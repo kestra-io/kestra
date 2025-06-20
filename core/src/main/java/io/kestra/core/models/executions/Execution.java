@@ -22,10 +22,11 @@ import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.LabelService;
+import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
-import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
@@ -111,6 +112,13 @@ public class Execution implements DeletedInterface, TenantInterface {
     @NonFinal
     @Setter
     String traceParent;
+
+    @With
+    @Nullable
+    List<TaskFixture> fixtures;
+
+    @Nullable
+    ExecutionKind kind;
 
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow}.
@@ -210,7 +218,9 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.deleted,
             this.metadata,
             this.scheduleDate,
-            this.traceParent
+            this.traceParent,
+            this.fixtures,
+            this.kind
         );
     }
 
@@ -234,7 +244,9 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.deleted,
             this.metadata,
             this.scheduleDate,
-            this.traceParent
+            this.traceParent,
+            this.fixtures,
+            this.kind
         );
     }
 
@@ -271,7 +283,9 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.deleted,
             this.metadata,
             this.scheduleDate,
-            this.traceParent
+            this.traceParent,
+            this.fixtures,
+            this.kind
         );
     }
 
@@ -295,7 +309,9 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.deleted,
             this.metadata,
             this.scheduleDate,
-            this.traceParent
+            this.traceParent,
+            this.fixtures,
+            this.kind
         );
     }
 
@@ -728,6 +744,16 @@ public class Execution implements DeletedInterface, TenantInterface {
             );
     }
 
+    public Optional<TaskFixture> getFixtureForTaskRun(TaskRun taskRun) {
+        if (this.fixtures == null) {
+            return Optional.empty();
+        }
+
+        return this.fixtures.stream()
+            .filter(fixture -> Objects.equals(fixture.getId(), taskRun.getTaskId()) && Objects.equals(fixture.getValue(), taskRun.getValue()))
+            .findFirst();
+    }
+
     /**
      * Create a new attempt for failed worker execution
      *
@@ -735,7 +761,7 @@ public class Execution implements DeletedInterface, TenantInterface {
      * @param e the exception raise
      * @return new taskRun with added attempt
      */
-    private static FailedTaskRunWithLog newAttemptsTaskRunForFailedExecution(TaskRun taskRun,
+    private FailedTaskRunWithLog newAttemptsTaskRunForFailedExecution(TaskRun taskRun,
         Exception e) {
         return new FailedTaskRunWithLog(
             taskRun
@@ -746,7 +772,7 @@ public class Execution implements DeletedInterface, TenantInterface {
                         .withState(State.Type.FAILED))
                 )
                 .withState(State.Type.FAILED),
-            RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(taskRun))
+            RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(taskRun, kind))
         );
     }
 
@@ -758,7 +784,7 @@ public class Execution implements DeletedInterface, TenantInterface {
      * @param e the exception raise
      * @return new taskRun with updated attempt with logs
      */
-    private static FailedTaskRunWithLog lastAttemptsTaskRunForFailedExecution(TaskRun taskRun,
+    private FailedTaskRunWithLog lastAttemptsTaskRunForFailedExecution(TaskRun taskRun,
         TaskRunAttempt lastAttempt, Exception e) {
         return new FailedTaskRunWithLog(
             taskRun
@@ -772,7 +798,7 @@ public class Execution implements DeletedInterface, TenantInterface {
                         .toList()
                 )
                 .withState(State.Type.FAILED),
-            RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(taskRun))
+            RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(taskRun, kind))
         );
     }
 
@@ -794,7 +820,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     /**
      * Transform an exception to {@link ILoggingEvent}
      *
-     * @param e the current execption
+     * @param e the current exception
      * @return the {@link ILoggingEvent} waited to generate {@link LogEntry}
      */
     public static ILoggingEvent loggingEventFromException(Exception e) {
@@ -827,10 +853,12 @@ public class Execution implements DeletedInterface, TenantInterface {
             .forEach((taskId, taskRuns) -> {
                 Map<String, Object> taskOutputs = new HashMap<>();
                 for (TaskRun current : taskRuns) {
-                    if (current.getIteration() != null) {
-                        taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
-                    } else {
-                        taskOutputs.putAll(outputs(current, byIds));
+                    if (!MapUtils.isEmpty(current.getOutputs())) {
+                        if (current.getIteration() != null) {
+                            taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                        } else {
+                            taskOutputs.putAll(outputs(current, byIds));
+                        }
                     }
                 }
                 result.put(taskId, taskOutputs);

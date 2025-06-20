@@ -2,10 +2,12 @@
     <KestraFilter
         v-if="triggersWithType.length"
         prefix="flow_triggers"
+        read-only
         :buttons="{
             refresh: {shown: true, callback: loadData},
             settings: {shown: false}
         }"
+        legacy-query
     />
 
     <el-table
@@ -17,7 +19,7 @@
     >
         <el-table-column type="expand">
             <template #default="props">
-                <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purge-filters :charts="false" embed />
+                <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purge-filters :with-charts="false" embed />
             </template>
         </el-table-column>
         <el-table-column prop="id" :label="$t('id')">
@@ -205,6 +207,7 @@
         <flow-run
             @update-inputs="backfill.inputs = $event"
             @update-labels="backfill.labels = $event"
+            :selected-trigger="selectedTrigger"
             :redirect="false"
             :embed="true"
         />
@@ -280,7 +283,7 @@
     import {storageKeys} from "../../utils/constants.js";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper, Empty},
+        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper},
         props:{
             embed: {
                 type: Boolean,

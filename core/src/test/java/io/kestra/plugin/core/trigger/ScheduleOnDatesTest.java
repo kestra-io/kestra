@@ -43,7 +43,7 @@ class ScheduleOnDatesTest {
             .id(IdUtils.create())
             .type(ScheduleOnDates.class.getName())
             .interval(null)
-            .dates(Property.of(List.of(before, after, later)))
+            .dates(Property.ofValue(List.of(before, after, later)))
             .build();
         var triggerContext = TriggerContext.builder().date(now).build();
         var trigger = Trigger.of(triggerContext, now);
@@ -67,7 +67,7 @@ class ScheduleOnDatesTest {
             .id(IdUtils.create())
             .type(ScheduleOnDates.class.getName())
             .interval(null)
-            .dates(Property.of(List.of(before, after, later)))
+            .dates(Property.ofValue(List.of(before, after, later)))
             .build();
         var conditionContext = conditionContext(scheduleOnDates);
 
@@ -89,7 +89,7 @@ class ScheduleOnDatesTest {
             .id(IdUtils.create())
             .type(ScheduleOnDates.class.getName())
             .interval(null)
-            .dates(Property.of(List.of(first, before, next)))
+            .dates(Property.ofValue(List.of(first, before, next)))
             .build();
         var conditionContext = conditionContext(scheduleOnDates);
 

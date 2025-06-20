@@ -5,6 +5,7 @@ import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
@@ -17,9 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -109,7 +112,9 @@ public class PluginScanner {
         List<Class<? extends AppBlockInterface>> appBlocks = new ArrayList<>();
         List<Class<? extends Chart<?>>> charts = new ArrayList<>();
         List<Class<? extends DataFilter<?, ?>>> dataFilters = new ArrayList<>();
+        List<Class<? extends DataFilterKPI<?, ?>>> dataFiltersKPI = new ArrayList<>();
         List<Class<? extends LogExporter<?>>> logExporter = new ArrayList<>();
+        List<Class<? extends AdditionalPlugin>> additionalPlugins = new ArrayList<>();
         List<String> guides = new ArrayList<>();
         Map<String, Class<?>> aliases = new HashMap<>();
 
@@ -168,9 +173,18 @@ public class PluginScanner {
                         //noinspection unchecked
                         dataFilters.add((Class<? extends DataFilter<?, ?>>)  dataFilter.getClass());
                     }
+                    case DataFilterKPI<?, ?> dataFilterKPI -> {
+                        log.debug("Loading DataFilterKPI plugin: '{}'", plugin.getClass());
+                        //noinspection unchecked
+                        dataFiltersKPI.add((Class<? extends DataFilterKPI<?, ?>>)  dataFilterKPI.getClass());
+                    }
                     case LogExporter<?> shipper -> {
                         log.debug("Loading LogExporter plugin: '{}'", plugin.getClass());
                         logExporter.add((Class<? extends LogExporter<?>>)  shipper.getClass());
+                    }
+                    case AdditionalPlugin additionalPlugin -> {
+                        log.debug("Loading additional plugin: '{}'", plugin.getClass());
+                        additionalPlugins.add(additionalPlugin.getClass());
                     }
                     default -> {
                     }
@@ -190,19 +204,13 @@ public class PluginScanner {
 
         var guidesDirectory = classLoader.getResource("doc/guides");
         if (guidesDirectory != null) {
-            try (var fileSystem = FileSystems.newFileSystem(guidesDirectory.toURI(), Collections.emptyMap())) {
-                var root = fileSystem.getPath("/doc/guides");
-                try (var stream = Files.walk(root, 1)) {
-                    stream
-                        .skip(1) // first element is the root element
-                        .sorted(Comparator.comparing(path -> path.getName(path.getParent().getNameCount()).toString()))
-                        .forEach(guide -> {
-                            var guideName = guide.getName(guide.getParent().getNameCount()).toString();
-                            guides.add(guideName.substring(0, guideName.lastIndexOf('.')));
-                        });
-                }
+            try {
+                var root = Path.of(guidesDirectory.toURI());
+                addGuides(root, guides);
             } catch (IOException | URISyntaxException e) {
                 // silently fail
+            } catch (FileSystemNotFoundException e) {
+                addGuidesThroughNewFileSystem(guidesDirectory, guides);
             }
         }
 
@@ -220,13 +228,36 @@ public class PluginScanner {
             .taskRunners(taskRunners)
             .charts(charts)
             .dataFilters(dataFilters)
+            .dataFiltersKPI(dataFiltersKPI)
             .guides(guides)
             .logExporters(logExporter)
+            .additionalPlugins(additionalPlugins)
             .aliases(aliases.entrySet().stream().collect(Collectors.toMap(
                 e -> e.getKey().toLowerCase(),
                 Function.identity()
             )))
             .build();
+    }
+
+    private static void addGuidesThroughNewFileSystem(URL guidesDirectory, List<String> guides) {
+        try (var fileSystem = FileSystems.newFileSystem(guidesDirectory.toURI(), Collections.emptyMap())) {
+            var root = fileSystem.getPath("doc/guides");
+            addGuides(root, guides);
+        } catch (IOException | URISyntaxException e) {
+            // silently fail
+        }
+    }
+
+    private static void addGuides(Path root, List<String> guides) throws IOException {
+        try (var stream = Files.walk(root, 1)) {
+            stream
+                .skip(1) // first element is the root element
+                .sorted(Comparator.comparing(path -> path.getName(path.getParent().getNameCount()).toString()))
+                .forEach(guide -> {
+                    var guideName = guide.getName(guide.getParent().getNameCount()).toString();
+                    guides.add(guideName.substring(0, guideName.lastIndexOf('.')));
+                });
+        }
     }
 
     public static Manifest getManifest(ClassLoader classLoader) {

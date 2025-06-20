@@ -1,646 +1,114 @@
 <template>
-    <Header
-        v-if="!embed"
-        :title="custom.shown ? custom.dashboard.title : t('overview')"
-        :breadcrumb="[
-            {
-                label: t(custom.shown ? 'custom_dashboard' : 'dashboard_label'),
-                link: {},
-            },
-        ]"
-        :id="custom.dashboard.id ?? undefined"
-    />
+    <Header v-if="header" :dashboard />
 
-    <div class="dashboard-filters">
-        <!-- Force re-rendering when switching between custom and default -->
+    <section id="filter">
         <KestraFilter
-            :key="custom.shown"
-            :prefix="custom.shown ? 'custom_dashboard' : 'dashboard'"
-            :include="
-                custom.shown
-                    ? ['relative_date', 'absolute_date', 'namespace', 'labels']
-                    : [
-                        'namespace',
-                        'state',
-                        'scope',
-                        'absolute_date',
-                    ]
-            "
+            :prefix="`dashboard__${dashboard.id}`"
+            :language
             :buttons="{
-                refresh: {
-                    shown: true,
-                    callback: custom.shown ? refreshCustom : fetchAll,
-                },
+                refresh: {shown: true, callback: () => refreshCharts()},
                 settings: {shown: false},
             }"
-            :dashboards="{shown: customDashboardsEnabled && route.name === 'home'}"
-            @dashboard="(v) => handleCustomUpdate(v)"
-            :is-default-dashboard="!custom.shown"
+            :dashboards="{shown: ALLOWED_CREATION_ROUTES.includes(String(route.name))}"
+            @dashboard="(value: Dashboard['id']) => load(value)"
         />
-    </div>
+    </section>
 
-    <div v-if="custom.shown">
-        <p v-if="custom.dashboard.description" class="description">
-            <small>{{ custom.dashboard.description }}</small>
-        </p>
-        <el-row class="custom">
-            <el-col
-                v-for="(chart, index) in custom.dashboard.charts"
-                :key="index + JSON.stringify(route.query)"
-                :xs="24"
-                :sm="12"
-            >
-                <div class="p-4 d-flex flex-column">
-                    <p class="m-0 fs-6 fw-bold">
-                        {{ chart.chartOptions?.displayName ?? chart.id }}
-                    </p>
-                    <p
-                        v-if="chart.chartOptions?.description"
-                        class="m-0 fw-light"
-                    >
-                        <small>{{ chart.chartOptions.description }}</small>
-                    </p>
-
-                    <div class="mt-4 flex-grow-1">
-                        <component
-                            :is="types[chart.type]"
-                            :source="chart.content"
-                            :chart
-                            :identifier="custom.id"
-                        />
-                    </div>
-                </div>
-            </el-col>
-        </el-row>
-    </div>
-    <div v-else class="dashboard">
-        <Card
-            :icon="CheckBold"
-            :label="t('dashboard.success_ratio')"
-            :tooltip="t('dashboard.success_ratio_tooltip')"
-            :value="stats.success"
-            :loading="executionsLoading"
-            :redirect="{
-                name: 'executions/list',
-                query: {
-                    state: State.SUCCESS,
-                    scope: 'USER',
-                    size: 100,
-                    page: 1,
-                },
-            }"
-        />
-
-        <Card
-            :icon="Alert"
-            :label="t('dashboard.failure_ratio')"
-            :tooltip="t('dashboard.failure_ratio_tooltip')"
-            :value="stats.failed"
-            :loading="executionsLoading"
-            :redirect="{
-                name: 'executions/list',
-                query: {
-                    state: State.FAILED,
-                    scope: 'USER',
-                    size: 100,
-                    page: 1,
-                },
-            }"
-        />
-
-        <Card
-            :icon="FileTree"
-            :label="t('flows')"
-            :value="numbers.flows"
-            :loading="numbersLoading"
-            :redirect="{
-                name: 'flows/list',
-                query: {scope: 'USER', size: 100, page: 1},
-            }"
-        />
-
-        <Card
-            :icon="LightningBolt"
-            :label="t('triggers')"
-            :value="numbers.triggers"
-            :loading="numbersLoading"
-            :redirect="{
-                name: 'admin/triggers',
-                query: {size: 100, page: 1},
-            }"
-        />
-
-        <ExecutionsBar
-            :data="graphData"
-            :total="stats.total"
-            :loading="executionsLoading"
-            class="card card-2/3"
-        />
-
-        <ExecutionsDoughnut
-            :data="graphData"
-            :total="stats.total"
-            :loading="executionsLoading"
-            class="card card-1/3"
-        />
-
-        <div v-if="props.flow" class="h-100 p-4 card card-1/2">
-            <span class="d-flex justify-content-between">
-                <span class="fs-6 fw-bold">
-                    {{ t("dashboard.description") }}
-                </span>
-                <el-button
-                    :icon="BookOpenOutline"
-                    @click="descriptionDialog = true"
-                >
-                    {{ t("open") }}
-                </el-button>
-
-                <el-dialog
-                    v-model="descriptionDialog"
-                    :title="$t('description')"
-                >
-                    <Markdown
-                        :source="description"
-                        :html="false"
-                        class="p-4 description"
-                    />
-                </el-dialog>
-            </span>
-
-            <Markdown :source="description" :html="false" class="p-4 description" />
-        </div>
-        <ExecutionsInProgress
-            v-else
-            :flow="props.flowId"
-            :namespace="props.namespace"
-            :loading="executionsLoading"
-            class="card card-1/2"
-        />
-
-        <ExecutionsNextScheduled
-            v-if="props.flow"
-            :flow="props.flowId"
-            :namespace="props.namespace"
-            :loading="executionsLoading"
-            class="card card-1/2"
-        />
-        <ExecutionsNextScheduled
-            v-else-if="isAllowedTriggers"
-            :flow="props.flowId"
-            :namespace="props.namespace"
-            :loading="executionsLoading"
-            class="card card-1/2"
-        />
-
-        <ExecutionsEmptyNextScheduled
-            v-else
-            :loading="executionsLoading"
-            class="card card-1/2"
-        />
-        <ExecutionsNamespace
-            v-if="!props.flow && Object.keys(namespaceExecutions).length > 1"
-            class="card card-1"
-            :data="namespaceExecutions"
-            :total="stats.total"
-        />
-        <Logs
-            v-if="!props.flow"
-            :data="logs"
-            :loading="executionsLoading"
-            class="card card-1"
-        />
-    </div>
+    <Sections :key :charts :show-default="dashboard.id === 'default'" padding />
 </template>
 
-<script setup>
-    import {computed, onBeforeMount, ref, watch} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import {useStore} from "vuex";
-    import {useI18n} from "vue-i18n";
+<script setup lang="ts">
+    import {computed, onBeforeMount, ref} from "vue";
 
-    import {apiUrl} from "override/utils/route";
-    import {State} from "@kestra-io/ui-libs"
+    import type {Dashboard, Chart} from "./composables/useDashboards";
+    import {ALLOWED_CREATION_ROUTES, getDashboard, processFlowYaml} from "./composables/useDashboards";
 
     import Header from "./components/Header.vue";
-    import Card from "./components/Card.vue";
-
     import KestraFilter from "../filter/KestraFilter.vue";
+    import Sections from "./sections/Sections.vue";
 
-    import ExecutionsBar from "./components/charts/executions/Bar.vue";
-    import ExecutionsDoughnut from "./components/charts/executions/Doughnut.vue";
-    import ExecutionsNamespace from "./components/charts/executions/Namespace.vue";
-    import Logs from "./components/charts/logs/Bar.vue";
+    import FILTER_LANGUAGE_MAIN from "../../composables/monaco/languages/filters/impl/dashboardFilterLanguage.js";
+    import FILTER_LANGUAGE_NAMESPACE from "../../composables/monaco/languages/filters/impl/namespaceDashboardFilterLanguage.js";
+    import FILTER_LANGUAGE_FLOW from "../../composables/monaco/languages/filters/impl/flowDashboardFilterLanguage.js";
 
-    import ExecutionsInProgress from "./components/tables/executions/InProgress.vue";
-    import ExecutionsNextScheduled from "./components/tables/executions/NextScheduled.vue";
-    import ExecutionsEmptyNextScheduled from "./components/tables/executions/EmptyNextScheduled.vue";
-
-    import Markdown from "../layout/Markdown.vue";
-    import TimeSeries from "./components/charts/custom/TimeSeries.vue";
-    import Bar from "./components/charts/custom/Bar.vue";
-    import Pie from "./components/charts/custom/Pie.vue";
-    import Table from "./components/tables/custom/Table.vue";
-
-    import CheckBold from "vue-material-design-icons/CheckBold.vue";
-    import Alert from "vue-material-design-icons/Alert.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-    import FileTree from "vue-material-design-icons/FileTree.vue";
-    import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import _cloneDeep from "lodash/cloneDeep.js";
-
-    const router = useRouter();
-    const route = useRoute();
-    const store = useStore();
-    const {t} = useI18n({useScope: "global"});
-    const user = store.getters["auth/user"];
-
-    const props = defineProps({
-        embed: {
-            type: Boolean,
-            default: false,
-        },
-        flow: {
-            type: Boolean,
-            default: false,
-        },
-        flowId: {
-            type: String,
-            required: false,
-            default: null,
-        },
-        namespace: {
-            type: String,
-            required: false,
-            default: null,
-        },
-        restoreURL: {
-            type: Boolean,
-            default: true,
-        },
-        id: {
-            type: String,
-            required: false,
-            default: null,
-        },
-        containerClass: {
-            type: String,
-            required: false,
-            default: null,
-        },
+    const language = computed(() => {
+        if (props.isNamespace) return FILTER_LANGUAGE_NAMESPACE;
+        if (props.isFlow) return FILTER_LANGUAGE_FLOW;
+        return FILTER_LANGUAGE_MAIN;
     });
 
-    const customDashboardsEnabled = computed(
-        () => store.state.misc?.configs?.isCustomDashboardsEnabled,
-    );
+    import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
 
-    // Custom Dashboards
-    const custom = ref({id: Math.random(), shown: false, dashboard: {}});
-    const handleCustomUpdate = async (v) => {
-        let dashboard = {};
+    import YAML_MAIN from "./assets/default_main_definition.yaml?raw";
+    import YAML_FLOW from "./assets/default_flow_definition.yaml?raw";
+    import YAML_NAMESPACE from "./assets/default_namespace_definition.yaml?raw";
 
-        if (route.name === "home") {
-            router.replace({
-                params: {...route.params, id: v?.id ?? "default"},
-                query: route.params.id != v?.id ? {} : {...route.query},
-            });
-            if (v && v.id !== "default") {
-                dashboard = await store.dispatch("dashboard/load", v.id);
-            }
+    import UTILS from "../../utils/utils.js";
 
-            custom.value = {
-                id: Math.random(),
-                shown: !v || v.id === "default" ? false : true,
-                dashboard,
-            };
+    import {useRoute, useRouter} from "vue-router";
+    const route = useRoute();
+    const router = useRouter();
+
+    import {useStore} from "vuex";
+    const store = useStore();
+
+    defineOptions({inheritAttrs: false});
+
+    const props = defineProps({
+        header: {type: Boolean, default: true},
+        isFlow: {type: Boolean, default: false},
+        isNamespace: {type: Boolean, default: false},
+    });
+
+    const dashboard = ref<Dashboard>({id: "", charts: []});
+    const charts = ref<Chart[]>([]);
+
+    // We use a key to force re-rendering of the Sections component
+    let key = ref(UTILS.uid());
+
+    const loadCharts = async (allCharts: Chart[] = []) => {
+        charts.value = [];
+
+        for (const chart of allCharts) {
+            charts.value.push({...chart, content: stringify(chart)});
         }
-    };
-    const refreshCustom = async () => {
-        const ID = custom.value.dashboard.id;
-        let dashboard = await store.dispatch("dashboard/load", ID);
-        custom.value = {id: Math.random(), shown: true, dashboard};
-    };
-    const types = {
-        "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
-        "io.kestra.plugin.core.dashboard.chart.Bar": Bar,
-        "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,
-        "io.kestra.plugin.core.dashboard.chart.Table": Table,
-        "io.kestra.plugin.core.dashboard.chart.Pie": Pie,
+
+        refreshCharts()
     };
 
-    const descriptionDialog = ref(false);
-    const description = props.flow
-        ? (store.state?.flow?.flow?.description ??
-            t("dashboard.no_flow_description"))
-        : undefined;
+    const refreshCharts = () => {
+        key.value = UTILS.uid();
+    };
 
-    const defaultNumbers = {flows: 0, triggers: 0};
-    const numbers = ref({...defaultNumbers});
-    const numbersLoading = ref(false);
-    const fetchNumbers = () => {
-        if (props.flowId) {
+    const load = async (id = "default", defaultYAML = YAML_MAIN) => {
+        if (!ALLOWED_CREATION_ROUTES.includes(String(route.name))) {
             return;
         }
 
-        numbersLoading.value = true;
-        store.$http
-            .post(`${apiUrl(store)}/stats/summary`, mergeQuery())
-            .then((response) => {
-                if (!response.data) return;
-                numbers.value = {...defaultNumbers, ...response.data};
-            })
-            .finally(() => {
-                numbersLoading.value = false;
+        if (!props.isFlow && !props.isNamespace) {
+            router.replace({
+                params: {...route.params, dashboard: id},
+                query: route.params.dashboard !== id ? {} : {...route.query},
             });
-    };
-
-    const executions = ref({raw: {}, all: {}, yesterday: {}, today: {}});
-    const stats = computed(() => {
-        const counts = executions?.value?.all?.executionCounts || {};
-        const terminatedStates = State.getTerminatedStates();
-        const statesToCount = Object.fromEntries(
-            Object.entries(counts).filter(([key]) =>
-                terminatedStates.includes(key),
-            ),
-        );
-
-        const total = Object.values(counts).reduce(
-            (sum, count) => sum + count,
-            0,
-        );
-
-        const totalTerminated = Object.values(statesToCount).reduce(
-            (sum, count) => sum + count,
-            0,
-        );
-
-        const successStates = ["SUCCESS", "CANCELLED", "WARNING", "SKIPPED"];
-        const failedStates = ["FAILED", "KILLED"];
-        const sumStates = (states) =>
-            states.reduce((sum, state) => sum + (statesToCount[state] || 0), 0);
-        const successRatio =
-            totalTerminated > 0 ? (sumStates(successStates) / totalTerminated) * 100 : 0;
-        const failedRatio = totalTerminated > 0 ? (sumStates(failedStates) / totalTerminated) * 100 : 0;
-
-        return {
-            total: total,
-            totalTerminated: totalTerminated,
-            success: `${successRatio.toFixed(2)}%`,
-            failed: `${failedRatio.toFixed(2)}%`,
-        };
-    });
-    const transformer = (data) => {
-        return data.reduce((accumulator, value) => {
-            accumulator = accumulator || {executionCounts: {}, duration: {}};
-
-            for (const key in value.executionCounts) {
-                accumulator.executionCounts[key] =
-                    (accumulator.executionCounts[key] || 0) +
-                    value.executionCounts[key];
-            }
-
-            for (const key in value.duration) {
-                accumulator.duration[key] =
-                    (accumulator.duration[key] || 0) + value.duration[key];
-            }
-
-            return accumulator;
-        }, null);
-    };
-
-    const mergeQuery = () => {
-        let queryFilter = _cloneDeep(route.query);
-
-        if (props.namespace) {
-            queryFilter["namespace"] = props.namespace;
         }
 
-        if (props.flowId) {
-            queryFilter["flowId"] = props.flowId;
-        }
-
-        return queryFilter;
-    }
-
-    const executionsLoading = ref(false);
-    const fetchExecutions = () => {
-        executionsLoading.value = true;
-
-        return store.dispatch("stat/daily", mergeQuery())
-            .then((response) => {
-                const sorted = response.sort(
-                    (a, b) => new Date(b.date) - new Date(a.date),
-                );
-
-                executions.value = {
-                    raw: sorted,
-                    all: transformer(sorted),
-                    yesterday: sorted.at(-2),
-                    today: sorted.at(-1),
-                };
-            })
-            .finally(() => {
-                executionsLoading.value = false;
-            });
+        dashboard.value = id === "default" ? {id, ...parse(defaultYAML)} : await store.dispatch("dashboard/load", id);
+        loadCharts(dashboard.value.charts);
     };
-
-    const graphData = computed(() => store.state.stat.daily || []);
-
-    const namespaceExecutions = ref({});
-
-    const fetchNamespaceExecutions = () => {
-        store.dispatch("stat/dailyGroupByNamespace", mergeQuery()).then((response) => {
-            namespaceExecutions.value = response;
-        });
-    };
-
-    const logs = ref([]);
-    const fetchLogs = () => {
-        store.dispatch("stat/logDaily", mergeQuery()).then((response) => {
-            logs.value = response;
-        });
-    };
-
-    const fetchAll = async () => {
-        if (!custom.value.shown) {
-            try {
-                executionsLoading.value = true;
-                await Promise.all([
-                    fetchNumbers(),
-                    fetchExecutions(),
-                    fetchNamespaceExecutions(),
-                    fetchLogs(),
-                ]).catch(error => {
-                    console.error("Failed to fetch dashboard data:", error);
-                });
-            } finally {
-                executionsLoading.value = false;
-            }
-        }
-    };
-
-    const isAllowedTriggers = computed(() => {
-        return (
-            user &&
-            user.isAllowed(permission.FLOW, action.READ, props.value?.namespace)
-        );
-    });
 
     onBeforeMount(() => {
-        handleCustomUpdate(route.params?.id ? {id: route.params?.id} : undefined);
-    });
+        const ID = getDashboard(route, "id");
 
-    watch(
-        route,
-        async () => {
-            await handleCustomUpdate(route.params?.id ? {id: route.params?.id} : undefined);
-            fetchAll();
-        },
-        {immediate: true, deep: true},
-    );
+        if (props.isFlow && ID === "default") load("default", processFlowYaml(YAML_FLOW, route.params.namespace, route.params.id));
+        else if (props.isNamespace && ID === "default") load("default", YAML_NAMESPACE);
+    });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
 
-$spacing: 20px;
-
-.dashboard-filters,
-.dashboard {
+section#filter {
+    margin: 2rem 0.25rem 0;
     padding: 0 2rem;
-    margin: 0;
-
-    .description {
-        border: none !important;
-        color: var(ks-content-secondary);
-    }
-}
-
-$media-md: 500px;
-$media-lg: 1000px;
-
-.dashboard{
-    container-type: inline-size;
-    padding-bottom: 1rem;
-    margin: 1rem 0;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-}
-
-
-
-.card {
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
-    background: var(--ks-background-card);
-    color: var(--ks-content-primary);
-    border: 1px solid var(--ks-border-primary);
-    border-radius: $border-radius;
-    overflow: hidden;
-    flex-shrink: 0;
-    grid-column: span 12;
-    @container (width > #{$media-md}) {
-        grid-column: span 6;
-    }
-    @container (width > #{$media-lg}) {
-        grid-column: span 3;
-    }
-}
-
-@container (width > #{$media-md}) {
-    .card-1\/2, .card-2\/3, .card-1\/3 {
-        grid-column: span 12;
-    }
-}
-
-.card-1\/2{
-    @container (width > #{$media-lg}) {
-        grid-column: span 6;
-    }
-}
-
-.card-2\/3{
-    @container (width > #{$media-lg}) {
-        grid-column: span 8;
-    }
-}
-
-.card-1\/3{
-    @container (width > #{$media-lg}) {
-        grid-column: span 4;
-    }
-}
-
-.card-1{
-    @container (width > #{$media-md}) {
-        grid-column: span 12;
-    }
-}
-
-.dashboard-filters {
-    margin: 24px 0 0 0;
-    padding-bottom: 0;
-
-    & .el-row {
-        padding: 0 5px;
-    }
-
-    & .el-col {
-        padding-bottom: 0 !important;
-    }
-}
-
-.description {
-    padding: 0 2rem 1rem 2rem;
-    margin: 0;
-    color: var(--ks-content-secondary);
-}
-
-.custom {
-    padding: 0 2rem 1rem 2rem;
-
-    &.el-row {
-        width: 100%;
-
-        & .el-col {
-            padding-bottom: $spacing;
-
-            &:nth-of-type(even) > div {
-                margin-left: 1rem;
-            }
-
-            & > div {
-                height: 100%;
-                background: var(--ks-background-card);
-                border: 1px solid var(--ks-border-primary);
-                border-radius: $border-radius;
-            }
-        }
-    }
-}
-
-:deep(.legend) {
-    &::-webkit-scrollbar {
-        height: 5px;
-        width: 5px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: var(--ks-background-body);
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: var(--ks-border-primary);
-        border-radius: 5px;
-    }
-
-    &::-webkit-scrollbar-thumb:hover {
-        background: var(--ks-button-background-primary-hover);
-    }
 }
 </style>

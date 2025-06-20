@@ -49,7 +49,6 @@ class DocumentationGeneratorTest {
         assertThat(render).contains("description: \"Short description for this task\"");
         assertThat(render).contains("`VALUE_1`");
         assertThat(render).contains("`VALUE_2`");
-        assertThat(render).contains("This plugin is exclusively available on the Cloud and Enterprise editions of Kestra.");
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -102,7 +101,7 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render).contains("Return a value for debugging purposes.");
-        assertThat(render).contains("is intended for troubleshooting");
+        assertThat(render).contains("This task is mostly useful for troubleshooting.");
         assertThat(render).contains("## Metrics");
         assertThat(render).contains("### `length`\n" + "* **Type:** ==counter== ");
         assertThat(render).contains("### `duration`\n" + "* **Type:** ==timer== ");

@@ -97,7 +97,7 @@
     import Utils from "../../utils/utils";
     import Markdown from "../layout/Markdown.vue";
     import ValidationError from "./ValidationError.vue";
-    import {SECTIONS} from "../../utils/constants";
+    import {SECTIONS} from "@kestra-io/ui-libs";
 
     export default {
         components: {Editor, TaskEditor, Drawer, Markdown, ValidationError},
@@ -221,8 +221,13 @@
             },
             onInput(value) {
                 clearTimeout(this.timer);
+                this.taskYaml = value;
+
                 this.timer = setTimeout(() => {
-                    this.$store.dispatch("flow/validateTask", {task: value, section: this.section})
+                    if (this.lastValidatedValue !== value) {
+                        this.lastValidatedValue = value;
+                        this.$store.dispatch("flow/validateTask", {task: value, section: this.section});
+                    }
                 }, 500);
             },
             defaultActiveTab() {
@@ -236,7 +241,9 @@
                 isModalOpen: false,
                 activeTabs: this.defaultActiveTab(),
                 type: null,
-                revisions: undefined
+                revisions: undefined,
+                timer: null,
+                lastValidatedValue: null,
             };
         },
         computed: {

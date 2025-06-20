@@ -1,0 +1,9 @@
+id: my-hello-flow-1
+namespace: company.team
+inputs:
+  - id: INPUT_A
+    type: STRING
+tasks:
+  - id: log_hello_task
+    type: io.kestra.plugin.core.log.Log
+    message: "Hello input: {{ inputs.INPUT_A }}"

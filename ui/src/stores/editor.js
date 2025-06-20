@@ -10,7 +10,7 @@ export default {
         treeData: [],
     },
     actions: {
-        saveAllTabs({dispatch, state}, {namespace}) {
+        saveAllTabs({dispatch, commit, state}, {namespace}) {
             return Promise.all(
                 state.tabs.map(async (tab) => {
                     if(tab.flow) return;
@@ -19,7 +19,11 @@ export default {
                         path: tab.path ?? tab.name,
                         content: tab.content,
                     }, {root: true});
-                    tab.dirty = false;
+                    commit("setTabDirty", {
+                        name: tab.name,
+                        path: tab.path,
+                        dirty: false
+                    });
                 })
             );
         },
@@ -72,7 +76,7 @@ export default {
                         return tab.name === name;
                     });
 
-            if (state.current.name === name) {
+            if (state.current?.name === name) {
                 if(POSITION - 1 >= 0){
                     commit("setCurrentTab", state.tabs[POSITION - 1]);
                 }else{

@@ -134,6 +134,6 @@ public abstract class AbstractExecutionServiceTest {
             null
         );
 
-        assertThat(purge.getExecutionsCount()).isEqualTo(0);
+        assertThat(purge.getExecutionsCount()).isZero();
     }
 }

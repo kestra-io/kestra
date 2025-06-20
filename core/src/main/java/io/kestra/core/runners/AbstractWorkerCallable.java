@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.WorkerJobLifecycle;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.utils.Exceptions;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import lombok.Getter;
@@ -61,6 +62,7 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
         try {
             return doCall();
         } catch (Throwable e) {
+            Exceptions.throwIfFatal(e);
             // Catching Throwable is usually a bad idea.
             // However, here, we want to be sure that the task fails whatever happens,
             // and some plugins may throw errors, for example, for dependency issues or worst,

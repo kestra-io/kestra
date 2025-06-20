@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hibernate.validator.internal.util.Contracts.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -42,7 +43,8 @@ public class FileSizeFunctionTest {
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", FLOW,
-                "namespace", NAMESPACE),
+                "namespace", NAMESPACE,
+                "tenantId", MAIN_TENANT),
             "execution", Map.of("id", executionId)
         );
 
@@ -54,10 +56,10 @@ public class FileSizeFunctionTest {
     void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        storageInterface.createDirectory(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream(FILE_TEXT.getBytes()));
+        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream(FILE_TEXT.getBytes()));
 
-        String render = variableRenderer.render("{{ fileSize('" + filePath + "', namespace='" + namespace + "') }}", Map.of("flow", Map.of("namespace", "flow.namespace")));
+        String render = variableRenderer.render("{{ fileSize('" + filePath + "', namespace='" + namespace + "') }}", Map.of("flow", Map.of("namespace", "flow.namespace", "tenantId", MAIN_TENANT)));
         assertThat(render).isEqualTo(FILE_SIZE);
     }
 
@@ -70,12 +72,14 @@ public class FileSizeFunctionTest {
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "subflow",
-                "namespace", NAMESPACE),
+                "namespace", NAMESPACE,
+                "tenantId", MAIN_TENANT),
             "execution", Map.of("id", IdUtils.create()),
             "trigger", Map.of(
                 "flowId", FLOW,
                 "namespace", NAMESPACE,
-                "executionId", executionId
+                "executionId", executionId,
+                "tenantId", MAIN_TENANT
             )
         );
 
@@ -92,7 +96,8 @@ public class FileSizeFunctionTest {
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "subflow",
-                "namespace", NAMESPACE),
+                "namespace", NAMESPACE,
+                "tenantId", MAIN_TENANT),
             "execution", Map.of("id", IdUtils.create())
         );
 
@@ -109,11 +114,13 @@ public class FileSizeFunctionTest {
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "subflow",
-                "namespace", NAMESPACE),
+                "namespace", NAMESPACE,
+                "tenantId", MAIN_TENANT),
             "execution", Map.of("id", IdUtils.create()),
             "trigger", Map.of(
                 "flowId", FLOW,
-                "executionId", executionId
+                "executionId", executionId,
+                "tenantId", MAIN_TENANT
             )
         );
 
@@ -135,7 +142,8 @@ public class FileSizeFunctionTest {
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", FLOW,
-                "namespace", NAMESPACE),
+                "namespace", NAMESPACE,
+                "tenantId", MAIN_TENANT),
             "execution", Map.of("id", executionId),
             "file", internalStorageFile
         );
@@ -153,12 +161,14 @@ public class FileSizeFunctionTest {
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "subflow",
-                "namespace", NAMESPACE),
+                "namespace", NAMESPACE,
+                "tenantId", MAIN_TENANT),
             "execution", Map.of("id", IdUtils.create()),
             "trigger", Map.of(
                 "flowId", FLOW,
                 "namespace", NAMESPACE,
-                "executionId", executionId
+                "executionId", executionId,
+                "tenantId", MAIN_TENANT
             ),
             "file", internalStorageFile
         );
@@ -172,6 +182,6 @@ public class FileSizeFunctionTest {
     }
 
     private URI getInternalStorageFile(URI internalStorageURI) throws IOException {
-        return storageInterface.put(null, null, internalStorageURI, new ByteArrayInputStream(FILE_TEXT.getBytes()));
+        return storageInterface.put(MAIN_TENANT, null, internalStorageURI, new ByteArrayInputStream(FILE_TEXT.getBytes()));
     }
 }

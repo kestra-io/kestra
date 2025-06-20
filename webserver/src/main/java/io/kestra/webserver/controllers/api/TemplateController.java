@@ -22,6 +22,7 @@ import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -42,8 +43,10 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 @Validated
-@Controller("/api/v1/templates")
+@Controller("/api/v1/{tenant}/templates")
 @TemplateEnabled
+@Deprecated(forRemoval = true)
+@Hidden
 public class TemplateController {
     @Inject
     private TemplateRepositoryInterface templateRepository;
@@ -85,6 +88,7 @@ public class TemplateController {
     public HttpResponse<Template> create(
         @Parameter(description = "The template") @Valid @Body Template template
     ) throws ConstraintViolationException {
+        template.setTenantId(tenantService.resolveTenant());
         if (templateRepository.findById(tenantService.resolveTenant(), template.getNamespace(), template.getId()).isPresent()) {
             throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
                 "Template id already exists",
@@ -106,6 +110,7 @@ public class TemplateController {
         @Parameter(description = "The template id") @PathVariable String id,
         @Parameter(description = "The template") @Valid @Body Template template
     ) throws ConstraintViolationException {
+        template.setTenantId(tenantService.resolveTenant());
         Optional<Template> existingTemplate = templateRepository.findById(tenantService.resolveTenant(), namespace, id);
 
         if (existingTemplate.isEmpty()) {
@@ -153,6 +158,7 @@ public class TemplateController {
         @Parameter(description = "A list of templates") @Body @Valid List<Template> templates,
         @Parameter(description = "If missing template should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException {
+        templates.forEach(template -> template.setTenantId(tenantService.resolveTenant()));
         return new ArrayList<>(this
             .updateCompleteNamespace(
                 namespace,
@@ -245,7 +251,7 @@ public class TemplateController {
                 validateConstraintViolationBuilder.index(index.getAndIncrement());
                 try {
                     Template templateParse = YamlParser.parse(template, Template.class);
-
+                    templateParse.setTenantId(tenantService.resolveTenant());
                     validateConstraintViolationBuilder.flow(templateParse.getId());
                     validateConstraintViolationBuilder.namespace(templateParse.getNamespace());
 
@@ -268,7 +274,7 @@ public class TemplateController {
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ) throws IOException {
-        var templates = templateRepository.find(tenantService.resolveTenant(), query, namespace);
+        var templates = templateRepository.find(query, tenantService.resolveTenant(), namespace);
         var bytes = zipTemplates(templates);
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"templates.zip\"");
     }
@@ -300,7 +306,7 @@ public class TemplateController {
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ){
         List<Template> list = templateRepository
-            .find(tenantService.resolveTenant(), query, namespace)
+            .find(query, tenantService.resolveTenant(), namespace)
             .stream()
             .peek(templateRepository::delete)
             .toList();
@@ -355,6 +361,7 @@ public class TemplateController {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
             for (String source : sources) {
                 Template parsed = YamlParser.parse(source, Template.class);
+                parsed.setTenantId(tenantService.resolveTenant());
                 importTemplate(parsed);
             }
         } else if (fileName.endsWith(".zip")) {
@@ -367,6 +374,7 @@ public class TemplateController {
 
                     String source = new String(archive.readAllBytes());
                     Template parsed = YamlParser.parse(source, Template.class);
+                    parsed.setTenantId(tenantService.resolveTenant());
                     importTemplate(parsed);
                 }
             }

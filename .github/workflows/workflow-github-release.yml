@@ -6,19 +6,21 @@ on:
       GH_PERSONAL_TOKEN:
         description: "The Github personal token."
         required: true
+  push:
+    tags:
+      - '*'
 
 jobs:
   publish:
     name: Github - Release
     runs-on: ubuntu-latest
     steps:
-      # Download Exec
-      - name: Artifacts - Download executable
-        uses: actions/download-artifact@v4
-        if: startsWith(github.ref, 'refs/tags/v')
+      # Check out
+      - name: Checkout - Repository
+        uses: actions/checkout@v4
         with:
-          name: exe
-          path: build/executable
+          fetch-depth: 0
+          submodules: true
 
       # Checkout GitHub Actions
       - name: Checkout - Actions
@@ -30,18 +32,27 @@ jobs:
           sparse-checkout: |
             .github/actions
 
+      # Download Exec
+      # Must be done after checkout actions
+      - name: Artifacts - Download executable
+        uses: actions/download-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: exe
+          path: build/executable
+
+
       # GitHub Release
       - name: Create GitHub release
         uses: ./actions/.github/actions/github-release
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
           SLACK_RELEASES_WEBHOOK_URL: ${{ secrets.SLACK_RELEASES_WEBHOOK_URL }}
 
       # Trigger gha workflow to bump helm chart version
       - name: GitHub - Trigger the Helm chart version bump
         uses: peter-evans/repository-dispatch@v3
-        if: steps.create_github_release.conclusion == 'success'
         with:
           token: ${{ secrets.GH_PERSONAL_TOKEN }}
           repository: kestra-io/helm-charts

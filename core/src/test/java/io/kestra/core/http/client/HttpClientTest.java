@@ -2,6 +2,7 @@ package io.kestra.core.http.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.net.HttpHeaders;
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
@@ -15,7 +16,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -71,7 +71,7 @@ class HttpClientTest {
     private ApplicationContext applicationContext;
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     private URI embeddedServerUri;
 
@@ -344,7 +344,7 @@ class HttpClientTest {
 
     @Test
     void noError404() throws IOException, IllegalVariableEvaluationException, HttpClientException {
-        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowFailed(Property.of(true)).build()))) {
+        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowFailed(Property.ofValue(true)).build()))) {
             HttpResponse<Map<String, String>> response = client.request(HttpRequest.of(URI.create(embeddedServerUri + "/http/error?status=404")));
 
             assertThat(response.getStatus().getCode()).isEqualTo(404);
@@ -353,7 +353,7 @@ class HttpClientTest {
 
     @Test
     void noErrorPost404() throws IOException, IllegalVariableEvaluationException, HttpClientException {
-        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowFailed(Property.of(true)).build()))) {
+        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowFailed(Property.ofValue(true)).build()))) {
             URI uri = URI.create(embeddedServerUri + "/http/post-error");
 
             HttpResponse<Map<String, String>> response = client.request(HttpRequest.builder().uri(uri).method("POST").body(HttpRequest.StringRequestBody.builder().content("OK").build()).build());
@@ -382,11 +382,11 @@ class HttpClientTest {
         try (HttpClient client = client(b -> b
             .configuration(HttpConfiguration.builder()
                 .proxy(ProxyConfiguration.builder()
-                    .type(Property.of(Proxy.Type.HTTP))
-                    .address(Property.of(proxy.getHost()))
-                    .username(Property.of("pr0xy"))
-                    .password(Property.of("p4ss"))
-                    .port(Property.of(proxy.getFirstMappedPort()))
+                    .type(Property.ofValue(Proxy.Type.HTTP))
+                    .address(Property.ofValue(proxy.getHost()))
+                    .username(Property.ofValue("pr0xy"))
+                    .password(Property.ofValue("p4ss"))
+                    .port(Property.ofValue(proxy.getFirstMappedPort()))
                     .build())
                 .build()))
         ) {
@@ -397,6 +397,28 @@ class HttpClientTest {
 
             assertThat(response.getStatus().getCode()).isEqualTo(200);
             assertThat(response.getBody()).contains("<html");
+        }
+    }
+
+    @Test
+    void shouldReturnResponseForAllowedResponseCode() throws IOException, IllegalVariableEvaluationException, HttpClientException {
+        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowedResponseCodes(Property.of(List.of(404))).build()))) {
+            HttpResponse<Map<String, String>> response = client.request(HttpRequest.of(URI.create(embeddedServerUri + "/http/error?status=404")));
+
+            assertThat(response.getStatus().getCode()).isEqualTo(404);
+        }
+    }
+
+    @Test
+    void shouldThrowExceptionForNotAllowedResponseCode() throws IOException, IllegalVariableEvaluationException {
+        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowedResponseCodes(Property.of(List.of(404))).build()))) {
+            URI uri = URI.create(embeddedServerUri + "/http/error?status=405");
+
+            HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+                client.request(HttpRequest.of(uri));
+            });
+
+            assertThat(Objects.requireNonNull(e.getResponse()).getStatus().getCode()).isEqualTo(405);
         }
     }
 

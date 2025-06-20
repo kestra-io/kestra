@@ -168,6 +168,21 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
         Assertions.assertEquals(new ServiceStateTransition.Response(FAILED, instance), response);
     }
 
+    @Test
+    void shouldPurgeServiceInstance() {
+        // Given
+        ServiceInstance instance = Fixtures.RunningServiceInstance;
+        repository.update(instance);
+        instance = Fixtures.EmptyServiceInstance;
+        repository.update(instance);
+
+        // When
+        int purged = repository.purgeEmptyInstances(Instant.now());
+
+        //Then
+        assertThat(purged).isEqualTo(1);
+    }
+
     public static final class Fixtures {
 
         public static List<ServiceInstance> all() {

@@ -6,7 +6,7 @@
                 <template #navbar v-if="!embed || showFilters">
                     <KestraFilter
                         prefix="logs"
-                        :include="['namespace', 'level', 'absolute_date', 'relative_date']"
+                        :language="LogFilterLanguage"
                         :buttons="{
                             refresh: {shown: true, callback: refresh},
                             settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
@@ -15,14 +15,7 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <el-card class="mb-3 shadow" v-loading="!statsReady">
-                        <div>
-                            <template v-if="hasStatsData">
-                                <Logs :data="logDaily" :loading="!statsReady" />
-                            </template>
-                            <LogsNoData v-else />
-                        </div>
-                    </el-card>
+                    <Sections :charts />
                 </template>
 
                 <template #table v-if="logs !== undefined && logs.length > 0">
@@ -44,7 +37,12 @@
     </section>
 </template>
 
-<script>
+<script setup lang="ts">
+    import LogFilterLanguage from "../../composables/monaco/languages/filters/impl/logFilterLanguage";
+    import Sections from "../dashboard/sections/Sections.vue";
+</script>
+
+<script lang="ts">
     import LogLine from "../logs/LogLine.vue";
     import {mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
@@ -52,18 +50,19 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../../components/layout/DataTable.vue";
-    import LogsNoData from "../dashboard/components/charts/logs/LogsNoData.vue";
     import _merge from "lodash/merge";
-    import Logs from "../dashboard/components/charts/logs/Bar.vue";
     import {storageKeys} from "../../utils/constants";
     import KestraFilter from "../filter/KestraFilter.vue"
     import {decodeSearchParams} from "../filter/utils/helpers";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             KestraFilter,
-            DataTable, LogLine, TopNavBar, Logs, LogsNoData},
+            DataTable, LogLine, TopNavBar
+        },
         props: {
             logLevel: {
                 type: String,
@@ -73,7 +72,7 @@
                 type: Boolean,
                 default: false
             },
-            charts: {
+            withCharts: {
                 type: Boolean,
                 default: true
             },
@@ -92,8 +91,6 @@
                 task: undefined,
                 isLoading: false,
                 lastRefreshDate: new Date(),
-                statsReady: false,
-                statsData: [],
                 canAutoRefresh: false,
                 showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_LOGS_CHART)),
             };
@@ -147,31 +144,44 @@
             flowId() {
                 return this.$route.params.id;
             },
-            countStats() {
-                return [...(this.logDaily || [])].reduce((a, b) => {
-                    return a + Object.values(b.counts).reduce((a, b) => a + b, 0);
-                }, 0);
-            },
-            hasStatsData() {
-                return this.countStats > 0;
-            },
-        },
-        beforeRouteEnter(to, from, next) {
-            const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
-            const query = {...to.query};
-            if (defaultNamespace) {
-                query.namespace = defaultNamespace;
+            charts() {
+                return [
+                    {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART}
+                ];
             }
-            next(vm => {
-                vm.$router?.replace({query});
-            });
+        },
+        beforeRouteEnter(to, _, next) {
+            const defaultNamespace = localStorage.getItem(
+                storageKeys.DEFAULT_NAMESPACE,
+            );
+            const query = {...to.query};
+            let queryHasChanged = false;
+
+            const queryKeys = Object.keys(query);
+            if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+                query["filters[namespace][EQUALS]"] = defaultNamespace;
+                queryHasChanged = true;
+            }
+
+            if (queryHasChanged) {
+                next({
+                    ...to,
+                    query,
+                    replace: true
+                });
+            } else {
+                next();
+            }
         },
         methods: {
+            LogFilterLanguage() {
+                return LogFilterLanguage
+            },
             onDateFilterTypeChange(event) {
                 this.canAutoRefresh = event;
             },
             showStatChart() {
-                return this.charts && this.showChart;
+                return this.showChart;
             },
             onShowChartChange(value) {
                 this.showChart = value;
@@ -223,22 +233,7 @@
                         this.saveRestoreUrl();
                     });
 
-                this.loadStats();
             },
-            loadStats() {
-                this.statsReady = false;
-                this.$store
-                    .dispatch("stat/logDaily", {
-                        ...this.loadQuery({
-                            startDate: this.$moment(this.startDate).toISOString(true),
-                            endDate: this.$moment(this.endDate).toISOString(true)
-                        }),
-                        logLevel: this.selectedLogLevel
-                    })
-                    .then(() => {
-                        this.statsReady = true;
-                    });
-            }
         },
     };
 </script>

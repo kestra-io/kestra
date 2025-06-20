@@ -1,9 +1,8 @@
 <template>
     <el-select
-        :model-value="modelValue"
-        :placeholder="$t('no_code.creation.select', {section: section.toLowerCase().slice(0, -1)})"
+        v-model="modelValue"
+        :placeholder="$t(`no_code.select.${blockType}`)"
         filterable
-        @update:model-value="onInput"
     >
         <el-option
             v-for="item in taskModels.sort()"
@@ -25,51 +24,55 @@
     </el-select>
 </template>
 
-<script>
-    import {mapState} from "vuex";
+<script setup lang="ts">
+    import {computed, onBeforeMount} from "vue";
+    import {useStore} from "vuex";
     import {TaskIcon} from "@kestra-io/ui-libs";
+    import {BlockType} from "../code/utils/types";
 
-    export default {
-        components: {
-            TaskIcon
-        },
-        props: {
-            modelValue: {
-                type: String,
-                required: false,
-                default: undefined,
-            },
-            section: {
-                type: String,
-                required: false,
-                default: undefined,
-            },
-        },
-        emits: ["update:modelValue"],
-        created() {
-            this.$store.dispatch("plugin/list");
-        },
-        computed: {
-            ...mapState("plugin", ["plugin", "plugins", "icons"]),
-            taskModels() {
-                const taskModels = [];
-                for (const plugin of this.plugins || []) {
-                    taskModels.push.apply(taskModels, plugin[this.upperSnakeToCamelCase(this.section)]);
+    const props = defineProps<{
+        blockType: BlockType | "pluginDefaults";
+    }>()
+
+    const modelValue = defineModel({
+        type: String,
+        default: "",
+    });
+
+    const store = useStore();
+
+    onBeforeMount(() => {
+        store.dispatch("plugin/listWithSubgroup", {includeDeprecated: false});
+    })
+
+    const plugins = computed(() => {
+        return store.state.plugin.plugins;
+    })
+    const icons = computed(() => {
+        return store.state.plugin.icons;
+    })
+
+    const taskModels = computed(() => {
+        const models = new Set<string>();
+        const pluginKeySection: BlockType[] =
+            props.blockType === "pluginDefaults"
+                ? ["tasks", "conditions", "triggers", "taskRunners"]
+                : [props.blockType];
+
+        for (const plugin of plugins.value || []) {
+            for (const curSection of pluginKeySection) {
+                const entries = plugin[curSection];
+                if (entries) {
+                    for (const model of entries) {
+                        models.add(model);
+                    }
                 }
-                return taskModels;
-            },
-        },
-        methods: {
-            upperSnakeToCamelCase(str) {
-                return str.toLowerCase().replaceAll(/_([a-z])/g, function (g) {
-                    return g[1].toUpperCase();
-                });
-            },
-            onInput(value) {
-                this.$emit("update:modelValue", value);
-            },
-        },
-    };
+            }
+        }
+
+        return Array.from(models);
+    });
+
 </script>
 
 <style lang="scss" scoped>
@@ -85,5 +88,9 @@
             top: 0;
             margin-right: 0;
         }
+    }
+
+    :deep(.el-select__suffix) {
+        display: flex !important;
     }
 </style>

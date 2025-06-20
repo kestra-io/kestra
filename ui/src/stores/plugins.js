@@ -1,5 +1,6 @@
-import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
-import {YamlUtils} from "@kestra-io/ui-libs";
+import {apiUrl} from "override/utils/route";
+import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
+import semver from "semver";
 
 export default {
     namespaced: true,
@@ -18,19 +19,43 @@ export default {
     actions: {
         list({commit}) {
             return this.$http.get(`${apiUrl(this)}/plugins`, {}).then(response => {
-                commit("setPlugins", response.data)
-                commit("setPluginSingleList", response.data.map(plugin => plugin.tasks.concat(plugin.triggers, plugin.conditions, plugin.controllers, plugin.storages, plugin.taskRunners, plugin.charts, plugin.dataFilters, plugin.aliases, plugin.logExporters)).flat())
+                commit("setPlugins", response.data);
+                commit("setPluginSingleList", response.data.map(plugin =>
+                    plugin.tasks.concat(
+                        plugin.triggers,
+                        plugin.conditions,
+                        plugin.controllers,
+                        plugin.storages,
+                        plugin.taskRunners,
+                        plugin.charts,
+                        plugin.dataFilters,
+                        plugin.aliases,
+                        plugin.logExporters,
+                        plugin.additionalPlugins
+                    )).flat());
                 return response.data;
-            })
+            });
         },
         listWithSubgroup({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/plugins/groups/subgroups`, {
                 params: options
             }).then(response => {
-                commit("setPlugins", response.data)
-                commit("setPluginSingleList", response.data.map(plugin => plugin.tasks.concat(plugin.triggers, plugin.conditions, plugin.controllers, plugin.storages, plugin.taskRunners, plugin.charts, plugin.dataFilters, plugin.aliases, plugin.logExporters)).flat())
+                commit("setPlugins", response.data);
+                commit("setPluginSingleList", response.data.map(plugin =>
+                    plugin.tasks.concat(
+                        plugin.triggers,
+                        plugin.conditions,
+                        plugin.controllers,
+                        plugin.storages,
+                        plugin.taskRunners,
+                        plugin.charts,
+                        plugin.dataFilters,
+                        plugin.aliases,
+                        plugin.logExporters,
+                        plugin.additionalPlugins
+                    )).flat());
                 return response.data;
-            })
+            });
         },
         load({commit, state}, options) {
             if (options.cls === undefined) {
@@ -62,7 +87,7 @@ export default {
                 }
 
                 return response.data;
-            })
+            });
         },
         loadVersions({commit}, options) {
             const promise = this.$http.get(
@@ -73,7 +98,7 @@ export default {
                     commit("setVersions", response.data.versions);
                 }
                 return response.data;
-            })
+            });
         },
         icons({commit}) {
             return Promise.all([
@@ -84,7 +109,7 @@ export default {
 
                 for (const [key, plugin] of Object.entries(responses[1].data)) {
                     if (icons[key] === undefined) {
-                        icons[key] = plugin
+                        icons[key] = plugin;
                     }
                 }
 
@@ -95,38 +120,57 @@ export default {
         },
         groupIcons(_) {
             return Promise.all([
-                this.$http.get(`${apiUrl(this)}/plugins/icons/groups`, {}),
+                this.$http.get(`${apiUrl(this)}/plugins/icons/groups`, {})
             ]).then(responses => {
-                return responses[0].data
+                return responses[0].data;
             });
         },
         loadInputsType({commit}) {
             return this.$http.get(`${apiUrl(this)}/plugins/inputs`, {}).then(response => {
-                commit("setInputsType", response.data)
+                commit("setInputsType", response.data);
 
                 return response.data;
-            })
+            });
         },
         loadInputSchema({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/plugins/inputs/${options.type}`, {}).then(response => {
-                commit("setInputSchema", response.data)
+                commit("setInputSchema", response.data);
 
                 return response.data;
-            })
+            });
         },
         loadSchemaType(_, options = {type: "flow"}) {
-            return this.$http.get(`${apiUrlWithoutTenants()}/plugins/schemas/${options.type}`, {}).then(response => {
+            return this.$http.get(`${apiUrl(this)}/plugins/schemas/${options.type}`, {}).then(response => {
                 return response.data;
-            })
+            });
         },
         updateDocumentation({commit, dispatch, getters}, options) {
-            const taskType = options.task !== undefined ? options.task : YamlUtils.getTaskType(
+            const taskType = options.task !== undefined ? options.task : YamlUtils.getTypeAtPosition(
                 options.event.model.getValue(),
                 options.event.position,
                 getters["getPluginSingleList"]
             );
+
+            const taskVersion = options.event
+                ? YamlUtils.getVersionAtPosition(
+                    options?.event?.model?.getValue(),
+                    options?.event?.position
+                )
+                : undefined;
+
             if (taskType) {
-                dispatch("load", {cls: taskType}).then((plugin) => {
+                let payload = {cls: taskType};
+                if (taskVersion !== undefined) {
+                    // Check if the version is valid to avoid error
+                    // when loading plugin
+                    if (semver.valid(taskVersion) !== null ||
+                        "latest" === taskVersion.toString().toLowerCase() ||
+                        "oldest" === taskVersion.toString().toLowerCase()
+                    ) {
+                        payload = {...payload, version: taskVersion};
+                    }
+                }
+                dispatch("load", payload).then((plugin) => {
                     commit("setEditorPlugin", {cls: taskType, ...plugin});
                 });
             } else {
@@ -136,37 +180,37 @@ export default {
     },
     mutations: {
         setPlugin(state, plugin) {
-            state.plugin = plugin
+            state.plugin = plugin;
         },
         setVersions(state, versions) {
-            state.versions = versions
+            state.versions = versions;
         },
         setPluginAllProps(state, pluginAllProps) {
-            state.pluginAllProps = pluginAllProps
+            state.pluginAllProps = pluginAllProps;
         },
         setPlugins(state, plugins) {
-            state.plugins = plugins
+            state.plugins = plugins;
         },
         setPluginSingleList(state, pluginSingleList) {
-            state.pluginSingleList = pluginSingleList
+            state.pluginSingleList = pluginSingleList;
         },
         setIcons(state, icons) {
-            state.icons = icons
+            state.icons = icons;
         },
         setPluginsDocumentation(state, pluginsDocumentation) {
-            state.pluginsDocumentation = pluginsDocumentation
+            state.pluginsDocumentation = pluginsDocumentation;
         },
         addPluginDocumentation(state, pluginDocumentation) {
-            state.pluginsDocumentation = {...state.pluginsDocumentation, ...pluginDocumentation}
+            state.pluginsDocumentation = {...state.pluginsDocumentation, ...pluginDocumentation};
         },
         setEditorPlugin(state, editorPlugin) {
-            state.editorPlugin = editorPlugin
+            state.editorPlugin = editorPlugin;
         },
         setInputsType(state, inputsType) {
-            state.inputsType = inputsType
+            state.inputsType = inputsType;
         },
         setInputSchema(state, schema) {
-            state.inputSchema = schema
+            state.inputSchema = schema;
         }
     },
     getters: {
@@ -174,5 +218,5 @@ export default {
         getPluginsDocumentation: state => state.pluginsDocumentation,
         getIcons: state => state.icons
     }
-}
+};
 

@@ -1,6 +1,6 @@
 import {markRaw, ref, StyleValue} from "vue";
-import {within, userEvent, expect, fireEvent, waitFor} from "@storybook/test";
-import type {Meta, StoryObj} from "@storybook/vue3";
+import {within, userEvent, expect, fireEvent, waitFor} from "storybook/test";
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import FileTreeOutlineIcon from "vue-material-design-icons/FileTreeOutline.vue";

@@ -35,6 +35,7 @@ import java.util.OptionalInt;
     title = "Make an HTTP API request to a specified URL and store the response as an output.",
     description = """
                   This task makes an API call to a specified URL of an HTTP server and stores the response as an output.
+                  Kestra offers 600+ plugins. Before using the generic HTTP task, check if a dedicated plugin fits your use case — it's recommended to use plugins first and only fall back to HTTP when needed.
                   By default, the maximum length of the response is limited to 10MB, but it can be increased to at most 2GB by using the `options.maxContentLength` property.
                   Note that the response is added as an output of the task. If you need to process large API payloads, we recommend using the `Download` task instead."""
 )
@@ -315,7 +316,7 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
         title = "If true, the HTTP response body will be automatically encrypted and decrypted in the outputs, provided that encryption is configured in your Kestra configuration.",
         description = "If this property is set to `true`, this task will output the request body using the `encryptedBody` output property; otherwise, the request body will be stored in the `body` output property."
     )
-    private Property<Boolean> encryptBody = Property.of(false);
+    private Property<Boolean> encryptBody = Property.ofValue(false);
 
     public Output run(RunContext runContext) throws Exception {
         try (HttpClient client = this.client(runContext)) {

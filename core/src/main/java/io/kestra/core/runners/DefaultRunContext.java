@@ -15,6 +15,7 @@ import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Introspected;
@@ -34,7 +35,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -172,12 +172,24 @@ public class DefaultRunContext extends RunContext {
             @SuppressWarnings("unchecked")
             Map<String, Object> inputs = (Map<String, Object>) getVariables().get("inputs");
             for (String secretInput : secretInputs) {
-                String secret = (String) inputs.get(secretInput);
+                String secret = findSecret(secretInput, inputs);
                 if (secret != null) {
                     logger.usedSecret(secret);
                 }
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private String findSecret(String secretInput, Map<String, Object> inputs) {
+        if (secretInput.indexOf('.') > 0) {
+            String prefix = secretInput.substring(0, secretInput.indexOf('.'));
+            String suffix = secretInput.substring(secretInput.indexOf('.') + 1);
+            Map<String, Object> subInputs = (Map<String, Object>) inputs.get(prefix);
+            return findSecret(suffix, subInputs);
+        }
+
+        return (String) inputs.get(secretInput);
     }
 
     void setPluginConfiguration(final Map<String, Object> pluginConfiguration) {

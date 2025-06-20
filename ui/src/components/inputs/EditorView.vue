@@ -121,7 +121,6 @@
                             params: {tenant: routeParams.tenant},
                         })
                 "
-                @export="exportYaml"
                 :is-namespace="isNamespace"
             />
         </div>
@@ -236,8 +235,11 @@
                 </div>
             </template>
             <NoCode
-                v-else
+                v-else-if="isFlow"
                 :flow="flowYaml"
+                :section="route.query.section?.toString()"
+                :task-id="route.query.identifier?.toString()"
+                :position="route.query.position === 'before' ? 'before' : 'after'"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
                 @reorder="(yaml) => handleReorder(yaml)"
@@ -266,7 +268,6 @@
                     @loading="loadingState"
                     @expand-subflow="onExpandSubflow"
                     @swapped-task="onSwappedTask"
-                    @open-no-code="(params) => handleTopologyEditClick(params)"
                     :flow-graph="flowGraph"
                     :flow-id="flowId"
                     :namespace="namespace"
@@ -463,9 +464,8 @@
 
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import {SECTIONS, storageKeys, editorViewTypes} from "../../utils/constants";
-    import {Utils, YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    import localUtils from "../../utils/utils";
+    import {storageKeys, editorViewTypes} from "../../utils/constants";
+    import {Utils, YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
 
     // editor components
     import Editor from "./Editor.vue";
@@ -478,6 +478,7 @@
     import ValidationError from "../flows/ValidationError.vue";
     import EditorButtons from "./EditorButtons.vue";
     import MetadataEditor from "../flows/MetadataEditor.vue";
+    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
 
     const store = useStore();
     const router = useRouter();
@@ -558,13 +559,15 @@
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
     const isFlow = computed(() => currentTab?.value?.flow || props.isCreating);
 
+    const {translateError, translateErrorWithKey} = useFlowOutdatedErrors()
+
     const baseOutdatedTranslationKey = computed(() => store.getters["flow/baseOutdatedTranslationKey"]);
-    const flowErrors = computed(() => store.getters["flow/flowErrors"]);
+    const flowErrors = computed(() => store.getters["flow/flowErrors"]?.map(translateError));
     const flowWarnings = computed(() => {
         if (isFlow.value) {
             const outdatedWarning =
                 store.state.flow.flowValidation?.outdated && !store.state.flow.isCreating
-                    ? [store.getters["flow/outdatedMessage"]]
+                    ? [translateErrorWithKey(store.getters["flow/baseOutdatedTranslationKey"])]
                     : [];
 
             const deprecationWarnings =
@@ -595,14 +598,6 @@
             editorWidth.value = editorWidth.value > 33.3 ? 33.3 : editorWidth.value;
         }
     });
-
-    const handleTopologyEditClick = (params) => {
-        if (viewType.value === editorViewTypes.TOPOLOGY) {
-            switchViewType(editorViewTypes.SOURCE_TOPOLOGY);
-        }
-        editorViewType.value = "NO_CODE";
-        nextTick(() => router.replace({query: {...route.query, ...params}}))
-    }
 
     const loadViewType = () => {
         return localStorage.getItem(editorViewTypes.STORAGE_KEY);
@@ -937,6 +932,7 @@
     const flowParsed = computed(() => store.getters["flow/flowParsed"]);
 
     const saveWithoutRevisionGuard = async () => {
+        clearTimeout(timer.value);
         const result = await store.dispatch("flow/saveWithoutRevisionGuard");
         if(result === "redirect_to_update"){
             await router.push({
@@ -958,7 +954,8 @@
         }
     };
 
-    const  save = async () => {
+    const save = async () => {
+        clearTimeout(timer.value);
         const result = await store.dispatch("flow/save", {
             content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
             namespace: props.namespace ?? route.params.namespace,
@@ -1101,7 +1098,7 @@
     async function loadFileAtPath(path){
         const content = await store.dispatch("namespace/readFile", {
             path,
-            namespace: props.namespace ?? route.params.namespace,
+            namespace: props.namespace ?? route.params.namespace ?? route.params.id,
         })
         store.commit("flow/setFlowYaml", content);
     }
@@ -1191,11 +1188,6 @@
 
     const closeTabsToRight = (index) => {
         closeTabs(openedTabs.value.slice(index + 1).filter(tab => tab !== FLOW_TAB.value), openedTabs.value[index]);
-    };
-
-    const exportYaml = () => {
-        const blob = new Blob([flowYaml.value], {type: "text/yaml"});
-        localUtils.downloadUrl(window.URL.createObjectURL(blob), "flow.yaml");
     };
 
     const dialog = ref({

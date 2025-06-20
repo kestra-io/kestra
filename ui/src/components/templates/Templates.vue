@@ -61,6 +61,7 @@
                         @sort-change="onSort"
                         @selection-change="handleSelectionChange"
                         :selectable="canRead || canDelete"
+                        :no-data-text="$t('no_results.templates')"
                     >
                         <template #select-actions>
                             <bulk-select

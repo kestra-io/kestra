@@ -31,14 +31,14 @@ class MiscControllerTest {
     }
 
     @Test
-    void configuration() {
+    void getConfiguration() {
         var response = client.toBlocking().retrieve("/api/v1/configs", MiscController.Configuration.class);
 
         assertThat(response).isNotNull();
         assertThat(response.getUuid()).isNotNull();
-        assertThat(response.getIsTaskRunEnabled()).isEqualTo(false);
-        assertThat(response.getIsAnonymousUsageEnabled()).isEqualTo(true);
-        assertThat(response.getIsBasicAuthEnabled()).isEqualTo(false);
+        assertThat(response.getIsTaskRunEnabled()).isFalse();
+        assertThat(response.getIsAnonymousUsageEnabled()).isTrue();
+        assertThat(response.getIsBasicAuthEnabled()).isFalse();
         assertThat(response.getSystemNamespace()).isEqualTo("some.system.ns");
     }
 
@@ -49,7 +49,7 @@ class MiscControllerTest {
         String uid = "someUid";
         String username = "my.email@kestra.io";
         String password = "myPassword";
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/basicAuth", new MiscController.BasicAuthCredentials(uid, username, password)));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new MiscController.BasicAuthCredentials(uid, username, password)));
         try {
             Assertions.assertThrows(
                 HttpClientResponseException.class,

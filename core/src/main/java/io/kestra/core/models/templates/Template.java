@@ -46,6 +46,7 @@ public class Template implements DeletedInterface, TenantInterface, HasUID {
         })
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
 
+    @Setter
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     private String tenantId;

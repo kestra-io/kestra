@@ -23,7 +23,6 @@ import io.kestra.core.models.triggers.*;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.queues.WorkerTriggerResultQueueInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.server.Service;
@@ -36,6 +35,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -71,7 +71,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     protected final QueueInterface<Execution> executionQueue;
     protected final QueueInterface<Trigger> triggerQueue;
     private final QueueInterface<WorkerJob> workerJobQueue;
-    private final WorkerTriggerResultQueueInterface workerTriggerResultQueue;
+    private final QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
     @SuppressWarnings("rawtypes")
     private final Optional<QueueInterface> clusterEventQueue;
@@ -90,7 +90,9 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private volatile Boolean isReady = false;
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService executionMonitorExecutor = Executors.newSingleThreadScheduledExecutor();
 
+    @Getter
     protected SchedulerTriggerStateInterface triggerState;
 
     // schedulable and schedulableNextDate must be volatile and their access synchronized as they are updated and read by different threads.
@@ -120,7 +122,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         this.workerJobQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED));
         this.executionKilledQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
-        this.workerTriggerResultQueue = applicationContext.getBean(WorkerTriggerResultQueueInterface.class);
+        this.workerTriggerResultQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED));
         this.clusterEventQueue = applicationContext.findBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.CLUSTER_EVENT_NAMED));
         this.flowListeners = flowListeners;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
@@ -147,20 +149,45 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.flowListeners.run();
         this.flowListeners.listen(this::initializedTriggers);
 
-        ScheduledFuture<?> handle = scheduleExecutor.scheduleAtFixedRate(
+        ScheduledFuture<?> evaluationLoop = scheduleExecutor.scheduleAtFixedRate(
             this::handle,
             0,
             1,
             TimeUnit.SECONDS
         );
 
-        // look at exception on the main thread
-        Thread.ofVirtual().name("scheduler-listener").start(
+        // look at exception on the evaluation loop thread
+        Thread.ofVirtual().name("scheduler-evaluation-loop-watch").start(
             () -> {
-                Await.until(handle::isDone);
+                Await.until(evaluationLoop::isDone);
 
                 try {
-                    handle.get();
+                    evaluationLoop.get();
+                } catch (CancellationException ignored) {
+
+                } catch (ExecutionException | InterruptedException e) {
+                    log.error("Scheduler fatal exception", e);
+                    close();
+                    applicationContext.close();
+                }
+            }
+        );
+
+        // Periodically report metrics and logs of running executions
+        ScheduledFuture<?> monitoringLoop = executionMonitorExecutor.scheduleWithFixedDelay(
+            this::executionMonitor,
+            30,
+            10,
+            TimeUnit.SECONDS
+        );
+
+        // look at exception on the monitoring loop thread
+        Thread.ofVirtual().name("scheduler-monitoring-loop-watch").start(
+            () -> {
+                Await.until(monitoringLoop::isDone);
+
+                try {
+                    monitoringLoop.get();
                 } catch (CancellationException ignored) {
 
                 } catch (ExecutionException | InterruptedException e) {
@@ -446,6 +473,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             .filter(flow -> flowToKeep.contains(flow.getId()))
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .filter(flow -> !flow.isDisabled() && !(flow instanceof FlowWithException))
+            .map(flow -> pluginDefaultService.injectAllDefaults(flow, log))
+            .filter(Objects::nonNull) // can occur if injecting default fail
             .flatMap(flow -> flow.getTriggers()
                 .stream()
                 .filter(abstractTrigger -> !abstractTrigger.isDisabled() && abstractTrigger instanceof WorkerTriggerInterface)
@@ -520,9 +549,9 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
         ZonedDateTime now = now();
 
-        final List<FlowWithSource> flowWithDefaults = getFlowsWithDefaults();
+        final List<FlowWithSource> flows = this.flowListeners.flows();
 
-        this.handleNext(flowWithDefaults, now, (triggers, scheduleContext) -> {
+        this.handleNext(flows, now, (triggers, scheduleContext) -> {
             if (triggers.isEmpty()) {
                 return;
             }
@@ -531,7 +560,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                 .filter(trigger -> Boolean.FALSE.equals(trigger.getDisabled()))
                 .toList();
 
-            List<FlowWithTriggers> schedulable = this.computeSchedulable(flowWithDefaults, triggerContextsToEvaluate, scheduleContext);
+            List<FlowWithTriggers> schedulable = this.computeSchedulable(flows, triggerContextsToEvaluate, scheduleContext);
 
             metricRegistry
                 .counter(MetricRegistry.METRIC_SCHEDULER_LOOP_COUNT, MetricRegistry.METRIC_SCHEDULER_LOOP_COUNT_DESCRIPTION)
@@ -562,7 +591,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                     .build()
                 )
                 .filter(f -> f.getTriggerContext().getEvaluateRunningDate() == null)
-                .filter(this::isExecutionNotRunning)
                 .map(FlowWithWorkerTriggerNextDate::of)
                 .filter(Objects::nonNull)
                 .toList();
@@ -660,6 +688,9 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                     }
                 });
         });
+        metricRegistry
+            .timer(MetricRegistry.METRIC_SCHEDULER_EVALUATION_LOOP_DURATION, MetricRegistry.METRIC_SCHEDULER_EVALUATION_LOOP_DURATION_DESCRIPTION)
+            .record(Duration.between(now, ZonedDateTime.now()));
     }
 
     private List<FlowWithSource> getFlowsWithDefaults() {
@@ -731,54 +762,54 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         }
     }
 
-    private boolean isExecutionNotRunning(FlowWithWorkerTrigger f) {
-        Trigger lastTrigger = f.getTriggerContext();
-
-        if (lastTrigger.getExecutionId() == null) {
-            return true;
-        }
-
-        Optional<Execution> execution = executionState.findById(lastTrigger.getTenantId(), lastTrigger.getExecutionId());
-
-        // executionState hasn't received the execution, we skip
-        if (execution.isEmpty()) {
-            if (lastTrigger.getUpdatedDate() != null) {
-                metricRegistry
-                    .timer(MetricRegistry.METRIC_SCHEDULER_EXECUTION_MISSING_DURATION, MetricRegistry.METRIC_SCHEDULER_EXECUTION_MISSING_DURATION_DESCRIPTION, metricRegistry.tags(lastTrigger))
-                    .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
+    private void executionMonitor() {
+        try {
+            // Retrieve triggers with non-null execution_id from all corresponding virtual nodes
+            ZonedDateTime now = ZonedDateTime.now();
+            List<Trigger> triggers = this.triggerState.findByNextExecutionDateReadyButLockedTriggers(now);
+            if (CollectionUtils.isEmpty(triggers)) {
+                log.debug("executionMonitor triggers is empty, skip");
+                return;
             }
-
-            if (lastTrigger.getUpdatedDate() == null || lastTrigger.getUpdatedDate().plusSeconds(60).isBefore(Instant.now())) {
-                logService.logTrigger(
-                    f.getTriggerContext(),
-                    Level.WARN,
-                    "Execution '{}' is not found, schedule is blocked since '{}'",
-                    lastTrigger.getExecutionId(),
-                    lastTrigger.getUpdatedDate()
-                );
-            }
-
-            return false;
+            triggers.forEach(lastTrigger -> {
+                Optional<Execution> execution = executionState.findById(lastTrigger.getTenantId(), lastTrigger.getExecutionId());
+                // executionState hasn't received the execution, we skip
+                if (execution.isEmpty()) {
+                    if (lastTrigger.getUpdatedDate() != null) {
+                        metricRegistry
+                            .timer(MetricRegistry.METRIC_SCHEDULER_EXECUTION_MISSING_DURATION, MetricRegistry.METRIC_SCHEDULER_EXECUTION_MISSING_DURATION_DESCRIPTION, metricRegistry.tags(lastTrigger))
+                            .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
+                    }
+                    if (lastTrigger.getUpdatedDate() == null || lastTrigger.getUpdatedDate().plusSeconds(60).isBefore(Instant.now())) {
+                        logService.logTrigger(
+                            lastTrigger,
+                            Level.WARN,
+                            "Execution '{}' is not found, schedule is blocked since '{}'",
+                            lastTrigger.getExecutionId(),
+                            lastTrigger.getUpdatedDate()
+                        );
+                    }
+                    return;
+                }
+                if (lastTrigger.getUpdatedDate() != null) {
+                    metricRegistry
+                        .timer(MetricRegistry.METRIC_SCHEDULER_EXECUTION_LOCK_DURATION, MetricRegistry.METRIC_SCHEDULER_EXECUTION_LOCK_DURATION_DESCRIPTION, metricRegistry.tags(lastTrigger))
+                        .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
+                }
+                if (log.isDebugEnabled()) {
+                    logService.logTrigger(
+                        lastTrigger,
+                        Level.DEBUG,
+                        "Execution '{}' is still '{}', updated at '{}'",
+                        lastTrigger.getExecutionId(),
+                        execution.get().getState().getCurrent(),
+                        lastTrigger.getUpdatedDate()
+                    );
+                }
+            });
+        } catch (Exception e) {
+            log.error("executionMonitor error", e);
         }
-
-        if (lastTrigger.getUpdatedDate() != null) {
-            metricRegistry
-                .timer(MetricRegistry.METRIC_SCHEDULER_EXECUTION_LOCK_DURATION, MetricRegistry.METRIC_SCHEDULER_EXECUTION_LOCK_DURATION_DESCRIPTION, metricRegistry.tags(lastTrigger))
-                .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
-        }
-
-        if (log.isDebugEnabled()) {
-            logService.logTrigger(
-                f.getTriggerContext(),
-                Level.DEBUG,
-                "Execution '{}' is still '{}', updated at '{}'",
-                lastTrigger.getExecutionId(),
-                execution.get().getState().getCurrent(),
-                lastTrigger.getUpdatedDate()
-            );
-        }
-
-        return false;
     }
 
     private void log(SchedulerExecutionWithTrigger executionWithTrigger) {
@@ -822,41 +853,44 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     }
 
     private Optional<SchedulerExecutionWithTrigger> evaluateScheduleTrigger(FlowWithWorkerTrigger flowWithTrigger) {
-        try {
+        return metricRegistry.timer(MetricRegistry.METRIC_SCHEDULER_TRIGGER_EVALUATION_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_EVALUATION_DURATION_DESCRIPTION, metricRegistry.tags(flowWithTrigger.getAbstractTrigger()))
+            .record(() -> {
+                try {
 
-            // mutability dirty hack that forces the creation of a new triggerExecutionId
-            DefaultRunContext runContext = (DefaultRunContext) flowWithTrigger.getConditionContext().getRunContext();
-            runContextInitializer.forScheduler(
-                runContext,
-                flowWithTrigger.getTriggerContext(),
-                flowWithTrigger.getAbstractTrigger()
-            );
+                    // mutability dirty hack that forces the creation of a new triggerExecutionId
+                    DefaultRunContext runContext = (DefaultRunContext) flowWithTrigger.getConditionContext().getRunContext();
+                    runContextInitializer.forScheduler(
+                        runContext,
+                        flowWithTrigger.getTriggerContext(),
+                        flowWithTrigger.getAbstractTrigger()
+                    );
 
-            Optional<Execution> evaluate = ((Schedulable) flowWithTrigger.getAbstractTrigger()).evaluate(
-                flowWithTrigger.getConditionContext(),
-                flowWithTrigger.getTriggerContext()
-            );
+                    Optional<Execution> evaluate = ((Schedulable) flowWithTrigger.getAbstractTrigger()).evaluate(
+                        flowWithTrigger.getConditionContext(),
+                        flowWithTrigger.getTriggerContext()
+                    );
 
-            if (log.isDebugEnabled()) {
-                logService.logTrigger(
-                    flowWithTrigger.getTriggerContext(),
-                    Level.DEBUG,
-                    "[type: {}] {}",
-                    flowWithTrigger.getAbstractTrigger().getType(),
-                    evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
-                );
-            }
+                    if (log.isDebugEnabled()) {
+                        logService.logTrigger(
+                            flowWithTrigger.getTriggerContext(),
+                            Level.DEBUG,
+                            "[type: {}] {}",
+                            flowWithTrigger.getAbstractTrigger().getType(),
+                            evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
+                        );
+                    }
 
-            flowWithTrigger.getConditionContext().getRunContext().cleanup();
+                    flowWithTrigger.getConditionContext().getRunContext().cleanup();
 
-            return evaluate.map(execution -> new SchedulerExecutionWithTrigger(
-                execution,
-                flowWithTrigger.getTriggerContext()
-            ));
-        } catch (Exception e) {
-            logError(flowWithTrigger, e);
-            return Optional.empty();
-        }
+                    return evaluate.map(execution -> new SchedulerExecutionWithTrigger(
+                        execution,
+                        flowWithTrigger.getTriggerContext()
+                    ));
+                } catch (Exception e) {
+                    logError(flowWithTrigger, e);
+                    return Optional.empty();
+                }
+            });
     }
 
     private void logError(FlowWithWorkerTrigger flowWithWorkerTriggerNextDate, Throwable e) {
@@ -970,6 +1004,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             }
             this.receiveCancellations.forEach(Runnable::run);
             this.scheduleExecutor.shutdown();
+            this.executionMonitorExecutor.shutdown();
             setState(ServiceState.TERMINATED_GRACEFULLY);
 
             if (log.isDebugEnabled()) {

@@ -57,6 +57,7 @@
                     :schema-type="schemaType"
                     :input="input"
                     :creating="creating"
+                    :large-suggestions="largeSuggestions"
                 />
                 <div
                     v-show="showPlaceholder"
@@ -74,7 +75,7 @@
 </template>
 
 <script>
-    import {defineAsyncComponent, shallowRef} from "vue";
+    import {shallowRef} from "vue";
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
@@ -82,8 +83,7 @@
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
-
-    const MonacoEditor = defineAsyncComponent(() => import("./MonacoEditor.vue"));
+    import MonacoEditor from "./MonacoEditor.vue";
 
     import Utils from "../../utils/utils";
 
@@ -98,6 +98,7 @@
             navbar: {type: Boolean, default: true},
             input: {type: Boolean, default: false},
             keepFocused: {type: Boolean, default: undefined},
+            largeSuggestions: {type: Boolean, required: false},
             fullHeight: {type: Boolean, default: true},
             customHeight: {type: Number, default: 7},
             theme: {type: String, default: undefined},
@@ -140,6 +141,7 @@
                 plugin: undefined,
                 taskType: undefined,
                 themeComputed: Utils.getTheme(),
+                preventCursorChange: false,
             };
         },
         mounted() {
@@ -151,6 +153,13 @@
                     this.themeComputed = Utils.getTheme();
                 },
                 immediate: true,
+            },
+            modelValue(value) {
+                if (this.editor?.getValue() !== value) {
+                    this.preventCursorChange = true;
+                } else {
+                    this.preventCursorChange = false;
+                }
             },
         },
         computed: {
@@ -167,13 +176,9 @@
             showPlaceholder() {
                 return (
                     this.input === true &&
-                    !this.focus &&
-                    (!Object.hasOwn(this, "editor") ||
-                        this.editor === undefined ||
-                        !(
-                            this.editor.getValue() !== undefined &&
-                            this.editor.getValue() !== ""
-                        ))
+                    !this.shouldFocus &&
+                    (!this.modelValue || this.modelValue.trim() === "") &&
+                    !this.focus
                 );
             },
             options() {
@@ -429,9 +434,13 @@
                     });
 
                     this.editor.onDidChangeCursorPosition?.(() => {
+                        clearTimeout(this.lastTimeout);
+                        if(this.preventCursorChange) {
+                            this.preventCursorChange = false;
+                            return;
+                        }
                         let position = this.editor.getPosition();
                         let model = this.editor.getModel();
-                        clearTimeout(this.lastTimeout);
                         this.lastTimeout = setTimeout(() => {
                             this.$emit("cursor", {
                                 position: position,
@@ -444,7 +453,7 @@
 
                 // attach an imperative method to the element so tests can programmatically update
                 // the value of the editor without dealing with how Monaco handles the exact keystrokes
-                this.$refs.monacoEditor.$el.__setValueInTests = (value) => {
+                this.$refs.monacoEditor.$el.querySelector(".ks-monaco-editor").__setValueInTests = (value) => {
                     this.editor.setValue(value);
                 };
             },
@@ -529,6 +538,8 @@
         top: 8px;
         right: 20px;
         z-index: 10;
+        color: var(--ks-content-secondary);
+        cursor: pointer;
     }
 
     .editor-absolute-container > * {
@@ -555,7 +566,7 @@
             padding-top: 7px;
 
             &.custom-dark-vs-theme {
-                background-color: $input-bg;
+                background-color: var(--ks-background-input);
             }
 
             &.theme-light {
@@ -618,14 +629,18 @@
     .monaco-editor,
     .monaco-editor-background {
         outline: none;
-        background-color: $input-bg;
-        --vscode-editor-background: $input-bg;
-        --vscode-breadcrumb-background: $input-bg;
-        --vscode-editorGutter-background: $input-bg;
+        background-color: var(--ks-background-input);
+        --vscode-editor-background: var(--ks-background-input);
+        --vscode-breadcrumb-background: var(--ks-background-input);
+        --vscode-editorGutter-background: var(--ks-background-input);
     }
 
     .monaco-editor .margin {
-        background-color: $input-bg;
+        background-color: var(--ks-background-input);
+        --vscode-editorGutter-background: var(--ks-background-input);
+        --vscode-editorLineNumber-activeForeground: var(--ks-content-secondary);
+        --vscode-editorLineNumber-foreground: var(--ks-content-secondary);
+        --vscode-editorLineNumber-rangeHighlightBackground: var(--ks-content-secondary);
     }
 }
 
@@ -648,7 +663,7 @@
 }
 
 .disable-text {
-    color: grey !important;
+    color: var(--ks-content-inactive) !important;
 }
 
 div.img {

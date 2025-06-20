@@ -33,7 +33,7 @@ class PluginControllerTest {
             ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             List<Plugin> list = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins"),
+                HttpRequest.GET("/api/v1/main/plugins"),
                 Argument.listOf(Plugin.class)
             );
 
@@ -63,7 +63,7 @@ class PluginControllerTest {
 
             // classLoader can lead to duplicate plugins for the core, just verify that the response is still the same
             list = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins"),
+                HttpRequest.GET("/api/v1/main/plugins"),
                 Argument.listOf(Plugin.class)
             );
 
@@ -77,7 +77,7 @@ class PluginControllerTest {
             ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             Map<String, PluginIcon> list = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/icons"),
+                HttpRequest.GET("/api/v1/main/plugins/icons"),
                 Argument.mapOf(String.class, PluginIcon.class)
             );
 
@@ -95,7 +95,7 @@ class PluginControllerTest {
             ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             DocumentationWithSchema doc = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/" + Return.class.getName()),
+                HttpRequest.GET("/api/v1/main/plugins/" + Return.class.getName()),
                 DocumentationWithSchema.class
             );
 
@@ -115,7 +115,7 @@ class PluginControllerTest {
             ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             DocumentationWithSchema doc = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/io.kestra.plugin.templates.ExampleTask"),
+                HttpRequest.GET("/api/v1/main/plugins/io.kestra.plugin.templates.ExampleTask"),
                 DocumentationWithSchema.class
             );
 
@@ -131,7 +131,7 @@ class PluginControllerTest {
             ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             DocumentationWithSchema doc = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/io.kestra.plugin.core.state.Set"),
+                HttpRequest.GET("/api/v1/main/plugins/io.kestra.plugin.core.state.Set"),
                 DocumentationWithSchema.class
             );
 
@@ -148,7 +148,7 @@ class PluginControllerTest {
             ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             DocumentationWithSchema doc = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/io.kestra.plugin.templates.ExampleTask?all=true"),
+                HttpRequest.GET("/api/v1/main/plugins/io.kestra.plugin.templates.ExampleTask?all=true"),
                 DocumentationWithSchema.class
             );
 
@@ -166,7 +166,7 @@ class PluginControllerTest {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
             ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
             Map<String, Object> doc = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/schemas/flow"),
+                HttpRequest.GET("/api/v1/main/plugins/schemas/flow"),
                 Argument.mapOf(String.class, Object.class)
             );
 
@@ -179,7 +179,7 @@ class PluginControllerTest {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
             ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
             Map<String, Object> doc = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/schemas/template"),
+                HttpRequest.GET("/api/v1/main/plugins/schemas/template"),
                 Argument.mapOf(String.class, Object.class)
             );
 
@@ -192,7 +192,7 @@ class PluginControllerTest {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
             ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
             Map<String, Object> doc = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/schemas/task"),
+                HttpRequest.GET("/api/v1/main/plugins/schemas/task"),
                 Argument.mapOf(String.class, Object.class)
             );
 
@@ -205,7 +205,7 @@ class PluginControllerTest {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
             ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
             List<InputType> doc = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/inputs"),
+                HttpRequest.GET("/api/v1/main/plugins/inputs"),
                 Argument.listOf(InputType.class)
             );
 
@@ -219,7 +219,7 @@ class PluginControllerTest {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
             ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
             DocumentationWithSchema doc = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/inputs/STRING"),
+                HttpRequest.GET("/api/v1/main/plugins/inputs/STRING"),
                 DocumentationWithSchema.class
             );
 

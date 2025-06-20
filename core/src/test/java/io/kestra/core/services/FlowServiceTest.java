@@ -8,6 +8,7 @@ import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
@@ -44,11 +45,37 @@ class FlowServiceTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id(taskId)
                 .type(Return.class.getName())
-                .format(Property.of("test"))
+                .format(Property.ofValue("test"))
                 .build()))
             .build();
 
         return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
+    }
+
+    @Test
+    void shouldReturnTrueWhenValidatingFlowGivenDefaults() {
+        // Given
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: download
+                type: io.kestra.plugin.core.http.Download
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: This is a message
+            pluginDefaults:
+              - type: io.kestra.plugin.core
+                values:
+                  level: WARN
+                  uri: https://kestra.io
+            """;
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", source);
+
+        // Then
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation("test", "io.kestra.unittest", 0, null, false, List.of(), List.of(), List.of()));
     }
 
     @Test
@@ -69,7 +96,7 @@ class FlowServiceTest {
         assertThat(importFlow.getTasks().getFirst().getId()).isEqualTo("task");
 
         Optional<FlowWithSource> fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import", Optional.empty());
-        assertThat(fromDb.isPresent()).isEqualTo(true);
+        assertThat(fromDb.isPresent()).isTrue();
         assertThat(fromDb.get().getRevision()).isEqualTo(1);
         assertThat(fromDb.get().getSource()).isEqualTo(source);
 
@@ -80,7 +107,7 @@ class FlowServiceTest {
         assertThat(importFlow.getTasks().getFirst().getId()).isEqualTo("replaced_task");
 
         fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import", Optional.empty());
-        assertThat(fromDb.isPresent()).isEqualTo(true);
+        assertThat(fromDb.isPresent()).isTrue();
         assertThat(fromDb.get().getRevision()).isEqualTo(2);
         assertThat(fromDb.get().getSource()).isEqualTo(source);
     }
@@ -103,7 +130,7 @@ class FlowServiceTest {
         assertThat(importFlow.getTasks().getFirst().getId()).isEqualTo("task");
 
         Optional<FlowWithSource> fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import_dry", Optional.empty());
-        assertThat(fromDb.isPresent()).isEqualTo(true);
+        assertThat(fromDb.isPresent()).isTrue();
         assertThat(fromDb.get().getRevision()).isEqualTo(1);
         assertThat(fromDb.get().getSource()).isEqualTo(oldSource);
 
@@ -114,7 +141,7 @@ class FlowServiceTest {
         assertThat(importFlow.getTasks().getFirst().getId()).isEqualTo("replaced_task");
 
         fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import_dry", Optional.empty());
-        assertThat(fromDb.isPresent()).isEqualTo(true);
+        assertThat(fromDb.isPresent()).isTrue();
         assertThat(fromDb.get().getRevision()).isEqualTo(1);
         assertThat(fromDb.get().getSource()).isEqualTo(oldSource);
     }
@@ -131,7 +158,7 @@ class FlowServiceTest {
         List<FlowInterface> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size()).isEqualTo(1);
-        assertThat(collect.getFirst().isDeleted()).isEqualTo(false);
+        assertThat(collect.getFirst().isDeleted()).isFalse();
         assertThat(collect.getFirst().getRevision()).isEqualTo(4);
     }
 
@@ -149,7 +176,7 @@ class FlowServiceTest {
         List<FlowInterface> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size()).isEqualTo(1);
-        assertThat(collect.getFirst().isDeleted()).isEqualTo(false);
+        assertThat(collect.getFirst().isDeleted()).isFalse();
         assertThat(collect.getFirst().getId()).isEqualTo("test2");
     }
 
@@ -166,7 +193,7 @@ class FlowServiceTest {
         List<FlowInterface> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size()).isEqualTo(1);
-        assertThat(collect.getFirst().isDeleted()).isEqualTo(false);
+        assertThat(collect.getFirst().isDeleted()).isFalse();
         assertThat(collect.getFirst().getRevision()).isEqualTo(4);
     }
 
@@ -256,7 +283,7 @@ class FlowServiceTest {
             .tasks(Collections.singletonList(Echo.builder()
                 .id("taskId")
                 .type(Return.class.getName())
-                .format(Property.of("test"))
+                .format(Property.ofValue("test"))
                 .build()))
             .build();
 
@@ -287,9 +314,9 @@ class FlowServiceTest {
     void delete() {
         FlowWithSource flow = create("deleteTest", "test", 1);
         FlowWithSource saved = flowRepository.create(GenericFlow.of(flow));
-        assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent()).isEqualTo(true);
+        assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent()).isTrue();
         flowService.delete(saved);
-        assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent()).isEqualTo(false);
+        assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent()).isFalse();
     }
 
     @Test
@@ -303,7 +330,7 @@ class FlowServiceTest {
     void findById() {
         FlowWithSource flow = create("findByIdTest", "test", 1);
         FlowWithSource saved = flowRepository.create(GenericFlow.of(flow));
-        assertThat(flowService.findById(null, saved.getNamespace(), saved.getId()).isPresent()).isEqualTo(true);
+        assertThat(flowService.findById(null, saved.getNamespace(), saved.getId()).isPresent()).isTrue();
     }
 
     @Test
@@ -343,6 +370,6 @@ class FlowServiceTest {
 
         List<String> exceptions = flowService.checkValidSubflows(flow, null);
 
-        assertThat(exceptions.size()).isEqualTo(0);
+        assertThat(exceptions.size()).isZero();
     }
 }

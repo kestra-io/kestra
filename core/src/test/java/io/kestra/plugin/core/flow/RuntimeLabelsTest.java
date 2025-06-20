@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -27,7 +28,7 @@ class RuntimeLabelsTest {
     @LoadFlows({"flows/valids/labels-update-task.yml"})
     void update() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "labels-update-task",
             null,
@@ -75,7 +76,7 @@ class RuntimeLabelsTest {
     @LoadFlows({"flows/valids/primitive-labels-flow.yml"})
     void primitiveTypeLabels() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "primitive-labels-flow",
             null,

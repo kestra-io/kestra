@@ -4,6 +4,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.plugin.core.dashboard.data.Triggers;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-public interface TriggerRepositoryInterface {
+public interface TriggerRepositoryInterface extends QueryBuilderInterface<Triggers.Fields> {
     Optional<Trigger> findLast(TriggerContext trigger);
 
     Optional<Trigger> findByExecution(Execution execution);
@@ -52,12 +53,8 @@ public interface TriggerRepositoryInterface {
     /**
      * Find all triggers that match the query, return a flux of triggers
      * as the search is not paginated
-     * @param query the query to search for
-     * @param tenantId the tenant of the triggers
-     * @param namespace the parent namespace of the triggers
-     * @return A flux of triggers
      */
-    Flux<Trigger> find(String query, String tenantId, String namespace);
+    Flux<Trigger> find(String tenantId, List<QueryFilter> filters);
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return Function.identity();

@@ -6,7 +6,7 @@
         effect="light"
         placement="top"
     >
-        <Keyboard @click="isShown = true" class="keyboard" />
+        <Keyboard @click="isShown = true" />
     </el-tooltip>
 
     <el-dialog v-model="isShown" top="25vh" header-class="p-3" body-class="p-2">
@@ -52,7 +52,7 @@
 
     const commands = [
         {
-            keys: ["⌘ Cmd/Ctrl", "SPACE"],
+            keys: ["Ctrl", "SPACE"],
             description: "editor_shortcuts.trigger_autocompletion",
         },
         {
@@ -62,6 +62,10 @@
         {
             keys: ["⌘ Cmd/Ctrl", "s"],
             description: "editor_shortcuts.save_flow",
+        },
+        {
+            keys: ["⌘ Cmd/Ctrl", "e"],
+            description: "editor_shortcuts.execute_flow",
         },
         {
             keys: ["⌥ Option/Alt", "↑", "↓"],
@@ -103,11 +107,6 @@
 </script>
 
 <style scoped lang="scss">
-.keyboard {
-    color: var(--ks-content-secondary);
-    cursor: pointer;
-}
-
 .el-tag {
     background-color: var(--ks-tag-background);
     color: var(--ks-tag-content);

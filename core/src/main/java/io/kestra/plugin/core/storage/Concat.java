@@ -107,7 +107,7 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
         title = "The extension of the created file, default is .tmp."
     )
     @Builder.Default
-    private Property<String> extension = Property.of(".tmp");
+    private Property<String> extension = Property.ofValue(".tmp");
 
     @SuppressWarnings("unchecked")
     @Override

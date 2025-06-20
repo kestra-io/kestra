@@ -111,7 +111,7 @@
         },
         methods: {
             async search(query, cb) {
-                cb(await this.$store.dispatch("doc/search", query));
+                cb(await this.$store.dispatch("doc/search", {q: query}));
             }
         }
     };

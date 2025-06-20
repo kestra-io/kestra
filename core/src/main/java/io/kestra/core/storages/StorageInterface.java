@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.Plugin;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -108,5 +109,19 @@ public interface StorageInterface extends AutoCloseable, Plugin {
         if (uri != null && (uri.toString().contains(".." + File.separator) || uri.toString().contains(File.separator + "..") || uri.toString().equals(".."))) {
             throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
         }
+    }
+
+    default String getPath(@NotNull String tenantId, URI uri) {
+        if (uri == null) {
+            uri = URI.create("/");
+        }
+
+        parentTraversalGuard(uri);
+        String path = uri.getPath();
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
+
+        return tenantId + path;
     }
 }

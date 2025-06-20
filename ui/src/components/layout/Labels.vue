@@ -64,6 +64,7 @@
 
 <style scoped lang="scss">
 .label {
+    background-color: var(--ks-tag-background-active);
     font-weight: normal;
 
     &:hover {
@@ -73,6 +74,6 @@
 
 .el-check-tag.el-check-tag--primary.is-checked {
     background-color: var(--el-color-primary);
-    color: var(--ks-content-primary);
+    color: var(--ks-button-content-primary);
 }
 </style>

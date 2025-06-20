@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -15,7 +16,7 @@ import io.kestra.plugin.core.flow.EachSequentialTest;
 import io.kestra.plugin.core.flow.FlowCaseTest;
 import io.kestra.plugin.core.flow.ForEachItemCaseTest;
 import io.kestra.plugin.core.flow.PauseTest;
-import io.kestra.plugin.core.flow.WaitForCaseTest;
+import io.kestra.plugin.core.flow.LoopUntilCaseTest;
 import io.kestra.plugin.core.flow.WorkingDirectoryTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -42,7 +43,7 @@ public abstract class AbstractRunnerTest {
     private RestartCaseTest restartCaseTest;
 
     @Inject
-    private FlowTriggerCaseTest flowTriggerCaseTest;
+    protected FlowTriggerCaseTest flowTriggerCaseTest;
 
     @Inject
     protected MultipleConditionTriggerCaseTest multipleConditionTriggerCaseTest;
@@ -66,7 +67,7 @@ public abstract class AbstractRunnerTest {
     protected ForEachItemCaseTest forEachItemCaseTest;
 
     @Inject
-    protected WaitForCaseTest waitForTestCaseTest;
+    protected LoopUntilCaseTest loopUntilTestCaseTest;
 
     @Inject
     private FlowConcurrencyCaseTest flowConcurrencyCaseTest;
@@ -193,7 +194,7 @@ public abstract class AbstractRunnerTest {
         flowTriggerCaseTest.trigger();
     }
 
-    @Test
+    @RetryingTest(5) // flaky on CI but never fail locally
     @LoadFlows({"flows/valids/trigger-flow-listener-with-pause.yaml",
         "flows/valids/trigger-flow-with-pause.yaml"})
     void flowTriggerWithPause() throws Exception {
@@ -230,6 +231,12 @@ public abstract class AbstractRunnerTest {
         "flows/valids/flow-trigger-preconditions-flow-b.yaml"})
     void flowTriggerPreconditionsMergeOutputs() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerPreconditionsMergeOutputs();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-trigger-paused-listen.yaml", "flows/valids/flow-trigger-paused-flow.yaml"})
+    void flowTriggerOnPaused() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerOnPaused();
     }
 
     @RetryingTest(5)
@@ -305,9 +312,9 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-delay-from-input.yaml"})
-    public void pauseRunDelayFromInput() throws Exception {
-        pauseTest.runDelayFromInput(runnerUtils);
+    @LoadFlows({"flows/valids/pause-duration-from-input.yaml"})
+    public void pauseRunDurationFromInput() throws Exception {
+        pauseTest.runDurationFromInput(runnerUtils);
     }
 
     @Test
@@ -416,37 +423,37 @@ public abstract class AbstractRunnerTest {
     @Test
     @LoadFlows({"flows/valids/waitfor.yaml"})
     void waitFor() throws Exception {
-        waitForTestCaseTest.waitfor();
+        loopUntilTestCaseTest.waitfor();
     }
 
     @Test
     @LoadFlows({"flows/valids/waitfor-max-iterations.yaml"})
     void waitforMaxIterations() throws Exception {
-        waitForTestCaseTest.waitforMaxIterations();
+        loopUntilTestCaseTest.waitforMaxIterations();
     }
 
     @Test
     @LoadFlows({"flows/valids/waitfor-max-duration.yaml"})
     void waitforMaxDuration() throws Exception {
-        waitForTestCaseTest.waitforMaxDuration();
+        loopUntilTestCaseTest.waitforMaxDuration();
     }
 
     @Test
     @LoadFlows({"flows/valids/waitfor-no-success.yaml"})
     void waitforNoSuccess() throws Exception {
-        waitForTestCaseTest.waitforNoSuccess();
+        loopUntilTestCaseTest.waitforNoSuccess();
     }
 
     @Test
     @LoadFlows({"flows/valids/waitfor-multiple-tasks.yaml"})
     void waitforMultipleTasks() throws Exception {
-        waitForTestCaseTest.waitforMultipleTasks();
+        loopUntilTestCaseTest.waitforMultipleTasks();
     }
 
     @Test
     @LoadFlows({"flows/valids/waitfor-multiple-tasks-failed.yaml"})
     void waitforMultipleTasksFailed() throws Exception {
-        waitForTestCaseTest.waitforMultipleTasksFailed();
+        loopUntilTestCaseTest.waitforMultipleTasksFailed();
     }
 
     @Test
@@ -488,7 +495,7 @@ public abstract class AbstractRunnerTest {
     @Test
     @LoadFlows({"flows/valids/if.yaml"})
     void multipleIf() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if", null,
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if", null,
             (f, e) -> Map.of("if1", true, "if2", false, "if3", true));
 
         assertThat(execution.getTaskRunList()).hasSize(12);

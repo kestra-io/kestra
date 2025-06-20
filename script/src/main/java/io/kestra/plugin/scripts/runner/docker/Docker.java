@@ -22,13 +22,13 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RetryUtils;
+import io.kestra.core.utils.UnixModeToPosixFilePermissions;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -44,6 +44,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -151,11 +152,6 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     private static final String LEGACY_VOLUME_ENABLED_CONFIG = "kestra.tasks.scripts.docker.volume-enabled";
     private static final String VOLUME_ENABLED_CONFIG = "volume-enabled";
 
-    /**
-     * Container stop command grace period (in seconds).
-     */
-    private static final Integer STOP_TIMEOUT_SEC = 10;
-
     @Schema(
         title = "Docker API URI."
     )
@@ -245,7 +241,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         even if an image with the same tag already exists."""
     )
     @Builder.Default
-    protected Property<PullPolicy> pullPolicy = Property.of(PullPolicy.IF_NOT_PRESENT);
+    protected Property<PullPolicy> pullPolicy = Property.ofValue(PullPolicy.IF_NOT_PRESENT);
 
     @Schema(
         title = "A list of device requests to be sent to device drivers."
@@ -293,20 +289,29 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     )
     @NotNull
     @Builder.Default
-    private Property<FileHandlingStrategy> fileHandlingStrategy = Property.of(FileHandlingStrategy.VOLUME);
+    private Property<FileHandlingStrategy> fileHandlingStrategy = Property.ofValue(FileHandlingStrategy.VOLUME);
 
     @Schema(
         title = "Whether the container should be deleted upon completion."
     )
     @NotNull
     @Builder.Default
-    private Property<Boolean> delete = Property.of(true);
+    private Property<Boolean> delete = Property.ofValue(true);
 
     @Builder.Default
     @Schema(
         title = "Whether to wait for the container to exit."
     )
-    private final Property<Boolean> wait = Property.of(true);
+    @NotNull
+    private Property<Boolean> wait = Property.ofValue(true);
+
+    @Builder.Default
+    @NotNull
+    @Schema(
+        title = "When a task is killed, this property sets the grace period before killing the container.",
+        description = "By default, we kill the container immediately when a task is killed. Optionally, you can configure a grace period so the container is stopped with a grace period instead."
+    )
+    private Duration killGracePeriod = Duration.ZERO;
 
     /**
      * Convenient default instance to be used as task default value for a 'taskRunner' property.
@@ -393,7 +398,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 String remotePath = windowsToUnixPath(taskCommands.getWorkingDirectory().toString());
 
                 // first, create an archive
-                Path fileArchive = runContext.workingDir().createFile("inputFiles.tart");
+                Path fileArchive = runContext.workingDir().createFile("inputFiles.tar");
                 try (FileOutputStream fos = new FileOutputStream(fileArchive.toString());
                      TarArchiveOutputStream out = new TarArchiveOutputStream(fos)) {
                     out.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX); // allow long file name
@@ -402,6 +407,13 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     for (Path file: relativeWorkingDirectoryFilesPaths) {
                         Path resolvedFile = runContext.workingDir().resolve(file);
                         TarArchiveEntry entry = out.createArchiveEntry(resolvedFile.toFile(), file.toString());
+                        // Preserve POSIX permissions if supported
+                        try {
+                            Set<PosixFilePermission> perms = Files.getPosixFilePermissions(resolvedFile);
+                            entry.setMode(UnixModeToPosixFilePermissions.fromPosixFilePermissions(perms));
+                        } catch (UnsupportedOperationException | IOException ignore) {
+                            // Skipping unix file permission
+                        }
                         out.putArchiveEntry(entry);
                         if (!Files.isDirectory(resolvedFile)) {
                             try (InputStream fis = Files.newInputStream(resolvedFile)) {
@@ -585,24 +597,28 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = dockerClient.copyArchiveFromContainerCmd(execId, windowsToUnixPath(taskCommands.getWorkingDirectory().toString()));
         try (InputStream is = copyArchiveFromContainerCmd.exec();
              TarArchiveInputStream tar = new TarArchiveInputStream(is)) {
-            ArchiveEntry entry;
+            TarArchiveEntry entry;
             while ((entry = tar.getNextEntry()) != null) {
                 // each entry contains the working directory as the first part, we need to remove it
-                Path extractTo = runContext.workingDir().resolve(Path.of(entry.getName().substring(runContext.workingDir().id().length() +1)));
+                Path extractTo = runContext.workingDir().resolve(Path.of(entry.getName().substring(runContext.workingDir().id().length() + 1)));
                 if (entry.isDirectory()) {
                     if (!Files.exists(extractTo)) {
                         Files.createDirectories(extractTo);
                     }
                 } else {
                     Files.copy(tar, extractTo, StandardCopyOption.REPLACE_EXISTING);
+                    try {
+                        Files.setPosixFilePermissions(extractTo, UnixModeToPosixFilePermissions.toPosixPermissions(entry.getMode()));
+                    } catch (UnsupportedOperationException | IOException e) {
+                        // File system does not support POSIX permissions (e.g., Windows)
+                    }
                 }
             }
         }
     }
 
     /**
-     * Attempts to gracefully stop the specified Docker container.
-     * After the {@link Docker#STOP_TIMEOUT_SEC} grace period, it kills the container.<br/>
+     * Kill the container immediately or attempts to gracefully stop the specified Docker container if a `killGracePeriod` is set.
      * See <a href="https://docs.docker.com/reference/cli/docker/container/stop/">{@code docker container stop}</a>.
      *
      * @param dockerClient client for the Docker Engine API
@@ -613,7 +629,11 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         try {
             InspectContainerResponse inspect = dockerClient.inspectContainerCmd(containerId).exec();
             if (Boolean.TRUE.equals(inspect.getState().getRunning())) {
-                dockerClient.stopContainerCmd(containerId).withTimeout(STOP_TIMEOUT_SEC).exec();
+                if (killGracePeriod.isPositive()) {
+                    dockerClient.stopContainerCmd(containerId).withTimeout((int) killGracePeriod.toSeconds()).exec();
+                } else {
+                    dockerClient.killContainerCmd(containerId).exec();
+                }
 
                 if (logger.isTraceEnabled()) {
                     logger.trace("Container was killed.");
@@ -807,8 +827,23 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             .longValue();
     }
 
+    private String getImageNameWithoutTag(String fullImageName) {
+        if (fullImageName == null || fullImageName.isEmpty()) {
+            return fullImageName;
+        }
+
+        int lastColonIndex = fullImageName.lastIndexOf(':');
+        int firstSlashIndex = fullImageName.indexOf('/');
+        if (lastColonIndex > -1 && (firstSlashIndex == -1 || lastColonIndex > firstSlashIndex)) {
+            return fullImageName.substring(0, lastColonIndex);
+        } else {
+            return fullImageName; // No tag found or the colon is part of the registry host
+        }
+    }
+
     private void pullImage(DockerClient dockerClient, String image, PullPolicy policy, Logger logger) {
-        NameParser.ReposTag imageParse = NameParser.parseRepositoryTag(image);
+        var imageNameWithoutTag = getImageNameWithoutTag(image);
+        var parsedTagFromImage = NameParser.parseRepositoryTag(image);
 
         if (policy.equals(PullPolicy.IF_NOT_PRESENT)) {
             try {
@@ -819,7 +854,9 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             }
         }
 
-        try (PullImageCmd pull = dockerClient.pullImageCmd(image)) {
+        // pullImageCmd without the tag (= repository) to avoid being redundant with withTag below
+        // and prevent errors with Podman trying to pull "image:tag:tag"
+        try (var pull = dockerClient.pullImageCmd(imageNameWithoutTag)) {
             new RetryUtils().<Boolean, InternalServerErrorException>of(
                 Exponential.builder()
                     .delayFactor(2.0)
@@ -831,8 +868,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 (bool, throwable) -> throwable instanceof InternalServerErrorException ||
                     throwable.getCause() instanceof ConnectionClosedException,
                 () -> {
-                    String tag = !imageParse.tag.isEmpty() ? imageParse.tag : "latest";
-                    String repository = pull.getRepository().contains(":") ? pull.getRepository().split(":")[0] : pull.getRepository();
+                    var tag = !parsedTagFromImage.tag.isEmpty() ? parsedTagFromImage.tag : "latest";
+                    var repository = pull.getRepository().contains(":") ? pull.getRepository().split(":")[0] : pull.getRepository();
                     pull
                         .withTag(tag)
                         .exec(new PullImageResultCallback())

@@ -41,7 +41,7 @@
             <template #navbar v-if="isDisplayedTop">
                 <KestraFilter
                     prefix="executions"
-                    :include="['namespace', 'state', 'scope', 'labels', 'child', 'relative_date', 'absolute_date']"
+                    :language="namespace === undefined || flowId === undefined ? ExecutionFilterLanguage : FlowExecutionFilterLanguage"
                     :buttons="{
                         refresh: {shown: true, callback: refresh},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
@@ -57,18 +57,11 @@
                 />
             </template>
 
-            <template #top>
-                <el-card v-if="showStatChart()" class="mb-4 shadow">
-                    <ExecutionsBar
-                        v-if="daily"
-                        :data="daily"
-                        :total="executionsCount"
-                        :loading="loading"
-                    />
-                </el-card>
+            <template v-if="showStatChart()" #top>
+                <Sections :charts show-default />
             </template>
 
-            <template #table v-if="executions?.length">
+            <template #table>
                 <select-table
                     ref="selectTable"
                     :data="executions"
@@ -79,6 +72,7 @@
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
+                    :no-data-text="$t('no_results.executions')"
                 >
                     <template #select-actions>
                         <bulk-select
@@ -136,6 +130,7 @@
                             v-model="isOpenLabelsModal"
                             destroy-on-close
                             :append-to-body="true"
+                            align-center
                         >
                             <template #header>
                                 <h5>{{ $t("Set labels") }}</h5>
@@ -260,7 +255,7 @@
 
                         <el-table-column
                             prop="flowRevision"
-                            v-if="displayColumn('revision')"
+                            v-if="displayColumn('flowRevision')"
                             :label="$t('revision')"
                             class-name="shrink"
                         >
@@ -328,7 +323,7 @@
         </data-table>
     </section>
 
-    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="uuid" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="uuid" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -367,7 +362,7 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="uuid" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="uuid" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -410,6 +405,9 @@
     import KestraFilter from "../filter/KestraFilter.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import RunFast from "vue-material-design-icons/RunFast.vue";
+    import ExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/executionFilterLanguage.ts";
+    import FlowExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/flowExecutionFilterLanguage.js";
+    import Sections from "../dashboard/sections/Sections.vue";
 </script>
 
 <script>
@@ -434,8 +432,9 @@
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
     import {h, ref} from "vue";
-    import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
     import DateAgo from "../layout/DateAgo.vue";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
 
     import {filterLabels} from "./utils"
 
@@ -451,7 +450,6 @@
             TriggerFlow,
             TopNavBar,
             LabelInput,
-            ExecutionsBar,
             DateAgo
         },
         emits: ["state-count"],
@@ -507,7 +505,6 @@
         data() {
             return {
                 isDefaultNamespaceAllow: true,
-                dailyReady: false,
                 dblClickRouteName: "executions/update",
                 flowTriggerDetails: undefined,
                 recomputeInterval: false,
@@ -565,7 +562,6 @@
                     }
                 ],
                 displayColumns: [],
-                childFilter: "ALL",
                 storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
                 isOpenLabelsModal: false,
                 executionLabels: [],
@@ -657,19 +653,40 @@
             },
             selectedNamespace(){
                 return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;
+            },
+            charts() {
+                return [
+                    {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART}
+                ];
             }
         },
-        beforeRouteEnter(to, from, next) {
-            const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
+        beforeRouteEnter(to, _, next) {
+            const defaultNamespace = localStorage.getItem(
+                storageKeys.DEFAULT_NAMESPACE,
+            );
             const query = {...to.query};
-            if (defaultNamespace) {
-                query.namespace = defaultNamespace;
-            } if (!query.scope) {
-                query.scope = defaultNamespace === "system" ? ["SYSTEM"] : ["USER"];
+            let queryHasChanged = false;
+
+            const queryKeys = Object.keys(query);
+            if (this?.namespace === undefined && defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+                query["filters[namespace][EQUALS]"] = defaultNamespace;
+                queryHasChanged = true;
             }
-            next(vm => {
-                vm.$router?.replace({query});
-            });
+
+            if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
+                query["filters[scope][EQUALS]"] = "USER";
+                queryHasChanged = true;
+            }
+
+            if (queryHasChanged) {
+                next({
+                    ...to,
+                    query,
+                    replace: true
+                });
+            } else {
+                next();
+            }
         },
         methods: {
             filteredLabels(labels) {
@@ -703,10 +720,6 @@
             onShowChartChange(value) {
                 this.showChart = value;
                 localStorage.setItem(storageKeys.SHOW_CHART, value);
-
-                if (this.showChart) {
-                    this.loadStats();
-                }
             },
             showStatChart() {
                 return this.isDisplayedTop && this.showChart;
@@ -724,54 +737,28 @@
             onStatusChange() {
                 this.load(this.onDataLoaded);
             },
-            loadQuery(base, stats) {
+            loadQuery(base) {
                 let queryFilter = this.queryWithFilter();
 
-                if (stats) {
-                    delete queryFilter["timeRange"];
-                    delete queryFilter["startDate"];
-                    delete queryFilter["endDate"];
-                } else if (queryFilter.timeRange) {
-                    delete queryFilter["startDate"];
-                    delete queryFilter["endDate"];
-                }
-
                 if (this.namespace) {
-                    queryFilter["namespace"] = this.namespace;
+                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
                 }
 
                 if (this.flowId) {
-                    queryFilter["flowId"] = this.flowId;
+                    queryFilter["filters[flowId][EQUALS]"] = this.flowId;
                 }
 
                 return _merge(base, queryFilter)
             },
-            loadStats() {
-                this.dailyReady = false;
-                this.loading = true;
-
-                this.$store
-                    .dispatch("stat/daily", this.loadQuery({
-                        startDate: this.$moment(this.startDate).toISOString(true),
-                        endDate: this.$moment(this.endDate).toISOString(true)
-                    }, true))
-                    .then(() => {
-                        this.dailyReady = true;
-                        this.loading = false;
-                    });
-            },
             loadData(callback) {
                 this.lastRefreshDate = new Date();
-                if (this.showStatChart()) {
-                    this.loadStats();
-                }
 
                 this.$store.dispatch("execution/findExecutions", this.loadQuery({
                     size: parseInt(this.$route.query.size || this.internalPageSize),
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                }, false)).finally(callback);
+                })).finally(callback);
             },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
@@ -788,7 +775,7 @@
                     const query = this.loadQuery({
                         sort: this.$route.query.sort || "state.startDate:desc",
                         state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
-                    }, false);
+                    });
                     let options = {...query, ...this.actionOptions};
                     if (params) {
                         options = {...options, ...params}
@@ -972,7 +959,7 @@
                                     params: this.loadQuery({
                                         sort: this.$route.query.sort || "state.startDate:desc",
                                         state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                                    }, false),
+                                    }),
                                     data: filtered.labels
                                 })
                                 .then(r => {
@@ -1014,7 +1001,7 @@
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: states
-                }, false)).then(() => {
+                })).then(() => {
                     this.$emit("state-count", this.total);
                 });
             }
@@ -1031,42 +1018,42 @@
 
 
 <style scoped lang="scss">
-.shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
-}
-
-.padding-bottom {
-    padding-bottom: 4rem;
-}
-.custom-warning {
-    border: 1px solid #ffb703;
-    border-radius: 7px;
-    box-shadow: 1px 1px 3px 1px #ffb703;
-
-    :deep(.el-alert__title) {
-        font-size: 16px;
-        color: #ffb703;
-        font-weight: bold;
+    .shadow {
+        box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
     }
 
-    :deep(.el-alert__description) {
-        font-size: 12px;
+    .padding-bottom {
+        padding-bottom: 4rem;
     }
+    .custom-warning {
+        border: 1px solid #ffb703;
+        border-radius: 7px;
+        box-shadow: 1px 1px 3px 1px #ffb703;
 
-    :deep(.el-alert__icon) {
-        color: #ffb703;
+        :deep(.el-alert__title) {
+            font-size: 16px;
+            color: #ffb703;
+            font-weight: bold;
+        }
+
+        :deep(.el-alert__description) {
+            font-size: 12px;
+        }
+
+        :deep(.el-alert__icon) {
+            color: #ffb703;
+        }
     }
-}
 </style>
 
 <style lang="scss">
-.el-message-box {
-    padding: 2rem;
-    max-width: initial;
-    width: 500px;
+    .el-message-box {
+        padding: 2rem;
+        max-width: initial;
+        width: 500px;
 
-    .custom-warning {
-        margin: 1rem 0;
+        .custom-warning {
+            margin: 1rem 0;
+        }
     }
-}
 </style>

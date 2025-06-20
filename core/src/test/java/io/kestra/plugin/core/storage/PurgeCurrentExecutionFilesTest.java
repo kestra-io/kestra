@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.storage;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.RunContextFactory;
@@ -13,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @KestraTest
 class PurgeCurrentExecutionFilesTest {
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void run() throws Exception {

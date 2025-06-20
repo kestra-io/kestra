@@ -1,7 +1,23 @@
 <template>
-    <Splitpanes class="default-theme" @resize="onResize">
-        <Pane v-for="(panel, panelIndex) in panels" min-size="10" :key="panelIndex" :size="panel.size">
+    <Splitpanes class="default-theme" v-bind="$attrs" @resize="onResize">
+        <Pane
+            v-for="(panel, panelIndex) in panels"
+            min-size="10"
+            :key="panelIndex"
+            :size="panel.size"
+            @dragover.prevent="(e) => panelDragOver(e, panelIndex)"
+            @dragleave.prevent="panelDragLeave"
+            @drop.prevent="(e) => panelDrop(e, panelIndex)"
+            :class="{'panel-dragover': panel.dragover}"
+        >
             <div class="editor-tabs-container">
+                <el-button
+                    :icon="DragVertical"
+                    link
+                    class="tab-icon drag-handle"
+                    draggable="true"
+                    @dragstart="(e:DragEvent) => panelDragStart(e, panelIndex)"
+                />
                 <div
                     class="editor-tabs"
                     role="tablist"
@@ -31,6 +47,7 @@
                             @dragleave.prevent
                             :data-tab-id="tab.value"
                             @click="panel.activeTab = tab"
+                            @mouseup="middleMouseClose($event, panelIndex, tab)"
                         >
                             <component :is="tab.button.icon" class="tab-icon" />
                             {{ tab.button.label }}
@@ -42,44 +59,54 @@
                         </div>
                     </template>
                 </div>
-                <button
-                    v-if="panel.tabs.filter(t => !t.potential).length > 1"
-                    @click="splitPanel(panelIndex)"
-                    class="split_right"
-                    title="Split panel"
-                >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            fill-rule="evenodd"
-                            clip-rule="evenodd"
-                            d="M22.038 20.5599C22.0402 21.35 21.4014 21.9924 20.6112 21.9946L3.47196 22.0424C2.6818 22.0446 2.03946 21.4058 2.03725 20.6157L1.98939 3.45824C1.98718 2.66808 2.62595 2.02574 3.41611 2.02353L20.5554 1.97571C21.3455 1.97351 21.9879 2.61228 21.9901 3.40244L22.038 20.5599ZM20.626 20.5807L10.5998 20.6086L10.5517 3.37297L20.5779 3.345L20.626 20.5807ZM9.10343 20.611L3.38734 20.6269L3.33925 3.39126L9.05535 3.37531L9.10343 20.611Z"
-                            fill="currentColor"
-                        />
-                    </svg>
-                </button>
-                
-                <el-dropdown trigger="click" placement="bottom-end">
-                    <DotsVertical class="me-2 tab-icon" />
-                    <template #dropdown>
-                        <el-dropdown-menu class="m-2">
-                            <el-dropdown-item disabled :icon="DockRight">
-                                <span class="small-text">
-                                    {{ t("multi_panel_editor.move_right") }}
-                                </span>
-                            </el-dropdown-item>
-                            <el-dropdown-item disabled :icon="DockLeft">
-                                <span class="small-text">
-                                    {{ t("multi_panel_editor.move_left") }}
-                                </span>
-                            </el-dropdown-item>
-                            <el-dropdown-item :icon="Close" @click="closeAllTabs(panelIndex)">
-                                <span class="small-text">
-                                    {{ t("multi_panel_editor.close_all_tabs") }}
-                                </span>
-                            </el-dropdown-item>
-                        </el-dropdown-menu>
-                    </template>
-                </el-dropdown>
+                <div class="buttons-container">
+                    <button
+                        v-if="panel.tabs.filter(t => !t.potential).length > 1"
+                        @click="splitPanel(panelIndex)"
+                        class="split_right"
+                        title="Split panel"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                fill-rule="evenodd"
+                                clip-rule="evenodd"
+                                d="M22.038 20.5599C22.0402 21.35 21.4014 21.9924 20.6112 21.9946L3.47196 22.0424C2.6818 22.0446 2.03946 21.4058 2.03725 20.6157L1.98939 3.45824C1.98718 2.66808 2.62595 2.02574 3.41611 2.02353L20.5554 1.97571C21.3455 1.97351 21.9879 2.61228 21.9901 3.40244L22.038 20.5599ZM20.626 20.5807L10.5998 20.6086L10.5517 3.37297L20.5779 3.345L20.626 20.5807ZM9.10343 20.611L3.38734 20.6269L3.33925 3.39126L9.05535 3.37531L9.10343 20.611Z"
+                                fill="currentColor"
+                            />
+                        </svg>
+                    </button>
+
+                    <el-dropdown trigger="click" placement="bottom-end">
+                        <el-button :icon="DotsVertical" link class="me-2 tab-icon" />
+                        <template #dropdown>
+                            <el-dropdown-menu class="m-2">
+                                <el-dropdown-item
+                                    :icon="DockRight"
+                                    :disabled="panelIndex === panels.length - 1"
+                                    @click="movePanel(panelIndex, 'right')"
+                                >
+                                    <span class="small-text">
+                                        {{ t("multi_panel_editor.move_right") }}
+                                    </span>
+                                </el-dropdown-item>
+                                <el-dropdown-item
+                                    :icon="DockLeft"
+                                    :disabled="panelIndex === 0"
+                                    @click="movePanel(panelIndex, 'left')"
+                                >
+                                    <span class="small-text">
+                                        {{ t("multi_panel_editor.move_left") }}
+                                    </span>
+                                </el-dropdown-item>
+                                <el-dropdown-item :icon="Close" @click="closeAllTabs(panelIndex)">
+                                    <span class="small-text">
+                                        {{ t("multi_panel_editor.close_all_tabs") }}
+                                    </span>
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </template>
+                    </el-dropdown>
+                </div>
             </div>
             <div
                 class="content-panel"
@@ -89,7 +116,14 @@
                 @dragleave.prevent="removeAllPotentialTabs"
                 @dragenter.prevent
             >
-                <component :is="panel.activeTab?.component" />
+                <KeepAlive v-if="panel.activeTab">
+                    <component
+                        :key="panel.activeTab.value"
+                        :is="panel.activeTab.component"
+                        :panel-index="panelIndex"
+                        :tab-index="panel.tabs.findIndex(t => t.value === panel.activeTab.value)"
+                    />
+                </KeepAlive>
                 <div
                     v-if="dragging"
                     class="editor-content-overlay"
@@ -98,17 +132,41 @@
             </div>
         </Pane>
     </Splitpanes>
+
+    <div
+        v-if="showDropZones"
+        class="absolute-drop-zones-container"
+    >
+        <div
+            class="new-panel-drop-zone left-drop-zone"
+            :class="{'panel-dragover': leftPanelDragover}"
+            @dragover.prevent="leftPanelDragOver"
+            @dragleave.prevent="leftPanelDragLeave"
+            @drop.prevent="(e) => newPanelDrop(e, 'left')"
+        />
+
+        <div
+            class="new-panel-drop-zone right-drop-zone"
+            :class="{'panel-dragover': rightPanelDragover}"
+            @dragover.prevent="rightPanelDragOver"
+            @dragleave.prevent="rightPanelDragLeave"
+            @drop.prevent="(e) => newPanelDrop(e, 'right')"
+        />
+    </div>
 </template>
 
 <script lang="ts" setup>
-    import {nextTick, ref, watch} from "vue";
+    import {nextTick, ref, watch, provide, computed} from "vue";
     import {useI18n} from "vue-i18n";
 
     import "splitpanes/dist/splitpanes.css"
     import {Splitpanes, Pane} from "splitpanes"
 
+    import {VISIBLE_PANELS_INJECTION_KEY} from "./code/injectionKeys";
+
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
+    import DragVertical from "vue-material-design-icons/DragVertical.vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import DockLeft from "vue-material-design-icons/DockLeft.vue";
     import DockRight from "vue-material-design-icons/DockRight.vue";
@@ -159,6 +217,8 @@
         required: true,
     })
 
+    provide(VISIBLE_PANELS_INJECTION_KEY, panels);
+
     const emit = defineEmits<{
         removeTab: [tab: string]
     }>()
@@ -167,6 +227,16 @@
     const movedTabInfo = ref<TabInfo | null>(null);
     const dragging = ref(false);
     const tabContainerRefs = ref<HTMLDivElement[]>([]);
+    const draggingPanel = ref<number | null>(null);
+    const realDragging = ref(false);
+    const leftPanelDragover = ref(false);
+    const rightPanelDragover = ref(false);
+
+    const showDropZones = computed(() =>
+        realDragging.value &&
+        movedTabInfo.value &&
+        !draggingPanel.value
+    );
 
     function onResize(e: {size:number}[]) {
         let i = 0;
@@ -183,7 +253,10 @@
 
     function cleanUp(){
         dragging.value = false;
+        realDragging.value = false;
         mouseXRef.value = -1;
+        leftPanelDragover.value = false;
+        rightPanelDragover.value = false;
         nextTick(() => {
             movedTabInfo.value = null
             for(const panel of panels.value) {
@@ -205,6 +278,12 @@
     }
 
     function dragover(e: DragEvent) {
+        // Ensure we set the realDragging flag when a drag operation is in progress
+        if (movedTabInfo.value) {
+            realDragging.value = true;
+            dragging.value = true;
+        }
+
         // if mouse has not moved vertically, stop the processing
         // this will be triggered every few ms so perf and readability will be paramount
         if(mouseXRef.value === e.clientX){
@@ -342,6 +421,49 @@
         }
     }
 
+    function newPanelDrop(e: DragEvent, direction: "left" | "right") {
+        if (!movedTabInfo.value) return;
+
+        const {tab: movedTab} = movedTabInfo.value;
+
+        // Create a new panel with the dragged tab
+        const newPanel = {
+            tabs: [movedTab],
+            activeTab: movedTab
+        };
+
+        // Add the new panel based on the drop direction, not relative to original panel
+        if (direction === "left") {
+            panels.value.splice(0, 0, newPanel);
+        } else {
+            panels.value.push(newPanel);
+        }
+
+        // Remove the tab from the original panel
+        // After adding the new panel, the original panel's index may have changed
+        // Find it again by looking for the tab in all panels
+        for (let i = 0; i < panels.value.length; i++) {
+            const panel = panels.value[i];
+            const tabIndex = panel.tabs.findIndex(t => t.value === movedTab.value);
+
+            if (i === 0 && direction === "left") continue;
+            if (i === panels.value.length - 1 && direction === "right") continue;
+
+            if (tabIndex !== -1) {
+                panel.tabs.splice(tabIndex, 1);
+
+                if (panel.activeTab.value === movedTab.value && panel.tabs.length > 0) {
+                    panel.activeTab = tabIndex > 0
+                        ? panel.tabs[tabIndex - 1]
+                        : panel.tabs[0];
+                }
+                break;
+            }
+        }
+
+        cleanUp();
+    }
+
     function closeAllTabs(panelIndex: number){
         panels.value[panelIndex].tabs = [];
     }
@@ -383,14 +505,87 @@
         // remove the tab from the original panel
         panel.tabs.splice(activeTabIndex, 1)
     }
+
+    function panelDragStart(e: DragEvent, panelIndex: number) {
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = "move";
+            draggingPanel.value = panelIndex;
+        }
+    }
+
+    function panelDragOver(e: DragEvent, panelIndex: number) {
+        if (draggingPanel.value === null || draggingPanel.value === panelIndex) return;
+
+        panels.value.forEach(panel => panel.dragover = false);
+        panels.value[panelIndex].dragover = true;
+    }
+
+    function panelDragLeave() {
+        panels.value.forEach(panel => panel.dragover = false);
+    }
+
+    function panelDrop(e: DragEvent, targetPanelIndex: number) {
+        if (draggingPanel.value === null || draggingPanel.value === targetPanelIndex) return;
+
+        const panelsCopy = [...panels.value];
+        const [movedPanel] = panelsCopy.splice(draggingPanel.value, 1);
+        panelsCopy.splice(targetPanelIndex, 0, movedPanel);
+
+        panels.value = panelsCopy;
+
+        draggingPanel.value = null;
+        panelDragLeave();
+    }
+
+    function movePanel(panelIndex: number, direction: "left" | "right") {
+        const newIndex = direction === "left" ? panelIndex - 1 : panelIndex + 1;
+        if (newIndex < 0 || newIndex >= panels.value.length) return;
+
+        const panelsCopy = [...panels.value];
+        const [movedPanel] = panelsCopy.splice(panelIndex, 1);
+        panelsCopy.splice(newIndex, 0, movedPanel);
+        panels.value = panelsCopy;
+    }
+
+    function rightPanelDragOver() {
+        if (!movedTabInfo.value) return;
+        rightPanelDragover.value = true;
+        leftPanelDragover.value = false;
+        removeAllPotentialTabs();
+    }
+
+    function rightPanelDragLeave() {
+        rightPanelDragover.value = false;
+    }
+
+    function leftPanelDragOver() {
+        if (!movedTabInfo.value) return;
+        leftPanelDragover.value = true;
+        rightPanelDragover.value = false;
+        removeAllPotentialTabs();
+    }
+
+    function leftPanelDragLeave() {
+        leftPanelDragover.value = false;
+    }
+
+    function middleMouseClose(event:MouseEvent, panelIndex:number, tab: Tab) {
+        // Middle mouse button
+        if (event.button === 1) {
+            event.preventDefault();
+            destroyTab(panelIndex, tab);
+        }
+    }
 </script>
 
 <style lang="scss" scoped>
     .editor-tabs-container{
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
         background-color: var(--ks-background-body);
         border-bottom: 1px solid var(--ks-border-primary);
+        align-items: center;
+
         button.split_right{
             border: none;
             color: var(--ks-content-tertiary);
@@ -400,6 +595,20 @@
             svg {
                 height: 16px;
                 width: 16px;
+            }
+        }
+        .buttons-container{
+            display: flex;
+
+        }
+        .drag-handle {
+            cursor: grab;
+            opacity: 0.5;
+            &:hover {
+                opacity: 1;
+            }
+            &:active {
+                cursor: grabbing;
             }
         }
     }
@@ -490,14 +699,14 @@
 
     .default-theme{
         .splitpanes__pane {
-            background-color: var(--ks-background-card);
+            background-color: var(--ks-background-panel);
             display: grid;
             grid-template-rows: auto 1fr;
         }
 
         :deep(.splitpanes__splitter){
             border-left-color: var(--ks-border-primary);
-            background-color: var(--ks-background-card);
+            background-color: var(--ks-background-panel);
             &:before, &:after{
                 background-color: var(--ks-content-secondary);
             }
@@ -512,5 +721,58 @@
 
     .splitpanes__pane{
         transition: none;
+        &.dragging {
+            opacity: 0.5;
+            background-color: var(--ks-background-card-hover);
+            transition: opacity 0.2s ease;
+        }
     }
+
+    .panel-dragover {
+        background-color: var(--ks-background-card-hover);
+        transition: background-color 0.2s ease;
+    }
+
+    .absolute-drop-zones-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        z-index: 100;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .new-panel-drop-zone {
+        position: relative;
+        width: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(30, 30, 30, 0.5);
+        transition: all 0.2s ease;
+        border: 2px dashed var(--ks-border-primary, #444);
+        border-radius: 4px;
+        margin: 8px;
+        pointer-events: auto;
+        height: calc(100% - 16px);
+    }
+
+    .new-panel-drop-zone:hover,
+    .new-panel-drop-zone.panel-dragover {
+        background-color: rgba(40, 40, 40, 0.8);
+        border-color: var(--ks-border-active, #888);
+    }
+
+    .left-drop-zone {
+        border-right-width: 2px;
+    }
+
+    .right-drop-zone {
+        border-left-width: 2px;
+    }
+
+
 </style>

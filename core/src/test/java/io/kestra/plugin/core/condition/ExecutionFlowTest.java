@@ -11,8 +11,6 @@ import io.kestra.core.utils.TestsUtils;
 
 import jakarta.inject.Inject;
 
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
@@ -26,13 +24,13 @@ class ExecutionFlowTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionFlow build = ExecutionFlow.builder()
-            .namespace(Property.of(flow.getNamespace()))
-            .flowId(Property.of(flow.getId()))
+            .namespace(Property.ofValue(flow.getNamespace()))
+            .flowId(Property.ofValue(flow.getId()))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(true);
+        assertThat(test).isTrue();
     }
 
     @Test
@@ -41,12 +39,12 @@ class ExecutionFlowTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionFlow build = ExecutionFlow.builder()
-            .namespace(Property.of(flow.getNamespace() + "a"))
-            .flowId(Property.of(flow.getId()))
+            .namespace(Property.ofValue(flow.getNamespace() + "a"))
+            .flowId(Property.ofValue(flow.getId()))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(false);
+        assertThat(test).isFalse();
     }
 }

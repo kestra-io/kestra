@@ -38,7 +38,7 @@ class BlueprintControllerTest {
     // GET "/v1/blueprints/kinds/{kind}/{id}/versions/{version}/graph"
     private static final String API_BLUEPRINT_GET_TAGS = "/v1/blueprints/kinds/%s/versions/%s/tags?q=%s";
     private static final String KIND_FLOW = BlueprintController.Kind.FLOW.val();
-    public static final String API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH = "/api/v1/blueprints/community/flow";
+    public static final String API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH = "/api/v1/main/blueprints/community/flow";
 
     @Inject
     @Client("/")
@@ -49,7 +49,7 @@ class BlueprintControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldFindBlueprints(WireMockRuntimeInfo wmRuntimeInfo) {
+    void shouldFindSearchBlueprints(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlMatching("/v1/blueprints.*"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
@@ -77,7 +77,7 @@ class BlueprintControllerTest {
     }
 
     @Test
-    void shouldGetSourceForExistingBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
+    void shouldGetSourceForExistingGetBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlMatching("/v1/blueprints/kinds/.*/id_1/.*/source.*"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
@@ -97,7 +97,7 @@ class BlueprintControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldGetGraphForExistingBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
+    void shouldGetGraphForExistingGetBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlMatching("/v1/blueprints/kinds/.*/id_1/.*/graph.*"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
@@ -122,7 +122,7 @@ class BlueprintControllerTest {
     }
 
     @Test
-    void shouldGetDetailsForExistingBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
+    void shouldGetDetailsForExistingGetBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlMatching("/v1/blueprints/kinds/.*/id_1.*"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")

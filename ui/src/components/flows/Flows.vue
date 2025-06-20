@@ -52,7 +52,7 @@
                 <template #navbar>
                     <KestraFilter
                         prefix="flows"
-                        :include="['namespace', 'scope', 'labels']"
+                        :language="FlowFilterLanguage"
                         :buttons="{
                             refresh: {shown: false},
                             settings: {
@@ -74,19 +74,12 @@
                     />
                 </template>
 
-                <template #top>
-                    <el-card v-if="showStatChart()" class="mb-4 shadow">
-                        <ExecutionsBar
-                            :data="daily"
-                            :total="executionsCount"
-                            :loading="loading"
-                        />
-                    </el-card>
+                <template v-if="showStatChart()" #top>
+                    <Sections :charts show-default />
                 </template>
 
                 <template #table>
                     <select-table
-                        v-if="flows.length"
                         ref="selectTable"
                         :data="flows"
                         :default-sort="{prop: 'id', order: 'ascending'}"
@@ -97,6 +90,7 @@
                         :row-class-name="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
+                        :no-data-text="$t('no_results.flows')"
                         class="flows-table"
                     >
                         <template #select-actions>
@@ -246,36 +240,6 @@
                             </el-table-column>
 
                             <el-table-column
-                                prop="state"
-                                v-if="
-                                    displayColumn('state') &&
-                                        user.hasAny(permission.EXECUTION)
-                                "
-                                :label="$t('execution statistics')"
-                                class-name="row-graph"
-                            >
-                                <template #default="scope">
-                                    <ExecutionsBarChart
-                                        v-if="dailyGroupByFlowReady"
-                                        class="stats-chart"
-                                        :duration="false"
-                                        :scales="false"
-                                        :data="chartData(scope.row)"
-                                        small
-                                        external-tooltip
-                                        :plugins="[]"
-                                        @click="
-                                            tableChartClick.bind(
-                                                null,
-                                                scope.row.namespace,
-                                                scope.row.id,
-                                            )
-                                        "
-                                    />
-                                </template>
-                            </el-table-column>
-
-                            <el-table-column
                                 v-if="displayColumn('triggers')"
                                 :label="$t('triggers')"
                                 class-name="row-action"
@@ -319,10 +283,9 @@
 
 <script setup>
     import {ref} from "vue";
-    import moment from "moment";
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
-    import ExecutionsBar from "../dashboard/components/charts/executions/Bar.vue";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import Plus from "vue-material-design-icons/Plus.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import Download from "vue-material-design-icons/Download.vue";
@@ -330,30 +293,12 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import Upload from "vue-material-design-icons/Upload.vue";
-    import ExecutionsBarChart from "../dashboard/components/charts/executions/BarChart.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
-    import {chartClick} from "../../utils/charts.js";
-    import {useRoute, useRouter} from "vue-router";
-
-    const route = useRoute();
-    const router = useRouter();
+    import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
+    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import Sections from "../dashboard/sections/Sections.vue";
 
     const file = ref(null);
-
-    function tableChartClick(namespace, flowId, e, elements) {
-        if (
-            elements.length > 0 &&
-            elements[0].index !== undefined &&
-            elements[0].datasetIndex !== undefined
-        ) {
-            chartClick(moment, router, route, {
-                date: e.chart.data.labels[elements[0].index],
-                state: e.chart.data.datasets[elements[0].datasetIndex].label,
-                namespace,
-                flowId,
-            });
-        }
-    }
 </script>
 
 <script>
@@ -518,21 +463,39 @@
                     );
                 }, 0);
             },
+            charts() {
+                return [
+                    {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART}
+                ];
+            }
         },
-        beforeRouteEnter(to, from, next) {
+        beforeRouteEnter(to, _, next) {
             const defaultNamespace = localStorage.getItem(
                 storageKeys.DEFAULT_NAMESPACE,
             );
             const query = {...to.query};
-            if (defaultNamespace) {
-                query.namespace = defaultNamespace;
+            let queryHasChanged = false;
+
+            const queryKeys = Object.keys(query);
+            if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+                query["filters[namespace][EQUALS]"] = defaultNamespace;
+                queryHasChanged = true;
             }
-            if (!query.scope) {
-                query.scope = ["USER"];
+
+            if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
+                query["filters[scope][EQUALS]"] = "USER";
+                queryHasChanged = true;
             }
-            next((vm) => {
-                vm.$router?.replace({query});
-            });
+
+            if (queryHasChanged) {
+                next({
+                    ...to,
+                    query,
+                    replace: true
+                });
+            } else {
+                next();
+            }
         },
         created() {
             this.displayColumns = this.loadDisplayColumns();
@@ -563,12 +526,11 @@
                 this.displayColumns = newColumns;
             },
             showStatChart() {
-                return this.daily && this.showChart;
+                return this.showChart;
             },
             onShowChartChange(value) {
                 this.showChart = value;
                 localStorage.setItem(storageKeys.SHOW_FLOWS_CHART, value);
-                if (this.showStatChart()) this.loadStats();
             },
             exportFlows() {
                 this.$toast().confirm(
@@ -582,17 +544,7 @@
                             return this.$store
                                 .dispatch(
                                     "flow/exportFlowByQuery",
-                                    this.loadQuery(
-                                        {
-                                            namespace: this.$route.query.namespace
-                                                ? [this.$route.query.namespace]
-                                                : undefined,
-                                            q: this.$route.query.q
-                                                ? [this.$route.query.q]
-                                                : undefined,
-                                        },
-                                        false,
-                                    ),
+                                    this.loadQuery(),
                                 )
                                 .then((_) => {
                                     this.$toast().success(
@@ -626,17 +578,7 @@
                             return this.$store
                                 .dispatch(
                                     "flow/disableFlowByQuery",
-                                    this.loadQuery(
-                                        {
-                                            namespace: this.$route.query.namespace
-                                                ? [this.$route.query.namespace]
-                                                : undefined,
-                                            q: this.$route.query.q
-                                                ? [this.$route.query.q]
-                                                : undefined,
-                                        },
-                                        false,
-                                    ),
+                                    this.loadQuery(),
                                 )
                                 .then((r) => {
                                     this.$toast().success(
@@ -682,17 +624,7 @@
                             return this.$store
                                 .dispatch(
                                     "flow/enableFlowByQuery",
-                                    this.loadQuery(
-                                        {
-                                            namespace: this.$route.query.namespace
-                                                ? [this.$route.query.namespace]
-                                                : undefined,
-                                            q: this.$route.query.q
-                                                ? [this.$route.query.q]
-                                                : undefined,
-                                        },
-                                        false,
-                                    ),
+                                    this.loadQuery(),
                                 )
                                 .then((r) => {
                                     this.$toast().success(
@@ -732,17 +664,7 @@
                             return this.$store
                                 .dispatch(
                                     "flow/deleteFlowByQuery",
-                                    this.loadQuery(
-                                        {
-                                            namespace: this.$route.query.namespace
-                                                ? [this.$route.query.namespace]
-                                                : undefined,
-                                            q: this.$route.query.q
-                                                ? [this.$route.query.q]
-                                                : undefined,
-                                        },
-                                        false,
-                                    ),
+                                    this.loadQuery(),
                                 )
                                 .then((r) => {
                                     this.$toast().success(
@@ -773,30 +695,20 @@
             importFlows() {
                 const formData = new FormData();
                 formData.append("fileUpload", this.$refs.file.files[0]);
-                this.$store.dispatch("flow/importFlows", formData).then((res) => {
-                    if (res.data.length > 0) {
-                        this.$toast().warning(
-                            this.$t("flows not imported") +
-                                ": " +
-                                res.data.join(", "),
-                        );
-                    } else {
-                        this.$toast().success(this.$t("flows imported"));
-                    }
-                    this.$refs.importForm.reset();
-                    this.loadData(() => {});
-                });
-            },
-            chartData(row) {
-                if (
-                    this.dailyGroupByFlow &&
-                    this.dailyGroupByFlow[row.namespace] &&
-                    this.dailyGroupByFlow[row.namespace][row.id]
-                ) {
-                    return this.dailyGroupByFlow[row.namespace][row.id];
-                } else {
-                    return [];
-                }
+                this.$store.dispatch("flow/importFlows", formData)
+                    .then((res) => {
+                        if (res.data.length > 0) {
+                            this.$toast().warning(
+                                this.$t("flows not imported") +
+                                    ": " +
+                                    res.data.join(", "),
+                            );
+                        } else {
+                            this.$toast().success(this.$t("flows imported"));
+                        }
+                        this.$refs.file.value = "";
+                        this.loadData(() => {});
+                    });
             },
             getLastExecution(row) {
                 let noState = {state: null, startDate: null};
@@ -817,42 +729,19 @@
                     return noState;
                 }
             },
-            loadQuery(base) {
-                let queryFilter = this.queryWithFilter();
+            loadQuery(base, ignoreDateFilters = true) {
+                let queryFilter = this.queryWithFilter(
+                    undefined,
+                    ignoreDateFilters ? ["startDate", "endDate", "timeRange"] : []
+                );
 
                 if (this.namespace) {
-                    queryFilter.namespace = this.namespace;
+                    queryFilter["filters[namespace][EQUALS]"] = this.$route.params.id || this.namespace;
                 }
 
                 return _merge(base, queryFilter);
             },
-            loadStats() {
-                this.dailyReady = false;
-                this.loading = true;
-
-                if (this.user.hasAny(permission.EXECUTION) && this.showStatChart) {
-                    this.$store
-                        .dispatch(
-                            "stat/daily",
-                            this.loadQuery({
-                                startDate: this.$moment(this.startDate)
-                                    .add(-1, "day")
-                                    .startOf("day")
-                                    .toISOString(true),
-                                endDate: this.$moment(this.endDate)
-                                    .endOf("day")
-                                    .toISOString(true),
-                            }),
-                        )
-                        .then(() => {
-                            this.dailyReady = true;
-                            this.loading = false;
-                        });
-                }
-            },
             loadData(callback) {
-                this.loadStats();
-
                 this.$store
                     .dispatch(
                         "flow/findFlows",

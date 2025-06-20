@@ -1,18 +1,17 @@
 <template>
     <Dashboard
         v-if="loaded && total && flow"
-        :restore-u-r-l="false"
-        flow
-        :flow-id="flow.id"
-        :namespace="flow.namespace"
-        embed
+        :header="false"
+        :is-flow="true"
     />
     <NoExecutions v-else-if="loaded && flow && !total" />
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, onMounted} from "vue";
+    import {computed, onMounted, ref} from "vue";
     import {useStore} from "vuex";
+
+    defineOptions({inheritAttrs: false});
 
     import Dashboard from "../dashboard/Dashboard.vue";
     import NoExecutions from "../flows/NoExecutions.vue";

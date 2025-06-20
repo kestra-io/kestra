@@ -111,7 +111,7 @@ public interface Service extends AutoCloseable {
      * </pre>
      */
     enum ServiceState {
-        CREATED(1, 2, 3),               // 0
+        CREATED(1, 2, 3, 4),            // 0
         RUNNING(2, 3, 4, 9),            // 1
         ERROR(4),                       // 2
         DISCONNECTED(4, 7),             // 3
@@ -119,7 +119,7 @@ public interface Service extends AutoCloseable {
         TERMINATED_GRACEFULLY(7),       // 5
         TERMINATED_FORCED(7),           // 6
         NOT_RUNNING(8),                 // 7
-        EMPTY(),                                       // 8
+        EMPTY(),                                       // 8 FINAL STATE
         MAINTENANCE(1, 2, 3, 4);                 // 9
 
         private final Set<Integer> validTransitions = new HashSet<>();

@@ -5,6 +5,7 @@ import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
@@ -45,8 +46,10 @@ public class RegisteredPlugin {
     private final List<Class<? extends AppBlockInterface>> appBlocks;
     private final List<Class<? extends Chart<?>>> charts;
     private final List<Class<? extends DataFilter<?, ?>>> dataFilters;
-    private final List<String> guides;
+    private final List<Class<? extends DataFilterKPI<?, ?>>> dataFiltersKPI;
     private final List<Class<? extends LogExporter<?>>> logExporters;
+    private final List<Class<? extends AdditionalPlugin>> additionalPlugins;
+    private final List<String> guides;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
 
@@ -61,7 +64,9 @@ public class RegisteredPlugin {
             !appBlocks.isEmpty() ||
             !charts.isEmpty() ||
             !dataFilters.isEmpty() ||
-            !logExporters.isEmpty()
+            !dataFiltersKPI.isEmpty() ||
+            !logExporters.isEmpty() ||
+            !additionalPlugins.isEmpty()
         ;
     }
 
@@ -114,6 +119,10 @@ public class RegisteredPlugin {
             return DataFilter.class;
         }
 
+        if (this.getDataFiltersKPI().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return DataFilterKPI.class;
+        }
+
         if (this.getAppBlocks().stream().anyMatch(r -> r.getName().equals(cls))) {
             return AppBlockInterface.class;
         }
@@ -124,6 +133,10 @@ public class RegisteredPlugin {
 
         if (this.getLogExporters().stream().anyMatch(r -> r.getName().equals(cls))) {
             return LogExporter.class;
+        }
+
+        if (this.getAdditionalPlugins().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return AdditionalPlugin.class;
         }
 
         if (this.getAliases().containsKey(cls.toLowerCase())) {
@@ -157,14 +170,12 @@ public class RegisteredPlugin {
         result.put("app-blocks", Arrays.asList(this.getAppBlocks().toArray(Class[]::new)));
         result.put("charts", Arrays.asList(this.getCharts().toArray(Class[]::new)));
         result.put("data-filters", Arrays.asList(this.getDataFilters().toArray(Class[]::new)));
+        result.put("data-filters-kpi", Arrays.asList(this.getDataFiltersKPI().toArray(Class[]::new)));
         result.put("log-exporters", Arrays.asList(this.getLogExporters().toArray(Class[]::new)));
+        result.put("additional-plugins", Arrays.asList(this.getAdditionalPlugins().toArray(Class[]::new)));
 
         return result;
     }
-
-//    public Map<String, Map<String,List<Class>>> allClassGroupedBySubGroup() {
-//
-//    }
 
     public Set<String> subGroupNames() {
         return allClass()
@@ -354,9 +365,21 @@ public class RegisteredPlugin {
             b.append("] ");
         }
 
+        if (!this.getDataFiltersKPI().isEmpty()) {
+            b.append("[DataFiltersKPI: ");
+            b.append(this.getDataFiltersKPI().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
         if (!this.getLogExporters().isEmpty()) {
             b.append("[Log Exporters: ");
             b.append(this.getLogExporters().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
+        if (!this.getAdditionalPlugins().isEmpty()) {
+            b.append("[Additional Plugins: ");
+            b.append(this.getAdditionalPlugins().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

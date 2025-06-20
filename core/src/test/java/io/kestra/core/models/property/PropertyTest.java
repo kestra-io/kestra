@@ -1,8 +1,8 @@
 package io.kestra.core.models.property;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -28,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class PropertyTest {
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Inject
     private StorageInterface storage;
@@ -48,13 +49,11 @@ class PropertyTest {
                   "key1": "{{value1}}",
                   "key2": "{{value2}}"
                 }"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder()
-                .fromMap(new Property<>("""
-                    {
-                      "key": "{{mapKey}}",
-                      "value": "{{mapValue}}"
-                    }"""))
-                .build()
+            .from("""
+                {
+                  "key": "{{mapKey}}",
+                  "value": "{{mapValue}}"
+                }"""
             )
             .build();
         var runContext = runContextFactory.of(Map.ofEntries(
@@ -99,19 +98,17 @@ class PropertyTest {
                   "key1": "{{value1}}",
                   "key2": "{{value2}}"
                 }"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder()
-                .fromList(new Property<>("""
-                    [
-                      {
-                         "key": "{{mapKey1}}",
-                         "value": "{{mapValue1}}"
-                      },
-                      {
-                         "key": "{{mapKey2}}",
-                         "value": "{{mapValue2}}"
-                       }
-                    ]"""))
-                .build()
+            .from("""
+                [
+                  {
+                     "key": "{{mapKey1}}",
+                     "value": "{{mapValue1}}"
+                  },
+                  {
+                     "key": "{{mapKey2}}",
+                     "value": "{{mapValue2}}"
+                   }
+                ]"""
             )
             .build();
         var runContext = runContextFactory.of(Map.ofEntries(
@@ -155,7 +152,7 @@ class PropertyTest {
         FileSerde.writeAll(Files.newBufferedWriter(messages), Flux.fromIterable(inputValues)).block();
         URI uri;
         try (var input = new FileInputStream(messages.toFile())) {
-            uri = storage.put(null, null, URI.create("/messages.ion"), input);
+            uri = storage.put(MAIN_TENANT, null, URI.create("/messages.ion"), input);
         }
 
         var task = DynamicPropertyExampleTask.builder()
@@ -171,7 +168,7 @@ class PropertyTest {
                   "key1": "{{value1}}",
                   "key2": "{{value2}}"
                 }"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder().fromURI(new Property<>("{{uri}}")).build())
+            .from("{{uri}}")
             .build();
         var runContext = runContextFactory.of(Map.ofEntries(
             entry("numberValue", 9),
@@ -212,13 +209,7 @@ class PropertyTest {
             .withDefault(new Property<>("{{defaultValue}}"))
             .items(new Property<>("""
                 ["{{item1}}", "{{item2}}"]"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder()
-                .fromMap(new Property<>("""
-                    {
-                      "key": "{{mapValue}}"
-                    }"""))
-                .build()
-            )
+            .from(Map.of("key", "{{mapValue}}"))
             .build();
         var runContext = runContextFactory.of();
 
@@ -241,14 +232,7 @@ class PropertyTest {
                   "key1": "{{value1}}",
                   "key2": "{{value2}}"
                 }"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder()
-                .fromMap(new Property<>("""
-                    {
-                      "key": "{{mapKey}}",
-                      "value": "{{mapValue}}"
-                    }"""))
-                .build()
-            )
+            .from(Map.of("key", "{{mapKey}}", "value", "{{mapValue}}"))
             .build();
         var runContext = runContextFactory.of(task, Map.ofEntries(
             entry("numberValue", -2),
@@ -269,8 +253,8 @@ class PropertyTest {
     }
 
     @Test
-    void of() {
-        var prop = Property.of(TestObj.builder().key("key").value("value").build());
+    void ofValue() {
+        var prop = Property.ofValue(TestObj.builder().key("key").value("value").build());
         assertThat(prop).isNotNull();
     }
 

@@ -27,25 +27,26 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Display a table with a Log count for each level by Namespace.",
             full = true,
-            code = {
-                "charts:\n" +
-                    "- id: table_logs\n" +
-                    "type: io.kestra.plugin.core.dashboard.chart.Table\n" +
-                    "chartOptions:\n" +
-                        "displayName: Log count by level for filtered namespace\n" +
-                    "data:\n" +
-                        "type: io.kestra.plugin.core.dashboard.data.Logs\n" +
-                        "columns:\n" +
-                            "level:\n" +
-                                "field: LEVEL\n" +
-                                "count:\n" +
-                                    "agg: COUNT\n" +
-                            "where:\n" +
-                                "- field: NAMESPACE\n" +
-                                "type: IN\n" +
-                                "values:\n" +
-                                    "- dev_graph\n" +
-                                    "- prod_graph\n"
+            code = { """
+                charts:
+                    - id: table_logs
+                    type: io.kestra.plugin.core.dashboard.chart.Table
+                    chartOptions:
+                        displayName: Log count by level for filtered namespace
+                    data:
+                        type: io.kestra.plugin.core.dashboard.data.Logs
+                        columns:
+                            level:
+                                field: LEVEL
+                                count:
+                                    agg: COUNT
+                            where:
+                                - field: NAMESPACE
+                                type: IN
+                                values:
+                                    - dev_graph
+                                    - prod_graph
+                """
             }
         )
     }

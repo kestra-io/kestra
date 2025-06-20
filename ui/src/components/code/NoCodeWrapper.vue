@@ -1,54 +1,109 @@
 <template>
     <NoCode
         :flow="lastValidFlowYaml"
-        @update-metadata="(e) => onUpdateMetadata(e, true)"
+        :parent-path="parentPath"
+        :ref-path="refPath"
+        :block-type="blockType"
+        :creating-task="creatingTask"
+        :editing-task="editingTask"
+        :position
+        @update-metadata="(e) => onUpdateMetadata(e)"
         @update-task="(e) => editorUpdate(e)"
         @reorder="(yaml) => handleReorder(yaml)"
-        @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
+        @close-task="() => emit('closeTask')"
     />
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue";
+    import {computed, provide, ref} from "vue";
+    import debounce from "lodash/debounce";
     import {useStore} from "vuex";
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import NoCode from "./NoCode.vue";
+    import {BlockType} from "./utils/types";
+    import {CREATE_TASK_FUNCTION_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY} from "./injectionKeys";
+
+    export interface NoCodeProps {
+        creatingTask?: boolean;
+        editingTask?: boolean;
+        blockType?: BlockType | "pluginDefaults";
+        parentPath?: string;
+        refPath?: number;
+        position?: "before" | "after";
+    }
+
+    defineProps<NoCodeProps>();
+
+    const emit = defineEmits<{
+        (e: "createTask", blockType: string, parentPath: string, refPath: number | undefined, position: "after" | "before"): boolean | void;
+        (e: "editTask", blockType: string, parentPath: string, refPath?: number): boolean | void;
+        (e: "closeTask"): boolean | void;
+    }>();
+
+    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
+        emit("createTask", blockType, parentPath, refPath, "after")
+    });
+    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
+        emit("editTask", blockType, parentPath, refPath)
+    });
 
     const store = useStore();
-    const flowYaml = computed(() => store.getters["flow/flowYaml"]);
+    const flowYaml = computed<string>(() => store.getters["flow/flowYaml"]);
 
-    const lastValidFlowYaml = ref("");
-
-    watch(flowYaml, (newVal) => {
-        try {
-            YAML_UTILS.parse(flowYaml.value);
-            lastValidFlowYaml.value = newVal;
-        } catch {
-            // do nothing
+    const lastValidFlowYaml = computed<string>(
+        (oldValue) => {
+            try {
+                YAML_UTILS.parse(flowYaml.value);
+                return flowYaml.value;
+            } catch {
+                return oldValue ?? "";
+            }
         }
-    }, {immediate: true});
+    );
 
-    const onUpdateMetadata = (metadata: any, shouldSave: boolean) => {
-        if(shouldSave) {
-            store.commit("flow/setMetadata", {...metadata.value, ...(metadata.concurrency?.limit === 0 ? {concurrency: null} : metadata)});
-            store.dispatch("flow/onSaveMetadata");
-            store.dispatch("flow/validateFlow", {flow: flowYaml.value});
-        } else {
-            store.commit("flow/setMetadata", metadata.concurrency?.limit === 0 ?  {concurrency: null} : metadata);
-        }
+    const validateFlow = debounce(() => {
+        store.dispatch("flow/validateFlow", {flow: flowYaml.value});
+    }, 500);
+
+    const onUpdateMetadata = (metadata: any) => {
+        store.commit("flow/setMetadata", {
+            ...metadata.value,
+            ...((metadata.concurrency?.limit ?? -1) === 0 ? {
+                concurrency: null
+            } : metadata)});
+        store.dispatch("flow/onSaveMetadata");
+        validateFlow()
+        store.commit("editor/setTabDirty", {
+            name: "Flow",
+            dirty: true
+        });
     };
+
+    const timeout = ref();
 
     const editorUpdate = (source: string) => {
         store.commit("flow/setFlowYaml", source);
+        store.commit("flow/setHaveChange", true);
+        validateFlow();
+        store.commit("editor/setTabDirty", {
+            name: "Flow",
+            dirty: true
+        });
+
+        // throttle the trigger of the flow update
+        clearTimeout(timeout.value);
+        timeout.value = setTimeout(() => {
+            store.dispatch("flow/onEdit", {
+                source,
+                currentIsFlow: true,
+                topologyVisible: true,
+            });
+        }, 1000);
     };
 
     const handleReorder = (source: string) => {
         store.commit("flow/setFlowYaml", source);
         store.commit("flow/setHaveChange", true)
         store.dispatch("flow/save", {content: source});
-    };
-
-    const updatePluginDocumentation = (event: string | undefined, task: any) => {
-        store.dispatch("plugin/updateDocumentation", {event,task});
     };
 </script>

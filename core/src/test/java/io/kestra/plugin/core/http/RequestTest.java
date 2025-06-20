@@ -2,13 +2,13 @@ package io.kestra.plugin.core.http;
 
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.http.client.HttpClientRequestException;
 import io.kestra.core.http.client.HttpClientResponseException;
 import io.kestra.core.http.client.configurations.*;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
@@ -36,6 +36,7 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -43,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @KestraTest
 class RequestTest {
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Inject
     private StorageInterface storageInterface;
@@ -58,7 +59,7 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/hello"))
+                .uri(Property.ofValue(server.getURL().toString() + "/hello"))
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -78,8 +79,8 @@ class RequestTest {
         Request task = Request.builder()
             .id(RequestTest.class.getSimpleName())
             .type(RequestTest.class.getName())
-            .uri(Property.of(url))
-            .method(Property.of("HEAD"))
+            .uri(Property.ofValue(url))
+            .method(Property.ofValue("HEAD"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -98,8 +99,8 @@ class RequestTest {
         Request task = Request.builder()
             .id(RequestTest.class.getSimpleName())
             .type(RequestTest.class.getName())
-            .uri(Property.of(url))
-            .method(Property.of("HEAD"))
+            .uri(Property.ofValue(url))
+            .method(Property.ofValue("HEAD"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -122,7 +123,7 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/redirect"))
+                .uri(Property.ofValue(server.getURL().toString() + "/redirect"))
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -144,9 +145,9 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/redirect"))
+                .uri(Property.ofValue(server.getURL().toString() + "/redirect"))
                 .options(HttpConfiguration.builder()
-                    .followRedirects(Property.of(false))
+                    .followRedirects(Property.ofValue(false))
                     .build()
                 )
                 .build();
@@ -169,9 +170,9 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/hello417"))
+                .uri(Property.ofValue(server.getURL().toString() + "/hello417"))
                 .options(HttpConfiguration.builder()
-                    .allowFailed(Property.of(true))
+                    .allowFailed(Property.ofValue(true))
                     .build()
                 )
                 .build();
@@ -195,7 +196,7 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/hello417"))
+                .uri(Property.ofValue(server.getURL().toString() + "/hello417"))
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -219,11 +220,11 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/markdown"))
-                .method(Property.of("POST"))
-                .body(Property.of("# hello web!"))
-                .contentType(Property.of("text/markdown"))
-                .options(HttpConfiguration.builder().defaultCharset(Property.of(null)).build())
+                .uri(Property.ofValue(server.getURL().toString() + "/markdown"))
+                .method(Property.ofValue("POST"))
+                .body(Property.ofValue("# hello web!"))
+                .contentType(Property.ofValue("text/markdown"))
+                .options(HttpConfiguration.builder().defaultCharset(Property.ofValue(null)).build())
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -250,10 +251,10 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/hello"))
+                .uri(Property.ofValue(server.getURL().toString() + "/hello"))
                 .options(HttpConfiguration.builder()
-                    .timeout(TimeoutConfiguration.builder().readIdleTimeout(Property.of(Duration.ofSeconds(30))).build())
-                    .ssl(SslOptions.builder().insecureTrustAllCertificates(Property.of(true)).build())
+                    .timeout(TimeoutConfiguration.builder().readIdleTimeout(Property.ofValue(Duration.ofSeconds(30))).build())
+                    .ssl(SslOptions.builder().insecureTrustAllCertificates(Property.ofValue(true)).build())
                     .build()
                 )
                 .build();
@@ -277,10 +278,10 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/hello"))
+                .uri(Property.ofValue(server.getURL().toString() + "/hello"))
                 .options(HttpConfiguration.builder()
-                    .allowFailed(Property.of(true))
-                    .timeout(TimeoutConfiguration.builder().readIdleTimeout(Property.of(Duration.ofSeconds(30))).build())
+                    .allowFailed(Property.ofValue(true))
+                    .timeout(TimeoutConfiguration.builder().readIdleTimeout(Property.ofValue(Duration.ofSeconds(30))).build())
                     .build()
                 )
                 .build();
@@ -306,9 +307,9 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .method(Property.of("POST"))
-                .uri(Property.of(server.getURL().toString() + "/post/json"))
-                .body(Property.of(JacksonMapper.ofJson().writeValueAsString(ImmutableMap.of("hello", "world"))))
+                .method(Property.ofValue("POST"))
+                .uri(Property.ofValue(server.getURL().toString() + "/post/json"))
+                .body(Property.ofValue(JacksonMapper.ofJson().writeValueAsString(ImmutableMap.of("hello", "world"))))
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
@@ -330,13 +331,13 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .method(Property.of("POST"))
-                .contentType(Property.of(MediaType.APPLICATION_FORM_URLENCODED))
-                .uri(Property.of(server.getURL().toString() + "/post/url-encoded"))
-                .headers(Property.of(Map.of(
+                .method(Property.ofValue("POST"))
+                .contentType(Property.ofValue(MediaType.APPLICATION_FORM_URLENCODED))
+                .uri(Property.ofValue(server.getURL().toString() + "/post/url-encoded"))
+                .headers(Property.ofValue(Map.of(
                     "test", "{{ inputs.test }}"
                 )))
-                .formData(Property.of(ImmutableMap.of("hello", "world")))
+                .formData(Property.ofValue(ImmutableMap.of("hello", "world")))
                 .build();
 
 
@@ -356,7 +357,7 @@ class RequestTest {
         File file = new File(Objects.requireNonNull(RequestTest.class.getClassLoader().getResource("application-test.yml")).toURI());
 
         URI fileStorage = storageInterface.put(
-            null,
+            MAIN_TENANT,
             null,
             new URI("/" + FriendlyId.createFriendlyId()),
             new FileInputStream(file)
@@ -370,10 +371,10 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .method(Property.of("POST"))
-                .contentType(Property.of(MediaType.MULTIPART_FORM_DATA))
-                .uri(Property.of(server.getURL().toString() + "/post/multipart"))
-                .formData(Property.of(ImmutableMap.of("hello", "world", "file", fileStorage.toString())))
+                .method(Property.ofValue("POST"))
+                .contentType(Property.ofValue(MediaType.MULTIPART_FORM_DATA))
+                .uri(Property.ofValue(server.getURL().toString() + "/post/multipart"))
+                .formData(Property.ofValue(ImmutableMap.of("hello", "world", "file", fileStorage.toString())))
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -390,7 +391,7 @@ class RequestTest {
         File file = new File(Objects.requireNonNull(RequestTest.class.getClassLoader().getResource("application-test.yml")).toURI());
 
         URI fileStorage = storageInterface.put(
-            null,
+            MAIN_TENANT,
             null,
             new URI("/" + FriendlyId.createFriendlyId()),
             new FileInputStream(file)
@@ -404,10 +405,10 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .method(Property.of("POST"))
-                .contentType(Property.of(MediaType.MULTIPART_FORM_DATA))
-                .uri(Property.of(server.getURL().toString() + "/post/multipart"))
-                .formData(Property.of(ImmutableMap.of("hello", "world", "file", ImmutableMap.of("content", fileStorage.toString(), "name", "test.yml"))))
+                .method(Property.ofValue("POST"))
+                .contentType(Property.ofValue(MediaType.MULTIPART_FORM_DATA))
+                .uri(Property.ofValue(server.getURL().toString() + "/post/multipart"))
+                .formData(Property.ofValue(ImmutableMap.of("hello", "world", "file", ImmutableMap.of("content", fileStorage.toString(), "name", "test.yml"))))
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -429,8 +430,8 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/hello"))
-                .encryptBody(Property.of(true))
+                .uri(Property.ofValue(server.getURL().toString() + "/hello"))
+                .encryptBody(Property.ofValue(true))
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -449,8 +450,8 @@ class RequestTest {
         Request task = Request.builder()
             .id(RequestTest.class.getSimpleName())
             .type(RequestTest.class.getName())
-            .uri(Property.of("https://github.com/kestra-io.png"))
-            .contentType(Property.of("application/octet-stream"))
+            .uri(Property.ofValue("https://github.com/kestra-io.png"))
+            .contentType(Property.ofValue("application/octet-stream"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -472,10 +473,10 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/auth/basic"))
+                .uri(Property.ofValue(server.getURL().toString() + "/auth/basic"))
                 .options(HttpConfiguration.builder()
-                    .auth(BasicAuthConfiguration.builder().username(Property.of("John"))
-                        .password(Property.of("p4ss")).build())
+                    .auth(BasicAuthConfiguration.builder().username(Property.ofValue("John"))
+                        .password(Property.ofValue("p4ss")).build())
                     .build()
                 )
                 .build();
@@ -499,7 +500,7 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/auth/basic"))
+                .uri(Property.ofValue(server.getURL().toString() + "/auth/basic"))
                 .options(HttpConfiguration.builder()
                     .basicAuthUser("John")
                     .basicAuthPassword("p4ss")
@@ -527,9 +528,9 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/auth/bearer"))
+                .uri(Property.ofValue(server.getURL().toString() + "/auth/bearer"))
                 .options(HttpConfiguration.builder()
-                    .auth(BearerAuthConfiguration.builder().token(Property.of(id)).build())
+                    .auth(BearerAuthConfiguration.builder().token(Property.ofValue(id)).build())
                     .build()
                 )
                 .build();
@@ -553,10 +554,10 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/content-type"))
-                .method(Property.of("POST"))
-                .body(Property.of("{}"))
-                .contentType(Property.of("application/vnd.campaignsexport.v1+json"))
+                .uri(Property.ofValue(server.getURL().toString() + "/content-type"))
+                .method(Property.ofValue("POST"))
+                .body(Property.ofValue("{}"))
+                .contentType(Property.ofValue("application/vnd.campaignsexport.v1+json"))
                 .options(HttpConfiguration.builder().logs(HttpConfiguration.LoggingType.values()).defaultCharset(null).build())
                 .build();
 
@@ -579,7 +580,7 @@ class RequestTest {
             Request task = Request.builder()
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/uri with space"))
+                .uri(Property.ofValue(server.getURL().toString() + "/uri with space"))
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());

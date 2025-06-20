@@ -10,11 +10,7 @@ import jakarta.inject.Singleton;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.HashMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,15 +24,18 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         List<QueryFilter> filters = new ArrayList<>();
         Map<QueryFilter.Op, Map<String, String>> labelsByOperation = new HashMap<>(); // Group labels by operation
 
-        queryParams.forEach((key, values) -> {
-            if (!key.startsWith("filters[")) return;
+        for (Map.Entry<String, List<String>> entry : queryParams.entrySet()) {
+            String key = entry.getKey();
+            if (!key.startsWith("filters[")) {
+                continue;
+            }
 
             Matcher matcher = FILTER_PATTERN.matcher(key);
 
             if (matcher.matches()) {
-                parseFilters(values, matcher, filters, labelsByOperation);
+                parseFilters(entry.getValue(), matcher, filters, labelsByOperation);
             }
-        });
+        }
         // Add a QueryFilter for each operation's labels
         labelsByOperation.forEach((operation, labels) -> {
             if (!labels.isEmpty()) {
@@ -75,21 +74,21 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         if (field == QueryFilter.Field.LABELS && nestedKey != null) {
             labelsByOperation.computeIfAbsent(operation, k -> new HashMap<>()).put(nestedKey, values.getFirst());
         } else {
-            Object value = nestedKey != null ? Map.of(nestedKey, values.getFirst()) : getFlatValue(values, field, operation);
-            filters.add(QueryFilter.builder()
+            List<Object> parsedValues = nestedKey != null ? List.of(Map.of(nestedKey, values.getFirst())) : parseValues(values, field, operation);
+            filters.addAll(parsedValues.stream().map(parsedValue -> QueryFilter.builder()
                 .field(field)
                 .operation(operation)
-                .value(value)
-                .build());
+                .value(parsedValue)
+                .build()).toList());
         }
     }
 
-    private static Object getFlatValue(List<String> values, QueryFilter.Field field, QueryFilter.Op operation) {
-        return switch (field) {
-            case SCOPE -> RequestUtils.toFlowScopes(values);
+    private static List<Object> parseValues(List<String> values, QueryFilter.Field field, QueryFilter.Op operation) {
+        return values.stream().map(value -> switch (field) {
+            case SCOPE -> RequestUtils.toFlowScopes(value);
             default -> (operation == QueryFilter.Op.IN || operation == QueryFilter.Op.NOT_IN)
-                ? List.of(URLDecoder.decode(values.getFirst(), StandardCharsets.UTF_8).replaceAll("[\\[\\]]", "").split(","))
-                : values.size() == 1 ? values.getFirst() : values;
-        };
+                ? Arrays.asList(URLDecoder.decode(value, StandardCharsets.UTF_8).replaceAll("[\\[\\]]", "").split(","))
+                : value;
+        }).toList();
     }
 }

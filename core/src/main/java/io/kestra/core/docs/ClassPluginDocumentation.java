@@ -1,9 +1,14 @@
 package io.kestra.core.docs;
 
 import io.kestra.core.plugins.PluginClassAndMetadata;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 @Getter
 @EqualsAndHashCode
@@ -50,7 +55,7 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
         }
 
         if (this.outputsSchema.containsKey("properties")) {
-            this.outputs = flatten(properties(this.outputsSchema), required(this.outputsSchema));
+            this.outputs = flattenWithoutType(properties(this.outputsSchema), required(this.outputsSchema));
         }
 
         // metrics

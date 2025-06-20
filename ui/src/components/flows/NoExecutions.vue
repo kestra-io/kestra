@@ -75,6 +75,11 @@
             canExecute() {
                 return this.flow ? this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace) : false;
             },
+            routeInfo() {
+                return {
+                    title: this.$t("flows")
+                }
+            }
         },
     };
 </script>
@@ -87,10 +92,8 @@
     background-size: 5000px 300px;
     background-position: top center;
     background-repeat: no-repeat;
-	height: 100vh;
+	height: 100%;
 	width: auto;
-	display: flex;
-	flex-direction: column;
 	container-type: inline-size;
 
     @media (min-width: 768px) {

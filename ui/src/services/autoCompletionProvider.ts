@@ -2,7 +2,7 @@ import {YamlElement} from "@kestra-io/ui-libs";
 
 export const QUOTE = "'";
 
-export class YamlNoAutoCompletion {
+export class YamlAutoCompletion {
     rootFieldAutoCompletion(): Promise<string[]> {
         return Promise.resolve([]);
     }

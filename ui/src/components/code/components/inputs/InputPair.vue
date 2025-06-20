@@ -1,27 +1,36 @@
 <template>
     <span v-if="required" class="me-1 text-danger">*</span>
-    <span class="label">{{ label }}</span>
+    <span v-if="label" class="label">{{ label }}</span>
+    <el-alert
+        v-if="alertState.visible"
+        :title="alertState.message"
+        type="error"
+        show-icon
+        :closable="false"
+        class="mb-2"
+    />
     <div class="mt-1 mb-2 w-100 wrapper">
         <el-row
-            v-for="(value, key, index) in props.modelValue"
+            v-for="(pair, index) in internalPairs"
             :key="index"
             :gutter="10"
         >
             <el-col :span="8">
                 <InputText
-                    :model-value="key"
+                    :model-value="pair[0]"
                     :placeholder="t('key')"
-                    @update:model-value="(changed) => updateKey(key, changed)"
+                    @update:model-value="(changed) => handleKeyInput(index, changed)"
+                    :have-error="duplicatedKeys.includes(pair[0])"
                 />
             </el-col>
             <el-col :span="16" class="d-flex">
                 <InputText
-                    :model-value="value"
+                    :model-value="pair[1]"
                     :placeholder="t('value')"
-                    @update:model-value="(changed) => updateValue(key, changed)"
+                    @update:model-value="(changed) => updateValue(index, changed)"
                     class="w-100 me-2"
                 />
-                <DeleteOutline @click="removePair(key)" class="delete" />
+                <DeleteOutline @click="removePair(index)" class="delete" />
             </el-col>
         </el-row>
 
@@ -30,8 +39,7 @@
 </template>
 
 <script setup lang="ts">
-    import {PropType} from "vue";
-
+    import {watch, computed, ref} from "vue";
     import {PairField} from "../../utils/types";
 
     import {DeleteOutline} from "../../utils/icons";
@@ -42,56 +50,83 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    const emits = defineEmits(["update:modelValue"]);
-    const props = defineProps({
-        modelValue: {
-            type: Object as PropType<PairField["value"][]>,
-            default: undefined,
-        },
-        label: {type: String, required: true},
-        property: {type: String, default: undefined},
-        required: {type: Boolean, default: false},
+    defineOptions({
+        name: "InputPair",
+        inheritAttrs: false,
     });
 
-    const addPair = () => {
-        emits("update:modelValue", {...props.modelValue, "": ""});
-    };
-    const removePair = (key: any) => {
-        const values = {...props.modelValue};
-        delete values[key];
+    const emit = defineEmits(["update:modelValue"]);
+    const props = defineProps<{
+        modelValue?: PairField["value"],
+        label?: string,
+        property?: string,
+        required?: boolean
+    }>();
 
-        emits("update:modelValue", values);
-    };
-    const updateKey = (old, changed) => {
-        const values = {...props.modelValue};
+    const internalPairs = ref<[string, string | undefined][]>([])
 
-        // Create an array of key-value pairs and preserve order
-        const entries = Object.entries(values);
+    // this flag will avoid updating the modelValue when the
+    // change was initiated in the component itself
+    const localEdit = ref(false);
 
-        // Find the index of the old key
-        const index = entries.findIndex(([key]) => key === old);
+    const duplicatedKeys = computed(() => {
+        return internalPairs.value.map(pair => pair[0])
+            .filter((key, index, self) =>
+                self.indexOf(key) !== index
+            );
+    });
 
-        if (index !== -1) {
-            // Get the value of the old key
-            const [, value] = entries[index];
-
-            // Remove the old key from the entries
-            entries.splice(index, 1);
-
-            // Add the new key with the same value
-            entries.splice(index, 0, [changed, value]);
-
-            // Rebuild the object while keeping the order
-            const updatedValues = Object.fromEntries(entries);
-
-            // Emit the updated object
-            emits("update:modelValue", updatedValues);
+    const alertState = computed(() => {
+        if(duplicatedKeys.value.length > 0){
+            return {
+                visible: true,
+                message: t("duplicate-pair", {label: props.label ?? t("key"), key: duplicatedKeys.value[0]}),
+            }
         }
+        return {
+            visible: false,
+            message: "",
+        };
+    });
+
+    watch(() => props.modelValue, (newValue) => {
+        // If the alert is visible, we don't want to update the pairs
+        // because it would delete problem line silently.
+        if (alertState.value.visible || localEdit.value) {
+            return;
+        }
+        localEdit.value = false;
+        internalPairs.value = Object.entries(newValue || {});
+    }, {
+        deep: true,
+        immediate: true
+    });
+
+
+
+    function updateModel() {
+        localEdit.value = true;
+        emit("update:modelValue", Object.fromEntries(internalPairs.value.filter(pair => pair[0] !== "" && pair[1] !== undefined)));
+    }
+
+    function handleKeyInput(index: number, newValue: string) {
+        internalPairs.value[index][0] = newValue.toString();
+        updateModel()
     };
-    const updateValue = (key, value) => {
-        const values = {...props.modelValue};
-        values[key] = value;
-        emits("update:modelValue", values);
+
+    function addPair() {
+        internalPairs.value.push(["", undefined])
+        updateModel()
+    };
+
+    function removePair (pairId: number) {
+        internalPairs.value.splice(pairId, 1);
+        updateModel()
+    };
+
+    function updateValue (pairId: number, newValue: string){
+        internalPairs.value[pairId][1] = newValue;
+        updateModel()
     };
 </script>
 

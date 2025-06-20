@@ -48,7 +48,7 @@ public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallbac
         for (String path : loadFlows.value()) {
             URL resource = loadFile(path);
 
-            TestsUtils.loads(repositoryLoader, resource);
+            TestsUtils.loads(loadFlows.tenantId(), repositoryLoader, resource);
         }
     }
 

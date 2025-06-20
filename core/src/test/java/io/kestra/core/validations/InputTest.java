@@ -22,7 +22,7 @@ class InputTest {
             .validator("[A-Z]+")
             .build();
 
-        assertThat(modelValidator.isValid(validInput).isEmpty()).isEqualTo(true);
+        assertThat(modelValidator.isValid(validInput).isEmpty()).isTrue();
     }
 
     @SuppressWarnings("deprecation")

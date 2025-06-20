@@ -28,11 +28,11 @@ class JsonStringTest {
     void jsonString() throws Exception {
         JsonStringCls build = new JsonStringCls("{}");
 
-        assertThat(modelValidator.isValid(build).isEmpty()).isEqualTo(true);
+        assertThat(modelValidator.isValid(build).isEmpty()).isTrue();
 
         build = new JsonStringCls("{\"invalid\"}");
 
-        assertThat(modelValidator.isValid(build).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(build).isPresent()).isTrue();
         assertThat(modelValidator.isValid(build).get().getMessage()).contains("invalid json");
     }
 }

@@ -84,8 +84,18 @@
                     </Column>
                 </Row>
                 <Row>
-                    <Column :label="$t('settings.blocks.configuration.fields.multi_panel_editor')">
-                        <el-switch :aria-label="$t('settings.blocks.configuration.fields.multi_panel_editor')" :model-value="pendingSettings.multiPanelEditor" @update:model-value="onMultiPanelEditor" />
+                    <Column :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')">
+                        <el-input-number
+                            :model-value="pendingSettings.autoRefreshInterval"
+                            @update:model-value="onAutoRefreshInterval"
+                            controls-position="right"
+                            :min="2"
+                            :max="120"
+                        >
+                            <template #suffix>
+                                <small class="dimmed">{{ $t('seconds').toLowerCase() }}</small>
+                            </template>
+                        </el-input-number>
                     </Column>
                 </Row>
             </template>
@@ -98,20 +108,6 @@
                         <el-select :model-value="pendingSettings.theme" @update:model-value="onTheme">
                             <el-option
                                 v-for="item in themesOptions"
-                                :key="item.value"
-                                :label="item.text"
-                                :value="item.value"
-                            />
-                        </el-select>
-                    </Column>
-
-                    <Column :label="$t('settings.blocks.theme.fields.chart_color_scheme.label')">
-                        <el-select :model-value="pendingSettings.chartColor" @update:model-value="onChartColor">
-                            <el-option
-                                v-for="item in [
-                                    {value: 'classic', text: $t('settings.blocks.theme.fields.chart_color_scheme.classic')},
-                                    {value: 'kestra', text: $t('settings.blocks.theme.fields.chart_color_scheme.kestra')}
-                                ]"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
@@ -289,7 +285,6 @@
                     editorType: undefined,
                     lang: undefined,
                     theme: undefined,
-                    chartColor: undefined,
                     dateFormat: undefined,
                     timezone: undefined,
                     autofoldTextEditor: undefined,
@@ -300,12 +295,11 @@
                     envName: undefined,
                     envColor: undefined,
                     executeDefaultTab: undefined,
-                    multiPanelEditor: undefined,
+                    autoRefreshInterval: undefined,
                     flowDefaultTab: undefined,
                     logsFontSize: undefined
                 },
                 settingsKeyMapping: {
-                    chartColor: "scheme",
                     dateFormat: DATE_FORMAT_STORAGE_KEY,
                     timezone: TIMEZONE_STORAGE_KEY,
                     executeFlowBehaviour: storageKeys.EXECUTE_FLOW_BEHAVIOUR,
@@ -332,10 +326,6 @@
             this.pendingSettings.lang = Utils.getLang();
             this.pendingSettings.theme = Utils.getTheme();
 
-            let scheme = localStorage.getItem("scheme") || "classic";
-            if(scheme === "default") scheme = "classic";
-            this.pendingSettings.chartColor =  scheme
-
             this.pendingSettings.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
             this.pendingSettings.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.pendingSettings.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
@@ -349,7 +339,7 @@
             this.pendingSettings.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
             this.pendingSettings.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
-            this.pendingSettings.multiPanelEditor = localStorage.getItem("multiPanelEditor") === "true";
+            this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10;
             this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
         },
         methods: {
@@ -358,7 +348,7 @@
             },
             async confirmNavigation() {
                 if (!this.hasUnsavedChanges) return true;
-                
+
                 try {
                     await this.$confirm(
                         this.$t("settings.blocks.save.unsaved_warning"),
@@ -395,7 +385,7 @@
                 if (this.hasUnsavedChanges) {
                     e.preventDefault();
                     e.stopPropagation();
-                    
+
                     const shouldNavigate = await this.confirmNavigation();
                     if (shouldNavigate) {
                         const href = link.getAttribute("href");
@@ -434,10 +424,6 @@
             },
             onTimezone(value) {
                 this.pendingSettings.timezone = value;
-                this.checkForChanges();
-            },
-            onChartColor(value) {
-                this.pendingSettings.chartColor = value;
                 this.checkForChanges();
             },
             onAutofoldTextEditor(value) {
@@ -486,8 +472,8 @@
                 this.pendingSettings.executeDefaultTab = value;
                 this.checkForChanges();
             },
-            onMultiPanelEditor(value) {
-                this.pendingSettings.multiPanelEditor = value;
+            onAutoRefreshInterval(value) {
+                this.pendingSettings.autoRefreshInterval = value;
                 this.checkForChanges();
             },
             onFlowDefaultTabChange(value){
@@ -572,7 +558,7 @@
         mounted() {
             const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
             mediaQuery.addEventListener("change", this.updateThemeBasedOnSystem);
-            
+
             window.addEventListener("beforeunload", this.handleBeforeUnload);
             document.addEventListener("click", this.handleNavigationClick, true); // Use capture phase
         },
@@ -583,6 +569,9 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapGetters("misc", ["configs"]),
+            ...mapState({
+                mappedTheme: state => state.misc.theme
+            }),
             routeInfo() {
                 return {
                     title: this.$t("settings.label")
@@ -740,13 +729,25 @@
                     },
                 ]
             }
-        }
+        },
+        watch: {
+            mappedTheme: {
+                handler() {
+                    this.pendingSettings.theme = Utils.getTheme();
+                },
+                immediate: true,
+            },
+        },
     };
 </script>
-<style>
-
+<style lang="scss">
     .settings-wrapper .el-input-number {
         max-width: 20vw;
+
+        & .el-input__suffix {
+            color: var(--ks-content-secondary);
+        }
+
     }
 
     .el-input__count {

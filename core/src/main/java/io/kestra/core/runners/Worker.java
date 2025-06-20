@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -19,7 +18,9 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.*;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.services.LogService;
+import io.kestra.core.services.VariablesService;
 import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
@@ -70,7 +71,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private static final String SERVICE_PROPS_WORKER_GROUP = "worker.group";
 
     @Inject
-    private WorkerJobQueueInterface workerJobQueue;
+    @Named(QueueFactoryInterface.WORKERJOB_NAMED)
+    private QueueInterface<WorkerJob> workerJobQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
@@ -113,6 +115,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @Inject
     private WorkerSecurityService workerSecurityService;
+
+    @Inject
+    private VariablesService variablesService;
 
     private final Set<String> killedExecution = ConcurrentHashMap.newKeySet();
 
@@ -223,6 +228,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
             if (state != null && state != ExecutionKilled.State.EXECUTED) {
                 return;
             }
+
+            metricRegistry
+                .counter(MetricRegistry.METRIC_WORKER_KILLED_COUNT, MetricRegistry.METRIC_WORKER_KILLED_COUNT_DESCRIPTION, metricRegistry.tags(executionKilled.getLeft()))
+                .increment();
 
             synchronized (this) {
                 if (executionKilled.getLeft() instanceof ExecutionKilledExecution executionKilledExecution) {
@@ -384,7 +393,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                             workerTaskResult = this.run(currentWorkerTask, false);
                         }
                     } catch (IllegalVariableEvaluationException e) {
-                        RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask.getTaskRun(), currentWorkerTask.getTask());
+                        RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
                         contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
                     } catch (QueueException e) {
                         log.error("Unable to emit the worker task result for task {} taskrun {}", currentWorkerTask.getTask().getId(), currentWorkerTask.getTaskRun().getId(), e);
@@ -684,10 +693,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
             TaskRun failed = workerTask.fail();
             if (e instanceof MessageTooBigException) {
                 // If it's a message too big, we remove the outputs
-                failed = failed.withOutputs(Collections.emptyMap());
+                failed = failed.withOutputs(Variables.empty());
             }
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(failed);
-            RunContextLogger contextLogger = runContextLoggerFactory.create(workerTask.getTaskRun(), workerTask.getTask());
+            RunContextLogger contextLogger = runContextLoggerFactory.create(workerTask);
             contextLogger.logger().error("Unable to emit the worker task result to the queue: {}", e.getMessage(), e);
             try {
                 this.workerTaskResultQueue.emit(workerTaskResult);
@@ -767,8 +776,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         if (!(workerTask.getTask() instanceof RunnableTask<?> task)) {
             // This should never happen but better to deal with it than crashing the Worker
-            var state = workerTask.getTask().isAllowFailure() ? workerTask.getTask().isAllowWarning() ? SUCCESS : WARNING : FAILED;
-            TaskRunAttempt attempt = TaskRunAttempt.builder().state(new io.kestra.core.models.flows.State().withState(state)).build();
+            var state = State.Type.fail(workerTask.getTask());
+            TaskRunAttempt attempt = TaskRunAttempt.builder()
+                .state(new io.kestra.core.models.flows.State().withState(state))
+                .workerId(this.id)
+                .build();
             List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
             TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts);
             logger.error("Unable to execute the task '" + workerTask.getTask().getId() +
@@ -777,7 +789,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
 
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
-            .state(new io.kestra.core.models.flows.State().withState(RUNNING));
+            .state(new io.kestra.core.models.flows.State().withState(RUNNING))
+            .workerId(this.id);
 
         // emit the attempt so the execution knows that the task is in RUNNING
         this.workerTaskResultQueue.emit(new WorkerTaskResult(
@@ -804,7 +817,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         // metrics
         runContext.metrics().forEach(metric -> {
             try {
-                this.metricEntryQueue.emit(MetricEntry.of(workerTask.getTaskRun(), metric));
+                this.metricEntryQueue.emit(MetricEntry.of(workerTask.getTaskRun(), metric, workerTask.getExecutionKind()));
             } catch (QueueException e) {
                 // fail silently
             }
@@ -817,7 +830,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
             .withAttempts(attempts);
 
         try {
-            taskRun = taskRun.withOutputs(workerTaskCallable.getTaskOutput() != null ? workerTaskCallable.getTaskOutput().toMap() : ImmutableMap.of());
+            Variables variables = variablesService.of(StorageContext.forTask(taskRun), workerTaskCallable.getTaskOutput());
+            taskRun = taskRun.withOutputs(variables);
         } catch (Exception e) {
             logger.warn("Unable to save output on taskRun '{}'", taskRun, e);
         }

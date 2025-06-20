@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
@@ -15,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @KestraTest
 class RunContextPropertyTest {
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void asShouldReturnEmptyForNullProperty() throws IllegalVariableEvaluationException {

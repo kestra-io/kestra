@@ -9,9 +9,7 @@ import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.core.services.LogStreamingService;
 import io.kestra.webserver.utils.PageableUtils;
-import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
-import io.kestra.webserver.utils.TimeLineSearch;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
@@ -37,11 +35,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static io.kestra.core.utils.DateUtils.validateTimeline;
-
 
 @Validated
-@Controller("/api/v1/")
+@Controller("/api/v1/{tenant}/logs")
 @Requires(beans = LogRepositoryInterface.class)
 public class LogController {
     @Inject
@@ -57,9 +53,9 @@ public class LogController {
     private LogStreamingService logStreamingService;
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "logs/search")
+    @Get(uri = "/search")
     @Operation(tags = {"Logs"}, summary = "Search for logs")
-    public PagedResults<LogEntry> find(
+    public PagedResults<LogEntry> searchLogs(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
@@ -73,32 +69,23 @@ public class LogController {
         @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate
     ) throws HttpStatusException {
-        // If filters is empty, map old params to QueryFilter
-        if (filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                triggerId,
-                minLevel,
-                startDate,
-                endDate,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null);
-        }
-        final ZonedDateTime now = ZonedDateTime.now();
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            triggerId,
+            minLevel,
+            startDate,
+            endDate,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
 
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
-        validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
-
-        ZonedDateTime resolvedStartDate = timeLineSearch.getStartDate();
-
-        // Update filters with the resolved startDate
-        filters = QueryFilterUtils.updateFilters(filters, resolvedStartDate);
         return PagedResults.of(logRepository.find(
             PageableUtils.from(page, size, sort),
             tenantService.resolveTenant(),
@@ -107,9 +94,9 @@ public class LogController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "logs/{executionId}")
+    @Get(uri = "/{executionId}")
     @Operation(tags = {"Logs"}, summary = "Get logs for a specific execution, taskrun or task")
-    public List<LogEntry> findByExecution(
+    public List<LogEntry> listLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
@@ -128,9 +115,9 @@ public class LogController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "logs/{executionId}/download", produces = MediaType.TEXT_PLAIN)
+    @Get(uri = "/{executionId}/download", produces = MediaType.TEXT_PLAIN)
     @Operation(tags = {"Logs"}, summary = "Download logs for a specific execution, taskrun or task")
-    public StreamedFile download(
+    public StreamedFile downloadLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
@@ -150,9 +137,9 @@ public class LogController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "logs/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
+    @Get(uri = "/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = {"Logs"}, summary = "Follow logs for a specific execution")
-    public Flux<Event<LogEntry>> follow(
+    public Flux<Event<LogEntry>> followLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel
     ) {
@@ -174,9 +161,9 @@ public class LogController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "logs/{executionId}")
+    @Delete(uri = "/{executionId}")
     @Operation(tags = {"Logs"}, summary = "Delete logs for a specific execution, taskrun or task")
-    public void delete(
+    public void deleteLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
@@ -187,9 +174,9 @@ public class LogController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "logs/{namespace}/{flowId}")
+    @Delete(uri = "/{namespace}/{flowId}")
     @Operation(tags = {"Logs"}, summary = "Delete logs for a specific execution, taskrun or task")
-    public void deleteFromFlow(
+    public void deleteLogsFromFlow(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow identifier") @PathVariable String flowId,
         @Parameter(description = "The trigger id") @Nullable @QueryValue String triggerId

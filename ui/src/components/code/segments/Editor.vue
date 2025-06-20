@@ -1,108 +1,122 @@
 <template>
     <div class="p-4">
-        <template v-if="!route.query.section && !route.query.identifier">
-            <template v-if="panel">
-                <component
-                    :is="panel.type"
-                    :model-value="panel.props.modelValue"
-                    v-bind="panel.props"
-                    @update:model-value="
-                        (value: any) => emits('updateMetadata', 'inputs', value)
-                    "
-                />
-            </template>
+        <template v-if="panel">
+            <MetadataInputsContent
+                :inputs="metadata.inputs"
+                :label="t('inputs')"
+                :selected-index="panel.props.selectedIndex"
+                @update:inputs="
+                    (value: any) => emits('updateMetadata', 'inputs', value)
+                "
+            />
+        </template>
 
-            <template v-else>
-                <component
-                    v-for="(v, k) in mainFields"
-                    :key="k"
-                    :is="v.component"
-                    v-model="v.value"
-                    v-bind="trimmed(v)"
-                    @update:model-value="emits('updateMetadata', k, v.value)"
+        <template v-else-if="!creatingTask && !editingTask">
+            <el-form label-position="top" v-if="fieldsFromSchema.length">
+                <TaskWrapper :key="v.root" v-for="(v) in fieldsFromSchema.slice(0, 3)" :merge="shouldMerge(v.schema)">
+                    <template #tasks>
+                        <TaskObjectField
+                            v-bind="v"
+                            @update:model-value="updateMetadata(v.root, $event)"
+                        />
+                    </template>
+                </TaskWrapper>
+
+                <MetadataInputs
+                    v-if="flowSchemaProperties.inputs"
+                    :label="t('no_code.fields.general.inputs')"
+                    :model-value="metadata.inputs"
+                    :required="flowSchema.required?.includes('inputs')"
+                    @update:model-value="updateMetadata('inputs', $event)"
                 />
 
                 <hr class="my-4">
 
                 <Collapse
-                    :items="sections"
-                    creation
-                    :flow
+                    v-for="(section, index) in sections"
+                    :key="index"
+                    v-bind="section"
                     @remove="(yaml) => emits('updateTask', yaml)"
                     @reorder="(yaml) => emits('reorder', yaml)"
                 />
 
                 <hr class="my-4">
 
-                <component
-                    v-for="(v, k) in otherFields"
-                    :key="k"
-                    :is="v.component"
-                    v-model="v.value"
-                    v-bind="trimmed(v)"
-                    @update:model-value="emits('updateMetadata', k, v.value)"
+                <TaskWrapper :key="v.root" v-for="(v) in fieldsFromSchema.slice(4)" :merge="shouldMerge(v.schema)">
+                    <template #tasks>
+                        <TaskObjectField
+                            v-bind="v"
+                            @update:model-value="updateMetadata(v.root, $event)"
+                        />
+                    </template>
+                </TaskWrapper>
+            </el-form>
+            <template v-else>
+                <el-skeleton
+                    animated
+                    :rows="4"
+                    :throttle="{leading: 500, initVal: true}"
+                />
+                <hr class="my-4">
+                <el-skeleton
+                    animated
+                    :rows="6"
+                    :throttle="{leading: 500, initVal: true}"
+                />
+                <hr class="my-4">
+                <el-skeleton
+                    animated
+                    :rows="5"
+                    :throttle="{leading: 500, initVal: true}"
                 />
             </template>
         </template>
 
         <Task
             v-else
-            :key="taskIdentifier"
-            :identifier="taskIdentifier"
-            :flow
-            :creation
-            @update-task="(yaml) => emits('updateTask', yaml)"
-            @update-documentation="(task) => emits('updateDocumentation', task)"
+            @update-task="onTaskUpdate"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {watch, computed} from "vue";
+    import {onMounted, computed, inject, ref} from "vue";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
-    import {Field, Fields, CollapseItem} from "../utils/types";
+    import {CollapseItem, NoCodeElement, BlockType} from "../utils/types";
 
     import Collapse from "../components/collapse/Collapse.vue";
-    import InputText from "../components/inputs/InputText.vue";
-    import InputSwitch from "../components/inputs/InputSwitch.vue";
-    import InputPair from "../components/inputs/InputPair.vue";
 
-    import Editor from "../../inputs/Editor.vue";
     import MetadataInputs from "../../flows/MetadataInputs.vue";
-    import TaskBasic from "../../flows/tasks/TaskBasic.vue";
+    import MetadataInputsContent from "../../flows/MetadataInputsContent.vue";
+    import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
+    import InitialSchema from "./flow-schema.json"
+
+
+    import {
+        CREATING_TASK_INJECTION_KEY, EDITING_TASK_INJECTION_KEY,
+        FLOW_INJECTION_KEY, PANEL_INJECTION_KEY,
+    } from "../injectionKeys";
 
     import Task from "./Task.vue";
 
-    import {useRoute} from "vue-router";
-    const route = useRoute();
+    const panel = inject(PANEL_INJECTION_KEY, ref());
 
-    const taskIdentifier = computed(
-        () => route.query.identifier?.toString() ?? "new",
-    );
+    const editingTask = inject(EDITING_TASK_INJECTION_KEY, false);
 
-    watch(
-        () => route.query,
-        async (newQuery) => {
-            if (!newQuery?.section && !newQuery?.identifier) {
-                emits("updateDocumentation", null);
-            }
-        },
-        {deep: true},
-    );
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
     import {useStore} from "vuex";
+    import TaskWrapper from "../../flows/tasks/TaskWrapper.vue";
+    import {removeNullAndUndefined} from "../utils/cleanUp";
     const store = useStore();
-
-    const panel = computed(() => store.state.code.panel);
 
     const emits = defineEmits([
         "save",
         "updateTask",
         "updateMetadata",
-        "updateDocumentation",
         "reorder",
     ]);
 
@@ -113,159 +127,134 @@
         }
     };
 
+    function shouldMerge(schema: any): boolean {
+        const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf;
+        return !complexObject
+    }
+
+    function updateMetadata(key: string, val: any) {
+        const realValue = val === null || val === undefined ? undefined :
+            // allow array to be created with null values (specifically for metadata)
+            // metadata do not use a buffer value, so each change needs to be reflected in the code,
+            // for TaskKvPair.vue (object) we added the buffer value in the input component
+            typeof val === "object" && !Array.isArray(val) ? removeNullAndUndefined(val) :
+            val; // Handle null values
+
+        emits("updateMetadata", key, realValue);
+    }
+
     document.addEventListener("keydown", saveEvent);
 
+    const creatingFlow = computed(() => {
+        return store.state.flow.isCreating;
+    });
+
+    const creatingTask = inject(CREATING_TASK_INJECTION_KEY);
+    const flow = inject(FLOW_INJECTION_KEY, ref(""));
+
     const props = defineProps({
-        creation: {type: Boolean, default: false},
-        flow: {type: String, required: true},
         metadata: {type: Object, required: true},
     });
 
-    const trimmed = (field: Field) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {component, value, ...rest} = field;
+    function onTaskUpdate(yaml: string) {
+        emits("updateTask", yaml)
+    }
 
-        return rest;
-    };
+    const schema = ref<{
+        definitions?: any,
+        $ref?: string,
+    }>(InitialSchema)
 
-    const fields = computed<Fields>(() => {
-        return {
-            id: {
-                component: InputText,
-                value: props.metadata.id,
-                label: t("no_code.fields.main.flow_id"),
-                required: true,
-                disabled: !props.creation,
-            },
-            namespace: {
-                component: InputText,
-                value: props.metadata.namespace,
-                label: t("no_code.fields.main.namespace"),
-                required: true,
-                disabled: !props.creation,
-            },
-            description: {
-                component: InputText,
-                value: props.metadata.description,
-                label: t("no_code.fields.main.description"),
-            },
-            retry: {
-                component: Editor,
-                value: props.metadata.retry,
-                label: t("no_code.fields.general.retry"),
-                navbar: false,
-                input: true,
-                lang: "yaml",
-                shouldFocus: false,
-                showScroll: true,
-                style: {height: "100px"},
-            },
-            labels: {
-                component: InputPair,
-                value: props.metadata.labels,
-                label: t("no_code.fields.general.labels"),
-                property: t("no_code.labels.label"),
-            },
-            inputs: {
-                component: MetadataInputs,
-                value: props.metadata.inputs,
-                label: t("no_code.fields.general.inputs"),
-                inputs: props.metadata.inputs ?? [],
-            },
-            outputs: {
-                component: Editor,
-                value: props.metadata.outputs,
-                label: t("no_code.fields.general.outputs"),
-                navbar: false,
-                input: true,
-                lang: "yaml",
-                shouldFocus: false,
-                showScroll: true,
-                style: {height: "100px"},
-            },
-            variables: {
-                component: InputPair,
-                value: props.metadata.variables,
-                label: t("no_code.fields.general.variables"),
-                property: t("no_code.labels.variable"),
-            },
-            concurrency: {
-                component: TaskBasic,
-                value: props.metadata.concurrency,
-                label: t("no_code.fields.general.concurrency"),
-                // TODO: Pass schema for concurrency dynamically
-                schema: {
-                    type: "object",
-                    properties: {
-                        behavior: {
-                            type: "string",
-                            enum: ["QUEUE", "CANCEL", "FAIL"],
-                            default: "QUEUE",
-                            markdownDescription: "Default value is : `QUEUE`",
-                        },
-                        limit: {type: "integer", exclusiveMinimum: 0},
-                    },
-                    required: ["limit"],
-                },
-                root: "concurrency",
-            },
-            pluginDefaults: {
-                component: Editor,
-                value: props.metadata.pluginDefaults,
-                label: t("no_code.fields.general.plugin_defaults"),
-                navbar: false,
-                input: true,
-                lang: "yaml",
-                shouldFocus: false,
-                showScroll: true,
-                style: {height: "100px"},
-            },
-            disabled: {
-                component: InputSwitch,
-                value: props.metadata.disabled,
-                label: t("no_code.fields.general.disabled"),
-            },
-        }
+    onMounted(async () => {
+        await store.dispatch("plugin/loadSchemaType").then((response) => {
+            schema.value = response;
+        })
     });
 
-    const mainFields = computed(() => {
-        const {id, namespace, description, inputs} = fields.value;
+    const definitions = computed(() => {
+        return schema.value?.definitions ?? {};
+    });
+    function removeRefPrefix(ref?: string): string {
+        return ref?.replace(/^#\/definitions\//, "") ?? "";
+    }
 
-        return {id, namespace, description, inputs};
-    })
+    const flowSchema = computed(() => {
+        const ref = removeRefPrefix(schema.value?.$ref);
+        return definitions.value?.[ref];
+    });
 
-    const otherFields = computed(() => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {id, namespace, description, inputs, ...rest} = fields.value;
+    const flowSchemaProperties = computed(() => {
+        return flowSchema.value?.properties ?? {};
+    });
 
-        return rest;
-    })
+    const METADATA_KEYS = [
+        "id",
+        "namespace",
+        "description",
+        "inputs",
+        "retry",
+        "labels",
+        "outputs",
+        "variables",
+        "concurrency",
+        "sla",
+        "disabled"
+    ] as const;
 
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    const getSectionTitle = (label: string, elements: Record<string, any>[] = []) => {
-        const title = t(`no_code.sections.${label}`);
-        return {title, elements};
-    };
+
+    const fieldsFromSchema = computed(() => {
+        if( !flowSchema.value || !flowSchemaProperties.value) {
+            return [];
+        }
+
+        // FIXME: some labels are not where you would expect them to be
+        const mainLabels: Record<string, string> = {
+            id: t("no_code.fields.main.flow_id"),
+            namespace: t("no_code.fields.main.namespace"),
+            description: t("no_code.fields.main.description"),
+        }
+
+        return METADATA_KEYS.map(f => ({
+            modelValue: props.metadata[f],
+            required: flowSchema.value?.required ?? [],
+            disabled: !creatingFlow.value && (f === "id" || f === "namespace"),
+            schema: flowSchemaProperties.value[f],
+            definitions: definitions.value,
+            label: mainLabels[f] ?? t(`no_code.fields.general.${f}`),
+            fieldKey: f,
+            task: props.metadata,
+            root: f,
+        }));
+    });
+
+    const SECTIONS_IDS = [
+        "tasks",
+        "triggers",
+        "errors",
+        "finally",
+        "afterExecution",
+        "pluginDefaults",
+    ] as const
+
+
+    const SECTION_BLOCK_MAP: Record<typeof SECTIONS_IDS[number], BlockType | "pluginDefaults"> = {
+        tasks: "tasks",
+        triggers: "triggers",
+        errors: "tasks",
+        finally: "tasks",
+        afterExecution: "tasks",
+        pluginDefaults: "pluginDefaults",
+    } as const;
+
+    type SectionKey = typeof SECTIONS_IDS[number];
+
     const sections = computed((): CollapseItem[] => {
-        const flow:{
-            tasks: Record<string, any>[];
-            triggers: Record<string, any>[];
-            errors: Record<string, any>[];
-            finally: Record<string, any>[];
-            afterExecution: Record<string, any>[];
-        } = YAML_UTILS.parse(props.flow) as any;
-        return [
-            getSectionTitle("tasks", flow?.tasks ?? []),
-            getSectionTitle("triggers", flow?.triggers ?? []),
-            getSectionTitle(
-                "error_handlers",
-                flow?.errors ?? [],
-            ),
-            getSectionTitle("finally", flow?.finally ?? []),
-            getSectionTitle(
-                "after_execution",
-                flow?.afterExecution ?? [],
-            ),
-        ];
+        const parsedFlow = YAML_UTILS.parse<Partial<Record<SectionKey, NoCodeElement[]>>>(flow.value);
+        return SECTIONS_IDS.map((section) => ({
+            elements: parsedFlow?.[section] ?? [],
+            title: t(`no_code.sections.${section}`),
+            blockType: SECTION_BLOCK_MAP[section],
+            section,
+        }))
     });
 </script>

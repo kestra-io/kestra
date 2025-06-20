@@ -23,7 +23,7 @@ public class NamespaceFiles {
         title = "Whether to enable namespace files to be loaded into the working directory. If explicitly set to `true` in a task, it will load all [Namespace Files](https://kestra.io/docs/developer-guide/namespace-files) into the task's working directory. Note that this property is by default set to `true` so that you can specify only the `include` and `exclude` properties to filter the files to load without having to explicitly set `enabled` to `true`."
     )
     @Builder.Default
-    private Property<Boolean> enabled = Property.of(true);
+    private Property<Boolean> enabled = Property.ofValue(true);
 
     @Schema(
         title = "A list of filters to include only matching glob patterns. This allows you to only load a subset of the [Namespace Files](https://kestra.io/docs/developer-guide/namespace-files) into the working directory."
@@ -41,12 +41,12 @@ public class NamespaceFiles {
         title = "A list of namespaces in which searching files. The files are loaded in the namespace order, and only the latest version of a file is kept. Meaning if a file is present in the first and second namespace, only the file present on the second namespace will be loaded."
     )
     @Builder.Default
-    private Property<List<String>> namespaces = new Property<>("""
+    private Property<List<String>> namespaces = Property.ofExpression("""
         ["{{flow.namespace}}"]""");
 
     @Schema(
         title = "Comportment of the task if a file already exist in the working directory."
     )
     @Builder.Default
-    private Property<FileExistComportment> ifExists = Property.of(FileExistComportment.OVERWRITE);
+    private Property<FileExistComportment> ifExists = Property.ofValue(FileExistComportment.OVERWRITE);
 }

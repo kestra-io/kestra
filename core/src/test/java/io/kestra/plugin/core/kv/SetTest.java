@@ -144,7 +144,7 @@ class SetTest {
             .type(Set.class.getName())
             .key(new Property<>("{{ inputs.key }}"))
             .value(new Property<>("{{ inputs.value }}"))
-            .ttl(Property.of(Duration.ofMinutes(5)))
+            .ttl(Property.ofValue(Duration.ofMinutes(5)))
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
@@ -160,7 +160,7 @@ class SetTest {
         final KVStore kv = runContext.namespaceKv(runContext.flowInfo().namespace());
         assertThat(kv.getValue(TEST_KEY)).isEqualTo(Optional.of(new KVValue(value)));
         Instant expirationDate = kv.get(TEST_KEY).get().expirationDate();
-        assertThat(expirationDate.isAfter(Instant.now().plus(Duration.ofMinutes(4))) && expirationDate.isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isEqualTo(true);
+        assertThat(expirationDate.isAfter(Instant.now().plus(Duration.ofMinutes(4))) && expirationDate.isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isTrue();
     }
 
     @Test
@@ -171,7 +171,7 @@ class SetTest {
             .type(Set.class.getName())
             .key(new Property<>("{{ inputs.key }}"))
             .value(new Property<>("{{ inputs.value }}"))
-            .overwrite(Property.of(false))
+            .overwrite(Property.ofValue(false))
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
@@ -191,7 +191,7 @@ class SetTest {
         assertThat(kv.getValue(TEST_KEY).orElseThrow().value()).isEqualTo(123.45);
 
         kv = createAndPerformSetTask("true", KVType.BOOLEAN);
-        assertThat(kv.getValue(TEST_KEY).orElseThrow().value()).isEqualTo(true);
+        assertThat((Boolean) kv.getValue(TEST_KEY).orElseThrow().value()).isTrue();
 
         kv = createAndPerformSetTask("2023-05-02T01:02:03Z", KVType.DATETIME);
         assertThat(kv.getValue(TEST_KEY).orElseThrow().value()).isEqualTo(Instant.parse("2023-05-02T01:02:03Z"));
@@ -210,7 +210,7 @@ class SetTest {
             .type(Set.class.getName())
             .key(new Property<>(TEST_KEY))
             .value(new Property<>(value))
-            .kvType(Property.of(type))
+            .kvType(Property.ofValue(type))
             .build();
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, set, null);
         set.run(runContext);

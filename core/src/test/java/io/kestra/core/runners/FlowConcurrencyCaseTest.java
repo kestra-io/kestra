@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -37,10 +38,10 @@ public class FlowConcurrencyCaseTest {
     protected QueueInterface<Execution> executionQueue;
 
     public void flowConcurrencyCancel() throws TimeoutException, QueueException, InterruptedException {
-        Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));
-        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "flow-concurrency-cancel");
+        Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));
+        Execution execution2 = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-cancel");
 
-        assertThat(execution1.getState().isRunning()).isEqualTo(true);
+        assertThat(execution1.getState().isRunning()).isTrue();
         assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
 
         CountDownLatch latch1 = new CountDownLatch(1);
@@ -60,10 +61,10 @@ public class FlowConcurrencyCaseTest {
     }
 
     public void flowConcurrencyFail() throws TimeoutException, QueueException, InterruptedException {
-        Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-fail", null, null, Duration.ofSeconds(30));
-        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "flow-concurrency-fail");
+        Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-fail", null, null, Duration.ofSeconds(30));
+        Execution execution2 = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-fail");
 
-        assertThat(execution1.getState().isRunning()).isEqualTo(true);
+        assertThat(execution1.getState().isRunning()).isTrue();
         assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         CountDownLatch latch1 = new CountDownLatch(1);
@@ -83,14 +84,14 @@ public class FlowConcurrencyCaseTest {
     }
 
     public void flowConcurrencyQueue() throws TimeoutException, QueueException, InterruptedException {
-        Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-queue", null, null, Duration.ofSeconds(30));
+        Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-queue", null, null, Duration.ofSeconds(30));
         Flow flow = flowRepository
-            .findById(null, "io.kestra.tests", "flow-concurrency-queue", Optional.empty())
+            .findById(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-queue", Optional.empty())
             .orElseThrow();
         Execution execution2 = Execution.newExecution(flow, null, null, Optional.empty());
         executionQueue.emit(execution2);
 
-        assertThat(execution1.getState().isRunning()).isEqualTo(true);
+        assertThat(execution1.getState().isRunning()).isTrue();
         assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CREATED);
 
         var executionResult1  = new AtomicReference<Execution>();
@@ -163,14 +164,14 @@ public class FlowConcurrencyCaseTest {
         });
 
 
-        Execution execution1 = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "flow-concurrency-queue-pause");
+        Execution execution1 = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-queue-pause");
         Flow flow = flowRepository
-            .findById(null, "io.kestra.tests", "flow-concurrency-queue-pause", Optional.empty())
+            .findById(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-queue-pause", Optional.empty())
             .orElseThrow();
         Execution execution2 = Execution.newExecution(flow, null, null, Optional.empty());
         executionQueue.emit(execution2);
 
-        assertThat(execution1.getState().isPaused()).isEqualTo(true);
+        assertThat(execution1.getState().isPaused()).isTrue();
         assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CREATED);
 
         assertTrue(firstExecutionLatch.await(10, TimeUnit.SECONDS));
@@ -215,14 +216,14 @@ public class FlowConcurrencyCaseTest {
             }
         });
 
-        Execution execution1 = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "flow-concurrency-cancel-pause");
+        Execution execution1 = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-cancel-pause");
         Flow flow = flowRepository
-            .findById(null, "io.kestra.tests", "flow-concurrency-cancel-pause", Optional.empty())
+            .findById(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-cancel-pause", Optional.empty())
             .orElseThrow();
         Execution execution2 = Execution.newExecution(flow, null, null, Optional.empty());
         executionQueue.emit(execution2);
 
-        assertThat(execution1.getState().isPaused()).isEqualTo(true);
+        assertThat(execution1.getState().isPaused()).isTrue();
         assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CREATED);
 
         assertTrue(firstExecLatch.await(10, TimeUnit.SECONDS));

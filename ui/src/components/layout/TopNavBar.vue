@@ -11,7 +11,10 @@
             <h1 class="h5 fw-semibold m-0 d-inline-flex">
                 <slot name="title">
                     {{ title }}
-                    <BetaBadge v-if="beta" />
+                    <el-tooltip v-if="description" :content="description">
+                        <Information class="ms-2" />
+                    </el-tooltip>
+                    <Badge v-if="beta" label="Beta" />
                 </slot>
                 <el-button
                     class="star-button"
@@ -35,7 +38,6 @@
             <slot name="additional-right" />
             <div class="d-flex fixed-buttons icons">
                 <impersonating />
-                <auth />
             </div>
         </div>
     </nav>
@@ -43,26 +45,30 @@
 
 <script>
     import {mapState, mapGetters} from "vuex";
-    import Auth from "override/components/auth/Auth.vue";
     import Impersonating from "override/components/auth/Impersonating.vue";
     import GlobalSearch from "./GlobalSearch.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
     import StarIcon from "vue-material-design-icons/Star.vue";
-    import BetaBadge from "../global/BetaBadge.vue";
+    import Information from "vue-material-design-icons/Information.vue"
+    import Badge from "../global/Badge.vue";
 
     export default {
         components: {
-            Auth,
             GlobalSearch,
             TrashCan,
             Impersonating,
-            BetaBadge
+            Information,
+            Badge
         },
         props: {
             title: {
                 type: String,
                 required: true
+            },
+            description: {
+                type: String,
+                default: undefined
             },
             breadcrumb: {
                 type: Array,

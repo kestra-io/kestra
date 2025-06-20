@@ -35,7 +35,6 @@ import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerOutput;
-import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.IdUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.stream.Streams;
@@ -49,6 +48,7 @@ import java.util.stream.Stream;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import static io.kestra.core.models.flows.State.Type.PAUSED;
 import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
@@ -63,7 +63,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
         You can trigger a flow as soon as another flow ends. This allows you to add implicit dependencies between multiple flows, which can often be managed by different teams.
 
         A flow trigger must have `preconditions` which filter on other flow executions.
-        It can also have standard trigger `conditions`.
+        It can also have standard trigger `conditions`. Neither condition type can use Pebble templating expressions; they must be declaratively defined.
         Upstream execution outputs will be available in a `trigger.outputs` variable."""
 )
 @Plugin(
@@ -218,14 +218,14 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Schema(
         title = "List of execution states that will be evaluated by the trigger",
         description = """
-            By default, only executions in a terminal state will be evaluated.
+            By default, only executions in a terminal state or in the PAUSED state will be evaluated.
             Any `ExecutionStatus`-type condition will be evaluated after the list of `states`. Note that a Flow trigger cannot react to the `CREATED` state because the Flow trigger reacts to state transitions. The `CREATED` state is the initial state of an execution and does not represent a state transition.
             ::alert{type="info"}
             The trigger will be evaluated for each state change of matching executions. If a flow has two `Pause` tasks, the execution will transition from PAUSED to a RUNNING state twice — one for each Pause task. In this case, a Flow trigger listening to a `PAUSED` state will be evaluated twice.
             ::"""
     )
     @Builder.Default
-    private List<State.Type> states = State.Type.terminatedTypes();
+    private List<State.Type> states = ListUtils.concat(State.Type.terminatedTypes(), List.of(PAUSED));
 
     @Valid
     @Schema(
@@ -254,7 +254,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             for (String id : multipleConditionIds) {
                 Optional<MultipleConditionWindow> multipleConditionWindow = multipleConditionStorage.get().get(flow, id);
                 if (multipleConditionWindow.isPresent()) {
-                    outputs = MapUtils.merge(outputs, multipleConditionWindow.get().getOutputs());
+                    outputs = MapUtils.deepMerge(outputs, multipleConditionWindow.get().getOutputs());
                 }
             }
         }
@@ -277,6 +277,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 this,
                 Output.builder()
                     .executionId(current.getId())
+                    .executionLabels(Label.toNestedMap(current.getLabels().stream().filter(label -> !label.key().equals(Label.CORRELATION_ID)).collect(Collectors.toList())))
                     .namespace(current.getNamespace())
                     .flowId(current.getFlowId())
                     .flowRevision(current.getFlowRevision())
@@ -578,6 +579,10 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Schema(title = "The execution ID that triggered the current flow.")
         @NotNull
         private String executionId;
+
+        @Schema(title = "The execution labels that triggered the current flow.")
+        @NotNull
+        private Map<String, Object> executionLabels;
 
         @Schema(title = "The execution state.")
         @NotNull

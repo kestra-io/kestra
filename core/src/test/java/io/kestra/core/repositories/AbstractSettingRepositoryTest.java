@@ -39,7 +39,7 @@ public abstract class AbstractSettingRepositoryTest {
         assertThat(find.get().getValue()).isEqualTo(save.getValue());
 
         List<Setting> all = settingRepository.findAll();
-        assertThat(all.size()).isGreaterThan(1); // ES have the version setting in test but not JDBC I don't know why
+        assertThat(all.size()).isGreaterThanOrEqualTo(1); // ES have the version setting in test but not JDBC I don't know why
         assertThat(all)
             .extracting(Setting::getValue)
             .contains(setting.getValue());

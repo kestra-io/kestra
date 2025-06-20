@@ -48,11 +48,11 @@
                             <span class="pe-3">
                                 {{ namespaceLabel(data.label) }}
                             </span>
+                            <slot name="description" :namespace="data" />
                             <span v-if="data.system" class="system">
                                 {{ t("system_namespace") }}
                             </span>
                         </div>
-
                         <el-button size="small">
                             <TextSearch />
                         </el-button>
@@ -67,17 +67,17 @@
     import {computed, onMounted, Ref, ref, watch} from "vue";
 
     import {useRoute} from "vue-router";
-    import useRouteContext from "../../mixins/useRouteContext.ts";
+    import useRouteContext from "../../../mixins/useRouteContext.ts";
     import {useStore} from "vuex";
-    import useNamespaces, {Namespace} from "../../composables/useNamespaces";
+    import useNamespaces, {Namespace} from "../../../composables/useNamespaces.ts";
     import {useI18n} from "vue-i18n";
 
-    import Navbar from "../layout/TopNavBar.vue";
-    import Action from "./components/buttons/Action.vue";
-    import KestraFilter from "../filter/KestraFilter.vue";
+    import Navbar from "../../../components/layout/TopNavBar.vue";
+    import Action from "../../../components/namespaces/components/buttons/Action.vue";
+    import KestraFilter from "../../../components/filter/KestraFilter.vue";
 
-    import permission from "../../models/permission";
-    import action from "../../models/action";
+    import permission from "../../../models/permission.ts";
+    import action from "../../../models/action.ts";
 
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
@@ -85,6 +85,7 @@
     interface Node {
         id: string;
         label: string;
+        description?: string;
         disabled: boolean;
         children?: Node[];
         system?: boolean;
@@ -138,12 +139,14 @@
 
             parts.forEach((part, index) => {
                 const label = parts.slice(0, index + 1).join(".");
+                const isLeaf = index === parts.length - 1;
 
                 if (!currentLevel[label])
                     currentLevel[label] = {
                         id: label,
                         label,
                         disabled: item.disabled,
+                        description: isLeaf ? item.description : undefined,
                         children: [],
                     };
                 currentLevel = currentLevel[label].children;
@@ -156,6 +159,7 @@
                     id: node.id,
                     label: node.label,
                     disabled: node.disabled,
+                    description: node.description,
                     children: node.children ? build(node.children) : undefined,
                 };
                 return result;

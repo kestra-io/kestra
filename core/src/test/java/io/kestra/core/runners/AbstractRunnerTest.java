@@ -493,6 +493,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/sla-parent-flow.yaml", "flows/valids/sla-subflow.yaml"})
+    void executionConditionSLAShouldLaslaViolationOnSubflowMayEndTheParentFlowbel() throws Exception {
+        slaTestCase.slaViolationOnSubflowMayEndTheParentFlow();
+    }
+
+    @Test
     @LoadFlows({"flows/valids/if.yaml"})
     void multipleIf() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if", null,

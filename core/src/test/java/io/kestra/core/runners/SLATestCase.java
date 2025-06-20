@@ -48,4 +48,10 @@ public class SLATestCase {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getLabels()).contains(new Label("sla", "violated"));
     }
+
+    public void slaViolationOnSubflowMayEndTheParentFlow() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "sla-parent-flow");
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
 }

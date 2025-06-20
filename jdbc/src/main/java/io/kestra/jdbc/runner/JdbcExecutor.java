@@ -1208,8 +1208,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
         slaMonitorStorage.processExpired(Instant.now(), slaMonitor -> {
             Executor result = executionRepository.lock(slaMonitor.getExecutionId(), pair -> {
-                Executor executor = new Executor(pair.getLeft(), null);
-                FlowInterface flow = flowMetaStore.findByExecution(pair.getLeft()).orElseThrow();
+                FlowWithSource flow = findFlow(pair.getLeft());
+                Executor executor = new Executor(pair.getLeft(), null).withFlow(flow);
                 Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
                 if (sla.isEmpty()) {
                     // this can happen in case the flow has been updated and the SLA removed

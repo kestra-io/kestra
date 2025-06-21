@@ -667,7 +667,7 @@ public class ExecutorService {
                                 .taskRunId(workerTaskResult.getTaskRun().getId())
                                 .executionId(executor.getExecution().getId())
                                 .date(workerTaskResult.getTaskRun().getState().maxDate().plus(duration != null ? duration : timeout))
-                                .state(duration != null ? behavior.mapToState() : State.Type.FAILED)
+                                .state(duration != null ? behavior.mapToState() : State.Type.fail(pauseTask))
                                 .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
                                 .build();
                         }

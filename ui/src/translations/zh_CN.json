@@ -843,6 +843,7 @@
       },
       "sections": {
         "afterExecution": "执行后",
+        "connection": "连接属性",
         "deprecated": "不推荐使用的属性",
         "errors": "错误处理程序",
         "finally": "最后",

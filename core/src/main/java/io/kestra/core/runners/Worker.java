@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -396,11 +395,16 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     } catch (IllegalVariableEvaluationException e) {
                         RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
                         contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
+                        try {
+                            this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.fail()));
+                        } catch (QueueException ex) {
+                            log.error("Unable to emit the worker task result for task {} taskrun {}", currentWorkerTask.getTask().getId(), currentWorkerTask.getTaskRun().getId(), e);
+                        }
                     } catch (QueueException e) {
                         log.error("Unable to emit the worker task result for task {} taskrun {}", currentWorkerTask.getTask().getId(), currentWorkerTask.getTaskRun().getId(), e);
                     }
 
-                    if (workerTaskResult.getTaskRun().getState().isFailed() && !currentWorkerTask.getTask().isAllowFailure()) {
+                    if (workerTaskResult == null || workerTaskResult.getTaskRun().getState().isFailed() && !currentWorkerTask.getTask().isAllowFailure()) {
                         break;
                     }
 
@@ -777,7 +781,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         if (!(workerTask.getTask() instanceof RunnableTask<?> task)) {
             // This should never happen but better to deal with it than crashing the Worker
-            var state = workerTask.getTask().isAllowFailure() ? workerTask.getTask().isAllowWarning() ? SUCCESS : WARNING : FAILED;
+            var state = State.Type.fail(workerTask.getTask());
             TaskRunAttempt attempt = TaskRunAttempt.builder()
                 .state(new io.kestra.core.models.flows.State().withState(state))
                 .workerId(this.id)

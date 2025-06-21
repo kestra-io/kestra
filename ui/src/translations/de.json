@@ -843,6 +843,7 @@
       },
       "sections": {
         "afterExecution": "Nach Ausführung",
+        "connection": "Verbindungseigenschaften",
         "deprecated": "Veraltete Eigenschaften",
         "errors": "Fehlerbehandler",
         "finally": "Schließlich",

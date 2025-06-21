@@ -1,12 +1,16 @@
 import Editor from "../../../../../src/components/code/segments/Editor.vue";
+import InitialSchema from "../../../../../src/components/code/segments/flow-schema.json";
 import {
     CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
     POSITION_INJECTION_KEY,
-    BLOCKTYPE_INJECT_KEY, REF_PATH_INJECTION_KEY
+    BLOCKTYPE_INJECT_KEY, REF_PATH_INJECTION_KEY,
+    PARENT_PATH_INJECTION_KEY,
+    EDITING_TASK_INJECTION_KEY
 } from "../../../../../src/components/code/injectionKeys";
-import {provide, ref, computed} from "vue";
+import {provide, ref} from "vue";
 import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
+
 
 export default {
     decorators: [vueRouter([
@@ -92,13 +96,15 @@ It allows you to return templated values, inputs or outputs.`.trim(),
 const Template = (args) => ({
     setup() {
         const store = useStore()
-        const modelValue = ref(args.flow)
 
-        provide(FLOW_INJECTION_KEY, computed(() => args.flow));
+        provide(FLOW_INJECTION_KEY, ref(args.flow));
         provide(BLOCKTYPE_INJECT_KEY, "tasks");
-        provide(REF_PATH_INJECTION_KEY, "");
+        provide(PARENT_PATH_INJECTION_KEY, "tasks");
+        provide(REF_PATH_INJECTION_KEY, 0);
+        provide(BLOCKTYPE_INJECT_KEY, "tasks");
         provide(POSITION_INJECTION_KEY, args.position);
         provide(CREATING_TASK_INJECTION_KEY, args.creating);
+        provide(EDITING_TASK_INJECTION_KEY, args.editing);
 
         store.$http = {
             get(url) {
@@ -116,15 +122,19 @@ const Template = (args) => ({
                         data: TASK_RESPONSE
                     })
                 }
+                if (url.endsWith("/flow")) {
+                    return Promise.resolve({
+                        data: InitialSchema
+                    })
+                }
                 return Promise.resolve({
                     data: []
                 })
             },
-            post(url, body, opts){
+            post(url){
                 if(url.endsWith("flows/validate/task")){
                     return Promise.resolve({data: {}})
                 }
-                console.error("POST", url, body, opts)
                 return Promise.resolve({
                     data: []
                 })
@@ -132,7 +142,7 @@ const Template = (args) => ({
         }
         return () =>
             <div style="margin: 1rem; width: 400px;border: 1px solid lightgray; padding: .5rem;">
-                <Editor {...args.props} flow={modelValue.value} on />
+                <Editor {...args.props}/>
             </div>
     }
 });
@@ -152,18 +162,9 @@ tasks:
       - three
     `.trim(),
     props:{
-        creation: false,
         metadata: {
             id: "example-id",
             namespace: "example-namespace",
-            description: "Example description",
-            retry: "",
-            labels: {},
-            inputs: [],
-            outputs: "",
-            variables: {},
-            concurrency: {},
-            disabled: false,
         },
     },
 };
@@ -179,11 +180,10 @@ EditTask.decorators = [vueRouter([
         path: "/flows",
         name: "flows",
         component: {template: "<div>flows</div>"}
-    }], {
-        initialRoute: "/flows?section=tasks&identifier=task1"
-    })
+    }])
 ]
 EditTask.args = {
+    editing: true,
     flow: `
 id: flow1
 namespace: namespace1
@@ -197,18 +197,9 @@ tasks:
       - three
     `.trim(),
     props:{
-        creation: false,
         metadata: {
             id: "example-id",
             namespace: "example-namespace",
-            description: "Example description",
-            retry: "",
-            labels: {},
-            inputs: [],
-            outputs: "",
-            variables: {},
-            concurrency: {},
-            disabled: false,
         },
     },
 };

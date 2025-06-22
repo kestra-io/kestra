@@ -9,7 +9,7 @@ import DemoTests from "../components/demo/Tests.vue"
 
 export default [
     //Initial
-    {name: "root", path: "/", redirect: {name: "home"}},
+    {name: "root", path: "/", redirect: {name: "home", params: {tenant: "main"}}},
     {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
 
     //Dashboards

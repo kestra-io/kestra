@@ -39,7 +39,6 @@ import filters from "./filters";
 import ElementPlus from "element-plus";
 import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
-import {setupTenantRouter, setupDocIdGuard} from "../composables/useTenant";
 import "./global"
 
 
@@ -79,8 +78,24 @@ export default async (app, routes, stores, translations, additionalTranslations 
         routes
     });
 
-    setupTenantRouter(router, app);
-    setupDocIdGuard(router, store);
+    /**
+     * Manage docId initialization for Contextual docs
+     */
+    router.beforeEach((to, from, next) => {
+        // set the docId from the path
+        // so it has a default
+        const pathArray = to.path.split("/");
+        const docId = pathArray[pathArray.length-1];
+        store.commit("doc/setDocId", docId);
+
+        // propagate showDocId query param
+        // to the next page to facilitate docs binding
+        if(to.query["showDocId"] === undefined && from.query["showDocId"] !== undefined){
+            next({path: to.path, query: {...to.query, showDocId: from.query["showDocId"]}})
+        }else{
+            next()
+        }
+    })
 
     router.afterEach((to) => {
         window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to))

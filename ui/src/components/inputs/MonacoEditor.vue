@@ -35,6 +35,7 @@
     import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess.js";
     import "monaco-editor/esm/vs/language/json/monaco.contribution";
     import "monaco-editor/esm/vs/basic-languages/monaco.contribution";
+    import "monaco-editor/esm/vs/basic-languages/python/python.contribution";
     import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
     import {editor} from "monaco-editor/esm/vs/editor/editor.api";
     import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";

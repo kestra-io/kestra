@@ -137,7 +137,11 @@
                 <el-dropdown
                     :ref="`dropdown__${data.id}`"
                     @contextmenu.prevent.stop="
-                        toggleDropdown(`dropdown__${data.id}`)
+                        toggleDropdown(`dropdown__${data.id}`);
+                        if(selectedNodes.length === 0) {
+                            selectedNodes.push(data.id);
+                            selectedFiles.push(getPath(data.id));
+                        }
                     "
                     trigger="contextmenu"
                     class="w-100"

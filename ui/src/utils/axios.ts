@@ -42,9 +42,9 @@ const increaseProgress = () => {
     }, latencyThreshold + 50);
 }
 
-const requestInterceptor = config => {
+const requestInterceptor = (config: any) => {
     initProgress();
-    return config
+    return config;
 }
 
 const responseInterceptor = (response: AxiosResponse): AxiosResponse => {

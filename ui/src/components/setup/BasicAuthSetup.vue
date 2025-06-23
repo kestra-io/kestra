@@ -201,10 +201,11 @@
 
 <script setup lang="ts">
     import {ref, computed, onUnmounted, type Ref} from "vue"
-    import {useStore} from "vuex"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import MailChecker from "mailchecker"
+    import {useMiscStore} from "../../stores/misc"
+    import {useApiStore} from "../../stores/api"
 
     import Cogs from "vue-material-design-icons/Cogs.vue"
     import AccountPlus from "vue-material-design-icons/AccountPlus.vue"
@@ -245,12 +246,13 @@
         label: string
     }
 
-    const store = useStore()
+    const miscStore = useMiscStore()
+    const apiStore = useApiStore()
     const router = useRouter()
     const {t} = useI18n()
 
     const activeStep = ref(0)
-    const usageData = ref(null)
+    const usageData = ref<any>(null)
     const isLoading = ref(true)
     const userForm: Ref<any> = ref(null)
     const surveyForm: Ref<any> = ref(null)
@@ -272,7 +274,7 @@
     const setupConfiguration = computed(() => usageData.value?.configurations ?? {})
 
     const trackSetupEvent = (eventName: string, additionalData: Record<string, any> = {}) => {
-        const configs = store.getters["misc/configs"]
+        const configs = miscStore.getConfigs
         const uid = localStorage.getItem("uid")
     
         if (!configs || !uid || configs.isAnonymousUsageEnabled === false) return
@@ -283,7 +285,7 @@
             user_email: userFormData.value.username || undefined
         } : {}
     
-        store.dispatch("api/posthogEvents", {
+        apiStore.posthogEvents({
             type: eventName,
             setup_step_current: activeStep.value,
             instance_id: configs.uuid,
@@ -295,7 +297,7 @@
 
     const initializeSetup = async () => {
         try {
-            const config = await store.dispatch("misc/loadConfigs")
+            const config = await miscStore.loadConfigs()
             
             if (config && config.isBasicAuthEnabled) {
                 localStorage.removeItem("basicAuthSetupInProgress")
@@ -305,7 +307,7 @@
             }
             localStorage.setItem("basicAuthSetupInProgress", "true")
             localStorage.setItem("setupStartTime", Date.now().toString())
-            usageData.value = await store.dispatch("misc/loadAllUsages")
+            usageData.value = await miscStore.loadAllUsages()
             trackSetupEvent("setup_flow:started", {step_number: 1})
         } catch {
         // Silently handle usage data loading errors
@@ -324,7 +326,7 @@
 
     const setupConfigurationLines = computed<ConfigLine[]>(() => {
         if (!setupConfiguration.value) return []
-        const configs = store.getters["misc/configs"]
+        const configs = miscStore.getConfigs
         return [
             {name: "repository", icon: Database, value: setupConfiguration.value.repositoryType},
             {name: "queue", icon: CurrentDc, value: setupConfiguration.value.queueType},
@@ -358,7 +360,7 @@
     const EMAIL_REGEX = /^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$/
     const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d).{8,}$/
 
-    const validateEmail = (rule: any, value: string, callback: (error?: Error) => void) => {
+    const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
         if (!value) {
             callback(new Error(t("setup.validation.email_required")))
             return
@@ -416,7 +418,7 @@
 
     const initBasicAuth = async () => {
         try {
-            await store.dispatch("misc/addBasicAuth", {
+            await miscStore.addBasicAuth({
                 firstName: userFormData.value.firstName,
                 lastName: userFormData.value.lastName,
                 username: userFormData.value.username,
@@ -439,7 +441,7 @@
     const handleSurveyContinue = () => {
         localStorage.setItem("basicAuthSurveyData", JSON.stringify(surveyData.value))
     
-        const surveySelections = {
+        const surveySelections: Record<string, any> = {
             company_size: surveyData.value.companySize,
             use_cases: surveyData.value.useCases,
             use_cases_count: surveyData.value.useCases.length,

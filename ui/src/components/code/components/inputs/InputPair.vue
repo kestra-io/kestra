@@ -63,7 +63,11 @@
         required?: boolean
     }>();
 
-    const internalPairs = ref<[string, string][]>([])
+    const internalPairs = ref<[string, string | undefined][]>([])
+
+    // this flag will avoid updating the modelValue when the
+    // change was initiated in the component itself
+    const localEdit = ref(false);
 
     const duplicatedKeys = computed(() => {
         return internalPairs.value.map(pair => pair[0])
@@ -88,9 +92,10 @@
     watch(() => props.modelValue, (newValue) => {
         // If the alert is visible, we don't want to update the pairs
         // because it would delete problem line silently.
-        if (alertState.value.visible) {
+        if (alertState.value.visible || localEdit.value) {
             return;
         }
+        localEdit.value = false;
         internalPairs.value = Object.entries(newValue || {});
     }, {
         deep: true,
@@ -100,16 +105,17 @@
 
 
     function updateModel() {
-        emit("update:modelValue", Object.fromEntries(internalPairs.value));
+        localEdit.value = true;
+        emit("update:modelValue", Object.fromEntries(internalPairs.value.filter(pair => pair[0] !== "" && pair[1] !== undefined)));
     }
 
-    function handleKeyInput(pairId: number, newValue: string) {
-        internalPairs.value[pairId][0] = newValue;
+    function handleKeyInput(index: number, newValue: string) {
+        internalPairs.value[index][0] = newValue.toString();
         updateModel()
     };
 
     function addPair() {
-        internalPairs.value.push(["", ""])
+        internalPairs.value.push(["", undefined])
         updateModel()
     };
 

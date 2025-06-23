@@ -1,6 +1,7 @@
 package io.kestra.jdbc.repository;
 
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -48,6 +49,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
     abstract protected Condition findCondition(String query);
 
+    protected Condition findQueryCondition(String query) {
+        return findCondition(query);
+    }
+
     @Getter
     private final JdbcFilterService filterService;
 
@@ -86,8 +91,6 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters
     ) {
-
-        String query = getQuery(filters);
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -98,10 +101,9 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId))
-                    .and(NORMAL_KIND_CONDITION)
-                    .and(this.findCondition(query));
+                    .and(NORMAL_KIND_CONDITION);
 
-               select = this.filter(select, filters, "timestamp");
+               select = this.filter(select, filters, "timestamp", Resource.LOG);
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });

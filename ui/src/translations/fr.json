@@ -147,7 +147,8 @@
       "docs": "Docs",
       "help": "Aide",
       "issue": "Ouvrir un Issue",
-      "news": "Nouvelles"
+      "news": "Nouvelles",
+      "star": "Ajoutez une étoile au repo"
     },
     "continue backfill": "Continuer le backfill",
     "continue backfills": "Continuer les backfills",
@@ -587,6 +588,7 @@
     "flow enable": "Êtes vous sûr de vouloir activer <code>{flowCount}</code> flow(s)?",
     "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
     "flow must have id and namespace": "Le flow doit avoir un id et un namespace.",
+    "flow must not be empty": "Le flow ne doit pas être vide",
     "flow not imported": "Certains flow n'ont pas pu être importés",
     "flow source not found": "Source du flow introuvable",
     "flow-dependencies": "dépendances",

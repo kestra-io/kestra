@@ -2,15 +2,9 @@ package io.kestra.repository.h2;
 
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowWithException;
-import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepositoryTest;
-import io.kestra.plugin.core.flow.Template;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import java.util.Collections;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,8 +14,6 @@ import java.util.List;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
 
 public class H2FlowRepositoryTest extends AbstractJdbcFlowRepositoryTest {
 

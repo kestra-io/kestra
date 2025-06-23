@@ -217,6 +217,12 @@
                     return values.map(value => remappedFilterKey + Comparators.EQUALS + value);
                 }).join(" ");
         } else {
+            Object.keys(query).filter((key) => {
+                return !key.startsWith("filters[");
+            }).forEach((key) => {
+                queryParamsToKeep.value.push(key);
+            });
+
             filter.value = Object.entries(query)
                 .filter(([key]) => key.startsWith("filters["))
                 .flatMap(([key, values]) => {
@@ -228,11 +234,6 @@
                         maybeSubKeyString = "";
                     } else {
                         maybeSubKeyString = "." + (subKey.includes(" ") ? `"${subKey}"` : subKey);
-                    }
-
-                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(FilterLanguage.withNestedKeyPlaceholder(remappedFilterKey + maybeSubKeyString)))) {
-                        queryParamsToKeep.value.push(key);
-                        return [];
                     }
 
                     if (!Array.isArray(values)) {

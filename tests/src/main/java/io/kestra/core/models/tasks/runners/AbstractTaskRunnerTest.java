@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 public abstract class AbstractTaskRunnerTest {
-    @Inject private TestRunContextFactory runContextFactory;
+    @Inject protected TestRunContextFactory runContextFactory;
     @Inject private StorageInterface storage;
 
     @Test

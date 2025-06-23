@@ -30,6 +30,7 @@
     import Editor from "../../../components/dashboard/components/Editor.vue";
 
     import type {Dashboard} from "../../../components/dashboard/composables/useDashboards";
+    import {getDashboard, processFlowYaml} from "../../../components/dashboard/composables/useDashboards";
 
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const save = async (source: string) => {
@@ -38,7 +39,12 @@
         toast.success(t("dashboards.creation.confirmation", {title: response.title}));
         store.dispatch("core/isUnsaved", false);
 
-        router.push({name: "home", params: {id: response.id}, query: {created: String(true)}});
+        const {name, params} = route.query;
+
+        const key = getDashboard({name, params: JSON.parse(params)}, "key")
+        localStorage.setItem(key, response.id)
+
+        router.push({name, params: {...JSON.parse(params), ...(name === "home" ? {dashboard: response.id} : {})}, query: {created: String(true)}});
     };
 
     import YAML_MAIN from "../assets/default_main_definition.yaml?raw";
@@ -46,12 +52,17 @@
     import YAML_NAMESPACE from "../assets/default_namespace_definition.yaml?raw";
 
     onMounted(async () => {
-        const {blueprintId, from} = route.query;
+        const {blueprintId, name, params} = route.query;
 
         if (blueprintId) {
             dashboard.value.sourceCode = await store.dispatch("blueprints/getBlueprintSource", {type: "community", kind: "dashboard", id: blueprintId});
         } else {
-            dashboard.value.sourceCode = from === "flows/update" ? YAML_FLOW : from === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN;
+            if (name === "flows/update") {
+                const {namespace, id} = JSON.parse(params);
+                dashboard.value.sourceCode = processFlowYaml(YAML_FLOW, namespace, id);
+            } else {
+                dashboard.value.sourceCode = name === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN;
+            }
         }
     });
 

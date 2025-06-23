@@ -62,7 +62,7 @@ const progressInterceptor = (progressEvent: AxiosProgressEvent) => {
 interface QueueItem {
     config: AxiosRequestConfig;
     resolve: (value: AxiosResponse | Promise<AxiosResponse>) => void;
-    reject: (reason?: any) => void;
+
 }
 
 export default (
@@ -89,10 +89,10 @@ export default (
     let refreshing = false;
 
     instance.interceptors.response.use(
-        (response: AxiosResponse) => {
+        (response) => {
             return response;
         },
-        async (errorResponse: AxiosError & { config?: { showMessageOnError?: boolean } }) => {
+        async (errorResponse: AxiosError & QueueItem & {showMessageOnError: boolean}) => {
             if (errorResponse?.code === "ERR_BAD_RESPONSE" && !errorResponse?.response?.data) {
                 store.dispatch("core/showMessage", {
                     response: errorResponse,
@@ -152,11 +152,11 @@ export default (
                     refreshing = true;
                     try {
                         await instance.post("/oauth/access_token?grant_type=refresh_token", null, {headers: {"Content-Type": "application/json"}});
-                        toRefreshQueue.forEach(({config, resolve, reject}) => {
+                        toRefreshQueue.forEach(({config, resolve}) => {
                             instance.request(config).then(response => {
                                 resolve(response)
                             }).catch(error => {
-                                reject(error)
+                                throw error
                             })
                         })
                         toRefreshQueue = [];
@@ -179,8 +179,7 @@ export default (
                         refreshing = false;
                     }
                 } else {
-                    // @ts-expect-error https://github.com/kestra-io/kestra-ee/issues/4157
-                    toRefreshQueue.push(originalRequest);
+                    toRefreshQueue.push(errorResponse);
 
                     return;
                 }

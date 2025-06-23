@@ -76,7 +76,7 @@
                 <h4>{{ $t('plugins.names') }}</h4>
                 <div class="plugins-container">
                     <div v-for="task in [...new Set(blueprint.includedTasks)]" :key="task">
-                        <task-icon :cls="task" :icons="icons" />
+                        <task-icon :cls="task" :icons="pluginsStore.icons" />
                     </div>
                 </div>
             </el-col>
@@ -97,6 +97,8 @@
     import {mapState} from "vuex";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
+    import {mapStores} from "pinia";
+    import {usePluginsStore} from "../../../stores/plugins";
 
     export default {
         components: {Markdown, CopyToClipboard},
@@ -203,7 +205,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("plugin", ["icons"]),
+            ...mapStores(usePluginsStore),
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },

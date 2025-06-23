@@ -27,10 +27,10 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, inject} from "vue";
-    import {useStore} from "vuex";
     import TaskObject from "./tasks/TaskObject.vue";
     import Save from "../code/components/Save.vue";
     import {BREADCRUMB_INJECTION_KEY, PANEL_INJECTION_KEY} from "../code/injectionKeys";
+    import {usePluginsStore} from "../../stores/plugins";
 
     interface InputType {
         type: string;
@@ -49,10 +49,7 @@
         disabled: false
     });
 
-    const store = useStore();
 
-    const inputSchema = computed(() => store.state.plugin.inputSchema);
-    const inputsType = computed(() => store.state.plugin.inputsType);
 
     const emit = defineEmits<{
         (e: "update:inputs", value?: InputType[]): void
@@ -64,15 +61,20 @@
     const newInputs = ref<InputType[]>([{type: "STRING"}]);
     const loading = ref(false);
 
+    const pluginsStore = usePluginsStore();
+
     const loadSchema = async (type: string) => {
         loading.value = true;
-        await store.dispatch("plugin/loadInputSchema", {type});
+        await pluginsStore.loadInputSchema({type});
         loading.value = false;
     };
 
+    const inputSchema = computed(() => pluginsStore.inputSchema);
+    const inputsType = computed(() => pluginsStore.inputsType);
+
     onMounted(() => {
         loading.value = true;
-        store.dispatch("plugin/loadInputsType")
+        pluginsStore.loadInputsType()
             .then(() => loading.value = false);
 
         if(selectedInput.value.type) {

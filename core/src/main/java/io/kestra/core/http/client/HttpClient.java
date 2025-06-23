@@ -284,7 +284,7 @@ public class HttpClient implements Closeable {
         } else if (cls.isAssignableFrom(Byte[].class)) {
             return (T) ArrayUtils.toObject(EntityUtils.toByteArray(entity));
         } else {
-            return (T) JacksonMapper.ofJson().readValue(entity.getContent(), cls);
+            return (T) JacksonMapper.ofJson(false).readValue(entity.getContent(), cls);
         }
     }
 

@@ -299,7 +299,7 @@ public final class RunVariables {
 
                     // temporal hack to add back the `schedule`variables
                     // will be removed in 2.0
-                    if (trigger.getType().equals(Schedule.class.getName())) {
+                    if (Schedule.class.getName().equals(execution.getTrigger().getType())) {
                         // add back its variables inside the `schedule` variables
                         builder.put("schedule", execution.getTrigger().getVariables());
                     }

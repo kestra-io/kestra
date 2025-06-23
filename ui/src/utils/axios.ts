@@ -92,7 +92,7 @@ export default (
         (response) => {
             return response;
         },
-        async (errorResponse: AxiosError & QueueItem & {showMessageOnError: boolean}) => {
+        async (errorResponse: AxiosError & QueueItem & {config:{showMessageOnError: boolean}}) => {
             if (errorResponse?.code === "ERR_BAD_RESPONSE" && !errorResponse?.response?.data) {
                 store.dispatch("core/showMessage", {
                     response: errorResponse,

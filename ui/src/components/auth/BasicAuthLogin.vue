@@ -56,13 +56,18 @@
 </template>
 
 <script setup lang="ts">
+    import {ref, computed} from "vue";
+    import {useRouter, useRoute} from "vue-router";
+    import {ElMessage} from "element-plus";
+    import type {FormInstance} from "element-plus";
+    import axios from "axios";
+
     import Account from "vue-material-design-icons/Account.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
     import Logo from "../home/Logo.vue";
-    import {ref, computed} from "vue";
-    import {useRouter, useRoute} from "vue-router";
-    import {useStore} from "vuex";
-    import type {FormInstance} from "element-plus";
+
+    import {useMiscStore} from "../../stores/misc";
+    import {apiUrlWithoutTenants} from "override/utils/route";
 
     interface Credentials {
         username: string;
@@ -71,7 +76,7 @@
 
     const router = useRouter();
     const route = useRoute();
-    const store = useStore();
+    const miscStore = useMiscStore();
 
     const form = ref<FormInstance>();
     const isLoading = ref(false);
@@ -88,23 +93,38 @@
         isLoading.value
     );
 
-    const handleSubmit = (event: Event) => {
+    const handleSubmit = async (event: Event) => {
         event.preventDefault();
         if (!form.value || isLoading.value) return;
 
-        form.value.validate((valid: boolean) => {
-            if (!valid) return;
-        
-            isLoading.value = true;
-        
-            const base64Credentials = btoa(`${credentials.value.username.trim()}:${credentials.value.password}`);
-            localStorage.setItem("basicAuthCredentials", base64Credentials);
+        if (!(await form.value.validate().catch(() => false))) return;
+
+        isLoading.value = true;
+
+        try {
+            const {username, password} = credentials.value;
+            const trimmedUsername = username.trim();
+
+            const auth = btoa(`${trimmedUsername}:${password}`);
+            
+            await axios.get(`${apiUrlWithoutTenants()}/configs`, {
+                headers: {Authorization: `Basic ${auth}`},
+                timeout: 10000
+            });
+
+            localStorage.setItem("basicAuthCredentials", auth);
             localStorage.removeItem("basicAuthSetupInProgress");
-            store.$http.defaults.headers.common["Authorization"] = `Basic ${base64Credentials}`;
-        
+            
+            if (miscStore.$http?.defaults?.headers?.common)
+                miscStore.$http.defaults.headers.common.Authorization = `Basic ${auth}`;
+
+            credentials.value = {username: "", password: ""};
             router.push(redirectPath.value);
+        } catch (error: any) {
+            ElMessage.error(error?.response?.status === 401 ? "Invalid credentials" : "Login failed");
+        } finally {
             isLoading.value = false;
-        });
+        }
     };
 </script>
 

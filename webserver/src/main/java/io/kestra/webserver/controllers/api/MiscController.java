@@ -85,7 +85,7 @@ public class MiscController {
 
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Get instance configuration. Global endpoint available to all users.")
+    @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
     public Configuration getConfiguration() throws JsonProcessingException {
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
@@ -121,14 +121,14 @@ public class MiscController {
 
     @Get("/{tenant}/usages/all")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Get instance usage information")
+    @Operation(tags = {"Misc"}, summary = "Retrieve instance usage information")
     public Usage getUsages() {
         return collectorService.metrics(true);
     }
 
     @Post(uri = "/{tenant}/basicAuth")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Create basic auth for the current instance")
+    @Operation(tags = {"Misc"}, summary = "Configure basic authentication for the instance.", description = "Sets up basic authentication credentials.")
     public HttpResponse<Void> createBasicAuth(
         @RequestBody(description = "") @Body BasicAuthCredentials basicAuthCredentials
     ) {

@@ -12,14 +12,14 @@
 
 <script lang="ts" setup>
     import {PropType, computed} from "vue";
+    import moment from "moment";
+    import {Bar} from "vue-chartjs";
 
     import NoData from "../../layout/NoData.vue";
     import type {Chart} from "../composables/useDashboards";
     import {useChartGenerator} from "../composables/useDashboards";
 
-    import {Bar} from "vue-chartjs";
 
-    import moment from "moment";
 
     import {customBarLegend} from "../composables/useLegend";
     import {useTheme} from "../../../utils/utils.js";

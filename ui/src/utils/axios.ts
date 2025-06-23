@@ -1,20 +1,22 @@
-import axios from "axios";
-import NProgress from "nprogress"
+import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios";
+import NProgress from "nprogress";
+import {Router} from "vue-router";
+import {Store} from "vuex";
 import {storageKeys} from "./constants";
 
 // nprogress
-let pendingRoute = false
-let requestsTotal = 0
-let requestsCompleted = 0
-let latencyThreshold = 0
+let pendingRoute = false;
+let requestsTotal = 0;
+let requestsCompleted = 0;
+const latencyThreshold = 0;
 
 const JWT_REFRESHED_QUERY = "__jwt_refreshed__";
 
 const progressComplete = () => {
-    pendingRoute = false
-    requestsTotal = 0
-    requestsCompleted = 0
-    NProgress.done()
+    pendingRoute = false;
+    requestsTotal = 0;
+    requestsCompleted = 0;
+    NProgress.done();
 }
 
 const initProgress = () => {
@@ -31,64 +33,72 @@ const initProgress = () => {
 
 const increaseProgress = () => {
     setTimeout(() => {
-        ++requestsCompleted
+        ++requestsCompleted;
         if (requestsCompleted >= requestsTotal) {
-            progressComplete()
+            progressComplete();
         } else {
-            NProgress.set((requestsCompleted / requestsTotal) - 0.1)
+            NProgress.set((requestsCompleted / requestsTotal) - 0.1);
         }
-    }, latencyThreshold + 50)
+    }, latencyThreshold + 50);
 }
 
-const requestInterceptor = config => {
-    initProgress();
-    return config
-}
-
-const responseInterceptor = response => {
+const responseInterceptor = (response: AxiosResponse): AxiosResponse => {
     increaseProgress();
-
-    return response
+    return response;
 }
 
-const errorResponseInterceptor = error => {
-    increaseProgress()
-
-    return Promise.reject(error)
+const errorResponseInterceptor = (error: AxiosError): Promise<AxiosError> => {
+    increaseProgress();
+    return Promise.reject(error);
 }
 
-const progressInterceptor = (progressEvent) => {
+
+const progressInterceptor = (progressEvent: AxiosProgressEvent) => {
     if (progressEvent && progressEvent.loaded && progressEvent.total) {
-        NProgress.inc((Math.floor(progressEvent.loaded * 1.0) / progressEvent.total))
+        NProgress.inc((Math.floor(progressEvent.loaded * 1.0) / progressEvent.total));
     }
 }
 
-export default (callback, store, router) => {
-    const instance = axios.create({
+interface QueueItem {
+    config: AxiosRequestConfig;
+    resolve: (value: AxiosResponse | Promise<AxiosResponse>) => void;
+    reject: (reason?: any) => void;
+}
+
+export default (
+    callback: (instance: AxiosInstance) => void,
+    store: Store<any>,
+    router: Router
+): void => {
+    const instance: AxiosInstance = axios.create({
         timeout: 15000,
         headers: {
             "Content-Type": "application/json"
         },
         onDownloadProgress: progressInterceptor,
         onUploadProgress: progressInterceptor
-    })
+    });
 
-    instance.interceptors.request.use(requestInterceptor)
+    instance.interceptors.request.use((config) => {
+        initProgress();
+        return config;
+    });
     instance.interceptors.response.use(responseInterceptor, errorResponseInterceptor);
 
-    let toRefreshQueue = [];
+    let toRefreshQueue: QueueItem[] = [];
     let refreshing = false;
 
     instance.interceptors.response.use(
-        response => {
-            return response
-        }, async errorResponse => {
+        (response: AxiosResponse) => {
+            return response;
+        },
+        async (errorResponse: AxiosError & { config?: { showMessageOnError?: boolean } }) => {
             if (errorResponse?.code === "ERR_BAD_RESPONSE" && !errorResponse?.response?.data) {
                 store.dispatch("core/showMessage", {
                     response: errorResponse,
                     content: errorResponse,
                     variant: "error"
-                })
+                });
                 return Promise.reject(errorResponse);
             }
 
@@ -110,8 +120,8 @@ export default (callback, store, router) => {
                     return Promise.reject(errorResponse);
                 }
 
-                window.location = `${base_path}/ui/login?from=${window.location.pathname +
-                (window.location.search ?? "")}`
+                window.location.assign(`${base_path}/ui/login?from=${window.location.pathname +
+                (window.location.search ?? "")}`)
             }
 
             const impersonate = localStorage.getItem(storageKeys.IMPERSONATE);
@@ -123,6 +133,10 @@ export default (callback, store, router) => {
                 && !impersonate) {
                 // Keep original request
                 const originalRequest = errorResponse.config
+
+                if(!originalRequest) {
+                    return Promise.reject(errorResponse);
+                }
 
                 if (!refreshing) {
                     const originalRequestData = typeof originalRequest.data === "string"
@@ -165,6 +179,7 @@ export default (callback, store, router) => {
                         refreshing = false;
                     }
                 } else {
+                    // @ts-expect-error https://github.com/kestra-io/kestra-ee/issues/4157
                     toRefreshQueue.push(originalRequest);
 
                     return;
@@ -175,7 +190,7 @@ export default (callback, store, router) => {
                 return Promise.reject(errorResponse.response.data)
             }
 
-            if (errorResponse.response.data && errorResponse?.config.showMessageOnError !== false) {
+            if (errorResponse.response.data && errorResponse?.config?.showMessageOnError !== false) {
                 store.dispatch("core/showMessage", {
                     response: errorResponse.response,
                     content: errorResponse.response.data,
@@ -186,12 +201,11 @@ export default (callback, store, router) => {
             }
 
             return Promise.reject(errorResponse);
-        })
-
+        });
 
     instance.defaults.paramsSerializer = {
         indexes: null
-    }
+    };
 
     router.beforeEach((to, from, next) => {
         if (pendingRoute) {
@@ -200,15 +214,15 @@ export default (callback, store, router) => {
         pendingRoute = true;
         initProgress();
 
-        next()
-    })
+        next();
+    });
 
     router.afterEach(() => {
         if (pendingRoute) {
             increaseProgress();
             pendingRoute = false;
         }
-    })
+    });
 
     callback(instance);
 };

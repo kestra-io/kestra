@@ -1,7 +1,7 @@
 import type {Store} from "vuex";
 import {describe, expect, it, Mock, vi} from "vitest"
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider";
-import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
 const defaultFlow = `inputs:
   - id: input1
@@ -53,26 +53,7 @@ const mockedStore: MockStore<Record<string, any>> = {
         namespace: {}
     },
     dispatch: vi.fn((type, payload) => {
-        if (type === "plugin/load") {
-            switch (payload.cls) {
-                case "io.kestra.plugin.core.trigger.Schedule":
-                    return Promise.resolve(propertiesSchemaWrapper({
-                        date: {},
-                        next: {},
-                        previous: {}
-                    }))
-                case "io.kestra.plugin.core.output.OutputValues":
-                    return Promise.resolve(propertiesSchemaWrapper({
-                        values: {}
-                    }))
-                case "io.kestra.plugin.core.kv.Get":
-                    return Promise.resolve(propertiesSchemaWrapper({
-                        value: {}
-                    }))
-                default:
-                    return Promise.reject("404")
-            }
-        } else if (type === "namespace/loadNamespacesForDatatype" && payload.dataType === "flow") {
+        if (type === "namespace/loadNamespacesForDatatype" && payload.dataType === "flow") {
             return Promise.resolve(["my.namespace", "another.namespace"])
         } else if (type === "flow/flowsByNamespace") {
             if (payload === "another.namespace") {
@@ -115,12 +96,35 @@ const mockedStore: MockStore<Record<string, any>> = {
     })
 } as any
 
-const provider = new FlowAutoCompletion(mockedStore);
+const pluginsStore = {
+    load(payload: any){
+        switch (payload.cls) {
+                case "io.kestra.plugin.core.trigger.Schedule":
+                    return Promise.resolve(propertiesSchemaWrapper({
+                        date: {},
+                        next: {},
+                        previous: {}
+                    }))
+                case "io.kestra.plugin.core.output.OutputValues":
+                    return Promise.resolve(propertiesSchemaWrapper({
+                        values: {}
+                    }))
+                case "io.kestra.plugin.core.kv.Get":
+                    return Promise.resolve(propertiesSchemaWrapper({
+                        value: {}
+                    }))
+                default:
+                    return Promise.reject("404")
+            }
+    }
+} as any
+
+const provider = new FlowAutoCompletion(mockedStore, pluginsStore);
 const parsed = YAML_UTILS.parse(defaultFlow);
 
 describe("FlowAutoCompletionProvider", () => {
     it("root autocompletions", async () => {
-        expect(await new FlowAutoCompletion(mockedStore).rootFieldAutoCompletion()).toEqual([
+        expect(await new FlowAutoCompletion(mockedStore, pluginsStore).rootFieldAutoCompletion()).toEqual([
             "outputs",
             "inputs",
             "vars",

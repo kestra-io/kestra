@@ -11,7 +11,7 @@
             :value="item"
         >
             <span class="options">
-                <task-icon :cls="item" :only-icon="true" :icons="icons" />
+                <task-icon :cls="item" :only-icon="true" :icons="pluginsStore.icons" />
                 <span>
                     {{ item }}
                 </span>
@@ -19,16 +19,16 @@
         </el-option>
 
         <template #prefix>
-            <task-icon v-if="modelValue" :cls="modelValue" :only-icon="true" :icons="icons" />
+            <task-icon v-if="modelValue" :cls="modelValue" :only-icon="true" :icons="pluginsStore.icons" />
         </template>
     </el-select>
 </template>
 
 <script setup lang="ts">
     import {computed, onBeforeMount} from "vue";
-    import {useStore} from "vuex";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {BlockType} from "../code/utils/types";
+    import {usePluginsStore} from "../../stores/plugins";
 
     const props = defineProps<{
         blockType: BlockType | "pluginDefaults";
@@ -39,27 +39,20 @@
         default: "",
     });
 
-    const store = useStore();
+    const pluginsStore = usePluginsStore();
 
     onBeforeMount(() => {
-        store.dispatch("plugin/listWithSubgroup", {includeDeprecated: false});
-    })
-
-    const plugins = computed(() => {
-        return store.state.plugin.plugins;
-    })
-    const icons = computed(() => {
-        return store.state.plugin.icons;
+        pluginsStore.listWithSubgroup({includeDeprecated: false});
     })
 
     const taskModels = computed(() => {
-        const models = new Set<string>();
+        const models = new Set<any>();
         const pluginKeySection: BlockType[] =
             props.blockType === "pluginDefaults"
                 ? ["tasks", "conditions", "triggers", "taskRunners"]
                 : [props.blockType];
 
-        for (const plugin of plugins.value || []) {
+        for (const plugin of pluginsStore.plugins || []) {
             for (const curSection of pluginKeySection) {
                 const entries = plugin[curSection];
                 if (entries) {

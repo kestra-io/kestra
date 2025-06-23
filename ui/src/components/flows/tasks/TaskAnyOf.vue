@@ -37,7 +37,6 @@
 </template>
 
 <script>
-    import {mapState} from "vuex";
     import Task from "./Task";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import getTaskComponent from "./getTaskComponent";
@@ -189,7 +188,6 @@
         ],
 
         computed: {
-            ...mapState("plugin", ["icons"]),
             schemas() {
                 if(!this.schema?.anyOf || !Array.isArray(this.schema.anyOf)) {
                     return [];

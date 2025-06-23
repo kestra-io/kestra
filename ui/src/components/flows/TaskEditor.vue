@@ -16,7 +16,7 @@
         </el-form-item>
     </el-form>
 
-    <div @click="store.dispatch('plugin/updateDocumentation', {task: selectedTaskType});">
+    <div @click="pluginsStore.updateDocumentation({task: selectedTaskType});">
         <TaskObject
             v-loading="isLoading"
             v-if="selectedTaskType && schema"
@@ -32,13 +32,13 @@
 
 <script lang="ts" setup>
     import {computed, inject, onActivated, ref, toRaw, watch} from "vue";
-    import {useStore} from "vuex";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {NoCodeElement, Schemas} from "../code/utils/types";
     import {BLOCKTYPE_INJECT_KEY, PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
     import {removeNullAndUndefined} from "../code/utils/cleanUp";
+    import {usePluginsStore} from "../../stores/plugins";
 
     defineOptions({
         name: "TaskEditor",
@@ -47,7 +47,7 @@
 
     const modelValue = defineModel<string>();
 
-    const store = useStore();
+    const pluginsStore = usePluginsStore();
 
     type PartialCodeElement = Partial<NoCodeElement>;
 
@@ -123,28 +123,29 @@
     // when tab is clicked, load the documentation
     onActivated(() => {
         if(selectedTaskType.value){
-            store.dispatch("plugin/updateDocumentation", {task: selectedTaskType.value});
+            pluginsStore.updateDocumentation({task: selectedTaskType.value});
         }
     });
 
     watch(selectedTaskType, (task) => {
         if (task) {
             load();
-            store.dispatch("plugin/updateDocumentation", {task});
+            pluginsStore.updateDocumentation({task});
         }
     }, {immediate: true});
 
     function load() {
         isLoading.value = true;
-        store
-            .dispatch("plugin/load", {
+        if(selectedTaskType.value){
+            pluginsStore.load({
                 cls: selectedTaskType.value,
                 all: true
             })
-            .then((response) => {
-                plugin.value = response;
-                isLoading.value = false;
-            })
+                .then((response) => {
+                    plugin.value = response;
+                    isLoading.value = false;
+                })
+        }
 
     }
 

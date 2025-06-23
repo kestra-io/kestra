@@ -12,7 +12,7 @@
                 >
                     <template #reference>
                         <el-button @click="copyLink(trigger)" size="small">
-                            <task-icon :only-icon="true" :cls="trigger?.type" :icons="icons" />
+                            <task-icon :only-icon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
                         </el-button>
                     </template>
                     <template #default>
@@ -25,8 +25,9 @@
 </template>
 <script>
     import TriggerVars from "./TriggerVars.vue";
-    import {mapState} from "vuex";
     import {TaskIcon} from "@kestra-io/ui-libs";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {mapStores} from "pinia";
 
     export default {
         props: {
@@ -70,7 +71,7 @@
             }
         },
         computed: {
-            ...mapState("plugin", ["icons"]),
+            ...mapStores(usePluginsStore),
             triggers() {
                 if (this.flow && this.flow.triggers) {
                     return this.flow.triggers.filter(trigger => this.triggerId === null || this.triggerId === trigger.id)

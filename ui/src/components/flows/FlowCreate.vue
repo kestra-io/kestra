@@ -68,7 +68,6 @@ tasks:
         computed: {
             ...mapState("flow", ["flowGraph", "flowYaml"]),
             ...mapState("auth", ["user"]),
-            ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flow", "flowValidation", "flowYaml"]),
             routeInfo() {

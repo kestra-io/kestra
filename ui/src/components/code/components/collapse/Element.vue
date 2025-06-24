@@ -1,5 +1,5 @@
 <template>
-    <div @click="handleClick" class="d-flex my-2 p-2 rounded element">
+    <div @click="handleClick" class="d-flex my-2 p-2 rounded element" :class="{'moved': moved}">
         <div class="me-2 icon">
             <TaskIcon :cls="element.type" :icons only-icon />
         </div>
@@ -24,6 +24,7 @@
 <script setup lang="ts">
     import {computed, inject} from "vue";
     import {useI18n} from "vue-i18n";
+    import {usePluginsStore} from "../../../../stores/plugins";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
     import {BlockType} from "../../utils/types";
@@ -44,13 +45,12 @@
             type: string;
         };
         elementIndex?: number;
+        moved: boolean;
     }>();
 
-    import {useStore} from "vuex";
+    const pluginsStore = usePluginsStore();
 
-    const store = useStore();
-
-    const icons = computed(() => store.state.plugin.icons);
+    const icons = computed(() => pluginsStore.icons);
 
     const editTask = inject(
         EDIT_TASK_FUNCTION_INJECTION_KEY,
@@ -81,6 +81,7 @@
     cursor: pointer;
     background-color: $code-card-color;
     border: 1px solid $code-border-color;
+    transition: all 0.2s ease-in-out;
 
     & > .icon {
         width: 1.25rem;
@@ -89,6 +90,11 @@
     & > .label {
         color: inherit;
         font-size: $code-font-sm;
+    }
+
+    &.moved {
+        background-color: var(--ks-button-background-secondary-active);
+        border-color: var(--ks-border-active);
     }
 }
 </style>

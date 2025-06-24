@@ -125,7 +125,7 @@ export default (
                 && !store.getters["auth/isLogged"]) {
                 const base_path = window.KESTRA_BASE_PATH.endsWith("/") ? window.KESTRA_BASE_PATH.slice(0, -1) : window.KESTRA_BASE_PATH;
 
-                if (window.location.pathname.includes("/login")) {
+                if (window.location.pathname.startsWith(base_path + "/ui/login")) {
                     return Promise.reject(errorResponse);
                 }
 

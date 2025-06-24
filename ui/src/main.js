@@ -20,10 +20,6 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
         const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null;
         const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress") === "true";
         
-        if (!hasCredentials && !isSetupInProgress) {
-            return next({name: "login", query: {from: to.fullPath}});
-        }
-        
         try {
             if (!store.getters["misc/configs"]) {
                 await store.dispatch("misc/loadConfigs");
@@ -33,19 +29,26 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
             const hasCompletedSetup = localStorage.getItem("basicAuthSetupCompleted") === "true";
             
             if (configs) {
-                if (!configs.isBasicAuthEnabled && !hasCompletedSetup) {
-                    return next({name: "setup"});
-                }
-                
                 if (configs.isBasicAuthEnabled) {
+                    if (!hasCredentials) {
+                        return next({name: "login", query: {from: to.fullPath}});
+                    }
                     if (hasCompletedSetup) {
                         localStorage.removeItem("basicAuthSetupCompleted");
                     }
-                    
                     if (isSetupInProgress) {
                         localStorage.removeItem("basicAuthSetupInProgress");
                     }
+                    return next();
                 }
+                
+                if (!configs.isBasicAuthEnabled && !hasCompletedSetup) {
+                    return next({name: "setup"});
+                }
+            }
+            
+            if (!hasCredentials && !isSetupInProgress) {
+                return next({name: "login", query: {from: to.fullPath}});
             }
             
             return next();

@@ -206,6 +206,7 @@
     import MailChecker from "mailchecker"
     import {useMiscStore} from "../../stores/misc"
     import {useApiStore} from "../../stores/api"
+    import {useSurveySkip} from "../../composables/useSurveyData"
 
     import Cogs from "vue-material-design-icons/Cogs.vue"
     import AccountPlus from "vue-material-design-icons/AccountPlus.vue"
@@ -250,6 +251,7 @@
     const apiStore = useApiStore()
     const router = useRouter()
     const {t} = useI18n()
+    const {storeSurveySkipData} = useSurveySkip()
 
     const activeStep = ref(0)
     const usageData = ref<any>(null)
@@ -473,6 +475,11 @@
                 surveySelections[`use_case_${useCase}`] = true
             })
         }
+    
+        storeSurveySkipData({
+            step_number: 3,
+            ...surveySelections
+        })
     
         trackSetupEvent("setup_flow:marketing_survey_skipped", {
             step_number: 3,

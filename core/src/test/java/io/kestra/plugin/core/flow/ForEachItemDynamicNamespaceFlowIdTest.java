@@ -12,7 +12,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
-
 import java.net.URI;
 import java.time.Duration;
 import java.util.Map;
@@ -47,11 +46,15 @@ public class ForEachItemDynamicNamespaceFlowIdTest {
     @Test
     public void testDynamicNamespaceAndFlowId() throws Exception {
         // Prepare a file with two lines, each line is a JSON object with different namespace/flowId
-        String content = """
-        {\"namespace\":\"io.kestra.tests.dynamic\",\"flowId\":\"subflow1\",\"input1\":\"foo\"}\n{\"namespace\":\"io.kestra.tests.dynamic\",\"flowId\":\"subflow2\",\"input1\":\"bar\"}"
-        """;
-        URI file = storageInterface.putContent(content.getBytes(), "test-dynamic-ns-flowid.jsonl");
-
+        String content = "{\"namespace\":\"io.kestra.tests.dynamic\",\"flowId\":\"subflow1\",\"input1\":\"foo\"}\n{\"namespace\":\"io.kestra.tests.dynamic\",\"flowId\":\"subflow2\",\"input1\":\"bar\"}";
+        java.io.File tempFile = java.io.File.createTempFile("test-dynamic-ns-flowid", ".jsonl");
+        java.nio.file.Files.writeString(tempFile.toPath(), content);
+        URI file = storageInterface.put(
+            MAIN_TENANT,
+            null,
+            new URI("/file/storage/test-dynamic-ns-flowid.jsonl"),
+            new java.io.FileInputStream(tempFile)
+        );
         // The ForEachItem task should use expressions for namespace and flowId
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(
@@ -62,7 +65,6 @@ public class ForEachItemDynamicNamespaceFlowIdTest {
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30)
         );
-
         // There should be two subflow executions, one for each item
         assertThat(execution.getState().getCurrent().isTerminated()).isTrue();
         assertThat(execution.getTaskRunList()).isNotEmpty();

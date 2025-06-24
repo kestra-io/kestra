@@ -11,7 +11,6 @@ declare module "@vue/runtime-core" {
         stat:any
         namespace:any
         misc:any
-        layout:any
         auth:any
         graph:any
         plugin:any

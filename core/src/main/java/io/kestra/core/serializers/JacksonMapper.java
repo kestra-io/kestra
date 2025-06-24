@@ -61,7 +61,7 @@ public final class JacksonMapper {
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     public static ObjectMapper ofJson() {
-        return MAPPER;
+        return JacksonMapper.ofJson(true);
     }
 
     public static ObjectMapper ofJson(boolean strict) {

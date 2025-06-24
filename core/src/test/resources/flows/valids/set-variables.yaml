@@ -1,0 +1,16 @@
+id: set-variables
+namespace: io.kestra.tests
+
+variables:
+  name: World
+
+tasks:
+  - id: set-vars
+    type: io.kestra.plugin.core.execution.SetVariables
+    variables:
+      message: Hello
+      name: Loïc
+  - id: output
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      message: "{{ vars.message }} {{ vars.name }}"

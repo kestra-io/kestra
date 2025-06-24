@@ -4,7 +4,7 @@
         @click="$refs.tree.setCurrentKey(undefined)"
         @contextmenu.prevent="onTabContextMenu"
     >
-        <div class="d-flex flex-row">
+        <div class="flex-row d-flex">
             <el-select
                 v-model="filter"
                 :placeholder="$t('namespace files.filter')"
@@ -137,7 +137,11 @@
                 <el-dropdown
                     :ref="`dropdown__${data.id}`"
                     @contextmenu.prevent.stop="
-                        toggleDropdown(`dropdown__${data.id}`)
+                        toggleDropdown(`dropdown__${data.id}`);
+                        if(selectedNodes.length === 0) {
+                            selectedNodes.push(data.id);
+                            selectedFiles.push(getPath(data.id));
+                        }
                     "
                     trigger="contextmenu"
                     class="w-100"
@@ -310,7 +314,7 @@
             v-model="confirmation.visible"
             :title="confirmationTitle"
             width="500"
-            @keydown.enter.prevent="removeItem()"
+            @keydown.enter.prevent="removeItems()"
         >
             <span class="py-3">
                 {{
@@ -326,7 +330,7 @@
                     <el-button @click="confirmation.visible = false">
                         {{ $t("cancel") }}
                     </el-button>
-                    <el-button type="primary" @click="removeItem()">
+                    <el-button type="primary" @click="removeItems()">
                         {{ $t("namespace files.dialog.confirm") }}
                     </el-button>
                 </div>
@@ -999,22 +1003,22 @@
                     };
                 }
             },
-            async removeItem() {
+            async removeItems() {
                 for (const node of this.confirmation.nodes) {
                     try {
                         await this.deleteFileDirectory({
                             namespace: this.currentNS ?? this.$route.params.namespace,
                             path: this.getPath(node),
-                            name: node.data.fileName,
-                            type: node.data.type,
+                            name: node.fileName,
+                            type: node.type,
                         });
-                        this.$refs.tree.remove(node.data.id);
+                        this.$refs.tree.remove(node.id);
                         this.closeTab({
-                            name: node.data.fileName,
+                            name: node.fileName,
                         });
                     } catch (error) {
-                        console.error(`Failed to delete file: ${node.data.fileName}`, error);
-                        this.$toast().error(`Failed to delete file: ${node.data.fileName}`);
+                        console.error(`Failed to delete file: ${node.fileName}`, error);
+                        this.$toast().error(`Failed to delete file: ${node.fileName}`);
                     }
                 }
 

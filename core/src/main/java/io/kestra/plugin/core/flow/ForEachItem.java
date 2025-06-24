@@ -513,26 +513,30 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                                 .uri(URI.create(runContext.getStorageOutputPrefix().toString() + "/" + iteration + "/outputs.ion"))
                                 .build();
 
+                            TaskRun updatedTaskRun = currentTaskRun.toBuilder()
+                                .outputs(Variables.inMemory(outputs.toMap()))
+                                .iteration(iteration)
+                                .namespace(resolvedNamespace)
+                                .flowId(resolvedFlowId)
+                                .build();
+
                             return ExecutableUtils.subflowExecution(
                                 runContext,
                                 flowExecutorInterface,
                                 currentExecution,
                                 currentFlow,
                                 this,
-                                currentTaskRun
-                                    .withOutputs(Variables.inMemory(outputs.toMap()))
-                                    .withIteration(iteration),
+                                updatedTaskRun,
                                 inputs,
                                 labels,
                                 inheritLabels,
-                                scheduleOn,
-                                new ExecutableTask.SubflowId(resolvedNamespace, resolvedFlowId, this.revision)
+                                scheduleOn
                             );
                         }
                     ))
                     .filter(Optional::isPresent)
-                    .<SubflowExecution<?>>map(Optional::get)
-                    .toList();
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
             } catch (IOException e) {
                 throw new InternalException(e);
             }
@@ -595,7 +599,8 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
 
         @Override
         public SubflowId subflowId() {
-            return this.subflowId;
+            // Not used for dynamic subflowId, set per TaskRun above
+            return null;
         }
     }
 

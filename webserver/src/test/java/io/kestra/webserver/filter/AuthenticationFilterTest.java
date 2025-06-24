@@ -2,7 +2,6 @@ package io.kestra.webserver.filter;
 
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.context.annotation.Property;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
@@ -27,8 +26,6 @@ class AuthenticationFilterTest {
 
     @Test
     void testUnauthorized() {
-        assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange("/api/v1/configs"));
-
         assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
             .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker")));
     }

@@ -2,7 +2,6 @@ package io.kestra.webserver.services;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.kestra.core.models.Setting;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
@@ -41,7 +40,7 @@ class BasicAuthServiceTest {
             post(urlEqualTo("/v1/reports/events"))
                 .willReturn(aResponse().withStatus(200))
         );
-        ctx = ApplicationContext.run(Map.of("kestra.server.basic-auth.enabled", "true"), Environment.TEST);
+        ctx = ApplicationContext.run(Map.of(), Environment.TEST);
 
         basicAuthService = ctx.getBean(BasicAuthService.class);
         basicAuthConfiguration = ctx.getBean(BasicAuthService.BasicAuthConfiguration.class);
@@ -57,16 +56,14 @@ class BasicAuthServiceTest {
     }
 
     @Test
-    void initFromYamlConfig() throws TimeoutException, QueueException {
-        assertThat(basicAuthService.isEnabled()).isTrue();
-
+    void initFromYamlConfig() throws TimeoutException {
         assertConfigurationMatchesApplicationYaml();
 
         awaitOssAuthEventApiCall("admin@kestra.io");
     }
 
     @Test
-    void secure() throws TimeoutException, QueueException {
+    void secure() throws TimeoutException {
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
             IllegalArgumentException.class,
             () -> basicAuthService.save(basicAuthConfiguration.withUsernamePassword("not-an-email", "password"))
@@ -78,24 +75,6 @@ class BasicAuthServiceTest {
 
         basicAuthService.save(basicAuthConfiguration.withUsernamePassword("some@email.com", "password"));
         awaitOssAuthEventApiCall("some@email.com");
-    }
-
-    @Test
-    void unsecure() {
-        assertThat(basicAuthService.isEnabled()).isTrue();
-        BasicAuthService.SaltedBasicAuthConfiguration previousConfiguration = basicAuthService.configuration();
-
-        basicAuthService.unsecure();
-
-        assertThat(basicAuthService.isEnabled()).isFalse();
-        BasicAuthService.SaltedBasicAuthConfiguration newConfiguration = basicAuthService.configuration();
-
-
-        assertThat(newConfiguration.getEnabled()).isFalse();
-        assertThat(newConfiguration.getUsername()).isEqualTo(previousConfiguration.getUsername());
-        assertThat(newConfiguration.getPassword()).isEqualTo(previousConfiguration.getPassword());
-        assertThat(newConfiguration.getRealm()).isEqualTo(previousConfiguration.getRealm());
-        assertThat(newConfiguration.getOpenUrls()).isEqualTo(previousConfiguration.getOpenUrls());
     }
 
     private void assertConfigurationMatchesApplicationYaml() {

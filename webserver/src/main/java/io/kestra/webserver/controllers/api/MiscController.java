@@ -1,7 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.collectors.Usage;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
@@ -86,7 +85,7 @@ public class MiscController {
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
-    public Configuration getConfiguration() throws JsonProcessingException {
+    public Configuration getConfiguration() {
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
             .uuid(instanceService.fetch())
@@ -101,7 +100,7 @@ public class MiscController {
                 .initial(this.initialPreviewRows)
                 .max(this.maxPreviewRows)
                 .build()
-            ).isBasicAuthEnabled(basicAuthService.isEnabled())
+            )
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .resourceToFilters(QueryFilter.Resource.asResourceList())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
@@ -166,8 +165,6 @@ public class MiscController {
         String url;
 
         Preview preview;
-
-        Boolean isBasicAuthEnabled;
 
         String systemNamespace;
 

@@ -380,8 +380,18 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     public List<Task> getTasks() {
         return List.of(
             new ForEachItemSplit(this.getId(), this.items, this.batch),
-            new ForEachItemExecutable(this.getId(), this.inputs, this.inheritLabels, this.labels, this.wait, this.transmitFailed, this.scheduleDate,
-                new ExecutableTask.SubflowId(this.namespace, this.flowId, Optional.ofNullable(this.revision)), this.restartBehavior
+            new ForEachItemExecutable(
+                this.getId(),
+                this.inputs,
+                this.inheritLabels,
+                this.labels,
+                this.wait,
+                this.transmitFailed,
+                this.scheduleDate,
+                this.namespace, // pass namespace
+                this.flowId,    // pass flowId
+                Optional.ofNullable(this.revision),
+                this.restartBehavior
             ),
             new ForEachItemMergeOutputs(this.getId())
         );
@@ -445,19 +455,22 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
         private Boolean wait;
         private Boolean transmitFailed;
         private Property<ZonedDateTime> scheduleOn;
-        private SubflowId subflowId;
+        private String namespace; // new field
+        private String flowId;    // new field
+        private Optional<Integer> revision; // new field
         private RestartBehavior restartBehavior;
 
-        private ForEachItemExecutable(String parentId, Map<String, Object> inputs, Boolean inheritLabels, List<Label> labels, Boolean wait, Boolean transmitFailed, Property<ZonedDateTime> scheduleOn, SubflowId subflowId, RestartBehavior restartBehavior) {
+        private ForEachItemExecutable(String parentId, Map<String, Object> inputs, Boolean inheritLabels, List<Label> labels, Boolean wait, Boolean transmitFailed, Property<ZonedDateTime> scheduleOn, String namespace, String flowId, Optional<Integer> revision, RestartBehavior restartBehavior) {
             this.inputs = inputs;
             this.inheritLabels = inheritLabels;
             this.labels = labels;
             this.wait = wait;
             this.transmitFailed = transmitFailed;
             this.scheduleOn = scheduleOn;
-            this.subflowId = subflowId;
+            this.namespace = namespace;
+            this.flowId = flowId;
+            this.revision = revision;
             this.restartBehavior = restartBehavior;
-
             this.id = parentId + SUFFIX;
             this.type = ForEachItemExecutable.class.getName();
         }
@@ -485,35 +498,36 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                     .map(throwFunction(
                         split -> {
                             int iteration = currentIteration.getAndIncrement();
-                            // these are special variable that can be passed to the subflow
                             Map<String, Object> itemsVariable = Map.of("taskrun",
                                 Map.of("items", split, "iteration", iteration));
                             Map<String, Object> inputs = new HashMap<>();
                             if (this.inputs != null) {
                                 inputs.putAll(runContext.render(this.inputs, itemsVariable));
                             }
-
+                            // Dynamically render namespace and flowId per item
+                            String resolvedNamespace = runContext.render(this.namespace, itemsVariable);
+                            String resolvedFlowId = runContext.render(this.flowId, itemsVariable);
                             // these are special outputs to be able to compute the iteration map of the parent taskrun
                             var outputs = Output.builder()
                                 .numberOfBatches(splits.size())
-                                // the passed URI may be used by the subflow to write execution outputs.
                                 .uri(URI.create(runContext.getStorageOutputPrefix().toString() + "/" + iteration + "/outputs.ion"))
                                 .build();
 
-                                return ExecutableUtils.subflowExecution(
-                                    runContext,
-                                    flowExecutorInterface,
-                                    currentExecution,
-                                    currentFlow,
-                                    this,
-                                    currentTaskRun
-                                        .withOutputs(Variables.inMemory(outputs.toMap()))
-                                        .withIteration(iteration),
-                                    inputs,
-                                    labels,
-                                    inheritLabels,
-                                    scheduleOn
-                                );
+                            return ExecutableUtils.subflowExecution(
+                                runContext,
+                                flowExecutorInterface,
+                                currentExecution,
+                                currentFlow,
+                                this,
+                                currentTaskRun
+                                    .withOutputs(Variables.inMemory(outputs.toMap()))
+                                    .withIteration(iteration),
+                                inputs,
+                                labels,
+                                inheritLabels,
+                                scheduleOn,
+                                new ExecutableTask.SubflowId(resolvedNamespace, resolvedFlowId, this.revision)
+                            );
                         }
                     ))
                     .filter(Optional::isPresent)

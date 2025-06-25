@@ -99,7 +99,7 @@
     "@types/testing-library__jest-dom": "^5.14.9",
     "@types/testing-library__user-event": "^4.1.1",
     "@typescript-eslint/parser": "^8.34.0",
-    "@vitejs/plugin-vue": "^5.2.4",
+    "@vitejs/plugin-vue": "^6.0.0",
     "@vitejs/plugin-vue-jsx": "^4.2.0",
     "@vitest/browser": "^3.2.3",
     "@vitest/coverage-v8": "^3.2.3",

@@ -14,7 +14,6 @@ import editor from "./editor";
 import doc from "./doc";
 import bookmarks from "./bookmarks";
 import dashboard from "./dashboard";
-import blueprints from "./blueprints";
 import service from "./service"
 
 export default {
@@ -35,7 +34,6 @@ export default {
         doc,
         bookmarks,
         dashboard,
-        blueprints,
         service,
     }
 }

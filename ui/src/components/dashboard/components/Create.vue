@@ -20,6 +20,9 @@
     import {useStore} from "vuex";
     const store = useStore();
 
+    import {useBlueprintsStore} from "../../../stores/blueprints";
+    const blueprintsStore = useBlueprintsStore();
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
@@ -55,7 +58,7 @@
         const {blueprintId, name, params} = route.query;
 
         if (blueprintId) {
-            dashboard.value.sourceCode = await store.dispatch("blueprints/getBlueprintSource", {type: "community", kind: "dashboard", id: blueprintId});
+            dashboard.value.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId});
         } else {
             if (name === "flows/update") {
                 const {namespace, id} = JSON.parse(params);

@@ -7,11 +7,13 @@
 
 <script>
     import {mapGetters, mapMutations, mapState} from "vuex";
+    import {mapStores} from "pinia";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import MultiPanelEditorView from "./MultiPanelEditorView.vue";
     import {storageKeys} from "../../utils/constants";
+    import {useBlueprintsStore} from "../../stores/blueprints";
 
     import {getRandomFlowID} from "../../../scripts/product/flow";
 
@@ -45,7 +47,7 @@
                 if (this.$route.query.copy && this.flow){
                     flowYaml = this.flow.source;
                 } else if (blueprintId && blueprintSource) {
-                    flowYaml = await this.$store.dispatch("blueprints/getBlueprintSource", {type: blueprintSource, kind: "flow", id: blueprintId});
+                    flowYaml = await this.blueprintsStore.getBlueprintSource({type: blueprintSource, kind: "flow", id: blueprintId});
                 } else {
                     const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
                     const selectedNamespace = this.$route.query.namespace || defaultNamespace || "company.team";
@@ -70,6 +72,7 @@ tasks:
             ...mapState("auth", ["user"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flow", "flowValidation", "flowYaml"]),
+            ...mapStores(useBlueprintsStore),
             routeInfo() {
                 return {
                     title: this.$t("flows")

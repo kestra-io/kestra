@@ -2,11 +2,17 @@ package io.kestra.core.runners;
 
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FilesServiceTest {
     @Inject
     private TestRunContextFactory runContextFactory;
+
+    @Inject
+    private ApplicationContext applicationContext;
 
     @Test
     void overrideExistingInputFile() throws Exception {
@@ -43,6 +52,17 @@ class FilesServiceTest {
     }
 
     @Test
+    @Property(name = "kestra.plugins.allowed-paths", value = "/tmp")
+    void localFileAsInputFile() throws Exception {
+        URI uri = createFile();
+        RunContext runContext = runContextFactory.of();
+        ((DefaultRunContext) runContext).init(applicationContext);
+        FilesService.inputFiles(runContext, Map.of("file.txt", uri.toString()));
+        Path file = runContext.workingDir().resolve(Path.of("file.txt"));
+        assertThat(new String(Files.readAllBytes(file))).isEqualTo("Hello World");
+    }
+
+    @Test
     void outputFiles() throws Exception {
         RunContext runContext = runContextFactory.of();
         Map<String, String> files = FilesService.inputFiles(runContext, Map.of("file.txt", "content"));
@@ -58,5 +78,11 @@ class FilesServiceTest {
 
         Map<String, URI> outputs = FilesService.outputFiles(runContext, List.of("*.{{extension}}"));
         assertThat(outputs.size()).isEqualTo(1);
+    }
+
+    private URI createFile() throws IOException {
+        File tempFile = File.createTempFile("file", ".txt");
+        Files.write(tempFile.toPath(), "Hello World".getBytes());
+        return tempFile.toPath().toUri();
     }
 }

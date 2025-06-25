@@ -41,7 +41,7 @@
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import configureLanguage from "../../composables/monaco/languages/languagesConfigurator";
 
-    import {EDITOR_HIGHLIGHT_INJECTION_KEY, FLOW_INJECTION_KEY} from "../code/injectionKeys";
+    import {EDITOR_HIGHLIGHT_INJECTION_KEY} from "../code/injectionKeys";
 
     import YamlWorker from "./yaml.worker.js?worker";
     import Utils from "../../utils/utils";
@@ -455,21 +455,18 @@
 
     const pluginsStore = usePluginsStore();
 
-    const flowYaml = inject(FLOW_INJECTION_KEY)
-
     onMounted(async function () {
         await document.fonts.ready;
         await initMonaco();
 
         if (props.language !== undefined) {
-            disposeCompletions.value = await configureLanguage(
+            await configureLanguage(
                 store,
                 pluginsStore,
                 t,
                 props.diffEditor ? undefined : editorResolved.value as ICodeEditor,
                 props.language,
-                props.schemaType,
-                flowYaml
+                props.schemaType
             );
         }
 

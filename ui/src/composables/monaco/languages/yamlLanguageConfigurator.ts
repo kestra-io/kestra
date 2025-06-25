@@ -10,7 +10,6 @@ import RegexProvider from "../../../utils/regex";
 import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import {Store} from "vuex";
 import {useI18n} from "vue-i18n";
-import {ComputedRef} from "vue";
 import IPosition = monaco.IPosition;
 import IDisposable = monaco.IDisposable;
 import IModel = monaco.editor.IModel;
@@ -21,12 +20,10 @@ import CompletionItem = languages.CompletionItem;
 
 export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
     private readonly _yamlAutoCompletion: YamlAutoCompletion;
-    private readonly _injectedYaml: ComputedRef<string | undefined> | undefined;
 
-    constructor(yamlAutoCompletion: YamlAutoCompletion, injectedYaml?: ComputedRef<string | undefined>) {
+    constructor(yamlAutoCompletion: YamlAutoCompletion) {
         super("yaml");
         this._yamlAutoCompletion = yamlAutoCompletion;
-        this._injectedYaml = injectedYaml;
     }
 
     async configureLanguage(store: Store<Record<string, any>>) {
@@ -126,58 +123,53 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         }
 
         const yamlAutoCompletion = this._yamlAutoCompletion;
-        const injectedYaml = this._injectedYaml
         // Values autocompletion
-        if(injectedYaml?.value){
-            // do nothing if injectedYaml is set
-        }else{
-            autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider("yaml", {
-                triggerCharacters: [":"],
-                async provideCompletionItems(model, position) {
-                    const source = model.getValue();
-                    const cursorPosition = model.getOffsetAt(position);
-                    const parsed = YamlUtils.parse(source, false);
+        autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider("yaml", {
+            triggerCharacters: [":"],
+            async provideCompletionItems(model, position) {
+                const source = model.getValue();
+                const cursorPosition = model.getOffsetAt(position);
+                const parsed = YamlUtils.parse(source, false);
 
-                    const currentWord = model.findPreviousMatch(RegexProvider.beforeSeparator(), position, true, false, null, true);
-                    const elementUnderCursor = YamlUtils.localizeElementAtIndex(source, cursorPosition);
-                    if (elementUnderCursor?.key === undefined) {
-                        return NO_SUGGESTIONS;
-                    }
-
-                    const parentStartLine = model.getPositionAt(elementUnderCursor.range![0]).lineNumber;
-                    const autoCompletions = await yamlAutoCompletion.valueAutoCompletion(source, parsed, elementUnderCursor);
-                    return {
-                        suggestions: autoCompletions.map(autoCompletion => {
-                            const [label, isKey] = autoCompletion.split(":") as [string, string | undefined];
-                            let insertText = label;
-                            const endColumn = endOfWordColumn(position, model);
-                            if (isKey === undefined) {
-                                if (source.charAt(cursorPosition - 1) === ":") {
-                                    insertText = ` ${label}`;
-                                }
-                            } else {
-                                if (parentStartLine === position.lineNumber) {
-                                    insertText = `\n  ${label}: `;
-                                } else {
-                                    insertText = model.getLineContent(position.lineNumber).charAt(endColumn - 1) === ":" ? label : `${label}: `;
-                                }
-                            }
-                            return ({
-                                kind: isKey === undefined ? monaco.languages.CompletionItemKind.Value : monaco.languages.CompletionItemKind.Property,
-                                label,
-                                insertText: insertText,
-                                range: {
-                                    startLineNumber: position.lineNumber,
-                                    endLineNumber: position.lineNumber,
-                                    startColumn: position.column - (currentWord?.matches?.[0]?.length ?? 0),
-                                    endColumn: endColumn
-                                }
-                            });
-                        })
-                    };
+                const currentWord = model.findPreviousMatch(RegexProvider.beforeSeparator(), position, true, false, null, true);
+                const elementUnderCursor = YamlUtils.localizeElementAtIndex(source, cursorPosition);
+                if (elementUnderCursor?.key === undefined) {
+                    return NO_SUGGESTIONS;
                 }
-            }));
-        }
+
+                const parentStartLine = model.getPositionAt(elementUnderCursor.range![0]).lineNumber;
+                const autoCompletions = await yamlAutoCompletion.valueAutoCompletion(source, parsed, elementUnderCursor);
+                return {
+                    suggestions: autoCompletions.map(autoCompletion => {
+                        const [label, isKey] = autoCompletion.split(":") as [string, string | undefined];
+                        let insertText = label;
+                        const endColumn = endOfWordColumn(position, model);
+                        if (isKey === undefined) {
+                            if (source.charAt(cursorPosition - 1) === ":") {
+                                insertText = ` ${label}`;
+                            }
+                        } else {
+                            if (parentStartLine === position.lineNumber) {
+                                insertText = `\n  ${label}: `;
+                            } else {
+                                insertText = model.getLineContent(position.lineNumber).charAt(endColumn - 1) === ":" ? label : `${label}: `;
+                            }
+                        }
+                        return ({
+                            kind: isKey === undefined ? monaco.languages.CompletionItemKind.Value : monaco.languages.CompletionItemKind.Property,
+                            label,
+                            insertText: insertText,
+                            range: {
+                                startLineNumber: position.lineNumber,
+                                endLineNumber: position.lineNumber,
+                                startColumn: position.column - (currentWord?.matches?.[0]?.length ?? 0),
+                                endColumn: endColumn
+                            }
+                        });
+                    })
+                };
+            }
+        }));
 
         const propertySuggestion = (value: string, position: {
             lineNumber: number,
@@ -275,7 +267,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             triggerCharacters: ["."],
             async provideCompletionItems(model, position) {
                 const source = model.getValue();
-                const parsed = YamlUtils.parse(injectedYaml?.value ?? source, false);
+                const parsed = YamlUtils.parse(source, false);
 
                 const parentFieldMatcher = model.findPreviousMatch(RegexProvider.capturePebbleVarParent + "$", position, true, false, null, true);
                 if (parentFieldMatcher === null || parentFieldMatcher.matches === null) {

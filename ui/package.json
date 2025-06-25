@@ -85,7 +85,7 @@
     "@playwright/test": "^1.52.0",
     "@rushstack/eslint-patch": "^1.11.0",
     "@shikijs/markdown-it": "^3.6.0",
-    "@storybook/addon-themes": "^9.0.8",
+    "@storybook/addon-themes": "^9.0.13",
     "@storybook/addon-vitest": "^9.0.8",
     "@storybook/test-runner": "^0.22.1",
     "@storybook/vue3-vite": "^9.0.8",

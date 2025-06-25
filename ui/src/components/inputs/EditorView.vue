@@ -133,29 +133,55 @@
             style="flex: 1;"
         >
             <template v-if="editorViewType === 'YAML'">
-                <editor
-                    class="position-relative"
-                    v-if="isCreating || openedTabs.length"
-                    ref="editorDomElement"
-                    @save="save"
-                    @execute="execute"
-                    :path="currentTab?.path"
-                    :model-value="flowYaml"
-                    :schema-type="isCurrentTabFlow? 'flow': undefined"
-                    :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
-                    :extension="currentTab?.extension"
-                    @update:model-value="editorUpdate"
-                    @cursor="updatePluginDocumentation"
-                    :creating="isCreating"
-                    @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
-                    @tab-loaded="onTabLoaded"
-                    :read-only="isReadOnly"
-                    :navbar="false"
-                >
-                    <template #absolute>
-                        <KeyShortcuts />
-                    </template>
-                </editor>
+                <template v-if="isCreating || openedTabs.length">
+                    <editor
+                        class="position-relative"
+                        ref="editorDomElement"
+                        @save="save"
+                        @execute="execute"
+                        :path="currentTab?.path"
+                        :diff-overview-bar="false"
+                        :model-value="draftSource === undefined ? flowYaml : draftSource"
+                        :schema-type="isCurrentTabFlow? 'flow': undefined"
+                        :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
+                        :extension="currentTab?.extension"
+                        @update:model-value="editorUpdate"
+                        @cursor="updatePluginDocumentation"
+                        :creating="isCreating"
+                        @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
+                        @tab-loaded="onTabLoaded"
+                        :read-only="isReadOnly"
+                        :navbar="false"
+                        :original="draftSource === undefined ? undefined : flowYaml"
+                        :diff-side-by-side="false"
+                    >
+                        <template #absolute>
+                            <div class="d-flex flex-column align-items-end gap-2" v-if="isCurrentTabFlow">
+                                <el-button v-if="!aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
+                                    {{ $t("ai.flow.title") }}
+                                </el-button>
+                                <span>
+                                    <KeyShortcuts />
+                                </span>
+                            </div>
+                        </template>
+                    </editor>
+                    <transition name="el-zoom-in-center">
+                        <AiAgent
+                            v-if="aiAgentOpened"
+                            class="position-absolute prompt"
+                            @close="aiAgentOpened = false"
+                            :flow="editorContent"
+                            @generated-yaml="yaml => {draftSource = yaml; aiAgentOpened = false}"
+                        />
+                    </transition>
+                    <AcceptDecline
+                        v-if="draftSource !== undefined"
+                        class="position-absolute prompt"
+                        @accept="acceptDraft"
+                        @decline="declineDraft"
+                    />
+                </template>
                 <div v-else class="no-tabs-opened">
                     <div class="img mb-1" />
 
@@ -480,6 +506,9 @@
     import MetadataEditor from "../flows/MetadataEditor.vue";
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
     import {usePluginsStore} from "../../stores/plugins";
+    import AiAgent from "../ai/AiAgent.vue";
+    import AiIcon from "../ai/AiIcon.vue";
+    import AcceptDecline from "./AcceptDecline.vue";
 
     const store = useStore();
     const router = useRouter();
@@ -490,6 +519,16 @@
     const tours = getCurrentInstance().appContext.config.globalProperties.$tours;
     const lowCodeEditorRef = ref(null);
     const tabsScrollRef = ref();
+
+    const toggleAiShortcut = (event) => {
+        if (event.altKey && event.key === "k" && isCurrentTabFlow.value) {
+            event.preventDefault();
+            draftSource.value = undefined;
+            aiAgentOpened.value = !aiAgentOpened.value;
+        }
+    };
+    const aiAgentOpened = ref(false);
+    const draftSource = ref(undefined);
 
     const props = defineProps({
         flowGraph: {
@@ -737,6 +776,8 @@
         if (props.isCreating) {
             store.commit("editor/closeTabs");
         }
+
+        window.addEventListener("keydown", toggleAiShortcut);
     });
 
     onBeforeUnmount(() => {
@@ -751,6 +792,7 @@
         store.commit("editor/closeAllTabs");
 
         document.removeEventListener("click", hideTabContextMenu);
+        window.removeEventListener("keydown", toggleAiShortcut);
     });
 
     const stopTour = () => {
@@ -786,7 +828,11 @@
     };
 
     const onEdit = (source, currentIsFlow = false) => {
-        store.commit("flow/setFlowYaml", source)
+        if (draftSource.value !== undefined) {
+            draftSource.value = source;
+        } else {
+            store.commit("flow/setFlowYaml", source);
+        }
         return store.dispatch("flow/onEdit", {
             source,
             currentIsFlow,
@@ -1287,6 +1333,17 @@
         store.commit("editor/refreshTree");
         event.target.value = "";
     };
+
+    function acceptDraft() {
+        const accepted = draftSource.value;
+        draftSource.value = undefined;
+        editorUpdate(accepted);
+    }
+
+    function declineDraft() {
+        draftSource.value = undefined;
+        aiAgentOpened.value = true;
+    }
 </script>
 
 <style lang="scss" scoped>
@@ -1480,6 +1537,12 @@
                 color: var(--ks-content-secondary);
             }
         }
+    }
+
+    .prompt {
+        bottom: 10%;
+        width: calc(100% - 4rem);
+        left: 2rem;
     }
 </style>
 

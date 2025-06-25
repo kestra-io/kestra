@@ -1,3 +1,4 @@
+import ai from "./ai"
 import auth from "./auth"
 import core from "./core"
 import execution from "./executions"
@@ -14,6 +15,7 @@ import service from "./service"
 
 export default {
     modules: {
+        ai,
         core,
         flow,
         template,

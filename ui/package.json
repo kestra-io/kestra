@@ -120,7 +120,7 @@
     "monaco-yaml": "5.3.1",
     "patch-package": "^8.0.0",
     "playwright": "^1.53.0",
-    "prettier": "^3.5.3",
+    "prettier": "^3.6.1",
     "rollup-plugin-copy": "^3.5.0",
     "sass": "^1.89.2",
     "storybook": "^9.0.8",

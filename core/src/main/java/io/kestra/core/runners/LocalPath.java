@@ -1,7 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;

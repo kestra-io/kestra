@@ -35,6 +35,7 @@ public class LocalPathFactory {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public InputStream get(URI uri) throws IOException {
             Path workingDirectory = runContext.workingDir().path(true);
             if (!uri.getScheme().equals(LocalPath.FILE_SCHEME)) {
@@ -42,16 +43,14 @@ public class LocalPathFactory {
             }
 
             Path path = Path.of(uri).toRealPath(); // toRealPath() will protect about path traversal issues
-            if (!path.startsWith(workingDirectory)) { // working directory is always allowed
-                // check that it's on a globally allowed path
-                if (globalAllowedPaths.stream().noneMatch(path::startsWith)) {
-                    // if not globally allowed, we check if it's allowed for this specific plugin
-                    List<String> pluginAllowedPaths = (List<String>) runContext.pluginConfiguration("allowed-paths").orElse(Collections.emptyList());
-                    if (pluginAllowedPaths.stream().noneMatch(path::startsWith)) {
-                        throw new SecurityException("The path " + path + " is not authorized. " +
-                            "Only files inside the working directory are allowed by default, other path must be allowed either globally inside the Kestra configuration using the `kestra.plugins.allowed-paths` property, " +
-                            "or by plugin using the `allowed-paths` plugin configuration.");
-                    }
+            // We allow working directory or globally allowed path
+            if (!path.startsWith(workingDirectory) && globalAllowedPaths.stream().noneMatch(path::startsWith)) {
+                // if not globally allowed, we check if it's allowed for this specific plugin
+                List<String> pluginAllowedPaths = (List<String>) runContext.pluginConfiguration("allowed-paths").orElse(Collections.emptyList());
+                if (pluginAllowedPaths.stream().noneMatch(path::startsWith)) {
+                    throw new SecurityException("The path " + path + " is not authorized. " +
+                        "Only files inside the working directory are allowed by default, other path must be allowed either globally inside the Kestra configuration using the `kestra.plugins.allowed-paths` property, " +
+                        "or by plugin using the `allowed-paths` plugin configuration.");
                 }
             }
 

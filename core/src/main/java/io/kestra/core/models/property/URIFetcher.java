@@ -65,6 +65,14 @@ public class URIFetcher {
     }
 
     /**
+     * Whether the URI is supported by the Fetcher.
+     * A supported URI is a URI which scheme is one of the {@link #SUPPORTED_SCHEMES}.
+     */
+    public static boolean supports(URI uri) {
+        return uri.getScheme() != null && SUPPORTED_SCHEMES.contains(uri.getScheme());
+    }
+
+    /**
      * Fetch the resource pointed by this SmartURI
      *
      * @throws IOException if an IO error occurs

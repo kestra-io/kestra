@@ -6,7 +6,6 @@ import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.utils.IdUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
-import reactor.core.scheduler.Schedulers;
 
 import java.io.*;
 import java.net.URI;

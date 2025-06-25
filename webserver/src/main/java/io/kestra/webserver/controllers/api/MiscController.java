@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.collectors.Usage;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
@@ -85,7 +86,7 @@ public class MiscController {
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
-    public Configuration getConfiguration() {
+    public Configuration getConfiguration() throws JsonProcessingException  {
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
             .uuid(instanceService.fetch())

@@ -37,7 +37,7 @@ function propertySuggestion (value: string, position: {
     });
 };
 
-export const QUOTES = ["\"", "'"];
+const QUOTES = ["\"", "'"];
 export function endOfWordColumn (position: IPosition, model: IModel): number{
     return position.column + (model.findNextMatch(
         RegexProvider.beforeSeparator(QUOTES),
@@ -49,8 +49,12 @@ export function endOfWordColumn (position: IPosition, model: IModel): number{
     )?.matches?.[0]?.length ?? 0);
 }
 
-const NO_SUGGESTIONS = {suggestions: []};
-export function registerPebbleAutocompletion(autoCompletionProviders: IDisposable[], autoCompletion: PebbleAutoCompletion, languages: string[]) {
+export const NO_SUGGESTIONS = {suggestions: []};
+export function registerPebbleAutocompletion(
+    autoCompletionProviders: IDisposable[],
+    autoCompletion: PebbleAutoCompletion,
+    languages: string[]
+) {
     // Pebble autocompletion
     autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(languages, {
         triggerCharacters: ["{"],
@@ -74,7 +78,11 @@ export function registerPebbleAutocompletion(autoCompletionProviders: IDisposabl
     }));
 }
 
-export function registerFunctionParametersAutoCompletion(autoCompletionProviders: IDisposable[], autoCompletion: PebbleAutoCompletion, languages: string[]) {
+export function registerFunctionParametersAutoCompletion(
+    autoCompletionProviders: IDisposable[],
+    autoCompletion: PebbleAutoCompletion,
+    languages: string[]
+) {
     autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(languages, {
         triggerCharacters: ["("],
         async provideCompletionItems(model, position) {
@@ -122,14 +130,14 @@ export function registerFunctionParametersAutoCompletion(autoCompletionProviders
 export function registerNestedValueAutoCompletion(
     autoCompletionProviders: IDisposable[],
     autoCompletion: PebbleAutoCompletion,
-    completionSource: ComputedRef<string | undefined>,
-    languages: string[]
+    languages: string[],
+    completionSource?: ComputedRef<string | undefined>,
 ) {
     autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(languages, {
         triggerCharacters: ["."],
         async provideCompletionItems(model, position) {
             const source = model.getValue();
-            const parsed = YamlUtils.parse(completionSource.value ?? source, false);
+            const parsed = YamlUtils.parse(completionSource?.value ?? source, false);
 
             const parentFieldMatcher = model.findPreviousMatch(RegexProvider.capturePebbleVarParent + "$", position, true, false, null, true);
             if (parentFieldMatcher === null || parentFieldMatcher.matches === null) {
@@ -173,7 +181,7 @@ export class PebbleLanguageConfigurator extends AbstractLanguageConfigurator {
 
         registerFunctionParametersAutoCompletion(autoCompletionProviders, autoCompletion, ["plaintext-pebble"]);
 
-        registerNestedValueAutoCompletion(autoCompletionProviders, autoCompletion, completionSource, ["plaintext-pebble"]);
+        registerNestedValueAutoCompletion(autoCompletionProviders, autoCompletion, ["plaintext-pebble"], completionSource);
 
         return autoCompletionProviders;
     }

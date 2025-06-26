@@ -14,8 +14,7 @@ import IDisposable = monaco.IDisposable;
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
-import {endOfWordColumn, registerFunctionParametersAutoCompletion, registerNestedValueAutoCompletion, registerPebbleAutocompletion} from "./pebbleLanguageConfigurator.ts";
-import {computed} from "vue";
+import {endOfWordColumn, NO_SUGGESTIONS, registerFunctionParametersAutoCompletion, registerNestedValueAutoCompletion, registerPebbleAutocompletion} from "./pebbleLanguageConfigurator.ts";
 
 
 export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
@@ -106,10 +105,8 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
     }
 
     configureAutoCompletion(_: ReturnType<typeof useI18n>["t"], __: Store<Record<string, any>>, ___: monaco.editor.ICodeEditor | undefined) {
-        const NO_SUGGESTIONS = {suggestions: []};
 
         const autoCompletionProviders: IDisposable[] = [];
-
         const yamlAutoCompletion = this._yamlAutoCompletion;
 
         // Values autocompletion
@@ -164,7 +161,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
         registerFunctionParametersAutoCompletion(autoCompletionProviders, yamlAutoCompletion, ["yaml", "plaintext"]);
 
-        registerNestedValueAutoCompletion(autoCompletionProviders, yamlAutoCompletion, computed(() => undefined), ["yaml", "plaintext"]);
+        registerNestedValueAutoCompletion(autoCompletionProviders, yamlAutoCompletion, ["yaml", "plaintext"]);
 
         return autoCompletionProviders;
     }

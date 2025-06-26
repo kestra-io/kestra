@@ -171,7 +171,7 @@
     });
 
     onMounted(async () => {
-        if(schema.value?.$ref) {
+        if(pluginsStore.schemaType?.flow) {
             return; // Schema already loaded
         }
 

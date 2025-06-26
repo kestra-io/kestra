@@ -1,7 +1,7 @@
 <template>
     <el-select
         v-model="modelValue"
-        :placeholder="$t(`no_code.select.${blockType}`)"
+        :placeholder="t(`no_code.select.${blockType}`)"
         filterable
     >
         <el-option
@@ -25,46 +25,46 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeMount} from "vue";
+    import {computed, inject} from "vue";
+    import {useI18n} from "vue-i18n";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {BlockType} from "../code/utils/types";
     import {usePluginsStore} from "../../stores/plugins";
+    import {PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
 
-    const props = defineProps<{
+
+    const pluginsStore = usePluginsStore();
+
+    defineProps<{
         blockType: BlockType | "pluginDefaults";
     }>()
+
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+
+    const fieldDefinition = computed(() => {
+        if(!pluginsStore.schemaType?.flow){
+            return {};
+        }
+        return pluginsStore.schemaType.flow.definitions[removeRefPrefix(pluginsStore.schemaType.flow.$ref)]?.properties[parentPath];
+    })
+
+    const taskModels = computed(() => {
+        return fieldDefinition.value?.items?.anyOf?.map((item: any) => {
+            return removeRefPrefix(item.$ref);
+        }) || [];
+    })
+
+    function removeRefPrefix(ref?: string): string {
+        return ref?.replace(/^#\/definitions\//, "") ?? "";
+    }
+
+    const {t} = useI18n();
 
     const modelValue = defineModel({
         type: String,
         default: "",
     });
 
-    const pluginsStore = usePluginsStore();
-
-    onBeforeMount(() => {
-        pluginsStore.listWithSubgroup({includeDeprecated: false});
-    })
-
-    const taskModels = computed(() => {
-        const models = new Set<any>();
-        const pluginKeySection: BlockType[] =
-            props.blockType === "pluginDefaults"
-                ? ["tasks", "conditions", "triggers", "taskRunners"]
-                : [props.blockType];
-
-        for (const plugin of pluginsStore.plugins || []) {
-            for (const curSection of pluginKeySection) {
-                const entries = plugin[curSection];
-                if (entries) {
-                    for (const model of entries) {
-                        models.add(model);
-                    }
-                }
-            }
-        }
-
-        return Array.from(models);
-    });
 
 </script>
 

@@ -152,6 +152,44 @@ class FileExistsFunctionTest {
         assertThrows(SecurityException.class, () -> variableRenderer.render("{{ fileExists(file) }}", variables));
     }
 
+    @Test
+    void shouldProcessNamespaceFile() throws IOException, IllegalVariableEvaluationException {
+        URI file = createNsFile(false);
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", "flow",
+                "namespace", "io.kestra.tests",
+                "tenantId", MAIN_TENANT),
+            "execution", Map.of("id", "execution"),
+            "nsfile", file.toString()
+        );
+
+        assertThat(variableRenderer.render("{{ fileExists(nsfile) }}", variables)).isEqualTo("true");
+    }
+
+    @Test
+    void shouldProcessNamespaceFileFromAnotherNamespace() throws IOException, IllegalVariableEvaluationException {
+        URI file = createNsFile(true);
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", "flow",
+                "namespace", "notme",
+                "tenantId", MAIN_TENANT),
+            "execution", Map.of("id", "execution"),
+            "nsfile", file.toString()
+        );
+
+        assertThat(variableRenderer.render("{{ fileExists(nsfile) }}", variables)).isEqualTo("true");
+    }
+
+    private URI createNsFile(boolean nsInAuthority) throws IOException {
+        String namespace = "io.kestra.tests";
+        String filePath = "file.txt";
+        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
+    }
+
     private URI createFile() throws IOException {
         File tempFile = File.createTempFile("file", ".txt");
         Files.write(tempFile.toPath(), "Hello World".getBytes());

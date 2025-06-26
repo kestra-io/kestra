@@ -111,7 +111,7 @@ public interface Service extends AutoCloseable {
      * </pre>
      */
     enum ServiceState {
-        CREATED(1, 2, 3, 4),            // 0
+        CREATED(1, 2, 3, 4, 9),            // 0
         RUNNING(2, 3, 4, 9),            // 1
         ERROR(4),                       // 2
         DISCONNECTED(4, 7),             // 3

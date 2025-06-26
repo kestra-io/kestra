@@ -1,5 +1,6 @@
 package io.kestra.core.test.flow;
 
+import jakarta.validation.Valid;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,7 +14,9 @@ public class Fixtures {
 
     private Map<String, String> files;
 
+    @Valid
     private List<TaskFixture> tasks;
 
+    @Valid
     private TriggerFixture trigger;
 }

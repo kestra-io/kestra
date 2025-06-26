@@ -11,6 +11,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.TestSuiteValidation;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -52,6 +53,7 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
 
     @NotNull
     @NotEmpty
+    @Valid
     private List<UnitTest> testCases;
 
     @JsonProperty("deleted")

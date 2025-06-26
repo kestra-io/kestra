@@ -1,5 +1,6 @@
 package io.kestra.core.test.flow;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,8 +21,10 @@ public class UnitTest {
 
     private String description;
 
+    @Valid
     private Fixtures fixtures;
 
     @NotNull
+    @Valid
     private List<Assertion> assertions;
 }

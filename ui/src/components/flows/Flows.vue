@@ -303,6 +303,7 @@
 
 <script>
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -318,6 +319,7 @@
     import TriggerAvatar from "./TriggerAvatar.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import Kicon from "../Kicon.vue";
+    import {useStatStore} from "../../stores/stat";
     import Labels from "../layout/Labels.vue";
     import {storageKeys} from "../../utils/constants";
 
@@ -400,8 +402,8 @@
         },
         computed: {
             ...mapState("flow", ["flows", "total"]),
-            ...mapState("stat", ["dailyGroupByFlow", "daily", "lastExecutions"]),
             ...mapState("auth", ["user"]),
+            ...mapStores(useStatStore),
             routeInfo() {
                 return {
                     title: this.$t("flows"),
@@ -456,7 +458,7 @@
                 );
             },
             executionsCount() {
-                return [...this.daily].reduce((a, b) => {
+                return [...(this.statStore.daily || [])].reduce((a, b) => {
                     return (
                         a +
                         Object.values(b.executionCounts).reduce((a, b) => a + b, 0)
@@ -712,8 +714,8 @@
             },
             getLastExecution(row) {
                 let noState = {state: null, startDate: null};
-                if (this.lastExecutions && this.lastExecutions.length > 0) {
-                    let filteredFlowExec = this.lastExecutions.filter(
+                if (this.statStore.lastExecutions && this.statStore.lastExecutions.length > 0) {
+                    let filteredFlowExec = this.statStore.lastExecutions.filter(
                         (executedFlow) =>
                             executedFlow.flowId == row.id &&
                             executedFlow.namespace == row.namespace,
@@ -760,8 +762,8 @@
                                 this.user &&
                                 this.user.hasAny(permission.EXECUTION)
                             ) {
-                                this.$store
-                                    .dispatch("stat/dailyGroupByFlow", {
+                                this.statStore
+                                    .dailyGroupByFlow({
                                         flows: flows.results.map((flow) => {
                                             return {
                                                 namespace: flow.namespace,
@@ -780,8 +782,8 @@
                                         this.dailyGroupByFlowReady = true;
                                     });
 
-                                this.$store
-                                    .dispatch("stat/lastExecutions", {
+                                this.statStore
+                                    .lastExecutions({
                                         flows: flows.results.map((flow) => {
                                             return {
                                                 namespace: flow.namespace,

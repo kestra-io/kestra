@@ -8,7 +8,6 @@ declare module "@vue/runtime-core" {
         template:any
         execution:any
         log:any
-        stat:any
         namespace:any
         misc:any
         auth:any

@@ -336,8 +336,8 @@
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
             this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview";
-            this.pendingSettings.envName = this.layoutStore.getEnvName || this.configs?.environment?.name;
-            this.pendingSettings.envColor = this.layoutStore.getEnvColor || this.configs?.environment?.color;
+            this.pendingSettings.envName = this.layoutStore.envName || this.configs?.environment?.name;
+            this.pendingSettings.envColor = this.layoutStore.envColor || this.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
             this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10;
             this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));

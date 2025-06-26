@@ -51,7 +51,7 @@
             ...mapGetters("misc", ["configs"]),
             ...mapStores(useApiStore, usePluginsStore, useLayoutStore),
             envName() {
-                return this.layoutStore.getEnvName || this.configs?.environment?.name;
+                return this.layoutStore.envName || this.configs?.environment?.name;
             },
             isOSS(){
                 return true;

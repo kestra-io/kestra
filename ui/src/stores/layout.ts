@@ -9,26 +9,10 @@ interface State {
 export const useLayoutStore = defineStore("layout", {
     state: (): State => ({
         topNavbar: undefined,
-        envName: undefined,
-        envColor: undefined
+        envName: localStorage.getItem("envName") || undefined,
+        envColor: localStorage.getItem("envColor") || undefined
     }),
-
-    getters: {
-        getEnvName: (state): string | undefined => {
-            if (!state.envName) {
-                state.envName = localStorage.getItem("envName") || undefined;
-            }
-            return state.envName;
-        },
-        getEnvColor: (state): string | undefined => {
-            if (!state.envColor) {
-                state.envColor = localStorage.getItem("envColor") || undefined;
-            }
-            return state.envColor;
-        },
-        getTopNavbar: (state): any | undefined => state.topNavbar
-    },
-
+    getters: {},
     actions: {
         setTopNavbar(value: any) {
             this.topNavbar = value;

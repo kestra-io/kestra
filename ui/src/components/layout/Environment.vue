@@ -15,11 +15,11 @@
             ...mapStores(useLayoutStore),
             ...mapGetters("misc", ["configs"]),
             name() {
-                return this.layoutStore.getEnvName || this.configs?.environment?.name;
+                return this.layoutStore.envName || this.configs?.environment?.name;
             },
             color() {
-                if (this.layoutStore.getEnvColor) {
-                    return this.layoutStore.getEnvColor;
+                if (this.layoutStore.envColor) {
+                    return this.layoutStore.envColor;
                 }
 
                 if (this.configs?.environment?.color) {

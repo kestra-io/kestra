@@ -649,9 +649,9 @@
                 });
             },
             executionsCount() {
-                return [...(this.statStore.daily || [])].reduce((a, b) => {
-                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
-                }, 0);
+                return this.statStore.dailyData?.reduce((a, b) => {  
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);  
+                }, 0) ?? 0; 
             },
             selectedNamespace(){
                 return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;

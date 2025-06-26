@@ -16,7 +16,7 @@
 
             <template #top>
                 <el-card v-if="showStatChart()" shadow="never" class="mb-4">
-                    <ExecutionsBar v-if="statStore.taskRunDaily" :data="statStore.taskRunDaily" :total="executionsCount" />
+                    <ExecutionsBar v-if="statStore.taskRunDailyData" :data="statStore.taskRunDailyData" :total="executionsCount" />
                 </el-card>
             </template>
 
@@ -177,9 +177,9 @@
                 return this.$moment().subtract(30, "days").toISOString(true);
             },
             executionsCount() {
-                return [...(this.statStore.taskRunDaily || [])].reduce((a, b) => {
-                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
-                }, 0);
+                return this.statStore.taskRunDailyData?.reduce((a, b) => {  
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);  
+                }, 0) ?? 0; 
             },
         },
         methods: {

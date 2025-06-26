@@ -3,14 +3,12 @@ import {apiUrl} from "override/utils/route";
 
 type StatsPayload = Record<string, any>;
 type DailyStats = Record<string, any>;
-type LogStats = Record<string, any>;
 type TaskRunStats = Record<string, any>;
 type LastExecutionStats = Record<string, any>;
 
 interface State {
     dailyGroupByFlowData: DailyStats | undefined;
     dailyData: DailyStats | undefined;
-    logDailyData: LogStats | undefined;
     taskRunDailyData: TaskRunStats | undefined;
     lastExecutionsData: LastExecutionStats | undefined;
 }
@@ -19,7 +17,6 @@ export const useStatStore = defineStore("stat", {
     state: (): State => ({
         dailyGroupByFlowData: undefined,
         dailyData: undefined,
-        logDailyData: undefined,
         taskRunDailyData: undefined,
         lastExecutionsData: undefined
     }),
@@ -31,20 +28,9 @@ export const useStatStore = defineStore("stat", {
             return response.data;
         },
 
-        async dailyGroupByNamespace(payload: StatsPayload) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/stats/executions/daily/group-by-namespace`, payload);
-            return response.data;
-        },
-
         async daily(payload: StatsPayload) {
             const response = await this.$http.post(`${apiUrl(this.vuexStore)}/stats/executions/daily`, payload);
             this.dailyData = response.data;
-            return response.data;
-        },
-
-        async logDaily(payload: StatsPayload) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/stats/logs/daily`, payload);
-            this.logDailyData = response.data;
             return response.data;
         },
 

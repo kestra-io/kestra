@@ -458,12 +458,11 @@
                 );
             },
             executionsCount() {
-                return [...(this.statStore.daily || [])].reduce((a, b) => {
+                return this.statStore.dailyData?.reduce((a, b) => {
                     return (
-                        a +
-                        Object.values(b.executionCounts).reduce((a, b) => a + b, 0)
+                        a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0)
                     );
-                }, 0);
+                }, 0) ?? 0;
             },
             charts() {
                 return [
@@ -714,8 +713,8 @@
             },
             getLastExecution(row) {
                 let noState = {state: null, startDate: null};
-                if (this.statStore.lastExecutions && this.statStore.lastExecutions.length > 0) {
-                    let filteredFlowExec = this.statStore.lastExecutions.filter(
+                if (this.statStore.lastExecutionsData && this.statStore.lastExecutionsData.length > 0) {
+                    let filteredFlowExec = this.statStore.lastExecutionsData.filter(
                         (executedFlow) =>
                             executedFlow.flowId == row.id &&
                             executedFlow.namespace == row.namespace,

@@ -4,7 +4,7 @@
         @click="$refs.tree.setCurrentKey(undefined)"
         @contextmenu.prevent="onTabContextMenu"
     >
-        <div class="d-flex flex-row">
+        <div class="flex-row d-flex">
             <el-select
                 v-model="filter"
                 :placeholder="$t('namespace files.filter')"
@@ -116,16 +116,7 @@
             v-loading="items === undefined"
             :props="{class: 'node', isLeaf: 'leaf'}"
             class="mt-3"
-            @node-click="
-                (data, node) =>
-                    data.leaf
-                        ? openTab({
-                            name: data.fileName,
-                            extension: data.fileName.split('.').pop(),
-                            path: getPath(node),
-                        })
-                        : undefined
-            "
+            @node-click="handleNodeClick"
             @node-drag-start="
                 nodeBeforeDrag = {
                     parent: $event.parent.data.id,
@@ -133,7 +124,7 @@
                 }
             "
             @node-drop="nodeMoved"
-            @keydown.delete.prevent="deleteKeystroke"
+            @keydown.delete.prevent="removeSelectedFiles"
         >
             <template #empty>
                 <div class="m-4 empty">
@@ -146,12 +137,21 @@
                 <el-dropdown
                     :ref="`dropdown__${data.id}`"
                     @contextmenu.prevent.stop="
-                        toggleDropdown(`dropdown__${data.id}`)
+                        toggleDropdown(`dropdown__${data.id}`);
+                        if(selectedNodes.length === 0) {
+                            selectedNodes.push(data.id);
+                            selectedFiles.push(getPath(data.id));
+                        }
                     "
                     trigger="contextmenu"
                     class="w-100"
                 >
-                    <el-row justify="space-between" class="w-100">
+                    <el-row
+                        justify="space-between"
+                        class="w-100"
+                        :class="{'selected-node': selectedNodes.includes(data.id)}"
+                        @click="(event) => handleNodeClick(data, node)"
+                    >
                         <el-col class="w-100">
                             <TypeIcon
                                 :name="data.fileName"
@@ -164,24 +164,25 @@
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item
-                                v-if="!data.leaf"
+                                v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'file', node)"
                             >
                                 {{ $t("namespace files.create.file") }}
                             </el-dropdown-item>
                             <el-dropdown-item
-                                v-if="!data.leaf"
+                                v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'folder', node)"
                             >
                                 {{ $t("namespace files.create.folder") }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="copyPath(data)">
+                            <el-dropdown-item v-if="!multiSelected" @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
                             </el-dropdown-item>
-                            <el-dropdown-item v-if="data.leaf" @click="exportFile(node, data)">
+                            <el-dropdown-item v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
                                 {{ $t("namespace files.export_single") }}
                             </el-dropdown-item>
                             <el-dropdown-item
+                                v-if="data.leaf && !multiSelected"
                                 @click="
                                     toggleRenameDialog(
                                         true,
@@ -199,13 +200,17 @@
                                     )
                                 }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="confirmRemove(node)">
+                            <el-dropdown-item @click="removeSelectedFiles()">
                                 {{
-                                    $t(
+                                    selectedNodes.length <= 1 ? $t(
                                         `namespace files.delete.${
                                             !data.leaf ? "folder" : "file"
                                         }`,
-                                    )
+                                    ) : $t(
+                                        `namespace files.delete.${
+                                            !data.leaf ? "folders" : "files"
+                                        }`
+                                        , {count: selectedNodes.length})
                                 }}
                             </el-dropdown-item>
                         </el-dropdown-menu>
@@ -307,21 +312,17 @@
 
         <el-dialog
             v-model="confirmation.visible"
-            :title="
-                Array.isArray(confirmation.node?.data?.children)
-                    ? $t('namespace files.dialog.folder_deletion')
-                    : $t('namespace files.dialog.file_deletion')
-            "
+            :title="confirmationTitle"
             width="500"
-            @keydown.enter.prevent="removeItem()"
+            @keydown.enter.prevent="removeItems()"
         >
             <span class="py-3">
                 {{
-                    Array.isArray(confirmation.node?.data?.children)
-                        ? $t(
-                            "namespace files.dialog.folder_deletion_description",
-                        )
-                        : $t("namespace files.dialog.file_deletion_description")
+                    confirmation.nodes.length > 1
+                        ? $t("namespace files.dialog.file_deletion_description")
+                        : confirmation.nodes[0]?.type === "Directory"
+                            ? $t("namespace files.dialog.folder_deletion_description")
+                            : $t("namespace files.dialog.file_deletion_description")
                 }}
             </span>
             <template #footer>
@@ -329,7 +330,7 @@
                     <el-button @click="confirmation.visible = false">
                         {{ $t("cancel") }}
                     </el-button>
-                    <el-button type="primary" @click="removeItem()">
+                    <el-button type="primary" @click="removeItems()">
                         {{ $t("namespace files.dialog.confirm") }}
                     </el-button>
                 </div>
@@ -414,6 +415,9 @@
                 nodeBeforeDrag: undefined,
                 searchResults: [],
                 tabContextMenu: {visible: false, x: 0, y: 0},
+                selectedFiles: [], // Tracks selected file paths
+                selectedNodes: [], // Tracks selected node IDs
+                lastClickedIndex: null, // Tracks the last clicked file index
             };
         },
         computed: {
@@ -424,6 +428,9 @@
             }),
             namespaceId() {
                 return this.currentNS ?? this.$route.params.namespace;
+            },
+            multiSelected() {
+                return this.selectedNodes.length > 1;
             },
             folders() {
                 function extractPaths(basePath = "", array) {
@@ -446,6 +453,22 @@
 
                 return extractPaths(undefined, this.items);
             },
+            confirmationTitle() {
+                if (!this.confirmation.nodes || this.confirmation.nodes.length === 0) {
+                    return ""; // Return an empty string if no nodes are selected
+                }
+
+                if (this.confirmation.nodes.length > 1) {
+                    // Bulk deletion title
+                    return this.$t("namespace files.dialog.file_deletion");
+                }
+
+                // Single node deletion title
+                const node = this.confirmation.nodes[0];
+                return node.type === "Directory"
+                    ? this.$t("namespace files.dialog.folder_deletion")
+                    : this.$t("namespace files.dialog.file_deletion");
+            },
         },
         methods: {
             ...mapMutations("editor", [
@@ -467,6 +490,79 @@
                 "importFileDirectory",
                 "exportFileDirectory",
             ]),
+
+            flattenTree(items, parentPath = "") {
+                const result = [];
+
+                for (const item of items) {
+                    const fullPath = `${parentPath}${item.fileName}`;
+                    result.push({path: fullPath, fileName: item.fileName, id: item.id});
+
+                    if (item.children && item.children.length > 0) {
+                        result.push(...this.flattenTree(item.children, `${fullPath}/`));
+                    }
+                }
+
+                return result.filter(i => i.path);
+            },
+            handleNodeClick(data, node) {
+                const path = this.getPath(node);
+                const flatList = this.flattenTree(this.items);
+                const currentIndex = flatList.findIndex(item => item.path === path);
+
+                if (window.event.shiftKey && this.lastClickedIndex !== null) {
+                    // Handle shift-click for range selection
+                    const start = Math.min(this.lastClickedIndex, currentIndex);
+                    const end = Math.max(this.lastClickedIndex, currentIndex);
+
+                    this.selectedFiles = flatList.slice(start, end + 1).map(item => item.path);
+                    this.selectedNodes = flatList.slice(start, end + 1).map(item => item.id);
+                } else {
+                    // Handle single-click selection
+                    this.selectedFiles = [path];
+                    this.selectedNodes = [node.data.id];
+                    this.lastClickedIndex = currentIndex;
+                    if (data.leaf) {
+                        this.openTab({
+                            name: data.fileName,
+                            path: path,
+                            extension: data.fileName.split(".").pop(),
+                        });
+                    }
+                }
+            },
+
+            async removeSelectedFiles() {
+                const nodes = this.selectedFiles.map((filePath) => {
+                    const node = this.findNodeByPath(filePath);
+                    return node;
+                });
+
+                this.confirmRemove(nodes);
+            },
+
+            findNodeByPath(path, items = this.items, parentPath = "") {
+                for (const item of items) {
+                    const fullPath = `${parentPath}${item.fileName}`;
+
+                    if (fullPath === path) {
+                        return item;
+                    }
+
+                    if (item.children && item.children.length > 0) {
+                        const foundNode = this.findNodeByPath(
+                            path,
+                            item.children,
+                            `${fullPath}/`
+                        );
+                        if (foundNode) {
+                            return foundNode;
+                        }
+                    }
+                }
+
+                return null;
+            },
             sorted(items) {
                 return items.sort((a, b) => {
                     if (a.type === "Directory" && b.type !== "Directory") return -1;
@@ -894,38 +990,41 @@
                     this.dialog = {...DIALOG_DEFAULTS};
                 }
             },
-            confirmRemove(node) {
-                this.confirmation = {visible: true, node};
-            },
-            async removeItem() {
-                const {
-                    node,
-                    node: {data},
-                } = this.confirmation;
-
-                await this.deleteFileDirectory({
-                    namespace: this.namespaceId,
-                    path: this.getPath(node),
-                    name: data.fileName,
-                    type: data.type,
-                });
-
-                this.$refs.tree.remove(data.id);
-
-                this.closeTab({
-                    name: data.fileName,
-                });
-
-                this.confirmation = {visible: false, node: undefined};
-            },
-            deleteKeystroke() {
-                if (this.$refs.tree.getCurrentNode()) {
-                    this.confirmRemove(
-                        this.$refs.tree.getNode(
-                            this.$refs.tree.getCurrentNode().id,
-                        ),
-                    );
+            confirmRemove(nodes) {
+                if (Array.isArray(nodes)) {
+                    this.confirmation = {
+                        visible: true,
+                        nodes,
+                    };
+                } else {
+                    this.confirmation = {
+                        visible: true,
+                        nodes: [nodes],
+                    };
                 }
+            },
+            async removeItems() {
+                for (const node of this.confirmation.nodes) {
+                    try {
+                        await this.deleteFileDirectory({
+                            namespace: this.currentNS ?? this.$route.params.namespace,
+                            path: this.getPath(node),
+                            name: node.fileName,
+                            type: node.type,
+                        });
+                        this.$refs.tree.remove(node.id);
+                        this.closeTab({
+                            name: node.fileName,
+                        });
+                    } catch (error) {
+                        console.error(`Failed to delete file: ${node.fileName}`, error);
+                        this.$toast().error(`Failed to delete file: ${node.fileName}`);
+                    }
+                }
+
+                // Clear the confirmation state after deletion
+                this.confirmation = {visible: false, nodes: []};
+                this.$toast().success("Selected files deleted successfully.");
             },
             async addFolder(folder, creation) {
                 const {fileName} = folder
@@ -1057,6 +1156,17 @@
                 this.tabContextMenu.visible = false;
                 document.removeEventListener("click", this.hideTabContextMenu);
             },
+            clearSelection() {
+                this.selectedFiles = [];
+                this.selectedNodes = [];
+                this.lastClickedIndex = null;
+            },
+        },
+        mounted() {
+            document.addEventListener("click", this.clearSelection);
+        },
+        beforeUnmount() {
+            document.removeEventListener("click", this.clearSelection);
         },
         watch: {
             flow: {
@@ -1209,10 +1319,11 @@
 
         .el-tree-node.is-current > .el-tree-node__content {
             min-width: fit-content;
-
-            html.dark &{
-                background-color: $primary;
-            }
+            border: 1px solid var(--ks-border-active)
+        }
+        .el-tree-node:has(.selected-node) > .el-tree-node__content {
+            background-color: var(--ks-button-background-primary);
+            min-width: fit-content;
         }
     }
 }

@@ -15,15 +15,15 @@ export default [
     //Dashboards
     {
         name: "home",
-        path: "/:tenant?/dashboards/:id?",
+        path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
         beforeEnter: (to, from, next) => {
-            if (!to.params.id) {
+            if (!to.params.dashboard) {
                 next({
                     name: "home",
                     params: {
                         ...to.params,
-                        id: "default",
+                        dashboard: "default",
                     },
                     query: to.query,
                 });
@@ -32,8 +32,8 @@ export default [
             }
         },
     },
-    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/DashboardCreate.vue")},
-    {name: "dashboards/update", path: "/:tenant?/dashboards/:id/edit", component: () => import("override/components/dashboard/components/DashboardEdit.vue")},
+    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/Create.vue")},
+    {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("override/components/dashboard/Edit.vue")},
 
     //Flows
     {name: "flows/list", path: "/:tenant?/flows", component: () => import("../components/flows/Flows.vue")},
@@ -71,7 +71,7 @@ export default [
     {name: "logs/list", path: "/:tenant?/logs", component: () => import("../components/logs/LogsWrapper.vue")},
 
     //Namespaces
-    {name: "namespaces/list", path: "/:tenant?/namespaces", component: () => import("../components/namespaces/Namespaces.vue")},
+    {name: "namespaces/list", path: "/:tenant?/namespaces", component: () => import("override/components/namespaces/Namespaces.vue")},
     {name: "namespaces/create", path: "/:tenant?/namespaces/new/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
     {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
 

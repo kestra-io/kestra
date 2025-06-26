@@ -4,6 +4,9 @@
         :schema
         :definitions
         :properties="computedProperties"
+        :root="root"
+        :task="task"
+        :required="required"
         merge
         @update:model-value="onInput"
     />

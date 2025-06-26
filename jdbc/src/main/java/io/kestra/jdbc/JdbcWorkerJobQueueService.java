@@ -1,9 +1,6 @@
 package io.kestra.jdbc;
 
 import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.models.Pauseable;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.server.ServiceRegistry;
 import io.kestra.core.server.ServiceType;
@@ -11,7 +8,6 @@ import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,26 +18,20 @@ import java.util.function.Consumer;
 
 @Singleton
 @Slf4j
-public class JdbcWorkerJobQueueService implements Closeable, Pauseable {
-    private final JdbcQueue<WorkerJob> workerTaskQueue;
+public class JdbcWorkerJobQueueService implements Closeable {
     private final AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
     private final ServiceRegistry serviceRegistry;
     private final AtomicReference<Runnable> disposable = new AtomicReference<>();
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
 
-    @SuppressWarnings("unchecked")
     public JdbcWorkerJobQueueService(ApplicationContext applicationContext) {
-        this.workerTaskQueue = (JdbcQueue<WorkerJob>) applicationContext.getBean(
-            QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED)
-        );
         this.serviceRegistry = applicationContext.getBean(ServiceRegistry.class);
         this.jdbcWorkerJobRunningRepository = applicationContext.getBean(AbstractJdbcWorkerJobRunningRepository.class);
     }
 
-    public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerJob, DeserializationException>> consumer) {
+    public Runnable receive(JdbcQueue<WorkerJob> workerJobQueue, String consumerGroup, Class<?> queueType, Consumer<Either<WorkerJob, DeserializationException>> consumer) {
 
-        this.disposable.set(workerTaskQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
+        this.disposable.set(workerJobQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
 
             Worker worker = serviceRegistry.waitForServiceAndGet(ServiceType.WORKER).unwrap();
 
@@ -83,16 +73,6 @@ public class JdbcWorkerJobQueueService implements Closeable, Pauseable {
         }));
 
         return this.disposable.get();
-    }
-
-    @Override
-    public void pause() {
-        this.workerTaskQueue.pause();
-    }
-
-    @Override
-    public void resume() {
-        this.workerTaskQueue.resume();
     }
 
     /** {@inheritDoc} **/

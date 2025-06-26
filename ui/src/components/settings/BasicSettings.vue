@@ -245,7 +245,9 @@
     import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
     import Utils from "../../utils/utils";
-    import {mapGetters, mapState, useStore} from "vuex";
+    import {mapGetters, mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useLayoutStore} from "../../stores/layout";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {logDisplayTypes, storageKeys} from "../../utils/constants";
@@ -318,8 +320,6 @@
             };
         },
         created() {
-            const store = useStore();
-
             this.pendingSettings.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
             this.pendingSettings.editorType = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
@@ -336,8 +336,8 @@
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
             this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview";
-            this.pendingSettings.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
-            this.pendingSettings.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
+            this.pendingSettings.envName = this.layoutStore.envName || this.configs?.environment?.name;
+            this.pendingSettings.envColor = this.layoutStore.envColor || this.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
             this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10;
             this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
@@ -498,12 +498,12 @@
                         break
                     case "envName":
                         if (this.pendingSettings[key] !== this.configs?.environment?.name) {
-                            this.$store.commit("layout/setEnvName", this.pendingSettings[key])
+                            this.layoutStore.setEnvName(this.pendingSettings[key]);
                         }
                         break
                     case "envColor":
                         if (this.pendingSettings[key] !== this.configs?.environment?.color) {
-                            this.$store.commit("layout/setEnvColor", this.pendingSettings[key])
+                            this.layoutStore.setEnvColor(this.pendingSettings[key]);
                         }
                         break
                     case "theme":
@@ -569,6 +569,7 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapGetters("misc", ["configs"]),
+            ...mapStores(useLayoutStore),
             ...mapState({
                 mappedTheme: state => state.misc.theme
             }),

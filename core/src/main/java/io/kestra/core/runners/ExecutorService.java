@@ -67,6 +67,9 @@ public class ExecutorService {
     @Inject
     private WorkerGroupExecutorInterface workerGroupExecutorInterface;
 
+    @Inject
+    private WorkerJobRunningStateStore workerJobRunningStateStore;
+
     protected FlowMetaStoreInterface flowExecutorInterface;
 
     @Inject
@@ -664,7 +667,7 @@ public class ExecutorService {
                                 .taskRunId(workerTaskResult.getTaskRun().getId())
                                 .executionId(executor.getExecution().getId())
                                 .date(workerTaskResult.getTaskRun().getState().maxDate().plus(duration != null ? duration : timeout))
-                                .state(duration != null ? behavior.mapToState() : State.Type.FAILED)
+                                .state(duration != null ? behavior.mapToState() : State.Type.fail(pauseTask))
                                 .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
                                 .build();
                         }
@@ -1072,6 +1075,25 @@ public class ExecutorService {
             newExecution = executionService.killParentTaskruns(taskRun, newExecution);
         }
         executor.withExecution(newExecution, "addWorkerTaskResult");
+        if (taskRun.getState().isTerminated()) {
+            log.trace("TaskRun terminated: {}", taskRun);
+            workerJobRunningStateStore.deleteByKey(taskRun.getId());
+            metricRegistry
+                .counter(
+                    MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT,
+                    MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION,
+                    metricRegistry.tags(workerTaskResult)
+                )
+                .increment();
+
+            metricRegistry
+                .timer(
+                    MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION,
+                    MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION,
+                    metricRegistry.tags(workerTaskResult)
+                )
+                .record(taskRun.getState().getDuration());
+        }
     }
 
     // Note: as the flow is only used in an error branch and it can take time to load, we pass it thought a Supplier

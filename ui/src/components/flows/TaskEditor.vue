@@ -16,26 +16,29 @@
         </el-form-item>
     </el-form>
 
-    <TaskObject
-        v-loading="isLoading"
-        v-if="selectedTaskType && schema"
-        name="root"
-        :model-value="taskObject"
-        @update:model-value="onTaskInput"
-        :schema="schemaProp"
-        :properties="properties"
-        :definitions="schema.definitions"
-    />
+    <div @click="pluginsStore.updateDocumentation({task: selectedTaskType});">
+        <TaskObject
+            v-loading="isLoading"
+            v-if="selectedTaskType && schema"
+            name="root"
+            :model-value="taskObject"
+            @update:model-value="onTaskInput"
+            :schema="schemaProp"
+            :properties="properties"
+            :definitions="schema.definitions"
+        />
+    </div>
 </template>
 
 <script lang="ts" setup>
     import {computed, inject, onActivated, ref, toRaw, watch} from "vue";
-    import {useStore} from "vuex";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {NoCodeElement, Schemas} from "../code/utils/types";
     import {BLOCKTYPE_INJECT_KEY, PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
+    import {removeNullAndUndefined} from "../code/utils/cleanUp";
+    import {usePluginsStore} from "../../stores/plugins";
 
     defineOptions({
         name: "TaskEditor",
@@ -44,7 +47,7 @@
 
     const modelValue = defineModel<string>();
 
-    const store = useStore();
+    const pluginsStore = usePluginsStore();
 
     type PartialCodeElement = Partial<NoCodeElement>;
 
@@ -115,45 +118,44 @@
             taskObject.value = parsed;
         }
         selectedTaskType.value = taskObject.value?.type;
-
-
     }
 
     // when tab is clicked, load the documentation
     onActivated(() => {
         if(selectedTaskType.value){
-            store.dispatch("plugin/updateDocumentation", {task: selectedTaskType.value});
+            pluginsStore.updateDocumentation({task: selectedTaskType.value});
         }
     });
 
     watch(selectedTaskType, (task) => {
         if (task) {
             load();
-            store.dispatch("plugin/updateDocumentation", {task});
+            pluginsStore.updateDocumentation({task});
         }
     }, {immediate: true});
 
     function load() {
-        if (store.state.plugin.schemaType[selectedTaskType.value ?? ""]) {
+        if (pluginsStore.schemaType?.flow[selectedTaskType.value ?? ""]) {
             plugin.value = {
                 schema: {
-                    properties: store.state.plugin.schemaType[selectedTaskType.value ?? ""],
-                    definitions: store.state.plugin.schemaType,
+                    properties: pluginsStore.schemaType?.flow[selectedTaskType.value ?? ""],
+                    definitions: pluginsStore.schemaType?.flow.definitions || {},
                 }
             };
             return;
         }
 
         isLoading.value = true;
-        store
-            .dispatch("plugin/load", {
+        if(selectedTaskType.value){
+            pluginsStore.load({
                 cls: selectedTaskType.value,
                 all: true
             })
-            .then((response) => {
-                plugin.value = response;
-                isLoading.value = false;
-            })
+                .then((response) => {
+                    plugin.value = response;
+                    isLoading.value = false;
+                })
+        }
 
     }
 
@@ -175,7 +177,7 @@
                 };
             }
         }
-        modelValue.value = YAML_UTILS.stringify(toRaw(val));
+        modelValue.value = YAML_UTILS.stringify(removeNullAndUndefined(toRaw(val)));
     }
 
     function onTaskTypeSelect() {
@@ -190,7 +192,6 @@
 <style lang="scss" scoped>
     .type-div {
         display: flex;
-        justify-content: space-between;
         text-transform: lowercase;
         align-items: center;
         gap: 0.25rem;

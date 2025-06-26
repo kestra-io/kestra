@@ -11,7 +11,6 @@ declare module "@vue/runtime-core" {
         stat:any
         namespace:any
         misc:any
-        layout:any
         auth:any
         graph:any
         plugin:any
@@ -22,7 +21,6 @@ declare module "@vue/runtime-core" {
         bookmarks:any
         dashboard:any
         code:any
-        blueprints:any
     }
 
     interface ComponentCustomProperties {

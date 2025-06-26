@@ -60,7 +60,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
         const keyLabelToRegex = (keyLabel: string) => {
             return new RegExp(keyLabel
                 .replaceAll(".", "\\.")
-                .replaceAll(/\{[^}]*}/g, "(?:\"[^,\"]*\"|[^\\s,\"]*?(?=" + COMPARATORS_REGEX + "|\\s|$))"));
+                .replaceAll(/\{[^}]*}/g, "(?:\"[^\"]*\"|[^\\s,\"]*?(?=" + COMPARATORS_REGEX + "|\\s|$))"));
         };
 
         if (this._filterLanguage && monaco.languages.getLanguages().find(l => l.id === this.language) === undefined) {
@@ -123,7 +123,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                     ],
                     value: [
                         [/"[^"]+(?![^"]*")/, "invalid"],
-                        [new RegExp("\"[^\\n,\"]*\""), {
+                        [new RegExp("\"[^\\n\"]*\""), {
                             token: "variable.value",
                             next: "@separator"
                         }],
@@ -186,7 +186,6 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                 })
             };
         };
-        const KEY_COMPLETIONS: Promise<Completion[]> = filterLanguage.keyCompletion();
         const filterLanguageConfiguratorInstance = this;
         return [
             monaco.languages.registerCompletionItemProvider({
@@ -259,6 +258,9 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                         null,
                         true
                     );
+
+                    const usedKeys = [...modelValue.matchAll(new RegExp(`\\s?(\\S+?)${COMPARATORS_REGEX}`, "g"))]
+                        .map(([_, key]) => FilterLanguage.withNestedKeyPlaceholder(key));
                     if (offset === 0
                         || (SEPARATOR_CHARS.includes(previousChar) && !inQuotedString)
                         || (!lastWordIsComparator && comparatorsAfterCurrentWord?.matches?.[1] !== undefined)) {
@@ -268,7 +270,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                                 ...wordAtPosition,
                                 endColumn: wordAtPosition.endColumn + (comparatorsAfterCurrentWord?.matches?.[1]?.length ?? 0)
                             },
-                            await KEY_COMPLETIONS
+                            await filterLanguage.keyCompletion(usedKeys)
                         );
                     }
 
@@ -309,7 +311,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                     );
 
                     if (currentFilterMatch === null) {
-                        return TO_SUGGESTIONS(position, wordAtPosition, await KEY_COMPLETIONS);
+                        return TO_SUGGESTIONS(position, wordAtPosition, await filterLanguage.keyCompletion(usedKeys));
                     } else {
                         const [, key, comparator, commaSeparatedValues] = currentFilterMatch?.matches ?? [];
 

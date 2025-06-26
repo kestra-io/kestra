@@ -2,8 +2,15 @@ import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import Executions from "../../../../src/components/executions/Executions.vue";
 import fixtureS from "./Executions-s.fixture.json";
-import {expect, userEvent, waitFor, within} from "@storybook/test";
+import {expect, userEvent, waitFor, within} from "storybook/test";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+import {
+    clearMonacoInput,
+    getMonacoFilter,
+    getMonacoFilterInput,
+    isColoredAsError,
+    refreshMonacoFilter
+} from "../../utils/monacoUtils.js";
 
 function getDecorators(executionsSearchData) {
     return [
@@ -102,16 +109,13 @@ FilterExecutions.play = async ({canvasElement, step}) => {
     const user = userEvent.setup();
 
     await step("filter should contains \"timeRange\" by default", async () => {
-        await waitFor(() =>
-            expect(getMonacoFilter(canvas)).toHaveTextContent("timeRange="),
-        );
+        await waitFor(() => expect(getMonacoFilter(canvas)).toHaveTextContent("timeRange="), {timeout: 5000});
     });
 
     await step(
         "clearing and adding a namespace filter with keyboard",
         async () => {
-            await user.click(getMonacoFilterInput(canvas));
-            await clearMonacoInput();
+            await clearMonacoInput(user, canvas);
             await userEvent.keyboard("namespace=io.kestra");
             await refreshMonacoFilter(canvas);
 
@@ -130,7 +134,7 @@ FilterExecutions.play = async ({canvasElement, step}) => {
             ),
         );
 
-        await user.click(getMonacoFilterInput(canvas));
+        await user.click(await getMonacoFilterInput(canvas));
         await userEvent.keyboard("{End}");
         await userEvent.keyboard(spaceBarKey);
         await userEvent.keyboard("flowId=123");
@@ -147,8 +151,7 @@ FilterExecutions.play = async ({canvasElement, step}) => {
     });
 
     await step("unknown field should be displayed red", async () => {
-        await user.click(getMonacoFilterInput(canvas));
-        await clearMonacoInput();
+        await clearMonacoInput(user, canvas);
         await userEvent.keyboard("an-unknown-field=q2132");
         await refreshMonacoFilter(canvas);
 
@@ -157,20 +160,19 @@ FilterExecutions.play = async ({canvasElement, step}) => {
                 "an-unknown-field=q2132",
             ),
         );
-        await waitFor(
-            expectColorRedDominant(
-                within(getMonacoFilter(canvas)).getByText(
+        await waitFor(() =>
+            expect(
+                isColoredAsError(within(getMonacoFilter(canvas)).getByText(
                     "an-unknown-field=q2132",
-                ),
-            ),
+                ))
+            ).toBeTruthy(),
         );
     });
 
     await step(
         "unknown field should be marked as invalid internally by Monaco",
         async () => {
-            await user.click(getMonacoFilterInput(canvas));
-            await clearMonacoInput();
+            await clearMonacoInput(user, canvas);
             await userEvent.keyboard("an-unknown-field=q2222222222");
             await refreshMonacoFilter(canvas);
 
@@ -190,37 +192,6 @@ FilterExecutions.play = async ({canvasElement, step}) => {
         },
     );
 };
-// TODO test from query route !!!!
 
 // Helpers and constants
 const spaceBarKey = "{ }";
-const triggerRefreshButton = "trigger-refresh-button";
-const monacoFilter = "monaco-filter";
-
-function expectColorRedDominant(element) {
-    return function expectColorRedDominantCheck(){
-        const style = window.getComputedStyle(element);
-        const rgb = style.color.match(/\d+/g).map(Number);
-        // Assert red is dominant (e.g., red > 200, green & blue < 100)
-        expect(rgb[0]).toBeGreaterThan(150);
-        expect(rgb[1]).toBeLessThan(60);
-        expect(rgb[2]).toBeLessThan(60);
-    }
-}
-
-function getMonacoFilter(canvas) {
-    return canvas.getByTestId(monacoFilter);
-}
-
-function getMonacoFilterInput(canvas) {
-    const monacoFilter = getMonacoFilter(canvas);
-    return within(monacoFilter).getByRole("textbox");
-}
-
-async function clearMonacoInput() {
-    await userEvent.keyboard("{Control>}a{/Control}{Delete}");
-}
-
-async function refreshMonacoFilter(canvas) {
-    await userEvent.click(canvas.getByTestId(triggerRefreshButton));
-}

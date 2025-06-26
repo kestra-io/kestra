@@ -1,17 +1,17 @@
 <template>
     <div class="p-4">
         <template v-if="panel">
-            <component
-                :is="panel.type"
-                :model-value="panel.props.modelValue"
-                v-bind="panel.props"
-                @update:model-value="
+            <MetadataInputsContent
+                :inputs="metadata.inputs"
+                :label="t('inputs')"
+                :selected-index="panel.props.selectedIndex"
+                @update:inputs="
                     (value: any) => emits('updateMetadata', 'inputs', value)
                 "
             />
         </template>
 
-        <template v-else-if="!creatingTask && refPath === undefined">
+        <template v-else-if="!creatingTask && !editingTask">
             <el-form label-position="top" v-if="fieldsFromSchema.length">
                 <TaskWrapper :key="v.root" v-for="(v) in fieldsFromSchema.slice(0, 3)" :merge="shouldMerge(v.schema)">
                     <template #tasks>
@@ -88,18 +88,21 @@
     import Collapse from "../components/collapse/Collapse.vue";
 
     import MetadataInputs from "../../flows/MetadataInputs.vue";
+    import MetadataInputsContent from "../../flows/MetadataInputsContent.vue";
     import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
+    import InitialSchema from "./flow-schema.json"
 
 
     import {
-        CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
-        PANEL_INJECTION_KEY, REF_PATH_INJECTION_KEY,
+        CREATING_TASK_INJECTION_KEY, EDITING_TASK_INJECTION_KEY,
+        FLOW_INJECTION_KEY, PANEL_INJECTION_KEY,
     } from "../injectionKeys";
 
     import Task from "./Task.vue";
 
     const panel = inject(PANEL_INJECTION_KEY, ref());
-    const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
+
+    const editingTask = inject(EDITING_TASK_INJECTION_KEY, false);
 
 
     import {useI18n} from "vue-i18n";
@@ -107,6 +110,8 @@
 
     import {useStore} from "vuex";
     import TaskWrapper from "../../flows/tasks/TaskWrapper.vue";
+    import {usePluginsStore} from "../../../stores/plugins";
+    import {removeNullAndUndefined} from "../utils/cleanUp";
     const store = useStore();
 
     const emits = defineEmits([
@@ -129,7 +134,13 @@
     }
 
     function updateMetadata(key: string, val: any) {
-        const realValue = val === null || val === undefined || (typeof val === "object" && Object.keys(val).length === 0) ? undefined : val; // Handle null values
+        const realValue = val === null || val === undefined ? undefined :
+            // allow array to be created with null values (specifically for metadata)
+            // metadata do not use a buffer value, so each change needs to be reflected in the code,
+            // for TaskKvPair.vue (object) we added the buffer value in the input component
+            typeof val === "object" && !Array.isArray(val) ? removeNullAndUndefined(val) :
+            val; // Handle null values
+
         emits("updateMetadata", key, realValue);
     }
 
@@ -150,11 +161,13 @@
         emits("updateTask", yaml)
     }
 
+    const pluginsStore = usePluginsStore();
+
     const schema = computed<{
         definitions?: any,
         $ref?: string,
     }>(() => {
-        return store.state.plugin.schemaType.flow ?? {};
+        return pluginsStore.schemaType?.flow ?? InitialSchema;
     });
 
     onMounted(async () => {
@@ -162,7 +175,7 @@
             return; // Schema already loaded
         }
 
-        await store.dispatch("plugin/loadSchemaType")
+        await pluginsStore.loadSchemaType()
     });
 
     const definitions = computed(() => {

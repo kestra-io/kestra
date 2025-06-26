@@ -18,9 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -202,19 +204,13 @@ public class PluginScanner {
 
         var guidesDirectory = classLoader.getResource("doc/guides");
         if (guidesDirectory != null) {
-            try (var fileSystem = FileSystems.newFileSystem(guidesDirectory.toURI(), Collections.emptyMap())) {
-                var root = fileSystem.getPath("/doc/guides");
-                try (var stream = Files.walk(root, 1)) {
-                    stream
-                        .skip(1) // first element is the root element
-                        .sorted(Comparator.comparing(path -> path.getName(path.getParent().getNameCount()).toString()))
-                        .forEach(guide -> {
-                            var guideName = guide.getName(guide.getParent().getNameCount()).toString();
-                            guides.add(guideName.substring(0, guideName.lastIndexOf('.')));
-                        });
-                }
+            try {
+                var root = Path.of(guidesDirectory.toURI());
+                addGuides(root, guides);
             } catch (IOException | URISyntaxException e) {
                 // silently fail
+            } catch (FileSystemNotFoundException e) {
+                addGuidesThroughNewFileSystem(guidesDirectory, guides);
             }
         }
 
@@ -241,6 +237,27 @@ public class PluginScanner {
                 Function.identity()
             )))
             .build();
+    }
+
+    private static void addGuidesThroughNewFileSystem(URL guidesDirectory, List<String> guides) {
+        try (var fileSystem = FileSystems.newFileSystem(guidesDirectory.toURI(), Collections.emptyMap())) {
+            var root = fileSystem.getPath("doc/guides");
+            addGuides(root, guides);
+        } catch (IOException | URISyntaxException e) {
+            // silently fail
+        }
+    }
+
+    private static void addGuides(Path root, List<String> guides) throws IOException {
+        try (var stream = Files.walk(root, 1)) {
+            stream
+                .skip(1) // first element is the root element
+                .sorted(Comparator.comparing(path -> path.getName(path.getParent().getNameCount()).toString()))
+                .forEach(guide -> {
+                    var guideName = guide.getName(guide.getParent().getNameCount()).toString();
+                    guides.add(guideName.substring(0, guideName.lastIndexOf('.')));
+                });
+        }
     }
 
     public static Manifest getManifest(ClassLoader classLoader) {

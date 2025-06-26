@@ -75,11 +75,7 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <ChartsSection
-                        :charts="charts"
-                        :show-default="true"
-                        :full-size="true"
-                    />
+                    <Sections :charts show-default />
                 </template>
 
                 <template #table>
@@ -299,8 +295,8 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
     import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
-    import YAML_CHART from "../../assets/dashboard/executions_timeseries_chart.yaml?raw";
-    import ChartsSection from "../dashboard/components/ChartsSection.vue";
+    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import Sections from "../dashboard/sections/Sections.vue";
 
     const file = ref(null);
 </script>
@@ -482,7 +478,7 @@
 
             const queryKeys = Object.keys(query);
             if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][EQUALS]"] = defaultNamespace;
+                query["filters[namespace][PREFIX]"] = defaultNamespace;
                 queryHasChanged = true;
             }
 
@@ -699,19 +695,20 @@
             importFlows() {
                 const formData = new FormData();
                 formData.append("fileUpload", this.$refs.file.files[0]);
-                this.$store.dispatch("flow/importFlows", formData).then((res) => {
-                    if (res.data.length > 0) {
-                        this.$toast().warning(
-                            this.$t("flows not imported") +
-                                ": " +
-                                res.data.join(", "),
-                        );
-                    } else {
-                        this.$toast().success(this.$t("flows imported"));
-                    }
-                    this.$refs.importForm.reset();
-                    this.loadData(() => {});
-                });
+                this.$store.dispatch("flow/importFlows", formData)
+                    .then((res) => {
+                        if (res.data.length > 0) {
+                            this.$toast().warning(
+                                this.$t("flows not imported") +
+                                    ": " +
+                                    res.data.join(", "),
+                            );
+                        } else {
+                            this.$toast().success(this.$t("flows imported"));
+                        }
+                        this.$refs.file.value = "";
+                        this.loadData(() => {});
+                    });
             },
             getLastExecution(row) {
                 let noState = {state: null, startDate: null};
@@ -739,7 +736,7 @@
                 );
 
                 if (this.namespace) {
-                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
+                    queryFilter["filters[namespace][PREFIX]"] = this.$route.params.id || this.namespace;
                 }
 
                 return _merge(base, queryFilter);

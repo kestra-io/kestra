@@ -25,8 +25,9 @@ export default abstract class AbstractLanguageConfigurator {
         if (!AbstractLanguageConfigurator.configuredLanguages.includes(this.language)) {
             AbstractLanguageConfigurator.configuredLanguages.push(this.language);
             await this.configureLanguage(store);
+            return this.configureAutoCompletion(t, store, editorInstance);
         }
 
-        return this.configureAutoCompletion(t, store, editorInstance);
+        return []
     }
 }

@@ -1,14 +1,14 @@
-import {defineAsyncComponent, h, markRaw, Ref, Suspense} from "vue"
+import {h, markRaw, Ref, Suspense} from "vue"
 import {useStore} from "vuex";
 import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import type {Panel, Tab} from "../MultiPanelTabs.vue";
 import {BlockType} from "../code/utils/types";
+import NoCodeWrapper from "../code/NoCodeWrapper.vue"
 
 import type {NoCodeProps} from "../code/NoCodeWrapper.vue";
 
-const NoCodeWrapper = markRaw(defineAsyncComponent(() => import("../code/NoCodeWrapper.vue")))
 
 
 const NOCODE_PREFIX = "nocode"
@@ -20,7 +20,7 @@ interface Opener {
 
 interface Handlers {
     onCreateTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number, position?: "before" | "after") => boolean,
-    onEditTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath: number) => boolean
+    onEditTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number) => boolean
     onCloseTask: (opener: Opener) => boolean
 }
 
@@ -67,10 +67,15 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
                 },
             }
         } else if (tab.action === "edit") {
+            const path = tab.refPath !== undefined
+                ? `${tab.parentPath}[${tab.refPath}]`
+                : tab.parentPath ?? ""
+
             const currentBlock: any = tab.parentPath ? YAML_UTILS.parse(YAML_UTILS.extractBlockWithPath({
                 source: flow,
-                path: `${tab.parentPath}[${tab.refPath}]`,
+                path,
             })) : {}
+
             return {
                 value: getEditTabKey(tab, keepAliveCacheBuster++),
                 button: {
@@ -102,6 +107,7 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
                 [h(NoCodeWrapper, {
                     ...restOfTab,
                     creatingTask: tab.action === "create",
+                    editingTask: tab.action === "edit",
                     onCloseTask: onCloseTask?.bind({}, props),
                     onCreateTask: onCreateTask?.bind({}, props) as any,
                     onEditTask: onEditTask?.bind({}, props) as any,
@@ -178,7 +184,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         openerPanel.activeTab = tab
     }
 
-    function openEditTaskTab(opener: { panelIndex: number, tabIndex: number }, blockType: BlockType | "pluginDefaults", parentPath: string, refPath: number, dirty: boolean = false) {
+    function openEditTaskTab(opener: { panelIndex: number, tabIndex: number }, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number, dirty: boolean = false) {
         const tab = getTabFromNoCodeTab({
             action: "edit",
             blockType,

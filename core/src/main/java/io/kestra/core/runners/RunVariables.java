@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.trigger.Schedule;
 import lombok.AllArgsConstructor;
 import lombok.With;
 
@@ -27,6 +28,7 @@ import java.util.function.Consumer;
  */
 public final class RunVariables {
     public static final String SECRET_CONSUMER_VARIABLE_NAME = "addSecretConsumer";
+    public static final String FIXTURE_FILES_KEY = "io.kestra.datatype:test_fixtures_files";
 
     /**
      * Creates an immutable map representation of the given {@link Task}.
@@ -181,9 +183,6 @@ public final class RunVariables {
             // Flow
             if (flow != null) {
                 builder.put("flow", RunVariables.of(flow));
-                if (flow.getVariables() != null) {
-                    builder.put("vars", flow.getVariables());
-                }
             }
 
             // Task
@@ -298,14 +297,17 @@ public final class RunVariables {
 
                 if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {
                     builder.put("trigger", execution.getTrigger().getVariables());
+
+                    // temporal hack to add back the `schedule`variables
+                    // will be removed in 2.0
+                    if (Schedule.class.getName().equals(execution.getTrigger().getType())) {
+                        // add back its variables inside the `schedule` variables
+                        builder.put("schedule", execution.getTrigger().getVariables());
+                    }
                 }
 
                 if (execution.getLabels() != null) {
                     builder.put("labels", Label.toNestedMap(execution.getLabels()));
-                }
-
-                if (execution.getVariables() != null) {
-                    builder.putAll(execution.getVariables());
                 }
 
                 if (flow == null) {
@@ -318,6 +320,20 @@ public final class RunVariables {
                     builder.put("flow", RunVariables.of(flowFromExecution));
                 }
             }
+
+            // variables
+            Optional.ofNullable(execution)
+                .map(Execution::getVariables)
+                .or(() -> Optional.ofNullable(flow).map(FlowInterface::getVariables))
+                .map(HashMap::new)
+                .ifPresent(variables -> {
+                    Object fixtureFiles = variables.remove(FIXTURE_FILES_KEY);
+                    builder.put("vars", ImmutableMap.copyOf(variables));
+
+                    if (fixtureFiles != null) {
+                        builder.put("files", fixtureFiles);
+                    }
+                });
 
             // Kestra configuration
             if (kestraConfiguration != null) {

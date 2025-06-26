@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PluginDocCommandTest {
 
-    public static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.18.0-SNAPSHOT.jar";
+    public static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.24.0-SNAPSHOT.jar";
 
     @Test
     void run() throws IOException, URISyntaxException {

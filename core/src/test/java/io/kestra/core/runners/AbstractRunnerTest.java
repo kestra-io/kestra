@@ -362,7 +362,7 @@ public abstract class AbstractRunnerTest {
         forEachItemCaseTest.forEachItemWithSubflowOutputs();
     }
 
-    @Test
+    @RetryingTest(5) // flaky on CI but always pass locally even with 100 iterations
     @LoadFlows({"flows/valids/restart-for-each-item.yaml", "flows/valids/restart-child.yaml"})
     void restartForEachItem() throws Exception {
         forEachItemCaseTest.restartForEachItem();
@@ -490,6 +490,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({"flows/valids/sla-execution-condition.yaml"})
     void executionConditionSLAShouldLabel() throws Exception {
         slaTestCase.executionConditionSLAShouldLabel();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/sla-parent-flow.yaml", "flows/valids/sla-subflow.yaml"})
+    void executionConditionSLAShouldLaslaViolationOnSubflowMayEndTheParentFlowbel() throws Exception {
+        slaTestCase.slaViolationOnSubflowMayEndTheParentFlow();
     }
 
     @Test

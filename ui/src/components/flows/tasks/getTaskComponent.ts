@@ -1,5 +1,4 @@
 import {pascalCase} from  "change-case";
-import InputPair from "../../code/components/inputs/InputPair.vue";
 
 const TasksComponents = import.meta.glob<{default: any}>("./Task*.vue", {eager: true});
 
@@ -34,7 +33,7 @@ function getType(property: any, key?: string, schema?: any): string {
     if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
         if( key === "labels" && property.anyOf.length === 2
                 && property.anyOf[0].type === "array" && property.anyOf[1].type === "object") {
-            return "input-pair";
+            return "KV-pairs";
         }
         return "any-of";
     }
@@ -47,8 +46,12 @@ function getType(property: any, key?: string, schema?: any): string {
         return "number";
     }
 
+    if( key === "version" && property.type === "string") {
+        return "version";
+    }
+
     if (key === "namespace") {
-        return "subflow-namespace";
+        return "namespace";
     }
 
     const properties = Object.keys(schema?.properties ?? {});
@@ -66,7 +69,8 @@ function getType(property: any, key?: string, schema?: any): string {
             return "tasks";
         }
 
-        if (property.items?.$ref?.includes("conditions.Condition")) {
+        if (property.items?.$ref?.includes("conditions.Condition")
+            || property.items.anyOf?.every((item: any) => item.$ref?.includes("io.kestra.plugin.core.condition"))) {
             return "conditions";
         }
 
@@ -78,7 +82,7 @@ function getType(property: any, key?: string, schema?: any): string {
     }
 
     if( property.type === "object" && !property.properties) {
-        return "input-pair";
+        return "KV-pairs";
     }
 
     return property.type || "expression";
@@ -86,13 +90,10 @@ function getType(property: any, key?: string, schema?: any): string {
 
 export default function getTaskComponent(property: any, key?: string, schema?: any) {
     const typeString = getType(property, key, schema);
-    if( typeString === "input-pair") {
-        return InputPair;
-    }
     const type = pascalCase(typeString);
     const component = TasksComponents[`./Task${type}.vue`]?.default;
     if (component) {
         component.ksTaskName = typeString;
     }
-    return component
+    return component ?? {}
 }

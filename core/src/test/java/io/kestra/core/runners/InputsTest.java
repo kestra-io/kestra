@@ -19,14 +19,15 @@ import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 
 import jakarta.validation.ConstraintViolationException;
-import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -394,5 +395,30 @@ public class InputsTest {
         var logEntry = receive.blockLast();
         assertThat(logEntry).isNotNull();
         assertThat(logEntry.getMessage()).isEqualTo("These are my secrets: ****** - ******");
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
+    void fileInputWithFileDefault() throws IOException, QueueException, TimeoutException {
+        HashMap<String, Object> inputs = new HashMap<>(InputsTest.inputs);
+        URI file = createFile();
+        inputs.put("file", file);
+
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "inputs",
+            null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs)
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat((String) execution.findTaskRunsByTaskId("file").getFirst().getOutputs().get("value")).isEqualTo(file.toString());
+    }
+
+    private URI createFile() throws IOException {
+        File tempFile = File.createTempFile("file", ".txt");
+        Files.write(tempFile.toPath(), "Hello World".getBytes());
+        return tempFile.toPath().toUri();
     }
 }

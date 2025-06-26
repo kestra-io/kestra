@@ -5,14 +5,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.WorkerJobRunningStateStore;
 import io.kestra.core.runners.WorkerTriggerResult;
 import io.kestra.core.utils.Either;
-import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -27,24 +23,14 @@ import java.util.function.Consumer;
 public class JdbcWorkerTriggerResultQueueService implements Closeable {
     private final static ObjectMapper MAPPER = JdbcMapper.of();
 
-    private final JdbcQueue<WorkerTriggerResult> workerTriggerResultQueue;
-
     @Inject
-    private AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
+    private WorkerJobRunningStateStore workerJobRunningStateStore;
+
     private final AtomicReference<Runnable> disposable = new AtomicReference<>();
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
-    private Runnable queueStop;
-
-    @SuppressWarnings("unchecked")
-    public JdbcWorkerTriggerResultQueueService(ApplicationContext applicationContext) {
-        this.workerTriggerResultQueue = (JdbcQueue<WorkerTriggerResult>) applicationContext.getBean(
-            QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED));
-    }
-
-    public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerTriggerResult, DeserializationException>> consumer) {
+    public Runnable receive(JdbcQueue<WorkerTriggerResult> workerTriggerResultQueue, String consumerGroup, Class<?> queueType, Consumer<Either<WorkerTriggerResult, DeserializationException>> consumer) {
         disposable.set(workerTriggerResultQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
             eithers.forEach(either -> {
                 if (either.isRight()) {
@@ -52,14 +38,14 @@ public class JdbcWorkerTriggerResultQueueService implements Closeable {
                     try {
                         JsonNode json = MAPPER.readTree(either.getRight().getRecord());
                         var triggerContext = MAPPER.treeToValue(json.get("triggerContext"), TriggerContext.class);
-                        jdbcWorkerJobRunningRepository.deleteByKey(triggerContext.uid());
+                        workerJobRunningStateStore.deleteByKey(triggerContext.uid());
                     } catch (JsonProcessingException | DeserializationException e) {
                         // ignore the message if we cannot do anything about it
                         log.error("Unexpected exception when trying to handle a deserialization error", e);
                     }
                 } else {
                     WorkerTriggerResult workerTriggerResult = either.getLeft();
-                    jdbcWorkerJobRunningRepository.deleteByKey(workerTriggerResult.getTriggerContext().uid());
+                    workerJobRunningStateStore.deleteByKey(workerTriggerResult.getTriggerContext().uid());
                 }
                 consumer.accept(either);
             });

@@ -55,14 +55,16 @@ public interface PluginManager extends AutoCloseable {
     /**
      * Installs the given plugin artifact.
      *
-     * @param file                   the plugin JAR file.
-     * @param installForRegistration specify whether plugin artifacts should be scanned and registered.
-     * @param localRepositoryPath    the optional local repository path to install artifact.
+     * @param file                           the plugin JAR file.
+     * @param installForRegistration         specify whether plugin artifacts should be scanned and registered.
+     * @param localRepositoryPath            the optional local repository path to install artifact.
+     * @param forceInstallOnExistingVersions specify whether plugin should be forced install upon the existing one
      * @return The URI of the installed plugin.
      */
     PluginArtifact install(final File file,
                            boolean installForRegistration,
-                           @Nullable Path localRepositoryPath);
+                           @Nullable Path localRepositoryPath,
+                           boolean forceInstallOnExistingVersions);
 
     /**
      * Installs the given plugin artifact.

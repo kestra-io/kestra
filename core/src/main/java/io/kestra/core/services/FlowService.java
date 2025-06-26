@@ -176,7 +176,7 @@ public class FlowService {
                     previous :
                     FlowWithSource.of(flowToImport.toBuilder().revision(previous.getRevision() + 1).build(), source)
                 )
-                .orElseGet(() -> FlowWithSource.of(flowToImport, source).toBuilder().revision(1).build());
+                .orElseGet(() -> FlowWithSource.of(flowToImport, source).toBuilder().tenantId(tenantId).revision(1).build());
         } else {
             return maybeExisting
                 .map(previous -> repository().update(flow, previous))

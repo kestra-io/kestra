@@ -8,6 +8,7 @@ import {Schemas} from "../components/code/utils/types";
 interface PluginComponent {
     icon?: string;
     cls?: string;
+    version?: string;
     description?: string;
     properties?: Record<string, any>;
     schema: Schemas;
@@ -38,6 +39,10 @@ interface State {
     inputSchema?: any;
     inputsType?: any;
     schemaType?: Record<string, any>;
+    currentlyLoading?: {
+        taskType?: string;
+        taskVersion?: string;
+    };
 }
 
 interface LoadOptions {
@@ -208,8 +213,21 @@ export const usePluginsStore = defineStore("plugins", {
                 )
                 : undefined;
 
+            // Avoid rerunning the same request twice in a row
+            if(this.currentlyLoading?.taskType === taskType &&
+                this.currentlyLoading?.taskVersion === taskVersion) {
+                    return
+            }
+
+            // No need to reload if the plugin has not changed
+            if(this.editorPlugin?.cls === taskType &&
+                this.editorPlugin?.version === taskVersion) {
+                    return;
+            }
+
             if (taskType) {
                 let payload:LoadOptions = {cls: taskType};
+
                 if (taskVersion !== undefined) {
                     // Check if the version is valid to avoid error
                     // when loading plugin
@@ -223,9 +241,16 @@ export const usePluginsStore = defineStore("plugins", {
                         };
                     }
                 }
+
+                this.currentlyLoading = {
+                    taskType: taskType,
+                    taskVersion: taskVersion,
+                };
+
                 this.load(payload).then((plugin) => {
                     this.editorPlugin = {
                         cls: taskType,
+                        version: taskVersion,
                         ...plugin,
                     };
                 });

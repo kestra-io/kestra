@@ -1,28 +1,30 @@
 package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.annotation.Property;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.pebbletemplates.pebble.error.PebbleException;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.util.Map;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@KestraTest(rebuildContext = true)
 @Property(name="kestra.server-type", value="WORKER")
 class ReadFileFunctionTest {
     @Inject
@@ -185,5 +187,72 @@ class ReadFileFunctionTest {
     void readFailOnNonWorkerNodes() {
         IllegalVariableEvaluationException exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unknown.txt') }}", Map.of("flow", Map.of("namespace", "io.kestra.tests"))));
         assertThat(exception.getMessage()).contains("The 'read' function can only be used in the Worker as it access the internal storage.");
+    }
+
+    @Test
+    void shouldFailProcessingUnsupportedScheme() {
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", "notme",
+                "namespace", "notme",
+                "tenantId", MAIN_TENANT),
+            "execution", Map.of("id", "notme")
+        );
+
+        assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('unsupported://path-to/file.txt') }}", variables));
+    }
+
+    @Test
+    void shouldFailProcessingNotAllowedPath() throws IOException {
+        URI file = createFile();
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", "notme",
+                "namespace", "notme",
+                "tenantId", MAIN_TENANT),
+            "execution", Map.of("id", "notme"),
+            "file", file.toString()
+        );
+
+        assertThrows(SecurityException.class, () -> variableRenderer.render("{{ read(file) }}", variables));
+    }
+
+    @Test
+    @Property(name = LocalPath.ALLOWED_PATHS_CONFIG, value = "/tmp")
+    void shouldSucceedProcessingAllowedFile() throws IllegalVariableEvaluationException, IOException {
+        URI file = createFile();
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", "notme",
+                "namespace", "notme",
+                "tenantId", MAIN_TENANT),
+            "execution", Map.of("id", "notme"),
+            "file", file.toString()
+        );
+
+        assertThat(variableRenderer.render("{{ read(file) }}", variables)).isEqualTo("Hello World");
+    }
+
+    @Test
+    @Property(name = LocalPath.ALLOWED_PATHS_CONFIG, value = "/tmp")
+    @Property(name = LocalPath.ENABLE_FILE_FUNCTIONS_CONFIG, value = "false")
+    void shouldFailProcessingAllowedFileIfFileFunctionDisabled() throws IOException {
+        URI file = createFile();
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", "notme",
+                "namespace", "notme",
+                "tenantId", MAIN_TENANT),
+            "execution", Map.of("id", "notme"),
+            "file", file.toString()
+        );
+
+        assertThrows(SecurityException.class, () -> variableRenderer.render("{{ read(file) }}", variables));
+    }
+
+    private URI createFile() throws IOException {
+        File tempFile = File.createTempFile("file", ".txt");
+        Files.write(tempFile.toPath(), "Hello World".getBytes());
+        return tempFile.toPath().toUri();
     }
 }

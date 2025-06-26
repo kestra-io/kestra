@@ -18,7 +18,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@KestraTest(rebuildContext = true)
 class FilesServiceTest {
     @Inject
     private TestRunContextFactory runContextFactory;
@@ -31,10 +31,10 @@ class FilesServiceTest {
         RunContext runContext = runContextFactory.of();
         FilesService.inputFiles(runContext, Map.of("file.txt", "content"));
 
-        FilesService.inputFiles(runContext, Map.of("file.txt", "overriden content"));
+        FilesService.inputFiles(runContext, Map.of("file.txt", "overridden content"));
 
         String fileContent = FileUtils.readFileToString(runContext.workingDir().path().resolve("file.txt").toFile(), "UTF-8");
-        assertThat(fileContent).isEqualTo("overriden content");
+        assertThat(fileContent).isEqualTo("overridden content");
     }
 
     @Test
@@ -52,7 +52,7 @@ class FilesServiceTest {
     }
 
     @Test
-    @Property(name = "kestra.plugins.allowed-paths", value = "/tmp")
+    @Property(name = LocalPath.ALLOWED_PATHS_CONFIG, value = "/tmp")
     void localFileAsInputFile() throws Exception {
         URI uri = createFile();
         RunContext runContext = runContextFactory.of();

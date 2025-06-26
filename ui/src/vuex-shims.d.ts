@@ -22,7 +22,6 @@ declare module "@vue/runtime-core" {
         bookmarks:any
         dashboard:any
         code:any
-        blueprints:any
     }
 
     interface ComponentCustomProperties {

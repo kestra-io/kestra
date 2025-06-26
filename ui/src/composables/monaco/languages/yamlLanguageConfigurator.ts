@@ -14,7 +14,8 @@ import IDisposable = monaco.IDisposable;
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
-import {endOfWordColumn, propertySuggestion, registerFunctionParametersAutoCompletion, registerPebbleAutocompletion} from "./pebbleLanguageConfigurator.ts";
+import {endOfWordColumn, registerFunctionParametersAutoCompletion, registerNestedValueAutoCompletion, registerPebbleAutocompletion} from "./pebbleLanguageConfigurator.ts";
+import {computed} from "vue";
 
 
 export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
@@ -163,29 +164,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
         registerFunctionParametersAutoCompletion(autoCompletionProviders, yamlAutoCompletion, ["yaml", "plaintext"]);
 
-        // Nested value autocompletion
-        autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
-            triggerCharacters: ["."],
-            async provideCompletionItems(model, position) {
-                const source = model.getValue();
-                const parsed = YamlUtils.parse(source, false);
-
-                const parentFieldMatcher = model.findPreviousMatch(RegexProvider.capturePebbleVarParent + "$", position, true, false, null, true);
-                if (parentFieldMatcher === null || parentFieldMatcher.matches === null) {
-                    return NO_SUGGESTIONS;
-                }
-
-                const startOfWordColumn = position.column - parentFieldMatcher.matches[2].length;
-                return {
-                    suggestions: (await yamlAutoCompletion.nestedFieldAutoCompletion(source, parsed, parentFieldMatcher.matches[1]))
-                        .map(s => propertySuggestion(s, {
-                            lineNumber: position.lineNumber,
-                            startColumn: startOfWordColumn,
-                            endColumn: endOfWordColumn(position, model)
-                        }))
-                };
-            }
-        }));
+        registerNestedValueAutoCompletion(autoCompletionProviders, yamlAutoCompletion, computed(() => undefined), ["yaml", "plaintext"]);
 
         return autoCompletionProviders;
     }

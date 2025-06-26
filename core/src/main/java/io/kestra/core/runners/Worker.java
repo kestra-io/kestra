@@ -18,6 +18,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.*;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.services.LogService;
+import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.VariablesService;
 import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.storages.StorageContext;
@@ -158,6 +159,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private TracerFactory tracerFactory;
     private Tracer tracer;
 
+    @Inject
+    private MaintenanceService maintenanceService;
+
     /**
      * Creates a new {@link Worker} instance.
      *
@@ -285,8 +289,12 @@ public class Worker implements Service, Runnable, AutoCloseable {
         ));
 
         this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
+        if (this.maintenanceService.isInMaintenanceMode()) {
+            enterMaintenance();
+        } else {
+            setState(ServiceState.RUNNING);
+        }
 
-        setState(ServiceState.RUNNING);
         if (workerGroupKey != null) {
             log.info("Worker started with {} thread(s) in group '{}'", numThreads, workerGroupKey);
         }
@@ -304,19 +312,23 @@ public class Worker implements Service, Runnable, AutoCloseable {
         ClusterEvent clusterEvent = either.getLeft();
         log.info("Cluster event received: {}", clusterEvent);
         switch (clusterEvent.eventType()) {
-            case MAINTENANCE_ENTER -> {
-                this.executionKilledQueue.pause();
-                this.workerJobQueue.pause();
-
-                this.setState(ServiceState.MAINTENANCE);
-            }
-            case MAINTENANCE_EXIT -> {
-                this.executionKilledQueue.resume();
-                this.workerJobQueue.resume();
-
-                this.setState(ServiceState.RUNNING);
-            }
+            case MAINTENANCE_ENTER -> enterMaintenance();
+            case MAINTENANCE_EXIT -> exitMaintenance();
         }
+    }
+
+    private void enterMaintenance() {
+        this.executionKilledQueue.pause();
+        this.workerJobQueue.pause();
+
+        this.setState(ServiceState.MAINTENANCE);
+    }
+
+    private void exitMaintenance() {
+        this.executionKilledQueue.resume();
+        this.workerJobQueue.resume();
+
+        this.setState(ServiceState.RUNNING);
     }
 
     private void setState(final ServiceState state) {

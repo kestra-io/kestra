@@ -28,6 +28,7 @@
     import {computed, inject} from "vue";
     import {useI18n} from "vue-i18n";
     import {TaskIcon} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {BlockType} from "../code/utils/types";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
@@ -40,31 +41,85 @@
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
 
+    function resolveRef(obj: {$ref:string} | any): any {
+        if(!obj || !obj.$ref) {
+            return obj;
+        }
+        return pluginsStore.flowDefinitions?.[removeRefPrefix(obj.$ref)];
+    }
+
+    // - recursively get each item in the path
+    function getNextPathItem(def: any, path: (string | number)[]): {
+        properties?: any
+        items?: any;
+        type?: string;
+    } {
+        const nextKey = path.shift();
+        if(nextKey === undefined) {
+            return def;
+        }
+
+        if(typeof nextKey === "number") {
+            // if the next key is a number, we are in an array
+            // so we need to check if the items are defined in an anyOf
+            const downstreamProperty = path.at(0)
+            if(def.items?.anyOf && typeof downstreamProperty === "string") {
+                const anyOf = def.items.anyOf.map(resolveRef)
+                    .filter((item: any) => item.properties?.[downstreamProperty]);
+                // take the first schema that has the downstream property
+                return getNextPathItem(anyOf[0], path);
+            }
+
+            return def.items.type === "object" ? getNextPathItem(def.items, path) : def.items;
+        }
+
+        if(!def?.properties?.[nextKey]) {
+            return def;
+        }
+
+        return getNextPathItem(def?.properties[nextKey], path);
+    }
+
     const fieldDefinition = computed(() => {
         if(!pluginsStore.flowRootProperties){
             return {};
         }
 
-        // TODO: figure out a way to resolve definitions of nested fields
-        // example:
-        // - make path array from string
-        // - get each item in the path in order
+        const pathArray = YAML_UTILS.parsePath(parentPath)
+
         // - finally extract the definition
+        const lastDef = getNextPathItem(pluginsStore.flowRootSchema, pathArray);
+
         // - if in an array with multiple anyOf, resolve the type will be harder
-        // this system only work with top level properties
-        return pluginsStore.flowRootProperties[parentPath] ?? {};
+        return lastDef?.type === "array" ? lastDef.items : lastDef ?? {};
     })
 
     const taskModels = computed(() => {
         // what if the fieldDefinition is not an array?
         // what if its items are defined in an allOf?
         // what if the refs are one level deeper?
-        const allRefs = fieldDefinition.value?.items?.anyOf?.map((item: any) => {
+        const allRefs = fieldDefinition.value?.anyOf?.map((item: any) => {
             return removeRefPrefix(item.$ref);
         }) || [];
-        return allRefs.filter((item: string) => {
-            return pluginsStore.flowDefinitions?.[item]?.$deprecated !== true;
-        }).sort();
+
+        return allRefs.reduce((acc: string[], item: string) => {
+            const def = pluginsStore.flowDefinitions?.[item]
+            if(!def) {
+                return acc;
+            }
+            if(def.$deprecated === true) {
+                return acc;
+            }
+
+            const consolidatedType = def.allOf
+                ? def.allOf.find((d: any) => d.properties?.type).type
+                : def.properties?.type;
+
+            if(consolidatedType?.const){
+                acc.push(consolidatedType?.const);
+            }
+            return acc
+        }, []).sort();
     })
 
     const {t} = useI18n();

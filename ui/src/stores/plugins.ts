@@ -86,7 +86,7 @@ export const usePluginsStore = defineStore("plugins", {
             return this.flowDefinitions?.[removeRefPrefix(this.flowSchema.$ref)];
         },
         flowRootProperties (): Record<string, any> | undefined {
-            return this.flowRootProperties?.properties;
+            return this.flowRootSchema?.properties;
         }
     },
 

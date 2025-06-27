@@ -5,7 +5,6 @@ import flow from "./flow"
 import graph from "./graph"
 import namespace from "./namespaces"
 import misc from "./miscs"
-import stat from "./stat"
 import template from "./template"
 import taskrun from "./taskruns"
 import trigger from "./trigger";
@@ -21,7 +20,6 @@ export default {
         flow,
         template,
         execution,
-        stat,
         namespace,
         misc,
         auth,

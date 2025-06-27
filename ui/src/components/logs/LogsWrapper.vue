@@ -47,7 +47,6 @@
 </script>
 
 <script lang="ts">
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import RouteContext from "../../mixins/routeContext";
     import RestoreUrl from "../../mixins/restoreUrl";
@@ -97,7 +96,6 @@
             storageKeys() {
                 return storageKeys
             },
-            ...mapState("stat", ["logDaily"]),
             ...mapStores(useLogsStore),
             routeInfo() {
                 return {

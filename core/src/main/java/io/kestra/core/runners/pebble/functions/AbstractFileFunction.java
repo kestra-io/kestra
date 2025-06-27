@@ -1,9 +1,12 @@
 package io.kestra.core.runners.pebble.functions;
 
+import io.kestra.core.runners.LocalPath;
+import io.kestra.core.runners.LocalPathFactory;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Slugify;
+import io.micronaut.context.annotation.Value;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -18,7 +21,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 abstract class AbstractFileFunction implements Function {
-
+    static final String SCHEME_NOT_SUPPORTED_ERROR = "Cannot process the URI %s: scheme not supported.";
     static final String KESTRA_SCHEME = "kestra:///";
     static final String TRIGGER = "trigger";
     static final String NAMESPACE = "namespace";
@@ -26,6 +29,7 @@ abstract class AbstractFileFunction implements Function {
     static final String ID  = "id";
     static final String PATH = "path";
 
+    private static final Pattern URI_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9+.-]*:.*");
     private static final Pattern EXECUTION_FILE = Pattern.compile(".*/.*/executions/.*/tasks/.*/.*");
 
     @Inject
@@ -33,6 +37,12 @@ abstract class AbstractFileFunction implements Function {
 
     @Inject
     protected StorageInterface storageInterface;
+
+    @Inject
+    protected LocalPathFactory localPathFactory;
+
+    @Value("${" + LocalPath.ENABLE_FILE_FUNCTIONS_CONFIG + ":true}")
+    protected boolean enableFileProtocol;
 
     //    @Value("${kestra.server-type:}") // default to empty as tests didn't set this property
 //    private String serverType;
@@ -65,9 +75,19 @@ abstract class AbstractFileFunction implements Function {
                 if (str.startsWith(KESTRA_SCHEME)) {
                     fileUri = URI.create(str);
                     namespace = checkAllowedFileAndReturnNamespace(context, fileUri);
+                } else if (str.startsWith(LocalPath.FILE_PROTOCOL)) {
+                    if (!enableFileProtocol) {
+                        throw new SecurityException("The file:// protocol has been disabled inside the Kestra configuration.");
+                    }
+
+                    fileUri = URI.create(str);
+                    namespace = (String) Optional.ofNullable(args.get(NAMESPACE)).orElse(flow.get(NAMESPACE));
+                } else if (URI_PATTERN.matcher(str).matches()) {
+                    // it is an unsupported URI
+                    throw new IllegalArgumentException(SCHEME_NOT_SUPPORTED_ERROR.formatted(str));
                 } else {
                     namespace = (String) Optional.ofNullable(args.get(NAMESPACE)).orElse(flow.get(NAMESPACE));
-                    fileUri = URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + str);
+                    fileUri = URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.namespaceFilePrefix(namespace) + "/" + str);
                     flowService.checkAllowedNamespace(tenantId, namespace, tenantId, flow.get(NAMESPACE));
                 }
             } else {

@@ -1,10 +1,8 @@
 package io.kestra.core.models.property;
 
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.*;
 import io.kestra.core.storages.StorageInterface;
-import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -15,6 +13,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,7 +39,7 @@ class URIFetcherTest {
     @Test
     void shouldFetchFromInternalStorage() throws URISyntaxException, IOException {
         URI uri = storageUpload();
-        RunContext runContext = runContextFactory.of();
+        RunContext runContext = buildRunContext();
 
         try(var fetched = URIFetcher.of(uri).fetch(runContext)) {
             String str = new String(fetched.readAllBytes());
@@ -51,7 +50,7 @@ class URIFetcherTest {
     @Test
     void shouldFailToFetchFromLocalFileWhenNotAllowed() throws IOException {
         URI uri = createFile();
-        RunContext runContext = runContextFactory.of();
+        RunContext runContext = buildRunContext();
 
         assertThrows(SecurityException.class, () -> {
             try(var ignored = URIFetcher.of(uri).fetch(runContext)) {}
@@ -59,10 +58,9 @@ class URIFetcherTest {
     }
 
     @Test
-    @Property(name = "kestra.plugins.allowed-paths", value = "/tmp")
     void shouldFetchFromLocalFileWhenAllowedGlobally() throws IOException {
         URI uri = createFile();
-        RunContext runContext = runContextFactory.of();
+        RunContext runContext = buildRunContext(List.of("/tmp"));
 
         try (var fetch = URIFetcher.of(uri).fetch(runContext)) {
             String fetchedContent = new String(fetch.readAllBytes());
@@ -73,13 +71,28 @@ class URIFetcherTest {
     @Test
     void shouldFetchFromLocalFileWhenAllowedForPlugin() throws IOException {
         URI uri = createFile();
-        RunContext runContext = Mockito.spy(runContextFactory.of());
-        Mockito.when(runContext.pluginConfiguration(Mockito.anyString())).thenReturn(Optional.of(List.of("/tmp")));
+        RunContext runContext = buildRunContext(Collections.emptyList(), List.of("/tmp"));
 
         try (var fetch = URIFetcher.of(uri).fetch(runContext)) {
             String fetchedContent = new String(fetch.readAllBytes());
             assertThat(fetchedContent).isEqualTo("Hello World");
         }
+    }
+
+    private RunContext buildRunContext() {
+        return buildRunContext(Collections.emptyList(), Collections.emptyList());
+    }
+
+    private RunContext buildRunContext(List<String> globalAllowedPaths) {
+        return buildRunContext(globalAllowedPaths, Collections.emptyList());
+    }
+
+    private RunContext buildRunContext(List<String> globalAllowedPaths, List<String> pluginAllowedPath) {
+        var spy = Mockito.spy(runContextFactory.of());
+        var localPath = new LocalPathFactory(globalAllowedPaths).createLocalPath(spy);
+        Mockito.when(spy.localPath()).thenReturn(localPath);
+        Mockito.when(spy.pluginConfiguration(Mockito.anyString())).thenReturn(Optional.of(pluginAllowedPath));
+        return spy;
     }
 
     private URI createFile() throws IOException {

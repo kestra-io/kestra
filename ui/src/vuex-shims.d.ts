@@ -6,10 +6,8 @@ declare module "@vue/runtime-core" {
         flow:any
         template:any
         execution:any
-        stat:any
         namespace:any
         misc:any
-        layout:any
         auth:any
         graph:any
         taskrun:any
@@ -18,7 +16,6 @@ declare module "@vue/runtime-core" {
         doc:any
         dashboard:any
         code:any
-        blueprints:any
     }
 
     interface ComponentCustomProperties {

@@ -1,6 +1,7 @@
 package io.kestra.core.validations.validator;
 
 import io.kestra.core.models.flows.input.FileInput;
+import io.kestra.core.runners.LocalPath;
 import io.kestra.core.validations.FileInputValidation;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
@@ -19,9 +20,9 @@ public class FileInputValidator implements ConstraintValidator<FileInputValidati
             return true; // nulls are allowed according to spec
         }
 
-        if (value.getDefaults() != null) {
+        if (value.getDefaults() != null && !LocalPath.FILE_SCHEME.equals(value.getDefaults().getScheme())) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("no `defaults` can be set for inputs of type 'FILE'")
+            context.buildConstraintViolationWithTemplate("inputs of type 'FILE' only support `defaults` as local files using a file URI")
                 .addConstraintViolation();
             return false;
         }

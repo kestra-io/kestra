@@ -41,19 +41,13 @@
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
 
-    function resolveRef(obj: {$ref:string} | any): any {
-        if(!obj || !obj.$ref) {
-            return obj;
-        }
-        return pluginsStore.flowDefinitions?.[removeRefPrefix(obj.$ref)];
-    }
-
     // - recursively get each item in the path
-    function getNextPathItem(def: any, path: (string | number)[]): {
+    function getNextPathItem(def: any, path: (string | number)[], index:number): {
         properties?: any
         items?: any;
         type?: string;
     } {
+
         const nextKey = path.shift();
         if(nextKey === undefined) {
             return def;
@@ -63,24 +57,31 @@
             // if the next key is a number, we are in an array
             // so we need to check if the items are defined in an anyOf
             const downstreamProperty = path.at(0)
+
             if(def.items?.anyOf && typeof downstreamProperty === "string") {
-                const anyOf = def.items.anyOf.map(resolveRef)
+                const anyOf = def.items.anyOf.map(pluginsStore.resolveRef)
+
+                const anyOfFiltered = anyOf
                     .filter((item: any) => item.properties?.[downstreamProperty]);
+
                 // take the first schema that has the downstream property
-                return getNextPathItem(anyOf[0], path);
+                return getNextPathItem(anyOfFiltered[0], path, index+1);
             }
 
-            return def.items.type === "object" ? getNextPathItem(def.items, path) : def.items;
+            return def.items.type === "object" ? getNextPathItem(def.items, path, index+1) : def.items;
         }
 
         if(!def?.properties?.[nextKey]) {
             return def;
         }
 
-        return getNextPathItem(def?.properties[nextKey], path);
+        return getNextPathItem(def?.properties[nextKey], path, index+1);
     }
 
+    // FIXME: field definition needs to be injected when we open the tab
+    // resolution of type is much easier in context
     const fieldDefinition = computed(() => {
+
         if(!pluginsStore.flowRootProperties){
             return {};
         }
@@ -88,7 +89,7 @@
         const pathArray = YAML_UTILS.parsePath(parentPath)
 
         // - finally extract the definition
-        const lastDef = getNextPathItem(pluginsStore.flowRootSchema, pathArray);
+        const lastDef = getNextPathItem(pluginsStore.flowRootSchema, pathArray, 0);
 
         // - if in an array with multiple anyOf, resolve the type will be harder
         return lastDef?.type === "array" ? lastDef.items : lastDef ?? {};
@@ -99,6 +100,13 @@
         // what if its items are defined in an allOf?
         // what if the refs are one level deeper?
         const allRefs = fieldDefinition.value?.anyOf?.map((item: any) => {
+            if(item.allOf){
+                // if the item is an allOf, we need to find the first item that has a $ref
+                const refItem = item.allOf.find((d: any) => d.$ref);
+                if(refItem?.$ref) {
+                    return removeRefPrefix(refItem.$ref);
+                }
+            }
             return removeRefPrefix(item.$ref);
         }) || [];
 

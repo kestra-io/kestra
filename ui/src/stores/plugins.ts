@@ -5,6 +5,7 @@ import semver from "semver";
 import {useApiStore} from "./api";
 import {Schemas} from "../components/code/utils/types";
 import InitialFlowSchema from "./flow-schema.json"
+import {toRaw} from "vue";
 
 interface PluginComponent {
     icon?: string;
@@ -53,6 +54,13 @@ interface LoadOptions {
     commit?: boolean;
 }
 
+interface JsonSchemaDef {
+            $ref?:string,
+            allOf?: JsonSchemaDef[],
+            type?: string,
+            properties?: Record<string, any>,
+}
+
 export function removeRefPrefix(ref?: string): string {
     return ref?.replace(/^#\/definitions\//, "") ?? "";
 }
@@ -91,6 +99,33 @@ export const usePluginsStore = defineStore("plugins", {
     },
 
     actions: {
+        resolveRef(obj: JsonSchemaDef): JsonSchemaDef {
+            if(obj?.$ref){
+                return this.flowDefinitions?.[removeRefPrefix(obj.$ref)];
+            }
+            if (obj?.allOf) {
+                const def = obj.allOf.reduce((acc: any, item) => {
+                    if (item.$ref) {
+                        const ref = toRaw(this.flowDefinitions?.[removeRefPrefix(item.$ref)]);
+                        if (ref?.type === "object" && ref?.properties) {
+                            acc.properties = {
+                                ...acc.properties,
+                                ...ref.properties
+                            };
+                        }
+                    }
+                    if(item.type === "object" && item.properties) {
+                        acc.properties = {
+                            ...acc.properties,
+                            ...item.properties
+                        };
+                    }
+                    return acc;
+                }, {});
+                return def
+            }
+            return obj;
+        },
         async list() {
             const response = await this.$http.get<Plugin[]>(`${apiUrl(this.vuexStore)}/plugins`);
             this.plugins = response.data;

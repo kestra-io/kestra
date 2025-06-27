@@ -12,7 +12,6 @@ import editor from "./editor";
 import doc from "./doc";
 import bookmarks from "./bookmarks";
 import dashboard from "./dashboard";
-import service from "./service"
 
 export default {
     modules: {
@@ -30,6 +29,5 @@ export default {
         doc,
         bookmarks,
         dashboard,
-        service,
     }
 }

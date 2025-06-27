@@ -7,7 +7,7 @@ tasks:
   retry:
     type: constant
     interval: PT0.250S
-    maxAttempt: 5
+    maxAttempts: 5
     maxDuration: PT15S
 
 errors:

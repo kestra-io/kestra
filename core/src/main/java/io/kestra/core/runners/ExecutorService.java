@@ -818,7 +818,7 @@ public class ExecutorService {
                         .executionKind(executor.getExecution().getKind())
                         .build();
                     // Get worker group
-                    Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(workerTask);
+                    Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(executor.getFlow(), workerTask);
                     if (workerGroup.isPresent()) {
                         // Check if the worker group exist
                         String tenantId = executor.getFlow().getTenantId();

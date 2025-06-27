@@ -4,6 +4,7 @@ import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import semver from "semver";
 import {useApiStore} from "./api";
 import {Schemas} from "../components/code/utils/types";
+import InitialFlowSchema from "./flow-schema.json"
 
 interface PluginComponent {
     icon?: string;
@@ -52,6 +53,10 @@ interface LoadOptions {
     commit?: boolean;
 }
 
+export function removeRefPrefix(ref?: string): string {
+    return ref?.replace(/^#\/definitions\//, "") ?? "";
+}
+
 export const usePluginsStore = defineStore("plugins", {
     state: (): State => ({
         plugin: undefined,
@@ -68,9 +73,21 @@ export const usePluginsStore = defineStore("plugins", {
     }),
 
     getters: {
-        getPluginSingleList: (state): PluginComponent[] | undefined => state.pluginSingleList,
-        getPluginsDocumentation: (state): Record<string, PluginComponent> => state.pluginsDocumentation,
-        getIcons: (state): Record<string, string> | undefined => state.icons
+        flowSchema (state): {
+            definitions: any,
+            $ref: string,
+        } {
+            return state.schemaType?.flow ?? InitialFlowSchema;
+        },
+        flowDefinitions (): Record<string, any> | undefined {
+            return this.flowSchema.definitions;
+        },
+        flowRootSchema (): Record<string, any> | undefined {
+            return this.flowDefinitions?.[removeRefPrefix(this.flowSchema.$ref)];
+        },
+        flowRootProperties (): Record<string, any> | undefined {
+            return this.flowRootProperties?.properties;
+        }
     },
 
     actions: {
@@ -190,6 +207,7 @@ export const usePluginsStore = defineStore("plugins", {
                 return response.data;
             });
         },
+
         loadSchemaType(options: {type: string} = {type: "flow"}) {
             return this.$http.get(`${apiUrl(this.vuexStore)}/plugins/schemas/${options.type}`, {}).then(response => {
                 this.schemaType = this.schemaType || {};
@@ -203,7 +221,7 @@ export const usePluginsStore = defineStore("plugins", {
             const taskType = options.event ? (options.task !== undefined ? options.task : YamlUtils.getTypeAtPosition(
                 options.event.model.getValue(),
                 options.event.position,
-                this.getPluginSingleList
+                this.pluginSingleList
             )) : options.task;
 
             const taskVersion: string | undefined = options.event

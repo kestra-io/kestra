@@ -23,10 +23,10 @@
                 </TaskWrapper>
 
                 <MetadataInputs
-                    v-if="flowSchemaProperties.inputs"
+                    v-if="pluginsStore.flowRootProperties?.inputs"
                     :label="t('no_code.fields.general.inputs')"
                     :model-value="metadata.inputs"
-                    :required="flowSchema.required?.includes('inputs')"
+                    :required="pluginsStore.flowRootSchema?.required?.includes('inputs')"
                     @update:model-value="updateMetadata('inputs', $event)"
                 />
 
@@ -73,7 +73,7 @@
         </template>
 
         <Task
-            v-else-if="schema"
+            v-else-if="pluginsStore.flowSchema"
             @update-task="onTaskUpdate"
         />
     </div>
@@ -90,8 +90,6 @@
     import MetadataInputs from "../../flows/MetadataInputs.vue";
     import MetadataInputsContent from "../../flows/MetadataInputsContent.vue";
     import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
-    import InitialSchema from "./flow-schema.json"
-
 
     import {
         CREATING_TASK_INJECTION_KEY, EDITING_TASK_INJECTION_KEY,
@@ -103,7 +101,6 @@
     const panel = inject(PANEL_INJECTION_KEY, ref());
 
     const editingTask = inject(EDITING_TASK_INJECTION_KEY, false);
-
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -163,36 +160,12 @@
 
     const pluginsStore = usePluginsStore();
 
-    const schema = computed<{
-        definitions?: any,
-        $ref?: string,
-    }>(() => {
-        return pluginsStore.schemaType?.flow ?? InitialSchema;
-    });
-
     onMounted(async () => {
         if(pluginsStore.schemaType?.flow) {
             return; // Schema already loaded
         }
 
         await pluginsStore.loadSchemaType()
-    });
-
-    const definitions = computed(() => {
-        return schema.value?.definitions ?? {};
-    });
-
-    function removeRefPrefix(ref?: string): string {
-        return ref?.replace(/^#\/definitions\//, "") ?? "";
-    }
-
-    const flowSchema = computed(() => {
-        const ref = removeRefPrefix(schema.value?.$ref);
-        return definitions.value?.[ref];
-    });
-
-    const flowSchemaProperties = computed(() => {
-        return flowSchema.value?.properties ?? {};
     });
 
     const METADATA_KEYS = [
@@ -211,10 +184,6 @@
 
 
     const fieldsFromSchema = computed(() => {
-        if( !flowSchema.value || !flowSchemaProperties.value) {
-            return [];
-        }
-
         // FIXME: some labels are not where you would expect them to be
         const mainLabels: Record<string, string> = {
             id: t("no_code.fields.main.flow_id"),
@@ -224,10 +193,10 @@
 
         return METADATA_KEYS.map(f => ({
             modelValue: props.metadata[f],
-            required: flowSchema.value?.required ?? [],
+            required: pluginsStore.flowRootSchema?.required ?? [],
             disabled: !creatingFlow.value && (f === "id" || f === "namespace"),
-            schema: flowSchemaProperties.value[f],
-            definitions: definitions.value,
+            schema: pluginsStore.flowRootProperties?.[f] ?? {},
+            definitions: pluginsStore.flowDefinitions,
             label: mainLabels[f] ?? t(`no_code.fields.general.${f}`),
             fieldKey: f,
             task: props.metadata,

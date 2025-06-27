@@ -29,9 +29,8 @@
     import {useI18n} from "vue-i18n";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {BlockType} from "../code/utils/types";
-    import {usePluginsStore} from "../../stores/plugins";
+    import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
-
 
     const pluginsStore = usePluginsStore();
 
@@ -42,21 +41,31 @@
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
 
     const fieldDefinition = computed(() => {
-        if(!pluginsStore.schemaType?.flow){
+        if(!pluginsStore.flowRootProperties){
             return {};
         }
-        return pluginsStore.schemaType.flow.definitions[removeRefPrefix(pluginsStore.schemaType.flow.$ref)]?.properties[parentPath];
+
+        // TODO: figure out a way to resolve definitions of nested fields
+        // example:
+        // - make path array from string
+        // - get each item in the path in order
+        // - finally extract the definition
+        // - if in an array with multiple anyOf, resolve the type will be harder
+        // this system only work with top level properties
+        return pluginsStore.flowRootProperties[parentPath] ?? {};
     })
 
     const taskModels = computed(() => {
-        return fieldDefinition.value?.items?.anyOf?.map((item: any) => {
+        // what if the fieldDefinition is not an array?
+        // what if its items are defined in an allOf?
+        // what if the refs are one level deeper?
+        const allRefs = fieldDefinition.value?.items?.anyOf?.map((item: any) => {
             return removeRefPrefix(item.$ref);
         }) || [];
+        return allRefs.filter((item: string) => {
+            return pluginsStore.flowDefinitions?.[item]?.$deprecated !== true;
+        }).sort();
     })
-
-    function removeRefPrefix(ref?: string): string {
-        return ref?.replace(/^#\/definitions\//, "") ?? "";
-    }
 
     const {t} = useI18n();
 
@@ -64,8 +73,6 @@
         type: String,
         default: "",
     });
-
-
 </script>
 
 <style lang="scss" scoped>

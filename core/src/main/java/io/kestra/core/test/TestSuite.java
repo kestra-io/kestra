@@ -1,6 +1,7 @@
 package io.kestra.core.test;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.HasSource;
@@ -25,6 +26,7 @@ import java.util.List;
 @Introspected
 @ToString
 @EqualsAndHashCode
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @TestSuiteValidation
 public class TestSuite implements HasUID, TenantInterface, DeletedInterface, HasSource {
 

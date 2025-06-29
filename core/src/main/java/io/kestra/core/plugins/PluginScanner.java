@@ -249,9 +249,9 @@ public class PluginScanner {
     }
 
     private static void addGuides(Path root, List<String> guides) throws IOException {
-        try (var stream = Files.walk(root)) { // remove depth limit to walk recursively
+        try (var stream = Files.walk(root, 1)) { // remove depth limit to walk recursively
             stream
-                .filter(Files::isRegularFile)
+                .skip(1)
                 .sorted(Comparator.comparing(path -> path.getName(path.getParent().getNameCount()).toString()))
                 .forEach(guide -> {
                     var guideName = guide.getName(guide.getParent().getNameCount()).toString();

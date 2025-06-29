@@ -18,6 +18,7 @@ public class FileRenderBuilder {
             case "ion" -> new IonFileRender(extension, filestream, maxLine);
             case "md" -> new DefaultFileRender(extension, filestream, DEFAULT_FILE_CHARSET, FileRender.Type.MARKDOWN, maxLine);
             case "pdf" -> new PdfFileRender(extension, filestream, maxLine);
+            case "parquet" -> new ParquetFileRender(extension, filestream, charset.orElse(DEFAULT_FILE_CHARSET), maxLine);
             default -> new DefaultFileRender(extension, filestream, charset.orElse(DEFAULT_FILE_CHARSET), maxLine);
         };
     }

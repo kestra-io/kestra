@@ -1,6 +1,7 @@
 package io.kestra.core.test;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.HasSource;
@@ -11,6 +12,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.TestSuiteValidation;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -24,6 +26,7 @@ import java.util.List;
 @Introspected
 @ToString
 @EqualsAndHashCode
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @TestSuiteValidation
 public class TestSuite implements HasUID, TenantInterface, DeletedInterface, HasSource {
 
@@ -52,6 +55,7 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
 
     @NotNull
     @NotEmpty
+    @Valid
     private List<UnitTest> testCases;
 
     @JsonProperty("deleted")

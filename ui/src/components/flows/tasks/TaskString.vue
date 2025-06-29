@@ -37,7 +37,7 @@
             :full-height="false"
             :should-focus="false"
             schema-type="flow"
-            lang="plaintext"
+            lang="plaintext-pebble"
             input
             @update:model-value="onInput"
             :large-suggestions="false"

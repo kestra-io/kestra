@@ -24,6 +24,7 @@
 
     import {useApiStore} from "./stores/api";
     import {usePluginsStore} from "./stores/plugins";
+    import {useLayoutStore} from "./stores/layout";
 
     // Main App
     export default {
@@ -48,9 +49,9 @@
             ...mapState("flow", ["overallTotal"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("misc", ["configs"]),
-            ...mapStores(useApiStore, usePluginsStore),
+            ...mapStores(useApiStore, usePluginsStore, useLayoutStore),
             envName() {
-                return this.$store.getters["layout/envName"] || this.configs?.environment?.name;
+                return this.layoutStore.envName || this.configs?.environment?.name;
             },
             isOSS(){
                 return true;

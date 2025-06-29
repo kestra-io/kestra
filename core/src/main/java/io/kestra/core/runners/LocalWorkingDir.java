@@ -199,7 +199,10 @@ public class LocalWorkingDir implements WorkingDir {
 
         if (Files.exists(newFilePath)) {
             switch (comportment) {
-                case OVERWRITE -> copyFile(inputStream, newFilePath);
+                case OVERWRITE -> {
+                    log.info("File {} already exist. It will be overwritten", newFilePath);
+                    copyFile(inputStream, newFilePath);
+                }
                 case FAIL -> throw new FileAlreadyExistsException("File " + newFilePath + " already exist");
                 case WARN -> log.warn("File {} already exist. It will be ignore", newFilePath);
                 case IGNORE -> {}

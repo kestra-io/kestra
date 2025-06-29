@@ -24,6 +24,15 @@ dependencies {
     implementation "io.micronaut.cache:micronaut-cache-core"
     implementation "io.micronaut.cache:micronaut-cache-caffeine"
 
+    
+    implementation 'org.apache.parquet:parquet-hadoop-bundle:1.15.1'
+    implementation ('org.apache.hadoop:hadoop-common:3.3.6') {
+        exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+    }
+    implementation('org.apache.hadoop:hadoop-mapreduce-client-core:3.3.6') {
+        exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+    }
+
     // test
     testAnnotationProcessor project(':processor')
     testImplementation project(':core').sourceSets.test.output
@@ -36,4 +45,5 @@ dependencies {
     testImplementation project(':jdbc-h2')
     testImplementation("io.micronaut.sql:micronaut-jooq")
 }
+
 

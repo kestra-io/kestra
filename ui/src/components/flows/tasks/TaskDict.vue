@@ -79,9 +79,21 @@
 
     const currentValue = ref<[string, any][]>([])
 
+    // this flag will avoid updating the modelValue when the
+    // change was initiated in the component itself
+    const localEdit = ref(false);
+
     watch(
         () => props.modelValue,
         (newValue) => {
+            if(localEdit.value) {
+                return;
+            }
+            localEdit.value = false;
+            if(newValue === undefined || newValue === null) {
+                currentValue.value = [];
+                return;
+            }
             currentValue.value = Object.entries(newValue ?? {});
         },
         {
@@ -101,7 +113,8 @@
         if(duplicatedKeys.value?.length > 0) {
             return;
         }
-        emit("update:modelValue", Object.fromEntries(currentValue.value));
+        localEdit.value = true;
+        emit("update:modelValue", Object.fromEntries(currentValue.value.filter(pair => pair[0] !== "" && pair[1] !== undefined)));
     }, 200);
 
     const emit = defineEmits(["update:modelValue"]);

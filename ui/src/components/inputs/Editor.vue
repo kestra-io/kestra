@@ -75,7 +75,7 @@
 </template>
 
 <script>
-    import {defineAsyncComponent, shallowRef} from "vue";
+    import {shallowRef} from "vue";
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
@@ -83,8 +83,7 @@
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
-
-    const MonacoEditor = defineAsyncComponent(() => import("./MonacoEditor.vue"));
+    import MonacoEditor from "./MonacoEditor.vue";
 
     import Utils from "../../utils/utils";
 

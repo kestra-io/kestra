@@ -59,6 +59,8 @@
     import {shallowRef} from "vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
     import FlowWarningDialog from "./FlowWarningDialog.vue";
+    import {mapStores} from "pinia";
+    import {useApiStore} from "../../stores/api";
 
     export default {
         components: {
@@ -101,7 +103,7 @@
             onClick() {
                 if (this.$tours["guidedTour"]?.isRunning?.value) {
                     this.$tours["guidedTour"]?.nextStep();
-                    this.$store.dispatch("api/events", {
+                    this.apiStore.events({
                         type: "ONBOARDING",
                         onboarding: {
                             step: this.$tours["guidedTour"]?.currentStep?._value,
@@ -161,6 +163,7 @@
             ...mapState("core", ["guidedProperties"]),
             ...mapState("execution", ["flow", "namespaces", "flowsExecutable"]),
             ...mapState("auth", ["user"]),
+            ...mapStores(useApiStore),
             computedFlowId() {
                 return this.flowId || this.localFlow?.id;
             },

@@ -45,6 +45,15 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
             }
 
             if (!dryRun) {
+                if ("flows".equalsIgnoreCase(table.getName()) || "triggers".equalsIgnoreCase(table.getName())){
+                    log.info("🔸 Delete tutorial flows to prevent duplication");
+                    int deleted = dslContextWrapper.transactionResult(configuration -> {
+                        DSLContext context = DSL.using(configuration);
+                        return deleteTutorialFlows(table, context);
+                    });
+                    log.info("✅ {} tutorial flows have been deleted", deleted);
+                }
+
                 int updated;
                 if (tableWithKey(table.getName())){
                     updated = dslContextWrapper.transactionResult(configuration -> {
@@ -92,5 +101,10 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
     protected abstract int updateTenantIdField(Table<?> table, DSLContext context);
 
     protected abstract int updateTenantIdFieldAndKey(Table<?> table, DSLContext context);
+
+    protected int deleteTutorialFlows(Table<?> table, DSLContext context){
+        String query = "DELETE FROM %s WHERE namespace = ?".formatted(table.getName());
+        return context.execute(query, "tutorial");
+    }
 
 }

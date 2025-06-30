@@ -57,9 +57,14 @@ export const TestDoubleKey: Story = {
 
         // find the monaco editor and type in the value
         const monacoEditor = await waitFor(async function monacoInit() {
-            const mon = (await canvas.findByTestId("task-dict-item-key2-3"))?.querySelector(".ks-monaco-editor") as any;
+            const line = await canvas.findByTestId("task-dict-item-key2-3")
+            const mon = line?.querySelector(".ks-monaco-editor") as any;
             if (!mon?.__setValueInTests) {
-                throw new Error("Monaco editor not found");
+                if(!line)
+                    throw new Error("Dict line not found");
+                if(!mon)
+                    throw new Error("Monaco editor not found");
+                throw new Error("Monaco editor not initialized for tests");
             }
             return mon;
         });

@@ -90,6 +90,7 @@
     import MetadataInputs from "../../flows/MetadataInputs.vue";
     import MetadataInputsContent from "../../flows/MetadataInputsContent.vue";
     import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
+    import InitialSchema from "./flow-schema.json"
 
 
     import {
@@ -109,6 +110,7 @@
 
     import {useStore} from "vuex";
     import TaskWrapper from "../../flows/tasks/TaskWrapper.vue";
+    import {usePluginsStore} from "../../../stores/plugins";
     import {removeNullAndUndefined} from "../utils/cleanUp";
     const store = useStore();
 
@@ -132,9 +134,13 @@
     }
 
     function updateMetadata(key: string, val: any) {
-        const realValue = val === null ? undefined :
-            typeof val === "object" ? removeNullAndUndefined(val) :
+        const realValue = val === null || val === undefined ? undefined :
+            // allow array to be created with null values (specifically for metadata)
+            // metadata do not use a buffer value, so each change needs to be reflected in the code,
+            // for TaskKvPair.vue (object) we added the buffer value in the input component
+            typeof val === "object" && !Array.isArray(val) ? removeNullAndUndefined(val) :
             val; // Handle null values
+
         emits("updateMetadata", key, realValue);
     }
 
@@ -158,10 +164,12 @@
     const schema = ref<{
         definitions?: any,
         $ref?: string,
-    }>({})
+    }>(InitialSchema)
+
+    const pluginStore = usePluginsStore();
 
     onMounted(async () => {
-        await store.dispatch("plugin/loadSchemaType").then((response) => {
+        await pluginStore.loadSchemaType().then((response) => {
             schema.value = response;
         })
     });

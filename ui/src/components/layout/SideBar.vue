@@ -371,7 +371,7 @@
         &.vsm_collapsed {
             .logo {
                 a {
-                    left: 8px;
+                    left: 10px;
 
                     span.img {
                         background-size: 207px 55px;

@@ -3,8 +3,10 @@ package io.kestra.core.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.utils.Enums;
+import java.util.ArrayList;
 import lombok.Builder;
 
 import java.util.Arrays;
@@ -101,7 +103,7 @@ public record QueryFilter(
         NAMESPACE("namespace") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.PREFIX);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
             }
         },
         LABELS("labels") {
@@ -113,7 +115,7 @@ public record QueryFilter(
         FLOW_ID("flowId") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.IN, Op.NOT_IN);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX);
             }
         },
         START_DATE("startDate") {
@@ -125,7 +127,7 @@ public record QueryFilter(
         END_DATE("endDate") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.GREATER_THAN, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
             }
         },
         STATE("state") {
@@ -137,8 +139,7 @@ public record QueryFilter(
         TIME_RANGE("timeRange") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH,
-                    Op.ENDS_WITH, Op.IN, Op.NOT_IN, Op.REGEX);
+                return List.of(Op.EQUALS);
             }
         },
         TRIGGER_EXECUTION_ID("triggerExecutionId") {
@@ -217,7 +218,7 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(
-                    Field.QUERY, Field.SCOPE, Field.FLOW_ID, Field.START_DATE, Field.END_DATE, Field.TIME_RANGE,
+                    Field.QUERY, Field.SCOPE, Field.FLOW_ID, Field.START_DATE, Field.END_DATE,
                     Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.CHILD_FILTER,
                     Field.NAMESPACE
                 );
@@ -226,8 +227,8 @@ public record QueryFilter(
         LOG {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.NAMESPACE, Field.START_DATE, Field.END_DATE,
-                    Field.FLOW_ID, Field.TRIGGER_ID, Field.MIN_LEVEL
+                return List.of(Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.START_DATE,
+                    Field.END_DATE, Field.FLOW_ID, Field.TRIGGER_ID, Field.MIN_LEVEL
                 );
             }
         },
@@ -248,7 +249,8 @@ public record QueryFilter(
         TRIGGER {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.NAMESPACE, Field.WORKER_ID, Field.FLOW_ID
+                return List.of(Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.WORKER_ID, Field.FLOW_ID,
+                    Field.START_DATE, Field.END_DATE, Field.TRIGGER_ID
                 );
             }
         };
@@ -293,6 +295,28 @@ public record QueryFilter(
     }
 
     public record Operation(String name, String value) {
+    }
+
+    public static void validateQueryFilters(List<QueryFilter> filters, Resource resource){
+        if (filters == null) {
+            return;
+        }
+        List<String> errors = new ArrayList<>();
+        filters.forEach(filter -> {
+            if (!filter.field().supportedOp().contains(filter.operation())) {
+                errors.add("Operation %s is not supported for field %s. Supported operations are %s".formatted(
+                    filter.operation(), filter.field().name(),
+                    filter.field().supportedOp().stream().map(Op::name).collect(Collectors.joining(", "))));
+            }
+            if (!resource.supportedField().contains(filter.field())){
+                errors.add("Field %s is not supported for resource %s. Supported fields are %s".formatted(
+                    filter.field().name(), resource.name(),
+                    resource.supportedField().stream().map(Field::name).collect(Collectors.joining(", "))));
+            }
+        });
+        if (!errors.isEmpty()){
+            throw new InvalidQueryFiltersException(errors);
+        }
     }
 
 }

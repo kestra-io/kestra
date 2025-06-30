@@ -479,6 +479,7 @@
     import EditorButtons from "./EditorButtons.vue";
     import MetadataEditor from "../flows/MetadataEditor.vue";
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
+    import {usePluginsStore} from "../../stores/plugins";
 
     const store = useStore();
     const router = useRouter();
@@ -695,6 +696,8 @@
         }
     };
 
+    const pluginsStore = usePluginsStore();
+
     onMounted(async () => {
         if(guidedProperties.value?.tourStarted) {
             editorViewType.value = "YAML";
@@ -739,7 +742,7 @@
     onBeforeUnmount(() => {
         window.removeEventListener("resize", onResize);
 
-        store.commit("plugin/setEditorPlugin", undefined);
+        pluginsStore.editorPlugin = undefined;
         document.removeEventListener("keydown", saveUsingKeyboard);
         document.removeEventListener("popstate", () => {
             stopTour();
@@ -762,7 +765,7 @@
     };
 
     const updatePluginDocumentation = (event, task) => {
-        store.dispatch("plugin/updateDocumentation", {event,task});
+        pluginsStore.updateDocumentation({event,task});
     };
 
     const fetchGraph = () => {
@@ -932,6 +935,7 @@
     const flowParsed = computed(() => store.getters["flow/flowParsed"]);
 
     const saveWithoutRevisionGuard = async () => {
+        clearTimeout(timer.value);
         const result = await store.dispatch("flow/saveWithoutRevisionGuard");
         if(result === "redirect_to_update"){
             await router.push({
@@ -954,6 +958,7 @@
     };
 
     const save = async () => {
+        clearTimeout(timer.value);
         const result = await store.dispatch("flow/save", {
             content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
             namespace: props.namespace ?? route.params.namespace,

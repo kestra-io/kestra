@@ -4,10 +4,11 @@ function isNullOrUndefined(value: any): boolean {
 
 export function removeNullAndUndefined(obj: any): any {
     if (Array.isArray(obj)) {
-        return obj
+        const ar = obj
             .map(item => removeNullAndUndefined(item))
             .filter(item => isNullOrUndefined(item) === false);
 
+        return ar.length > 0 ? ar : undefined;
     }
     if (typeof obj === "object") {
         const newObj: any = {};

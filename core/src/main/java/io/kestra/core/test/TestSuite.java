@@ -1,8 +1,6 @@
 package io.kestra.core.test;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.HasUID;
@@ -26,7 +24,6 @@ import java.util.List;
 @Introspected
 @ToString
 @EqualsAndHashCode
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @TestSuiteValidation
 public class TestSuite implements HasUID, TenantInterface, DeletedInterface, HasSource {
 
@@ -58,11 +55,11 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
     @Valid
     private List<UnitTest> testCases;
 
-    @JsonProperty("deleted")
-    boolean isDeleted = Boolean.FALSE;
+    @Builder.Default
+    private boolean deleted = Boolean.FALSE;
 
     @Builder.Default
-    private Boolean disabled = Boolean.FALSE;
+    private boolean disabled = Boolean.FALSE;
 
     @Override
     @JsonIgnore
@@ -84,12 +81,12 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
             newSource,
             newTestSuite.getTestCases(),
             newTestSuite.isDeleted(),
-            newTestSuite.getDisabled()
+            newTestSuite.isDisabled()
             );
     }
 
     public TestSuite delete() {
-        return this.toBuilder().isDeleted(true).build();
+        return this.toBuilder().deleted(true).build();
     }
 
     @Override

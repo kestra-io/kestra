@@ -1,5 +1,5 @@
 <template>
-    <div class="no-code">
+    <div class="no-code" tabindex="0" @keydown="onKeydown">
         <Breadcrumbs />
 
         <hr class="m-0">
@@ -9,12 +9,13 @@
             @update-metadata="(k, v) => emit('updateMetadata', {[k]: v})"
             @update-task="(yaml) => emit('updateTask', yaml)"
             @reorder="(yaml) => emit('reorder', yaml)"
+            @select-task="onSelectTask"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, provide, ref} from "vue";
+    import {computed, provide, ref, getCurrentInstance, onMounted} from "vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {
@@ -90,6 +91,45 @@
         }
 
     })
+
+    const selectedTask = ref<{ id: string; section: string; index: number } | null>(null);
+    const instance = getCurrentInstance();
+
+    function onSelectTask(task: { id: string; section: string; index: number }) {
+        selectedTask.value = task;
+    }
+
+    async function onKeydown(e: KeyboardEvent) {
+        if (e.key === "Delete" && selectedTask.value) {
+            e.preventDefault();
+            const $confirm = instance?.appContext.config.globalProperties.$confirm;
+            if ($confirm) {
+                try {
+                    await $confirm(
+                        `Are you sure you want to delete task '${selectedTask.value.id}'?`,
+                        "Delete Task",
+                        {confirmButtonText: "Delete", cancelButtonText: "Cancel", type: "warning"}
+                    );
+                    // Emit removal event (simulate as if user clicked delete button)
+                    emit("updateTask", YAML_UTILS.deleteBlockWithPath({
+                        source: props.flow,
+                        path: `${selectedTask.value.section}[${selectedTask.value.index}]`,
+                    }));
+                    selectedTask.value = null;
+                } catch {
+                    // Cancelled
+                }
+            }
+        }
+    }
+
+    onMounted(() => {
+        // Focus the div to receive key events
+        setTimeout(() => {
+            const el = instance?.proxy?.$el;
+            if (el && el.focus) el.focus();
+        }, 0);
+    });
 </script>
 
 <style lang="scss" scoped>

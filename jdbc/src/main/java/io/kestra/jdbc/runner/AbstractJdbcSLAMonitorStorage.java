@@ -49,7 +49,9 @@ public abstract class AbstractJdbcSLAMonitorStorage extends AbstractJdbcReposito
                 DSLContext context = DSL.using(configuration);
                 var select = context.select()
                     .from(this.jdbcRepository.getTable())
-                    .where(field("deadline").lt(date));
+                    .where(field("deadline").lt(date))
+                    .forUpdate()
+                    .skipLocked();
 
                 this.jdbcRepository.fetch(select)
                     .forEach(slaMonitor -> {

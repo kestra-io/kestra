@@ -7,6 +7,7 @@
         :creating-task="creatingTask"
         :editing-task="editingTask"
         :position
+        :definition-key="definitionKey"
         @update-metadata="(e) => onUpdateMetadata(e)"
         @update-task="(e) => editorUpdate(e)"
         @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
@@ -30,19 +31,21 @@
         parentPath?: string;
         refPath?: number;
         position?: "before" | "after";
+        definitionKey?: string;
     }
 
     defineProps<NoCodeProps>();
 
     const emit = defineEmits<{
-        (e: "createTask", blockType: string, parentPath: string, refPath: number | undefined, position: "after" | "before"): boolean | void;
-        (e: "editTask", blockType: string, parentPath: string, refPath?: number): boolean | void;
+        (e: "createTask", blockType: string, parentPath: string, definitionKey: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;
+        (e: "editTask", blockType: string, parentPath: string, definitionKey: string, refPath?: number): boolean | void;
         (e: "closeTask"): boolean | void;
     }>();
 
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
         emit("createTask", blockType, parentPath, refPath, "after")
     });
+
     provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
         emit("editTask", blockType, parentPath, refPath)
     });

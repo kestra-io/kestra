@@ -28,10 +28,9 @@
     import {computed, inject} from "vue";
     import {useI18n} from "vue-i18n";
     import {TaskIcon} from "@kestra-io/ui-libs";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {BlockType} from "../code/utils/types";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
-    import {PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
+    import {DEFINITION_INJECTION_KEY} from "../code/injectionKeys";
 
     const pluginsStore = usePluginsStore();
 
@@ -39,57 +38,13 @@
         blockType: BlockType | "pluginDefaults";
     }>()
 
-    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+    const definitionKey = inject(DEFINITION_INJECTION_KEY, "");
 
-    // - recursively get each item in the path
-    function getNextPathItem(def: any, path: (string | number)[], index:number): {
-        properties?: any
-        items?: any;
-        type?: string;
-    } {
-
-        const nextKey = path.shift();
-        if(nextKey === undefined) {
-            return def;
-        }
-
-        if(typeof nextKey === "number") {
-            // if the next key is a number, we are in an array
-            // so we need to check if the items are defined in an anyOf
-            const downstreamProperty = path.at(0)
-
-            if(def.items?.anyOf && typeof downstreamProperty === "string") {
-                const anyOf = def.items.anyOf.map(pluginsStore.resolveRef)
-
-                const anyOfFiltered = anyOf
-                    .filter((item: any) => item.properties?.[downstreamProperty]);
-
-                // take the first schema that has the downstream property
-                return getNextPathItem(anyOfFiltered[0], path, index+1);
-            }
-
-            return def.items.type === "object" ? getNextPathItem(def.items, path, index+1) : def.items;
-        }
-
-        if(!def?.properties?.[nextKey]) {
-            return def;
-        }
-
-        return getNextPathItem(def?.properties[nextKey], path, index+1);
-    }
-
-    // FIXME: field definition needs to be injected when we open the tab
-    // resolution of type is much easier in context
     const fieldDefinition = computed(() => {
-
-        if(!pluginsStore.flowRootProperties){
-            return {};
+        if(definitionKey.length === 0) {
+            throw new Error("Definition key is required for PluginSelect component");
         }
-
-        const pathArray = YAML_UTILS.parsePath(parentPath)
-
-        // - finally extract the definition
-        const lastDef = getNextPathItem(pluginsStore.flowRootSchema, pathArray, 0);
+        const lastDef = pluginsStore.flowDefinitions?.[definitionKey]
 
         // - if in an array with multiple anyOf, resolve the type will be harder
         return lastDef?.type === "array" ? lastDef.items : lastDef ?? {};

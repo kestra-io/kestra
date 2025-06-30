@@ -2,6 +2,7 @@ import type {ComputedRef, InjectionKey, Ref} from "vue"
 import {Breadcrumb, BlockType, TopologyClickParams} from "./utils/types"
 import {Panel} from "../MultiPanelTabs.vue"
 
+export const DEFINITION_INJECTION_KEY = Symbol("definition-injection-key") as InjectionKey<string>
 /**
  * Complete flow YAML string for the no-code
  */

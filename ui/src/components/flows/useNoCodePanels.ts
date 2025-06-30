@@ -19,8 +19,21 @@ interface Opener {
 }
 
 interface Handlers {
-    onCreateTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number, position?: "before" | "after") => boolean,
-    onEditTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number) => boolean
+    onCreateTask: (
+        opener: Opener,
+        blockType: BlockType | "pluginDefaults",
+        parentPath: string,
+        definitionKey: string,
+        refPath?: number,
+        position?: "before" | "after",
+    ) => boolean,
+    onEditTask: (
+        opener: Opener,
+        blockType: BlockType | "pluginDefaults",
+        parentPath: string,
+        definitionKey: string,
+        refPath?: number,
+    ) => boolean
     onCloseTask: (opener: Opener) => boolean
 }
 
@@ -37,9 +50,9 @@ export function getEditTabKey(tab: NoCodeProps, index: number) {
 export function getCreateTabKey(tab: NoCodeProps, index: number) {
     const indexWithLeftPadding = String(index).padStart(4, "0")
     return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify({
-                    action: "create",
-                    ...tab,
-                })}`
+        action: "create",
+        ...tab,
+    })}`
 }
 
 interface NoCodeTabWithAction extends NoCodeProps {
@@ -108,9 +121,9 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
                     ...restOfTab,
                     creatingTask: tab.action === "create",
                     editingTask: tab.action === "edit",
-                    onCloseTask: onCloseTask?.bind({}, props),
                     onCreateTask: onCreateTask?.bind({}, props) as any,
                     onEditTask: onEditTask?.bind({}, props) as any,
+                    onCloseTask: onCloseTask?.bind({}, props),
                 })]
             )
         }),
@@ -161,6 +174,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         },
         blockType: BlockType | "pluginDefaults",
         parentPath: string,
+        definitionKey: string,
         refPath?: number,
         position: "before" | "after" = "after",
         dirty: boolean = false,
@@ -170,6 +184,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             action: "create",
             blockType,
             parentPath,
+            definitionKey,
             refPath,
             position,
         }, t, handlers, store.state.flow.flowYaml, dirty)
@@ -184,11 +199,19 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         openerPanel.activeTab = tab
     }
 
-    function openEditTaskTab(opener: { panelIndex: number, tabIndex: number }, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number, dirty: boolean = false) {
+    function openEditTaskTab(
+        opener: { panelIndex: number, tabIndex: number },
+        blockType: BlockType | "pluginDefaults",
+        parentPath: string,
+        definitionKey:string,
+        refPath?: number,
+        dirty: boolean = false
+    ) {
         const tab = getTabFromNoCodeTab({
             action: "edit",
             blockType,
             parentPath,
+            definitionKey,
             refPath,
         }, t, handlers, store.state.flow.flowYaml, dirty)
 

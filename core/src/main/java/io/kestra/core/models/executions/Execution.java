@@ -824,7 +824,7 @@ public class Execution implements DeletedInterface, TenantInterface {
      * @param e the current exception
      * @return the {@link ILoggingEvent} waited to generate {@link LogEntry}
      */
-    public static ILoggingEvent loggingEventFromException(Exception e) {
+    public static ILoggingEvent loggingEventFromException(Throwable e) {
         LoggingEvent loggingEvent = new LoggingEvent();
         loggingEvent.setLevel(ch.qos.logback.classic.Level.ERROR);
         loggingEvent.setThrowableProxy(new ThrowableProxy(e));

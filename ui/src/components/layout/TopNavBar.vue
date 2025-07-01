@@ -47,6 +47,7 @@
     import {mapState, mapGetters} from "vuex";
     import {mapStores} from "pinia";
     import {useLogsStore} from "../../stores/logs";
+    import {useBookmarksStore} from "../../stores/bookmarks";
     import Impersonating from "override/components/auth/Impersonating.vue";
     import GlobalSearch from "./GlobalSearch.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
@@ -83,10 +84,9 @@
         },
         computed: {
             ...mapState("core", ["tutorialFlows"]),
-            ...mapState("bookmarks", ["pages"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
-            ...mapStores(useLogsStore),
+            ...mapStores(useLogsStore, useBookmarksStore),
             tourEnabled(){
                 // Temporary solution to not showing the tour menu item for EE
                 return this.tutorialFlows?.length && !Object.keys(this.user).length
@@ -98,7 +98,7 @@
                 return this.bookmarked ? StarIcon : StarOutlineIcon
             },
             bookmarked() {
-                return this.pages.some(page => page.path === this.currentFavURI)
+                return this.bookmarksStore.pages.some(page => page.path === this.currentFavURI)
             },
             currentFavURI() {
                 // make sure the value changes when the route changes
@@ -131,11 +131,11 @@
             },
             onStarClick() {
                 if (this.bookmarked) {
-                    this.$store.dispatch("bookmarks/remove", {
+                    this.bookmarksStore.remove({
                         path: this.currentFavURI
                     })
                 } else {
-                    this.$store.dispatch("bookmarks/add", {
+                    this.bookmarksStore.add({
                         path: this.currentFavURI,
                         label: this.breadcrumb?.length ? `${this.breadcrumb[this.breadcrumb.length-1].label}: ${this.title}` : this.title,
                     })

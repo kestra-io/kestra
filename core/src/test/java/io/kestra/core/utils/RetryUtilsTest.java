@@ -21,7 +21,7 @@ class RetryUtilsTest {
     private <T, E extends Throwable> RetryUtils.Instance<T, E> instance() {
         return retryUtils.of(Constant.builder()
             .interval(Duration.ofMillis(10))
-            .maxAttempt(3)
+            .maxAttempts(3)
             .build());
     }
 

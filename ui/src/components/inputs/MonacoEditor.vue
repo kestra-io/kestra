@@ -460,7 +460,14 @@
         await initMonaco();
 
         if (props.language !== undefined) {
-            disposeCompletions.value = await configureLanguage(store, pluginsStore, t, props.diffEditor ? undefined : editorResolved.value as ICodeEditor, props.language, props.schemaType);
+            await configureLanguage(
+                store,
+                pluginsStore,
+                t,
+                props.diffEditor ? undefined : editorResolved.value as ICodeEditor,
+                props.language,
+                props.schemaType
+            );
         }
 
         // Exposing functions globally for testing purposes

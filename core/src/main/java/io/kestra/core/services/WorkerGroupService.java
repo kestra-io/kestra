@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.runners.WorkerJob;
 import jakarta.inject.Singleton;
@@ -19,7 +20,7 @@ public class WorkerGroupService {
         return null;
     }
 
-    public Optional<WorkerGroup> resolveGroupFromJob(WorkerJob workerJob) {
+    public Optional<WorkerGroup> resolveGroupFromJob(FlowInterface flow, WorkerJob workerJob) {
         // Worker Group is an EE functionality, setting a worker group in a task is not possible (validation error),
         // and even if possible, it will be a no-op.
         return Optional.empty();

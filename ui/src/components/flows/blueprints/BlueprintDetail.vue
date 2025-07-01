@@ -99,6 +99,7 @@
     import action from "../../../models/action";
     import {mapStores} from "pinia";
     import {usePluginsStore} from "../../../stores/plugins";
+    import {useBlueprintsStore} from "../../../stores/blueprints";
 
     export default {
         components: {Markdown, CopyToClipboard},
@@ -163,7 +164,7 @@
             }
         },
         async created() {
-            this.$store.dispatch("blueprints/getBlueprint", {
+            this.blueprintsStore.getBlueprint({
                 type: this.combinedView ? this.blueprintType : this.$route.params.tab,
                 kind: this.blueprintKind,
                 id: this.blueprintId
@@ -173,16 +174,14 @@
                     if (this.kind === "flow") {
                         try {
                             if (this.$route.params.tab === "community") {
-                                this.$store.dispatch(
-                                    "blueprints/getBlueprintGraph",
-                                    {
-                                        type: this.$route.params.tab,
-                                        kind: this.blueprintKind,
-                                        id: this.blueprintId,
-                                        validateStatus: (status) => {
-                                            return status === 200;
-                                        }
-                                    })
+                                this.blueprintsStore.getBlueprintGraph({
+                                    type: this.$route.params.tab,
+                                    kind: this.blueprintKind,
+                                    id: this.blueprintId,
+                                    validateStatus: (status) => {
+                                        return status === 200;
+                                    }
+                                })
                                     .then(data => {
                                         this.flowGraph  = data;
                                     });
@@ -205,7 +204,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(usePluginsStore),
+            ...mapStores(usePluginsStore, useBlueprintsStore),
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },

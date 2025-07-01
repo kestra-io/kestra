@@ -3,6 +3,7 @@ import NProgress from "nprogress";
 import {Router} from "vue-router";
 import {Store} from "vuex";
 import {storageKeys} from "./constants";
+import {useLayoutStore} from "../stores/layout";
 
 // nprogress
 let pendingRoute = false;
@@ -168,7 +169,9 @@ export default (
                     } catch {
                         document.body.classList.add("login");
                         store.dispatch("core/isUnsaved", false);
-                        store.commit("layout/setTopNavbar", undefined);
+                        
+                        useLayoutStore().setTopNavbar(undefined);
+                        
                         router.push({
                             name: "login",
                             query: {

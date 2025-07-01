@@ -57,6 +57,7 @@
             creatingTask?: boolean;
             editingTask?: boolean;
             position?: "before" | "after";
+            fieldName?: string | undefined;
         }>(), {
             creatingTask: false,
             editingTask: false,
@@ -64,6 +65,7 @@
             refPath: undefined,
             blockType: undefined,
             parentPath: undefined,
+            fieldName: undefined,
         });
 
     const metadata = computed(() => YAML_UTILS.getMetadata(props.flow));

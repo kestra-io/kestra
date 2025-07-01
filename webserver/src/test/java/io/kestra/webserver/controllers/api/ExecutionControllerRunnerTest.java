@@ -1542,7 +1542,7 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(evalResult.getError()).isNull();
         assertThat(evalResult.getStackTrace()).isNull();
-        assertThat(evalResult.getResult()).isEqualTo("******");
+        assertThat(evalResult.getResult()).startsWith("{\"todos\":[{");
 
         evalResult = client.toBlocking().retrieve(
             HttpRequest

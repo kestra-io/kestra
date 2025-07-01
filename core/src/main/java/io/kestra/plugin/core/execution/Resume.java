@@ -17,6 +17,7 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.models.tasks.runners.PluginUtilsService;
+import io.kestra.plugin.core.flow.Pause;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,6 +27,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @SuperBuilder
@@ -95,7 +97,7 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
 
         Map<String, Object> renderedInputs = runContext.render(this.inputs).asMap(String.class, Object.class);
         renderedInputs = !renderedInputs.isEmpty() ? renderedInputs : null;
-        Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, renderedInputs);
+        Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, renderedInputs, Pause.Resumed.now());
         executionQueue.emit(resumed);
 
         return null;

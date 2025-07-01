@@ -1,30 +1,29 @@
-import {apiUrl} from "override/utils/route";
-import {Store} from "vuex";
+import {apiUrlWithoutTenants} from "override/utils/route";
 import {SchemasSettings} from "monaco-yaml";
 
-export const yamlSchemas: (store: Store<any>) => SchemasSettings[] = (store) => [
+export const yamlSchemas: () => SchemasSettings[] = () => [
     {
         fileMatch: ["flow-*.yaml"],
-        uri: `${apiUrl(store)}/plugins/schemas/flow`
+        uri: `${apiUrlWithoutTenants()}/plugins/schemas/flow`
     },
     {
         fileMatch: ["task-*.yaml"],
-        uri: `${apiUrl(store)}/plugins/schemas/task`
+        uri: `${apiUrlWithoutTenants()}/plugins/schemas/task`
     },
     {
         fileMatch: ["template-*.yaml"],
-        uri: `${apiUrl(store)}/plugins/schemas/template`
+        uri: `${apiUrlWithoutTenants()}/plugins/schemas/template`
     },
     {
         fileMatch: ["trigger-*.yaml"],
-        uri: `${apiUrl(store)}/plugins/schemas/trigger`
+        uri: `${apiUrlWithoutTenants()}/plugins/schemas/trigger`
     },
     {
         fileMatch: ["plugindefault-*.yaml"],
-        uri: `${apiUrl(store)}/plugins/schemas/plugindefault?arrayOf=true`
+        uri: `${apiUrlWithoutTenants()}/plugins/schemas/plugindefault?arrayOf=true`
     },
     {
         fileMatch: ["dashboard-*.yaml"],
-        uri: `${apiUrl(store)}/plugins/schemas/dashboard`
+        uri: `${apiUrlWithoutTenants()}/plugins/schemas/dashboard`
     }
 ]

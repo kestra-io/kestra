@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Validated
-@Controller("/api/v1/main/plugins/")
+@Controller("/api/v1/plugins/")
 public class PluginController {
     private static final String CACHE_DIRECTIVE = "public, max-age=3600";
 
@@ -80,7 +80,7 @@ public class PluginController {
     )
     public MutableHttpResponse<DocumentationWithSchema> getSchemaFromInputType(
         @Parameter(description = "The schema needed") @PathVariable Type type
-    ) throws ClassNotFoundException, IOException {
+    ) throws IOException {
         ClassInputDocumentation classInputDocumentation = this.inputDocumentation(type);
 
         return HttpResponse.ok()
@@ -125,7 +125,8 @@ public class PluginController {
                     plugin.getTaskRunners().stream(),
                     plugin.getLogExporters().stream(),
                     plugin.getApps().stream(),
-                    plugin.getAppBlocks().stream()
+                    plugin.getAppBlocks().stream(),
+                    plugin.getAdditionalPlugins().stream()
                 )
                 .flatMap(i -> i)
                 .map(e -> new AbstractMap.SimpleEntry<>(

@@ -52,7 +52,7 @@ export default {
         onSort(sortItem) {
             this.internalSort = this.sortString(sortItem);
 
-            if (!this.embed && this.internalSort) {
+            if (this.internalSort) {
                 const sort = this.internalSort;
                 this.$router.push({
                     query: {...this.$route.query, sort}

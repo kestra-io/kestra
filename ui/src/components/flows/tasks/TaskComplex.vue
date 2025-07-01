@@ -4,31 +4,40 @@
         :schema
         :definitions
         :properties="computedProperties"
+        :root="root"
+        :task="task"
+        :required="required"
         merge
         @update:model-value="onInput"
     />
 </template>
 
+<script setup>
+    import TaskObject from "./TaskObject.vue";
+</script>
+
 <script>
     import Task from "./Task";
-    import TaskObject from "./TaskObject.vue";
-
-    import {
-        BREADCRUMB_INJECTION_KEY,
-        PANEL_INJECTION_KEY,
-    } from "../../code/injectionKeys";
 
     export default {
+        inheritAttrs: false,
         mixins: [Task],
-        inject: {
-            panel: {from: PANEL_INJECTION_KEY},
-            breadcrumbs: {from: BREADCRUMB_INJECTION_KEY},
-        },
-        components: {TaskObject},
         computed: {
             computedProperties() {
-                const type = this.schema.$ref.split("/").pop();
-                return this.definitions[type]?.properties;
+                if(!this.schema?.allOf && !this.schema?.$ref) {
+                    return this.schema?.properties || {};
+                }
+                const schemas = this.schema.allOf ?? [this.schema];
+                return schemas.reduce((acc, item) => {
+                    if (item.$ref) {
+                        const type = item.$ref.split("/").pop();
+                        return {
+                            ...acc,
+                            ...this.definitions[type]?.properties
+                        };
+                    }
+                    return {...acc, ...item.properties};
+                }, {});
             },
         },
     };

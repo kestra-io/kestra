@@ -151,7 +151,7 @@ class FlowTest {
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
 
-        assertThat(validate.get().getMessage()).contains("file: no `defaults` can be set for inputs of type 'FILE'");
+        assertThat(validate.get().getMessage()).contains("file: inputs of type 'FILE' only support `defaults` as local files using a file URI");
         assertThat(validate.get().getMessage()).contains("array: `itemType` cannot be `ARRAY");
     }
 

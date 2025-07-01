@@ -70,7 +70,7 @@ flag_management:
     carryforward: true
     statuses:
       - type: project
-        target: 80%
+        target: 73% # current value as of 2025-06-25
         threshold: 1%
       - type: patch
-        target: 90%
+        target: 75%

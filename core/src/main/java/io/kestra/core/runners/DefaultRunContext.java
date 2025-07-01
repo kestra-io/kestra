@@ -15,7 +15,6 @@ import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Introspected;
@@ -56,6 +55,7 @@ public class DefaultRunContext extends RunContext {
     private Optional<String> secretKey;
     private WorkingDir workingDir;
     private Validator validator;
+    private LocalPath localPath;
 
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
@@ -153,6 +153,7 @@ public class DefaultRunContext extends RunContext {
             this.kvStoreService = applicationContext.getBean(KVStoreService.class);
             this.secretKey = applicationContext.getProperty("kestra.encryption.secret-key", String.class);
             this.validator = applicationContext.getBean(Validator.class);
+            this.localPath = applicationContext.getBean(LocalPathFactory.class).createLocalPath(this);
         }
     }
 
@@ -571,6 +572,11 @@ public class DefaultRunContext extends RunContext {
     @Override
     public boolean isInitialized() {
         return isInitialized.get();
+    }
+
+    @Override
+    public LocalPath localPath() {
+        return localPath;
     }
 
     /**

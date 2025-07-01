@@ -316,11 +316,11 @@ public class ExecutionService {
     }
 
     public Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState) throws Exception {
-        return this.markAs(execution, flow, taskRunId, newState, null);
+        return this.markAs(execution, flow, taskRunId, newState, null, null);
     }
 
     @SuppressWarnings("deprecation")
-    private Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs) throws Exception {
+    private Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs, @Nullable Pause.Resumed resumed) throws Exception {
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
             taskRun -> taskRun.getId().equals(taskRunId)
@@ -338,8 +338,8 @@ public class ExecutionService {
             if (!isFlowable || s.equals(taskRunId)) {
                 TaskRun newTaskRun = originalTaskRun.withState(newState);
 
-                if (task instanceof Pause pauseTask && pauseTask.getOnResume() != null) {
-                    Variables variables = variablesService.of(StorageContext.forTask(originalTaskRun), pauseTask.generateOutputs(onResumeInputs));
+                if (task instanceof Pause pauseTask) {
+                    Variables variables = variablesService.of(StorageContext.forTask(originalTaskRun), pauseTask.generateOutputs(onResumeInputs, resumed));
                     newTaskRun = newTaskRun.withOutputs(variables);
                 }
 
@@ -482,8 +482,8 @@ public class ExecutionService {
      * @return the execution in the new state.
      * @throws Exception if the state of the execution cannot be updated
      */
-    public Execution resume(Execution execution, FlowInterface flow, State.Type newState) throws Exception {
-        return this.resume(execution, flow, newState, (Map<String, Object>) null);
+    public Execution resume(Execution execution, FlowInterface flow, State.Type newState, Pause.Resumed resumed) throws Exception {
+        return this.resume(execution, flow, newState, (Map<String, Object>) null, resumed);
     }
 
     /**
@@ -537,7 +537,7 @@ public class ExecutionService {
      * @param inputs    the onResume inputs
      * @return the execution in the new state.
      */
-    public Mono<Execution> resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Publisher<CompletedPart> inputs) {
+    public Mono<Execution> resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Publisher<CompletedPart> inputs, @Nullable Pause.Resumed resumed) {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task -> {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
@@ -548,7 +548,7 @@ public class ExecutionService {
             })
             .handle((resumeInputs, sink) -> {
                 try {
-                    sink.next(resume(execution, flow, newState, resumeInputs));
+                    sink.next(resume(execution, flow, newState, resumeInputs, resumed));
                 } catch (Exception e) {
                     sink.error(e);
                 }
@@ -580,13 +580,13 @@ public class ExecutionService {
      * @return the execution in the new state.
      * @throws Exception if the state of the execution cannot be updated
      */
-    public Execution resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Map<String, Object> inputs) throws Exception {
+    public Execution resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Map<String, Object> inputs,  @Nullable Pause.Resumed resumed) throws Exception {
         var pausedTaskRun = execution
             .findFirstByState(State.Type.PAUSED);
 
         Execution unpausedExecution;
         if (pausedTaskRun.isPresent()) {
-            unpausedExecution = this.markAs(execution, flow, pausedTaskRun.get().getId(), newState, inputs);
+            unpausedExecution = this.markAs(execution, flow, pausedTaskRun.get().getId(), newState, inputs, resumed);
         } else {
             // we are in a manual execution pause, not triggered by the Pause task, so we just switch the execution to the new state.
             if (!execution.getState().isPaused()) {
@@ -668,7 +668,7 @@ public class ExecutionService {
             // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it.
             // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
             try {
-                newExecution = this.resume(execution, flow, State.Type.KILLING);
+                newExecution = this.resume(execution, flow, State.Type.KILLING, null);
                 newExecution = newExecution.withState(afterKillState.orElse(newExecution.getState().getCurrent()));
             } catch (Exception e) {
                 // if we cannot resume, we set it anyway to killing, so we don't throw
@@ -848,7 +848,7 @@ public class ExecutionService {
 
         if (execution.getState().getCurrent() == State.Type.PAUSED) {
             Flow flow = flowRepositoryInterface.findByExecution(execution);
-            return resume(execution, flow, State.Type.RUNNING);
+            return resume(execution, flow, State.Type.RUNNING, null);
         }
 
         // for all other states, we just return the same execution,

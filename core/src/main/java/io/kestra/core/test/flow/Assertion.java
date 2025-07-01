@@ -7,8 +7,10 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +20,8 @@ import static io.kestra.core.test.flow.Assertion.Operator.*;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Assertion {
     @NotNull
@@ -32,8 +36,8 @@ public class Assertion {
     private Property<String> endsWith;
     private Property<String> startsWith;
     private Property<String> contains;
-    private Property<Object> equalsTo;
-    private Property<Object> notEqualsTo;
+    private Property<Object> equalTo;
+    private Property<Object> notEqualTo;
     private Property<Double> greaterThan;
     private Property<Double> greaterThanOrEqualTo;
     private Property<Double> lessThan;
@@ -47,8 +51,8 @@ public class Assertion {
         ENDS_WITH("endsWith"),
         STARTS_WITH("startsWith"),
         CONTAINS("contains"),
-        EQUALS_TO("equalsTo"),
-        NOT_EQUALS_TO("notEqualsTo"),
+        EQUAL_TO("equalTo"),
+        NOT_EQUAL_TO("notEqualTo"),
         GREATER_THAN("greaterThan"),
         GREATER_THAN_OR_EQUAL_TO("greaterThanOrEqualTo"),
         LESS_THAN("lessThan"),
@@ -102,17 +106,17 @@ public class Assertion {
                 .ifPresent(expectedValue -> results.add(
                     startsWith(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
                 ));
-            runContext.render(this.getEqualsTo()).as(Object.class)
+            runContext.render(this.getEqualTo()).as(Object.class)
                 .ifPresent(expectedValue -> results.add(
-                    equalsTo(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
+                    equalTo(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
                 ));
             runContext.render(this.getContains()).as(String.class)
                 .ifPresent(expectedValue -> results.add(
                     contains(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
                 ));
-            runContext.render(this.getNotEqualsTo()).as(Object.class)
+            runContext.render(this.getNotEqualTo()).as(Object.class)
                 .ifPresent(expectedValue -> results.add(
-                    notEqualsTo(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
+                    notEqualTo(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
                 ));
             var expectedGreaterThanValue = runContext.render(this.getGreaterThan()).as(Double.class);
             if (expectedGreaterThanValue.isPresent()) {
@@ -195,10 +199,10 @@ public class Assertion {
         );
     }
 
-    private AssertionResult equalsTo(Object expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) {
+    private AssertionResult equalTo(Object expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) {
         var isSuccess = expectedValue.equals(actualValue);
         return new AssertionResult(
-            EQUALS_TO.toString(),
+            EQUAL_TO.toString(),
             expectedValue,
             actualValue,
             isSuccess,
@@ -209,10 +213,10 @@ public class Assertion {
         );
     }
 
-    private AssertionResult notEqualsTo(Object expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) {
+    private AssertionResult notEqualTo(Object expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) {
         var isSuccess = !expectedValue.equals(actualValue);
         return new AssertionResult(
-            NOT_EQUALS_TO.toString(),
+            NOT_EQUAL_TO.toString(),
             expectedValue,
             actualValue,
             isSuccess,

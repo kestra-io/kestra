@@ -1,12 +1,13 @@
 <template>
-    <component
+    <TaskBoolean
         v-if="isBoolean"
-        :is="`task-${type}`"
         v-bind="componentProps"
     />
 </template>
 
 <script setup lang="ts">
+    import TaskBoolean from "./TaskBoolean.vue";
+
     interface Props {
         type?: string
         isBoolean?: boolean

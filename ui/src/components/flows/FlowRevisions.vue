@@ -156,7 +156,11 @@
                 this.$toast()
                     .confirm(this.$t("restore confirm", {revision: this.revisionNumber(index)}), () => {
                         return saveFlowTemplate(this, revision, "flow")
-                            .then(this.load)
+                            .then(response => {
+                                this.$store.commit("flow/setFlowYaml", response.source);
+                                this.$store.commit("flow/setFlowYamlOrigin", response.source);
+                                this.load()
+                            })
                             .then(() => {
                                 this.$router.push({query: {}});
                             });

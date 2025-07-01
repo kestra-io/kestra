@@ -321,11 +321,12 @@
                         {
                             label: this.$route.params.namespace,
                             link: {
-                                name: "flows/list",
-                                query: {
-                                    namespace: this.$route.params.namespace,
-                                },
-                            },
+                                name: "namespaces/update",
+                                params: {
+                                    id: this.$route.params.namespace,
+                                    tab: "flows"
+                                }
+                            }
                         },
                     ],
                     beta: this.tabs.find(tab => tab.name === this.$route.params.tab)?.props?.beta,

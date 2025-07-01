@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, Ref, onMounted} from "vue";
+    import {ref, computed, Ref, watch, onMounted} from "vue";
 
     import {useTabs} from "override/components/namespaces/useTabs";
     import {useHelpers} from "./utils/useHelpers";
@@ -25,10 +25,16 @@
 
     const route = useRoute();
 
-    const context = ref({title: details.title});
+    const context = ref({title: details.value.title});
     useRouteContext(context);
 
     const namespace = computed(() => route.params?.id) as Ref<string>;
+
+    watch(namespace, (newID) => {
+        if (newID) {
+            store.dispatch("namespace/load", newID);
+        }
+    });
 
     const store = useStore();
     onMounted(() => {

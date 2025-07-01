@@ -21,15 +21,21 @@ const namespaceDashboardFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     timeRange: new FilterKeyCompletions(
         [Comparators.EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.RELATIVE_DATE
+        async (_, hardcodedValues) => hardcodedValues.RELATIVE_DATE,
+        false,
+        ["timeRange", "startDate", "endDate"]
     ),
     startDate: new FilterKeyCompletions(
         [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.GREATER_THAN, Comparators.LESS_THAN_OR_EQUAL_TO, Comparators.LESS_THAN, Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async () => PICK_DATE_VALUE
+        async () => PICK_DATE_VALUE,
+        false,
+        ["timeRange"]
     ),
     endDate: new FilterKeyCompletions(
         [Comparators.LESS_THAN_OR_EQUAL_TO, Comparators.LESS_THAN, Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.GREATER_THAN, Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async () => PICK_DATE_VALUE
+        async () => PICK_DATE_VALUE,
+        false,
+        ["timeRange"]
     ),
     "labels.{key}": new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
@@ -42,7 +48,7 @@ class NamespaceDashboardFilterLanguage extends FilterLanguage {
     static readonly INSTANCE = new NamespaceDashboardFilterLanguage();
 
     private constructor() {
-        super("namespace-dashboards", namespaceDashboardFilterKeys);
+        super("namespace-dashboards", namespaceDashboardFilterKeys, false);
     }
 }
 

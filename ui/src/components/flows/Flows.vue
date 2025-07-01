@@ -75,11 +75,7 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <ChartsSection
-                        :charts="charts"
-                        :show-default="true"
-                        :full-size="true"
-                    />
+                    <Sections :charts show-default />
                 </template>
 
                 <template #table>
@@ -299,14 +295,15 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
     import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
-    import YAML_CHART from "../../assets/dashboard/executions_timeseries_chart.yaml?raw";
-    import ChartsSection from "../dashboard/components/ChartsSection.vue";
+    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import Sections from "../dashboard/sections/Sections.vue";
 
     const file = ref(null);
 </script>
 
 <script>
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -322,6 +319,7 @@
     import TriggerAvatar from "./TriggerAvatar.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import Kicon from "../Kicon.vue";
+    import {useStatStore} from "../../stores/stat";
     import Labels from "../layout/Labels.vue";
     import {storageKeys} from "../../utils/constants";
 
@@ -404,8 +402,8 @@
         },
         computed: {
             ...mapState("flow", ["flows", "total"]),
-            ...mapState("stat", ["dailyGroupByFlow", "daily", "lastExecutions"]),
             ...mapState("auth", ["user"]),
+            ...mapStores(useStatStore),
             routeInfo() {
                 return {
                     title: this.$t("flows"),
@@ -460,12 +458,11 @@
                 );
             },
             executionsCount() {
-                return [...this.daily].reduce((a, b) => {
+                return this.statStore.dailyData?.reduce((a, b) => {
                     return (
-                        a +
-                        Object.values(b.executionCounts).reduce((a, b) => a + b, 0)
+                        a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0)
                     );
-                }, 0);
+                }, 0) ?? 0;
             },
             charts() {
                 return [
@@ -482,7 +479,7 @@
 
             const queryKeys = Object.keys(query);
             if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][EQUALS]"] = defaultNamespace;
+                query["filters[namespace][PREFIX]"] = defaultNamespace;
                 queryHasChanged = true;
             }
 
@@ -699,24 +696,25 @@
             importFlows() {
                 const formData = new FormData();
                 formData.append("fileUpload", this.$refs.file.files[0]);
-                this.$store.dispatch("flow/importFlows", formData).then((res) => {
-                    if (res.data.length > 0) {
-                        this.$toast().warning(
-                            this.$t("flows not imported") +
-                                ": " +
-                                res.data.join(", "),
-                        );
-                    } else {
-                        this.$toast().success(this.$t("flows imported"));
-                    }
-                    this.$refs.importForm.reset();
-                    this.loadData(() => {});
-                });
+                this.$store.dispatch("flow/importFlows", formData)
+                    .then((res) => {
+                        if (res.data.length > 0) {
+                            this.$toast().warning(
+                                this.$t("flows not imported") +
+                                    ": " +
+                                    res.data.join(", "),
+                            );
+                        } else {
+                            this.$toast().success(this.$t("flows imported"));
+                        }
+                        this.$refs.file.value = "";
+                        this.loadData(() => {});
+                    });
             },
             getLastExecution(row) {
                 let noState = {state: null, startDate: null};
-                if (this.lastExecutions && this.lastExecutions.length > 0) {
-                    let filteredFlowExec = this.lastExecutions.filter(
+                if (this.statStore.lastExecutionsData && this.statStore.lastExecutionsData.length > 0) {
+                    let filteredFlowExec = this.statStore.lastExecutionsData.filter(
                         (executedFlow) =>
                             executedFlow.flowId == row.id &&
                             executedFlow.namespace == row.namespace,
@@ -739,7 +737,7 @@
                 );
 
                 if (this.namespace) {
-                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
+                    queryFilter["filters[namespace][PREFIX]"] = this.$route.params.id || this.namespace;
                 }
 
                 return _merge(base, queryFilter);
@@ -763,8 +761,8 @@
                                 this.user &&
                                 this.user.hasAny(permission.EXECUTION)
                             ) {
-                                this.$store
-                                    .dispatch("stat/dailyGroupByFlow", {
+                                this.statStore
+                                    .dailyGroupByFlow({
                                         flows: flows.results.map((flow) => {
                                             return {
                                                 namespace: flow.namespace,
@@ -783,8 +781,8 @@
                                         this.dailyGroupByFlowReady = true;
                                     });
 
-                                this.$store
-                                    .dispatch("stat/lastExecutions", {
+                                this.statStore
+                                    .lastExecutions({
                                         flows: flows.results.map((flow) => {
                                             return {
                                                 namespace: flow.namespace,

@@ -6,6 +6,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.PluginVersioning;
 import io.kestra.core.models.WorkerJobLifecycle;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.runner.Process;
@@ -39,6 +40,7 @@ public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Pl
     @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     protected String type;
 
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     protected String version;
 
     @JsonIgnore

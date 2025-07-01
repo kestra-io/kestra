@@ -23,7 +23,7 @@
                     is-concurrency
                     :statuses="[State.QUEUED, State.RUNNING, State.PAUSED]"
                     @state-count="setRunningCount"
-                    :filter="false"
+                    filter
                 />
             </el-card>
         </div>

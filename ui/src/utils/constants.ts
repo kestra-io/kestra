@@ -32,8 +32,7 @@ export const storageKeys = {
     PAGINATION_SIZE: "paginationSize",
     IMPERSONATE: "impersonate",
     EDITOR_VIEW_TYPE: "editorViewType",
-    DASHBORD_SELECTED: "dashboardSelected",
-    AUTO_REFRESH_INTERVAL: "autoRefreshInterval"
+    AUTO_REFRESH_INTERVAL: "autoRefreshInterval",
 }
 
 export const executeFlowBehaviours = {

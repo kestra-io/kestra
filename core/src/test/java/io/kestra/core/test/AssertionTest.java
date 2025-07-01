@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-import static io.kestra.core.test.flow.Assertion.Operator.EQUALS_TO;
+import static io.kestra.core.test.flow.Assertion.Operator.EQUAL_TO;
 import static io.kestra.core.test.flow.Assertion.Operator.IS_NOT_NULL;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,10 +22,10 @@ class AssertionTest {
     RunContextFactory runContextFactory;
 
     @Test
-    void shouldAssertSuccess_equalsTo() {
+    void shouldAssertSuccess_equalTo() {
         var assertion = Assertion.builder()
             .value(Property.ofValue("value1"))
-            .equalsTo(Property.ofValue("value1"))
+            .equalTo(Property.ofValue("value1"))
             .description(Property.ofValue("my description"))
             .build();
 
@@ -40,10 +40,10 @@ class AssertionTest {
     }
 
     @Test
-    void shouldAssertFail_equalsTo() {
+    void shouldAssertFail_equalTo() {
         var assertion = Assertion.builder()
             .value(Property.ofValue("value1"))
-            .equalsTo(Property.ofValue("different-value"))
+            .equalTo(Property.ofValue("different-value"))
             .errorMessage(Property.ofValue("error message"))
             .build();
 
@@ -60,7 +60,7 @@ class AssertionTest {
     void shouldBrokenAssert_returnError() {
         var assertion = Assertion.builder()
             .value(new Property<>("{{ invalid-pebble-expression() }}"))
-            .equalsTo(Property.ofValue("value"))
+            .equalTo(Property.ofValue("value"))
             .build();
 
         assertThat(assertion.run(runContextFactory.of()).results())
@@ -79,7 +79,7 @@ class AssertionTest {
     void shouldRender_values_fromTaskOutputs() {
         var assertion = Assertion.builder()
             .value(new Property<>("{{ outputs.my_task.res }}"))
-            .equalsTo(Property.ofValue("value1"))
+            .equalTo(Property.ofValue("value1"))
             .build();
         var runContext = runContextFactory.of(Map.of("outputs", Map.of("my_task", Map.of("res", "value1"))));
 
@@ -93,7 +93,7 @@ class AssertionTest {
     void shouldRender_values_fromTaskOutputs_and_produce_defaultErrorMessage() {
         var assertion = Assertion.builder()
             .value(new Property<>("{{ outputs.my_task.res }}"))
-            .equalsTo(Property.ofValue("expectedValue2"))
+            .equalTo(Property.ofValue("expectedValue2"))
             .build();
         var runContext = runContextFactory.of(Map.of("outputs", Map.of("my_task", Map.of("res", "actualValue1"))));
 
@@ -112,17 +112,17 @@ class AssertionTest {
         testAssertionResultSuccess(
             Assertion.builder()
                 .value(Property.ofValue(1))
-                .equalsTo(Property.ofValue(1))
+                .equalTo(Property.ofValue(1))
                 .build()
         );
     }
 
     @Test
-    void equalsTo_failure_number() {
+    void equalTo_failure_number() {
         testAssertionResultFails(
             Assertion.builder()
                 .value(Property.ofValue(1))
-                .equalsTo(Property.ofValue(2))
+                .equalTo(Property.ofValue(2))
                 .build()
         );
     }
@@ -188,21 +188,21 @@ class AssertionTest {
     }
 
     @Test
-    void notEqualsTo_success() {
+    void notEqualTo_success() {
         testAssertionResultSuccess(
             Assertion.builder()
                 .value(Property.ofValue("value1"))
-                .notEqualsTo(Property.ofValue("value2222"))
+                .notEqualTo(Property.ofValue("value2222"))
                 .build()
         );
     }
 
     @Test
-    void notEqualsTo_failure() {
+    void notEqualTo_failure() {
         testAssertionResultFails(
             Assertion.builder()
                 .value(Property.ofValue("value1"))
-                .notEqualsTo(Property.ofValue("value1"))
+                .notEqualTo(Property.ofValue("value1"))
                 .build()
         );
     }
@@ -382,7 +382,7 @@ class AssertionTest {
         var testedAssertion = Assertion.builder()
             .value(Property.ofValue("value1"))
             .isNotNull(Property.ofValue(true))
-            .equalsTo(Property.ofValue("value222"))
+            .equalTo(Property.ofValue("value222"))
             .build();
 
         var testResults = testedAssertion.run(runContextFactory.of()).results();
@@ -393,7 +393,7 @@ class AssertionTest {
             .first()
             .extracting(AssertionResult::isSuccess).isEqualTo(true);
         assertThat(testResults)
-            .filteredOn(res -> res.operator().equals(EQUALS_TO.toString()))
+            .filteredOn(res -> res.operator().equals(EQUAL_TO.toString()))
             .first()
             .extracting(AssertionResult::isSuccess).isEqualTo(false);
     }

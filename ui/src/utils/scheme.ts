@@ -1,63 +1,70 @@
 import {computed} from "vue";
-import {useStorage} from "@vueuse/core";
 import {useTheme} from "./utils"
 import {cssVariable} from "@kestra-io/ui-libs";
 
-const SCHEME = "scheme";
-const EXECUTIONS = Object.freeze({
-    CANCELLED: cssVariable("--ks-chart-cancelled"),
-    CREATED: cssVariable("--ks-chart-created"),
-    FAILED: cssVariable("--ks-chart-failed"),
-    KILLED: cssVariable("--ks-chart-killed"),
-    KILLING: cssVariable("--ks-chart-killing"),
-    PAUSED: cssVariable("--ks-chart-paused"),
-    QUEUED: cssVariable("--ks-chart-queued"),
-    RESTARTED: cssVariable("--ks-chart-restarted"),
-    RETRIED: cssVariable("--ks-chart-retried"),
-    RETRYING: cssVariable("--ks-chart-retrying"),
-    RUNNING: cssVariable("--ks-chart-running"),
-    SKIPPED: cssVariable("--ks-chart-skipped"),
-    SUCCESS: cssVariable("--ks-chart-success"),
-    WARNING: cssVariable("--ks-chart-warning"),
-});
-const LOGS = Object.freeze({
-    DEBUG: cssVariable("--ks-chart-debug"),
-    ERROR: cssVariable("--ks-chart-error"),
-    INFO: cssVariable("--ks-chart-info"),
-    TRACE: cssVariable("--ks-chart-trace"),
-    WARN: cssVariable("--ks-chart-warn"),
-});
-const TYPES = Object.freeze({
-    executions: EXECUTIONS,
-    logs: LOGS,
-});
+const executionStates = [
+    "CANCELLED",
+    "CREATED",
+    "FAILED",
+    "KILLED",
+    "KILLING",
+    "PAUSED",
+    "QUEUED",
+    "RESTARTED",
+    "RETRIED",
+    "RETRYING",
+    "RUNNING",
+    "SKIPPED",
+    "SUCCESS",
+    "WARNING"
+] as const;
+
+const logLevels = [
+    "DEBUG",
+    "ERROR",
+    "INFO",
+    "TRACE",
+    "WARN"
+]
+
+function getSchemes() {
+    const executions = {} as Record<typeof executionStates[number], string>
+    for(const state of executionStates) {
+        executions[state] = cssVariable(`--ks-chart-${state.toLowerCase()}`) ?? "transparent";
+    }
+
+    const logs = {} as Record<typeof logLevels[number], string>
+    for(const level of logLevels) {
+        logs[level] = cssVariable(`--ks-chart-${level.toLowerCase()}`) ?? "transparent";
+    }
+
+    return {
+        executions,
+        logs,
+    }
+}
+
+export function getSchemeValue(state: typeof executionStates[number], type:"executions"): string;
+export function getSchemeValue(state: typeof logLevels[number], type:"logs"): string;
+
+export function getSchemeValue(state: string, type:"executions"|"logs" = "executions" ){
+    return (getSchemes() as any)[type][state] ?? "transparent";
+};
+
 /**
- * Allows scheme/theme customization.
+ *
+ * @param {"executions" | "logs"} type - what th chart needed will display
+ * @returns
  */
-const OPTIONS = Object.freeze({
-    classic: {
-        light: TYPES,
-        dark: TYPES,
-    },
-    kestra: {
-        light: TYPES,
-        dark: TYPES,
-    },
-});
-
-export const setScheme = (value: "classic" | "kestra") => {
-    localStorage.setItem(SCHEME, value);
-};
-
-export const getScheme = (theme: "light" | "dark", state: "string", type: "executions" | "logs" = "executions") => {
-    const scheme = localStorage.getItem(SCHEME) as  "classic" | "kestra" ?? "classic";
-
-    return (OPTIONS[scheme]?.[theme]?.[type] as Record<string, string>)?.[state];
-};
-
-export const useScheme = (type: "executions" | "logs" = "executions") => {
-    const scheme = useStorage<"classic" | "kestra">(SCHEME, "classic");
+export const useScheme = (type = "executions") => {
     const theme = useTheme();
-
-    return computed(() => OPTIONS[scheme.value]?.[theme.value]?.[type]);
+    return computed(() => {
+        const TYPES = getSchemes();
+        // force recalculation of css variables on theme change
+        if(theme.value !== undefined) {
+            return TYPES[type as keyof typeof TYPES] ?? {};
+        }else {
+            return {}
+        }
+    });
 }

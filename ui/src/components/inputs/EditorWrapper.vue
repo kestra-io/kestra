@@ -23,7 +23,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onActivated, onMounted, ref, provide} from "vue";
+    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useStore} from "vuex";
     import Editor from "./Editor.vue";
     import KeyShortcuts from "./KeyShortcuts.vue";
@@ -35,6 +35,7 @@
     const router = useRouter()
 
     import {EDITOR_CURSOR_INJECTION_KEY} from "../code/injectionKeys";
+    import {usePluginsStore} from "../../stores/plugins";
 
     const store = useStore();
     const cursor = ref();
@@ -76,11 +77,16 @@
     }
 
     onMounted(() => {
-        loadFile()
+        loadFile();
+        window.addEventListener("keydown", handleGlobalSave);
     });
 
     onActivated(() => {
-        loadFile()
+        loadFile();
+    });
+
+    onBeforeUnmount(() => {
+        window.removeEventListener("keydown", handleGlobalSave);
     });
 
     const editorDomElement = ref<any>(null);
@@ -92,6 +98,8 @@
     const isReadOnly = computed(() => flowStore.value?.deleted || !store.getters["flow/isAllowedEdit"] || store.getters["flow/readOnlySystemLabel"])
 
     const timeout = ref<any>(null);
+
+    const pluginsStore = usePluginsStore();
 
     function editorUpdate(newValue: string){
         if(store.state.editor.tabs.find((t:any) => t.path === props.path)?.content === newValue){
@@ -122,12 +130,13 @@
     }
 
 
-    function updatePluginDocumentation(event: string | undefined, task: any){
-        store.dispatch("plugin/updateDocumentation", {event,task});
+    function updatePluginDocumentation(event: any, task: string | undefined) {
+        pluginsStore.updateDocumentation({event, task});
     };
 
     const flowParsed = computed(() => store.getters["flow/flowParsed"]);
     const save = async () => {
+        clearTimeout(timeout.value);
         const result = await store.dispatch("flow/save", {content: editorDomElement.value.$refs.monacoEditor.value})
         if(result === "redirect_to_update"){
             await router.push({
@@ -143,6 +152,7 @@
     };
 
     const saveFileContent =  async ()=>{
+        clearTimeout(timeout.value);
         await store.dispatch("namespace/createFile", {
             namespace: namespace.value,
             path: props.path,
@@ -153,6 +163,17 @@
             dirty: false
         });
     }
+
+    const handleGlobalSave = (event: KeyboardEvent) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === "s") {
+            event.preventDefault();
+            if (isCurrentTabFlow.value) {
+                save();
+            } else {
+                saveFileContent();
+            }
+        }
+    };
 
     const execute = () => {
         store.commit("flow/executeFlow", true);

@@ -115,20 +115,6 @@
                         </el-select>
                     </Column>
 
-                    <Column :label="$t('settings.blocks.theme.fields.chart_color_scheme.label')">
-                        <el-select :model-value="pendingSettings.chartColor" @update:model-value="onChartColor">
-                            <el-option
-                                v-for="item in [
-                                    {value: 'classic', text: $t('settings.blocks.theme.fields.chart_color_scheme.classic')},
-                                    {value: 'kestra', text: $t('settings.blocks.theme.fields.chart_color_scheme.kestra')}
-                                ]"
-                                :key="item.value"
-                                :label="item.text"
-                                :value="item.value"
-                            />
-                        </el-select>
-                    </Column>
-
                     <Column :label="$t('settings.blocks.theme.fields.logs_font_size')">
                         <el-input-number
                             :model-value="pendingSettings.logsFontSize"
@@ -259,7 +245,9 @@
     import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
     import Utils from "../../utils/utils";
-    import {mapGetters, mapState, useStore} from "vuex";
+    import {mapGetters, mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useLayoutStore} from "../../stores/layout";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {logDisplayTypes, storageKeys} from "../../utils/constants";
@@ -299,7 +287,6 @@
                     editorType: undefined,
                     lang: undefined,
                     theme: undefined,
-                    chartColor: undefined,
                     dateFormat: undefined,
                     timezone: undefined,
                     autofoldTextEditor: undefined,
@@ -315,7 +302,6 @@
                     logsFontSize: undefined
                 },
                 settingsKeyMapping: {
-                    chartColor: "scheme",
                     dateFormat: DATE_FORMAT_STORAGE_KEY,
                     timezone: TIMEZONE_STORAGE_KEY,
                     executeFlowBehaviour: storageKeys.EXECUTE_FLOW_BEHAVIOUR,
@@ -334,17 +320,11 @@
             };
         },
         created() {
-            const store = useStore();
-
             this.pendingSettings.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
             this.pendingSettings.editorType = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.pendingSettings.lang = Utils.getLang();
             this.pendingSettings.theme = Utils.getTheme();
-
-            let scheme = localStorage.getItem("scheme") || "classic";
-            if(scheme === "default") scheme = "classic";
-            this.pendingSettings.chartColor =  scheme
 
             this.pendingSettings.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
             this.pendingSettings.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
@@ -356,8 +336,8 @@
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
             this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview";
-            this.pendingSettings.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
-            this.pendingSettings.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
+            this.pendingSettings.envName = this.layoutStore.envName || this.configs?.environment?.name;
+            this.pendingSettings.envColor = this.layoutStore.envColor || this.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
             this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10;
             this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
@@ -446,10 +426,6 @@
                 this.pendingSettings.timezone = value;
                 this.checkForChanges();
             },
-            onChartColor(value) {
-                this.pendingSettings.chartColor = value;
-                this.checkForChanges();
-            },
             onAutofoldTextEditor(value) {
                 this.pendingSettings.autofoldTextEditor = value;
                 this.checkForChanges();
@@ -522,12 +498,12 @@
                         break
                     case "envName":
                         if (this.pendingSettings[key] !== this.configs?.environment?.name) {
-                            this.$store.commit("layout/setEnvName", this.pendingSettings[key])
+                            this.layoutStore.setEnvName(this.pendingSettings[key]);
                         }
                         break
                     case "envColor":
                         if (this.pendingSettings[key] !== this.configs?.environment?.color) {
-                            this.$store.commit("layout/setEnvColor", this.pendingSettings[key])
+                            this.layoutStore.setEnvColor(this.pendingSettings[key]);
                         }
                         break
                     case "theme":
@@ -593,6 +569,7 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapGetters("misc", ["configs"]),
+            ...mapStores(useLayoutStore),
             ...mapState({
                 mappedTheme: state => state.misc.theme
             }),

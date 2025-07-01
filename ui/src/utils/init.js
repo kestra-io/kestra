@@ -33,6 +33,7 @@ import {
 } from "chart.js";
 import Vue3Tour from "vue3-tour"
 import VueVirtualScroller from "vue-virtual-scroller";
+import {createPinia} from "pinia";
 
 import Toast from "./toast";
 import filters from "./filters";
@@ -41,14 +42,11 @@ import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
 import "./global"
 
-const TasksComponentsRaw = import.meta.glob("../components/flows/tasks/Task*.vue", {eager: true});
 
 import LeftMenuLink from "../components/LeftMenuLink.vue";
 import RouterMd from "../components/utils/RouterMd.vue";
 import Utils from "./utils";
 
-const TasksComponents = Object.entries(TasksComponentsRaw)
-    .map(([path, component]) => [path.replace(/^.*\/(.*)\.vue$/, "$1"), component.default]);
 
 export default async (app, routes, stores, translations, additionalTranslations = {}) => {
     // charts
@@ -73,6 +71,28 @@ export default async (app, routes, stores, translations, additionalTranslations 
     let store = createStore(stores);
     app.use(store);
 
+    let piniaStore = createPinia();
+    piniaStore.use(({store:piniaStoreLocal}) => {
+        piniaStoreLocal.vuexStore = store;
+        piniaStoreLocal.$http = {
+            get: (url, config) => {
+                return store.$http.get(url, config);
+            },
+            post: (url, data, config) => {
+                return store.$http.post(url, data, config);
+            },
+            put: (url, data, config) => {
+                return store.$http.put(url, data, config);
+            },
+            delete: (url, config) => {
+                return store.$http.delete(url, config);
+            },
+            patch: (url, data, config) => {
+                return store.$http.patch(url, data, config);
+            }
+        }
+    });
+    app.use(piniaStore);
 
     // router
     let router = createRouter({
@@ -164,10 +184,6 @@ export default async (app, routes, stores, translations, additionalTranslations 
     createUnsavedChanged(app, store, router);
     createEventsRouter(app, store, router);
 
-    // Task have some recursion and need to be register globally
-    for(const [name, comp] of TasksComponents){
-        app.component(name, comp)
-    }
     app.component("LeftMenuLink", LeftMenuLink);
     app.component("RouterMd", RouterMd);
     const components = {
@@ -183,5 +199,5 @@ export default async (app, routes, stores, translations, additionalTranslations 
 
     app.config.globalProperties.append = (path, pathToAppend) => path + (path.endsWith("/") ? "" : "/") + pathToAppend
 
-    return {store, router};
+    return {store, router, piniaStore};
 }

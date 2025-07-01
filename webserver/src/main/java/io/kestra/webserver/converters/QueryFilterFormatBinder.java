@@ -85,7 +85,7 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
 
     private static List<Object> parseValues(List<String> values, QueryFilter.Field field, QueryFilter.Op operation) {
         return values.stream().map(value -> switch (field) {
-            case SCOPE -> RequestUtils.toFlowScopes(values);
+            case SCOPE -> RequestUtils.toFlowScopes(value);
             default -> (operation == QueryFilter.Op.IN || operation == QueryFilter.Op.NOT_IN)
                 ? Arrays.asList(URLDecoder.decode(value, StandardCharsets.UTF_8).replaceAll("[\\[\\]]", "").split(","))
                 : value;

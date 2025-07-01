@@ -20,7 +20,8 @@
                 :block-type="blockType"
                 :parent-path-complete="parentPathComplete"
                 :element
-                :element-index
+                :element-index="elementIndex"
+                :moved="elementIndex == movedIndex"
                 @remove-element="removeElement(elementIndex)"
                 @move-element="
                     (direction: 'up' | 'down') =>
@@ -61,13 +62,13 @@
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
-    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, ref(false));
+    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, false);
 
     const parentPathComplete = computed(() => {
         return `${[
             [
                 parentPath,
-                creatingTask.value && refPath !== undefined
+                creatingTask && refPath !== undefined
                     ? `[${refPath + 1}]`
                     : refPath !== undefined
                         ? `[${refPath}]`
@@ -87,6 +88,8 @@
         );
     };
 
+    const movedIndex = ref(-1);
+
     const moveElement = (
         items: Record<string, any>[] | undefined,
         elementID: string,
@@ -102,6 +105,11 @@
             return;
 
         const newIndex = direction === "up" ? index - 1 : index + 1;
+
+        movedIndex.value = newIndex;
+        setTimeout(() => {
+            movedIndex.value = -1;
+        }, 200);
 
         emits(
             "reorder",

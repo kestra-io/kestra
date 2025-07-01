@@ -4,9 +4,10 @@
     "target": "ES2020",
     "useDefineForClassFields": true,
     "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable", "ES2021.String"],
+    "lib": ["ES2023.Array", "ES2020", "DOM", "DOM.Iterable", "ES2021.String"],
     "skipLibCheck": true,
     "incremental": true,
+    "types": ["vitest/globals"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -23,10 +24,10 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "baseUrl": ".",
+    "baseUrl": "./",
     "paths": {
       "override/*": ["src/override/*"]
-    },
+    }
   },
   "include": [
     ".storybook/preview.*",

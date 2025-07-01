@@ -17,7 +17,7 @@
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
                 only-icon
-                :icons="icons"
+                :icons="pluginsStore.icons"
             />
         </div>
 
@@ -191,6 +191,8 @@
     import Utils from "../../utils/utils";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {mapStores} from "pinia";
 
     export default {
         components: {
@@ -243,8 +245,8 @@
             }
         },
         computed: {
-            ...mapState("plugin", ["icons"]),
             ...mapState("auth", ["user"]),
+            ...mapStores(usePluginsStore),
             SECTIONS() {
                 return SECTIONS
             },

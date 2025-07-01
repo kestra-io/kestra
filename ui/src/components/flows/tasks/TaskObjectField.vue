@@ -1,5 +1,5 @@
 <template>
-    <el-form-item v-if="fieldKey" :required>
+    <el-form-item v-if="fieldKey" :required="isRequired">
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -12,7 +12,7 @@
                         {{ props.fieldKey }}
                     </span>
                     <ClearButton
-                        v-if="isAnyOf && !required"
+                        v-if="isAnyOf && !required && modelValue && Object.keys(modelValue).length > 0"
                         @click="$emit('update:modelValue', undefined); taskComponent?.resetSelectType?.();"
                     />
                 </div>
@@ -46,8 +46,9 @@
         <component
             v-if="!isBoolean"
             ref="taskComponent"
-            :is="`task-${type}`"
+            :is="type"
             v-bind="{...componentProps}"
+            :disabled
             class="mt-1 mb-2 wrapper"
         />
     </el-form-item>
@@ -57,18 +58,20 @@
     import Help from "vue-material-design-icons/Information.vue";
     import Markdown from "../../layout/Markdown.vue";
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
-    import {getType} from "./Task";
     import {computed} from "vue";
     import {templateRef} from "@vueuse/core";
     import ClearButton from "./ClearButton.vue";
+    import getTaskComponent from "./getTaskComponent";
 
     const props = defineProps<{
         schema: any;
         definitions: any;
+        root?: string;
         fieldKey: string;
         task: any;
         modelValue?: Record<string, any> | string | number | boolean | Array<any>,
         required?: string[];
+        disabled?: boolean;
     }>()
 
     const emit = defineEmits<{
@@ -77,8 +80,8 @@
 
     const taskComponent = templateRef<{resetSelectType?: () => void}>("taskComponent");
 
-    const required = computed(() => {
-        return props.required?.includes(props.fieldKey);
+    const isRequired = computed(() => {
+        return !props.disabled && props.required?.includes(props.fieldKey) && props.schema.$required;
     })
 
     const componentProps = computed(() => {
@@ -88,9 +91,9 @@
                 emit("update:modelValue", value);
             },
             task: props.task,
-            root: props.fieldKey,
+            root: props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey,
             schema: props.schema,
-            required: required.value,
+            required: isRequired.value,
             definitions: props.definitions
         }
     })
@@ -117,11 +120,11 @@
     })
 
     const simpleType = computed(() => {
-        return getType(props.schema);
+        return type.value.ksTaskName;
     })
 
     const type = computed(() => {
-        return getType(props.schema, props.fieldKey, props.definitions)
+        return getTaskComponent(props.schema, props.fieldKey, props.definitions)
     })
 </script>
 
@@ -159,7 +162,7 @@
         flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-weight: 600;
+        font-size: 0.875rem;
     }
 
     .label-anyof{

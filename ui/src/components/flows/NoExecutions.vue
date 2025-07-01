@@ -75,6 +75,11 @@
             canExecute() {
                 return this.flow ? this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace) : false;
             },
+            routeInfo() {
+                return {
+                    title: this.$t("flows")
+                }
+            }
         },
     };
 </script>

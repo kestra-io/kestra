@@ -75,7 +75,7 @@
 </template>
 
 <script>
-    import {defineAsyncComponent, shallowRef} from "vue";
+    import {shallowRef} from "vue";
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
@@ -83,8 +83,7 @@
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
-
-    const MonacoEditor = defineAsyncComponent(() => import("./MonacoEditor.vue"));
+    import MonacoEditor from "./MonacoEditor.vue";
 
     import Utils from "../../utils/utils";
 
@@ -142,6 +141,7 @@
                 plugin: undefined,
                 taskType: undefined,
                 themeComputed: Utils.getTheme(),
+                preventCursorChange: false,
             };
         },
         mounted() {
@@ -153,6 +153,13 @@
                     this.themeComputed = Utils.getTheme();
                 },
                 immediate: true,
+            },
+            modelValue(value) {
+                if (this.editor?.getValue() !== value) {
+                    this.preventCursorChange = true;
+                } else {
+                    this.preventCursorChange = false;
+                }
             },
         },
         computed: {
@@ -427,9 +434,13 @@
                     });
 
                     this.editor.onDidChangeCursorPosition?.(() => {
+                        clearTimeout(this.lastTimeout);
+                        if(this.preventCursorChange) {
+                            this.preventCursorChange = false;
+                            return;
+                        }
                         let position = this.editor.getPosition();
                         let model = this.editor.getModel();
-                        clearTimeout(this.lastTimeout);
                         this.lastTimeout = setTimeout(() => {
                             this.$emit("cursor", {
                                 position: position,
@@ -555,7 +566,7 @@
             padding-top: 7px;
 
             &.custom-dark-vs-theme {
-                background-color: var(--ks-background-input);           
+                background-color: var(--ks-background-input);
             }
 
             &.theme-light {

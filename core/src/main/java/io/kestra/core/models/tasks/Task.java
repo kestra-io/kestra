@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
@@ -31,33 +32,44 @@ abstract public class Task implements TaskInterface {
 
     protected String type;
 
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     protected String version;
 
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private String description;
 
     @Valid
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     protected AbstractRetry retry;
 
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     protected Property<Duration> timeout;
 
     @Builder.Default
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     protected Boolean disabled = false;
 
     @Valid
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private WorkerGroup workerGroup;
 
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private Level logLevel;
 
     @Builder.Default
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private boolean allowFailure = false;
 
     @Builder.Default
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private boolean logToFile = false;
 
     @Builder.Default
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private String runIf = "true";
 
     @Builder.Default
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private boolean allowWarning = false;
 
     public Optional<Task> findById(String id) {

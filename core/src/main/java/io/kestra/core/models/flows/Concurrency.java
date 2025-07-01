@@ -1,20 +1,19 @@
 package io.kestra.core.models.flows;
 
 import io.micronaut.core.annotation.Introspected;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 
 @SuperBuilder
 @Getter
 @NoArgsConstructor
 @Introspected
 public class Concurrency {
-    @Positive
+    @Min(1)
     @NotNull
     private Integer limit;
 

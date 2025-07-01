@@ -6,7 +6,7 @@ import {Me} from "../../../../../stores/auth.ts";
 
 const dashboardFilterKeys: Record<string, FilterKeyCompletions> = {
     namespace: new FilterKeyCompletions(
-        [Comparators.STARTS_WITH_NAMESPACE_PREFIX, Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.CONTAINS, Comparators.STARTS_WITH, Comparators.ENDS_WITH, Comparators.REGEX],
+        [Comparators.PREFIX, Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.CONTAINS, Comparators.STARTS_WITH, Comparators.ENDS_WITH, Comparators.REGEX],
         async (store) => {
             const user = store.getters["auth/user"] as Me;
             if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
@@ -25,15 +25,21 @@ const dashboardFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     timeRange: new FilterKeyCompletions(
         [Comparators.EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.RELATIVE_DATE
+        async (_, hardcodedValues) => hardcodedValues.RELATIVE_DATE,
+        false,
+        ["timeRange", "startDate", "endDate"]
     ),
     startDate: new FilterKeyCompletions(
         [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.GREATER_THAN, Comparators.LESS_THAN_OR_EQUAL_TO, Comparators.LESS_THAN, Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async () => PICK_DATE_VALUE
+        async () => PICK_DATE_VALUE,
+        false,
+        ["timeRange"]
     ),
     endDate: new FilterKeyCompletions(
         [Comparators.LESS_THAN_OR_EQUAL_TO, Comparators.LESS_THAN, Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.GREATER_THAN, Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async () => PICK_DATE_VALUE
+        async () => PICK_DATE_VALUE,
+        false,
+        ["timeRange"]
     ),
     "labels.{key}": new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
@@ -46,7 +52,7 @@ class DashboardFilterLanguage extends FilterLanguage {
     static readonly INSTANCE = new DashboardFilterLanguage();
 
     private constructor() {
-        super("dashboards", dashboardFilterKeys);
+        super("dashboards", dashboardFilterKeys, false);
     }
 }
 

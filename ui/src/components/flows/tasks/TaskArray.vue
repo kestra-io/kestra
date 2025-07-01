@@ -16,12 +16,21 @@
             />
         </el-col>
         <el-col :span="items.length > 1 ? 20 : 22" class="pe-2">
-            <InputText
-                :model-value="element"
-                @update:model-value="(v) => handleInput(v, index)"
-                :placeholder="$t('value')"
-                class="w-100"
-            />
+            <TaskWrapper :merge="!needWrapper">
+                <template #tasks>
+                    <component
+                        :key="'array-' + index"
+                        :is="componentType"
+                        :model-value="element"
+                        :task="modelValue"
+                        :root="`${root}[${index}]`"
+                        :properties="{}"
+                        :schema="props.schema.items"
+                        :definitions="props.definitions"
+                        @update:model-value="handleInput($event, index)"
+                    />
+                </template>
+            </TaskWrapper>
         </el-col>
         <el-col :span="2" class="d-flex align-items-center justify-content-center delete">
             <DeleteOutline @click="removeItem(index)" />
@@ -31,52 +40,90 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
+    import {computed} from "vue";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../code/utils/icons";
 
-    import InputText from "../../code/components/inputs/InputText.vue";
     import Add from "../../code/components/Add.vue";
+    import getTaskComponent from "./getTaskComponent";
+    import TaskWrapper from "./TaskWrapper.vue";
 
     defineOptions({inheritAttrs: false});
 
     const emits = defineEmits(["update:modelValue"]);
     const props = withDefaults(defineProps<{
+        schema: any;
+        definitions: any;
         modelValue?: (string | number | boolean | undefined)[] | string | number | boolean;
+        required?: boolean;
+        root?: string;
     }>(), {
-        modelValue: undefined
+        modelValue: undefined,
+        schema: () => ({}),
+        definitions: () => ({}),
+        required: false,
+        root: undefined,
     });
 
-    const items = ref(
-        !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
+    const componentType = computed(() => {
+        return getTaskComponent(props.schema.items, "", props.definitions);
+    });
+
+    const needWrapper = computed(() => {
+        return ![
+            "string",
+            "number",
+            "boolean",
+            "expression",
+        ].includes(componentType.value.ksTaskName)
+    });
+
+    const items = computed(() =>
+        props.modelValue === undefined && !props.required
+            // we want to avoid displaying an item when
+            // modelValue is undefined
+            // if field is required though it invites users to fill it in
+            ? []
+            : !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     );
 
     const handleInput = (value: string, index: number) => {
-        items.value[index] = value;
-        emits("update:modelValue", items.value);
+        emits("update:modelValue", items.value.toSpliced(index, 1, value));
     };
 
+    const newEmptyValue = computed(() => {
+        if (props.schema.items?.type === "string") {
+            return "";
+        }
+        return props.schema.items?.default ?? undefined;
+    })
+
     const addItem = () => {
-        items.value.push(undefined);
-        emits("update:modelValue", items.value);
+        emits("update:modelValue", [...items.value, newEmptyValue.value]);
     };
+
     const removeItem = (index: number) => {
-        items.value.splice(index, 1);
-        emits("update:modelValue", items.value);
+        if (items.value.length <= 1) {
+            emits("update:modelValue", undefined);
+            return;
+        }
+        emits("update:modelValue", items.value.toSpliced(index, 1));
     };
+
     const moveItem = (index: number, direction: "up" | "down") => {
+        const tempValue = items.value
         if (direction === "up" && index > 0) {
-            [items.value[index - 1], items.value[index]] = [
-                items.value[index],
-                items.value[index - 1],
+            [tempValue[index - 1], tempValue[index]] = [
+                tempValue[index],
+                tempValue[index - 1],
             ];
-        } else if (direction === "down" && index < items.value.length - 1) {
-            [items.value[index + 1], items.value[index]] = [
-                items.value[index],
-                items.value[index + 1],
+        } else if (direction === "down" && index < tempValue.length - 1) {
+            [tempValue[index + 1], tempValue[index]] = [
+                tempValue[index],
+                tempValue[index + 1],
             ];
         }
-        emits("update:modelValue", items.value);
+        emits("update:modelValue", tempValue);
     };
 </script>
 

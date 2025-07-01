@@ -200,6 +200,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
     private final AbstractJdbcFlowTopologyRepository flowTopologyRepository;
 
+    private final MaintenanceService maintenanceService;
+
     private final String id = IdUtils.create();
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
@@ -229,13 +231,15 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         final AbstractJdbcFlowTopologyRepository flowTopologyRepository,
         final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         final TracerFactory tracerFactory,
-        final ExecutorsUtils executorsUtils
+        final ExecutorsUtils executorsUtils,
+        final MaintenanceService maintenanceService
         ) {
         this.serviceLivenessCoordinator = serviceLivenessCoordinator;
         this.flowMetaStore = flowMetaStore;
         this.flowTopologyRepository = flowTopologyRepository;
         this.eventPublisher = eventPublisher;
         this.tracer = tracerFactory.getTracer(JdbcExecutor.class, "EXECUTOR");
+        this.maintenanceService = maintenanceService;
 
         // By default, we start half-available processors count threads with a minimum of 4 by executor service
         // for the worker task result queue and the execution queue.
@@ -389,7 +393,12 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
             }
         ));
-        setState(ServiceState.RUNNING);
+
+        if (this.maintenanceService.isInMaintenanceMode()) {
+            enterMaintenance();
+        } else {
+            setState(ServiceState.RUNNING);
+        }
         log.info("Executor started with {} thread(s)", numberOfThreads);
     }
 
@@ -402,27 +411,31 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         ClusterEvent clusterEvent = either.getLeft();
         log.info("Cluster event received: {}", clusterEvent);
         switch (clusterEvent.eventType()) {
-            case MAINTENANCE_ENTER -> {
-                this.executionQueue.pause();
-                this.workerTaskResultQueue.pause();
-                this.killQueue.pause();
-                this.subflowExecutionResultQueue.pause();
-                this.flowQueue.pause();
-
-                this.isPaused.set(true);
-                this.setState(ServiceState.MAINTENANCE);
-            }
-            case MAINTENANCE_EXIT -> {
-                this.executionQueue.resume();
-                this.workerTaskResultQueue.resume();
-                this.killQueue.resume();
-                this.subflowExecutionResultQueue.resume();
-                this.flowQueue.resume();
-
-                this.isPaused.set(false);
-                this.setState(ServiceState.RUNNING);
-            }
+            case MAINTENANCE_ENTER -> enterMaintenance();
+            case MAINTENANCE_EXIT -> exitMaintenance();
         }
+    }
+
+    private void enterMaintenance() {
+        this.executionQueue.pause();
+        this.workerTaskResultQueue.pause();
+        this.killQueue.pause();
+        this.subflowExecutionResultQueue.pause();
+        this.flowQueue.pause();
+
+        this.isPaused.set(true);
+        this.setState(ServiceState.MAINTENANCE);
+    }
+
+    private void exitMaintenance() {
+        this.executionQueue.resume();
+        this.workerTaskResultQueue.resume();
+        this.killQueue.resume();
+        this.subflowExecutionResultQueue.resume();
+        this.flowQueue.resume();
+
+        this.isPaused.set(false);
+        this.setState(ServiceState.RUNNING);
     }
 
     void reEmitWorkerJobsForWorkers(final Configuration configuration,
@@ -604,7 +617,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                                             workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.SKIPPED)));
                                         } else {
                                             if (workerTask.getTask().isSendToWorkerTask()) {
-                                                Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(workerTask);
+                                                Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(flow, workerTask);
                                                 String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> workerTask.getRunContext().render(workerGroup.getKey())))
                                                     .orElse(null);
                                                 workerJobQueue.emit(workerGroupKey, workerTask);
@@ -718,22 +731,6 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 try {
                     // process worker task result
                     executorService.addWorkerTaskResult(current, () -> findFlow(execution), message);
-
-                    // send metrics on terminated
-                    TaskRun taskRun = message.getTaskRun();
-                    if (taskRun.getState().isTerminated()) {
-                        metricRegistry
-                            .counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(message))
-                            .increment();
-
-                        metricRegistry
-                            .timer(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(message))
-                            .record(taskRun.getState().getDuration());
-
-                        log.trace("TaskRun terminated: {}", taskRun);
-                        workerJobRunningRepository.deleteByKey(taskRun.getId());
-                    }
-
                     // join worker result
                     return Pair.of(
                         current,
@@ -796,7 +793,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         // This is important to avoid races such as RUNNING that arrives after the first SUCCESS/FAILED.
                         RunContext runContext = runContextFactory.of(flow, task, current.getExecution(), message.getParentTaskRun());
                         taskRun = execution.findTaskRunByTaskRunId(message.getParentTaskRun().getId()).withState(message.getState());
-                        Map<String, Object> outputs = MapUtils.merge(taskRun.getOutputs(), message.getParentTaskRun().getOutputs());
+                        Map<String, Object> outputs = MapUtils.deepMerge(taskRun.getOutputs(), message.getParentTaskRun().getOutputs());
                         Variables variables = variablesService.of(StorageContext.forTask(taskRun), outputs);
                         taskRun = taskRun.withOutputs(variables);
                         taskRun = ExecutableUtils.manageIterations(
@@ -1166,7 +1163,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                 try {
                     // Handle paused tasks
-                    if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)) {
+                    if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW) && !pair.getLeft().getState().isTerminated()) {
                         FlowInterface flow = flowMetaStore.findByExecution(pair.getLeft()).orElseThrow();
                         if (executionDelay.getTaskRunId() == null) {
                             // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
@@ -1224,8 +1221,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
         slaMonitorStorage.processExpired(Instant.now(), slaMonitor -> {
             Executor result = executionRepository.lock(slaMonitor.getExecutionId(), pair -> {
-                Executor executor = new Executor(pair.getLeft(), null);
-                FlowInterface flow = flowMetaStore.findByExecution(pair.getLeft()).orElseThrow();
+                FlowWithSource flow = findFlow(pair.getLeft());
+                Executor executor = new Executor(pair.getLeft(), null).withFlow(flow);
                 Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
                 if (sla.isEmpty()) {
                     // this can happen in case the flow has been updated and the SLA removed

@@ -38,7 +38,6 @@
         computed,
         shallowRef, h
     } from "vue";
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
 
@@ -50,6 +49,7 @@
 
     import Environment from "./Environment.vue";
     import BookmarkLinkList from "./BookmarkLinkList.vue";
+    import {useBookmarksStore} from "../../stores/bookmarks";
 
 
     const props = defineProps({
@@ -63,7 +63,6 @@
 
     const $route = useRoute()
     const {locale, t} = useI18n({useScope: "global"});
-    const store = useStore()
 
     function flattenMenu(menu) {
         return menu.reduce((acc, item) => {
@@ -117,9 +116,11 @@
         expandParentIfNeeded();
     })
 
+    const bookmarksStore = useBookmarksStore();
+
     const menu = computed(() => {
         return [
-            ...(store.state.bookmarks.pages?.length ? [{
+            ...(bookmarksStore.pages?.length ? [{
                 title: t("bookmark"),
                 icon: {
                     element: shallowRef(StarOutline),
@@ -128,7 +129,7 @@
                 child: [{
                     // here we use only one component for all bookmarks
                     // so when one edits the bookmark, it will be updated without closing the section
-                    component: () => h(BookmarkLinkList, {pages: store.state.bookmarks.pages}),
+                    component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
                 }]
             }] : []),
             ...disabledCurrentRoute(props.generateMenu())

@@ -196,7 +196,7 @@
                     }
                 } else if (this.currentView === this.views.CHART) {
                     const chart = YAML_UTILS.getChartAtPosition(event.model.getValue(), event.position)
-                    if (chart && this.selectedChart?.id !== chart.id) {
+                    if (chart) {
                         const result = await this.loadChart(chart);
                         this.selectedChart = result.data;
                         this.chartError = result.error;

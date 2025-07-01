@@ -1,6 +1,5 @@
 package io.kestra.core.test.flow;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import jakarta.validation.constraints.NotNull;
@@ -15,7 +14,6 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class TaskFixture {
     @NotNull
     private String id;

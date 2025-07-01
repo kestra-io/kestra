@@ -10,7 +10,6 @@ import taskrun from "./taskruns"
 import trigger from "./trigger";
 import editor from "./editor";
 import doc from "./doc";
-import bookmarks from "./bookmarks";
 import dashboard from "./dashboard";
 import service from "./service"
 
@@ -28,7 +27,6 @@ export default {
         trigger,
         editor,
         doc,
-        bookmarks,
         dashboard,
         service,
     }

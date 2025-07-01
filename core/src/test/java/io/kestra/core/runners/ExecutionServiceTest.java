@@ -17,6 +17,7 @@ import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.Await;
 import io.kestra.plugin.core.debug.Return;
+import io.kestra.plugin.core.flow.Pause;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -351,14 +352,14 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
 
-        Execution resume = executionService.resume(execution, flow, State.Type.RUNNING);
+        Execution resume = executionService.resume(execution, flow, State.Type.RUNNING, Pause.Resumed.now());
 
         assertThat(resume.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(resume.getState().getHistories()).hasSize(4);
 
         assertThrows(
             IllegalArgumentException.class,
-            () -> executionService.resume(resume, flow, State.Type.RUNNING)
+            () -> executionService.resume(resume, flow, State.Type.RUNNING, Pause.Resumed.now())
         );
     }
 
@@ -371,7 +372,7 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
 
-        Execution resume = executionService.resume(execution, flow, State.Type.KILLING);
+        Execution resume = executionService.resume(execution, flow, State.Type.KILLING, null);
 
         assertThat(resume.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(resume.getState().getHistories()).hasSize(4);

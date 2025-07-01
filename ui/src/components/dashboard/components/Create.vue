@@ -20,6 +20,9 @@
     import {useStore} from "vuex";
     const store = useStore();
 
+    import {useDashboardStore} from "../../../stores/dashboard";
+    const dashboardStore = useDashboardStore();
+
     import {useBlueprintsStore} from "../../../stores/blueprints";
     const blueprintsStore = useBlueprintsStore();
 
@@ -37,7 +40,7 @@
 
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const save = async (source: string) => {
-        const response = await store.dispatch("dashboard/create", source);
+        const response = await dashboardStore.create(source)
 
         toast.success(t("dashboards.creation.confirmation", {title: response.title}));
         store.dispatch("core/isUnsaved", false);

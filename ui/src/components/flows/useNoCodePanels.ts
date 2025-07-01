@@ -79,7 +79,7 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
             return {
                 value: getEditTabKey(tab, keepAliveCacheBuster++),
                 button: {
-                    label: `${parentName} / ${currentBlock?.id ?? tab.refPath}`,
+                    label: `${parentName} / ${currentBlock?.id ?? tab.refPath ?? t(`no_code.creation.${tab.blockType}`)}`,
                     icon: markRaw(MouseRightClickIcon),
                 },
             }

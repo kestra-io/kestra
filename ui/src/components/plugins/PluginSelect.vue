@@ -28,9 +28,10 @@
     import {computed, inject} from "vue";
     import {useI18n} from "vue-i18n";
     import {TaskIcon} from "@kestra-io/ui-libs";
+    import * as YAML_Utils from "@kestra-io/ui-libs/flow-yaml-utils";
     import {BlockType} from "../code/utils/types";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
-    import {DEFINITION_INJECTION_KEY} from "../code/injectionKeys";
+    import {DEFINITION_INJECTION_KEY, PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
 
     const pluginsStore = usePluginsStore();
 
@@ -39,12 +40,15 @@
     }>()
 
     const definitionKey = inject(DEFINITION_INJECTION_KEY, "");
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+
+    const field = computed(() => YAML_Utils.parsePath(parentPath).filter(a => typeof a === "string").pop() ?? "");
 
     const fieldDefinition = computed(() => {
         if(definitionKey.length === 0) {
             throw new Error("Definition key is required for PluginSelect component");
         }
-        const lastDef = pluginsStore.flowDefinitions?.[definitionKey]
+        const lastDef = pluginsStore.flowDefinitions?.[definitionKey].properties[field.value]
 
         // - if in an array with multiple anyOf, resolve the type will be harder
         return lastDef?.type === "array" ? lastDef.items : lastDef ?? {};

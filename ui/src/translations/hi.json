@@ -29,6 +29,7 @@
     "Unfold content lines": "मल्टीलाइन स्ट्रिंग्स अनफोल्ड करें",
     "about_this_blueprint": "इस blueprint के बारे में",
     "absolute": "पूर्ण",
+    "accept": "स्वीकारें",
     "actions": "क्रियाएँ",
     "activate_basic_auth": "बेसिक ऑथेंटिकेशन सक्रिय करें",
     "active": "सक्रिय",
@@ -44,6 +45,13 @@
     "advanced configuration": "अन्य गुण",
     "after": "बाद में",
     "aggregation": "एकत्रीकरण",
+    "ai": {
+      "flow": {
+        "generating": "आपके लिए Flow YAML उत्पन्न किया जा रहा है...",
+        "prompt_placeholder": "अपने Kestra flow बनाने के लिए निर्देश दर्ज करें।",
+        "title": "एआई एजेंट"
+      }
+    },
     "all executions": "सभी निष्पादन",
     "all tags": "सभी टैग",
     "api": "API",
@@ -239,6 +247,7 @@
     },
     "days": "दिन",
     "debug": "डिबग",
+    "decline": "अस्वीकार करें",
     "default": "डिफ़ॉल्ट",
     "delete": "हटाएं",
     "delete backfill": "Backfill हटाएं",
@@ -1178,6 +1187,7 @@
     "steps": "चरण",
     "stream": "स्ट्रीम",
     "sub flow": "Subflow",
+    "submit": "प्रस्तुत करें",
     "success": "सफलता",
     "sum": "योग",
     "switch-view": "दृश्य स्विच करें",
@@ -1215,6 +1225,7 @@
     "timezone": "समय क्षेत्र",
     "title": "शीर्षक",
     "to": "तक",
+    "to toggle": "टॉगल करने के लिए",
     "toggle fullscreen": "पूर्ण स्क्रीन टॉगल करें",
     "toggle output": "आउटपुट टॉगल करें",
     "toggle output display": "आउटपुट प्रदर्शन टॉगल करें",

@@ -29,6 +29,7 @@
     "Unfold content lines": "複数行文字列を展開する",
     "about_this_blueprint": "このblueprintについて",
     "absolute": "絶対",
+    "accept": "承認",
     "actions": "アクション",
     "activate_basic_auth": "基本認証を有効化する",
     "active": "アクティブ",
@@ -44,6 +45,13 @@
     "advanced configuration": "他のプロパティ",
     "after": "後",
     "aggregation": "集計",
+    "ai": {
+      "flow": {
+        "generating": "フローのYAMLを生成しています...",
+        "prompt_placeholder": "Kestra flowを作成するための指示を入力してください。",
+        "title": "AIエージェント"
+      }
+    },
     "all executions": "すべての実行",
     "all tags": "すべてのタグ",
     "api": "API",
@@ -239,6 +247,7 @@
     },
     "days": "日数",
     "debug": "デバッグ",
+    "decline": "辞退",
     "default": "デフォルト",
     "delete": "削除",
     "delete backfill": "backfillを削除",
@@ -1178,6 +1187,7 @@
     "steps": "ステップ",
     "stream": "ストリーム",
     "sub flow": "Subflow",
+    "submit": "送信",
     "success": "Success",
     "sum": "合計",
     "switch-view": "ビューを切り替え",
@@ -1215,6 +1225,7 @@
     "timezone": "タイムゾーン",
     "title": "タイトル",
     "to": "まで",
+    "to toggle": "切り替える",
     "toggle fullscreen": "フルスクリーンを切り替え",
     "toggle output": "出力を切り替え",
     "toggle output display": "出力表示を切り替え",

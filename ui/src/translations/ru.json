@@ -29,6 +29,7 @@
     "Unfold content lines": "Развернуть многострочные строки",
     "about_this_blueprint": "О данном blueprint",
     "absolute": "Абсолютный",
+    "accept": "Принять",
     "actions": "Действия",
     "activate_basic_auth": "Активировать Basic Authentication",
     "active": "Активно",
@@ -44,6 +45,13 @@
     "advanced configuration": "Другие свойства",
     "after": "после",
     "aggregation": "Агрегация",
+    "ai": {
+      "flow": {
+        "generating": "Генерация YAML для flow...",
+        "prompt_placeholder": "Введите инструкции для создания вашего Kestra flow.",
+        "title": "AI Агент"
+      }
+    },
     "all executions": "Все выполнения",
     "all tags": "Все теги",
     "api": "API",
@@ -239,6 +247,7 @@
     },
     "days": "Дни",
     "debug": "Отладка",
+    "decline": "Отклонить",
     "default": "По умолчанию",
     "delete": "Удалить",
     "delete backfill": "Удалить backfill",
@@ -1178,6 +1187,7 @@
     "steps": "Шаги",
     "stream": "Поток",
     "sub flow": "Подпроцесс",
+    "submit": "Отправить",
     "success": "Успех",
     "sum": "Сумма",
     "switch-view": "Переключить вид",
@@ -1215,6 +1225,7 @@
     "timezone": "Часовой пояс",
     "title": "Заголовок",
     "to": "До",
+    "to toggle": "переключить",
     "toggle fullscreen": "Переключить полноэкранный режим",
     "toggle output": "Переключить выводы",
     "toggle output display": "Переключить отображение вывода",

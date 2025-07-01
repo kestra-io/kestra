@@ -675,8 +675,6 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .log-wrapper {
-        max-height: calc(100vh - 233px);
-
         :deep(> .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div) {
             padding-bottom: 1rem;
         }

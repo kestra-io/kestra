@@ -13,4 +13,4 @@ tasks:
             retry:
               type: constant
               interval: PT1S
-              maxAttempt: 3
+              maxAttempts: 3

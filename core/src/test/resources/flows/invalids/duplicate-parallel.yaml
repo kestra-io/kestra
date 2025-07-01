@@ -9,7 +9,7 @@ tasks:
     retry:
       type: constant
       interval: PT15M
-      maxAttempt: 5
+      maxAttempts: 5
     timeout: PT1H
   - id: t5
     type: io.kestra.plugin.core.flow.Parallel

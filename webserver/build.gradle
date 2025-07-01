@@ -1,5 +1,3 @@
-publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
-
 if (rootProject.name == "kestra") {
     processResources {
         dependsOn(':ui:assembleFrontend')

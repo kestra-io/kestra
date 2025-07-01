@@ -31,11 +31,10 @@ plugins {
 
     // release
     id "io.github.gradle-nexus.publish-plugin" version "2.0.0"
-    id 'net.researchgate.release' version '3.0.2'
+    id 'net.researchgate.release' version '3.1.0'
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
     id 'signing'
-    id 'ru.vyarus.pom' version '3.0.0' apply false
-    id 'ru.vyarus.github-info' version '2.0.0' apply false
+    id "com.vanniktech.maven.publish" version "0.33.0"
 }
 
 idea {
@@ -293,6 +292,7 @@ distTar.dependsOn shadowJar
 startScripts.dependsOn shadowJar
 startShadowScripts.dependsOn jar
 shadowJar.dependsOn 'ui:assembleFrontend'
+shadowJar.dependsOn jar
 
 /**********************************************************************************************************************\
  * Executable Jar
@@ -404,22 +404,11 @@ task runLocal(type: JavaExec) {
 /**********************************************************************************************************************\
  * Publish
  **********************************************************************************************************************/
-nexusPublishing {
-    repositoryDescription = "${project.group}:${rootProject.name}:${project.version}"
-    useStaging = !project.version.endsWith("-SNAPSHOT")
-    repositories {
-        sonatype {
-            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
-        }
-    }
-}
+subprojects {subProject ->
 
-subprojects {
-    apply plugin: "maven-publish"
-    apply plugin: 'signing'
-    apply plugin: 'ru.vyarus.pom'
-    apply plugin: 'ru.vyarus.github-info'
+    if (subProject.name != 'jmh-benchmarks' && subProject.name != rootProject.name) {
+        apply plugin: 'signing'
+        apply plugin: "com.vanniktech.maven.publish"
 
     javadoc {
         options {
@@ -448,56 +437,69 @@ subprojects {
         from sourceSets.test.output
     }
 
-    github {
-        user 'kestra-io'
-        license 'Apache'
-        repository 'kestra'
-        site 'https://kestra.io'
-    }
-
-    maven.pom {
-        description = 'The modern, scalable orchestrator & scheduler open source platform'
-
-        developers {
-            developer {
-                id = "tchiotludo"
-                name = "Ludovic Dehon"
-            }
+        //These modules should not be published
+        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver"]
+        if (subProject.name in unpublishedModules){
+            return
         }
-    }
 
-    publishing {
-        publications {
-            sonatypePublication(MavenPublication) {
-                version project.version
+        subProject.tasks.matching { it.name.startsWith("publish") }.configureEach {
+            dependsOn rootProject.tasks.named("executableJar")
+        }
+        mavenPublishing {
+            publishToMavenCentral(true)
+            signAllPublications()
 
-                if (project.name.contains('cli')) {
-                    groupId "io.kestra"
-                    artifactId "kestra"
+            coordinates(
+                "${rootProject.group}",
+                subProject.name == "cli" ? rootProject.name : subProject.name,
+                "${rootProject.version}"
+            )
 
-                    artifact shadowJar
-                    artifact executableJar
-                } else {
-                    from components.java
+            pom {
+                name        = project.name
+                description = "${project.group}:${project.name}:${rootProject.version}"
+                url         = "https://github.com/kestra-io/${rootProject.name}"
 
-                    groupId project.group
-                    artifactId project.name
-
-                    artifact sourcesJar
-                    artifact javadocJar
-                    artifact testsJar
+                licenses {
+                    license {
+                        name = "The Apache License, Version 2.0"
+                        url  = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
+                }
+                developers {
+                    developer {
+                        id    = "tchiotludo"
+                        name  = "Ludovic Dehon"
+                        email = "ldehon@kestra.io"
+                    }
+                }
+                scm {
+                    connection = 'scm:git:'
+                    url = "https://github.com/kestra-io/${rootProject.name}"
                 }
             }
         }
-    }
 
-    signing {
-        // only sign JARs that we publish to Sonatype
-        required { gradle.taskGraph.hasTask("publishSonatypePublicationPublicationToSonatypeRepository") }
-        sign publishing.publications.sonatypePublication
+        afterEvaluate {
+            publishing {
+                publications {
+                    withType(MavenPublication).configureEach { publication ->
+
+                        if (subProject.name == "platform") {
+                            // Clear all artifacts except the BOM
+                            publication.artifacts.clear()
+                        }
+                    }
+                }
+            }
+        }
+
+    tasks.withType(GenerateModuleMetadata).configureEach {
+        // Suppression this validation error as we want to enforce the Kestra platform
+        suppressedValidationErrors.add('enforced-platform')
     }
 }
-
 
 /**********************************************************************************************************************\
  * Version

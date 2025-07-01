@@ -44,30 +44,3 @@ dependencies {
 
     implementation project(":webserver")
 }
-
-//Need to be disable to allow publishing an artifact with different name than project.name (here rootProject.name)
-tasks.withType(GenerateModuleMetadata).configureEach {
-    enabled = false
-}
-
-afterEvaluate {
-    components.remove(components.findByName("java"))
-    publishing {
-        publications {
-            withType(MavenPublication).configureEach { publication ->
-                publication.artifacts.clear()
-
-                // Use the shadow jar
-                publication.artifact(rootProject.tasks.named("shadowJar").get()) {
-                    extension = "jar"
-                }
-
-                // Add the executable zip
-                publication.artifact(rootProject.tasks.named("executableJar").get().archiveFile) {
-                    classifier = "exec"
-                    extension = "zip"
-                }
-            }
-        }
-    }
-}

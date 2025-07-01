@@ -50,11 +50,14 @@ export function useTopologyPanels(
         }
 
         const refPath = /\[(\d+)\]$/.exec(path)?.[1];
+        let parentPath = "";
+        let refPathIndex: number | undefined = undefined;
         if (!refPath) {
-            return;
+            parentPath = path; // no refPath, so we are at the root of the section
+        }else{
+            refPathIndex = parseInt(refPath, 10);
+            parentPath = path.slice(0, (refPath.length * -1) - 2); // remove the [refPath] part
         }
-        const refPathIndex = parseInt(refPath, 10);
-        const parentPath = path.slice(0, (refPath.length * -1) - 2); // remove the [refPath] part
 
         if (action === "create") openAddTaskTab(target, params.section, parentPath, refPathIndex, params.position);
         else if (action === "edit") openEditTaskTab(target, params.section, parentPath, refPathIndex);

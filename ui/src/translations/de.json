@@ -29,6 +29,7 @@
     "Unfold content lines": "Mehrzeilige Zeichenfolgen entfalten",
     "about_this_blueprint": "Über dieses Blueprint",
     "absolute": "Absolut",
+    "accept": "Akzeptieren",
     "actions": "Aktionen",
     "activate_basic_auth": "Aktiviere Basis-Authentifizierung",
     "active": "Aktiv",
@@ -44,6 +45,13 @@
     "advanced configuration": "Andere Eigenschaften",
     "after": "nach",
     "aggregation": "Aggregation",
+    "ai": {
+      "flow": {
+        "generating": "Erzeuge Flow YAML für Sie...",
+        "prompt_placeholder": "Geben Sie Anweisungen ein, um Ihren Kestra flow zu erstellen.",
+        "title": "KI-Agent"
+      }
+    },
     "all executions": "Alle Ausführungen",
     "all tags": "Alle Tags",
     "api": "API",
@@ -239,6 +247,7 @@
     },
     "days": "Tage",
     "debug": "Debuggen",
+    "decline": "Ablehnen",
     "default": "Standard",
     "delete": "Löschen",
     "delete backfill": "Backfill löschen",
@@ -1178,6 +1187,7 @@
     "steps": "Schritte",
     "stream": "Stream",
     "sub flow": "Subflow",
+    "submit": "Einreichen",
     "success": "Erfolg",
     "sum": "Summe",
     "switch-view": "Ansicht wechseln",
@@ -1215,6 +1225,7 @@
     "timezone": "Zeitzone",
     "title": "Titel",
     "to": "Bis",
+    "to toggle": "umschalten",
     "toggle fullscreen": "Vollbild umschalten",
     "toggle output": "Outputs umschalten",
     "toggle output display": "Outputanzeige umschalten",

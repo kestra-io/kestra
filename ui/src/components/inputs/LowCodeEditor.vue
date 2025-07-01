@@ -80,7 +80,7 @@
                         'executionId',
                     ]"
                     :level="logLevel"
-                    @follow="forwardEvent('follow', $event)"
+                    @follow="emit('follow', $event)"
                 />
             </div>
             <div v-if="isShowDescriptionOpen">
@@ -104,10 +104,11 @@
     </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     // Core
     import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
     import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
     import {useStorage} from "@vueuse/core";
     import {useRouter} from "vue-router";
     import {useVueFlow} from "@vue-flow/core";
@@ -135,53 +136,33 @@
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
-    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY);
+    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
 
     // props
-    const props = defineProps({
-        flowGraph: {
-            type: Object,
-            required: true,
-        },
-        flowId: {
-            type: String,
-            required: false,
-            default: undefined,
-        },
-        namespace: {
-            type: String,
-            required: false,
-            default: undefined,
-        },
-        execution: {
-            type: Object,
-            default: undefined,
-        },
-        isReadOnly: {
-            type: Boolean,
-            default: false,
-        },
-        source: {
-            type: String,
-            default: undefined,
-        },
-        isAllowedEdit: {
-            type: Boolean,
-            default: false,
-        },
-        horizontalDefault: {
-            type: Boolean,
-            default: undefined,
-        },
-        toggleOrientationButton: {
-            type: Boolean,
-            default: false,
-        },
-        expandedSubflows: {
-            type: Array,
-            default: () => [],
-        },
-    });
+    const props = withDefaults(
+        defineProps<{
+            flowGraph: Record<string, any>;
+            flowId?: string;
+            namespace?: string;
+            execution?: Record<string, any>;
+            isReadOnly?: boolean;
+            source?: string;
+            isAllowedEdit?: boolean;
+            horizontalDefault?: boolean;
+            toggleOrientationButton?: boolean;
+            expandedSubflows?: string[];
+        }>(),
+        {
+            flowId: undefined,
+            namespace: undefined,
+            execution: undefined,
+            isReadOnly: false,
+            source: "",
+            isAllowedEdit: false,
+            horizontalDefault: undefined,
+            toggleOrientationButton: false,
+            expandedSubflows: () => [],
+        })
 
     const emit = defineEmits([
         "follow",
@@ -193,26 +174,26 @@
 
     // Vue instance variables
     const store = useStore();
-    const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
-    const t = getCurrentInstance().appContext.config.globalProperties.$t;
+    const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
+    const {t} = useI18n();
 
     const pluginsStore = usePluginsStore();
 
     // Components variables
     const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault);
-    const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value === "true"));
-    const vueFlow = ref(null);
-    const timer = ref(null);
-    const taskObject = ref(null);
-    const taskEditData = ref(null);
-    const taskEditDomElement = ref(null);
+    const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"));
+    const vueFlow = ref<HTMLDivElement>();
+    const timer = ref<ReturnType<typeof setTimeout>>();
+    const taskObject = ref();
+    const taskEditData = ref();
+    const taskEditDomElement = ref();
     const isShowLogsOpen = ref(false);
     const logFilter = ref("");
     const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO");
     const isDrawerOpen = ref(false);
     const isShowDescriptionOpen = ref(false);
     const isShowConditionOpen = ref(false);
-    const selectedTask = ref(null);
+    const selectedTask = ref();
 
     // Init components
     onMounted(() => {
@@ -234,23 +215,21 @@
 
     // Event listeners & Watchers
     const observeWidth = () => {
-        const resizeObserver = new ResizeObserver(function () {
-            clearTimeout(timer.value);
-            timer.value = setTimeout(() => {
-                nextTick(() => {
-                    fitView();
-                });
-            }, 50);
-        });
-        resizeObserver.observe(vueFlow.value);
+        if(vueFlow.value){
+            const resizeObserver = new ResizeObserver(function () {
+                clearTimeout(timer.value);
+                timer.value = setTimeout(() => {
+                    nextTick(() => {
+                        fitView();
+                    });
+                }, 50) as any;
+            });
+            resizeObserver.observe(vueFlow.value);
+        }
     };
 
-    const forwardEvent = (type, event) => {
-        emit(type, event);
-    };
     // Source edit functions
-
-    const onDelete = (event) => {
+    const onDelete = (event: any) => {
         const flowParsed = YAML_UTILS.parse(props.source);
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
@@ -259,7 +238,7 @@
                 if (
                     section === SECTIONS.TASKS &&
                     flowParsed.tasks.length === 1 &&
-                    flowParsed.tasks.map((e) => e.id).includes(event.id)
+                    flowParsed.tasks.map((e: any) => e.id).includes(event.id)
                 ) {
                     store.dispatch("core/showMessage", {
                         variant: "error",
@@ -269,7 +248,7 @@
                     return;
                 }
                 const updatedYmlSource = YAML_UTILS.deleteBlock({
-                    source:props.source,
+                    source: props.source ?? "",
                     section,
                     key: event.id,
                 })
@@ -283,28 +262,31 @@
         );
     };
 
-    const onCreateNewTask = (event) => {
+    const onCreateNewTask = (event: [string, "before" | "after"]) => {
         topologyClick.value = {
             action: "create",
             params: {
-                section: SECTIONS.TASKS.toLowerCase(),
+                section: SECTIONS.TASKS.toLowerCase() as any,
                 position: event[1],
                 id: event[0],
             }
         };
     };
 
-    const onEditTask = (event) => {
+    const onEditTask = (event: {
+        task: Record<string, any>;
+        section?: string;
+    }) => {
         topologyClick.value = {
             action: "edit",
             params: {
-                section: (event.section ?? SECTIONS.TASKS).toLowerCase(),
+                section: (event.section ?? SECTIONS.TASKS).toLowerCase() as any,
                 id: event.task.id,
             }
         };
     };
 
-    const onAddFlowableError = (event) => {
+    const onAddFlowableError = (event: any) => {
         taskEditData.value = {
             action: "add_flowable_error",
             taskId: event.task.id,
@@ -312,9 +294,13 @@
         taskEditDomElement.value.$refs.taskEdit.click();
     };
 
-    const confirmEdit = (event) => {
-        const source = props.source;
-        const task = YAML_UTILS.extractTask(props.source, YAML_UTILS.parse(event).id);
+    const confirmEdit = (event: string) => {
+        const source = props.source ?? "";
+        const task = YAML_UTILS.extractBlock({
+            section: "tasks",
+            source: props.source ?? "",
+            key: YAML_UTILS.parse(event).id
+        });
         if (
             task === undefined ||
             (task && YAML_UTILS.parse(event).id === taskEditData.value.oldTaskId)
@@ -323,23 +309,26 @@
             case "create_task":
                 emit(
                     "on-edit",
-                    YAML_UTILS.insertTask(
+                    YAML_UTILS.insertBlock({
+                        section: "tasks",
                         source,
-                        taskEditData.value.insertionDetails[0],
-                        event,
-                        taskEditData.value.insertionDetails[1],
-                    ),
+                        parentKey: taskEditData.value.insertionDetails[0],
+                        newBlock:event,
+                        position: taskEditData.value.insertionDetails[1],
+                    }),
                     true,
                 );
                 return;
             case "edit_task":
                 emit(
                     "on-edit",
-                    YAML_UTILS.replaceTaskInDocument(
+                    YAML_UTILS.replaceBlockInDocument({
+                        section: "tasks",
                         source,
-                        taskEditData.value.oldTaskId,
-                        event,
-                    ),
+                        key: taskEditData.value.oldTaskId,
+                        keyName: "id",
+                        newContent: event,
+                    }),
                     true,
                 );
                 return;
@@ -374,13 +363,15 @@
     };
 
     const fitViewOrientation = () => {
-        const resizeObserver = new ResizeObserver(() => {
-            clearTimeout(timer.value);
-            nextTick(() => {
-                fitView();
+        if(vueFlow.value){
+            const resizeObserver = new ResizeObserver(() => {
+                clearTimeout(timer.value);
+                nextTick(() => {
+                    fitView();
+                });
             });
-        });
-        resizeObserver.observe(vueFlow.value);
+            resizeObserver.observe(vueFlow.value);
+        }
     };
 
     const toggleOrientation = () => {
@@ -389,7 +380,7 @@
         fitViewOrientation();
     };
 
-    const openFlow = (data) => {
+    const openFlow = (data: any) => {
         if (data.link.executionId) {
             window.open(
                 router.resolve({
@@ -418,38 +409,38 @@
         }
     };
 
-    const showLogs = (event) => {
+    const showLogs = (event: string) => {
         selectedTask.value = event;
         isShowLogsOpen.value = true;
         isDrawerOpen.value = true;
     };
 
-    const onSearch = (search) => {
+    const onSearch = (search: string) => {
         logFilter.value = search;
     };
 
-    const onLevelChange = (level) => {
+    const onLevelChange = (level: string) => {
         logLevel.value = level;
     };
 
-    const showDescription = (event) => {
+    const showDescription = (event: string) => {
         selectedTask.value = event;
         isShowDescriptionOpen.value = true;
         isDrawerOpen.value = true;
     };
 
-    const showCondition = (event) => {
+    const showCondition = (event: {task: string}) => {
         selectedTask.value = event.task;
         isShowConditionOpen.value = true;
         isDrawerOpen.value = true;
     };
 
-    const onSwappedTask = (event) => {
+    const onSwappedTask = (event: any) => {
         emit("swapped-task", event.swappedTasks);
         emit("on-edit", event.newSource, true);
     };
 
-    const message = (event) => {
+    const message = (event: any) => {
         store.dispatch("core/showMessage", {
             variant: event.variant,
             title: t(event.title),
@@ -457,7 +448,7 @@
         });
     };
 
-    const expandSubflow = (event) => {
+    const expandSubflow = (event: any) => {
         emit("expand-subflow", event);
     };
 </script>

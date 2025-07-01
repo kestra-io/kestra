@@ -12,6 +12,7 @@ import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthService;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
@@ -34,6 +35,9 @@ import java.util.Optional;
 @Slf4j
 @Controller("/api/v1")
 public class MiscController {
+    @Inject
+    protected ApplicationContext applicationContext;
+
     @Inject
     VersionProvider versionProvider;
 
@@ -102,6 +106,7 @@ public class MiscController {
                 .max(this.maxPreviewRows)
                 .build()
             ).isBasicAuthEnabled(basicAuthService.isEnabled())
+            .isAiEnabled(applicationContext.containsBean(AiController.class))
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .resourceToFilters(QueryFilter.Resource.asResourceList())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
@@ -174,6 +179,8 @@ public class MiscController {
         List<String> hiddenLabelsPrefixes;
         // List of filter by component
         List<QueryFilter.ResourceField> resourceToFilters;
+
+        Boolean isAiEnabled;
     }
 
     @Value

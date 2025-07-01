@@ -79,23 +79,24 @@
     import KestraIcon from "../../Kicon.vue";
     import {Menu, Plus, DeleteOutline, Magnify, Pencil} from "../utils/icons";
     import {useI18n} from "vue-i18n";
-    import {useStore} from "vuex";
     import {useRouter, useRoute} from "vue-router";
     import {getDashboard} from "../../dashboard/composables/useDashboards";
 
     const {t} = useI18n({useScope: "global"});
-    const store = useStore();
     const route = useRoute();
     const routeTenant = ref(route.params.tenant);
     const router = useRouter();
     const emits = defineEmits(["dashboard"]);
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
 
+    import {useDashboardStore} from "../../../stores/dashboard";
+    const dashboardStore = useDashboardStore();
+
     const remove = (dashboard: any) => {
         toast.confirm(
             t("dashboards.deletion.confirmation", {title: dashboard.title}),
             () => {
-                store.dispatch("dashboard/delete", dashboard.id).then(() => {
+                dashboardStore.delete(dashboard.id).then(() => {
                     dashboards.value = dashboards.value.filter(
                         (d) => d.id !== dashboard.id,
                     );
@@ -141,28 +142,26 @@
     };
 
     const fetchDashboards = () => {
-        store
-            .dispatch("dashboard/list", {})
-            .then((response: { results: { id: string; title: string }[] }) => {
-                dashboards.value = response.results;
+        dashboardStore.list({}).then((response: { results: { id: string; title: string }[] }) => {
+            dashboards.value = response.results;
 
-                const creation = Boolean(route.query.created);
-                const lastSelected = creation
-                    ? (route.params?.dashboard ?? fetchLastDashboard())
-                    : (fetchLastDashboard() ?? route.params?.dashboard);
+            const creation = Boolean(route.query.created);
+            const lastSelected = creation
+                ? (route.params?.dashboard ?? fetchLastDashboard())
+                : (fetchLastDashboard() ?? route.params?.dashboard);
 
-                if (lastSelected) {
-                    const dashboard = dashboards.value.find(
-                        (d) => d.id === lastSelected,
-                    );
-                    if (dashboard) {
-                        selectDashboard(dashboard);
-                    } else {
-                        selectedDashboard.value = null;
-                        emits("dashboard", "default");
-                    }
+            if (lastSelected) {
+                const dashboard = dashboards.value.find(
+                    (d) => d.id === lastSelected,
+                );
+                if (dashboard) {
+                    selectDashboard(dashboard);
+                } else {
+                    selectedDashboard.value = null;
+                    emits("dashboard", "default");
                 }
-            });
+            }
+        });
     };
 
     const ID = getDashboard(route, "id");

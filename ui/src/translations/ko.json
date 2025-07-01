@@ -29,6 +29,7 @@
     "Unfold content lines": "다중 라인 문자열 펼치기",
     "about_this_blueprint": "이 blueprint 정보",
     "absolute": "절대적",
+    "accept": "수락",
     "actions": "작업",
     "activate_basic_auth": "기본 인증 활성화",
     "active": "활성화됨",
@@ -44,6 +45,13 @@
     "advanced configuration": "다른 속성",
     "after": "이후",
     "aggregation": "집계",
+    "ai": {
+      "flow": {
+        "generating": "Flow YAML을 생성 중입니다...",
+        "prompt_placeholder": "Kestra flow를 생성하기 위한 지침을 입력하세요.",
+        "title": "AI 에이전트"
+      }
+    },
     "all executions": "모든 실행",
     "all tags": "모든 태그",
     "api": "API",
@@ -239,6 +247,7 @@
     },
     "days": "일",
     "debug": "디버그",
+    "decline": "거부",
     "default": "기본값",
     "delete": "삭제",
     "delete backfill": "backfill 삭제",
@@ -1178,6 +1187,7 @@
     "steps": "단계",
     "stream": "스트림",
     "sub flow": "Subflow",
+    "submit": "제출",
     "success": "성공",
     "sum": "합계",
     "switch-view": "보기 전환",
@@ -1215,6 +1225,7 @@
     "timezone": "시간대",
     "title": "제목",
     "to": "종료",
+    "to toggle": "전환하기",
     "toggle fullscreen": "전체 화면 전환",
     "toggle output": "출력 전환",
     "toggle output display": "출력 표시 전환",

@@ -1,8 +1,9 @@
 import {onMounted, watch, computed, ref} from "vue";
+import {useDashboardStore} from "../../../stores/dashboard";
 import type {RouteParams, RouteLocation} from "vue-router";
 import {useRoute} from "vue-router";
-import {useStore} from "vuex";
 import {useI18n} from "vue-i18n";
+
 
 import {decodeSearchParams} from "../../filter/utils/helpers.ts";
 
@@ -103,7 +104,7 @@ export function useChartGenerator(props: {chart: Chart; filters: string[]; showD
 
     const route = useRoute();
 
-    const store = useStore();
+    const dashboardStore = useDashboardStore();
 
     const {t} = useI18n({useScope: "global"});
     const EMPTY_TEXT = t("dashboards.empty");
@@ -119,13 +120,13 @@ export function useChartGenerator(props: {chart: Chart; filters: string[]; showD
 
             if (filters) params.filters = filters;
 
-            data.value = await store.dispatch("dashboard/generate", params);
+            data.value = await dashboardStore.generate(params);
         } else {
             const params = {chart: props.chart.content, globalFilter: {filters}};
 
             if (pagination) params.globalFilter = {...params.globalFilter, ...pagination};
 
-            data.value = await store.dispatch("dashboard/chartPreview", params);
+            data.value = await dashboardStore.chartPreview(params);
         }
 
         return data.value;

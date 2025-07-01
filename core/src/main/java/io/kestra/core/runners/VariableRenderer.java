@@ -2,22 +2,26 @@ package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.pebble.*;
+import io.kestra.core.runners.pebble.functions.RenderingFunctionInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.error.AttributeNotFoundException;
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.AbstractExtension;
+import io.pebbletemplates.pebble.extension.Extension;
+import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 
 import java.io.IOException;
+import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Singleton
 public class VariableRenderer {
@@ -29,6 +33,10 @@ public class VariableRenderer {
 
     @Inject
     public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
+        this(applicationContext, variableConfiguration, Collections.emptyList());
+    }
+
+    public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration, List<String> functionsToMask) {
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
 
         PebbleEngine.Builder pebbleBuilder = new PebbleEngine.Builder()
@@ -39,8 +47,13 @@ public class VariableRenderer {
             .newLineTrimming(false)
             .autoEscaping(false);
 
-        applicationContext.getBeansOfType(AbstractExtension.class)
-            .forEach(pebbleBuilder::extension);
+        List<Extension> extensions = applicationContext.getBeansOfType(Extension.class).stream()
+            .map(e -> functionsToMask.stream().anyMatch(excludedFunction -> e.getFunctions().containsKey(excludedFunction))
+                ? extensionWithMaskedFunctions(e, functionsToMask)
+                : e)
+            .toList();
+
+        extensions.forEach(pebbleBuilder::extension);
 
         if (this.variableConfiguration.getCacheEnabled()) {
             pebbleBuilder.templateCache(new PebbleLruCache(this.variableConfiguration.getCacheSize()));
@@ -49,8 +62,57 @@ public class VariableRenderer {
         this.pebbleEngine = pebbleBuilder.build();
     }
 
-    public static IllegalVariableEvaluationException properPebbleException(PebbleException e) {
-        if (e instanceof AttributeNotFoundException current) {
+    private Extension extensionWithMaskedFunctions(Extension initialExtension, List<String> maskedFunctions) {
+        return (Extension) Proxy.newProxyInstance(
+            initialExtension.getClass().getClassLoader(),
+            new Class[]{Extension.class},
+            (proxy, method, methodArgs) -> {
+                if (method.getName().equals("getFunctions")) {
+                    return initialExtension.getFunctions().entrySet().stream()
+                        .map(entry -> {
+                            if (maskedFunctions.contains(entry.getKey())) {
+                                return Map.entry(entry.getKey(), this.maskedFunctionProxy(entry.getValue()));
+                            } else if (RenderingFunctionInterface.class.isAssignableFrom(entry.getValue().getClass())) {
+                                return Map.entry(entry.getKey(), this.variableRendererProxy(entry.getValue()));
+                            }
+
+                            return entry;
+                        }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                }
+
+                return method.invoke(initialExtension, methodArgs);
+            }
+        );
+    }
+
+    private Function variableRendererProxy(Function initialFunction) {
+        return (Function) Proxy.newProxyInstance(
+            initialFunction.getClass().getClassLoader(),
+            new Class[]{Function.class, RenderingFunctionInterface.class},
+            (functionProxy, functionMethod, functionArgs) -> {
+                if (functionMethod.getName().equals("variableRenderer")) {
+                    return this;
+                }
+                return functionMethod.invoke(initialFunction, functionArgs);
+            }
+        );
+    }
+
+    private Function maskedFunctionProxy(Function initialFunction) {
+        return (Function) Proxy.newProxyInstance(
+            initialFunction.getClass().getClassLoader(),
+            new Class[]{Function.class},
+            (functionProxy, functionMethod, functionArgs) -> {
+                if (functionMethod.getName().equals("execute")) {
+                    return "******";
+                }
+                return functionMethod.invoke(initialFunction, functionArgs);
+            }
+        );
+    }
+
+    public static IllegalVariableEvaluationException properPebbleException(PebbleException initialExtension) {
+        if (initialExtension instanceof AttributeNotFoundException current) {
             return new IllegalVariableEvaluationException(
                 "Unable to find `" + current.getAttributeName() +
                     "` used in the expression `" + current.getFileName() +
@@ -58,7 +120,7 @@ public class VariableRenderer {
             );
         }
 
-        return new IllegalVariableEvaluationException(e);
+        return new IllegalVariableEvaluationException(initialExtension);
     }
 
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
@@ -133,10 +195,10 @@ public class VariableRenderer {
     /**
      * This method can be used in fallback for rendering an input string.
      *
-     * @param e         The exception that was throw by the default variable renderer.
-     * @param inline    The expression to be rendered.
-     * @param variables The context variables.
-     * @return          The rendered string.
+     * @param e The exception that was throw by the default variable renderer.
+     * @param inline           The expression to be rendered.
+     * @param variables        The context variables.
+     * @return The rendered string.
      */
     protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return null;

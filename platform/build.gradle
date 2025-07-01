@@ -1,6 +1,5 @@
 plugins {
     id 'java-platform'
-    id 'maven-publish'
 }
 
 group = 'io.kestra'
@@ -142,15 +141,5 @@ dependencies {
         api "io.kestra:repository-memory:$version"
         api "io.kestra:runner-memory:$version"
         api "io.kestra:storage-local:$version"
-    }
-}
-
-publishing {
-    publications {
-        sonatypePublication(MavenPublication) {
-            groupId project.group
-            artifactId project.name
-            from components.javaPlatform
-        }
     }
 }

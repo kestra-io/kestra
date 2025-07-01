@@ -142,13 +142,14 @@
 
     import Editor from "../../inputs/Editor.vue";
     import {usePluginsStore} from "../../../stores/plugins";
+    import {useDashboardStore} from "../../../stores/dashboard";
     import yaml from "yaml";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
 
     export default {
         computed: {
-            ...mapStores(usePluginsStore),
+            ...mapStores(usePluginsStore, useDashboardStore),
             ContentSave() {
                 return ContentSave
             },
@@ -251,7 +252,7 @@
             async loadChart(chart) {
                 const yamlChart = yaml.stringify(chart);
                 const result = {error: null, data: null, raw: {}};
-                await this.$store.dispatch("dashboard/validateChart", yamlChart)
+                await this.dashboardStore.validateChart(yamlChart)
                     .then(errors => {
                         if (errors.constraints) {
                             result.error = errors.constraints;
@@ -282,7 +283,7 @@
         },
         watch: {
             source() {
-                this.$store.dispatch("dashboard/validate", this.source)
+                this.dashboardStore.validate(this.source)
                     .then(errors => {
                         if (errors.constraints) {
                             this.errors = [errors.constraints];

@@ -45,7 +45,7 @@
             type: string;
         };
         elementIndex?: number;
-        moved: boolean;
+        moved?: boolean;
     }>();
 
     const pluginsStore = usePluginsStore();

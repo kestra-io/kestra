@@ -1,3 +1,4 @@
+import ai from "./ai"
 import auth from "./auth"
 import core from "./core"
 import execution from "./executions"
@@ -10,11 +11,11 @@ import taskrun from "./taskruns"
 import trigger from "./trigger";
 import editor from "./editor";
 import doc from "./doc";
-import dashboard from "./dashboard";
 import service from "./service"
 
 export default {
     modules: {
+        ai,
         core,
         flow,
         template,
@@ -27,7 +28,6 @@ export default {
         trigger,
         editor,
         doc,
-        dashboard,
         service,
     }
 }

@@ -62,20 +62,27 @@
             const {name: currentRoute} = this.$route;
             const isAuthRoute = currentRoute === "login" || currentRoute === "setup";
             const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null;
-            
+
             this.setTitleEnvSuffix();
-            
-            if (!isAuthRoute && !hasCredentials) {
-                this.$router.push({name: "login"});
-                this.displayApp();
-                return;
-            }
-            
+
             if (!this.created && !isAuthRoute) {
                 try {
                     const config = await this.loadGeneralResources();
-                    // If loadGeneralResources returned null, it means credentials were missing
                     if (config === null) {
+                        this.displayApp();
+                        return;
+                    }
+
+                    // Basic auth enabled: redirect to login if no credentials
+                    if (this.configs && this.configs.isBasicAuthEnabled && !hasCredentials) {
+                        this.$router.push({name: "login"});
+                        this.displayApp();
+                        return;
+                    }
+
+                    // Basic auth disabled: redirect to setup if incomplete
+                    if (this.configs && !this.configs.isBasicAuthEnabled && !this.isSetupRoute() && localStorage.getItem("basicAuthSetupCompleted") !== "true") {
+                        this.$router.push({name: "setup"});
                         this.displayApp();
                         return;
                     }
@@ -83,16 +90,18 @@
                     if (error?.response?.status === 401) {
                         localStorage.removeItem("basicAuthCredentials");
                         this.$router.push({name: "login"});
+                        this.displayApp();
                         return;
                     }
                 }
+            } else if (!isAuthRoute && !hasCredentials) {
+                // Fallback: redirect to login when configs unavailable
+                this.$router.push({name: "login"});
+                this.displayApp();
+                return;
             }
-            
+
             this.displayApp();
-            
-            if (this.configs && !this.configs.isBasicAuthEnabled && !this.isSetupRoute() && localStorage.getItem("basicAuthSetupCompleted") !== "true") {
-                this.$router.push({name: "setup"});
-            }
         },
         methods: {
             displayApp() {
@@ -115,7 +124,6 @@
                 })();
                 
                 if (!localStorage.getItem("basicAuthCredentials")) {
-                    this.$router.push({name: "login"});
                     return null;
                 }
                 
@@ -136,6 +144,8 @@
                     .then(apiConfig => {
                         this.initStats(apiConfig, config, uid);
                     })
+                
+                return config;
             },
             initStats(apiConfig, config, uid) {
                 if (!this.configs || this.configs["isAnonymousUsageEnabled"] === false) {
@@ -143,24 +153,24 @@
                 }
 
                 // only run posthog in production
-                // if (import.meta.env.MODE === "production") {
-                posthog.init(
-                    apiConfig.posthog.token,
-                    {
-                        api_host: apiConfig.posthog.apiHost,
-                        ui_host: "https://eu.posthog.com",
-                        capture_pageview: false,
-                        capture_pageleave: true,
-                        autocapture: false,
+                if (import.meta.env.MODE === "production") {
+                    posthog.init(
+                        apiConfig.posthog.token,
+                        {
+                            api_host: apiConfig.posthog.apiHost,
+                            ui_host: "https://eu.posthog.com",
+                            capture_pageview: false,
+                            capture_pageleave: true,
+                            autocapture: false,
+                        }
+                    )
+
+                    posthog.register_once(this.statsGlobalData(config, uid));
+
+                    if (!posthog.get_property("__alias")) {
+                        posthog.alias(apiConfig.id);
                     }
-                )
-
-                posthog.register_once(this.statsGlobalData(config, uid));
-
-                if (!posthog.get_property("__alias")) {
-                    posthog.alias(apiConfig.id);
                 }
-                // }
 
 
                 // close survey on page change

@@ -50,7 +50,7 @@ public class ErrorLogsFunction  implements Function {
             .delayFactor(2.0)
             .interval(Duration.ofMillis(100))
             .maxInterval(Duration.ofSeconds(1))
-            .maxAttempt(-1)
+            .maxAttempts(-1)
             .maxDuration(Duration.ofSeconds(5))
             .build());
 

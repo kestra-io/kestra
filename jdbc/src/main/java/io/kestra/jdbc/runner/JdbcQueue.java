@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +68,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final JdbcQueueIndexer jdbcQueueIndexer;
 
+    private final boolean immediateRepoll;
+
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
 
@@ -89,6 +92,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.table = DSL.table(jdbcTableConfigs.tableConfig("queues").table());
 
         this.jdbcQueueIndexer = applicationContext.getBean(JdbcQueueIndexer.class);
+
+        this.immediateRepoll = applicationContext.getProperty("kestra.jdbc.queues.immediate-repoll", Boolean.class).orElse(true);
 
         // init metrics we can at post construct to avoid costly Metric.Id computation
         this.bigMessageCounter = metricRegistry
@@ -427,7 +432,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                         if (count > 0) {
                             lastPoll = ZonedDateTime.now();
                             sleep = configuration.minPollInterval;
-                            if (count.equals(configuration.pollSize)) {
+                            if (immediateRepoll) {
+                                continue;
+                            } else if (count.equals(configuration.pollSize)) {
                                 // Note: this provides better latency on high throughput: when Kestra is a top capacity,
                                 // it will not do a sleep and immediately poll again.
                                 // We can even have better latency at even higher latency by continuing for positive count,

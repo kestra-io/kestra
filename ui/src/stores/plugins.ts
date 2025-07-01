@@ -45,6 +45,7 @@ interface State {
         taskType?: string;
         taskVersion?: string;
     };
+    _iconsPromise: Promise<Record<string, string>> | undefined;
 }
 
 interface LoadOptions {
@@ -78,6 +79,7 @@ export const usePluginsStore = defineStore("plugins", {
         inputSchema: undefined,
         inputsType: undefined,
         schemaType: undefined,
+        _iconsPromise: undefined
     }),
 
     getters: {
@@ -201,23 +203,39 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
         fetchIcons() {
-            const apiStore = useApiStore();
-            return Promise.all([
-                this.$http.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}),
-                apiStore.pluginIcons()
-            ]).then(responses => {
-                const icons = responses[0].data;
+            if(this.icons){
+                return Promise.resolve(this.icons);
+            }
 
-                for (const [key, plugin] of Object.entries(responses[1].data)) {
-                    if (icons[key] === undefined) {
-                        icons[key] = plugin;
+            if (this._iconsPromise) {
+                return this._iconsPromise;
+            }
+
+            const apiStore = useApiStore();
+
+            const apiPromise = apiStore.pluginIcons().then(response => {
+                this.icons = response.data ?? {};
+                for (const [key, plugin] of Object.entries(response.data)) {
+                    if (this.icons && this.icons[key] === undefined) {
+                        this.icons[key] = plugin as string;
                     }
                 }
-
-                this.icons = icons;
-
-                return icons;
             });
+
+            const iconsPromise =
+                this.$http.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(response => {
+                    const icons = response.data ?? {};
+                    this.icons = this.icons ? {
+                        ...icons,
+                        ...this.icons
+                    } : icons;
+                });
+
+            this._iconsPromise = Promise.all([apiPromise, iconsPromise]).then(() => {
+                return this.icons ?? {};
+            })
+
+            return this._iconsPromise;
         },
 
         groupIcons() {

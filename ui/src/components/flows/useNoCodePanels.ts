@@ -204,7 +204,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         opener: { panelIndex: number, tabIndex: number },
         blockType: BlockType | "pluginDefaults",
         parentPath: string,
-        definitionKey:string,
+        definitionKey: string,
         refPath?: number,
         dirty: boolean = false
     ) {

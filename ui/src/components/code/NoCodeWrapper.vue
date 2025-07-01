@@ -42,12 +42,12 @@
         (e: "closeTask"): boolean | void;
     }>();
 
-    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
-        emit("createTask", blockType, parentPath, refPath, "after")
+    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, definitionKey, refPath) => {
+        emit("createTask", blockType, parentPath, definitionKey, refPath, "after")
     });
 
-    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
-        emit("editTask", blockType, parentPath, refPath)
+    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, definitionKey, refPath) => {
+        emit("editTask", blockType, parentPath, definitionKey, refPath)
     });
 
     const store = useStore();

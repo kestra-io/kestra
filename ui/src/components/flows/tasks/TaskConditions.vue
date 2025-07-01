@@ -20,7 +20,10 @@
 
     const store = useStore();
 
-    interface Condition {id:string, type:string}
+    interface Condition {
+        id: string,
+        type: string
+    }
 
     const props = withDefaults(defineProps<{
         modelValue?: Condition[]

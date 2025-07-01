@@ -44,6 +44,7 @@
             id: string;
             type: string;
         };
+        definitionKey: string;
         elementIndex?: number;
         moved?: boolean;
     }>();
@@ -69,6 +70,7 @@
         editTask(
             props.blockType,
             props.parentPathComplete,
+            props.definitionKey,
             props.elementIndex,
         );
     };

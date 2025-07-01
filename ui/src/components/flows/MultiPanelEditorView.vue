@@ -74,7 +74,7 @@
 
 
     const noCodeHandlers: Parameters<typeof setupInitialNoCodeTab>[2] = {
-        onCreateTask(opener, blockType, parentPath, refPath, position){
+        onCreateTask(opener, blockType, parentPath, definitionKey, refPath, position){
             const createTabId = getCreateTabKey({
                 blockType,
                 parentPath,
@@ -91,7 +91,7 @@
                 return false
             }
 
-            openAddTaskTab(opener, blockType, parentPath, refPath, position, isFlowDirty.value)
+            openAddTaskTab(opener, blockType, parentPath, definitionKey, refPath, position, isFlowDirty.value)
             return false
         },
         onEditTask(...args){
@@ -154,7 +154,7 @@
     }
 
     const panels: Ref<Panel[]> = useStorage<any>(
-        `panel-${flow.value.namespace}-${flow.value.id}`,
+        `flow-${flow.value.namespace}-${flow.value.id}`,
         DEFAULT_ACTIVE_TABS
             .map((t):Panel => getPanelFromValue(t).panel),
         undefined,

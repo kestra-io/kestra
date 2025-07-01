@@ -10,6 +10,7 @@
                     :block-type="blockType"
                     :parent-path-complete="parentPathComplete"
                     :ref-path="elements?.length ? elements.length - 1 : undefined"
+                    :definition-key
                 />
             </template>
 
@@ -22,6 +23,7 @@
                 :element
                 :element-index="elementIndex"
                 :moved="elementIndex == movedIndex"
+                :definition-key
                 @remove-element="removeElement(elementIndex)"
                 @move-element="
                     (direction: 'up' | 'down') =>

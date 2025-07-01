@@ -69,6 +69,7 @@ export type CollapseItem = {
     blockType: BlockType | "pluginDefaults";
     section: string;
     elements?: NoCodeElement[];
+    definitionKey: string;
 };
 
 export type Breadcrumb = {

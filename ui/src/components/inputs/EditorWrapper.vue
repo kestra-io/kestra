@@ -35,7 +35,7 @@
             v-if="aiAgentOpened"
             class="position-absolute prompt"
             @close="aiAgentOpened = false"
-            :flow="editorContent"
+            :flow="flowContent"
             @generated-yaml="yaml => {draftSource = yaml; aiAgentOpened = false}"
         />
     </transition>
@@ -142,14 +142,14 @@
 
     const timeout = ref<any>(null);
 
-    const editorContent = computed(() => {
-        return store.state.editor.tabs.find((t: any) => t.path === props.path)?.content as string;
+    const flowContent = computed(() => {
+        return draftSource.value ?? source.value;
     });
 
     const pluginsStore = usePluginsStore();
 
     function editorUpdate(newValue: string){
-        if (editorContent.value === newValue) {
+        if (flowContent.value === newValue) {
             return;
         }
         if (isCurrentTabFlow.value) {

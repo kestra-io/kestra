@@ -56,6 +56,7 @@ public class GeminiAiService implements AiServiceInterface {
         DATA_FILTERS_GROUP_NAME,
         DATA_FILTERS_KPI_GROUP_NAME
     );
+    public static final int SEED = 50000;
 
     private final InMemoryRunner inMemoryRunner;
 
@@ -87,9 +88,9 @@ public class GeminiAiService implements AiServiceInterface {
         String pluginRelevanceInstructions;
         String serializedPlugins;
         try {
-            serializedPlugins = JacksonMapper.ofJson().writeValueAsString(List.of(descriptionByType.entrySet().stream().map(e ->
+            serializedPlugins = JacksonMapper.ofJson().writeValueAsString(descriptionByType.entrySet().stream().map(e ->
                 Map.of("type", e.getKey(), "description", e.getValue())
-            )));
+            ).toList());
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize plugin types for Gemini AI agent", e);
             serializedPlugins = "[]";
@@ -104,7 +105,8 @@ public class GeminiAiService implements AiServiceInterface {
             - Triggers initiate a Flow execution based on events or interval, while tasks perform actions within a Flow. Always distinguish between them and include both as needed.
             - Include AT LEAST ONE trigger if execution should start based on an event or interval.
             - Every flow must include at least one task that is not a trigger.
-            - ALWAYS include all plugin types present in the current Flow YAML.
+            - ALWAYS include all plugin types present in the current Flow YAML. If the user asks for troubleshooting, also include additional types if required.
+            - If you don't include any plugin types, explain why.
             Use only the plugin types from the list below. You may select up to 10 types but you MUST ALWAYS return at least one valid type. Below is the list of all available plugin types in Kestra, each formatted as 'type:description':
             ```
             %s
@@ -117,9 +119,9 @@ public class GeminiAiService implements AiServiceInterface {
 
         return LlmAgent.builder()
             .name("kestra_plugin_relevance_agent")
-            .description("An agent to build a Kestra Flow YAML.")
+            .description("An agent to identify most relevant plugins to build a Kestra Flow YAML.")
             .model(model)
-            .generateContentConfig(GenerateContentConfig.builder().temperature(0.9f).maxOutputTokens(1024).build())
+            .generateContentConfig(GenerateContentConfig.builder().temperature(0.7f).seed(SEED).maxOutputTokens(1024).build())
             .instruction(pluginRelevanceInstructions)
             .outputKey("mostRelevantTypes")
             .afterAgentCallback(callbackContext -> {
@@ -156,7 +158,7 @@ public class GeminiAiService implements AiServiceInterface {
             .name("kestra_init_flow_builder_agent")
             .description("An agent to bootstrap a Kestra Flow YAML.")
             .model(model)
-            .generateContentConfig(GenerateContentConfig.builder().temperature(0.9f).maxOutputTokens(50000).build())
+            .generateContentConfig(GenerateContentConfig.builder().temperature(0.7f).seed(SEED).maxOutputTokens(50000).build())
             .outputKey("responseForUser")
             .beforeAgentCallback((beforeAgentCallback) -> {
                 Object responseForUser = beforeAgentCallback.state().get("responseForUser");
@@ -175,6 +177,7 @@ public class GeminiAiService implements AiServiceInterface {
                     
                     Here are the rules:
                     - Use examples, properties, and outputs only as specified in the schema.
+                    - If the user asks for troubleshooting, try to fix any related expression or task.
                     - If the user current flow seems unrelated, you can discard it and start from scratch, otherwise try to keep what you can from the current Flow while still replying to the user's intent.
                     - Identify if the user requests an addition, deletion, or modification of specific tasks, or a full rewrite of their flow. Only modify the relevant part.
                       If the change scope is unclear, discard the initial Flow if it does not fit the user’s needs.
@@ -213,6 +216,7 @@ public class GeminiAiService implements AiServiceInterface {
         LlmAgent yamlFixerAgent = LlmAgent.builder()
             .name("kestra_flow_yaml_fixer")
             .description("An agent to build a Kestra Flow YAML.")
+            .generateContentConfig(GenerateContentConfig.builder().temperature(0.7f).seed(SEED).maxOutputTokens(50000).build())
             .beforeAgentCallback((beforeAgentCallback) -> {
                 String responseForUser = (String) beforeAgentCallback.state().get("responseForUser");
                 if (responseForUser == null || responseForUser.isBlank()) {
@@ -343,7 +347,7 @@ public class GeminiAiService implements AiServiceInterface {
         String generatedUserId = FriendlyId.createFriendlyId();
         Content userMsg = Content.fromParts(
             Part.fromText("Current Flow YAML:\n```yaml\n" + flowGenerationPrompt.flowYaml() + "\n```"),
-            Part.fromText("Build a Flow that does the following:\n```\n" + flowGenerationPrompt.userPrompt() + "\n```")
+            Part.fromText("User's prompt:\n```\n" + flowGenerationPrompt.userPrompt() + "\n```")
         );
 
         AtomicReference<Session> sessionRef = new AtomicReference<>();

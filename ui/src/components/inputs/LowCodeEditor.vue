@@ -183,7 +183,7 @@
     const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault);
     const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"));
     const vueFlow = ref<HTMLDivElement>();
-    const timer = ref<number>();
+    const timer = ref<ReturnType<typeof setTimeout>>();
     const taskObject = ref();
     const taskEditData = ref();
     const taskEditDomElement = ref();

@@ -142,7 +142,7 @@
     const activeTabs = ref(props.readOnly ? "source" : "form");
     const type = ref<string>();
     const revisions = ref<any[]>();
-    const timer = ref<number>(0);
+    const timer = ref<ReturnType<typeof setTimeout>>();
     const lastValidatedValue = ref<string | null>(null);
 
     // Computed properties

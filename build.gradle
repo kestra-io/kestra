@@ -484,6 +484,12 @@ subprojects {subProject ->
             return
         }
 
+        //These modules should not be published
+        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver"]
+        if (subProject.name in unpublishedModules){
+            return
+        }
+
         subProject.tasks.matching { it.name.startsWith("publish") }.configureEach {
             dependsOn rootProject.tasks.named("executableJar")
         }

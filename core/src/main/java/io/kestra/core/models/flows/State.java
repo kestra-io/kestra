@@ -3,6 +3,7 @@ package io.kestra.core.models.flows;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.kestra.core.models.tasks.Task;
 import io.micronaut.core.annotation.Introspected;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -253,8 +254,21 @@ public class State {
             return this == Type.KILLED;
         }
 
+        /**
+         * @return states that are terminal to an execution
+         */
         public static List<Type> terminatedTypes() {
             return Stream.of(Type.values()).filter(type -> type.isTerminated()).toList();
+        }
+
+        /**
+         * Compute the final 'failure' of a task depending on <code>allowFailure</code> and <code>allowWarning</code>:
+         * - if both are true -> SUCCESS
+         * - if only <code>allowFailure</code> is true -> WARNING
+         * - if none -> FAILED
+         */
+        public static State.Type fail(Task task) {
+            return task.isAllowFailure() ? (task.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING) : State.Type.FAILED;
         }
     }
 

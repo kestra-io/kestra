@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -19,6 +18,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.*;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.services.LogService;
+import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.VariablesService;
 import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.storages.StorageContext;
@@ -159,6 +159,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private TracerFactory tracerFactory;
     private Tracer tracer;
 
+    @Inject
+    private MaintenanceService maintenanceService;
+
     /**
      * Creates a new {@link Worker} instance.
      *
@@ -286,8 +289,12 @@ public class Worker implements Service, Runnable, AutoCloseable {
         ));
 
         this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
+        if (this.maintenanceService.isInMaintenanceMode()) {
+            enterMaintenance();
+        } else {
+            setState(ServiceState.RUNNING);
+        }
 
-        setState(ServiceState.RUNNING);
         if (workerGroupKey != null) {
             log.info("Worker started with {} thread(s) in group '{}'", numThreads, workerGroupKey);
         }
@@ -305,19 +312,23 @@ public class Worker implements Service, Runnable, AutoCloseable {
         ClusterEvent clusterEvent = either.getLeft();
         log.info("Cluster event received: {}", clusterEvent);
         switch (clusterEvent.eventType()) {
-            case MAINTENANCE_ENTER -> {
-                this.executionKilledQueue.pause();
-                this.workerJobQueue.pause();
-
-                this.setState(ServiceState.MAINTENANCE);
-            }
-            case MAINTENANCE_EXIT -> {
-                this.executionKilledQueue.resume();
-                this.workerJobQueue.resume();
-
-                this.setState(ServiceState.RUNNING);
-            }
+            case MAINTENANCE_ENTER -> enterMaintenance();
+            case MAINTENANCE_EXIT -> exitMaintenance();
         }
+    }
+
+    private void enterMaintenance() {
+        this.executionKilledQueue.pause();
+        this.workerJobQueue.pause();
+
+        this.setState(ServiceState.MAINTENANCE);
+    }
+
+    private void exitMaintenance() {
+        this.executionKilledQueue.resume();
+        this.workerJobQueue.resume();
+
+        this.setState(ServiceState.RUNNING);
     }
 
     private void setState(final ServiceState state) {
@@ -396,11 +407,16 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     } catch (IllegalVariableEvaluationException e) {
                         RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
                         contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
+                        try {
+                            this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.fail()));
+                        } catch (QueueException ex) {
+                            log.error("Unable to emit the worker task result for task {} taskrun {}", currentWorkerTask.getTask().getId(), currentWorkerTask.getTaskRun().getId(), e);
+                        }
                     } catch (QueueException e) {
                         log.error("Unable to emit the worker task result for task {} taskrun {}", currentWorkerTask.getTask().getId(), currentWorkerTask.getTaskRun().getId(), e);
                     }
 
-                    if (workerTaskResult.getTaskRun().getState().isFailed() && !currentWorkerTask.getTask().isAllowFailure()) {
+                    if (workerTaskResult == null || workerTaskResult.getTaskRun().getState().isFailed() && !currentWorkerTask.getTask().isAllowFailure()) {
                         break;
                     }
 
@@ -777,7 +793,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         if (!(workerTask.getTask() instanceof RunnableTask<?> task)) {
             // This should never happen but better to deal with it than crashing the Worker
-            var state = workerTask.getTask().isAllowFailure() ? workerTask.getTask().isAllowWarning() ? SUCCESS : WARNING : FAILED;
+            var state = State.Type.fail(workerTask.getTask());
             TaskRunAttempt attempt = TaskRunAttempt.builder()
                 .state(new io.kestra.core.models.flows.State().withState(state))
                 .workerId(this.id)

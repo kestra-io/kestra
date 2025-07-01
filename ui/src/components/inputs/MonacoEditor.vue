@@ -1,5 +1,6 @@
 <template>
     <div>
+
         <div class="ks-monaco-editor" ref="editorRef" />
         <div v-if="errorMarkers.length" class="error-panel">
             <div v-for="err in errorMarkers" :key="err.startLineNumber + '-' + err.startColumn + '-' + err.message" class="error-item" @click="goToError(err)">
@@ -7,6 +8,9 @@
                 <span>{{ err.message }}</span>
             </div>
         </div>
+        
+        <div data-testid="monaco-editor" class="ks-monaco-editor" ref="editorRef" />
+
         <div ref="datePickerWrapper" v-show="datePickerShown">
             <el-date-picker
                 ref="datePicker"
@@ -21,6 +25,13 @@
                 class="z-3"
             />
         </div>
+
+        <textarea
+            data-testid="monaco-editor-hidden-synced-textarea"
+            style="height: 0; width: 0; opacity: 0;"
+            type="text"
+            v-model="textAreaValue"
+        />
     </div>
 </template>
 
@@ -53,6 +64,7 @@
     import {hashCode} from "../../utils/global.ts";
     import ICodeEditor = editor.ICodeEditor;
     import debounce from "lodash/debounce";
+    import {usePluginsStore} from "../../stores/plugins.ts";
 
     const store = useStore();
     const currentInstance = getCurrentInstance()!;
@@ -74,6 +86,15 @@
             }
         },
     };
+
+    const textAreaValue = computed({
+        get() {
+            return props.value;
+        },
+        set(value) {
+            emit("change", value);
+        }
+    });
 
     const highlight = inject(EDITOR_HIGHLIGHT_INJECTION_KEY, ref());
     watch(highlight, (line) => {
@@ -299,11 +320,11 @@
             node.querySelector(`.${KESTRA_ICON_WRAPPER_CLASS}`)?.remove();
 
             if (completionValue.includes(".") && !completionValue.includes("{")) {
-                if (store.state.plugin?.icons?.[completionValue] !== undefined) {
+                if (pluginsStore?.icons?.[completionValue] !== undefined) {
                     replaceRowIcon(vsCodeIcon, h(TaskIcon, {
                         cls: completionValue,
                         "only-icon": true,
-                        icons: store.state.plugin.icons,
+                        icons: pluginsStore.icons,
                     }));
                 }
             } else if (STATES[completionValue] !== undefined) {
@@ -442,6 +463,7 @@
 
     const disposeCompletions = ref<() => void>();
 
+
     const errorMarkers = ref<any[]>([]);
 
     function updateErrorMarkers() {
@@ -460,12 +482,22 @@
         }
     }
 
+    const pluginsStore = usePluginsStore();
+
+
     onMounted(async function () {
         await document.fonts.ready;
         await initMonaco();
 
         if (props.language !== undefined) {
-            disposeCompletions.value = await configureLanguage(store, t, props.diffEditor ? undefined : editorResolved.value as ICodeEditor, props.language, props.schemaType);
+            await configureLanguage(
+                store,
+                pluginsStore,
+                t,
+                props.diffEditor ? undefined : editorResolved.value as ICodeEditor,
+                props.language,
+                props.schemaType
+            );
         }
 
         // Exposing functions globally for testing purposes

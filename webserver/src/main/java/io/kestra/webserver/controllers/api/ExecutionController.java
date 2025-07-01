@@ -31,6 +31,7 @@ import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkErrorResponse;
@@ -95,6 +96,7 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
@@ -1283,8 +1285,9 @@ public class ExecutionController {
     ) throws Exception {
         Execution execution = executionService.getExecutionIfPause(tenantService.resolveTenant(), executionId, true);
         Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+        Pause.Resumed resumed = createResumed();
 
-        return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs)
+        return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs, resumed)
             .<HttpResponse<?>>handle((resumeExecution, sink) -> {
                 try {
                     this.executionQueue.emit(resumeExecution);
@@ -1295,6 +1298,10 @@ public class ExecutionController {
             })
             // need to consume the inputs in case of error
             .doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast());
+    }
+
+    protected Pause.Resumed createResumed() {
+        return Pause.Resumed.now();
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1344,7 +1351,7 @@ public class ExecutionController {
         for (Execution execution : executions) {
             var flow = flows.get(execution.getFlowId() + "_" + execution.getFlowRevision()) != null ? flows.get(execution.getFlowId() + "_" + execution.getFlowRevision()) : flowRepository.findByExecutionWithoutAcl(execution);
             flows.put(execution.getFlowId() + "_" + execution.getFlowRevision(), flow);
-            Execution resumeExecution = this.executionService.resume(execution, flow, State.Type.RUNNING);
+            Execution resumeExecution = this.executionService.resume(execution, flow, State.Type.RUNNING, createResumed());
             this.executionQueue.emit(resumeExecution);
         }
 

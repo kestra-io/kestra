@@ -6,18 +6,20 @@
 
 <script>
     import {mapGetters} from "vuex";
+    import {mapStores} from "pinia";
     import {cssVariable} from "@kestra-io/ui-libs";
+    import {useLayoutStore} from "../../stores/layout";
 
     export default {
         computed: {
-            ...mapGetters("layout", ["envName", "envColor"]),
+            ...mapStores(useLayoutStore),
             ...mapGetters("misc", ["configs"]),
             name() {
-                return this.envName || this.configs?.environment?.name;
+                return this.layoutStore.envName || this.configs?.environment?.name;
             },
             color() {
-                if (this.envColor) {
-                    return this.envColor;
+                if (this.layoutStore.envColor) {
+                    return this.layoutStore.envColor;
                 }
 
                 if (this.configs?.environment?.color) {

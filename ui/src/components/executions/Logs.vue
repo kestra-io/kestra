@@ -52,6 +52,11 @@
                             <download />
                         </kicon>
                     </el-button>
+                    <el-button @click="copyAllLogs()">
+                        <kicon :tooltip="$t('copy logs')">
+                            <content-copy />
+                        </kicon>
+                    </el-button>
                 </el-button-group>
             </el-form-item>
             <el-form-item>
@@ -120,6 +125,7 @@
     import {mapState} from "vuex";
     import Download from "vue-material-design-icons/Download.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Kicon from "../Kicon.vue";
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
@@ -142,6 +148,7 @@
             Kicon,
             Download,
             Magnify,
+            ContentCopy,
             Collapse,
             Restart,
             DynamicScroller,
@@ -250,6 +257,16 @@
                     }
                 }).then((response) => {
                     Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName);
+                });
+            },
+            copyAllLogs() {
+                this.$store.dispatch("execution/downloadLogs", {
+                    executionId: this.execution.id,
+                    params: {
+                        minLevel: this.level,
+                    }
+                }).then((response) => {
+                    Utils.copy(response);
                 });
             },
             forwardEvent(type, event) {

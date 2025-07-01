@@ -90,6 +90,7 @@
     import MetadataInputs from "../../flows/MetadataInputs.vue";
     import MetadataInputsContent from "../../flows/MetadataInputsContent.vue";
     import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
+    import InitialSchema from "./flow-schema.json"
 
 
     import {
@@ -109,6 +110,7 @@
 
     import {useStore} from "vuex";
     import TaskWrapper from "../../flows/tasks/TaskWrapper.vue";
+    import {usePluginsStore} from "../../../stores/plugins";
     import {removeNullAndUndefined} from "../utils/cleanUp";
     const store = useStore();
 
@@ -162,10 +164,12 @@
     const schema = ref<{
         definitions?: any,
         $ref?: string,
-    }>({})
+    }>(InitialSchema)
+
+    const pluginStore = usePluginsStore();
 
     onMounted(async () => {
-        await store.dispatch("plugin/loadSchemaType").then((response) => {
+        await pluginStore.loadSchemaType().then((response) => {
             schema.value = response;
         })
     });

@@ -555,7 +555,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                     builder.uri(uri);
                 } catch (Exception e) {
                     runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
-                    var state = this.isAllowFailure() ? State.Type.WARNING : State.Type.FAILED;
+                    var state = State.Type.fail(this);
                     taskRun = taskRun
                         .withState(state)
                         .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))

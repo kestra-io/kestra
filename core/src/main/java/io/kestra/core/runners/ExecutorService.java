@@ -667,7 +667,7 @@ public class ExecutorService {
                                 .taskRunId(workerTaskResult.getTaskRun().getId())
                                 .executionId(executor.getExecution().getId())
                                 .date(workerTaskResult.getTaskRun().getState().maxDate().plus(duration != null ? duration : timeout))
-                                .state(duration != null ? behavior.mapToState() : State.Type.FAILED)
+                                .state(duration != null ? behavior.mapToState() : State.Type.fail(pauseTask))
                                 .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
                                 .build();
                         }
@@ -818,7 +818,7 @@ public class ExecutorService {
                         .executionKind(executor.getExecution().getKind())
                         .build();
                     // Get worker group
-                    Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(workerTask);
+                    Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(executor.getFlow(), workerTask);
                     if (workerGroup.isPresent()) {
                         // Check if the worker group exist
                         String tenantId = executor.getFlow().getTenantId();

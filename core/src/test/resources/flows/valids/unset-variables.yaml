@@ -1,0 +1,16 @@
+id: unset-variables
+namespace: io.kestra.tests
+
+tasks:
+  - id: set-vars
+    type: io.kestra.plugin.core.execution.SetVariables
+    variables:
+      message: Hello World
+  - id: unset-variables
+    type: io.kestra.plugin.core.execution.UnsetVariables
+    variables:
+      - message
+  - id: output
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      message: "{{ vars.message ??? 'default' }}"

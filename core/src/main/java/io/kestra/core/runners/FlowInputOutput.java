@@ -17,6 +17,7 @@ import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
+import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
@@ -425,7 +426,7 @@ public class FlowInputOutput {
                 case FILE -> {
                     URI uri = URI.create(current.toString().replace(File.separator, "/"));
 
-                    if (uri.getScheme() != null && uri.getScheme().equals("kestra")) {
+                    if (URIFetcher.supports(uri)) {
                         yield uri;
                     } else {
                         yield storageInterface.from(execution, id, new File(current.toString()));

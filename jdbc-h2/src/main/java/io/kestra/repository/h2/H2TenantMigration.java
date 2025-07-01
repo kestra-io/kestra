@@ -39,4 +39,13 @@ public class H2TenantMigration extends AbstractJdbcTenantMigration {
 
         return context.execute(query);
     }
+
+    @Override
+    protected int deleteTutorialFlows(Table<?> table, DSLContext context) {
+        String query = """
+            DELETE FROM "%s"
+            WHERE JQ_STRING("value", '.namespace') = ?
+        """.formatted(table.getName());
+        return context.execute(query, "tutorial");
+    }
 }

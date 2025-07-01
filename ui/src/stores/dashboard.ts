@@ -1,97 +1,83 @@
-import type {Module} from "vuex";
-
-import axios from "axios";
+import {defineStore} from "pinia";
+import {apiUrl} from "override/utils/route";
 
 import type {Dashboard} from "../components/dashboard/composables/useDashboards";
-import {apiUrl} from "override/utils/route";
 
 const header = {headers: {"Content-Type": "application/x-yaml"}};
 const validateStatus = (status: number) => status === 200 || status === 404;
 
-export interface DashboardState {
+export interface State {
     dashboard?: Dashboard;
-    chartErrors?: string[];
+    chartErrors: string[];
 }
 
-const dashboard: Module<DashboardState, unknown> = {
-    namespaced: true,
-    state: () => ({
+export const useDashboardStore = defineStore("dashboard", {
+    state: (): State => ({
         dashboard: undefined,
         chartErrors: [],
     }),
-    mutations: {
-        setDashboard(state, dashboard: Dashboard) {
-            state.dashboard = dashboard;
-        },
-        setChartErrors(state, errors: string[]) {
-            state.chartErrors = errors;
-        },
-    },
+
     actions: {
-        list(_, options) {
+        setDashboard(dashboard: Dashboard) {
+            this.dashboard = dashboard;
+        },
+
+        setChartErrors(errors: string[]) {
+            this.chartErrors = errors;
+        },
+
+        async list(options: Record<string, any>) {
             const {sort, ...params} = options;
+            const response = await this.$http.get(`${apiUrl(this.vuexStore)}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params});
 
-            // TODO: Make sure that all dashboards are loaded, do it gradually if needed
-            return axios
-                .get(`${apiUrl(this)}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params})
-                .then((response) => response.data);
+            return response.data;
         },
-        load({commit}, id) {
-            return axios
-                .get(`${apiUrl(this)}/dashboards/${id}`, {validateStatus})
-                .then((response) => {
-                    let dashboard;
 
-                    if (response.status === 200) dashboard = response.data;
+        async load(id: string) {
+            const response = await this.$http.get(`${apiUrl(this.vuexStore)}/dashboards/${id}`, {validateStatus});
+            let dashboard;
 
-                    // If the dashboard is not found, we return a default dashboard with the given id
-                    else dashboard = {title: "Default", id};
+            if (response.status === 200) dashboard = response.data;
+            else dashboard = {title: "Default", id};
 
-                    commit("setDashboard", dashboard);
+            this.setDashboard(dashboard);
+            return dashboard;
+        },
 
-                    return dashboard;
-                });
+        async create(source: any) {
+            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards`, source, header);
+            return response.data;
         },
-        create(_, source) {
-            return axios
-                .post(`${apiUrl(this)}/dashboards`, source, header)
-                .then((response) => response.data);
-        },
-        update(_, {id, source}) {
-            return axios
-                .put(`${apiUrl(this)}/dashboards/${id}`, source, header)
-                .then((response) => response.data);
-        },
-        delete(_, id) {
-            return axios
-                .delete(`${apiUrl(this)}/dashboards/${id}`)
-                .then((response) => response.data);
-        },
-        generate(_, {id, chartId, ...filters}) {
-            return axios
-                .post(`${apiUrl(this)}/dashboards/${id}/charts/${chartId}`, Object.keys(filters).length > 0 ? filters : null, {validateStatus})
-                .then((response) => response.data);
-        },
-        validate(_, source) {
-            return axios
-                .post(`${apiUrl(this)}/dashboards/validate`, source, header)
-                .then((response) => response.data);
-        },
-        validateChart({commit}, source) {
-            return axios
-                .post(`${apiUrl(this)}/dashboards/validate/chart`, source, header)
-                .then((response) => {
-                    commit("setChartErrors", response.data);
 
-                    return response.data;
-                });
+        async update({id, source}: { id: string; source: any }) {
+            const response = await this.$http.put(`${apiUrl(this.vuexStore)}/dashboards/${id}`, source, header);
+            return response.data;
         },
-        chartPreview(_, chart) {
-            return axios
-                .post(`${apiUrl(this)}/dashboards/charts/preview`, chart)
-                .then((response) => response.data);
+
+        async delete(id: string) {
+            const response = await this.$http.delete(`${apiUrl(this.vuexStore)}/dashboards/${id}`);
+            return response.data;
+        },
+
+        async generate({id, chartId, ...filters}: {id: string; chartId: string; [key: string]: any;}) {
+            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/${id}/charts/${chartId}`, Object.keys(filters).length > 0 ? filters : null, {validateStatus});
+            return response.data;
+        },
+
+        async validate(source: any) {
+            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/validate`, source, header);
+            return response.data;
+        },
+
+        async validateChart(source: any) {
+            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/validate/chart`, source, header);
+            this.setChartErrors(response.data);
+            return response.data;
+        },
+
+        async chartPreview(chart: any) {
+            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/charts/preview`, chart);
+            return response.data;
         },
     },
-};
-
-export default dashboard;
+});

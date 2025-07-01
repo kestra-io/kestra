@@ -14,7 +14,6 @@ declare module "@vue/runtime-core" {
         trigger:any
         editor:any
         doc:any
-        dashboard:any
         code:any
     }
 

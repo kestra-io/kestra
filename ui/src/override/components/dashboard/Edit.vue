@@ -18,6 +18,9 @@
     import {useStore} from "vuex";
     const store = useStore();
 
+    import {useDashboardStore} from "../../../stores/dashboard";
+    const dashboardStore = useDashboardStore();
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
@@ -31,7 +34,7 @@
 
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const save = async (source: string) => {
-        const response = await store.dispatch("dashboard/update", {id: route.params.dashboard, source,});
+        const response = await dashboardStore.update({id: route.params.dashboard, source});
 
         dashboard.value.sourceCode = source;
 
@@ -40,7 +43,7 @@
     };
 
     onMounted(() => {
-        store.dispatch("dashboard/load", route.params.dashboard).then((response) => {
+        dashboardStore.load(route.params.dashboard as string).then((response) => {
             dashboard.value = response;
         });
     });

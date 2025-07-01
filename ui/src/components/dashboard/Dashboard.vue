@@ -49,8 +49,8 @@
     const route = useRoute();
     const router = useRouter();
 
-    import {useStore} from "vuex";
-    const store = useStore();
+    import {useDashboardStore} from "../../stores/dashboard";
+    const dashboardStore = useDashboardStore();
 
     defineOptions({inheritAttrs: false});
 
@@ -92,7 +92,7 @@
             });
         }
 
-        dashboard.value = id === "default" ? {id, ...parse(defaultYAML)} : await store.dispatch("dashboard/load", id);
+        dashboard.value = id === "default" ? {id, ...parse(defaultYAML)} : await dashboardStore.load(id);
         loadCharts(dashboard.value.charts);
     };
 

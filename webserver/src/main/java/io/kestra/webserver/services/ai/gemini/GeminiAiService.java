@@ -202,6 +202,7 @@ public class GeminiAiService implements AiServiceInterface {
                     - To avoid escaping quotes, use double quotes first and if you need quotes inside, use single ones. Only escape them if you have 3+ level quotes, for example: `message: "Hello {{inputs.userJson | jq('.name')}}"`.
                     - A property key is unique within each type.
                     - When fetching data from the JDBC plugin, always use fetchType: STORE.
+                    - Manipulating date in expressions can be done through `dateAdd` (`{{now()|dateAdd(-1,'DAYS')}}`) and `date` filters (`{{"July 24, 2001"|date("yyyy-MM-dd",existingFormat="MMMM dd, yyyy")}}`)
                     - Always preserve root-level `id` and `namespace` if provided.
                     - If the user uses vague references (“it,” “that”), infer context from the current Flow YAML.
                     - Except for error scenarios, output only the raw YAML, with no explanation or additional text.

@@ -954,7 +954,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             .conditionContext(flowWithTrigger.conditionContext)
             .build();
         try {
-            Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(workerTrigger);
+            Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(flowWithTrigger.getFlow(), workerTrigger);
             if (workerGroup.isPresent()) {
                 // Check if the worker group exist
                 String tenantId = flowWithTrigger.getFlow().getTenantId();

@@ -12,6 +12,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
@@ -21,10 +22,7 @@ import org.junit.jupiter.api.Test;
 import jakarta.validation.ConstraintViolationException;
 import reactor.core.publisher.Flux;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -400,8 +398,27 @@ public class InputsTest {
     @Test
     @LoadFlows({"flows/valids/inputs.yaml"})
     void fileInputWithFileDefault() throws IOException, QueueException, TimeoutException {
-        HashMap<String, Object> inputs = new HashMap<>(InputsTest.inputs);
+        HashMap<String, Object> newInputs = new HashMap<>(InputsTest.inputs);
         URI file = createFile();
+        newInputs.put("file", file);
+
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "inputs",
+            null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, newInputs)
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat((String) execution.findTaskRunsByTaskId("file").getFirst().getOutputs().get("value")).isEqualTo(file.toString());
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
+    void fileInputWithNsfile() throws IOException, QueueException, TimeoutException {
+        HashMap<String, Object> inputs = new HashMap<>(InputsTest.inputs);
+        URI file = createNsFile(false);
         inputs.put("file", file);
 
         Execution execution = runnerUtils.runOne(
@@ -420,5 +437,13 @@ public class InputsTest {
         File tempFile = File.createTempFile("file", ".txt");
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
+    }
+
+    private URI createNsFile(boolean nsInAuthority) throws IOException {
+        String namespace = "io.kestra.tests";
+        String filePath = "file.txt";
+        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 }

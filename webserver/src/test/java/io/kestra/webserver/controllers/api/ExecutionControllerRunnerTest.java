@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
@@ -718,7 +719,8 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/pause.yaml"})
-    void resumeExecutionPaused() throws TimeoutException, InterruptedException, QueueException {
+    @SuppressWarnings("unchecked")
+    void resumeExecutionPaused() throws TimeoutException, InterruptedException, QueueException, InternalException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
@@ -734,6 +736,7 @@ class ExecutionControllerRunnerTest {
             GET("/api/v1/main/executions/" + pausedExecution.getId()),
             Execution.class);
         assertThat(execution.getState().isPaused()).isFalse();
+        assertThat((Map<String, Object>) execution.findTaskRunByTaskRunId("pause").getOutputs().get("resumed")).containsKey("on");
     }
 
     @SuppressWarnings("unchecked")

@@ -25,14 +25,14 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         this._yamlAutoCompletion = yamlAutoCompletion;
     }
 
-    async configureLanguage(store: Store<Record<string, any>>) {
+    async configureLanguage() {
         configureMonacoYaml(monaco, {
             enableSchemaRequest: true,
             hover: true,
             completion: true,
             validate: true,
             format: true,
-            schemas: yamlSchemas(store)
+            schemas: yamlSchemas()
         });
 
         const yamlCompletion = (StandaloneServices.get(ILanguageFeaturesService).completionProvider._entries as {

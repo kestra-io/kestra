@@ -15,7 +15,7 @@ export default abstract class AbstractLanguageConfigurator {
         return this._language;
     }
 
-    async configureLanguage(_: Store<Record<string, any>>) {
+    async configureLanguage() {
         monaco.languages.register({id: this.language});
     }
 
@@ -24,7 +24,7 @@ export default abstract class AbstractLanguageConfigurator {
     async configure(store: Store<Record<string, any>>, t: ReturnType<typeof useI18n>["t"], editorInstance: monaco.editor.ICodeEditor | undefined): Promise<IDisposable[]> {
         if (!AbstractLanguageConfigurator.configuredLanguages.includes(this.language)) {
             AbstractLanguageConfigurator.configuredLanguages.push(this.language);
-            await this.configureLanguage(store);
+            await this.configureLanguage();
             return this.configureAutoCompletion(t, store, editorInstance);
         }
 

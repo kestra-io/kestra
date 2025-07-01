@@ -11,7 +11,7 @@ public interface InputFilesInterface {
         description = """
             Each file can be defined:
             - Inline with its content
-            - As a URI, supported schemes are `kestra` for internal storage files, and `file` for host local files.
+            - As a URI, supported schemes are `kestra` for internal storage files, `file` for host local files, and `nsfile` for namespace files.
             """,
         oneOf = {Map.class, String.class}
     )

@@ -74,7 +74,7 @@ dependencies {
     testImplementation "io.micronaut:micronaut-http-server-netty"
     testImplementation "io.micronaut:micronaut-management"
 
-    testImplementation "org.testcontainers:testcontainers:1.21.1"
-    testImplementation "org.testcontainers:junit-jupiter:1.21.1"
+    testImplementation "org.testcontainers:testcontainers:1.21.2"
+    testImplementation "org.testcontainers:junit-jupiter:1.21.2"
     testImplementation "org.bouncycastle:bcpkix-jdk18on:1.81"
 }

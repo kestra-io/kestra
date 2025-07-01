@@ -136,7 +136,7 @@ public class Data {
                 Structured data items can be defined in the following ways:
                 - A single item as a map (a document).
                 - A list of items as a list of maps (a list of documents).
-                - A URI, supported schemes are `kestra` for internal storage files, and `file` for host local files.
+                - A URI, supported schemes are `kestra` for internal storage files, `file` for host local files, and `nsfile` for namespace files.
                 - A JSON String that will then be serialized either as a single item or a list of items.""";
 
         @Schema(

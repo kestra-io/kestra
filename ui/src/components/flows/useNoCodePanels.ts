@@ -79,7 +79,7 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
             return {
                 value: getEditTabKey(tab, keepAliveCacheBuster++),
                 button: {
-                    label: `${parentName} / ${currentBlock?.id ?? tab.refPath}`,
+                    label: `${parentName} / ${currentBlock?.id ?? tab.refPath ?? t(`no_code.creation.${tab.blockType}`)}`,
                     icon: markRaw(MouseRightClickIcon),
                 },
             }
@@ -120,7 +120,8 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
 export function setupInitialNoCodeTabIfExists(flow: string, tab: string, t: (key: string) => string, handlers: Handlers) {
     if (tab.startsWith(`${NOCODE_PREFIX}-`)){
         const {parentPath, refPath, action} = parseTabId(tab)
-        if(action === "edit" && !YAML_UTILS.extractBlockWithPath({source: flow, path: `${parentPath}[${refPath}]`})) {
+        const path = (refPath === undefined ? parentPath : `${parentPath}[${refPath}]`) ?? ""
+        if(action === "edit" && !YAML_UTILS.extractBlockWithPath({source: flow, path})) {
             // if the task is not found, we don't create the tab
             return undefined
         }

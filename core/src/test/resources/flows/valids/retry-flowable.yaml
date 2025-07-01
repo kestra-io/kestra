@@ -7,7 +7,7 @@ tasks:
     retry:
       type: constant
       interval: PT1S
-      maxAttempt: 3
+      maxAttempts: 3
     tasks:
       - id: child
         type: io.kestra.plugin.core.execution.Fail

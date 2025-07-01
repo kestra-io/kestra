@@ -49,4 +49,10 @@ public class NamespaceFiles {
     )
     @Builder.Default
     private Property<FileExistComportment> ifExists = Property.ofValue(FileExistComportment.OVERWRITE);
+
+    @Schema(
+        title = "Whether to mount file into the root of the working directory, or create a folder per namespace"
+    )
+    @Builder.Default
+    private Property<Boolean> folderPerNamespace = Property.ofValue(false);
 }

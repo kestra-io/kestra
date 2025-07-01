@@ -843,6 +843,7 @@
       },
       "sections": {
         "afterExecution": "실행 후",
+        "connection": "연결 속성",
         "deprecated": "사용되지 않는 속성",
         "errors": "오류 처리기",
         "finally": "마지막으로",

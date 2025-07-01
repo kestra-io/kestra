@@ -15,6 +15,6 @@ export const baseUrl = root;
 
 export const basePath = () => "/api/v1/main"
 
-export const apiUrl = (_?: Store<any>) => `${baseUrl}${basePath()}`
+export const apiUrl = (_: Store<any>) => `${baseUrl}${basePath()}`
 
 export const apiUrlWithoutTenants = () => `${baseUrl}/api/v1`

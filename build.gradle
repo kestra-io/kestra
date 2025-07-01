@@ -527,9 +527,6 @@ subprojects {subProject ->
             return
         }
 
-        subProject.tasks.matching { it.name.startsWith("publish") }.configureEach {
-            dependsOn rootProject.tasks.named("executableJar")
-        }
         mavenPublishing {
             publishToMavenCentral(true)
             signAllPublications()
@@ -579,12 +576,50 @@ subprojects {subProject ->
             }
         }
 
+        if (subProject.name == 'cli') {
+
+            /* Make sure the special publication is wired *after* every plugin */
+            subProject.afterEvaluate {
+                /* 1. Remove the default java component so Gradle stops expecting
+                       the standard cli-*.jar, sources, javadoc, etc.           */
+                components.removeAll { it.name == "java" }
+
+                /* 2. Replace the publication’s artifacts with shadow + exec */
+                publishing.publications.withType(MavenPublication).configureEach { pub ->
+                    pub.artifacts.clear()
+
+                    // main shadow JAR built at root
+                    pub.artifact(rootProject.tasks.named("shadowJar").get()) {
+                        extension = "jar"
+                    }
+
+                    // executable ZIP built at root
+                    pub.artifact(rootProject.tasks.named("executableJar").get().archiveFile) {
+                        classifier = "exec"
+                        extension  = "zip"
+                    }
+                }
+
+                /* 3. Disable Gradle-module metadata for this publication to
+                       avoid the “artifact removed from java component” error. */
+                tasks.withType(GenerateModuleMetadata).configureEach { it.enabled = false }
+
+                /* 4. Make every publish task in :cli wait for the two artifacts */
+                tasks.matching { it.name.startsWith("publish") }.configureEach {
+                    dependsOn rootProject.tasks.named("shadowJar")
+                    dependsOn rootProject.tasks.named("executableJar")
+                }
+            }
+        }
+
         tasks.withType(GenerateModuleMetadata).configureEach {
             // Suppression this validation error as we want to enforce the Kestra platform
             suppressedValidationErrors.add('enforced-platform')
         }
     }
 }
+
+
 
 /**********************************************************************************************************************\
  * Version

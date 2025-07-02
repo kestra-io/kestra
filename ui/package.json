@@ -98,7 +98,7 @@
     "@types/semver": "^7.7.0",
     "@types/testing-library__jest-dom": "^5.14.9",
     "@types/testing-library__user-event": "^4.1.1",
-    "@typescript-eslint/parser": "^8.35.0",
+    "@typescript-eslint/parser": "^8.35.1",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vitejs/plugin-vue-jsx": "^5.0.1",
     "@vitest/browser": "^3.2.4",

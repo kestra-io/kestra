@@ -99,8 +99,8 @@ export default (
                 const coreStore = useCoreStore();
                 coreStore.message = {
                     variant: "error",
-                    title: "Connection Error",
-                    message: errorResponse.message || "Network Error"
+                    response: errorResponse,
+                    content: errorResponse,
                 };
                 return Promise.reject(errorResponse);
             }
@@ -200,7 +200,6 @@ export default (
                 const coreStore = useCoreStore();
                 coreStore.message = {
                     variant: "error",
-                    message: (errorResponse.response.data as any)?.message,
                     response: errorResponse.response,
                     content: errorResponse.response.data
                 };

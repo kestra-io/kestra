@@ -12,13 +12,7 @@ import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.SearchResult;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowForExecution;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowScope;
-import io.kestra.core.models.flows.FlowWithException;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
@@ -39,26 +33,12 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.Condition;
-import org.jooq.DSLContext;
-import org.jooq.Field;
+import org.jooq.*;
 import org.jooq.Record;
-import org.jooq.Record1;
-import org.jooq.Record3;
-import org.jooq.Record4;
-import org.jooq.SQLDialect;
-import org.jooq.Select;
-import org.jooq.SelectConditionStep;
-import org.jooq.Table;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -302,24 +282,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 .selectCount()
                 .from(fromLastRevision(true))
                 .where(this.defaultFilter(tenantId))
-                .fetchOne(0, int.class));
-    }
-
-    @Override
-    public int countForNamespace(String tenantId, @Nullable String namespace) {
-        if (namespace == null) return count(tenantId);
-
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> DSL
-                .using(configuration)
-                .selectCount()
-                .from(fromLastRevision(true))
-                .where(this.defaultFilter(tenantId))
-                .and(DSL.or(
-                    NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%"),
-                    NAMESPACE_FIELD.eq(namespace)
-                ))
                 .fetchOne(0, int.class));
     }
 

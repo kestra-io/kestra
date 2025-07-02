@@ -1,5 +1,6 @@
 package io.kestra.core.test.flow;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,6 +15,8 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Fixtures {
+
+    @Schema(additionalProperties = Schema.AdditionalPropertiesValue.TRUE)
     private Map<String, Object> inputs;
 
     private Map<String, String> files;

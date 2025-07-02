@@ -608,7 +608,7 @@
     "flows deleted": "<code>{count}</code> 个流程已删除",
     "flows disabled": "<code>{count}</code> 个流程已禁用",
     "flows enabled": "<code>{count}</code> 个流程已启用",
-    "flows exported": "流程已导出",
+    "flows exported": "<code>{count}</code> 个 flow 已导出",
     "flows imported": "Flow已导入",
     "focus task": "点击任何元素以查看其文档。",
     "fold_all_multi_lines": "折叠所有多行",

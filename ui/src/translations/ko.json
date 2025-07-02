@@ -608,7 +608,7 @@
     "flows deleted": "<code>{count}</code> 개의 flow가 삭제되었습니다",
     "flows disabled": "<code>{count}</code> 개의 flow가 비활성화되었습니다",
     "flows enabled": "<code>{count}</code> 개의 flow가 활성화되었습니다",
-    "flows exported": "flow가 내보내졌습니다",
+    "flows exported": "<code>{count}</code> Flow(s) 내보내기 완료",
     "flows imported": "Flow가 가져왔습니다.",
     "focus task": "문서를 보려면 요소를 클릭하세요.",
     "fold_all_multi_lines": "모든 다중 라인 접기",

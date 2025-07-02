@@ -608,7 +608,7 @@
     "flows deleted": "<code>{count}</code> Flow(s) हटाए गए",
     "flows disabled": "<code>{count}</code> Flow(s) अक्षम किए गए",
     "flows enabled": "<code>{count}</code> Flow(s) सक्षम किए गए",
-    "flows exported": "Flows निर्यात किए गए",
+    "flows exported": "<code>{count}</code> Flow(s) निर्यात किए गए",
     "flows imported": "फ़्लोज़ आयात किए गए",
     "focus task": "किसी भी तत्व पर क्लिक करें ताकि उसका दस्तावेज़ देखा जा सके।",
     "fold_all_multi_lines": "सभी मल्टी लाइन्स को फोल्ड करें",

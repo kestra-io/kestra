@@ -608,7 +608,7 @@
     "flows deleted": "<code>{count}</code> Flow(s) gelöscht",
     "flows disabled": "<code>{count}</code> Flow(s) deaktiviert",
     "flows enabled": "<code>{count}</code> Flow(s) aktiviert",
-    "flows exported": "Flows exportiert",
+    "flows exported": "<code>{count}</code> Flow(s) exportiert",
     "flows imported": "Flows importiert",
     "focus task": "Klicken Sie auf ein Element, um dessen Dokumentation zu sehen.",
     "fold_all_multi_lines": "Alle Mehrzeiligen Einklappen",

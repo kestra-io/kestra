@@ -541,15 +541,21 @@
                             : this.selection.length,
                     }),
                     () => {
+                        const flowCount = this.queryBulkAction
+                            ? this.total
+                            : this.selection.length;
+                        
                         if (this.queryBulkAction) {
                             return this.$store
                                 .dispatch(
                                     "flow/exportFlowByQuery",
                                     this.loadQuery(),
                                 )
-                                .then((_) => {
+                                .then(() => {
                                     this.$toast().success(
-                                        this.$t("flows exported"),
+                                        this.$t("flows exported", {
+                                            count: flowCount,
+                                        }),
                                     );
                                 });
                         } else {
@@ -557,9 +563,11 @@
                                 .dispatch("flow/exportFlowByIds", {
                                     ids: this.selection,
                                 })
-                                .then((_) => {
+                                .then(() => {
                                     this.$toast().success(
-                                        this.$t("flows exported"),
+                                        this.$t("flows exported", {
+                                            count: flowCount,
+                                        }),
                                     );
                                 });
                         }

@@ -432,10 +432,20 @@
             },
             exportFlows() {
                 return this.$store
-                    .dispatch("flow/exportFlowByQuery", {})
-                    .then(_ => {
-                        this.$toast().success(this.$t("flows exported"));
-                    })
+                    .dispatch("flow/findFlows", {size: 1, page: 1})
+                    .then((result) => {
+                        const flowCount = result.total;
+                        
+                        return this.$store
+                            .dispatch("flow/exportFlowByQuery", {})
+                            .then(() => {
+                                this.$toast().success(
+                                    this.$t("flows exported", {
+                                        count: flowCount,
+                                    })
+                                );
+                            });
+                    });
             },
             exportTemplates() {
                 return this.$store

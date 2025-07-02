@@ -4,6 +4,7 @@ import {Router} from "vue-router";
 import {Store} from "vuex";
 import {storageKeys} from "./constants";
 import {useLayoutStore} from "../stores/layout";
+import {useCoreStore} from "../stores/core";
 
 // nprogress
 let pendingRoute = false;
@@ -95,11 +96,12 @@ export default (
         },
         async (errorResponse: AxiosError & { config?: { showMessageOnError?: boolean } }) => {
             if (errorResponse?.code === "ERR_BAD_RESPONSE" && !errorResponse?.response?.data) {
-                store.dispatch("core/showMessage", {
+                const coreStore = useCoreStore();
+                coreStore.message = {
+                    variant: "error",
                     response: errorResponse,
                     content: errorResponse,
-                    variant: "error"
-                });
+                };
                 return Promise.reject(errorResponse);
             }
 
@@ -108,7 +110,8 @@ export default (
             }
 
             if (errorResponse.response.status === 404) {
-                store.dispatch("core/showError", errorResponse.response.status)
+                const coreStore = useCoreStore();
+                coreStore.error = errorResponse.response.status;
 
                 return Promise.reject(errorResponse);
             }
@@ -168,7 +171,7 @@ export default (
                         return instance(originalRequest)
                     } catch {
                         document.body.classList.add("login");
-                        store.dispatch("core/isUnsaved", false);
+                        useCoreStore().unsavedChange = false;
                         
                         useLayoutStore().setTopNavbar(undefined);
                         
@@ -194,11 +197,12 @@ export default (
             }
 
             if (errorResponse.response.data && errorResponse?.config?.showMessageOnError !== false) {
-                store.dispatch("core/showMessage", {
+                const coreStore = useCoreStore();
+                coreStore.message = {
+                    variant: "error",
                     response: errorResponse.response,
-                    content: errorResponse.response.data,
-                    variant: "error"
-                })
+                    content: errorResponse.response.data
+                };
 
                 return Promise.reject(errorResponse);
             }

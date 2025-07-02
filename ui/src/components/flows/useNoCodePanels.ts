@@ -165,6 +165,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         refPath?: number,
         position: "before" | "after" = "after",
         dirty: boolean = false,
+        fieldName?: string | undefined
     ) {
         // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab({
@@ -173,6 +174,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             parentPath,
             refPath,
             position,
+            fieldName,
         }, t, handlers, store.state.flow.flowYaml, dirty)
 
         panels.value[opener.panelIndex]?.tabs.splice(opener.tabIndex + 1, 0, tab)

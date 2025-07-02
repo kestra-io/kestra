@@ -36,7 +36,10 @@
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {NoCodeElement, Schemas} from "../code/utils/types";
-    import {BLOCKTYPE_INJECT_KEY, PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
+    import {
+        BLOCKTYPE_INJECT_KEY,
+        FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY
+    } from "../code/injectionKeys";
     import {removeNullAndUndefined} from "../code/utils/cleanUp";
     import {usePluginsStore} from "../../stores/plugins";
 
@@ -58,6 +61,7 @@
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const blockType = inject(BLOCKTYPE_INJECT_KEY, "");
+    const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
 
     const isPluginDefaults = computed(() => {
         return parentPath.startsWith("pluginDefaults")
@@ -151,6 +155,11 @@
 
     function onTaskInput(val: PartialCodeElement | undefined) {
         taskObject.value = val;
+        if(fieldName){
+            val = {
+                [fieldName]: val,
+            };
+        }
         if (isPluginDefaults.value) {
             const {
                 forced,

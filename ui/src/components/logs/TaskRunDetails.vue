@@ -113,6 +113,8 @@
     import Download from "vue-material-design-icons/Download.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useCoreStore} from "../../stores/core";
     import ForEachStatus from "../executions/ForEachStatus.vue";
     import TaskRunLine from "../executions/TaskRunLine.vue";
     import FlowUtils from "../../utils/flowUtils";
@@ -323,6 +325,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapStores(useCoreStore),
             Download() {
                 return Download
             },
@@ -527,11 +530,11 @@
                         }
 
                         this.logsSSE.onerror = _ => {
-                            this.$store.dispatch("core/showMessage", {
+                            this.coreStore.message = {
                                 variant: "error",
                                 title: this.$t("error"),
                                 message: this.$t("something_went_wrong.loading_execution"),
-                            });
+                            };
                         }
                     })
 

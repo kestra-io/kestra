@@ -464,7 +464,7 @@
     "export all templates": "Export all templates",
     "flow_export": "Export flow",
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
-    "flows exported": "Flows exported",
+    "flows exported": "<code>{count}</code> Flow(s) exported",
     "export all flows": "Export all flows",
     "import": "Import",
     "disable": "Disable",

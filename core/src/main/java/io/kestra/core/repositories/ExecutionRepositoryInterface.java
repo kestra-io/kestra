@@ -5,7 +5,6 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
-import io.kestra.core.models.executions.statistics.ExecutionCountStatistics;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
@@ -128,29 +127,6 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable DateUtils.GroupType groupBy,
         List<State.Type> state,
         boolean isTaskRun
-    );
-
-    List<Execution> lastExecutions(
-        @Nullable String tenantId,
-        @Nullable List<FlowFilter> flows
-    );
-
-    Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable List<FlowFilter> flows,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        boolean groupByNamespaceOnly
-    );
-
-    Map<String, ExecutionCountStatistics> executionCountsGroupedByNamespace(
-        @Nullable String tenantId,
-        @Nullable String namespace,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate
     );
 
     @Getter

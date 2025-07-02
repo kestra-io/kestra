@@ -36,6 +36,8 @@
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
     import {mapGetters, mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useCoreStore} from "../../stores/core";
     import TriggerFlow from "./TriggerFlow.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
@@ -62,13 +64,13 @@
         },
         computed: {
             ...mapGetters("flow", ["flow"]),
-            ...mapGetters("core", ["guidedProperties"]),
-            ...mapState("flow", ["total"])
+            ...mapState("flow", ["total"]),
+            ...mapStores(useCoreStore),
         },
         methods: {
             stopTour() {
                 this.$tours["guidedTour"]?.stop();
-                this.$store.commit("core/setGuidedProperties", {tourStarted: false});
+                this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, tourStarted: false};
             },
         },
         created() {

@@ -27,6 +27,17 @@ export const POSITION_INJECTION_KEY = Symbol("position-injection-key") as Inject
  * NOTE: different from the `isCreating` flag coming from the store. `isCreating` refers to the Complete flow being in creation
  */
 export const CREATING_TASK_INJECTION_KEY = Symbol("creating-injection-key") as InjectionKey<boolean>
+/**
+ * When creating anew task, allows to specify a field where the new task should be injected.
+ * @example
+ * ```yaml
+ * tasks:
+ *   - task: # this is the fieldName
+ *       id: myTask
+ *       type: io.kestra.core.tasks.shell.Bash
+ * ```
+ */
+export const FIELDNAME_INJECTION_KEY = Symbol("fieldname-injection-key") as InjectionKey<string | undefined>
 export const EDITING_TASK_INJECTION_KEY = Symbol("editing-injection-key") as InjectionKey<boolean>
 /**
  * Call this when starting to create a new task, when the user clicks on the add button

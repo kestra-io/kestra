@@ -608,7 +608,7 @@
     "flows deleted": "<code>{count}</code> Flow(ы) удалены",
     "flows disabled": "<code>{count}</code> Flow(ы) отключены",
     "flows enabled": "<code>{count}</code> Flow(ы) включены",
-    "flows exported": "Flows экспортированы",
+    "flows exported": "<code>{count}</code> Flow(s) экспортировано",
     "flows imported": "Потоки импортированы",
     "focus task": "Нажмите на любой элемент, чтобы увидеть его документацию.",
     "fold_all_multi_lines": "Свернуть все многострочные строки",

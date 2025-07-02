@@ -608,7 +608,7 @@
     "flows deleted": "<code>{count}</code>件のflowが削除されました",
     "flows disabled": "<code>{count}</code>件のflowが無効化されました",
     "flows enabled": "<code>{count}</code>件のflowが有効化されました",
-    "flows exported": "flowがエクスポートされました",
+    "flows exported": "<code>{count}</code> Flow(s) エクスポート済み",
     "flows imported": "フローがインポートされました",
     "focus task": "任意の要素をクリックしてそのドキュメントを表示します。",
     "fold_all_multi_lines": "すべての複数行を折りたたむ",

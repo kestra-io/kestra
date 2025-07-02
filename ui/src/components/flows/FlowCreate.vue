@@ -14,6 +14,7 @@
     import MultiPanelEditorView from "./MultiPanelEditorView.vue";
     import {storageKeys} from "../../utils/constants";
     import {useBlueprintsStore} from "../../stores/blueprints";
+    import {useCoreStore} from "../../stores/core";
 
     import {getRandomFlowID} from "../../../scripts/product/flow";
 
@@ -28,7 +29,7 @@
             this.$store.commit("flow/setIsCreating", true);
             if (this.$route.query.reset) {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
+                this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, tourStarted: true};
                 this.$tours["guidedTour"]?.start();
             }
             this.setupFlow()
@@ -70,9 +71,8 @@ tasks:
         computed: {
             ...mapState("flow", ["flowGraph", "flowYaml"]),
             ...mapState("auth", ["user"]),
-            ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flow", "flowValidation", "flowYaml"]),
-            ...mapStores(useBlueprintsStore),
+            ...mapStores(useBlueprintsStore, useCoreStore),
             routeInfo() {
                 return {
                     title: this.$t("flows")

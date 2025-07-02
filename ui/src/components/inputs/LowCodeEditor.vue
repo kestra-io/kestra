@@ -107,7 +107,7 @@
 <script lang="ts" setup>
     // Core
     import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
-    import {useStore} from "vuex";
+    import {useCoreStore} from "../../stores/core";
     import {useI18n} from "vue-i18n";
     import {useStorage} from "@vueuse/core";
     import {useRouter} from "vue-router";
@@ -173,7 +173,7 @@
     ]);
 
     // Vue instance variables
-    const store = useStore();
+    const coreStore = useCoreStore();
     const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
     const {t} = useI18n();
 
@@ -240,11 +240,11 @@
                     flowParsed.tasks.length === 1 &&
                     flowParsed.tasks.map((e: any) => e.id).includes(event.id)
                 ) {
-                    store.dispatch("core/showMessage", {
+                    coreStore.message = {
                         variant: "error",
                         title: t("can not delete"),
                         message: t("can not have less than 1 task"),
-                    });
+                    };
                     return;
                 }
                 const updatedYmlSource = YAML_UTILS.deleteBlock({
@@ -345,13 +345,13 @@
                 return;
             }
         } else {
-            store.dispatch("core/showMessage", {
+            coreStore.message = {
                 variant: "error",
                 title: t("error detected"),
                 message: t("Task Id already exist in the flow", {
                     taskId: YAML_UTILS.parse(event).id,
                 }),
-            });
+            };
         }
         taskEditData.value = null;
         taskObject.value = null;
@@ -441,11 +441,11 @@
     };
 
     const message = (event: any) => {
-        store.dispatch("core/showMessage", {
+        coreStore.message = {
             variant: event.variant,
             title: t(event.title),
             message: t(event.message),
-        });
+        };
     };
 
     const expandSubflow = (event: any) => {

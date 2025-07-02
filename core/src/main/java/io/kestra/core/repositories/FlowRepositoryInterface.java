@@ -3,18 +3,12 @@ package io.kestra.core.repositories;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowForExecution;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowScope;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.*;
 import io.micronaut.data.model.Pageable;
-
 import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
+
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public interface FlowRepositoryInterface {
@@ -120,14 +114,6 @@ public interface FlowRepositoryInterface {
      * @return The count.
      */
     int count(@Nullable  String tenantId);
-
-    /**
-     * Counts the total number of flows for the given namespace.
-     *
-     * @param tenantId the tenant ID.
-     * @return The count.
-     */
-    int countForNamespace(@Nullable  String tenantId, @Nullable String namespace);
 
     List<Flow> findByNamespace(String tenantId, String namespace);
 

@@ -43,12 +43,14 @@
 
     import {linkedElements} from "../../utils/vueFlow"
     import {useStore} from "vuex";
+    import {useCoreStore} from "../../stores/core";
     import {apiUrl} from "override/utils/route";
 
     const {id, addNodes, addEdges, getNodes, removeNodes, getEdges, removeEdges, fitView, addSelectedElements, removeSelectedNodes, removeSelectedEdges} = useVueFlow();
 
     const route = useRoute();
     const store = useStore();
+    const coreStore = useCoreStore();
     const axios = inject("axios")
     const router = useRouter();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
@@ -78,11 +80,11 @@
                 if (!initialLoad.value) {
                     let newNodes = new Set(response.data.nodes.map(n => n.uid))
                     let oldNodes = new Set(getNodes.value.map(n => n.id))
-                    store.dispatch("core/showMessage", {
+                    coreStore.message = {
                         variant: "success",
                         title: t("dependencies loaded"),
                         message: t("loaded x dependencies", [...newNodes].filter(node => !oldNodes.has(node)).length),
-                    })
+                    }
                 }
 
                 removeEdges(getEdges.value)

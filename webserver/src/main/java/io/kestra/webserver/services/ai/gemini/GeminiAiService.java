@@ -106,8 +106,7 @@ public class GeminiAiService implements AiServiceInterface {
             - Include AT LEAST ONE trigger if execution should start based on an event or interval.
             - Every flow must include at least one task that is not a trigger.
             - ALWAYS include all plugin types present in the current Flow YAML. If the user asks for troubleshooting, also include additional types if required.
-            - If you don't include any plugin types, explain why.
-            Use only the plugin types from the list below. You may select up to 10 types but you MUST ALWAYS return at least one valid type. Below is the list of all available plugin types in Kestra, each formatted as 'type:description':
+            Use only the plugin types from the list below. You may select up to 10 types but you MUST ALWAYS return AT LEAST one type. Below is the list of all available plugin types in Kestra, each formatted as 'type:description':
             ```
             %s
             ```
@@ -132,7 +131,8 @@ public class GeminiAiService implements AiServiceInterface {
                 }
 
                 if (mostRelevantTypes.isEmpty()) {
-                    return Maybe.empty();
+                    callbackContext.state().put("responseForUser", UNABLE_TO_GENERATE_FLOW_ERROR);
+                    return shortCircuitLlmResponse(callbackContext, UNABLE_TO_GENERATE_FLOW_ERROR);
                 }
 
                 String[] identifiedTypes = mostRelevantTypes.split(" ?, ?");

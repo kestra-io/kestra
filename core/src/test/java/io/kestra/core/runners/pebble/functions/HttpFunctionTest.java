@@ -21,7 +21,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 
 @KestraTest
-@WireMockTest(httpPort = 28181)
+@WireMockTest(httpPort = 28182)
 class HttpFunctionTest {
     @Inject
     private VariableRenderer variableRenderer;
@@ -87,7 +87,7 @@ class HttpFunctionTest {
                     accept='application/yaml'
                 ).with[0]
             }}""", Map.of(
-            "url", "http://localhost:28181/yamlApi",
+            "url", "http://localhost:28182/yamlApi",
             "body", Map.of(
                 "request", "body",
                 "with", List.of("yaml", "content")
@@ -127,7 +127,7 @@ class HttpFunctionTest {
                         }
                     )
                 }}""", Map.of(
-                "url", "http://localhost:28181/withHeadersApi"
+                "url", "http://localhost:28182/withHeadersApi"
             )
         );
 
@@ -155,7 +155,7 @@ class HttpFunctionTest {
                         }
                     )
                 }}""", Map.of(
-                "url", "http://localhost:28181/withBasicAuthApi",
+                "url", "http://localhost:28182/withBasicAuthApi",
                 "user", "myUser",
                 "password", "myPassword"
             )

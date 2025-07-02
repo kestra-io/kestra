@@ -19,18 +19,12 @@ import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.validations.WorkerGroupValidation;
-import io.kestra.core.validations.validator.WorkerGroupValidator;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.plugin.core.flow.Sleep;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
-import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.test.annotation.MockBean;
-import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.AfterEach;
@@ -287,19 +281,6 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
             @Override
             public String resolveGroupFromKey(String workerGroupKey) {
                 return workerGroupKey;
-            }
-        };
-    }
-
-    @MockBean(WorkerGroupValidator.class)
-    WorkerGroupValidator workerGroupValidator() {
-        return new WorkerGroupValidator() {
-            @Override
-            public boolean isValid(
-                @Nullable WorkerGroup value,
-                @NonNull AnnotationValue<WorkerGroupValidation> annotationMetadata,
-                @NonNull ConstraintValidatorContext context) {
-                return true;
             }
         };
     }

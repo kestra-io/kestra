@@ -110,7 +110,7 @@
     "cross-env": "^7.0.3",
     "decompress": "^4.2.1",
     "eslint": "^9.30.0",
-    "eslint-plugin-storybook": "^9.0.14",
+    "eslint-plugin-storybook": "^9.0.15",
     "eslint-plugin-vue": "^9.33.0",
     "globals": "^16.2.0",
     "husky": "^9.1.7",

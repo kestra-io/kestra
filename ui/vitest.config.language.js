@@ -1,10 +1,10 @@
-import {defineConfig} from "vite";
+import {defineProject} from "vitest/config";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
 
 import viteConfig from "./vite.config.js";
 
-export default defineConfig({
+export default defineProject({
     plugins: [
         vue(),
     ],
@@ -15,7 +15,11 @@ export default defineConfig({
         },
     },
     test: {
-        projects: [".storybook/vitest.config.js", "./vitest.config.unit.js", "./vitest.config.language.js"],
+        name: "language",
+        environment: "node",
+        include: [
+            "tests/unit/**/translation.spec.js"
+        ]
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

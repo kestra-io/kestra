@@ -112,6 +112,7 @@
             label: {type: String, default: undefined},
             shouldFocus: {type: Boolean, default: true},
             showScroll: {type: Boolean, default: false},
+            diffOverviewBar: {type: Boolean, default: true},
         },
         components: {
             MonacoEditor,
@@ -155,7 +156,7 @@
                 immediate: true,
             },
             modelValue(value) {
-                if (this.editor?.getValue() !== value) {
+                if (this.editor?.getValue?.() !== value) {
                     this.preventCursorChange = true;
                 } else {
                     this.preventCursorChange = false;
@@ -227,6 +228,7 @@
                     };
                     options.renderSideBySide = this.diffSideBySide;
                     options.useInlineViewWhenSpaceIsLimited = false;
+                    options.renderOverviewRuler = this.diffOverviewBar;
                 }
 
                 if (this.minimap === false) {
@@ -387,10 +389,6 @@
                     if (localStorage.getItem("autofoldTextEditor") === "1") {
                         this.autoFold(true);
                     }
-                }
-
-                if (this.original !== undefined) {
-                    this.editor.updateOptions({readOnly: true});
                 }
 
                 if (!this.fullHeight) {

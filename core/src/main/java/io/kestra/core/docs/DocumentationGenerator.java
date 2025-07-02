@@ -227,7 +227,7 @@ public class DocumentationGenerator {
                     baseCls,
                     null
                 );
-                return ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, true);
+                return ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, registeredPlugin.version(), true);
             })
             .map(pluginDocumentation -> {
                 try {

@@ -257,7 +257,7 @@ public class PluginController {
 
     protected ClassPluginDocumentation<?> buildPluginDocumentation(String className, String version, Boolean allProperties) {
         return pluginRegistry.findMetadataByIdentifier(getPluginIdentifier(className, version))
-            .map(metadata -> ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, allProperties))
+            .map(metadata -> ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, version, allProperties))
             .orElseThrow(() -> new NoSuchElementException("Class '" + className + "' doesn't exists "));
     }
 

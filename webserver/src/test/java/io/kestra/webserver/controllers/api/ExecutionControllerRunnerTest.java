@@ -1513,7 +1513,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @ExecuteFlow("flows/valids/minimal.yaml")
-    void shouldMaskSecretWhenEvalTaskRunExpressionPebbleExpression(Execution execution) {
+    void shouldMaskSensitiveFunctionsWhenEvalTaskRunExpressionPebbleExpression(Execution execution) {
         ExecutionController.EvalResult evalResult = client.toBlocking().retrieve(
             HttpRequest
                 .POST("/api/v1/main/executions/" + execution.getId() + "/eval/" + execution.getTaskRunList().getFirst().getId(), "{{ secret('MY_SECRET') }}")
@@ -1533,6 +1533,26 @@ class ExecutionControllerRunnerTest {
         assertThat(evalResult.getError()).isEqualTo("io.pebbletemplates.pebble.error.PebbleException: Cannot find secret for key 'NON_EXISTING_KEY'. ({{ secret('NON_EXISTING_KEY') }}:1)");
         assertThat(evalResult.getStackTrace()).startsWith("io.kestra.core.exceptions.IllegalVariableEvaluationException: io.pebbletemplates.pebble.error.PebbleException: Cannot find secret for key 'NON_EXISTING_KEY'. ({{ secret('NON_EXISTING_KEY') }}:1)");
         assertThat(evalResult.getResult()).isNull();
+
+        evalResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/" + execution.getId() + "/eval/" + execution.getTaskRunList().getFirst().getId(), "{{ http('https://dummyjson.com/todos') }}")
+                .contentType(MediaType.TEXT_PLAIN),
+            ExecutionController.EvalResult.class
+        );
+        assertThat(evalResult.getError()).isNull();
+        assertThat(evalResult.getStackTrace()).isNull();
+        assertThat(evalResult.getResult()).isEqualTo("******");
+
+        evalResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/" + execution.getId() + "/eval/" + execution.getTaskRunList().getFirst().getId(), "{{ render('{{s'~'ecret(\"MY_SECRET\")}}') }}")
+                .contentType(MediaType.TEXT_PLAIN),
+            ExecutionController.EvalResult.class
+        );
+        assertThat(evalResult.getError()).isNull();
+        assertThat(evalResult.getStackTrace()).isNull();
+        assertThat(evalResult.getResult()).isEqualTo("******");
     }
 
     private ExecutionController.EvalResult evalTaskRunExpression(Execution execution, String expression, int index) {

@@ -4,12 +4,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
-import io.kestra.core.exceptions.ConflictException;
-import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.exceptions.InvalidException;
-import io.kestra.core.exceptions.NotFoundException;
-import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.exceptions.*;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -122,6 +117,11 @@ public class ErrorController {
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, IllegalArgumentException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Illegal argument");
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, AiException e) {
+        return jsonError(request, HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
     }
 
     @Error(global = true)

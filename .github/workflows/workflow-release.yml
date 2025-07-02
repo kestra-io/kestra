@@ -69,7 +69,7 @@ jobs:
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
       SONATYPE_GPG_KEYID: ${{ secrets.SONATYPE_GPG_KEYID }}
       SONATYPE_GPG_PASSWORD: ${{ secrets.SONATYPE_GPG_PASSWORD }}
-      SONATYPE_GPG_FILE: ${{ secrets.SONATYPE_GPG_FILE }}
+      SONATYPE_GPG_FILE_ASCII: ${{ secrets.SONATYPE_GPG_FILE_ASCII }}
 
   Github:
     name: Github Release

@@ -23,6 +23,9 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.runners.pebble.functions.HttpFunction;
+import io.kestra.core.runners.pebble.functions.SecretFunction;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -42,6 +45,7 @@ import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.kestra.webserver.utils.filepreview.FileRender;
 import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Introspected;
@@ -114,11 +118,16 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Validated
 @Controller("/api/v1/{tenant}/executions")
 public class ExecutionController {
-    private static final Pattern SECRET_FUNCTION = Pattern.compile("(.*)(secret\\([^)]+\\))(.*)");
-
     @Nullable
     @Value("${micronaut.server.context-path}")
     protected String basePath;
+
+    @Inject
+    private ApplicationContext applicationContext;
+
+    @Inject
+    @Nullable
+    private VariableRenderer.VariableConfiguration variableConfiguration;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -222,7 +231,6 @@ public class ExecutionController {
             triggerExecutionId);
 
         return PagedResults.of(executionRepository.find(
-
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             tenantService.resolveTenant(),
             filters
@@ -300,20 +308,20 @@ public class ExecutionController {
     }
 
     private String runContextRender(Flow flow, Task task, Execution execution, TaskRun taskRun, String expression) throws IllegalVariableEvaluationException {
-        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun, false);
-        String baseRender = runContext.render(expression);
+        RunContext realRunContext = runContextFactory.of(flow, task, execution, taskRun, false);
+        // We render the expression with the real run context first to ensure that the expression is valid and can be evaluated without mask
+        realRunContext.render(expression);
 
-        if (expression.contains("{")) { // fast backoff from regex
-            Matcher matcher = SECRET_FUNCTION.matcher(expression);
-            String maskedExpression = expression;
-            while (matcher.find()) {
-                maskedExpression = matcher.replaceFirst("$1\"******\"$3");
-                matcher = SECRET_FUNCTION.matcher(maskedExpression);
-            }
-            return runContext.render(maskedExpression);
-        }
+        RunContext runContextWithMaskedFunctions = runContextFactory.of(
+            flow,
+            task,
+            execution,
+            taskRun,
+            false,
+            new VariableRenderer(applicationContext, variableConfiguration, List.of(SecretFunction.NAME, HttpFunction.NAME))
+        );
 
-        return baseRender;
+        return runContextWithMaskedFunctions.render(expression);
     }
 
     @SuperBuilder

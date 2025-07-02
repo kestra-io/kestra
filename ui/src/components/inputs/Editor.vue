@@ -80,6 +80,8 @@
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
     import {mapState, mapGetters} from "vuex";
+    import {mapStores} from "pinia";
+    import {useCoreStore} from "../../stores/core";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
@@ -165,8 +167,8 @@
         },
         computed: {
             ...mapState({mappedTheme: state => state.misc.theme}),
-            ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flowValidation"]),
+            ...mapStores(useCoreStore),
             containerClass() {
                 return [
                     !this.input ? "" : "single-line",
@@ -401,22 +403,22 @@
 
                 if (!this.original) {
                     this.editor.onDidContentSizeChange((_) => {
-                        if (this.guidedProperties.monacoRange) {
+                        if (this.coreStore.guidedProperties.monacoRange) {
                             editor.revealLine(
-                                this.guidedProperties.monacoRange.endLineNumber,
+                                this.coreStore.guidedProperties.monacoRange.endLineNumber,
                             );
                             const decorationsToAdd = [];
                             decorationsToAdd.push({
-                                range: this.guidedProperties.monacoRange,
+                                range: this.coreStore.guidedProperties.monacoRange,
                                 options: {
                                     isWholeLine: true,
                                     inlineClassName: "highlight-text",
                                 },
                                 className: "highlight-text",
                             });
-                            if (this.guidedProperties.monacoDisableRange) {
+                            if (this.coreStore.guidedProperties.monacoDisableRange) {
                                 decorationsToAdd.push({
-                                    range: this.guidedProperties.monacoDisableRange,
+                                    range: this.coreStore.guidedProperties.monacoDisableRange,
                                     options: {
                                         isWholeLine: true,
                                         inlineClassName: "disable-text",

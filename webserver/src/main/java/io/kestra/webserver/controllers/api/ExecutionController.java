@@ -14,6 +14,9 @@ import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.topologies.FlowNode;
+import io.kestra.core.models.topologies.FlowTopology;
+import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.queues.QueueException;
@@ -30,6 +33,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.test.flow.TaskFixture;
+import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
@@ -39,6 +43,7 @@ import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.ExecutionStreamingService;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
@@ -104,6 +109,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
@@ -154,6 +160,12 @@ public class ExecutionController {
 
     @Inject
     private ExecutionStreamingService streamingService;
+
+    @Inject
+    private FlowTopologyService flowTopologyService;
+
+    @Inject
+    private ExecutionDependenciesStreamingService executionDependenciesStreamingService;
 
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
@@ -2274,6 +2286,81 @@ public class ExecutionController {
         return flowRepository.findByNamespaceExecutable(tenantService.resolveTenant(), namespace);
     }
 
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{executionId}/follow-dependencies", produces = MediaType.TEXT_EVENT_STREAM)
+    @Operation(tags = {"Executions"}, summary = "Follow all execution dependencies executions")
+    public Flux<Event<ExecutionStatusEvent>> followDependenciesExecutions(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "If true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly,
+        @Parameter(description = "If true, expand all dependencies recursively") @QueryValue(defaultValue = "false") boolean expandAll
+    ) throws TimeoutException {
+        String subscriberId = UUID.randomUUID().toString();
+
+        // NOTE: ideally, we should load the execution inside the Flux.
+        //  But as we need the correlationId to unsubscribe, we have no choice but to do it eagerly.
+        //  This should not be an issue as long as it executes on an IO thread.
+
+        // Check if execution exists
+        Execution current = Await.until(
+            () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
+            Duration.ofMillis(500),
+            Duration.ofSeconds(10)
+        );
+
+        String correlationId = current.getLabels().stream().filter(label -> label.key().equals(CORRELATION_ID)).findAny().map(label -> label.value()).orElseThrow();
+
+        return Flux.<Event<ExecutionStatusEvent>>create(emitter -> {
+                // Send initial event
+                emitter.next(Event.of(ExecutionStatusEvent.of(Execution.builder().id(executionId).build())).id("start"));
+
+                try {
+                    Stream<FlowTopology> flowTopologyStream = flowService.findDependencies(current.getTenantId(), current.getNamespace(), current.getFlowId(), destinationOnly, expandAll);
+                    FlowTopologyGraph graph = flowTopologyService.graph(
+                        flowTopologyStream,
+                        (flowNode -> flowNode)
+                    );
+                    List<FlowNode> dependencies = new ArrayList<>(graph.getNodes()); // we need a modifiable collection
+
+                    // precompute flows for all nodes
+                    Map<String, Flow> flows = new HashMap<>();
+                    dependencies.forEach(node -> flows.put(FlowId.uidWithoutRevision(node.getTenantId(), node.getNamespace(), node.getId()), flowRepository.findByIdWithoutAcl(node.getTenantId(), node.getNamespace(), node.getId(), Optional.empty()).orElseThrow()));
+
+                    // check if there are already terminated executions so we could end them immediately
+                    List<Execution> terminatedExecutions = executionRepository.find(null, current.getTenantId(), null, null, null, null, null, null, Map.of(CORRELATION_ID, correlationId), null, null)
+                        .mapNotNull(exec -> {
+                            if (dependencies.stream().anyMatch(node -> node.getTenantId().equals(exec.getTenantId()) && node.getNamespace().equals(exec.getNamespace()) && node.getId().equals(exec.getFlowId()))) {
+                                if (streamingService.isStopFollow(flows.get(FlowId.uidWithoutRevision(current)), current)) {
+                                    emitter.next(Event.of(ExecutionStatusEvent.of(exec)).id("end"));
+                                    return exec;
+                                } else {
+                                    emitter.next(Event.of(ExecutionStatusEvent.of(exec)).id("progress"));
+                                }
+                            }
+                            return null;
+                        })
+                        .collectList()
+                        .blockOptional()
+                        .orElse(Collections.emptyList());
+                    terminatedExecutions.forEach(exec -> dependencies.removeIf(node -> node.getTenantId().equals(exec.getTenantId()) && node.getNamespace().equals(exec.getNamespace()) && node.getId().equals(exec.getFlowId())));
+
+                    // end the flux is all nodes are already terminated
+                    if (dependencies.isEmpty()) {
+                        emitter.complete();
+                        return;
+                    }
+
+                    // subscribe to all executions with the same correlationId to track dependencies
+                    // TODO there is a small risk that between the time we check for already terminated executions and the time we start listening some exec would be terminated and we
+                    // miss there update which would retain the SSE connection forever.
+                    executionDependenciesStreamingService.registerSubscriber(correlationId, subscriberId, new ExecutionDependenciesStreamingService.Subscriber(correlationId, dependencies, flows, emitter));
+                } catch (IllegalStateException e) {
+                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
+                        "Unable to find flow for execution " + executionId));
+                }
+            }, FluxSink.OverflowStrategy.BUFFER)
+            .doFinally(ignored -> executionDependenciesStreamingService.unregisterSubscriber(correlationId, subscriberId));
+    }
+
     public String getTenant() {
         return tenantService.resolveTenant() != null ? tenantService.resolveTenant() + "/" : "";
     }
@@ -2359,4 +2446,5 @@ public class ExecutionController {
             );
         }
     }
+
 }

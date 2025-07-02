@@ -8,6 +8,7 @@ import FilterLanguageConfigurator, {languages as filterLanguages} from "./filter
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider";
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider";
 import {usePluginsStore} from "../../../stores/plugins";
+import {TestSuitesAutoCompletion} from "override/services/testSuitesAutoCompletionProvider.ts";
 
 export default async function configure(
     store: Store<Record<string, any>>,
@@ -18,7 +19,14 @@ export default async function configure(
     domain?: string
 ): Promise<void> {
     if (language === "yaml") {
-        const yamlAutoCompletion = domain === "flow" ? new FlowAutoCompletion(store, pluginsStore) : new YamlAutoCompletion();
+        let yamlAutoCompletion: YamlAutoCompletion;
+        if(domain === "flow"){
+            yamlAutoCompletion = new FlowAutoCompletion(store, pluginsStore);
+        } else if (domain === "testsuites") {
+            yamlAutoCompletion = new TestSuitesAutoCompletion(store);
+        } else {
+            yamlAutoCompletion = new YamlAutoCompletion();
+        }
         await new YamlLanguageConfigurator(yamlAutoCompletion).configure(store, t, editorInstance);
     } else if(language === "plaintext-pebble") {
         const autoCompletion = new FlowAutoCompletion(store, pluginsStore);

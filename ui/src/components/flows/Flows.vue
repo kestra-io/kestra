@@ -743,13 +743,15 @@
                 return _merge(base, queryFilter);
             },
             loadData(callback) {
+                const q = this.$route.query;
+
                 this.$store
                     .dispatch(
                         "flow/findFlows",
                         this.loadQuery({
-                            size: parseInt(this.$route.query.size || 25),
-                            page: parseInt(this.$route.query.page || 1),
-                            sort: this.$route.query.sort || "id:asc",
+                            size: parseInt(this.namespace ? this.internalPageSize : q.size ?? 25),
+                            page: parseInt(this.namespace ? this.internalPageNumber : q.page ?? 1),
+                            sort: q.sort ?? "id:asc",
                         }),
                     )
                     .then((flows) => {

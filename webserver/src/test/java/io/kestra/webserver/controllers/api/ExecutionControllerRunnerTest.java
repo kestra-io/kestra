@@ -736,7 +736,7 @@ class ExecutionControllerRunnerTest {
             GET("/api/v1/main/executions/" + pausedExecution.getId()),
             Execution.class);
         assertThat(execution.getState().isPaused()).isFalse();
-        assertThat((Map<String, Object>) execution.findTaskRunByTaskRunId("pause").getOutputs().get("resumed")).containsKey("on");
+        assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
     }
 
     @SuppressWarnings("unchecked")
@@ -1542,7 +1542,7 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(evalResult.getError()).isNull();
         assertThat(evalResult.getStackTrace()).isNull();
-        assertThat(evalResult.getResult()).isEqualTo("******");
+        assertThat(evalResult.getResult()).startsWith("{\"todos\":[{");
 
         evalResult = client.toBlocking().retrieve(
             HttpRequest

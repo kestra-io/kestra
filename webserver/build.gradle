@@ -22,7 +22,7 @@ dependencies {
     implementation "io.micronaut.cache:micronaut-cache-core"
     implementation "io.micronaut.cache:micronaut-cache-caffeine"
 
-    implementation 'com.google.adk:google-adk:0.1.0'
+    implementation 'com.google.adk:google-adk:0.2.0'
 
     // test
     testAnnotationProcessor project(':processor')

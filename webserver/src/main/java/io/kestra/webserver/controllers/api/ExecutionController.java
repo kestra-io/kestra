@@ -308,20 +308,14 @@ public class ExecutionController {
     }
 
     private String runContextRender(Flow flow, Task task, Execution execution, TaskRun taskRun, String expression) throws IllegalVariableEvaluationException {
-        RunContext realRunContext = runContextFactory.of(flow, task, execution, taskRun, false);
-        // We render the expression with the real run context first to ensure that the expression is valid and can be evaluated without mask
-        realRunContext.render(expression);
-
-        RunContext runContextWithMaskedFunctions = runContextFactory.of(
+        return runContextFactory.of(
             flow,
             task,
             execution,
             taskRun,
             false,
-            new VariableRenderer(applicationContext, variableConfiguration, List.of(SecretFunction.NAME, HttpFunction.NAME))
-        );
-
-        return runContextWithMaskedFunctions.render(expression);
+            new VariableRenderer(applicationContext, variableConfiguration, List.of(SecretFunction.NAME))
+        ).render(expression);
     }
 
     @SuperBuilder

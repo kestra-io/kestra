@@ -17,6 +17,7 @@ import jakarta.inject.Singleton;
 import lombok.Getter;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -43,7 +44,6 @@ public class VariableRenderer {
             .registerExtensionCustomizer(ExtensionCustomizer::new)
             .strictVariables(true)
             .cacheActive(this.variableConfiguration.getCacheEnabled())
-
             .newLineTrimming(false)
             .autoEscaping(false);
 
@@ -103,10 +103,16 @@ public class VariableRenderer {
             initialFunction.getClass().getClassLoader(),
             new Class[]{Function.class},
             (functionProxy, functionMethod, functionArgs) -> {
+                Object result;
+                try {
+                    result = functionMethod.invoke(initialFunction, functionArgs);
+                } catch (InvocationTargetException e) {
+                    throw e.getCause();
+                }
                 if (functionMethod.getName().equals("execute")) {
                     return "******";
                 }
-                return functionMethod.invoke(initialFunction, functionArgs);
+                return result;
             }
         );
     }

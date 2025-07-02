@@ -412,7 +412,6 @@
 
 <script>
     import {mapState, mapGetters} from "vuex";
-    import {mapStores} from "pinia";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -424,7 +423,6 @@
     import Labels from "../layout/Labels.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
     import {State} from "@kestra-io/ui-libs"
-    import {useStatStore} from "../../stores/stat";
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
@@ -591,7 +589,6 @@
             ...mapState("execution", ["executions", "total"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
-            ...mapStores(useStatStore),
             ...mapGetters("misc", ["configs"]),
             routeInfo() {
                 return {
@@ -647,11 +644,6 @@
                         label: this.$t("mark as", {status: value})
                     };
                 });
-            },
-            executionsCount() {
-                return this.statStore.dailyData?.reduce((a, b) => {  
-                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);  
-                }, 0) ?? 0; 
             },
             selectedNamespace(){
                 return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;

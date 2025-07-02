@@ -4,7 +4,6 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.runners.WorkerJob;
 import jakarta.inject.Singleton;
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;

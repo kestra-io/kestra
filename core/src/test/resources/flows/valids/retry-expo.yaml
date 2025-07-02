@@ -6,7 +6,7 @@ tasks:
     type: io.kestra.plugin.core.execution.Fail
     retry:
       type: exponential
-      maxAttempt: 3
+      maxAttempts: 3
       maxDuration: PT15S
       interval: PT0.25s
       maxInterval: PT5S

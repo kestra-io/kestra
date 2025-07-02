@@ -2,7 +2,6 @@ import type {Store} from "vuex";
 
 declare module "@vue/runtime-core" {
     interface State {
-        core:any
         flow:any
         template:any
         execution:any
@@ -14,7 +13,6 @@ declare module "@vue/runtime-core" {
         trigger:any
         editor:any
         doc:any
-        dashboard:any
         code:any
     }
 

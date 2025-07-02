@@ -23,7 +23,7 @@ import java.util.concurrent.TimeoutException;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@WireMockTest(httpPort = 28181)
+@WireMockTest(httpPort = 28184)
 class BasicAuthServiceTest {
     private BasicAuthService basicAuthService;
 

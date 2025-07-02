@@ -27,27 +27,28 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Display a chart with rows inserted by Namespace.",
             full = true,
-            code = {
-                "id: table_metrics\n" +
-                "type: io.kestra.plugin.core.dashboard.chart.Table\n" +
-                "chartOptions:\n" +
-                  "displayName: Rows Inserted by Namespace\n" +
-                "data:\n" +
-                  "type: io.kestra.plugin.core.dashboard.data.Metrics\n" +
-                  "columns:\n" +
-                    "namespace:\n" +
-                      "field: NAMESPACE\n" +
-                    "inserted_rows:\n" +
-                      "field: VALUE\n" +
-                      "agg: SUM\n" +
-                  "where:\n" +
-                    "- field: NAME\n" +
-                      "type: EQUAL_TO\n" +
-                      "value: rows\n" +
-                  "orderBy:\n" +
-                    "- column: inserted_rows\n" +
-                      "order: DESC\n"
-            }
+            code = """
+            charts:
+              - id: table_metrics
+                type: io.kestra.plugin.core.dashboard.chart.Table
+                chartOptions:
+                  displayName: Rows Inserted by Namespace
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.Metrics
+                  columns:
+                    namespace:
+                      field: NAMESPACE
+                    inserted_rows:
+                      field: VALUE
+                      agg: SUM
+                  where:
+                    - field: NAME
+                      type: EQUAL_TO
+                      value: rows
+                  orderBy:
+                    - column: inserted_rows
+                      order: DESC
+            """
         )
     }
 )

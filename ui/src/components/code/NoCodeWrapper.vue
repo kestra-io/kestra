@@ -6,6 +6,7 @@
         :block-type="blockType"
         :creating-task="creatingTask"
         :editing-task="editingTask"
+        :field-name="fieldName"
         :position
         :definition-key="definitionKey"
         @update-metadata="(e) => onUpdateMetadata(e)"
@@ -32,6 +33,7 @@
         refPath?: number;
         position?: "before" | "after";
         definitionKey?: string;
+        fieldName?: string | undefined;
     }
 
     defineProps<NoCodeProps>();

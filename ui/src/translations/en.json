@@ -1344,6 +1344,17 @@
         "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
       },
       "chart_preview": "Click on a chart source code to see its preview"
-    }
+    },
+    "ai": {
+      "flow": {
+        "title": "AI Agent",
+        "prompt_placeholder": "Enter instructions to create your Kestra flow.",
+        "generating": "Generating Flow YAML for you..."
+      }
+    },
+    "submit": "Submit",
+    "to toggle": "to toggle",
+    "accept": "Accept",
+    "decline": "Decline"
   }
 }

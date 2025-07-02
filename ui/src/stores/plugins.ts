@@ -14,6 +14,7 @@ interface PluginComponent {
     description?: string;
     properties?: Record<string, any>;
     schema: Schemas;
+    markdown?: string;
 }
 
 interface Plugin {

@@ -62,6 +62,7 @@ public abstract class AbstractFlow implements FlowInterface {
     @Schema(implementation = Object.class, oneOf = {List.class, Map.class})
     List<Label> labels;
 
+    @Schema(additionalProperties = Schema.AdditionalPropertiesValue.TRUE)
     Map<String, Object> variables;
 
     @Valid

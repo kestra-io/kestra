@@ -1,5 +1,3 @@
-publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
-
 if (rootProject.name == "kestra") {
     processResources {
         dependsOn(':ui:assembleFrontend')
@@ -23,6 +21,8 @@ dependencies {
     implementation "io.micronaut:micronaut-http-server-netty"
     implementation "io.micronaut.cache:micronaut-cache-core"
     implementation "io.micronaut.cache:micronaut-cache-caffeine"
+
+    implementation 'com.google.adk:google-adk:0.2.0'
 
     // test
     testAnnotationProcessor project(':processor')

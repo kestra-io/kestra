@@ -22,7 +22,7 @@ public class InExpression extends BinaryExpression<Object> {
         Object rightValue = getRightExpression().evaluate(self, context);
 
         if (rightValue instanceof Collection<?>) {
-            return ((Collection<?>) rightValue).contains(leftValue.toString());
+            return ((Collection<?>) rightValue).stream().map(Object::toString).toList().contains(leftValue.toString());
         }
         if (rightValue instanceof Iterable<?>) {
             for (Object item : (Iterable<?>) rightValue) {

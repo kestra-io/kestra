@@ -26,6 +26,7 @@ export default defineConfig({
         },
         exclude: [
             "tests/e2e/**",
+            "node_modules/**",
         ],
         coverage: {
             include: [
@@ -40,7 +41,7 @@ export default defineConfig({
                 "**/*.d.ts",
             ]
         },
-        projects: [".storybook/vitest.config.js"]
+        projects: [".storybook/vitest.config.js", "./vitest.config.js"]
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

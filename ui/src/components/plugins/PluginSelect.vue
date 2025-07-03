@@ -28,16 +28,11 @@
     import {computed, inject} from "vue";
     import {useI18n} from "vue-i18n";
     import {TaskIcon} from "@kestra-io/ui-libs";
-    import {BlockType} from "../code/utils/types";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../code/injectionKeys";
     import {getValueAtJsonPath} from "../../utils/utils";
 
     const pluginsStore = usePluginsStore();
-
-    defineProps<{
-        blockType: BlockType | "pluginDefaults";
-    }>()
 
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
 

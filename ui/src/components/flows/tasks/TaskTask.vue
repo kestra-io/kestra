@@ -2,7 +2,6 @@
     <div class="w-100">
         <Element
             :section="root"
-            block-type="tasks"
             :parent-path-complete="parentPathComplete"
             :block-schema-path="[schemaPath, 'properties', root.split('.').pop()].join('/')"
             :element="{

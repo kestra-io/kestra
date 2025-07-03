@@ -8,9 +8,7 @@
                 </div>
             </template>
             <PluginSelect
-                v-if="blockType"
                 v-model="selectedTaskType"
-                :block-type="blockType"
                 @update:model-value="onTaskTypeSelect"
             />
         </el-form-item>
@@ -38,7 +36,7 @@
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {NoCodeElement, Schemas} from "../code/utils/types";
     import {
-        BLOCKTYPE_INJECT_KEY, SCHEMA_PATH_INJECTION_KEY,
+        SCHEMA_PATH_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY
     } from "../code/injectionKeys";
@@ -65,7 +63,6 @@
     const plugin = ref<{schema: Schemas}>();
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
-    const blockType = inject(BLOCKTYPE_INJECT_KEY, "");
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
 
     provide(SCHEMA_PATH_INJECTION_KEY, computed(() => `#/definitions/${selectedTaskType.value}`))
@@ -100,6 +97,10 @@
 
             return updatedProperties;
         }
+
+        // FIXME: resolve a better label
+        const blockType = "tasks"
+
         if(!updatedProperties?.id && ["triggers", "tasks"].includes(blockType ?? "")){
             updatedProperties["id"] = {
                 type: "string",

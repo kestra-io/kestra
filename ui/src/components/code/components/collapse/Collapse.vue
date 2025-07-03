@@ -6,8 +6,6 @@
         >
             <template #icon>
                 <Creation
-                    v-if="blockType"
-                    :block-type="blockType"
                     :parent-path-complete="parentPathComplete"
                     :ref-path="elements?.length ? elements.length - 1 : undefined"
                     :block-schema-path
@@ -18,7 +16,6 @@
                 v-for="(element, elementIndex) in filteredElements"
                 :key="elementIndex"
                 :section="section"
-                :block-type="blockType"
                 :parent-path-complete="parentPathComplete"
                 :element
                 :element-index="elementIndex"

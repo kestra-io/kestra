@@ -15,7 +15,6 @@
                     v-if="pluginsStore.flowRootProperties?.inputs"
                     :elements="metadata.inputs"
                     :title="t('no_code.fields.general.inputs')"
-                    block-type="tasks"
                     section="inputs"
                     :block-schema-path="[pluginsStore.flowSchema?.$ref, 'properties', 'inputs', 'items'].join('/')"
                 />
@@ -73,7 +72,7 @@
     import {onMounted, computed, inject, ref} from "vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
-    import {CollapseItem, NoCodeElement, BlockType} from "../utils/types";
+    import {CollapseItem, NoCodeElement} from "../utils/types";
 
     import Collapse from "../components/collapse/Collapse.vue";
 
@@ -89,7 +88,7 @@
     const editingTask = inject(EDITING_TASK_INJECTION_KEY, false);
 
     import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
+    const {t} = useI18n();
 
     import {useStore} from "vuex";
     import TaskWrapper from "../../flows/tasks/TaskWrapper.vue";
@@ -199,16 +198,6 @@
         "pluginDefaults",
     ] as const
 
-
-    const SECTION_BLOCK_MAP: Record<typeof SECTIONS_IDS[number], BlockType | "pluginDefaults"> = {
-        tasks: "tasks",
-        triggers: "triggers",
-        errors: "tasks",
-        finally: "tasks",
-        afterExecution: "tasks",
-        pluginDefaults: "pluginDefaults",
-    } as const;
-
     type SectionKey = typeof SECTIONS_IDS[number];
 
     const sections = computed((): CollapseItem[] => {
@@ -216,7 +205,6 @@
         return SECTIONS_IDS.map((section) => ({
             elements: parsedFlow?.[section] ?? [],
             title: t(`no_code.sections.${section}`),
-            blockType: SECTION_BLOCK_MAP[section],
             section,
             blockSchemaPath: [pluginsStore.flowSchema?.$ref, "properties", section, "items"].join("/"),
         }))

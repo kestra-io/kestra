@@ -3,7 +3,7 @@ import InitialSchema from "../../../../../src/components/code/segments/flow-sche
 import {
     CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
     POSITION_INJECTION_KEY,
-    BLOCKTYPE_INJECT_KEY, REF_PATH_INJECTION_KEY,
+     REF_PATH_INJECTION_KEY,
     PARENT_PATH_INJECTION_KEY,
     EDITING_TASK_INJECTION_KEY
 } from "../../../../../src/components/code/injectionKeys";
@@ -98,10 +98,8 @@ const Template = (args) => ({
         const store = useStore()
 
         provide(FLOW_INJECTION_KEY, ref(args.flow));
-        provide(BLOCKTYPE_INJECT_KEY, "tasks");
         provide(PARENT_PATH_INJECTION_KEY, "tasks");
         provide(REF_PATH_INJECTION_KEY, 0);
-        provide(BLOCKTYPE_INJECT_KEY, "tasks");
         provide(POSITION_INJECTION_KEY, args.position);
         provide(CREATING_TASK_INJECTION_KEY, args.creating);
         provide(EDITING_TASK_INJECTION_KEY, args.editing);

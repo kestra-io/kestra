@@ -4,7 +4,6 @@ import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import type {Panel, Tab} from "../MultiPanelTabs.vue";
-import {BlockType} from "../code/utils/types";
 import NoCodeWrapper from "../code/NoCodeWrapper.vue"
 
 import type {NoCodeProps} from "../code/NoCodeWrapper.vue";
@@ -21,7 +20,6 @@ interface Opener {
 interface Handlers {
     onCreateTask: (
         opener: Opener,
-        blockType: BlockType | "pluginDefaults",
         parentPath: string,
         blockSchemaPath: string,
         refPath?: number,
@@ -29,7 +27,6 @@ interface Handlers {
     ) => boolean,
     onEditTask: (
         opener: Opener,
-        blockType: BlockType | "pluginDefaults",
         parentPath: string,
         blockSchemaPath: string,
         refPath?: number,
@@ -178,7 +175,6 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             panelIndex: number,
             tabIndex: number
         },
-        blockType: BlockType | "pluginDefaults",
         parentPath: string,
         blockSchemaPath: string,
         refPath?: number,
@@ -189,7 +185,6 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab({
             action: "create",
-            blockType,
             parentPath,
             blockSchemaPath,
             refPath,
@@ -209,7 +204,6 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
 
     function openEditTaskTab(
         opener: { panelIndex: number, tabIndex: number },
-        blockType: BlockType | "pluginDefaults",
         parentPath: string,
         blockSchemaPath: string,
         refPath?: number,
@@ -217,7 +211,6 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
     ) {
         const tab = getTabFromNoCodeTab({
             action: "edit",
-            blockType,
             parentPath,
             blockSchemaPath,
             refPath,

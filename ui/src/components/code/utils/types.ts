@@ -66,7 +66,6 @@ export interface NoCodeElement {
 
 export type CollapseItem = {
     title: string;
-    blockType: BlockType | "pluginDefaults";
     section: string;
     elements?: NoCodeElement[];
     blockSchemaPath: string;

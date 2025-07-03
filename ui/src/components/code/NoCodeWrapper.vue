@@ -8,7 +8,7 @@
         :editing-task="editingTask"
         :field-name="fieldName"
         :position
-        :definition-key="definitionKey"
+        :block-schema-path="blockSchemaPath"
         @update-metadata="(e) => onUpdateMetadata(e)"
         @update-task="(e) => editorUpdate(e)"
         @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
@@ -32,24 +32,24 @@
         parentPath?: string;
         refPath?: number;
         position?: "before" | "after";
-        definitionKey?: string;
+        blockSchemaPath?: string;
         fieldName?: string | undefined;
     }
 
     defineProps<NoCodeProps>();
 
     const emit = defineEmits<{
-        (e: "createTask", blockType: string, parentPath: string, definitionKey: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;
-        (e: "editTask", blockType: string, parentPath: string, definitionKey: string, refPath?: number): boolean | void;
+        (e: "createTask", blockType: string, parentPath: string, blockSchemaPath: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;
+        (e: "editTask", blockType: string, parentPath: string, blockSchemaPath: string, refPath?: number): boolean | void;
         (e: "closeTask"): boolean | void;
     }>();
 
-    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, definitionKey, refPath) => {
-        emit("createTask", blockType, parentPath, definitionKey, refPath, "after")
+    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, blockSchemaPath, refPath) => {
+        emit("createTask", blockType, parentPath, blockSchemaPath, refPath, "after")
     });
 
-    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, definitionKey, refPath) => {
-        emit("editTask", blockType, parentPath, definitionKey, refPath)
+    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, blockSchemaPath, refPath) => {
+        emit("editTask", blockType, parentPath, blockSchemaPath, refPath)
     });
 
     const store = useStore();

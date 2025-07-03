@@ -19,13 +19,13 @@
     const props = defineProps<{
         blockType: BlockType | "pluginDefaults";
         parentPathComplete: string;
-        definitionKey: string;
+        blockSchemaPath: string;
         refPath?: number;
     }>()
 
     const createTask = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {});
 
     const handleClick = () => {
-        createTask(props.blockType, props.parentPathComplete, props.definitionKey, props.refPath);
+        createTask(props.blockType, props.parentPathComplete, props.blockSchemaPath, props.refPath);
     };
 </script>

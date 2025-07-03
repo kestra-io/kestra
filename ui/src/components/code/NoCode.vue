@@ -23,7 +23,7 @@
         PANEL_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         FLOW_INJECTION_KEY, FIELDNAME_INJECTION_KEY,
-        EDITING_TASK_INJECTION_KEY, DEFINITION_INJECTION_KEY
+        EDITING_TASK_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY
     } from "./injectionKeys";
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
@@ -57,7 +57,7 @@
             creatingTask?: boolean;
             editingTask?: boolean;
             position?: "before" | "after";
-            definitionKey?: string;
+            blockSchemaPath?: string;
             fieldName?: string | undefined;
         }>(), {
             creatingTask: false,
@@ -66,7 +66,7 @@
             refPath: undefined,
             blockType: undefined,
             parentPath: undefined,
-            definitionKey: "",
+            blockSchemaPath: "",
             fieldName: undefined,
         });
 
@@ -84,7 +84,7 @@
     provide(POSITION_INJECTION_KEY, props.position);
     provide(CREATING_TASK_INJECTION_KEY, props.creatingTask);
     provide(EDITING_TASK_INJECTION_KEY, props.editingTask);
-    provide(DEFINITION_INJECTION_KEY, props.definitionKey);
+    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, props.blockSchemaPath);
     provide(FIELDNAME_INJECTION_KEY, props.fieldName);
 
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => {

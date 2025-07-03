@@ -30,7 +30,7 @@
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {BlockType} from "../code/utils/types";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
-    import {DEFINITION_INJECTION_KEY} from "../code/injectionKeys";
+    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../code/injectionKeys";
     import {getValueAtJsonPath} from "../../utils/utils";
 
     const pluginsStore = usePluginsStore();
@@ -39,13 +39,13 @@
         blockType: BlockType | "pluginDefaults";
     }>()
 
-    const definitionKey = inject(DEFINITION_INJECTION_KEY, "");
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
 
     const fieldDefinition = computed(() => {
-        if(definitionKey.length === 0) {
+        if(blockSchemaPath.length === 0) {
             console.error("Definition key is required for PluginSelect component");
         }
-        return getValueAtJsonPath(pluginsStore.flowSchema, definitionKey);
+        return getValueAtJsonPath(pluginsStore.flowSchema, blockSchemaPath);
     })
 
     const taskModels = computed(() => {

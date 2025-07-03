@@ -76,7 +76,7 @@
 
 
     const noCodeHandlers: Parameters<typeof setupInitialNoCodeTab>[2] = {
-        onCreateTask(opener, blockType, parentPath, definitionKey, refPath, position){
+        onCreateTask(opener, blockType, parentPath, blockSchemaPath, refPath, position){
             const createTabId = getCreateTabKey({
                 blockType,
                 parentPath,
@@ -93,7 +93,7 @@
                 return false
             }
 
-            openAddTaskTab(opener, blockType, parentPath, definitionKey, refPath, position, isFlowDirty.value)
+            openAddTaskTab(opener, blockType, parentPath, blockSchemaPath, refPath, position, isFlowDirty.value)
             return false
         },
         onEditTask(...args){

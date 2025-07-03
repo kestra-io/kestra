@@ -23,7 +23,7 @@ interface Handlers {
         opener: Opener,
         blockType: BlockType | "pluginDefaults",
         parentPath: string,
-        definitionKey: string,
+        blockSchemaPath: string,
         refPath?: number,
         position?: "before" | "after",
     ) => boolean,
@@ -31,7 +31,7 @@ interface Handlers {
         opener: Opener,
         blockType: BlockType | "pluginDefaults",
         parentPath: string,
-        definitionKey: string,
+        blockSchemaPath: string,
         refPath?: number,
     ) => boolean
     onCloseTask: (opener: Opener) => boolean
@@ -180,7 +180,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         },
         blockType: BlockType | "pluginDefaults",
         parentPath: string,
-        definitionKey: string,
+        blockSchemaPath: string,
         refPath?: number,
         position: "before" | "after" = "after",
         dirty: boolean = false,
@@ -191,7 +191,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             action: "create",
             blockType,
             parentPath,
-            definitionKey,
+            blockSchemaPath,
             refPath,
             position,
             fieldName,
@@ -211,7 +211,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         opener: { panelIndex: number, tabIndex: number },
         blockType: BlockType | "pluginDefaults",
         parentPath: string,
-        definitionKey: string,
+        blockSchemaPath: string,
         refPath?: number,
         dirty: boolean = false
     ) {
@@ -219,7 +219,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             action: "edit",
             blockType,
             parentPath,
-            definitionKey,
+            blockSchemaPath,
             refPath,
         }, t, handlers, store.state.flow.flowYaml, dirty)
 

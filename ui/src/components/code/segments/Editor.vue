@@ -232,7 +232,7 @@
             title: t(`no_code.sections.${section}`),
             blockType: SECTION_BLOCK_MAP[section],
             section,
-            definitionKey: [pluginsStore.flowSchema?.$ref, "properties", section, "items"].join("/"),
+            blockSchemaPath: [pluginsStore.flowSchema?.$ref, "properties", section, "items"].join("/"),
         }))
     });
 </script>

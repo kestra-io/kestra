@@ -4,7 +4,7 @@
             :section="root"
             block-type="tasks"
             :parent-path-complete="parentPathComplete"
-            :definition-key="[schemaPath, 'properties', root.split('.').pop()].join('/')"
+            :block-schema-path="[schemaPath, 'properties', root.split('.').pop()].join('/')"
             :element="{
                 id: model?.id ?? 'Set a task',
                 type: model?.type,

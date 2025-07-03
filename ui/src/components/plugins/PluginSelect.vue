@@ -46,9 +46,9 @@
 
     const fieldDefinition = computed(() => {
         if(definitionKey.length === 0) {
-            throw new Error("Definition key is required for PluginSelect component");
+            console.error("Definition key is required for PluginSelect component");
         }
-        const lastDef = pluginsStore.flowDefinitions?.[definitionKey].properties[field.value]
+        const lastDef = pluginsStore.flowDefinitions?.[definitionKey]?.properties[field.value]
 
         // - if in an array with multiple anyOf, resolve the type will be harder
         return lastDef?.type === "array" ? lastDef.items : lastDef ?? {};

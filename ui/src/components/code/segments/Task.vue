@@ -30,7 +30,7 @@
         PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY,
         EDIT_TASK_FUNCTION_INJECTION_KEY, BLOCKTYPE_INJECT_KEY,
-        FIELDNAME_INJECTION_KEY,
+        FIELDNAME_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY,
     } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
@@ -51,6 +51,7 @@
     );
 
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
 
     const closeTaskAddition = inject(
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
@@ -186,6 +187,7 @@
             editTask(
                 blockType,
                 fieldName ? `${parentPath}[${currentRefPath}].${fieldName}` : parentPath,
+                blockSchemaPath,
                 fieldName ? undefined : currentRefPath,
             );
             hasMovedToEdit.value = true;

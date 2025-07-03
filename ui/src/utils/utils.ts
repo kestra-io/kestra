@@ -325,7 +325,7 @@ function resolve$ref(obj: Record<string, any>, fullObject: Record<string, any>) 
 }
 
 export function getValueAtJsonPath(obj: Record<string, any>, path: string): any {
-    if (!obj || !path) {
+    if (!obj || !path || typeof path !== "string") {
         return undefined;
     }
 

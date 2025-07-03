@@ -127,10 +127,22 @@
     "change state current state": "現在のステータスは:",
     "change state done": "タスクの状態が更新されました",
     "change state hint": {
-      "FAILED": "['FlowはFAILEDとしてマークされます。', '他のTaskは実行されません。', 'エラーTaskが実行されます。']",
+      "FAILED": [
+        "FlowはFAILEDとしてマークされます。",
+        "他のTaskは実行されません。",
+        "エラーTaskが実行されます。"
+      ],
       "RUNNING": "フローが再起動し、次のすべてのタスクが実行されます。すべてのブロックされたタスクが実行されます。",
-      "SUCCESS": "['このflowはこのtaskが成功したため再起動します。', 'すべてのブロックされたtaskが実行されます。', 'すべてのtaskの実行が成功した場合、flowはSUCCESS状態になります。']",
-      "WARNING": "['このflowはWARNINGとしてマークされます。', '次のtasksが実行されます。', 'エラーtasksが実行されます。']"
+      "SUCCESS": [
+        "このflowはこのtaskが成功したため再起動します。",
+        "すべてのブロックされたtaskが実行されます。",
+        "すべてのtaskの実行が成功した場合、flowはSUCCESS状態になります。"
+      ],
+      "WARNING": [
+        "このflowはWARNINGとしてマークされます。",
+        "次のtasksが実行されます。",
+        "エラーtasksが実行されます。"
+      ]
     },
     "change state tooltip": "実行状態を変更",
     "chart": "チャート",

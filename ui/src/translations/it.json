@@ -127,10 +127,25 @@
     "change state current state": "Lo stato attuale è:",
     "change state done": "Lo stato del task è stato aggiornato",
     "change state hint": {
-      "FAILED": "['Il flow sarà contrassegnato come FAILED.', 'Nessun altro task verrà eseguito.', 'I task di errore verranno eseguiti.']",
-      "RUNNING": "['Il flow si riavvierà ed eseguirà tutti i task successivi.', 'Tutti i task bloccati verranno eseguiti.']",
-      "SUCCESS": "['Il flow verrà riavviato poiché questo task è stato completato con successo.', 'Tutti i task bloccati verranno eseguiti.', 'Il flow sarà in stato SUCCESS se tutte le esecuzioni dei task avranno successo.']",
-      "WARNING": "['Il flow sarà contrassegnato come WARNING.', 'I prossimi task saranno eseguiti.', 'I task di errore saranno eseguiti.']"
+      "FAILED": [
+        "Il flow sarà contrassegnato come FAILED.",
+        "Nessun altro task verrà eseguito.",
+        "I task di errore verranno eseguiti."
+      ],
+      "RUNNING": [
+        "Il flow si riavvierà ed eseguirà tutti i task successivi.",
+        "Tutti i task bloccati verranno eseguiti."
+      ],
+      "SUCCESS": [
+        "Il flow verrà riavviato poiché questo task è stato completato con successo.",
+        "Tutti i task bloccati verranno eseguiti.",
+        "Il flow sarà in stato SUCCESS se tutte le esecuzioni dei task avranno successo."
+      ],
+      "WARNING": [
+        "Il flow sarà contrassegnato come WARNING.",
+        "I prossimi task saranno eseguiti.",
+        "I task di errore saranno eseguiti."
+      ]
     },
     "change state tooltip": "Cambia lo stato di esecuzione",
     "chart": "Grafico",

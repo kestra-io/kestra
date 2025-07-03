@@ -127,10 +127,25 @@
     "change state current state": "현재 상태는:",
     "change state done": "작업 상태가 업데이트되었습니다",
     "change state hint": {
-      "FAILED": "['Flow가 FAILED로 표시됩니다.', '다른 task는 실행되지 않습니다.', '오류 task가 실행됩니다.']",
-      "RUNNING": "['Flow가 재시작되며 모든 다음 task가 실행됩니다.', '모든 차단된 task가 실행됩니다.']",
-      "SUCCESS": "['이 task가 성공했기 때문에 flow가 재시작됩니다.', '모든 차단된 task가 실행됩니다.', '모든 task 실행이 성공하면 flow는 SUCCESS 상태가 됩니다.']",
-      "WARNING": "['Flow가 WARNING으로 표시됩니다.', '다음 tasks가 실행됩니다.', '오류 tasks가 실행됩니다.']"
+      "FAILED": [
+        "Flow가 FAILED로 표시됩니다.",
+        "다른 task는 실행되지 않습니다.",
+        "오류 task가 실행됩니다."
+      ],
+      "RUNNING": [
+        "Flow가 재시작되며 모든 다음 task가 실행됩니다.",
+        "모든 차단된 task가 실행됩니다."
+      ],
+      "SUCCESS": [
+        "이 task가 성공했기 때문에 flow가 재시작됩니다.",
+        "모든 차단된 task가 실행됩니다.",
+        "모든 task 실행이 성공하면 flow는 SUCCESS 상태가 됩니다."
+      ],
+      "WARNING": [
+        "Flow가 WARNING으로 표시됩니다.",
+        "다음 tasks가 실행됩니다.",
+        "오류 tasks가 실행됩니다."
+      ]
     },
     "change state tooltip": "실행 상태 변경",
     "chart": "차트",

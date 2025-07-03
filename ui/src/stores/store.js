@@ -9,7 +9,6 @@ import template from "./template"
 import taskrun from "./taskruns"
 import trigger from "./trigger";
 import editor from "./editor";
-import doc from "./doc";
 import service from "./service"
 
 export default {
@@ -25,7 +24,6 @@ export default {
         taskrun,
         trigger,
         editor,
-        doc,
         service,
     }
 }

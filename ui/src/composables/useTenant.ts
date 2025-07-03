@@ -1,6 +1,5 @@
 import type {Router, RouteLocationNormalized, RouteLocationRaw, RouteLocationNamedRaw} from "vue-router";
 import type {App} from "vue";
-import type {Store} from "vuex";
 
 export function setupTenantRouter(router: Router, app: App): void {
     // Auto-inject tenant in route resolution with "main" as default
@@ -29,20 +28,6 @@ export function setupTenantRouter(router: Router, app: App): void {
             // Use current tenant from route context, fallback to "main"
             const currentTenant = from.params?.tenant || "main";
             next({path: `/${currentTenant}${to.path}`, query: to.query, hash: to.hash, replace: true});
-        } else {
-            next();
-        }
-    });
-}
-
-export function setupDocIdGuard(router: Router, store: Store<any>): void {
-    // DocId and showDocId query param guard
-    router.beforeEach((to, from, next) => {
-        store.commit("doc/setDocId", to.path.split("/").pop());
-        const hasShowDocId = !to.query.showDocId && from.query?.showDocId;
-        
-        if (hasShowDocId) {
-            next({path: to.path, query: {...to.query, showDocId: from.query.showDocId}});
         } else {
             next();
         }

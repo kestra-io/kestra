@@ -12,7 +12,6 @@ declare module "@vue/runtime-core" {
         taskrun:any
         trigger:any
         editor:any
-        doc:any
         code:any
     }
 

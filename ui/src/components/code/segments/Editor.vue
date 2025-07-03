@@ -1,17 +1,6 @@
 <template>
     <div class="p-4">
-        <template v-if="panel">
-            <MetadataInputsContent
-                :inputs="metadata.inputs"
-                :label="t('inputs')"
-                :selected-index="panel.props.selectedIndex"
-                @update:inputs="
-                    (value: any) => emits('updateMetadata', 'inputs', value)
-                "
-            />
-        </template>
-
-        <template v-else-if="!creatingTask && !editingTask">
+        <template v-if="!creatingTask && !editingTask">
             <el-form label-position="top" v-if="fieldsFromSchema.length">
                 <TaskWrapper :key="v.root" v-for="(v) in fieldsFromSchema.slice(0, 3)" :merge="shouldMerge(v.schema)">
                     <template #tasks>
@@ -22,12 +11,13 @@
                     </template>
                 </TaskWrapper>
 
-                <MetadataInputs
+                <Collapse
                     v-if="pluginsStore.flowRootProperties?.inputs"
-                    :label="t('no_code.fields.general.inputs')"
-                    :model-value="metadata.inputs"
-                    :required="pluginsStore.flowRootSchema?.required?.includes('inputs')"
-                    @update:model-value="updateMetadata('inputs', $event)"
+                    :elements="metadata.inputs"
+                    :title="t('no_code.fields.general.inputs')"
+                    block-type="tasks"
+                    section="inputs"
+                    :block-schema-path="[pluginsStore.flowSchema?.$ref, 'properties', 'inputs', 'items'].join('/')"
                 />
 
                 <hr class="my-4">
@@ -87,18 +77,14 @@
 
     import Collapse from "../components/collapse/Collapse.vue";
 
-    import MetadataInputs from "../../flows/MetadataInputs.vue";
-    import MetadataInputsContent from "../../flows/MetadataInputsContent.vue";
     import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
 
     import {
         CREATING_TASK_INJECTION_KEY, EDITING_TASK_INJECTION_KEY,
-        FLOW_INJECTION_KEY, PANEL_INJECTION_KEY,
+        FLOW_INJECTION_KEY,
     } from "../injectionKeys";
 
     import Task from "./Task.vue";
-
-    const panel = inject(PANEL_INJECTION_KEY, ref());
 
     const editingTask = inject(EDITING_TASK_INJECTION_KEY, false);
 

@@ -39,10 +39,12 @@
     import {NoCodeElement, Schemas} from "../code/utils/types";
     import {
         BLOCKTYPE_INJECT_KEY, SCHEMA_PATH_INJECTION_KEY,
-        FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY
+        FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
+        BLOCK_SCHEMA_PATH_INJECTION_KEY
     } from "../code/injectionKeys";
     import {removeNullAndUndefined} from "../code/utils/cleanUp";
-    import {usePluginsStore} from "../../stores/plugins";
+    import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
+    import {getValueAtJsonPath} from "../../utils/utils";
 
     const {t} = useI18n();
 
@@ -50,8 +52,6 @@
         name: "TaskEditor",
         inheritAttrs: false,
     });
-
-
 
     const modelValue = defineModel<string>();
 
@@ -69,6 +69,8 @@
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
 
     provide(SCHEMA_PATH_INJECTION_KEY, computed(() => `#/definitions/${selectedTaskType.value}`))
+
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
 
     const isPluginDefaults = computed(() => {
         return parentPath.startsWith("pluginDefaults")
@@ -131,35 +133,76 @@
         selectedTaskType.value = taskObject.value?.type;
     }
 
-    // when tab is clicked, load the documentation
+    // when tab is opened, load the documentation
     onActivated(() => {
-        if(selectedTaskType.value){
+        if(selectedTaskType.value && parentPath !== "inputs"){
             pluginsStore.updateDocumentation({task: selectedTaskType.value});
         }
     });
 
-    watch(selectedTaskType, (task) => {
+    // useful to map inputs to their real schema
+    const typeMap = computed<Record<string, string>>(() => {
+        const field = getValueAtJsonPath(pluginsStore.flowSchema, blockSchemaPath)
+
+        if (field?.anyOf) {
+            const f = field.anyOf.reduce((acc: Record<string, string>, item: any) => {
+                if (item.$ref) {
+                    const i = getValueAtJsonPath(pluginsStore.flowSchema, item.$ref);
+                    if(i) item = i;
+                }
+                if (item.allOf) {
+                    let type = "", ref;
+                    for (const subItem of item.allOf) {
+                        if (subItem.properties?.type?.const) {
+                            type = subItem.properties.type.const;
+                        }
+                        if (subItem.$ref) {
+                            ref = removeRefPrefix(subItem.$ref)
+                        }
+                    }
+                    if (type && ref) {
+                        acc[type] = ref;
+                    }
+                }
+                return acc;
+            }, {});
+
+            return f;
+        }
+
+        return {}
+    });
+
+    watch([selectedTaskType, () => pluginsStore.flowSchema], ([task]) => {
         if (task) {
             load();
-            pluginsStore.updateDocumentation({task});
+            if(parentPath !== "inputs"){
+                pluginsStore.updateDocumentation({task});
+            }
         }
     }, {immediate: true});
 
     function load() {
-        if (pluginsStore.schemaType?.flow[selectedTaskType.value ?? ""]) {
+        const resolvedType = typeMap.value[selectedTaskType.value ?? ""] ?? selectedTaskType.value ?? "";
+        if (pluginsStore.flowDefinitions?.[resolvedType]) {
+            const defs = pluginsStore.flowDefinitions ?? {}
             plugin.value = {
                 schema: {
-                    properties: pluginsStore.schemaType?.flow[selectedTaskType.value ?? ""],
-                    definitions: pluginsStore.schemaType?.flow.definitions || {},
+                    properties: defs[resolvedType],
+                    definitions: defs,
                 }
             };
             return;
         }
 
+        if(parentPath === "inputs"){
+            return
+        }
+
         isLoading.value = true;
-        if(selectedTaskType.value){
+        if(resolvedType.length){
             pluginsStore.load({
-                cls: selectedTaskType.value,
+                cls: resolvedType,
                 all: true
             })
                 .then((response) => {
@@ -167,7 +210,6 @@
                     isLoading.value = false;
                 })
         }
-
     }
 
     function onTaskInput(val: PartialCodeElement | undefined) {
@@ -205,6 +247,7 @@
         onTaskInput(value);
     }
 </script>
+
 <style lang="scss" scoped>
     .type-div {
         display: flex;

@@ -726,6 +726,7 @@ public class ExecutionController {
                             execution,
                             executionUrl(execution)
                         ))
+                        .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
                         .doFinally(signalType -> streamingService.unregisterSubscriber(executionWithInputs.getId(), subscriberId));
                 } catch (QueueException e) {
                     return Mono.error(e);
@@ -1812,6 +1813,7 @@ public class ExecutionController {
                         "Unable to find flow for execution " + executionId));
                 }
             }, FluxSink.OverflowStrategy.BUFFER)
+            .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
             .doFinally(ignored -> streamingService.unregisterSubscriber(executionId, subscriberId));
     }
 
@@ -2350,14 +2352,16 @@ public class ExecutionController {
                     }
 
                     // subscribe to all executions with the same correlationId to track dependencies
-                    // TODO there is a small risk that between the time we check for already terminated executions and the time we start listening some exec would be terminated and we
-                    // miss there update which would retain the SSE connection forever.
+                    // NOTE: there is a small risk that between the time we check for already terminated executions and the time we start listening,
+                    //  some exec would be terminated, and we miss there update which would retain the SSE connection forever.
+                    //  We set a timeout for that.
                     executionDependenciesStreamingService.registerSubscriber(correlationId, subscriberId, new ExecutionDependenciesStreamingService.Subscriber(correlationId, dependencies, flows, emitter));
                 } catch (IllegalStateException e) {
                     emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
                         "Unable to find flow for execution " + executionId));
                 }
             }, FluxSink.OverflowStrategy.BUFFER)
+            .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
             .doFinally(ignored -> executionDependenciesStreamingService.unregisterSubscriber(correlationId, subscriberId));
     }
 

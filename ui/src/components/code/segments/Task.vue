@@ -49,6 +49,7 @@
         CREATING_TASK_INJECTION_KEY,
         false,
     );
+
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
 
     const closeTaskAddition = inject(

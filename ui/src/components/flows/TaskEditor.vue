@@ -4,7 +4,7 @@
             <template #label>
                 <div class="type-div">
                     <span class="asterisk">*</span>
-                    <code>{{ $t("type") }}</code>
+                    <code>{{ t("type") }}</code>
                 </div>
             </template>
             <PluginSelect
@@ -31,22 +31,27 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, inject, onActivated, ref, toRaw, watch} from "vue";
+    import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue";
+    import {useI18n} from "vue-i18n";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {NoCodeElement, Schemas} from "../code/utils/types";
     import {
-        BLOCKTYPE_INJECT_KEY,
+        BLOCKTYPE_INJECT_KEY, SCHEMA_PATH_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY
     } from "../code/injectionKeys";
     import {removeNullAndUndefined} from "../code/utils/cleanUp";
     import {usePluginsStore} from "../../stores/plugins";
 
+    const {t} = useI18n();
+
     defineOptions({
         name: "TaskEditor",
         inheritAttrs: false,
     });
+
+
 
     const modelValue = defineModel<string>();
 
@@ -62,6 +67,8 @@
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const blockType = inject(BLOCKTYPE_INJECT_KEY, "");
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
+
+    provide(SCHEMA_PATH_INJECTION_KEY, computed(() => `#/definitions/${selectedTaskType.value}`))
 
     const isPluginDefaults = computed(() => {
         return parentPath.startsWith("pluginDefaults")

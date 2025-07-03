@@ -107,7 +107,7 @@
 
     import {useStore} from "vuex";
     import TaskWrapper from "../../flows/tasks/TaskWrapper.vue";
-    import {removeRefPrefix, usePluginsStore} from "../../../stores/plugins";
+    import {usePluginsStore} from "../../../stores/plugins";
     import {removeNullAndUndefined} from "../utils/cleanUp";
     const store = useStore();
 
@@ -232,7 +232,7 @@
             title: t(`no_code.sections.${section}`),
             blockType: SECTION_BLOCK_MAP[section],
             section,
-            definitionKey: removeRefPrefix(pluginsStore.flowSchema?.$ref) ?? ""
+            definitionKey: [pluginsStore.flowSchema?.$ref, "properties", section, "items"].join("/"),
         }))
     });
 </script>

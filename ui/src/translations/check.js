@@ -11,8 +11,7 @@ const getNestedKeys = (obj, prefix = "") =>
         keys.push(fullKey);
         if (
             typeof obj[key] === "object" &&
-            obj[key] &&
-            !Array.isArray(obj[key])
+            obj[key]
         ) {
             keys.push(...getNestedKeys(obj[key], fullKey));
         }

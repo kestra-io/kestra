@@ -1,7 +1,7 @@
 <template>
     <div class="d-flex justify-content-center">
-        <el-button class="decline-button" @click="emit('decline')">
-            {{ t('decline') }}
+        <el-button class="reject-button" @click="emit('reject')">
+            {{ t('reject') }}
         </el-button>
         <el-button type="success" class="accept-button" @click="emit('accept')">
             {{ t('accept') }}
@@ -15,12 +15,12 @@
     const t = getCurrentInstance()!.appContext.config.globalProperties.$t;
     const emit = defineEmits<{
         accept: [];
-        decline: [];
+        reject: [];
     }>();
 </script>
 
 <style scoped lang="scss">
-    .decline-button {
+    .reject-button {
         border-color: var(--ks-border-failed);
         color: var(--ks-content-failed);
     }

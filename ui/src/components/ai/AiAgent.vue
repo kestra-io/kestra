@@ -20,7 +20,7 @@
                 <el-text v-if="error !== undefined" type="danger" size="default" class="me-auto">
                     {{ error }}
                 </el-text>
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between flex-wrap">
                     <div>
                         <div v-if="waitingForReply" class="d-flex loading-text">
                             <div v-loading="true" />
@@ -37,7 +37,7 @@
                         </el-button>
                     </div>
                     <el-text class="text-tertiary" size="small">
-                        ALT / ⌥ + K {{ t("to toggle") }}
+                        Ctrl + Shift + K {{ t("to toggle") }}
                     </el-text>
                 </div>
             </div>

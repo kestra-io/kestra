@@ -154,15 +154,13 @@
                         :navbar="false"
                         :original="draftSource === undefined ? undefined : flowYaml"
                         :diff-side-by-side="false"
+                        :on-ai-toggle="toggleAiAgent"
                     >
                         <template #absolute>
                             <div class="d-flex flex-column align-items-end gap-2" v-if="isCurrentTabFlow">
                                 <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
                                     {{ $t("ai.flow.title") }}
                                 </el-button>
-                                <span>
-                                    <KeyShortcuts />
-                                </span>
                             </div>
                         </template>
                     </editor>
@@ -179,7 +177,7 @@
                         v-if="draftSource !== undefined"
                         class="position-absolute prompt"
                         @accept="acceptDraft"
-                        @decline="declineDraft"
+                        @reject="declineDraft"
                     />
                 </template>
                 <div v-else class="no-tabs-opened">
@@ -487,7 +485,6 @@
 
     import TypeIcon from "../utils/icons/Type.vue"
     import SwitchView from "./SwitchView.vue";
-    import KeyShortcuts from "./KeyShortcuts.vue";
 
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -523,15 +520,22 @@
     const lowCodeEditorRef = ref(null);
     const tabsScrollRef = ref();
 
-    const toggleAiShortcut = (event) => {
-        if (event.altKey && event.key === "k" && isCurrentTabFlow.value) {
-            event.preventDefault();
+    const aiAgentOpened = ref(false);
+    const draftSource = ref(undefined);
+
+    const toggleAiAgent = () => {
+        if (isCurrentTabFlow.value && !aiEnabled.value) {
             draftSource.value = undefined;
             aiAgentOpened.value = !aiAgentOpened.value;
         }
     };
-    const aiAgentOpened = ref(false);
-    const draftSource = ref(undefined);
+
+    const toggleAiShortcut = (event) => {
+        if (event.ctrlKey && event.shiftKey && event.key === "K") {
+            event.preventDefault();
+            toggleAiAgent();
+        }
+    };
 
     const props = defineProps({
         flowGraph: {
@@ -759,6 +763,7 @@
 
         // Save on ctrl+s in topology
         document.addEventListener("keydown", saveUsingKeyboard);
+        document.addEventListener("keydown", toggleAiShortcut);
 
         // Guided tour
         setTimeout(() => {
@@ -779,8 +784,6 @@
         if (props.isCreating) {
             store.commit("editor/closeTabs");
         }
-
-        window.addEventListener("keydown", toggleAiShortcut);
     });
 
     onBeforeUnmount(() => {
@@ -788,6 +791,7 @@
 
         pluginsStore.editorPlugin = undefined;
         document.removeEventListener("keydown", saveUsingKeyboard);
+        document.removeEventListener("keydown", toggleAiShortcut);
         document.removeEventListener("popstate", () => {
             stopTour();
         });
@@ -795,7 +799,6 @@
         store.commit("editor/closeAllTabs");
 
         document.removeEventListener("click", hideTabContextMenu);
-        window.removeEventListener("keydown", toggleAiShortcut);
     });
 
     const stopTour = () => {

@@ -6,6 +6,7 @@ import FileTreeOutlineIcon from "vue-material-design-icons/FileTreeOutline.vue";
 import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
 import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
 import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
+import KeyboardIcon from "vue-material-design-icons/Keyboard.vue";
 
 import EditorSidebarWrapper from "../../../components/inputs/EditorSidebarWrapper.vue";
 import EditorWrapper from "../../../components/inputs/EditorWrapper.vue";
@@ -64,5 +65,13 @@ export const EDITOR_ELEMENTS = [
         },
         value: "blueprints",
         component: markRaw(BlueprintsWrapper),
+    },
+    {
+        button: {
+            icon: markRaw(KeyboardIcon),
+            label: "Key Shortcuts"
+        },
+        value: "keyshortcuts",
+        component: () => null,
     }
 ]

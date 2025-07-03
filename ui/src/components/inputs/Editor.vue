@@ -115,6 +115,7 @@
             shouldFocus: {type: Boolean, default: true},
             showScroll: {type: Boolean, default: false},
             diffOverviewBar: {type: Boolean, default: true},
+            onAiToggle: {type: Function, default: undefined},
         },
         components: {
             MonacoEditor,
@@ -320,6 +321,19 @@
                         this.$emit("execute", ed.getValue());
                     },
                 });
+
+                if (this.onAiToggle) {
+                    this.editor.addAction({
+                        id: "kestra-ai-toggle",
+                        label: this.$t("ai.flow.title"),
+                        keybindings: [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.KeyK],
+                        contextMenuGroupId: "navigation",
+                        contextMenuOrder: 1.6,
+                        run: () => {
+                            this.onAiToggle();
+                        },
+                    });
+                }
 
                 this.editor.addAction({
                     id: "confirm",

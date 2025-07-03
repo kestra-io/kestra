@@ -11,6 +11,7 @@
         :creating="isCreating"
         :path="props.path"
         :diff-overview-bar="false"
+        :on-ai-toggle="toggleAiAgent"
         @update:model-value="editorUpdate"
         @cursor="updatePluginDocumentation"
         @save="isCurrentTabFlow ? save(): saveFileContent()"
@@ -23,9 +24,6 @@
                 <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
                     {{ $t("ai.flow.title") }}
                 </el-button>
-                <span>
-                    <KeyShortcuts />
-                </span>
             </div>
             <ContentSave v-else @click="saveFileContent" />
         </template>
@@ -43,7 +41,7 @@
         v-if="draftSource !== undefined"
         class="position-absolute prompt"
         @accept="acceptDraft"
-        @decline="declineDraft"
+        @reject="declineDraft"
     />
 </template>
 
@@ -51,7 +49,6 @@
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useStore} from "vuex";
     import Editor from "./Editor.vue";
-    import KeyShortcuts from "./KeyShortcuts.vue";
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
@@ -72,15 +69,23 @@
     const aiEnabled = computed(() => store.state.misc.configs?.isAiEnabled);
     const cursor = ref();
 
-    const toggleAiShortcut = (event: KeyboardEvent) => {
-        if (event.altKey && event.key === "k" && isCurrentTabFlow.value) {
-            event.preventDefault();
+
+    const aiAgentOpened = ref(false);
+    const draftSource = ref<string | undefined>(undefined);
+
+    const toggleAiAgent = () => {
+        if (isCurrentTabFlow.value && !aiEnabled.value) {
             draftSource.value = undefined;
             aiAgentOpened.value = !aiAgentOpened.value;
         }
     };
-    const aiAgentOpened = ref(false);
-    const draftSource = ref<string | undefined>(undefined);
+
+    const toggleAiShortcut = (event: KeyboardEvent) => {
+        if (event.ctrlKey && event.shiftKey && event.key === "K") {
+            event.preventDefault();
+            toggleAiAgent();
+        }
+    };
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
 
@@ -122,7 +127,7 @@
     onMounted(() => {
         loadFile();
         window.addEventListener("keydown", handleGlobalSave);
-        window.addEventListener("keydown", toggleAiShortcut);
+        document.addEventListener("keydown", toggleAiShortcut);
     });
 
     onActivated(() => {
@@ -131,7 +136,7 @@
 
     onBeforeUnmount(() => {
         window.removeEventListener("keydown", handleGlobalSave);
-        window.removeEventListener("keydown", toggleAiShortcut);
+        document.removeEventListener("keydown", toggleAiShortcut);
     });
 
     const editorDomElement = ref<any>(null);
@@ -248,6 +253,7 @@
     .prompt {
         bottom: 10%;
         width: calc(100% - 4rem);
+        max-width: 790px;
         left: 2rem;
     }
 </style>

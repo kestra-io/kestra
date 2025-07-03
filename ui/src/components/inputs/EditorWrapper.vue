@@ -21,7 +21,7 @@
     >
         <template #absolute>
             <div class="d-flex flex-column align-items-end gap-2" v-if="isCurrentTabFlow">
-                <el-button v-if="!aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
+                <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
                     {{ $t("ai.flow.title") }}
                 </el-button>
             </div>

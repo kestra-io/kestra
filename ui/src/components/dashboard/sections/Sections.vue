@@ -10,9 +10,9 @@
             >
                 <div class="d-flex flex-column">
                     <p v-if="!isKPIChart(chart.type)">
-                        <span class="fs-6 fw-bold">{{
-                            labels(chart).title
-                        }}</span>
+                        <span class="fs-6 fw-bold">
+                            {{ labels(chart).title }}
+                        </span>
                         <template v-if="labels(chart)?.description">
                             <br>
                             <small class="fw-light">

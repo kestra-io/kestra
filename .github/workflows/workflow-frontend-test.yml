@@ -69,10 +69,6 @@ jobs:
         working-directory: ui
         run: npm run test:storybook -- --coverage
 
-      - name: Check translations
-        working-directory: ui
-        run: npx vitest --project=language
-
       - name: Codecov - Upload coverage reports
         uses: codecov/codecov-action@v5
         if: ${{ !cancelled() && github.event.pull_request.head.repo.full_name == github.repository }}

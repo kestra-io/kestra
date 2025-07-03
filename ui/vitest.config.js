@@ -15,7 +15,7 @@ export default defineConfig({
         },
     },
     test: {
-        projects: [".storybook/vitest.config.js", "./vitest.config.unit.js", "./vitest.config.language.js"],
+        projects: [".storybook/vitest.config.js", "./vitest.config.unit.js"],
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

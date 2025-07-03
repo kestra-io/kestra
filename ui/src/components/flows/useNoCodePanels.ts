@@ -39,11 +39,16 @@ interface Handlers {
 
 export function getEditTabKey(tab: NoCodeProps, index: number) {
     const indexWithLeftPadding = String(index).padStart(4, "0")
+    // remove irrelevant properties from the tab object
+    const {
+        creatingTask: _,
+        editingTask: ___,
+        position: __,
+        ...relevantTabProps
+    } = tab
     return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify({
                     action: "edit",
-                    blockType: tab.blockType,
-                    parentPath: tab.parentPath,
-                    refPath: tab.refPath,
+                    ...relevantTabProps
                 })}`
 }
 

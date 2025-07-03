@@ -598,6 +598,9 @@ subprojects {subProject ->
                         classifier = "exec"
                         extension  = "zip"
                     }
+                    pub.artifact(tasks.named("sourcesJar").get())
+                    pub.artifact(tasks.named("javadocJar").get())
+
                 }
 
                 /* 3. Disable Gradle-module metadata for this publication to

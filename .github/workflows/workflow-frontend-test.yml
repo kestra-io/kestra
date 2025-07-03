@@ -39,7 +39,6 @@ jobs:
           key: playwright-${{ hashFiles('ui/package-lock.json') }}
 
       - name: Npm - install
-        shell: bash
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         working-directory: ui
         run: npm ci
@@ -52,22 +51,23 @@ jobs:
           workdir: ui
 
       - name: Npm - Run build
-        shell: bash
         working-directory: ui
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: npm run build
 
+      - name: Run front-end unit tests
+        working-directory: ui
+        run: npm run test:unit -- --coverage
+
       - name: Storybook - Install Playwright
-        shell: bash
         working-directory: ui
         if: steps.cache-playwright.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps
 
-      - name: Run front-end unit tests
-        shell: bash
+      - name: Run storybook component tests
         working-directory: ui
-        run: npm run test:cicd
+        run: npm run test:storybook -- --coverage
 
       - name: Codecov - Upload coverage reports
         uses: codecov/codecov-action@v5

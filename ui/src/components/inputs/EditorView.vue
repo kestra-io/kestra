@@ -524,7 +524,7 @@
     const draftSource = ref(undefined);
 
     const toggleAiAgent = () => {
-        if (isCurrentTabFlow.value && !aiEnabled.value) {
+        if (isCurrentTabFlow.value && aiEnabled.value) {
             draftSource.value = undefined;
             aiAgentOpened.value = !aiAgentOpened.value;
         }

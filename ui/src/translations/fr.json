@@ -840,6 +840,7 @@
         "conditions": "Ajouter une condition",
         "errors": "Ajouter un gestionnaire d'erreurs",
         "finally": "Ajouter un bloc finally",
+        "inputs": "Ajouter un champ d'input",
         "pluginDefaults": "Ajouter un plugin par défaut",
         "tasks": "Ajouter une tâche",
         "triggers": "Ajouter un trigger"
@@ -848,16 +849,19 @@
         "general": {
           "concurrency": "Concurrence",
           "disabled": "Désactivé",
-          "inputs": "Entrées",
           "labels": "Étiquettes",
+          "listeners": "Auditeurs",
           "outputs": "Sorties",
           "retry": "Réessayer",
           "sla": "SLA",
-          "variables": "Variables"
+          "taskDefaults": "Paramètres par défaut des Tasks",
+          "variables": "Variables",
+          "workerGroup": "Groupe de Workers"
         },
         "main": {
           "description": "Description",
-          "flow_id": "ID de Flow",
+          "id": "ID de flow",
+          "inputs": "Entrées",
           "namespace": "Namespace"
         }
       },
@@ -885,6 +889,7 @@
         "conditions": "Sélectionner une condition",
         "errors": "Sélectionner une task",
         "finally": "Sélectionnez une task",
+        "inputs": "Sélectionnez un type de champ input",
         "pluginDefaults": "Sélectionner un plugin",
         "tasks": "Sélectionnez une task",
         "triggers": "Sélectionner un trigger"

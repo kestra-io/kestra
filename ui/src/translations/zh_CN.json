@@ -837,6 +837,7 @@
         "conditions": "添加条件",
         "errors": "添加错误处理程序",
         "finally": "添加一个finally块",
+        "inputs": "添加一个input字段",
         "pluginDefaults": "添加插件默认值",
         "tasks": "添加任务",
         "triggers": "添加一个trigger"
@@ -845,16 +846,19 @@
         "general": {
           "concurrency": "并发性",
           "disabled": "禁用",
-          "inputs": "输入",
           "labels": "标签",
+          "listeners": "监听器",
           "outputs": "输出",
           "retry": "重试",
           "sla": "SLA",
-          "variables": "变量"
+          "taskDefaults": "任务默认值",
+          "variables": "变量",
+          "workerGroup": "工作组"
         },
         "main": {
           "description": "描述",
-          "flow_id": "Flow ID",
+          "id": "Flow ID",
+          "inputs": "输入",
           "namespace": "命名空间"
         }
       },
@@ -882,6 +886,7 @@
         "conditions": "选择条件",
         "errors": "选择一个task",
         "finally": "选择一个task",
+        "inputs": "选择一个input字段类型",
         "pluginDefaults": "选择插件",
         "tasks": "选择一个task",
         "triggers": "选择一个trigger"

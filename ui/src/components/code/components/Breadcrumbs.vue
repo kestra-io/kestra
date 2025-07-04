@@ -49,8 +49,7 @@
             }
         }
 
-        // FIXME: resolve a better label
-        const blockType = "tasks"
+        const blockType = parentPath.split(".").pop() ?? "";
 
         if(taskCreation || (refPath !== undefined && refPath >= 0)) {
             breadcrumbs.value[index] = {

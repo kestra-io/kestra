@@ -98,10 +98,9 @@
             return updatedProperties;
         }
 
-        // FIXME: resolve a better label
-        const blockType = "tasks"
-
-        if(!updatedProperties?.id && ["triggers", "tasks"].includes(blockType ?? "")){
+        if(!updatedProperties?.id && (parentPath.endsWith("task")
+            || parentPath.endsWith("tasks")
+            || parentPath.endsWith("triggers"))){
             updatedProperties["id"] = {
                 type: "string",
                 $required: true

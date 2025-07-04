@@ -29,12 +29,15 @@
     import {useI18n} from "vue-i18n";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
-    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../code/injectionKeys";
+    import {BLOCK_SCHEMA_PATH_INJECTION_KEY, PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
     import {getValueAtJsonPath} from "../../utils/utils";
 
     const pluginsStore = usePluginsStore();
 
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+
+    const blockType = parentPath.split(".").pop() ?? "";
 
     const fieldDefinition = computed(() => {
         if(blockSchemaPath.length === 0) {

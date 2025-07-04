@@ -72,12 +72,14 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
             path: tab.parentPath.replace(/\.[^.]+$/, ""),
         })) : {}
 
+        const blockType = tab.parentPath?.split(".").pop() ?? ""
+
         const parentName = parentBlock ? parentBlock.id ?? parentBlock.type ?? tab.parentPath : tab.parentPath
         if (tab.action === "create") {
             return {
                 value: getCreateTabKey(tab, keepAliveCacheBuster++),
                 button: {
-                    label: `${parentName} / ${t(`no_code.creation.${tab.blockType}`)}`,
+                    label: `${parentName} / ${t(`no_code.creation.${blockType}`)}`,
                     icon: markRaw(MouseRightClickIcon),
                 },
             }
@@ -94,7 +96,7 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
             return {
                 value: getEditTabKey(tab, keepAliveCacheBuster++),
                 button: {
-                    label: `${parentName} / ${currentBlock?.id ?? tab.refPath ?? t(`no_code.creation.${tab.blockType}`)}`,
+                    label: `${parentName} / ${currentBlock?.id ?? tab.refPath ?? t(`no_code.creation.${blockType}`)}`,
                     icon: markRaw(MouseRightClickIcon),
                 },
             }

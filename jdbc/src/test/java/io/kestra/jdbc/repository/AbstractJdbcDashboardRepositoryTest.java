@@ -6,7 +6,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 
 
-public class AbstractJdbcDashboardRepositoryTest extends io.kestra.core.repositories.AbstractDashboardRepositoryTest {
+public abstract class AbstractJdbcDashboardRepositoryTest extends io.kestra.core.repositories.AbstractDashboardRepositoryTest {
     @Inject
     JdbcTestUtils jdbcTestUtils;
     @Inject

@@ -6,9 +6,12 @@ import io.kestra.core.models.dashboards.TimeWindow;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ExecutionService;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.codehaus.plexus.util.StringUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -20,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AbstractDashboardRepositoryTest {
     public static final String NAMESPACE = "io.kestra.unittest";
     public static final String TENANT_ID = "tenantId";
@@ -31,7 +35,9 @@ public abstract class AbstractDashboardRepositoryTest {
     protected DashboardRepositoryInterface dashboardRepositoryInterface;
     @Inject
     protected RunContextFactory runContextFactory;
-
+    @Singleton
+    @MockBean
+    protected FlowRepositoryInterface flowRepositoryInterface;
     public static Dashboard dashboardEntry(String id, String description) {
         return Dashboard.builder()
             .id(id)

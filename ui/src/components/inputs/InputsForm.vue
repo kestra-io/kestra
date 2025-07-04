@@ -435,11 +435,16 @@
                 }
 
                 const files = e.target.files || e.dataTransfer.files;
-                if (!files.length) {
-                    return;
+                if (files.length > 0) {
+                    
+                    this.inputsValues[input.id] = e.target.files[0];
+                    
+                    setTimeout(() => {
+                        this.fileInputProcessing.delete(input.id);
+                        this.onChange(input);
+                    }, 200);
+                    
                 }
-                this.inputsValues[input.id] = e.target.files[0];
-                this.onChange(input);
             },
             onYamlChange(input, e) {
                 this.inputsValues[input.id] = e.target.value;
@@ -638,6 +643,15 @@
 .el-input-file {
     display: flex;
     align-items: center;
+
+    .el-input__inner {
+        cursor: pointer;
+    }
+    .el-input__wrapper {
+        padding-top: calc(var(--el-input-inner-height) - var(--el-input-height, 32px) + 8px);
+        padding-bottom: calc(var(--el-input-inner-height) - var(--el-input-height, 32px) + 8px);
+    }
+    
 }
 
 .preview {

@@ -147,12 +147,12 @@ public class ErrorController {
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, NotFoundException e) {
-        return jsonError(request, e, HttpStatus.NOT_FOUND, Optional.ofNullable(e.getMessage()).orElse(HttpStatus.NOT_FOUND.getReason()));
+        return jsonError(request, e, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReason());
     }
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, ConflictException e) {
-        return jsonError(request, e, HttpStatus.CONFLICT, Optional.ofNullable(e.getMessage()).orElse(HttpStatus.CONFLICT.getReason()));
+        return jsonError(request, e, HttpStatus.CONFLICT, HttpStatus.CONFLICT.getReason());
     }
 
     @Error(global = true)

@@ -70,8 +70,13 @@ function getType(property: any, key?: string, schema?: any): string {
         }
 
         if (property.items?.$ref?.includes("conditions.Condition")
-            || property.items.anyOf?.every((item: any) => item.$ref?.includes("io.kestra.plugin.core.condition"))) {
+            || property.items.anyOf?.every((item: any) => item.$ref?.includes("io.kestra.plugin.core.condition"))
+            || property.items.anyOf?.every((item: any) => item.allOf?.some((i: any) => i.$ref?.includes("io.kestra.plugin.core.condition")))) {
             return "conditions";
+        }
+
+        if(property.items?.anyOf?.length > 10){
+            return "tasks";
         }
 
         return "array";

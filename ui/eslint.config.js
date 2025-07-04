@@ -64,6 +64,7 @@ export default [
                 "warn",
                 {"allow": ["scoped"]}
             ],
+
             "vue/component-name-in-template-casing": [
                 "error",
                 "PascalCase",
@@ -71,6 +72,7 @@ export default [
                     "registeredComponentsOnly": true,
                 }
             ],
+            "vue/prop-name-casing": ["error", "camelCase"],
             "@typescript-eslint/consistent-type-assertions": [
                 "error",
                 {

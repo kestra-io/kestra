@@ -66,9 +66,12 @@
             if(def.$deprecated === true) {
                 return acc;
             }
+            if(def.$deprecated === true) {
+                return acc;
+            }
 
             const consolidatedType = def.allOf
-                ? def.allOf.find((d: any) => d.properties?.type).type
+                ? def.allOf.find((d: any) => d.properties?.type)?.properties.type
                 : def.properties?.type;
 
             if(consolidatedType?.const){

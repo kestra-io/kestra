@@ -320,9 +320,16 @@
                     }
                 }
 
-                this.$store.dispatch("trigger/search", query).then(triggersData => {
+                const previousSelection = this.selection;
+                this.$store.dispatch("trigger/search", query).then(async triggersData => {
                     this.triggers = triggersData.results;
                     this.total = triggersData.total;
+
+                    if (previousSelection && this.$refs.selectTable) {
+                        await this.$refs.selectTable.waitTableRender();
+                        this.$refs.selectTable.setSelection(previousSelection);
+                    }
+
                     if (callback) {
                         callback();
                     }
@@ -378,9 +385,15 @@
                     return;
                 }
                 this.$store.dispatch("trigger/update", {...trigger, disabled: !value})
-                    .then(_ => {
-                        this.loadData();
-                    })
+                    .then(trigger => {
+                        // replace the update trigger in the list
+                        this.triggers = this.triggers.map(t => {
+                            if (t.id === trigger.id) {
+                                return {triggerContext: trigger, abstractTrigger: t.abstractTrigger};
+                            }
+                            return t;
+                        });
+                    });
             },
             genericConfirmAction(toast, queryAction, byIdAction, success, data) {
                 this.$toast().confirm(

@@ -29,6 +29,7 @@
     "Unfold content lines": "Déplier les multilignes",
     "about_this_blueprint": "À propos de ce blueprint",
     "absolute": "Absolu",
+    "accept": "Accepter",
     "actions": "Actions",
     "activate_basic_auth": "Activer l'authentification de base",
     "active": "Actif",
@@ -44,6 +45,13 @@
     "advanced configuration": "Autres propriétés",
     "after": "après",
     "aggregation": "Agrégation",
+    "ai": {
+      "flow": {
+        "generating": "Génération du YAML de flow pour vous...",
+        "prompt_placeholder": "Entrez les instructions pour créer votre flow Kestra.",
+        "title": "Agent IA"
+      }
+    },
     "all executions": "Toutes les exécutions",
     "all tags": "Toutes catégories",
     "api": "API",
@@ -119,10 +127,25 @@
     "change state current state": "Statut actuel :",
     "change state done": "L'état de la task a été mis à jour",
     "change state hint": {
-      "FAILED": "['Le flow sera marqué comme FAILED.', 'Aucune autre task ne sera exécutée.', 'Les tasks d'erreur seront exécutées.']",
-      "RUNNING": "['Le flow redémarrera et exécutera toutes les tâches suivantes.', 'Toutes les tâches bloquées seront exécutées.']",
-      "SUCCESS": "['Le flow redémarrera car cette task a réussi.', 'Toutes les tasks bloquées seront exécutées.', 'Le flow sera en état SUCCESS si toutes les exécutions de task réussissent.']",
-      "WARNING": "['Le flow sera marqué comme WARNING.', 'Les prochaines tasks seront exécutées.', 'Les tasks d\\'erreur seront exécutées.']"
+      "FAILED": [
+        "Le flow sera marqué comme FAILED.",
+        "Aucune autre task ne sera exécutée.",
+        "Les tasks d'erreur seront exécutées."
+      ],
+      "RUNNING": [
+        "Le flow redémarrera et exécutera toutes les tâches suivantes.",
+        "Toutes les tâches bloquées seront exécutées."
+      ],
+      "SUCCESS": [
+        "Le flow redémarrera car cette task a réussi.",
+        "Toutes les tasks bloquées seront exécutées.",
+        "Le flow sera en état SUCCESS si toutes les exécutions de task réussissent."
+      ],
+      "WARNING": [
+        "Le flow sera marqué comme WARNING.",
+        "Les prochaines tasks seront exécutées.",
+        "Les tasks d'erreur seront exécutées."
+      ]
     },
     "change state tooltip": "Changer l'état d'exécution",
     "chart": "Graphique",
@@ -239,6 +262,7 @@
     },
     "days": "Jours",
     "debug": "Déboguer",
+    "decline": "Refuser",
     "default": "Par défaut",
     "delete": "Effacer",
     "delete backfill": "Supprimer le backfill",
@@ -599,7 +623,7 @@
     "flows deleted": "<code>{count}</code> Flow(s) supprimé(s)",
     "flows disabled": "<code>{count}</code> Flow(s) désactivé(s)",
     "flows enabled": "<code>{count}</code> Flow(s) activé(s)",
-    "flows exported": "Flows exportés",
+    "flows exported": "<code>{count}</code> Flow(s) exporté(s)",
     "flows imported": "Flux importés",
     "focus task": "Cliquer sur une tâche pour voir sa documentation",
     "fold_all_multi_lines": "Replier toutes les lignes multiples",
@@ -715,7 +739,9 @@
       },
       "delete": {
         "file": "Supprimer le fichier",
+        "files": "Supprimer {count} fichiers sélectionnés",
         "folder": "Supprimer le dossier",
+        "folders": "Supprimer {count} dossiers sélectionnés",
         "label": "Supprimer"
       },
       "dialog": {
@@ -843,6 +869,7 @@
       },
       "sections": {
         "afterExecution": "Après l'Exécution",
+        "connection": "Propriétés de connexion",
         "deprecated": "Propriétés obsolètes",
         "errors": "Gestionnaires d'erreurs",
         "finally": "Enfin",
@@ -1177,6 +1204,7 @@
     "steps": "Étapes",
     "stream": "Flow",
     "sub flow": "Sous-flow",
+    "submit": "Soumettre",
     "success": "Succès",
     "sum": "Somme",
     "switch-view": "Changer de vue",
@@ -1214,6 +1242,7 @@
     "timezone": "Fuseau horaire",
     "title": "Titre",
     "to": "à",
+    "to toggle": "pour basculer",
     "toggle fullscreen": "Permuter le plein écran",
     "toggle output": "Voir les sorties",
     "toggle output display": "Permuter l'affichage de sortie",

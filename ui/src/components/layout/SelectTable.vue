@@ -32,7 +32,7 @@
                 tableHeight: this.infiniteScrollLoad === undefined ? "auto" : "100%"
             }
         },
-        expose: ["resetInfiniteScroll", "toggleRowExpansion"],
+        expose: ["resetInfiniteScroll", "setSelection", "waitTableRender", "toggleRowExpansion"],
         computed: {
             scrollWrapper() {
                 if (this.data) {
@@ -87,6 +87,18 @@
             selectionChanged(selection) {
                 this.hasSelection = selection.length > 0;
                 this.$emit("selection-change", selection);
+            },
+            setSelection(selection) {
+                this.$refs.table.clearSelection();
+                if (Array.isArray(selection)) {
+                    selection.forEach(sel => {
+                        const row = this.data.find(r => r.id === sel.id);
+                        if (row) {
+                            this.$refs.table.toggleRowSelection(row, true);
+                        }
+                    });
+                }
+                this.selectionChanged(selection);
             },
             computeHeaderSize() {
                 const tableElement = this.$refs.table?.$el;

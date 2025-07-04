@@ -1,6 +1,14 @@
 <template>
     <context-info-content :title="t('feeds.title')">
-        <div class="post" :class="{lastPost: index === 0, expanded: expanded[feed.id]}" v-for="(feed, index) in feeds" :key="feed.id">
+        <div
+            class="post"
+            :class="{
+                lastPost: index === 0,
+                expanded: expanded[feed.id]
+            }"
+            v-for="(feed, index) in feeds"
+            :key="feed.id"
+        >
             <div v-if="feed.image" class="mr-2">
                 <img :src="feed.image" alt="">
             </div>
@@ -40,7 +48,6 @@
 
 <script lang="ts" setup>
     import {computed, onMounted, reactive} from "vue";
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import {useStorage} from "@vueuse/core"
 
@@ -51,12 +58,14 @@
     import DateAgo from "./DateAgo.vue";
     import ContextInfoContent from "../ContextInfoContent.vue";
 
-    const store = useStore();
+    import {useApiStore} from "../../stores/api";
+
+    const apiStore = useApiStore();
     const {t} = useI18n({useScope: "global"});
 
-    const feeds = computed(() => store.state.api.feeds);
+    const feeds = computed(() => apiStore.feeds);
 
-    const expanded = reactive({});
+    const expanded = reactive<Record<string, boolean>>({});
 
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
     onMounted(() => {

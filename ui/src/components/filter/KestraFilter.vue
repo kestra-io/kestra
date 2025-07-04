@@ -79,7 +79,7 @@
     import Save from "./segments/Save.vue";
     import Settings from "./segments/Settings.vue";
     import RefreshButton from "../layout/RefreshButton.vue";
-    import Dashboards from "./segments/Dashboards.vue";
+    import Dashboards from "../dashboard/components/selector/Selector.vue";
     import Properties from "./segments/Properties.vue";
     import {COMPARATORS_REGEX} from "../../composables/monaco/languages/filters/filterLanguageConfigurator.ts";
     import {Comparators, getComparator} from "../../composables/monaco/languages/filters/filterCompletion.ts";

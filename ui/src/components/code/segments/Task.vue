@@ -15,14 +15,6 @@
 
     <template v-if="yaml">
         <ValidationError v-if="false" :errors link />
-
-        <Save
-            v-if="!lastBreadcrumb"
-            :disabled="(errors?.length ?? 0) > 0"
-            @click="exitTaskElement"
-            :what="section"
-            class="w-100 mt-3"
-        />
     </template>
 </template>
 
@@ -38,10 +30,10 @@
         PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY,
         EDIT_TASK_FUNCTION_INJECTION_KEY, BLOCKTYPE_INJECT_KEY,
+        FIELDNAME_INJECTION_KEY,
     } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
-    import Save from "../components/Save.vue";
     import {BlockType} from "../utils/types";
 
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
@@ -57,12 +49,9 @@
         CREATING_TASK_INJECTION_KEY,
         false,
     );
-    const exitTaskElement = inject(
-        CLOSE_TASK_FUNCTION_INJECTION_KEY,
-        () => {},
-    );
+    const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
 
-    const closeTask = inject(
+    const closeTaskAddition = inject(
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
         () => {},
     );
@@ -195,12 +184,12 @@
             const currentRefPath = (refPath !== undefined && refPath !== null) ? refPath + (position === "after" ? 1 : 0) : 0;
             editTask(
                 blockType,
-                parentPath,
-                currentRefPath,
+                fieldName ? `${parentPath}[${currentRefPath}].${fieldName}` : parentPath,
+                fieldName ? undefined : currentRefPath,
             );
             hasMovedToEdit.value = true;
             nextTick(() => {
-                closeTask();
+                closeTaskAddition();
             });
         }
 

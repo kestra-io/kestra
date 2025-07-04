@@ -1,7 +1,7 @@
 <template>
     <doc-id-display />
     <el-config-provider>
-        <error-toast v-if="message" :no-auto-hide="true" :message="message" />
+        <error-toast v-if="coreStore.message" :no-auto-hide="true" :message="coreStore.message" />
         <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded">
             <router-view />
         </component>
@@ -14,12 +14,19 @@
     import {h, ref, shallowRef} from "vue";
     import ErrorToast from "./components/ErrorToast.vue";
     import {mapGetters, mapState} from "vuex";
+    import {mapStores} from "pinia";
     import Utils from "./utils/utils";
     import VueTour from "./components/onboarding/VueTour.vue";
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
     import DocIdDisplay from "./components/DocIdDisplay.vue";
     import posthog from "posthog-js";
     import "@kestra-io/ui-libs/style.css";
+
+    import {useApiStore} from "./stores/api";
+    import {usePluginsStore} from "./stores/plugins";
+    import {useLayoutStore} from "./stores/layout";
+    import {useCoreStore} from "./stores/core";
+
     // Main App
     export default {
         name: "App",
@@ -39,12 +46,11 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("core", ["message"]),
             ...mapState("flow", ["overallTotal"]),
-            ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("misc", ["configs"]),
+            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore),
             envName() {
-                return this.$store.getters["layout/envName"] || this.configs?.environment?.name;
+                return this.layoutStore.envName || this.configs?.environment?.name;
             },
             isOSS(){
                 return true;
@@ -123,17 +129,17 @@
                     localStorage.setItem("uid", uid);
                 }
 
-                this.$store.dispatch("plugin/icons")
+                this.pluginsStore.fetchIcons()
                 const config = await this.$store.dispatch("misc/loadConfigs");
                 await this.$store.dispatch("doc/initResourceUrlTemplate", config.version);
 
-                this.$store.dispatch("api/loadFeeds", {
+                this.apiStore.loadFeeds({
                     version: config.version,
                     iid: config.uuid,
                     uid: uid,
                 });
 
-                this.$store.dispatch("api/loadConfig")
+                this.apiStore.loadConfig()
                     .then(apiConfig => {
                         this.initStats(apiConfig, config, uid);
                     })

@@ -6,10 +6,11 @@
         :block-type="blockType"
         :creating-task="creatingTask"
         :editing-task="editingTask"
+        :field-name="fieldName"
         :position
         @update-metadata="(e) => onUpdateMetadata(e)"
         @update-task="(e) => editorUpdate(e)"
-        @reorder="(yaml) => handleReorder(yaml)"
+        @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
         @close-task="() => emit('closeTask')"
     />
 </template>
@@ -30,6 +31,7 @@
         parentPath?: string;
         refPath?: number;
         position?: "before" | "after";
+        fieldName?: string | undefined;
     }
 
     defineProps<NoCodeProps>();
@@ -99,11 +101,5 @@
                 topologyVisible: true,
             });
         }, 1000);
-    };
-
-    const handleReorder = (source: string) => {
-        store.commit("flow/setFlowYaml", source);
-        store.commit("flow/setHaveChange", true)
-        store.dispatch("flow/save", {content: source});
     };
 </script>

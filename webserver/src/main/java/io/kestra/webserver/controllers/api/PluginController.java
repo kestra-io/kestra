@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Validated
-@Controller("/api/v1/{tenant}/plugins/")
+@Controller("/api/v1/plugins/")
 public class PluginController {
     private static final String CACHE_DIRECTIVE = "public, max-age=3600";
 
@@ -80,7 +80,7 @@ public class PluginController {
     )
     public MutableHttpResponse<DocumentationWithSchema> getSchemaFromInputType(
         @Parameter(description = "The schema needed") @PathVariable Type type
-    ) throws ClassNotFoundException, IOException {
+    ) throws IOException {
         ClassInputDocumentation classInputDocumentation = this.inputDocumentation(type);
 
         return HttpResponse.ok()
@@ -257,7 +257,7 @@ public class PluginController {
 
     protected ClassPluginDocumentation<?> buildPluginDocumentation(String className, String version, Boolean allProperties) {
         return pluginRegistry.findMetadataByIdentifier(getPluginIdentifier(className, version))
-            .map(metadata -> ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, allProperties))
+            .map(metadata -> ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, version, allProperties))
             .orElseThrow(() -> new NoSuchElementException("Class '" + className + "' doesn't exists "));
     }
 

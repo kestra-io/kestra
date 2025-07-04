@@ -818,7 +818,7 @@ public class ExecutorService {
                         .executionKind(executor.getExecution().getKind())
                         .build();
                     // Get worker group
-                    Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(workerTask);
+                    Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(executor.getFlow(), workerTask);
                     if (workerGroup.isPresent()) {
                         // Check if the worker group exist
                         String tenantId = executor.getFlow().getTenantId();
@@ -1296,7 +1296,7 @@ public class ExecutorService {
             .state(ExecutionKilled.State.REQUESTED)
             .executionState(state)
             .executionId(execution.getId())
-            .isOnKillCascade(false) // TODO we may offer the choice to the user here
+            .isOnKillCascade(true)
             .tenantId(execution.getTenantId())
             .build()
         );

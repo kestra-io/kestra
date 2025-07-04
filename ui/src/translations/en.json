@@ -464,7 +464,7 @@
     "export all templates": "Export all templates",
     "flow_export": "Export flow",
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
-    "flows exported": "Flows exported",
+    "flows exported": "<code>{count}</code> Flow(s) exported",
     "export all flows": "Export all flows",
     "import": "Import",
     "disable": "Disable",
@@ -1152,6 +1152,7 @@
         "general": "General properties",
         "optional": "Optional properties",
         "deprecated": "Deprecated properties",
+        "connection": "Connection properties",
         "tasks": "Tasks",
         "triggers": "Triggers",
         "errors": "Error Handlers",
@@ -1343,6 +1344,17 @@
         "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
       },
       "chart_preview": "Click on a chart source code to see its preview"
-    }
+    },
+    "ai": {
+      "flow": {
+        "title": "AI Agent",
+        "prompt_placeholder": "Enter instructions to create your Kestra flow.",
+        "generating": "Generating Flow YAML for you..."
+      }
+    },
+    "submit": "Submit",
+    "to toggle": "to toggle",
+    "accept": "Accept",
+    "decline": "Decline"
   }
 }

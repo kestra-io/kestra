@@ -25,6 +25,7 @@
     import {useStorage} from "@vueuse/core";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
+    import {useCoreStore} from "../../stores/core";
 
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
@@ -41,6 +42,7 @@
     }
 
     const store = useStore()
+    const coreStore = useCoreStore()
     const flow = computed(() => store.state.flow.flow)
 
     onMounted(() => {
@@ -142,7 +144,7 @@
 
     const {setupInitialCodeTab} = useInitialCodeTabs()
 
-    const isTourRunning = computed(() => store.state.core.guidedProperties?.tourStarted)
+    const isTourRunning = computed(() => coreStore.guidedProperties?.tourStarted)
     const DEFAULT_TOUR_TABS = [
         {tabs: ["code"], activeTab: "code", size: 1},
         {tabs: ["topology"], activeTab: "topology", size: 1}

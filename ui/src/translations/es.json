@@ -29,6 +29,7 @@
     "Unfold content lines": "Desplegar cadenas multilínea",
     "about_this_blueprint": "Acerca de este blueprint",
     "absolute": "Absoluto",
+    "accept": "Aceptar",
     "actions": "Acciones",
     "activate_basic_auth": "Activar Autenticación Básica",
     "active": "Activo",
@@ -44,6 +45,13 @@
     "advanced configuration": "Otras propiedades",
     "after": "después",
     "aggregation": "Agregación",
+    "ai": {
+      "flow": {
+        "generating": "Generando YAML de Flow para ti...",
+        "prompt_placeholder": "Ingrese instrucciones para crear su flow de Kestra.",
+        "title": "Agente de IA"
+      }
+    },
     "all executions": "Todas las ejecuciones",
     "all tags": "Todas las etiquetas",
     "api": "API",
@@ -119,10 +127,25 @@
     "change state current state": "Estado actual es:",
     "change state done": "El estado del task ha sido actualizado",
     "change state hint": {
-      "FAILED": "['El flow se marcará como FAILED.', 'No se ejecutará ninguna otra task.', 'Se ejecutarán las tasks de error.']",
-      "RUNNING": "['El flow se reiniciará y ejecutará todas las siguientes tasks.', 'Todas las tasks bloqueadas serán ejecutadas.']",
-      "SUCCESS": "['El flow se reiniciará ya que esta task fue exitosa.', 'Todas las tasks bloqueadas serán ejecutadas.', 'El flow estará en un estado de SUCCESS si todas las ejecuciones de tasks son exitosas.']",
-      "WARNING": "['El flow se marcará como WARNING.', 'Las próximas tasks se ejecutarán.', 'Las tasks con error se ejecutarán.']"
+      "FAILED": [
+        "El flow se marcará como FAILED.",
+        "No se ejecutará ninguna otra task.",
+        "Se ejecutarán las tasks de error."
+      ],
+      "RUNNING": [
+        "El flow se reiniciará y ejecutará todas las siguientes tasks.",
+        "Todas las tasks bloqueadas serán ejecutadas."
+      ],
+      "SUCCESS": [
+        "El flow se reiniciará ya que esta task fue exitosa.",
+        "Todas las tasks bloqueadas serán ejecutadas.",
+        "El flow estará en un estado de SUCCESS si todas las ejecuciones de tasks son exitosas."
+      ],
+      "WARNING": [
+        "El flow se marcará como WARNING.",
+        "Las próximas tasks se ejecutarán.",
+        "Las tasks con error se ejecutarán."
+      ]
     },
     "change state tooltip": "Cambiar el estado de ejecución",
     "chart": "Gráfico",
@@ -239,6 +262,7 @@
     },
     "days": "Días",
     "debug": "Depuración",
+    "decline": "Rechazar",
     "default": "Predeterminado",
     "delete": "Eliminar",
     "delete backfill": "Eliminar el backfill",
@@ -599,7 +623,7 @@
     "flows deleted": "<code>{count}</code> Flow(s) eliminados",
     "flows disabled": "<code>{count}</code> Flow(s) deshabilitados",
     "flows enabled": "<code>{count}</code> Flow(s) habilitados",
-    "flows exported": "Flows exportados",
+    "flows exported": "<code>{count}</code> Flow(s) exportado(s)",
     "flows imported": "Flujos importados",
     "focus task": "Haz clic en cualquier elemento para ver su documentación.",
     "fold_all_multi_lines": "Plegar Todas las Líneas Múltiples",
@@ -715,7 +739,9 @@
       },
       "delete": {
         "file": "Eliminar archivo",
+        "files": "Eliminar {count} archivos seleccionados",
         "folder": "Eliminar carpeta",
+        "folders": "Eliminar {count} carpetas seleccionadas",
         "label": "Eliminar"
       },
       "dialog": {
@@ -843,6 +869,7 @@
       },
       "sections": {
         "afterExecution": "Después de la Ejecución",
+        "connection": "Propiedades de conexión",
         "deprecated": "Propiedades obsoletas",
         "errors": "Manejadores de Errores",
         "finally": "Finalmente",
@@ -1177,6 +1204,7 @@
     "steps": "Pasos",
     "stream": "Stream",
     "sub flow": "Subflow",
+    "submit": "Enviar",
     "success": "Éxito",
     "sum": "Suma",
     "switch-view": "Cambiar vista",
@@ -1214,6 +1242,7 @@
     "timezone": "Zona horaria",
     "title": "Título",
     "to": "Hasta",
+    "to toggle": "para alternar",
     "toggle fullscreen": "Alternar pantalla completa",
     "toggle output": "Alternar salidas",
     "toggle output display": "Alternar visualización de salida",

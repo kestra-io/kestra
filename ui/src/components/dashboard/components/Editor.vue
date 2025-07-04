@@ -122,7 +122,7 @@
 </template>
 <script setup>
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    
+
     import {TYPES, getChartTitle} from "../composables/useDashboards";
 
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
@@ -138,14 +138,18 @@
     defineEmits(["save"])
 </script>
 <script>
+    import {mapStores} from "pinia";
 
     import Editor from "../../inputs/Editor.vue";
+    import {usePluginsStore} from "../../../stores/plugins";
+    import {useDashboardStore} from "../../../stores/dashboard";
     import yaml from "yaml";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
 
     export default {
         computed: {
+            ...mapStores(usePluginsStore, useDashboardStore),
             ContentSave() {
                 return ContentSave
             },
@@ -183,16 +187,17 @@
                 if (this.currentView === this.views.DOC) {
                     const type = YAML_UTILS.getTaskType(event.model.getValue(), event.position, this.plugins)
                     if (type) {
-                        this.$store.dispatch("plugin/load", {cls: type})
+
+                        this.pluginsStore.load({cls: type})
                             .then(plugin => {
-                                this.$store.commit("plugin/setEditorPlugin", {cls: type, ...plugin});
-                            });
+                                this.pluginsStore.editorPlugin = {cls: type, ...plugin};
+                            })
                     } else {
-                        this.$store.commit("plugin/setEditorPlugin", undefined);
+                        this.pluginsStore.editorPlugin = undefined;
                     }
                 } else if (this.currentView === this.views.CHART) {
                     const chart = YAML_UTILS.getChartAtPosition(event.model.getValue(), event.position)
-                    if (chart && this.selectedChart?.id !== chart.id) {
+                    if (chart) {
                         const result = await this.loadChart(chart);
                         this.selectedChart = result.data;
                         this.chartError = result.error;
@@ -217,7 +222,7 @@
                 };
             },
             loadPlugins() {
-                this.$store.dispatch("plugin/list", {...this.$route.params})
+                this.pluginsStore.list({...this.$route.params})
                     .then(data => {
                         this.plugins = data.map(plugin => {
                             const charts = plugin.charts || [];
@@ -247,7 +252,7 @@
             async loadChart(chart) {
                 const yamlChart = yaml.stringify(chart);
                 const result = {error: null, data: null, raw: {}};
-                await this.$store.dispatch("dashboard/validateChart", yamlChart)
+                await this.dashboardStore.validateChart(yamlChart)
                     .then(errors => {
                         if (errors.constraints) {
                             result.error = errors.constraints;
@@ -278,7 +283,7 @@
         },
         watch: {
             source() {
-                this.$store.dispatch("dashboard/validate", this.source)
+                this.dashboardStore.validate(this.source)
                     .then(errors => {
                         if (errors.constraints) {
                             this.errors = [errors.constraints];
@@ -289,7 +294,7 @@
             }
         },
         beforeUnmount() {
-            this.$store.commit("plugin/setEditorPlugin", undefined);
+            this.pluginsStore.editorPlugin = undefined;
         }
     };
 </script>

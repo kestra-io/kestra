@@ -24,12 +24,14 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @SuperBuilder
@@ -305,9 +307,10 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
         };
     }
 
-    public Map<String, Object> generateOutputs(Map<String, Object> inputs) {
+    public Map<String, Object> generateOutputs(Map<String, Object> inputs, Resumed resumed) {
         Output build = Output.builder()
             .onResume(inputs)
+            .resumed(resumed)
             .build();
 
         return JacksonMapper.toMap(build);
@@ -317,6 +320,19 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         private Map<String, Object> onResume;
+
+        @Schema(title = "Resumed information: when and by who the execution was resumed.")
+        private Resumed resumed;
+    }
+
+    public record Resumed(@Nullable String by, LocalDateTime on) {
+        public static Resumed now() {
+            return new Resumed(null, LocalDateTime.now());
+        }
+
+        public static Resumed now(String by) {
+            return new Resumed(by, LocalDateTime.now());
+        }
     }
 
     public enum Behavior {

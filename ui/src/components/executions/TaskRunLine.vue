@@ -17,7 +17,7 @@
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
                 only-icon
-                :icons="icons"
+                :icons="pluginsStore.icons"
             />
         </div>
 
@@ -191,6 +191,9 @@
     import Utils from "../../utils/utils";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {useCoreStore} from "../../stores/core";
+    import {mapStores} from "pinia";
 
     export default {
         components: {
@@ -243,8 +246,8 @@
             }
         },
         computed: {
-            ...mapState("plugin", ["icons"]),
             ...mapState("auth", ["user"]),
+            ...mapStores(usePluginsStore, useCoreStore),
             SECTIONS() {
                 return SECTIONS
             },
@@ -308,11 +311,11 @@
                     params: {...params, taskRunId: currentTaskRunId}
                 }).then((response) => {
                     Utils.copy(response).then(() =>{
-                        this.$store.dispatch("core/showMessage", {
+                        this.coreStore.message = {
                             variant: "success",
                             title: this.$t("success"),
                             message: this.$t("copied_logs_to_clipboard"),
-                        });
+                        };
                     });
                 })
             },

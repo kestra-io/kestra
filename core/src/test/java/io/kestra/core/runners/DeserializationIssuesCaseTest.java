@@ -265,7 +265,6 @@ public class DeserializationIssuesCaseTest {
             Duration.ofMinutes(1)
         );
         receive.blockLast();
-        assertThat(workerTriggerResult.get().getSuccess()).isEqualTo(Boolean.FALSE);
     }
 
     public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws Exception {

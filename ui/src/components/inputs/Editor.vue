@@ -326,7 +326,7 @@
                     this.editor.addAction({
                         id: "kestra-ai-toggle",
                         label: this.$t("ai.flow.title"),
-                        keybindings: [KeyMod.WinCtrl | KeyMod.Shift | KeyCode.KeyK],
+                        keybindings: [KeyMod.CtrlCmd | KeyMod.Alt | KeyMod.Shift | KeyCode.KeyB],
                         contextMenuGroupId: "navigation",
                         contextMenuOrder: 1.6,
                         run: () => {

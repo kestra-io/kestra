@@ -60,7 +60,7 @@
             description: "editor_shortcuts.execute_flow",
         },
         {
-            keys: ["^ Ctrl", "Shift", "K"],
+            keys: ["^ Ctrl", "⌥ Option/Alt", "Shift", "K"],
             description: "editor_shortcuts.toggle_ai_agent",
         },
         {

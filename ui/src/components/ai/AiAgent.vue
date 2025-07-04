@@ -37,7 +37,7 @@
                         </el-button>
                     </div>
                     <el-text class="text-tertiary" size="small">
-                        ^ Ctrl + Shift + K {{ t("to toggle") }}
+                        Ctrl + Alt (⌥) + Shift + K {{ t("to toggle") }}
                     </el-text>
                 </div>
             </div>

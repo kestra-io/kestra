@@ -81,7 +81,7 @@
     };
 
     const toggleAiShortcut = (event: KeyboardEvent) => {
-        if (event.ctrlKey && event.shiftKey && event.key === "K") {
+        if (event.ctrlKey && event.altKey && event.shiftKey && event.key === "K") {
             event.preventDefault();
             toggleAiAgent();
         }

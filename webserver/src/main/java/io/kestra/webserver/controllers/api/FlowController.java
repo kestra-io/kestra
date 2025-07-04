@@ -133,7 +133,7 @@ public class FlowController {
         if (flow instanceof FlowWithException fwe) {
             throw new IllegalStateException(
                 "Unable to generate graph for flow " + flowUid +
-                    " because of exception " + fwe.getException()
+                " because of exception " + fwe.getException()
             );
         }
 
@@ -316,7 +316,7 @@ public class FlowController {
         tags = {"Flows"},
         summary = "Update a complete namespace from yaml source",
         description = "All flow will be created / updated for this namespace.\n" +
-            "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
+                      "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
     )
     public List<FlowInterface> updateFlowsInNamespace(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -342,7 +342,7 @@ public class FlowController {
         tags = {"Flows"},
         summary = "Update a complete namespace from json object",
         description = "All flow will be created / updated for this namespace.\n" +
-            "Flow that already created but not in `flows` will be deleted if the query delete is `true`",
+                      "Flow that already created but not in `flows` will be deleted if the query delete is `true`",
         deprecated = true
     )
     @Deprecated(forRemoval = true, since = "0.18")
@@ -516,7 +516,7 @@ public class FlowController {
         tags = {"Flows"},
         summary = "Update from multiples yaml sources",
         description = "All flow will be created / updated for this namespace.\n" +
-            "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
+                      "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
     )
     public List<FlowInterface> bulkUpdateFlows(
         @RequestBody(description = "A list of flows source code splitted with \"---\"") @Body @Nullable String flows,
@@ -601,14 +601,33 @@ public class FlowController {
     public FlowTopologyGraph getFlowDependencies(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "If true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly
+        @Parameter(description = "If true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly,
+        @Parameter(description = "If true, expand all dependencies recursively") @QueryValue(defaultValue = "false") boolean expandAll
     ) {
         List<FlowTopology> flowTopologies = flowTopologyRepository.findByFlow(tenantService.resolveTenant(), namespace, id, destinationOnly);
+        Stream<FlowTopology> flowTopologyStream = expandAll ? recursiveFlowTopology(tenantService.resolveTenant(), namespace, id, destinationOnly) : flowTopologies.stream();
 
         return flowTopologyService.graph(
-            flowTopologies.stream(),
+            flowTopologyStream,
             (flowNode -> flowNode)
         );
+    }
+
+    protected Stream<FlowTopology> recursiveFlowTopology(String tenantId, String namespace, String flowId, boolean destinationOnly) {
+        List<FlowTopology> flowTopologies = flowTopologyRepository.findByFlow(tenantId, namespace, flowId, destinationOnly);
+        List<FlowTopology> subTopologies = flowTopologies.stream()
+            // filter on destination is not the current node to avoid an infinite loop
+            .filter(topology -> !(topology.getDestination().getTenantId().equals(tenantId) && topology.getDestination().getNamespace().equals(namespace) && topology.getDestination().getId().equals(flowId)))
+            .toList();
+
+        if (subTopologies.isEmpty()) {
+            return flowTopologies.stream();
+        } else {
+            return Stream.concat(flowTopologies.stream(), subTopologies.stream()
+                .map(topology -> topology.getDestination())
+                // recursively fetch child nodes
+                .flatMap(destination -> recursiveFlowTopology(destination.getTenantId(), destination.getNamespace(), destination.getId(), destinationOnly)));
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -836,19 +855,19 @@ public class FlowController {
     }
 
     protected static List<QueryFilter> mapLegacyQueryParamsToNewFilters(List<QueryFilter> filters, String query, List<FlowScope> scope, String namespace, List<String> labels) {
-            filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-                filters,
-                query,
-                namespace,
-                null,
-                null,
-                null,
-                scope,
-                labels,
-                null,
-                null,
-                null,
-                null);
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            null,
+            null,
+            null,
+            scope,
+            labels,
+            null,
+            null,
+            null,
+            null);
 
         return filters;
     }

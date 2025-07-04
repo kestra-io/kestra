@@ -127,10 +127,25 @@
     "change state current state": "Status atual é:",
     "change state done": "O estado da task foi atualizado",
     "change state hint": {
-      "FAILED": "['O flow será marcado como FAILED.', 'Nenhuma outra task será executada.', 'As tasks de erro serão executadas.']",
-      "RUNNING": "['O flow será reiniciado e executará todas as próximas tasks.', 'Todas as tasks bloqueadas serão executadas.']",
-      "SUCCESS": "['O flow será reiniciado pois esta task foi bem-sucedida.', 'Todas as tasks bloqueadas serão executadas.', 'O flow estará em estado de SUCCESS se todas as execuções das tasks forem bem-sucedidas.']",
-      "WARNING": "['O flow será marcado como WARNING.', 'As próximas tasks serão executadas.', 'As tasks de erro serão executadas.']"
+      "FAILED": [
+        "O flow será marcado como FAILED.",
+        "Nenhuma outra task será executada.",
+        "As tasks de erro serão executadas."
+      ],
+      "RUNNING": [
+        "O flow será reiniciado e executará todas as próximas tasks.",
+        "Todas as tasks bloqueadas serão executadas."
+      ],
+      "SUCCESS": [
+        "O flow será reiniciado pois esta task foi bem-sucedida.",
+        "Todas as tasks bloqueadas serão executadas.",
+        "O flow estará em estado de SUCCESS se todas as execuções das tasks forem bem-sucedidas."
+      ],
+      "WARNING": [
+        "O flow será marcado como WARNING.",
+        "As próximas tasks serão executadas.",
+        "As tasks de erro serão executadas."
+      ]
     },
     "change state tooltip": "Alterar o estado de execução",
     "chart": "Gráfico",
@@ -608,7 +623,7 @@
     "flows deleted": "<code>{count}</code> Flow(s) deletado(s)",
     "flows disabled": "<code>{count}</code> Flow(s) desativado(s)",
     "flows enabled": "<code>{count}</code> Flow(s) ativado(s)",
-    "flows exported": "Flows exportados",
+    "flows exported": "<code>{count}</code> Flow(s) exportado(s)",
     "flows imported": "Fluxos importados",
     "focus task": "Clique em qualquer elemento para ver sua documentação.",
     "fold_all_multi_lines": "Recolher Todas as Linhas Múltiplas",
@@ -724,7 +739,9 @@
       },
       "delete": {
         "file": "Deletar arquivo",
+        "files": "Excluir {count} arquivos selecionados",
         "folder": "Deletar pasta",
+        "folders": "Excluir {count} pastas selecionadas",
         "label": "Deletar"
       },
       "dialog": {

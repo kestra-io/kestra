@@ -1296,7 +1296,7 @@ public class ExecutorService {
             .state(ExecutionKilled.State.REQUESTED)
             .executionState(state)
             .executionId(execution.getId())
-            .isOnKillCascade(false) // TODO we may offer the choice to the user here
+            .isOnKillCascade(true)
             .tenantId(execution.getTenantId())
             .build()
         );

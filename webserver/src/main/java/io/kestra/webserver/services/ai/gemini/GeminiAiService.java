@@ -21,6 +21,8 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.Version;
+import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.models.ai.FlowGenerationPrompt;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.micronaut.context.annotation.Requires;
@@ -56,7 +58,8 @@ public class GeminiAiService implements AiServiceInterface {
         DATA_FILTERS_GROUP_NAME,
         DATA_FILTERS_KPI_GROUP_NAME
     );
-    public static final int SEED = 50000;
+    private static final int SEED = 50000;
+    private static final float TEMPERATURE = 0.7f;
 
     private final InMemoryRunner inMemoryRunner;
 
@@ -65,15 +68,16 @@ public class GeminiAiService implements AiServiceInterface {
         final PluginRegistry pluginRegistry,
         final JsonSchemaGenerator jsonSchemaGenerator,
         final TenantService tenantService,
-        final FlowService flowService
+        final FlowService flowService,
+        final VersionProvider versionProvider
     ) {
-        SequentialAgent kestraFlowBuilder = initializeAgents(geminiConfiguration, pluginRegistry, jsonSchemaGenerator, tenantService, flowService);
-
+        SequentialAgent kestraFlowBuilder = initializeAgents(geminiConfiguration, pluginRegistry, jsonSchemaGenerator, tenantService, flowService, versionProvider.getVersion());
         inMemoryRunner = new InMemoryRunner(kestraFlowBuilder);
     }
 
-    private static LlmAgent createMostRelevantTypesAgent(PluginRegistry pluginRegistry, JsonSchemaGenerator jsonSchemaGenerator, Gemini model) {
+    private LlmAgent createMostRelevantTypesAgent(PluginRegistry pluginRegistry, JsonSchemaGenerator jsonSchemaGenerator, Gemini model, String fallbackPluginVersion) {
         Map<String, String> descriptionByType = pluginRegistry.plugins().stream()
+            .sorted(Comparator.comparing(p -> Version.of(Optional.ofNullable(p.version()).orElse(fallbackPluginVersion))))
             .flatMap(plugin -> plugin.allClassGrouped().entrySet().stream().filter(e -> !EXCLUDED_PLUGIN_TYPES.contains(e.getKey())).map(Map.Entry::getValue).flatMap(Collection::stream))
             .map(clazz -> Map.entry(clazz.getName(), Optional.ofNullable(((Class<?>) clazz).getDeclaredAnnotation(io.swagger.v3.oas.annotations.media.Schema.class))))
             .filter(e -> !e.getValue().map(io.swagger.v3.oas.annotations.media.Schema::deprecated).orElse(false))
@@ -82,7 +86,8 @@ public class GeminiAiService implements AiServiceInterface {
                     Map.Entry::getKey,
                     e -> e.getValue()
                         .map(io.swagger.v3.oas.annotations.media.Schema::title)
-                        .orElse("")
+                        .orElse(""),
+                    (existing, replacement) -> existing // In case of duplicates, keep the first one as it's the most recent version
                 )
             );
         String pluginRelevanceInstructions;
@@ -106,8 +111,7 @@ public class GeminiAiService implements AiServiceInterface {
             - Include AT LEAST ONE trigger if execution should start based on an event or interval.
             - Every flow must include at least one task that is not a trigger.
             - ALWAYS include all plugin types present in the current Flow YAML. If the user asks for troubleshooting, also include additional types if required.
-            - If you don't include any plugin types, explain why.
-            Use only the plugin types from the list below. You may select up to 10 types but you MUST ALWAYS return at least one valid type. Below is the list of all available plugin types in Kestra, each formatted as 'type:description':
+            Use only the plugin types from the list below. You may select up to 10 types but you MUST ALWAYS return AT LEAST one type. Below is the list of all available plugin types in Kestra, each formatted as 'type:description':
             ```
             %s
             ```
@@ -121,7 +125,7 @@ public class GeminiAiService implements AiServiceInterface {
             .name("kestra_plugin_relevance_agent")
             .description("An agent to identify most relevant plugins to build a Kestra Flow YAML.")
             .model(model)
-            .generateContentConfig(GenerateContentConfig.builder().temperature(0.7f).seed(SEED).maxOutputTokens(1024).build())
+            .generateContentConfig(GenerateContentConfig.builder().temperature(TEMPERATURE).seed(SEED).maxOutputTokens(1024).build())
             .instruction(pluginRelevanceInstructions)
             .outputKey("mostRelevantTypes")
             .afterAgentCallback(callbackContext -> {
@@ -132,7 +136,8 @@ public class GeminiAiService implements AiServiceInterface {
                 }
 
                 if (mostRelevantTypes.isEmpty()) {
-                    return Maybe.empty();
+                    callbackContext.state().put("responseForUser", UNABLE_TO_GENERATE_FLOW_ERROR);
+                    return shortCircuitLlmResponse(callbackContext, UNABLE_TO_GENERATE_FLOW_ERROR);
                 }
 
                 String[] identifiedTypes = mostRelevantTypes.split(" ?, ?");
@@ -158,7 +163,7 @@ public class GeminiAiService implements AiServiceInterface {
             .name("kestra_init_flow_builder_agent")
             .description("An agent to bootstrap a Kestra Flow YAML.")
             .model(model)
-            .generateContentConfig(GenerateContentConfig.builder().temperature(0.7f).seed(SEED).maxOutputTokens(50000).build())
+            .generateContentConfig(GenerateContentConfig.builder().temperature(TEMPERATURE).seed(SEED).maxOutputTokens(50000).build())
             .outputKey("responseForUser")
             .beforeAgentCallback((beforeAgentCallback) -> {
                 Object responseForUser = beforeAgentCallback.state().get("responseForUser");
@@ -217,7 +222,7 @@ public class GeminiAiService implements AiServiceInterface {
         LlmAgent yamlFixerAgent = LlmAgent.builder()
             .name("kestra_flow_yaml_fixer")
             .description("An agent to build a Kestra Flow YAML.")
-            .generateContentConfig(GenerateContentConfig.builder().temperature(0.7f).seed(SEED).maxOutputTokens(50000).build())
+            .generateContentConfig(GenerateContentConfig.builder().temperature(TEMPERATURE).seed(SEED).maxOutputTokens(50000).build())
             .beforeAgentCallback((beforeAgentCallback) -> {
                 String responseForUser = (String) beforeAgentCallback.state().get("responseForUser");
                 if (responseForUser == null || responseForUser.isBlank()) {
@@ -283,9 +288,16 @@ public class GeminiAiService implements AiServiceInterface {
             .build();
     }
 
-    private static SequentialAgent initializeAgents(GeminiConfiguration geminiConfiguration, PluginRegistry pluginRegistry, JsonSchemaGenerator jsonSchemaGenerator, TenantService tenantService, FlowService flowService) {
+    private SequentialAgent initializeAgents(
+        GeminiConfiguration geminiConfiguration,
+        PluginRegistry pluginRegistry,
+        JsonSchemaGenerator jsonSchemaGenerator,
+        TenantService tenantService,
+        FlowService flowService,
+        String fallbackPluginVersion
+    ) {
         Gemini model = new Gemini(geminiConfiguration.modelName(), Client.builder().apiKey(geminiConfiguration.apiKey()).build());
-        LlmAgent mostRelevantTypesAgent = createMostRelevantTypesAgent(pluginRegistry, jsonSchemaGenerator, model);
+        LlmAgent mostRelevantTypesAgent = createMostRelevantTypesAgent(pluginRegistry, jsonSchemaGenerator, model, fallbackPluginVersion);
 
         LlmAgent yamlBuilderAgent = createYamlBuilderAgent(model);
 

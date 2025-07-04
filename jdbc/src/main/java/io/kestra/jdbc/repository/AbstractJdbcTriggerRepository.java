@@ -144,24 +144,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 .fetchOne(0, int.class));
     }
 
-    @Override
-    public int countForNamespace(@Nullable String tenantId, @Nullable String namespace) {
-        if (namespace == null) return count(tenantId);
-
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> DSL
-                .using(configuration)
-                .selectCount()
-                .from(this.jdbcRepository.getTable())
-                .where(this.defaultFilter(tenantId))
-                .and(DSL.or(
-                    NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%"),
-                    NAMESPACE_FIELD.eq(namespace)
-                ))
-                .fetchOne(0, int.class));
-    }
-
     public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
         JdbcSchedulerContext jdbcSchedulerContext = (JdbcSchedulerContext) scheduleContextInterface;
 

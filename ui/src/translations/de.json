@@ -127,10 +127,25 @@
     "change state current state": "Aktueller Zustand ist:",
     "change state done": "Der Task-Zustand wurde aktualisiert",
     "change state hint": {
-      "FAILED": "['Der Flow wird als FAILED markiert.', 'Keine andere Task wird ausgeführt.', 'Die Fehler-Tasks werden ausgeführt.']",
-      "RUNNING": "['Der Flow wird neu gestartet und alle nächsten Tasks werden ausgeführt.', 'Alle blockierten Tasks werden ausgeführt.']",
-      "SUCCESS": "['Der Flow wird neu gestartet, da dieser Task erfolgreich war.', 'Alle blockierten Tasks werden ausgeführt.', 'Der Flow wird im Zustand SUCCESS sein, wenn alle Task-Ausführungen erfolgreich sind.']",
-      "WARNING": "['Der Flow wird als WARNING markiert.', 'Die nächsten Tasks werden ausgeführt.', 'Die Fehler-Tasks werden ausgeführt.']"
+      "FAILED": [
+        "Der Flow wird als FAILED markiert.",
+        "Keine andere Task wird ausgeführt.",
+        "Die Fehler-Tasks werden ausgeführt."
+      ],
+      "RUNNING": [
+        "Der Flow wird neu gestartet und alle nächsten Tasks werden ausgeführt.",
+        "Alle blockierten Tasks werden ausgeführt."
+      ],
+      "SUCCESS": [
+        "Der Flow wird neu gestartet, da dieser Task erfolgreich war.",
+        "Alle blockierten Tasks werden ausgeführt.",
+        "Der Flow wird im Zustand SUCCESS sein, wenn alle Task-Ausführungen erfolgreich sind."
+      ],
+      "WARNING": [
+        "Der Flow wird als WARNING markiert.",
+        "Die nächsten Tasks werden ausgeführt.",
+        "Die Fehler-Tasks werden ausgeführt."
+      ]
     },
     "change state tooltip": "Ändern Sie den Ausführungszustand",
     "chart": "Diagramm",
@@ -608,7 +623,7 @@
     "flows deleted": "<code>{count}</code> Flow(s) gelöscht",
     "flows disabled": "<code>{count}</code> Flow(s) deaktiviert",
     "flows enabled": "<code>{count}</code> Flow(s) aktiviert",
-    "flows exported": "Flows exportiert",
+    "flows exported": "<code>{count}</code> Flow(s) exportiert",
     "flows imported": "Flows importiert",
     "focus task": "Klicken Sie auf ein Element, um dessen Dokumentation zu sehen.",
     "fold_all_multi_lines": "Alle Mehrzeiligen Einklappen",
@@ -724,7 +739,9 @@
       },
       "delete": {
         "file": "Datei löschen",
+        "files": "Lösche {count} ausgewählte Dateien",
         "folder": "Ordner löschen",
+        "folders": "Lösche {count} ausgewählte Ordner",
         "label": "Löschen"
       },
       "dialog": {

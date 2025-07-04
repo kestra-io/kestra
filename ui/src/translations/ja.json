@@ -127,10 +127,22 @@
     "change state current state": "現在のステータスは:",
     "change state done": "タスクの状態が更新されました",
     "change state hint": {
-      "FAILED": "['FlowはFAILEDとしてマークされます。', '他のTaskは実行されません。', 'エラーTaskが実行されます。']",
+      "FAILED": [
+        "FlowはFAILEDとしてマークされます。",
+        "他のTaskは実行されません。",
+        "エラーTaskが実行されます。"
+      ],
       "RUNNING": "フローが再起動し、次のすべてのタスクが実行されます。すべてのブロックされたタスクが実行されます。",
-      "SUCCESS": "['このflowはこのtaskが成功したため再起動します。', 'すべてのブロックされたtaskが実行されます。', 'すべてのtaskの実行が成功した場合、flowはSUCCESS状態になります。']",
-      "WARNING": "['このflowはWARNINGとしてマークされます。', '次のtasksが実行されます。', 'エラーtasksが実行されます。']"
+      "SUCCESS": [
+        "このflowはこのtaskが成功したため再起動します。",
+        "すべてのブロックされたtaskが実行されます。",
+        "すべてのtaskの実行が成功した場合、flowはSUCCESS状態になります。"
+      ],
+      "WARNING": [
+        "このflowはWARNINGとしてマークされます。",
+        "次のtasksが実行されます。",
+        "エラーtasksが実行されます。"
+      ]
     },
     "change state tooltip": "実行状態を変更",
     "chart": "チャート",
@@ -608,7 +620,7 @@
     "flows deleted": "<code>{count}</code>件のflowが削除されました",
     "flows disabled": "<code>{count}</code>件のflowが無効化されました",
     "flows enabled": "<code>{count}</code>件のflowが有効化されました",
-    "flows exported": "flowがエクスポートされました",
+    "flows exported": "<code>{count}</code> Flow(s) エクスポート済み",
     "flows imported": "フローがインポートされました",
     "focus task": "任意の要素をクリックしてそのドキュメントを表示します。",
     "fold_all_multi_lines": "すべての複数行を折りたたむ",
@@ -724,7 +736,9 @@
       },
       "delete": {
         "file": "ファイルを削除",
+        "files": "{count} 個の選択されたファイルを削除",
         "folder": "フォルダーを削除",
+        "folders": "{count} 個の選択されたフォルダーを削除",
         "label": "削除"
       },
       "dialog": {

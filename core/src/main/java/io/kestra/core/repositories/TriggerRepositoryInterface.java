@@ -42,15 +42,6 @@ public interface TriggerRepositoryInterface extends QueryBuilderInterface<Trigge
     int count(@Nullable String tenantId);
 
     /**
-     * Counts the total number of triggers for the given namespace.
-     *
-     * @param tenantId  the tenant of the triggers
-     * @param namespace the namespace
-     * @return The count.
-     */
-    int countForNamespace(@Nullable String tenantId, @Nullable String namespace);
-
-    /**
      * Find all triggers that match the query, return a flux of triggers
      * as the search is not paginated
      */

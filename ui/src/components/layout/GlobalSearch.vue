@@ -1,6 +1,7 @@
 <template>
     <div data-component="FILENAME_PLACEHOLDER">
         <el-autocomplete
+            ref="searchInput"
             class="flex-shrink-0"
             v-model="filter"
             @select="goTo"
@@ -22,7 +23,7 @@
                     class="d-flex gap-2"
                 >
                     <div class="d-flex gap-2 nav-item-title">
-                        <component :is="{...item.icon.element}" class="align-middle" /> {{ item.title }}
+                        <component v-if="item.icon?.element" :is="{...item.icon.element}" class="align-middle" /> {{ item.title }}
                     </div>
                     <arrow-right class="is-justify-end" />
                 </router-link>
@@ -31,7 +32,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted} from "vue";
     import {useRouter} from "vue-router";
     import {useLeftMenu} from "override/components/useLeftMenu";
@@ -50,17 +51,23 @@
                 return [];
             }
             if(item.child) {
-                return item.child.filter(c => !c.hidden);
+                return item.child.filter(c => !c.hidden).map(c => {
+                    if (!c.icon?.element) {
+                        c.icon = item.icon;
+                    }
+
+                    return c;
+                });
             }
 
             return item;
         }).filter(item => item.href);
     });
 
-    const keyDown = (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+    const keyDown = (e: KeyboardEvent) => {
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === "k") {
             e.preventDefault();
-            searchInput.value.click();
+            searchInput.value.focus();
         }
     };
 

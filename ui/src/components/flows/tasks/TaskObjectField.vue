@@ -11,8 +11,9 @@
                     <span v-if="props.fieldKey" class="label">
                         {{ props.fieldKey }}
                     </span>
+
                     <ClearButton
-                        v-if="isAnyOf && !required && modelValue && Object.keys(modelValue).length > 0"
+                        v-if="isAnyOf && !isRequired && modelValue && Object.keys(modelValue).length > 0"
                         @click="$emit('update:modelValue', undefined); taskComponent?.resetSelectType?.();"
                     />
                 </div>

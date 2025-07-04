@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, computed, inject, ref} from "vue";
+    import {onMounted, computed, inject, ref, provide} from "vue";
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
     import {usePluginsStore} from "../../../stores/plugins";
@@ -40,6 +40,7 @@
     import {
         CREATING_TASK_INJECTION_KEY, EDITING_TASK_INJECTION_KEY,
         FLOW_INJECTION_KEY,
+        SCHEMA_PATH_INJECTION_KEY,
     } from "../injectionKeys";
 
     import Task from "./Task.vue";
@@ -47,6 +48,8 @@
     import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
     import {removeNullAndUndefined} from "../utils/cleanUp";
     const editingTask = inject(EDITING_TASK_INJECTION_KEY, false);
+
+    provide(SCHEMA_PATH_INJECTION_KEY, computed(() => pluginsStore.schemaType?.flow.$ref ?? ""));
 
     const {t} = useI18n();
     const store = useStore();
@@ -123,27 +126,17 @@
         await pluginsStore.loadSchemaType()
     });
 
+    // fields displayed on top of the form
     const MAIN_KEYS = [
         "id",
         "namespace",
         "description",
-        "inputs",
-    ] as const;
+        "inputs"
+    ]
 
+    // ---
 
-    const fieldsFromSchemaTop = computed(() => {
-        return MAIN_KEYS.map(key => ({
-            modelValue: parsedFlow.value[key],
-            required: pluginsStore.flowRootSchema?.required ?? [],
-            disabled: !creatingFlow.value && (key === "id" || key === "namespace"),
-            schema: pluginsStore.flowRootProperties?.[key] ?? {},
-            definitions: pluginsStore.flowDefinitions,
-            label: t(`no_code.fields.main.${key}`),
-            fieldKey: key,
-            task: parsedFlow.value,
-        }));
-    });
-
+    // fields displayed just after the horizontal bar
     const SECTIONS_IDS = [
         "tasks",
         "triggers",
@@ -151,27 +144,36 @@
         "finally",
         "afterExecution",
         "pluginDefaults",
-    ] as const
+    ]
 
+    // once all those fields are displayed, the rest of the fields are displayed
+    // in alphabetical order, except the ones in HIDDEN_FIELDS
     const HIDDEN_FIELDS = [
         "deleted",
         "tenantId",
-        "revision",
+        "revision"
     ];
 
+    const getFieldFromKey = (key:string, translateGroup: string) => ({
+        modelValue: parsedFlow.value[key],
+        required: pluginsStore.flowRootSchema?.required ?? [],
+        disabled: !creatingFlow.value && (key === "id" || key === "namespace"),
+        schema: pluginsStore.flowRootProperties?.[key] ?? {},
+        definitions: pluginsStore.flowDefinitions,
+        label: SECTIONS_IDS.includes(key) ? key : t(`no_code.fields.${translateGroup}.${key}`),
+        fieldKey: key,
+        task: parsedFlow.value,
+    })
+
+
+    const fieldsFromSchemaTop = computed(() => MAIN_KEYS.map(key => getFieldFromKey(key, "main")))
+
+
+
     const fieldsFromSchemaRest = computed(() => {
-        return Object.entries(pluginsStore.flowRootProperties ?? {})
-            .filter(([key]) => !MAIN_KEYS.includes(key as typeof MAIN_KEYS[number]) && !HIDDEN_FIELDS.includes(key as string))
-            .map(([key, schema]) => ({
-                modelValue: parsedFlow.value[key],
-                required: pluginsStore.flowRootSchema?.required ?? [],
-                disabled: !creatingFlow.value && (key === "id" || key === "namespace"),
-                schema,
-                definitions: pluginsStore.flowDefinitions,
-                label: SECTIONS_IDS.includes(key as any) ? key : t(`no_code.fields.general.${key}`),
-                fieldKey: key,
-                task: parsedFlow.value,
-            })).sort((a, b) => {
+        return Object.keys(pluginsStore.flowRootProperties ?? {})
+            .filter((key) => !MAIN_KEYS.includes(key) && !HIDDEN_FIELDS.includes(key))
+            .map((key) => getFieldFromKey(key, "general")).sort((a, b) => {
                 const indexA = SECTIONS_IDS.indexOf(a.fieldKey as typeof SECTIONS_IDS[number]);
                 const indexB = SECTIONS_IDS.indexOf(b.fieldKey as typeof SECTIONS_IDS[number]);
                 if(indexA === -1 || indexB === -1) {

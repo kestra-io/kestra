@@ -131,8 +131,8 @@
         },
         computed: {
             filteredProperties() {
-                return this.properties ? Object.entries(this.properties).filter(([key, schema]) => {
-                    return !(key === "type" && schema?.const);
+                return this.properties ? Object.entries(this.properties).filter(([key]) => {
+                    return !(key === "type");
                 }) : [];
             },
             sortedProperties() {

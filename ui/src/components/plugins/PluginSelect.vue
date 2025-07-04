@@ -29,7 +29,10 @@
     import {useI18n} from "vue-i18n";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
-    import {BLOCK_SCHEMA_PATH_INJECTION_KEY, PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
+    import {
+        BLOCK_SCHEMA_PATH_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY
+    } from "../code/injectionKeys";
     import {getValueAtJsonPath} from "../../utils/utils";
 
     const pluginsStore = usePluginsStore();
@@ -47,6 +50,23 @@
     })
 
     const taskModels = computed(() => {
+        if(blockType === "pluginDefaults") {
+            const models = new Set<any>();
+            const pluginKeySection = ["tasks", "conditions", "triggers", "taskRunners"] as const;
+
+            for (const plugin of pluginsStore.plugins || []) {
+                for (const curSection of pluginKeySection) {
+                    const entries = plugin[curSection];
+                    if (entries) {
+                        for (const model of entries) {
+                            models.add(model);
+                        }
+                    }
+                }
+            }
+
+            return Array.from(models);
+        }
         const allRefs = fieldDefinition.value?.anyOf?.map((item: any) => {
             if(item.allOf){
                 // if the item is an allOf, we need to find the first item that has a $ref

@@ -1,64 +1,27 @@
 <template>
     <div class="p-4">
         <template v-if="!creatingTask && !editingTask">
-            <el-form label-position="top" v-if="fieldsFromSchema.length">
-                <TaskWrapper :key="v.root" v-for="(v) in fieldsFromSchema.slice(0, 3)" :merge="shouldMerge(v.schema)">
+            <el-form label-position="top">
+                <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema, v.fieldKey)">
                     <template #tasks>
                         <TaskObjectField
                             v-bind="v"
-                            @update:model-value="updateMetadata(v.root, $event)"
+                            @update:model-value="updateMetadata(v.fieldKey, $event)"
                         />
                     </template>
                 </TaskWrapper>
 
-                <Collapse
-                    v-if="pluginsStore.flowRootProperties?.inputs"
-                    :elements="metadata.inputs"
-                    :title="t('no_code.fields.general.inputs')"
-                    section="inputs"
-                    :block-schema-path="[pluginsStore.flowSchema?.$ref, 'properties', 'inputs', 'items'].join('/')"
-                />
-
                 <hr class="my-4">
 
-                <Collapse
-                    v-for="(section, index) in sections"
-                    :key="index"
-                    v-bind="section"
-                    @remove="(yaml) => emits('updateTask', yaml)"
-                    @reorder="(yaml) => emits('reorder', yaml)"
-                />
-
-                <hr class="my-4">
-
-                <TaskWrapper :key="v.root" v-for="(v) in fieldsFromSchema.slice(4)" :merge="shouldMerge(v.schema)">
+                <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :merge="shouldMerge(v.schema, v.fieldKey)">
                     <template #tasks>
                         <TaskObjectField
                             v-bind="v"
-                            @update:model-value="updateMetadata(v.root, $event)"
+                            @update:model-value="updateMetadata(v.fieldKey, $event)"
                         />
                     </template>
                 </TaskWrapper>
             </el-form>
-            <template v-else>
-                <el-skeleton
-                    animated
-                    :rows="4"
-                    :throttle="{leading: 500, initVal: true}"
-                />
-                <hr class="my-4">
-                <el-skeleton
-                    animated
-                    :rows="6"
-                    :throttle="{leading: 500, initVal: true}"
-                />
-                <hr class="my-4">
-                <el-skeleton
-                    animated
-                    :rows="5"
-                    :throttle="{leading: 500, initVal: true}"
-                />
-            </template>
         </template>
 
         <Task
@@ -70,12 +33,10 @@
 
 <script setup lang="ts">
     import {onMounted, computed, inject, ref} from "vue";
+    import {useI18n} from "vue-i18n";
+    import {useStore} from "vuex";
+
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-
-    import {CollapseItem, NoCodeElement} from "../utils/types";
-
-    import Collapse from "../components/collapse/Collapse.vue";
-
     import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
 
     import {
@@ -85,15 +46,13 @@
 
     import Task from "./Task.vue";
 
-    const editingTask = inject(EDITING_TASK_INJECTION_KEY, false);
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n();
-
-    import {useStore} from "vuex";
     import TaskWrapper from "../../flows/tasks/TaskWrapper.vue";
     import {usePluginsStore} from "../../../stores/plugins";
     import {removeNullAndUndefined} from "../utils/cleanUp";
+    const editingTask = inject(EDITING_TASK_INJECTION_KEY, false);
+
+    const {t} = useI18n();
     const store = useStore();
 
     const emits = defineEmits([
@@ -110,7 +69,13 @@
         }
     };
 
-    function shouldMerge(schema: any): boolean {
+    function shouldMerge(schema: any, key: string): boolean {
+        if(SECTIONS_IDS.includes(key as typeof SECTIONS_IDS[number])) {
+            return true;
+        }
+        if(key === "inputs") {
+            return true;
+        }
         const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf;
         return !complexObject
     }
@@ -135,7 +100,16 @@
     const creatingTask = inject(CREATING_TASK_INJECTION_KEY);
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
 
-    const props = defineProps({
+    const parsedFlow = computed(() => {
+        try {
+            return YAML_UTILS.parse(flow.value);
+        } catch (e) {
+            console.error("Error parsing flow YAML", e);
+            return {};
+        }
+    });
+
+    defineProps({
         metadata: {type: Object, required: true},
     });
 
@@ -158,34 +132,25 @@
         "namespace",
         "description",
         "inputs",
-        "retry",
-        "labels",
-        "outputs",
-        "variables",
-        "concurrency",
-        "sla",
-        "disabled"
     ] as const;
 
 
-    const fieldsFromSchema = computed(() => {
-        // FIXME: some labels are not where you would expect them to be
+    const fieldsFromSchemaTop = computed(() => {
         const mainLabels: Record<string, string> = {
             id: t("no_code.fields.main.flow_id"),
             namespace: t("no_code.fields.main.namespace"),
             description: t("no_code.fields.main.description"),
         }
 
-        return METADATA_KEYS.map(f => ({
-            modelValue: props.metadata[f],
+        return METADATA_KEYS.map(key => ({
+            modelValue: parsedFlow.value[key],
             required: pluginsStore.flowRootSchema?.required ?? [],
-            disabled: !creatingFlow.value && (f === "id" || f === "namespace"),
-            schema: pluginsStore.flowRootProperties?.[f] ?? {},
+            disabled: !creatingFlow.value && (key === "id" || key === "namespace"),
+            schema: pluginsStore.flowRootProperties?.[key] ?? {},
             definitions: pluginsStore.flowDefinitions,
-            label: mainLabels[f] ?? t(`no_code.fields.general.${f}`),
-            fieldKey: f,
-            task: props.metadata,
-            root: f,
+            label: mainLabels[key] ?? t(`no_code.fields.general.${key}`),
+            fieldKey: key,
+            task: parsedFlow.value,
         }));
     });
 
@@ -198,15 +163,25 @@
         "pluginDefaults",
     ] as const
 
-    type SectionKey = typeof SECTIONS_IDS[number];
-
-    const sections = computed((): CollapseItem[] => {
-        const parsedFlow = YAML_UTILS.parse<Partial<Record<SectionKey, NoCodeElement[]>>>(flow.value);
-        return SECTIONS_IDS.map((section) => ({
-            elements: parsedFlow?.[section] ?? [],
-            title: t(`no_code.sections.${section}`),
-            section,
-            blockSchemaPath: [pluginsStore.flowSchema?.$ref, "properties", section, "items"].join("/"),
-        }))
+    const fieldsFromSchemaRest = computed(() => {
+        return Object.entries(pluginsStore.flowRootProperties ?? {})
+            .filter(([key]) => !METADATA_KEYS.includes(key as typeof METADATA_KEYS[number]))
+            .map(([key, schema]) => ({
+                modelValue: parsedFlow.value[key],
+                required: pluginsStore.flowRootSchema?.required ?? [],
+                disabled: !creatingFlow.value && (key === "id" || key === "namespace"),
+                schema,
+                definitions: pluginsStore.flowDefinitions,
+                label: t(`no_code.fields.general.${key}`),
+                fieldKey: key,
+                task: parsedFlow.value,
+            })).sort((a, b) => {
+                const indexA = SECTIONS_IDS.indexOf(a.fieldKey as typeof SECTIONS_IDS[number]);
+                const indexB = SECTIONS_IDS.indexOf(b.fieldKey as typeof SECTIONS_IDS[number]);
+                if(indexA === -1 || indexB === -1) {
+                    return indexB - indexA;
+                }
+                return indexA - indexB;
+            });
     });
 </script>

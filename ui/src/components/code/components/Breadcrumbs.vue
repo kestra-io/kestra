@@ -20,7 +20,7 @@
     import {
         BREADCRUMB_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
         FLOW_INJECTION_KEY,
-        BLOCKTYPE_INJECT_KEY, REF_PATH_INJECTION_KEY,
+        REF_PATH_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY
     } from "../injectionKeys";
     const {t} = useI18n({useScope: "global"});
@@ -29,7 +29,6 @@
     const flowYaml = inject(FLOW_INJECTION_KEY, ref(""));
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
     const taskCreation = inject(CREATING_TASK_INJECTION_KEY, false);
-    const blockType = inject(BLOCKTYPE_INJECT_KEY, undefined);
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
 
     const flow = computed(() => {
@@ -49,6 +48,9 @@
                 label: parentPath,
             }
         }
+
+        const blockType = parentPath.split(".").pop() ?? "";
+
         if(taskCreation || (refPath !== undefined && refPath >= 0)) {
             breadcrumbs.value[index] = {
                 label: taskCreation

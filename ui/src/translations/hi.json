@@ -840,6 +840,7 @@
         "conditions": "एक शर्त जोड़ें",
         "errors": "त्रुटि हैंडलर जोड़ें",
         "finally": "अंत में एक finally ब्लॉक जोड़ें",
+        "inputs": "इनपुट फ़ील्ड जोड़ें",
         "pluginDefaults": "प्लगइन डिफ़ॉल्ट जोड़ें",
         "tasks": "कार्य जोड़ें",
         "triggers": "ट्रिगर जोड़ें"
@@ -848,16 +849,19 @@
         "general": {
           "concurrency": "समानांतरता",
           "disabled": "अक्षम",
-          "inputs": "इनपुट्स",
           "labels": "लेबल्स",
+          "listeners": "श्रोता",
           "outputs": "आउटपुट्स",
           "retry": "पुनः प्रयास करें",
           "sla": "SLA",
-          "variables": "वेरिएबल्स"
+          "taskDefaults": "डिफ़ॉल्ट Task",
+          "variables": "वेरिएबल्स",
+          "workerGroup": "वर्कर ग्रुप"
         },
         "main": {
           "description": "विवरण",
-          "flow_id": "फ्लो ID",
+          "id": "Flow ID",
+          "inputs": "इनपुट्स",
           "namespace": "Namespace"
         }
       },
@@ -885,6 +889,7 @@
         "conditions": "कंडीशन चुनें",
         "errors": "एक task चुनें",
         "finally": "एक task चुनें",
+        "inputs": "इनपुट फ़ील्ड प्रकार चुनें",
         "pluginDefaults": "एक प्लगइन चुनें",
         "tasks": "कार्य चुनें",
         "triggers": "ट्रिगर चुनें"

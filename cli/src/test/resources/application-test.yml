@@ -17,7 +17,7 @@ kestra:
       central:
         url: https://repo.maven.apache.org/maven2/
       sonatype:
-        url: https://s01.oss.sonatype.org/content/repositories/snapshots/
+        url: https://central.sonatype.com/repository/maven-snapshots/
   server:
     liveness:
       enabled: false

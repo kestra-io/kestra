@@ -840,6 +840,7 @@
         "conditions": "Добавить условие",
         "errors": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
+        "inputs": "Добавить поле input",
         "pluginDefaults": "Добавить плагин по умолчанию",
         "tasks": "Добавить task",
         "triggers": "Добавить trigger"
@@ -848,16 +849,19 @@
         "general": {
           "concurrency": "Конкурентность",
           "disabled": "Отключено",
-          "inputs": "Входные данные",
           "labels": "Метки",
+          "listeners": "Слушатели",
           "outputs": "Выходы",
           "retry": "Повторить попытку",
           "sla": "SLA",
-          "variables": "Переменные"
+          "taskDefaults": "Значения по умолчанию для Task",
+          "variables": "Переменные",
+          "workerGroup": "Группа Worker"
         },
         "main": {
           "description": "Описание",
-          "flow_id": "ID потока",
+          "id": "ID flow",
+          "inputs": "Входные данные",
           "namespace": "Namespace"
         }
       },
@@ -885,6 +889,7 @@
         "conditions": "Выберите условие",
         "errors": "Выберите task",
         "finally": "Выберите task",
+        "inputs": "Выберите тип поля input",
         "pluginDefaults": "Выберите плагин",
         "tasks": "Выберите task",
         "triggers": "Выберите trigger"

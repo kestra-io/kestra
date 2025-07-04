@@ -29,29 +29,30 @@ import java.util.Set;
         @Example(
             title = "Display a chart with a count of Logs per date grouped by level.",
             full = true,
-            code = {
-                "id: logs_timeseries\n" +
-                "type: io.kestra.plugin.core.dashboard.chart.TimeSeries\n" +
-                "chartOptions:\n" +
-                  "displayName: Logs\n" +
-                  "description: Logs count per date grouped by level\n" +
-                  "legend:\n" +
-                    "enabled: true\n" +
-                  "column: date\n" +
-                  "colorByColumn: level\n" +
-                "data:\n" +
-                  "type: io.kestra.plugin.core.dashboard.data.Logs\n" +
-                  "columns:\n" +
-                    "date:\n" +
-                      "field: DATE\n" +
-                      "displayName: Execution Date\n" +
-                    "level:\n" +
-                      "field: LEVEL\n" +
-                    "total:\n" +
-                      "displayName: Total Executions\n" +
-                      "agg: COUNT\n" +
-                      "graphStyle: BARS\n"
-            }
+            code = """
+            charts:
+              - id: logs_timeseries
+                type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+                chartOptions:
+                  displayName: Logs
+                  description: Logs count per date grouped by level
+                  legend:
+                    enabled: true
+                  column: date
+                  colorByColumn: level
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.Logs
+                  columns:
+                    date:
+                      field: DATE
+                      displayName: Execution Date
+                    level:
+                      field: LEVEL
+                    total:
+                      displayName: Total Executions
+                      agg: COUNT
+                      graphStyle: BARS
+            """                
         )
     }
 )

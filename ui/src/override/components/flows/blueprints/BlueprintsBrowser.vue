@@ -138,6 +138,7 @@
     import KestraFilter from "../../../../components/filter/KestraFilter.vue";
     import {usePluginsStore} from "../../../../stores/plugins";
     import {useBlueprintsStore} from "../../../../stores/blueprints";
+    import {useCoreStore} from "../../../../stores/core";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
@@ -263,7 +264,7 @@
                     if(this.embed) {
                         this.error = true;
                     } else {
-                        this.$store.dispatch("core/showError", 404);
+                        this.coreStore.error = 404;
                     }
                 }).finally(() => {
                     // Handle switch tab while fetching data
@@ -280,7 +281,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(usePluginsStore, useBlueprintsStore),
+            ...mapStores(usePluginsStore, useBlueprintsStore, useCoreStore),
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },

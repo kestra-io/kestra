@@ -1,5 +1,5 @@
 import {defineStore} from "pinia";
-import {apiUrl} from "override/utils/route";
+import {apiUrlWithoutTenants} from "override/utils/route";
 import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import semver from "semver";
 import {useApiStore} from "./api";
@@ -11,6 +11,7 @@ interface PluginComponent {
     description?: string;
     properties?: Record<string, any>;
     schema: Schemas;
+    markdown?: string;
 }
 
 interface Plugin {
@@ -37,6 +38,7 @@ interface State {
     editorPlugin: (PluginComponent & { cls: string }) | undefined;
     inputSchema: any | undefined;
     inputsType: any | undefined;
+    _iconsPromise: Promise<Record<string, string>> | undefined;
 }
 
 interface LoadOptions {
@@ -57,7 +59,8 @@ export const usePluginsStore = defineStore("plugins", {
         pluginsDocumentation: {},
         editorPlugin: undefined,
         inputSchema: undefined,
-        inputsType: undefined
+        inputsType: undefined,
+        _iconsPromise: undefined
     }),
 
     getters: {
@@ -68,7 +71,7 @@ export const usePluginsStore = defineStore("plugins", {
 
     actions: {
         async list() {
-            const response = await this.$http.get<Plugin[]>(`${apiUrl(this.vuexStore)}/plugins`);
+            const response = await this.$http.get<Plugin[]>(`${apiUrlWithoutTenants()}/plugins`);
             this.plugins = response.data;
             this.pluginSingleList = response.data
                 .map(plugin => plugin.tasks
@@ -80,7 +83,7 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
         async listWithSubgroup(options: Record<string, any>) {
-            const response = await this.$http.get<Plugin[]>(`${apiUrl(this.vuexStore)}/plugins/groups/subgroups`, {
+            const response = await this.$http.get<Plugin[]>(`${apiUrlWithoutTenants()}/plugins/groups/subgroups`, {
                 params: options
             });
             this.plugins = response.data;
@@ -106,8 +109,8 @@ export const usePluginsStore = defineStore("plugins", {
             }
 
             const url = options.version ?
-                `${apiUrl(this.vuexStore)}/plugins/${options.cls}/versions/${options.version}` :
-                `${apiUrl(this.vuexStore)}/plugins/${options.cls}`;
+                `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions/${options.version}` :
+                `${apiUrlWithoutTenants()}/plugins/${options.cls}`;
 
             const response = await this.$http.get<PluginComponent>(url, {params: options});
 
@@ -131,7 +134,7 @@ export const usePluginsStore = defineStore("plugins", {
 
         loadVersions(options: { cls: string; commit?: boolean }) {
             const promise = this.$http.get(
-                `${apiUrl(this.vuexStore)}/plugins/${options.cls}/versions`
+                `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions`
             );
             return promise.then(response => {
                 if (options.commit !== false) {
@@ -142,49 +145,65 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
         fetchIcons() {
-            const apiStore = useApiStore();
-            return Promise.all([
-                this.$http.get(`${apiUrl(this.vuexStore)}/plugins/icons`, {}),
-                apiStore.pluginIcons()
-            ]).then(responses => {
-                const icons = responses[0].data;
+            if(this.icons){
+                return Promise.resolve(this.icons);
+            }
 
-                for (const [key, plugin] of Object.entries(responses[1].data)) {
-                    if (icons[key] === undefined) {
-                        icons[key] = plugin;
+            if (this._iconsPromise) {
+                return this._iconsPromise;
+            }
+
+            const apiStore = useApiStore();
+
+            const apiPromise = apiStore.pluginIcons().then(response => {
+                this.icons = response.data ?? {};
+                for (const [key, plugin] of Object.entries(response.data)) {
+                    if (this.icons && this.icons[key] === undefined) {
+                        this.icons[key] = plugin as string;
                     }
                 }
-
-                this.icons = icons;
-
-                return icons;
             });
+
+            const iconsPromise =
+                this.$http.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(response => {
+                    const icons = response.data ?? {};
+                    this.icons = this.icons ? {
+                        ...icons,
+                        ...this.icons
+                    } : icons;
+                });
+
+            this._iconsPromise = Promise.all([apiPromise, iconsPromise]).then(() => {
+                return this.icons ?? {};
+            })
+
+            return this._iconsPromise;
         },
 
         groupIcons() {
             return Promise.all([
-                this.$http.get(`${apiUrl(this.vuexStore)}/plugins/icons/groups`, {})
+                this.$http.get(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
             ]).then(responses => {
                 return responses[0].data;
             });
         },
 
         loadInputsType() {
-            return this.$http.get(`${apiUrl(this.vuexStore)}/plugins/inputs`, {}).then(response => {
+            return this.$http.get(`${apiUrlWithoutTenants()}/plugins/inputs`, {}).then(response => {
                 this.inputsType = response.data;
 
                 return response.data;
             });
         },
         loadInputSchema(options: {type: string}) {
-            return this.$http.get(`${apiUrl(this.vuexStore)}/plugins/inputs/${options.type}`, {}).then(response => {
+            return this.$http.get(`${apiUrlWithoutTenants()}/plugins/inputs/${options.type}`, {}).then(response => {
                 this.inputSchema = response.data;
 
                 return response.data;
             });
         },
         loadSchemaType(options: {type: string} = {type: "flow"}) {
-            return this.$http.get(`${apiUrl(this.vuexStore)}/plugins/schemas/${options.type}`, {}).then(response => {
+            return this.$http.get(`${apiUrlWithoutTenants()}/plugins/schemas/${options.type}`, {}).then(response => {
                 return response.data;
             });
         },

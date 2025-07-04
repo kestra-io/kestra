@@ -175,7 +175,6 @@
         },
         computed: {
             ...mapState("template", ["templates", "total"]),
-            ...mapState("stat", ["dailyGroupByFlow", "daily"]),
             ...mapState("auth", ["user"]),
             routeInfo() {
                 return {

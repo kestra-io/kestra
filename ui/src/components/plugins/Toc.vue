@@ -7,7 +7,7 @@
             clearable
         />
         <el-collapse accordion v-model="activeNames">
-            <template :key="plugin.title" v-for="(plugin) in sortedPlugins(pluginsList)">
+            <template v-for="(plugin) in sortedPlugins(pluginsList)" :key="plugin.title">
                 <el-collapse-item
                     v-if="isVisible(plugin)"
                     :name="plugin.group"
@@ -31,7 +31,7 @@
                                                     <task-icon
                                                         :only-icon="true"
                                                         :cls="namespace + '.' + cls"
-                                                        :icons="icons"
+                                                        :icons="pluginsStore.icons"
                                                     />
                                                 </div>
                                                 <span
@@ -54,7 +54,8 @@
 
 <script>
     import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
-    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {usePluginsStore} from "../../stores/plugins";
 
     export default {
         emits: ["routerChange"],
@@ -89,7 +90,7 @@
             }
         },
         computed: {
-            ...mapState("plugin", ["plugin", "icons"]),
+            ...mapStores(usePluginsStore),
             countPlugin() {
                 return this.plugins.flatMap(plugin => this.pluginElements(plugin)).length
             },

@@ -17,8 +17,11 @@
     const route = useRoute();
     const router = useRouter();
 
-    import {useStore} from "vuex";
-    const store = useStore();
+    import {useDashboardStore} from "../../../stores/dashboard";
+    const dashboardStore = useDashboardStore();
+
+    import {useCoreStore} from "../../../stores/core";
+    const coreStore = useCoreStore();
 
     import {useBlueprintsStore} from "../../../stores/blueprints";
     const blueprintsStore = useBlueprintsStore();
@@ -37,10 +40,10 @@
 
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const save = async (source: string) => {
-        const response = await store.dispatch("dashboard/create", source);
+        const response = await dashboardStore.create(source)
 
         toast.success(t("dashboards.creation.confirmation", {title: response.title}));
-        store.dispatch("core/isUnsaved", false);
+        coreStore.unsavedChange = false;
 
         const {name, params} = route.query;
 

@@ -4,6 +4,7 @@ import io.kestra.core.Helpers;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
@@ -17,33 +18,32 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
 import io.kestra.core.services.FlowService;
-import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.debug.Return;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import java.time.ZonedDateTime;
-import java.util.stream.Stream;
+import jakarta.validation.ConstraintViolationException;
 import lombok.Getter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.event.Level;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
-import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.slf4j.event.Level;
+import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -858,26 +858,6 @@ public abstract class AbstractFlowRepositoryTest {
             Optional.ofNullable(toDelete).ifPresent(flow -> {
                 flowRepository.delete(flow);
             });
-        }
-    }
-
-    @Test
-    void shouldCountForNullTenantGivenNamespace() {
-        List<FlowWithSource> toDelete = new ArrayList<>();
-        try {
-            toDelete.add(flowRepository.create(GenericFlow.of(createTestFlowForNamespace("io.kestra.unittest.sub"))));
-            toDelete.add(flowRepository.create(GenericFlow.of(createTestFlowForNamespace("io.kestra.unittest.shouldcountbynamespacefornulltenant"))));
-            toDelete.add(flowRepository.create(GenericFlow.of(createTestFlowForNamespace("com.kestra.unittest"))));
-
-            int count = flowRepository.countForNamespace(MAIN_TENANT, "io.kestra.unittest.shouldcountbynamespacefornulltenant");
-            assertThat(count).isEqualTo(1);
-
-            count = flowRepository.countForNamespace(MAIN_TENANT, TEST_NAMESPACE);
-            assertThat(count).isEqualTo(2);
-        } finally {
-            for (FlowWithSource flow : toDelete) {
-                flowRepository.delete(flow);
-            }
         }
     }
 

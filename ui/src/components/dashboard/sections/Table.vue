@@ -36,6 +36,8 @@
 <script lang="ts" setup>
     import {PropType, onMounted, watch, ref, computed} from "vue";
 
+    import type {RouteLocation} from "vue-router";
+
     import type {Chart} from "../composables/useDashboards";
     import {getDashboard, isPaginationEnabled, useChartGenerator} from "../composables/useDashboards";
 
@@ -112,7 +114,7 @@
             : undefined;
     });
 
-    const dashboardID = (route) => getDashboard(route, "id")
+    const dashboardID = (route: RouteLocation) => getDashboard(route, "id") as string
 
     const handlePageChange = async (options: { page: number; size: number }) => {
         pageNumber.value = options.page;

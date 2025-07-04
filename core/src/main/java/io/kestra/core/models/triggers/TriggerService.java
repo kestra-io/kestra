@@ -119,6 +119,7 @@ public abstract class TriggerService {
             .id(id)
             .namespace(context.getNamespace())
             .flowId(context.getFlowId())
+            .tenantId(context.getTenantId())
             .flowRevision(flowRevision)
             .state(new State())
             .trigger(executionTrigger)

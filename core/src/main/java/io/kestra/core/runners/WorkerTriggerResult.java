@@ -25,9 +25,6 @@ public class WorkerTriggerResult implements HasUID {
     @NotNull
     AbstractTrigger trigger;
 
-    @Builder.Default
-    Boolean success = true;
-
     /**
      * {@inheritDoc}
      */

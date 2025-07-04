@@ -9,17 +9,22 @@
                 :md="(chart.chartOptions?.width || 6) * 2"
             >
                 <div class="d-flex flex-column">
-                    <p v-if="!isKPIChart(chart.type)">
-                        <span class="fs-6 fw-bold">
-                            {{ labels(chart).title }}
-                        </span>
-                        <template v-if="labels(chart)?.description">
-                            <br>
-                            <small class="fw-light">
-                                {{ labels(chart).description }}
-                            </small>
-                        </template>
-                    </p>
+                    <div class="d-flex justify-content-between">
+                        <div id="charts_heading">
+                            <p v-if="!isKPIChart(chart.type)">
+                                <span class="fs-6 fw-bold">
+                                    {{ labels(chart).title }}
+                                </span>
+                                <template v-if="labels(chart)?.description">
+                                    <br>
+                                    <small class="fw-light">
+                                        {{ labels(chart).description }}
+                                    </small>
+                                </template>
+                            </p>
+                        </div>
+                        <div id="charts_buttons" />
+                    </div>
 
                     <div class="flex-grow-1">
                         <component

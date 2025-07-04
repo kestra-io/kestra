@@ -1,10 +1,10 @@
 <template>
-    <div class="conditions-wrapper">
+    <div class="tasks-wrapper">
         <Collapse
-            title="conditions"
+            :title="root"
             :elements="items"
-            section="conditions"
-            :block-schema-path="[schemaPath, 'properties', 'conditions', 'items'].join('/')"
+            :section
+            :block-schema-path="[schemaPath, 'properties', root, 'items'].join('/')"
             @remove="(yaml) => store.commit('flow/setFlowYaml', yaml)"
             @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
         />
@@ -17,32 +17,46 @@
     import Collapse from "../../code/components/collapse/Collapse.vue";
     import {SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
 
-    defineOptions({inheritAttrs: false});
+    const schemaPath = inject(SCHEMA_PATH_INJECTION_KEY, ref())
 
-    const schemaPath = inject(SCHEMA_PATH_INJECTION_KEY, ref());
+    defineOptions({
+        inheritAttrs: false
+    });
 
     const store = useStore();
 
-    interface Condition {
-        id: string,
-        type: string
+    interface Task {
+        id:string,
+        type:string
     }
 
     const props = withDefaults(defineProps<{
-        modelValue?: Condition[]
+        modelValue?: Task[],
+        root?: string;
     }>(), {
-        modelValue: () => []
+        modelValue: () => [],
+        root: undefined
     });
 
     const items = computed(() =>
         !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     );
+
+    const section = computed(() => {
+        return props.root ?? "tasks";
+    });
 </script>
 
 <style scoped lang="scss">
 @import "../../code/styles/code.scss";
 
-.conditions-wrapper {
+.tasks-wrapper {
     width: 100%;
+}
+
+.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
 }
 </style>

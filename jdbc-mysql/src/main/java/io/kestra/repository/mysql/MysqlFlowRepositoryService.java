@@ -17,9 +17,7 @@ public abstract class MysqlFlowRepositoryService {
         List<Condition> conditions = new ArrayList<>();
 
         if (query != null) {
-            Condition fullText = jdbcRepository.fullTextCondition(Arrays.asList("namespace", "id"), query);
-            Condition idLike = DSL.field("id", String.class).likeIgnoreCase("%" + query + "%");
-            conditions.add(DSL.or(fullText, idLike));
+            conditions.add(jdbcRepository.fullTextCondition(Arrays.asList("namespace", "id"), query));
         }
 
         if (labels != null) {

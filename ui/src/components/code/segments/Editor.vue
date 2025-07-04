@@ -6,7 +6,7 @@
         />
 
         <el-form label-position="top" v-else>
-            <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema, v.fieldKey)">
+            <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema, v.fieldKey)" :transparent="v.fieldKey === 'inputs'">
                 <template #tasks>
                     <TaskObjectField
                         v-bind="v"
@@ -17,7 +17,7 @@
 
             <hr class="my-4">
 
-            <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :merge="shouldMerge(v.schema, v.fieldKey)">
+            <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :merge="shouldMerge(v.schema, v.fieldKey)" :transparent="SECTIONS_IDS.includes(v.fieldKey)">
                 <template #tasks>
                     <TaskObjectField
                         v-bind="v"
@@ -67,13 +67,8 @@
         }
     };
 
-    function shouldMerge(schema: any, key: string): boolean {
-        if(SECTIONS_IDS.includes(key as typeof SECTIONS_IDS[number])) {
-            return true;
-        }
-        if(key === "inputs") {
-            return true;
-        }
+
+    function shouldMerge(schema: any, _key: string): boolean {
         const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf;
         return !complexObject
     }

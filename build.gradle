@@ -476,37 +476,37 @@ subprojects {subProject ->
         apply plugin: 'signing'
         apply plugin: "com.vanniktech.maven.publish"
 
-    javadoc {
-        options {
-            locale = 'en_US'
-            encoding = 'UTF-8'
-            addStringOption("Xdoclint:none", "-quiet")
+        javadoc {
+            options {
+                locale = 'en_US'
+                encoding = 'UTF-8'
+                addStringOption("Xdoclint:none", "-quiet")
+            }
         }
-    }
 
-    tasks.register('sourcesJar', Jar) {
-        dependsOn = [':core:copyGradleProperties']
-        dependsOn = [':ui:assembleFrontend']
-        archiveClassifier.set('sources')
-        from sourceSets.main.allSource
-    }
-    sourcesJar.dependsOn ':core:copyGradleProperties'
-    sourcesJar.dependsOn ':ui:assembleFrontend'
-
-    tasks.register('javadocJar', Jar) {
-        archiveClassifier.set('javadoc')
-        from javadoc
-    }
-
-    tasks.register('testsJar', Jar) {
-        group = 'build'
-        description = 'Build the tests jar'
-
-        archiveClassifier.set('tests')
-        if (sourceSets.matching { it.name == 'test'}) {
-            from sourceSets.named('test').get().output
+        tasks.register('sourcesJar', Jar) {
+            dependsOn = [':core:copyGradleProperties']
+            dependsOn = [':ui:assembleFrontend']
+            archiveClassifier.set('sources')
+            from sourceSets.main.allSource
         }
-    }
+        sourcesJar.dependsOn ':core:copyGradleProperties'
+        sourcesJar.dependsOn ':ui:assembleFrontend'
+
+        tasks.register('javadocJar', Jar) {
+            archiveClassifier.set('javadoc')
+            from javadoc
+        }
+
+        tasks.register('testsJar', Jar) {
+            group = 'build'
+            description = 'Build the tests jar'
+
+            archiveClassifier.set('tests')
+            if (sourceSets.matching { it.name == 'test'}) {
+                from sourceSets.named('test').get().output
+            }
+        }
 
         //These modules should not be published
         def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver"]
@@ -585,6 +585,9 @@ subprojects {subProject ->
                         classifier = "exec"
                         extension  = "zip"
                     }
+                    pub.artifact(tasks.named("sourcesJar").get())
+                    pub.artifact(tasks.named("javadocJar").get())
+
                 }
 
                 /* 3. Disable Gradle-module metadata for this publication to

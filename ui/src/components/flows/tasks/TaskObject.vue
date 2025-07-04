@@ -76,42 +76,40 @@
     import Task from "./Task";
 
     function sortProperties(properties, required) {
-        if (!properties) {
-            return properties;
+        if(!properties.length) {
+            return [];
         }
+        return properties.sort((a, b) => {
+            if (a[0] === "id" || a[0] === "forced") {
+                return -1;
+            } else if (b[0] === "id" || b[0] === "forced") {
+                return 1;
+            }
 
-        return Object.entries(properties)
-            .sort((a, b) => {
-                if (a[0] === "id" || a[0] === "forced") {
-                    return -1;
-                } else if (b[0] === "id" || b[0] === "forced") {
-                    return 1;
-                }
+            const aRequired = (required || []).includes(
+                a[0],
+            );
+            const bRequired = (required || []).includes(
+                b[0],
+            );
 
-                const aRequired = (required || []).includes(
-                    a[0],
-                );
-                const bRequired = (required || []).includes(
-                    b[0],
-                );
+            if (aRequired && !bRequired) {
+                return -1;
+            } else if (!aRequired && bRequired) {
+                return 1;
+            }
 
-                if (aRequired && !bRequired) {
-                    return -1;
-                } else if (!aRequired && bRequired) {
-                    return 1;
-                }
+            const aDefault = "default" in a[1];
+            const bDefault = "default" in b[1];
 
-                const aDefault = "default" in a[1];
-                const bDefault = "default" in b[1];
+            if (aDefault && !bDefault) {
+                return 1;
+            } else if (!aDefault && bDefault) {
+                return -1;
+            }
 
-                if (aDefault && !bDefault) {
-                    return 1;
-                } else if (!aDefault && bDefault) {
-                    return -1;
-                }
-
-                return a[0].localeCompare(b[0]);
-            })
+            return a[0].localeCompare(b[0]);
+        })
     }
 
     export default {
@@ -132,8 +130,13 @@
             };
         },
         computed: {
+            filteredProperties() {
+                return this.properties ? Object.entries(this.properties).filter(([key, schema]) => {
+                    return !(key === "type" && schema?.const);
+                }) : [];
+            },
             sortedProperties() {
-                return sortProperties(this.properties, this.schema?.required);
+                return sortProperties(this.filteredProperties, this.schema?.required);
             },
             requiredProperties() {
                 return this.merge ? this.sortedProperties : this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));

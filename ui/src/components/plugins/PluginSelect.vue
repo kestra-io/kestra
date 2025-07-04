@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject} from "vue";
+    import {computed, inject, onBeforeMount} from "vue";
     import {useI18n} from "vue-i18n";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
@@ -47,6 +47,12 @@
             console.error("Definition key is required for PluginSelect component");
         }
         return getValueAtJsonPath(pluginsStore.flowSchema, blockSchemaPath);
+    })
+
+    onBeforeMount(() => {
+        if(blockType === "pluginDefaults") {
+            pluginsStore.listWithSubgroup({includeDeprecated: false});
+        }
     })
 
     const taskModels = computed(() => {

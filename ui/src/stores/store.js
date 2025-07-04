@@ -7,7 +7,6 @@ import namespace from "./namespaces"
 import misc from "./miscs"
 import template from "./template"
 import taskrun from "./taskruns"
-import trigger from "./trigger";
 import editor from "./editor";
 import doc from "./doc";
 import service from "./service"
@@ -23,7 +22,6 @@ export default {
         auth,
         graph,
         taskrun,
-        trigger,
         editor,
         doc,
         service,

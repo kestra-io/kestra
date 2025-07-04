@@ -2,10 +2,10 @@
     <div class="plugin-doc">
         <template v-if="fetchPluginDocumentation && pluginsStore.editorPlugin">
             <div class="d-flex gap-3 mb-3 align-items-center">
-                <task-icon
+                <TaskIcon
                     class="plugin-icon"
                     :cls="pluginsStore.editorPlugin.cls"
-                    only-icon
+                    onlyIcon
                     :icons="pluginsStore.icons"
                 />
                 <h4 class="mb-0">
@@ -22,14 +22,14 @@
                 </el-button>
             </div>
             <Suspense>
-                <schema-to-html class="plugin-schema" :dark-mode="theme === 'dark'" :schema="pluginsStore.editorPlugin.schema" :plugin-type="pluginsStore.editorPlugin.cls">
+                <SchemaToHtml class="plugin-schema" :darkMode="theme === 'dark'" :schema="pluginsStore.editorPlugin.schema" :pluginType="pluginsStore.editorPlugin.cls">
                     <template #markdown="{content}">
-                        <markdown font-size-var="font-size-base" :source="content" />
+                        <Markdown font-size-var="font-size-base" :source="content" />
                     </template>
-                </schema-to-html>
+                </SchemaToHtml>
             </Suspense>
         </template>
-        <markdown v-else :source="introContent" :class="{'position-absolute': absolute}" />
+        <Markdown v-else :source="introContent" :class="{'position-absolute': absolute}" />
     </div>
 </template>
 
@@ -45,7 +45,6 @@
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {mapStores} from "pinia";
     import {usePluginsStore} from "../../stores/plugins";
-
     export default {
         props: {
             overrideIntro: {

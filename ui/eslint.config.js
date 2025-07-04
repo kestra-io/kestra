@@ -72,7 +72,10 @@ export default [
                     "registeredComponentsOnly": true,
                 }
             ],
-            "vue/prop-name-casing": ["error", "camelCase"],
+            "vue/attribute-hyphenation": [
+                "error",
+                "never"
+            ],
             "@typescript-eslint/consistent-type-assertions": [
                 "error",
                 {

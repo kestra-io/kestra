@@ -14,7 +14,7 @@
         </el-form-item>
     </el-form>
 
-    <div @click="pluginsStore.updateDocumentation({task: selectedTaskType});">
+    <div @click="if(isPlugin)pluginsStore.updateDocumentation({task: selectedTaskType});">
         <TaskObject
             v-loading="isLoading"
             v-if="selectedTaskType && schema"
@@ -71,6 +71,10 @@
 
     const isPluginDefaults = computed(() => {
         return parentPath.startsWith("pluginDefaults")
+    });
+
+    const isPlugin = computed(() => {
+        return parentPath !== "inputs"
     });
 
     watch(modelValue, (v) => {
@@ -176,7 +180,7 @@
     watch([selectedTaskType, () => pluginsStore.flowSchema], ([task]) => {
         if (task) {
             load();
-            if(parentPath !== "inputs"){
+            if(isPlugin.value){
                 pluginsStore.updateDocumentation({task});
             }
         }
@@ -184,6 +188,7 @@
 
     function load() {
         const resolvedType = typeMap.value[selectedTaskType.value ?? ""] ?? selectedTaskType.value ?? "";
+        // try to resolve the type from local schema
         if (pluginsStore.flowDefinitions?.[resolvedType]) {
             const defs = pluginsStore.flowDefinitions ?? {}
             plugin.value = {
@@ -193,22 +198,6 @@
                 }
             };
             return;
-        }
-
-        if(parentPath === "inputs"){
-            return
-        }
-
-        isLoading.value = true;
-        if(resolvedType.length){
-            pluginsStore.load({
-                cls: resolvedType,
-                all: true
-            })
-                .then((response) => {
-                    plugin.value = response;
-                    isLoading.value = false;
-                })
         }
     }
 

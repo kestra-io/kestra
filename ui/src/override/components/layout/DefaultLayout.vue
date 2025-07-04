@@ -12,11 +12,13 @@
     import Errors from "../../../components/errors/Errors.vue";
     import ContextInfoBar from "../../../components/ContextInfoBar.vue";
     import {useStore} from "vuex";
+    import {useCoreStore} from "../../../stores/core";
     import {computed, onMounted} from "vue";
 
     const store = useStore();
+    const coreStore = useCoreStore();
     const configs = computed(() => store.getters["misc/configs"]);
-    const error = computed(() => store.getters["core/error"]);
+    const error = computed(() => coreStore.error);
 
     function onMenuCollapse(collapse) {
         document.getElementsByTagName("html")[0].classList.add(!collapse ? "menu-not-collapsed" : "menu-collapsed");

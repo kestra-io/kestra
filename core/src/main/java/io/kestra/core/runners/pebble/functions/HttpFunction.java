@@ -10,7 +10,6 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.body.DefaultMessageBodyHandlerRegistry;
@@ -76,14 +75,14 @@ public class HttpFunction<T> implements Function {
             : URI.create(args.get("uri").toString());
         Map<String, Object> query = (Map<String, Object>) args.getOrDefault("query", Collections.emptyMap());
         String method = args.getOrDefault("method", "GET").toString().toUpperCase();
-        String contentType = args.getOrDefault("contentType", "application/json").toString();
-        String accept = args.getOrDefault("accept", "application/json").toString();
+        String contentType = args.getOrDefault("contentType", MediaType.APPLICATION_JSON).toString();
+        String accept = args.getOrDefault("accept", MediaType.APPLICATION_JSON).toString();
 
         HttpRequest.RequestBody body = null;
         Map<String, List<String>> headers = Optional.ofNullable((Map<String, Object>) args.get("headers"))
             .map(this::singleValueToListForHeaders)
             .orElse(new HashMap<>());
-        // Content-Type is already supplied through the above RequestBody, so we remove it from headers
+        // Content-Type is already supplied through the RequestBody, so we remove it from headers
         headers.remove("Content-Type");
         headers.put("Accept", List.of(accept));
 

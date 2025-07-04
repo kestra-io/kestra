@@ -468,6 +468,7 @@
 <script setup>
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
+    import {useCoreStore} from "../../stores/core";
     import {useRoute, useRouter} from "vue-router";
     import {useStorage} from "@vueuse/core";
 
@@ -511,6 +512,7 @@
     import AcceptDecline from "./AcceptDecline.vue";
 
     const store = useStore();
+    const coreStore = useCoreStore();
     const aiEnabled = computed(() => store.state.misc.configs?.isAiEnabled);
     const router = useRouter();
     const route = useRoute();
@@ -595,7 +597,7 @@
     });
 
     store.commit("flow/setIsCreating", props.isCreating);
-    const guidedProperties = ref(store.getters["core/guidedProperties"]);
+    const guidedProperties = ref(coreStore.guidedProperties);
 
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
     const isFlow = computed(() => currentTab?.value?.flow || props.isCreating);
@@ -798,7 +800,10 @@
 
     const stopTour = () => {
         tours["guidedTour"].stop();
-        store.commit("core/setGuidedProperties", {tourStarted: false});
+        coreStore.guidedProperties = {
+            ...coreStore.guidedProperties,
+            tourStarted: false
+        };
     };
 
     const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"]);
@@ -876,11 +881,11 @@
             newTrigger.value
         );
         if (existingTask) {
-            store.dispatch("core/showMessage", {
+            coreStore.message = {
                 variant: "error",
                 title: t("trigger_id_exists"),
                 message: t("trigger_id_message", {existingTrigger: existingTask}),
-            });
+            };
             return;
         }
         onEdit(YAML_UTILS.insertSection("triggers", source, newTrigger.value), true);
@@ -910,11 +915,11 @@
             newError.value
         );
         if (existingTask) {
-            store.dispatch("core/showMessage", {
+            coreStore.message = {
                 variant: "error",
                 title: t("task_id_exists"),
                 message: t("task_id_message", {existingTask}),
-            });
+            };
             return;
         }
         onEdit(YAML_UTILS.insertSection("errors", source, newError.value), true);

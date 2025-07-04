@@ -39,7 +39,7 @@
 </template>
 
 <script>
-    import {mapGetters, mapState} from "vuex";
+    import {mapState} from "vuex";
     import OverviewBottom from "../onboarding/execution/OverviewBottom.vue";
     import TriggerFlow from "../flows/TriggerFlow.vue";
     import noexecutionimg from "../../assets/onboarding/noexecution.png";
@@ -63,7 +63,6 @@
             },
         },
         computed: {
-            ...mapGetters("core", ["guidedProperties"]),
             ...mapState("flow", ["flow"]),
             ...mapState("auth", ["user"]),
             logo() {

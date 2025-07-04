@@ -43,9 +43,6 @@ jobs:
           with:
             node-version: "20.x"
 
-        - name: Check keys matching
-          run: node ui/src/translations/check.js
-
         - name: Set up Git
           run: |
             git config --global user.name "GitHub Action"
@@ -65,3 +62,6 @@ jobs:
             git commit -m "chore(core): localize to languages other than english" -m "Extended localization support by adding translations for multiple languages using English as the base. This enhances accessibility and usability for non-English-speaking users while keeping English as the source reference."
             git push -u origin $BRANCH_NAME || (git push origin --delete $BRANCH_NAME && git push -u origin $BRANCH_NAME)
             gh pr create --title "Translations from en.json" --body "This PR was created automatically by a GitHub Action." --base develop --head $BRANCH_NAME --assignee anna-geller --reviewer anna-geller
+
+        - name: Check keys matching
+          run: node ui/src/translations/check.js

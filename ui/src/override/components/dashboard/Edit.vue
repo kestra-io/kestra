@@ -15,8 +15,8 @@
     import {useRoute} from "vue-router";
     const route = useRoute();
 
-    import {useStore} from "vuex";
-    const store = useStore();
+    import {useCoreStore} from "../../../stores/core";
+    const coreStore = useCoreStore();
 
     import {useDashboardStore} from "../../../stores/dashboard";
     const dashboardStore = useDashboardStore();
@@ -39,7 +39,7 @@
         dashboard.value.sourceCode = source;
 
         toast.success(t("dashboards.edition.confirmation", {title: response.title}));
-        store.dispatch("core/isUnsaved", false);
+        coreStore.unsavedChange = false;
     };
 
     onMounted(() => {

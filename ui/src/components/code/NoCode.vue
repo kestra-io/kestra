@@ -22,7 +22,7 @@
         CREATING_TASK_INJECTION_KEY, BLOCKTYPE_INJECT_KEY,
         PANEL_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
-        FLOW_INJECTION_KEY,
+        FLOW_INJECTION_KEY, FIELDNAME_INJECTION_KEY,
         EDITING_TASK_INJECTION_KEY,
     } from "./injectionKeys";
     import Breadcrumbs from "./components/Breadcrumbs.vue";
@@ -57,6 +57,7 @@
             creatingTask?: boolean;
             editingTask?: boolean;
             position?: "before" | "after";
+            fieldName?: string | undefined;
         }>(), {
             creatingTask: false,
             editingTask: false,
@@ -64,6 +65,7 @@
             refPath: undefined,
             blockType: undefined,
             parentPath: undefined,
+            fieldName: undefined,
         });
 
     const metadata = computed(() => YAML_UTILS.getMetadata(props.flow));
@@ -80,6 +82,7 @@
     provide(POSITION_INJECTION_KEY, props.position);
     provide(CREATING_TASK_INJECTION_KEY, props.creatingTask);
     provide(EDITING_TASK_INJECTION_KEY, props.editingTask);
+    provide(FIELDNAME_INJECTION_KEY, props.fieldName);
 
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => {
         if (breadcrumbs.value[breadcrumbs.value.length - 1].component) {

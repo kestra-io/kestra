@@ -6,6 +6,7 @@
         :block-type="blockType"
         :creating-task="creatingTask"
         :editing-task="editingTask"
+        :field-name="fieldName"
         :position
         @update-metadata="(e) => onUpdateMetadata(e)"
         @update-task="(e) => editorUpdate(e)"
@@ -30,6 +31,7 @@
         parentPath?: string;
         refPath?: number;
         position?: "before" | "after";
+        fieldName?: string | undefined;
     }
 
     defineProps<NoCodeProps>();

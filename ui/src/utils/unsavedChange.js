@@ -1,8 +1,11 @@
+import {useCoreStore} from "../stores/core";
+
 export default (app, store, router) => {
     const confirmationMessage = app.config.globalProperties.$t("unsaved changed ?");
+    const coreStore = useCoreStore();
 
     window.addEventListener("beforeunload", (e) => {
-        if (store.getters["core/unsavedChange"]) {
+        if (coreStore.unsavedChange) {
             (e || window.event).returnValue = confirmationMessage; //Gecko + IE
             return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
         }
@@ -28,7 +31,7 @@ export default (app, store, router) => {
     }
 
     router.beforeEach(async (to, from) => {
-        if (store.getters["core/unsavedChange"] && !routeEqualsExceptHash(from, to)) {
+        if (coreStore.unsavedChange && !routeEqualsExceptHash(from, to)) {
             if (confirm(confirmationMessage)) {
                  store.commit("editor/setTabDirty", {
                      name: "Flow",
@@ -36,7 +39,7 @@ export default (app, store, router) => {
                      dirty: false,
                 });
                 store.commit("flow/setFlow", store.getters["flow/lastSavedFlow"]);
-                store.commit("core/setUnsavedChange", false);
+                coreStore.unsavedChange = false;
             } else {
                 return false;
             }

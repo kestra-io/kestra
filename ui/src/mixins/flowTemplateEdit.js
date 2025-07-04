@@ -13,6 +13,7 @@ import {apiUrl} from "override/utils/route";
 import {mapStores} from "pinia";
 import {useApiStore} from "../stores/api";
 import {usePluginsStore} from "../stores/plugins";
+import {useCoreStore} from "../stores/core";
 
 export default {
     mixins: [RouteContext],
@@ -34,10 +35,11 @@ export default {
         ...mapState("auth", ["user"]),
         ...mapGetters("flow", ["flow"]),
         ...mapGetters("template", ["template"]),
-        ...mapGetters("core", ["isUnsaved"]),
-        ...mapState("core", ["guidedProperties"]),
         ...mapState("plugin", ["pluginSingleList","pluginsDocumentation"]),
-        ...mapStores(useApiStore, usePluginsStore),
+        ...mapStores(useApiStore, usePluginsStore, useCoreStore),
+        guidedProperties() {
+            return this.coreStore.guidedProperties;
+        },
         isEdit() {
             return (
                 this.$route.name === `${this.dataType}s/update` &&

@@ -5,8 +5,6 @@
         <hr class="m-0">
 
         <Editor
-            :metadata
-            @update-metadata="(k, v) => emit('updateMetadata', {[k]: v})"
             @update-task="(yaml) => emit('updateTask', yaml)"
             @reorder="(yaml) => emit('reorder', yaml)"
         />
@@ -15,7 +13,6 @@
 
 <script setup lang="ts">
     import {computed, provide, ref} from "vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
@@ -31,7 +28,6 @@
 
     const emit = defineEmits<{
         (e: "updateTask", yaml: string): void
-        (e: "updateMetadata", value: {[key: string]: any}): void
         (e: "reorder", yaml: string): void
         (e: "createTask", parentPath: string, refPath: number | undefined, position?: "before" | "after"): boolean | void
         (e: "editTask", parentPath: string, refPath?: number): boolean | void
@@ -64,8 +60,6 @@
             blockSchemaPath: "",
             fieldName: undefined,
         });
-
-    const metadata = computed(() => YAML_UTILS.getMetadata(props.flow));
 
     const breadcrumbs = ref<Breadcrumb[]>([])
     const panel = ref()

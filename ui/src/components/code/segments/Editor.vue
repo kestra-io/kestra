@@ -1,33 +1,31 @@
 <template>
     <div class="p-4">
-        <template v-if="!creatingTask && !editingTask">
-            <el-form label-position="top">
-                <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema, v.fieldKey)">
-                    <template #tasks>
-                        <TaskObjectField
-                            v-bind="v"
-                            @update:model-value="updateMetadata(v.fieldKey, $event)"
-                        />
-                    </template>
-                </TaskWrapper>
-
-                <hr class="my-4">
-
-                <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :merge="shouldMerge(v.schema, v.fieldKey)">
-                    <template #tasks>
-                        <TaskObjectField
-                            v-bind="v"
-                            @update:model-value="updateMetadata(v.fieldKey, $event)"
-                        />
-                    </template>
-                </TaskWrapper>
-            </el-form>
-        </template>
-
         <Task
-            v-else-if="pluginsStore.flowSchema"
+            v-if="creatingTask || editingTask"
             @update-task="onTaskUpdate"
         />
+
+        <el-form label-position="top" v-else>
+            <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema, v.fieldKey)">
+                <template #tasks>
+                    <TaskObjectField
+                        v-bind="v"
+                        @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
+                    />
+                </template>
+            </TaskWrapper>
+
+            <hr class="my-4">
+
+            <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :merge="shouldMerge(v.schema, v.fieldKey)">
+                <template #tasks>
+                    <TaskObjectField
+                        v-bind="v"
+                        @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
+                    />
+                </template>
+            </TaskWrapper>
+        </el-form>
     </div>
 </template>
 
@@ -35,9 +33,9 @@
     import {onMounted, computed, inject, ref} from "vue";
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
+    import {usePluginsStore} from "../../../stores/plugins";
 
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
 
     import {
         CREATING_TASK_INJECTION_KEY, EDITING_TASK_INJECTION_KEY,
@@ -45,10 +43,8 @@
     } from "../injectionKeys";
 
     import Task from "./Task.vue";
-
-
     import TaskWrapper from "../../flows/tasks/TaskWrapper.vue";
-    import {usePluginsStore} from "../../../stores/plugins";
+    import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
     import {removeNullAndUndefined} from "../utils/cleanUp";
     const editingTask = inject(EDITING_TASK_INJECTION_KEY, false);
 
@@ -58,7 +54,6 @@
     const emits = defineEmits([
         "save",
         "updateTask",
-        "updateMetadata",
         "reorder",
     ]);
 
@@ -80,7 +75,7 @@
         return !complexObject
     }
 
-    function updateMetadata(key: string, val: any) {
+    function onTaskUpdateField(key: string, val: any) {
         const realValue = val === null || val === undefined ? undefined :
             // allow array to be created with null values (specifically for metadata)
             // metadata do not use a buffer value, so each change needs to be reflected in the code,
@@ -88,7 +83,12 @@
             typeof val === "object" && !Array.isArray(val) ? removeNullAndUndefined(val) :
             val; // Handle null values
 
-        emits("updateMetadata", key, realValue);
+
+        const currentFlow = parsedFlow.value;
+
+        currentFlow[key] = realValue;
+
+        emits("updateTask", YAML_UTILS.stringify(currentFlow));
     }
 
     document.addEventListener("keydown", saveEvent);
@@ -109,10 +109,6 @@
         }
     });
 
-    defineProps({
-        metadata: {type: Object, required: true},
-    });
-
     function onTaskUpdate(yaml: string) {
         emits("updateTask", yaml)
     }
@@ -127,7 +123,7 @@
         await pluginsStore.loadSchemaType()
     });
 
-    const METADATA_KEYS = [
+    const MAIN_KEYS = [
         "id",
         "namespace",
         "description",
@@ -136,19 +132,13 @@
 
 
     const fieldsFromSchemaTop = computed(() => {
-        const mainLabels: Record<string, string> = {
-            id: t("no_code.fields.main.flow_id"),
-            namespace: t("no_code.fields.main.namespace"),
-            description: t("no_code.fields.main.description"),
-        }
-
-        return METADATA_KEYS.map(key => ({
+        return MAIN_KEYS.map(key => ({
             modelValue: parsedFlow.value[key],
             required: pluginsStore.flowRootSchema?.required ?? [],
             disabled: !creatingFlow.value && (key === "id" || key === "namespace"),
             schema: pluginsStore.flowRootProperties?.[key] ?? {},
             definitions: pluginsStore.flowDefinitions,
-            label: mainLabels[key] ?? t(`no_code.fields.general.${key}`),
+            label: t(`no_code.fields.main.${key}`),
             fieldKey: key,
             task: parsedFlow.value,
         }));
@@ -163,16 +153,22 @@
         "pluginDefaults",
     ] as const
 
+    const HIDDEN_FIELDS = [
+        "deleted",
+        "tenantId",
+        "revision",
+    ];
+
     const fieldsFromSchemaRest = computed(() => {
         return Object.entries(pluginsStore.flowRootProperties ?? {})
-            .filter(([key]) => !METADATA_KEYS.includes(key as typeof METADATA_KEYS[number]))
+            .filter(([key]) => !MAIN_KEYS.includes(key as typeof MAIN_KEYS[number]) && !HIDDEN_FIELDS.includes(key as string))
             .map(([key, schema]) => ({
                 modelValue: parsedFlow.value[key],
                 required: pluginsStore.flowRootSchema?.required ?? [],
                 disabled: !creatingFlow.value && (key === "id" || key === "namespace"),
                 schema,
                 definitions: pluginsStore.flowDefinitions,
-                label: t(`no_code.fields.general.${key}`),
+                label: SECTIONS_IDS.includes(key as any) ? key : t(`no_code.fields.general.${key}`),
                 fieldKey: key,
                 task: parsedFlow.value,
             })).sort((a, b) => {

@@ -1164,17 +1164,20 @@
         "main": {
           "flow_id": "Flow ID",
           "namespace": "Namespace",
-          "description": "Description"
+          "description": "Description",
+          "inputs": "Inputs"
         },
         "general": {
           "retry": "Retry",
           "sla": "SLA",
           "labels": "Labels",
-          "inputs": "Inputs",
           "outputs": "Outputs",
           "variables": "Variables",
           "concurrency": "Concurrency",
-          "disabled": "Disabled"
+          "disabled": "Disabled",
+          "listeners": "Listeners",
+          "taskDefaults": "Task Defaults",
+          "workerGroup": "Worker Group"
         }
       },
       "select": {

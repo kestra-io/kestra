@@ -8,7 +8,6 @@
         :field-name="fieldName"
         :position
         :block-schema-path="blockSchemaPath"
-        @update-metadata="(e) => onUpdateMetadata(e)"
         @update-task="(e) => editorUpdate(e)"
         @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
         @close-task="() => emit('closeTask')"
@@ -66,20 +65,6 @@
     const validateFlow = debounce(() => {
         store.dispatch("flow/validateFlow", {flow: flowYaml.value});
     }, 500);
-
-    const onUpdateMetadata = (metadata: any) => {
-        store.commit("flow/setMetadata", {
-            ...metadata.value,
-            ...((metadata.concurrency?.limit ?? -1) === 0 ? {
-                concurrency: null
-            } : metadata)});
-        store.dispatch("flow/onSaveMetadata");
-        validateFlow()
-        store.commit("editor/setTabDirty", {
-            name: "Flow",
-            dirty: true
-        });
-    };
 
     const timeout = ref();
 

@@ -70,7 +70,7 @@ function getType(property: any, key?: string, schema?: any): string {
     }
 
     if( property.type === "array") {
-        if(property.items?.anyOf?.length > 10){
+        if(property.items?.anyOf?.length > 10 || key === "pluginDefaults") {
             return "list";
         }
 

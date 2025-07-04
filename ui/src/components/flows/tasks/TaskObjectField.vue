@@ -1,7 +1,7 @@
 <template>
     <el-form-item v-if="fieldKey" :required="isRequired">
         <template #label>
-            <div class="inline-wrapper">
+            <div class="inline-wrapper" v-if="simpleType !== 'list'">
                 <div class="inline-start">
                     <TaskLabelWithBoolean
                         :type="simpleType"
@@ -42,6 +42,7 @@
                     <help />
                 </el-tooltip>
             </div>
+            <div v-else />
         </template>
         <component
             v-if="!isBoolean"

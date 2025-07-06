@@ -669,6 +669,14 @@
         "files": "Delete {count} selected files",
         "folders": "Delete {count} selected folders"
       },
+      "move": {
+        "files": "Move {count} selected files",
+        "label": "Move",
+        "error": "Failed to move file: {fileName}",
+        "success": "File(s) successfully moved",
+        "no_items": "No items selected for move.",
+        "no_valid_items": "No valid items to move."
+      },
       "import": {
         "import": "Import",
         "files": "Import files",
@@ -688,7 +696,8 @@
         "folder_deletion": "Confirm folder deletion",
         "file_deletion_description": "Are you sure you want to delete the selected file(s)?",
         "folder_deletion_description": "Are you sure you want to delete this folder and all of its contents?",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "root_folder": "Root Folder"
       },
       "path": {
         "copy": "Copy path",

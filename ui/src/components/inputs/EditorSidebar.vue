@@ -213,6 +213,9 @@
                                         , {count: selectedNodes.length})
                                 }}
                             </el-dropdown-item>
+                            <el-dropdown-item v-if="selectedNodes.length > 0" @click="toggleMoveDialog(true)">
+                                {{ $t('namespace files.move.files', {count: selectedNodes.length}) }}
+                            </el-dropdown-item>
                         </el-dropdown-menu>
                     </template>
                 </el-dropdown>
@@ -310,6 +313,47 @@
             </template>
         </el-dialog>
 
+        <!-- Move dialog -->
+        <el-dialog
+            v-model="moveDialog.visible"
+            :title="$t('namespace files.move.files', {count: selectedNodes.length})"
+            width="500"
+            @keydown.enter.prevent="moveItems"
+        >
+            <div class="pb-1">
+                <span>
+                    {{ $t('namespace files.dialog.parent_folder') }}
+                </span>
+            </div>
+            <el-select
+                v-model="moveDialog.folder"
+                clearable
+                size="large"
+                class="mb-3"
+            >
+                <el-option
+                    v-for="folder in folders"
+                    :key="folder"
+                    :value="folder"
+                    :label="folder === '__ROOT__' ? $t('namespace files.dialog.root_folder') : folder"
+                />
+            </el-select>
+            <template #footer>
+                <div>
+                    <el-button @click="toggleMoveDialog(false)">
+                        {{ $t('cancel') }}
+                    </el-button>
+                    <el-button
+                        type="primary"
+                        :disabled="moveDialog.folder === undefined || moveDialog.folder === null"
+                        @click="moveItems"
+                    >
+                        {{ $t('namespace files.move.label') }}
+                    </el-button>
+                </div>
+            </template>
+        </el-dialog>
+
         <el-dialog
             v-model="confirmation.visible"
             :title="confirmationTitle"
@@ -385,6 +429,11 @@
         old: undefined,
     };
 
+    const MOVE_DEFAULTS = {
+        visible: false,
+        folder: undefined,
+    };
+
     export default {
         props: {
             currentNS: {
@@ -407,6 +456,7 @@
                 filter: "",
                 dialog: {...DIALOG_DEFAULTS},
                 renameDialog: {...RENAME_DEFAULTS},
+                moveDialog: {...MOVE_DEFAULTS},
                 dropdownRef: "",
                 tree: {allExpanded: false},
                 currentFolder: undefined,
@@ -451,7 +501,7 @@
                     return paths;
                 }
 
-                return extractPaths(undefined, this.items);
+                return ["__ROOT__", ...extractPaths(undefined, this.items)];
             },
             confirmationTitle() {
                 if (!this.confirmation.nodes || this.confirmation.nodes.length === 0) {
@@ -517,8 +567,20 @@
 
                     this.selectedFiles = flatList.slice(start, end + 1).map(item => item.path);
                     this.selectedNodes = flatList.slice(start, end + 1).map(item => item.id);
+
+                } else if (window.event.ctrlKey || window.event.metaKey) {
+                    const isAlreadySelected = this.selectedFiles.includes(path);
+
+                    if (isAlreadySelected) {
+                        this.selectedFiles = this.selectedFiles.filter(f => f !== path);
+                        this.selectedNodes = this.selectedNodes.filter(id => id !== node.data.id);
+                    } else {
+                        this.selectedFiles.push(path);
+                        this.selectedNodes.push(node.data.id);
+                    }
+
+                    this.lastClickedIndex = currentIndex;
                 } else {
-                    // Handle single-click selection
                     this.selectedFiles = [path];
                     this.selectedNodes = [node.data.id];
                     this.lastClickedIndex = currentIndex;
@@ -734,6 +796,75 @@
                 this.$refs.tree.getNode(this.renameDialog.node).data.fileName =
                     this.renameDialog.name;
                 this.renameDialog = {...RENAME_DEFAULTS};
+            },
+            toggleMoveDialog(isShown) {
+                if (isShown) this.moveDialog.visible = true;
+                else this.moveDialog = {...MOVE_DEFAULTS};
+            },
+            async moveItems() {
+                const selectedFilesToMove = [...this.selectedFiles];
+
+                const topLevelPaths = selectedFilesToMove.filter(path => {
+                    return !selectedFilesToMove.some(otherPath => {
+                        return path !== otherPath && path.startsWith(otherPath + "/");
+                    });
+                });
+
+                if (topLevelPaths.length === 0) {
+                    this.$toast().error(this.$t("namespace files.move.no_items"));
+                    return;
+                }
+
+                const itemsToMove = topLevelPaths.map(path => {
+                    const node = this.findNodeByPath(path, this.items);
+                    return {
+                        path: path,
+                        node: node
+                    };
+                }).filter(item => item.node);
+
+
+                if (itemsToMove.length === 0) {
+                    this.$toast().error(this.$t("namespace files.move.no_valid_items"));
+                    return;
+                }
+
+                let successCount = 0;
+                let errorCount = 0;
+
+                for (const item of itemsToMove) {
+                    try {
+                        const newPath = this.moveDialog.folder === "__ROOT__"
+                            ? item.node.fileName
+                            : `${this.moveDialog.folder}/${item.node.fileName}`;
+
+                        await this.moveFileDirectory({
+                            namespace: this.namespaceId,
+                            old: item.path,
+                            new: newPath,
+                            type: item.node.type,
+                        });
+
+                        successCount++;
+                    } catch (error) {
+                        errorCount++;
+                        console.error(`Failed to move file: ${item.node.fileName}`, error);
+                        this.$toast().error(this.$t("namespace files.move.error", {fileName: item.node.fileName}));
+                    }
+                }
+
+                this.moveDialog = {...MOVE_DEFAULTS};
+                this.items = undefined;
+                await this.loadNodes({level: 0}, () => {});
+                this.clearSelection();
+
+                if (successCount > 0) {
+                    this.$toast().success(this.$t("namespace files.move.success", {count: successCount}));
+                }
+
+                if (errorCount > 0) {
+                    this.$toast().warning(`${successCount} items moved successfully, ${errorCount} failed`);
+                }
             },
             async nodeMoved(draggedNode) {
                 try {
@@ -1163,10 +1294,8 @@
             },
         },
         mounted() {
-            document.addEventListener("click", this.clearSelection);
         },
         beforeUnmount() {
-            document.removeEventListener("click", this.clearSelection);
         },
         watch: {
             flow: {

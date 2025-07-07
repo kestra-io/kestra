@@ -29,7 +29,7 @@
     import {ref, computed, watch, onMounted, inject} from "vue";
     import TaskObject from "./tasks/TaskObject.vue";
     import Save from "../code/components/Save.vue";
-    import {BREADCRUMB_INJECTION_KEY, PANEL_INJECTION_KEY} from "../code/injectionKeys";
+    import {PANEL_INJECTION_KEY} from "../code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
 
     interface InputType {
@@ -56,7 +56,6 @@
     }>();
 
     const panel = inject(PANEL_INJECTION_KEY, ref());
-    const breadcrumbs = inject(BREADCRUMB_INJECTION_KEY, ref([]));
 
     const newInputs = ref<InputType[]>([{type: "STRING"}]);
     const loading = ref(false);
@@ -99,7 +98,6 @@
 
     const update = () => {
         panel.value = undefined;
-        breadcrumbs.value.pop();
         const value = newInputs.value.filter(input => input?.id);
         emit("update:inputs", value.length ? value : undefined);
     };

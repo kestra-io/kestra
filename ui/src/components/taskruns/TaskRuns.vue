@@ -1,7 +1,7 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
     <section class="container" v-if="ready">
-        <data-table @page-changed="onPageChanged" ref="dataTable" :total="total">
+        <data-table @page-changed="onPageChanged" ref="dataTable" :total="taskrunsStore.total">
             <template #navbar>
                 <KestraFilter
                     prefix="taskruns"
@@ -22,7 +22,7 @@
 
             <template #table>
                 <el-table
-                    :data="taskruns"
+                    :data="taskrunsStore.taskruns"
                     ref="table"
                     :default-sort="{prop: 'state.startDate', order: 'descending'}"
                     table-layout="auto"
@@ -108,7 +108,6 @@
     import TaskRunFilterLanguage from "../../composables/monaco/languages/filters/impl/taskRunFilterLanguage.js";
 </script>
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
@@ -119,11 +118,12 @@
     import DateAgo from "../layout/DateAgo.vue";
     import Kicon from "../Kicon.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
-    import {useStatStore} from "../../stores/stat";
     import {State} from "@kestra-io/ui-libs"
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
     import {stateGlobalChartTypes, storageKeys} from "../../utils/constants";
+    import {useTaskRunsStore} from "../../stores/taskruns";
+    import {useStatStore} from "../../stores/stat";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -146,8 +146,7 @@
             };
         },
         computed: {
-            ...mapState("taskrun", ["taskruns", "total"]),
-            ...mapStores(useStatStore),
+            ...mapStores(useStatStore, useTaskRunsStore),
             routeInfo() {
                 return {
                     title: this.$t("taskruns")
@@ -231,8 +230,8 @@
                         this.dailyReady = true;
                     });
 
-                this.$store
-                    .dispatch("taskrun/findTaskRuns", this.loadQuery({
+                this.taskrunsStore
+                    .findTaskRuns(this.loadQuery({
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
                         state: this.$route.query.state ? [this.$route.query.state] : this.statuses

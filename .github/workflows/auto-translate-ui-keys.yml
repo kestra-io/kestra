@@ -61,7 +61,7 @@ jobs:
             fi
             git commit -m "chore(core): localize to languages other than english" -m "Extended localization support by adding translations for multiple languages using English as the base. This enhances accessibility and usability for non-English-speaking users while keeping English as the source reference."
             git push -u origin $BRANCH_NAME || (git push origin --delete $BRANCH_NAME && git push -u origin $BRANCH_NAME)
-            gh pr create --title "Translations from en.json" --body "This PR was created automatically by a GitHub Action." --base ${{ github.ref_name }} --head $BRANCH_NAME --team-reviewer kestra-io/frontend
+            gh pr create --title "Translations from en.json" --body "This PR was created automatically by a GitHub Action.\n\nSomeone from the @kestra-io/frontend team needs to review and merge." --base ${{ github.ref_name }} --head $BRANCH_NAME
 
         - name: Check keys matching
           run: node ui/src/translations/check.js

@@ -206,11 +206,12 @@
         "confirmation": "<code>{title}</code> 대시보드를 삭제하시겠습니까?"
       },
       "edition": {
-        "chart": "<code>{chart}</code> 차트 편집",
+        "chart": "이 차트 편집",
         "confirmation": "대시보드 <code>{title}</code>의 변경 사항이 저장되었습니다.",
         "label": "대시보드 편집"
       },
       "empty": "결과가 표시되지 않습니다.",
+      "export": "CSV로 내보내기",
       "labels": {
         "plural": "대시보드",
         "singular": "대시보드"

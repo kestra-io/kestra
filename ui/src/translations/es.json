@@ -206,11 +206,12 @@
         "confirmation": "¿Está seguro de que desea eliminar el dashboard <code>{title}</code>?"
       },
       "edition": {
-        "chart": "Editar gráfico <code>{chart}</code>",
+        "chart": "Editar este gráfico",
         "confirmation": "Los cambios en el dashboard <code>{title}</code> se han guardado.",
         "label": "Editar Dashboard"
       },
       "empty": "No hay resultados para mostrar.",
+      "export": "Exportar a CSV",
       "labels": {
         "plural": "Dashboards",
         "singular": "Panel de control"

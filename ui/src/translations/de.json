@@ -206,11 +206,12 @@
         "confirmation": "Möchten Sie das Dashboard <code>{title}</code> wirklich löschen?"
       },
       "edition": {
-        "chart": "Bearbeiten <code>{chart}</code>-Diagramm",
+        "chart": "Bearbeiten Sie dieses Diagramm",
         "confirmation": "Änderungen im Dashboard <code>{title}</code> werden gespeichert.",
         "label": "Dashboard bearbeiten"
       },
       "empty": "Es gibt keine Ergebnisse anzuzeigen.",
+      "export": "Exportieren nach CSV",
       "labels": {
         "plural": "Dashboards",
         "singular": "Dashboard"

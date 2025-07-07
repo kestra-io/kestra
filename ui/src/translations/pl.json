@@ -904,6 +904,7 @@
     "no_logs_data_description": "Albo żadne flow nie są uruchomione, albo musisz dostosować swoje filtry.",
     "no_namespaces": "Zero namespaces spełnia kryteria wyszukiwania.",
     "no_results": {
+      "dsf": "I'm sorry, it seems like the text you provided for translation is not complete or is not in a recognizable format. Could you please provide the text you would like translated?",
       "executions": "Nie znaleziono wykonania",
       "flows": "Nie znaleziono flowów",
       "kv_pairs": "Nie znaleziono par klucz-wartość",

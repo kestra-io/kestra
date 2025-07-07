@@ -104,7 +104,7 @@ public class MiscController {
             .preview(Preview.builder()
                 .initial(this.initialPreviewRows)
                 .max(this.maxPreviewRows)
-                .build()
+                .build())
             .isAiEnabled(applicationContext.containsBean(AiController.class))
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .resourceToFilters(QueryFilter.Resource.asResourceList())

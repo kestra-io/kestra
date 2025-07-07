@@ -4,6 +4,7 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -199,7 +200,16 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     abstract protected Condition findCondition(String query, Map<String, String> labels);
 
+    protected Condition findQueryCondition(String query) {
+        return findCondition(query, Map.of());
+    }
+
     abstract protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation);
+
+    @Override
+    protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
+        return findCondition(value, operation);
+    }
 
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
@@ -293,22 +303,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .where(this.defaultFilter(tenantId, false))
             .and(NORMAL_KIND_CONDITION);
 
-        if (filters != null)
-            for (QueryFilter filter : filters) {
-                QueryFilter.Field field = filter.field();
-                QueryFilter.Op operation = filter.operation();
-                Object value = filter.value();
-                if (field.equals(QueryFilter.Field.QUERY)) {
-                    select = switch (operation) {
-                        case EQUALS -> select.and(this.findCondition(filter.value().toString(), Map.of()));
-                        case NOT_EQUALS -> select.andNot(this.findCondition(filter.value().toString(), Map.of()));
-                        default -> throw new UnsupportedOperationException("Unsupported operation for QUERY field: " + operation);
-                    };
-                } else if (field.equals(QueryFilter.Field.LABELS) && value instanceof Map<?, ?> labels)
-                    select = select.and(findCondition(labels, operation));
-                else
-                    select = getConditionOnField(select, field, value, operation, "start_date");
-            }
+        select = this.filter(select, filters, "start_date", Resource.EXECUTION);
 
         return select;
     }
@@ -683,134 +678,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         }
 
         return select;
-    }
-
-    @Override
-    public Map<String, ExecutionCountStatistics> executionCountsGroupedByNamespace(
-        @Nullable String tenantId,
-        @Nullable String namespace,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate
-    ) {
-
-        ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
-        ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
-
-        return jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-                SelectConditionStep<Record3<String, String, Long>> selectCount = context
-                    .select(NAMESPACE_FIELD, STATE_CURRENT_FIELD, DSL.count().cast(Long.class))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId))
-                    .and(NORMAL_KIND_CONDITION)
-                    .and(START_DATE_FIELD.greaterOrEqual(finalStartDate.toOffsetDateTime()))
-                    .and(START_DATE_FIELD.lessOrEqual(finalEndDate.toOffsetDateTime()));
-
-                if (namespace != null) {
-                    selectCount = selectCount.and(DSL.or(
-                        NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%"),
-                        NAMESPACE_FIELD.eq(namespace)
-                    ));
-                }
-
-                Map<String, Result<Record3<String, String, Long>>> resultByNamespace = selectCount
-                    .groupBy(STATE_CURRENT_FIELD, NAMESPACE_FIELD)
-                    .fetch()
-                    .intoGroups(NAMESPACE_FIELD);
-
-                return resultByNamespace.entrySet().stream()
-                    .map(entry -> {
-                        Map<State.Type, Long> counts = entry.getValue()
-                            .stream()
-                            .map(r -> new AbstractMap.SimpleEntry<>(State.Type.valueOf(r.value2()), r.value3()))
-                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                        return new AbstractMap.SimpleEntry<>(entry.getKey(), new ExecutionCountStatistics(counts));
-                    })
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            });
-    }
-
-    @Override
-    public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable List<FlowFilter> flows,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        boolean groupByNamespaceOnly
-    ) {
-        List<Field<?>> fields = new ArrayList<>();
-
-        fields.add(STATE_CURRENT_FIELD);
-        fields.add(NAMESPACE_FIELD);
-
-        if (!groupByNamespaceOnly) {
-            fields.add(field("flow_id", String.class));
-        }
-
-        ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
-        ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
-
-        Results results = dailyStatisticsQuery(
-            fields,
-            query,
-            tenantId,
-            null,
-            namespace,
-            flowId,
-            flows,
-            finalStartDate,
-            finalEndDate,
-            null,
-            null
-        );
-
-        return results
-            .resultsOrRows()
-            .getFirst()
-            .result()
-            .intoGroups(NAMESPACE_FIELD)
-            .entrySet()
-            .stream()
-            .map(e -> {
-                if (groupByNamespaceOnly) {
-                    return new AbstractMap.SimpleEntry<>(
-                        e.getKey(),
-                        Map.of(
-                            "*",
-                            dailyStatisticsQueryMapRecord(
-                                e.getValue(),
-                                finalStartDate,
-                                finalEndDate,
-                                null
-                            )
-                        )
-                    );
-                } else {
-                    return new AbstractMap.SimpleEntry<>(
-                        e.getKey(),
-                        e.getValue().intoGroups(field("flow_id", String.class))
-                            .entrySet()
-                            .stream()
-                            .map(f -> new AbstractMap.SimpleEntry<>(
-                                f.getKey(),
-                                dailyStatisticsQueryMapRecord(
-                                    f.getValue(),
-                                    finalStartDate,
-                                    finalEndDate,
-                                    null
-                                )
-                            ))
-                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-                    );
-                }
-
-            })
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private static List<DailyExecutionStatistics> fillDate(List<DailyExecutionStatistics> results, ZonedDateTime startDate, ZonedDateTime endDate) {

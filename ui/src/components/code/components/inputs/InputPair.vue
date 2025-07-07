@@ -20,7 +20,7 @@
                     :model-value="pair[0]"
                     :placeholder="t('key')"
                     @update:model-value="(changed) => handleKeyInput(index, changed)"
-                    :have-error="duplicatedPairs.includes(pair[0])"
+                    :have-error="duplicatedKeys.includes(pair[0])"
                 />
             </el-col>
             <el-col :span="16" class="d-flex">
@@ -63,49 +63,59 @@
         required?: boolean
     }>();
 
-    const internalPairs = ref<[string, string][]>([])
+    const internalPairs = ref<[string, string | undefined][]>([])
+
+    // this flag will avoid updating the modelValue when the
+    // change was initiated in the component itself
+    const localEdit = ref(false);
+
+    const duplicatedKeys = computed(() => {
+        return internalPairs.value.map(pair => pair[0])
+            .filter((key, index, self) =>
+                self.indexOf(key) !== index
+            );
+    });
 
     const alertState = computed(() => {
+        if(duplicatedKeys.value.length > 0){
+            return {
+                visible: true,
+                message: t("duplicate-pair", {label: props.label ?? t("key"), key: duplicatedKeys.value[0]}),
+            }
+        }
         return {
-            visible: Object.keys(props.modelValue || {}).length === 0,
-            message: t("code.inputPair.empty"),
+            visible: false,
+            message: "",
         };
     });
 
     watch(() => props.modelValue, (newValue) => {
         // If the alert is visible, we don't want to update the pairs
         // because it would delete problem line silently.
-        if (alertState.value.visible) {
+        if (alertState.value.visible || localEdit.value) {
             return;
         }
+        localEdit.value = false;
         internalPairs.value = Object.entries(newValue || {});
     }, {
         deep: true,
         immediate: true
     });
 
-    const duplicatedPairs = computed(() => {
-        return internalPairs.value.map(pair => pair[0])
-            .filter((pair, index, self) =>
-                self.findIndex(p => p[0] === pair[0]) !== index
-            );
-    });
 
-    const modelValueToUpdate = computed(() => {
-        return Object.fromEntries(internalPairs.value);
-    });
 
     function updateModel() {
-        emit("update:modelValue", modelValueToUpdate.value);
+        localEdit.value = true;
+        emit("update:modelValue", Object.fromEntries(internalPairs.value.filter(pair => pair[0] !== "" && pair[1] !== undefined)));
     }
 
-    function handleKeyInput(pairId: number, newValue: string) {
-        internalPairs.value[pairId][0] = newValue;
+    function handleKeyInput(index: number, newValue: string) {
+        internalPairs.value[index][0] = newValue.toString();
         updateModel()
     };
 
     function addPair() {
-        internalPairs.value.push(["", ""])
+        internalPairs.value.push(["", undefined])
         updateModel()
     };
 

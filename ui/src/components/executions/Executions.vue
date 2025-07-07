@@ -58,11 +58,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <ChartsSection
-                    :charts="charts"
-                    :show-default="true"
-                    :full-size="true"
-                />
+                <Sections :charts show-default />
             </template>
 
             <template #table>
@@ -411,7 +407,7 @@
     import RunFast from "vue-material-design-icons/RunFast.vue";
     import ExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/executionFilterLanguage.ts";
     import FlowExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/flowExecutionFilterLanguage.js";
-    import ChartsSection from "../dashboard/components/ChartsSection.vue";
+    import Sections from "../dashboard/sections/Sections.vue";
 </script>
 
 <script>
@@ -438,7 +434,7 @@
     import {h, ref} from "vue";
     import DateAgo from "../layout/DateAgo.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import YAML_CHART from "../../assets/dashboard/executions_timeseries_chart.yaml?raw";
+    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
 
     import {filterLabels} from "./utils"
 
@@ -591,7 +587,6 @@
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),
-            ...mapState("stat", ["daily"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
             ...mapGetters("misc", ["configs"]),
@@ -650,11 +645,6 @@
                     };
                 });
             },
-            executionsCount() {
-                return [...this.daily].reduce((a, b) => {
-                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
-                }, 0);
-            },
             selectedNamespace(){
                 return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;
             },
@@ -673,7 +663,7 @@
 
             const queryKeys = Object.keys(query);
             if (this?.namespace === undefined && defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][EQUALS]"] = defaultNamespace;
+                query["filters[namespace][PREFIX]"] = defaultNamespace;
                 queryHasChanged = true;
             }
 
@@ -745,7 +735,7 @@
                 let queryFilter = this.queryWithFilter();
 
                 if (this.namespace) {
-                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
+                    queryFilter["filters[namespace][PREFIX]"] = this.namespace;
                 }
 
                 if (this.flowId) {

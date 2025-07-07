@@ -72,7 +72,7 @@
                                             </div>
                                             <div class="tasks-container">
                                                 <task-icon
-                                                    :icons="icons"
+                                                    :icons="pluginsStore.icons"
                                                     :cls="task"
                                                     :key="task"
                                                     v-for="task in [...new Set(blueprint.includedTasks)]"
@@ -90,7 +90,7 @@
                                 </div>
                                 <div v-if="!embed" class="tasks-container">
                                     <task-icon
-                                        :icons="icons"
+                                        :icons="pluginsStore.icons"
                                         :cls="task"
                                         :key="task"
                                         v-for="task in [...new Set(blueprint.includedTasks)]"
@@ -122,19 +122,23 @@
 </template>
 
 <script>
-    import DataTable from "../../../../components/layout/DataTable.vue";
-    import {TaskIcon} from "@kestra-io/ui-libs";
-    import DataTableActions from "../../../../mixins/dataTableActions";
     import {shallowRef} from "vue";
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {TaskIcon} from "@kestra-io/ui-libs";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import DataTableActions from "../../../../mixins/dataTableActions";
+    import DataTable from "../../../../components/layout/DataTable.vue";
     import RestoreUrl from "../../../../mixins/restoreUrl";
     import permission from "../../../../models/permission";
     import action from "../../../../models/action";
-    import {mapState} from "vuex";
     import Utils from "../../../../utils/utils";
     import Errors from "../../../../components/errors/Errors.vue";
     import {editorViewTypes} from "../../../../utils/constants";
     import KestraFilter from "../../../../components/filter/KestraFilter.vue";
+    import {usePluginsStore} from "../../../../stores/plugins";
+    import {useBlueprintsStore} from "../../../../stores/blueprints";
+    import {useCoreStore} from "../../../../stores/core";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
@@ -184,7 +188,7 @@
             },
             async copy(id) {
                 await Utils.copy(
-                    (await this.$store.dispatch("blueprints/getBlueprintSource", {type: this.blueprintType, kind: this.blueprintKind, id: id}))
+                    (await this.blueprintsStore.getBlueprintSource({type: this.blueprintType, kind: this.blueprintKind, id: id}))
                 );
             },
             async blueprintToEditor(blueprintId) {
@@ -210,7 +214,7 @@
                 if (this.$route.query.q || this.q) {
                     query.q = this.$route.query.q || this.q;
                 }
-                return this.$store.dispatch("blueprints/getBlueprintTagsForQuery", {type: this.blueprintType, kind: this.blueprintKind, ...query})
+                return this.blueprintsStore.getBlueprintTagsForQuery({type: this.blueprintType, kind: this.blueprintKind, ...query})
                     .then(data => {
                         // Handle switch tab while fetching data
                         if (this.blueprintType === beforeLoadBlueprintType) {
@@ -239,8 +243,7 @@
                     query.tags = this.$route.query.selectedTag || this.selectedTag;
                 }
 
-                return this.$store
-                    .dispatch("blueprints/getBlueprintsForQuery", {type: this.blueprintType, kind: this.blueprintKind, params: query})
+                return this.blueprintsStore.getBlueprintsForQuery({type: this.blueprintType, kind: this.blueprintKind, params: query})
                     .then(data => {
                         // Handle switch tab while fetching data
                         if (this.blueprintType === beforeLoadBlueprintType) {
@@ -261,7 +264,7 @@
                     if(this.embed) {
                         this.error = true;
                     } else {
-                        this.$store.dispatch("core/showError", 404);
+                        this.coreStore.error = 404;
                     }
                 }).finally(() => {
                     // Handle switch tab while fetching data
@@ -278,7 +281,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("plugin", ["icons"]),
+            ...mapStores(usePluginsStore, useBlueprintsStore, useCoreStore),
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },

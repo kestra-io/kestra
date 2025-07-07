@@ -131,7 +131,8 @@
       "docs": "Docs",
       "help": "Help",
       "issue": "Open an Issue",
-      "demo": "Get a demo"
+      "demo": "Get a demo",
+      "star": "Star the repo"
     },
     "source": "Source",
     "source only": "Source only",
@@ -426,23 +427,13 @@
       "all": "Select all ({count})"
     },
     "cancel": "Cancel",
-    "homeDashboard": {
-      "title": "Dashboards",
-      "welcome": "Welcome to Kestra",
+    "errorLogs": "Errors logs",
+    "welcome_page": {
       "wel_text": "Welcome!",
+      "welcome": "Welcome to Kestra",
       "start": "Let's get your first workflow up and running.",
-      "guide": "Need guidance to execute your first flow?",
-      "today": "Today",
-      "yesterday": "Yesterday",
-      "last28Days": "Last 28 days",
-      "lastXdays": "Last {days} days",
-      "namespacesExecutions": "Executions per namespace",
-      "namespacesErrorExecutions": "Executions errors per namespace",
-      "failedExecutions": "Failed executions",
-      "errorLogs": "Errors logs",
-      "no executions": "Ready to see your flow in action?"
+      "guide": "Need guidance to execute your first flow?"
     },
-    "dashboards": "Dashboards",
     "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
     "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
@@ -473,7 +464,7 @@
     "export all templates": "Export all templates",
     "flow_export": "Export flow",
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
-    "flows exported": "Flows exported",
+    "flows exported": "<code>{count}</code> Flow(s) exported",
     "export all flows": "Export all flows",
     "import": "Import",
     "disable": "Disable",
@@ -541,6 +532,7 @@
     "error in editor": "An error has been found in the editor",
     "delete task confirm": "Do you want to delete the task <code>{taskId}</code>?",
     "can not save": "Can not save",
+    "flow must not be empty": "Flow must not be empty",
     "flow must have id and namespace": "Flow must have an id and a namespace.",
     "readonly property": "Read-only property",
     "namespace and id readonly": "The properties `namespace` and `id` cannot be changed — they are now set to their initial values. If you want to rename a flow or change its namespace, you can create a new flow and remove the old one.",
@@ -673,7 +665,9 @@
       "delete": {
         "label": "Delete",
         "file": "Delete file",
-        "folder": "Delete folder"
+        "folder": "Delete folder",
+        "files": "Delete {count} selected files",
+        "folders": "Delete {count} selected folders"
       },
       "import": {
         "import": "Import",
@@ -692,7 +686,7 @@
         "parent_folder": "Parent folder:",
         "file_deletion": "Confirm file deletion",
         "folder_deletion": "Confirm folder deletion",
-        "file_deletion_description": "Are you sure you want to delete this file?",
+        "file_deletion_description": "Are you sure you want to delete the selected file(s)?",
         "folder_deletion_description": "Are you sure you want to delete this folder and all of its contents?",
         "confirm": "Confirm"
       },
@@ -810,7 +804,7 @@
           }
         },
         "save": {
-          "label":"Save",
+          "label": "Save",
           "discard": "Discard",
           "unsaved_title": "Unsaved Changes",
           "unsaved_warning": "You have unsaved changes. Do you want to save them before leaving?"
@@ -1029,26 +1023,6 @@
     "scheduleDate": "Schedule date",
     "warning": "Warning",
     "trigger_check_warning": "Using trigger variables won't work with manual flow execution. Add the `??` coalesce operator to solve the issue. For example, instead of `trigger.date`, use `trigger.date ?? execution.startDate`.",
-    "dashboard": {
-      "success_ratio": "Success Ratio",
-      "success_ratio_tooltip": "Success Ratio is the sum of SUCCESS, CANCELLED, and WARNING executions divided by the total number of executions in a terminated state.",
-      "failure_ratio": "Failure Ratio",
-      "failure_ratio_tooltip": "Failed ratio is the sum of FAILED, KILLED, and RETRIED executions divided by the total number of executions in a terminated state.",
-      "per_day": " (per day)",
-      "per_namespace": " (per namespace)",
-      "total_executions": "Total Executions",
-      "executions_in_progress": "Executions In Progress",
-      "see_all": "See all",
-      "next_scheduled_executions": "Next Scheduled Executions",
-      "next_execution_date": "Next Execution Date",
-      "id": "ID",
-      "trigger_disabled": "This trigger can only be enabled through code.",
-      "description": "Description",
-      "no_flow_description": "This flow has no description.",
-      "not_auth": "You don't have the necessary permissions to view this widget.",
-      "preview": "Dashboard preview",
-      "click_chart_preview": "Click on a chart source code to see the preview"
-    },
     "docs": "Docs",
     "active-slots": "Active slots",
     "behavior": "Behavior",
@@ -1094,16 +1068,6 @@
     "active": "Active",
     "flows imported": "Flows imported",
     "flow not imported": "Some flow could not be imported",
-    "dashboard_label": "Dashboard",
-    "default_dashboard": "Default Dashboard",
-    "custom_dashboard": "Custom Dashboards",
-    "create_custom_dashboard": "Create new dashboard",
-    "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> is created.",
-    "create_dashboard": "Create Dashboard",
-    "edit_custom_dashboard": "Edit Dashboard",
-    "custom_dashboard_validate_editing": "Changes in dashboard <code>{title}</code> are saved.",
-    "custom_dashboard_confirm_deletion": "Are you sure you want to delete <code>{title}</code> dashboard?",
-    "custom_dashboard_empty": "There are no results to be shown.",
     "filters": {
       "label": "Choose filters",
       "empty": "No data.",
@@ -1176,7 +1140,7 @@
       "unnamed": "No Name",
       "adding": "+ Add a {what}",
       "adding_default": "+ Add a new value",
-      "clearSelection" : "Clear selection",
+      "clearSelection": "Clear selection",
       "labels": {
         "yaml": "YAML Editor",
         "no_code": "No Code Editor",
@@ -1188,6 +1152,7 @@
         "general": "General properties",
         "optional": "Optional properties",
         "deprecated": "Deprecated properties",
+        "connection": "Connection properties",
         "tasks": "Tasks",
         "triggers": "Triggers",
         "errors": "Error Handlers",
@@ -1197,19 +1162,22 @@
       },
       "fields": {
         "main": {
-          "flow_id": "Flow ID",
+          "id": "Flow ID",
           "namespace": "Namespace",
-          "description": "Description"
+          "description": "Description",
+          "inputs": "Inputs"
         },
         "general": {
           "retry": "Retry",
           "sla": "SLA",
           "labels": "Labels",
-          "inputs": "Inputs",
           "outputs": "Outputs",
           "variables": "Variables",
           "concurrency": "Concurrency",
-          "disabled": "Disabled"
+          "disabled": "Disabled",
+          "listeners": "Listeners",
+          "taskDefaults": "Task Defaults",
+          "workerGroup": "Worker Group"
         }
       },
       "select": {
@@ -1219,7 +1187,8 @@
         "finally": "Select a task",
         "pluginDefaults": "Select a plugin",
         "afterExecution": "Select a task",
-        "conditions": "Select a condition"
+        "conditions": "Select a condition",
+        "inputs": "Select an input field type"
       },
       "creation": {
         "tasks": "Add a task",
@@ -1228,7 +1197,8 @@
         "finally": "Add a finally block",
         "pluginDefaults": "Add a plugin default",
         "afterExecution": "Add an after execution block",
-        "conditions": "Add a condition"
+        "conditions": "Add a condition",
+        "inputs": "Add an input field"
       },
       "close": {
         "tasks": "Close task",
@@ -1349,6 +1319,7 @@
     "worker information": "Worker Information",
     "test-badge-text": "Test",
     "test-badge-tooltip": "This execution was created by a Test",
+    "total_executions": "Total Executions",
     "no_results": {
       "executions": "No Executions Found",
       "triggers": "No Triggers Found",
@@ -1357,6 +1328,39 @@
       "secrets": "No Secrets Found",
       "templates": "No Templates Found"
     },
-    "duplicate-pair": "{label} {key} is duplicated, second key ignored."
+    "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
+    "dashboards": {
+      "labels": {
+        "singular": "Dashboard",
+        "plural": "Dashboards"
+      },
+      "default": "Default Dashboard",
+      "preview": "Preview Dashboard",
+      "empty": "There are no results to be shown.",
+      "creation": {
+        "label": "Create Dashboard",
+        "confirmation": "Dashboard <code>{title}</code> is created."
+      },
+      "edition": {
+        "label": "Edit Dashboard",
+        "confirmation": "Changes in dashboard <code>{title}</code> are saved.",
+        "chart": "Edit this chart"
+      },
+      "deletion": {
+        "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
+      },
+      "chart_preview": "Click on a chart source code to see its preview"
+    },
+    "ai": {
+      "flow": {
+        "title": "AI Agent",
+        "prompt_placeholder": "Enter instructions to create your Kestra flow.",
+        "generating": "Generating Flow YAML for you..."
+      }
+    },
+    "submit": "Submit",
+    "to toggle": "to toggle",
+    "accept": "Accept",
+    "decline": "Decline"
   }
 }

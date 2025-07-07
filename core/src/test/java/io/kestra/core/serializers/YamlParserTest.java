@@ -22,7 +22,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
@@ -48,7 +47,7 @@ class YamlParserTest {
         Task optionals = flow.getTasks().get(2);
         assertThat(optionals.getTimeout()).isEqualTo(Property.builder().expression("PT60M").build());
         assertThat(optionals.getRetry().getType()).isEqualTo("constant");
-        assertThat(optionals.getRetry().getMaxAttempt()).isEqualTo(5);
+        assertThat(optionals.getRetry().getMaxAttempts()).isEqualTo(5);
         assertThat(((Constant) optionals.getRetry()).getInterval().getSeconds()).isEqualTo(900L);
     }
 
@@ -64,7 +63,7 @@ class YamlParserTest {
         Task optionals = flow.getTasks().get(2);
         assertThat(optionals.getTimeout()).isEqualTo(Property.builder().expression("PT60M").build());
         assertThat(optionals.getRetry().getType()).isEqualTo("constant");
-        assertThat(optionals.getRetry().getMaxAttempt()).isEqualTo(5);
+        assertThat(optionals.getRetry().getMaxAttempts()).isEqualTo(5);
         assertThat(((Constant) optionals.getRetry()).getInterval().getSeconds()).isEqualTo(900L);
     }
 

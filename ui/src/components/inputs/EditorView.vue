@@ -133,29 +133,55 @@
             style="flex: 1;"
         >
             <template v-if="editorViewType === 'YAML'">
-                <editor
-                    class="position-relative"
-                    v-if="isCreating || openedTabs.length"
-                    ref="editorDomElement"
-                    @save="save"
-                    @execute="execute"
-                    :path="currentTab?.path"
-                    :model-value="flowYaml"
-                    :schema-type="isCurrentTabFlow? 'flow': undefined"
-                    :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
-                    :extension="currentTab?.extension"
-                    @update:model-value="editorUpdate"
-                    @cursor="updatePluginDocumentation"
-                    :creating="isCreating"
-                    @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
-                    @tab-loaded="onTabLoaded"
-                    :read-only="isReadOnly"
-                    :navbar="false"
-                >
-                    <template #absolute>
-                        <KeyShortcuts />
-                    </template>
-                </editor>
+                <template v-if="isCreating || openedTabs.length">
+                    <editor
+                        class="position-relative"
+                        ref="editorDomElement"
+                        @save="save"
+                        @execute="execute"
+                        :path="currentTab?.path"
+                        :diff-overview-bar="false"
+                        :model-value="draftSource === undefined ? flowYaml : draftSource"
+                        :schema-type="isCurrentTabFlow? 'flow': undefined"
+                        :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
+                        :extension="currentTab?.extension"
+                        @update:model-value="editorUpdate"
+                        @cursor="updatePluginDocumentation"
+                        :creating="isCreating"
+                        @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
+                        @tab-loaded="onTabLoaded"
+                        :read-only="isReadOnly"
+                        :navbar="false"
+                        :original="draftSource === undefined ? undefined : flowYaml"
+                        :diff-side-by-side="false"
+                    >
+                        <template #absolute>
+                            <div class="d-flex flex-column align-items-end gap-2" v-if="isCurrentTabFlow">
+                                <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
+                                    {{ $t("ai.flow.title") }}
+                                </el-button>
+                                <span>
+                                    <KeyShortcuts />
+                                </span>
+                            </div>
+                        </template>
+                    </editor>
+                    <transition name="el-zoom-in-center">
+                        <AiAgent
+                            v-if="aiAgentOpened"
+                            class="position-absolute prompt"
+                            @close="aiAgentOpened = false"
+                            :flow="editorContent"
+                            @generated-yaml="yaml => {draftSource = yaml; aiAgentOpened = false}"
+                        />
+                    </transition>
+                    <AcceptDecline
+                        v-if="draftSource !== undefined"
+                        class="position-absolute prompt"
+                        @accept="acceptDraft"
+                        @decline="declineDraft"
+                    />
+                </template>
                 <div v-else class="no-tabs-opened">
                     <div class="img mb-1" />
 
@@ -442,6 +468,7 @@
 <script setup>
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
+    import {useCoreStore} from "../../stores/core";
     import {useRoute, useRouter} from "vue-router";
     import {useStorage} from "@vueuse/core";
 
@@ -479,8 +506,14 @@
     import EditorButtons from "./EditorButtons.vue";
     import MetadataEditor from "../flows/MetadataEditor.vue";
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
+    import {usePluginsStore} from "../../stores/plugins";
+    import AiAgent from "../ai/AiAgent.vue";
+    import AiIcon from "../ai/AiIcon.vue";
+    import AcceptDecline from "./AcceptDecline.vue";
 
     const store = useStore();
+    const coreStore = useCoreStore();
+    const aiEnabled = computed(() => store.state.misc.configs?.isAiEnabled);
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);
@@ -489,6 +522,16 @@
     const tours = getCurrentInstance().appContext.config.globalProperties.$tours;
     const lowCodeEditorRef = ref(null);
     const tabsScrollRef = ref();
+
+    const toggleAiShortcut = (event) => {
+        if (event.altKey && event.key === "k" && isCurrentTabFlow.value) {
+            event.preventDefault();
+            draftSource.value = undefined;
+            aiAgentOpened.value = !aiAgentOpened.value;
+        }
+    };
+    const aiAgentOpened = ref(false);
+    const draftSource = ref(undefined);
 
     const props = defineProps({
         flowGraph: {
@@ -554,7 +597,7 @@
     });
 
     store.commit("flow/setIsCreating", props.isCreating);
-    const guidedProperties = ref(store.getters["core/guidedProperties"]);
+    const guidedProperties = ref(coreStore.guidedProperties);
 
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
     const isFlow = computed(() => currentTab?.value?.flow || props.isCreating);
@@ -695,6 +738,8 @@
         }
     };
 
+    const pluginsStore = usePluginsStore();
+
     onMounted(async () => {
         if(guidedProperties.value?.tourStarted) {
             editorViewType.value = "YAML";
@@ -734,12 +779,14 @@
         if (props.isCreating) {
             store.commit("editor/closeTabs");
         }
+
+        window.addEventListener("keydown", toggleAiShortcut);
     });
 
     onBeforeUnmount(() => {
         window.removeEventListener("resize", onResize);
 
-        store.commit("plugin/setEditorPlugin", undefined);
+        pluginsStore.editorPlugin = undefined;
         document.removeEventListener("keydown", saveUsingKeyboard);
         document.removeEventListener("popstate", () => {
             stopTour();
@@ -748,11 +795,15 @@
         store.commit("editor/closeAllTabs");
 
         document.removeEventListener("click", hideTabContextMenu);
+        window.removeEventListener("keydown", toggleAiShortcut);
     });
 
     const stopTour = () => {
         tours["guidedTour"].stop();
-        store.commit("core/setGuidedProperties", {tourStarted: false});
+        coreStore.guidedProperties = {
+            ...coreStore.guidedProperties,
+            tourStarted: false
+        };
     };
 
     const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"]);
@@ -762,7 +813,7 @@
     };
 
     const updatePluginDocumentation = (event, task) => {
-        store.dispatch("plugin/updateDocumentation", {event,task});
+        pluginsStore.updateDocumentation({event,task});
     };
 
     const fetchGraph = () => {
@@ -783,7 +834,11 @@
     };
 
     const onEdit = (source, currentIsFlow = false) => {
-        store.commit("flow/setFlowYaml", source)
+        if (draftSource.value !== undefined) {
+            draftSource.value = source;
+        } else {
+            store.commit("flow/setFlowYaml", source);
+        }
         return store.dispatch("flow/onEdit", {
             source,
             currentIsFlow,
@@ -826,11 +881,11 @@
             newTrigger.value
         );
         if (existingTask) {
-            store.dispatch("core/showMessage", {
+            coreStore.message = {
                 variant: "error",
                 title: t("trigger_id_exists"),
                 message: t("trigger_id_message", {existingTrigger: existingTask}),
-            });
+            };
             return;
         }
         onEdit(YAML_UTILS.insertSection("triggers", source, newTrigger.value), true);
@@ -860,11 +915,11 @@
             newError.value
         );
         if (existingTask) {
-            store.dispatch("core/showMessage", {
+            coreStore.message = {
                 variant: "error",
                 title: t("task_id_exists"),
                 message: t("task_id_message", {existingTask}),
-            });
+            };
             return;
         }
         onEdit(YAML_UTILS.insertSection("errors", source, newError.value), true);
@@ -932,6 +987,7 @@
     const flowParsed = computed(() => store.getters["flow/flowParsed"]);
 
     const saveWithoutRevisionGuard = async () => {
+        clearTimeout(timer.value);
         const result = await store.dispatch("flow/saveWithoutRevisionGuard");
         if(result === "redirect_to_update"){
             await router.push({
@@ -954,6 +1010,7 @@
     };
 
     const save = async () => {
+        clearTimeout(timer.value);
         const result = await store.dispatch("flow/save", {
             content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
             namespace: props.namespace ?? route.params.namespace,
@@ -1282,6 +1339,17 @@
         store.commit("editor/refreshTree");
         event.target.value = "";
     };
+
+    function acceptDraft() {
+        const accepted = draftSource.value;
+        draftSource.value = undefined;
+        editorUpdate(accepted);
+    }
+
+    function declineDraft() {
+        draftSource.value = undefined;
+        aiAgentOpened.value = true;
+    }
 </script>
 
 <style lang="scss" scoped>
@@ -1475,6 +1543,12 @@
                 color: var(--ks-content-secondary);
             }
         }
+    }
+
+    .prompt {
+        bottom: 10%;
+        width: calc(100% - 4rem);
+        left: 2rem;
     }
 </style>
 

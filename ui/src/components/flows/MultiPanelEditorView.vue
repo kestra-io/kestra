@@ -25,6 +25,7 @@
     import {useStorage} from "@vueuse/core";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
+    import {useCoreStore} from "../../stores/core";
 
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
@@ -41,6 +42,7 @@
     }
 
     const store = useStore()
+    const coreStore = useCoreStore()
     const flow = computed(() => store.state.flow.flow)
 
     onMounted(() => {
@@ -74,9 +76,8 @@
 
 
     const noCodeHandlers: Parameters<typeof setupInitialNoCodeTab>[2] = {
-        onCreateTask(opener, blockType, parentPath, refPath, position){
+        onCreateTask(opener, parentPath, blockSchemaPath, refPath, position){
             const createTabId = getCreateTabKey({
-                blockType,
                 parentPath,
                 refPath,
                 position,
@@ -91,7 +92,7 @@
                 return false
             }
 
-            openAddTaskTab(opener, blockType, parentPath, refPath, position, isFlowDirty.value)
+            openAddTaskTab(opener, parentPath, blockSchemaPath, refPath, position, isFlowDirty.value)
             return false
         },
         onEditTask(...args){
@@ -99,12 +100,10 @@
             // and don't open a new one)
             const [
                 ,
-                blockType,
                 parentPath,
                 refPath,
             ] = args
             const editKey = getEditTabKey({
-                blockType,
                 parentPath,
                 refPath
             }, 0).slice(12)
@@ -142,14 +141,19 @@
 
     const {setupInitialCodeTab} = useInitialCodeTabs()
 
-    const isTourRunning = computed(() => store.state.core.guidedProperties?.tourStarted)
+    const isTourRunning = computed(() => coreStore.guidedProperties?.tourStarted)
     const DEFAULT_TOUR_TABS = [
         {tabs: ["code"], activeTab: "code", size: 1},
         {tabs: ["topology"], activeTab: "topology", size: 1}
     ];
 
+    function cleanupNoCodeTabKey(key: string): string {
+        // remove the number for "nocode-1234-" prefix from the key
+        return /^nocode-\d{4}/.test(key) ? key.slice(0, 6) + key.slice(11) : key
+    }
+
     const panels: Ref<Panel[]> = useStorage<any>(
-        `panel-${flow.value.namespace}-${flow.value.id}`,
+        `flow-${flow.value.namespace}-${flow.value.id}`,
         DEFAULT_ACTIVE_TABS
             .map((t):Panel => getPanelFromValue(t).panel),
         undefined,
@@ -158,7 +162,7 @@
                 write(v: Panel[]){
                     return JSON.stringify(v.map(p => ({
                         tabs: p.tabs.map(t => t.value),
-                        activeTab: p.activeTab?.value,
+                        activeTab: cleanupNoCodeTabKey(p.activeTab?.value),
                         size: p.size,
                     })))
                 },
@@ -175,7 +179,7 @@
                                 )
                                     // filter out any tab that may have disappeared
                                     .filter(Boolean)
-                                const activeTab = tabs.find(t => t.value === p.activeTab) ?? tabs[0]
+                                const activeTab = tabs.find(t => cleanupNoCodeTabKey(t.value) === p.activeTab) ?? tabs[0]
                                 return {
                                     activeTab,
                                     tabs,
@@ -225,11 +229,10 @@
     }
 
     .editor-wrapper{
-        flex: 1;
         position: relative;
     }
 
-    .editor-panels{
+    :deep(.editor-panels){
         position: absolute;
     }
 

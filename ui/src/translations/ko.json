@@ -29,6 +29,7 @@
     "Unfold content lines": "다중 라인 문자열 펼치기",
     "about_this_blueprint": "이 blueprint 정보",
     "absolute": "절대적",
+    "accept": "수락",
     "actions": "작업",
     "activate_basic_auth": "기본 인증 활성화",
     "active": "활성화됨",
@@ -44,6 +45,13 @@
     "advanced configuration": "다른 속성",
     "after": "이후",
     "aggregation": "집계",
+    "ai": {
+      "flow": {
+        "generating": "Flow YAML을 생성 중입니다...",
+        "prompt_placeholder": "Kestra flow를 생성하기 위한 지침을 입력하세요.",
+        "title": "AI 에이전트"
+      }
+    },
     "all executions": "모든 실행",
     "all tags": "모든 태그",
     "api": "API",
@@ -119,10 +127,25 @@
     "change state current state": "현재 상태는:",
     "change state done": "작업 상태가 업데이트되었습니다",
     "change state hint": {
-      "FAILED": "['Flow가 FAILED로 표시됩니다.', '다른 task는 실행되지 않습니다.', '오류 task가 실행됩니다.']",
-      "RUNNING": "['Flow가 재시작되며 모든 다음 task가 실행됩니다.', '모든 차단된 task가 실행됩니다.']",
-      "SUCCESS": "['이 task가 성공했기 때문에 flow가 재시작됩니다.', '모든 차단된 task가 실행됩니다.', '모든 task 실행이 성공하면 flow는 SUCCESS 상태가 됩니다.']",
-      "WARNING": "['Flow가 WARNING으로 표시됩니다.', '다음 tasks가 실행됩니다.', '오류 tasks가 실행됩니다.']"
+      "FAILED": [
+        "Flow가 FAILED로 표시됩니다.",
+        "다른 task는 실행되지 않습니다.",
+        "오류 task가 실행됩니다."
+      ],
+      "RUNNING": [
+        "flow가 재시작되고 모든 다음 task가 실행됩니다.",
+        "모든 차단된 task가 실행됩니다."
+      ],
+      "SUCCESS": [
+        "이 task가 성공했기 때문에 flow가 재시작됩니다.",
+        "모든 차단된 task가 실행됩니다.",
+        "모든 task 실행이 성공하면 flow는 SUCCESS 상태가 됩니다."
+      ],
+      "WARNING": [
+        "Flow가 WARNING으로 표시됩니다.",
+        "다음 tasks가 실행됩니다.",
+        "오류 tasks가 실행됩니다."
+      ]
     },
     "change state tooltip": "실행 상태 변경",
     "chart": "차트",
@@ -147,7 +170,8 @@
       "docs": "문서",
       "help": "도움말",
       "issue": "이슈 열기",
-      "news": "뉴스"
+      "news": "뉴스",
+      "star": "레포에 별표 추가"
     },
     "continue backfill": "backfill 계속",
     "continue backfills": "backfill 계속",
@@ -159,8 +183,6 @@
     "copy_to_clipboard": "클립보드에 복사",
     "create": "생성",
     "create first task": "첫 번째 task 만들기",
-    "create_custom_dashboard": "새 대시보드 생성",
-    "create_dashboard": "대시보드 생성",
     "create_flow": "Flow 생성",
     "created date": "생성 날짜",
     "creation": "생성",
@@ -172,34 +194,29 @@
     "current": "현재",
     "current execution": "현재 실행",
     "custom value": "사용자 정의 value",
-    "custom_dashboard": "맞춤 대시보드",
-    "custom_dashboard_confirm_deletion": "<code>{title}</code> 대시보드를 삭제하시겠습니까?",
-    "custom_dashboard_empty": "결과가 표시되지 않습니다.",
-    "custom_dashboard_validate_creation": "대시보드 <code>{title}</code>가 생성되었습니다.",
-    "custom_dashboard_validate_editing": "대시보드 <code>{title}</code>의 변경 사항이 저장되었습니다.",
     "dark_version": "다크 버전",
-    "dashboard": {
-      "click_chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
-      "description": "설명",
-      "executions_in_progress": "진행 중인 실행",
-      "failure_ratio": "실패 비율",
-      "failure_ratio_tooltip": "실패 비율은 FAILED, KILLED, RETRIED 실행의 합을 종료된 상태의 전체 실행 수로 나눈 값입니다.",
-      "id": "ID",
-      "next_execution_date": "다음 실행 날짜",
-      "next_scheduled_executions": "다음 예정된 실행",
-      "no_flow_description": "이 flow에는 설명이 없습니다.",
-      "not_auth": "이 위젯을 볼 수 있는 권한이 없습니다.",
-      "per_day": "(하루당)",
-      "per_namespace": "(네임스페이스별)",
-      "preview": "대시보드 미리보기",
-      "see_all": "모두 보기",
-      "success_ratio": "성공 비율",
-      "success_ratio_tooltip": "성공 비율은 SUCCESS, CANCELLED 및 WARNING 실행의 합계를 종료된 상태의 총 실행 수로 나눈 값입니다.",
-      "total_executions": "총 실행 횟수",
-      "trigger_disabled": "이 trigger는 코드로만 활성화할 수 있습니다."
+    "dashboards": {
+      "chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
+      "creation": {
+        "confirmation": "대시보드 <code>{title}</code>이(가) 생성되었습니다.",
+        "label": "대시보드 생성"
+      },
+      "default": "기본 대시보드",
+      "deletion": {
+        "confirmation": "<code>{title}</code> 대시보드를 삭제하시겠습니까?"
+      },
+      "edition": {
+        "chart": "이 차트 편집",
+        "confirmation": "대시보드 <code>{title}</code>의 변경 사항이 저장되었습니다.",
+        "label": "대시보드 편집"
+      },
+      "empty": "결과가 표시되지 않습니다.",
+      "labels": {
+        "plural": "대시보드",
+        "singular": "대시보드"
+      },
+      "preview": "미리보기 대시보드"
     },
-    "dashboard_label": "대시보드",
-    "dashboards": "대시보드",
     "data": "데이터",
     "data_not_protected": "귀하의 데이터는 보호되지 않습니다. 잃어버리지 마세요. <b>무료 보안 기능을 활성화하거나 유료 서비스를 시도해 보세요.</b>",
     "date": "날짜",
@@ -246,8 +263,8 @@
     },
     "days": "일",
     "debug": "디버그",
+    "decline": "거부",
     "default": "기본값",
-    "default_dashboard": "기본 대시보드",
     "delete": "삭제",
     "delete backfill": "backfill 삭제",
     "delete backfills": "backfill 삭제",
@@ -359,12 +376,12 @@
     "download": "다운로드",
     "download logs": "Logs 다운로드",
     "download_logos": "로고 팩 다운로드",
+    "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "duration": "지속 시간",
     "dynamic": "동적",
     "each value": "반복 값",
     "edit": "편집",
     "edit flow": "Flow 편집",
-    "edit_custom_dashboard": "대시보드 편집",
     "editor": "편집기",
     "editor_shortcuts": {
       "command_palette": "명령 팔레트 표시",
@@ -434,6 +451,7 @@
     "error": "오류",
     "error detected": "오류 감지됨",
     "error in editor": "편집기에서 오류가 발견되었습니다",
+    "errorLogs": "오류 logs",
     "errors": {
       "401": {
         "content": "이 페이지에 접근하려면 인증이 필요합니다.",
@@ -595,6 +613,7 @@
     "flow enable": "<code>{flowCount}</code> 개의 flow를 활성화하시겠습니까?",
     "flow export": "<code>{flowCount}</code> 개의 flow를 내보내시겠습니까?",
     "flow must have id and namespace": "Flow에는 id와 namespace가 있어야 합니다.",
+    "flow must not be empty": "flow는 비어 있을 수 없습니다",
     "flow not imported": "일부 flow를 가져올 수 없습니다.",
     "flow source not found": "Flow source를 찾을 수 없음",
     "flow-dependencies": "종속성",
@@ -605,7 +624,7 @@
     "flows deleted": "<code>{count}</code> 개의 flow가 삭제되었습니다",
     "flows disabled": "<code>{count}</code> 개의 flow가 비활성화되었습니다",
     "flows enabled": "<code>{count}</code> 개의 flow가 활성화되었습니다",
-    "flows exported": "flow가 내보내졌습니다",
+    "flows exported": "<code>{count}</code> Flow(s) 내보내기 완료",
     "flows imported": "Flow가 가져왔습니다.",
     "focus task": "문서를 보려면 요소를 클릭하세요.",
     "fold_all_multi_lines": "모든 다중 라인 접기",
@@ -622,22 +641,6 @@
     "healthcheck date": "HealthCheck 날짜",
     "hide task documentation": "task 문서 숨기기",
     "home": "홈",
-    "homeDashboard": {
-      "errorLogs": "오류 로그",
-      "failedExecutions": "실패한 실행",
-      "guide": "첫 번째 flow를 실행하는 데 도움이 필요하신가요?",
-      "last28Days": "지난 28일",
-      "lastXdays": "지난 {days}일",
-      "namespacesErrorExecutions": "namespace별 실행 오류",
-      "namespacesExecutions": "namespace별 실행",
-      "no executions": "flow를 실행해 보시겠습니까?",
-      "start": "첫 번째 workflow를 시작하고 실행해 봅시다.",
-      "title": "대시보드",
-      "today": "오늘",
-      "wel_text": "환영합니다!",
-      "welcome": "Kestra에 오신 것을 환영합니다",
-      "yesterday": "어제"
-    },
     "hostname": "호스트 이름",
     "hours": "운영 시간",
     "iam": "IAM",
@@ -737,7 +740,9 @@
       },
       "delete": {
         "file": "파일 삭제",
+        "files": "{count}개의 선택된 파일 삭제",
         "folder": "폴더 삭제",
+        "folders": "{count}개의 선택된 폴더 삭제",
         "label": "삭제"
       },
       "dialog": {
@@ -836,6 +841,7 @@
         "conditions": "조건 추가",
         "errors": "오류 처리기 추가",
         "finally": "마지막 블록 추가",
+        "inputs": "입력 필드 추가",
         "pluginDefaults": "플러그인 기본값 추가",
         "tasks": "작업 추가",
         "triggers": "트리거 추가"
@@ -844,16 +850,19 @@
         "general": {
           "concurrency": "병행성",
           "disabled": "비활성화됨",
-          "inputs": "입력",
           "labels": "레이블",
+          "listeners": "리스너",
           "outputs": "출력",
           "retry": "재시도",
           "sla": "SLA",
-          "variables": "변수"
+          "taskDefaults": "작업 기본값",
+          "variables": "변수",
+          "workerGroup": "작업자 그룹"
         },
         "main": {
           "description": "설명",
-          "flow_id": "플로우 ID",
+          "id": "Flow ID",
+          "inputs": "입력",
           "namespace": "네임스페이스"
         }
       },
@@ -865,6 +874,7 @@
       },
       "sections": {
         "afterExecution": "실행 후",
+        "connection": "연결 속성",
         "deprecated": "사용되지 않는 속성",
         "errors": "오류 처리기",
         "finally": "마지막으로",
@@ -880,6 +890,7 @@
         "conditions": "조건 선택",
         "errors": "작업 선택",
         "finally": "작업 선택",
+        "inputs": "입력 필드 유형 선택",
         "pluginDefaults": "플러그인 선택",
         "tasks": "작업 선택",
         "triggers": "트리거 선택"
@@ -1199,6 +1210,7 @@
     "steps": "단계",
     "stream": "스트림",
     "sub flow": "Subflow",
+    "submit": "제출",
     "success": "성공",
     "sum": "합계",
     "switch-view": "보기 전환",
@@ -1236,6 +1248,7 @@
     "timezone": "시간대",
     "title": "제목",
     "to": "종료",
+    "to toggle": "전환하기",
     "toggle fullscreen": "전체 화면 전환",
     "toggle output": "출력 전환",
     "toggle output display": "출력 표시 전환",
@@ -1249,6 +1262,7 @@
       "zoom-out": "축소",
       "zoom-reset": "확대/축소 재설정"
     },
+    "total_executions": "총 실행 횟수",
     "trigger": "Trigger",
     "trigger details": "Trigger 세부 정보",
     "trigger disabled": "Flow 소스 내에서 Trigger가 비활성화되었습니다.",
@@ -1332,6 +1346,12 @@
     "welcome aboard content": "가이드 투어를 사용하여 첫 번째 flow를 만들고 Blueprints에서 더 많은 예제를 확인하세요.",
     "welcome button create": "첫 번째 flow 만들기",
     "welcome display require": "<strong>첫 번째 flow</strong>를 실행하여 시작하세요",
+    "welcome_page": {
+      "guide": "첫 번째 flow를 실행하는 데 도움이 필요하신가요?",
+      "start": "첫 번째 workflow를 시작해 봅시다.",
+      "wel_text": "환영합니다!",
+      "welcome": "Kestra에 오신 것을 환영합니다"
+    },
     "wordmark_colors": "워드마크 색상은 배경에 따라 조정되며, 아이콘은 어두운 배경에 놓였을 때 배경 없이 유지됩니다.",
     "worker group": "Worker 그룹",
     "worker group fallback": "작업자 그룹 대체",

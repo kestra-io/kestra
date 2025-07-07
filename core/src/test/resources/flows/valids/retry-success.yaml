@@ -8,7 +8,7 @@ tasks:
   retry:
     type: constant
     interval: PT0.250S
-    maxAttempt: 4
+    maxAttempts: 4
     maxDuration: PT15S
     warningOnRetry: true
 

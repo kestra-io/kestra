@@ -52,15 +52,14 @@ jobs:
     env:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
-      # Update
-      - name: Github - Update internal
-        uses: benc-uk/workflow-dispatch@v1
-        if: github.ref == 'refs/heads/develop' && needs.docker.result == 'success'
+      - name: Trigger EE Workflow
+        uses: peter-evans/repository-dispatch@v3
+        if: github.ref == 'refs/heads/develop' && needs.release.result == 'success'
         with:
-          workflow: oss-build.yml
-          repo: kestra-io/infra
-          ref: master
           token: ${{ secrets.GH_PERSONAL_TOKEN }}
+          repository: kestra-io/kestra-ee
+          event-type: "oss-updated"
+
 
       # Slack
       - name: Slack - Notification

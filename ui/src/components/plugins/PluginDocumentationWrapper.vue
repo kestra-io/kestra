@@ -1,5 +1,5 @@
 <template>
-    <div class="plugin-doc-wrapper" :class="{editorPlugin: plugin}">
+    <div class="plugin-doc-wrapper" :class="{editorPlugin: pluginsStore.editorPlugin}">
         <PluginDocumentation :key="theme" />
     </div>
 </template>
@@ -7,9 +7,10 @@
     import {computed} from "vue";
     import {useStore} from "vuex";
     import PluginDocumentation from "./PluginDocumentation.vue"
+    import {usePluginsStore} from "../../stores/plugins";
 
     const store = useStore();
-    const plugin = computed(() => store.state.plugin.editorPlugin);
+    const pluginsStore = usePluginsStore()
     const theme = computed(() => store.getters["misc/theme"]);
 </script>
 

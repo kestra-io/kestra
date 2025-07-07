@@ -34,6 +34,9 @@ export default mergeConfig(
                 },
                 setupFiles: ["vitest.setup.ts"],
             },
+            define: {
+                "process.env.RUN_TEST_WITH_PERSISTENT": JSON.stringify("false"), // Disable persistent mode for tests
+            }
         }),
     ),
 );

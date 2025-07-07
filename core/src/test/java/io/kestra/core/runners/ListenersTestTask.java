@@ -29,7 +29,7 @@ public class ListenersTestTask extends Task implements RunnableTask<ListenersTes
                     .delayFactor(2.0)
                     .interval(Duration.ofSeconds(1))
                     .maxInterval(Duration.ofSeconds(15))
-                    .maxAttempt(-1)
+                    .maxAttempts(-1)
                     .maxDuration(Duration.ofMinutes(10))
                     .build(),
                 runContext.logger()

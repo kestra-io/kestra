@@ -79,7 +79,7 @@
     import Save from "./segments/Save.vue";
     import Settings from "./segments/Settings.vue";
     import RefreshButton from "../layout/RefreshButton.vue";
-    import Dashboards from "./segments/Dashboards.vue";
+    import Dashboards from "../dashboard/components/selector/Selector.vue";
     import Properties from "./segments/Properties.vue";
     import {COMPARATORS_REGEX} from "../../composables/monaco/languages/filters/filterLanguageConfigurator.ts";
     import {Comparators, getComparator} from "../../composables/monaco/languages/filters/filterCompletion.ts";
@@ -217,6 +217,12 @@
                     return values.map(value => remappedFilterKey + Comparators.EQUALS + value);
                 }).join(" ");
         } else {
+            Object.keys(query).filter((key) => {
+                return !key.startsWith("filters[");
+            }).forEach((key) => {
+                queryParamsToKeep.value.push(key);
+            });
+
             filter.value = Object.entries(query)
                 .filter(([key]) => key.startsWith("filters["))
                 .flatMap(([key, values]) => {
@@ -228,11 +234,6 @@
                         maybeSubKeyString = "";
                     } else {
                         maybeSubKeyString = "." + (subKey.includes(" ") ? `"${subKey}"` : subKey);
-                    }
-
-                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(FilterLanguage.withNestedKeyPlaceholder(remappedFilterKey + maybeSubKeyString)))) {
-                        queryParamsToKeep.value.push(key);
-                        return [];
                     }
 
                     if (!Array.isArray(values)) {

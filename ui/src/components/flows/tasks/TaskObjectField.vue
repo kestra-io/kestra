@@ -1,5 +1,13 @@
 <template>
-    <el-form-item v-if="fieldKey" :required="isRequired">
+    <component
+        v-if="simpleType === 'list'"
+        ref="taskComponent"
+        :is="type"
+        v-bind="{...componentProps}"
+        :disabled
+        class="mt-1 mb-2 wrapper"
+    />
+    <el-form-item v-else-if="fieldKey" :required="isRequired">
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -11,8 +19,9 @@
                     <span v-if="props.fieldKey" class="label">
                         {{ props.fieldKey }}
                     </span>
+
                     <ClearButton
-                        v-if="isAnyOf && !required && modelValue && Object.keys(modelValue).length > 0"
+                        v-if="isAnyOf && !isRequired && modelValue && Object.keys(modelValue).length > 0"
                         @click="$emit('update:modelValue', undefined); taskComponent?.resetSelectType?.();"
                     />
                 </div>
@@ -81,7 +90,7 @@
     const taskComponent = templateRef<{resetSelectType?: () => void}>("taskComponent");
 
     const isRequired = computed(() => {
-        return !props.disabled && props.required?.includes(props.fieldKey) && props.schema.$required;
+        return !props.disabled && props.required?.includes(props.fieldKey);// && props.schema.$required;
     })
 
     const componentProps = computed(() => {
@@ -162,7 +171,7 @@
         flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-weight: 600;
+        font-size: 0.875rem;
     }
 
     .label-anyof{

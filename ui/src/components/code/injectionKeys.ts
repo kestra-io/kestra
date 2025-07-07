@@ -1,15 +1,13 @@
 import type {ComputedRef, InjectionKey, Ref} from "vue"
-import {Breadcrumb, BlockType, TopologyClickParams} from "./utils/types"
+import {TopologyClickParams} from "./utils/types"
 import {Panel} from "../MultiPanelTabs.vue"
 
+export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<string>
+export const SCHEMA_PATH_INJECTION_KEY = Symbol("schema-path-injection-key") as InjectionKey<ComputedRef<string>>
 /**
  * Complete flow YAML string for the no-code
  */
 export const FLOW_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
-/**
- * The type of the block that is being created
- */
-export const BLOCKTYPE_INJECT_KEY = Symbol("blocktype-injection-key") as InjectionKey<BlockType | "pluginDefaults" | undefined>
 /**
  * When creating a subtask, this is the parent task path
  */
@@ -27,25 +25,32 @@ export const POSITION_INJECTION_KEY = Symbol("position-injection-key") as Inject
  * NOTE: different from the `isCreating` flag coming from the store. `isCreating` refers to the Complete flow being in creation
  */
 export const CREATING_TASK_INJECTION_KEY = Symbol("creating-injection-key") as InjectionKey<boolean>
+/**
+ * When creating anew task, allows to specify a field where the new task should be injected.
+ * @example
+ * ```yaml
+ * tasks:
+ *   - task: # this is the fieldName
+ *       id: myTask
+ *       type: io.kestra.core.tasks.shell.Bash
+ * ```
+ */
+export const FIELDNAME_INJECTION_KEY = Symbol("fieldname-injection-key") as InjectionKey<string | undefined>
 export const EDITING_TASK_INJECTION_KEY = Symbol("editing-injection-key") as InjectionKey<boolean>
 /**
  * Call this when starting to create a new task, when the user clicks on the add button
  * to start the addition process
  */
-export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-injection-key") as InjectionKey<(blockType: BlockType | "pluginDefaults", parentPath: string, refPath: number | undefined) => void>
+export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath: number | undefined) => void>
 /**
  * Call this when starting to edit a task, when the user clicks on the task line
  * to start the edition process
  */
-export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number) => void>
+export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath?: number) => void>
 /**
  * Call this when closing a task, when the user clicks on the close button
  */
 export const CLOSE_TASK_FUNCTION_INJECTION_KEY = Symbol("close-function-injection-key") as InjectionKey<() => void>
-/**
- * Breadcrumbs for the no-code panel
- */
-export const BREADCRUMB_INJECTION_KEY = Symbol("breadcrumb-injection-key") as InjectionKey<Ref<Breadcrumb[]>>
 /**
  * Set this to override the contents of the no-code editor with a component of your choice
  * This is used to display the metadata edition inputs

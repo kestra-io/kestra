@@ -26,7 +26,7 @@
                         <div id="charts_buttons">
                             <KestraIcon
                                 v-if="props.dashboard?.id !== 'default'"
-                                :tooltip="t('dashboards.edition.chart', {chart: chart.id})"
+                                :tooltip="t('dashboards.edition.chart')"
                             >
                                 <el-button
                                     tag="router-link"

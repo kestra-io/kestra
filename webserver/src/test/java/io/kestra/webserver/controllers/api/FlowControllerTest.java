@@ -12,8 +12,13 @@ import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.topologies.FlowNode;
+import io.kestra.core.models.topologies.FlowRelation;
+import io.kestra.core.models.topologies.FlowTopology;
+import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
@@ -83,6 +88,9 @@ class FlowControllerTest {
 
     @Inject
     protected LocalFlowRepositoryLoader repositoryLoader;
+
+    @Inject
+    private FlowTopologyRepositoryInterface flowTopologyRepository;
 
     @BeforeAll
     public static void beforeAll() {
@@ -954,6 +962,28 @@ class FlowControllerTest {
         assertThat(body.get(0).getConstraints()).contains("cron: must not be null");
     }
 
+    @Test
+    void dependencies() {
+        flowTopologyRepository.save(createSimpleFlowTopology("flow-a", "flow-b"));
+        flowTopologyRepository.save(createSimpleFlowTopology("flow-b", "flow-c"));
+        flowTopologyRepository.save(createSimpleFlowTopology("flow-c", "flow-d"));
+        flowTopologyRepository.save(createSimpleFlowTopology("flow-d", "flow-e"));
+
+        FlowTopologyGraph result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/flow-a/dependencies"), FlowTopologyGraph.class);
+        assertThat(result.getNodes().size()).isEqualTo(2);
+        assertThat(result.getEdges().size()).isEqualTo(1);
+        assertThat(result.getNodes()).extracting(node -> node.getId()).contains("flow-a", "flow-b");
+        assertThat(result.getEdges()).extracting(edge -> edge.getSource()).contains("flow-a");
+        assertThat(result.getEdges()).extracting(edge -> edge.getTarget()).contains("flow-b");
+
+        result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/flow-a/dependencies?expandAll=true"), FlowTopologyGraph.class);
+        assertThat(result.getNodes().size()).isEqualTo(5);
+        assertThat(result.getEdges().size()).isEqualTo(4);
+        assertThat(result.getNodes()).extracting(node -> node.getId()).contains("flow-a", "flow-b", "flow-c", "flow-d", "flow-e");
+        assertThat(result.getEdges()).extracting(edge -> edge.getSource()).contains("flow-a", "flow-b", "flow-c", "flow-d");
+        assertThat(result.getEdges()).extracting(edge -> edge.getTarget()).contains("flow-b", "flow-c", "flow-d", "flow-e");
+    }
+
     private Flow generateFlow(String namespace, String inputName) {
         return generateFlow(IdUtils.create(), namespace, inputName);
     }
@@ -1019,5 +1049,25 @@ class FlowControllerTest {
 
     private String postFlow(String friendlyId, String namespace, String format) {
         return client.toBlocking().retrieve(POST("/api/v1/main/flows", generateFlow(friendlyId, namespace, format)), String.class);
+    }
+
+    protected FlowTopology createSimpleFlowTopology(String flowA, String flowB) {
+        return FlowTopology.builder()
+            .relation(FlowRelation.FLOW_TASK)
+            .source(FlowNode.builder()
+                .id(flowA)
+                .namespace("io.kestra.tests")
+                .tenantId("main")
+                .uid(flowA)
+                .build()
+            )
+            .destination(FlowNode.builder()
+                .id(flowB)
+                .namespace("io.kestra.tests")
+                .tenantId("main")
+                .uid(flowB)
+                .build()
+            )
+            .build();
     }
 }

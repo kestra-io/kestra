@@ -80,6 +80,8 @@
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
     import {mapState, mapGetters} from "vuex";
+    import {mapStores} from "pinia";
+    import {useCoreStore} from "../../stores/core";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
@@ -112,6 +114,7 @@
             label: {type: String, default: undefined},
             shouldFocus: {type: Boolean, default: true},
             showScroll: {type: Boolean, default: false},
+            diffOverviewBar: {type: Boolean, default: true},
         },
         components: {
             MonacoEditor,
@@ -155,7 +158,7 @@
                 immediate: true,
             },
             modelValue(value) {
-                if (this.editor?.getValue() !== value) {
+                if (this.editor?.getValue?.() !== value) {
                     this.preventCursorChange = true;
                 } else {
                     this.preventCursorChange = false;
@@ -164,8 +167,8 @@
         },
         computed: {
             ...mapState({mappedTheme: state => state.misc.theme}),
-            ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flowValidation"]),
+            ...mapStores(useCoreStore),
             containerClass() {
                 return [
                     !this.input ? "" : "single-line",
@@ -227,6 +230,7 @@
                     };
                     options.renderSideBySide = this.diffSideBySide;
                     options.useInlineViewWhenSpaceIsLimited = false;
+                    options.renderOverviewRuler = this.diffOverviewBar;
                 }
 
                 if (this.minimap === false) {
@@ -389,10 +393,6 @@
                     }
                 }
 
-                if (this.original !== undefined) {
-                    this.editor.updateOptions({readOnly: true});
-                }
-
                 if (!this.fullHeight) {
                     editor.onDidContentSizeChange((e) => {
                         if (!this.$refs.container) return;
@@ -403,22 +403,22 @@
 
                 if (!this.original) {
                     this.editor.onDidContentSizeChange((_) => {
-                        if (this.guidedProperties.monacoRange) {
+                        if (this.coreStore.guidedProperties.monacoRange) {
                             editor.revealLine(
-                                this.guidedProperties.monacoRange.endLineNumber,
+                                this.coreStore.guidedProperties.monacoRange.endLineNumber,
                             );
                             const decorationsToAdd = [];
                             decorationsToAdd.push({
-                                range: this.guidedProperties.monacoRange,
+                                range: this.coreStore.guidedProperties.monacoRange,
                                 options: {
                                     isWholeLine: true,
                                     inlineClassName: "highlight-text",
                                 },
                                 className: "highlight-text",
                             });
-                            if (this.guidedProperties.monacoDisableRange) {
+                            if (this.coreStore.guidedProperties.monacoDisableRange) {
                                 decorationsToAdd.push({
-                                    range: this.guidedProperties.monacoDisableRange,
+                                    range: this.coreStore.guidedProperties.monacoDisableRange,
                                     options: {
                                         isWholeLine: true,
                                         inlineClassName: "disable-text",

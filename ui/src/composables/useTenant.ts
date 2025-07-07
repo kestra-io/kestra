@@ -1,0 +1,50 @@
+import type {Router, RouteLocationNormalized, RouteLocationRaw, RouteLocationNamedRaw} from "vue-router";
+import type {App} from "vue";
+import type {Store} from "vuex";
+
+export function setupTenantRouter(router: Router, app: App): void {
+    // Auto-inject tenant in route resolution with "main" as default
+    const originalResolve = router.resolve;
+    router.resolve = function(to: RouteLocationRaw, currentLocation?: RouteLocationNormalized) {
+        if (to && typeof to === "object" && "name" in to && to.name && (!to.params || !to.params.tenant)) {
+            to = {...to, params: {tenant: "main", ...to.params}};
+        }
+        return originalResolve.call(this, to, currentLocation);
+    };
+
+    app.config.globalProperties.$routeTo = function(to: RouteLocationRaw): RouteLocationRaw {
+        if (typeof to === "string") {
+            return to;
+        }
+        
+        const toWithParams = to as RouteLocationNamedRaw;
+        return {
+            ...toWithParams, 
+            params: {tenant: this.$route?.params?.tenant || "main", ...toWithParams.params}
+        };
+    };
+
+    router.beforeEach((to, from, next) => {
+        if (to.path !== "/" && !to.params.tenant) {
+            // Use current tenant from route context, fallback to "main"
+            const currentTenant = from.params?.tenant || "main";
+            next({path: `/${currentTenant}${to.path}`, query: to.query, hash: to.hash, replace: true});
+        } else {
+            next();
+        }
+    });
+}
+
+export function setupDocIdGuard(router: Router, store: Store<any>): void {
+    // DocId and showDocId query param guard
+    router.beforeEach((to, from, next) => {
+        store.commit("doc/setDocId", to.path.split("/").pop());
+        const hasShowDocId = !to.query.showDocId && from.query?.showDocId;
+        
+        if (hasShowDocId) {
+            next({path: to.path, query: {...to.query, showDocId: from.query.showDocId}});
+        } else {
+            next();
+        }
+    });
+}

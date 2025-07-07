@@ -7,6 +7,6 @@ tasks:
     retry:
       behavior: CREATE_NEW_EXECUTION
       type: constant
-      maxAttempt: 3
+      maxAttempts: 3
       interval: PT1S
 

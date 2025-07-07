@@ -29,6 +29,8 @@ class PluginControllerTest {
     @Client("/")
     ReactorHttpClient client;
 
+    public static final String PATH = "/api/v1/plugins";
+
     @BeforeAll
     public static void beforeAll() {
         Helpers.loadExternalPluginsFromClasspath();
@@ -37,7 +39,7 @@ class PluginControllerTest {
     @Test
     void plugins() {
         List<Plugin> list = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/plugins"),
+            HttpRequest.GET(PATH),
             Argument.listOf(Plugin.class)
         );
 
@@ -67,7 +69,7 @@ class PluginControllerTest {
 
         // classLoader can lead to duplicate plugins for the core, just verify that the response is still the same
         list = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/plugins"),
+            HttpRequest.GET(PATH),
             Argument.listOf(Plugin.class)
         );
 
@@ -77,7 +79,7 @@ class PluginControllerTest {
     @Test
     void icons() {
         Map<String, PluginIcon> list = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/plugins/icons"),
+            HttpRequest.GET(PATH + "/icons"),
             Argument.mapOf(String.class, PluginIcon.class)
         );
 
@@ -95,7 +97,7 @@ class PluginControllerTest {
     @Test
     void returnTask() {
         DocumentationWithSchema doc = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/plugins/" + Return.class.getName()),
+            HttpRequest.GET(PATH + "/" + Return.class.getName()),
             DocumentationWithSchema.class
         );
 
@@ -111,7 +113,7 @@ class PluginControllerTest {
     @Test
     void docs() {
         DocumentationWithSchema doc = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/plugins/io.kestra.plugin.templates.ExampleTask"),
+            HttpRequest.GET(PATH + "/io.kestra.plugin.templates.ExampleTask"),
             DocumentationWithSchema.class
         );
 
@@ -123,7 +125,7 @@ class PluginControllerTest {
     @Test
     void docWithAlert() {
         DocumentationWithSchema doc = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/plugins/io.kestra.plugin.core.state.Set"),
+            HttpRequest.GET(PATH + "/io.kestra.plugin.core.state.Set"),
             DocumentationWithSchema.class
         );
 
@@ -136,7 +138,7 @@ class PluginControllerTest {
     @Test
     void taskWithBase() {
         DocumentationWithSchema doc = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/plugins/io.kestra.plugin.templates.ExampleTask?all=true"),
+            HttpRequest.GET(PATH + "/io.kestra.plugin.templates.ExampleTask?all=true"),
             DocumentationWithSchema.class
         );
 
@@ -151,7 +153,7 @@ class PluginControllerTest {
     @Test
     void flow() {
         Map<String, Object> doc = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/plugins/schemas/flow"),
+            HttpRequest.GET(PATH + "/schemas/flow"),
             Argument.mapOf(String.class, Object.class)
         );
 
@@ -161,7 +163,7 @@ class PluginControllerTest {
     @Test
     void template() {
         Map<String, Object> doc = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/plugins/schemas/template"),
+            HttpRequest.GET(PATH + "/schemas/template"),
             Argument.mapOf(String.class, Object.class)
         );
 
@@ -171,7 +173,7 @@ class PluginControllerTest {
     @Test
     void task() {
         Map<String, Object> doc = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/plugins/schemas/task"),
+            HttpRequest.GET(PATH + "/schemas/task"),
             Argument.mapOf(String.class, Object.class)
         );
 
@@ -181,7 +183,7 @@ class PluginControllerTest {
     @Test
     void inputs() {
         List<InputType> doc = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/plugins/inputs"),
+            HttpRequest.GET(PATH + "/inputs"),
             Argument.listOf(InputType.class)
         );
 
@@ -192,7 +194,7 @@ class PluginControllerTest {
     @Test
     void input() {
         DocumentationWithSchema doc = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/plugins/inputs/STRING"),
+            HttpRequest.GET(PATH + "/inputs/STRING"),
             DocumentationWithSchema.class
         );
 

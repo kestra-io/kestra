@@ -108,6 +108,10 @@ public class RunContextFactory {
     }
 
     public RunContext of(FlowInterface flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
+        return this.of(flow, task, execution, taskRun, decryptVariables, variableRenderer);
+    }
+
+    public RunContext of(FlowInterface flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables, VariableRenderer variableRenderer) {
         RunContextLogger runContextLogger = runContextLoggerFactory.create(taskRun, task, execution.getKind());
 
         return newBuilder()
@@ -127,6 +131,7 @@ public class RunContextFactory {
             .withKvStoreService(kvStoreService)
             .withSecretInputs(secretInputsFromFlow(flow))
             .withTask(task)
+            .withVariableRenderer(variableRenderer)
             .build();
     }
 

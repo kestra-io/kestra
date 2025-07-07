@@ -29,6 +29,7 @@
     "Unfold content lines": "मल्टीलाइन स्ट्रिंग्स अनफोल्ड करें",
     "about_this_blueprint": "इस blueprint के बारे में",
     "absolute": "पूर्ण",
+    "accept": "स्वीकारें",
     "actions": "क्रियाएँ",
     "activate_basic_auth": "बेसिक ऑथेंटिकेशन सक्रिय करें",
     "active": "सक्रिय",
@@ -44,6 +45,13 @@
     "advanced configuration": "अन्य गुण",
     "after": "बाद में",
     "aggregation": "एकत्रीकरण",
+    "ai": {
+      "flow": {
+        "generating": "आपके लिए Flow YAML उत्पन्न किया जा रहा है...",
+        "prompt_placeholder": "अपने Kestra flow बनाने के लिए निर्देश दर्ज करें।",
+        "title": "एआई एजेंट"
+      }
+    },
     "all executions": "सभी निष्पादन",
     "all tags": "सभी टैग",
     "api": "API",
@@ -119,10 +127,25 @@
     "change state current state": "वर्तमान स्थिति है:",
     "change state done": "कार्य की स्थिति को अपडेट किया गया है",
     "change state hint": {
-      "FAILED": "['Flow को FAILED के रूप में चिह्नित किया जाएगा।', 'कोई अन्य task निष्पादित नहीं किया जाएगा।', 'Error tasks निष्पादित किए जाएंगे।']",
-      "RUNNING": "['Flow पुनः शुरू होगा और सभी अगले tasks निष्पादित होंगे।', 'सभी अवरुद्ध tasks निष्पादित होंगे।']",
-      "SUCCESS": "['Flow पुनः शुरू होगा क्योंकि यह task सफल रहा।', 'सभी अवरुद्ध tasks निष्पादित किए जाएंगे।', 'यदि सभी task रन सफल होते हैं, तो Flow SUCCESS स्थिति में होगा।']",
-      "WARNING": "['Flow को WARNING के रूप में चिह्नित किया जाएगा।', 'अगले tasks निष्पादित किए जाएंगे।', 'त्रुटि tasks निष्पादित किए जाएंगे।']"
+      "FAILED": [
+        "Flow को FAILED के रूप में चिह्नित किया जाएगा।",
+        "कोई अन्य task निष्पादित नहीं किया जाएगा।",
+        "Error tasks निष्पादित किए जाएंगे।"
+      ],
+      "RUNNING": [
+        "flow पुनः आरंभ होगा और सभी अगले tasks निष्पादित होंगे।",
+        "सभी अवरुद्ध tasks निष्पादित किए जाएंगे।"
+      ],
+      "SUCCESS": [
+        "Flow पुनः शुरू होगा क्योंकि यह task सफल रहा।",
+        "सभी अवरुद्ध tasks निष्पादित किए जाएंगे।",
+        "यदि सभी task रन सफल होते हैं, तो Flow SUCCESS स्थिति में होगा।"
+      ],
+      "WARNING": [
+        "Flow को WARNING के रूप में चिह्नित किया जाएगा।",
+        "अगले tasks निष्पादित किए जाएंगे।",
+        "त्रुटि tasks निष्पादित किए जाएंगे।"
+      ]
     },
     "change state tooltip": "निष्पादन स्थिति बदलें",
     "chart": "चार्ट",
@@ -183,6 +206,7 @@
         "confirmation": "क्या आप वाकई <code>{title}</code> डैशबोर्ड को हटाना चाहते हैं?"
       },
       "edition": {
+        "chart": "इस चार्ट को संपादित करें",
         "confirmation": "डैशबोर्ड <code>{title}</code> में परिवर्तन सहेजे गए हैं।",
         "label": "डैशबोर्ड संपादित करें"
       },
@@ -239,6 +263,7 @@
     },
     "days": "दिन",
     "debug": "डिबग",
+    "decline": "अस्वीकार करें",
     "default": "डिफ़ॉल्ट",
     "delete": "हटाएं",
     "delete backfill": "Backfill हटाएं",
@@ -599,7 +624,7 @@
     "flows deleted": "<code>{count}</code> Flow(s) हटाए गए",
     "flows disabled": "<code>{count}</code> Flow(s) अक्षम किए गए",
     "flows enabled": "<code>{count}</code> Flow(s) सक्षम किए गए",
-    "flows exported": "Flows निर्यात किए गए",
+    "flows exported": "<code>{count}</code> Flow(s) निर्यात किए गए",
     "flows imported": "फ़्लोज़ आयात किए गए",
     "focus task": "किसी भी तत्व पर क्लिक करें ताकि उसका दस्तावेज़ देखा जा सके।",
     "fold_all_multi_lines": "सभी मल्टी लाइन्स को फोल्ड करें",
@@ -715,7 +740,9 @@
       },
       "delete": {
         "file": "फ़ाइल हटाएं",
+        "files": "{count} चयनित फ़ाइलें हटाएं",
         "folder": "फ़ोल्डर हटाएं",
+        "folders": "{count} चयनित फ़ोल्डर हटाएं",
         "label": "हटाएं"
       },
       "dialog": {
@@ -814,6 +841,7 @@
         "conditions": "एक शर्त जोड़ें",
         "errors": "त्रुटि हैंडलर जोड़ें",
         "finally": "अंत में एक finally ब्लॉक जोड़ें",
+        "inputs": "इनपुट फ़ील्ड जोड़ें",
         "pluginDefaults": "प्लगइन डिफ़ॉल्ट जोड़ें",
         "tasks": "कार्य जोड़ें",
         "triggers": "ट्रिगर जोड़ें"
@@ -822,16 +850,19 @@
         "general": {
           "concurrency": "समानांतरता",
           "disabled": "अक्षम",
-          "inputs": "इनपुट्स",
           "labels": "लेबल्स",
+          "listeners": "श्रोता",
           "outputs": "आउटपुट्स",
           "retry": "पुनः प्रयास करें",
           "sla": "SLA",
-          "variables": "वेरिएबल्स"
+          "taskDefaults": "डिफ़ॉल्ट Task",
+          "variables": "वेरिएबल्स",
+          "workerGroup": "वर्कर ग्रुप"
         },
         "main": {
           "description": "विवरण",
-          "flow_id": "फ्लो ID",
+          "id": "Flow ID",
+          "inputs": "इनपुट्स",
           "namespace": "Namespace"
         }
       },
@@ -859,6 +890,7 @@
         "conditions": "कंडीशन चुनें",
         "errors": "एक task चुनें",
         "finally": "एक task चुनें",
+        "inputs": "इनपुट फ़ील्ड प्रकार चुनें",
         "pluginDefaults": "एक प्लगइन चुनें",
         "tasks": "कार्य चुनें",
         "triggers": "ट्रिगर चुनें"
@@ -1178,6 +1210,7 @@
     "steps": "चरण",
     "stream": "स्ट्रीम",
     "sub flow": "Subflow",
+    "submit": "प्रस्तुत करें",
     "success": "सफलता",
     "sum": "योग",
     "switch-view": "दृश्य स्विच करें",
@@ -1215,6 +1248,7 @@
     "timezone": "समय क्षेत्र",
     "title": "शीर्षक",
     "to": "तक",
+    "to toggle": "टॉगल करने के लिए",
     "toggle fullscreen": "पूर्ण स्क्रीन टॉगल करें",
     "toggle output": "आउटपुट टॉगल करें",
     "toggle output display": "आउटपुट प्रदर्शन टॉगल करें",

@@ -4,12 +4,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
-import io.kestra.core.exceptions.ConflictException;
-import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.exceptions.InvalidException;
-import io.kestra.core.exceptions.NotFoundException;
-import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.exceptions.*;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -125,6 +120,11 @@ public class ErrorController {
     }
 
     @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, AiException e) {
+        return jsonError(request, HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+    }
+
+    @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, IllegalStateException e) {
         return jsonError(request, e, HttpStatus.CONFLICT, "Illegal state");
     }
@@ -147,12 +147,12 @@ public class ErrorController {
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, NotFoundException e) {
-        return jsonError(request, e, HttpStatus.NOT_FOUND, Optional.ofNullable(e.getMessage()).orElse(HttpStatus.NOT_FOUND.getReason()));
+        return jsonError(request, e, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReason());
     }
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, ConflictException e) {
-        return jsonError(request, e, HttpStatus.CONFLICT, Optional.ofNullable(e.getMessage()).orElse(HttpStatus.CONFLICT.getReason()));
+        return jsonError(request, e, HttpStatus.CONFLICT, HttpStatus.CONFLICT.getReason());
     }
 
     @Error(global = true)

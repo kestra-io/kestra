@@ -1,5 +1,5 @@
 <template>
-    <div class="plugin-doc-wrapper" :class="{editorPlugin: plugin}">
+    <div class="plugin-doc-wrapper" :class="{editorPlugin: pluginsStore.editorPlugin}">
         <PluginDocumentation :key="theme" />
     </div>
 </template>
@@ -11,7 +11,6 @@
 
     const store = useStore();
     const pluginsStore = usePluginsStore()
-    const plugin = computed(() => pluginsStore.editorPlugin);
     const theme = computed(() => store.getters["misc/theme"]);
 </script>
 

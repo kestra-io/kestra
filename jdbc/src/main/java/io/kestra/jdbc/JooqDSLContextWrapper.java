@@ -28,7 +28,7 @@ public class JooqDSLContextWrapper {
         return retryUtils.of(
             Random.builder()
                 .minInterval(Duration.ofMillis(50))
-                .maxAttempt(-1)
+                .maxAttempts(-1)
                 .maxDuration(Duration.ofSeconds(60))
                 .maxInterval(Duration.ofMillis(1000))
                 .build()

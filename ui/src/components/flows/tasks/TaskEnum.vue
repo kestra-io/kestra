@@ -5,7 +5,7 @@
         filterable
         clearable
         :persistent="false"
-        :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'value'}`"
+        :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root?.split('.').pop() || 'value'}`"
     >
         <el-option
             v-for="item in schema.enum"

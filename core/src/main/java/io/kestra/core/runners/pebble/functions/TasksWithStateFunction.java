@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TasksWithState implements Function {
+public class TasksWithStateFunction implements Function {
     public List<String> getArgumentNames() {
         return List.of("state");
     }

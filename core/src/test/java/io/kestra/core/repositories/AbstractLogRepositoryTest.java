@@ -10,14 +10,12 @@ import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.statistics.LogStatistics;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.dashboard.data.Logs;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -30,6 +28,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.models.flows.FlowScope.USER;
@@ -287,31 +286,6 @@ public abstract class AbstractLogRepositoryTest {
 
         find = logRepository.findByExecutionId(MAIN_TENANT, log1.getExecutionId(), null, Pageable.from(1, 50));
         assertThat(find.size()).isZero();
-    }
-
-    @Test
-    void statistics() throws InterruptedException {
-        for (int i = 0; i < 28; i++) {
-            logRepository.save(
-                logEntry(i < 5 ? Level.TRACE : (i < 8 ? Level.INFO : Level.ERROR))
-                    .flowId(i < 15 ? "first" : "second")
-                    .build()
-            );
-        }
-        logRepository.save(logEntry(Level.INFO).executionKind(ExecutionKind.TEST).build()); // should be ignored by stats
-
-        // mysql need some time ...
-        Thread.sleep(500);
-
-        List<LogStatistics> list = logRepository.statistics(null, MAIN_TENANT, null, "first", null, null, null, null);
-        assertThat(list.size()).isEqualTo(31);
-        assertThat(list.stream().filter(logStatistics -> logStatistics.getCounts().get(Level.TRACE) == 5).count()).isEqualTo(1L);
-        assertThat(list.stream().filter(logStatistics -> logStatistics.getCounts().get(Level.INFO) == 3).count()).isEqualTo(1L);
-        assertThat(list.stream().filter(logStatistics -> logStatistics.getCounts().get(Level.ERROR) == 7).count()).isEqualTo(1L);
-
-        list = logRepository.statistics(null, MAIN_TENANT, null, "second", null, null, null, null);
-        assertThat(list.size()).isEqualTo(31);
-        assertThat(list.stream().filter(logStatistics -> logStatistics.getCounts().get(Level.ERROR) == 13).count()).isEqualTo(1L);
     }
 
     @Test

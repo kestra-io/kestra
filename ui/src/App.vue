@@ -1,7 +1,7 @@
 <template>
     <doc-id-display />
     <el-config-provider>
-        <error-toast v-if="message" :no-auto-hide="true" :message="message" />
+        <error-toast v-if="coreStore.message" :no-auto-hide="true" :message="coreStore.message" />
         <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded">
             <router-view />
         </component>
@@ -24,6 +24,8 @@
 
     import {useApiStore} from "./stores/api";
     import {usePluginsStore} from "./stores/plugins";
+    import {useLayoutStore} from "./stores/layout";
+    import {useCoreStore} from "./stores/core";
 
     // Main App
     export default {
@@ -44,13 +46,11 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("core", ["message"]),
             ...mapState("flow", ["overallTotal"]),
-            ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("misc", ["configs"]),
-            ...mapStores(useApiStore, usePluginsStore),
+            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore),
             envName() {
-                return this.$store.getters["layout/envName"] || this.configs?.environment?.name;
+                return this.layoutStore.envName || this.configs?.environment?.name;
             },
             isOSS(){
                 return true;

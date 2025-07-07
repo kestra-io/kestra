@@ -9,17 +9,38 @@
                 :md="(chart.chartOptions?.width || 6) * 2"
             >
                 <div class="d-flex flex-column">
-                    <p v-if="!isKPIChart(chart.type)">
-                        <span class="fs-6 fw-bold">{{
-                            labels(chart).title
-                        }}</span>
-                        <template v-if="labels(chart)?.description">
-                            <br>
-                            <small class="fw-light">
-                                {{ labels(chart).description }}
-                            </small>
-                        </template>
-                    </p>
+                    <div class="d-flex justify-content-between">
+                        <div id="charts_heading">
+                            <p v-if="!isKPIChart(chart.type)">
+                                <span class="fs-6 fw-bold">
+                                    {{ labels(chart).title }}
+                                </span>
+                                <template v-if="labels(chart)?.description">
+                                    <br>
+                                    <small class="fw-light">
+                                        {{ labels(chart).description }}
+                                    </small>
+                                </template>
+                            </p>
+                        </div>
+                        <div id="charts_buttons">
+                            <KestraIcon
+                                v-if="props.dashboard?.id !== 'default'"
+                                :tooltip="t('dashboards.edition.chart')"
+                            >
+                                <el-button
+                                    tag="router-link"
+                                    :to="{
+                                        name: 'dashboards/update',
+                                        params: {dashboard: props.dashboard?.id},
+                                        query: {highlight: chart.id}}"
+                                    :icon="Pencil"
+                                    link
+                                    class="ms-2"
+                                />
+                            </KestraIcon>                            
+                        </div>
+                    </div>
 
                     <div class="flex-grow-1">
                         <component
@@ -38,14 +59,21 @@
 <script setup lang="ts">
     import {onMounted, ref} from "vue";
 
-    import type {Chart} from "../composables/useDashboards";
+    import type {Dashboard, Chart} from "../composables/useDashboards";
     import {TYPES, isKPIChart, getChartTitle} from "../composables/useDashboards";
 
     import {useRoute, useRouter} from "vue-router";
     const route = useRoute();
     const router = useRouter();
 
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
+
+    import KestraIcon from "../../Kicon.vue";
+    import Pencil from "vue-material-design-icons/Pencil.vue";
+
     const props = defineProps<{
+        dashboard: Dashboard;
         charts?: Chart[];
         showDefault?: boolean;
         padding?: boolean;
@@ -94,6 +122,15 @@ section#charts {
             border: 1px solid var(--ks-border-primary);
             border-radius: $border-radius;
             box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+        }
+
+        #charts_buttons {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        &:hover #charts_buttons {
+            opacity: 1;
         }
     }
 }

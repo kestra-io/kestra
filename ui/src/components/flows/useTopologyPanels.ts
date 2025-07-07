@@ -49,14 +49,35 @@ export function useTopologyPanels(
             return;
         }
 
-        const refPath = /\[(\d+)\]$/.exec(path)?.[1];
-        if (!refPath) {
-            return;
+        const parsedPath = YAML_UTILS.parsePath(path);
+        const refPath = parsedPath.findLast(p => typeof p === "number");
+        const fieldNameAny = parsedPath[parsedPath.length - 1];
+        let fieldName: string | undefined = undefined;
+        if(typeof fieldNameAny === "string") {
+            fieldName = fieldNameAny;
         }
-        const refPathIndex = parseInt(refPath, 10);
-        const parentPath = path.slice(0, (refPath.length * -1) - 2); // remove the [refPath] part
 
-        if (action === "create") openAddTaskTab(target, params.section, parentPath, refPathIndex, params.position);
-        else if (action === "edit") openEditTaskTab(target, params.section, parentPath, refPathIndex);
+        if (refPath === undefined) {
+            console.warn("No refPath found in topology click params", value);
+            return
+        }
+
+        if (action === "create"){
+            const refLength = (refPath.toString().length + 2)
+                + (fieldName ? fieldName.length + 1 : 0); // -2 for the [ and ] characters an 1 for the .
+
+            const parentPath = path.slice(0, - refLength); // remove the [refPath] part and the fieldName if necessary
+            openAddTaskTab(target, params.section, parentPath, refPath, params.position, undefined, fieldName);
+        } else if( action === "edit" && fieldName === undefined) {
+            // if the fieldName is undefined, editing a task directly in an array
+            // we need the parent path and the refPath
+            const parentPath = path.slice(0, - (refPath.toString().length + 2)); // remove the [refPath] part
+            openEditTaskTab(target, params.section, parentPath, refPath);
+        }else if (action === "edit" && fieldName !== undefined) {
+            // if the fieldName is defined, editing a task as a subfield like a dag
+            // we only need the path, the rest is part of the path
+            openEditTaskTab(target, params.section, path, undefined);
+        }
+        topologyClick.value = undefined; // reset the click
     });
 }

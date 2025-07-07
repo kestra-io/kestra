@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.utils.ListUtils;
 import io.micronaut.http.sse.Event;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -116,8 +117,7 @@ public class ExecutionStreamingService {
      */
     public boolean isStopFollow(Flow flow, Execution execution) {
         return executionService.isTerminated(flow, execution) &&
-            execution.getState().getCurrent() != State.Type.PAUSED &&
-            execution.getTaskRunList().stream().allMatch(taskRun -> taskRun.getState().isTerminated());
+            ListUtils.emptyOnNull(execution.getTaskRunList()).stream().allMatch(taskRun -> taskRun.getState().isTerminated());
     }
 
     @PreDestroy

@@ -206,7 +206,7 @@
         "confirmation": "Êtes-vous sûr de vouloir supprimer le tableau de bord <code>{title}</code> ?"
       },
       "edition": {
-        "chart": "Modifier le graphique <code>{chart}</code>",
+        "chart": "Modifier ce graphique",
         "confirmation": "Les modifications dans le tableau de bord <code>{title}</code> sont enregistrées.",
         "label": "Modifier le tableau de bord"
       },

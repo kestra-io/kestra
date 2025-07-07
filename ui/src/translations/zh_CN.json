@@ -203,7 +203,7 @@
         "confirmation": "您确定要删除<code>{title}</code>仪表板吗？"
       },
       "edition": {
-        "chart": "编辑 <code>{chart}</code> 图表",
+        "chart": "编辑此图表",
         "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
         "label": "编辑仪表板"
       },

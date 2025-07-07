@@ -203,7 +203,7 @@
         "confirmation": "<code>{title}</code> ダッシュボードを削除してもよろしいですか？"
       },
       "edition": {
-        "chart": "<code>{chart}</code> チャートを編集",
+        "chart": "このチャートを編集",
         "confirmation": "ダッシュボード<code>{title}</code>の変更が保存されました。",
         "label": "ダッシュボードを編集"
       },

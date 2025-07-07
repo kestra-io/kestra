@@ -206,7 +206,7 @@
         "confirmation": "Вы уверены, что хотите удалить панель <code>{title}</code>?"
       },
       "edition": {
-        "chart": "Редактировать диаграмму <code>{chart}</code>",
+        "chart": "Редактировать этот график",
         "confirmation": "Изменения в панели <code>{title}</code> сохранены.",
         "label": "Редактировать Dashboard"
       },

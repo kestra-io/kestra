@@ -206,7 +206,7 @@
         "confirmation": "क्या आप वाकई <code>{title}</code> डैशबोर्ड को हटाना चाहते हैं?"
       },
       "edition": {
-        "chart": "<code>{chart}</code> चार्ट संपादित करें",
+        "chart": "इस चार्ट को संपादित करें",
         "confirmation": "डैशबोर्ड <code>{title}</code> में परिवर्तन सहेजे गए हैं।",
         "label": "डैशबोर्ड संपादित करें"
       },

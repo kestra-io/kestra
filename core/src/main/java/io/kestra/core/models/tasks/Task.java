@@ -11,6 +11,7 @@ import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

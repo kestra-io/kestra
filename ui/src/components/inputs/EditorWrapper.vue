@@ -11,7 +11,6 @@
         :creating="isCreating"
         :path="props.path"
         :diff-overview-bar="false"
-        :on-ai-toggle="toggleAiAgent"
         @update:model-value="editorUpdate"
         @cursor="updatePluginDocumentation"
         @save="isCurrentTabFlow ? save(): saveFileContent()"
@@ -20,7 +19,7 @@
         :diff-side-by-side="false"
     >
         <template #absolute>
-            <div class="d-flex flex-column align-items-end gap-2" v-if="isCurrentTabFlow">
+            <div class="d-flex flex-column align-items-end gap-2 mt-2" v-if="isCurrentTabFlow">
                 <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
                     {{ $t("ai.flow.title") }}
                 </el-button>
@@ -57,7 +56,7 @@
     const route = useRoute()
     const router = useRouter()
 
-    import {EDITOR_CURSOR_INJECTION_KEY} from "../code/injectionKeys";
+    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
 
     import AiAgent from "../ai/AiAgent.vue";
@@ -69,23 +68,17 @@
     const aiEnabled = computed(() => store.state.misc.configs?.isAiEnabled);
     const cursor = ref();
 
-
-    const aiAgentOpened = ref(false);
-    const draftSource = ref<string | undefined>(undefined);
-
-    const toggleAiAgent = () => {
-        if (isCurrentTabFlow.value && aiEnabled.value) {
+    const toggleAiShortcut = (event: KeyboardEvent) => {
+        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             draftSource.value = undefined;
             aiAgentOpened.value = !aiAgentOpened.value;
         }
     };
-
-    const toggleAiShortcut = (event: KeyboardEvent) => {
-        if (event.ctrlKey && event.altKey && event.shiftKey && event.key === "K") {
-            event.preventDefault();
-            toggleAiAgent();
-        }
-    };
+    const aiAgentOpened = ref(false);
+    const draftSource = ref<string | undefined>(undefined);
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
 
@@ -103,6 +96,8 @@
         dirty: false,
         flow: true
     });
+
+    provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
 
     const source = computed(() => {
         return props.flow
@@ -127,7 +122,7 @@
     onMounted(() => {
         loadFile();
         window.addEventListener("keydown", handleGlobalSave);
-        document.addEventListener("keydown", toggleAiShortcut);
+        window.addEventListener("keydown", toggleAiShortcut);
     });
 
     onActivated(() => {
@@ -136,7 +131,7 @@
 
     onBeforeUnmount(() => {
         window.removeEventListener("keydown", handleGlobalSave);
-        document.removeEventListener("keydown", toggleAiShortcut);
+        window.removeEventListener("keydown", toggleAiShortcut);
     });
 
     const editorDomElement = ref<any>(null);
@@ -252,13 +247,20 @@
 <style scoped lang="scss">
     .prompt {
         bottom: 10%;
-        width: calc(100% - 4rem);
-        max-width: 790px;
-        left: 2rem;
+        width: calc(100% - 5rem);
+        left: 3rem;
+        max-width: 700px;
+        background-color: var(--ks-background-panel);
+        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
     }
 
     .rounded-pill {
-        background-color: #2f3342;
-        color: #ffffff
+        background-color: #262A35;
+        color: #ffffff;
+        box-shadow: 0px 4px 4px 0px #00000040;
+
+        &:hover {
+            background-color: #262A35;
+        }
     }
 </style>

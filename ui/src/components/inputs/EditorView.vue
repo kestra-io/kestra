@@ -154,10 +154,9 @@
                         :navbar="false"
                         :original="draftSource === undefined ? undefined : flowYaml"
                         :diff-side-by-side="false"
-                        :on-ai-toggle="toggleAiAgent"
                     >
                         <template #absolute>
-                            <div class="d-flex flex-column align-items-end gap-2" v-if="isCurrentTabFlow">
+                            <div class="d-flex flex-column align-items-end gap-2 mt-2" v-if="isCurrentTabFlow">
                                 <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
                                     {{ $t("ai.flow.title") }}
                                 </el-button>
@@ -520,22 +519,17 @@
     const lowCodeEditorRef = ref(null);
     const tabsScrollRef = ref();
 
-    const aiAgentOpened = ref(false);
-    const draftSource = ref(undefined);
-
-    const toggleAiAgent = () => {
-        if (isCurrentTabFlow.value && aiEnabled.value) {
+    const toggleAiShortcut = (event) => {
+        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             draftSource.value = undefined;
             aiAgentOpened.value = !aiAgentOpened.value;
         }
     };
-
-    const toggleAiShortcut = (event) => {
-        if (event.ctrlKey && event.shiftKey && event.key === "K") {
-            event.preventDefault();
-            toggleAiAgent();
-        }
-    };
+    const aiAgentOpened = ref(false);
+    const draftSource = ref(undefined);
 
     const props = defineProps({
         flowGraph: {
@@ -763,7 +757,6 @@
 
         // Save on ctrl+s in topology
         document.addEventListener("keydown", saveUsingKeyboard);
-        document.addEventListener("keydown", toggleAiShortcut);
 
         // Guided tour
         setTimeout(() => {
@@ -784,6 +777,8 @@
         if (props.isCreating) {
             store.commit("editor/closeTabs");
         }
+
+        window.addEventListener("keydown", toggleAiShortcut);
     });
 
     onBeforeUnmount(() => {
@@ -791,7 +786,6 @@
 
         pluginsStore.editorPlugin = undefined;
         document.removeEventListener("keydown", saveUsingKeyboard);
-        document.removeEventListener("keydown", toggleAiShortcut);
         document.removeEventListener("popstate", () => {
             stopTour();
         });
@@ -799,6 +793,7 @@
         store.commit("editor/closeAllTabs");
 
         document.removeEventListener("click", hideTabContextMenu);
+        window.removeEventListener("keydown", toggleAiShortcut);
     });
 
     const stopTour = () => {
@@ -1550,13 +1545,21 @@
 
     .prompt {
         bottom: 10%;
-        width: calc(100% - 4rem);
-        left: 2rem;
+        width: calc(100% - 5rem);
+        left: 3rem;
+        max-width: 700px;
+        background-color: var(--ks-background-panel);
+        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
     }
 
     .rounded-pill {
-        background-color: #2f3342;
-        color: #ffffff
+        background-color: #262A35;
+        color: #ffffff;
+        box-shadow: 0px 4px 4px 0px #00000040;
+
+        &:hover {
+            background-color: #262A35;
+        }
     }
 </style>
 

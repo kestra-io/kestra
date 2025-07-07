@@ -18,7 +18,7 @@
         <template #footer>
             <div class="d-flex justify-content-between">
                 <el-text class="text-tertiary" size="small">
-                    Ctrl + Alt (⌥) + Shift + K {{ t("to toggle") }}
+                    (⌘) Ctrl + Alt (⌥) + Shift + K {{ t("to toggle") }}
                 </el-text>
                 <div class="d-flex flex-column align-items-end gap-3">
                     <el-text v-if="error !== undefined" type="danger" size="default" class="me-auto">

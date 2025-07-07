@@ -132,7 +132,10 @@
         "Aucune autre task ne sera exécutée.",
         "Les tasks d'erreur seront exécutées."
       ],
-      "RUNNING": "['Le flow redémarrera et exécutera toutes les tâches suivantes. ', 'Toutes les tâches bloquées seront exécutées. ']",
+      "RUNNING": [
+        "Le flow redémarrera et exécutera toutes les tâches suivantes.",
+        "Toutes les tâches bloquées seront exécutées."
+      ],
       "SUCCESS": [
         "Le flow redémarrera car cette task a réussi.",
         "Toutes les tasks bloquées seront exécutées.",

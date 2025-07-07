@@ -132,7 +132,10 @@
         "Żadne inne task nie będą wykonane.",
         "Task błędów będą wykonane."
       ],
-      "RUNNING": "['Flow zostanie ponownie uruchomiony i wykona wszystkie kolejne taski.', 'Wszystkie zablokowane taski zostaną wykonane.']",
+      "RUNNING": [
+        "Flow zostanie ponownie uruchomiony i wykona wszystkie kolejne taski.",
+        "Wszystkie zablokowane taski zostaną wykonane."
+      ],
       "SUCCESS": [
         "Flow zostanie uruchomiony ponownie, ponieważ ten task zakończył się sukcesem.",
         "Wszystkie zablokowane taski zostaną wykonane.",

@@ -132,7 +132,10 @@
         "Nenhuma outra task será executada.",
         "As tasks de erro serão executadas."
       ],
-      "RUNNING": "['O flow será reiniciado e executará todas as próximas tasks. ', 'Todas as tasks bloqueadas serão executadas. ']",
+      "RUNNING": [
+        "O flow será reiniciado e executará todas as próximas tasks.",
+        "Todas as tasks bloqueadas serão executadas."
+      ],
       "SUCCESS": [
         "O flow será reiniciado pois esta task foi bem-sucedida.",
         "Todas as tasks bloqueadas serão executadas.",

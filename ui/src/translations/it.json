@@ -132,7 +132,10 @@
         "Nessun altro task verrà eseguito.",
         "I task di errore verranno eseguiti."
       ],
-      "RUNNING": "['Il flow verrà riavviato ed eseguirà tutti i task successivi. ', 'Tutti i task bloccati verranno eseguiti. ']",
+      "RUNNING": [
+        "Il flow verrà riavviato ed eseguirà tutti i task successivi.",
+        "Tutti i task bloccati verranno eseguiti."
+      ],
       "SUCCESS": [
         "Il flow verrà riavviato poiché questo task è stato completato con successo.",
         "Tutti i task bloccati verranno eseguiti.",

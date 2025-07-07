@@ -30,4 +30,21 @@ public class InExpressionTest {
 
         assertThat(render).isEqualTo("false");
     }
+
+    @Test
+    void inMap() throws IllegalVariableEvaluationException {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("map", Map.of("key", "value"));
+        vars.put("key", "key");
+        vars.put("value", "value");
+
+        String render = variableRenderer.render("{{ key in map }}", vars);
+
+        assertThat(render).isEqualTo("true");
+
+        render = variableRenderer.render("{{ value in map }}", vars);
+
+        assertThat(render).isEqualTo("true");
+    }
+
 }

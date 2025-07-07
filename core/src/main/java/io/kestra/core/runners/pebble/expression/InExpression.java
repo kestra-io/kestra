@@ -2,10 +2,11 @@ package io.kestra.core.runners.pebble.expression;
 
 import io.pebbletemplates.pebble.node.expression.BinaryExpression;
 import io.pebbletemplates.pebble.node.expression.Expression;
-import io.pebbletemplates.pebble.template.PebbleTemplateImpl;
 import io.pebbletemplates.pebble.template.EvaluationContextImpl;
+import io.pebbletemplates.pebble.template.PebbleTemplateImpl;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 
 public class InExpression extends BinaryExpression<Object> {
@@ -31,6 +32,14 @@ public class InExpression extends BinaryExpression<Object> {
                 }
             }
             return false;
+        }
+        if (rightValue instanceof Map<?, ?>) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) rightValue).entrySet()) {
+                if (Objects.equals(entry.getKey().toString(), leftValue.toString()) ||
+                    Objects.equals(entry.getValue().toString(), leftValue.toString())) {
+                    return true;
+                }
+            }
         }
         return false;
     }

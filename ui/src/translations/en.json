@@ -213,8 +213,8 @@
         "The flow will be in a SUCCESS state if all task runs are successful."
       ],
       "RUNNING": [
-        "The flow will restart and will execute all next tasks.",
-        "All blocked tasks will be executed."
+        "The flow will restart and will execute all next tasks. ",
+        "All blocked tasks will be executed. "
       ]
     },
     "change state tooltip": "Change the execution state",

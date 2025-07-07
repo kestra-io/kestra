@@ -22,11 +22,11 @@ public class InExpressionTest {
         Map<String, Object> vars = new HashMap<>();
         vars.put("state", State.Type.SUCCESS);
 
-        String render = variableRenderer.render("{{ state in ['SUCCESS', 'WARNING'] }}", vars);
+        String render = variableRenderer.render("{{ state isIn ['SUCCESS', 'WARNING'] }}", vars);
 
         assertThat(render).isEqualTo("true");
 
-        render = variableRenderer.render("{{ state in ['FAILED', 'KILLED'] }}", vars);
+        render = variableRenderer.render("{{ state isIn ['FAILED', 'KILLED'] }}", vars);
 
         assertThat(render).isEqualTo("false");
     }
@@ -38,11 +38,11 @@ public class InExpressionTest {
         vars.put("key", "key");
         vars.put("value", "value");
 
-        String render = variableRenderer.render("{{ key in map }}", vars);
+        String render = variableRenderer.render("{{ key isIn map }}", vars);
 
         assertThat(render).isEqualTo("true");
 
-        render = variableRenderer.render("{{ value in map }}", vars);
+        render = variableRenderer.render("{{ value isIn map }}", vars);
 
         assertThat(render).isEqualTo("true");
     }

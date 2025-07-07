@@ -77,7 +77,7 @@ public class Extension extends AbstractExtension {
 
         operators.add(new BinaryOperatorImpl("??", 120, NullCoalescingExpression::new, NORMAL, Associativity.LEFT));
         operators.add(new BinaryOperatorImpl("???", 120, UndefinedCoalescingExpression::new, NORMAL, Associativity.LEFT));
-        operators.add(new BinaryOperatorImpl("in", 120, InExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("isIn", 120, InExpression::new, NORMAL, Associativity.LEFT));
 
         return operators;
     }

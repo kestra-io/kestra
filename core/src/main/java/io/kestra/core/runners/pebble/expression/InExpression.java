@@ -22,23 +22,32 @@ public class InExpression extends BinaryExpression<Object> {
         Object leftValue = getLeftExpression().evaluate(self, context);
         Object rightValue = getRightExpression().evaluate(self, context);
 
-        if (rightValue instanceof Collection<?>) {
-            return ((Collection<?>) rightValue).stream().map(Object::toString).toList().contains(leftValue.toString());
-        }
-        if (rightValue instanceof Iterable<?>) {
-            for (Object item : (Iterable<?>) rightValue) {
-                if (Objects.equals(item.toString(), leftValue.toString())) {
-                    return true;
-                }
-            }
+        if (leftValue == null || rightValue == null) {
             return false;
         }
-        if (rightValue instanceof Map<?, ?>) {
-            for (Map.Entry<?, ?> entry : ((Map<?, ?>) rightValue).entrySet()) {
-                if (Objects.equals(entry.getKey().toString(), leftValue.toString()) ||
-                    Objects.equals(entry.getValue().toString(), leftValue.toString())) {
-                    return true;
+
+        switch (rightValue) {
+            case Collection<?> objects -> {
+                return objects.stream().map(Object::toString).toList().contains(leftValue.toString());
+            }
+            case Iterable<?> objects -> {
+                for (Object item : objects) {
+                    if (Objects.equals(item.toString(), leftValue.toString())) {
+                        return true;
+                    }
                 }
+                return false;
+            }
+            case Map<?, ?> map -> {
+                for (Map.Entry<?, ?> entry : map.entrySet()) {
+                    if (Objects.equals(entry.getKey().toString(), leftValue.toString()) ||
+                            Objects.equals(entry.getValue().toString(), leftValue.toString())) {
+                        return true;
+                    }
+                }
+            }
+            default -> {
+                return false;
             }
         }
         return false;
@@ -46,6 +55,6 @@ public class InExpression extends BinaryExpression<Object> {
 
     @Override
     public String toString() {
-        return String.format("%s in %s", getLeftExpression(), getRightExpression());
+        return String.format("%s isIn %s", getLeftExpression(), getRightExpression());
     }
 }

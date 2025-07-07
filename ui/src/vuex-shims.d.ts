@@ -9,7 +9,6 @@ declare module "@vue/runtime-core" {
         misc:any
         auth:any
         graph:any
-        taskrun:any
         editor:any
         doc:any
         code:any

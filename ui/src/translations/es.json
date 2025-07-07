@@ -133,7 +133,7 @@
         "Se ejecutarán las tasks de error."
       ],
       "RUNNING": [
-        "El flow se reiniciará y ejecutará todas las siguientes tasks.", 
+        "El flow se reiniciará y ejecutará todas las siguientes tasks.",
         "Todas las tasks bloqueadas serán ejecutadas."
       ],
       "SUCCESS": [

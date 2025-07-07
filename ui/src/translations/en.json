@@ -1343,7 +1343,8 @@
       },
       "edition": {
         "label": "Edit Dashboard",
-        "confirmation": "Changes in dashboard <code>{title}</code> are saved."
+        "confirmation": "Changes in dashboard <code>{title}</code> are saved.",
+        "chart": "Edit <code>{chart}</code> chart"
       },
       "deletion": {
         "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"

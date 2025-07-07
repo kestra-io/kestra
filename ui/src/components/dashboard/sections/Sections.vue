@@ -24,16 +24,21 @@
                             </p>
                         </div>
                         <div id="charts_buttons">
-                            <el-button
+                            <KestraIcon
                                 v-if="props.dashboard?.id !== 'default'"
-                                tag="router-link"
-                                :to="{
-                                    name: 'dashboards/update',
-                                    params: {dashboard: props.dashboard?.id},
-                                    query: {highlight: chart.id}}"
-                                :icon="Pencil"
-                                link
-                            />
+                                :tooltip="t('dashboards.edition.chart', {chart: chart.id})"
+                            >
+                                <el-button
+                                    tag="router-link"
+                                    :to="{
+                                        name: 'dashboards/update',
+                                        params: {dashboard: props.dashboard?.id},
+                                        query: {highlight: chart.id}}"
+                                    :icon="Pencil"
+                                    link
+                                    class="ms-2"
+                                />
+                            </KestraIcon>                            
                         </div>
                     </div>
 
@@ -61,6 +66,10 @@
     const route = useRoute();
     const router = useRouter();
 
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
+
+    import KestraIcon from "../../Kicon.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
 
     const props = defineProps<{

@@ -14,7 +14,7 @@
         />
     </section>
 
-    <Sections :key :charts :show-default="dashboard.id === 'default'" padding />
+    <Sections :key :dashboard :charts :show-default="dashboard.id === 'default'" padding />
 </template>
 
 <script setup lang="ts">

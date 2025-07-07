@@ -206,6 +206,7 @@
         "confirmation": "Tem certeza de que deseja excluir o dashboard <code>{title}</code>?"
       },
       "edition": {
+        "chart": "Editar gráfico <code>{chart}</code>",
         "confirmation": "As alterações no dashboard <code>{title}</code> foram salvas.",
         "label": "Editar Dashboard"
       },

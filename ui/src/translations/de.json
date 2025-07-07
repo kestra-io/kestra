@@ -206,6 +206,7 @@
         "confirmation": "Möchten Sie das Dashboard <code>{title}</code> wirklich löschen?"
       },
       "edition": {
+        "chart": "Bearbeiten <code>{chart}</code>-Diagramm",
         "confirmation": "Änderungen im Dashboard <code>{title}</code> werden gespeichert.",
         "label": "Dashboard bearbeiten"
       },

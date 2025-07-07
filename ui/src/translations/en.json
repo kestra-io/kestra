@@ -1354,7 +1354,8 @@
       "deletion": {
         "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
       },
-      "chart_preview": "Click on a chart source code to see its preview"
+      "chart_preview": "Click on a chart source code to see its preview",
+      "export": "Export to CSV"
     },
     "setup": {
       "login": "Login",

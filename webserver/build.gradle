@@ -24,6 +24,8 @@ dependencies {
 
     implementation 'com.google.adk:google-adk:0.2.0'
 
+    implementation("de.siegmar:fastcsv")
+
     // test
     testAnnotationProcessor project(':processor')
     testImplementation project(':core').sourceSets.test.output

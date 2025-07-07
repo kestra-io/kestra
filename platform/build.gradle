@@ -113,6 +113,7 @@ dependencies {
         api group: 'jakarta.mail', name: 'jakarta.mail-api', version: '2.1.3'
         api group: 'org.eclipse.angus', name: 'jakarta.mail', version: '2.0.3'
         api group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '3.2.1'
+        api group: 'de.siegmar', name: 'fastcsv', version: '4.0.0'
         // Json Diff
         api group: 'com.github.java-json-tools', name: 'json-patch', version: '1.13'
 

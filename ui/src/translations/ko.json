@@ -214,6 +214,7 @@
         "label": "대시보드 편집"
       },
       "empty": "결과가 표시되지 않습니다.",
+      "export": "CSV로 내보내기",
       "labels": {
         "plural": "대시보드",
         "singular": "대시보드"

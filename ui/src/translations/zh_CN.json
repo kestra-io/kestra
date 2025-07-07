@@ -214,6 +214,7 @@
         "label": "编辑仪表板"
       },
       "empty": "没有结果显示。",
+      "export": "导出为CSV",
       "labels": {
         "plural": "仪表板",
         "singular": "仪表板"

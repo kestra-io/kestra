@@ -64,8 +64,8 @@ export const useDashboardStore = defineStore("dashboard", {
             return response.data;
         },
 
-        async generate({id, chartId, ...filters}: {id: Dashboard["id"]; chartId: Chart["id"]} & Record<string, any>) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/${id}/charts/${chartId}`, Object.keys(filters).length > 0 ? filters : null, {validateStatus});
+        async generate(id: Dashboard["id"], chartId: Chart["id"], filtersOverrides: ChartFiltersOverrides) {
+            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/${id}/charts/${chartId}`, filtersOverrides, {validateStatus});
             return response.data;
         },
 
@@ -75,9 +75,28 @@ export const useDashboardStore = defineStore("dashboard", {
             return response.data;
         },
 
-        async chartPreview(data: {chart: Chart["source"]; globalFilter: Record<string, any>}) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/charts/preview`, data);
+        async chartPreview(previewRequest: PreviewRequest) {
+            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/charts/preview`, previewRequest);
+            return response.data;
+        },
+
+        async export(id: Dashboard["id"], chartId: Chart["id"], filtersOverrides: ChartFiltersOverrides) {
+            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/${id}/charts/${chartId}/export/to-csv`, filtersOverrides);
             return response.data;
         },
     },
 });
+export interface PreviewRequest {
+    chart: string,
+    globalFilter?: ChartFiltersOverrides
+}
+export interface ChartFiltersOverrides {
+    startDate?: Date;
+    endDate?: Date;
+    pageSize?: number;
+    pageNumber?: number;
+    namespace?: string;
+    labels?: Record<string, string>;
+    filters?: Record<string, any>;
+}
+

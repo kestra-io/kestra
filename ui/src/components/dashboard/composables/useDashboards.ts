@@ -1,5 +1,5 @@
-import {onMounted, computed, ref} from "vue";
-import {useDashboardStore} from "../../../stores/dashboard";
+import {onMounted, watch, computed, ref} from "vue";
+import {ChartFiltersOverrides, PreviewRequest, useDashboardStore} from "../../../stores/dashboard";
 import type {RouteParams, RouteLocation} from "vue-router";
 import {useRoute} from "vue-router";
 import {useI18n} from "vue-i18n";
@@ -28,7 +28,7 @@ export type Chart = {
         };
         [key: string]: unknown;
     };
-    data?: {      
+    data?: {
         columns?: {
             [key: string]: Record<string, any>;
         };
@@ -91,6 +91,8 @@ export const TYPES: Record<string, any> = {
 
 export const isKPIChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.KPI";
 
+export const isTableChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.Table";
+
 export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id;
 
 export const getPropertyValue = (data: Record<string, any>, property: "value" | "description"): string => data.results?.[0]?.[property];
@@ -114,19 +116,27 @@ export function useChartGenerator(props: {chart: Chart; filters: string[]; showD
         const filters = props.filters.concat(decodeSearchParams(route.query, undefined, []) ?? []);
 
         if (!props.showDefault) {
-            let params = {id, chartId: props.chart.id, filters};
-
-            if (pagination) params = {...params, ...pagination};
-
-            if (filters) params.filters = filters;
-
-            data.value = await dashboardStore.generate(params);
+            const dashboardId = id;
+            const chartId = props.chart.id;
+            const filtersOverrides: ChartFiltersOverrides = {
+                pageNumber: pagination?.pageNumber,
+                pageSize: pagination?.pageSize,
+                filters: filters
+            };
+            data.value = await dashboardStore.generate(dashboardId, chartId, filtersOverrides);
         } else {
-            const params = {chart: props.chart.content, globalFilter: {filters}};
-
-            if (pagination) params.globalFilter = {...params.globalFilter, ...pagination};
-
-            data.value = await dashboardStore.chartPreview(params);
+            if(!props.chart.content){
+                throw new Error("chart content cannot be null when preview")
+            }
+            const previewRequest: PreviewRequest = {
+                chart: props.chart.content,
+                globalFilter: {
+                    pageNumber: pagination?.pageNumber,
+                    pageSize: pagination?.pageSize,
+                    filters: filters
+                },
+            };
+            data.value = await dashboardStore.chartPreview(previewRequest);
         }
 
         return data.value;

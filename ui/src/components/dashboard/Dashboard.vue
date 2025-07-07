@@ -14,7 +14,7 @@
         />
     </section>
 
-    <Sections :key :charts :show-default="dashboard.id === 'default'" padding />
+    <Sections :key :dashboard :charts :show-default="dashboard.id === 'default'" padding />
 </template>
 
 <script setup lang="ts">
@@ -49,8 +49,8 @@
     const route = useRoute();
     const router = useRouter();
 
-    import {useStore} from "vuex";
-    const store = useStore();
+    import {useDashboardStore} from "../../stores/dashboard";
+    const dashboardStore = useDashboardStore();
 
     defineOptions({inheritAttrs: false});
 
@@ -92,7 +92,7 @@
             });
         }
 
-        dashboard.value = id === "default" ? {id, ...parse(defaultYAML)} : await store.dispatch("dashboard/load", id);
+        dashboard.value = id === "default" ? {id, ...parse(defaultYAML)} : await dashboardStore.load(id);
         loadCharts(dashboard.value.charts);
     };
 

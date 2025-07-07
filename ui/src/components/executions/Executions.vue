@@ -58,7 +58,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections :charts show-default />
+                <Sections :dashboard="{id: 'default'}" :charts show-default />
             </template>
 
             <template #table>
@@ -587,7 +587,6 @@
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),
-            ...mapState("stat", ["daily"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
             ...mapGetters("misc", ["configs"]),
@@ -646,11 +645,6 @@
                     };
                 });
             },
-            executionsCount() {
-                return [...this.daily].reduce((a, b) => {
-                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
-                }, 0);
-            },
             selectedNamespace(){
                 return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;
             },
@@ -669,7 +663,7 @@
 
             const queryKeys = Object.keys(query);
             if (this?.namespace === undefined && defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][EQUALS]"] = defaultNamespace;
+                query["filters[namespace][PREFIX]"] = defaultNamespace;
                 queryHasChanged = true;
             }
 
@@ -741,7 +735,7 @@
                 let queryFilter = this.queryWithFilter();
 
                 if (this.namespace) {
-                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
+                    queryFilter["filters[namespace][PREFIX]"] = this.namespace;
                 }
 
                 if (this.flowId) {

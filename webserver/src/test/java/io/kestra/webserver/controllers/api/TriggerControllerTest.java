@@ -186,6 +186,7 @@ class TriggerControllerTest {
             .toBuilder()
             .executionId("hello")
             .disabled(false)
+            .tenantId(null)
             .build();
 
         Trigger afterUpdated = client.toBlocking().retrieve(HttpRequest.PUT(TRIGGER_PATH, updatedBad), Trigger.class);

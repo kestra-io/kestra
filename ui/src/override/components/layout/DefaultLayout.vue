@@ -1,10 +1,10 @@
 <template>
-    <left-menu v-if="configs" @menu-collapse="onMenuCollapse" />
+    <LeftMenu v-if="configs" @menu-collapse="onMenuCollapse" />
     <main>
-        <errors v-if="error" :code="error" />
+        <Errors v-if="error" :code="error" />
         <slot v-else />
     </main>
-    <context-info-bar v-if="configs" />
+    <ContextInfoBar v-if="configs" />
     
     <SurveyDialog
         :visible="showSurveyDialog"
@@ -20,12 +20,14 @@
     import {useStore} from "vuex"
     import {computed, onMounted, ref} from "vue"
     import {useSurveySkip} from "../../../composables/useSurveyData"
+    import {useCoreStore} from "../../../stores/core"
 
     const store = useStore()
-    const configs = computed(() => store.getters["misc/configs"])
-    const error = computed(() => store.getters["core/error"])
+    const coreStore = useCoreStore()
     const {markSurveyDialogShown} = useSurveySkip()
-    
+
+    const configs = computed(() => store.getters["misc/configs"])
+    const error = computed(() => coreStore.error)
     const showSurveyDialog = ref(false)
 
     const onMenuCollapse = (collapse) => {

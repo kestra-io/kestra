@@ -1,15 +1,14 @@
 package io.kestra.core.models.property;
 
-import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.StorageContext;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -17,8 +16,7 @@ import java.util.List;
  * It supports reading from the following schemes: {@link #SUPPORTED_SCHEMES}.
  */
 public class URIFetcher {
-    private static final String FILE_SCHEME = "file";
-    private static final List<String> SUPPORTED_SCHEMES = List.of(StorageContext.KESTRA_SCHEME, FILE_SCHEME);
+    private static final List<String> SUPPORTED_SCHEMES = List.of(StorageContext.KESTRA_SCHEME, LocalPath.FILE_SCHEME, Namespace.NAMESPACE_FILE_SCHEME);
 
     private final URI uri;
 
@@ -69,6 +67,14 @@ public class URIFetcher {
     }
 
     /**
+     * Whether the URI is supported by the Fetcher.
+     * A supported URI is a URI which scheme is one of the {@link #SUPPORTED_SCHEMES}.
+     */
+    public static boolean supports(URI uri) {
+        return uri.getScheme() != null && SUPPORTED_SCHEMES.contains(uri.getScheme());
+    }
+
+    /**
      * Fetch the resource pointed by this SmartURI
      *
      * @throws IOException if an IO error occurs
@@ -82,23 +88,11 @@ public class URIFetcher {
         // we need to first check the protocol, then create one reader by protocol
         return switch (uri.getScheme()) {
             case StorageContext.KESTRA_SCHEME -> runContext.storage().getFile(uri);
-            case FILE_SCHEME -> {
-                Path path = Path.of(uri).toRealPath(); // toRealPath() will protect about path traversal issues
-                Path workingDirectory = runContext.workingDir().path();
-                if (!path.startsWith(workingDirectory)) {
-                    // we need to check that it's on an allowed path
-                    List<String> globalAllowedPaths = ((DefaultRunContext) runContext).getApplicationContext().getProperty("kestra.plugins.allowed-paths", List.class, Collections.emptyList());
-                    if (globalAllowedPaths.stream().noneMatch(path::startsWith)) {
-                        // if not globally allowed, we check it's allowed for this specific plugin
-                        List<String> pluginAllowedPaths = (List<String>) runContext.pluginConfiguration("allowed-paths").orElse(Collections.emptyList());
-                        if (pluginAllowedPaths.stream().noneMatch(path::startsWith)) {
-                            throw new SecurityException("The path " + path + " is not authorized. " +
-                                "Only files inside the working directory are allowed by default, other path must be allowed either globally inside the Kestra configuration using the `kestra.plugins.allowed-paths` property, " +
-                                "or by plugin using the `allowed-paths` plugin configuration.");
-                        }
-                    }
-                }
-                yield new FileInputStream(path.toFile());
+            case LocalPath.FILE_SCHEME -> runContext.localPath().get(uri);
+            case Namespace.NAMESPACE_FILE_SCHEME -> {
+                var namespace = uri.getAuthority() == null ? runContext.storage().namespace() : runContext.storage().namespace(uri.getAuthority());
+                var nsFileUri = namespace.get(Path.of(uri.getPath())).uri();
+                yield runContext.storage().getFile(nsFileUri);
             }
             default -> throw new IllegalArgumentException("Scheme not supported: " + uri.getScheme());
         };

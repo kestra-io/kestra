@@ -58,6 +58,7 @@
 <script setup lang="ts">
     import {computed, getCurrentInstance} from "vue";
     import {useStore} from "vuex";
+    import {useCoreStore} from "../../stores/core";
     import {useI18n} from "vue-i18n";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Play from "vue-material-design-icons/Play.vue";
@@ -73,6 +74,7 @@
     const {topbar = true} = defineProps<{topbar?: boolean}>();
 
     const store = useStore();
+    const coreStore = useCoreStore();
     const {t} = useI18n();
     const instance = getCurrentInstance();
 
@@ -95,7 +97,10 @@
 
     const startTour = () => {
         localStorage.setItem("tourDoneOrSkip", "undefined");
-        store.commit("core/setGuidedProperties", {tourStarted: true});
+        coreStore.guidedProperties = {
+            ...coreStore.guidedProperties,
+            tourStarted: true
+        };
         (instance?.proxy as any)?.$tours["guidedTour"]?.start();
     };
 </script>

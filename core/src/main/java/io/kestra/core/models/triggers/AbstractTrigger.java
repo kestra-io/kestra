@@ -78,6 +78,10 @@ abstract public class AbstractTrigger implements TriggerInterface {
     @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private boolean logToFile = false;
 
+    @Builder.Default
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    private boolean failOnTriggerError = false;
+
     /**
      * For backward compatibility: we rename minLogLevel to logLevel.
      * @deprecated use {@link #logLevel} instead

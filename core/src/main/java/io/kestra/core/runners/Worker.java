@@ -10,6 +10,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.*;
@@ -18,6 +19,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.*;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.services.LogService;
+import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.VariablesService;
 import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.storages.StorageContext;
@@ -95,6 +97,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private QueueInterface<Trigger> triggerQueue;
 
     @Inject
+    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    private QueueInterface<LogEntry> logQueue;
+
+    @Inject
     @Named(QueueFactoryInterface.CLUSTER_EVENT_NAMED)
     private Optional<QueueInterface<ClusterEvent>> clusterEventQueue;
 
@@ -157,6 +163,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
     @Inject
     private TracerFactory tracerFactory;
     private Tracer tracer;
+
+    @Inject
+    private MaintenanceService maintenanceService;
 
     /**
      * Creates a new {@link Worker} instance.
@@ -285,8 +294,12 @@ public class Worker implements Service, Runnable, AutoCloseable {
         ));
 
         this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
+        if (this.maintenanceService.isInMaintenanceMode()) {
+            enterMaintenance();
+        } else {
+            setState(ServiceState.RUNNING);
+        }
 
-        setState(ServiceState.RUNNING);
         if (workerGroupKey != null) {
             log.info("Worker started with {} thread(s) in group '{}'", numThreads, workerGroupKey);
         }
@@ -304,19 +317,23 @@ public class Worker implements Service, Runnable, AutoCloseable {
         ClusterEvent clusterEvent = either.getLeft();
         log.info("Cluster event received: {}", clusterEvent);
         switch (clusterEvent.eventType()) {
-            case MAINTENANCE_ENTER -> {
-                this.executionKilledQueue.pause();
-                this.workerJobQueue.pause();
-
-                this.setState(ServiceState.MAINTENANCE);
-            }
-            case MAINTENANCE_EXIT -> {
-                this.executionKilledQueue.resume();
-                this.workerJobQueue.resume();
-
-                this.setState(ServiceState.RUNNING);
-            }
+            case MAINTENANCE_ENTER -> enterMaintenance();
+            case MAINTENANCE_EXIT -> exitMaintenance();
         }
+    }
+
+    private void enterMaintenance() {
+        this.executionKilledQueue.pause();
+        this.workerJobQueue.pause();
+
+        this.setState(ServiceState.MAINTENANCE);
+    }
+
+    private void exitMaintenance() {
+        this.executionKilledQueue.resume();
+        this.workerJobQueue.resume();
+
+        this.setState(ServiceState.RUNNING);
     }
 
     private void setState(final ServiceState state) {
@@ -338,7 +355,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 } else if ("trigger".equals(type)) {
                     // try to deserialize the triggerContext to fail it
                     var triggerContext = MAPPER.treeToValue(json.get("triggerContext"), TriggerContext.class);
-                    var workerTriggerResult = WorkerTriggerResult.builder().triggerContext(triggerContext).success(false).execution(Optional.empty()).build();
+                    var workerTriggerResult = WorkerTriggerResult.builder().triggerContext(triggerContext).execution(Optional.empty()).build();
                     this.workerTriggerResultQueue.emit(workerTriggerResult);
                 }
             } catch (IOException | QueueException e) {
@@ -477,11 +494,23 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         logError(workerTrigger, e);
         try {
+            Execution execution = workerTrigger.getTrigger().isFailOnTriggerError() ? TriggerService.generateExecution(workerTrigger.getTrigger(), workerTrigger.getConditionContext(), workerTrigger.getTriggerContext(), (Output) null)
+                .withState(FAILED) : null;
+            if (execution != null) {
+                RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution))
+                    .forEach(log -> {
+                        try {
+                            logQueue.emitAsync(log);
+                        } catch (QueueException ex) {
+                            // fail silently
+                        }
+                    });
+            }
             this.workerTriggerResultQueue.emit(
                 WorkerTriggerResult.builder()
-                    .success(false)
                     .triggerContext(workerTrigger.getTriggerContext())
                     .trigger(workerTrigger.getTrigger())
+                    .execution(Optional.ofNullable(execution))
                     .build()
             );
         } catch (QueueException ex) {
@@ -518,7 +547,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
         try {
             this.workerTriggerResultQueue.emit(
                 WorkerTriggerResult.builder()
-                    .success(false)
                     .execution(Optional.of(execution))
                     .triggerContext(workerTrigger.getTriggerContext())
                     .trigger(workerTrigger.getTrigger())
@@ -629,7 +657,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 ));
         }
 
-        if (killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
+        if (! Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution()) && killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun().withState(KILLED));
             try {
                 this.workerTaskResultQueue.emit(workerTaskResult);

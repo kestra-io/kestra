@@ -303,7 +303,7 @@ import java.util.OptionalInt;
                     {{ {
                       "title": inputs.title,
                       "message": inputs.message,
-                      "priority": inputs.priority,
+                      "priority": inputs.priority
                     } }}
               """
       )

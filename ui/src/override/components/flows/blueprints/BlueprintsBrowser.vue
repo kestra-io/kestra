@@ -137,6 +137,8 @@
     import {editorViewTypes} from "../../../../utils/constants";
     import KestraFilter from "../../../../components/filter/KestraFilter.vue";
     import {usePluginsStore} from "../../../../stores/plugins";
+    import {useBlueprintsStore} from "../../../../stores/blueprints";
+    import {useCoreStore} from "../../../../stores/core";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
@@ -186,7 +188,7 @@
             },
             async copy(id) {
                 await Utils.copy(
-                    (await this.$store.dispatch("blueprints/getBlueprintSource", {type: this.blueprintType, kind: this.blueprintKind, id: id}))
+                    (await this.blueprintsStore.getBlueprintSource({type: this.blueprintType, kind: this.blueprintKind, id: id}))
                 );
             },
             async blueprintToEditor(blueprintId) {
@@ -212,7 +214,7 @@
                 if (this.$route.query.q || this.q) {
                     query.q = this.$route.query.q || this.q;
                 }
-                return this.$store.dispatch("blueprints/getBlueprintTagsForQuery", {type: this.blueprintType, kind: this.blueprintKind, ...query})
+                return this.blueprintsStore.getBlueprintTagsForQuery({type: this.blueprintType, kind: this.blueprintKind, ...query})
                     .then(data => {
                         // Handle switch tab while fetching data
                         if (this.blueprintType === beforeLoadBlueprintType) {
@@ -241,8 +243,7 @@
                     query.tags = this.$route.query.selectedTag || this.selectedTag;
                 }
 
-                return this.$store
-                    .dispatch("blueprints/getBlueprintsForQuery", {type: this.blueprintType, kind: this.blueprintKind, params: query})
+                return this.blueprintsStore.getBlueprintsForQuery({type: this.blueprintType, kind: this.blueprintKind, params: query})
                     .then(data => {
                         // Handle switch tab while fetching data
                         if (this.blueprintType === beforeLoadBlueprintType) {
@@ -263,7 +264,7 @@
                     if(this.embed) {
                         this.error = true;
                     } else {
-                        this.$store.dispatch("core/showError", 404);
+                        this.coreStore.error = 404;
                     }
                 }).finally(() => {
                     // Handle switch tab while fetching data
@@ -280,7 +281,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(usePluginsStore),
+            ...mapStores(usePluginsStore, useBlueprintsStore, useCoreStore),
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },

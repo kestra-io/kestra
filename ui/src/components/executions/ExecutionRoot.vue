@@ -18,6 +18,8 @@
     import ExecutionOutput from "./outputs/Wrapper.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useCoreStore} from "../../stores/core";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../../components/Tabs.vue";
@@ -113,17 +115,17 @@
                         // if execution is not defined
                         this.sse.onerror = () => {
                             if (!this.execution) {
-                                this.$store.dispatch("core/showMessage", {
+                                this.coreStore.message = {
                                     variant: "error",
                                     title: this.$t("error"),
                                     message: this.$t("errors.404.flow or execution"),
-                                });
+                                };
                             } else {
-                                this.$store.dispatch("core/showMessage", {
+                                this.coreStore.message = {
                                     variant: "error",
                                     title: this.$t("error"),
                                     message: this.$t("something_went_wrong.loading_execution"),
-                                });
+                                };
                             }
                         }
                     });
@@ -182,6 +184,7 @@
             // ...mapState("flow", ["flow", "revisions"]),
             ...mapState("execution", ["execution", "flow"]),
             ...mapState("auth", ["user"]),
+            ...mapStores(useCoreStore),
             tabs() {
                 return this.getTabs();
             },

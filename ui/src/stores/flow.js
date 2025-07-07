@@ -6,6 +6,7 @@ import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import Utils from "../utils/utils";
 import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
+import {useCoreStore} from "./core";
 
 const textYamlHeader = {
     headers: {
@@ -101,7 +102,8 @@ export default {
                     dirty: false
                 }, {root: true});
 
-                dispatch("core/isUnsaved", false, {root: true});
+                const coreStore = useCoreStore();
+                coreStore.unsavedChange = false;
             }
         },
         onEdit({getters, dispatch, commit, state, rootState}, {source, currentIsFlow, editorViewType, topologyVisible}) {
@@ -119,11 +121,12 @@ export default {
                         (getters.id !== flowParsed.id ||
                             getters.namespace !== flowParsed.namespace)))
                         {
-                        dispatch("core/showMessage", {
+                        const coreStore = useCoreStore();
+                        coreStore.message = {
                             variant: "error",
                             title: this.$i18n.t("readonly property"),
                             message: this.$i18n.t("namespace and id readonly"),
-                        }, {root: true});
+                        };
                         commit("setFlowYaml", YAML_UTILS.replaceIdAndNamespace(
                             source,
                             getters.id,
@@ -135,7 +138,8 @@ export default {
 
             commit("setHaveChange", true);
             if(editorViewType === "YAML") {
-                dispatch("core/isUnsaved", true, {root: true});
+                const coreStore = useCoreStore();
+                coreStore.unsavedChange = true;
             }
 
             if(!state.isCreating){
@@ -171,11 +175,12 @@ export default {
             const flowParsed = getters.flowParsed;
 
             if (flowParsed === undefined) {
-                dispatch("core/showMessage", {
+                const coreStore = useCoreStore();
+                coreStore.message = {
                     variant: "error",
                     title: this.$i18n.t("invalid flow"),
                     message: this.$i18n.t("invalid yaml"),
-                }, {root: true});
+                };
 
                 return;
             }
@@ -211,7 +216,8 @@ export default {
                 await dispatch("createFlow", {flow: flowYaml})
                     .then((response) => {
                         this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
-                        dispatch("core/isUnsaved", false, {root: true});
+                        const coreStore = useCoreStore();
+                        coreStore.unsavedChange = false;
                         commit("setIsCreating", false);
                         commit("setHaveChange", false);
                     });
@@ -219,7 +225,8 @@ export default {
                 await dispatch("saveFlow", {flow: flowYaml})
                     .then((response) => {
                         this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
-                        dispatch("core/isUnsaved", false, {root: true});
+                        const coreStore = useCoreStore();
+                        coreStore.unsavedChange = false;
                     });
             }
 
@@ -311,11 +318,12 @@ export default {
                 })
                 .then(response => {
                     if (response.data.exception) {
-                        commit("core/setMessage", {
+                        const coreStore = useCoreStore();
+                        coreStore.message = {
                             title: "Invalid source code",
                             message: response.data.exception,
                             variant: "danger"
-                        }, {root: true});
+                        };
                         delete response.data.exception;
                     }
                     if(options.store === false) {
@@ -484,11 +492,12 @@ export default {
                     }
 
                     if([404, 422].includes(error.response?.status) && config?.params?.subflows?.length > 0) {
-                        commit("core/setMessage", {
+                        const coreStore = useCoreStore();
+                        coreStore.message = {
                             title: "Couldn't expand subflow",
                             message: error.response.data.message,
                             variant: "danger"
-                        }, {root: true});
+                        };
                     }
 
                     return Promise.reject(error);

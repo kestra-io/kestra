@@ -29,6 +29,7 @@
     "Unfold content lines": "複数行文字列を展開する",
     "about_this_blueprint": "このblueprintについて",
     "absolute": "絶対",
+    "accept": "承認",
     "actions": "アクション",
     "activate_basic_auth": "基本認証を有効化する",
     "active": "アクティブ",
@@ -40,13 +41,22 @@
     "add task": "taskを追加",
     "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
     "add_new_item": "新しいアイテムを追加",
+    "additionalPlugins": "追加プラグイン",
     "administration": "管理",
     "advanced configuration": "他のプロパティ",
     "after": "後",
     "aggregation": "集計",
+    "ai": {
+      "flow": {
+        "generating": "フローのYAMLを生成しています...",
+        "prompt_placeholder": "Kestra flowを作成するための指示を入力してください。",
+        "title": "AIエージェント"
+      }
+    },
     "all executions": "すべての実行",
     "all tags": "すべてのタグ",
     "api": "API",
+    "appBlocks": "アプリブロック",
     "apps": "アプリケーション",
     "attempt": "試行",
     "attempts": "試行回数",
@@ -119,14 +129,30 @@
     "change state current state": "現在のステータスは:",
     "change state done": "タスクの状態が更新されました",
     "change state hint": {
-      "FAILED": "['FlowはFAILEDとしてマークされます。', '他のTaskは実行されません。', 'エラーTaskが実行されます。']",
-      "RUNNING": "フローが再起動し、次のすべてのタスクが実行されます。すべてのブロックされたタスクが実行されます。",
-      "SUCCESS": "['このflowはこのtaskが成功したため再起動します。', 'すべてのブロックされたtaskが実行されます。', 'すべてのtaskの実行が成功した場合、flowはSUCCESS状態になります。']",
-      "WARNING": "['このflowはWARNINGとしてマークされます。', '次のtasksが実行されます。', 'エラーtasksが実行されます。']"
+      "FAILED": [
+        "FlowはFAILEDとしてマークされます。",
+        "他のTaskは実行されません。",
+        "エラーTaskが実行されます。"
+      ],
+      "RUNNING": [
+        "flowは再起動し、すべての次のtaskが実行されます。",
+        "すべてのブロックされたtaskが実行されます。"
+      ],
+      "SUCCESS": [
+        "このflowはこのtaskが成功したため再起動します。",
+        "すべてのブロックされたtaskが実行されます。",
+        "すべてのtaskの実行が成功した場合、flowはSUCCESS状態になります。"
+      ],
+      "WARNING": [
+        "このflowはWARNINGとしてマークされます。",
+        "次のtasksが実行されます。",
+        "エラーtasksが実行されます。"
+      ]
     },
     "change state tooltip": "実行状態を変更",
     "chart": "チャート",
     "chart preview": "チャートプレビュー",
+    "charts": "チャート",
     "choice": "選択",
     "choose file": "ファイルを選択するか、ここにドロップしてください...",
     "close": "閉じる",
@@ -183,6 +209,7 @@
         "confirmation": "<code>{title}</code> ダッシュボードを削除してもよろしいですか？"
       },
       "edition": {
+        "chart": "このチャートを編集",
         "confirmation": "ダッシュボード<code>{title}</code>の変更が保存されました。",
         "label": "ダッシュボードを編集"
       },
@@ -194,6 +221,7 @@
       "preview": "プレビュー ダッシュボード"
     },
     "data": "データ",
+    "dataFilters": "データフィルター",
     "data_not_protected": "あなたのデータは保護されていません。失わないようにしてください。<b>無料のセキュリティ機能を有効にするか、有料オプションをお試しください。</b>",
     "date": "日付",
     "date count": "{date}に{count}",
@@ -239,6 +267,7 @@
     },
     "days": "日数",
     "debug": "デバッグ",
+    "decline": "辞退",
     "default": "デフォルト",
     "delete": "削除",
     "delete backfill": "backfillを削除",
@@ -599,7 +628,7 @@
     "flows deleted": "<code>{count}</code>件のflowが削除されました",
     "flows disabled": "<code>{count}</code>件のflowが無効化されました",
     "flows enabled": "<code>{count}</code>件のflowが有効化されました",
-    "flows exported": "flowがエクスポートされました",
+    "flows exported": "<code>{count}</code> Flow(s) エクスポート済み",
     "flows imported": "フローがインポートされました",
     "focus task": "任意の要素をクリックしてそのドキュメントを表示します。",
     "fold_all_multi_lines": "すべての複数行を折りたたむ",
@@ -680,6 +709,7 @@
     "live help": "ライブヘルプ",
     "loaded x dependencies": "{count}件の依存関係が読み込まれました",
     "log expand setting": "Logのデフォルト表示",
+    "logExporters": "ログエクスポーター",
     "logs": "Logs",
     "logs_view": {
       "compact": "デフォルトビュー",
@@ -715,7 +745,9 @@
       },
       "delete": {
         "file": "ファイルを削除",
+        "files": "{count} 個の選択されたファイルを削除",
         "folder": "フォルダーを削除",
+        "folders": "{count} 個の選択されたフォルダーを削除",
         "label": "削除"
       },
       "dialog": {
@@ -814,6 +846,7 @@
         "conditions": "条件を追加",
         "errors": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
+        "inputs": "入力フィールドを追加",
         "pluginDefaults": "プラグインのデフォルトを追加",
         "tasks": "タスクを追加",
         "triggers": "トリガーを追加"
@@ -822,16 +855,19 @@
         "general": {
           "concurrency": "並行性",
           "disabled": "無効",
-          "inputs": "入力",
           "labels": "ラベル",
+          "listeners": "リスナー",
           "outputs": "出力",
           "retry": "リトライ",
           "sla": "SLA",
-          "variables": "変数"
+          "taskDefaults": "タスクデフォルト",
+          "variables": "変数",
+          "workerGroup": "ワーカーグループ"
         },
         "main": {
           "description": "説明",
-          "flow_id": "フローID",
+          "id": "Flow ID",
+          "inputs": "入力",
           "namespace": "Namespace（ネームスペース）"
         }
       },
@@ -859,6 +895,7 @@
         "conditions": "条件を選択",
         "errors": "タスクを選択",
         "finally": "タスクを選択",
+        "inputs": "入力フィールドタイプを選択",
         "pluginDefaults": "プラグインを選択",
         "tasks": "タスクを選択",
         "triggers": "トリガーを選択"
@@ -1178,6 +1215,7 @@
     "steps": "ステップ",
     "stream": "ストリーム",
     "sub flow": "Subflow",
+    "submit": "送信",
     "success": "Success",
     "sum": "合計",
     "switch-view": "ビューを切り替え",
@@ -1190,9 +1228,9 @@
     "task logs": "Task Logs",
     "task run id": "タスクランID",
     "taskDefaults": "taskのデフォルト設定",
+    "taskRunners": "タスクランナー",
     "task_id_exists": "タスクIDは既に存在します",
     "task_id_message": "フロー内にTask Id ${existingTask}は既に存在します。",
-    "task_runners": "タスクランナー",
     "taskid column details": "最後に実行されたtaskとその試行回数。",
     "taskruns": "Task Runs",
     "tasks": "Tasks",
@@ -1215,6 +1253,7 @@
     "timezone": "タイムゾーン",
     "title": "タイトル",
     "to": "まで",
+    "to toggle": "切り替える",
     "toggle fullscreen": "フルスクリーンを切り替え",
     "toggle output": "出力を切り替え",
     "toggle output display": "出力表示を切り替え",

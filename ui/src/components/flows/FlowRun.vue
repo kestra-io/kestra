@@ -46,7 +46,7 @@
                             data-test-id="execute-dialog-button"
                             :icon="Flash"
                             class="flow-run-trigger-button"
-                            :class="{'onboarding-glow': guidedProperties.tourStarted}"
+                            :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}"
                             @click="onSubmit($refs.form); executeClicked = true;"
                             type="primary"
                             native-type="submit"
@@ -71,6 +71,8 @@
 
 <script>
     import {mapState, mapGetters} from "vuex";
+    import {mapStores} from "pinia";
+    import {useCoreStore} from "../../stores/core";
     import {executeTask} from "../../utils/submitTask"
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
@@ -111,8 +113,8 @@
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
         computed: {
             ...mapState("execution", ["flow", "execution"]),
-            ...mapState("core", ["guidedProperties"]),
             ...mapGetters("misc", ["configs"]),
+            ...mapStores(useCoreStore),
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             },

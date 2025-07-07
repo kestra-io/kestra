@@ -26,6 +26,7 @@
     import {computed} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useStore} from "vuex";
+    import {useCoreStore} from "../../../stores/core";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue";
@@ -35,6 +36,7 @@
     import action from "../../../models/action";
 
     const store = useStore();
+    const coreStore = useCoreStore();
     const router = useRouter();
     const route = useRoute();
 
@@ -67,7 +69,7 @@
         store.dispatch("flow/createFlow", {
             flow: YAML_UTILS.deleteMetadata(flow.value.source, "deleted"),
         }).then(() => {
-            store.dispatch("core/isUnsaved", false);
+            coreStore.unsavedChange = false;
             router.go();
         });
     };

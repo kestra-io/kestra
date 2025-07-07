@@ -28,6 +28,7 @@ import java.util.function.Consumer;
  */
 public final class RunVariables {
     public static final String SECRET_CONSUMER_VARIABLE_NAME = "addSecretConsumer";
+    public static final String FIXTURE_FILES_KEY = "io.kestra.datatype:test_fixtures_files";
 
     /**
      * Creates an immutable map representation of the given {@link Task}.
@@ -299,7 +300,7 @@ public final class RunVariables {
 
                     // temporal hack to add back the `schedule`variables
                     // will be removed in 2.0
-                    if (trigger.getType().equals(Schedule.class.getName())) {
+                    if (Schedule.class.getName().equals(execution.getTrigger().getType())) {
                         // add back its variables inside the `schedule` variables
                         builder.put("schedule", execution.getTrigger().getVariables());
                     }
@@ -321,13 +322,18 @@ public final class RunVariables {
             }
 
             // variables
-            if (execution != null &&  execution.getVariables() != null) {
-                builder.put("vars", execution.getVariables());
-            }
-            else if (execution == null && flow != null && flow.getVariables() != null) {
-                // flow variables are added to the execution variables at execution creation time so they must only be added if the execution is null
-                builder.put("vars", flow.getVariables());
-            }
+            Optional.ofNullable(execution)
+                .map(Execution::getVariables)
+                .or(() -> Optional.ofNullable(flow).map(FlowInterface::getVariables))
+                .map(HashMap::new)
+                .ifPresent(variables -> {
+                    Object fixtureFiles = variables.remove(FIXTURE_FILES_KEY);
+                    builder.put("vars", ImmutableMap.copyOf(variables));
+
+                    if (fixtureFiles != null) {
+                        builder.put("files", fixtureFiles);
+                    }
+                });
 
             // Kestra configuration
             if (kestraConfiguration != null) {

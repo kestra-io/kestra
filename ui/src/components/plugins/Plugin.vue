@@ -53,7 +53,7 @@
                     <schema-to-html
                         class="plugin-schema"
                         :dark-mode="theme === 'dark'"
-                        :schema="plugin.schema"
+                        :schema="pluginsStore.plugin.schema"
                         :props-initially-expanded="true"
                         :plugin-type="pluginType"
                     >

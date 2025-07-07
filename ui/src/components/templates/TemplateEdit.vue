@@ -63,7 +63,7 @@
                 }
             },
             onChange() {
-                this.$store.dispatch("core/isUnsaved", this.previousContent !== this.content);
+                this.coreStore.unsavedChange = this.previousContent !== this.content;
             }
         }
     };

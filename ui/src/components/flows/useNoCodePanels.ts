@@ -4,7 +4,6 @@ import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import type {Panel, Tab} from "../MultiPanelTabs.vue";
-import {BlockType} from "../code/utils/types";
 import NoCodeWrapper from "../code/NoCodeWrapper.vue"
 
 import type {NoCodeProps} from "../code/NoCodeWrapper.vue";
@@ -19,27 +18,43 @@ interface Opener {
 }
 
 interface Handlers {
-    onCreateTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number, position?: "before" | "after") => boolean,
-    onEditTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number) => boolean
+    onCreateTask: (
+        opener: Opener,
+        parentPath: string,
+        blockSchemaPath: string,
+        refPath?: number,
+        position?: "before" | "after",
+    ) => boolean,
+    onEditTask: (
+        opener: Opener,
+        parentPath: string,
+        blockSchemaPath: string,
+        refPath?: number,
+    ) => boolean
     onCloseTask: (opener: Opener) => boolean
 }
 
 export function getEditTabKey(tab: NoCodeProps, index: number) {
     const indexWithLeftPadding = String(index).padStart(4, "0")
+    // remove irrelevant properties from the tab object
+    const {
+        creatingTask: _,
+        editingTask: ___,
+        position: __,
+        ...relevantTabProps
+    } = tab
     return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify({
                     action: "edit",
-                    blockType: tab.blockType,
-                    parentPath: tab.parentPath,
-                    refPath: tab.refPath,
+                    ...relevantTabProps
                 })}`
 }
 
 export function getCreateTabKey(tab: NoCodeProps, index: number) {
     const indexWithLeftPadding = String(index).padStart(4, "0")
     return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify({
-                    action: "create",
-                    ...tab,
-                })}`
+        action: "create",
+        ...tab,
+    })}`
 }
 
 interface NoCodeTabWithAction extends NoCodeProps {
@@ -57,12 +72,14 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
             path: tab.parentPath.replace(/\.[^.]+$/, ""),
         })) : {}
 
+        const blockType = tab.parentPath?.split(".").pop() ?? ""
+
         const parentName = parentBlock ? parentBlock.id ?? parentBlock.type ?? tab.parentPath : tab.parentPath
         if (tab.action === "create") {
             return {
                 value: getCreateTabKey(tab, keepAliveCacheBuster++),
                 button: {
-                    label: `${parentName} / ${t(`no_code.creation.${tab.blockType}`)}`,
+                    label: `${parentName} / ${t(`no_code.creation.${blockType}`)}`,
                     icon: markRaw(MouseRightClickIcon),
                 },
             }
@@ -79,7 +96,7 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
             return {
                 value: getEditTabKey(tab, keepAliveCacheBuster++),
                 button: {
-                    label: `${parentName} / ${currentBlock?.id ?? tab.refPath ?? t(`no_code.creation.${tab.blockType}`)}`,
+                    label: `${parentName} / ${currentBlock?.id ?? tab.refPath ?? t(`no_code.creation.${blockType}`)}`,
                     icon: markRaw(MouseRightClickIcon),
                 },
             }
@@ -108,9 +125,9 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
                     ...restOfTab,
                     creatingTask: tab.action === "create",
                     editingTask: tab.action === "edit",
-                    onCloseTask: onCloseTask?.bind({}, props),
                     onCreateTask: onCreateTask?.bind({}, props) as any,
                     onEditTask: onEditTask?.bind({}, props) as any,
+                    onCloseTask: onCloseTask?.bind({}, props),
                 })]
             )
         }),
@@ -160,8 +177,8 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             panelIndex: number,
             tabIndex: number
         },
-        blockType: BlockType | "pluginDefaults",
         parentPath: string,
+        blockSchemaPath: string,
         refPath?: number,
         position: "before" | "after" = "after",
         dirty: boolean = false,
@@ -170,8 +187,8 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab({
             action: "create",
-            blockType,
             parentPath,
+            blockSchemaPath,
             refPath,
             position,
             fieldName,
@@ -187,11 +204,17 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         openerPanel.activeTab = tab
     }
 
-    function openEditTaskTab(opener: { panelIndex: number, tabIndex: number }, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number, dirty: boolean = false) {
+    function openEditTaskTab(
+        opener: { panelIndex: number, tabIndex: number },
+        parentPath: string,
+        blockSchemaPath: string,
+        refPath?: number,
+        dirty: boolean = false
+    ) {
         const tab = getTabFromNoCodeTab({
             action: "edit",
-            blockType,
             parentPath,
+            blockSchemaPath,
             refPath,
         }, t, handlers, store.state.flow.flowYaml, dirty)
 

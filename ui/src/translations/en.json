@@ -1162,19 +1162,22 @@
       },
       "fields": {
         "main": {
-          "flow_id": "Flow ID",
+          "id": "Flow ID",
           "namespace": "Namespace",
-          "description": "Description"
+          "description": "Description",
+          "inputs": "Inputs"
         },
         "general": {
           "retry": "Retry",
           "sla": "SLA",
           "labels": "Labels",
-          "inputs": "Inputs",
           "outputs": "Outputs",
           "variables": "Variables",
           "concurrency": "Concurrency",
-          "disabled": "Disabled"
+          "disabled": "Disabled",
+          "listeners": "Listeners",
+          "taskDefaults": "Task Defaults",
+          "workerGroup": "Worker Group"
         }
       },
       "select": {
@@ -1184,7 +1187,8 @@
         "finally": "Select a task",
         "pluginDefaults": "Select a plugin",
         "afterExecution": "Select a task",
-        "conditions": "Select a condition"
+        "conditions": "Select a condition",
+        "inputs": "Select an input field type"
       },
       "creation": {
         "tasks": "Add a task",
@@ -1193,7 +1197,8 @@
         "finally": "Add a finally block",
         "pluginDefaults": "Add a plugin default",
         "afterExecution": "Add an after execution block",
-        "conditions": "Add a condition"
+        "conditions": "Add a condition",
+        "inputs": "Add an input field"
       },
       "close": {
         "tasks": "Close task",

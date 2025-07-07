@@ -19,13 +19,11 @@
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
         FLOW_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
-        REF_PATH_INJECTION_KEY,
-        EDIT_TASK_FUNCTION_INJECTION_KEY, BLOCKTYPE_INJECT_KEY,
-        FIELDNAME_INJECTION_KEY,
+        REF_PATH_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY,
+        FIELDNAME_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY,
     } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
-    import {BlockType} from "../utils/types";
 
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
@@ -34,13 +32,14 @@
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
-    const blockType = inject(BLOCKTYPE_INJECT_KEY, undefined);
     const position = inject(POSITION_INJECTION_KEY, "after");
     const creatingTask = inject(
         CREATING_TASK_INJECTION_KEY,
         false,
     );
+
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
 
     const closeTaskAddition = inject(
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
@@ -56,7 +55,6 @@
         parentPath: string,
         refPath?: number
         position?: "before" | "after",
-        blockType?: BlockType | "pluginDefaults"
     }
 
     const yaml = ref("");
@@ -120,7 +118,7 @@
                     newContent: yaml.value,
                 });
             }
-        } else if(!hasMovedToEdit.value && blockType){
+        } else if(!hasMovedToEdit.value ){
             const currentSection = section.value as keyof typeof SECTIONS_MAP;
 
             if(!currentSection) {
@@ -132,7 +130,6 @@
                 parentPath,
                 refPath,
                 position,
-                blockType,
             } satisfies TaskModel;
 
             result = YAML_UTILS.insertBlockWithPath({
@@ -143,8 +140,8 @@
 
             const currentRefPath = (refPath !== undefined && refPath !== null) ? refPath + (position === "after" ? 1 : 0) : 0;
             editTask(
-                blockType,
                 fieldName ? `${parentPath}[${currentRefPath}].${fieldName}` : parentPath,
+                blockSchemaPath,
                 fieldName ? undefined : currentRefPath,
             );
             hasMovedToEdit.value = true;

@@ -1,7 +1,7 @@
 <template>
     <div class="tasks-wrapper">
         <Collapse
-            title="tasks"
+            :title="root"
             :elements="items"
             :section
             :block-schema-path="[schemaPath, 'properties', root, 'items'].join('/')"

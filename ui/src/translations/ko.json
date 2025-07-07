@@ -840,6 +840,7 @@
         "conditions": "조건 추가",
         "errors": "오류 처리기 추가",
         "finally": "마지막 블록 추가",
+        "inputs": "입력 필드 추가",
         "pluginDefaults": "플러그인 기본값 추가",
         "tasks": "작업 추가",
         "triggers": "트리거 추가"
@@ -848,16 +849,19 @@
         "general": {
           "concurrency": "병행성",
           "disabled": "비활성화됨",
-          "inputs": "입력",
           "labels": "레이블",
+          "listeners": "리스너",
           "outputs": "출력",
           "retry": "재시도",
           "sla": "SLA",
-          "variables": "변수"
+          "taskDefaults": "작업 기본값",
+          "variables": "변수",
+          "workerGroup": "작업자 그룹"
         },
         "main": {
           "description": "설명",
-          "flow_id": "플로우 ID",
+          "id": "Flow ID",
+          "inputs": "입력",
           "namespace": "네임스페이스"
         }
       },
@@ -885,6 +889,7 @@
         "conditions": "조건 선택",
         "errors": "작업 선택",
         "finally": "작업 선택",
+        "inputs": "입력 필드 유형 선택",
         "pluginDefaults": "플러그인 선택",
         "tasks": "작업 선택",
         "triggers": "트리거 선택"

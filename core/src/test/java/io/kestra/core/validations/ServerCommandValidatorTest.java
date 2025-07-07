@@ -1,4 +1,4 @@
-package io.kestra.cli;
+package io.kestra.core.validations;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.exceptions.BeanInstantiationException;

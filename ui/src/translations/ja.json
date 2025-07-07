@@ -901,6 +901,7 @@
     "no_logs_data_description": "フローが実行中でないか、フィルターを調整する必要があるかもしれません。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
     "no_results": {
+      "dsf": "I'm sorry, it seems like the text you provided for translation is not clear or complete. Could you please provide the text you would like translated into Japanese?",
       "executions": "実行が見つかりません",
       "flows": "フローが見つかりません",
       "kv_pairs": "キー-バリュー ペアが見つかりません",

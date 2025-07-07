@@ -1086,8 +1086,11 @@ class ExecutionControllerRunnerTest {
             GET("/api/v1/main/executions/" + runningExecution.getId()),
             Execution.class);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.KILLED);
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList().size()).isEqualTo(2);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+
+        // check that afterExecutions has been run even if killed
+        assertThat(execution.getTaskRunList().getLast().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test

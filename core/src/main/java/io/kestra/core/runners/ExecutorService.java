@@ -735,6 +735,7 @@ public class ExecutorService {
         List<TaskRun> afterExecutionNexts = FlowableUtils.resolveSequentialNexts(executor.getExecution(), afterExecutionResolvedTasks)
             .stream()
             .map(throwFunction(NextTaskRun::getTaskRun))
+            .map(taskRun -> taskRun.withForceExecution(true)) // forceExecution so it would be executed even if the execution is killed
             .toList();
         if (!afterExecutionNexts.isEmpty()) {
             return executor.withTaskRun(afterExecutionNexts, "handleAfterExecution ");

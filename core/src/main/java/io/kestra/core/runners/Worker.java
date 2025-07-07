@@ -657,7 +657,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 ));
         }
 
-        if (killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
+        if (! Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution()) && killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun().withState(KILLED));
             try {
                 this.workerTaskResultQueue.emit(workerTaskResult);

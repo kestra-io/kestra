@@ -27,7 +27,7 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Display a chart with rows inserted by Namespace.",
             full = true,
-            code = """
+            code = { """
             charts:
               - id: table_metrics
                 type: io.kestra.plugin.core.dashboard.chart.Table
@@ -49,6 +49,7 @@ import lombok.experimental.SuperBuilder;
                     - column: inserted_rows
                       order: DESC
             """
+          }
         )
     }
 )

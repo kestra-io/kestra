@@ -1246,6 +1246,13 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(response.getCount()).isEqualTo(3);
+
+        // load one of the executions to check that labels have been correctly updated
+        Execution execution = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + result1.getId()),
+            Execution.class);
+        assertThat(execution.getLabels()).hasSize(3);
+        assertThat(execution.getLabels()).contains(new Label("key", "value"));
     }
 
     @Test

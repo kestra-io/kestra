@@ -47,7 +47,7 @@
         </el-button>
     </div>
     <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
-        <Sections :charts="charts.map(chart => chart.data)" show-default />
+        <Sections :dashboard="{id: 'default'}" :charts="charts.map(chart => chart.data)" show-default />
     </div>
     <div class="main-editor" v-else>
         <div

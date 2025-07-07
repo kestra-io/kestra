@@ -1324,8 +1324,9 @@
       "executions": "No Executions Found",
       "triggers": "No Triggers Found",
       "flows": "No Flows Found",
-      "kv_pairs": "No Key-Value pairs Found",
+      "kv_pairs": "No Key-Value sdfsdf Found",
       "secrets": "No Secrets Found",
+      "dsf": "dsfsd",
       "templates": "No Templates Found"
     },
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",

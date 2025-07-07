@@ -7,7 +7,7 @@ import Dashboard from "../../../components/dashboard/Dashboard.vue";
 import Flows from "../../../components/flows/Flows.vue";
 import Executions from "../../../components/executions/Executions.vue";
 import Dependencies from "../../../components/namespaces/components/content/Dependencies.vue";
-import EditorView from "../../inputs/NamespaceFilesEditorView.vue";
+import EditorView from "../components/NamespaceFilesEditorView.vue";
 
 export interface Tab {
     locked?: boolean;

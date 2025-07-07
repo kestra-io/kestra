@@ -257,7 +257,6 @@
 <script setup>
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
-    import {useCoreStore} from "../../stores/core";
     import {useRoute, useRouter} from "vue-router";
     import {useStorage} from "@vueuse/core";
 
@@ -273,17 +272,18 @@
     import File from "vue-material-design-icons/File.vue";
     import Folder from "vue-material-design-icons/Folder.vue";
 
-    import TypeIcon from "../utils/icons/Type.vue"
+    import TypeIcon from "../../utils/icons/Type.vue"
 
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import {storageKeys, editorViewTypes} from "../../utils/constants";
+    import permission from "../../../models/permission";
+    import action from "../../../models/action";
+    import {storageKeys, editorViewTypes} from "../../../utils/constants";
 
     // editor components
-    import Editor from "./Editor.vue";
-    import EditorButtons from "./EditorButtons.vue";
-    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
-    import {usePluginsStore} from "../../stores/plugins";
+    import Editor from "../../inputs/Editor.vue";
+    import EditorButtons from "../../inputs/EditorButtons.vue";
+    import {useFlowOutdatedErrors} from "../../inputs/flowOutdatedErrors";
+    import {usePluginsStore} from "../../../stores/plugins";
+    import {useCoreStore} from "../../../stores/core";
 
     const store = useStore();
     const coreStore = useCoreStore();

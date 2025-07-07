@@ -1328,7 +1328,8 @@
       "secrets": "No Secrets Found",
       "templates": "No Templates Found"
     },
-    "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
+    "dsfsdsf": "fdsdsfdsf",
+    "duplicate-pair": "{label} \"{key}\" is, first key ignored.",
     "dashboards": {
       "labels": {
         "singular": "Dashboard",

@@ -283,7 +283,7 @@
         },
         watch: {
             source() {
-                this.dashboardStore.validate(this.source)
+                this.dashboardStore.validateDashboard(this.source)
                     .then(errors => {
                         if (errors.constraints) {
                             this.errors = [errors.constraints];

@@ -904,6 +904,7 @@
     "no_logs_data_description": "Albo żadne flow nie są uruchomione, albo musisz dostosować swoje filtry.",
     "no_namespaces": "Zero namespaces spełnia kryteria wyszukiwania.",
     "no_results": {
+      "dsfdsf": "test",
       "executions": "Nie znaleziono wykonania",
       "flows": "Nie znaleziono flowów",
       "kv_pairs": "Nie znaleziono par klucz-wartość",

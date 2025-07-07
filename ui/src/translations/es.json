@@ -904,6 +904,7 @@
     "no_logs_data_description": "Ya sea que no haya flows en ejecución, o puede que necesite ajustar sus filtros.",
     "no_namespaces": "Ningún namespace coincide con los criterios de búsqueda.",
     "no_results": {
+      "dsfdsf": "prueba",
       "executions": "No se encontraron ejecuciones",
       "flows": "No se encontraron Flows",
       "kv_pairs": "No se encontraron pares Key-Value",

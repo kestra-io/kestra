@@ -39,6 +39,7 @@ class MiscControllerTest {
         assertThat(response.getIsTaskRunEnabled()).isFalse();
         assertThat(response.getIsAnonymousUsageEnabled()).isTrue();
         assertThat(response.getIsBasicAuthEnabled()).isFalse();
+        assertThat(response.getIsAiEnabled()).isFalse();
         assertThat(response.getSystemNamespace()).isEqualTo("some.system.ns");
     }
 

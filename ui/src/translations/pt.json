@@ -29,6 +29,7 @@
     "Unfold content lines": "Desdobrar strings multilinhas",
     "about_this_blueprint": "Sobre este blueprint",
     "absolute": "Absoluto",
+    "accept": "Aceitar",
     "actions": "Ações",
     "activate_basic_auth": "Ativar Autenticação Básica",
     "active": "Ativo",
@@ -44,6 +45,13 @@
     "advanced configuration": "Outras propriedades",
     "after": "depois",
     "aggregation": "Agregação",
+    "ai": {
+      "flow": {
+        "generating": "Gerando Flow YAML para você...",
+        "prompt_placeholder": "Insira instruções para criar seu flow do Kestra.",
+        "title": "Agente de IA"
+      }
+    },
     "all executions": "Todas as execuções",
     "all tags": "Todas as tags",
     "api": "API",
@@ -119,10 +127,25 @@
     "change state current state": "Status atual é:",
     "change state done": "O estado da task foi atualizado",
     "change state hint": {
-      "FAILED": "['O flow será marcado como FAILED.', 'Nenhuma outra task será executada.', 'As tasks de erro serão executadas.']",
-      "RUNNING": "['O flow será reiniciado e executará todas as próximas tasks.', 'Todas as tasks bloqueadas serão executadas.']",
-      "SUCCESS": "['O flow será reiniciado pois esta task foi bem-sucedida.', 'Todas as tasks bloqueadas serão executadas.', 'O flow estará em estado de SUCCESS se todas as execuções das tasks forem bem-sucedidas.']",
-      "WARNING": "['O flow será marcado como WARNING.', 'As próximas tasks serão executadas.', 'As tasks de erro serão executadas.']"
+      "FAILED": [
+        "O flow será marcado como FAILED.",
+        "Nenhuma outra task será executada.",
+        "As tasks de erro serão executadas."
+      ],
+      "RUNNING": [
+        "O flow será reiniciado e executará todas as próximas tasks.",
+        "Todas as tasks bloqueadas serão executadas."
+      ],
+      "SUCCESS": [
+        "O flow será reiniciado pois esta task foi bem-sucedida.",
+        "Todas as tasks bloqueadas serão executadas.",
+        "O flow estará em estado de SUCCESS se todas as execuções das tasks forem bem-sucedidas."
+      ],
+      "WARNING": [
+        "O flow será marcado como WARNING.",
+        "As próximas tasks serão executadas.",
+        "As tasks de erro serão executadas."
+      ]
     },
     "change state tooltip": "Alterar o estado de execução",
     "chart": "Gráfico",
@@ -183,6 +206,7 @@
         "confirmation": "Tem certeza de que deseja excluir o dashboard <code>{title}</code>?"
       },
       "edition": {
+        "chart": "Edite este gráfico",
         "confirmation": "As alterações no dashboard <code>{title}</code> foram salvas.",
         "label": "Editar Dashboard"
       },
@@ -239,6 +263,7 @@
     },
     "days": "Dias",
     "debug": "Depurar",
+    "decline": "Recusar",
     "default": "Padrão",
     "delete": "Deletar",
     "delete backfill": "Deletar o backfill",
@@ -599,7 +624,7 @@
     "flows deleted": "<code>{count}</code> Flow(s) deletado(s)",
     "flows disabled": "<code>{count}</code> Flow(s) desativado(s)",
     "flows enabled": "<code>{count}</code> Flow(s) ativado(s)",
-    "flows exported": "Flows exportados",
+    "flows exported": "<code>{count}</code> Flow(s) exportado(s)",
     "flows imported": "Fluxos importados",
     "focus task": "Clique em qualquer elemento para ver sua documentação.",
     "fold_all_multi_lines": "Recolher Todas as Linhas Múltiplas",
@@ -715,7 +740,9 @@
       },
       "delete": {
         "file": "Deletar arquivo",
+        "files": "Excluir {count} arquivos selecionados",
         "folder": "Deletar pasta",
+        "folders": "Excluir {count} pastas selecionadas",
         "label": "Deletar"
       },
       "dialog": {
@@ -814,6 +841,7 @@
         "conditions": "Adicionar uma condição",
         "errors": "Adicionar um manipulador de erro",
         "finally": "Adicionar um bloco finally",
+        "inputs": "Adicionar um campo de input",
         "pluginDefaults": "Adicionar um padrão de plugin",
         "tasks": "Adicionar uma task",
         "triggers": "Adicionar um trigger"
@@ -822,16 +850,19 @@
         "general": {
           "concurrency": "Concorrência",
           "disabled": "Desativado",
-          "inputs": "Entradas",
           "labels": "Etiquetas",
+          "listeners": "Ouvintes",
           "outputs": "Saídas",
           "retry": "Repetir",
           "sla": "SLA",
-          "variables": "Variáveis"
+          "taskDefaults": "Padrões de Task",
+          "variables": "Variáveis",
+          "workerGroup": "Grupo de Worker"
         },
         "main": {
           "description": "Descrição",
-          "flow_id": "ID do Flow",
+          "id": "ID do Flow",
+          "inputs": "Entradas",
           "namespace": "Namespace"
         }
       },
@@ -859,6 +890,7 @@
         "conditions": "Selecione uma condição",
         "errors": "Selecione uma task",
         "finally": "Selecione uma task",
+        "inputs": "Selecione um tipo de campo de input",
         "pluginDefaults": "Selecione um plugin",
         "tasks": "Selecione uma task",
         "triggers": "Selecione um trigger"
@@ -1178,6 +1210,7 @@
     "steps": "Passos",
     "stream": "Stream",
     "sub flow": "Subflow",
+    "submit": "Enviar",
     "success": "Sucesso",
     "sum": "Soma",
     "switch-view": "Alternar visualização",
@@ -1215,6 +1248,7 @@
     "timezone": "Fuso horário",
     "title": "Título",
     "to": "Para",
+    "to toggle": "alternar",
     "toggle fullscreen": "Alternar tela cheia",
     "toggle output": "Alternar outputs",
     "toggle output display": "Alternar exibição de output",

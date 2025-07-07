@@ -56,7 +56,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
         return super.configure(store, t, editorInstance);
     }
 
-    async configureLanguage(_: Store<Record<string, any>>): Promise<void> {
+    async configureLanguage(): Promise<void> {
         const keyLabelToRegex = (keyLabel: string) => {
             return new RegExp(keyLabel
                 .replaceAll(".", "\\.")

@@ -29,6 +29,7 @@
 #plugin-fivetran:io.kestra.plugin:plugin-fivetran:LATEST
 #plugin-fs:io.kestra.plugin:plugin-fs:LATEST
 #plugin-gcp:io.kestra.plugin:plugin-gcp:LATEST
+#plugin-gemini:io.kestra.plugin:plugin-gemini:LATEST
 #plugin-git:io.kestra.plugin:plugin-git:LATEST
 #plugin-github:io.kestra.plugin:plugin-github:LATEST
 #plugin-googleworkspace:io.kestra.plugin:plugin-googleworkspace:LATEST

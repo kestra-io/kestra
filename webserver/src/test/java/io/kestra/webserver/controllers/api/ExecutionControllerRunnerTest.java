@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
@@ -718,7 +719,8 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/pause.yaml"})
-    void resumeExecutionPaused() throws TimeoutException, InterruptedException, QueueException {
+    @SuppressWarnings("unchecked")
+    void resumeExecutionPaused() throws TimeoutException, InterruptedException, QueueException, InternalException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
@@ -734,6 +736,7 @@ class ExecutionControllerRunnerTest {
             GET("/api/v1/main/executions/" + pausedExecution.getId()),
             Execution.class);
         assertThat(execution.getState().isPaused()).isFalse();
+        assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
     }
 
     @SuppressWarnings("unchecked")
@@ -1510,7 +1513,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @ExecuteFlow("flows/valids/minimal.yaml")
-    void shouldMaskSecretWhenEvalTaskRunExpressionPebbleExpression(Execution execution) {
+    void shouldMaskSensitiveFunctionsWhenEvalTaskRunExpressionPebbleExpression(Execution execution) {
         ExecutionController.EvalResult evalResult = client.toBlocking().retrieve(
             HttpRequest
                 .POST("/api/v1/main/executions/" + execution.getId() + "/eval/" + execution.getTaskRunList().getFirst().getId(), "{{ secret('MY_SECRET') }}")
@@ -1530,6 +1533,26 @@ class ExecutionControllerRunnerTest {
         assertThat(evalResult.getError()).isEqualTo("io.pebbletemplates.pebble.error.PebbleException: Cannot find secret for key 'NON_EXISTING_KEY'. ({{ secret('NON_EXISTING_KEY') }}:1)");
         assertThat(evalResult.getStackTrace()).startsWith("io.kestra.core.exceptions.IllegalVariableEvaluationException: io.pebbletemplates.pebble.error.PebbleException: Cannot find secret for key 'NON_EXISTING_KEY'. ({{ secret('NON_EXISTING_KEY') }}:1)");
         assertThat(evalResult.getResult()).isNull();
+
+        evalResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/" + execution.getId() + "/eval/" + execution.getTaskRunList().getFirst().getId(), "{{ http('https://dummyjson.com/todos') }}")
+                .contentType(MediaType.TEXT_PLAIN),
+            ExecutionController.EvalResult.class
+        );
+        assertThat(evalResult.getError()).isNull();
+        assertThat(evalResult.getStackTrace()).isNull();
+        assertThat(evalResult.getResult()).startsWith("{\"todos\":[{");
+
+        evalResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/" + execution.getId() + "/eval/" + execution.getTaskRunList().getFirst().getId(), "{{ render('{{s'~'ecret(\"MY_SECRET\")}}') }}")
+                .contentType(MediaType.TEXT_PLAIN),
+            ExecutionController.EvalResult.class
+        );
+        assertThat(evalResult.getError()).isNull();
+        assertThat(evalResult.getStackTrace()).isNull();
+        assertThat(evalResult.getResult()).isEqualTo("******");
     }
 
     private ExecutionController.EvalResult evalTaskRunExpression(Execution execution, String expression, int index) {

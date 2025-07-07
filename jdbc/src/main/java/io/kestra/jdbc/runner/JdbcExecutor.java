@@ -200,6 +200,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
     private final AbstractJdbcFlowTopologyRepository flowTopologyRepository;
 
+    private final MaintenanceService maintenanceService;
+
     private final String id = IdUtils.create();
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
@@ -229,13 +231,15 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         final AbstractJdbcFlowTopologyRepository flowTopologyRepository,
         final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         final TracerFactory tracerFactory,
-        final ExecutorsUtils executorsUtils
+        final ExecutorsUtils executorsUtils,
+        final MaintenanceService maintenanceService
         ) {
         this.serviceLivenessCoordinator = serviceLivenessCoordinator;
         this.flowMetaStore = flowMetaStore;
         this.flowTopologyRepository = flowTopologyRepository;
         this.eventPublisher = eventPublisher;
         this.tracer = tracerFactory.getTracer(JdbcExecutor.class, "EXECUTOR");
+        this.maintenanceService = maintenanceService;
 
         // By default, we start half-available processors count threads with a minimum of 4 by executor service
         // for the worker task result queue and the execution queue.
@@ -389,7 +393,12 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
             }
         ));
-        setState(ServiceState.RUNNING);
+
+        if (this.maintenanceService.isInMaintenanceMode()) {
+            enterMaintenance();
+        } else {
+            setState(ServiceState.RUNNING);
+        }
         log.info("Executor started with {} thread(s)", numberOfThreads);
     }
 
@@ -402,27 +411,31 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         ClusterEvent clusterEvent = either.getLeft();
         log.info("Cluster event received: {}", clusterEvent);
         switch (clusterEvent.eventType()) {
-            case MAINTENANCE_ENTER -> {
-                this.executionQueue.pause();
-                this.workerTaskResultQueue.pause();
-                this.killQueue.pause();
-                this.subflowExecutionResultQueue.pause();
-                this.flowQueue.pause();
-
-                this.isPaused.set(true);
-                this.setState(ServiceState.MAINTENANCE);
-            }
-            case MAINTENANCE_EXIT -> {
-                this.executionQueue.resume();
-                this.workerTaskResultQueue.resume();
-                this.killQueue.resume();
-                this.subflowExecutionResultQueue.resume();
-                this.flowQueue.resume();
-
-                this.isPaused.set(false);
-                this.setState(ServiceState.RUNNING);
-            }
+            case MAINTENANCE_ENTER -> enterMaintenance();
+            case MAINTENANCE_EXIT -> exitMaintenance();
         }
+    }
+
+    private void enterMaintenance() {
+        this.executionQueue.pause();
+        this.workerTaskResultQueue.pause();
+        this.killQueue.pause();
+        this.subflowExecutionResultQueue.pause();
+        this.flowQueue.pause();
+
+        this.isPaused.set(true);
+        this.setState(ServiceState.MAINTENANCE);
+    }
+
+    private void exitMaintenance() {
+        this.executionQueue.resume();
+        this.workerTaskResultQueue.resume();
+        this.killQueue.resume();
+        this.subflowExecutionResultQueue.resume();
+        this.flowQueue.resume();
+
+        this.isPaused.set(false);
+        this.setState(ServiceState.RUNNING);
     }
 
     void reEmitWorkerJobsForWorkers(final Configuration configuration,
@@ -604,7 +617,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                                             workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.SKIPPED)));
                                         } else {
                                             if (workerTask.getTask().isSendToWorkerTask()) {
-                                                Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(workerTask);
+                                                Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(flow, workerTask);
                                                 String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> workerTask.getRunContext().render(workerGroup.getKey())))
                                                     .orElse(null);
                                                 workerJobQueue.emit(workerGroupKey, workerTask);
@@ -1000,11 +1013,25 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             }
 
             if (!shouldSend) {
+                Execution execution = executor.getExecution();
+
                 // delete the execution from the state storage if ended
                 // IMPORTANT: it must be done here as it's when the execution arrives 'again' with a terminated state,
                 // so we are sure at this point that no new executions will be created otherwise the tate storage would be re-created by the execution queue.
                 if (executorService.canBePurged(executor)) {
-                    executorStateStorage.delete(executor.getExecution());
+                    executorStateStorage.delete(execution);
+                }
+
+                // purge the trigger: reset scheduler trigger at end
+                // IMPORTANT: this is to cover an edge case, execution created for failed trigger didn't have any taskrun so they will arrives directly here.
+                // We need to detect that and reset them as they will never reach the reset code later on this method.
+                if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
+                    FlowWithSource flow = executor.getFlow();
+                    triggerRepository
+                        .findByExecution(execution)
+                        .ifPresent(trigger -> {
+                            this.triggerState.update(executionService.resetExecution(flow, execution, trigger));
+                        });
                 }
 
                 return;

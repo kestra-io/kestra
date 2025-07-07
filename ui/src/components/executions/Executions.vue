@@ -587,7 +587,6 @@
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),
-            ...mapState("stat", ["daily"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
             ...mapGetters("misc", ["configs"]),
@@ -645,11 +644,6 @@
                         label: this.$t("mark as", {status: value})
                     };
                 });
-            },
-            executionsCount() {
-                return [...this.daily].reduce((a, b) => {
-                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
-                }, 0);
             },
             selectedNamespace(){
                 return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;

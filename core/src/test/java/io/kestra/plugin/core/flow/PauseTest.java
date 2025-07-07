@@ -305,7 +305,8 @@ public class PauseTest {
                 execution,
                 flow,
                 State.Type.RUNNING,
-                Flux.just(part1, part2)
+                Flux.just(part1, part2),
+                null
             ).block();
 
             execution = runnerUtils.awaitExecution(
@@ -330,7 +331,7 @@ public class PauseTest {
 
             ConstraintViolationException e = assertThrows(
                 ConstraintViolationException.class,
-                () -> executionService.resume(execution, flow, State.Type.RUNNING, Mono.empty()).block()
+                () -> executionService.resume(execution, flow, State.Type.RUNNING, Mono.empty(), Pause.Resumed.now()).block()
             );
 
             assertThat(e.getMessage()).contains("Invalid input for `asked`, missing required input, but received `null`");
@@ -344,7 +345,7 @@ public class PauseTest {
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
 
-            Execution restarted = executionService.resume(execution, flow, State.Type.RUNNING);
+            Execution restarted = executionService.resume(execution, flow, State.Type.RUNNING, Pause.Resumed.now());
 
             execution = runnerUtils.awaitExecution(
                 e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,

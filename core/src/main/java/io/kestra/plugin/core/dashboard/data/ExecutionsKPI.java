@@ -30,24 +30,25 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Display a chart with executions in success in a given namespace.",
             full = true,
-            code = {
-                "id: kpi_success_ratio\n" +
-                "type: io.kestra.plugin.core.dashboard.chart.KPI\n" +
-                "chartOptions:\n" +
-                "  displayName: Success Ratio\n" +
-                "  numberType: PERCENTAGE\n" +
-                "  width: 3\n" +
-                "data:\n" +
-                "  type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI\n" +
-                "  columns:\n" +
-                "    field: ID\n" +
-                "    agg: COUNT\n" +
-                "  numerator:\n" +
-                "    - type: IN\n" +
-                "      field: STATE\n" +
-                "      values:\n" +
-                "        - SUCCESS\n"
-            }
+            code = """
+            charts:
+              - id: kpi_success_ratio
+                type: io.kestra.plugin.core.dashboard.chart.KPI
+                chartOptions:
+                  displayName: Success Ratio
+                  numberType: PERCENTAGE
+                  width: 3
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI
+                  columns:
+                    field: ID
+                    agg: COUNT
+                  numerator:
+                    - type: IN
+                      field: STATE
+                      values:
+                        - SUCCESS
+            """
         )
     }
 )

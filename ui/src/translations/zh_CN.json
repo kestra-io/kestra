@@ -29,6 +29,7 @@
     "Unfold content lines": "展开多行字符串",
     "about_this_blueprint": "关于此blueprint",
     "absolute": "绝对",
+    "accept": "接受",
     "actions": "操作",
     "activate_basic_auth": "启用基本身份验证",
     "active": "活动",
@@ -44,6 +45,13 @@
     "advanced configuration": "其他属性",
     "after": "之后",
     "aggregation": "聚合",
+    "ai": {
+      "flow": {
+        "generating": "正在为您生成Flow YAML...",
+        "prompt_placeholder": "输入说明以创建您的 Kestra flow。",
+        "title": "AI代理"
+      }
+    },
     "all executions": "所有执行",
     "all tags": "所有标签",
     "api": "API",
@@ -119,10 +127,22 @@
     "change state current state": "当前状态是：",
     "change state done": "任务状态已更新",
     "change state hint": {
-      "FAILED": "['该flow将被标记为FAILED。', '不会执行其他task。', '将执行错误tasks。']",
+      "FAILED": [
+        "该flow将被标记为FAILED。",
+        "不会执行其他task。",
+        "将执行错误tasks。"
+      ],
       "RUNNING": "流程将重新启动，并将执行所有下一个任务。所有被阻止的任务将被执行。",
-      "SUCCESS": "['由于此任务成功，flow 将重新启动。', '所有被阻止的任务将被执行。', '如果所有任务运行都成功，flow 将处于 SUCCESS 状态。']",
-      "WARNING": "['流程将被标记为WARNING。', '接下来的tasks将被执行。', '错误的tasks将被执行。']"
+      "SUCCESS": [
+        "由于此任务成功，flow 将重新启动。",
+        "所有被阻止的任务将被执行。",
+        "如果所有任务运行都成功，flow 将处于 SUCCESS 状态。"
+      ],
+      "WARNING": [
+        "流程将被标记为WARNING。",
+        "接下来的tasks将被执行。",
+        "错误的tasks将被执行。"
+      ]
     },
     "change state tooltip": "更改执行状态",
     "chart": "图表",
@@ -183,6 +203,7 @@
         "confirmation": "您确定要删除<code>{title}</code>仪表板吗？"
       },
       "edition": {
+        "chart": "编辑此图表",
         "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
         "label": "编辑仪表板"
       },
@@ -239,6 +260,7 @@
     },
     "days": "天数",
     "debug": "调试",
+    "decline": "拒绝",
     "default": "默认值",
     "delete": "删除",
     "delete backfill": "删除回填",
@@ -599,7 +621,7 @@
     "flows deleted": "<code>{count}</code> 个流程已删除",
     "flows disabled": "<code>{count}</code> 个流程已禁用",
     "flows enabled": "<code>{count}</code> 个流程已启用",
-    "flows exported": "流程已导出",
+    "flows exported": "<code>{count}</code> 个 flow 已导出",
     "flows imported": "Flow已导入",
     "focus task": "点击任何元素以查看其文档。",
     "fold_all_multi_lines": "折叠所有多行",
@@ -715,7 +737,9 @@
       },
       "delete": {
         "file": "删除文件",
+        "files": "删除 {count} 个已选择的文件",
         "folder": "删除文件夹",
+        "folders": "删除 {count} 个已选文件夹",
         "label": "删除"
       },
       "dialog": {
@@ -814,6 +838,7 @@
         "conditions": "添加条件",
         "errors": "添加错误处理程序",
         "finally": "添加一个finally块",
+        "inputs": "添加一个input字段",
         "pluginDefaults": "添加插件默认值",
         "tasks": "添加任务",
         "triggers": "添加一个trigger"
@@ -822,16 +847,19 @@
         "general": {
           "concurrency": "并发性",
           "disabled": "禁用",
-          "inputs": "输入",
           "labels": "标签",
+          "listeners": "监听器",
           "outputs": "输出",
           "retry": "重试",
           "sla": "SLA",
-          "variables": "变量"
+          "taskDefaults": "任务默认值",
+          "variables": "变量",
+          "workerGroup": "工作组"
         },
         "main": {
           "description": "描述",
-          "flow_id": "Flow ID",
+          "id": "Flow ID",
+          "inputs": "输入",
           "namespace": "命名空间"
         }
       },
@@ -859,6 +887,7 @@
         "conditions": "选择条件",
         "errors": "选择一个task",
         "finally": "选择一个task",
+        "inputs": "选择一个input字段类型",
         "pluginDefaults": "选择插件",
         "tasks": "选择一个task",
         "triggers": "选择一个trigger"
@@ -1178,6 +1207,7 @@
     "steps": "步骤",
     "stream": "流",
     "sub flow": "子流程",
+    "submit": "提交",
     "success": "成功",
     "sum": "总计",
     "switch-view": "切换视图",
@@ -1215,6 +1245,7 @@
     "timezone": "时区",
     "title": "标题",
     "to": "到",
+    "to toggle": "切换",
     "toggle fullscreen": "切换全屏",
     "toggle output": "切换输出",
     "toggle output display": "切换输出显示",

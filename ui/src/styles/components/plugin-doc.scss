@@ -8,6 +8,12 @@
     .plugin-icon {
         width: 25px;
         height: 25px;
+        min-width: 25px;
+        min-height: 25px;
+    }
+
+    .plugin-title {
+        min-width: 150px;
     }
 
     .plugin-schema {
@@ -108,10 +114,17 @@
         color: var(--ks-content-info);
         border: 1px solid var(--ks-border-info);
         font-family: 'Courier New', Courier, monospace;
+        white-space: nowrap; // Prevent button text from wrapping
         
         .material-design-icon {
             position: absolute;
             bottom: 0;
+        }
+        
+        @media (max-width: 576px) {
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            min-width: auto;
         }
     }
 }

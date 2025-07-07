@@ -29,6 +29,7 @@
     "Unfold content lines": "다중 라인 문자열 펼치기",
     "about_this_blueprint": "이 blueprint 정보",
     "absolute": "절대적",
+    "accept": "수락",
     "actions": "작업",
     "activate_basic_auth": "기본 인증 활성화",
     "active": "활성화됨",
@@ -44,6 +45,13 @@
     "advanced configuration": "다른 속성",
     "after": "이후",
     "aggregation": "집계",
+    "ai": {
+      "flow": {
+        "generating": "Flow YAML을 생성 중입니다...",
+        "prompt_placeholder": "Kestra flow를 생성하기 위한 지침을 입력하세요.",
+        "title": "AI 에이전트"
+      }
+    },
     "all executions": "모든 실행",
     "all tags": "모든 태그",
     "api": "API",
@@ -119,10 +127,25 @@
     "change state current state": "현재 상태는:",
     "change state done": "작업 상태가 업데이트되었습니다",
     "change state hint": {
-      "FAILED": "['Flow가 FAILED로 표시됩니다.', '다른 task는 실행되지 않습니다.', '오류 task가 실행됩니다.']",
-      "RUNNING": "['Flow가 재시작되며 모든 다음 task가 실행됩니다.', '모든 차단된 task가 실행됩니다.']",
-      "SUCCESS": "['이 task가 성공했기 때문에 flow가 재시작됩니다.', '모든 차단된 task가 실행됩니다.', '모든 task 실행이 성공하면 flow는 SUCCESS 상태가 됩니다.']",
-      "WARNING": "['Flow가 WARNING으로 표시됩니다.', '다음 tasks가 실행됩니다.', '오류 tasks가 실행됩니다.']"
+      "FAILED": [
+        "Flow가 FAILED로 표시됩니다.",
+        "다른 task는 실행되지 않습니다.",
+        "오류 task가 실행됩니다."
+      ],
+      "RUNNING": [
+        "Flow가 재시작되며 모든 다음 task가 실행됩니다.",
+        "모든 차단된 task가 실행됩니다."
+      ],
+      "SUCCESS": [
+        "이 task가 성공했기 때문에 flow가 재시작됩니다.",
+        "모든 차단된 task가 실행됩니다.",
+        "모든 task 실행이 성공하면 flow는 SUCCESS 상태가 됩니다."
+      ],
+      "WARNING": [
+        "Flow가 WARNING으로 표시됩니다.",
+        "다음 tasks가 실행됩니다.",
+        "오류 tasks가 실행됩니다."
+      ]
     },
     "change state tooltip": "실행 상태 변경",
     "chart": "차트",
@@ -183,6 +206,7 @@
         "confirmation": "<code>{title}</code> 대시보드를 삭제하시겠습니까?"
       },
       "edition": {
+        "chart": "이 차트 편집",
         "confirmation": "대시보드 <code>{title}</code>의 변경 사항이 저장되었습니다.",
         "label": "대시보드 편집"
       },
@@ -239,6 +263,7 @@
     },
     "days": "일",
     "debug": "디버그",
+    "decline": "거부",
     "default": "기본값",
     "delete": "삭제",
     "delete backfill": "backfill 삭제",
@@ -599,7 +624,7 @@
     "flows deleted": "<code>{count}</code> 개의 flow가 삭제되었습니다",
     "flows disabled": "<code>{count}</code> 개의 flow가 비활성화되었습니다",
     "flows enabled": "<code>{count}</code> 개의 flow가 활성화되었습니다",
-    "flows exported": "flow가 내보내졌습니다",
+    "flows exported": "<code>{count}</code> Flow(s) 내보내기 완료",
     "flows imported": "Flow가 가져왔습니다.",
     "focus task": "문서를 보려면 요소를 클릭하세요.",
     "fold_all_multi_lines": "모든 다중 라인 접기",
@@ -715,7 +740,9 @@
       },
       "delete": {
         "file": "파일 삭제",
+        "files": "{count}개의 선택된 파일 삭제",
         "folder": "폴더 삭제",
+        "folders": "{count}개의 선택된 폴더 삭제",
         "label": "삭제"
       },
       "dialog": {
@@ -814,6 +841,7 @@
         "conditions": "조건 추가",
         "errors": "오류 처리기 추가",
         "finally": "마지막 블록 추가",
+        "inputs": "입력 필드 추가",
         "pluginDefaults": "플러그인 기본값 추가",
         "tasks": "작업 추가",
         "triggers": "트리거 추가"
@@ -822,16 +850,19 @@
         "general": {
           "concurrency": "병행성",
           "disabled": "비활성화됨",
-          "inputs": "입력",
           "labels": "레이블",
+          "listeners": "리스너",
           "outputs": "출력",
           "retry": "재시도",
           "sla": "SLA",
-          "variables": "변수"
+          "taskDefaults": "작업 기본값",
+          "variables": "변수",
+          "workerGroup": "작업자 그룹"
         },
         "main": {
           "description": "설명",
-          "flow_id": "플로우 ID",
+          "id": "Flow ID",
+          "inputs": "입력",
           "namespace": "네임스페이스"
         }
       },
@@ -859,6 +890,7 @@
         "conditions": "조건 선택",
         "errors": "작업 선택",
         "finally": "작업 선택",
+        "inputs": "입력 필드 유형 선택",
         "pluginDefaults": "플러그인 선택",
         "tasks": "작업 선택",
         "triggers": "트리거 선택"
@@ -1178,6 +1210,7 @@
     "steps": "단계",
     "stream": "스트림",
     "sub flow": "Subflow",
+    "submit": "제출",
     "success": "성공",
     "sum": "합계",
     "switch-view": "보기 전환",
@@ -1215,6 +1248,7 @@
     "timezone": "시간대",
     "title": "제목",
     "to": "종료",
+    "to toggle": "전환하기",
     "toggle fullscreen": "전체 화면 전환",
     "toggle output": "출력 전환",
     "toggle output display": "출력 표시 전환",

@@ -40,15 +40,22 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed, inject, provide, ref} from "vue";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../code/utils/icons";
 
     import Add from "../../code/components/Add.vue";
     import getTaskComponent from "./getTaskComponent";
     import TaskWrapper from "./TaskWrapper.vue";
+    import {SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
 
     defineOptions({inheritAttrs: false});
+
+    const schemaPath = inject(SCHEMA_PATH_INJECTION_KEY, ref())
+
+    provide(SCHEMA_PATH_INJECTION_KEY, computed(() => {
+        return [schemaPath.value, "properties", props.root, "items"].join("/");
+    }));
 
     const emits = defineEmits(["update:modelValue"]);
     const props = withDefaults(defineProps<{

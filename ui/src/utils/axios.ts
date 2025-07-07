@@ -4,6 +4,7 @@ import {Router} from "vue-router";
 import {Store} from "vuex";
 import {storageKeys} from "./constants";
 import {useLayoutStore} from "../stores/layout";
+import {useCoreStore} from "../stores/core";
 
 // nprogress
 let pendingRoute = false;
@@ -63,7 +64,7 @@ const progressInterceptor = (progressEvent: AxiosProgressEvent) => {
 interface QueueItem {
     config: AxiosRequestConfig;
     resolve: (value: AxiosResponse | Promise<AxiosResponse>) => void;
-    reject: (reason?: any) => void;
+
 }
 
 export default (
@@ -90,16 +91,17 @@ export default (
     let refreshing = false;
 
     instance.interceptors.response.use(
-        (response: AxiosResponse) => {
+        (response) => {
             return response;
         },
-        async (errorResponse: AxiosError & { config?: { showMessageOnError?: boolean } }) => {
+        async (errorResponse: AxiosError & QueueItem & {config:{showMessageOnError: boolean}}) => {
             if (errorResponse?.code === "ERR_BAD_RESPONSE" && !errorResponse?.response?.data) {
-                store.dispatch("core/showMessage", {
+                const coreStore = useCoreStore();
+                coreStore.message = {
+                    variant: "error",
                     response: errorResponse,
                     content: errorResponse,
-                    variant: "error"
-                });
+                };
                 return Promise.reject(errorResponse);
             }
 
@@ -108,7 +110,8 @@ export default (
             }
 
             if (errorResponse.response.status === 404) {
-                store.dispatch("core/showError", errorResponse.response.status)
+                const coreStore = useCoreStore();
+                coreStore.error = errorResponse.response.status;
 
                 return Promise.reject(errorResponse);
             }
@@ -153,11 +156,11 @@ export default (
                     refreshing = true;
                     try {
                         await instance.post("/oauth/access_token?grant_type=refresh_token", null, {headers: {"Content-Type": "application/json"}});
-                        toRefreshQueue.forEach(({config, resolve, reject}) => {
+                        toRefreshQueue.forEach(({config, resolve}) => {
                             instance.request(config).then(response => {
                                 resolve(response)
                             }).catch(error => {
-                                reject(error)
+                                throw error
                             })
                         })
                         toRefreshQueue = [];
@@ -168,7 +171,7 @@ export default (
                         return instance(originalRequest)
                     } catch {
                         document.body.classList.add("login");
-                        store.dispatch("core/isUnsaved", false);
+                        useCoreStore().unsavedChange = false;
                         
                         useLayoutStore().setTopNavbar(undefined);
                         
@@ -182,8 +185,7 @@ export default (
                         refreshing = false;
                     }
                 } else {
-                    // @ts-expect-error https://github.com/kestra-io/kestra-ee/issues/4157
-                    toRefreshQueue.push(originalRequest);
+                    toRefreshQueue.push(errorResponse);
 
                     return;
                 }
@@ -194,11 +196,12 @@ export default (
             }
 
             if (errorResponse.response.data && errorResponse?.config?.showMessageOnError !== false) {
-                store.dispatch("core/showMessage", {
+                const coreStore = useCoreStore();
+                coreStore.message = {
+                    variant: "error",
                     response: errorResponse.response,
-                    content: errorResponse.response.data,
-                    variant: "error"
-                })
+                    content: errorResponse.response.data
+                };
 
                 return Promise.reject(errorResponse);
             }

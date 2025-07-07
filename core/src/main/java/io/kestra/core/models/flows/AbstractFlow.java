@@ -3,6 +3,8 @@ package io.kestra.core.models.flows;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -60,6 +62,9 @@ public abstract class AbstractFlow implements FlowInterface {
     @Schema(implementation = Object.class, oneOf = {List.class, Map.class})
     List<Label> labels;
 
+    @Schema(additionalProperties = Schema.AdditionalPropertiesValue.TRUE)
     Map<String, Object> variables;
 
+    @Valid
+    private WorkerGroup workerGroup;
 }

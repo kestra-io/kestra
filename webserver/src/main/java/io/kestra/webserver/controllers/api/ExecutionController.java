@@ -23,6 +23,9 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.runners.pebble.functions.HttpFunction;
+import io.kestra.core.runners.pebble.functions.SecretFunction;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -31,6 +34,7 @@ import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkErrorResponse;
@@ -41,6 +45,7 @@ import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.kestra.webserver.utils.filepreview.FileRender;
 import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Introspected;
@@ -95,6 +100,7 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
@@ -112,11 +118,16 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Validated
 @Controller("/api/v1/{tenant}/executions")
 public class ExecutionController {
-    private static final Pattern SECRET_FUNCTION = Pattern.compile("(.*)(secret\\([^)]+\\))(.*)");
-
     @Nullable
     @Value("${micronaut.server.context-path}")
     protected String basePath;
+
+    @Inject
+    private ApplicationContext applicationContext;
+
+    @Inject
+    @Nullable
+    private VariableRenderer.VariableConfiguration variableConfiguration;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -220,7 +231,6 @@ public class ExecutionController {
             triggerExecutionId);
 
         return PagedResults.of(executionRepository.find(
-
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             tenantService.resolveTenant(),
             filters
@@ -298,20 +308,14 @@ public class ExecutionController {
     }
 
     private String runContextRender(Flow flow, Task task, Execution execution, TaskRun taskRun, String expression) throws IllegalVariableEvaluationException {
-        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun, false);
-        String baseRender = runContext.render(expression);
-
-        if (expression.contains("{")) { // fast backoff from regex
-            Matcher matcher = SECRET_FUNCTION.matcher(expression);
-            String maskedExpression = expression;
-            while (matcher.find()) {
-                maskedExpression = matcher.replaceFirst("$1\"******\"$3");
-                matcher = SECRET_FUNCTION.matcher(maskedExpression);
-            }
-            return runContext.render(maskedExpression);
-        }
-
-        return baseRender;
+        return runContextFactory.of(
+            flow,
+            task,
+            execution,
+            taskRun,
+            false,
+            new VariableRenderer(applicationContext, variableConfiguration, List.of(SecretFunction.NAME))
+        ).render(expression);
     }
 
     @SuperBuilder
@@ -1283,8 +1287,9 @@ public class ExecutionController {
     ) throws Exception {
         Execution execution = executionService.getExecutionIfPause(tenantService.resolveTenant(), executionId, true);
         Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+        Pause.Resumed resumed = createResumed();
 
-        return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs)
+        return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs, resumed)
             .<HttpResponse<?>>handle((resumeExecution, sink) -> {
                 try {
                     this.executionQueue.emit(resumeExecution);
@@ -1295,6 +1300,10 @@ public class ExecutionController {
             })
             // need to consume the inputs in case of error
             .doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast());
+    }
+
+    protected Pause.Resumed createResumed() {
+        return Pause.Resumed.now();
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1344,7 +1353,7 @@ public class ExecutionController {
         for (Execution execution : executions) {
             var flow = flows.get(execution.getFlowId() + "_" + execution.getFlowRevision()) != null ? flows.get(execution.getFlowId() + "_" + execution.getFlowRevision()) : flowRepository.findByExecutionWithoutAcl(execution);
             flows.put(execution.getFlowId() + "_" + execution.getFlowRevision(), flow);
-            Execution resumeExecution = this.executionService.resume(execution, flow, State.Type.RUNNING);
+            Execution resumeExecution = this.executionService.resume(execution, flow, State.Type.RUNNING, createResumed());
             this.executionQueue.emit(resumeExecution);
         }
 

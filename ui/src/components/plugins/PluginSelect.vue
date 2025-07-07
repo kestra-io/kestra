@@ -1,7 +1,7 @@
 <template>
     <el-select
         v-model="modelValue"
-        :placeholder="$t(`no_code.select.${blockType}`)"
+        :placeholder="t(`no_code.select.${blockType}`)"
         filterable
     >
         <el-option
@@ -25,47 +25,94 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeMount} from "vue";
+    import {computed, inject, onBeforeMount} from "vue";
+    import {useI18n} from "vue-i18n";
     import {TaskIcon} from "@kestra-io/ui-libs";
-    import {BlockType} from "../code/utils/types";
-    import {usePluginsStore} from "../../stores/plugins";
+    import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
+    import {
+        BLOCK_SCHEMA_PATH_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY
+    } from "../code/injectionKeys";
+    import {getValueAtJsonPath} from "../../utils/utils";
 
-    const props = defineProps<{
-        blockType: BlockType | "pluginDefaults";
-    }>()
+    const pluginsStore = usePluginsStore();
+
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+
+    const blockType = parentPath.split(".").pop() ?? "";
+
+    const fieldDefinition = computed(() => {
+        if(blockSchemaPath.length === 0) {
+            console.error("Definition key is required for PluginSelect component");
+        }
+        return getValueAtJsonPath(pluginsStore.flowSchema, blockSchemaPath);
+    })
+
+    onBeforeMount(() => {
+        if(blockType === "pluginDefaults") {
+            pluginsStore.listWithSubgroup({includeDeprecated: false});
+        }
+    })
+
+    const taskModels = computed(() => {
+        if(blockType === "pluginDefaults") {
+            const models = new Set<any>();
+            const pluginKeySection = ["tasks", "conditions", "triggers", "taskRunners"] as const;
+
+            for (const plugin of pluginsStore.plugins || []) {
+                for (const curSection of pluginKeySection) {
+                    const entries = plugin[curSection];
+                    if (entries) {
+                        for (const model of entries) {
+                            models.add(model);
+                        }
+                    }
+                }
+            }
+
+            return Array.from(models);
+        }
+        const allRefs = fieldDefinition.value?.anyOf?.map((item: any) => {
+            if(item.allOf){
+                // if the item is an allOf, we need to find the first item that has a $ref
+                const refItem = item.allOf.find((d: any) => d.$ref);
+                if(refItem?.$ref) {
+                    return removeRefPrefix(refItem.$ref);
+                }
+            }
+            return removeRefPrefix(item.$ref);
+        }) || [];
+
+        return allRefs.reduce((acc: string[], item: string) => {
+            const def = pluginsStore.flowDefinitions?.[item]
+            if(!def) {
+                return acc;
+            }
+            if(def.$deprecated === true) {
+                return acc;
+            }
+            if(def.$deprecated === true) {
+                return acc;
+            }
+
+            const consolidatedType = def.allOf
+                ? def.allOf.find((d: any) => d.properties?.type)?.properties.type
+                : def.properties?.type;
+
+            if(consolidatedType?.const){
+                acc.push(consolidatedType?.const);
+            }
+            return acc
+        }, []).sort();
+    })
+
+    const {t} = useI18n();
 
     const modelValue = defineModel({
         type: String,
         default: "",
     });
-
-    const pluginsStore = usePluginsStore();
-
-    onBeforeMount(() => {
-        pluginsStore.listWithSubgroup({includeDeprecated: false});
-    })
-
-    const taskModels = computed(() => {
-        const models = new Set<any>();
-        const pluginKeySection: BlockType[] =
-            props.blockType === "pluginDefaults"
-                ? ["tasks", "conditions", "triggers", "taskRunners"]
-                : [props.blockType];
-
-        for (const plugin of pluginsStore.plugins || []) {
-            for (const curSection of pluginKeySection) {
-                const entries = plugin[curSection];
-                if (entries) {
-                    for (const model of entries) {
-                        models.add(model);
-                    }
-                }
-            }
-        }
-
-        return Array.from(models);
-    });
-
 </script>
 
 <style lang="scss" scoped>

@@ -35,6 +35,11 @@ function getType(property: any, key?: string, schema?: any): string {
                 && property.anyOf[0].type === "array" && property.anyOf[1].type === "object") {
             return "KV-pairs";
         }
+
+        // for dag tasks
+        if(property.anyOf.length > 10) {
+            return "task"
+        }
         return "any-of";
     }
 
@@ -65,13 +70,8 @@ function getType(property: any, key?: string, schema?: any): string {
     }
 
     if( property.type === "array") {
-        if (property.items?.$ref?.includes("tasks.Task")) {
-            return "tasks";
-        }
-
-        if (property.items?.$ref?.includes("conditions.Condition")
-            || property.items.anyOf?.every((item: any) => item.$ref?.includes("io.kestra.plugin.core.condition"))) {
-            return "conditions";
+        if(property.items?.anyOf?.length > 10 || key === "pluginDefaults") {
+            return "list";
         }
 
         return "array";

@@ -29,6 +29,7 @@
     "Unfold content lines": "Развернуть многострочные строки",
     "about_this_blueprint": "О данном blueprint",
     "absolute": "Абсолютный",
+    "accept": "Принять",
     "actions": "Действия",
     "activate_basic_auth": "Активировать Basic Authentication",
     "active": "Активно",
@@ -44,6 +45,13 @@
     "advanced configuration": "Другие свойства",
     "after": "после",
     "aggregation": "Агрегация",
+    "ai": {
+      "flow": {
+        "generating": "Генерация YAML для flow...",
+        "prompt_placeholder": "Введите инструкции для создания вашего Kestra flow.",
+        "title": "AI Агент"
+      }
+    },
     "all executions": "Все выполнения",
     "all tags": "Все теги",
     "api": "API",
@@ -119,10 +127,25 @@
     "change state current state": "Текущий статус:",
     "change state done": "Состояние task было обновлено",
     "change state hint": {
-      "FAILED": "['Flow будет помечен как FAILED.', 'Никакие другие task не будут выполнены.', 'Ошибочные tasks будут выполнены.']",
-      "RUNNING": "['Flow перезапустится и выполнит все следующие tasks.', 'Все заблокированные tasks будут выполнены.']",
-      "SUCCESS": "['Flow будет перезапущен, так как этот task был успешным.', 'Все заблокированные tasks будут выполнены.', 'Flow будет в состоянии SUCCESS, если все запуски tasks будут успешными.']",
-      "WARNING": "['Flow будет помечен как WARNING.', 'Следующие tasks будут выполнены.', 'Ошибка tasks будет выполнена.']"
+      "FAILED": [
+        "Flow будет помечен как FAILED.",
+        "Никакие другие task не будут выполнены.",
+        "Ошибочные tasks будут выполнены."
+      ],
+      "RUNNING": [
+        "Flow перезапустится и выполнит все следующие tasks.",
+        "Все заблокированные tasks будут выполнены."
+      ],
+      "SUCCESS": [
+        "Flow будет перезапущен, так как этот task был успешным.",
+        "Все заблокированные tasks будут выполнены.",
+        "Flow будет в состоянии SUCCESS, если все запуски tasks будут успешными."
+      ],
+      "WARNING": [
+        "Flow будет помечен как WARNING.",
+        "Следующие tasks будут выполнены.",
+        "Ошибка tasks будет выполнена."
+      ]
     },
     "change state tooltip": "Изменить состояние выполнения",
     "chart": "График",
@@ -183,6 +206,7 @@
         "confirmation": "Вы уверены, что хотите удалить панель <code>{title}</code>?"
       },
       "edition": {
+        "chart": "Редактировать этот график",
         "confirmation": "Изменения в панели <code>{title}</code> сохранены.",
         "label": "Редактировать Dashboard"
       },
@@ -239,6 +263,7 @@
     },
     "days": "Дни",
     "debug": "Отладка",
+    "decline": "Отклонить",
     "default": "По умолчанию",
     "delete": "Удалить",
     "delete backfill": "Удалить backfill",
@@ -599,7 +624,7 @@
     "flows deleted": "<code>{count}</code> Flow(ы) удалены",
     "flows disabled": "<code>{count}</code> Flow(ы) отключены",
     "flows enabled": "<code>{count}</code> Flow(ы) включены",
-    "flows exported": "Flows экспортированы",
+    "flows exported": "<code>{count}</code> Flow(s) экспортировано",
     "flows imported": "Потоки импортированы",
     "focus task": "Нажмите на любой элемент, чтобы увидеть его документацию.",
     "fold_all_multi_lines": "Свернуть все многострочные строки",
@@ -715,7 +740,9 @@
       },
       "delete": {
         "file": "Удалить файл",
+        "files": "Удалить {count} выбранных файлов",
         "folder": "Удалить папку",
+        "folders": "Удалить {count} выбранных папок",
         "label": "Удалить"
       },
       "dialog": {
@@ -814,6 +841,7 @@
         "conditions": "Добавить условие",
         "errors": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
+        "inputs": "Добавить поле input",
         "pluginDefaults": "Добавить плагин по умолчанию",
         "tasks": "Добавить task",
         "triggers": "Добавить trigger"
@@ -822,16 +850,19 @@
         "general": {
           "concurrency": "Конкурентность",
           "disabled": "Отключено",
-          "inputs": "Входные данные",
           "labels": "Метки",
+          "listeners": "Слушатели",
           "outputs": "Выходы",
           "retry": "Повторить попытку",
           "sla": "SLA",
-          "variables": "Переменные"
+          "taskDefaults": "Значения по умолчанию для Task",
+          "variables": "Переменные",
+          "workerGroup": "Группа Worker"
         },
         "main": {
           "description": "Описание",
-          "flow_id": "ID потока",
+          "id": "ID flow",
+          "inputs": "Входные данные",
           "namespace": "Namespace"
         }
       },
@@ -859,6 +890,7 @@
         "conditions": "Выберите условие",
         "errors": "Выберите task",
         "finally": "Выберите task",
+        "inputs": "Выберите тип поля input",
         "pluginDefaults": "Выберите плагин",
         "tasks": "Выберите task",
         "triggers": "Выберите trigger"
@@ -1178,6 +1210,7 @@
     "steps": "Шаги",
     "stream": "Поток",
     "sub flow": "Подпроцесс",
+    "submit": "Отправить",
     "success": "Успех",
     "sum": "Сумма",
     "switch-view": "Переключить вид",
@@ -1215,6 +1248,7 @@
     "timezone": "Часовой пояс",
     "title": "Заголовок",
     "to": "До",
+    "to toggle": "переключить",
     "toggle fullscreen": "Переключить полноэкранный режим",
     "toggle output": "Переключить выводы",
     "toggle output display": "Переключить отображение вывода",

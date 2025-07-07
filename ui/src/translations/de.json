@@ -29,6 +29,7 @@
     "Unfold content lines": "Mehrzeilige Zeichenfolgen entfalten",
     "about_this_blueprint": "Über dieses Blueprint",
     "absolute": "Absolut",
+    "accept": "Akzeptieren",
     "actions": "Aktionen",
     "activate_basic_auth": "Aktiviere Basis-Authentifizierung",
     "active": "Aktiv",
@@ -44,6 +45,13 @@
     "advanced configuration": "Andere Eigenschaften",
     "after": "nach",
     "aggregation": "Aggregation",
+    "ai": {
+      "flow": {
+        "generating": "Erzeuge Flow YAML für Sie...",
+        "prompt_placeholder": "Geben Sie Anweisungen ein, um Ihren Kestra flow zu erstellen.",
+        "title": "KI-Agent"
+      }
+    },
     "all executions": "Alle Ausführungen",
     "all tags": "Alle Tags",
     "api": "API",
@@ -119,10 +127,25 @@
     "change state current state": "Aktueller Zustand ist:",
     "change state done": "Der Task-Zustand wurde aktualisiert",
     "change state hint": {
-      "FAILED": "['Der Flow wird als FAILED markiert.', 'Keine andere Task wird ausgeführt.', 'Die Fehler-Tasks werden ausgeführt.']",
-      "RUNNING": "['Der Flow wird neu gestartet und alle nächsten Tasks werden ausgeführt.', 'Alle blockierten Tasks werden ausgeführt.']",
-      "SUCCESS": "['Der Flow wird neu gestartet, da dieser Task erfolgreich war.', 'Alle blockierten Tasks werden ausgeführt.', 'Der Flow wird im Zustand SUCCESS sein, wenn alle Task-Ausführungen erfolgreich sind.']",
-      "WARNING": "['Der Flow wird als WARNING markiert.', 'Die nächsten Tasks werden ausgeführt.', 'Die Fehler-Tasks werden ausgeführt.']"
+      "FAILED": [
+        "Der Flow wird als FAILED markiert.",
+        "Keine andere Task wird ausgeführt.",
+        "Die Fehler-Tasks werden ausgeführt."
+      ],
+      "RUNNING": [
+        "Der Flow wird neu gestartet und alle nächsten Tasks werden ausgeführt.",
+        "Alle blockierten Tasks werden ausgeführt."
+      ],
+      "SUCCESS": [
+        "Der Flow wird neu gestartet, da dieser Task erfolgreich war.",
+        "Alle blockierten Tasks werden ausgeführt.",
+        "Der Flow wird im Zustand SUCCESS sein, wenn alle Task-Ausführungen erfolgreich sind."
+      ],
+      "WARNING": [
+        "Der Flow wird als WARNING markiert.",
+        "Die nächsten Tasks werden ausgeführt.",
+        "Die Fehler-Tasks werden ausgeführt."
+      ]
     },
     "change state tooltip": "Ändern Sie den Ausführungszustand",
     "chart": "Diagramm",
@@ -183,6 +206,7 @@
         "confirmation": "Möchten Sie das Dashboard <code>{title}</code> wirklich löschen?"
       },
       "edition": {
+        "chart": "Bearbeiten Sie dieses Diagramm",
         "confirmation": "Änderungen im Dashboard <code>{title}</code> werden gespeichert.",
         "label": "Dashboard bearbeiten"
       },
@@ -239,6 +263,7 @@
     },
     "days": "Tage",
     "debug": "Debuggen",
+    "decline": "Ablehnen",
     "default": "Standard",
     "delete": "Löschen",
     "delete backfill": "Backfill löschen",
@@ -599,7 +624,7 @@
     "flows deleted": "<code>{count}</code> Flow(s) gelöscht",
     "flows disabled": "<code>{count}</code> Flow(s) deaktiviert",
     "flows enabled": "<code>{count}</code> Flow(s) aktiviert",
-    "flows exported": "Flows exportiert",
+    "flows exported": "<code>{count}</code> Flow(s) exportiert",
     "flows imported": "Flows importiert",
     "focus task": "Klicken Sie auf ein Element, um dessen Dokumentation zu sehen.",
     "fold_all_multi_lines": "Alle Mehrzeiligen Einklappen",
@@ -715,7 +740,9 @@
       },
       "delete": {
         "file": "Datei löschen",
+        "files": "Lösche {count} ausgewählte Dateien",
         "folder": "Ordner löschen",
+        "folders": "Lösche {count} ausgewählte Ordner",
         "label": "Löschen"
       },
       "dialog": {
@@ -814,6 +841,7 @@
         "conditions": "Bedingung hinzufügen",
         "errors": "Einen Fehler-Handler hinzufügen",
         "finally": "Fügen Sie einen Finally-Block hinzu",
+        "inputs": "Ein Eingabefeld hinzufügen",
         "pluginDefaults": "Fügen Sie ein Plugin-Default hinzu",
         "tasks": "Aufgabe hinzufügen",
         "triggers": "Füge einen Trigger hinzu"
@@ -822,16 +850,19 @@
         "general": {
           "concurrency": "Nebenläufigkeit",
           "disabled": "Deaktiviert",
-          "inputs": "Eingaben",
           "labels": "Labels",
+          "listeners": "Listener",
           "outputs": "Ausgaben",
           "retry": "Wiederholen",
           "sla": "SLA",
-          "variables": "Variablen"
+          "taskDefaults": "Standardwerte für Tasks",
+          "variables": "Variablen",
+          "workerGroup": "Worker-Gruppe"
         },
         "main": {
           "description": "Beschreibung",
-          "flow_id": "Flow-ID",
+          "id": "Flow-ID",
+          "inputs": "Eingaben",
           "namespace": "Namespace"
         }
       },
@@ -859,6 +890,7 @@
         "conditions": "Wählen Sie eine Bedingung aus",
         "errors": "Wählen Sie eine Task aus",
         "finally": "Wählen Sie eine Task aus",
+        "inputs": "Wählen Sie einen Input-Feldtyp aus",
         "pluginDefaults": "Wählen Sie ein Plugin aus",
         "tasks": "Wählen Sie eine Task aus",
         "triggers": "Wählen Sie einen Trigger aus"
@@ -1178,6 +1210,7 @@
     "steps": "Schritte",
     "stream": "Stream",
     "sub flow": "Subflow",
+    "submit": "Einreichen",
     "success": "Erfolg",
     "sum": "Summe",
     "switch-view": "Ansicht wechseln",
@@ -1215,6 +1248,7 @@
     "timezone": "Zeitzone",
     "title": "Titel",
     "to": "Bis",
+    "to toggle": "umschalten",
     "toggle fullscreen": "Vollbild umschalten",
     "toggle output": "Outputs umschalten",
     "toggle output display": "Outputanzeige umschalten",

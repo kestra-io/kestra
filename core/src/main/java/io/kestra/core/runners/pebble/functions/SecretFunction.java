@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 @Slf4j
 @Singleton
 public class SecretFunction implements Function {
+    public static final String NAME = "secret";
 
     private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofJson();
     private static final String SUBKEY_ARG = "subkey";

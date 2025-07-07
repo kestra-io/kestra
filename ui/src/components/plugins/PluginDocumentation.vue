@@ -8,7 +8,7 @@
                     only-icon
                     :icons="pluginsStore.icons"
                 />
-                <h4 class="mb-0">
+                <h4 class="mb-0 plugin-title text-truncate">
                     {{ pluginName }}
                 </h4>
                 <el-button

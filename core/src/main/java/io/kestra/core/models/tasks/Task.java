@@ -28,6 +28,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @Plugin
 abstract public class Task implements TaskInterface {
+    @Size(max = 256, message = "Task id must be at most 256 characters")
     protected String id;
 
     protected String type;

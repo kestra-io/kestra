@@ -904,6 +904,7 @@
     "no_logs_data_description": "Либо никакие flows не выполняются, либо вам нужно изменить фильтры.",
     "no_namespaces": "Ни один namespace не соответствует критериям поиска.",
     "no_results": {
+      "dsf": "I'm sorry, but it seems like the text you provided for translation is not complete or may contain a typo. Could you please provide the correct text that needs to be translated?",
       "executions": "Исполнения не найдены",
       "flows": "Потоки не найдены",
       "kv_pairs": "Пары kv store не найдены",

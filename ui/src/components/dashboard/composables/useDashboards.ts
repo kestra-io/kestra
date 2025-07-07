@@ -91,6 +91,8 @@ export const TYPES: Record<string, any> = {
 
 export const isKPIChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.KPI";
 
+export const isTableChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.Table";
+
 export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id;
 
 export const getPropertyValue = (data: Record<string, any>, property: "value" | "description"): string => data.results?.[0]?.[property];

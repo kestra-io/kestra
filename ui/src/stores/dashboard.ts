@@ -79,5 +79,10 @@ export const useDashboardStore = defineStore("dashboard", {
             const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/charts/preview`, chart);
             return response.data;
         },
+
+        async export(chart: any) {
+            // TODO: Implement export functionality as part of https://github.com/kestra-io/kestra/issues/9368
+            return chart;
+        },
     },
 });

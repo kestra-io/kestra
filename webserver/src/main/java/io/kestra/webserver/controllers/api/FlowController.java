@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -97,6 +98,9 @@ public class FlowController {
 
     @Inject
     private TenantService tenantService;
+
+    @Inject
+    private JsonSchemaGenerator jsonSchemaGenerator;
 
 
     @ExecuteOn(TaskExecutors.IO)
@@ -282,7 +286,7 @@ public class FlowController {
     }
 
     /**
-     * @deprecated use {@link #create(String)} instead
+     * @deprecated use {@link #createFlow(String)} (String)} instead
      */
     @ExecuteOn(TaskExecutors.IO)
     @Post(consumes = MediaType.ALL)

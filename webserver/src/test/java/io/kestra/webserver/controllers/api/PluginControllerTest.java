@@ -151,13 +151,24 @@ class PluginControllerTest {
     }
 
     @Test
-    void flow() {
+    void flowSchema() {
         Map<String, Object> doc = client.toBlocking().retrieve(
             HttpRequest.GET(PATH + "/schemas/flow"),
             Argument.mapOf(String.class, Object.class)
         );
 
         assertThat(doc.get("$ref")).isEqualTo("#/definitions/io.kestra.core.models.flows.Flow");
+    }
+
+    @Test
+    void flowProperties() {
+        Map<String, Object> doc = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/properties/flow"),
+            Argument.mapOf(String.class, Object.class)
+        );
+
+        assertThat((Map<String, Object>) doc.get("properties")).hasSize(23);
+        assertThat((List<String>) doc.get("required")).hasSize(3);
     }
 
     @Test

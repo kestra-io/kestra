@@ -24,6 +24,7 @@ public class JsonSchemaCache {
     private final JsonSchemaGenerator jsonSchemaGenerator;
 
     private final ConcurrentMap<CacheKey, Map<String, Object>> schemaCache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<SchemaType, Map<String, Object>> propertiesCache = new ConcurrentHashMap<>();
 
     private final Map<SchemaType, Class<?>> classesBySchemaType = new HashMap<>();
 
@@ -52,6 +53,16 @@ public class JsonSchemaCache {
         });
     }
 
+    public Map<String, Object> getPropertiesForType(final SchemaType type) {
+        return propertiesCache.computeIfAbsent(type, (key) -> {
+
+            Class<?> cls = Optional.ofNullable(classesBySchemaType.get(type))
+                .orElseThrow(() -> new IllegalArgumentException("Cannot found properties for type '" + type + "'"));
+            return jsonSchemaGenerator.properties(null, cls);
+        });
+    }
+
+    // must be public as it's used in EE
     public void registerClassForType(final SchemaType type, final Class<?> clazz) {
         classesBySchemaType.put(type, clazz);
     }

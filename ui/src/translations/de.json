@@ -840,6 +840,7 @@
         "conditions": "Bedingung hinzufügen",
         "errors": "Einen Fehler-Handler hinzufügen",
         "finally": "Fügen Sie einen Finally-Block hinzu",
+        "inputs": "Ein Eingabefeld hinzufügen",
         "pluginDefaults": "Fügen Sie ein Plugin-Default hinzu",
         "tasks": "Aufgabe hinzufügen",
         "triggers": "Füge einen Trigger hinzu"
@@ -848,16 +849,19 @@
         "general": {
           "concurrency": "Nebenläufigkeit",
           "disabled": "Deaktiviert",
-          "inputs": "Eingaben",
           "labels": "Labels",
+          "listeners": "Listener",
           "outputs": "Ausgaben",
           "retry": "Wiederholen",
           "sla": "SLA",
-          "variables": "Variablen"
+          "taskDefaults": "Standardwerte für Tasks",
+          "variables": "Variablen",
+          "workerGroup": "Worker-Gruppe"
         },
         "main": {
           "description": "Beschreibung",
-          "flow_id": "Flow-ID",
+          "id": "Flow-ID",
+          "inputs": "Eingaben",
           "namespace": "Namespace"
         }
       },
@@ -885,6 +889,7 @@
         "conditions": "Wählen Sie eine Bedingung aus",
         "errors": "Wählen Sie eine Task aus",
         "finally": "Wählen Sie eine Task aus",
+        "inputs": "Wählen Sie einen Input-Feldtyp aus",
         "pluginDefaults": "Wählen Sie ein Plugin aus",
         "tasks": "Wählen Sie eine Task aus",
         "triggers": "Wählen Sie einen Trigger aus"

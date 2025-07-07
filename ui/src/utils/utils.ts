@@ -313,3 +313,32 @@ export const useTheme = () => {
     const store = useStore();
     return computed<"light" | "dark">(() => store.getters["misc/theme"]);
 }
+
+function resolve$ref(obj: Record<string, any>, fullObject: Record<string, any>) {
+    if (obj === undefined || obj === null) {
+        return;
+    }
+    if(obj.$ref){
+        return getValueAtJsonPath(fullObject, obj.$ref);
+    }
+    return obj
+}
+
+export function getValueAtJsonPath(obj: Record<string, any>, path: string): any {
+    if (!obj || !path || typeof path !== "string") {
+        return undefined;
+    }
+
+    const keys = path.replace(/^#\//, "").split("/");
+    let current = obj;
+
+    for (const key of keys) {
+        if (current && key in current) {
+            current = resolve$ref(current[key], obj);
+        } else {
+            return undefined;
+        }
+    }
+
+    return current;
+}

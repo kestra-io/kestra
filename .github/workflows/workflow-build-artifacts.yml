@@ -68,7 +68,7 @@ jobs:
           if [[ $TAG = "master" || $TAG == v* ]]; then
             echo "plugins=$PLUGINS" >> $GITHUB_OUTPUT
           else
-            echo "plugins=--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots $PLUGINS" >> $GITHUB_OUTPUT
+            echo "plugins=--repositories=https://central.sonatype.com/repository/maven-snapshots/ $PLUGINS" >> $GITHUB_OUTPUT
           fi
 
       # Build

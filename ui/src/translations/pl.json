@@ -840,6 +840,7 @@
         "conditions": "Dodaj warunek",
         "errors": "Dodaj obsługę błędów",
         "finally": "Dodaj blok finally",
+        "inputs": "Dodaj pole input",
         "pluginDefaults": "Dodaj domyślny plugin",
         "tasks": "Dodaj task",
         "triggers": "Dodaj trigger"
@@ -848,16 +849,19 @@
         "general": {
           "concurrency": "Współbieżność",
           "disabled": "Wyłączony",
-          "inputs": "Wejścia",
           "labels": "Etykiety",
+          "listeners": "Słuchacze",
           "outputs": "Wyjścia",
           "retry": "Ponów próbę",
           "sla": "SLA",
-          "variables": "Zmienne"
+          "taskDefaults": "Domyślne ustawienia Task",
+          "variables": "Zmienne",
+          "workerGroup": "Grupa Worker"
         },
         "main": {
           "description": "Opis",
-          "flow_id": "Identyfikator flow",
+          "id": "Flow ID",
+          "inputs": "Wejścia",
           "namespace": "Namespace"
         }
       },
@@ -885,6 +889,7 @@
         "conditions": "Wybierz warunek",
         "errors": "Wybierz task",
         "finally": "Wybierz task",
+        "inputs": "Wybierz typ pola input",
         "pluginDefaults": "Wybierz plugin",
         "tasks": "Wybierz task",
         "triggers": "Wybierz trigger"

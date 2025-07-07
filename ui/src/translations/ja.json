@@ -837,6 +837,7 @@
         "conditions": "条件を追加",
         "errors": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
+        "inputs": "入力フィールドを追加",
         "pluginDefaults": "プラグインのデフォルトを追加",
         "tasks": "タスクを追加",
         "triggers": "トリガーを追加"
@@ -845,16 +846,19 @@
         "general": {
           "concurrency": "並行性",
           "disabled": "無効",
-          "inputs": "入力",
           "labels": "ラベル",
+          "listeners": "リスナー",
           "outputs": "出力",
           "retry": "リトライ",
           "sla": "SLA",
-          "variables": "変数"
+          "taskDefaults": "タスクデフォルト",
+          "variables": "変数",
+          "workerGroup": "ワーカーグループ"
         },
         "main": {
           "description": "説明",
-          "flow_id": "フローID",
+          "id": "Flow ID",
+          "inputs": "入力",
           "namespace": "Namespace（ネームスペース）"
         }
       },
@@ -882,6 +886,7 @@
         "conditions": "条件を選択",
         "errors": "タスクを選択",
         "finally": "タスクを選択",
+        "inputs": "入力フィールドタイプを選択",
         "pluginDefaults": "プラグインを選択",
         "tasks": "タスクを選択",
         "triggers": "トリガーを選択"

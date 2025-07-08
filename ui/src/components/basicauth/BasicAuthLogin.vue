@@ -92,8 +92,8 @@
     const redirectPath = computed(() => (route.query.from as string) ?? "/welcome")
 
     const isLoginDisabled = computed(() => 
-        !credentials.value.username.trim() || 
-        !credentials.value.password.trim() || 
+        !credentials.value.username?.trim() || 
+        !credentials.value.password?.trim() || 
         isLoading.value
     )
 
@@ -107,8 +107,12 @@
 
         try {
             const {username, password} = credentials.value
+            
+            if (!username?.trim() || !password?.trim()) {
+                throw new Error("Username and password are required")
+            }
+            
             const trimmedUsername = username.trim()
-
             const auth = btoa(`${trimmedUsername}:${password}`)
             
             await axios.get(`${apiUrlWithoutTenants()}/configs`, {

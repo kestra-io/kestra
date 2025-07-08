@@ -730,11 +730,12 @@ class ExecutionControllerRunnerTest {
             HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", null));
         assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
 
-        // check that the execution is no more paused
-        Thread.sleep(100);
-        Execution execution = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution.getId()),
-            Execution.class);
+        // waiting for the flow to complete successfully
+        Execution execution = runnerUtils.awaitExecution(
+            exec -> exec.getId().equals(pausedExecution.getId()) && exec.getState().isSuccess(),
+            () -> {},
+            Duration.ofSeconds(10)
+        );
         assertThat(execution.getState().isPaused()).isFalse();
         assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
     }

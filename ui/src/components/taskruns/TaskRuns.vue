@@ -14,6 +14,11 @@
                 />
             </template>
 
+            <template #top>
+                <el-card v-if="showStatChart()" shadow="never" class="mb-4">
+                    <ExecutionsBar v-if="statStore.taskRunDailyData" :data="statStore.taskRunDailyData" :total="executionsCount" />
+                </el-card>
+            </template>
 
             <template #table>
                 <el-table
@@ -104,6 +109,7 @@
 </script>
 <script>
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -113,7 +119,7 @@
     import DateAgo from "../layout/DateAgo.vue";
     import Kicon from "../Kicon.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
-
+    import {useStatStore} from "../../stores/stat";
     import {State} from "@kestra-io/ui-libs"
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
@@ -141,6 +147,7 @@
         },
         computed: {
             ...mapState("taskrun", ["taskruns", "total"]),
+            ...mapStores(useStatStore),
             routeInfo() {
                 return {
                     title: this.$t("taskruns")
@@ -166,6 +173,11 @@
 
                 // the default is PT30D
                 return this.$moment().subtract(30, "days").toISOString(true);
+            },
+            executionsCount() {
+                return this.statStore.taskRunDailyData?.reduce((a, b) => {  
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);  
+                }, 0) ?? 0; 
             },
         },
         methods: {
@@ -210,6 +222,15 @@
             },
             loadData(callback) {
                 this.lastRefreshDate = new Date();
+                this.statStore
+                    .taskRunDaily(this.loadQuery({
+                        startDate: this.startDate,
+                        endDate: this.endDate
+                    }, true))
+                    .then(() => {
+                        this.dailyReady = true;
+                    });
+
                 this.$store
                     .dispatch("taskrun/findTaskRuns", this.loadQuery({
                         size: parseInt(this.$route.query.size || 25),

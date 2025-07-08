@@ -45,7 +45,7 @@ public class JsonSchemaCache {
 
     public Map<String, Object> getSchemaForType(final SchemaType type,
                                                 final boolean arrayOf) {
-        return schemaCache.computeIfAbsent(new CacheKey(type, arrayOf), (key) -> {
+        return schemaCache.computeIfAbsent(new CacheKey(type, arrayOf), key -> {
 
             Class<?> cls = Optional.ofNullable(classesBySchemaType.get(type))
                 .orElseThrow(() -> new IllegalArgumentException("Cannot found schema for type '" + type + "'"));
@@ -54,7 +54,7 @@ public class JsonSchemaCache {
     }
 
     public Map<String, Object> getPropertiesForType(final SchemaType type) {
-        return propertiesCache.computeIfAbsent(type, (key) -> {
+        return propertiesCache.computeIfAbsent(type, key -> {
 
             Class<?> cls = Optional.ofNullable(classesBySchemaType.get(type))
                 .orElseThrow(() -> new IllegalArgumentException("Cannot found properties for type '" + type + "'"));

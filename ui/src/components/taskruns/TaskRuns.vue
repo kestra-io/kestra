@@ -221,6 +221,7 @@
             },
             loadData(callback) {
                 this.lastRefreshDate = new Date();
+
                 this.statStore
                     .taskRunDaily(this.loadQuery({
                         startDate: this.startDate,

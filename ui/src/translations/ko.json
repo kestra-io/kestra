@@ -41,6 +41,7 @@
     "add task": "task 추가",
     "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
     "add_new_item": "새 항목 추가",
+    "additionalPlugins": "추가 플러그인",
     "administration": "관리",
     "advanced configuration": "다른 속성",
     "after": "이후",
@@ -55,6 +56,7 @@
     "all executions": "모든 실행",
     "all tags": "모든 태그",
     "api": "API",
+    "appBlocks": "앱 블록",
     "apps": "앱",
     "attempt": "시도",
     "attempts": "시도 횟수",
@@ -133,7 +135,7 @@
         "오류 task가 실행됩니다."
       ],
       "RUNNING": [
-        "Flow가 재시작되며 모든 다음 task가 실행됩니다.",
+        "flow가 재시작되고 모든 다음 task가 실행됩니다.",
         "모든 차단된 task가 실행됩니다."
       ],
       "SUCCESS": [
@@ -150,6 +152,7 @@
     "change state tooltip": "실행 상태 변경",
     "chart": "차트",
     "chart preview": "차트 미리보기",
+    "charts": "차트",
     "choice": "선택",
     "choose file": "파일을 선택하거나 여기에 드롭하세요...",
     "close": "닫기",
@@ -206,6 +209,7 @@
         "confirmation": "<code>{title}</code> 대시보드를 삭제하시겠습니까?"
       },
       "edition": {
+        "chart": "이 차트 편집",
         "confirmation": "대시보드 <code>{title}</code>의 변경 사항이 저장되었습니다.",
         "label": "대시보드 편집"
       },
@@ -217,6 +221,7 @@
       "preview": "미리보기 대시보드"
     },
     "data": "데이터",
+    "dataFilters": "데이터 필터",
     "data_not_protected": "귀하의 데이터는 보호되지 않습니다. 잃어버리지 마세요. <b>무료 보안 기능을 활성화하거나 유료 서비스를 시도해 보세요.</b>",
     "date": "날짜",
     "date count": "{date}에 {count}",
@@ -704,6 +709,7 @@
     "live help": "실시간 도움말",
     "loaded x dependencies": "{count} 개의 종속성이 로드되었습니다",
     "log expand setting": "기본 Log 표시",
+    "logExporters": "로그 Exporters",
     "logs": "Logs",
     "logs_view": {
       "compact": "기본 보기",
@@ -840,6 +846,7 @@
         "conditions": "조건 추가",
         "errors": "오류 처리기 추가",
         "finally": "마지막 블록 추가",
+        "inputs": "입력 필드 추가",
         "pluginDefaults": "플러그인 기본값 추가",
         "tasks": "작업 추가",
         "triggers": "트리거 추가"
@@ -848,16 +855,19 @@
         "general": {
           "concurrency": "병행성",
           "disabled": "비활성화됨",
-          "inputs": "입력",
           "labels": "레이블",
+          "listeners": "리스너",
           "outputs": "출력",
           "retry": "재시도",
           "sla": "SLA",
-          "variables": "변수"
+          "taskDefaults": "작업 기본값",
+          "variables": "변수",
+          "workerGroup": "작업자 그룹"
         },
         "main": {
           "description": "설명",
-          "flow_id": "플로우 ID",
+          "id": "Flow ID",
+          "inputs": "입력",
           "namespace": "네임스페이스"
         }
       },
@@ -885,6 +895,7 @@
         "conditions": "조건 선택",
         "errors": "작업 선택",
         "finally": "작업 선택",
+        "inputs": "입력 필드 유형 선택",
         "pluginDefaults": "플러그인 선택",
         "tasks": "작업 선택",
         "triggers": "트리거 선택"
@@ -1217,9 +1228,9 @@
     "task logs": "Task Logs",
     "task run id": "TaskRun ID",
     "taskDefaults": "Task 기본값",
+    "taskRunners": "작업 실행기",
     "task_id_exists": "Task ID가 이미 존재합니다.",
     "task_id_message": "Flow에 Task Id ${existingTask}가 이미 존재합니다.",
-    "task_runners": "작업 실행기",
     "taskid column details": "마지막으로 실행된 task 및 시도 횟수.",
     "taskruns": "Task 실행들",
     "tasks": "Tasks",

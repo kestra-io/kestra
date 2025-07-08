@@ -14,9 +14,6 @@ kestra:
     secret-key: not_really_a_secret_only_for_unit_test
   anonymous-usage-report:
     enabled: false
-  server:
-    basic-auth:
-      enabled: false
 datasources:
   postgres:
     url: jdbc:postgresql://postgres:5432/kestra_unit

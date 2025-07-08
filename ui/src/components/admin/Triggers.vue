@@ -274,6 +274,9 @@
     import _merge from "lodash/merge";
     import LogsWrapper from "../logs/LogsWrapper.vue";
     import KestraFilter from "../filter/KestraFilter.vue"
+    import {mapStores} from "pinia";
+    import {useTriggerStore} from "../../stores/trigger";
+
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -321,7 +324,7 @@
                 }
 
                 const previousSelection = this.selection;
-                this.$store.dispatch("trigger/search", query).then(async triggersData => {
+                this.triggerStore.search(query).then(async triggersData => {
                     this.triggers = triggersData.results;
                     this.total = triggersData.total;
 
@@ -339,7 +342,7 @@
                 const namespace = this.triggerToUnlock.namespace;
                 const flowId = this.triggerToUnlock.flowId;
                 const triggerId = this.triggerToUnlock.triggerId;
-                const unlockedTrigger = await this.$store.dispatch("trigger/unlock", {
+                const unlockedTrigger = await this.triggerStore.unlock({
                     namespace: namespace,
                     flowId: flowId,
                     triggerId: triggerId
@@ -358,7 +361,7 @@
                 this.triggerToUnlock = undefined;
             },
             restart(trigger) {
-                this.$store.dispatch("trigger/restart", {
+                this.triggerStore.restart({
                     namespace: trigger.namespace,
                     flowId: trigger.flowId,
                     triggerId: trigger.triggerId
@@ -384,7 +387,7 @@
                     });
                     return;
                 }
-                this.$store.dispatch("trigger/update", {...trigger, disabled: !value})
+                this.triggerStore.update({...trigger, disabled: !value})
                     .then(trigger => {
                         // replace the update trigger in the list
                         this.triggers = this.triggers.map(t => {
@@ -404,11 +407,24 @@
                 );
             },
             genericConfirmCallback(queryAction, byIdAction, success, data) {
+                const actionMap = {
+                    "unpauseBackfillByQuery": () => this.triggerStore.unpauseBackfillByQuery,
+                    "unpauseBackfillByTriggers": () => this.triggerStore.unpauseBackfillByTriggers,
+                    "pauseBackfillByQuery": () => this.triggerStore.pauseBackfillByQuery,
+                    "pauseBackfillByTriggers": () => this.triggerStore.pauseBackfillByTriggers,
+                    "deleteBackfillByQuery": () => this.triggerStore.deleteBackfillByQuery,
+                    "deleteBackfillByTriggers": () => this.triggerStore.deleteBackfillByTriggers,
+                    "unlockByQuery": () => this.triggerStore.unlockByQuery,
+                    "unlockByTriggers": () => this.triggerStore.unlockByTriggers,
+                    "setDisabledByQuery": () => this.triggerStore.setDisabledByQuery,
+                    "setDisabledByTriggers": () => this.triggerStore.setDisabledByTriggers,
+                };
+
                 if (this.queryBulkAction) {
                     const query = this.loadQuery({});
                     const options = {...query, ...data};
-                    return this.$store
-                        .dispatch(queryAction, options)
+                    const actions = actionMap[queryAction]();
+                    return actions(options)
                         .then(data => {
                             this.$toast().success(this.$t(success, {count: data.count}));
                             this.loadData()
@@ -416,8 +432,8 @@
                 } else {
                     const selection = this.selection;
                     const options = {triggers: selection, ...data};
-                    return this.$store
-                        .dispatch(byIdAction, byIdAction.includes("setDisabled") ? options : selection)
+                    const actions = actionMap[byIdAction]();
+                    return actions(byIdAction.includes("setDisabled") ? options : selection)
                         .then(data => {
                             this.$toast().success(this.$t(success, {count: data.count}));
                             this.loadData()
@@ -431,40 +447,40 @@
             unpauseBackfills() {
                 this.genericConfirmAction(
                     "bulk unpause backfills",
-                    "trigger/unpauseBackfillByQuery",
-                    "trigger/unpauseBackfillByTriggers",
+                    "unpauseBackfillByQuery",
+                    "unpauseBackfillByTriggers",
                     "bulk success unpause backfills"
                 );
             },
             pauseBackfills() {
                 this.genericConfirmAction(
                     "bulk pause backfills",
-                    "trigger/pauseBackfillByQuery",
-                    "trigger/pauseBackfillByTriggers",
+                    "pauseBackfillByQuery",
+                    "pauseBackfillByTriggers",
                     "bulk success pause backfills"
                 );
             },
             deleteBackfills() {
                 this.genericConfirmAction(
                     "bulk delete backfills",
-                    "trigger/deleteBackfillByQuery",
-                    "trigger/deleteBackfillByTriggers",
+                    "deleteBackfillByQuery",
+                    "deleteBackfillByTriggers",
                     "bulk success delete backfills"
                 );
             },
             unlockTriggers() {
                 this.genericConfirmAction(
                     "bulk unlock",
-                    "trigger/unlockByQuery",
-                    "trigger/unlockByTriggers",
+                    "unlockByQuery",
+                    "unlockByTriggers",
                     "bulk success unlock"
                 );
             },
             setDisabledTriggers(bool) {
                 this.genericConfirmAction(
                     `bulk disabled status.${bool}`,
-                    "trigger/setDisabledByQuery",
-                    "trigger/setDisabledByTriggers",
+                    "setDisabledByQuery",
+                    "setDisabledByTriggers",
                     `bulk success disabled status.${bool}`,
                     {disabled: bool}
                 );
@@ -477,6 +493,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapStores(useTriggerStore),
             routeInfo() {
                 return {
                     title: this.$t("triggers")
@@ -516,6 +533,9 @@
                     acc[column.prop] = this.triggersMerged.some(trigger => trigger[column.prop]);
                     return acc;
                 }, {});
+            },
+            triggerStore() {
+                return useTriggerStore();
             }
         }
     };

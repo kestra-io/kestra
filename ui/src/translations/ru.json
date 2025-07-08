@@ -41,6 +41,7 @@
     "add task": "Добавить задачу",
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
     "add_new_item": "Добавить новый элемент",
+    "additionalPlugins": "Дополнительные плагины",
     "administration": "Администрирование",
     "advanced configuration": "Другие свойства",
     "after": "после",
@@ -55,6 +56,7 @@
     "all executions": "Все выполнения",
     "all tags": "Все теги",
     "api": "API",
+    "appBlocks": "Блоки приложения",
     "apps": "Приложения",
     "attempt": "Попытка",
     "attempts": "Попытка(и)",
@@ -133,7 +135,7 @@
         "Ошибочные tasks будут выполнены."
       ],
       "RUNNING": [
-        "Flow перезапустится и выполнит все следующие tasks.",
+        "Flow будет перезапущен и выполнит все следующие tasks.",
         "Все заблокированные tasks будут выполнены."
       ],
       "SUCCESS": [
@@ -150,6 +152,7 @@
     "change state tooltip": "Изменить состояние выполнения",
     "chart": "График",
     "chart preview": "Предварительный просмотр диаграммы",
+    "charts": "Графики",
     "choice": "Выбор",
     "choose file": "Выберите файл или перетащите его сюда...",
     "close": "Закрыть",
@@ -206,6 +209,7 @@
         "confirmation": "Вы уверены, что хотите удалить панель <code>{title}</code>?"
       },
       "edition": {
+        "chart": "Редактировать этот график",
         "confirmation": "Изменения в панели <code>{title}</code> сохранены.",
         "label": "Редактировать Dashboard"
       },
@@ -217,6 +221,7 @@
       "preview": "Предварительный просмотр Dashboard"
     },
     "data": "Данные",
+    "dataFilters": "Фильтры данных",
     "data_not_protected": "Ваши данные не защищены. Не потеряйте их. <b>Включите наши бесплатные функции безопасности или попробуйте платную версию.</b>",
     "date": "Дата",
     "date count": "{count} на {date}",
@@ -704,6 +709,7 @@
     "live help": "Живая помощь",
     "loaded x dependencies": "{count} зависимости загружены",
     "log expand setting": "Отображение logs по умолчанию",
+    "logExporters": "Экспортеры Log",
     "logs": "Логи",
     "logs_view": {
       "compact": "Вид по умолчанию",
@@ -840,6 +846,7 @@
         "conditions": "Добавить условие",
         "errors": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
+        "inputs": "Добавить поле input",
         "pluginDefaults": "Добавить плагин по умолчанию",
         "tasks": "Добавить task",
         "triggers": "Добавить trigger"
@@ -848,16 +855,19 @@
         "general": {
           "concurrency": "Конкурентность",
           "disabled": "Отключено",
-          "inputs": "Входные данные",
           "labels": "Метки",
+          "listeners": "Слушатели",
           "outputs": "Выходы",
           "retry": "Повторить попытку",
           "sla": "SLA",
-          "variables": "Переменные"
+          "taskDefaults": "Значения по умолчанию для Task",
+          "variables": "Переменные",
+          "workerGroup": "Группа Worker"
         },
         "main": {
           "description": "Описание",
-          "flow_id": "ID потока",
+          "id": "ID flow",
+          "inputs": "Входные данные",
           "namespace": "Namespace"
         }
       },
@@ -885,6 +895,7 @@
         "conditions": "Выберите условие",
         "errors": "Выберите task",
         "finally": "Выберите task",
+        "inputs": "Выберите тип поля input",
         "pluginDefaults": "Выберите плагин",
         "tasks": "Выберите task",
         "triggers": "Выберите trigger"
@@ -1217,9 +1228,9 @@
     "task logs": "Журналы задач",
     "task run id": "ID выполнения задачи",
     "taskDefaults": "Задача по умолчанию",
+    "taskRunners": "Запускатели Task",
     "task_id_exists": "Id задачи уже существует",
     "task_id_message": "Id задачи ${existingTask} уже существует в flow.",
-    "task_runners": "Запускатели задач",
     "taskid column details": "Последний task выполняется и количество его попыток.",
     "taskruns": "Запуски задач",
     "tasks": "Задачи",

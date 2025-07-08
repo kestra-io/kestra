@@ -139,6 +139,7 @@
     import {usePluginsStore} from "../../../../stores/plugins";
     import {useBlueprintsStore} from "../../../../stores/blueprints";
     import {useCoreStore} from "../../../../stores/core";
+    import {useDocStore} from "../../../../stores/doc";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
@@ -167,7 +168,7 @@
             }
         },
         mounted() {
-            this.$store.commit("doc/setDocId", `blueprints.${this.blueprintType}`);
+            this.docStore.docId = `blueprints.${this.blueprintType}`;
         },
         data() {
             return {
@@ -281,7 +282,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(usePluginsStore, useBlueprintsStore, useCoreStore),
+            ...mapStores(usePluginsStore, useBlueprintsStore, useCoreStore, useDocStore),
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },

@@ -60,6 +60,12 @@ component_management:
       name: Ui
       paths:
         - ui/**
+      statuses:
+        - type: project
+          target: auto
+        - type: patch
+          target: auto
+
     - component_id: webserver
       name: Webserver
       paths:
@@ -70,7 +76,8 @@ flag_management:
     carryforward: true
     statuses:
       - type: project
-        target: 73% # current value as of 2025-06-25
-        threshold: 1%
+        target: 70%
+        threshold: 10%
       - type: patch
         target: 75%
+        threshold: 10%

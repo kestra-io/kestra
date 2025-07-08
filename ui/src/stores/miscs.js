@@ -23,6 +23,9 @@ export default {
         },
         async addBasicAuth({_commit, state}, options) {
             const email = options.username;
+            
+            localStorage.setItem("firstName", options.firstName);
+            localStorage.setItem("lastName", options.lastName);
 
             await this.$http.post(`${apiUrl(this)}/basicAuth`, {
                 uid: localStorage.getItem("uid"),

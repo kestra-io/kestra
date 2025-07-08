@@ -7,6 +7,7 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
@@ -62,6 +63,11 @@ public class TaskRun implements TenantInterface {
     @With
     Boolean dynamic;
 
+    // Set it to true to force execution even if the execution is killed
+    @Nullable
+    @With
+    Boolean forceExecution;
+
     @Deprecated
     public void setItems(String items) {
         // no-op for backward compatibility
@@ -81,7 +87,8 @@ public class TaskRun implements TenantInterface {
             this.outputs,
             this.state.withState(state),
             this.iteration,
-            this.dynamic
+            this.dynamic,
+            this.forceExecution
         );
     }
 
@@ -99,7 +106,8 @@ public class TaskRun implements TenantInterface {
             this.outputs,
             newState,
             this.iteration,
-            this.dynamic
+            this.dynamic,
+            this.forceExecution
         );
     }
 
@@ -121,7 +129,8 @@ public class TaskRun implements TenantInterface {
             this.outputs,
             this.state.withState(State.Type.FAILED),
             this.iteration,
-            this.dynamic
+            this.dynamic,
+            this.forceExecution
         );
     }
 

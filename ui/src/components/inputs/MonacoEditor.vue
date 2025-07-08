@@ -99,6 +99,35 @@
         }
     });
 
+    import {useRoute} from "vue-router";
+    const route = useRoute();
+
+    const highlightLine = () => {
+        if(!route.query.highlight) return;
+
+        const editor = getModifiedEditor();
+
+        if (!editor) return;
+
+        editor.focus();
+
+        const lines = editor.getModel()!.getLinesContent();
+
+        let lineNumber = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].includes(route.query.highlight as string)) {
+                lineNumber = i + 1; // Monaco line numbers are 1-based
+                break;
+            }
+        }
+
+        const endLineCharacter = editor?.getModel()!.getLineMaxColumn(lineNumber) ?? 0
+
+        editor.setSelection(new monaco.Range(lineNumber, 0, lineNumber, endLineCharacter));
+        editor.revealLineInCenter(lineNumber);
+    }
+
     const highlight = inject(EDITOR_HIGHLIGHT_INJECTION_KEY, ref());
     watch(highlight, (line) => {
         if (!line) return;
@@ -732,6 +761,8 @@
 
         setTimeout(() => monaco.editor.remeasureFonts(), 1)
         emit("editorDidMount", editorResolved.value);
+
+        highlightLine();
     }
 
     const current = computed(() => {

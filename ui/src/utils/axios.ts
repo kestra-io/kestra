@@ -44,6 +44,11 @@ const increaseProgress = () => {
     }, latencyThreshold + 50);
 }
 
+const requestInterceptor = (config: any) => {
+    initProgress();
+    return config;
+}
+
 const responseInterceptor = (response: AxiosResponse): AxiosResponse => {
     increaseProgress();
     return response;
@@ -64,7 +69,7 @@ const progressInterceptor = (progressEvent: AxiosProgressEvent) => {
 interface QueueItem {
     config: AxiosRequestConfig;
     resolve: (value: AxiosResponse | Promise<AxiosResponse>) => void;
-    reject: (reason?: any) => void;
+
 }
 
 export default (
@@ -81,20 +86,24 @@ export default (
         onUploadProgress: progressInterceptor
     });
 
-    instance.interceptors.request.use((config) => {
-        initProgress();
-        return config;
+    instance.interceptors.request.use(config => {
+        const basicAuth = localStorage.getItem("basicAuthCredentials");
+        if (basicAuth && !config.headers.Authorization) {
+            config.headers.Authorization = `Basic ${basicAuth}`;
+        }
+        return requestInterceptor(config);
     });
+
     instance.interceptors.response.use(responseInterceptor, errorResponseInterceptor);
 
     let toRefreshQueue: QueueItem[] = [];
     let refreshing = false;
 
     instance.interceptors.response.use(
-        (response: AxiosResponse) => {
+        (response) => {
             return response;
         },
-        async (errorResponse: AxiosError & { config?: { showMessageOnError?: boolean } }) => {
+        async (errorResponse: AxiosError & QueueItem & {config:{showMessageOnError: boolean}}) => {
             if (errorResponse?.code === "ERR_BAD_RESPONSE" && !errorResponse?.response?.data) {
                 const coreStore = useCoreStore();
                 coreStore.message = {
@@ -156,11 +165,11 @@ export default (
                     refreshing = true;
                     try {
                         await instance.post("/oauth/access_token?grant_type=refresh_token", null, {headers: {"Content-Type": "application/json"}});
-                        toRefreshQueue.forEach(({config, resolve, reject}) => {
+                        toRefreshQueue.forEach(({config, resolve}) => {
                             instance.request(config).then(response => {
                                 resolve(response)
                             }).catch(error => {
-                                reject(error)
+                                throw error
                             })
                         })
                         toRefreshQueue = [];
@@ -171,22 +180,26 @@ export default (
                         return instance(originalRequest)
                     } catch {
                         document.body.classList.add("login");
+
                         useCoreStore().unsavedChange = false;
-                        
                         useLayoutStore().setTopNavbar(undefined);
+                        
+                        localStorage.removeItem("basicAuthCredentials");
+                        delete instance.defaults.headers.common["Authorization"];
+                        
+                        const currentPath = window.location.pathname;
+                        const isLoginPath = currentPath.includes("/login");
                         
                         router.push({
                             name: "login",
                             query: {
-                                expired: 1,
-                                from: window.location.pathname + (window.location.search ?? "")
+                                ...(isLoginPath ? {} : {from: currentPath})
                             }
                         })
                         refreshing = false;
                     }
                 } else {
-                    // @ts-expect-error https://github.com/kestra-io/kestra-ee/issues/4157
-                    toRefreshQueue.push(originalRequest);
+                    toRefreshQueue.push(errorResponse);
 
                     return;
                 }
@@ -233,3 +246,4 @@ export default (
 
     callback(instance);
 };
+

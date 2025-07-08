@@ -30,7 +30,7 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Display a chart with a Executions per Namespace broken out by State.",
             full = true,
-            code = """
+            code = { """
             charts:                
               - id: executions_per_namespace_bars
                 type: io.kestra.plugin.core.dashboard.chart.Bar
@@ -50,7 +50,8 @@ import lombok.experimental.SuperBuilder;
                     total:
                       displayName: Executions
                       agg: COUNT
-            """                    
+            """
+          }                    
         )
     }
 )

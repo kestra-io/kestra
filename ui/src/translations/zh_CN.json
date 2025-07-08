@@ -41,6 +41,7 @@
     "add task": "添加任务",
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
     "add_new_item": "添加新项目",
+    "additionalPlugins": "附加插件",
     "administration": "管理",
     "advanced configuration": "其他属性",
     "after": "之后",
@@ -55,6 +56,7 @@
     "all executions": "所有执行",
     "all tags": "所有标签",
     "api": "API",
+    "appBlocks": "应用模块",
     "apps": "应用程序",
     "attempt": "尝试",
     "attempts": "尝试",
@@ -132,7 +134,10 @@
         "不会执行其他task。",
         "将执行错误tasks。"
       ],
-      "RUNNING": "流程将重新启动，并将执行所有下一个任务。所有被阻止的任务将被执行。",
+      "RUNNING": [
+        "flow将重新启动，并将执行所有后续task。",
+        "所有被阻止的task将被执行。"
+      ],
       "SUCCESS": [
         "由于此任务成功，flow 将重新启动。",
         "所有被阻止的任务将被执行。",
@@ -147,6 +152,7 @@
     "change state tooltip": "更改执行状态",
     "chart": "图表",
     "chart preview": "图表预览",
+    "charts": "图表",
     "choice": "选择",
     "choose file": "选择文件或拖放到此处...",
     "close": "关闭",
@@ -203,6 +209,7 @@
         "confirmation": "您确定要删除<code>{title}</code>仪表板吗？"
       },
       "edition": {
+        "chart": "编辑此图表",
         "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
         "label": "编辑仪表板"
       },
@@ -214,6 +221,7 @@
       "preview": "预览仪表板"
     },
     "data": "数据",
+    "dataFilters": "数据过滤器",
     "data_not_protected": "您的数据未受保护。不要丢失它。<b>启用我们的免费安全功能或试用我们的付费服务。</b>",
     "date": "日期",
     "date count": "{date}的{count}",
@@ -701,6 +709,7 @@
     "live help": "实时帮助",
     "loaded x dependencies": "已加载 {count} 个依赖项",
     "log expand setting": "日志默认显示",
+    "logExporters": "日志导出器",
     "logs": "日志",
     "logs_view": {
       "compact": "默认视图",
@@ -837,6 +846,7 @@
         "conditions": "添加条件",
         "errors": "添加错误处理程序",
         "finally": "添加一个finally块",
+        "inputs": "添加一个input字段",
         "pluginDefaults": "添加插件默认值",
         "tasks": "添加任务",
         "triggers": "添加一个trigger"
@@ -845,16 +855,19 @@
         "general": {
           "concurrency": "并发性",
           "disabled": "禁用",
-          "inputs": "输入",
           "labels": "标签",
+          "listeners": "监听器",
           "outputs": "输出",
           "retry": "重试",
           "sla": "SLA",
-          "variables": "变量"
+          "taskDefaults": "任务默认值",
+          "variables": "变量",
+          "workerGroup": "工作组"
         },
         "main": {
           "description": "描述",
-          "flow_id": "Flow ID",
+          "id": "Flow ID",
+          "inputs": "输入",
           "namespace": "命名空间"
         }
       },
@@ -882,6 +895,7 @@
         "conditions": "选择条件",
         "errors": "选择一个task",
         "finally": "选择一个task",
+        "inputs": "选择一个input字段类型",
         "pluginDefaults": "选择插件",
         "tasks": "选择一个task",
         "triggers": "选择一个trigger"
@@ -1214,9 +1228,9 @@
     "task logs": "任务日志",
     "task run id": "任务运行 ID",
     "taskDefaults": "任务默认值",
+    "taskRunners": "任务 Runners",
     "task_id_exists": "任务ID已存在",
     "task_id_message": "任务ID ${existingTask} 已经存在于flow中。",
-    "task_runners": "任务运行器",
     "taskid column details": "最后执行的任务及其尝试次数。",
     "taskruns": "任务运行",
     "tasks": "任务",

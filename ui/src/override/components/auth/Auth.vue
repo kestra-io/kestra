@@ -30,15 +30,34 @@
                 {{ $t("join_slack") }}
             </a>
         </el-option>
+        <template #footer>
+            <el-option class="list-unstyled" :value="'logout'" @click="logout">
+                <div class="menu-item">
+                    <Logout class="menu-icon" />
+                    {{ $t("setup.logout") }}
+                </div>
+            </el-option>
+        </template>
     </el-select>
 </template>
 
-<script setup>
-    import {RouterLink} from "vue-router";
+<script setup lang="ts">
+    import {RouterLink, useRouter} from "vue-router";
+    import {useStore} from "vuex";
 
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
     import Slack from "vue-material-design-icons/Slack.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import Logout from "vue-material-design-icons/Logout.vue";
+
+    const router = useRouter();
+    const store = useStore();
+
+    const logout = () => {
+        localStorage.removeItem("basicAuthCredentials");
+        delete store.$http?.defaults?.headers?.common?.["Authorization"];
+        router.push({name: "login"});
+    };
 </script>
 
 <style lang="scss" scoped>
@@ -83,6 +102,13 @@
                 &.is-hovering {
                     background: none;
                 }
+            }
+        }
+
+        .el-select-dropdown__footer {
+            padding: 5px 0;
+            .el-select-dropdown__item {
+                margin: 0 !important;
             }
         }
     }

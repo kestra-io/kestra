@@ -1,7 +1,10 @@
 package io.kestra.webserver.controllers.api;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.webserver.services.BasicAuthService;
+import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.annotation.Client;
@@ -10,8 +13,6 @@ import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 @Property(name = "kestra.system-flows.namespace", value = "some.system.ns")
@@ -22,6 +23,9 @@ class MiscControllerTest {
 
     @Inject
     BasicAuthService basicAuthService;
+
+    @Inject
+    BasicAuthConfiguration basicAuthConfiguration;
 
     @Test
     void ping() {
@@ -38,7 +42,6 @@ class MiscControllerTest {
         assertThat(response.getUuid()).isNotNull();
         assertThat(response.getIsTaskRunEnabled()).isFalse();
         assertThat(response.getIsAnonymousUsageEnabled()).isTrue();
-        assertThat(response.getIsBasicAuthEnabled()).isFalse();
         assertThat(response.getIsAiEnabled()).isFalse();
         assertThat(response.getSystemNamespace()).isEqualTo("some.system.ns");
     }
@@ -70,7 +73,7 @@ class MiscControllerTest {
                 MiscController.Configuration.class)
             );
         } finally {
-            basicAuthService.unsecure();
+            basicAuthService.save(basicAuthConfiguration);
         }
     }
 }

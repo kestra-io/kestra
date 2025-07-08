@@ -1,31 +1,59 @@
 <template>
-    <left-menu v-if="configs" @menu-collapse="onMenuCollapse" />
+    <LeftMenu v-if="configs" @menu-collapse="onMenuCollapse" />
     <main>
-        <errors v-if="error" :code="error" />
+        <Errors v-if="error" :code="error" />
         <slot v-else />
     </main>
-    <context-info-bar v-if="configs" />
+    <ContextInfoBar v-if="configs" />
+    
+    <SurveyDialog
+        :visible="showSurveyDialog"
+        @close="handleSurveyDialogClose"
+    />
 </template>
 
 <script setup>
-    import LeftMenu from "override/components/LeftMenu.vue";
-    import Errors from "../../../components/errors/Errors.vue";
-    import ContextInfoBar from "../../../components/ContextInfoBar.vue";
-    import {useStore} from "vuex";
-    import {useCoreStore} from "../../../stores/core";
-    import {computed, onMounted} from "vue";
+    import LeftMenu from "override/components/LeftMenu.vue"
+    import Errors from "../../../components/errors/Errors.vue"
+    import ContextInfoBar from "../../../components/ContextInfoBar.vue"
+    import SurveyDialog from "../../../components/SurveyDialog.vue"
+    import {useStore} from "vuex"
+    import {computed, onMounted, ref} from "vue"
+    import {useSurveySkip} from "../../../composables/useSurveyData"
+    import {useCoreStore} from "../../../stores/core"
 
-    const store = useStore();
-    const coreStore = useCoreStore();
-    const configs = computed(() => store.getters["misc/configs"]);
-    const error = computed(() => coreStore.error);
+    const store = useStore()
+    const coreStore = useCoreStore()
+    const {markSurveyDialogShown} = useSurveySkip()
 
-    function onMenuCollapse(collapse) {
-        document.getElementsByTagName("html")[0].classList.add(!collapse ? "menu-not-collapsed" : "menu-collapsed");
-        document.getElementsByTagName("html")[0].classList.remove(collapse ? "menu-not-collapsed" : "menu-collapsed");
+    const configs = computed(() => store.getters["misc/configs"])
+    const error = computed(() => coreStore.error)
+    const showSurveyDialog = ref(false)
+
+    const onMenuCollapse = (collapse) => {
+        const htmlElement = document.documentElement
+        htmlElement.classList.toggle("menu-collapsed", collapse)
+        htmlElement.classList.toggle("menu-not-collapsed", !collapse)
+    }
+
+    const handleSurveyDialogClose = () => {
+        showSurveyDialog.value = false
+        markSurveyDialogShown()
+        localStorage.removeItem("showSurveyDialogAfterLogin")
+    }
+
+    const checkForSurveyDialog = () => {
+        const shouldShow = localStorage.getItem("showSurveyDialogAfterLogin") === "true"
+        if (shouldShow) {
+            setTimeout(() => {
+                showSurveyDialog.value = true
+            }, 500)
+        }
     }
 
     onMounted(() => {
-        onMenuCollapse(localStorage.getItem("menuCollapsed") === "true")
-    });
+        const isMenuCollapsed = localStorage.getItem("menuCollapsed") === "true"
+        onMenuCollapse(isMenuCollapsed)
+        checkForSurveyDialog()
+    })
 </script>

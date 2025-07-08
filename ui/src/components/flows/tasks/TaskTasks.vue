@@ -4,7 +4,7 @@
             title="tasks"
             :elements="items"
             :section
-            block-type="tasks"
+            :block-schema-path="[schemaPath, 'properties', root, 'items'].join('/')"
             @remove="(yaml) => store.commit('flow/setFlowYaml', yaml)"
             @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
         />
@@ -12,9 +12,12 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed, inject, ref} from "vue";
     import {useStore} from "vuex";
     import Collapse from "../../code/components/collapse/Collapse.vue";
+    import {SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
+
+    const schemaPath = inject(SCHEMA_PATH_INJECTION_KEY, ref())
 
     defineOptions({
         inheritAttrs: false

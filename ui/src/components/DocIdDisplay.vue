@@ -13,18 +13,18 @@
 
 <script lang="ts" setup>
     import {computed, ref} from "vue";
-    import {useStore} from "vuex";
     import {useRoute} from "vue-router";
+    import {useDocStore} from "../stores/doc";
     import Utils from "../utils/utils";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
 
-    const store = useStore();
+    const docStore = useDocStore();
     const route = useRoute();
 
     const showDocId = computed(() => route.query["showDocId"] !== undefined);
 
-    const text = computed(() => `docId: ${ store.state.doc.docId }`);
+    const text = computed(() => `docId: ${docStore.docId}`);
 
     const copied = ref(false);
 

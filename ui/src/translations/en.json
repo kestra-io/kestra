@@ -1271,7 +1271,12 @@
     "select": "Select your {{section}}",
     "for flow": "for flow",
     "confirm": "Confirm",
-    "task_runners": "Task Runners",
+    "taskRunners": "Task Runners",
+    "additionalPlugins": "Additional Plugins",
+    "appBlocks": "App Blocks",
+    "charts": "Charts",
+    "dataFilters": "Data Filters",
+    "logExporters": "Log Exporters",
     "empty": {
       "announcements": {
         "title": "You have no announcements yet!",

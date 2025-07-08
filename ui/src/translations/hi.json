@@ -1183,6 +1183,73 @@
       },
       "label": "सेटिंग्स"
     },
+    "setup": {
+      "config": {
+        "basicauth": "बेसिक ऑथेंटिकेशन",
+        "queue": "पंक्ति",
+        "repository": "डेटाबेस",
+        "storage": "आंतरिक Storage"
+      },
+      "confirm": {
+        "config_title": "पुष्टि करें कि कॉन्फ़िगरेशन मान्य है",
+        "confirm": "पुष्टि करें",
+        "not_valid": "नहीं, यह मान्य नहीं है",
+        "valid": "हाँ, यह मान्य है"
+      },
+      "form": {
+        "email": "ईमेल",
+        "firstName": "पहला नाम",
+        "lastName": "अंतिम नाम",
+        "password": "पासवर्ड"
+      },
+      "login": "लॉगिन",
+      "logout": "लॉगआउट",
+      "steps": {
+        "complete": "Kestra UI प्रारंभ करें",
+        "config": "कॉन्फ़िगरेशन सत्यापित करें",
+        "survey": "हमें और बताएं",
+        "user": "अपना पहला उपयोगकर्ता बनाएं"
+      },
+      "subtitles": {
+        "complete": "सेटअप सफलतापूर्वक पूरा हुआ!",
+        "config": "यहाँ आपके configuration का विवरण है",
+        "survey": "हमें Kestra Open Source Edition को बेहतर बनाने में मदद करें",
+        "user": "अपने instance को सेट अप करें अपने पहले उपयोगकर्ता को बनाकर"
+      },
+      "success": {
+        "subtitle": "आप तैयार हैं!",
+        "title": "बधाई हो!"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "व्यक्तिगत उपयोग",
+        "company_size": "आपकी कंपनी का आकार क्या है?",
+        "continue": "जारी रखें",
+        "newsletter": "Kestra न्यूज़लेटर की सदस्यता लें – नवीनतम फीचर्स और बदलावों के साथ अपडेट रहें।",
+        "skip": "छोड़ें",
+        "use_case": "आपका प्राथमिक उपयोग मामला क्या है?",
+        "use_case_business": "व्यावसायिक प्रक्रियाएँ",
+        "use_case_data": "डेटा वर्कफ्लो",
+        "use_case_infrastructure": "इन्फ्रास्ट्रक्चर ऑटोमेशन",
+        "use_case_ml": "ML/AI पाइपलाइन्स",
+        "use_case_other": "अन्य"
+      },
+      "titles": {
+        "survey": "हमें और बताएं",
+        "user": "पहला उपयोगकर्ता बनाएं"
+      },
+      "validation": {
+        "email_invalid": "अमान्य ईमेल",
+        "email_required": "ईमेल आवश्यक है",
+        "email_temporary_not_allowed": "अस्थायी या डिस्पोजेबल ईमेल पते की अनुमति नहीं है",
+        "firstName_required": "पहला नाम आवश्यक है",
+        "lastName_required": "अंतिम नाम आवश्यक है",
+        "password_invalid": "अमान्य पासवर्ड"
+      }
+    },
     "show": "दिखाएं",
     "show chart": "चार्ट दिखाएं",
     "show description": "विवरण दिखाएं",

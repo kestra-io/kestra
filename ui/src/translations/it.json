@@ -1183,6 +1183,73 @@
       },
       "label": "Impostazioni"
     },
+    "setup": {
+      "config": {
+        "basicauth": "Autenticazione di base",
+        "queue": "Coda",
+        "repository": "Database",
+        "storage": "Archiviazione Interna"
+      },
+      "confirm": {
+        "config_title": "Conferma che la configurazione sia valida",
+        "confirm": "Conferma",
+        "not_valid": "No, non è valido",
+        "valid": "Sì, è valido"
+      },
+      "form": {
+        "email": "Email",
+        "firstName": "Nome",
+        "lastName": "Cognome",
+        "password": "Password"
+      },
+      "login": "Accedi",
+      "logout": "Disconnetti",
+      "steps": {
+        "complete": "Avvia Kestra UI",
+        "config": "Convalida Configurazione",
+        "survey": "Dicci di più",
+        "user": "Crea il tuo primo utente"
+      },
+      "subtitles": {
+        "complete": "Impostazione completata con successo!",
+        "config": "Ecco i dettagli della tua configurazione",
+        "survey": "Aiutaci a migliorare Kestra Open Source Edition",
+        "user": "Configura la tua istanza creando il tuo primo utente"
+      },
+      "success": {
+        "subtitle": "Tutto pronto!",
+        "title": "Congratulazioni!"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "Uso personale",
+        "company_size": "Qual è la dimensione della tua azienda?",
+        "continue": "Continua",
+        "newsletter": "Iscriviti alla newsletter di Kestra – rimani aggiornato con le ultime funzionalità e modifiche.",
+        "skip": "Salta",
+        "use_case": "Qual è il tuo caso d'uso principale?",
+        "use_case_business": "Processi aziendali",
+        "use_case_data": "Workflow dei dati",
+        "use_case_infrastructure": "Automazione dell'infrastruttura",
+        "use_case_ml": "Pipeline ML/AI",
+        "use_case_other": "Altro"
+      },
+      "titles": {
+        "survey": "Dicci di più",
+        "user": "Crea primo utente"
+      },
+      "validation": {
+        "email_invalid": "Email non valido",
+        "email_required": "L'email è obbligatoria",
+        "email_temporary_not_allowed": "Indirizzi email temporanei o usa e getta non sono consentiti",
+        "firstName_required": "Nome richiesto",
+        "lastName_required": "Cognome richiesto",
+        "password_invalid": "Password non valido"
+      }
+    },
     "show": "Mostra",
     "show chart": "Mostra Grafico",
     "show description": "Mostra una descrizione",

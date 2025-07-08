@@ -1183,6 +1183,73 @@
       },
       "label": "Einstellungen"
     },
+    "setup": {
+      "config": {
+        "basicauth": "Einfache Authentifizierung",
+        "queue": "Warteschlange",
+        "repository": "Datenbank",
+        "storage": "Interner Speicher"
+      },
+      "confirm": {
+        "config_title": "Bestätigen Sie, dass die Konfiguration gültig ist",
+        "confirm": "Bestätigen",
+        "not_valid": "Nein, es ist nicht gültig",
+        "valid": "Ja, es ist gültig"
+      },
+      "form": {
+        "email": "E-Mail",
+        "firstName": "Vorname",
+        "lastName": "Nachname",
+        "password": "Passwort"
+      },
+      "login": "Anmelden",
+      "logout": "Abmelden",
+      "steps": {
+        "complete": "Kestra UI starten",
+        "config": "Konfiguration validieren",
+        "survey": "Erzählen Sie uns mehr",
+        "user": "Erstellen Sie Ihren ersten Benutzer"
+      },
+      "subtitles": {
+        "complete": "Einrichtung erfolgreich abgeschlossen!",
+        "config": "Hier sind die Details Ihrer Konfiguration",
+        "survey": "Hilf uns, die Kestra Open Source Edition zu verbessern",
+        "user": "Richten Sie Ihre Instanz ein, indem Sie Ihren ersten Benutzer erstellen"
+      },
+      "success": {
+        "subtitle": "Alles bereit!",
+        "title": "Herzlichen Glückwunsch!"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "Persönliche Nutzung",
+        "company_size": "Wie groß ist Ihr Unternehmen?",
+        "continue": "Weiter",
+        "newsletter": "Abonnieren Sie den Kestra-Newsletter – bleiben Sie auf dem Laufenden über die <br> neuesten Funktionen und Änderungen.",
+        "skip": "Überspringen",
+        "use_case": "Was ist Ihr primärer Anwendungsfall?",
+        "use_case_business": "Geschäftsprozesse",
+        "use_case_data": "Daten-Workflows",
+        "use_case_infrastructure": "Infrastrukturautomatisierung",
+        "use_case_ml": "ML/AI-Pipelines",
+        "use_case_other": "Andere"
+      },
+      "titles": {
+        "survey": "Erzählen Sie uns mehr",
+        "user": "Ersten Benutzer erstellen"
+      },
+      "validation": {
+        "email_invalid": "Ungültige E-Mail-Adresse",
+        "email_required": "E-Mail ist erforderlich",
+        "email_temporary_not_allowed": "Temporäre oder Einweg-E-Mail-Adressen sind nicht erlaubt",
+        "firstName_required": "Vorname erforderlich",
+        "lastName_required": "Nachname erforderlich",
+        "password_invalid": "Ungültiges Passwort"
+      }
+    },
     "show": "Anzeigen",
     "show chart": "Diagramm anzeigen",
     "show description": "Beschreibung anzeigen",

@@ -44,11 +44,6 @@ const increaseProgress = () => {
     }, latencyThreshold + 50);
 }
 
-const requestInterceptor = (config: any) => {
-    initProgress();
-    return config;
-}
-
 const responseInterceptor = (response: AxiosResponse): AxiosResponse => {
     increaseProgress();
     return response;
@@ -86,14 +81,10 @@ export default (
         onUploadProgress: progressInterceptor
     });
 
-    instance.interceptors.request.use(config => {
-        const basicAuth = localStorage.getItem("basicAuthCredentials");
-        if (basicAuth && !config.headers.Authorization) {
-            config.headers.Authorization = `Basic ${basicAuth}`;
-        }
-        return requestInterceptor(config);
+    instance.interceptors.request.use((config) => {
+        initProgress();
+        return config;
     });
-
     instance.interceptors.response.use(responseInterceptor, errorResponseInterceptor);
 
     let toRefreshQueue: QueueItem[] = [];
@@ -180,20 +171,15 @@ export default (
                         return instance(originalRequest)
                     } catch {
                         document.body.classList.add("login");
-
                         useCoreStore().unsavedChange = false;
+                        
                         useLayoutStore().setTopNavbar(undefined);
-                        
-                        localStorage.removeItem("basicAuthCredentials");
-                        delete instance.defaults.headers.common["Authorization"];
-                        
-                        const currentPath = window.location.pathname;
-                        const isLoginPath = currentPath.includes("/login");
                         
                         router.push({
                             name: "login",
                             query: {
-                                ...(isLoginPath ? {} : {from: currentPath})
+                                expired: 1,
+                                from: window.location.pathname + (window.location.search ?? "")
                             }
                         })
                         refreshing = false;
@@ -246,4 +232,3 @@ export default (
 
     callback(instance);
 };
-

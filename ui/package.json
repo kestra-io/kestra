@@ -42,7 +42,6 @@
     "humanize-duration": "^3.33.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
-    "mailchecker": "^6.0.17",
     "markdown-it": "^14.1.0",
     "markdown-it-anchor": "^9.2.0",
     "markdown-it-container": "^4.0.0",

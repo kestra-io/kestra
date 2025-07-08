@@ -2,7 +2,7 @@
     <doc-id-display />
     <el-config-provider>
         <error-toast v-if="coreStore.message" :no-auto-hide="true" :message="coreStore.message" />
-        <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
+        <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded">
             <router-view />
         </component>
         <VueTour />
@@ -10,11 +10,12 @@
 </template>
 
 <script>
+    import {ElMessageBox, ElSwitch} from "element-plus";
+    import {h, ref, shallowRef} from "vue";
     import ErrorToast from "./components/ErrorToast.vue";
     import {mapGetters, mapState} from "vuex";
     import {mapStores} from "pinia";
     import Utils from "./utils/utils";
-    import {shallowRef} from "vue";
     import VueTour from "./components/onboarding/VueTour.vue";
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
     import DocIdDisplay from "./components/DocIdDisplay.vue";
@@ -55,54 +56,59 @@
             isOSS(){
                 return true;
             },
-            shouldRenderApp() {
-                return !this.configs || this.isSetupRoute() || this.configs.isBasicAuthEnabled || localStorage.getItem("basicAuthSetupCompleted") === "true";
-            }
         },
         async created() {
-            const {name: currentRoute} = this.$route;
-            const isAuthRoute = currentRoute === "login" || currentRoute === "setup";
-            const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null;
-
+            if (this.created === false) {
+                await this.loadGeneralResources();
+                this.displayApp();
+            }
             this.setTitleEnvSuffix();
 
-            if (!this.created && !isAuthRoute) {
-                try {
-                    const config = await this.loadGeneralResources();
-                    if (config === null) {
-                        this.displayApp();
-                        return;
-                    }
-
-                    // Basic auth enabled: redirect to login if no credentials
-                    if (this.configs && this.configs.isBasicAuthEnabled && !hasCredentials) {
-                        this.$router.push({name: "login"});
-                        this.displayApp();
-                        return;
-                    }
-
-                    // Basic auth disabled: redirect to setup if incomplete
-                    if (this.configs && !this.configs.isBasicAuthEnabled && !this.isSetupRoute() && localStorage.getItem("basicAuthSetupCompleted") !== "true") {
-                        this.$router.push({name: "setup"});
-                        this.displayApp();
-                        return;
-                    }
-                } catch (error) {
-                    if (error?.response?.status === 401) {
-                        localStorage.removeItem("basicAuthCredentials");
-                        this.$router.push({name: "login"});
-                        this.displayApp();
-                        return;
-                    }
+            if (this.configs) {
+                // save uptime before showing security advice.
+                if (localStorage.getItem("security.advice.uptime") === null) {
+                    localStorage.setItem("security.advice.uptime", `${new Date().getTime()}`);
                 }
-            } else if (!isAuthRoute && !hasCredentials) {
-                // Fallback: redirect to login when configs unavailable
-                this.$router.push({name: "login"});
-                this.displayApp();
-                return;
-            }
+                // use local-storage for ease testing
+                if (localStorage.getItem("security.advice.expired") === null) {
+                    localStorage.setItem("security.advice.expired", "604800000");  // 7 days.
+                }
 
-            this.displayApp();
+                // only show security advice after expiration
+                const uptime = parseInt(localStorage.getItem("security.advice.uptime"));
+                const expired = parseInt(localStorage.getItem("security.advice.expired"));
+                const isSecurityAdviceShow = (localStorage.getItem("security.advice.show") || "true") === "true";
+
+                const isSecurityAdviceEnable = new Date().getTime() - uptime >= expired
+                if (!this.configs.isBasicAuthEnabled
+                    && isSecurityAdviceShow
+                    && isSecurityAdviceEnable) {
+                    const checked = ref(false);
+                    ElMessageBox({
+                        title: this.$t("security_advice.title"),
+                        message: () => {
+                            return h("div", null, [
+                                h("p", null, this.$t("security_advice.content")),
+                                h(ElSwitch, {
+                                    modelValue: checked.value,
+                                    "onUpdate:modelValue": (val) => {
+                                        checked.value = val
+                                        localStorage.setItem("security.advice.show", `${!val}`)
+                                    },
+                                    activeText: this.$t("security_advice.switch_text")
+                                }),
+                            ])
+                        },
+                        showCancelButton: true,
+                        confirmButtonText: this.$t("security_advice.enable"),
+                        cancelButtonText: this.$t("cancel"),
+                        center: false,
+                        showClose: false,
+                    }).then(() => {
+                        this.$router.push({path: "admin/stats"});
+                    });
+                }
+            }
         },
         methods: {
             displayApp() {
@@ -118,19 +124,14 @@
                 document.title = document.title.replace(/( - .+)?$/, envSuffix);
             },
             async loadGeneralResources() {
-                const uid = localStorage.getItem("uid") || (() => {
-                    const newUid = Utils.uid();
-                    localStorage.setItem("uid", newUid);
-                    return newUid;
-                })();
-                
-                if (!localStorage.getItem("basicAuthCredentials")) {
-                    return null;
+                let uid = localStorage.getItem("uid");
+                if (uid === null) {
+                    uid = Utils.uid();
+                    localStorage.setItem("uid", uid);
                 }
-                
+
                 this.pluginsStore.fetchIcons()
                 const config = await this.$store.dispatch("misc/loadConfigs");
-
                 await this.docStore.initResourceUrlTemplate(config.version);
 
                 this.apiStore.loadFeeds({
@@ -143,8 +144,6 @@
                     .then(apiConfig => {
                         this.initStats(apiConfig, config, uid);
                     })
-                
-                return config;
             },
             initStats(apiConfig, config, uid) {
                 if (!this.configs || this.configs["isAnonymousUsageEnabled"] === false) {
@@ -199,12 +198,6 @@
                         type: "OSS"
                     }
                 }
-            },
-            isLoginRoute() {
-                return this.$route?.name?.startsWith("login");
-            },
-            isSetupRoute() {
-                return this.$route?.name === "setup";
             },
         },
         watch: {

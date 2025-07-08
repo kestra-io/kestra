@@ -13,23 +13,23 @@ import {setupTenantRouter} from "./composables/useTenant";
 const app = createApp(App)
 
 initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
-    
+
     router.beforeEach(async (to, from, next) => {
         if (["login", "setup"].includes(to.name)) {
             return next();
         }
-        
+
         const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null;
         const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress") === "true";
-        
+
         try {
             if (!store.getters["misc/configs"]) {
                 await store.dispatch("misc/loadConfigs");
             }
-            
+
             const configs = store.getters["misc/configs"];
             const hasCompletedSetup = localStorage.getItem("basicAuthSetupCompleted") === "true";
-            
+
             if (configs) {
                 if (configs.isBasicAuthEnabled) {
                     if (!hasCredentials) {
@@ -43,18 +43,18 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
                     }
                     return next();
                 }
-                
+
                 if (!configs.isBasicAuthEnabled && !hasCompletedSetup) {
                     return next({name: "setup"});
                 }
             }
-            
+
             if (!hasCredentials && !isSetupInProgress) {
                 return next({name: "login", query: {from: to.fullPath}});
             }
-            
+
             return next();
-            
+
         } catch (error) {
             console.error("Router guard error:", error);
             localStorage.removeItem("basicAuthCredentials");
@@ -64,7 +64,7 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
 
     // Setup tenant router
     setupTenantRouter(router, app);
-  
+
     // axios
     configureAxios((instance) => {
         app.use(VueAxios, instance);
@@ -72,7 +72,7 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
         store.$http = app.$http;
         store.axios = app.axios;
         piniaStore.$http = app.$http;
-    }, store, router);
+    }, store, router, true);
 
     piniaStore.vuexStore = store;
     app.config.globalProperties.$isOss = true; // Set to true for OSS version

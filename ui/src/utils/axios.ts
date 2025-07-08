@@ -75,7 +75,8 @@ interface QueueItem {
 export default (
     callback: (instance: AxiosInstance) => void,
     store: Store<any>,
-    router: Router
+    router: Router,
+    oss: boolean = false
 ): void => {
     const instance: AxiosInstance = axios.create({
         timeout: 15000,
@@ -126,7 +127,7 @@ export default (
             }
 
             if (errorResponse.response.status === 401
-                && !store.getters["auth/isLogged"]) {
+                && (oss || !store.getters["auth/isLogged"])) {
                 const base_path = window.KESTRA_BASE_PATH.endsWith("/") ? window.KESTRA_BASE_PATH.slice(0, -1) : window.KESTRA_BASE_PATH;
 
                 if (window.location.pathname.startsWith(base_path + "/ui/login")) {
@@ -135,13 +136,14 @@ export default (
 
                 window.location.assign(`${base_path}/ui/login?from=${window.location.pathname +
                 (window.location.search ?? "")}`)
+                return
             }
 
             const impersonate = localStorage.getItem(storageKeys.IMPERSONATE);
 
             // Authentication expired
             if (errorResponse.response.status === 401 &&
-                store.getters["auth/isLogged"] &&
+                store.getters["auth/isLogged"] && !oss &&
                 !document.cookie.split("; ").map(cookie => cookie.split("=")[0]).includes("JWT")
                 && !impersonate) {
                 // Keep original request
@@ -183,13 +185,13 @@ export default (
 
                         useCoreStore().unsavedChange = false;
                         useLayoutStore().setTopNavbar(undefined);
-                        
+
                         localStorage.removeItem("basicAuthCredentials");
                         delete instance.defaults.headers.common["Authorization"];
-                        
+
                         const currentPath = window.location.pathname;
                         const isLoginPath = currentPath.includes("/login");
-                        
+
                         router.push({
                             name: "login",
                             query: {

@@ -5,7 +5,7 @@
         <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
             <router-view />
         </component>
-        <VueTour />
+        <VueTour v-if="!isAuthRoute" />
     </el-config-provider>
 </template>
 
@@ -22,7 +22,6 @@
     import "@kestra-io/ui-libs/style.css";
 
     import {useApiStore} from "./stores/api";
-    import {usePluginsStore} from "./stores/plugins";
     import {useLayoutStore} from "./stores/layout";
     import {useCoreStore} from "./stores/core";
     import {useDocStore} from "./stores/doc";
@@ -48,7 +47,7 @@
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["overallTotal"]),
             ...mapGetters("misc", ["configs"]),
-            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore),
+            ...mapStores(useApiStore, useLayoutStore, useCoreStore, useDocStore),
             envName() {
                 return this.layoutStore.envName || this.configs?.environment?.name;
             },
@@ -57,16 +56,18 @@
             },
             shouldRenderApp() {
                 return !this.configs || this.isSetupRoute() || this.configs.isBasicAuthEnabled || localStorage.getItem("basicAuthSetupCompleted") === "true";
-            }
+            },
+            hasCredentials() {
+                return localStorage.getItem("basicAuthCredentials") !== null;
+            },
+            isAuthRoute() {
+                return this.$route.name === "login" || this.$route.name === "setup";
+            },
         },
         async created() {
-            const {name: currentRoute} = this.$route;
-            const isAuthRoute = currentRoute === "login" || currentRoute === "setup";
-            const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null;
-
             this.setTitleEnvSuffix();
 
-            if (!this.created && !isAuthRoute) {
+            if (!this.created && !this.isAuthRoute) {
                 try {
                     const config = await this.loadGeneralResources();
                     if (config === null) {
@@ -75,7 +76,7 @@
                     }
 
                     // Basic auth enabled: redirect to login if no credentials
-                    if (this.configs && this.configs.isBasicAuthEnabled && !hasCredentials) {
+                    if (this.configs && this.configs.isBasicAuthEnabled && !this.hasCredentials) {
                         this.$router.push({name: "login"});
                         this.displayApp();
                         return;
@@ -95,7 +96,7 @@
                         return;
                     }
                 }
-            } else if (!isAuthRoute && !hasCredentials) {
+            } else if (!this.isAuthRoute && !this.hasCredentials) {
                 // Fallback: redirect to login when configs unavailable
                 this.$router.push({name: "login"});
                 this.displayApp();
@@ -123,12 +124,11 @@
                     localStorage.setItem("uid", newUid);
                     return newUid;
                 })();
-                
+
                 if (!localStorage.getItem("basicAuthCredentials")) {
                     return null;
                 }
-                
-                this.pluginsStore.fetchIcons()
+
                 const config = await this.$store.dispatch("misc/loadConfigs");
 
                 await this.docStore.initResourceUrlTemplate(config.version);
@@ -143,7 +143,7 @@
                     .then(apiConfig => {
                         this.initStats(apiConfig, config, uid);
                     })
-                
+
                 return config;
             },
             initStats(apiConfig, config, uid) {

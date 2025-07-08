@@ -29,6 +29,9 @@ export const useMiscStore = defineStore("misc", {
         },
 
         async loadAllUsages() {
+            // avoid crashing loop when no credentials are set
+            if(localStorage.getItem("basicAuthCredentials") === null) return []
+
             const response = await this.$http.get(`${apiUrl(this.vuexStore)}/usages/all`);
             return response.data;
         },
@@ -40,7 +43,7 @@ export const useMiscStore = defineStore("misc", {
             password: string;
         }) {
             const email = options.username;
-            
+
             localStorage.setItem("firstName", options.firstName);
             localStorage.setItem("lastName", options.lastName);
 

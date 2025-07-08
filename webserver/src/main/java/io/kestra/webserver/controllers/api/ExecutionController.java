@@ -1825,7 +1825,7 @@ public class ExecutionController {
             );
         }
 
-        executions.forEach(execution -> setLabelsOnTerminatedExecution(execution, setLabelsByIds.executionLabels()));
+        executions.forEach(execution -> setLabelsOnTerminatedExecution(execution, ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels())));
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 

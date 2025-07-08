@@ -14,6 +14,11 @@
                 />
             </template>
 
+            <template #top>
+                <el-card v-if="showStatChart()" shadow="never" class="mb-4">
+                    <ExecutionsBar v-if="statStore.taskRunDailyData" :data="statStore.taskRunDailyData" :total="executionsCount" />
+                </el-card>
+            </template>
 
             <template #table>
                 <el-table
@@ -103,6 +108,8 @@
     import TaskRunFilterLanguage from "../../composables/monaco/languages/filters/impl/taskRunFilterLanguage.js";
 </script>
 <script>
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -112,13 +119,12 @@
     import DateAgo from "../layout/DateAgo.vue";
     import Kicon from "../Kicon.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
-
     import {State} from "@kestra-io/ui-libs"
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
     import {stateGlobalChartTypes, storageKeys} from "../../utils/constants";
-    import {mapStores} from "pinia";
-    import {useTaskRunsStore} from "../../stores/taskruns.ts";
+    import {useTaskRunsStore} from "../../stores/taskruns";
+    import {useStatStore} from "../../stores/stat";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -141,7 +147,8 @@
             };
         },
         computed: {
-            ...mapStores(useTaskRunsStore),
+            ...mapState("taskrun", ["taskruns", "total"]),
+            ...mapStores(useStatStore, useTaskRunsStore),
             routeInfo() {
                 return {
                     title: this.$t("taskruns")
@@ -167,6 +174,11 @@
 
                 // the default is PT30D
                 return this.$moment().subtract(30, "days").toISOString(true);
+            },
+            executionsCount() {
+                return this.statStore.taskRunDailyData?.reduce((a, b) => {  
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);  
+                }, 0) ?? 0; 
             },
         },
         methods: {
@@ -211,6 +223,16 @@
             },
             loadData(callback) {
                 this.lastRefreshDate = new Date();
+
+                this.statStore
+                    .taskRunDaily(this.loadQuery({
+                        startDate: this.startDate,
+                        endDate: this.endDate
+                    }, true))
+                    .then(() => {
+                        this.dailyReady = true;
+                    });
+
                 this.taskrunsStore
                     .findTaskRuns(this.loadQuery({
                         size: parseInt(this.$route.query.size || 25),

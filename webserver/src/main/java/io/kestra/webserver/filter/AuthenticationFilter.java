@@ -24,7 +24,8 @@ import java.util.Optional;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-@Filter("/**")
+//We want to authenticate only Kestra endpoints
+@Filter("/api/v1/**")
 @Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
 @Requires(property = "micronaut.security.enabled", notEquals = "true") // don't add this filter in EE
 public class AuthenticationFilter implements HttpServerFilter {

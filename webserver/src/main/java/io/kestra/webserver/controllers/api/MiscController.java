@@ -90,7 +90,7 @@ public class MiscController {
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
-    public Configuration getConfiguration() throws JsonProcessingException  {
+    public Configuration getConfiguration() {
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
             .uuid(instanceService.fetch())
@@ -106,6 +106,7 @@ public class MiscController {
                 .max(this.maxPreviewRows)
                 .build())
             .isAiEnabled(applicationContext.containsBean(AiController.class))
+            .isBasicAuthInitialized(basicAuthService.isBasicAuthInitialized())
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .resourceToFilters(QueryFilter.Resource.asResourceList())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
@@ -180,6 +181,8 @@ public class MiscController {
         List<QueryFilter.ResourceField> resourceToFilters;
 
         Boolean isAiEnabled;
+
+        Boolean isBasicAuthInitialized;
     }
 
     @Value

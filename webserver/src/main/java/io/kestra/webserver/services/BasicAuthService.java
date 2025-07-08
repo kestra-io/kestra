@@ -6,7 +6,6 @@ import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.AuthUtils;
-import io.kestra.core.validations.ServerCommandValidator;
 import io.kestra.webserver.models.events.OssAuthEvent;
 import io.micronaut.context.annotation.ConfigurationInject;
 import io.micronaut.context.annotation.ConfigurationProperties;
@@ -46,7 +45,7 @@ public class BasicAuthService {
     @Inject
     private ApplicationEventPublisher<OssAuthEvent> ossAuthEventPublisher;
 
-    public BasicAuthService(ServerCommandValidator serverCommandValidator) {}
+    public BasicAuthService() {}
 
     @PostConstruct
     private void init() {
@@ -122,6 +121,11 @@ public class BasicAuthService {
             .map(Setting::getValue)
             .map(value -> JacksonMapper.toMap(value, SaltedBasicAuthConfiguration.class))
             .orElse(null);
+    }
+
+    public boolean isBasicAuthInitialized(){
+        SaltedBasicAuthConfiguration configuration = configuration();
+        return configuration != null && configuration.getUsername() != null && configuration.getPassword() != null;
     }
 
     @Getter

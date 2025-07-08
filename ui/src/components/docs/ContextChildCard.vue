@@ -11,7 +11,7 @@
                 <div class="card-body d-flex align-items-center">
                     <span class="card-icon">
                         <img
-                            :src="$store.getters['doc/resourceUrl'](item.icon)"
+                            :src="docStore.resourceUrl(item.icon)"
                             :alt="item.title"
                             width="50px"
                             height="50px"
@@ -33,11 +33,11 @@
 
 <script setup>
     import {computed, ref, onMounted} from "vue";
-    import {useStore} from "vuex";
+    import {useDocStore} from "../../stores/doc";
 
     import ContextDocsLink from "./ContextDocsLink.vue";
 
-    const store = useStore();
+    const docStore = useDocStore();
 
     const props = defineProps({
         pageUrl: {
@@ -50,7 +50,7 @@
         if (props.pageUrl) {
             return props.pageUrl.replace(/^\//, "").replace(/\/$/, "");
         } else {
-            const p = store.getters["doc/docPath"];
+            const p = docStore.docPath;
             return p ? `docs/${p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/")}` : p;
         }
     })
@@ -58,7 +58,7 @@
 
     const resourcesWithMetadata = ref({});
     onMounted(async () => {
-        resourcesWithMetadata.value = await store.dispatch("doc/children", currentPage.value);
+        resourcesWithMetadata.value = await docStore.children(currentPage.value);
     })
 
     const navigation = computed(() => {

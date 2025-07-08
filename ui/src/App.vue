@@ -25,6 +25,7 @@
     import {usePluginsStore} from "./stores/plugins";
     import {useLayoutStore} from "./stores/layout";
     import {useCoreStore} from "./stores/core";
+    import {useDocStore} from "./stores/doc";
 
     // Main App
     export default {
@@ -47,7 +48,7 @@
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["overallTotal"]),
             ...mapGetters("misc", ["configs"]),
-            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore),
+            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore),
             envName() {
                 return this.layoutStore.envName || this.configs?.environment?.name;
             },
@@ -129,10 +130,8 @@
                 
                 this.pluginsStore.fetchIcons()
                 const config = await this.$store.dispatch("misc/loadConfigs");
-                
-                this.$store.dispatch("plugin/icons");
-                await this.$store.dispatch("doc/initResourceUrlTemplate", config.version);
-                this.$store.dispatch("api/loadFeeds", {version: config.version, iid: config.uuid, uid});
+
+                await this.docStore.initResourceUrlTemplate(config.version);
 
                 this.apiStore.loadFeeds({
                     version: config.version,

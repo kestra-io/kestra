@@ -1066,17 +1066,15 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
     }
 
+    /**
+     * This method should only be used on tests.
+     * It shut down the worker without waiting for tasks to end,
+     * and without closing the queue, so tests can launch and shutdown a worker manually without closing the queue.
+     */
     @VisibleForTesting
     public void shutdown() {
         // initiate shutdown
         shutdown.compareAndSet(false, true);
-
-        try {
-            // close the WorkerJob queue to stop receiving new JobTask execution.
-            workerJobQueue.close();
-        } catch (IOException e) {
-            log.error("Failed to close the WorkerJobQueue");
-        }
 
         // close all queues and shutdown now
         this.receiveCancellations.forEach(Runnable::run);

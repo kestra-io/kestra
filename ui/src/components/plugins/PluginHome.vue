@@ -114,10 +114,9 @@
         },
         methods: {
             openGroup(plugin) {
-                this.openPlugin(
-                    Object.entries(plugin)
-                        .find(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements) && elements.length > 0)?.[1]
-                )
+                const defaultElement = Object.entries(plugin)
+                    .find(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements) && elements.length > 0)?.[1]?.[0];
+                this.openPlugin(defaultElement);
             },
             openPlugin(cls) {
                 if (!cls) {

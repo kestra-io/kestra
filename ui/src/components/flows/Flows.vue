@@ -303,6 +303,7 @@
 
 <script>
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -318,6 +319,7 @@
     import TriggerAvatar from "./TriggerAvatar.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import Kicon from "../Kicon.vue";
+    import {useStatStore} from "../../stores/stat";
     import Labels from "../layout/Labels.vue";
     import {storageKeys} from "../../utils/constants";
 
@@ -398,6 +400,7 @@
         computed: {
             ...mapState("flow", ["flows", "total"]),
             ...mapState("auth", ["user"]),
+            ...mapStores(useStatStore),
             routeInfo() {
                 return {
                     title: this.$t("flows"),
@@ -450,6 +453,13 @@
                         this.$route.query.namespace,
                     )
                 );
+            },
+            executionsCount() {
+                return this.statStore.dailyData?.reduce((a, b) => {
+                    return (
+                        a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0)
+                    );
+                }, 0) ?? 0;
             },
             charts() {
                 return [
@@ -749,6 +759,50 @@
                             sort: q.sort ?? "id:asc",
                         }),
                     )
+                    .then((flows) => {
+                        this.dailyGroupByFlowReady = false;
+                        this.lastExecutionByFlowReady = false;
+
+                        if (flows.results && flows.results.length > 0) {
+                            if (
+                                this.user &&
+                                this.user.hasAny(permission.EXECUTION)
+                            ) {
+                                this.statStore
+                                    .dailyGroupByFlow({
+                                        flows: flows.results.map((flow) => {
+                                            return {
+                                                namespace: flow.namespace,
+                                                id: flow.id,
+                                            };
+                                        }),
+                                        startDate: this.$moment(this.startDate)
+                                            .add(-1, "day")
+                                            .startOf("day")
+                                            .toISOString(true),
+                                        endDate: this.$moment(this.endDate)
+                                            .endOf("day")
+                                            .toISOString(true),
+                                    })
+                                    .then(() => {
+                                        this.dailyGroupByFlowReady = true;
+                                    });
+
+                                this.statStore
+                                    .lastExecutions({
+                                        flows: flows.results.map((flow) => {
+                                            return {
+                                                namespace: flow.namespace,
+                                                id: flow.id,
+                                            };
+                                        }),
+                                    })
+                                    .then(() => {
+                                        this.lastExecutionByFlowReady = true;
+                                    });
+                            }
+                        }
+                    })
                     .finally(callback);
             },
             rowClasses(row) {

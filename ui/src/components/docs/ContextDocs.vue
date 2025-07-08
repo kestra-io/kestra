@@ -40,7 +40,7 @@
 
 <script lang="ts" setup>
     import {ref, watch, computed, getCurrentInstance, onUnmounted, onMounted, nextTick} from "vue";
-    import {useStore} from "vuex";
+    import {useDocStore} from "../../stores/doc";
     import {useI18n} from "vue-i18n";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import {MDCRenderer, getMDCParser} from "@kestra-io/ui-libs";
@@ -52,7 +52,7 @@
     import ContextInfoContent from "../ContextInfoContent.vue";
     import ContextChildTableOfContents from "./ContextChildTableOfContents.vue";
 
-    const store = useStore();
+    const docStore = useDocStore();
     const {t} = useI18n({useScope: "global"});
 
     const docWrapper = ref<HTMLDivElement | null>(null);
@@ -60,8 +60,8 @@
     const currentHistoryIndex = ref(-1);
     const ast = ref<any>(undefined);
 
-    const pageMetadata = computed(() => store.getters["doc/pageMetadata"]);
-    const docPath = computed(() => store.getters["doc/docPath"]);
+    const pageMetadata = computed(() => docStore.pageMetadata);
+    const docPath = computed(() => docStore.docPath);
     const routeInfo = computed(() => ({
         title: pageMetadata.value?.title ?? t("docs"),
     }));
@@ -88,11 +88,11 @@
     const goBack = () => {
         if (!canGoBack.value) return;
         currentHistoryIndex.value--;
-        store.commit("doc/setDocPath", docHistory.value[currentHistoryIndex.value]);
+        docStore.docPath = docHistory.value[currentHistoryIndex.value];
     };
 
     async function setDocPageFromResponse(response){
-        await store.commit("doc/setPageMetadata", response.metadata);
+        docStore.pageMetadata = response.metadata;
         let content = response.content;
         if (!("canShare" in navigator)) {
             content = content.replaceAll(/\s*web-share\s*/g, "");
@@ -112,7 +112,7 @@
 
     async function fetchDefaultDocFromDocIdIfPossible() {
         try {
-            const response = await store.dispatch("doc/fetchDocId", store.state.doc.docId);
+            const response = await docStore.fetchDocId(docStore.docId!);
             if (response) {
                 await setDocPageFromResponse(response);
                 // Add the default page to history
@@ -126,11 +126,11 @@
     }
 
     async function refreshPage(val) {
-        let response: {metadata: any, content:string} | undefined = undefined;
+        let response: {metadata?: any, content:string} | undefined = undefined;
         // if this fails to return a value, fetch the default doc
         // if nothing, fetch the home page
         if(response === undefined){
-            response = await store.dispatch("doc/fetchResource", `docs${val ?? ""}`)
+            response = await docStore.fetchResource(`docs${val ?? ""}`)
         }
         if(response === undefined){
             return;
@@ -160,7 +160,7 @@
         ast.value = undefined;
     });
 
-    watch(() => store.getters["doc/docPath"], async (val) => {
+    watch(() => docStore.docPath, async (val) => {
         if (!val?.length) {
             fetchDefaultDocFromDocIdIfPossible();
             return;

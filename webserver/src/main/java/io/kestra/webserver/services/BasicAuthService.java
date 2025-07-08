@@ -6,7 +6,6 @@ import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.AuthUtils;
-import io.kestra.core.validations.ServerCommandValidator;
 import io.kestra.webserver.models.events.OssAuthEvent;
 import io.micronaut.context.annotation.ConfigurationInject;
 import io.micronaut.context.annotation.ConfigurationProperties;
@@ -46,24 +45,23 @@ public class BasicAuthService {
     @Inject
     private ApplicationEventPublisher<OssAuthEvent> ossAuthEventPublisher;
 
-    public BasicAuthService(ServerCommandValidator serverCommandValidator) {}
+    public BasicAuthService() {}
 
     @PostConstruct
     private void init() {
-        if (Boolean.TRUE.equals(this.basicAuthConfiguration.getEnabled())) {
-            this.save(this.basicAuthConfiguration);
-        } else if (Boolean.FALSE.equals(this.basicAuthConfiguration.getEnabled())) {
-            this.unsecure();
+        if (basicAuthConfiguration == null){
+            settingRepository.save(Setting.builder()
+                .key(BASIC_AUTH_SETTINGS_KEY)
+                .value(new BasicAuthConfiguration())
+                .build());
+        } else if (basicAuthConfiguration.getUsername() == null || basicAuthConfiguration.getPassword() == null){
+            settingRepository.save(Setting.builder()
+                .key(BASIC_AUTH_SETTINGS_KEY)
+                .value(basicAuthConfiguration)
+                .build());
+        } else {
+            save(basicAuthConfiguration);
         }
-    }
-
-    public boolean isEnabled() {
-        BasicAuthConfiguration basicAuthConfiguration = configuration();
-        if (basicAuthConfiguration == null) {
-            return false;
-        }
-
-        return Boolean.TRUE.equals(basicAuthConfiguration.getEnabled()) && basicAuthConfiguration.getUsername() != null && basicAuthConfiguration.getPassword() != null;
     }
 
     public void save(BasicAuthConfiguration basicAuthConfiguration) {
@@ -73,6 +71,10 @@ public class BasicAuthService {
     public void save(String uid, BasicAuthConfiguration basicAuthConfiguration) {
         if (basicAuthConfiguration.getUsername() != null && !EMAIL_PATTERN.matcher(basicAuthConfiguration.getUsername()).matches()) {
             throw new IllegalArgumentException("Invalid username for Basic Authentication. Please provide a valid email address.");
+        }
+
+        if (basicAuthConfiguration.getUsername() == null) {
+            throw new IllegalArgumentException("No user name set for Basic Authentication. Please provide a user name.");
         }
 
         if (basicAuthConfiguration.getPassword() == null) {
@@ -114,18 +116,6 @@ public class BasicAuthService {
         }
     }
 
-    public void unsecure() {
-        BasicAuthConfiguration configuration = configuration();
-        if (configuration == null || Boolean.FALSE.equals(configuration.getEnabled())) {
-            return;
-        }
-
-        settingRepository.save(Setting.builder()
-            .key(BASIC_AUTH_SETTINGS_KEY)
-            .value(configuration.withEnabled(false))
-            .build());
-    }
-
     public SaltedBasicAuthConfiguration configuration() {
         return settingRepository.findByKey(BASIC_AUTH_SETTINGS_KEY)
             .map(Setting::getValue)
@@ -133,13 +123,16 @@ public class BasicAuthService {
             .orElse(null);
     }
 
+    public boolean isBasicAuthInitialized(){
+        SaltedBasicAuthConfiguration configuration = configuration();
+        return configuration != null && configuration.getUsername() != null && configuration.getPassword() != null;
+    }
+
     @Getter
     @NoArgsConstructor
     @EqualsAndHashCode
     @ConfigurationProperties("kestra.server.basic-auth")
     public static class BasicAuthConfiguration {
-        @With
-        private Boolean enabled;
         private String username;
         protected String password;
         private String realm;
@@ -148,13 +141,11 @@ public class BasicAuthService {
         @SuppressWarnings("MnInjectionPoints")
         @ConfigurationInject
         public BasicAuthConfiguration(
-            @Nullable Boolean enabled,
             @Nullable String username,
             @Nullable String password,
             @Nullable String realm,
             @Nullable List<String> openUrls
         ) {
-            this.enabled = enabled;
             this.username = username;
             this.password = password;
             this.realm = Optional.ofNullable(realm).orElse("Kestra");
@@ -165,12 +156,11 @@ public class BasicAuthService {
             String username,
             String password
         ) {
-            this(true, username, password, null, null);
+            this(username, password, null, null);
         }
 
         public BasicAuthConfiguration(BasicAuthConfiguration basicAuthConfiguration) {
             if (basicAuthConfiguration != null) {
-                this.enabled = basicAuthConfiguration.getEnabled();
                 this.username = basicAuthConfiguration.getUsername();
                 this.password = basicAuthConfiguration.getPassword();
                 this.realm = basicAuthConfiguration.getRealm();
@@ -181,7 +171,6 @@ public class BasicAuthService {
         @VisibleForTesting
         BasicAuthConfiguration withUsernamePassword(String username, String password) {
             return new BasicAuthConfiguration(
-                this.enabled,
                 username,
                 password,
                 this.realm,

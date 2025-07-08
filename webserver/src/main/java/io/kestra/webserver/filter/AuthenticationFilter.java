@@ -17,12 +17,12 @@ import io.micronaut.web.router.RouteMatchUtils;
 import jakarta.inject.Inject;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Optional;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Filter("/**")
 @Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
@@ -42,21 +42,18 @@ public class AuthenticationFilter implements HttpServerFilter {
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
-        return Mono.fromCallable(() -> basicAuthService.isEnabled())
+        return Mono.fromCallable(basicAuthService::configuration)
             .subscribeOn(Schedulers.boundedElastic())
             .flux()
-            .switchMap(enabled -> {
-                if (!enabled) {
-                    return chain.proceed(request);
-                }
+            .flatMap(basicAuthConfiguration -> {
+                boolean isConfigEndpoint = request.getPath().endsWith("/configs") || request.getPath().endsWith("/basicAuth");
 
-                BasicAuthService.SaltedBasicAuthConfiguration basicAuthConfiguration = this.basicAuthService.configuration();
                 boolean isOpenUrl = Optional.ofNullable(basicAuthConfiguration.getOpenUrls())
                     .map(Collection::stream)
                     .map(stream -> stream.anyMatch(s -> request.getPath().startsWith(s)))
                     .orElse(false);
 
-                if (isOpenUrl || isManagementEndpoint(request)) {
+                if (isConfigEndpoint || isOpenUrl || isManagementEndpoint(request)) {
                     return chain.proceed(request);
                 }
 
@@ -68,13 +65,14 @@ public class AuthenticationFilter implements HttpServerFilter {
 
                 if (basicAuth.isEmpty() ||
                     !basicAuth.get().username().equals(basicAuthConfiguration.getUsername()) ||
-                    !AuthUtils.encodePassword(basicAuthConfiguration.getSalt(), basicAuth.get().password()).equals(basicAuthConfiguration.getPassword())
+                    !AuthUtils.encodePassword(basicAuthConfiguration.getSalt(),
+                        basicAuth.get().password()).equals(basicAuthConfiguration.getPassword())
                 ) {
-                    return Flux.just(HttpResponse.unauthorized().header("WWW-Authenticate", PREFIX + " realm=" + basicAuthConfiguration.getRealm()));
+                    return Flux.just(HttpResponse.unauthorized());
                 }
 
                 return chain.proceed(request);
-            });
+            }) ;
     }
 
     @SuppressWarnings("rawtypes")

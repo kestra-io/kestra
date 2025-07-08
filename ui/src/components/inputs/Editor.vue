@@ -82,6 +82,7 @@
     import {mapState, mapGetters} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
+    import {useDocStore} from "../../stores/doc";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
@@ -148,7 +149,7 @@
             };
         },
         mounted() {
-            this.$store.commit("doc/setDocId", "flowEditor");
+            this.docStore.docId = "flowEditor";
         },
         watch: {
             mappedTheme: {
@@ -168,7 +169,7 @@
         computed: {
             ...mapState({mappedTheme: state => state.misc.theme}),
             ...mapGetters("flow", ["flowValidation"]),
-            ...mapStores(useCoreStore),
+            ...mapStores(useCoreStore, useDocStore),
             containerClass() {
                 return [
                     !this.input ? "" : "single-line",

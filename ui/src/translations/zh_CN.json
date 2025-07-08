@@ -1183,6 +1183,73 @@
       },
       "label": "设置"
     },
+    "setup": {
+      "config": {
+        "basicauth": "基本认证",
+        "queue": "队列",
+        "repository": "数据库",
+        "storage": "内部存储"
+      },
+      "confirm": {
+        "config_title": "确认配置有效",
+        "confirm": "确认",
+        "not_valid": "不，这无效",
+        "valid": "是的，它是有效的"
+      },
+      "form": {
+        "email": "电子邮件",
+        "firstName": "名字",
+        "lastName": "姓氏",
+        "password": "密码"
+      },
+      "login": "登录",
+      "logout": "退出",
+      "steps": {
+        "complete": "启动 Kestra UI",
+        "config": "验证配置",
+        "survey": "告诉我们更多信息",
+        "user": "创建您的第一个用户"
+      },
+      "subtitles": {
+        "complete": "设置已成功完成！",
+        "config": "以下是您的配置详情",
+        "survey": "帮助我们改进 Kestra Open Source Edition",
+        "user": "通过创建您的第一个用户来设置您的实例"
+      },
+      "success": {
+        "subtitle": "一切准备就绪！",
+        "title": "恭喜！"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "个人使用",
+        "company_size": "您的公司规模是多少？",
+        "continue": "继续",
+        "newsletter": "订阅 Kestra 新闻通讯 – 及时了解最新功能和更改。",
+        "skip": "跳过",
+        "use_case": "您的主要使用案例是什么？",
+        "use_case_business": "业务流程",
+        "use_case_data": "数据工作流",
+        "use_case_infrastructure": "基础设施自动化",
+        "use_case_ml": "ML/AI 管道",
+        "use_case_other": "其他"
+      },
+      "titles": {
+        "survey": "告诉我们更多信息",
+        "user": "创建第一个用户"
+      },
+      "validation": {
+        "email_invalid": "无效的电子邮件",
+        "email_required": "需要电子邮件",
+        "email_temporary_not_allowed": "不允许使用临时或一次性邮箱地址",
+        "firstName_required": "名字是必填项",
+        "lastName_required": "姓氏为必填项",
+        "password_invalid": "密码无效"
+      }
+    },
     "show": "显示",
     "show chart": "显示图表",
     "show description": "显示描述",

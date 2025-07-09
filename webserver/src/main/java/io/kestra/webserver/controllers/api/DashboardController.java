@@ -235,6 +235,11 @@ public class DashboardController {
     public PagedResults<Map<String, Object>> previewChart(
         @Parameter(description = "The chart") @Body @Valid PreviewRequest previewRequest
     ) throws IOException {
+        var fetchChartDataQuery = buildChartPreviewDataQuery(previewRequest);
+        return fetchChartData(fetchChartDataQuery);
+    }
+
+    private FetchChartDataQuery buildChartPreviewDataQuery(PreviewRequest previewRequest){
         String tenantId = tenantService.resolveTenant();
         Chart<?> chart = YAML_PARSER.parse(previewRequest.chart(), Chart.class);
         ChartFiltersOverrides globalFilter = previewRequest.globalFilter();
@@ -259,7 +264,7 @@ public class DashboardController {
         }
         Pageable pageable = null;
 
-        return fetchChartData(new FetchChartDataQuery(chart, filters, startDate, endDate, tenantId, pageable));
+        return new FetchChartDataQuery(chart, filters, startDate, endDate, tenantId, pageable);
     }
 
     private record FetchChartDataQuery(Chart<?> chart, List<QueryFilter> filters, ZonedDateTime startDate,
@@ -354,6 +359,26 @@ public class DashboardController {
         CSVUtils.toCSV(outputStreamWriter, fetchedData.getResults());
 
         var filename = "%s_%s_export.csv".formatted(id, chartId);
+        return HttpResponse.ok(byteArrayOutputStream.toByteArray()).header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "charts/export/to-csv", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Operation(tags = {"Dashboards"}, summary = "Export a table chart data to CSV")
+    public HttpResponse<byte[]> exportChartToCsv(
+        @Parameter(description = "The chart") @Body @Valid PreviewRequest previewRequest
+    ) throws IOException {
+        var fetchChartDataQuery = buildChartPreviewDataQuery(previewRequest);
+        if (!(fetchChartDataQuery.chart instanceof Table)) {
+            throw new IllegalArgumentException("Only Table data charts can be exported.");
+        }
+        var fetchedData = fetchChartData(fetchChartDataQuery);
+
+        var byteArrayOutputStream = new ByteArrayOutputStream();
+        var outputStreamWriter = new OutputStreamWriter(byteArrayOutputStream);
+        CSVUtils.toCSV(outputStreamWriter, fetchedData.getResults());
+
+        var filename = "%s_%s_export.csv".formatted("default-dashboard", fetchChartDataQuery.chart().getId());
         return HttpResponse.ok(byteArrayOutputStream.toByteArray()).header("Content-Disposition", "attachment; filename=\"%s\"".formatted(filename));
     }
 

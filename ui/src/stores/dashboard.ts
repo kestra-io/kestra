@@ -84,6 +84,11 @@ export const useDashboardStore = defineStore("dashboard", {
             const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/${id}/charts/${chartId}/export/to-csv`, filtersOverrides);
             return response.data;
         },
+
+        async chartPreviewExport(previewRequest: PreviewRequest) {
+            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/charts/export/to-csv`, previewRequest);
+            return response.data;
+        },
     },
 });
 export interface PreviewRequest {

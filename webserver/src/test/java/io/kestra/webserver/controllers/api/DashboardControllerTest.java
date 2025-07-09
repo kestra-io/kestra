@@ -117,7 +117,7 @@ class DashboardControllerTest {
     }
 
     @Test
-    void exportADashboardChartToCsv() {
+    void exportACustomDashboardChartToCsv() {
         var uuid = IdUtils.create();
         var fakeNamespace = "a-namespace_" + uuid;
         var logTimestamp = Instant.now();
@@ -180,6 +180,61 @@ class DashboardControllerTest {
 
         // export CSV
         byte[] csvBytes = client.toBlocking().retrieve(POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/table_logs_chart_id/export/to-csv", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build()), Argument.of(byte[].class));
+        var csv = new String(csvBytes, StandardCharsets.UTF_8);
+        assertThat(csv).isEqualTo("chart_namespace,chart_execution_id\r\n%s,%s\r\n".formatted(fakeNamespace, fakeExecutionId));
+    }
+
+    @Test
+    void exportADefaultDashboardChartToCsv() {
+        var uuid = IdUtils.create();
+        var fakeNamespace = "a-namespace_" + uuid;
+        var logTimestamp = Instant.now();
+        var fakeExecutionId = "an-execution-id" + uuid;
+        logRepository.save(LogEntry.builder()
+            .namespace(fakeNamespace)
+            .level(Level.INFO)
+            .attemptNumber(1)
+            .deleted(false)
+            .executionId(fakeExecutionId)
+            .tenantId(MAIN_TENANT)
+            .executionKind(ExecutionKind.NORMAL)
+            .flowId("a-flow-id")
+            .timestamp(logTimestamp)
+            .message("a message")
+            .build());
+
+        String chartYaml = """
+            id: table_logs_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Logs
+              columns:
+                chart_namespace:
+                  field: NAMESPACE
+                chart_execution_id:
+                  field: EXECUTION_ID
+              where:
+                - field: NAMESPACE
+                  type: EQUAL_TO
+                  value: "%s"
+                - field: EXECUTION_ID
+                  type: EQUAL_TO
+                  value: "%s"
+            """.formatted(fakeNamespace, fakeExecutionId);
+
+        // Compute a dashboard, making sure the query is correct
+        var previewRequest = new DashboardController.PreviewRequest(chartYaml, ChartFiltersOverrides.builder().filters(Collections.emptyList()).build());
+        PagedResults<Map<String, Object>> chartData = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
+            PagedResults.class
+        );
+        assertThat(chartData).isNotNull();
+        assertThat(chartData.getTotal()).isEqualTo(1);
+        assertThat(chartData.getResults().get(0).get("chart_namespace")).isEqualTo(fakeNamespace);
+        assertThat(chartData.getResults().get(0).get("chart_execution_id")).isEqualTo(fakeExecutionId);
+
+        // export CSV
+        byte[] csvBytes = client.toBlocking().retrieve(POST(DASHBOARD_PATH + "/charts/export/to-csv", previewRequest), Argument.of(byte[].class));
         var csv = new String(csvBytes, StandardCharsets.UTF_8);
         assertThat(csv).isEqualTo("chart_namespace,chart_execution_id\r\n%s,%s\r\n".formatted(fakeNamespace, fakeExecutionId));
     }

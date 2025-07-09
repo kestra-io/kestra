@@ -25,7 +25,6 @@ import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.VariableRenderer;
-import io.kestra.core.runners.pebble.functions.HttpFunction;
 import io.kestra.core.runners.pebble.functions.SecretFunction;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
@@ -108,7 +107,6 @@ import java.util.stream.Collectors;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
-import static io.kestra.core.utils.DateUtils.validateTimeline;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -2194,6 +2192,36 @@ public class ExecutionController {
 
     public String getTenant() {
         return tenantService.resolveTenant() != null ? tenantService.resolveTenant() + "/" : "";
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/latest")
+    @Operation(tags = {"Executions"}, summary = "Get the latest execution for given flows")
+    public List<LastExecutionResponse> getLatestExecutions(
+        @Parameter(description = "The flow filters") @Body List<ExecutionRepositoryInterface.FlowFilter> flowFilters
+    ) {
+        return executionRepository.lastExecutions(
+            tenantService.resolveTenant(),
+            flowFilters
+        ).stream().map(LastExecutionResponse::ofExecution).toList();
+    }
+
+    @Introspected
+    public record LastExecutionResponse(
+        @Parameter(description = "The flow's ID") String flowId,
+        @Parameter(description = "The namespace") String namespace,
+        @Parameter(description = "The start date") Instant startDate,
+        @Parameter(description = "The status") State.Type status
+    ) {
+
+        public static LastExecutionResponse ofExecution(Execution execution) {
+            return new LastExecutionResponse(
+                execution.getFlowId(),
+                execution.getNamespace(),
+                execution.getState().getStartDate(),
+                execution.getState().getCurrent()
+            );
+        }
     }
 
     @Introspected

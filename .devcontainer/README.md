@@ -74,9 +74,6 @@ kestra:
       path: /tmp/kestra-wd/tmp
   anonymous-usage-report:
     enabled: false
-  server:
-    basic-auth:
-      enabled: false
 
 datasources:
   postgres:

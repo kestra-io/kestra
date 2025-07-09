@@ -41,6 +41,7 @@
     "add task": "taskを追加",
     "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
     "add_new_item": "新しいアイテムを追加",
+    "additionalPlugins": "追加プラグイン",
     "administration": "管理",
     "advanced configuration": "他のプロパティ",
     "after": "後",
@@ -55,6 +56,7 @@
     "all executions": "すべての実行",
     "all tags": "すべてのタグ",
     "api": "API",
+    "appBlocks": "アプリブロック",
     "apps": "アプリケーション",
     "attempt": "試行",
     "attempts": "試行回数",
@@ -132,7 +134,10 @@
         "他のTaskは実行されません。",
         "エラーTaskが実行されます。"
       ],
-      "RUNNING": "フローが再起動し、次のすべてのタスクが実行されます。すべてのブロックされたタスクが実行されます。",
+      "RUNNING": [
+        "flowは再起動し、すべての次のtaskが実行されます。",
+        "すべてのブロックされたtaskが実行されます。"
+      ],
       "SUCCESS": [
         "このflowはこのtaskが成功したため再起動します。",
         "すべてのブロックされたtaskが実行されます。",
@@ -147,6 +152,7 @@
     "change state tooltip": "実行状態を変更",
     "chart": "チャート",
     "chart preview": "チャートプレビュー",
+    "charts": "チャート",
     "choice": "選択",
     "choose file": "ファイルを選択するか、ここにドロップしてください...",
     "close": "閉じる",
@@ -203,7 +209,7 @@
         "confirmation": "<code>{title}</code> ダッシュボードを削除してもよろしいですか？"
       },
       "edition": {
-        "chart": "<code>{chart}</code> チャートを編集",
+        "chart": "このチャートを編集",
         "confirmation": "ダッシュボード<code>{title}</code>の変更が保存されました。",
         "label": "ダッシュボードを編集"
       },
@@ -215,6 +221,7 @@
       "preview": "プレビュー ダッシュボード"
     },
     "data": "データ",
+    "dataFilters": "データフィルター",
     "data_not_protected": "あなたのデータは保護されていません。失わないようにしてください。<b>無料のセキュリティ機能を有効にするか、有料オプションをお試しください。</b>",
     "date": "日付",
     "date count": "{date}に{count}",
@@ -702,6 +709,7 @@
     "live help": "ライブヘルプ",
     "loaded x dependencies": "{count}件の依存関係が読み込まれました",
     "log expand setting": "Logのデフォルト表示",
+    "logExporters": "ログエクスポーター",
     "logs": "Logs",
     "logs_view": {
       "compact": "デフォルトビュー",
@@ -1175,6 +1183,73 @@
       },
       "label": "設定"
     },
+    "setup": {
+      "config": {
+        "basicauth": "基本認証",
+        "queue": "キュー",
+        "repository": "データベース",
+        "storage": "内部ストレージ"
+      },
+      "confirm": {
+        "config_title": "設定が有効であることを確認してください",
+        "confirm": "確認",
+        "not_valid": "いいえ、有効ではありません。",
+        "valid": "はい、有効です"
+      },
+      "form": {
+        "email": "メール",
+        "firstName": "名",
+        "lastName": "姓",
+        "password": "パスワード"
+      },
+      "login": "ログイン",
+      "logout": "ログアウト",
+      "steps": {
+        "complete": "Kestra UIを開始",
+        "config": "設定を検証",
+        "survey": "詳細を教えてください",
+        "user": "最初のユーザーを作成する"
+      },
+      "subtitles": {
+        "complete": "セットアップが正常に完了しました！",
+        "config": "こちらはあなたの設定の詳細です",
+        "survey": "Kestra Open Source Edition の改善にご協力ください",
+        "user": "最初のユーザーを作成してインスタンスをセットアップする"
+      },
+      "success": {
+        "subtitle": "準備完了です！",
+        "title": "おめでとうございます！"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "個人使用",
+        "company_size": "御社の規模はどのくらいですか？",
+        "continue": "続行",
+        "newsletter": "Kestraのニュースレターを購読して、最新の機能や変更を常に把握しましょう。",
+        "skip": "スキップ",
+        "use_case": "主な使用ケースは何ですか？",
+        "use_case_business": "ビジネスプロセス",
+        "use_case_data": "データワークフロー",
+        "use_case_infrastructure": "インフラストラクチャ自動化",
+        "use_case_ml": "ML/AI パイプライン",
+        "use_case_other": "その他"
+      },
+      "titles": {
+        "survey": "詳細を教えてください",
+        "user": "最初のユーザーを作成"
+      },
+      "validation": {
+        "email_invalid": "無効なメールアドレス",
+        "email_required": "メールが必要です",
+        "email_temporary_not_allowed": "一時的または使い捨てのメールアドレスは使用できません",
+        "firstName_required": "名が必要です",
+        "lastName_required": "姓が必要です",
+        "password_invalid": "無効なパスワード"
+      }
+    },
     "show": "表示",
     "show chart": "チャートを表示",
     "show description": "説明を表示",
@@ -1220,9 +1295,9 @@
     "task logs": "Task Logs",
     "task run id": "タスクランID",
     "taskDefaults": "taskのデフォルト設定",
+    "taskRunners": "タスクランナー",
     "task_id_exists": "タスクIDは既に存在します",
     "task_id_message": "フロー内にTask Id ${existingTask}は既に存在します。",
-    "task_runners": "タスクランナー",
     "taskid column details": "最後に実行されたtaskとその試行回数。",
     "taskruns": "Task Runs",
     "tasks": "Tasks",

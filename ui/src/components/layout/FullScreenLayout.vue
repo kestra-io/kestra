@@ -1,6 +1,6 @@
 <template>
     <div class="fullscreen-layout">
-        <router-view />
+        <slot />
     </div>
 </template>
 

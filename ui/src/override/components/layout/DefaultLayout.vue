@@ -21,13 +21,11 @@
     import {computed, onMounted, ref} from "vue"
     import {useSurveySkip} from "../../../composables/useSurveyData"
     import {useCoreStore} from "../../../stores/core"
-    import {usePluginsStore} from "../../../stores/plugins"
 
 
 
     const store = useStore()
     const coreStore = useCoreStore()
-    const pluginsStore = usePluginsStore()
     const {markSurveyDialogShown} = useSurveySkip()
 
     const configs = computed(() => store.getters["misc/configs"])
@@ -59,6 +57,5 @@
         const isMenuCollapsed = localStorage.getItem("menuCollapsed") === "true"
         onMenuCollapse(isMenuCollapsed)
         checkForSurveyDialog()
-        pluginsStore.fetchIcons()
     })
 </script>

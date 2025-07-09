@@ -439,6 +439,7 @@
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
 
     import {filterLabels} from "./utils"
+    import {usePluginsStore} from "../../stores/plugins.ts";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -576,6 +577,7 @@
             };
         },
         created() {
+            this.pluginsStore.fetchIcons()
             // allow to have different storage key for flow executions list
             if (this.$route.name === "flows/update") {
                 this.storageKey = storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS;
@@ -591,7 +593,7 @@
             ...mapState("execution", ["executions", "total"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
-            ...mapStores(useStatStore),
+            ...mapStores(useStatStore, usePluginsStore),
             ...mapGetters("misc", ["configs"]),
             routeInfo() {
                 return {
@@ -649,9 +651,9 @@
                 });
             },
             executionsCount() {
-                return this.statStore.dailyData?.reduce((a, b) => {  
-                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);  
-                }, 0) ?? 0; 
+                return this.statStore.dailyData?.reduce((a, b) => {
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
+                }, 0) ?? 0;
             },
             selectedNamespace(){
                 return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;

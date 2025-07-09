@@ -450,6 +450,7 @@
 
     onMounted(() => {
         coreStore.readTutorialFlows();
+        pluginsStore.fetchIcons();
     });
 </script>
 

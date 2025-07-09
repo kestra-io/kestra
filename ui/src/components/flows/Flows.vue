@@ -319,9 +319,11 @@
     import TriggerAvatar from "./TriggerAvatar.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import Kicon from "../Kicon.vue";
-    import {useStatStore} from "../../stores/stat";
     import Labels from "../layout/Labels.vue";
     import {storageKeys} from "../../utils/constants";
+
+    import {useStatStore} from "../../stores/stat";
+    import {usePluginsStore} from "../../stores/plugins.ts";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -400,7 +402,7 @@
         computed: {
             ...mapState("flow", ["flows", "total"]),
             ...mapState("auth", ["user"]),
-            ...mapStores(useStatStore),
+            ...mapStores(useStatStore, usePluginsStore),
             routeInfo() {
                 return {
                     title: this.$t("flows"),
@@ -497,6 +499,7 @@
         },
         created() {
             this.displayColumns = this.loadDisplayColumns();
+            this.pluginsStore.fetchIcons()
         },
         methods: {
             selectionMapper(element) {
@@ -541,7 +544,7 @@
                         const flowCount = this.queryBulkAction
                             ? this.total
                             : this.selection.length;
-                        
+
                         if (this.queryBulkAction) {
                             return this.$store
                                 .dispatch(

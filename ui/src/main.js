@@ -36,11 +36,6 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
         
         try {
             await store.dispatch("misc/loadConfigs")
-            const configs = store.getters["misc/configs"]
-            
-            if (!configs?.isBasicAuthInitialized) {
-                return next({name: "setup"})
-            }
             
             // Check if basic auth setup is still in progress
             const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress")

@@ -137,12 +137,6 @@
             
             await validateCredentials(auth)
             
-            const isInitialized = await checkServerInitialization()
-            if (!isInitialized) {
-                router.push({name: "setup"})
-                return
-            }
-
             localStorage.setItem("basicAuthCredentials", auth)
             localStorage.removeItem("basicAuthSetupInProgress")
             sessionStorage.setItem("sessionActive", "true")

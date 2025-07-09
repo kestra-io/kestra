@@ -114,7 +114,7 @@
             : undefined;
     });
 
-    const dashboardID = (route: RouteLocation) => getDashboard(route, "id") as string
+    const dashboardID = (route: RouteLocation) => getDashboard(route, "id") as string;
 
     const handlePageChange = async (options: { page: number; size: number }) => {
         pageNumber.value = options.page;

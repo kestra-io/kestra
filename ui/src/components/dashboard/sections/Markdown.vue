@@ -9,6 +9,8 @@
 <script setup lang="ts">
     import {PropType, onMounted, watch, ref} from "vue";
 
+    import type {RouteLocation} from "vue-router";
+
     import type {Chart} from "../composables/useDashboards";
     import {getDashboard, getPropertyValue, useChartGenerator} from "../composables/useDashboards";
 
@@ -32,7 +34,7 @@
         else data.value = props.chart.content ?? props.chart.source?.content;
     };
 
-    const dashboardID = (route) => getDashboard(route, "id")
+    const dashboardID = (route: RouteLocation) => getDashboard(route, "id") || "default"
 
     watch(route, async (changed) => await getData(dashboardID(changed)));
 

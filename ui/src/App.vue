@@ -5,7 +5,7 @@
         <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
             <router-view />
         </component>
-        <VueTour v-if="thi=$route.name && !isAuthRoute" />
+        <VueTour v-if="$route.name && !isAuthRoute" />
     </el-config-provider>
 </template>
 

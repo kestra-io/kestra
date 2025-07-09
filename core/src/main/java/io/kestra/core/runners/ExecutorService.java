@@ -19,6 +19,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
@@ -261,7 +262,8 @@ public class ExecutorService {
                 // Compute outputs for the parent Flowable task if a terminated state was resolved
                 if (workerTaskResult.getTaskRun().getState().isTerminated()) {
                     try {
-                        Output outputs = flowableParent.outputs(runContext);
+                        // as flowable tasks can save outputs during iterative execution, we must merge the maps here
+                        Map<String, Object> outputs = MapUtils.merge(workerTaskResult.getTaskRun().getOutputs(), flowableParent.outputs(runContext).toMap());
                         Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputs);
                         return Optional.of(new WorkerTaskResult(workerTaskResult
                             .getTaskRun()

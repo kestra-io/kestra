@@ -56,50 +56,21 @@
                 return true;
             },
             shouldRenderApp() {
-                return !this.configs || this.isSetupRoute() || this.configs.isBasicAuthEnabled || localStorage.getItem("basicAuthSetupCompleted") === "true";
+                return this.loaded
             }
         },
         async created() {
-            const {name: currentRoute} = this.$route;
-            const isAuthRoute = currentRoute === "login" || currentRoute === "setup";
-            const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null;
+            const {name: currentRoute} = this.$route
+            const isAuthRoute = currentRoute === "login" || currentRoute === "setup"
 
-            this.setTitleEnvSuffix();
+            this.setTitleEnvSuffix()
 
-            if (!this.created && !isAuthRoute) {
+            if (!isAuthRoute && localStorage.getItem("basicAuthCredentials")) {
                 try {
-                    const config = await this.loadGeneralResources();
-                    if (config === null) {
-                        this.displayApp();
-                        return;
-                    }
-
-                    // Basic auth enabled: redirect to login if no credentials
-                    if (this.configs && this.configs.isBasicAuthEnabled && !hasCredentials) {
-                        this.$router.push({name: "login"});
-                        this.displayApp();
-                        return;
-                    }
-
-                    // Basic auth disabled: redirect to setup if incomplete
-                    if (this.configs && !this.configs.isBasicAuthEnabled && !this.isSetupRoute() && localStorage.getItem("basicAuthSetupCompleted") !== "true") {
-                        this.$router.push({name: "setup"});
-                        this.displayApp();
-                        return;
-                    }
+                    await this.loadGeneralResources()
                 } catch (error) {
-                    if (error?.response?.status === 401) {
-                        localStorage.removeItem("basicAuthCredentials");
-                        this.$router.push({name: "login"});
-                        this.displayApp();
-                        return;
-                    }
+                    console.warn("Failed to load general resources:", error)
                 }
-            } else if (!isAuthRoute && !hasCredentials) {
-                // Fallback: redirect to login when configs unavailable
-                this.$router.push({name: "login"});
-                this.displayApp();
-                return;
             }
 
             this.displayApp();
@@ -172,7 +143,6 @@
                 }
 
 
-                // close survey on page change
                 let surveyVisible = false;
                 window.addEventListener("PHSurveyShown", () => {
                     surveyVisible = true;
@@ -201,10 +171,10 @@
                 }
             },
             isLoginRoute() {
-                return this.$route?.name?.startsWith("login");
+                return this.$route?.name?.startsWith("login")
             },
             isSetupRoute() {
-                return this.$route?.name === "setup";
+                return this.$route?.name === "setup"
             },
         },
         watch: {

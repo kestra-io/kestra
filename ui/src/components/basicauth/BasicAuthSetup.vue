@@ -301,18 +301,24 @@
         try {
             const config = await miscStore.loadConfigs()
             
-            if (config && config.isBasicAuthEnabled) {
+            if (config && config.isBasicAuthInitialized && localStorage.getItem("basicAuthSetupCompleted") === "true") {
                 localStorage.removeItem("basicAuthSetupInProgress")
                 localStorage.removeItem("setupStartTime")
                 router.push({name: "welcome"})
                 return
             }
+            
             localStorage.setItem("basicAuthSetupInProgress", "true")
             localStorage.setItem("setupStartTime", Date.now().toString())
+            
+            if (config && config.isBasicAuthInitialized) {
+                activeStep.value = 1
+            }
+            
             usageData.value = await miscStore.loadAllUsages()
             trackSetupEvent("setup_flow:started", {step_number: 1})
         } catch {
-        // Silently handle usage data loading errors
+            /* Silently handle usage data loading errors */
         } finally {
             isLoading.value = false
         }
@@ -333,7 +339,7 @@
             {name: "repository", icon: Database, value: setupConfiguration.value.repositoryType},
             {name: "queue", icon: CurrentDc, value: setupConfiguration.value.queueType},
             {name: "storage", icon: CloudOutline, value: setupConfiguration.value.storageType},
-            {name: "basicauth", icon: Lock, value: activeStep.value >= 0 ? true : configs?.isBasicAuthEnabled}
+            {name: "basicauth", icon: Lock, value: activeStep.value >= 1 ? true : configs?.isBasicAuthInitialized}
         ]
     })
 
@@ -413,12 +419,7 @@
         trackSetupEvent("setup_flow:step_back", {from_step_number: currentStep, to_step_number: activeStep.value})
     }
 
-    const handleUserFormSubmit = () => {
-        trackSetupEvent("setup_flow:user_form_submitted", {is_form_valid: isUserStepValid.value})
-        nextStep()
-    }
-
-    const initBasicAuth = async () => {
+    const handleUserFormSubmit = async () => {
         try {
             await miscStore.addBasicAuth({
                 firstName: userFormData.value.firstName,
@@ -426,18 +427,36 @@
                 username: userFormData.value.username,
                 password: userFormData.value.password
             })
-        
+            
+            const credentials = btoa(`${userFormData.value.username}:${userFormData.value.password}`)
+            localStorage.setItem("basicAuthCredentials", credentials)
+            
+            await miscStore.loadConfigs()
+            
+            try {
+                usageData.value = await miscStore.loadAllUsages()
+            } catch {
+                /* Silently handle usage data loading  */
+            }
+            
             trackSetupEvent("setup_flow:account_created", {
                 user_firstname: userFormData.value.firstName,
                 user_lastname: userFormData.value.lastName,
                 user_email: userFormData.value.username
             })
+            
+            trackSetupEvent("setup_flow:user_form_submitted", {is_form_valid: isUserStepValid.value})
             nextStep()
         } catch (error: any) {
             trackSetupEvent("setup_flow:account_creation_failed", {
                 error_message: error.message || "Unknown error"
             })
+            console.error("Failed to create basic auth account:", error)
         }
+    }
+
+    const initBasicAuth = () => {
+        nextStep()
     }
 
     const handleSurveyContinue = () => {

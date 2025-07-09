@@ -1,5 +1,6 @@
 import {createApp} from "vue"
 import VueAxios from "vue-axios";
+import axios from "axios";
 
 import App from "./App.vue"
 import initApp from "./utils/init"
@@ -8,57 +9,66 @@ import routes from "./routes/routes";
 import en from "./translations/en.json";
 import stores from "./stores/store";
 import {setupTenantRouter} from "./composables/useTenant";
+import {apiUrlWithoutTenants} from "./override/utils/route";
 
 
 const app = createApp(App)
 
-initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
+const validateCredentials = async (credentials) => {
+    const [username, password] = atob(credentials).split(":")
     
+    const response = await axios.post(`${apiUrlWithoutTenants()}/basicAuth`, {
+        username, 
+        password
+    })
+    
+    return response.data
+}
+
+const handleAuthError = (error, to) => {
+    if (error.message?.includes("401") || error.message?.includes("HTTP 401")) {
+        localStorage.removeItem("basicAuthCredentials")
+        const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
+        return {name: "login", query: fromPath ? {from: fromPath} : {}}
+    }
+    return {name: "setup"}
+}
+
+initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
     router.beforeEach(async (to, from, next) => {
         if (["login", "setup"].includes(to.name)) {
             return next();
         }
         
-        const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null;
-        const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress") === "true";
+        const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null
+        
+        if (!hasCredentials) {
+            const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
+            return next({name: "login", query: fromPath ? {from: fromPath} : {}})
+        }
         
         try {
-            if (!store.getters["misc/configs"]) {
-                await store.dispatch("misc/loadConfigs");
+            const basicAuthCredentials = localStorage.getItem("basicAuthCredentials")
+            if (basicAuthCredentials) {
+                await validateCredentials(basicAuthCredentials)
             }
             
-            const configs = store.getters["misc/configs"];
-            const hasCompletedSetup = localStorage.getItem("basicAuthSetupCompleted") === "true";
+            await store.dispatch("misc/loadConfigs")
+            const configs = store.getters["misc/configs"]
             
-            if (configs) {
-                if (configs.isBasicAuthEnabled) {
-                    if (!hasCredentials) {
-                        return next({name: "login", query: {from: to.fullPath}});
-                    }
-                    if (hasCompletedSetup) {
-                        localStorage.removeItem("basicAuthSetupCompleted");
-                    }
-                    if (isSetupInProgress) {
-                        localStorage.removeItem("basicAuthSetupInProgress");
-                    }
-                    return next();
-                }
-                
-                if (!configs.isBasicAuthEnabled && !hasCompletedSetup) {
-                    return next({name: "setup"});
-                }
+            if (!configs?.isBasicAuthInitialized) {
+                return next({name: "setup"})
             }
             
-            if (!hasCredentials && !isSetupInProgress) {
-                return next({name: "login", query: {from: to.fullPath}});
+            // Check if basic auth setup is still in progress
+            const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress")
+            if (isSetupInProgress === "true") {
+                return next({name: "setup"})
             }
             
             return next();
-            
         } catch (error) {
-            console.error("Router guard error:", error);
-            localStorage.removeItem("basicAuthCredentials");
-            return next({name: "login"});
+            return next(handleAuthError(error, to))
         }
     });
 

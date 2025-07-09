@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue"
+    import {ref, computed, onMounted} from "vue"
     import {useRouter, useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {ElMessage} from "element-plus"
@@ -97,6 +97,26 @@
         isLoading.value
     )
 
+    const validateCredentials = async (auth: string) => {
+        await axios.get(`${apiUrlWithoutTenants()}/dashboards`, {
+            headers: {Authorization: `Basic ${auth}`},
+            timeout: 10000
+        })
+    }
+
+    const checkServerInitialization = async () => {
+        const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {
+            timeout: 10000
+        })
+        return response.data?.isBasicAuthInitialized
+    }
+
+    const handleNetworkError = (error: any) => {
+        return error.code === "ERR_NETWORK" || 
+            error.code === "ECONNREFUSED" || 
+            (!error.response && error.message.includes("Network Error"))
+    }
+
     const handleSubmit = async (event: Event) => {
         event.preventDefault()
         if (!form.value || isLoading.value) return
@@ -115,18 +135,21 @@
             const trimmedUsername = username.trim()
             const auth = btoa(`${trimmedUsername}:${password}`)
             
-            await axios.get(`${apiUrlWithoutTenants()}/configs`, {
-                headers: {Authorization: `Basic ${auth}`},
-                timeout: 10000
-            })
+            await validateCredentials(auth)
+            
+            const isInitialized = await checkServerInitialization()
+            if (!isInitialized) {
+                router.push({name: "setup"})
+                return
+            }
 
             localStorage.setItem("basicAuthCredentials", auth)
             localStorage.removeItem("basicAuthSetupInProgress")
-            
             sessionStorage.setItem("sessionActive", "true")
             
-            if (miscStore.$http?.defaults?.headers?.common)
+            if (miscStore.$http?.defaults?.headers?.common) {
                 miscStore.$http.defaults.headers.common.Authorization = `Basic ${auth}`
+            }
 
             credentials.value = {username: "", password: ""}
             
@@ -136,11 +159,35 @@
             
             router.push(redirectPath.value)
         } catch (error: any) {
-            ElMessage.error(error?.response?.status === 401 ? "Invalid credentials" : "Login failed")
+            if (handleNetworkError(error)) {
+                router.push({name: "setup"})
+                return
+            }
+            
+            if (error?.response?.status === 401) {
+                ElMessage.error("Invalid credentials")
+            } else if (error?.response?.status === 404) {
+                router.push({name: "setup"})
+            } else {
+                ElMessage.error("Login failed")
+            }
         } finally {
             isLoading.value = false
         }
     }
+
+    onMounted(async () => {
+        try {
+            const isInitialized = await checkServerInitialization()
+            if (!isInitialized) {
+                router.push({name: "setup"})
+            }
+        } catch (error: any) {
+            if (handleNetworkError(error) || error?.response?.status === 404) {
+                router.push({name: "setup"})
+            }
+        }
+    })
 </script>
 
 <style lang="scss" scoped>

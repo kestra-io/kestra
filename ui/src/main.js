@@ -26,23 +26,23 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
         if (["login", "setup"].includes(to.name)) {
             return next();
         }
-        
+
         const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null
-        
+
         if (!hasCredentials) {
             const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
             return next({name: "login", query: fromPath ? {from: fromPath} : {}})
         }
-        
+
         try {
             await store.dispatch("misc/loadConfigs")
-            
+
             // Check if basic auth setup is still in progress
             const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress")
             if (isSetupInProgress === "true") {
                 return next({name: "setup"})
             }
-            
+
             return next();
         } catch (error) {
             return next(handleAuthError(error, to))
@@ -51,7 +51,7 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
 
     // Setup tenant router
     setupTenantRouter(router, app);
-  
+
     // axios
     configureAxios((instance) => {
         app.use(VueAxios, instance);
@@ -59,7 +59,7 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
         store.$http = app.$http;
         store.axios = app.axios;
         piniaStore.$http = app.$http;
-    }, store, router);
+    }, store, router, true);
 
     piniaStore.vuexStore = store;
     app.config.globalProperties.$isOss = true; // Set to true for OSS version

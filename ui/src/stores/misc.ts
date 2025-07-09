@@ -30,7 +30,7 @@ export const useMiscStore = defineStore("misc", {
 
         async loadAllUsages() {
             // avoid crashing loop when no credentials are set
-            if(localStorage.getItem("basicAuthCredentials") === null) return []
+            if(!this.configs?.isBasicAuthEnabled) return []
 
             const response = await this.$http.get(`${apiUrl(this.vuexStore)}/usages/all`);
             return response.data;

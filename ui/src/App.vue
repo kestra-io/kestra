@@ -76,7 +76,7 @@
                     }
 
                     // Basic auth enabled: redirect to login if no credentials
-                    if (this.configs && this.configs.isBasicAuthEnabled && !this.hasCredentials) {
+                    if (this.configs?.isBasicAuthEnabled && !this.hasCredentials) {
                         this.$router.push({name: "login"});
                         this.displayApp();
                         return;

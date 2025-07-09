@@ -34,7 +34,7 @@
     "bootstrap": "^5.3.7",
     "buffer": "^6.0.3",
     "chart.js": "^4.5.0",
-    "core-js": "^3.43.0",
+    "core-js": "^3.44.0",
     "cronstrue": "^3.0.0",
     "dagre": "^0.8.5",
     "el-table-infinite-scroll": "^3.0.7",

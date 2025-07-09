@@ -1,4 +1,4 @@
-import {onMounted, watch, computed, ref} from "vue";
+import {onMounted, computed, ref} from "vue";
 import {useDashboardStore} from "../../../stores/dashboard";
 import type {RouteParams, RouteLocation} from "vue-router";
 import {useRoute} from "vue-router";
@@ -135,10 +135,6 @@ export function useChartGenerator(props: {chart: Chart; filters: string[]; showD
     onMounted(async () => {
         if (includeHooks) await generate(getDashboard(route, "id") as string);
     });
-
-    watch(route, async (changed) => {
-        if (includeHooks) await generate(getDashboard(changed, "id") as string);
-    }, {deep: true});
 
     return {percentageShown, EMPTY_TEXT, data, generate};
 }

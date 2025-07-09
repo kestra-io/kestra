@@ -58,6 +58,7 @@
 <script setup lang="ts">
     import {ref, computed, onMounted} from "vue"
     import {useRouter, useRoute} from "vue-router"
+    import {useStore} from "vuex"
     import {useI18n} from "vue-i18n"
     import {ElMessage} from "element-plus"
     import type {FormInstance} from "element-plus"
@@ -68,8 +69,9 @@
     import Logo from "../home/Logo.vue"
 
     import {useMiscStore} from "../../stores/misc"
+    import {useCoreStore} from "../../stores/core"
     import {useSurveySkip} from "../../composables/useSurveyData"
-    import {apiUrlWithoutTenants} from "override/utils/route"
+    import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
 
     interface Credentials {
         username: string
@@ -78,8 +80,10 @@
 
     const router = useRouter()
     const route = useRoute()
+    const store = useStore()
     const {t} = useI18n()
     const miscStore = useMiscStore()
+    const coreStore = useCoreStore()
     const {shouldShowHelloDialog} = useSurveySkip()
 
     const form = ref<FormInstance>()
@@ -91,14 +95,14 @@
 
     const redirectPath = computed(() => (route.query.from as string) ?? "/welcome")
 
-    const isLoginDisabled = computed(() => 
-        !credentials.value.username?.trim() || 
-        !credentials.value.password?.trim() || 
+    const isLoginDisabled = computed(() =>
+        !credentials.value.username?.trim() ||
+        !credentials.value.password?.trim() ||
         isLoading.value
     )
 
     const validateCredentials = async (auth: string) => {
-        await axios.get(`${apiUrlWithoutTenants()}/dashboards`, {
+        await axios.get(`${apiUrl(store)}/usages/all`, {
             headers: {Authorization: `Basic ${auth}`},
             timeout: 10000
         })
@@ -112,12 +116,13 @@
     }
 
     const handleNetworkError = (error: any) => {
-        return error.code === "ERR_NETWORK" || 
-            error.code === "ECONNREFUSED" || 
+        return error.code === "ERR_NETWORK" ||
+            error.code === "ECONNREFUSED" ||
             (!error.response && error.message.includes("Network Error"))
     }
 
     const handleSubmit = async (event: Event) => {
+        coreStore.error = undefined;
         event.preventDefault()
         if (!form.value || isLoading.value) return
 
@@ -127,37 +132,43 @@
 
         try {
             const {username, password} = credentials.value
-            
+
             if (!username?.trim() || !password?.trim()) {
                 throw new Error("Username and password are required")
             }
-            
+
             const trimmedUsername = username.trim()
             const auth = btoa(`${trimmedUsername}:${password}`)
-            
+
             await validateCredentials(auth)
-            
+
+            const isInitialized = await checkServerInitialization()
+            if (!isInitialized) {
+                router.push({name: "setup"})
+                return
+            }
+
             localStorage.setItem("basicAuthCredentials", auth)
             localStorage.removeItem("basicAuthSetupInProgress")
             sessionStorage.setItem("sessionActive", "true")
-            
+
             if (miscStore.$http?.defaults?.headers?.common) {
                 miscStore.$http.defaults.headers.common.Authorization = `Basic ${auth}`
             }
 
             credentials.value = {username: "", password: ""}
-            
+
             if (shouldShowHelloDialog()) {
                 localStorage.setItem("showSurveyDialogAfterLogin", "true")
             }
-            
+
             router.push(redirectPath.value)
         } catch (error: any) {
             if (handleNetworkError(error)) {
                 router.push({name: "setup"})
                 return
             }
-            
+
             if (error?.response?.status === 401) {
                 ElMessage.error("Invalid credentials")
             } else if (error?.response?.status === 404) {

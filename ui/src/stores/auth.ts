@@ -37,7 +37,9 @@ export default {
         user: new Me()
     },
     actions: {
-
+        logout(){
+            return true
+        }
     },
     mutations: {
         setUser(state, user) {

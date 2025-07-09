@@ -1,11 +1,11 @@
 <template>
     <LeftMenu v-if="configs" @menu-collapse="onMenuCollapse" />
     <main>
-        <Errors v-if="error" :code="error" />
+        <Errors v-if="coreStore.error" :code="coreStore.error" />
         <slot v-else />
     </main>
     <ContextInfoBar v-if="configs" />
-    
+
     <SurveyDialog
         :visible="showSurveyDialog"
         @close="handleSurveyDialogClose"
@@ -27,7 +27,6 @@
     const {markSurveyDialogShown} = useSurveySkip()
 
     const configs = computed(() => store.getters["misc/configs"])
-    const error = computed(() => coreStore.error)
     const showSurveyDialog = ref(false)
 
     const onMenuCollapse = (collapse) => {

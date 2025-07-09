@@ -141,7 +141,7 @@
     "@rollup/rollup-darwin-x64": "^4.44.1",
     "@rollup/rollup-linux-x64-gnu": "^4.44.1",
     "@swc/core-darwin-arm64": "^1.12.9",
-    "@swc/core-darwin-x64": "^1.12.9",
+    "@swc/core-darwin-x64": "^1.12.11",
     "@swc/core-linux-x64-gnu": "^1.12.9"
   },
   "overrides": {

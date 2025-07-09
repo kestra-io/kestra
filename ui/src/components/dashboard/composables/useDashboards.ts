@@ -1,4 +1,4 @@
-import {onMounted, watch, computed, ref} from "vue";
+import {onMounted, computed, ref} from "vue";
 import {ChartFiltersOverrides, PreviewRequest, useDashboardStore} from "../../../stores/dashboard";
 import type {RouteParams, RouteLocation} from "vue-router";
 import {useRoute} from "vue-router";

@@ -108,7 +108,7 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
     private List<String> renderExpressionValues(final Function<String, Object> renderer) {
         Object result;
         try {
-            result = renderer.apply(expression);
+            result = renderer.apply(expression.trim());
         } catch (Exception e) {
             throw ManualConstraintViolation.toConstraintViolationException(
                 "Cannot render 'expression'. Cause: " + e.getMessage(),

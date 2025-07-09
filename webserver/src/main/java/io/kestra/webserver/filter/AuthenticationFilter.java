@@ -69,7 +69,7 @@ public class AuthenticationFilter implements HttpServerFilter {
                     !AuthUtils.encodePassword(basicAuthConfiguration.getSalt(),
                         basicAuth.get().password()).equals(basicAuthConfiguration.getPassword())
                 ) {
-                    return Flux.just(HttpResponse.unauthorized());
+                    return Flux.just(HttpResponse.unauthorized().header("WWW-Authenticate", PREFIX + " realm=" + basicAuthConfiguration.getRealm()));
                 }
 
                 return chain.proceed(request);

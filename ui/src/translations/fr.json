@@ -1183,6 +1183,73 @@
       },
       "label": "Paramètres"
     },
+    "setup": {
+      "config": {
+        "basicauth": "Authentification basique",
+        "queue": "File d'attente",
+        "repository": "Base de données",
+        "storage": "Stockage Interne"
+      },
+      "confirm": {
+        "config_title": "Confirmez que la configuration est valide",
+        "confirm": "Confirmer",
+        "not_valid": "Non, ce n'est pas valide",
+        "valid": "Oui, c'est valide"
+      },
+      "form": {
+        "email": "E-mail",
+        "firstName": "Prénom",
+        "lastName": "Nom de famille",
+        "password": "Mot de passe"
+      },
+      "login": "Connexion",
+      "logout": "Déconnexion",
+      "steps": {
+        "complete": "Démarrer l'UI de Kestra",
+        "config": "Valider la Configuration",
+        "survey": "Dites-nous en plus",
+        "user": "Créez votre premier utilisateur"
+      },
+      "subtitles": {
+        "complete": "Configuration terminée avec succès !",
+        "config": "Voici les détails de votre configuration",
+        "survey": "Aidez-nous à améliorer Kestra Open Source Edition",
+        "user": "Configurez votre instance en créant votre premier utilisateur"
+      },
+      "success": {
+        "subtitle": "Vous êtes prêt !",
+        "title": "Félicitations !"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "Usage personnel",
+        "company_size": "Quelle est la taille de votre entreprise ?",
+        "continue": "Continuer",
+        "newsletter": "Abonnez-vous à la newsletter de Kestra – restez à jour avec les dernières fonctionnalités et modifications.",
+        "skip": "Passer",
+        "use_case": "Quel est votre cas d'utilisation principal ?",
+        "use_case_business": "Processus métier",
+        "use_case_data": "Flux de données",
+        "use_case_infrastructure": "Automatisation de l'infrastructure",
+        "use_case_ml": "Pipelines ML/AI",
+        "use_case_other": "Autre"
+      },
+      "titles": {
+        "survey": "Dites-nous en plus",
+        "user": "Créer le premier utilisateur"
+      },
+      "validation": {
+        "email_invalid": "E-mail invalide",
+        "email_required": "L'email est requis",
+        "email_temporary_not_allowed": "Les adresses email temporaires ou jetables ne sont pas autorisées",
+        "firstName_required": "Prénom requis",
+        "lastName_required": "Nom de famille requis",
+        "password_invalid": "Mot de passe invalide"
+      }
+    },
     "show": "Afficher",
     "show chart": "Afficher le graphique",
     "show description": "Afficher une description",

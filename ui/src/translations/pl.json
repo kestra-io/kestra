@@ -1183,6 +1183,73 @@
       },
       "label": "Ustawienia"
     },
+    "setup": {
+      "config": {
+        "basicauth": "Podstawowe uwierzytelnianie",
+        "queue": "Kolejka",
+        "repository": "Baza danych",
+        "storage": "Magazyn Wewnętrzny"
+      },
+      "confirm": {
+        "config_title": "Potwierdź, że konfiguracja jest prawidłowa",
+        "confirm": "Potwierdź",
+        "not_valid": "Nie, to nie jest prawidłowe",
+        "valid": "Tak, jest prawidłowy"
+      },
+      "form": {
+        "email": "Email",
+        "firstName": "Imię",
+        "lastName": "Nazwisko",
+        "password": "Hasło"
+      },
+      "login": "Zaloguj się",
+      "logout": "Wyloguj się",
+      "steps": {
+        "complete": "Uruchom Kestra UI",
+        "config": "Sprawdź Konfigurację",
+        "survey": "Powiedz nam więcej",
+        "user": "Utwórz pierwszego użytkownika"
+      },
+      "subtitles": {
+        "complete": "Konfiguracja zakończona sukcesem!",
+        "config": "Oto szczegóły Twojej konfiguracji",
+        "survey": "Pomóż nam ulepszyć Kestra Open Source Edition",
+        "user": "Skonfiguruj swoją instancję, tworząc pierwszego użytkownika"
+      },
+      "success": {
+        "subtitle": "Jesteś gotowy!",
+        "title": "Gratulacje!"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "Użytek osobisty",
+        "company_size": "Jaki jest rozmiar Twojej firmy?",
+        "continue": "Kontynuuj",
+        "newsletter": "Zasubskrybuj newsletter Kestra – bądź na bieżąco z najnowszymi funkcjami i zmianami.",
+        "skip": "Pomiń",
+        "use_case": "Jaki jest Twój główny przypadek użycia?",
+        "use_case_business": "Procesy biznesowe",
+        "use_case_data": "Przepływy danych",
+        "use_case_infrastructure": "Automatyzacja infrastruktury",
+        "use_case_ml": "Pipelines ML/AI",
+        "use_case_other": "Inne"
+      },
+      "titles": {
+        "survey": "Powiedz nam więcej",
+        "user": "Utwórz pierwszego użytkownika"
+      },
+      "validation": {
+        "email_invalid": "Nieprawidłowy email",
+        "email_required": "Email jest wymagany",
+        "email_temporary_not_allowed": "Tymczasowe lub jednorazowe adresy e-mail nie są dozwolone",
+        "firstName_required": "Imię jest wymagane",
+        "lastName_required": "Wymagane nazwisko",
+        "password_invalid": "Nieprawidłowe hasło"
+      }
+    },
     "show": "Pokaż",
     "show chart": "Pokaż Wykres",
     "show description": "Pokaż opis",

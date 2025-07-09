@@ -31,7 +31,7 @@ dependencies {
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.63.0')
     api platform("com.azure:azure-sdk-bom:1.2.36")
-    api platform('software.amazon.awssdk:bom:2.31.75')
+    api platform('software.amazon.awssdk:bom:2.31.77')
 
 
     constraints {
@@ -102,8 +102,8 @@ dependencies {
         api 'com.h2database:h2:2.3.232'
         api 'mysql:mysql-connector-java:8.0.33'
         api 'org.postgresql:postgresql:42.7.6'
-        api 'com.github.docker-java:docker-java:3.5.2'
-        api 'com.github.docker-java:docker-java-transport-httpclient5:3.5.2'
+        api 'com.github.docker-java:docker-java:3.5.3'
+        api 'com.github.docker-java:docker-java-transport-httpclient5:3.5.3'
         api (group: 'org.opensearch.client', name: 'opensearch-java', version: "$opensearchVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-client', version: "$opensearchRestVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchRestVersion") // used by the elasticsearch plugin

@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
@@ -888,12 +889,37 @@ public class ExecutorService {
             this.addWorkerTaskResults(executor, workerTaskResults);
         }
 
-
         if (workerTasks.isEmpty() || hasMockedWorkerTask) {
             return executor;
         }
 
         Executor executorToReturn = executor;
+
+        // suspend on breakpoint: if a breakpoint is for a CREATED taskrun, set the execution state to BREAKPOINT and ends here
+        if (!ListUtils.isEmpty(executor.getExecution().getBreakpoints())) {
+            List<Breakpoint> breakpoints = executor.getExecution().getBreakpoints();
+            if (executor.getExecution()
+                .getTaskRunList()
+                .stream()
+                .anyMatch(taskRun -> shouldSuspend(taskRun, breakpoints))
+            ) {
+                List<TaskRun> newTaskRuns = executor.getExecution().getTaskRunList().stream().map(
+                    taskRun -> {
+                        if (shouldSuspend(taskRun, breakpoints)) {
+                            return taskRun.withState(State.Type.BREAKPOINT);
+                        }
+                        return taskRun;
+                    }
+                ).toList();
+                Execution newExecution = executor.getExecution().withTaskRunList(newTaskRuns).withState(State.Type.BREAKPOINT);
+                executorToReturn = executorToReturn.withExecution(newExecution, "handleBreakpoint");
+                logService.logExecution(
+                    newExecution,
+                    Level.INFO,
+                    "Flow is suspended at a breakpoint."
+                );
+            }
+        }
 
         // Ends FAILED or CANCELLED task runs by creating worker task results
         List<WorkerTask> endedTasks = workerTasks.get(true);
@@ -908,13 +934,18 @@ public class ExecutorService {
 
         // Send other TaskRun to the worker (create worker tasks)
         List<WorkerTask> processingTasks = workerTasks.get(false);
-        if (processingTasks != null && !processingTasks.isEmpty()) {
+        if (processingTasks != null && !processingTasks.isEmpty() && !executor.getExecution().getState().isBreakpoint()) {
             executorToReturn = executorToReturn.withWorkerTasks(processingTasks, "handleWorkerTask");
 
             metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_CREATED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_CREATED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution())).increment(processingTasks.size());
         }
 
         return executorToReturn;
+    }
+
+    private boolean shouldSuspend(TaskRun taskRun, List<Breakpoint> breakpoints) {
+        return taskRun.getState().getCurrent().isCreated() && breakpoints.stream()
+                .anyMatch(breakpoint -> taskRun.getTaskId().equals(breakpoint.getId()) && Objects.equals(taskRun.getValue(), breakpoint.getValue()));
     }
 
     private Executor handleExecutableTask(final Executor executor) {

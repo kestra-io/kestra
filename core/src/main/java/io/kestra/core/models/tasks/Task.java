@@ -11,6 +11,7 @@ import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,6 +29,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @Plugin
 abstract public class Task implements TaskInterface {
+    @Size(max = 256, message = "Task id must be at most 256 characters")
     protected String id;
 
     protected String type;

@@ -209,7 +209,7 @@
                                         :inverted="true"
                                         :date="
                                             getLastExecution(scope.row)
-                                                .startDate
+                                                ?.startDate
                                         "
                                     />
                                 </template>
@@ -228,11 +228,11 @@
                                         v-if="
                                             lastExecutionByFlowReady &&
                                                 getLastExecution(scope.row)
-                                                    .lastStatus
+                                                    ?.status
                                         "
                                         :status="
                                             getLastExecution(scope.row)
-                                                .lastStatus
+                                                ?.status
                                         "
                                         size="small"
                                     />
@@ -303,7 +303,6 @@
 
 <script>
     import {mapState} from "vuex";
-    import {mapStores} from "pinia";
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -319,7 +318,6 @@
     import TriggerAvatar from "./TriggerAvatar.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import Kicon from "../Kicon.vue";
-    import {useStatStore} from "../../stores/stat";
     import Labels from "../layout/Labels.vue";
     import {storageKeys} from "../../utils/constants";
 
@@ -395,12 +393,13 @@
                     localStorage.getItem(storageKeys.SHOW_FLOWS_CHART),
                 ),
                 loading: false,
+                lastExecutionByFlowReady: false,
+                latestExecutions: []
             };
         },
         computed: {
             ...mapState("flow", ["flows", "total"]),
             ...mapState("auth", ["user"]),
-            ...mapStores(useStatStore),
             routeInfo() {
                 return {
                     title: this.$t("flows"),
@@ -453,13 +452,6 @@
                         this.$route.query.namespace,
                     )
                 );
-            },
-            executionsCount() {
-                return this.statStore.dailyData?.reduce((a, b) => {
-                    return (
-                        a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0)
-                    );
-                }, 0) ?? 0;
             },
             charts() {
                 return [
@@ -541,7 +533,7 @@
                         const flowCount = this.queryBulkAction
                             ? this.total
                             : this.selection.length;
-                        
+
                         if (this.queryBulkAction) {
                             return this.$store
                                 .dispatch(
@@ -717,23 +709,10 @@
                     });
             },
             getLastExecution(row) {
-                let noState = {state: null, startDate: null};
-                if (this.statStore.lastExecutionsData && this.statStore.lastExecutionsData.length > 0) {
-                    let filteredFlowExec = this.statStore.lastExecutionsData.filter(
-                        (executedFlow) =>
-                            executedFlow.flowId == row.id &&
-                            executedFlow.namespace == row.namespace,
-                    );
-                    if (filteredFlowExec.length > 0) {
-                        return {
-                            lastStatus: filteredFlowExec[0].state?.current,
-                            startDate: filteredFlowExec[0].state?.startDate,
-                        };
-                    }
-                    return noState;
-                } else {
-                    return noState;
-                }
+                if (!this.latestExecutions || !row) return null;
+                return this.latestExecutions.find(
+                    e => e.flowId === row.id && e.namespace === row.namespace
+                ) ?? null;
             },
             loadQuery(base, ignoreDateFilters = true) {
                 let queryFilter = this.queryWithFilter(
@@ -759,48 +738,25 @@
                             sort: q.sort ?? "id:asc",
                         }),
                     )
-                    .then((flows) => {
-                        this.dailyGroupByFlowReady = false;
-                        this.lastExecutionByFlowReady = false;
-
-                        if (flows.results && flows.results.length > 0) {
-                            if (
-                                this.user &&
-                                this.user.hasAny(permission.EXECUTION)
-                            ) {
-                                this.statStore
-                                    .dailyGroupByFlow({
-                                        flows: flows.results.map((flow) => {
-                                            return {
-                                                namespace: flow.namespace,
-                                                id: flow.id,
-                                            };
-                                        }),
-                                        startDate: this.$moment(this.startDate)
-                                            .add(-1, "day")
-                                            .startOf("day")
-                                            .toISOString(true),
-                                        endDate: this.$moment(this.endDate)
-                                            .endOf("day")
-                                            .toISOString(true),
+                    .then(data => {
+                        if(this.user.hasAnyActionOnAnyNamespace(
+                            permission.EXECUTION,
+                            action.READ,
+                        )) {
+                            this.$store.dispatch(
+                                "execution/loadLatestExecutions",
+                                {
+                                    flowFilters: data.results.map(flow => {
+                                        return {
+                                            id: flow.id,
+                                            namespace: flow.namespace
+                                        };
                                     })
-                                    .then(() => {
-                                        this.dailyGroupByFlowReady = true;
-                                    });
-
-                                this.statStore
-                                    .lastExecutions({
-                                        flows: flows.results.map((flow) => {
-                                            return {
-                                                namespace: flow.namespace,
-                                                id: flow.id,
-                                            };
-                                        }),
-                                    })
-                                    .then(() => {
-                                        this.lastExecutionByFlowReady = true;
-                                    });
-                            }
+                                }
+                            ).then(latestExecs => {
+                                this.latestExecutions = latestExecs;
+                                this.lastExecutionByFlowReady = true;
+                            });
                         }
                     })
                     .finally(callback);

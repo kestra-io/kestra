@@ -146,7 +146,7 @@ class PluginControllerTest {
 
         assertThat(doc.getMarkdown()).contains("io.kestra.plugin.templates.ExampleTask");
         assertThat(properties.size()).isEqualTo(17);
-        assertThat(properties.get("id").size()).isEqualTo(4);
+        assertThat(properties.get("id").size()).isEqualTo(5);
         assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
     }
 

@@ -136,7 +136,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public List<Label> getLabels() {
-        return Optional.ofNullable(this.labels).orElse(new ArrayList<>());
+        return Label.deduplicate(this.labels);
     }
 
     /**
@@ -400,7 +400,7 @@ public class Execution implements DeletedInterface, TenantInterface {
      *
      * @param resolvedTasks normal tasks
      * @param resolvedErrors errors tasks
-     * @param resolvedErrors finally tasks
+     * @param resolvedFinally finally tasks
      * @return the flow we need to follow
      */
     public List<ResolvedTask> findTaskDependingFlowState(

@@ -7,7 +7,6 @@ import io.kestra.core.models.flows.State;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -157,7 +156,19 @@ class ExecutionTest {
             .labels(List.of(new Label("test", "test-value")))
             .build();
 
-        assertThat(execution.getLabels().size()).isEqualTo(1);
-        assertThat(execution.getLabels().getFirst()).isEqualTo(new Label("test", "test-value"));
+        assertThat(execution.getLabels()).containsExactly(new Label("test", "test-value"));
+    }
+
+    @Test
+    void labelsGetDeduplicated() {
+        final List<Label> duplicatedLabels = List.of(
+            new Label("test", "value1"),
+            new Label("test", "value2")
+        );
+        final Execution execution = Execution.builder()
+            .labels(duplicatedLabels)
+            .build();
+
+        assertThat(execution.getLabels()).containsExactly(new Label("test", "value2"));
     }
 }

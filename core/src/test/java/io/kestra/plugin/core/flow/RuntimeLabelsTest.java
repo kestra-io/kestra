@@ -104,4 +104,38 @@ class RuntimeLabelsTest {
             new Label("taskRunId", labelsTaskRunId),
             new Label("existingLabel", "someValue"));
     }
+
+    @Test
+    @LoadFlows({"flows/valids/primitive-labels-flow.yml"})
+    void primitiveTypeLabelsOverrideExistingLabels() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "primitive-labels-flow",
+            null,
+            (flow, createdExecution) -> Map.of(
+                "intLabel", 42,
+                "boolLabel", true,
+                "floatLabel", 3.14f
+            ),
+            null,
+            List.of(
+                new Label("intValue", "1"),
+                new Label("boolValue", "false"),
+                new Label("floatValue", "4.2f")
+            )
+        );
+
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        String labelsTaskRunId = execution.findTaskRunsByTaskId("update-labels").getFirst().getId();
+
+        assertThat(execution.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution.getId()),
+            new Label("intValue", "42"),
+            new Label("boolValue", "true"),
+            new Label("floatValue", "3.14"),
+            new Label("taskRunId", labelsTaskRunId));
+    }
 }

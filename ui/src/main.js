@@ -1,6 +1,5 @@
 import {createApp} from "vue"
 import VueAxios from "vue-axios";
-import axios from "axios";
 
 import App from "./App.vue"
 import initApp from "./utils/init"
@@ -9,21 +8,9 @@ import routes from "./routes/routes";
 import en from "./translations/en.json";
 import stores from "./stores/store";
 import {setupTenantRouter} from "./composables/useTenant";
-import {apiUrlWithoutTenants} from "./override/utils/route";
 
 
 const app = createApp(App)
-
-const validateCredentials = async (credentials) => {
-    const [username, password] = atob(credentials).split(":")
-    
-    const response = await axios.post(`${apiUrlWithoutTenants()}/basicAuth`, {
-        username, 
-        password
-    })
-    
-    return response.data
-}
 
 const handleAuthError = (error, to) => {
     if (error.message?.includes("401") || error.message?.includes("HTTP 401")) {
@@ -48,11 +35,6 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
         }
         
         try {
-            const basicAuthCredentials = localStorage.getItem("basicAuthCredentials")
-            if (basicAuthCredentials) {
-                await validateCredentials(basicAuthCredentials)
-            }
-            
             await store.dispatch("misc/loadConfigs")
             const configs = store.getters["misc/configs"]
             

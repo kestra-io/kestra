@@ -24,7 +24,7 @@
     });
 
     const data = ref();
-    const {EMPTY_TEXT, generate} = useChartGenerator(props);
+    const {EMPTY_TEXT, generate} = useChartGenerator(props, false);
 
     import {useRoute} from "vue-router";
     const route = useRoute();

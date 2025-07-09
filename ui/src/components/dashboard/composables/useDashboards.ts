@@ -99,7 +99,7 @@ export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions
 
 export const processFlowYaml = (yaml: string, namespace: string, flow: string): string => yaml.replace(/--NAMESPACE--/g, namespace).replace(/--FLOW--/g, flow)
 
-export function useChartGenerator(props: {chart: Chart; filters: string[]; showDefault: boolean;}) {
+export function useChartGenerator(props: {chart: Chart; filters: string[]; showDefault: boolean;}, includeHooks: boolean = true) {
     const percentageShown = computed(() => props.chart?.chartOptions?.numberType === "PERCENTAGE");
 
     const route = useRoute();
@@ -132,9 +132,13 @@ export function useChartGenerator(props: {chart: Chart; filters: string[]; showD
         return data.value;
     };
 
-    onMounted(() => generate(getDashboard(route, "id") as string));
+    onMounted(async () => {
+        if (includeHooks) await generate(getDashboard(route, "id") as string);
+    });
 
-    watch(route, (changed) => generate(getDashboard(changed, "id") as string), {deep: true});
+    watch(route, async (changed) => {
+        if (includeHooks) await generate(getDashboard(changed, "id") as string);
+    }, {deep: true});
 
     return {percentageShown, EMPTY_TEXT, data, generate};
 }

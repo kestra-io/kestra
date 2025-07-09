@@ -64,7 +64,7 @@ export const useDashboardStore = defineStore("dashboard", {
             return response.data;
         },
 
-        async generate({id, chartId, ...filters}: {id: Dashboard["id"]; chartId: Chart["id"]; [key: string]: any;}) {
+        async generate({id, chartId, ...filters}: {id: Dashboard["id"]; chartId: Chart["id"]} & Record<string, any>) {
             const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/${id}/charts/${chartId}`, Object.keys(filters).length > 0 ? filters : null, {validateStatus});
             return response.data;
         },
@@ -75,8 +75,8 @@ export const useDashboardStore = defineStore("dashboard", {
             return response.data;
         },
 
-        async chartPreview(chart: Chart) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/charts/preview`, chart);
+        async chartPreview(data: {chart: Chart["source"]; globalFilter: Record<string, any>}) {
+            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/charts/preview`, data);
             return response.data;
         },
     },

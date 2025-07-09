@@ -22,7 +22,13 @@
                 </el-button>
             </div>
             <Suspense>
-                <schema-to-html class="plugin-schema" :dark-mode="miscStore.theme === 'dark'" :schema="pluginsStore.editorPlugin.schema" :plugin-type="pluginsStore.editorPlugin.cls">
+                <schema-to-html
+                    class="plugin-schema"
+                    :dark-mode="miscStore.theme === 'dark'"
+                    :schema="pluginsStore.editorPlugin.schema"
+                    :plugin-type="pluginsStore.editorPlugin.cls"
+                    :force-include-properties="pluginsStore.forceIncludeProperties"
+                >
                     <template #markdown="{content}">
                         <markdown font-size-var="font-size-base" :source="content" />
                     </template>
@@ -40,6 +46,7 @@
 </script>
 
 <script>
+    import {mapGetters} from "vuex";
     import intro from "../../assets/docs/basic.md?raw";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {mapStores} from "pinia";

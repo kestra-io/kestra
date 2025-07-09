@@ -142,7 +142,7 @@
                 return this.merge ? [] : this.sortedProperties.filter(([_,v]) => v && v.$group === "connection");
             },
             deprecatedProperties() {
-                return this.merge ? [] : this.sortedProperties.filter(([_,v]) => v && v.$deprecated);
+                return this.merge ? [] : this.sortedProperties.filter(([k,v]) => v && v.$deprecated && this.modelValue[k] !== undefined);
             },
         },
         methods: {

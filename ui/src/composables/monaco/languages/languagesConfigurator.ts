@@ -19,13 +19,13 @@ export default async function configure(
 ): Promise<void> {
     if (language === "yaml") {
         const yamlAutoCompletion = domain === "flow" ? new FlowAutoCompletion(store, pluginsStore) : new YamlAutoCompletion();
-        await new YamlLanguageConfigurator(yamlAutoCompletion).configure(store, t, editorInstance);
+        await new YamlLanguageConfigurator(yamlAutoCompletion).configure(store, pluginsStore, t, editorInstance);
     } else if(language === "plaintext-pebble") {
         const autoCompletion = new FlowAutoCompletion(store, pluginsStore);
         await new PebbleLanguageConfigurator(autoCompletion, computed(() => store.getters["flow/flowYaml"]))
-            .configure(store, t, editorInstance);
+            .configure(store, pluginsStore, t, editorInstance);
     } else if (filterLanguages.some(languageRegex => languageRegex.test(language))) {
         await new FilterLanguageConfigurator(language, domain)
-            .configure(store, t, editorInstance);
+            .configure(store, pluginsStore, t, editorInstance);
     }
 }

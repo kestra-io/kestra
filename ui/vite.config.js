@@ -45,7 +45,6 @@ export default defineConfig({
             "#build/mdc-image-component.mjs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
             "#mdc-imports": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
             "#mdc-configs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
-            "shiki": path.resolve(__dirname, "node_modules/shiki/dist"),
             "vuex": path.resolve(__dirname, "node_modules/vuex/dist/vuex.esm-bundler.js"),
             "@storybook/addon-actions": "storybook/actions",
         },

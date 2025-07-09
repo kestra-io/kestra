@@ -215,7 +215,9 @@
                             const charts = plugin.charts || [];
                             const dataFilters = plugin.dataFilters || [];
                             return charts.concat(dataFilters);
-                        }).flat();
+                        }).flat()
+                            .filter(({deprecated}) => !deprecated)
+                            .map(({cls}) => cls);
                     })
             },
             buttonType(view) {

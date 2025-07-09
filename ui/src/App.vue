@@ -5,7 +5,7 @@
         <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
             <router-view />
         </component>
-        <VueTour />
+        <VueTour v-if="shouldRenderApp && $route?.name && !isAnonymousRoute" />
     </el-config-provider>
 </template>
 
@@ -57,15 +57,21 @@
             },
             shouldRenderApp() {
                 return this.loaded
-            }
+            },
+            isAnonymousRoute() {
+                return (this.isLoginRoute || this.isSetupRoute);
+            },
+            isLoginRoute() {
+                return this.$route?.name?.startsWith("login")
+            },
+            isSetupRoute() {
+                return this.$route?.name === "setup"
+            },
         },
         async created() {
-            const {name: currentRoute} = this.$route
-            const isAuthRoute = currentRoute === "login" || currentRoute === "setup"
-
             this.setTitleEnvSuffix()
 
-            if (!isAuthRoute && localStorage.getItem("basicAuthCredentials")) {
+            if (!this.isAnonymousRoute && localStorage.getItem("basicAuthCredentials")) {
                 try {
                     await this.loadGeneralResources()
                 } catch (error) {
@@ -94,12 +100,11 @@
                     localStorage.setItem("uid", newUid);
                     return newUid;
                 })();
-                
+
                 if (!localStorage.getItem("basicAuthCredentials")) {
                     return null;
                 }
-                
-                this.pluginsStore.fetchIcons()
+
                 const config = await this.$store.dispatch("misc/loadConfigs");
 
                 await this.docStore.initResourceUrlTemplate(config.version);
@@ -114,7 +119,7 @@
                     .then(apiConfig => {
                         this.initStats(apiConfig, config, uid);
                     })
-                
+
                 return config;
             },
             initStats(apiConfig, config, uid) {
@@ -169,12 +174,6 @@
                         type: "OSS"
                     }
                 }
-            },
-            isLoginRoute() {
-                return this.$route?.name?.startsWith("login")
-            },
-            isSetupRoute() {
-                return this.$route?.name === "setup"
             },
         },
         watch: {

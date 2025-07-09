@@ -29,8 +29,11 @@ export const useMiscStore = defineStore("misc", {
         },
 
         async loadAllUsages() {
-            const response = await this.$http.get(`${apiUrl(this.vuexStore)}/usages/all`);
-            return response.data;
+            if(this.configs.isBasicAuthInitialized){
+                const response = await this.$http.get(`${apiUrl(this.vuexStore)}/usages/all`);
+                return response.data;
+            }
+            return [];
         },
 
         async addBasicAuth(options: {
@@ -40,7 +43,7 @@ export const useMiscStore = defineStore("misc", {
             password: string;
         }) {
             const email = options.username;
-            
+
             localStorage.setItem("firstName", options.firstName);
             localStorage.setItem("lastName", options.lastName);
 

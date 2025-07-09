@@ -13,7 +13,7 @@ import {setupTenantRouter} from "./composables/useTenant";
 const app = createApp(App)
 
 const handleAuthError = (error, to) => {
-    if (error.message?.includes("401") || error.message?.includes("HTTP 401")) {
+    if (error.message?.includes("401")) {
         localStorage.removeItem("basicAuthCredentials")
         const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
         return {name: "login", query: fromPath ? {from: fromPath} : {}}
@@ -22,7 +22,7 @@ const handleAuthError = (error, to) => {
 }
 
 initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
-    router.beforeEach(async (to, from, next) => {
+    router.beforeEach(async (to, _from, next) => {
         if (["login", "setup"].includes(to.name)) {
             return next();
         }
@@ -35,7 +35,12 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
         }
 
         try {
-            await store.dispatch("misc/loadConfigs")
+            const configs = await store.dispatch("misc/loadConfigs")
+
+            if(!configs.isBasicAuthInitialized) {
+                // If basic auth is not initialized, redirect to set it up
+                return next({name: "setup"})
+            }
 
             // Check if basic auth setup is still in progress
             const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress")

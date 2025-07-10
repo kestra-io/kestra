@@ -214,6 +214,7 @@
         "label": "Dashboard bearbeiten"
       },
       "empty": "Es gibt keine Ergebnisse anzuzeigen.",
+      "export": "Exportieren nach CSV",
       "labels": {
         "plural": "Dashboards",
         "singular": "Dashboard"

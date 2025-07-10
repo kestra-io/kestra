@@ -214,6 +214,7 @@
         "label": "Modifier le tableau de bord"
       },
       "empty": "Il n'y a aucun résultat à afficher.",
+      "export": "Exporter vers CSV",
       "labels": {
         "plural": "Tableaux de bord",
         "singular": "Tableau de bord"

@@ -49,6 +49,10 @@ public class BasicAuthService {
 
     @PostConstruct
     private void init() {
+        Optional<Setting> persistedConfig = settingRepository.findByKey(BASIC_AUTH_SETTINGS_KEY);
+        if (persistedConfig.isPresent()) {
+            return;
+        }
         if (basicAuthConfiguration == null){
             settingRepository.save(Setting.builder()
                 .key(BASIC_AUTH_SETTINGS_KEY)

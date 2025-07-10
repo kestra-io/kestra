@@ -103,15 +103,22 @@
     )
 
     const validateCredentials = async (auth: string) => {
-        await axios.get(`${apiUrl(store)}/usages/all`, {
-            headers: {Authorization: `Basic ${auth}`},
-            timeout: 10000
-        })
+        try {
+            document.cookie = `BasicAuth=${auth}`;
+            await axios.get(`${apiUrl(store)}/usages/all`, {
+                timeout: 10000,
+                withCredentials: true
+            })
+        } catch(e) {
+            BasicAuth.logout();
+            throw e;
+        }
     }
 
     const checkServerInitialization = async () => {
         const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {
-            timeout: 10000
+            timeout: 10000,
+            withCredentials: true
         })
         return response.data?.isBasicAuthInitialized
     }

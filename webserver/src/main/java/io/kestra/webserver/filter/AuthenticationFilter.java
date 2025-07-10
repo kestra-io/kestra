@@ -7,6 +7,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Filter;
+import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.http.filter.ServerFilterPhase;
@@ -21,6 +22,7 @@ import reactor.core.publisher.Flux;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Optional;
+
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -58,11 +60,11 @@ public class AuthenticationFilter implements HttpServerFilter {
                     return chain.proceed(request);
                 }
 
-                var basicAuth = request
-                    .getHeaders()
-                    .getAuthorization()
-                    .filter(auth -> auth.toLowerCase().startsWith(PREFIX.toLowerCase()))
-                    .map(cred -> BasicAuth.from(cred.substring(PREFIX.length() + 1)));
+                var basicAuth = Optional.ofNullable(
+                        request.getCookies()
+                            .get("BasicAuth")
+                    ).map(Cookie::getValue)
+                    .map(BasicAuth::from);
 
                 if (basicAuth.isEmpty() ||
                     !basicAuth.get().username().equals(basicAuthConfiguration.getUsername()) ||
@@ -73,7 +75,7 @@ public class AuthenticationFilter implements HttpServerFilter {
                 }
 
                 return chain.proceed(request);
-            }) ;
+            });
     }
 
     @SuppressWarnings("rawtypes")

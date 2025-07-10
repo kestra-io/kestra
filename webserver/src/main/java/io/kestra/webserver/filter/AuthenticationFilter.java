@@ -29,7 +29,7 @@ import reactor.core.scheduler.Schedulers;
 @Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
 @Requires(property = "micronaut.security.enabled", notEquals = "true") // don't add this filter in EE
 public class AuthenticationFilter implements HttpServerFilter {
-    private static final String PREFIX = "Basic";
+    private static final String PREFIX = "k-Basic";
     private static final Integer ORDER = ServerFilterPhase.SECURITY.order();
 
     @Inject
@@ -69,7 +69,7 @@ public class AuthenticationFilter implements HttpServerFilter {
                     !AuthUtils.encodePassword(basicAuthConfiguration.getSalt(),
                         basicAuth.get().password()).equals(basicAuthConfiguration.getPassword())
                 ) {
-                    return Flux.just(HttpResponse.unauthorized());
+                    return Flux.just(HttpResponse.unauthorized().header("WWW-Authenticate", PREFIX + " realm=" + basicAuthConfiguration.getRealm()));
                 }
 
                 return chain.proceed(request);

@@ -72,6 +72,7 @@
     import {useCoreStore} from "../../stores/core"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
+    import * as BasicAuth from "../../utils/basicAuth";
 
     interface Credentials {
         username: string
@@ -148,7 +149,7 @@
                 return
             }
 
-            localStorage.setItem("basicAuthCredentials", auth)
+            BasicAuth.signIn(trimmedUsername, password)
             localStorage.removeItem("basicAuthSetupInProgress")
             sessionStorage.setItem("sessionActive", "true")
 

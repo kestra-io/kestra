@@ -5,6 +5,7 @@ import {Store} from "vuex"
 import {storageKeys} from "./constants"
 import {useLayoutStore} from "../stores/layout"
 import {useCoreStore} from "../stores/core"
+import * as BasicAuth from "../utils/basicAuth"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -83,7 +84,7 @@ export default (
     })
 
     instance.interceptors.request.use(config => {
-        const basicAuth = localStorage.getItem("basicAuthCredentials")
+        const basicAuth = BasicAuth.credentials()
         if (basicAuth && !config.headers.Authorization) {
             config.headers.Authorization = `Basic ${basicAuth}`
         }
@@ -138,7 +139,7 @@ export default (
                 store.getters["auth/isLogged"] && !oss &&
                 !document.cookie.split("; ").map(cookie => cookie.split("=")[0]).includes("JWT")
                 && !impersonate) {
-                
+
                 // Keep original request
                 const originalRequest = errorResponse.config
 
@@ -150,25 +151,25 @@ export default (
                 if (originalRequest.url?.includes("/oauth/access_token")) {
                     refreshing = false
                     toRefreshQueue = []
-                    
+
                     document.body.classList.add("login")
                     useCoreStore().unsavedChange = false
                     useLayoutStore().setTopNavbar(undefined)
-                    localStorage.removeItem("basicAuthCredentials")
+                    BasicAuth.logout()
                     delete instance.defaults.headers.common["Authorization"]
-                    
+
                     store.dispatch("auth/logout").catch(() => {})
-                    
+
                     const currentPath = window.location.pathname
                     const isLoginPath = currentPath.includes("/login")
-                    
+
                     router.push({
                         name: "login",
                         query: {
                             ...(isLoginPath ? {} : {from: currentPath})
                         }
                     })
-                    
+
                     return Promise.reject(errorResponse)
                 }
 
@@ -184,21 +185,21 @@ export default (
                     }
 
                     refreshing = true
-                    
+
                     try {
                         await instance.post("/oauth/access_token?grant_type=refresh_token", null, {
                             headers: {"Content-Type": "application/json"},
                             timeout: 5000
                         })
-                        
+
                         // Process queued requests
-                        const queuePromises = toRefreshQueue.map(({config, resolve}) => 
+                        const queuePromises = toRefreshQueue.map(({config, resolve}) =>
                             instance.request(config).then(resolve).catch(error => {
                                 console.warn("Queued request failed after token refresh:", error)
                                 throw error
                             })
                         )
-                        
+
                         await Promise.allSettled(queuePromises)
                         toRefreshQueue = []
                         refreshing = false
@@ -206,23 +207,23 @@ export default (
                         // Retry original request
                         originalRequestData[JWT_REFRESHED_QUERY] = 1
                         originalRequest.data = originalRequest.data ? JSON.stringify(originalRequestData) : undefined
-                        
+
                         return instance(originalRequest)
-                        
+
                     } catch (refreshError) {
                         console.warn("Token refresh failed:", refreshError)
-                        
+
                         refreshing = false
                         toRefreshQueue = []
-                        
+
                         document.body.classList.add("login")
                         useCoreStore().unsavedChange = false
                         useLayoutStore().setTopNavbar(undefined)
-                        localStorage.removeItem("basicAuthCredentials")
+                        BasicAuth.logout()
                         delete instance.defaults.headers.common["Authorization"]
-                        
+
                         store.dispatch("auth/logout").catch(() => {})
-                        
+
                         const currentPath = window.location.pathname
                         const isLoginPath = currentPath.includes("/login")
 
@@ -232,7 +233,7 @@ export default (
                                 ...(isLoginPath ? {} : {from: currentPath})
                             }
                         })
-                        
+
                         return Promise.reject(errorResponse)
                     }
                 } else {
@@ -242,7 +243,7 @@ export default (
                             config: originalRequest,
                             resolve: (response) => resolve(response)
                         })
-                        
+
                         // Set a timeout for queued requests
                         setTimeout(() => {
                             reject(new Error("Token refresh timeout"))

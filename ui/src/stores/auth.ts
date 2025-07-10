@@ -1,28 +1,25 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 export class Me {
-
-    hasAny(permission, namespace) {
+    hasAny(_permission: any, _namespace: any) {
         return true;
     }
 
 
-    hasAnyAction(permission, action, namespace) {
+    hasAnyAction(_permission: any, _action: any, _namespace: any) {
         return true;
     }
 
 
-    isAllowed(permission, action, namespace) {
+    isAllowed(_permission: any, _action: any, _namespace: any) {
         return true;
     }
 
 
-    isAllowedGlobal(permission, action) {
+    isAllowedGlobal(_permission: any, _action: any) {
         return true;
     }
 
 
-    hasAnyActionOnAnyNamespace(permission, action) {
+    hasAnyActionOnAnyNamespace(_permission: any, _action: any) {
         return true;
     }
 
@@ -42,7 +39,7 @@ export default {
         }
     },
     mutations: {
-        setUser(state, user) {
+        setUser(state: {user: Me}, user: Me) {
             state.user = user
         },
     },
@@ -50,7 +47,7 @@ export default {
         isLogged: () => {
             return true;
         },
-        user: (state): Me => {
+        user: (state: {user: Me}): Me => {
             return state.user;
         }
     }

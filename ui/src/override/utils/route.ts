@@ -15,6 +15,14 @@ export const baseUrl = root;
 
 export const basePath = () => "/api/v1/main"
 
-export const apiUrl = (_: Store<any>) => `${baseUrl}${basePath()}`
+export const apiUrl = (_: Store<any>) => {
+    const login = localStorage.getItem("basicAuthLogin");
+    const password = localStorage.getItem("basicAuthPassword");
+    if(!login || !password) {
+        return `${baseUrl}${basePath()}`
+    }
+    const baseUrlParsed = new URL(baseUrl); // Validate baseUrl
+    return `${baseUrlParsed.protocol}//${login}:${password}@${baseUrlParsed.host}${basePath()}`
+}
 
 export const apiUrlWithoutTenants = () => `${baseUrl}/api/v1`

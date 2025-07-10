@@ -29,7 +29,7 @@ import reactor.core.scheduler.Schedulers;
 @Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
 @Requires(property = "micronaut.security.enabled", notEquals = "true") // don't add this filter in EE
 public class AuthenticationFilter implements HttpServerFilter {
-    private static final String PREFIX = "k-Basic";
+    private static final String PREFIX = "Basic";
     private static final Integer ORDER = ServerFilterPhase.SECURITY.order();
 
     @Inject

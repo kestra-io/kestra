@@ -26,6 +26,7 @@
     import {useLayoutStore} from "./stores/layout";
     import {useCoreStore} from "./stores/core";
     import {useDocStore} from "./stores/doc";
+    import * as BasicAuth from "./utils/basicAuth";
 
     // Main App
     export default {
@@ -71,7 +72,7 @@
         async created() {
             this.setTitleEnvSuffix()
 
-            if (!this.isAnonymousRoute && localStorage.getItem("basicAuthCredentials")) {
+            if (!this.isAnonymousRoute && BasicAuth.isLoggedIn()) {
                 try {
                     await this.loadGeneralResources()
                 } catch (error) {
@@ -101,7 +102,7 @@
                     return newUid;
                 })();
 
-                if (!localStorage.getItem("basicAuthCredentials")) {
+                if (!BasicAuth.isLoggedIn()) {
                     return null;
                 }
 

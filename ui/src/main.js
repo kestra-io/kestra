@@ -8,13 +8,14 @@ import routes from "./routes/routes";
 import en from "./translations/en.json";
 import stores from "./stores/store";
 import {setupTenantRouter} from "./composables/useTenant";
+import * as BasicAuth from "./utils/basicAuth";
 
 
 const app = createApp(App)
 
 const handleAuthError = (error, to) => {
     if (error.message?.includes("401")) {
-        localStorage.removeItem("basicAuthCredentials")
+        BasicAuth.logout()
         const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
         return {name: "login", query: fromPath ? {from: fromPath} : {}}
     }
@@ -27,7 +28,7 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
             return next();
         }
 
-        const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null
+        const hasCredentials = BasicAuth.isLoggedIn()
 
         if (!hasCredentials) {
             const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined

@@ -29,7 +29,7 @@
                                 :tooltip="t('dashboards.export')"
                             >
                                 <el-button
-                                    @click="dashboardStore.export(dashboard.id, chart.id, {filters: filters})"
+                                    @click="props.dashboard.id === 'default' ? dashboardStore.chartPreviewExport({chart: chart.content!, chartId: chart.id, globalFilter: {filters}}) : dashboardStore.export(dashboard.id, chart.id, {filters: filters})"
                                     :icon="Download"
                                     link
                                     class="ms-2"

@@ -1,5 +1,6 @@
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
+import Utils from "../utils/utils";
 
 import type {Dashboard, Chart} from "../components/dashboard/composables/useDashboards";
 
@@ -80,19 +81,43 @@ export const useDashboardStore = defineStore("dashboard", {
             return response.data;
         },
 
-        async export(id: Dashboard["id"], chartId: Chart["id"], filtersOverrides: ChartFiltersOverrides) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/${id}/charts/${chartId}/export/to-csv`, filtersOverrides);
-            return response.data;
+        async export(
+            id: Dashboard["id"],
+            chartId: Chart["id"],
+            filtersOverrides: ChartFiltersOverrides,
+        ) {
+            return await this.$http
+                .post(
+                    `${apiUrl(this.vuexStore)}/dashboards/${id}/charts/${chartId}/export/to-csv`,
+                    filtersOverrides,
+                     {responseType: "blob"}
+                )
+                .then((response) => {
+                    const blob = new Blob([response.data], {
+                        type: "application/octet-stream",
+                    });
+
+                    const url = window.URL.createObjectURL(blob);
+                    Utils.downloadUrl(url, `${id}-${chartId}.csv`);
+                });
         },
 
         async chartPreviewExport(previewRequest: PreviewRequest) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/charts/export/to-csv`, previewRequest);
-            return response.data;
+            return await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/charts/export/to-csv`, previewRequest,  {responseType: "blob"})
+             .then((response) => {
+                    const blob = new Blob([response.data], {
+                        type: "application/octet-stream",
+                    });
+
+                    const url = window.URL.createObjectURL(blob);
+                    Utils.downloadUrl(url, `${"default"}-${previewRequest.chartId}.csv`);
+                });
         },
     },
 });
 export interface PreviewRequest {
     chart: string,
+    chartId?: string,
     globalFilter?: ChartFiltersOverrides
 }
 export interface ChartFiltersOverrides {

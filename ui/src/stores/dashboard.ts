@@ -98,7 +98,7 @@ export const useDashboardStore = defineStore("dashboard", {
             const path = isDefault ? "/charts/export/to-csv" : `/${dashboard.id}/charts/${chart.id}/export/to-csv`;
             const payload = isDefault ? {chart: chart.content, globalFilter: parameters} : parameters;
 
-            const filename = `chart-${chart.id}.csv`;
+            const filename = `chart-${chart.id}`;
 
             return this.$http
                 .post(`${apiUrl(this.vuexStore)}/dashboards${path}`, payload, response)

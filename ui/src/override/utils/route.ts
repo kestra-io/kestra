@@ -1,4 +1,5 @@
-import {Store} from "vuex";
+import type {Store} from "vuex"
+import * as basicAuth from "../../utils/basicAuth"
 
 declare global {
     interface Window {
@@ -6,27 +7,25 @@ declare global {
     }
 }
 
-let root = (import.meta.env.VITE_APP_API_URL || "") + window.KESTRA_BASE_PATH;
-if (root.endsWith("/")) {
-    root = root.substring(0, root.length - 1);
+const createBaseUrl = (): string => {
+    const root = (import.meta.env.VITE_APP_API_URL || "") + (window.KESTRA_BASE_PATH || "")
+    return root.trim() || window.location.origin
 }
 
-export const baseUrl = root;
+export const baseUrl = createBaseUrl().replace(/\/$/, "")
+export const basePath = "/api/v1/main"
 
-export const basePath = () => "/api/v1/main"
+export const apiUrl = (_: Store<any>): string => {
+    const loginString = basicAuth.getLoginString()
 
-export const apiUrl = (_: Store<any>) => {
-    const login = localStorage.getItem("basicAuthLogin");
-    const password = localStorage.getItem("basicAuthPassword");
-    if(!login || !password) {
-        return `${baseUrl}${basePath()}`
-    }
+    if (!loginString) return `${baseUrl}${basePath}`
+
     try {
-        const {protocol, host} = new URL(baseUrl); // Validate baseUrl
-        return `${protocol}//${login}:${password}@${host}${basePath()}`
+        const {protocol, host} = new URL(baseUrl)
+        return `${protocol}//${loginString}@${host}${basePath}`
     } catch {
-        return `${baseUrl}${basePath()}`;
+        return `${baseUrl}${basePath}`
     }
 }
 
-export const apiUrlWithoutTenants = () => `${baseUrl}/api/v1`
+export const apiUrlWithoutTenants = (): string => `${baseUrl}/api/v1`

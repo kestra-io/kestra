@@ -48,8 +48,9 @@ export type Chart = {
 export type Request = {
     chart: Chart["content"];
     globalFilter?: Parameters;
-}
-export type Parameters  = {
+};
+
+export type Parameters = {
     pageNumber?: number;
     pageSize?: number;
     startDate?: Date;
@@ -57,7 +58,7 @@ export type Parameters  = {
     namespace?: string;
     labels?: Record<string, string>;
     filters?: Record<string, any>;
-}
+};
 
 export const ALLOWED_CREATION_ROUTES = ["home", "flows/update", "namespaces/update"];
 
@@ -115,7 +116,7 @@ export const getPropertyValue = (data: Record<string, any>, property: "value" | 
 
 export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions?.pagination?.enabled ?? false;
 
-export const processFlowYaml = (yaml: string, namespace: string, flow: string): string => yaml.replace(/--NAMESPACE--/g, namespace).replace(/--FLOW--/g, flow)
+export const processFlowYaml = (yaml: string, namespace: string, flow: string): string => yaml.replace(/--NAMESPACE--/g, namespace).replace(/--FLOW--/g, flow);
 
 export function useChartGenerator(props: {chart: Chart; filters: string[]; showDefault: boolean;}, includeHooks: boolean = true) {
     const percentageShown = computed(() => props.chart?.chartOptions?.numberType === "PERCENTAGE");
@@ -135,7 +136,9 @@ export function useChartGenerator(props: {chart: Chart; filters: string[]; showD
         if (!props.showDefault) {
             data.value = await dashboardStore.generate(id, props.chart.id, parameters);
         } else {
-            if(!props.chart.content) throw new Error("Chart content must exist for preview.");
+            if (!props.chart.content){
+                throw new Error("Chart content must exist for preview.");
+            }
 
             const request: Request = {chart: props.chart.content, globalFilter: parameters};
             data.value = await dashboardStore.chartPreview(request);

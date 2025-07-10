@@ -112,7 +112,7 @@
 
         if (route.name === "flows/update") {
             filters.value.push({field: "namespace", operation: "EQUALS", value: route.params.namespace});
-            filters.value.push({field: "flowId", operation: "EQUALS", value: route.params.id})
+            filters.value.push({field: "flowId", operation: "EQUALS", value: route.params.id});
         }
 
         if (route.name === "namespaces/update") {

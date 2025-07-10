@@ -6,12 +6,11 @@ const header: AxiosRequestConfig = {headers: {"Content-Type": "application/x-yam
 const response: AxiosRequestConfig = {responseType: "blob" as const};
 const validateStatus = (status: number) => status === 200 || status === 404;
 const downloadHandler = (response: AxiosResponse, filename: string) => {
-
     const blob = new Blob([response.data], {type: "application/octet-stream"});
     const url = window.URL.createObjectURL(blob);
 
     Utils.downloadUrl(url, `${filename}.csv`);
-}
+};
 
 import {apiUrl} from "override/utils/route";
 
@@ -62,7 +61,7 @@ export const useDashboardStore = defineStore("dashboard", {
             return response.data;
         },
 
-        async update({id, source}: { id: Dashboard["id"]; source: Dashboard["sourceCode"] }) {
+        async update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
             const response = await this.$http.put(`${apiUrl(this.vuexStore)}/dashboards/${id}`, source, header);
             return response.data;
         },

@@ -6,6 +6,8 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.validations.TestSuiteAssertionValidation;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,6 +25,7 @@ import static io.kestra.core.test.flow.Assertion.Operator.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@TestSuiteAssertionValidation
 public class Assertion {
     @NotNull
     private Property<Object> value;
@@ -46,6 +49,13 @@ public class Assertion {
     private Property<List<String>> notIn;
     private Property<Boolean> isNull;
     private Property<Boolean> isNotNull;
+
+    public boolean hasAtLeastOneAssertion() {
+        return !(endsWith == null && startsWith == null && contains == null &&
+            equalTo == null && notEqualTo == null && greaterThan == null && greaterThanOrEqualTo == null
+            && lessThan == null && lessThanOrEqualTo == null && in == null && notIn == null
+            && isNull == null && isNotNull == null);
+    }
 
     public enum Operator{
         ENDS_WITH("endsWith"),

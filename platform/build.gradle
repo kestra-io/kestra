@@ -131,6 +131,7 @@ dependencies {
         api "org.wiremock:wiremock-jetty12:3.13.1"
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
         api "com.microsoft.playwright:playwright:1.53.0"
+        api "org.awaitility:awaitility:4.3.0"
 
         // Kestra components
         api "io.kestra:core:$version"

@@ -19,6 +19,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
@@ -261,7 +262,8 @@ public class ExecutorService {
                 // Compute outputs for the parent Flowable task if a terminated state was resolved
                 if (workerTaskResult.getTaskRun().getState().isTerminated()) {
                     try {
-                        Output outputs = flowableParent.outputs(runContext);
+                        // as flowable tasks can save outputs during iterative execution, we must merge the maps here
+                        Map<String, Object> outputs = MapUtils.merge(workerTaskResult.getTaskRun().getOutputs(), flowableParent.outputs(runContext).toMap());
                         Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputs);
                         return Optional.of(new WorkerTaskResult(workerTaskResult
                             .getTaskRun()
@@ -1170,71 +1172,83 @@ public class ExecutorService {
     }
 
     public void log(Logger log, Boolean in, WorkerJob value) {
-        if (value instanceof WorkerTask workerTask) {
-            log.debug(
-                "{} {} : {}",
-                in ? "<< IN " : ">> OUT",
-                workerTask.getClass().getSimpleName(),
-                workerTask.getTaskRun().toStringState()
-            );
-        } else if (value instanceof WorkerTrigger workerTrigger) {
-            log.debug(
-                "{} {} : {}",
-                in ? "<< IN " : ">> OUT",
-                workerTrigger.getClass().getSimpleName(),
-                workerTrigger.getTriggerContext().uid()
-            );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            if (value instanceof WorkerTask workerTask) {
+                log.debug(
+                    "{} {} : {}",
+                    in ? "<< IN " : ">> OUT",
+                    workerTask.getClass().getSimpleName(),
+                    workerTask.getTaskRun().toStringState()
+                );
+            } else if (value instanceof WorkerTrigger workerTrigger) {
+                log.debug(
+                    "{} {} : {}",
+                    in ? "<< IN " : ">> OUT",
+                    workerTrigger.getClass().getSimpleName(),
+                    workerTrigger.getTriggerContext().uid()
+                );
+            }
         }
     }
 
     public void log(Logger log, Boolean in, WorkerTaskResult value) {
-        log.debug(
-            "{} {} : {}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.getTaskRun().toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} : {}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.getTaskRun().toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, SubflowExecutionResult value) {
-        log.debug(
-            "{} {} : {}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.getParentTaskRun().toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} : {}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.getParentTaskRun().toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, SubflowExecutionEnd value) {
-        log.debug(
-            "{} {} : {}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} : {}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, Execution value) {
-        log.debug(
-            "{} {} [key='{}']\n{}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.getId(),
-            value.toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} [key='{}']\n{}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.getId(),
+                value.toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, Executor value) {
-        log.debug(
-            "{} {} [key='{}', from='{}', offset='{}', crc32='{}']\n{}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.getExecution().getId(),
-            value.getFrom(),
-            value.getOffset(),
-            value.getExecution().toCrc32State(),
-            value.getExecution().toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} [key='{}', from='{}', offset='{}', crc32='{}']\n{}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.getExecution().getId(),
+                value.getFrom(),
+                value.getOffset(),
+                value.getExecution().toCrc32State(),
+                value.getExecution().toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, ExecutionKilledExecution value) {

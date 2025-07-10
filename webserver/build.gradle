@@ -31,6 +31,7 @@ dependencies {
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':storage-local')
     testImplementation "org.wiremock:wiremock-jetty12"
+    testImplementation "org.awaitility:awaitility"
 
     testImplementation project(':tests')
     testImplementation project(':jdbc')

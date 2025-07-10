@@ -5,16 +5,18 @@
                 <Logo style="width: 14rem;" />
             </div>
             <el-steps :space="60" direction="vertical" :active="activeStep" finish-status="success">
-                <el-step :icon="activeStep > 0 ? CheckBold : AccountPlus" :title="t('setup.steps.user')" />
+                <el-step :icon="activeStep > 0 ? CheckBold : AccountPlus" :title="t('setup.steps.user')" :class="{'primary-icon': activeStep <= 0}" />
                 <el-step
                     :icon="activeStep > 1 ? CheckBold : Cogs"
                     :title="t('setup.steps.config')"
+                    :class="{'primary-icon': activeStep <= 1}"
                 />
                 <el-step
                     :icon="activeStep > 2 ? CheckBold : MessageOutline"
                     :title="t('setup.steps.survey')"
+                    :class="{'primary-icon': activeStep <= 2}"
                 />
-                <el-step :icon="LightningBolt" :title="t('setup.steps.complete')" />
+                <el-step :icon="LightningBolt" :title="t('setup.steps.complete')" class="primary-icon" />
             </el-steps>
         </div>
         <div class="setup-main">
@@ -312,7 +314,7 @@
             localStorage.setItem("setupStartTime", Date.now().toString())
             
             if (config && config.isBasicAuthInitialized) {
-                activeStep.value = 1
+                activeStep.value = 0
             }
             
             usageData.value = await miscStore.loadAllUsages()
@@ -769,11 +771,11 @@ $mobile-breakpoint: 992px;
     }
     
     :deep(.el-checkbox__label) {
-        color: #e2e8f0;
         font-size: 14px;
         padding-left: 0;
         line-height: 1.4;
         align-self: center;
+        color: var(--ks-content-primary);
     }
 }
 
@@ -858,5 +860,11 @@ $mobile-breakpoint: 992px;
 
 html.dark .el-col .el-card * {
     color: var(--ks-content-primary);
+}
+
+.primary-icon {
+    :deep(.el-step__icon-inner) {
+        color: var(--ks-content-primary);
+    }
 }
 </style>

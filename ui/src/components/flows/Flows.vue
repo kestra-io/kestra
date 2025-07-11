@@ -224,18 +224,15 @@
                                 :label="$t('last execution status')"
                             >
                                 <template #default="scope">
-                                    <status
-                                        v-if="
-                                            lastExecutionByFlowReady &&
-                                                getLastExecution(scope.row)
-                                                    ?.status
-                                        "
-                                        :status="
-                                            getLastExecution(scope.row)
-                                                ?.status
-                                        "
-                                        size="small"
-                                    />
+                                    <div
+                                        v-if="lastExecutionByFlowReady && getLastExecution(scope.row)?.status"
+                                        class="d-flex justify-content-between"
+                                    >
+                                        <Status :status="getLastExecution(scope.row)?.status" size="small" />
+                                        <div class="height: 100px;">
+                                            <Bar :chart="CHART_DEFINITION" show-default short />
+                                        </div>
+                                    </div>
                                 </template>
                             </el-table-column>
 
@@ -297,6 +294,28 @@
     import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
     import Sections from "../dashboard/sections/Sections.vue";
+    
+    import Bar from "../dashboard/sections/Bar.vue";
+    
+    const CHART_DEFINITION = {
+        id: "executions_per_namespace_bars",
+        type: "io.kestra.plugin.core.dashboard.chart.Bar",
+        chartOptions: {
+            displayName: "Executions (per namespace)",
+            legend: {enabled: false},
+            column: "total",
+            width: 12,
+        },
+        data: {
+            type: "io.kestra.plugin.core.dashboard.data.Executions",
+            columns: {
+                state: {field: "STATE"},
+                total: {displayName: "Excutions", agg: "COUNT"},
+            },
+        },
+    };
+
+    CHART_DEFINITION.content = YAML_UTILS.stringify(CHART_DEFINITION);
 
     const file = ref(null);
 </script>

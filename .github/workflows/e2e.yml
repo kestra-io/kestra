@@ -62,7 +62,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
-          path: kestra/playwright-report/
+          path: kestra/ui/playwright-report/
           retention-days: 7
         # Allure check
         # TODO I don't know what it should do

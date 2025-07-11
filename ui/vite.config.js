@@ -38,6 +38,15 @@ export default defineConfig({
             }
         }
     },
+    server: {
+        proxy: {
+            "^/api": {
+                target: "http://kestra:8080", // Make sure to change your /etc/hosts file, to contain this line: 127.0.0.1 kestra
+                ws: true,
+                changeOrigin: true
+            }
+        }
+    },
     resolve: {
         alias: {
             "override": path.resolve(__dirname, "src/override/"),

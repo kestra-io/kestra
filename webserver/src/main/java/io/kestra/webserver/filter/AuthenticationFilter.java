@@ -51,14 +51,16 @@ public class AuthenticationFilter implements HttpServerFilter {
             .subscribeOn(Schedulers.boundedElastic())
             .flux()
             .flatMap(basicAuthConfiguration -> {
-                boolean isConfigEndpoint = request.getPath().endsWith("/configs") || request.getPath().endsWith("/basicAuth");
+                boolean isWhitelistedEndpoint = request.getPath().endsWith("/configs")
+                    || request.getPath().endsWith("/basicAuth")
+                    || request.getPath().contains("/api/v1/plugins");
 
                 boolean isOpenUrl = Optional.ofNullable(basicAuthConfiguration.getOpenUrls())
                     .map(Collection::stream)
                     .map(stream -> stream.anyMatch(s -> request.getPath().startsWith(s)))
                     .orElse(false);
 
-                if (isConfigEndpoint || isOpenUrl || isManagementEndpoint(request)) {
+                if (isWhitelistedEndpoint || isOpenUrl || isManagementEndpoint(request)) {
                     return chain.proceed(request);
                 }
 

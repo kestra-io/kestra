@@ -28,9 +28,13 @@ class AuthenticationFilterTest {
     private AuthenticationFilter filter;
 
     @Test
-    void testConfigEndpointAlwaysOpen() {
+    void testWhitelistedEndpointAlwaysOpen() {
         var response =  client.toBlocking()
             .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/plugins/schemas/FLOW").basicAuth("anonymous", "hacker"));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
     }
 

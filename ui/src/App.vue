@@ -107,6 +107,7 @@
                 }
 
                 const config = await this.miscStore.loadConfigs();
+                this.pluginsStore.fetchIcons()
 
                 await this.docStore.initResourceUrlTemplate(config.version);
 

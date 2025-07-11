@@ -49,7 +49,9 @@ const config: PlaywrightTestConfig = {
         screenshot: "only-on-failure",
         /* Collect video when retrying the failed test */
         video: "retain-on-failure",
-
+        launchOptions: {
+            slowMo: 100,
+        },
     },
 
     /* Configure projects for major browsers */

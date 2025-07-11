@@ -102,7 +102,7 @@
 
     const validateCredentials = async (auth: string) => {
         try {
-            document.cookie = `BASIC_AUTH=${auth};path=/`;
+            document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`;
             await axios.get(`${apiUrl(store)}/usages/all`, {
                 timeout: 10000,
                 withCredentials: true

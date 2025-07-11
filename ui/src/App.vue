@@ -11,7 +11,7 @@
 
 <script>
     import ErrorToast from "./components/ErrorToast.vue";
-    import {mapGetters, mapState} from "vuex";
+    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import Utils from "./utils/utils";
     import {shallowRef} from "vue";
@@ -26,6 +26,7 @@
     import {useLayoutStore} from "./stores/layout";
     import {useCoreStore} from "./stores/core";
     import {useDocStore} from "./stores/doc";
+    import {useMiscStore} from "./stores/misc";
     import * as BasicAuth from "./utils/basicAuth";
 
     // Main App
@@ -48,10 +49,9 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["overallTotal"]),
-            ...mapGetters("misc", ["configs"]),
-            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore),
+            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore),
             envName() {
-                return this.layoutStore.envName || this.configs?.environment?.name;
+                return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
             },
             isOSS(){
                 return true;
@@ -106,9 +106,8 @@
                     return null;
                 }
 
+                const config = await this.miscStore.loadConfigs();
                 this.pluginsStore.fetchIcons()
-
-                const config = await this.$store.dispatch("misc/loadConfigs");
 
                 await this.docStore.initResourceUrlTemplate(config.version);
 

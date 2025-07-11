@@ -15,11 +15,7 @@ export const useMiscStore = defineStore("misc", {
         theme: "light"
     }),
 
-    getters: {
-        getConfigs: (state) => state.configs,
-        getContextInfoBarOpenTab: (state) => state.contextInfoBarOpenTab,
-        getTheme: (state) => state.theme,
-    },
+
 
     actions: {
         async loadConfigs() {
@@ -63,18 +59,6 @@ export const useMiscStore = defineStore("misc", {
                 counter: 0,
                 email: email
             });
-        },
-
-        setTheme(theme: string) {
-            this.theme = theme;
-        },
-
-        setConfigs(configs: any) {
-            this.configs = configs;
-        },
-
-        setContextInfoBarOpenTab(value: string) {
-            this.contextInfoBarOpenTab = value;
         }
     }
 });

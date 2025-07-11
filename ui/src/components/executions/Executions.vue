@@ -411,7 +411,9 @@
 </script>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useMiscStore} from "../../stores/misc";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -589,7 +591,7 @@
             ...mapState("execution", ["executions", "total"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useMiscStore),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -684,7 +686,7 @@
         },
         methods: {
             filteredLabels(labels) {
-                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
 
                 // Extract only the keys from the route query labels
                 const allowedLabels = this.$route.query.labels ? this.$route.query.labels.map(label => label.split(":")[0]) : [];

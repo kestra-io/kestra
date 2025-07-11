@@ -22,7 +22,7 @@
                 </el-button>
             </div>
             <Suspense>
-                <schema-to-html class="plugin-schema" :dark-mode="theme === 'dark'" :schema="pluginsStore.editorPlugin.schema" :plugin-type="pluginsStore.editorPlugin.cls">
+                <schema-to-html class="plugin-schema" :dark-mode="miscStore.theme === 'dark'" :schema="pluginsStore.editorPlugin.schema" :plugin-type="pluginsStore.editorPlugin.cls">
                     <template #markdown="{content}">
                         <markdown font-size-var="font-size-base" :source="content" />
                     </template>
@@ -40,11 +40,11 @@
 </script>
 
 <script>
-    import {mapGetters} from "vuex";
     import intro from "../../assets/docs/basic.md?raw";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {mapStores} from "pinia";
     import {usePluginsStore} from "../../stores/plugins";
+    import {useMiscStore} from "../../stores/misc";
 
     export default {
         props: {
@@ -62,8 +62,7 @@
             }
         },
         computed: {
-            ...mapGetters("misc", ["theme"]),
-            ...mapStores(usePluginsStore),
+            ...mapStores(usePluginsStore, useMiscStore),
             introContent () {
                 return this.overrideIntro ?? intro
             },

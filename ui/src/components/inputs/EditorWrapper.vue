@@ -62,14 +62,16 @@
 
     import {EDITOR_CURSOR_INJECTION_KEY} from "../code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
+    import {useMiscStore} from "../../stores/misc";
 
     import AiAgent from "../ai/AiAgent.vue";
     import AiIcon from "../ai/AiIcon.vue";
     import AcceptDecline from "./AcceptDecline.vue";
 
     const store = useStore();
+    const miscStore = useMiscStore();
 
-    const aiEnabled = computed(() => store.state.misc.configs?.isAiEnabled);
+    const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const cursor = ref();
 
     const toggleAiShortcut = (event: KeyboardEvent) => {

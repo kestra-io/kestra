@@ -469,6 +469,7 @@
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
     import {useCoreStore} from "../../stores/core";
+    import {useMiscStore} from "../../stores/misc";
     import {useRoute, useRouter} from "vue-router";
     import {useStorage} from "@vueuse/core";
 
@@ -513,7 +514,8 @@
 
     const store = useStore();
     const coreStore = useCoreStore();
-    const aiEnabled = computed(() => store.state.misc.configs?.isAiEnabled);
+    const miscStore = useMiscStore();
+    const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);

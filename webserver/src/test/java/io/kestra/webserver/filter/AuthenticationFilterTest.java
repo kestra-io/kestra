@@ -10,8 +10,6 @@ import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,8 +36,13 @@ class AuthenticationFilterTest {
 
     @Test
     void testUnauthorized() {
-        assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
+        HttpClientResponseException httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/main/dashboards").header("Authorization", "")));
+        assertThat(httpClientResponseException.getResponse().getHeaders().get("WWW-Authenticate")).isEqualTo("Basic");
+
+        httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
             .exchange(HttpRequest.GET("/api/v1/main/dashboards").basicAuth("anonymous", "hacker")));
+        assertThat(httpClientResponseException.getResponse().getHeaders().get("WWW-Authenticate")).isEqualTo("Basic");
     }
 
     @Test

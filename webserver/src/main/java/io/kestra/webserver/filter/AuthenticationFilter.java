@@ -3,10 +3,12 @@ package io.kestra.webserver.filter;
 import io.kestra.core.utils.AuthUtils;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Filter;
+import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.http.filter.ServerFilterPhase;
@@ -21,6 +23,7 @@ import reactor.core.publisher.Flux;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Optional;
+
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -31,6 +34,7 @@ import reactor.core.scheduler.Schedulers;
 public class AuthenticationFilter implements HttpServerFilter {
     private static final String PREFIX = "Basic";
     private static final Integer ORDER = ServerFilterPhase.SECURITY.order();
+    public static final String BASIC_AUTH_COOKIE_NAME = "BASIC_AUTH";
 
     @Inject
     private BasicAuthService basicAuthService;
@@ -58,22 +62,39 @@ public class AuthenticationFilter implements HttpServerFilter {
                     return chain.proceed(request);
                 }
 
-                var basicAuth = request
-                    .getHeaders()
-                    .getAuthorization()
-                    .filter(auth -> auth.toLowerCase().startsWith(PREFIX.toLowerCase()))
-                    .map(cred -> BasicAuth.from(cred.substring(PREFIX.length() + 1)));
+                var basicAuth = fromCookie(request)
+                    .or(() -> fromAuthorizationHeader(request))
+                    .map(BasicAuth::from);
 
                 if (basicAuth.isEmpty() ||
                     !basicAuth.get().username().equals(basicAuthConfiguration.getUsername()) ||
                     !AuthUtils.encodePassword(basicAuthConfiguration.getSalt(),
                         basicAuth.get().password()).equals(basicAuthConfiguration.getPassword())
                 ) {
-                    return Flux.just(HttpResponse.unauthorized());
+                    return Flux.just(HttpResponse.unauthorized().header("WWW-Authenticate", "Basic"));
                 }
 
                 return chain.proceed(request);
-            }) ;
+            });
+    }
+
+    private Optional<String> fromCookie(HttpRequest<?> request) {
+        try {
+            return Optional.ofNullable(
+                request.getCookies()
+                    .get(BASIC_AUTH_COOKIE_NAME)
+            ).map(Cookie::getValue);
+        } catch (Exception e) {
+            // Can happen in tests because getCookies() is not implemented in NettyClientHttpRequest but is in NettyHttpRequest
+            return Optional.empty();
+        }
+    }
+
+    private Optional<String> fromAuthorizationHeader(HttpRequest<?> request) {
+        return request.getHeaders()
+            .getAuthorization()
+            .filter(auth -> auth.toLowerCase().startsWith(PREFIX.toLowerCase()))
+            .map(cred -> cred.substring(PREFIX.length() + 1));
     }
 
     @SuppressWarnings("rawtypes")

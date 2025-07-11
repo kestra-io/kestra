@@ -34,6 +34,13 @@ const makeToast = (t: (t:string, options?: Record<string, string>) => string) =>
             .confirm(typeof message === "string" ? this._MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type})
             .then(() => callback())
     },
+    confirmNoCancel: function(message: string, callback: () => Promise<any>, type = "warning" as const) {
+        ElMessageBox
+            .confirm(
+                typeof message === "string" ? this._MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type, showCancelButton: false}
+            )
+            .then(() => callback());
+    },
     saved: function(name:string, title?:string, options?: Record<string, any>) {
         ElNotification.closeAll();
         const message = options?.multiple

@@ -226,7 +226,7 @@
                                 <template #default="scope">
                                     <div
                                         v-if="lastExecutionByFlowReady && getLastExecution(scope.row)?.status"
-                                        class="d-flex justify-content-between"
+                                        class="d-flex justify-content-between align-items-center"
                                     >
                                         <Status :status="getLastExecution(scope.row)?.status" size="small" />
                                         <div class="height: 100px;">

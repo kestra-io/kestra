@@ -73,7 +73,7 @@
                     }
                     : {}),
                 tooltip: {
-                    enabled: true,
+                    enabled: props.short ? false : true,
                     filter: (value) => value.raw,
                     callbacks: {
                         label: (value) => {
@@ -176,7 +176,7 @@
 
     .short-chart {
         &:not(.with-legend) {
-            #{--chart-height}: 60px;
+            #{--chart-height}: 40px;
         }
 
         min-height: var(--chart-height);

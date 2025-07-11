@@ -174,7 +174,7 @@
                 
                 this.$router.push({query: {
                     ...this.$route.query,
-                    ...{revisionLeft: this.revisionLeftIndex + 1, revisionRight: this.revisionRightIndex + 1}
+                    revisionLeft: this.revisionLeftIndex + 1, revisionRight: this.revisionRightIndex + 1
                 }});
             },
             async fetchRevision(revision) {

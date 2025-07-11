@@ -26,14 +26,12 @@ export default (component, options, callback) => {
     const app =  mount(
         component,
         {
-            ...{
-                global: {
-                    plugins: [store, i18n, ElementPlus],
-                    config: {
-                        globalProperties: {
-                            $filters: filters,
-                            $moment: extendMoment(moment)
-                        }
+            global: {
+                plugins: [store, i18n, ElementPlus],
+                config: {
+                    globalProperties: {
+                        $filters: filters,
+                        $moment: extendMoment(moment)
                     }
                 }
             },

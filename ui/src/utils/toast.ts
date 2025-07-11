@@ -40,59 +40,54 @@ const makeToast = (t: (t:string, options?: Record<string, string>) => string) =>
             ? t("multiple saved done", {name})
             : t("saved done", {name: name});
         ElNotification({
-            ...{
+            
                 title: title || t("saved"),
                 message: this._wrap(message),
                 position: "bottom-right",
                 type: "success",
-            },
-            ...(options || {})
+            ...options
         });
     },
     deleted: function(name:string, title?:string, options?: Record<string, any>) {
         ElNotification({
-            ...{
+            
                 title: title || t("deleted"),
                 message: this._wrap(t("deleted confirm", {name: name})),
                 position: "bottom-right",
                 type: "success",
-            },
-            ...(options || {})
+            ...options
         })
     },
     success: function(message:string, title?:string, options?: Record<string, any>) {
         ElNotification({
-            ...{
+            
                 title: title || t("success"),
                 message: this._wrap(message),
                 position: "bottom-right",
                 type: "success",
-            },
-            ...(options || {})
+            ...options
         })
     },
     warning: function(message:string, title?:string, options?: Record<string, any>) {
         ElNotification({
-            ...{
+            
                 title: title || t("warning"),
                 message: this._wrap(message),
                 position: "bottom-right",
                 type: "warning",
-            },
-            ...(options || {})
+            ...options
         })
     },
     error: function(message:string, title:string, options?: Record<string, any>) {
         ElNotification({
-            ...{
+            
                 title: title || t("error"),
                 message: this._wrap(message),
                 position: "bottom-right",
                 type: "error",
                 duration: 0,
-                customClass: "large"
-            },
-            ...(options || {})
+                customClass: "large",
+            ...options
         })
     }
 })

@@ -240,10 +240,8 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
         groupIcons() {
-            return Promise.all([
-                this.$http.get(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
-            ]).then(responses => {
-                return responses[0].data;
+            return this.$http.get(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {}).then(response => {
+                return response.data;
             });
         },
 

@@ -1,12 +1,12 @@
 export function logout() {
-    document.cookie = "BASIC_AUTH=;expires=Thu, 01 Jan 1970 00:00:01 GMT";
+    document.cookie = "BASIC_AUTH=;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT";
     return true;
 }
 
 export function signIn(username: string, password: string) {
     const trimmedUsername = username.trim();
     const credentials = btoa(`${trimmedUsername}:${password}`)
-    document.cookie = `BASIC_AUTH=${credentials}`;
+    document.cookie = `BASIC_AUTH=${credentials};path=/`;
     return true;
 }
 

@@ -43,7 +43,8 @@ test.describe("Flow Page", () => {
 
         await test.step("execute the flow", async () => {
 
-            await page.getByRole("button", {name: "Execute"}).first().click();
+            await expect(page.locator("section").getByRole("button", {name: "Execute"})).toBeVisible();
+            await page.locator("section").getByRole("button", {name: "Execute"}).click();
 
             await page.getByRole("dialog").getByRole("button", {name: "Execute"}).click();
 

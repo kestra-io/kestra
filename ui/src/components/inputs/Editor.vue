@@ -79,10 +79,11 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
-    import {mapState, mapGetters} from "vuex";
+    import {mapGetters} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
     import {useDocStore} from "../../stores/doc";
+    import {useMiscStore} from "../../stores/misc";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
@@ -167,9 +168,11 @@
             },
         },
         computed: {
-            ...mapState({mappedTheme: state => state.misc.theme}),
             ...mapGetters("flow", ["flowValidation"]),
-            ...mapStores(useCoreStore, useDocStore),
+            ...mapStores(useCoreStore, useDocStore, useMiscStore),
+            mappedTheme() {
+                return this.miscStore.theme;
+            },
             containerClass() {
                 return [
                     !this.input ? "" : "single-line",

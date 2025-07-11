@@ -55,7 +55,7 @@ class PluginControllerTest {
         assertThat(template.getDescription()).isEqualTo("Plugin template for Kestra");
 
         assertThat(template.getTasks().size()).isEqualTo(1);
-        assertThat(template.getTasks().getFirst()).isEqualTo("io.kestra.plugin.templates.ExampleTask");
+        assertThat(template.getTasks().getFirst().cls()).isEqualTo("io.kestra.plugin.templates.ExampleTask");
 
         assertThat(template.getGuides().size()).isEqualTo(2);
         assertThat(template.getGuides().getFirst()).isEqualTo("authentication");

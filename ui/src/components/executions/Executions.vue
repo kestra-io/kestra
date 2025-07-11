@@ -764,6 +764,13 @@
                     () => {}
                 );
             },
+            confirmActionWithNoCancelOption(toast, queryAction, byIdAction, success) {
+                this.$toast().confirmNoCancel(
+                    this.$t(toast, {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    () => this.genericConfirmCallback(queryAction, byIdAction, success),
+                    () => {}
+                );
+            },
             genericConfirmCallback(queryAction, byIdAction, success, params) {
                 if (this.queryBulkAction) {
                     const query = this.loadQuery({
@@ -799,7 +806,7 @@
                 }
             },
             resumeExecutions() {
-                this.genericConfirmAction(
+                this.confirmActionWithNoCancelOption(
                     "bulk resume",
                     "execution/queryResumeExecution",
                     "execution/bulkResumeExecution",

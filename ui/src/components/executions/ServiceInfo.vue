@@ -27,7 +27,7 @@
         follow: []
     }>();
 
-    const {t} = useI18n({useScope: "global"});
+    const {t} = useI18n();
     const serviceStore = useServiceStore();
     const service = ref();
 

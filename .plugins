@@ -76,6 +76,7 @@
 #plugin-nats:io.kestra.plugin:plugin-nats:LATEST
 #plugin-neo4j:io.kestra.plugin:plugin-neo4j:LATEST
 #plugin-notifications:io.kestra.plugin:plugin-notifications:LATEST
+#plugin-notion:io.kestra.plugin:plugin-notion:LATEST
 #plugin-ollama:io.kestra.plugin:plugin-ollama:LATEST
 #plugin-openai:io.kestra.plugin:plugin-openai:LATEST
 #plugin-opensearch:io.kestra.plugin:plugin-opensearch:LATEST

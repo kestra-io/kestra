@@ -68,7 +68,6 @@
     import Lock from "vue-material-design-icons/Lock.vue"
     import Logo from "../home/Logo.vue"
 
-    import {useMiscStore} from "../../stores/misc"
     import {useCoreStore} from "../../stores/core"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
@@ -83,7 +82,6 @@
     const route = useRoute()
     const store = useStore()
     const {t} = useI18n()
-    const miscStore = useMiscStore()
     const coreStore = useCoreStore()
     const {shouldShowHelloDialog} = useSurveySkip()
 
@@ -103,15 +101,22 @@
     )
 
     const validateCredentials = async (auth: string) => {
-        await axios.get(`${apiUrl(store)}/usages/all`, {
-            headers: {Authorization: `Basic ${auth}`},
-            timeout: 10000
-        })
+        try {
+            document.cookie = `BASIC_AUTH=${auth};path=/`;
+            await axios.get(`${apiUrl(store)}/usages/all`, {
+                timeout: 10000,
+                withCredentials: true
+            })
+        } catch(e) {
+            BasicAuth.logout();
+            throw e;
+        }
     }
 
     const checkServerInitialization = async () => {
         const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {
-            timeout: 10000
+            timeout: 10000,
+            withCredentials: true
         })
         return response.data?.isBasicAuthInitialized
     }
@@ -152,10 +157,6 @@
             BasicAuth.signIn(trimmedUsername, password)
             localStorage.removeItem("basicAuthSetupInProgress")
             sessionStorage.setItem("sessionActive", "true")
-
-            if (miscStore.$http?.defaults?.headers?.common) {
-                miscStore.$http.defaults.headers.common.Authorization = `Basic ${auth}`
-            }
 
             credentials.value = {username: "", password: ""}
 

@@ -1,16 +1,12 @@
 export function logout() {
-    localStorage.removeItem("basicAuthCredentials");
-    localStorage.removeItem("basicAuthLogin");
-    localStorage.removeItem("basicAuthPassword");
+    document.cookie = "BASIC_AUTH=;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT";
     return true;
 }
 
 export function signIn(username: string, password: string) {
     const trimmedUsername = username.trim();
     const credentials = btoa(`${trimmedUsername}:${password}`)
-    localStorage.setItem("basicAuthCredentials", credentials)
-    localStorage.setItem("basicAuthLogin", trimmedUsername)
-    localStorage.setItem("basicAuthPassword", password)
+    document.cookie = `BASIC_AUTH=${credentials};path=/`;
     return true;
 }
 
@@ -19,14 +15,5 @@ export function isLoggedIn() {
 }
 
 export function credentials() {
-    return localStorage.getItem("basicAuthCredentials");
-}
-
-export function getLoginString() {
-    const login = localStorage.getItem("basicAuthLogin");
-    const password = localStorage.getItem("basicAuthPassword");
-    if (!login || !password) {
-        return null;
-    }
-    return `${login}:${password}`;
+    return document.cookie.split("BASIC_AUTH=")?.[1]?.split(";")?.[0];
 }

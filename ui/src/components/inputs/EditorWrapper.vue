@@ -67,7 +67,7 @@
     import AiAgent from "../ai/AiAgent.vue";
     import AiIcon from "../ai/AiIcon.vue";
     import AcceptDecline from "./AcceptDecline.vue";
-    import {localizeElementAtIndex} from "@kestra-io/ui-libs/flow-yaml-utils";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     const store = useStore();
     const miscStore = useMiscStore();
@@ -187,8 +187,8 @@
 
 
     function updatePluginDocumentation(event: any) {
-        const elementWrapper = localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
-        let element = (elementWrapper?.value?.type !== undefined ? elementWrapper.value : elementWrapper?.parents?.findLast(p => p.type !== undefined)) as Parameters<typeof pluginsStore.updateDocumentation>;
+        const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+        let element = (elementWrapper?.value?.type !== undefined ? elementWrapper.value : elementWrapper?.parents?.findLast(p => p.type !== undefined)) as Parameters<typeof pluginsStore.updateDocumentation>[0];
         pluginsStore.updateDocumentation(element);
     };
 

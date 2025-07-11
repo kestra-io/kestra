@@ -119,6 +119,6 @@ public class Plugin {
             .toList();
     }
 
-    private record PluginElementMetadata(String cls, Boolean deprecated) {
+    public record PluginElementMetadata(String cls, Boolean deprecated) {
     }
 }

@@ -5,7 +5,7 @@ import {useApiStore} from "./api";
 import {Schemas} from "../components/code/utils/types";
 import InitialFlowSchema from "./flow-schema.json"
 import {toRaw} from "vue";
-import {isEntryAPluginElementPredicate} from "../../../../../ui-libs/src";
+import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
 
 interface PluginComponent {
     icon?: string;

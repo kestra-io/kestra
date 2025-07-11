@@ -14,7 +14,6 @@ import {mapStores} from "pinia";
 import {useApiStore} from "../stores/api";
 import {usePluginsStore} from "../stores/plugins";
 import {useCoreStore} from "../stores/core";
-import {localizeElementAtIndex} from "@kestra-io/ui-libs/flow-yaml-utils";
 
 export default {
     mixins: [RouteContext],
@@ -267,7 +266,7 @@ export default {
             }
         },
         updatePluginDocumentation(event) {
-            const elementWrapper = localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+            const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
             let element = elementWrapper?.value?.type !== undefined ? elementWrapper.value : elementWrapper?.parents?.findLast(p => p.type !== undefined);
             this.pluginsStore.updateDocumentation(element);
         },

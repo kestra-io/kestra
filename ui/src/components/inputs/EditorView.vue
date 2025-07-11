@@ -507,7 +507,7 @@
     import MetadataEditor from "../flows/MetadataEditor.vue";
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
     import {usePluginsStore} from "../../stores/plugins";
-    import {localizeElementAtIndex} from "@kestra-io/ui-libs/flow-yaml-utils";
+    import * as FLOW_YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import AiAgent from "../ai/AiAgent.vue";
     import AiIcon from "../ai/AiIcon.vue";
     import AcceptDecline from "./AcceptDecline.vue";
@@ -815,7 +815,7 @@
     };
 
     const updatePluginDocumentation = (event) => {
-        const elementWrapper = localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+        const elementWrapper = FLOW_YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
         let element = elementWrapper.value.type !== undefined ? elementWrapper.value : elementWrapper.parents.findLast(p => p.type !== undefined);
         pluginsStore.updateDocumentation(element);
     };

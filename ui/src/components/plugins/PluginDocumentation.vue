@@ -46,7 +46,6 @@
 </script>
 
 <script>
-    import {mapGetters} from "vuex";
     import intro from "../../assets/docs/basic.md?raw";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {mapStores} from "pinia";

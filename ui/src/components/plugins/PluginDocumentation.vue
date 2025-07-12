@@ -22,7 +22,13 @@
                 </el-button>
             </div>
             <Suspense>
-                <schema-to-html class="plugin-schema" :dark-mode="miscStore.theme === 'dark'" :schema="pluginsStore.editorPlugin.schema" :plugin-type="pluginsStore.editorPlugin.cls">
+                <schema-to-html
+                    class="plugin-schema"
+                    :dark-mode="miscStore.theme === 'dark'"
+                    :schema="pluginsStore.editorPlugin.schema"
+                    :plugin-type="pluginsStore.editorPlugin.cls"
+                    :force-include-properties="pluginsStore.forceIncludeProperties"
+                >
                     <template #markdown="{content}">
                         <markdown font-size-var="font-size-base" :source="content" />
                     </template>

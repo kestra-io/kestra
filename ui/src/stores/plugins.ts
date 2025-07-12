@@ -1,15 +1,16 @@
 import {defineStore} from "pinia";
 import {apiUrlWithoutTenants} from "override/utils/route";
-import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import semver from "semver";
 import {useApiStore} from "./api";
 import {Schemas} from "../components/code/utils/types";
 import InitialFlowSchema from "./flow-schema.json"
 import {toRaw} from "vue";
+import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
 
 interface PluginComponent {
     icon?: string;
     cls?: string;
+    deprecated?: boolean;
     version?: string;
     description?: string;
     properties?: Record<string, any>;
@@ -34,18 +35,19 @@ interface State {
     plugin?: PluginComponent;
     versions?: string[];
     pluginAllProps?: any;
+    deprecatedTypes?: string[];
     plugins?: Plugin[];
-    pluginSingleList?: PluginComponent[];
-    icons?: Record<string, string> ;
+    icons?: Record<string, string>;
     pluginsDocumentation: Record<string, PluginComponent>;
-    editorPlugin?: (PluginComponent & { cls: string });
+    editorPlugin?: (PluginComponent & {cls: string});
     inputSchema?: any;
     inputsType?: any;
     schemaType?: Record<string, any>;
     currentlyLoading?: {
-        taskType?: string;
-        taskVersion?: string;
+        type?: string;
+        version?: string;
     };
+    forceIncludeProperties?: Record<string, any>;
     _iconsPromise: Promise<Record<string, string>> | undefined;
 }
 
@@ -57,10 +59,10 @@ interface LoadOptions {
 }
 
 interface JsonSchemaDef {
-            $ref?:string,
-            allOf?: JsonSchemaDef[],
-            type?: string,
-            properties?: Record<string, any>,
+    $ref?: string,
+    allOf?: JsonSchemaDef[],
+    type?: string,
+    properties?: Record<string, any>,
 }
 
 export function removeRefPrefix(ref?: string): string {
@@ -73,7 +75,6 @@ export const usePluginsStore = defineStore("plugins", {
         versions: undefined,
         pluginAllProps: undefined,
         plugins: undefined,
-        pluginSingleList: undefined,
         icons: undefined,
         pluginsDocumentation: {},
         editorPlugin: undefined,
@@ -82,28 +83,36 @@ export const usePluginsStore = defineStore("plugins", {
         schemaType: undefined,
         _iconsPromise: undefined
     }),
-
     getters: {
-        flowSchema (state): {
+        flowSchema(state): {
             definitions: any,
             $ref: string,
         } {
             return state.schemaType?.flow ?? InitialFlowSchema;
         },
-        flowDefinitions (): Record<string, any> | undefined {
+        flowDefinitions(): Record<string, any> | undefined {
             return this.flowSchema.definitions;
         },
-        flowRootSchema (): Record<string, any> | undefined {
+        flowRootSchema(): Record<string, any> | undefined {
             return this.flowDefinitions?.[removeRefPrefix(this.flowSchema.$ref)];
         },
-        flowRootProperties (): Record<string, any> | undefined {
+        flowRootProperties(): Record<string, any> | undefined {
             return this.flowRootSchema?.properties;
+        },
+        allTypes(): string[] {
+            return this.plugins?.flatMap(plugin => Object.entries(plugin))
+                ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+                ?.flatMap(([, value]: [string, PluginComponent[]]) => value.map(({cls}) => cls!)) ?? [];
+        },
+        deprecatedTypes(): string[] {
+            return this.plugins?.flatMap(plugin => Object.entries(plugin))
+                ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+                ?.flatMap(([, value]: [string, PluginComponent[]]) => value.filter(({deprecated}) => deprecated === true).map(({cls}) => cls!)) ?? [];
         }
     },
-
     actions: {
         resolveRef(obj: JsonSchemaDef): JsonSchemaDef {
-            if(obj?.$ref){
+            if (obj?.$ref) {
                 return this.flowDefinitions?.[removeRefPrefix(obj.$ref)];
             }
             if (obj?.allOf) {
@@ -117,7 +126,7 @@ export const usePluginsStore = defineStore("plugins", {
                             };
                         }
                     }
-                    if(item.type === "object" && item.properties) {
+                    if (item.type === "object" && item.properties) {
                         acc.properties = {
                             ...acc.properties,
                             ...item.properties
@@ -132,12 +141,6 @@ export const usePluginsStore = defineStore("plugins", {
         async list() {
             const response = await this.$http.get<Plugin[]>(`${apiUrlWithoutTenants()}/plugins`);
             this.plugins = response.data;
-            this.pluginSingleList = response.data
-                .map(plugin => plugin.tasks
-                    .concat(plugin.triggers, plugin.conditions, plugin.controllers,
-                           plugin.storages, plugin.taskRunners, plugin.charts,
-                           plugin.dataFilters, plugin.aliases, plugin.logExporters))
-                .flat();
             return response.data;
         },
 
@@ -146,12 +149,6 @@ export const usePluginsStore = defineStore("plugins", {
                 params: options
             });
             this.plugins = response.data;
-            this.pluginSingleList = response.data
-                .map(plugin => plugin.tasks
-                    .concat(plugin.triggers, plugin.conditions, plugin.controllers,
-                           plugin.storages, plugin.taskRunners, plugin.charts,
-                           plugin.dataFilters, plugin.aliases, plugin.logExporters))
-                .flat();
             return response.data;
         },
 
@@ -191,7 +188,7 @@ export const usePluginsStore = defineStore("plugins", {
             return response.data;
         },
 
-        loadVersions(options: { cls: string; commit?: boolean }) {
+        loadVersions(options: {cls: string; commit?: boolean}) {
             const promise = this.$http.get(
                 `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions`
             );
@@ -204,7 +201,7 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
         fetchIcons() {
-            if(this.icons){
+            if (this.icons) {
                 return Promise.resolve(this.icons);
             }
 
@@ -271,64 +268,57 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
 
-        async updateDocumentation(options: { task?: string; event?: { model: { getValue: () => string }, position: any } }) {
-            const taskType = options.event ? (options.task !== undefined ? options.task : YamlUtils.getTypeAtPosition(
-                options.event.model.getValue(),
-                options.event.position,
-                this.pluginSingleList
-            )) : options.task;
+        async updateDocumentation(pluginElement: ({type: string, version?: string} & Record<string, any>) | undefined) {
+            if (!pluginElement?.type || !this.allTypes.includes(pluginElement.type)) {
+                this.editorPlugin = undefined;
+                this.currentlyLoading = undefined;
+                return;
+            }
 
-            const taskVersion: string | undefined = options.event
-                ? YamlUtils.getVersionAtPosition(
-                    options?.event?.model?.getValue(),
-                    options?.event?.position
-                )
-                : undefined;
+            const {type, version} = pluginElement;
 
             // Avoid rerunning the same request twice in a row
-            if(this.currentlyLoading?.taskType === taskType &&
-                this.currentlyLoading?.taskVersion === taskVersion) {
-                    return
+            if (this.currentlyLoading?.type === type &&
+                this.currentlyLoading?.version === version) {
+                return
             }
 
             // No need to reload if the plugin has not changed
-            if(this.editorPlugin?.cls === taskType &&
-                this.editorPlugin?.version === taskVersion) {
-                    return;
+            if (this.editorPlugin?.cls === type &&
+                this.editorPlugin?.version === version) {
+                return;
             }
 
-            if (taskType) {
-                let payload:LoadOptions = {cls: taskType};
+            let payload: LoadOptions = {cls: type};
 
-                if (taskVersion !== undefined) {
-                    // Check if the version is valid to avoid error
-                    // when loading plugin
-                    if (semver.valid(taskVersion) !== null ||
-                        "latest" === taskVersion.toString().toLowerCase() ||
-                        "oldest" === taskVersion.toString().toLowerCase()
-                    ) {
-                        payload = {
-                            ...payload,
-                            version: taskVersion
-                        };
-                    }
+            if (version !== undefined) {
+                // Check if the version is valid to avoid error
+                // when loading plugin
+                if (semver.valid(version) !== null ||
+                    "latest" === version.toString().toLowerCase() ||
+                    "oldest" === version.toString().toLowerCase()
+                ) {
+                    payload = {
+                        ...payload,
+                        version
+                    };
                 }
+            }
 
-                this.currentlyLoading = {
-                    taskType: taskType,
-                    taskVersion: taskVersion,
+            this.currentlyLoading = {
+                type,
+                version,
+            };
+
+            this.load(payload).then((plugin) => {
+                this.editorPlugin = {
+                    cls: type,
+                    version,
+                    ...plugin,
                 };
 
-                this.load(payload).then((plugin) => {
-                    this.editorPlugin = {
-                        cls: taskType,
-                        version: taskVersion,
-                        ...plugin,
-                    };
-                });
-            } else {
-                this.editorPlugin = undefined;
-            }
+                this.forceIncludeProperties = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version");
+            });
         }
     },
 

@@ -14,7 +14,7 @@
         </el-form-item>
     </el-form>
 
-    <div @click="if(isPlugin)pluginsStore.updateDocumentation({task: selectedTaskType});">
+    <div @click="isPlugin && pluginsStore.updateDocumentation(taskObject as Parameters<typeof pluginsStore.updateDocumentation>[0])">
         <TaskObject
             v-loading="isLoading"
             v-if="selectedTaskType && schema"
@@ -140,7 +140,7 @@
     // when tab is opened, load the documentation
     onActivated(() => {
         if(selectedTaskType.value && parentPath !== "inputs"){
-            pluginsStore.updateDocumentation({task: selectedTaskType.value});
+            pluginsStore.updateDocumentation(taskObject.value as Parameters<typeof pluginsStore.updateDocumentation>[0]);
         }
     });
 
@@ -181,7 +181,7 @@
         if (task) {
             load();
             if(isPlugin.value){
-                pluginsStore.updateDocumentation({task});
+                pluginsStore.updateDocumentation(taskObject.value as Parameters<typeof pluginsStore.updateDocumentation>[0]);
             }
         }
     }, {immediate: true});

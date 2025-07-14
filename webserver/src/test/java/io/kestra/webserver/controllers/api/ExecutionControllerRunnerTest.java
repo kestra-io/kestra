@@ -1364,7 +1364,7 @@ class ExecutionControllerRunnerTest {
         "flows/valids/minimal.yaml"})
     void shouldUnqueueAQueuedFlowToCancelledState() throws QueueException, TimeoutException {
         // run a first flow so the second is queued
-        runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-queue");
+        runnerUtils.runOneUntilRunning(TENANT_ID, "io.kestra.tests", "flow-concurrency-queue");
         Execution result1 = runUntilQueued("io.kestra.tests", "flow-concurrency-queue");
 
         var cancelResponse = client.toBlocking().exchange(

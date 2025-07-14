@@ -1372,7 +1372,7 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(cancelResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
-        Optional<Execution> cancelledExecution = executionRepositoryInterface.findById(null, result1.getId());
+        Optional<Execution> cancelledExecution = executionRepositoryInterface.findById(TENANT_ID, result1.getId());
         assertThat(cancelledExecution.isPresent()).isTrue();
         assertThat(cancelledExecution.get().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
     }

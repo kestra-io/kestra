@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;

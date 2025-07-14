@@ -2347,6 +2347,7 @@ public class ExecutionController {
 
                     // end the flux is all nodes are already terminated
                     if (dependencies.isEmpty()) {
+                        emitter.next(Event.of(ExecutionStatusEvent.of(Execution.builder().id(executionId).build())).id("end-all"));
                         emitter.complete();
                         return;
                     }

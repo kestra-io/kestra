@@ -1848,7 +1848,7 @@ class ExecutionControllerRunnerTest {
         assertThat(results).isNotNull();
         assertThat(results.size()).isGreaterThan(1);
         assertThat(results.getFirst().getId()).isEqualTo("start");
-        assertThat(results.getLast().getId()).isEqualTo("end");
+        assertThat(results.getLast().getId()).isEqualTo("end-all");
         // check that we have 3 end events and 3 result in SUCCESS
         assertThat(results.stream().filter(event -> event.getId().equals("end"))).hasSize(3);
         assertThat(results.stream().filter(event -> event.getData().state() != null && event.getData().state().getCurrent().equals(State.Type.SUCCESS))).hasSize(3);
@@ -1862,7 +1862,7 @@ class ExecutionControllerRunnerTest {
         assertThat(results).isNotNull();
         assertThat(results.size()).isGreaterThan(1);
         assertThat(results.getFirst().getId()).isEqualTo("start");
-        assertThat(results.getLast().getId()).isEqualTo("end");
+        assertThat(results.getLast().getId()).isEqualTo("end-all");
         // check that we have 3 end events and 3 results in SUCCESS
         assertThat(results.stream().filter(event -> event.getId().equals("end"))).hasSize(3);
         assertThat(results.stream().filter(event -> event.getData().state() != null && event.getData().state().getCurrent().equals(State.Type.SUCCESS))).hasSize(3);
@@ -1875,10 +1875,9 @@ class ExecutionControllerRunnerTest {
 
         assertThat(results).isNotNull();
         assertThat(results.size()).isGreaterThan(1);
-        assertThat(results.getLast().getData().state().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(results.getFirst().getId()).isEqualTo("start");
-        assertThat(results.getLast().getId()).isEqualTo("end");
-        // check that we have 3 end events and 3 results in SUCCESS
+        assertThat(results.getLast().getId()).isEqualTo("end-all");
+        // check that we have 2 end events and 2 results in SUCCESS
         assertThat(results.stream().filter(event -> event.getId().equals("end"))).hasSize(2);
         assertThat(results.stream().filter(event -> event.getData().state() != null && event.getData().state().getCurrent().equals(State.Type.SUCCESS))).hasSize(2);
 

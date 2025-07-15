@@ -1,10 +1,10 @@
 import axios from "axios";
+import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
 import Utils from "../utils/utils"
 
-export default {
-    namespaced: true,
-    state: {
+export default defineStore("executions", {
+    state: () => ({
         executions: undefined,
         execution: undefined,
         taskRun: undefined,
@@ -21,9 +21,9 @@ export default {
         flowGraph: undefined,
         namespaces: [],
         flowsExecutable: []
-    },
+    }),
     actions: {
-        restartExecution(_, options) {
+        restartExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/${options.executionId}/restart`,
                 null,
@@ -33,40 +33,40 @@ export default {
                     }
                 })
         },
-        bulkRestartExecution(_, options) {
+        bulkRestartExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/restart/by-ids`,
                 options.executionsId
             )
         },
-        queryRestartExecution(_, options) {
+        queryRestartExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/restart/by-query`,
                 {},
                 {params: options}
             )
         },
-        bulkResumeExecution(_, options) {
+        bulkResumeExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/resume/by-ids`,
                 options.executionsId
             )
         },
-        queryResumeExecution(_, options) {
+        queryResumeExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/resume/by-query`,
                 {},
                 {params: options}
             )
         },
-        bulkReplayExecution(_, options) {
+        bulkReplayExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/replay/by-ids`,
                 options.executionsId,
                 {params: options}
             )
         },
-        bulkChangeExecutionStatus(_, options) {
+        bulkChangeExecutionStatus(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/change-status/by-ids`,
                 options.executionsId,
@@ -77,21 +77,21 @@ export default {
                 }
             )
         },
-        queryReplayExecution(_, options) {
+        queryReplayExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/replay/by-query`,
                 {},
                 {params: options}
             )
         },
-        queryChangeExecutionStatus(_, options) {
+        queryChangeExecutionStatus(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/change-status/by-query`,
                 {},
                 {params: options}
             )
         },
-        replayExecution(_, options) {
+        replayExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/${options.executionId}/replay`,
                 null,
@@ -102,7 +102,7 @@ export default {
                     }
                 })
         },
-        changeExecutionStatus(_, options) {
+        changeExecutionStatus(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/${options.executionId}/change-status`,
                 null,
@@ -112,7 +112,7 @@ export default {
                     }
                 })
         },
-        changeStatus(_, options) {
+        changeStatus(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/${options.executionId}/state`,
                 {
@@ -120,16 +120,16 @@ export default {
                     state: options.state,
                 })
         },
-        kill(_, options) {
+        kill(options) {
             return this.$http.delete(`${apiUrl(this)}/executions/${options.id}/kill?isOnKillCascade=${options.isOnKillCascade}`);
         },
-        bulkKill(_, options) {
+        bulkKill(options) {
             return this.$http.delete(`${apiUrl(this)}/executions/kill/by-ids`, {data: options.executionsId});
         },
-        queryKill(_, options) {
+        queryKill(options) {
             return this.$http.delete(`${apiUrl(this)}/executions/kill/by-query`, {params: options});
         },
-        resume(_, options) {
+        resume(options) {
             return this.$http.post(`${apiUrl(this)}/executions/${options.id}/resume`, Utils.toFormData(options.formData), {
                 timeout: 60 * 60 * 1000,
                 headers: {
@@ -137,7 +137,7 @@ export default {
                 }
             });
         },
-        validateResume(_, options) {
+        validateResume(options) {
             return this.$http.post(`${apiUrl(this)}/executions/${options.id}/resume/validate`, Utils.toFormData(options.formData), {
                 timeout: 60 * 60 * 1000,
                 headers: {
@@ -145,40 +145,40 @@ export default {
                 }
             });
         },
-        pause(_, options) {
+        pause(options) {
             return this.$http.post(`${apiUrl(this)}/executions/${options.id}/pause`);
         },
-        bulkPauseExecution(_, options) {
+        bulkPauseExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/pause/by-ids`,
                 options.executionsId
             )
         },
-        queryPauseExecution(_, options) {
+        queryPauseExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/pause/by-query`,
                 {},
                 {params: options}
             )
         },
-        loadExecution({commit}, options) {
+        loadExecution(options) {
             return this.$http.get(`${apiUrl(this)}/executions/${options.id}`).then(response => {
-                commit("setExecution", response.data)
+                this.execution = response.data
 
                 return response.data;
             })
         },
-        findExecutions({commit}, options) {
+        findExecutions(options) {
             return this.$http.get(`${apiUrl(this)}/executions/search`, {params: options}).then(response => {
                 if (options.commit !== false) {
-                    commit("setExecutions", response.data.results)
-                    commit("setTotal", response.data.total)
+                    this.executions = response.data.results
+                    this.total = response.data.total
                 }
 
                 return response.data
             })
         },
-        validateExecution(_, options) {
+        validateExecution(options) {
             return this.$http.post(`${apiUrl(this)}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
                 timeout: 60 * 60 * 1000,
                 headers: {
@@ -190,7 +190,7 @@ export default {
                 }
             })
         },
-        triggerExecution(_, options) {
+        triggerExecution(options) {
             return this.$http.post(`${apiUrl(this)}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
                 timeout: 60 * 60 * 1000,
                 headers: {
@@ -202,66 +202,66 @@ export default {
                 }
             })
         },
-        deleteExecution({commit}, options) {
+        deleteExecution(options) {
             const {id, deleteLogs, deleteMetrics, deleteStorage} = options
             const qs = Object.entries({deleteLogs, deleteMetrics, deleteStorage}).map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join("&");
 
             return this.$http.delete(`${apiUrl(this)}/executions/${id}?${qs}`).then(() => {
-                commit("setExecution", null)
+                this.execution = null
             })
         },
-        bulkDeleteExecution({_commit}, options) {
+        bulkDeleteExecution(options) {
             return this.$http.delete(`${apiUrl(this)}/executions/by-ids`, {data: options.executionsId, params: {...options}})
         },
-        queryDeleteExecution({_commit}, options) {
+        queryDeleteExecution(options) {
             return this.$http.delete(`${apiUrl(this)}/executions/by-query`, {params: options})
         },
-        followExecution(_, options) {
+        followExecution(options) {
             return new EventSource(`${apiUrl(this)}/executions/${options.id}/follow`, {withCredentials: true});
         },
-        followLogs(_, options) {
+        followLogs(options) {
             return new EventSource(`${apiUrl(this)}/logs/${options.id}/follow`, {withCredentials: true});
         },
-        loadLogs({commit}, options) {
+        loadLogs( options) {
             return this.$http.get(`${apiUrl(this)}/logs/${options.executionId}`, {
                 params: options.params
             }).then(response => {
                 if (options.store === false) {
                     return response.data
                 }
-                commit("setLogs", response.data)
+                this.logs = response.data
 
                 return response.data
             });
         },
-        loadMetrics({commit}, options) {
+        loadMetrics( options) {
             return this.$http.get(`${apiUrl(this)}/metrics/${options.executionId}`, {
                 params: options.params
             }).then(response => {
                 if (options.store === false) {
                     return response.data
                 }
-                commit("setMetrics", response.data.results)
-                commit("setMetricsTotal", response.data.total)
+                this.metrics = response.data.results
+                this.total =  response.data.total
 
                 return response.data
             });
         },
-        downloadLogs(_, options) {
+        downloadLogs(options) {
             return this.$http.get(`${apiUrl(this)}/logs/${options.executionId}/download`, {
                 params: options.params
             }).then(response => {
                 return response.data
             })
         },
-        deleteLogs(_, options) {
+        deleteLogs(options) {
             return this.$http.delete(`${apiUrl(this)}/logs/${options.executionId}`, {
                 params: options.params
             }).then(response => {
                 return response.data
             })
         },
-        filePreview({commit}, options) {
+        filePreview(options) {
             return this.$http.get(`${apiUrl(this)}/executions/${options.executionId}/file/preview`, {
                 params: options
             }).then(response => {
@@ -277,11 +277,11 @@ export default {
                     }
                 }
 
-                commit("setFilePreview", data);
+                this.filePreview = data;
                 return data;
             })
         },
-        setLabels(_, options) {
+        setLabels(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/${options.executionId}/labels`,
                 options.labels,
@@ -291,140 +291,100 @@ export default {
                     }
                 })
         },
-        querySetLabels({_commit}, options) {
+        querySetLabels(options) {
             return this.$http.post(`${apiUrl(this)}/executions/labels/by-query`, options.data, {
                 params: options.params})
         },
-        bulkSetLabels({_commit}, options) {
+        bulkSetLabels(options) {
             return this.$http.post(`${apiUrl(this)}/executions/labels/by-ids`,  options)
         },
-        unqueue(_, options) {
+        unqueue(options) {
             return this.$http.post(`${apiUrl(this)}/executions/${options.id}/unqueue?state=${options.state}`);
         },
-        bulkUnqueueExecution(_, options) {
+        bulkUnqueueExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/unqueue/by-ids?state=${options.newStatus}`,
                 options.executionsId
             )
         },
-        queryUnqueueExecution(_, options) {
+        queryUnqueueExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/unqueue/by-query?state=${options.newStatus}`,
                 {},
                 {params: options}
             )
         },
-        forceRun(_, options) {
+        forceRun(options) {
             return this.$http.post(`${apiUrl(this)}/executions/${options.id}/force-run`);
         },
-        bulkForceRunExecution(_, options) {
+        bulkForceRunExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/force-run/by-ids`,
                 options.executionsId
             )
         },
-        queryForceRunExecution(_, options) {
+        queryForceRunExecution(options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/force-run/by-query`,
                 {},
                 {params: options}
             )
         },
-        loadFlowForExecution({commit}, options) {
+        loadFlowForExecution(options) {
             const revision = options.revision ? `?revision=${options.revision}` : "";
             return this.$http.get(`${apiUrl(this)}/executions/flows/${options.namespace}/${options.flowId}${revision}`)
                 .then(response => {
-                    commit("setFlow", response.data)
+                    this.flow = response.data
                     return response.data;
                 });
         },
-        loadFlowForExecutionByExecutionId({commit}, options) {
+        loadFlowForExecutionByExecutionId(options) {
             return this.$http.get(`${apiUrl(this)}/executions/${options.id}/flow`)
                 .then(response => {
-                    commit("setFlow", response.data)
+                    this.flow = response.data
                     return response.data;
                 });
         },
-        loadGraph({commit}, options) {
+        loadGraph(options) {
             const params = options.params ? options.params : {};
             return axios.get(`${apiUrl(this)}/executions/${options.id}/graph`, {params, withCredentials: true, paramsSerializer: {indexes: null}})
                 .then(response => {
-                    commit("setFlowGraph", response.data)
+                    this.flowGraph = response.data
                 })
         },
-        loadNamespaces({commit}) {
+        loadNamespaces() {
             return this.$http.get(`${apiUrl(this)}/executions/namespaces`)
                 .then(response => {
-                    commit("setNamespaces", response.data)
+                    this.namespaces = response.data
                 })
         },
-        loadFlowsExecutable({commit}, options) {
+        loadFlowsExecutable(options) {
             return this.$http.get(`${apiUrl(this)}/executions/namespaces/${options.namespace}/flows`)
                 .then(response => {
-                    commit("setFlowsExecutable", response.data)
+                    this.flowsExecutable = response.data
                 })
         },
-        loadLatestExecutions({_}, options) {
+        loadLatestExecutions(options) {
             return this.$http.post(`${apiUrl(this)}/executions/latest`, options.flowFilters).then(response => {
                 return response.data
             })
-        }
+        },
+        // mutations
+        addSubflowExecution(params) {
+            this.subflowsExecutions[params.subflow] = params.execution
+        },
+        removeSubflowExecution(subflow) {
+            delete this.subflowsExecutions[subflow]
+        },
+        resetLogs() {
+            this.logs = {results:[], total:0}
+        },
+        appendLogs(logs) {
+            this.logs.results = this.logs.results.concat(logs.results)
+        },
+        appendFollowedLogs(logs) {
+            this.logs.results.push(logs)
+            this.logs.total = this.logs.results.length
+        },
     },
-    mutations: {
-        setExecutions(state, executions) {
-            state.executions = executions
-        },
-        setExecution(state, execution) {
-            state.execution = execution
-        },
-        addSubflowExecution(state, params) {
-            state.subflowsExecutions[params.subflow] = params.execution
-        },
-        removeSubflowExecution(state, subflow) {
-            delete state.subflowsExecutions[subflow]
-        },
-        setSubflowExecutions(state, subflowsExecution) {
-            state.subflowsExecution = subflowsExecution
-        },
-        setTaskRun(state, taskRun) {
-            state.taskRun = taskRun
-        },
-        setTotal(state, total) {
-            state.total = total
-        },
-        setLogs(state, logs) {
-            state.logs = logs
-        },
-        resetLogs(state) {
-            state.logs = {results:[], total:0}
-        },
-        appendLogs(state, logs) {
-            state.logs.results = state.logs.results.concat(logs.results)
-        },
-        appendFollowedLogs(state, logs) {
-            state.logs.results.push(logs)
-            state.logs.total = state.logs.results.length
-        },
-        setMetrics(state, metrics) {
-            state.metrics = metrics
-        },
-        setMetricsTotal(state, metrics) {
-            state.metricsTotal = metrics
-        },
-        setFilePreview(state, filePreview) {
-            state.filePreview = filePreview
-        },
-        setFlow(state, flow) {
-            state.flow = flow
-        },
-        setFlowGraph(state, flowGraph) {
-            state.flowGraph = flowGraph
-        },
-        setNamespaces(state, namespaces) {
-            state.namespaces = namespaces
-        },
-        setFlowsExecutable(state, flowsExecutable) {
-            state.flowsExecutable = flowsExecutable
-        }
-    }
-}
+})

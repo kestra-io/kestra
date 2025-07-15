@@ -438,10 +438,9 @@
 
                 if (!files.length) {
                     return;
-                }        
+                }
 
                 this.inputsValues[input.id] = files[0];
-
                 setTimeout(() => this.onChange(input), 300);
             },
             onYamlChange(input, e) {

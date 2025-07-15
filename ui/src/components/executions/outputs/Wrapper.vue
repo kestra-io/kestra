@@ -414,7 +414,7 @@
             ? value
             : `${value.substring(0, 16)}...`;
     const isFile = (value) =>
-        typeof value === "string" && value.startsWith("kestra:///");
+        typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
     const displayVarValue = () =>
         isFile(selectedValue.value) ||
         selectedValue.value !== debugExpression.value;

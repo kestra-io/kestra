@@ -157,10 +157,10 @@
                         type="file"
                         @change="onFileChange(input, $event)"
                         autocomplete="off"
-                        :style="{display: typeof(inputsValues[input.id]) === 'string' && inputsValues[input.id].startsWith('kestra:///') ? 'none': ''}"
+                        :style="{display: isFile(inputsValues[input.id]) ? 'none': ''}"
                     >
                     <label
-                        v-if="typeof(inputsValues[input.id]) === 'string' && inputsValues[input.id].startsWith('kestra:///')"
+                        v-if="isFile(inputsValues[input.id])"
                         :for="input.id+'-file'"
                     >Kestra Internal Storage File</label>
                 </div>
@@ -577,6 +577,9 @@
                 [items[index], items[targetIndex]] = [items[targetIndex], items[index]];
 
                 this.updateArrayValue(input);
+            },
+            isFile(data) {
+                return typeof data === "string" && (data.startsWith("kestra:///") || data.startsWith("file://") || data.startsWith("nsfile://"));
             }
         },
         watch: {

@@ -21,8 +21,11 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.InputsTest;
+import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -31,6 +34,7 @@ import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpRequest;
@@ -53,9 +57,13 @@ import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -66,6 +74,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static io.micronaut.http.HttpRequest.GET;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -78,6 +87,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @KestraTest(startRunner = true)
+@Property(name = LocalPath.ALLOWED_PATHS_CONFIG, value = "/tmp")
 class ExecutionControllerRunnerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
     public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
@@ -112,6 +122,9 @@ class ExecutionControllerRunnerTest {
 
     @Inject
     protected RunnerUtils runnerUtils;
+
+    @Inject
+    private StorageInterface storageInterface;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TENANT_ID = "main";
@@ -569,7 +582,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/inputs.yaml"})
-    void downloadDownloadFileFromExecution() throws TimeoutException, QueueException{
+    void downloadInternalStorageFileFromExecution() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
         assertThat(execution.getTaskRunList()).hasSize(14);
 
@@ -607,7 +620,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/inputs.yaml"})
-    void downloadFileFromExecutionPreview() throws TimeoutException, QueueException{
+    void previewInternalStorageFileFromExecution() throws TimeoutException, QueueException{
         Execution defaultExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
         assertThat(defaultExecution.getTaskRunList()).hasSize(14);
 
@@ -653,6 +666,88 @@ class ExecutionControllerRunnerTest {
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(e.getMessage()).contains("using encoding 'foo'");
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
+    void previewLocalFileFromExecution() throws TimeoutException, QueueException, IOException {
+        HashMap<String, Object> newInputs = new HashMap<>(InputsTest.inputs);
+        URI file = createFile();
+        newInputs.put("file", file);
+
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "inputs",
+            null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, newInputs)
+        );
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // get the metadata of the file
+        FileMetas metas = client.retrieve(
+            GET("/api/v1/main/executions/" + execution.getId() + "/file/metas?path=" + file),
+            FileMetas.class
+        ).block();
+        assertThat(metas).isNotNull();
+        assertThat(metas.getSize()).isEqualTo(11L);
+
+        // preview the file
+        Map<String, Object> preview = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + execution.getId() + "/file/preview?path=" + file),
+            Map.class
+        );
+        assertThat(preview).isNotNull();
+        assertThat(preview).containsEntry("extension", "txt");
+        assertThat(preview).containsEntry("content", "Hello World");
+
+        // download the file
+        String content = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + execution.getId() + "/file?path=" + file),
+            String.class
+        );
+        assertThat(content).isEqualTo("Hello World");
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
+    void previewNsFileFromExecution() throws TimeoutException, QueueException, IOException {
+        HashMap<String, Object> newInputs = new HashMap<>(InputsTest.inputs);
+        URI file = createNsFile(false);
+        newInputs.put("file", file);
+
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "inputs",
+            null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, newInputs)
+        );
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // get the metadata of the file
+        FileMetas metas = client.retrieve(
+            GET("/api/v1/main/executions/" + execution.getId() + "/file/metas?path=" + file),
+            FileMetas.class
+        ).block();
+        assertThat(metas).isNotNull();
+        assertThat(metas.getSize()).isEqualTo(11L);
+
+        // preview the file
+        Map<String, Object> preview = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + execution.getId() + "/file/preview?path=" + file),
+            Map.class
+        );
+        assertThat(preview).isNotNull();
+        assertThat(preview).containsEntry("extension", "txt");
+        assertThat(preview).containsEntry("content", "Hello World");
+
+        // download the file
+        String content = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + execution.getId() + "/file?path=" + file),
+            String.class
+        );
+        assertThat(content).isEqualTo("Hello World");
     }
 
     @SuppressWarnings("unchecked")
@@ -1726,6 +1821,20 @@ class ExecutionControllerRunnerTest {
         List<Label> systemLabels = getExecutionSystemLabels(allLabels);
         assertThat(customLabels).as("Custom label count").hasSize(expectedCustomCount);
         assertThat("System label count", systemLabels, hasSize(expectedSystemMatcher));
+    }
+
+    private URI createFile() throws IOException {
+        File tempFile = File.createTempFile("file", ".txt");
+        Files.write(tempFile.toPath(), "Hello World".getBytes());
+        return tempFile.toPath().toUri();
+    }
+
+    private URI createNsFile(boolean nsInAuthority) throws IOException {
+        String namespace = "io.kestra.tests";
+        String filePath = "file.txt";
+        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 
     private Execution awaitExecution(String executionId) {

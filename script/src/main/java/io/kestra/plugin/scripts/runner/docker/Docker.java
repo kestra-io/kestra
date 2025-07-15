@@ -862,7 +862,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     .delayFactor(2.0)
                     .interval(Duration.ofSeconds(5))
                     .maxInterval(Duration.ofSeconds(120))
-                    .maxAttempt(5)
+                    .maxAttempts(5)
                     .build()
             ).run(
                 (bool, throwable) -> throwable instanceof InternalServerErrorException ||

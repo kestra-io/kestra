@@ -5,25 +5,24 @@
 </template>
 
 <script>
-    import {mapGetters} from "vuex";
     import {mapStores} from "pinia";
     import {cssVariable} from "@kestra-io/ui-libs";
     import {useLayoutStore} from "../../stores/layout";
+    import {useMiscStore} from "../../stores/misc";
 
     export default {
         computed: {
-            ...mapStores(useLayoutStore),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useLayoutStore, useMiscStore),
             name() {
-                return this.layoutStore.envName || this.configs?.environment?.name;
+                return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
             },
             color() {
                 if (this.layoutStore.envColor) {
                     return this.layoutStore.envColor;
                 }
 
-                if (this.configs?.environment?.color) {
-                    return this.configs.environment.color;
+                if (this.miscStore.configs?.environment?.color) {
+                    return this.miscStore.configs.environment.color;
                 }
 
                 return cssVariable("--bs-info");

@@ -6,14 +6,17 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 @EqualsAndHashCode
 @ToString
 public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
+    private static final Map<PluginDocIdentifier, ClassPluginDocumentation<?>> CACHE = new ConcurrentHashMap<>();
     private String icon;
     private String group;
     protected String docLicense;
@@ -78,8 +81,12 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
         }
     }
 
-    public static <T> ClassPluginDocumentation<T> of(JsonSchemaGenerator jsonSchemaGenerator, PluginClassAndMetadata<T> plugin, boolean allProperties) {
-        return new ClassPluginDocumentation<>(jsonSchemaGenerator, plugin, allProperties);
+    public static <T> ClassPluginDocumentation<T> of(JsonSchemaGenerator jsonSchemaGenerator, PluginClassAndMetadata<T> plugin, String version, boolean allProperties) {
+        //noinspection unchecked
+        return (ClassPluginDocumentation<T>) CACHE.computeIfAbsent(
+            new PluginDocIdentifier(plugin.type(), version, allProperties),
+            (key) -> new ClassPluginDocumentation<>(jsonSchemaGenerator, plugin, allProperties)
+        );
     }
 
     @AllArgsConstructor
@@ -89,6 +96,12 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
         String type;
         String unit;
         String description;
+    }
+
+    private record PluginDocIdentifier(String pluginClassAndVersion, boolean allProperties) {
+        public PluginDocIdentifier(Class<?> pluginClass, String version, boolean allProperties) {
+            this(pluginClass.getName() + ":" + version, allProperties);
+        }
     }
 }
 

@@ -52,7 +52,7 @@
                 <Suspense v-loading="isLoading">
                     <schema-to-html
                         class="plugin-schema"
-                        :dark-mode="theme === 'dark'"
+                        :dark-mode="miscStore.theme === 'dark'"
                         :schema="pluginsStore.plugin.schema"
                         :props-initially-expanded="true"
                         :plugin-type="pluginType"
@@ -80,16 +80,15 @@
 
 <script>
     import RouteContext from "../../mixins/routeContext";
-    import {mapGetters} from "vuex";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {mapStores} from "pinia";
     import {usePluginsStore} from "../../stores/plugins";
+    import {useMiscStore} from "../../stores/misc";
 
     export default {
         mixins: [RouteContext],
         computed: {
-            ...mapGetters("misc", ["theme"]),
-            ...mapStores(usePluginsStore),
+            ...mapStores(usePluginsStore, useMiscStore),
             routeInfo() {
                 return {
                     title: this.pluginType ?? this.$t("plugins.names"),

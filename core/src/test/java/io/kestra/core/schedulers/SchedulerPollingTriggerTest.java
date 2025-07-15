@@ -4,7 +4,9 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.tasks.test.FailingPollingTrigger;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.condition.Expression;
@@ -185,7 +187,47 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
         }
     }
 
-    private FlowWithSource createPollingTriggerFlow(PollingTrigger pollingTrigger) {
+    @Test
+    void pollingTriggerFailOnTriggerError() throws Exception {
+        // mock flow listener
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        FailingPollingTrigger pollingTrigger = FailingPollingTrigger.builder()
+            .id("failing")
+            .type(FailingPollingTrigger.class.getName())
+            .failOnTriggerError(true)
+            .build();
+        Flow flow = createPollingTriggerFlow(pollingTrigger);
+        doReturn(List.of(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        try (
+            AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
+            Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)
+        ) {
+            AtomicReference<Execution> last = new AtomicReference<>();
+
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
+                if (execution.getLeft().getFlowId().equals(flow.getId())) {
+                    last.set(execution.getLeft());
+                    queueCount.countDown();
+                }
+            });
+
+            worker.run();
+            scheduler.run();
+
+            assertTrue(queueCount.await(10, TimeUnit.SECONDS));
+            receive.blockLast();
+
+            assertThat(last.get()).isNotNull();
+            assertTrue(last.get().getState().isFailed());
+        }
+    }
+
+    private FlowWithSource createPollingTriggerFlow(AbstractTrigger pollingTrigger) {
         return createFlow(Collections.singletonList(pollingTrigger));
     }
 

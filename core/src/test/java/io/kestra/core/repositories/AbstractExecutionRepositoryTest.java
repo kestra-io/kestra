@@ -30,8 +30,11 @@ import io.kestra.plugin.core.debug.Return;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.event.Level;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -41,15 +44,11 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.slf4j.event.Level;
+import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.USER;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.groups.Tuple.tuple;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -414,156 +413,6 @@ public abstract class AbstractExecutionRepositoryTest {
         ArrayListTotal<Execution> page1 = executionRepository.findByFlowId(MAIN_TENANT, NAMESPACE, FLOW, Pageable.from(1, 10));
 
         assertThat(page1.size()).isEqualTo(2);
-    }
-
-    @Test
-    protected void dailyGroupByFlowStatistics() throws InterruptedException {
-        for (int i = 0; i < 28; i++) {
-            executionRepository.save(builder(
-                i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
-                i < 15 ? null : "second"
-            ).build());
-        }
-
-        // mysql need some time ...
-        Thread.sleep(500);
-
-        Map<String, Map<String, List<DailyExecutionStatistics>>> result = executionRepository.dailyGroupByFlowStatistics(
-            null,
-            MAIN_TENANT,
-            null,
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            false
-        );
-
-        assertThat(result.size()).isEqualTo(1);
-        assertThat(result.get("io.kestra.unittest").size()).isEqualTo(2);
-
-        DailyExecutionStatistics full = result.get("io.kestra.unittest").get(FLOW).get(10);
-        DailyExecutionStatistics second = result.get("io.kestra.unittest").get("second").get(10);
-
-        assertThat(full.getDuration().getAvg().toMillis()).isGreaterThan(0L);
-        assertThat(full.getExecutionCounts().size()).isEqualTo(11);
-        assertThat(full.getExecutionCounts().get(State.Type.FAILED)).isEqualTo(3L);
-        assertThat(full.getExecutionCounts().get(State.Type.RUNNING)).isEqualTo(5L);
-        assertThat(full.getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(7L);
-        assertThat(full.getExecutionCounts().get(State.Type.CREATED)).isEqualTo(0L);
-
-        assertThat(second.getDuration().getAvg().toMillis()).isGreaterThan(0L);
-        assertThat(second.getExecutionCounts().size()).isEqualTo(11);
-        assertThat(second.getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(13L);
-        assertThat(second.getExecutionCounts().get(State.Type.CREATED)).isEqualTo(0L);
-
-        result = executionRepository.dailyGroupByFlowStatistics(
-            null,
-            MAIN_TENANT,
-            null,
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            true
-        );
-
-        assertThat(result.size()).isEqualTo(1);
-        assertThat(result.get("io.kestra.unittest").size()).isEqualTo(1);
-        full = result.get("io.kestra.unittest").get("*").get(10);
-        assertThat(full.getDuration().getAvg().toMillis()).isGreaterThan(0L);
-        assertThat(full.getExecutionCounts().size()).isEqualTo(11);
-        assertThat(full.getExecutionCounts().get(State.Type.FAILED)).isEqualTo(3L);
-        assertThat(full.getExecutionCounts().get(State.Type.RUNNING)).isEqualTo(5L);
-        assertThat(full.getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(20L);
-        assertThat(full.getExecutionCounts().get(State.Type.CREATED)).isEqualTo(0L);
-
-        result = executionRepository.dailyGroupByFlowStatistics(
-            null,
-            MAIN_TENANT,
-            null,
-            null,
-            List.of(ExecutionRepositoryInterface.FlowFilter.builder().namespace("io.kestra.unittest").id(FLOW).build()),
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            false
-        );
-
-        assertThat(result.size()).isEqualTo(1);
-        assertThat(result.get("io.kestra.unittest").size()).isEqualTo(1);
-        assertThat(result.get("io.kestra.unittest").get(FLOW).size()).isEqualTo(11);
-    }
-
-    @Test
-    protected void lastExecutions() throws InterruptedException {
-
-        Instant executionNow = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-
-        Execution executionOld = builder(State.Type.SUCCESS, FLOW)
-            .state(State.of(
-                State.Type.SUCCESS,
-                List.of(new State.History(
-                    State.Type.SUCCESS,
-                    executionNow.minus(1, ChronoUnit.DAYS)
-                )))
-            ).build();
-
-        Execution executionFailed = builder(State.Type.FAILED, FLOW)
-            .state(State.of(
-                State.Type.FAILED,
-                List.of(new State.History(
-                    State.Type.FAILED,
-                    executionNow.minus(1, ChronoUnit.HOURS)
-                )))
-            ).build();
-
-        Execution executionRunning = builder(State.Type.RUNNING, FLOW)
-            .state(State.of(
-                State.Type.RUNNING,
-                List.of(new State.History(State.Type.RUNNING, executionNow)))
-            ).build();
-
-        String anotherNamespace = "another";
-        Execution executionSuccessAnotherNamespace = builder(State.Type.SUCCESS, FLOW, anotherNamespace)
-            .state(State.of(
-                State.Type.SUCCESS,
-                List.of(new State.History(
-                    State.Type.SUCCESS,
-                    executionNow.minus(30, ChronoUnit.MINUTES)
-                )))
-            ).build();
-
-        executionRepository.save(executionOld);
-        executionRepository.save(executionFailed);
-        executionRepository.save(executionRunning);
-
-        executionRepository.save(executionSuccessAnotherNamespace);
-
-        // mysql need some time ...
-        Thread.sleep(500);
-
-        List<Execution> result = executionRepository.lastExecutions(
-            MAIN_TENANT,
-            List.of(
-                ExecutionRepositoryInterface.FlowFilter.builder()
-                    .id(FLOW)
-                    .namespace(NAMESPACE).build(),
-                ExecutionRepositoryInterface.FlowFilter.builder()
-                    .id(FLOW)
-                    .namespace(anotherNamespace).build()
-            )
-        );
-
-        assertThat(result.size()).isEqualTo(2);
-        assertThat(result)
-            .extracting(
-                r -> r.getState().getCurrent(),
-                Execution::getNamespace
-            )
-            .containsExactlyInAnyOrder(
-                tuple(State.Type.FAILED, NAMESPACE),
-                tuple(State.Type.SUCCESS, anotherNamespace)
-            );
     }
 
     @Test

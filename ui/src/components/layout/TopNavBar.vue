@@ -44,10 +44,11 @@
 </template>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
+    import {mapGetters} from "vuex";
     import {mapStores} from "pinia";
     import {useLogsStore} from "../../stores/logs";
     import {useBookmarksStore} from "../../stores/bookmarks";
+    import {useCoreStore} from "../../stores/core";
     import Impersonating from "override/components/auth/Impersonating.vue";
     import GlobalSearch from "./GlobalSearch.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
@@ -83,13 +84,11 @@
             },
         },
         computed: {
-            ...mapState("core", ["tutorialFlows"]),
-            ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
-            ...mapStores(useLogsStore, useBookmarksStore),
+            ...mapStores(useLogsStore, useBookmarksStore, useCoreStore),
             tourEnabled(){
                 // Temporary solution to not showing the tour menu item for EE
-                return this.tutorialFlows?.length && !Object.keys(this.user).length
+                return this.coreStore.tutorialFlows?.length && !Object.keys(this.user).length
             },
             shouldDisplayDeleteButton() {
                 return this.$route.name === "flows/update" && this.$route.params?.tab === "logs"
@@ -118,7 +117,7 @@
         methods: {
             restartGuidedTour() {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
+                this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, tourStarted: true};
 
                 this.$tours["guidedTour"]?.start();
             },

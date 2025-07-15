@@ -10,6 +10,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.*;
@@ -94,6 +95,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
     @Inject
     @Named(QueueFactoryInterface.TRIGGER_NAMED)
     private QueueInterface<Trigger> triggerQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    private QueueInterface<LogEntry> logQueue;
 
     @Inject
     @Named(QueueFactoryInterface.CLUSTER_EVENT_NAMED)
@@ -350,7 +355,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 } else if ("trigger".equals(type)) {
                     // try to deserialize the triggerContext to fail it
                     var triggerContext = MAPPER.treeToValue(json.get("triggerContext"), TriggerContext.class);
-                    var workerTriggerResult = WorkerTriggerResult.builder().triggerContext(triggerContext).success(false).execution(Optional.empty()).build();
+                    var workerTriggerResult = WorkerTriggerResult.builder().triggerContext(triggerContext).execution(Optional.empty()).build();
                     this.workerTriggerResultQueue.emit(workerTriggerResult);
                 }
             } catch (IOException | QueueException e) {
@@ -489,11 +494,23 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         logError(workerTrigger, e);
         try {
+            Execution execution = workerTrigger.getTrigger().isFailOnTriggerError() ? TriggerService.generateExecution(workerTrigger.getTrigger(), workerTrigger.getConditionContext(), workerTrigger.getTriggerContext(), (Output) null)
+                .withState(FAILED) : null;
+            if (execution != null) {
+                RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution))
+                    .forEach(log -> {
+                        try {
+                            logQueue.emitAsync(log);
+                        } catch (QueueException ex) {
+                            // fail silently
+                        }
+                    });
+            }
             this.workerTriggerResultQueue.emit(
                 WorkerTriggerResult.builder()
-                    .success(false)
                     .triggerContext(workerTrigger.getTriggerContext())
                     .trigger(workerTrigger.getTrigger())
+                    .execution(Optional.ofNullable(execution))
                     .build()
             );
         } catch (QueueException ex) {
@@ -530,7 +547,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
         try {
             this.workerTriggerResultQueue.emit(
                 WorkerTriggerResult.builder()
-                    .success(false)
                     .execution(Optional.of(execution))
                     .triggerContext(workerTrigger.getTriggerContext())
                     .trigger(workerTrigger.getTrigger())
@@ -641,7 +657,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 ));
         }
 
-        if (killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
+        if (! Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution()) && killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun().withState(KILLED));
             try {
                 this.workerTaskResultQueue.emit(workerTaskResult);
@@ -1050,17 +1066,15 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
     }
 
+    /**
+     * This method should only be used on tests.
+     * It shut down the worker without waiting for tasks to end,
+     * and without closing the queue, so tests can launch and shutdown a worker manually without closing the queue.
+     */
     @VisibleForTesting
     public void shutdown() {
         // initiate shutdown
         shutdown.compareAndSet(false, true);
-
-        try {
-            // close the WorkerJob queue to stop receiving new JobTask execution.
-            workerJobQueue.close();
-        } catch (IOException e) {
-            log.error("Failed to close the WorkerJobQueue");
-        }
 
         // close all queues and shutdown now
         this.receiveCancellations.forEach(Runnable::run);

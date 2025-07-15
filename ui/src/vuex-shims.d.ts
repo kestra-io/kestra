@@ -2,19 +2,13 @@ import type {Store} from "vuex";
 
 declare module "@vue/runtime-core" {
     interface State {
-        core:any
         flow:any
         template:any
         execution:any
         namespace:any
-        misc:any
         auth:any
         graph:any
-        taskrun:any
-        trigger:any
         editor:any
-        doc:any
-        dashboard:any
         code:any
     }
 

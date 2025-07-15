@@ -26,7 +26,7 @@ class MultiselectInputTest {
         MultiselectInput input = MultiselectInput
             .builder()
             .id("id")
-            .expression("{{ values }}")
+            .expression("{{ values }}\n")
             .build();
         // When
         Input<?> renderInput = RenderableInput.mayRenderInput(input, s -> {

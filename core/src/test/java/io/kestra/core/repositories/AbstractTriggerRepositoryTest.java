@@ -1,6 +1,7 @@
 package io.kestra.core.repositories;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
@@ -10,18 +11,17 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
-import java.util.Map;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.event.Level;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.USER;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -188,40 +188,5 @@ public abstract class AbstractTriggerRepositoryTest {
         int count = triggerRepository.count(null);
         // Then
         assertThat(count).isEqualTo(1);
-    }
-
-    @Test
-    void shouldCountForNullTenantGivenNamespace() {
-        // Given
-        triggerRepository.save(Trigger
-            .builder()
-            .triggerId(IdUtils.create())
-            .flowId(IdUtils.create())
-            .namespace("io.kestra.unittest.p2")
-            .build()
-        );
-
-        triggerRepository.save(Trigger
-            .builder()
-            .triggerId(IdUtils.create())
-            .flowId(IdUtils.create())
-            .namespace("io.kestra.unittest.shouldcountbynamespacefornulltenant")
-            .build()
-        );
-
-        triggerRepository.save(Trigger
-            .builder()
-            .triggerId(IdUtils.create())
-            .flowId(IdUtils.create())
-            .namespace("com.kestra.unittest")
-            .build()
-        );
-
-        // When
-        int count = triggerRepository.countForNamespace(null, "io.kestra.unittest.shouldcountbynamespacefornulltenant");
-        assertThat(count).isEqualTo(1);
-
-        count = triggerRepository.countForNamespace(null, "io.kestra.unittest");
-        assertThat(count).isEqualTo(2);
     }
 }

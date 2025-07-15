@@ -43,7 +43,7 @@ class KVStoreServiceTest {
     @Test
     void shouldGetKVStoreFromNonExistingNamespaceWithAKV() throws IOException {
         KVStore kvStore = new InternalKVStore(null, "system", storageInterface);
-        kvStore.put("key", new KVValueAndMetadata(new KVMetadata(Duration.ofHours(1)), "value"));
+        kvStore.put("key", new KVValueAndMetadata(new KVMetadata("myDescription", Duration.ofHours(1)), "value"));
         Assertions.assertNotNull(storeService.get(null, "system", null));
     }
 

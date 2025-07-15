@@ -5,7 +5,7 @@
             v-if="tooltip"
             :content="tooltip"
             :raw-content="true"
-            :placement="placement"
+            v-bind="placement ? {placement} : {}"
             :persistent="false"
             transition=""
             :hide-after="0"

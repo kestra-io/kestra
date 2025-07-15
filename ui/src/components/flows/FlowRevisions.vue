@@ -61,6 +61,7 @@
             :diff-side-by-side="sideBySide"
             :model-value="revisionRightText"
             :original="revisionLeftText"
+            read-only
             lang="yaml"
             :show-doc="false"
         />

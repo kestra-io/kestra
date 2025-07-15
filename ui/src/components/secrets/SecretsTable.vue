@@ -36,7 +36,7 @@
                 </template>
             </el-table-column>
 
-            <el-table-column v-if="!keyOnly" prop="tags" :label="$t('tags')">
+            <el-table-column v-if="!keyOnly && !paneView" prop="tags" :label="$t('tags')">
                 <template #default="scope">
                     <labels v-if="scope.row.tags !== undefined" :labels="scope.row.tags" read-only />
                 </template>
@@ -63,13 +63,13 @@
                 </template>
             </el-table-column>
 
-            <el-table-column v-if="!keyOnly" column-key="update" class-name="row-action">
+            <el-table-column v-if="!keyOnly && !paneView" column-key="update" class-name="row-action">
                 <template #default="scope">
                     <el-button v-if="canUpdate(scope.row)" :icon="FileDocumentEdit" link @click="updateSecretModal(scope.row)" />
                 </template>
             </el-table-column>
 
-            <el-table-column v-if="!keyOnly" column-key="delete" class-name="row-action">
+            <el-table-column v-if="!keyOnly && !paneView" column-key="delete" class-name="row-action">
                 <template #default="scope">
                     <el-button v-if="canDelete(scope.row)" :icon="Delete" link @click="removeSecret(scope.row)" />
                 </template>
@@ -221,6 +221,10 @@
                 default: true
             },
             keyOnly: {
+                type: Boolean,
+                default: false
+            },
+            paneView: {
                 type: Boolean,
                 default: false
             }

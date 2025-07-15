@@ -435,11 +435,13 @@
                 }
 
                 const files = e.target.files || e.dataTransfer.files;
+
                 if (!files.length) {
                     return;
                 }
-                this.inputsValues[input.id] = e.target.files[0];
-                this.onChange(input);
+
+                this.inputsValues[input.id] = files[0];
+                setTimeout(() => this.onChange(input), 300);
             },
             onYamlChange(input, e) {
                 this.inputsValues[input.id] = e.target.value;
@@ -638,6 +640,15 @@
 .el-input-file {
     display: flex;
     align-items: center;
+
+    .el-input__inner {
+        cursor: pointer;
+    }
+
+    .el-input__wrapper {
+        padding: 0.5rem;
+    }
+    
 }
 
 .preview {

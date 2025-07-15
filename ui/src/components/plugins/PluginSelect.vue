@@ -89,7 +89,7 @@
             if (!def) {
                 return acc;
             }
-            if (def.$deprecated === true) {
+            if (Boolean(def.$deprecated) === true) {
                 return acc;
             }
 

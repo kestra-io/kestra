@@ -323,7 +323,7 @@
         </data-table>
     </section>
 
-    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="uuid" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -362,7 +362,7 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="uuid" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -437,6 +437,7 @@
     import DateAgo from "../layout/DateAgo.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import Utils from "../../utils/utils";
 
     import {filterLabels} from "./utils"
 
@@ -759,11 +760,12 @@
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
             },
-            genericConfirmAction(toast, queryAction, byIdAction, success) {
+            genericConfirmAction(toast, queryAction, byIdAction, success, showCancelButton = true) {
                 this.$toast().confirm(
                     this.$t(toast, {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => this.genericConfirmCallback(queryAction, byIdAction, success),
-                    () => {}
+                    () => {},
+                    showCancelButton
                 );
             },
             genericConfirmCallback(queryAction, byIdAction, success, params) {
@@ -805,7 +807,8 @@
                     "bulk resume",
                     "execution/queryResumeExecution",
                     "execution/bulkResumeExecution",
-                    "executions resumed"
+                    "executions resumed",
+                    false
                 );
             },
             pauseExecutions() {

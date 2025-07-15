@@ -323,7 +323,7 @@
         </data-table>
     </section>
 
-    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="uuid" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -362,7 +362,7 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="uuid" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -437,6 +437,7 @@
     import DateAgo from "../layout/DateAgo.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import Utils from "../../utils/utils";
 
     import {filterLabels} from "./utils"
 

@@ -86,10 +86,8 @@
 
         return allRefs.reduce((acc: string[], item: string) => {
             const def = pluginsStore.flowDefinitions?.[item]
-            if (!def) {
-                return acc;
-            }
-            if (def.$deprecated) {
+            
+            if (!def || def.$deprecated) {
                 return acc;
             }
 

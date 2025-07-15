@@ -47,7 +47,7 @@
         </el-button>
     </div>
     <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
-        <Sections :charts="charts.map(chart => chart.data)" show-default />
+        <Sections :dashboard="{id: 'default'}" :charts="charts.map(chart => chart.data)" show-default />
     </div>
     <div class="main-editor" v-else>
         <div
@@ -83,26 +83,8 @@
                 class="d-flex justify-content-center align-items-center w-100 p-3"
                 v-else-if="currentView === views.CHART"
             >
-                <div v-if="selectedChart" class="w-100">
-                    <p class="fs-6 fw-bold">
-                        {{ getChartTitle(selectedChart) }}
-                    </p>
-                    <p
-                        v-if="selectedChart.chartOptions?.description"
-                    >
-                        <small>{{ selectedChart.chartOptions.description }}</small>
-                    </p>
-
-                    <div :style="`position: relative; width:calc(${100}% - 10px)`">
-                        <component
-                            :key="selectedChart.id"
-                            :is="TYPES[selectedChart.type]"
-                            :source="selectedChart.content"
-                            :chart="selectedChart"
-                            :identifier="selectedChart.id"
-                            show-default
-                        />
-                    </div>
+                <div v-if="selectedChart.length" class="w-100">
+                    <Sections :dashboard="{id: 'default'}" :charts="selectedChart" show-default />
                 </div>
                 <div v-else-if="chartError" class="text-container">
                     <span>{{ chartError }}</span>
@@ -122,8 +104,6 @@
 </template>
 <script setup>
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    
-    import {TYPES, getChartTitle} from "../composables/useDashboards";
 
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
     import Sections from "../sections/Sections.vue";
@@ -134,18 +114,21 @@
     import ViewDashboard from "vue-material-design-icons/ViewDashboard.vue";
     import EmptyVisualDashboard from "../../../assets/empty_visuals/Visuals_empty_dashboard.svg"
 
-    // avoid an eslint warning about missing declaration
     defineEmits(["save"])
 </script>
 <script>
+    import {mapStores} from "pinia";
 
     import Editor from "../../inputs/Editor.vue";
+    import {usePluginsStore} from "../../../stores/plugins";
+    import {useDashboardStore} from "../../../stores/dashboard";
     import yaml from "yaml";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
 
     export default {
         computed: {
+            ...mapStores(usePluginsStore, useDashboardStore),
             ContentSave() {
                 return ContentSave
             },
@@ -160,7 +143,7 @@
             },
             displaySide() {
                 return this.currentView !== this.views.NONE && this.currentView !== this.views.DASHBOARD;
-            }
+            },
         },
         props: {
             allowSaveUnchanged: {
@@ -183,18 +166,27 @@
                 if (this.currentView === this.views.DOC) {
                     const type = YAML_UTILS.getTaskType(event.model.getValue(), event.position, this.plugins)
                     if (type) {
-                        this.$store.dispatch("plugin/load", {cls: type})
+
+                        this.pluginsStore.load({cls: type})
                             .then(plugin => {
-                                this.$store.commit("plugin/setEditorPlugin", {cls: type, ...plugin});
-                            });
+                                this.pluginsStore.editorPlugin = {cls: type, ...plugin};
+                            })
                     } else {
-                        this.$store.commit("plugin/setEditorPlugin", undefined);
+                        this.pluginsStore.editorPlugin = undefined;
                     }
                 } else if (this.currentView === this.views.CHART) {
                     const chart = YAML_UTILS.getChartAtPosition(event.model.getValue(), event.position)
-                    if (chart && this.selectedChart?.id !== chart.id) {
+                    if (chart) {
                         const result = await this.loadChart(chart);
-                        this.selectedChart = result.data;
+                        this.selectedChart = result.data
+                            ? [{
+                                ...result.data,
+                                chartOptions: {
+                                    ...result.data.chartOptions,
+                                    width: 12 // Setting chart to full width for the preview purposes
+                                }
+                            }]
+                            : [];
                         this.chartError = result.error;
                     }
                 }
@@ -217,13 +209,15 @@
                 };
             },
             loadPlugins() {
-                this.$store.dispatch("plugin/list", {...this.$route.params})
+                this.pluginsStore.list({...this.$route.params})
                     .then(data => {
                         this.plugins = data.map(plugin => {
                             const charts = plugin.charts || [];
                             const dataFilters = plugin.dataFilters || [];
                             return charts.concat(dataFilters);
-                        }).flat();
+                        }).flat()
+                            .filter(({deprecated}) => !deprecated)
+                            .map(({cls}) => cls);
                     })
             },
             buttonType(view) {
@@ -247,7 +241,7 @@
             async loadChart(chart) {
                 const yamlChart = yaml.stringify(chart);
                 const result = {error: null, data: null, raw: {}};
-                await this.$store.dispatch("dashboard/validateChart", yamlChart)
+                await this.dashboardStore.validateChart(yamlChart)
                     .then(errors => {
                         if (errors.constraints) {
                             result.error = errors.constraints;
@@ -271,14 +265,14 @@
                     DASHBOARD: "dashboard"
                 },
                 currentView: "documentation",
-                selectedChart: null,
+                selectedChart: [],
                 charts: [],
                 chartError: null
             }
         },
         watch: {
             source() {
-                this.$store.dispatch("dashboard/validate", this.source)
+                this.dashboardStore.validateDashboard(this.source)
                     .then(errors => {
                         if (errors.constraints) {
                             this.errors = [errors.constraints];
@@ -289,7 +283,7 @@
             }
         },
         beforeUnmount() {
-            this.$store.commit("plugin/setEditorPlugin", undefined);
+            this.pluginsStore.editorPlugin = undefined;
         }
     };
 </script>

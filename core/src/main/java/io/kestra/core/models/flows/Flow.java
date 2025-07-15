@@ -70,6 +70,8 @@ public class Flow extends AbstractFlow implements HasUID {
 
     @Valid
     @NotEmpty
+
+    @Schema(additionalProperties = Schema.AdditionalPropertiesValue.TRUE)
     List<Task> tasks;
 
     @Valid

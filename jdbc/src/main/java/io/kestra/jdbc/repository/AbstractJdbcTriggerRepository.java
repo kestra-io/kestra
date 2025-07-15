@@ -1,6 +1,7 @@
 package io.kestra.jdbc.repository;
 
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -140,24 +141,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 .selectCount()
                 .from(this.jdbcRepository.getTable())
                 .where(this.defaultFilter(tenantId))
-                .fetchOne(0, int.class));
-    }
-
-    @Override
-    public int countForNamespace(@Nullable String tenantId, @Nullable String namespace) {
-        if (namespace == null) return count(tenantId);
-
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> DSL
-                .using(configuration)
-                .selectCount()
-                .from(this.jdbcRepository.getTable())
-                .where(this.defaultFilter(tenantId))
-                .and(DSL.or(
-                    NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%"),
-                    NAMESPACE_FIELD.eq(namespace)
-                ))
                 .fetchOne(0, int.class));
     }
 
@@ -305,26 +288,24 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
             });
     }
     @Override
-    public ArrayListTotal<Trigger> find(Pageable pageable,String tenantId, List<QueryFilter> filters) {
+    public ArrayListTotal<Trigger> find(Pageable pageable, String tenantId, List<QueryFilter> filters) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                // extract Query field from the filters list
-                String query = getQuery(filters);
-
-                // Base query with table and DSL fields
-                SelectConditionStep<?> select = context
-                    .select(field("value"))
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId))
-                    .and(this.fullTextCondition(query));
-
-                select = filter(select, filters, "next_execution_date");
-                // Return paginated results
+                SelectConditionStep<?> select = generateSelect(context, tenantId, filters);
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
+    }
+
+    private SelectConditionStep<?> generateSelect(DSLContext context, String tenantId, List<QueryFilter> filters){
+        SelectConditionStep<?> select = context
+            .select(field("value"))
+            .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
+            .from(this.jdbcRepository.getTable())
+            .where(this.defaultFilter(tenantId));
+
+        return filter(select, filters, "next_execution_date", Resource.TRIGGER);
     }
 
     @Override
@@ -366,18 +347,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 .getDslContextWrapper()
                 .transaction(configuration -> {
                     DSLContext context = DSL.using(configuration);
-                    // extract Query field from the filters list
-                    String query = getQuery(filters);
-
-                    // Base query with table and DSL fields
-                    SelectConditionStep<?> select = context
-                        .select(field("value"))
-                        .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
-                        .from(this.jdbcRepository.getTable())
-                        .where(this.defaultFilter(tenantId))
-                        .and(this.fullTextCondition(query));
-
-                    select = filter(select, filters, "next_execution_date");
+                    SelectConditionStep<?> select = generateSelect(context, tenantId, filters);
 
                     select.fetch()
                     .map(this.jdbcRepository::map)
@@ -393,6 +363,10 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
 
     protected Condition fullTextCondition(String query) {
         return query == null ? DSL.trueCondition() : jdbcRepository.fullTextCondition(List.of("fulltext"), query);
+    }
+
+    protected Condition findQueryCondition(String query) {
+        return fullTextCondition(query);
     }
 
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {

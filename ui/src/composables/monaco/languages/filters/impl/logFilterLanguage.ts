@@ -45,6 +45,22 @@ const logFilterKeys: Record<string, FilterKeyCompletions> = {
         false,
         ["timeRange"]
     ),
+    scope: new FilterKeyCompletions(
+        [Comparators.EQUALS, Comparators.NOT_EQUALS],
+        async (_, hardcodedValues) => hardcodedValues.SCOPES,
+        undefined,
+        ["scope"]
+    ),
+    triggerId: new FilterKeyCompletions(
+        [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.CONTAINS, Comparators.STARTS_WITH, Comparators.ENDS_WITH],
+        undefined,
+        true
+    ),
+    flowId: new FilterKeyCompletions(
+        [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.CONTAINS, Comparators.STARTS_WITH, Comparators.ENDS_WITH, Comparators.REGEX],
+        undefined,
+        true
+    ),
 };
 
 class LogFilterLanguage extends FilterLanguage {

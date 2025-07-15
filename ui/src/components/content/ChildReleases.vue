@@ -16,7 +16,7 @@
 
 <script setup>
     import {useRoute} from "vue-router";
-    import {useStore} from "vuex";
+    import {useDocStore} from "../../stores/doc";
 
     const props = defineProps({
         pageUrl: {
@@ -25,7 +25,7 @@
         },
     });
 
-    const store = useStore();
+    const docStore = useDocStore();
     const route = useRoute();
 
     let currentPage;
@@ -38,7 +38,7 @@
 
     currentPage = currentPage.endsWith("/") ? currentPage.slice(0, -1) : currentPage;
 
-    const resourcesWithMetadata = await store.dispatch("doc/children", currentPage);
+    const resourcesWithMetadata = await docStore.children(currentPage);
 
     const navigation = Object.entries(resourcesWithMetadata)
         .filter(([_, metadata]) => metadata.release !== undefined)

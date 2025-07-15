@@ -112,12 +112,12 @@ jobs:
             echo "plugins=${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT
           elif [[ $TAG = "develop" ]]; then
             TAG="develop";
-            echo "plugins=--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots $PLUGINS" >> $GITHUB_OUTPUT
+            echo "plugins=--repositories=https://central.sonatype.com/repository/maven-snapshots/ $PLUGINS" >> $GITHUB_OUTPUT
           else
             TAG="build-${{ github.run_id }}";
-            echo "plugins=--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots $PLUGINS" >> $GITHUB_OUTPUT
+            echo "plugins=--repositories=https://central.sonatype.com/repository/maven-snapshots/ $PLUGINS" >> $GITHUB_OUTPUT
           fi
-          
+
           echo "tag=${TAG}${{ matrix.image.tag }}" >> $GITHUB_OUTPUT
 
       # Build Docker Image

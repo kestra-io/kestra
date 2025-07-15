@@ -33,7 +33,6 @@ export const storageKeys = {
     IMPERSONATE: "impersonate",
     EDITOR_VIEW_TYPE: "editorViewType",
     AUTO_REFRESH_INTERVAL: "autoRefreshInterval",
-    MAINTENANCE_MODE: "maintenanceMode",
 }
 
 export const executeFlowBehaviours = {

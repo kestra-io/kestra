@@ -75,7 +75,7 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <Sections :charts show-default />
+                    <Sections :dashboard="{id: 'default'}" :charts show-default />
                 </template>
 
                 <template #table>
@@ -209,7 +209,7 @@
                                         :inverted="true"
                                         :date="
                                             getLastExecution(scope.row)
-                                                .startDate
+                                                ?.startDate
                                         "
                                     />
                                 </template>
@@ -228,11 +228,11 @@
                                         v-if="
                                             lastExecutionByFlowReady &&
                                                 getLastExecution(scope.row)
-                                                    .lastStatus
+                                                    ?.status
                                         "
                                         :status="
                                             getLastExecution(scope.row)
-                                                .lastStatus
+                                                ?.status
                                         "
                                         size="small"
                                     />
@@ -388,19 +388,17 @@
                 isDefaultNamespaceAllow: true,
                 permission: permission,
                 action: action,
-                dailyGroupByFlowReady: false,
-                lastExecutionByFlowReady: false,
-                dailyReady: false,
                 file: undefined,
                 showChart: ["true", null].includes(
                     localStorage.getItem(storageKeys.SHOW_FLOWS_CHART),
                 ),
                 loading: false,
+                lastExecutionByFlowReady: false,
+                latestExecutions: []
             };
         },
         computed: {
             ...mapState("flow", ["flows", "total"]),
-            ...mapState("stat", ["dailyGroupByFlow", "daily", "lastExecutions"]),
             ...mapState("auth", ["user"]),
             routeInfo() {
                 return {
@@ -455,14 +453,6 @@
                     )
                 );
             },
-            executionsCount() {
-                return [...this.daily].reduce((a, b) => {
-                    return (
-                        a +
-                        Object.values(b.executionCounts).reduce((a, b) => a + b, 0)
-                    );
-                }, 0);
-            },
             charts() {
                 return [
                     {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART}
@@ -478,7 +468,7 @@
 
             const queryKeys = Object.keys(query);
             if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][EQUALS]"] = defaultNamespace;
+                query["filters[namespace][PREFIX]"] = defaultNamespace;
                 queryHasChanged = true;
             }
 
@@ -540,15 +530,21 @@
                             : this.selection.length,
                     }),
                     () => {
+                        const flowCount = this.queryBulkAction
+                            ? this.total
+                            : this.selection.length;
+
                         if (this.queryBulkAction) {
                             return this.$store
                                 .dispatch(
                                     "flow/exportFlowByQuery",
                                     this.loadQuery(),
                                 )
-                                .then((_) => {
+                                .then(() => {
                                     this.$toast().success(
-                                        this.$t("flows exported"),
+                                        this.$t("flows exported", {
+                                            count: flowCount,
+                                        }),
                                     );
                                 });
                         } else {
@@ -556,9 +552,11 @@
                                 .dispatch("flow/exportFlowByIds", {
                                     ids: this.selection,
                                 })
-                                .then((_) => {
+                                .then(() => {
                                     this.$toast().success(
-                                        this.$t("flows exported"),
+                                        this.$t("flows exported", {
+                                            count: flowCount,
+                                        }),
                                     );
                                 });
                         }
@@ -711,23 +709,10 @@
                     });
             },
             getLastExecution(row) {
-                let noState = {state: null, startDate: null};
-                if (this.lastExecutions && this.lastExecutions.length > 0) {
-                    let filteredFlowExec = this.lastExecutions.filter(
-                        (executedFlow) =>
-                            executedFlow.flowId == row.id &&
-                            executedFlow.namespace == row.namespace,
-                    );
-                    if (filteredFlowExec.length > 0) {
-                        return {
-                            lastStatus: filteredFlowExec[0].state?.current,
-                            startDate: filteredFlowExec[0].state?.startDate,
-                        };
-                    }
-                    return noState;
-                } else {
-                    return noState;
-                }
+                if (!this.latestExecutions || !row) return null;
+                return this.latestExecutions.find(
+                    e => e.flowId === row.id && e.namespace === row.namespace
+                ) ?? null;
             },
             loadQuery(base, ignoreDateFilters = true) {
                 let queryFilter = this.queryWithFilter(
@@ -736,63 +721,42 @@
                 );
 
                 if (this.namespace) {
-                    queryFilter["filters[namespace][EQUALS]"] = this.$route.params.id || this.namespace;
+                    queryFilter["filters[namespace][PREFIX]"] = this.$route.params.id || this.namespace;
                 }
 
                 return _merge(base, queryFilter);
             },
             loadData(callback) {
+                const q = this.$route.query;
+
                 this.$store
                     .dispatch(
                         "flow/findFlows",
                         this.loadQuery({
-                            size: parseInt(this.$route.query.size || 25),
-                            page: parseInt(this.$route.query.page || 1),
-                            sort: this.$route.query.sort || "id:asc",
+                            size: parseInt(this.namespace ? this.internalPageSize : q.size ?? 25),
+                            page: parseInt(this.namespace ? this.internalPageNumber : q.page ?? 1),
+                            sort: q.sort ?? "id:asc",
                         }),
                     )
-                    .then((flows) => {
-                        this.dailyGroupByFlowReady = false;
-                        this.lastExecutionByFlowReady = false;
-
-                        if (flows.results && flows.results.length > 0) {
-                            if (
-                                this.user &&
-                                this.user.hasAny(permission.EXECUTION)
-                            ) {
-                                this.$store
-                                    .dispatch("stat/dailyGroupByFlow", {
-                                        flows: flows.results.map((flow) => {
-                                            return {
-                                                namespace: flow.namespace,
-                                                id: flow.id,
-                                            };
-                                        }),
-                                        startDate: this.$moment(this.startDate)
-                                            .add(-1, "day")
-                                            .startOf("day")
-                                            .toISOString(true),
-                                        endDate: this.$moment(this.endDate)
-                                            .endOf("day")
-                                            .toISOString(true),
+                    .then(data => {
+                        if(this.user.hasAnyActionOnAnyNamespace(
+                            permission.EXECUTION,
+                            action.READ,
+                        )) {
+                            this.$store.dispatch(
+                                "execution/loadLatestExecutions",
+                                {
+                                    flowFilters: data.results.map(flow => {
+                                        return {
+                                            id: flow.id,
+                                            namespace: flow.namespace
+                                        };
                                     })
-                                    .then(() => {
-                                        this.dailyGroupByFlowReady = true;
-                                    });
-
-                                this.$store
-                                    .dispatch("stat/lastExecutions", {
-                                        flows: flows.results.map((flow) => {
-                                            return {
-                                                namespace: flow.namespace,
-                                                id: flow.id,
-                                            };
-                                        }),
-                                    })
-                                    .then(() => {
-                                        this.lastExecutionByFlowReady = true;
-                                    });
-                            }
+                                }
+                            ).then(latestExecs => {
+                                this.latestExecutions = latestExecs;
+                                this.lastExecutionByFlowReady = true;
+                            });
                         }
                     })
                     .finally(callback);

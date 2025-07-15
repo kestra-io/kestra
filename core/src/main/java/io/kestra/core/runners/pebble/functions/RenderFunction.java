@@ -19,7 +19,7 @@ import java.util.Map;
 
 @Singleton
 @Requires(property = "kestra.variables.recursive-rendering", value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
-public class RenderFunction implements Function {
+public class RenderFunction implements Function, RenderingFunctionInterface {
     @Inject
     private ApplicationContext applicationContext;
 
@@ -49,12 +49,15 @@ public class RenderFunction implements Function {
             .distinct()
             .collect(HashMap::new, (m, v) -> m.put(v, context.getVariable(v)), HashMap::putAll);
 
-        VariableRenderer variableRenderer = applicationContext.getBean(VariableRenderer.class);
-
         try {
-            return variableRenderer.renderObject(toRender, variables, recursive).orElse(null);
+            return ((RenderingFunctionInterface) evaluationContext.getExtensionRegistry().getFunction(functionName())).variableRenderer(applicationContext).renderObject(toRender, variables, recursive).orElse(null);
         } catch (IllegalVariableEvaluationException e) {
             throw new PebbleException(e, e.getMessage());
         }
+    }
+
+    @Override
+    public String functionName() {
+        return "render";
     }
 }

@@ -238,7 +238,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
                 builder.outputs(outputs);
             } catch (Exception e) {
                 runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
-                var state = this.isAllowFailure() ? this.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED;
+                var state = State.Type.fail(this);
                 Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
                 taskRun = taskRun
                     .withState(state)
@@ -259,6 +259,14 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         State.Type finalState = ExecutableUtils.guessState(execution, this.transmitFailed, this.isAllowFailure(), this.isAllowWarning());
         if (taskRun.getState().getCurrent() != finalState) {
             taskRun = taskRun.withState(finalState);
+        }
+
+        if (finalState.isFailed()) {
+            String log = String.format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in FAILED state", execution.getId(), execution.getFlowId(), execution.getNamespace());
+            runContext.logger().error(log);
+        } else if (finalState == State.Type.WARNING) {
+            String log = String.format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in WARNING state", execution.getId(),  execution.getFlowId(), execution.getNamespace());
+            runContext.logger().warn(log);
         }
 
         return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, execution));

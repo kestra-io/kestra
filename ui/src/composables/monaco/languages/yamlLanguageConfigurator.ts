@@ -1,20 +1,28 @@
+import {Store} from "vuex";
+import {useI18n} from "vue-i18n";
 import {configureMonacoYaml} from "monaco-yaml";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import {languages} from "monaco-editor/esm/vs/editor/editor.api";
 import {yamlSchemas} from "override/utils/yamlSchemas";
 import {StandaloneServices} from "monaco-editor/esm/vs/editor/standalone/browser/standaloneServices";
 import {ILanguageFeaturesService} from "monaco-editor/esm/vs/editor/common/services/languageFeatures";
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator";
-import {QUOTE, YamlAutoCompletion} from "../../../services/autoCompletionProvider.ts";
+import {YamlAutoCompletion} from "../../../services/autoCompletionProvider.ts";
 import RegexProvider from "../../../utils/regex";
-import {YamlUtils} from "@kestra-io/ui-libs";
-import {Store} from "vuex";
-import {useI18n} from "vue-i18n";
+import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import IPosition = monaco.IPosition;
 import IDisposable = monaco.IDisposable;
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
+import {
+    endOfWordColumn,
+    NO_SUGGESTIONS,
+    registerFunctionParametersAutoCompletion,
+    registerNestedValueAutoCompletion,
+    registerPebbleAutocompletion
+} from "./pebbleLanguageConfigurator.ts";
+import {usePluginsStore} from "../../../stores/plugins.ts";
+import {languages} from "monaco-editor/esm/vs/editor/editor.api";
 import CompletionItem = languages.CompletionItem;
 
 
@@ -26,14 +34,14 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         this._yamlAutoCompletion = yamlAutoCompletion;
     }
 
-    async configureLanguage(store: Store<Record<string, any>>) {
+    async configureLanguage(pluginsStore: ReturnType<typeof usePluginsStore>) {
         configureMonacoYaml(monaco, {
             enableSchemaRequest: true,
             hover: true,
             completion: true,
             validate: true,
             format: true,
-            schemas: yamlSchemas(store)
+            schemas: yamlSchemas()
         });
 
         const yamlCompletion = (StandaloneServices.get(ILanguageFeaturesService).completionProvider._entries as {
@@ -54,75 +62,66 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 return defaultCompletion;
             }
 
-            (defaultCompletion.suggestions as {
-                label: string,
-                filterText: string,
-                insertText: string,
-                sortText?: string
-            }[]).forEach(suggestion => {
-                if (suggestion.label.endsWith("...") && suggestion.insertText.includes(suggestion.label.substring(0, suggestion.label.length - 3))) {
-                    suggestion.label = suggestion.insertText;
-                }
-
-                const wordAtPosition = model.getWordAtPosition(position)?.word?.toLowerCase();
-                if (wordAtPosition !== undefined) {
-                    const sortBumperText = "a1".repeat(10);
+            return {
+                ...defaultCompletion,
+                suggestions: (defaultCompletion.suggestions as (CompletionItem & {label: string})[]).map(suggestion => {
+                    if (suggestion.label.endsWith("...") && suggestion.insertText.includes(suggestion.label.substring(0, suggestion.label.length - 3))) {
+                        return {...suggestion, label: suggestion.insertText};
+                    }
+                    return suggestion;
+                }).filter(suggestion => {
                     if (suggestion.label.includes(".")) {
-                        const dotSplit = suggestion.label.toLowerCase().split(/\.(?=\w)/);
-                        if (dotSplit[dotSplit.length - 1].startsWith(wordAtPosition)) {
-                            suggestion.sortText = sortBumperText.repeat(5) + suggestion.label;
-                        } else if (dotSplit[dotSplit.length - 1].includes(wordAtPosition)) {
-                            suggestion.sortText = sortBumperText.repeat(4) + suggestion.label;
-                        } else {
-                            suggestion.sortText = dotSplit.splice(dotSplit.length - 1, 1).reduceRight((prefix, part) => {
-                                let sortBumperPrefixForPart;
-                                if (part.startsWith(wordAtPosition)) {
-                                    sortBumperPrefixForPart = sortBumperText.repeat(3)
-                                } else if (part.includes(wordAtPosition)) {
-                                    sortBumperPrefixForPart = sortBumperText.repeat(2);
-                                }
+                        return !pluginsStore.deprecatedTypes.includes(suggestion.label);
+                    }
 
-                                if (sortBumperPrefixForPart === undefined || prefix.length >= sortBumperPrefixForPart.length) {
-                                    return prefix;
-                                }
+                    return true;
+                }).map(suggestion => {
+                    const wordAtPosition = model.getWordAtPosition(position)?.word?.toLowerCase();
+                    if (wordAtPosition !== undefined) {
+                        const sortBumperText = "a1".repeat(10);
+                        if (suggestion.label.includes(".")) {
+                            const dotSplit = suggestion.label.toLowerCase().split(/\.(?=\w)/);
+                            if (dotSplit[dotSplit.length - 1].startsWith(wordAtPosition)) {
+                                suggestion.sortText = sortBumperText.repeat(5) + suggestion.label;
+                            } else if (dotSplit[dotSplit.length - 1].includes(wordAtPosition)) {
+                                suggestion.sortText = sortBumperText.repeat(4) + suggestion.label;
+                            } else {
+                                suggestion.sortText = dotSplit.splice(dotSplit.length - 1, 1).reduceRight((prefix, part) => {
+                                    let sortBumperPrefixForPart;
+                                    if (part.startsWith(wordAtPosition)) {
+                                        sortBumperPrefixForPart = sortBumperText.repeat(3)
+                                    } else if (part.includes(wordAtPosition)) {
+                                        sortBumperPrefixForPart = sortBumperText.repeat(2);
+                                    }
 
-                                return sortBumperPrefixForPart;
-                            }, "") + suggestion.label;
+                                    if (sortBumperPrefixForPart === undefined || prefix.length >= sortBumperPrefixForPart.length) {
+                                        return prefix;
+                                    }
+
+                                    return sortBumperPrefixForPart;
+                                }, "") + suggestion.label;
+                            }
+
+                            suggestion.filterText = (suggestion.label.includes(wordAtPosition) ? wordAtPosition + " " : "") + suggestion.label.toLowerCase();
                         }
 
-                        suggestion.filterText = (suggestion.label.includes(wordAtPosition) ? wordAtPosition + " " : "") + suggestion.label.toLowerCase();
+                        if (suggestion.sortText === undefined && suggestion.label.includes(wordAtPosition)) {
+                            suggestion.sortText = sortBumperText + suggestion.label;
+                        }
                     }
 
-                    if (suggestion.sortText === undefined && suggestion.label.includes(wordAtPosition)) {
-                        suggestion.sortText = sortBumperText + suggestion.label;
-                    }
-                }
+                    suggestion.sortText = suggestion.sortText?.toLowerCase();
 
-                suggestion.sortText = suggestion.sortText?.toLowerCase();
-            });
-
-            return defaultCompletion;
+                    return suggestion;
+                })
+            };
         };
     }
 
     configureAutoCompletion(_: ReturnType<typeof useI18n>["t"], __: Store<Record<string, any>>, ___: monaco.editor.ICodeEditor | undefined) {
-        const NO_SUGGESTIONS = {suggestions: []};
-
         const autoCompletionProviders: IDisposable[] = [];
-
-        const QUOTES = ["\"", "'"];
-        const endOfWordColumn = (position: IPosition, model: IModel): number => {
-            return position.column + (model.findNextMatch(
-                RegexProvider.beforeSeparator(QUOTES),
-                position,
-                true,
-                false,
-                null,
-                true
-            )?.matches?.[0]?.length ?? 0);
-        }
-
         const yamlAutoCompletion = this._yamlAutoCompletion;
+
         // Values autocompletion
         autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider("yaml", {
             triggerCharacters: [":"],
@@ -171,120 +170,11 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             }
         }));
 
-        const propertySuggestion = (value: string, position: {
-            lineNumber: number,
-            startColumn: number,
-            endColumn: number
-        }, kind?: monaco.languages.CompletionItemKind): CompletionItem => {
-            let label = value.split("(")[0];
-            if (label.startsWith(QUOTE) && label.endsWith(QUOTE)) {
-                label = label.substring(1, label.length - 1);
-            }
+        registerPebbleAutocompletion(autoCompletionProviders, yamlAutoCompletion, ["yaml", "plaintext"]);
 
-            return ({
-                kind: kind ?? (value.includes("(") ? monaco.languages.CompletionItemKind.Function : monaco.languages.CompletionItemKind.Property),
-                label: label,
-                insertText: value,
-                insertTextRules: value.includes("${1:") ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet : undefined,
-                sortText: value.includes("(") ? "b" + value : "a" + value,
-                range: {
-                    startLineNumber: position.lineNumber,
-                    endLineNumber: position.lineNumber,
-                    startColumn: position.startColumn,
-                    endColumn: position.endColumn
-                }
-            });
-        };
+        registerFunctionParametersAutoCompletion(autoCompletionProviders, yamlAutoCompletion, ["yaml", "plaintext"]);
 
-        // Pebble autocompletion
-        autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
-            triggerCharacters: ["{"],
-            async provideCompletionItems(model, position) {
-                // Not a subfield access
-                const rootPebbleVariableMatcher = model.findPreviousMatch(RegexProvider.capturePebbleVarRoot + "$", position, true, false, null, true);
-                if (rootPebbleVariableMatcher === null || rootPebbleVariableMatcher.matches === null) {
-                    return NO_SUGGESTIONS;
-                }
-
-                const startOfWordColumn = position.column - rootPebbleVariableMatcher.matches[1].length;
-                return {
-                    suggestions: (await (yamlAutoCompletion.rootFieldAutoCompletion()))
-                        .map(s => propertySuggestion(s, {
-                            lineNumber: position.lineNumber,
-                            startColumn: startOfWordColumn,
-                            endColumn: endOfWordColumn(position, model)
-                        }))
-                };
-            }
-        }));
-
-        // Function parameters autocompletion
-        autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
-            triggerCharacters: ["("],
-            async provideCompletionItems(model, position) {
-                const source = model.getValue();
-                const parsed = YamlUtils.parse(source, false);
-
-                const functionMatcher = model.findPreviousMatch(RegexProvider.capturePebbleFunction + "$", position, true, false, null, true);
-                if (functionMatcher === null || functionMatcher.matches === null) {
-                    return NO_SUGGESTIONS;
-                }
-
-                const wordStartOffset = functionMatcher.matches?.[3]?.length
-                    ?? (model.findPreviousMatch(RegexProvider.beforeSeparator(QUOTES) + "$", position, true, false, null, true)?.matches?.[0]?.length)
-                    ?? 0;
-                const startOfWordColumn = position.column - wordStartOffset;
-                return {
-                    suggestions: (await yamlAutoCompletion.functionAutoCompletion(
-                            parsed,
-                            functionMatcher.matches[1],
-                            Object.fromEntries(functionMatcher.matches?.[2]?.split(/ *, */)?.map(arg => arg.split(/ *= */)) ?? []))
-                    ).map(s => {
-                        const endColumn = endOfWordColumn(position, model);
-                        const suggestion = propertySuggestion(s, {
-                            lineNumber: position.lineNumber,
-                            startColumn: startOfWordColumn,
-                            endColumn: endColumn
-                        }, monaco.languages.CompletionItemKind.Value);
-
-                        // If the inserted value is a string (surrounded by quotes), we remove them if there is already one
-                        if (suggestion.insertText.startsWith(QUOTE) && suggestion.insertText.endsWith(QUOTE)) {
-                            const lineContent = model.getLineContent(position.lineNumber);
-                            suggestion.insertText = suggestion.insertText.substring(
-                                QUOTES.includes(lineContent.charAt(startOfWordColumn - 2)) ? 1 : 0,
-                                suggestion.insertText.length - (QUOTES.includes(lineContent.charAt(endColumn - 1)) ? 1 : 0)
-                            );
-                        }
-
-                        return suggestion;
-                    })
-                };
-            }
-        }))
-
-        // Nested value autocompletion
-        autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
-            triggerCharacters: ["."],
-            async provideCompletionItems(model, position) {
-                const source = model.getValue();
-                const parsed = YamlUtils.parse(source, false);
-
-                const parentFieldMatcher = model.findPreviousMatch(RegexProvider.capturePebbleVarParent + "$", position, true, false, null, true);
-                if (parentFieldMatcher === null || parentFieldMatcher.matches === null) {
-                    return NO_SUGGESTIONS;
-                }
-
-                const startOfWordColumn = position.column - parentFieldMatcher.matches[2].length;
-                return {
-                    suggestions: (await yamlAutoCompletion.nestedFieldAutoCompletion(source, parsed, parentFieldMatcher.matches[1]))
-                        .map(s => propertySuggestion(s, {
-                            lineNumber: position.lineNumber,
-                            startColumn: startOfWordColumn,
-                            endColumn: endOfWordColumn(position, model)
-                        }))
-                };
-            }
-        }));
+        registerNestedValueAutoCompletion(autoCompletionProviders, yamlAutoCompletion, ["yaml", "plaintext"]);
 
         return autoCompletionProviders;
     }

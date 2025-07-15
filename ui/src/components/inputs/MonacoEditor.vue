@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="ks-monaco-editor" ref="editorRef" />
+        <div data-testid="monaco-editor" class="ks-monaco-editor" ref="editorRef" />
         <div ref="datePickerWrapper" v-show="datePickerShown">
             <el-date-picker
                 ref="datePicker"
@@ -15,11 +15,30 @@
                 class="z-3"
             />
         </div>
+
+        <textarea
+            data-testid="monaco-editor-hidden-synced-textarea"
+            style="height: 0; width: 0; opacity: 0;"
+            type="text"
+            v-model="textAreaValue"
+        />
     </div>
 </template>
 
 <script lang="ts" setup>
-    import {computed, getCurrentInstance, h, inject, onBeforeUnmount, onMounted, ref, render, VNode, watch} from "vue";
+    import {
+        computed,
+        getCurrentInstance,
+        h,
+        inject,
+        onBeforeUnmount,
+        onMounted,
+        ref,
+        render,
+        shallowRef,
+        VNode,
+        watch
+    } from "vue";
     import {useStore} from "vuex";
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
@@ -47,6 +66,8 @@
     import {hashCode} from "../../utils/global.ts";
     import ICodeEditor = editor.ICodeEditor;
     import debounce from "lodash/debounce";
+    import {usePluginsStore} from "../../stores/plugins.ts";
+    import EditorType = editor.EditorType;
 
     const store = useStore();
     const currentInstance = getCurrentInstance()!;
@@ -68,6 +89,44 @@
             }
         },
     };
+
+    const textAreaValue = computed({
+        get() {
+            return props.value;
+        },
+        set(value) {
+            emit("change", value);
+        }
+    });
+
+    import {useRoute} from "vue-router";
+    const route = useRoute();
+
+    const highlightLine = () => {
+        if(!route.query.highlight) return;
+
+        const editor = getModifiedEditor();
+
+        if (!editor) return;
+
+        editor.focus();
+
+        const lines = editor.getModel()!.getLinesContent();
+
+        let lineNumber = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].includes(route.query.highlight as string)) {
+                lineNumber = i + 1; // Monaco line numbers are 1-based
+                break;
+            }
+        }
+
+        const endLineCharacter = editor?.getModel()!.getLineMaxColumn(lineNumber) ?? 0
+
+        editor.setSelection(new monaco.Range(lineNumber, 0, lineNumber, endLineCharacter));
+        editor.revealLineInCenter(lineNumber);
+    }
 
     const highlight = inject(EDITOR_HIGHLIGHT_INJECTION_KEY, ref());
     watch(highlight, (line) => {
@@ -178,8 +237,8 @@
         return defineCustomTheme(props.theme);
     });
 
-    let localEditor: monaco.editor.IStandaloneCodeEditor | null = null;
-    let localDiffEditor: monaco.editor.IStandaloneDiffEditor | null = null;
+    let localEditor = shallowRef<monaco.editor.IStandaloneCodeEditor | undefined>();
+    let localDiffEditor = shallowRef<monaco.editor.IStandaloneDiffEditor | undefined>();
 
     const suggestWidgetResizeObserver = ref<MutationObserver>()
     const suggestWidgetObserver = ref<MutationObserver>()
@@ -194,7 +253,7 @@
     })
 
     const editorResolved = computed(() => {
-        return props.diffEditor ? localDiffEditor : localEditor;
+        return props.diffEditor ? localDiffEditor.value : localEditor.value;
     })
 
     const editorRef = ref<HTMLDivElement | null>(null);
@@ -209,12 +268,12 @@
         if (editorResolved.value && needReload(newValue, oldValue)) {
             reload();
         } else {
-            localEditor?.updateOptions(newValue ?? {});
+            localEditor.value?.updateOptions(newValue ?? {});
         }
     }, {deep: true});
 
     watch(() => props.value, (newValue) => {
-        if (localEditor) {
+        if (localEditor.value) {
             const modifiedEditor = getModifiedEditor();
             if (newValue !== modifiedEditor?.getValue()) {
                 modifiedEditor?.setValue(newValue);
@@ -223,7 +282,7 @@
     });
 
     watch(() => props.original, (newValue) => {
-        if (localEditor && props.diffEditor) {
+        if (localEditor.value && props.diffEditor) {
             const originalEditor = getOriginalEditor();
             if (newValue !== originalEditor?.getValue()) {
                 originalEditor?.setValue(newValue);
@@ -293,11 +352,11 @@
             node.querySelector(`.${KESTRA_ICON_WRAPPER_CLASS}`)?.remove();
 
             if (completionValue.includes(".") && !completionValue.includes("{")) {
-                if (store.state.plugin?.icons?.[completionValue] !== undefined) {
+                if (pluginsStore?.icons?.[completionValue] !== undefined) {
                     replaceRowIcon(vsCodeIcon, h(TaskIcon, {
                         cls: completionValue,
                         "only-icon": true,
-                        icons: store.state.plugin.icons,
+                        icons: pluginsStore.icons,
                     }));
                 }
             } else if (STATES[completionValue] !== undefined) {
@@ -350,24 +409,19 @@
         }
     }
 
-    function removeDatePicker() {
+    function removeDatePicker(codeEditor: ICodeEditor) {
         if (
-            editorResolved.value?.getEditorType() !== editor.EditorType.ICodeEditor
-            || !datePickerShown.value
+            !datePickerShown.value
         ) {
             return;
         }
 
         datePickerShown.value = false;
-        (editorResolved.value as editor.ICodeEditor).removeContentWidget(datePickerWidget);
+        codeEditor.removeContentWidget(datePickerWidget);
     }
 
     watch(suggestWidget, (newVal) => {
-        if (editorResolved.value?.getEditorType() !== editor.EditorType.ICodeEditor) {
-            return;
-        }
-
-        const asCodeEditor = editorResolved.value as editor.ICodeEditor;
+        const asCodeEditor = editorResolved.value?.getEditorType() === EditorType.ICodeEditor ? editorResolved.value as editor.ICodeEditor : undefined;
 
         if (newVal !== undefined) {
             if (newVal.querySelector(".monaco-list-row") !== null) {
@@ -381,7 +435,9 @@
             suggestWidgetObserver.value = new MutationObserver(mutations => {
                 mutations.forEach(({removedNodes}) => {
                     if ([...removedNodes.values()].some(n => n instanceof Text && n.textContent === "_DATE_PICKER_")) {
-                        removeDatePicker(asCodeEditor);
+                        if (asCodeEditor !== undefined) {
+                            removeDatePicker(asCodeEditor);
+                        }
                     }
                 })
 
@@ -391,7 +447,7 @@
                 );
 
                 addedRows.forEach(async row => {
-                    if (row.ariaLabel === "_DATE_PICKER_") {
+                    if (asCodeEditor !== undefined && row.ariaLabel === "_DATE_PICKER_") {
                         (asCodeEditor.getContribution("editor.contrib.suggestController") as unknown as {
                             cancelSuggestWidget: () => void
                         }).cancelSuggestWidget()
@@ -428,37 +484,47 @@
 
             suggestWidgetObserver.value.observe(newVal, {childList: true, subtree: true});
 
-            asCodeEditor.onDidChangeCursorPosition(() => {
-                removeDatePicker();
+            asCodeEditor?.onDidChangeCursorPosition(() => {
+                removeDatePicker(asCodeEditor);
             })
         }
     });
 
     const disposeCompletions = ref<() => void>();
 
+    const pluginsStore = usePluginsStore();
+
+    const prefix = computed(() => props.schemaType ? `${props.schemaType}-` : "");
     onMounted(async function () {
         await document.fonts.ready;
         await initMonaco();
 
         if (props.language !== undefined) {
-            disposeCompletions.value = await configureLanguage(store, t, props.diffEditor ? undefined : editorResolved.value as ICodeEditor, props.language, props.schemaType);
+            await configureLanguage(
+                store,
+                pluginsStore,
+                t,
+                props.diffEditor ? undefined : editorResolved.value as ICodeEditor,
+                props.language,
+                props.schemaType
+            );
         }
 
         // Exposing functions globally for testing purposes
         (window as any).pasteToEditor = (textToPaste: string) => {
-            localEditor?.executeEdits("", [{
-                range: localEditor?.getSelection() ?? new monaco.Range(0, 0, 0, 0),
+            localEditor.value?.executeEdits("", [{
+                range: localEditor.value?.getSelection() ?? new monaco.Range(0, 0, 0, 0),
                 text: textToPaste
             }])
         };
         (window as any).clearEditor = () => {
-            localEditor?.getModel()?.setValue("")
+            localEditor.value?.getModel()?.setValue("")
         };
         (window as any).acceptSuggestion = () => {
-            localEditor?.trigger("acceptSelectedSuggestion", "acceptSelectedSuggestion", {});
+            localEditor.value?.trigger("acceptSelectedSuggestion", "acceptSelectedSuggestion", {});
         };
         (window as any).nextSuggestion = () => {
-            localEditor?.trigger("selectNextSuggestion", "selectNextSuggestion", {});
+            localEditor.value?.trigger("selectNextSuggestion", "selectNextSuggestion", {});
         };
     })
 
@@ -570,7 +636,8 @@
 
         const $el = editorRef.value
         if ($el !== null) {
-            suggestWidgetResizeObserver.value.observe($el.querySelector(".overflowingContentWidgets")!, {childList: true})
+            const modifiedEditorWidgets = $el.querySelector(".editor.modified .overflowingContentWidgets");
+            suggestWidgetResizeObserver.value.observe(modifiedEditorWidgets ?? $el.querySelector(".overflowingContentWidgets"), {childList: true})
         }
     }
 
@@ -588,13 +655,21 @@
 
         if (props.diffEditor) {
             if (editorRef.value) {
-                localDiffEditor = monaco.editor.createDiffEditor(editorRef.value, {
+                localDiffEditor.value = monaco.editor.createDiffEditor(editorRef.value, {
                     ...options,
                     ignoreTrimWhitespace: false
                 });
-                let originalModel = monaco.editor.createModel(props.original, props.language);
-                let modifiedModel = monaco.editor.createModel(props.value, props.language);
-                localDiffEditor.setModel({
+                let originalModel = monaco.editor.createModel(
+                    props.original,
+                    props.language,
+                    monaco.Uri.file(prefix.value + Utils.uid() + (props.language ? `.${props.language}` : ""))
+                );
+                let modifiedModel = monaco.editor.createModel(
+                    props.value,
+                    props.language,
+                    monaco.Uri.file(prefix.value + Utils.uid() + (props.language ? `.${props.language}` : ""))
+                );
+                localDiffEditor.value.setModel({
                     original: originalModel,
                     modified: modifiedModel
                 });
@@ -629,34 +704,34 @@
             });
 
             if (editorRef.value) {
-                localEditor = monaco.editor.create(editorRef.value, options);
+                localEditor.value = monaco.editor.create(editorRef.value, options);
 
                 if (props.suggestionsOnFocus) {
-                    localEditor.onMouseDown(() => {
-                        localEditor!.trigger("click", "editor.action.triggerSuggest", {});
+                    localEditor.value.onMouseDown(() => {
+                        localEditor.value!.trigger("click", "editor.action.triggerSuggest", {});
                     });
                 }
 
                 if (props.placeholder !== undefined) {
-                    new PlaceholderContentWidget(props.placeholder, localEditor);
+                    new PlaceholderContentWidget(props.placeholder, localEditor.value);
                 }
 
-                const suggestController = localEditor!.getContribution("editor.contrib.suggestController") as unknown as {
+                const suggestController = localEditor.value!.getContribution("editor.contrib.suggestController") as unknown as {
                     model: { state: 0 | 1 | 2 },
                     cancelSuggestWidget: () => void
                 };
 
-                localEditor.onDidChangeModelContent(e => {
+                localEditor.value.onDidChangeModelContent(e => {
                     if ((e.isUndoing || e.isRedoing) && suggestController.model.state !== 0) {
                         suggestController.cancelSuggestWidget();
-                        localEditor!.trigger("refreshSuggestionsAfterUndoRedo", "editor.action.triggerSuggest", {});
+                        localEditor.value!.trigger("refreshSuggestionsAfterUndoRedo", "editor.action.triggerSuggest", {});
                     }
                 });
 
-                localEditor.onDidChangeCursorPosition(debounce(() => {
+                localEditor.value.onDidChangeCursorPosition(debounce(() => {
                     if (suggestController.model.state !== 0) {
                         suggestController.cancelSuggestWidget();
-                        localEditor!.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {});
+                        localEditor.value!.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {});
                     }
                 }, 300))
             }
@@ -665,8 +740,6 @@
                 await changeTab(props.path, () => Promise.resolve(props.value), false);
             }
         }
-
-        observeAndResizeSuggestWidget();
 
         let _editor = getModifiedEditor();
         _editor?.onDidChangeModelContent(function (event) {
@@ -684,8 +757,12 @@
             }
         });
 
+        observeAndResizeSuggestWidget();
+
         setTimeout(() => monaco.editor.remeasureFonts(), 1)
         emit("editorDidMount", editorResolved.value);
+
+        highlightLine();
     }
 
     const current = computed(() => {
@@ -694,18 +771,17 @@
 
     async function changeTab(pathOrName: string, valueSupplier: () => Promise<string>, useModelCache = true) {
         let model;
-        const prefix = props.schemaType ? `${props.schemaType}-` : "";
         if (props.input || pathOrName === undefined) {
             model = monaco.editor.createModel(
                 await valueSupplier(),
                 props.language,
-                monaco.Uri.file(prefix + Utils.uid() + (props.language ? `.${props.language}` : ""))
+                monaco.Uri.file(prefix.value + Utils.uid() + (props.language ? `.${props.language}` : ""))
             );
         } else {
             if (!pathOrName.includes(".") && props.language) {
                 pathOrName = `${pathOrName}.${props.language}`;
             }
-            const fileUri = monaco.Uri.file(prefix + pathOrName);
+            const fileUri = monaco.Uri.file(prefix.value + pathOrName);
             model = monaco.editor.getModel(fileUri);
             if (model === null) {
                 model = monaco.editor.createModel(
@@ -717,33 +793,46 @@
                 model.setValue(await valueSupplier());
             }
         }
-        localEditor?.setModel(model);
+        localEditor.value?.setModel(model);
 
         return model
     }
 
     function getModifiedEditor() {
-        return props.diffEditor ? localDiffEditor?.getModifiedEditor() : localEditor;
+        return props.diffEditor ? localDiffEditor.value?.getModifiedEditor() : localEditor.value;
     }
 
     function getOriginalEditor() {
-        return props.diffEditor ? localDiffEditor?.getOriginalEditor() : localEditor;
+        return props.diffEditor ? localDiffEditor.value?.getOriginalEditor() : localEditor.value;
     }
 
     function focus() {
         editorResolved.value?.focus();
     }
 
+    watch(() => props.diffEditor, () => {
+        reload();
+    });
+
+    watch(() => props.value , (newVal) => {
+        if (props.diffEditor && localDiffEditor.value?.getModel()?.modified?.getValue?.() !== newVal) {
+            localDiffEditor.value?.getModel()?.modified?.setValue?.(newVal);
+        }
+    });
+
     function destroy() {
         disposeObservers();
         disposeCompletions.value?.();
-        if (props.diffEditor) {
-            localDiffEditor?.getModel()?.modified?.dispose();
-            localDiffEditor?.getModel()?.original?.dispose();
-            localDiffEditor?.dispose();
-        } else {
-            localEditor?.getModel()?.dispose();
-            localEditor?.dispose();
+        if (localDiffEditor.value !== undefined) {
+            localDiffEditor.value?.dispose();
+            localDiffEditor.value?.getModel()?.modified?.dispose();
+            localDiffEditor.value?.getModel()?.original?.dispose();
+            localDiffEditor.value = undefined;
+        }
+        if (localEditor.value !== undefined) {
+            localEditor.value?.dispose();
+            localEditor.value?.getModel()?.dispose();
+            localEditor.value = undefined
         }
     }
 
@@ -754,7 +843,7 @@
     function reload() {
         destroy();
         initMonaco();
-    };
+    }
 </script>
 
 <style scoped lang="scss">

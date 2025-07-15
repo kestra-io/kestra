@@ -1,4 +1,9 @@
-import {Comparators, Completion, FilterKeyCompletions} from "../filterCompletion.ts";
+import {
+    Comparators,
+    Completion,
+    FilterKeyCompletions,
+    PICK_DATE_VALUE
+} from "../filterCompletion.ts";
 import {FilterLanguage} from "../filterLanguage.ts";
 import permission from "../../../../../models/permission.ts";
 import action from "../../../../../models/action.ts";
@@ -28,6 +33,40 @@ const triggerFilterKeys: Record<string, FilterKeyCompletions> = {
         undefined,
         true
     ),
+    timeRange: new FilterKeyCompletions(
+        [Comparators.EQUALS],
+        async (_, hardcodedValues) => hardcodedValues.RELATIVE_DATE,
+        false,
+        ["timeRange", "startDate", "endDate"]
+    ),
+    startDate: new FilterKeyCompletions(
+        [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.GREATER_THAN, Comparators.LESS_THAN_OR_EQUAL_TO, Comparators.LESS_THAN, Comparators.EQUALS, Comparators.NOT_EQUALS],
+        async () => PICK_DATE_VALUE,
+        false,
+        ["timeRange"]
+    ),
+    endDate: new FilterKeyCompletions(
+        [Comparators.LESS_THAN_OR_EQUAL_TO, Comparators.LESS_THAN, Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.GREATER_THAN, Comparators.EQUALS, Comparators.NOT_EQUALS],
+        async () => PICK_DATE_VALUE,
+        false,
+        ["timeRange"]
+    ),
+    scope: new FilterKeyCompletions(
+        [Comparators.EQUALS, Comparators.NOT_EQUALS],
+        async (_, hardcodedValues) => hardcodedValues.SCOPES,
+        undefined,
+        ["scope"]
+    ),
+    triggerId: new FilterKeyCompletions(
+        [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.CONTAINS, Comparators.STARTS_WITH, Comparators.ENDS_WITH],
+        undefined,
+        true
+    ),
+    workerId: new FilterKeyCompletions(
+        [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.CONTAINS, Comparators.STARTS_WITH, Comparators.ENDS_WITH],
+        undefined,
+        true
+    )
 }
 
 class TriggerFilterLanguage extends FilterLanguage {

@@ -21,19 +21,16 @@
 
 <script setup lang="ts">
     import {ref, watch, inject} from "vue";
-    import {useI18n} from "vue-i18n";
     import InputText from "../code/components/inputs/InputText.vue";
     import Add from "../code/components/Add.vue";
     import {DeleteOutline} from "../code/utils/icons";
-    import {BREADCRUMB_INJECTION_KEY, PANEL_INJECTION_KEY} from "../code/injectionKeys";
+    import {PANEL_INJECTION_KEY} from "../code/injectionKeys";
 
     interface InputType {
         type: string;
         id?: string;
         cls?: string;
     }
-
-    const {t} = useI18n();
 
     const props = withDefaults(defineProps<{
         modelValue: InputType[];
@@ -51,7 +48,6 @@
     }>();
 
     const panel = inject(PANEL_INJECTION_KEY, ref());
-    const breadcrumbs = inject(BREADCRUMB_INJECTION_KEY, ref([]));
 
     const newInputs = ref<InputType[]>([]);
     const selectedInput = ref<InputType | undefined>();
@@ -72,10 +68,6 @@
                 selectedIndex: index,
             }
         };
-
-        breadcrumbs.value.push({
-            label: t("inputs".toLowerCase()),
-        });
     };
 
     const deleteInput = (index: number) => {

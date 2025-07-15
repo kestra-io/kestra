@@ -1,12 +1,15 @@
 <template>
     <a
         download
-        :href="$store.getters['doc/resourceUrl']('kestra-logo-kit.zip')"
+        :href="docStore.resourceUrl('kestra-logo-kit.zip')"
     >
         <LinkVariant />   {{ $t('download_logos') }}
     </a>
 </template>
 
 <script setup>
+    import {useDocStore} from "../../stores/doc";
     import LinkVariant from "vue-material-design-icons/LinkVariant.vue";
+    
+    const docStore = useDocStore();
 </script>

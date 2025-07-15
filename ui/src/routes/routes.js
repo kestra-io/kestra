@@ -1,4 +1,5 @@
 import OnlyLeftMenuLayout from "../components/layout/OnlyLeftMenuLayout.vue"
+import FullScreenLayout from "../components/layout/FullScreenLayout.vue"
 import Errors from "../components/errors/Errors.vue"
 import DemoIAM from "../components/demo/IAM.vue"
 import DemoTenants from "../components/demo/Tenants.vue"
@@ -9,7 +10,7 @@ import DemoTests from "../components/demo/Tests.vue"
 
 export default [
     //Initial
-    {name: "root", path: "/", redirect: {name: "home"}},
+    {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}}},
     {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
 
     //Dashboards
@@ -71,7 +72,7 @@ export default [
     {name: "logs/list", path: "/:tenant?/logs", component: () => import("../components/logs/LogsWrapper.vue")},
 
     //Namespaces
-    {name: "namespaces/list", path: "/:tenant?/namespaces", component: () => import("../components/namespaces/Namespaces.vue")},
+    {name: "namespaces/list", path: "/:tenant?/namespaces", component: () => import("override/components/namespaces/Namespaces.vue")},
     {name: "namespaces/create", path: "/:tenant?/namespaces/new/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
     {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
 
@@ -84,6 +85,11 @@ export default [
     //Admin
     {name: "admin/triggers", path: "/:tenant?/admin/triggers", component: () => import("../components/admin/Triggers.vue")},
     {name: "admin/stats", path: "/:tenant?/admin/stats", component: () => import("override/components/admin/stats/Stats.vue")},
+
+    //Setup
+    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout}},
+    //Login
+    {name: "login", path: "/:tenant?/login", component: () => import("../components/basicauth/BasicAuthLogin.vue"), meta: {layout: FullScreenLayout}},
 
     //Errors
     {name: "errors/404-wildcard", path: "/:pathMatch(.*)", component: Errors, props: {code: 404}},

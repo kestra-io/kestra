@@ -3,12 +3,12 @@
         <button v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
 
         <el-button
-            v-for="(button, key) of buttonsList"
+            v-for="(button, key) of {...buttonsList, ...props.additionalButtons}"
             :key="key"
             :type="activeTab === key ? 'primary' : 'default'"
             :tag="button.url ? 'a' : 'button'"
             :href="button.url"
-            @click="() => {if(!button.url){ setActiveTab(key)}}"
+            @click="() => {if(!button.url){ setActiveTab(key as string)}}"
             :target="button.url ? '_blank' : undefined"
         >
             <component :is="button.icon" class="context-button-icon" />{{ button.title }}
@@ -23,12 +23,12 @@
             :persistent="false"
             transition=""
             :hide-after="0"
-            :disabled="!configs.commitId"
+            :disabled="!miscStore.configs.commitId"
         >
             <template #content>
-                <code>{{ configs.commitId }}</code> <DateAgo v-if="configs.commitDate" :inverted="true" :date="configs.commitDate" />
+                <code>{{ miscStore.configs.commitId }}</code> <DateAgo v-if="miscStore.configs.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
             </template>
-            <span class="versionNumber">{{ configs?.version }}</span>
+            <span class="versionNumber">{{ miscStore.configs?.version }}</span>
         </el-tooltip>
         <el-button class="theme-switcher" @click="onSwitchTheme">
             <WeatherNight v-if="themeIsDark" />
@@ -50,7 +50,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref, watch, type Ref, type Component} from "vue";
+    import {computed, ref, watch, type Ref, type Component, PropType} from "vue";
     import {useMouse, watchThrottled} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
@@ -65,28 +65,43 @@
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import WeatherSunny from "vue-material-design-icons/WeatherSunny.vue"
     import WeatherNight from "vue-material-design-icons/WeatherNight.vue"
+    import Star from "vue-material-design-icons/Star.vue"
 
     import {useStorage} from "@vueuse/core"
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import Utils from "../utils/utils";
+    import {useApiStore} from "../stores/api";
+    import {useMiscStore} from "../stores/misc";
 
     const {t} = useI18n({useScope: "global"});
 
-    const store = useStore();
+    const apiStore = useApiStore();
+    const miscStore = useMiscStore();
 
-    const configs = computed(() => store.getters["misc/configs"]);
-    const activeTab = computed(() => store.getters["misc/contextInfoBarOpenTab"])
+    const activeTab = computed(() => miscStore.contextInfoBarOpenTab)
 
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
 
     const hasUnread = computed(() => {
-        const feeds = store.state.misc.feeds
+        const feeds = apiStore.feeds
         return (
             lastNewsReadDate.value === null ||
             (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate)))
         )
     })
+
+    const props = defineProps({
+        additionalButtons: {
+            type: Object as PropType<Record<string, {
+                title: string;
+                icon?: Component;
+                url: string;
+                hasUnreadMarker: false;
+            }>>,
+            default: () => ({})
+        }
+    });
+
 
     const buttonsList: Record<string, {
         title:string,
@@ -120,6 +135,11 @@
             title: t("contextBar.demo"),
             icon: Calendar,
             url: "https://kestra.io/demo"
+        },
+        star: {
+            title: t("contextBar.star"),
+            icon: Star,
+            url: "https://github.com/kestra-io/kestra"
         }
     }
 
@@ -161,9 +181,9 @@
 
     function setActiveTab(tab: string) {
         if (activeTab.value === tab) {
-            store.commit("misc/setContextInfoBarOpenTab", "")
+            miscStore.contextInfoBarOpenTab = "";
         } else {
-            store.commit("misc/setContextInfoBarOpenTab", tab)
+            miscStore.contextInfoBarOpenTab = tab;
         }
     }
 
@@ -171,7 +191,8 @@
 
     const onSwitchTheme = () => {
         themeIsDark.value = !themeIsDark.value;
-        Utils.switchTheme(store, themeIsDark.value ? "dark" : "light");
+        const theme = themeIsDark.value ? "dark" : "light";
+        Utils.switchTheme(miscStore, theme);
     }
 </script>
 
@@ -207,6 +228,11 @@
         align-items: center;
         gap: 0.5rem;
         font-size: var(--font-size-sm);
+        overflow-y: auto;
+        &::-webkit-scrollbar {
+            width: 0; 
+        }
+        scrollbar-width: none;
 
         &.opened {
             border-right: 1px solid var(--ks-border-primary);
@@ -228,6 +254,7 @@
             color: var(--ks-content-tertiary);
             opacity: .4;
             margin-top: 1rem;
+            white-space: nowrap;
         }
 
         .theme-switcher {
@@ -269,6 +296,10 @@
         width: 0;
         position: relative;
         overflow-y: auto;
+        &::-webkit-scrollbar {
+            width: 0px; 
+        }
+        scrollbar-width: none;
 
         .closeButton {
             position: fixed;

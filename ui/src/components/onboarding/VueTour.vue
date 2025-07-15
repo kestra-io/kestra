@@ -28,8 +28,8 @@
                             v-if="currentStep(tour).title"
                             class="title"
                             :class="{
-                                dark: currentStep(tour).keepDark, 
-                                empty: !flows.length, 
+                                dark: currentStep(tour).keepDark,
+                                empty: !flows.length,
                                 fixed: tour.currentStep === 1
                             }"
                         >
@@ -69,7 +69,7 @@
                                     >
                                         <TaskIcon
                                             :cls="task"
-                                            :icons="icons"
+                                            :icons="pluginsStore.icons"
                                             :variable="ICON_COLOR"
                                             only-icon
                                         />
@@ -159,22 +159,27 @@
     import ArrowRight from "../../assets/onboarding/icons/arrow-right.svg";
 
     import {editorViewTypes} from "../../utils/constants";
+    import {useApiStore} from "../../stores/api";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {useCoreStore} from "../../stores/core";
 
     const router = useRouter();
     const store = useStore();
+    const coreStore = useCoreStore();
 
-    const icons = computed(() => store.state.plugin.icons);
+    const apiStore = useApiStore();
+    const pluginsStore = usePluginsStore();
 
     const {t} = useI18n({useScope: "global"});
 
     const updateStatus = () => localStorage.setItem("tourDoneOrSkip", "true");
     const dispatchEvent = (step, action) =>
-        store.dispatch("api/events", {
+        apiStore.events({
             type: "ONBOARDING",
             onboarding: {
                 step,
                 action,
-                template: store.getters["core/guidedProperties"].template,
+                template: coreStore.guidedProperties.template,
             },
             page: pageFromRoute(router.currentRoute.value),
         });
@@ -210,7 +215,7 @@
     };
 
     const activeFlow = ref(0);
-    const flows = computed(() => store.state.core.tutorialFlows);
+    const flows = computed(() => coreStore.tutorialFlows);
 
     const allTasks = (tasks) => {
         const uniqueTypes = new Set();
@@ -254,9 +259,10 @@
     });
 
     watch(activeFlow, async (newValue) => {
-        store.commit("core/setGuidedProperties", {
+        coreStore.guidedProperties = {
+            ...coreStore.guidedProperties,
             template: flows.value[newValue].id,
-        });
+        };
     });
 
     const properties = (step, c = true, p = true, s = false) => ({
@@ -285,10 +291,10 @@
             before: () => {
                 toggleScroll(false);
 
-                store.commit("core/setGuidedProperties", {
+                coreStore.guidedProperties = {
+                    ...coreStore.guidedProperties,
                     tourStarted: true,
-                    fullscreen: true,
-                });
+                };
 
                 return wait();
             },
@@ -306,17 +312,19 @@
                         tab: "edit",
                     },
                 });
-                store.commit("core/setGuidedProperties", {
+                coreStore.guidedProperties = {
+                    ...coreStore.guidedProperties,
                     manuallyContinue: true,
-                });
+                };
             },
             before: () => {
                 store.commit("editor/updateOnboarding");
 
-                store.commit("core/setGuidedProperties", {
+                coreStore.guidedProperties = {
+                    ...coreStore.guidedProperties,
                     tourStarted: true,
                     template: flows.value[activeFlow.value]?.id,
-                });
+                };
 
                 return wait();
             },
@@ -410,7 +418,10 @@
         updateStatus();
         dispatchEvent(current, "skip");
 
-        store.commit("core/setGuidedProperties", {tourStarted: false});
+        coreStore.guidedProperties = {
+            ...coreStore.guidedProperties,
+            tourStarted: false,
+        };
 
         TOURS[TOUR_NAME].stop();
         router.push({name: "flows/create"});
@@ -422,7 +433,10 @@
         dispatchEvent(current, "finish");
         dispatchEvent(current, "executed");
 
-        store.commit("core/setGuidedProperties", {tourStarted: false});
+        coreStore.guidedProperties = {
+            ...coreStore.guidedProperties,
+            tourStarted: false,
+        };
 
         TOURS[TOUR_NAME].finish();
 
@@ -435,7 +449,7 @@
     };
 
     onMounted(() => {
-        store.dispatch("core/readTutorialFlows");
+        coreStore.readTutorialFlows();
     });
 </script>
 

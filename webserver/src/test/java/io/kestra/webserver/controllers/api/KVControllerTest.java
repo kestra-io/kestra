@@ -65,7 +65,8 @@ class KVControllerTest {
         Instant myKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(5)).truncatedTo(ChronoUnit.MILLIS);
         Instant mySecondKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(10)).truncatedTo(ChronoUnit.MILLIS);
         storageInterface.put(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "my-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString()), new ByteArrayInputStream("my-value".getBytes())));
-        storageInterface.put(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "my-second-key"), new StorageObject(Map.of("expirationDate", mySecondKeyExpirationDate.toString()), new ByteArrayInputStream("my-second-value".getBytes())));
+        String secondKvDescription = "myDescription";
+        storageInterface.put(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "my-second-key"), new StorageObject(Map.of("expirationDate", mySecondKeyExpirationDate.toString(), "description", secondKvDescription), new ByteArrayInputStream("my-second-value".getBytes())));
 
         List<KVEntry> res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv"), Argument.of(List.class, KVEntry.class));
         res.stream().forEach(entry -> {
@@ -74,7 +75,9 @@ class KVControllerTest {
         });
 
         assertThat(res.stream().filter(entry -> entry.key().equals("my-key")).findFirst().get().expirationDate()).isEqualTo(myKeyExpirationDate);
-        assertThat(res.stream().filter(entry -> entry.key().equals("my-second-key")).findFirst().get().expirationDate()).isEqualTo(mySecondKeyExpirationDate);
+        KVEntry secondKv = res.stream().filter(entry -> entry.key().equals("my-second-key")).findFirst().get();
+        assertThat(secondKv.expirationDate()).isEqualTo(mySecondKeyExpirationDate);
+        assertThat(secondKv.description()).isEqualTo(secondKvDescription);
     }
 
     static Stream<Arguments> kvGetKeyValueArgs() {
@@ -152,7 +155,8 @@ class KVControllerTest {
     @ParameterizedTest
     @MethodSource("kvSetKeyValueArgs")
     void setKeyValue(MediaType mediaType, String value, Class<?> expectedClass) throws IOException, ResourceExpiredException {
-        client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", value).contentType(mediaType).header("ttl", "PT5M"));
+        String myDescription = "myDescription";
+        client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", value).contentType(mediaType).header("ttl", "PT5M").header("description", myDescription));
 
         KVStore kvStore = new InternalKVStore(TENANT_ID, NAMESPACE, storageInterface);
         Class<?> valueClazz = kvStore.getValue("my-key").get().value().getClass();
@@ -163,6 +167,7 @@ class KVControllerTest {
         KVEntry kvEntry = list.get(0);
         assertThat(kvEntry.expirationDate().isAfter(Instant.now().plus(Duration.ofMinutes(4)))).isTrue();
         assertThat(kvEntry.expirationDate().isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isTrue();
+        assertThat(kvEntry.description()).isEqualTo(myDescription);
     }
 
     @Test

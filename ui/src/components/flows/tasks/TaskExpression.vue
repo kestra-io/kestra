@@ -42,7 +42,9 @@
             return props.modelValue;
         }
 
-        return YAML_UTILS.stringify(props.modelValue);
+        return props.modelValue !== undefined && props.modelValue !== null
+            ? YAML_UTILS.stringify(props.modelValue)
+            : "";
     })
 
     const localEditorValue = ref(editorValue.value)

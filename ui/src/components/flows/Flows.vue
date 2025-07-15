@@ -75,7 +75,7 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <Sections :charts show-default />
+                    <Sections :dashboard="{id: 'default'}" :charts show-default />
                 </template>
 
                 <template #table>
@@ -209,7 +209,7 @@
                                         :inverted="true"
                                         :date="
                                             getLastExecution(scope.row)
-                                                .startDate
+                                                ?.startDate
                                         "
                                     />
                                 </template>
@@ -228,11 +228,11 @@
                                         v-if="
                                             lastExecutionByFlowReady &&
                                                 getLastExecution(scope.row)
-                                                    .lastStatus
+                                                    ?.status
                                         "
                                         :status="
                                             getLastExecution(scope.row)
-                                                .lastStatus
+                                                ?.status
                                         "
                                         size="small"
                                     />
@@ -393,6 +393,8 @@
                     localStorage.getItem(storageKeys.SHOW_FLOWS_CHART),
                 ),
                 loading: false,
+                lastExecutionByFlowReady: false,
+                latestExecutions: []
             };
         },
         computed: {
@@ -531,7 +533,7 @@
                         const flowCount = this.queryBulkAction
                             ? this.total
                             : this.selection.length;
-                        
+
                         if (this.queryBulkAction) {
                             return this.$store
                                 .dispatch(
@@ -707,23 +709,10 @@
                     });
             },
             getLastExecution(row) {
-                let noState = {state: null, startDate: null};
-                if (this.statStore.lastExecutionsData && this.statStore.lastExecutionsData.length > 0) {
-                    let filteredFlowExec = this.statStore.lastExecutionsData.filter(
-                        (executedFlow) =>
-                            executedFlow.flowId == row.id &&
-                            executedFlow.namespace == row.namespace,
-                    );
-                    if (filteredFlowExec.length > 0) {
-                        return {
-                            lastStatus: filteredFlowExec[0].state?.current,
-                            startDate: filteredFlowExec[0].state?.startDate,
-                        };
-                    }
-                    return noState;
-                } else {
-                    return noState;
-                }
+                if (!this.latestExecutions || !row) return null;
+                return this.latestExecutions.find(
+                    e => e.flowId === row.id && e.namespace === row.namespace
+                ) ?? null;
             },
             loadQuery(base, ignoreDateFilters = true) {
                 let queryFilter = this.queryWithFilter(
@@ -749,6 +738,27 @@
                             sort: q.sort ?? "id:asc",
                         }),
                     )
+                    .then(data => {
+                        if(this.user.hasAnyActionOnAnyNamespace(
+                            permission.EXECUTION,
+                            action.READ,
+                        )) {
+                            this.$store.dispatch(
+                                "execution/loadLatestExecutions",
+                                {
+                                    flowFilters: data.results.map(flow => {
+                                        return {
+                                            id: flow.id,
+                                            namespace: flow.namespace
+                                        };
+                                    })
+                                }
+                            ).then(latestExecs => {
+                                this.latestExecutions = latestExecs;
+                                this.lastExecutionByFlowReady = true;
+                            });
+                        }
+                    })
                     .finally(callback);
             },
             rowClasses(row) {

@@ -1,14 +1,5 @@
 <template>
-    <component
-        v-if="lastBreadcrumb"
-        :is="lastBreadcrumb.type"
-        v-bind="lastBreadcrumb.props"
-        :model-value="parsedTask[field]"
-        @update:model-value="validateTaskElement"
-    />
-
     <TaskEditor
-        v-else
         v-model="yaml"
         @update:model-value="validateTask(); saveTask();"
     />
@@ -25,7 +16,7 @@
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants";
     import {
-        BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
+        CLOSE_TASK_FUNCTION_INJECTION_KEY,
         FLOW_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY,
@@ -58,15 +49,6 @@
         EDIT_TASK_FUNCTION_INJECTION_KEY,
         () => {},
     );
-
-    const breadcrumbs = inject(
-        BREADCRUMB_INJECTION_KEY,
-        ref([])
-    );
-
-    const lastBreadcrumb = computed(() => {
-        return breadcrumbs.value?.[breadcrumbs.value.length - 1]?.component
-    });
 
     interface TaskModel {
         newBlock: string,
@@ -104,8 +86,6 @@
         section.value === "triggers" ? SECTIONS.TRIGGERS : SECTIONS.TASKS
     )
 
-    const parsedTask = computed(() => YAML_UTILS.parse(yaml.value));
-
     const validateTask = (task?: string) => {
         if(section.value !== PLUGIN_DEFAULTS_SECTION && task){
             clearTimeout(timer.value);
@@ -120,26 +100,6 @@
             }, 500) as any;
         }
     };
-
-    const field = computed(() => {
-        const index = breadcrumbs.value.length - 1;
-        return breadcrumbs.value[index]?.label;
-    });
-
-    const validateTaskElement = (taskElement?: Record<string, any>) => {
-        let temp = parsedTask.value;
-
-        if (lastBreadcrumb.value.shown) {
-            if (field.value && Object.keys(taskElement ?? {}).length) {
-                temp[field.value] = taskElement;
-            }
-        }
-
-        const task = YAML_UTILS.stringify(temp);
-
-        yaml.value = task;
-    };
-
 
     const timer = ref<number>();
     const lastValidatedValue = ref<string>();

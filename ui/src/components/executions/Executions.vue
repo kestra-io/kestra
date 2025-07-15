@@ -58,7 +58,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections :charts show-default />
+                <Sections :dashboard="{id: 'default'}" :charts show-default />
             </template>
 
             <template #table>
@@ -323,7 +323,7 @@
         </data-table>
     </section>
 
-    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="uuid" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -362,7 +362,7 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="uuid" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -411,7 +411,9 @@
 </script>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useMiscStore} from "../../stores/misc";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -435,6 +437,7 @@
     import DateAgo from "../layout/DateAgo.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import Utils from "../../utils/utils";
 
     import {filterLabels} from "./utils"
 
@@ -589,7 +592,7 @@
             ...mapState("execution", ["executions", "total"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useMiscStore),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -684,7 +687,7 @@
         },
         methods: {
             filteredLabels(labels) {
-                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
 
                 // Extract only the keys from the route query labels
                 const allowedLabels = this.$route.query.labels ? this.$route.query.labels.map(label => label.split(":")[0]) : [];
@@ -757,11 +760,12 @@
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
             },
-            genericConfirmAction(toast, queryAction, byIdAction, success) {
+            genericConfirmAction(toast, queryAction, byIdAction, success, showCancelButton = true) {
                 this.$toast().confirm(
                     this.$t(toast, {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => this.genericConfirmCallback(queryAction, byIdAction, success),
-                    () => {}
+                    () => {},
+                    showCancelButton
                 );
             },
             genericConfirmCallback(queryAction, byIdAction, success, params) {
@@ -803,7 +807,8 @@
                     "bulk resume",
                     "execution/queryResumeExecution",
                     "execution/bulkResumeExecution",
-                    "executions resumed"
+                    "executions resumed",
+                    false
                 );
             },
             pauseExecutions() {

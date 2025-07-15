@@ -160,7 +160,7 @@
             source: "",
             isAllowedEdit: false,
             horizontalDefault: undefined,
-            toggleOrientationButton: false,
+            toggleOrientationButton: true,
             expandedSubflows: () => [],
         })
 

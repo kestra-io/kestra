@@ -130,9 +130,6 @@ datasources:
     username: kestra
     password: k3str4
 kestra:
-  server:
-    basic-auth:
-    enabled: false
   encryption:
     secret-key: 3ywuDa/Ec61VHkOX3RlI9gYq7CaD0mv0Pf3DHtAXA6U=
   repository:

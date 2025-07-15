@@ -266,7 +266,6 @@
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
                 @reorder="(yaml) => handleReorder(yaml)"
-                @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
             />
         </div>
         <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
@@ -466,6 +465,7 @@
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
     import {useCoreStore} from "../../stores/core";
+    import {useMiscStore} from "../../stores/misc";
     import {useRoute, useRouter} from "vue-router";
     import {useStorage} from "@vueuse/core";
 
@@ -503,13 +503,15 @@
     import MetadataEditor from "../flows/MetadataEditor.vue";
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
     import {usePluginsStore} from "../../stores/plugins";
+    import * as FLOW_YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import AiAgent from "../ai/AiAgent.vue";
     import AiIcon from "../ai/AiIcon.vue";
     import AcceptDecline from "./AcceptDecline.vue";
 
     const store = useStore();
     const coreStore = useCoreStore();
-    const aiEnabled = computed(() => store.state.misc.configs?.isAiEnabled);
+    const miscStore = useMiscStore();
+    const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);
@@ -810,8 +812,10 @@
         emit(type, event);
     };
 
-    const updatePluginDocumentation = (event, task) => {
-        pluginsStore.updateDocumentation({event,task});
+    const updatePluginDocumentation = (event) => {
+        const elementWrapper = FLOW_YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+        let element = elementWrapper.value.type !== undefined ? elementWrapper.value : elementWrapper.parents.findLast(p => p.type !== undefined);
+        pluginsStore.updateDocumentation(element);
     };
 
     const fetchGraph = () => {

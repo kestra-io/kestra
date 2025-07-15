@@ -1,7 +1,7 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
     <section class="container" v-if="ready">
-        <data-table @page-changed="onPageChanged" ref="dataTable" :total="total">
+        <data-table @page-changed="onPageChanged" ref="dataTable" :total="taskrunsStore.total">
             <template #navbar>
                 <KestraFilter
                     prefix="taskruns"
@@ -14,10 +14,9 @@
                 />
             </template>
 
-
             <template #table>
                 <el-table
-                    :data="taskruns"
+                    :data="taskrunsStore.taskruns"
                     ref="table"
                     :default-sort="{prop: 'state.startDate', order: 'descending'}"
                     table-layout="auto"
@@ -103,7 +102,6 @@
     import TaskRunFilterLanguage from "../../composables/monaco/languages/filters/impl/taskRunFilterLanguage.js";
 </script>
 <script>
-    import {mapState} from "vuex";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -113,7 +111,6 @@
     import DateAgo from "../layout/DateAgo.vue";
     import Kicon from "../Kicon.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
-
     import {State} from "@kestra-io/ui-libs"
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
@@ -140,7 +137,6 @@
             };
         },
         computed: {
-            ...mapState("taskrun", ["taskruns", "total"]),
             routeInfo() {
                 return {
                     title: this.$t("taskruns")
@@ -166,6 +162,11 @@
 
                 // the default is PT30D
                 return this.$moment().subtract(30, "days").toISOString(true);
+            },
+            executionsCount() {
+                return this.statStore.taskRunDailyData?.reduce((a, b) => {
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
+                }, 0) ?? 0;
             },
         },
         methods: {
@@ -210,8 +211,10 @@
             },
             loadData(callback) {
                 this.lastRefreshDate = new Date();
-                this.$store
-                    .dispatch("taskrun/findTaskRuns", this.loadQuery({
+
+
+                this.taskrunsStore
+                    .findTaskRuns(this.loadQuery({
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
                         state: this.$route.query.state ? [this.$route.query.state] : this.statuses

@@ -35,7 +35,6 @@ export default {
         ...mapState("auth", ["user"]),
         ...mapGetters("flow", ["flow"]),
         ...mapGetters("template", ["template"]),
-        ...mapState("plugin", ["pluginSingleList","pluginsDocumentation"]),
         ...mapStores(useApiStore, usePluginsStore, useCoreStore),
         guidedProperties() {
             return this.coreStore.guidedProperties;
@@ -267,18 +266,9 @@ export default {
             }
         },
         updatePluginDocumentation(event) {
-            const taskType = YAML_UTILS.getTypeAtPosition(event.model.getValue(), event.position, this.pluginSingleList)
-            if (taskType) {
-                const taskElement = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.position);
-                const version = taskElement?.parents?.[taskElement.parents.length - 1]?.version;
-
-                this.pluginsStore.load({cls: taskType, version})
-                    .then(plugin => {
-                        this.pluginsStore.editorPlugin = {cls: taskType, ...plugin};
-                    });
-            } else {
-                this.pluginsStore.editorPlugin = undefined;
-            }
+            const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+            let element = elementWrapper?.value?.type !== undefined ? elementWrapper.value : elementWrapper?.parents?.findLast(p => p.type !== undefined);
+            this.pluginsStore.updateDocumentation(element);
         },
     },
 };

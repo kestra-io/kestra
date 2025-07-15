@@ -17,17 +17,17 @@
 
 <script setup lang="ts">
     import {computed} from "vue";
-    import {useStore} from "vuex";
+    import {useDocStore} from "../../stores/doc";
     import ContextDocsLink from "../docs/ContextDocsLink.vue";
 
-    const store = useStore();
+    const docStore = useDocStore();
 
     const props = defineProps<{
         directory: string
         title: string
     }>()
 
-    let navigation = await store.dispatch("doc/children", props.directory) as Record<string, any>;
+    let navigation = await docStore.children(props.directory) as Record<string, any>;
 
     // avoid null values in navigation
     const protectedNavigation = computed(() => {

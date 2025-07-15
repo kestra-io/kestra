@@ -103,6 +103,8 @@ public interface FlowRepositoryInterface {
 
     List<FlowWithSource> findAllWithSource(String tenantId);
 
+    List<FlowWithSource> findAllWithSourceWithNoAcl(String tenantId);
+
     List<Flow> findAllForAllTenants();
 
     List<FlowWithSource> findAllWithSourceForAllTenants();

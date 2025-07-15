@@ -56,7 +56,7 @@
                     :icon="CalendarCollapseHorizontalOutline"
                     v-if="isSchedule(scope.row.type) && !scope.row.backfill && userCan(action.CREATE)"
                     @click="setBackfillModal(scope.row, true)"
-                    :disabled="scope.row.disabled"
+                    :disabled="scope.row.disabled || scope.row.sourceDisabled"
                     size="small"
                     type="primary"
                 >

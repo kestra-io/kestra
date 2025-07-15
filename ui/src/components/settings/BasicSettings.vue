@@ -245,9 +245,10 @@
     import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
     import Utils from "../../utils/utils";
-    import {mapGetters, mapState} from "vuex";
+    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useLayoutStore} from "../../stores/layout";
+    import {useMiscStore} from "../../stores/misc";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {logDisplayTypes, storageKeys} from "../../utils/constants";
@@ -336,8 +337,8 @@
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
             this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview";
-            this.pendingSettings.envName = this.layoutStore.envName || this.configs?.environment?.name;
-            this.pendingSettings.envColor = this.layoutStore.envColor || this.configs?.environment?.color;
+            this.pendingSettings.envName = this.layoutStore.envName || this.miscStore.configs?.environment?.name;
+            this.pendingSettings.envColor = this.layoutStore.envColor || this.miscStore.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
             this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10;
             this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
@@ -507,12 +508,12 @@
                             localStorage.removeItem(key)
                         break
                     case "envName":
-                        if (this.pendingSettings[key] !== this.configs?.environment?.name) {
+                        if (this.pendingSettings[key] !== this.miscStore.configs?.environment?.name) {
                             this.layoutStore.setEnvName(this.pendingSettings[key]);
                         }
                         break
                     case "envColor":
-                        if (this.pendingSettings[key] !== this.configs?.environment?.color) {
+                        if (this.pendingSettings[key] !== this.miscStore.configs?.environment?.color) {
                             this.layoutStore.setEnvColor(this.pendingSettings[key]);
                         }
                         break
@@ -578,11 +579,10 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapGetters("misc", ["configs"]),
-            ...mapStores(useLayoutStore),
-            ...mapState({
-                mappedTheme: state => state.misc.theme
-            }),
+            ...mapStores(useLayoutStore, useMiscStore),
+            mappedTheme() {
+                return this.miscStore.theme;
+            },
             routeInfo() {
                 return {
                     title: this.$t("settings.label")

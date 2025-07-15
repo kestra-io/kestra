@@ -4,7 +4,7 @@
         :popper-offset="20"
         :show-arrow="false"
         :suffix-icon="ChevronRight"
-        :placeholder="$t('kestra')"
+        :placeholder="t('kestra')"
         popper-class="user-select border border-0"
     >
         <template #prefix>
@@ -14,31 +14,54 @@
             <el-option :value="{}" class=" list-unstyled">
                 <div class="menu-item">
                     <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra">
-                    {{ $t("kestra") }}
+                    {{ t("kestra") }}
                 </div>
             </el-option>
         </template>
         <el-option label="Settings" value="settings">
             <RouterLink :to="{name: 'settings'}" class="menu-item">
                 <CogOutline class="menu-icon" />
-                {{ $t("settings.label") }}
+                {{ t("settings.label") }}
             </RouterLink>
         </el-option>
         <el-option label="slack" value="slack">
             <a href="https://kestra.io/slack" target="_blank" class="menu-item">
                 <Slack class="menu-icon" />
-                {{ $t("join_slack") }}
+                {{ t("join_slack") }}
             </a>
         </el-option>
+        <template #footer>
+            <el-option class="list-unstyled" :value="'logout'" @click="logout">
+                <div class="menu-item">
+                    <Logout class="menu-icon" />
+                    {{ t("setup.logout") }}
+                </div>
+            </el-option>
+        </template>
     </el-select>
 </template>
 
-<script setup>
-    import {RouterLink} from "vue-router";
+<script setup lang="ts">
+    import {RouterLink, useRouter} from "vue-router";
+    import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
 
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
     import Slack from "vue-material-design-icons/Slack.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import Logout from "vue-material-design-icons/Logout.vue";
+
+    import * as BasicAuth from "../../../utils/basicAuth";
+
+    const router = useRouter();
+    const store = useStore() as any;
+    const {t} = useI18n();
+
+    const logout = () => {
+        BasicAuth.logout();
+        delete store.$http?.defaults?.headers?.common?.["Authorization"];
+        router.push({name: "login"});
+    };
 </script>
 
 <style lang="scss" scoped>
@@ -83,6 +106,13 @@
                 &.is-hovering {
                     background: none;
                 }
+            }
+        }
+
+        .el-select-dropdown__footer {
+            padding: 5px 0;
+            .el-select-dropdown__item {
+                margin: 0 !important;
             }
         }
     }

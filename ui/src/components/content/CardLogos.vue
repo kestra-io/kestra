@@ -6,7 +6,7 @@
                 width="222.67px"
                 height="125px"
                 loading="lazy"
-                :src="$store.getters['doc/resourceUrl']('/docs/tutorial/logos/logo-dark-version.png')"
+                :src="docStore.resourceUrl('/docs/tutorial/logos/logo-dark-version.png')"
                 alt="Dark version logo"
             >
             <p class="title">
@@ -23,7 +23,7 @@
                 width="222.67px"
                 height="125px"
                 loading="lazy"
-                :src="$store.getters['doc/resourceUrl']('/docs/tutorial/logos/logo-light-version.png')"
+                :src="docStore.resourceUrl('/docs/tutorial/logos/logo-light-version.png')"
                 alt="Light version logo"
             >
             <p class="title">
@@ -40,7 +40,7 @@
                 width="222.67px"
                 height="125px"
                 loading="lazy"
-                :src="$store.getters['doc/resourceUrl']('/docs/tutorial/logos/logo-monogram-version.png')"
+                :src="docStore.resourceUrl('/docs/tutorial/logos/logo-monogram-version.png')"
                 alt="Monogram version logo"
             >
             <p class="title">
@@ -52,6 +52,12 @@
         </div>
     </div>
 </template>
+
+<script setup lang="ts">
+    import {useDocStore} from "../../stores/doc";
+    
+    const docStore = useDocStore();
+</script>
 
 <style lang="scss" scoped>
     @import "@kestra-io/ui-libs/src/scss/variables";

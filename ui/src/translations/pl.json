@@ -41,6 +41,7 @@
     "add task": "Dodaj task",
     "add-trigger-in-editor": "Najpierw dodaj Trigger do swojego Flow",
     "add_new_item": "Dodaj nowy element",
+    "additionalPlugins": "Dodatkowe Wtyczki",
     "administration": "Administracja",
     "advanced configuration": "Inne właściwości",
     "after": "po",
@@ -55,6 +56,7 @@
     "all executions": "Wszystkie wykonania",
     "all tags": "Wszystkie tagi",
     "api": "API",
+    "appBlocks": "Bloki aplikacji",
     "apps": "Aplikacje",
     "attempt": "Próba",
     "attempts": "Próba(y)",
@@ -133,7 +135,7 @@
         "Task błędów będą wykonane."
       ],
       "RUNNING": [
-        "Flow zostanie ponownie uruchomiony i wykona wszystkie następne taski.",
+        "Flow zostanie ponownie uruchomiony i wykona wszystkie kolejne taski.",
         "Wszystkie zablokowane taski zostaną wykonane."
       ],
       "SUCCESS": [
@@ -150,6 +152,7 @@
     "change state tooltip": "Zmień stan wykonania",
     "chart": "Wykres",
     "chart preview": "Podgląd wykresu",
+    "charts": "Wykresy",
     "choice": "Wybór",
     "choose file": "Wybierz plik lub upuść go tutaj...",
     "close": "Zamknij",
@@ -206,10 +209,12 @@
         "confirmation": "Czy na pewno chcesz usunąć dashboard <code>{title}</code>?"
       },
       "edition": {
+        "chart": "Edytuj ten wykres",
         "confirmation": "Zmiany w dashboardzie <code>{title}</code> zostały zapisane.",
         "label": "Edytuj Dashboard"
       },
       "empty": "Brak wyników do wyświetlenia.",
+      "export": "Eksportuj do CSV",
       "labels": {
         "plural": "Dashboardy",
         "singular": "Dashboard"
@@ -217,6 +222,7 @@
       "preview": "Podgląd Dashboardu"
     },
     "data": "Dane",
+    "dataFilters": "Filtry Danych",
     "data_not_protected": "Twoje dane nie są chronione. Nie trać ich. <b>Włącz nasze darmowe funkcje zabezpieczeń lub wypróbuj naszą płatną ofertę.</b>",
     "date": "Data",
     "date count": "{count} w dniu {date}",
@@ -696,6 +702,7 @@
     "last execution date": "Data ostatniego wykonania",
     "last execution state": "Ostatni stan",
     "last execution status": "Ostatni status wykonania",
+    "last modified": "Ostatnia modyfikacja",
     "launch execution": "Wykonaj",
     "learn_more": "Dowiedz się więcej",
     "light_background": "To jest preferowana opcja podczas pracy z jasnym tłem.",
@@ -704,6 +711,7 @@
     "live help": "Pomoc na żywo",
     "loaded x dependencies": "{count} zależności załadowane",
     "log expand setting": "Domyślne wyświetlanie Logs",
+    "logExporters": "Eksporterzy Logów",
     "logs": "Logs",
     "logs_view": {
       "compact": "Widok domyślny",
@@ -1177,6 +1185,73 @@
       },
       "label": "Ustawienia"
     },
+    "setup": {
+      "config": {
+        "basicauth": "Podstawowe uwierzytelnianie",
+        "queue": "Kolejka",
+        "repository": "Baza danych",
+        "storage": "Magazyn Wewnętrzny"
+      },
+      "confirm": {
+        "config_title": "Potwierdź, że konfiguracja jest prawidłowa",
+        "confirm": "Potwierdź",
+        "not_valid": "Nie, to nie jest prawidłowe",
+        "valid": "Tak, jest prawidłowy"
+      },
+      "form": {
+        "email": "Email",
+        "firstName": "Imię",
+        "lastName": "Nazwisko",
+        "password": "Hasło"
+      },
+      "login": "Zaloguj się",
+      "logout": "Wyloguj się",
+      "steps": {
+        "complete": "Uruchom Kestra UI",
+        "config": "Sprawdź Konfigurację",
+        "survey": "Powiedz nam więcej",
+        "user": "Utwórz pierwszego użytkownika"
+      },
+      "subtitles": {
+        "complete": "Konfiguracja zakończona sukcesem!",
+        "config": "Oto szczegóły Twojej konfiguracji",
+        "survey": "Pomóż nam ulepszyć Kestra Open Source Edition",
+        "user": "Skonfiguruj swoją instancję, tworząc pierwszego użytkownika"
+      },
+      "success": {
+        "subtitle": "Jesteś gotowy!",
+        "title": "Gratulacje!"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "Użytek osobisty",
+        "company_size": "Jaki jest rozmiar Twojej firmy?",
+        "continue": "Kontynuuj",
+        "newsletter": "Zasubskrybuj newsletter Kestra – bądź na bieżąco z najnowszymi funkcjami i zmianami.",
+        "skip": "Pomiń",
+        "use_case": "Jaki jest Twój główny przypadek użycia?",
+        "use_case_business": "Procesy biznesowe",
+        "use_case_data": "Przepływy danych",
+        "use_case_infrastructure": "Automatyzacja infrastruktury",
+        "use_case_ml": "Pipelines ML/AI",
+        "use_case_other": "Inne"
+      },
+      "titles": {
+        "survey": "Powiedz nam więcej",
+        "user": "Utwórz pierwszego użytkownika"
+      },
+      "validation": {
+        "email_invalid": "Nieprawidłowy email",
+        "email_required": "Email jest wymagany",
+        "email_temporary_not_allowed": "Tymczasowe lub jednorazowe adresy e-mail nie są dozwolone",
+        "firstName_required": "Imię jest wymagane",
+        "lastName_required": "Wymagane nazwisko",
+        "password_invalid": "Nieprawidłowe hasło"
+      }
+    },
     "show": "Pokaż",
     "show chart": "Pokaż Wykres",
     "show description": "Pokaż opis",
@@ -1222,9 +1297,9 @@
     "task logs": "Task logs",
     "task run id": "ID TaskRun",
     "taskDefaults": "Domyślne ustawienia task",
+    "taskRunners": "Task Runners",
     "task_id_exists": "Id zadania już istnieje",
     "task_id_message": "Identyfikator Task ${existingTask} już istnieje w flow.",
-    "task_runners": "Uruchamiacze zadań",
     "taskid column details": "Ostatni task wykonywany i liczba jego prób.",
     "taskruns": "Task Runs",
     "tasks": "Tasks",

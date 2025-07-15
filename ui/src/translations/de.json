@@ -41,6 +41,7 @@
     "add task": "Einen Task hinzufügen",
     "add-trigger-in-editor": "Fügen Sie zuerst einen Trigger zu Ihrem Flow hinzu",
     "add_new_item": "Neues Element hinzufügen",
+    "additionalPlugins": "Zusätzliche Plugins",
     "administration": "Administration",
     "advanced configuration": "Andere Eigenschaften",
     "after": "nach",
@@ -55,6 +56,7 @@
     "all executions": "Alle Ausführungen",
     "all tags": "Alle Tags",
     "api": "API",
+    "appBlocks": "App-Blöcke",
     "apps": "Apps",
     "attempt": "Versuch",
     "attempts": "Versuch(e)",
@@ -133,7 +135,7 @@
         "Die Fehler-Tasks werden ausgeführt."
       ],
       "RUNNING": [
-        "Der Flow wird neu gestartet und alle nächsten Tasks werden ausgeführt.",
+        "Der flow wird neu gestartet und alle nächsten Tasks werden ausgeführt.",
         "Alle blockierten Tasks werden ausgeführt."
       ],
       "SUCCESS": [
@@ -150,6 +152,7 @@
     "change state tooltip": "Ändern Sie den Ausführungszustand",
     "chart": "Diagramm",
     "chart preview": "Diagrammvorschau",
+    "charts": "Diagramme",
     "choice": "Wahl",
     "choose file": "Wählen Sie eine Datei oder ziehen Sie sie hierher...",
     "close": "Schließen",
@@ -206,10 +209,12 @@
         "confirmation": "Möchten Sie das Dashboard <code>{title}</code> wirklich löschen?"
       },
       "edition": {
+        "chart": "Bearbeiten Sie dieses Diagramm",
         "confirmation": "Änderungen im Dashboard <code>{title}</code> werden gespeichert.",
         "label": "Dashboard bearbeiten"
       },
       "empty": "Es gibt keine Ergebnisse anzuzeigen.",
+      "export": "Exportieren nach CSV",
       "labels": {
         "plural": "Dashboards",
         "singular": "Dashboard"
@@ -217,6 +222,7 @@
       "preview": "Vorschau-Dashboard"
     },
     "data": "Daten",
+    "dataFilters": "Datenfilter",
     "data_not_protected": "Ihre Daten sind nicht geschützt. Verlieren Sie sie nicht. <b>Aktivieren Sie unsere kostenlosen Sicherheitsfunktionen oder probieren Sie unser kostenpflichtiges Angebot aus.</b>",
     "date": "Datum",
     "date count": "{count} am {date}",
@@ -696,6 +702,7 @@
     "last execution date": "Letztes Ausführungsdatum",
     "last execution state": "Letzter Zustand",
     "last execution status": "Letzter Ausführungsstatus",
+    "last modified": "Zuletzt geändert",
     "launch execution": "Ausführen",
     "learn_more": "Erfahren Sie mehr",
     "light_background": "Dies ist die bevorzugte Option bei der Arbeit mit einem hellen Hintergrund.",
@@ -704,6 +711,7 @@
     "live help": "Live-Hilfe",
     "loaded x dependencies": "{count} Abhängigkeiten geladen",
     "log expand setting": "Log-Standardanzeige",
+    "logExporters": "Log-Exporteure",
     "logs": "Logs",
     "logs_view": {
       "compact": "Standardansicht",
@@ -1177,6 +1185,73 @@
       },
       "label": "Einstellungen"
     },
+    "setup": {
+      "config": {
+        "basicauth": "Einfache Authentifizierung",
+        "queue": "Warteschlange",
+        "repository": "Datenbank",
+        "storage": "Interner Speicher"
+      },
+      "confirm": {
+        "config_title": "Bestätigen Sie, dass die Konfiguration gültig ist",
+        "confirm": "Bestätigen",
+        "not_valid": "Nein, es ist nicht gültig.",
+        "valid": "Ja, es ist gültig"
+      },
+      "form": {
+        "email": "E-Mail",
+        "firstName": "Vorname",
+        "lastName": "Nachname",
+        "password": "Passwort"
+      },
+      "login": "Anmelden",
+      "logout": "Abmelden",
+      "steps": {
+        "complete": "Kestra UI starten",
+        "config": "Konfiguration validieren",
+        "survey": "Erzählen Sie uns mehr",
+        "user": "Erstellen Sie Ihren ersten Benutzer"
+      },
+      "subtitles": {
+        "complete": "Einrichtung erfolgreich abgeschlossen!",
+        "config": "Hier sind die Details Ihrer Konfiguration",
+        "survey": "Helfen Sie uns, die Kestra Open Source Edition zu verbessern",
+        "user": "Richten Sie Ihre Instanz ein, indem Sie Ihren ersten Benutzer erstellen"
+      },
+      "success": {
+        "subtitle": "Alles bereit!",
+        "title": "Herzlichen Glückwunsch!"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "Persönliche Nutzung",
+        "company_size": "Wie groß ist Ihr Unternehmen?",
+        "continue": "Fortfahren",
+        "newsletter": "Abonnieren Sie den Kestra-Newsletter – bleiben Sie auf dem Laufenden über die <br> neuesten Funktionen und Änderungen.",
+        "skip": "Überspringen",
+        "use_case": "Was ist Ihr primärer Anwendungsfall?",
+        "use_case_business": "Geschäftsprozesse",
+        "use_case_data": "Daten-Workflows",
+        "use_case_infrastructure": "Infrastrukturautomatisierung",
+        "use_case_ml": "ML/AI-Pipelines",
+        "use_case_other": "Andere"
+      },
+      "titles": {
+        "survey": "Erzählen Sie uns mehr",
+        "user": "Ersten Benutzer erstellen"
+      },
+      "validation": {
+        "email_invalid": "Ungültige E-Mail-Adresse",
+        "email_required": "E-Mail ist erforderlich",
+        "email_temporary_not_allowed": "Temporäre oder Einweg-E-Mail-Adressen sind nicht erlaubt",
+        "firstName_required": "Vorname erforderlich",
+        "lastName_required": "Nachname erforderlich",
+        "password_invalid": "Ungültiges Passwort"
+      }
+    },
     "show": "Anzeigen",
     "show chart": "Diagramm anzeigen",
     "show description": "Beschreibung anzeigen",
@@ -1222,9 +1297,9 @@
     "task logs": "Task Logs",
     "task run id": "TaskRun-ID",
     "taskDefaults": "Task-Standards",
+    "taskRunners": "Task Runners",
     "task_id_exists": "Task-ID existiert bereits",
     "task_id_message": "Task-ID ${existingTask} existiert bereits im Flow.",
-    "task_runners": "Task-Ausführungen",
     "taskid column details": "Letzter Task, der ausgeführt wird, und seine Anzahl der Versuche.",
     "taskruns": "Task-Ausführungen",
     "tasks": "Tasks",

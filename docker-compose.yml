@@ -39,11 +39,10 @@ services:
             username: kestra
             password: k3str4
         kestra:
-          server:
-            basicAuth:
-              enabled: false
-              username: "admin@localhost.dev" # it must be a valid email address
-              password: kestra
+          # server:
+          #   basicAuth:
+          #     username: admin@kestra.io # it must be a valid email address
+          #     password: admin    
           repository:
             type: postgres
           storage:

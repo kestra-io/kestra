@@ -18,34 +18,31 @@
     </RouterLink>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {computed, toRef} from "vue";
-    import {useStore} from "vuex";
+    import {useDocStore} from "../../stores/doc";
     import {useDocsLink} from "./useDocsLink";
 
-    const store = useStore();
+    const docStore = useDocStore();
 
-    const emit = defineEmits(["click"]);
+    const emit = defineEmits<{
+        click: []
+    }>();
 
-    const props = defineProps({
-        href: {
-            type: String,
-            default: undefined
-        },
-        useRaw: {
-            type: Boolean,
-            default: false
-        },
-        "class": {
-            type: String,
-            default: undefined
-        }
+    const props = withDefaults(defineProps<{
+        href?: string;
+        useRaw?: boolean;
+        class?: string;
+    }>(), {
+        href: undefined,
+        useRaw: false,
+        class: undefined
     });
 
-    const {href, isRemote} = useDocsLink(toRef(props.href), computed(() => (store.getters["doc/docPath"] ?? "")));
+    const {href, isRemote} = useDocsLink(toRef(() => props.href ?? ""), computed(() => (docStore.docPath ?? "")));
     const finalHref = computed(() => props.useRaw ? `/${props.href}` : href.value);
 
     const navigateInVuex = () => {
-        store.commit("doc/setDocPath", finalHref.value);
+        docStore.docPath = finalHref.value;
     };
 </script>

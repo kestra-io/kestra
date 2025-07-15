@@ -1,6 +1,7 @@
 import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import Executions from "../../../../src/components/executions/Executions.vue";
+import {useMiscStore} from "../../../../src/stores/misc";
 import fixtureS from "./Executions-s.fixture.json";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
@@ -18,6 +19,7 @@ function getDecorators(executionsSearchData) {
             return {
                 setup() {
                     const store = useStore();
+                    const miscStore = useMiscStore();
                     store.commit("auth/setUser", {
                         id: "123",
                         firstName: "John",
@@ -26,9 +28,9 @@ function getDecorators(executionsSearchData) {
                         isAllowed: () => true,
                         hasAnyActionOnAnyNamespace: () => true,
                     });
-                    store.commit("misc/setConfigs", {
+                    miscStore.configs = {
                         hiddenLabelsPrefixes: ["system_"],
-                    });
+                    };
                     store.$http = {
                         get: async (uri, _params) => {
                             if (uri.endsWith("executions/search")) {

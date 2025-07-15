@@ -161,6 +161,7 @@ describe("FlowAutoCompletionProvider", () => {
             "now()",
             "randomInt(lower=${1:0}, upper=${2:10})",
             "randomPort()",
+            "tasksWithState(state=${1:'FAILED'})",
         ]);
     })
 

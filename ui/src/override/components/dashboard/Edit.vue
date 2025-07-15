@@ -15,8 +15,11 @@
     import {useRoute} from "vue-router";
     const route = useRoute();
 
-    import {useStore} from "vuex";
-    const store = useStore();
+    import {useCoreStore} from "../../../stores/core";
+    const coreStore = useCoreStore();
+
+    import {useDashboardStore} from "../../../stores/dashboard";
+    const dashboardStore = useDashboardStore();
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -31,16 +34,16 @@
 
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const save = async (source: string) => {
-        const response = await store.dispatch("dashboard/update", {id: route.params.dashboard, source,});
+        const response = await dashboardStore.update({id: route.params.dashboard, source});
 
         dashboard.value.sourceCode = source;
 
         toast.success(t("dashboards.edition.confirmation", {title: response.title}));
-        store.dispatch("core/isUnsaved", false);
+        coreStore.unsavedChange = false;
     };
 
     onMounted(() => {
-        store.dispatch("dashboard/load", route.params.dashboard).then((response) => {
+        dashboardStore.load(route.params.dashboard as string).then((response) => {
             dashboard.value = response;
         });
     });

@@ -1,7 +1,6 @@
 package io.kestra.core.test;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.HasUID;
@@ -11,6 +10,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.TestSuiteValidation;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -52,13 +52,14 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
 
     @NotNull
     @NotEmpty
+    @Valid
     private List<UnitTest> testCases;
 
-    @JsonProperty("deleted")
-    boolean isDeleted = Boolean.FALSE;
+    @Builder.Default
+    private boolean deleted = Boolean.FALSE;
 
     @Builder.Default
-    private Boolean disabled = Boolean.FALSE;
+    private boolean disabled = Boolean.FALSE;
 
     @Override
     @JsonIgnore
@@ -80,16 +81,43 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
             newSource,
             newTestSuite.getTestCases(),
             newTestSuite.isDeleted(),
-            newTestSuite.getDisabled()
+            newTestSuite.isDisabled()
             );
     }
 
     public TestSuite delete() {
-        return this.toBuilder().isDeleted(true).build();
+        return this.toBuilder().deleted(true).build();
+    }
+
+    public TestSuite disable() {
+        var disabled = true;
+        return this.toBuilder()
+            .disabled(disabled)
+            .source(toggleDisabledInYamlSource(this.source, disabled))
+            .build();
+    }
+
+    public TestSuite enable() {
+        var disabled = false;
+        return this.toBuilder()
+            .disabled(disabled)
+            .source(toggleDisabledInYamlSource(this.source, disabled))
+            .build();
     }
 
     @Override
     public String source() {
         return this.getSource();
+    }
+
+    protected static String toggleDisabledInYamlSource(String yamlSource, boolean disabled) {
+        String regex = disabled ? "^disabled\\s*:\\s*false\\s*" : "^disabled\\s*:\\s*true\\s*";
+
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile(regex, java.util.regex.Pattern.MULTILINE);
+        if (p.matcher(yamlSource).find()) {
+            return p.matcher(yamlSource).replaceAll(String.format("disabled: %s\n", disabled));
+        }
+
+        return yamlSource + String.format("\ndisabled: %s", disabled);
     }
 }

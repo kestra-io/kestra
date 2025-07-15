@@ -1,6 +1,7 @@
 import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 import Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
+import {useCoreStore} from "./core";
 
 export default {
     namespaced: true,
@@ -26,7 +27,12 @@ export default {
         loadTemplate({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/templates/${options.namespace}/${options.id}`).then(response => {
                 if (response.data.exception) {
-                    commit("core/setMessage", {title: "Invalid source code", message: response.data.exception, variant: "danger"}, {root: true});
+                    const coreStore = useCoreStore();
+                    coreStore.message = {
+                        title: "Invalid source code", 
+                        message: response.data.exception, 
+                        variant: "error"
+                    };
                     delete response.data.exception;
                     commit("setTemplate", JSON.parse(response.data.source));
                 } else {

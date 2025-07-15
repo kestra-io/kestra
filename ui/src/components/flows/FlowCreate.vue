@@ -7,11 +7,14 @@
 
 <script>
     import {mapGetters, mapMutations, mapState} from "vuex";
+    import {mapStores} from "pinia";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import MultiPanelEditorView from "./MultiPanelEditorView.vue";
     import {storageKeys} from "../../utils/constants";
+    import {useBlueprintsStore} from "../../stores/blueprints";
+    import {useCoreStore} from "../../stores/core";
 
     import {getRandomFlowID} from "../../../scripts/product/flow";
 
@@ -26,7 +29,7 @@
             this.$store.commit("flow/setIsCreating", true);
             if (this.$route.query.reset) {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
+                this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, tourStarted: true};
                 this.$tours["guidedTour"]?.start();
             }
             this.setupFlow()
@@ -45,7 +48,7 @@
                 if (this.$route.query.copy && this.flow){
                     flowYaml = this.flow.source;
                 } else if (blueprintId && blueprintSource) {
-                    flowYaml = await this.$store.dispatch("blueprints/getBlueprintSource", {type: blueprintSource, kind: "flow", id: blueprintId});
+                    flowYaml = await this.blueprintsStore.getBlueprintSource({type: blueprintSource, kind: "flow", id: blueprintId});
                 } else {
                     const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
                     const selectedNamespace = this.$route.query.namespace || defaultNamespace || "company.team";
@@ -68,8 +71,8 @@ tasks:
         computed: {
             ...mapState("flow", ["flowGraph", "flowYaml"]),
             ...mapState("auth", ["user"]),
-            ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flow", "flowValidation", "flowYaml"]),
+            ...mapStores(useBlueprintsStore, useCoreStore),
             routeInfo() {
                 return {
                     title: this.$t("flows")

@@ -12,6 +12,8 @@ public interface TemplateRepositoryInterface {
 
     List<Template> findAll(String tenantId);
 
+    List<Template> findAllWithNoAcl(String tenantId);
+
     List<Template> findAllForAllTenants();
 
     ArrayListTotal<Template> find(

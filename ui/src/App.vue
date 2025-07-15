@@ -1,21 +1,20 @@
 <template>
     <doc-id-display />
     <el-config-provider>
-        <error-toast v-if="message" :no-auto-hide="true" :message="message" />
-        <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded">
+        <error-toast v-if="coreStore.message" :no-auto-hide="true" :message="coreStore.message" />
+        <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
             <router-view />
         </component>
-        <VueTour />
+        <VueTour v-if="shouldRenderApp && $route?.name && !isAnonymousRoute" />
     </el-config-provider>
 </template>
 
 <script>
-    import {ElMessageBox, ElSwitch} from "element-plus";
-    import {h, ref, shallowRef} from "vue";
     import ErrorToast from "./components/ErrorToast.vue";
-    import {mapGetters, mapState} from "vuex";
+    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import Utils from "./utils/utils";
+    import {shallowRef} from "vue";
     import VueTour from "./components/onboarding/VueTour.vue";
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
     import DocIdDisplay from "./components/DocIdDisplay.vue";
@@ -24,6 +23,11 @@
 
     import {useApiStore} from "./stores/api";
     import {usePluginsStore} from "./stores/plugins";
+    import {useLayoutStore} from "./stores/layout";
+    import {useCoreStore} from "./stores/core";
+    import {useDocStore} from "./stores/doc";
+    import {useMiscStore} from "./stores/misc";
+    import * as BasicAuth from "./utils/basicAuth";
 
     // Main App
     export default {
@@ -44,74 +48,43 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("core", ["message"]),
             ...mapState("flow", ["overallTotal"]),
-            ...mapGetters("core", ["guidedProperties"]),
-            ...mapGetters("misc", ["configs"]),
-            ...mapStores(useApiStore, usePluginsStore),
+            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore),
             envName() {
-                return this.$store.getters["layout/envName"] || this.configs?.environment?.name;
+                return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
             },
             isOSS(){
                 return true;
             },
+            shouldRenderApp() {
+                return this.loaded
+            },
+            isAnonymousRoute() {
+                return (this.isLoginRoute || this.isSetupRoute);
+            },
+            isLoginRoute() {
+                return this.$route?.name?.startsWith("login")
+            },
+            isSetupRoute() {
+                return this.$route?.name === "setup"
+            },
         },
         async created() {
-            if (this.created === false) {
-                await this.loadGeneralResources();
-                this.displayApp();
-            }
-            this.setTitleEnvSuffix();
+            this.setTitleEnvSuffix()
 
-            if (this.configs) {
-                // save uptime before showing security advice.
-                if (localStorage.getItem("security.advice.uptime") === null) {
-                    localStorage.setItem("security.advice.uptime", `${new Date().getTime()}`);
-                }
-                // use local-storage for ease testing
-                if (localStorage.getItem("security.advice.expired") === null) {
-                    localStorage.setItem("security.advice.expired", "604800000");  // 7 days.
-                }
-
-                // only show security advice after expiration
-                const uptime = parseInt(localStorage.getItem("security.advice.uptime"));
-                const expired = parseInt(localStorage.getItem("security.advice.expired"));
-                const isSecurityAdviceShow = (localStorage.getItem("security.advice.show") || "true") === "true";
-
-                const isSecurityAdviceEnable = new Date().getTime() - uptime >= expired
-                if (!this.configs.isBasicAuthEnabled
-                    && isSecurityAdviceShow
-                    && isSecurityAdviceEnable) {
-                    const checked = ref(false);
-                    ElMessageBox({
-                        title: this.$t("security_advice.title"),
-                        message: () => {
-                            return h("div", null, [
-                                h("p", null, this.$t("security_advice.content")),
-                                h(ElSwitch, {
-                                    modelValue: checked.value,
-                                    "onUpdate:modelValue": (val) => {
-                                        checked.value = val
-                                        localStorage.setItem("security.advice.show", `${!val}`)
-                                    },
-                                    activeText: this.$t("security_advice.switch_text")
-                                }),
-                            ])
-                        },
-                        showCancelButton: true,
-                        confirmButtonText: this.$t("security_advice.enable"),
-                        cancelButtonText: this.$t("cancel"),
-                        center: false,
-                        showClose: false,
-                    }).then(() => {
-                        this.$router.push({path: "admin/stats"});
-                    });
+            if (!this.isAnonymousRoute && BasicAuth.isLoggedIn()) {
+                try {
+                    await this.loadGeneralResources()
+                } catch (error) {
+                    console.warn("Failed to load general resources:", error)
                 }
             }
+
+            this.displayApp();
         },
         methods: {
             displayApp() {
-                Utils.switchTheme(this.$store);
+                Utils.switchTheme(this.miscStore);
 
                 document.getElementById("loader-wrapper").style.display = "none";
                 document.getElementById("app-container").style.display = "block";
@@ -123,15 +96,20 @@
                 document.title = document.title.replace(/( - .+)?$/, envSuffix);
             },
             async loadGeneralResources() {
-                let uid = localStorage.getItem("uid");
-                if (uid === null) {
-                    uid = Utils.uid();
-                    localStorage.setItem("uid", uid);
+                const uid = localStorage.getItem("uid") || (() => {
+                    const newUid = Utils.uid();
+                    localStorage.setItem("uid", newUid);
+                    return newUid;
+                })();
+
+                if (!BasicAuth.isLoggedIn()) {
+                    return null;
                 }
 
+                const config = await this.miscStore.loadConfigs();
                 this.pluginsStore.fetchIcons()
-                const config = await this.$store.dispatch("misc/loadConfigs");
-                await this.$store.dispatch("doc/initResourceUrlTemplate", config.version);
+
+                await this.docStore.initResourceUrlTemplate(config.version);
 
                 this.apiStore.loadFeeds({
                     version: config.version,
@@ -143,6 +121,8 @@
                     .then(apiConfig => {
                         this.initStats(apiConfig, config, uid);
                     })
+
+                return config;
             },
             initStats(apiConfig, config, uid) {
                 if (!this.configs || this.configs["isAnonymousUsageEnabled"] === false) {
@@ -170,7 +150,6 @@
                 }
 
 
-                // close survey on page change
                 let surveyVisible = false;
                 window.addEventListener("PHSurveyShown", () => {
                     surveyVisible = true;

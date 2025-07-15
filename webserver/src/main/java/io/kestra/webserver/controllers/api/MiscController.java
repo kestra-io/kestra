@@ -12,6 +12,7 @@ import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthService;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
@@ -34,6 +35,9 @@ import java.util.Optional;
 @Slf4j
 @Controller("/api/v1")
 public class MiscController {
+    @Inject
+    protected ApplicationContext applicationContext;
+
     @Inject
     VersionProvider versionProvider;
 
@@ -85,8 +89,8 @@ public class MiscController {
 
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Get current configurations")
-    public Configuration getConfiguration() throws JsonProcessingException {
+    @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
+    public Configuration getConfiguration() throws JsonProcessingException { // JsonProcessingException might be thrown in EE
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
             .uuid(instanceService.fetch())
@@ -100,8 +104,9 @@ public class MiscController {
             .preview(Preview.builder()
                 .initial(this.initialPreviewRows)
                 .max(this.maxPreviewRows)
-                .build()
-            ).isBasicAuthEnabled(basicAuthService.isEnabled())
+                .build())
+            .isAiEnabled(applicationContext.containsBean(AiController.class))
+            .isBasicAuthInitialized(basicAuthService.isBasicAuthInitialized())
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .resourceToFilters(QueryFilter.Resource.asResourceList())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
@@ -119,16 +124,16 @@ public class MiscController {
         return builder.build();
     }
 
-    @Get("/main/usages/all")
+    @Get("/{tenant}/usages/all")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Get instance usage information")
+    @Operation(tags = {"Misc"}, summary = "Retrieve instance usage information")
     public Usage getUsages() {
         return collectorService.metrics(true);
     }
 
-    @Post(uri = "/main/basicAuth")
+    @Post(uri = "/{tenant}/basicAuth")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Create basic auth for the current instance")
+    @Operation(tags = {"Misc"}, summary = "Configure basic authentication for the instance.", description = "Sets up basic authentication credentials.")
     public HttpResponse<Void> createBasicAuth(
         @RequestBody(description = "") @Body BasicAuthCredentials basicAuthCredentials
     ) {
@@ -136,6 +141,8 @@ public class MiscController {
 
         return HttpResponse.noContent();
     }
+
+
 
     @Getter
     @NoArgsConstructor
@@ -167,13 +174,15 @@ public class MiscController {
 
         Preview preview;
 
-        Boolean isBasicAuthEnabled;
-
         String systemNamespace;
 
         List<String> hiddenLabelsPrefixes;
         // List of filter by component
         List<QueryFilter.ResourceField> resourceToFilters;
+
+        Boolean isAiEnabled;
+
+        Boolean isBasicAuthInitialized;
     }
 
     @Value

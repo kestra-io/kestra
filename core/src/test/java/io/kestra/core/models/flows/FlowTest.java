@@ -125,17 +125,6 @@ class FlowTest {
     }
 
     @Test
-    void workerGroup() {
-        Flow flow = this.parse("flows/invalids/worker-group.yaml");
-        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
-
-        assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
-
-        assertThat(validate.get().getMessage()).isEqualTo("tasks[0].workerGroup: Worker Group is an Enterprise Edition functionality\n");
-    }
-
-    @Test
     void allTasksWithChildsAndTriggerIds() {
         Flow flow = this.parse("flows/valids/trigger-flow-listener-no-inputs.yaml");
         List<String> all = flow.allTasksWithChildsAndTriggerIds();
@@ -151,7 +140,7 @@ class FlowTest {
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
 
-        assertThat(validate.get().getMessage()).contains("file: no `defaults` can be set for inputs of type 'FILE'");
+        assertThat(validate.get().getMessage()).contains("file: inputs of type 'FILE' only support `defaults` as local files using a file URI");
         assertThat(validate.get().getMessage()).contains("array: `itemType` cannot be `ARRAY");
     }
 

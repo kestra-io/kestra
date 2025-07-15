@@ -3,7 +3,7 @@ import {vueRouter} from "storybook-vue3-router";
 import FlowEditor from "../../../../src/components/flows/FlowEditor.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json";
-import flowSchema from "../../../../src/components/code/segments/flow-schema.json";
+import flowSchema from "../../../../src/stores/flow-schema.json";
 
 
 export default {

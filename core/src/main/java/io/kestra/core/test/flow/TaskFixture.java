@@ -3,13 +3,17 @@ package io.kestra.core.test.flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.Map;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TaskFixture {
     @NotNull
     private String id;

@@ -105,7 +105,8 @@
     import TableClock from "vue-material-design-icons/TableClock.vue";
 </script>
 <script>
-    import {mapGetters} from "vuex";
+    import {mapStores} from "pinia";
+    import {useMiscStore} from "../../../stores/misc";
 
     export default {
         data() {
@@ -118,7 +119,7 @@
             if (this.fetchedUsages) {
                 this.usages = this.fetchedUsages;
             } else {
-                this.usages = await this.$store.dispatch("misc/loadAllUsages");
+                this.usages = await this.miscStore.loadAllUsages();
             }
 
             this.$emit("loaded");
@@ -148,7 +149,7 @@
             }
         },
         computed: {
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useMiscStore),
             namespaces() {
                 return this.usages.flows?.namespacesCount ?? 0;
             },
@@ -180,7 +181,7 @@
                 return this.usages.executions?.dailyTaskrunsCount?.filter(item => item.groupBy === "day");
             },
             taskrunsOverTwoDays() {
-                if (!this.configs?.isTaskRunEnabled) {
+                if (!this.miscStore.configs?.isTaskRunEnabled) {
                     return undefined;
                 }
 

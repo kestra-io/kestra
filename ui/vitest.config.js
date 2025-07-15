@@ -1,5 +1,4 @@
 import {defineConfig} from "vite";
-import {coverageConfigDefaults} from "vitest/config";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
 
@@ -16,31 +15,7 @@ export default defineConfig({
         },
     },
     test: {
-        environment: "jsdom",
-        reporters: [
-            ["default"],
-            ["junit"]
-        ],
-        outputFile: {
-            junit: "./test-report.junit.xml",
-        },
-        exclude: [
-            "tests/e2e/**",
-        ],
-        coverage: {
-            include: [
-                "src/**/*.{js,ts,vue}",
-            ],
-            exclude: [
-                ...coverageConfigDefaults.exclude,
-                "stylelint.config.mjs",
-                "storybook-static/**",
-                "**/.storybook/**",
-                "**/*.stories.*",
-                "**/*.d.ts",
-            ]
-        },
-        projects: [".storybook/vitest.config.js"]
+        projects: [".storybook/vitest.config.js", "./vitest.config.unit.js"],
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

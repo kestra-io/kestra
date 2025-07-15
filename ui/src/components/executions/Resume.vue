@@ -17,9 +17,6 @@
             <inputs-form :initial-inputs="inputsList" :execution="execution" v-model="inputs" />
         </el-form>
         <template #footer>
-            <el-button @click="cancel()">
-                {{ $t('cancel') }}
-            </el-button>
             <el-button :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" native-type="submit">
                 {{ $t('resume') }}
             </el-button>
@@ -74,7 +71,7 @@
                 this.$toast()
                     .confirm(this.$t("resumed confirm", {id: this.execution.id}), () => {
                         return this.resume();
-                    });
+                    }, () => {}, false);
             },
             resumeWithInputs(formRef) {
                 if (formRef) {
@@ -98,16 +95,6 @@
                     .then(() => {
                         this.isDrawerOpen = false;
                         this.$toast().success(this.$t("resumed done"));
-                    });
-            },
-            cancel() {
-                this.$store
-                    .dispatch("execution/kill", {
-                        id: this.execution.id,
-                    })
-                    .then(() => {
-                        this.isDrawerOpen = false;
-                        this.$toast().success(this.$t("killed done"));
                     });
             },
             loadDefinition() {

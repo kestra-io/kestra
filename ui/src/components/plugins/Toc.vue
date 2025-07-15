@@ -7,7 +7,7 @@
             clearable
         />
         <el-collapse accordion v-model="activeNames">
-            <template :key="plugin.title" v-for="(plugin) in sortedPlugins(pluginsList)">
+            <template v-for="(plugin) in sortedPlugins(pluginsList)" :key="plugin.title">
                 <el-collapse-item
                     v-if="isVisible(plugin)"
                     :name="plugin.group"
@@ -16,7 +16,7 @@
                     :ref="`plugin-${plugin.group}`"
                 >
                     <ul class="toc-h3">
-                        <li v-for="(types, namespace) in group(plugin, plugin.tasks)" :key="namespace">
+                        <li v-for="(types, namespace) in group(plugin)" :key="namespace">
                             <h6>{{ namespace }}</h6>
                             <ul class="toc-h4">
                                 <li v-for="(classes, type) in types" :key="type + '-' + namespace">
@@ -31,7 +31,7 @@
                                                     <task-icon
                                                         :only-icon="true"
                                                         :cls="namespace + '.' + cls"
-                                                        :icons="icons"
+                                                        :icons="pluginsStore.icons"
                                                     />
                                                 </div>
                                                 <span
@@ -54,7 +54,8 @@
 
 <script>
     import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
-    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {usePluginsStore} from "../../stores/plugins";
 
     export default {
         emits: ["routerChange"],
@@ -69,7 +70,7 @@
             $route: {
                 handler() {
                     this.plugins.forEach(plugin => {
-                        if (Object.entries(plugin).some(([key, value]) => isEntryAPluginElementPredicate(key, value) && value.includes(this.$route.params.cls))) {
+                        if (Object.entries(plugin).some(([key, value]) => isEntryAPluginElementPredicate(key, value) && value.map(({cls}) => cls).includes(this.$route.params.cls))) {
                             this.activeNames = [plugin.group]
                             localStorage.setItem("activePlugin", plugin.group);
                         }
@@ -89,9 +90,9 @@
             }
         },
         computed: {
-            ...mapState("plugin", ["plugin", "icons"]),
+            ...mapStores(usePluginsStore),
             countPlugin() {
-                return this.plugins.flatMap(plugin => this.pluginElements(plugin)).length
+                return new Set(this.plugins.flatMap(plugin => this.pluginElements(plugin))).size
             },
             pluginsList() {
                 return this.plugins
@@ -110,15 +111,27 @@
                     .map(plugin => {
                         return {
                             ...plugin,
-                            ...Object.fromEntries(Object.entries(plugin).filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
-                                .map(([elementType, elements]) => [elementType, elements.filter(element => element.toLowerCase().includes(this.searchInput.toLowerCase()))]))
+                            ...Object.fromEntries(
+                                Object.entries(plugin)
+                                    .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+                                    .map(([elementType, elements]) => [
+                                        elementType,
+                                        elements.filter(({deprecated}) => !deprecated)
+                                            .filter(({cls}) => cls.toLowerCase().includes(this.searchInput.toLowerCase()))
+                                    ])
+                            )
                         }
                     })
             }
         },
         methods: {
             pluginElements(plugin) {
-                return Object.entries(plugin).filter(([key, value]) => isEntryAPluginElementPredicate(key, value)).flatMap(([_, value]) => value)
+                return Object.entries(plugin)
+                    .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+                    .flatMap(([_, value]) => value
+                        .filter(({deprecated}) => !deprecated)
+                        .map(({cls}) => cls)
+                    )
             },
             scrollToActivePlugin() {
                 const activePlugin = localStorage.getItem("activePlugin");
@@ -150,15 +163,16 @@
                 return Object.entries(plugin)
                     .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
                     .flatMap(([type, value]) => {
-                        return value.map(task => {
-                            const namespace = task.substring(0, task.lastIndexOf("."));
+                        return value.filter(({deprecated}) => !deprecated)
+                            .map(({cls}) => {
+                                const namespace = cls.substring(0, cls.lastIndexOf("."));
 
-                            return {
-                                type,
-                                namespace: namespace,
-                                cls: task.substring(task.lastIndexOf(".") + 1)
-                            };
-                        });
+                                return {
+                                    type,
+                                    namespace: namespace,
+                                    cls: cls.substring(cls.lastIndexOf(".") + 1)
+                                };
+                            });
                     })
                     .reduce((accumulator, value) => {
                         accumulator[value.namespace] = accumulator[value.namespace] || {};

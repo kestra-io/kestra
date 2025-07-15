@@ -15,7 +15,7 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <Sections :charts />
+                    <Sections :charts :dashboard="{id: 'default', charts: []}" show-default />
                 </template>
 
                 <template #table v-if="logsStore.logs !== undefined && logsStore.logs.length > 0">
@@ -47,7 +47,6 @@
 </script>
 
 <script lang="ts">
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import RouteContext from "../../mixins/routeContext";
     import RestoreUrl from "../../mixins/restoreUrl";
@@ -97,7 +96,6 @@
             storageKeys() {
                 return storageKeys
             },
-            ...mapState("stat", ["logDaily"]),
             ...mapStores(useLogsStore),
             routeInfo() {
                 return {
@@ -157,7 +155,7 @@
 
             const queryKeys = Object.keys(query);
             if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][EQUALS]"] = defaultNamespace;
+                query["filters[namespace][PREFIX]"] = defaultNamespace;
                 queryHasChanged = true;
             }
 

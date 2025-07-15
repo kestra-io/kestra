@@ -1,11 +1,14 @@
 package io.kestra.core.validations;
 
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+
+import java.net.URI;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -46,5 +49,27 @@ class InputTest {
 
         assertThat(validInput.getName()).isEqualTo(newName);
         assertThat(validInput.getId()).isEqualTo(newName);
+    }
+
+    @Test
+    void shouldFailFileInputWithDefault() {
+        var fileInput = FileInput.builder()
+            .id("test")
+            .type(Type.FILE)
+            .defaults(URI.create("http://some.uri"))
+            .build();
+
+        assertThat(modelValidator.isValid(fileInput)).isPresent();
+    }
+
+    @Test
+    void shouldValidateFileInputWithFileDefault() {
+        var fileInput = FileInput.builder()
+            .id("test")
+            .type(Type.FILE)
+            .defaults(URI.create("file:///tmp.file.txt"))
+            .build();
+
+        assertThat(modelValidator.isValid(fileInput)).isEmpty();
     }
 }

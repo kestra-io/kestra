@@ -46,7 +46,7 @@
                             data-test-id="execute-dialog-button"
                             :icon="Flash"
                             class="flow-run-trigger-button"
-                            :class="{'onboarding-glow': guidedProperties.tourStarted}"
+                            :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}"
                             @click="onSubmit($refs.form); executeClicked = true;"
                             type="primary"
                             native-type="submit"
@@ -70,7 +70,10 @@
 </script>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useCoreStore} from "../../stores/core";
+    import {useMiscStore} from "../../stores/misc";
     import {executeTask} from "../../utils/submitTask"
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
@@ -111,8 +114,7 @@
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
         computed: {
             ...mapState("execution", ["flow", "execution"]),
-            ...mapState("core", ["guidedProperties"]),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useCoreStore, useMiscStore),
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             },
@@ -137,7 +139,7 @@
             },
             fillInputsFromExecution(){
                 // Add all labels except the one from flow to prevent duplicates
-                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
                 this.executionLabels = this.getExecutionLabels().filter(item => !toIgnore.some(prefix => item.key.startsWith(prefix)));
 
                 if (!this.flow.inputs) {

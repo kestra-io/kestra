@@ -1,5 +1,5 @@
 <template>
-    <div class="d-flex justify-content-center">
+    <div class="wrapper">
         <el-button class="decline-button" @click="emit('decline')">
             {{ t('decline') }}
         </el-button>
@@ -20,8 +20,28 @@
 </script>
 
 <style scoped lang="scss">
+.wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    gap: 10px;
+    background: #1E202AD9;
+    backdrop-filter: blur(10px);
+    padding: 1rem;
+
+    html.light & {
+        background: #F8F9FA80;
+    }
+
+    .el-button--success, .decline-button {
+        padding: 4px 12px;
+        margin: 0;
+    }
+    
     .decline-button {
         border-color: var(--ks-border-failed);
         color: var(--ks-content-failed);
     }
+}
 </style>

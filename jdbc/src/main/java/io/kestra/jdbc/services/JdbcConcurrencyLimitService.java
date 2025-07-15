@@ -19,13 +19,20 @@ public class JdbcConcurrencyLimitService extends ConcurrencyLimitService {
     private AbstractJdbcExecutionQueuedStorage storage;
 
     @Override
-    public Execution unqueue(Execution execution) throws QueueException {
+    public Execution unqueue(Execution execution, State.Type state) throws QueueException {
         if (execution.getState().getCurrent() != State.Type.QUEUED) {
             throw new IllegalArgumentException("Only QUEUED execution can be unqueued");
         }
 
         storage.remove(execution);
 
-        return execution.withState(State.Type.RUNNING);
+        state = (state == null) ? State.Type.RUNNING : state;
+
+        // Validate the target state, throwing an exception if the state is invalid
+        if (!VALID_TARGET_STATES.contains(state)) {
+            throw new IllegalArgumentException("Invalid target state: " + state + ". Valid states are: " + VALID_TARGET_STATES);
+        }
+
+        return execution.withState(state);
     }
 }

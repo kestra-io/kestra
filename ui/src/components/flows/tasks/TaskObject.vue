@@ -2,20 +2,14 @@
     <el-form label-position="top" class="w-100">
         <template v-if="sortedProperties">
             <template v-for="[fieldKey, fieldSchema] in requiredProperties" :key="fieldKey">
-                <template v-if="fieldKey === 'id' || isNestedProperty(fieldKey)">
-                    <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
-                </template>
-
-                <template v-else>
-                    <TaskWrapper :merge>
-                        <template #tasks>
-                            <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
-                        </template>
-                    </TaskWrapper>
-                </template>
+                <TaskWrapper :merge>
+                    <template #tasks>
+                        <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                    </template>
+                </TaskWrapper>
             </template>
 
-            <el-collapse v-model="activeNames" v-if="optionalProperties?.length || deprecatedProperties?.length" class="collapse">
+            <el-collapse v-model="activeNames" v-if="optionalProperties?.length || deprecatedProperties?.length || connectionProperties?.length" class="collapse">
                 <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="$t('no_code.sections.optional')">
                     <template v-for="[fieldKey, fieldSchema] in optionalProperties" :key="fieldKey">
                         <TaskWrapper>
@@ -28,6 +22,16 @@
 
                 <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="$t('no_code.sections.deprecated')">
                     <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
+                        <TaskWrapper>
+                            <template #tasks>
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                            </template>
+                        </TaskWrapper>
+                    </template>
+                </el-collapse-item>
+
+                <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="$t('no_code.sections.connection')">
+                    <template v-for="[fieldKey, fieldSchema] in connectionProperties" :key="fieldKey">
                         <TaskWrapper>
                             <template #tasks>
                                 <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
@@ -58,48 +62,48 @@
     import TaskDict from "./TaskDict.vue";
     import TaskWrapper from "./TaskWrapper.vue";
     import TaskObjectField from "./TaskObjectField.vue";
+
+    defineEmits(["update:modelValue"]);
 </script>
 
 <script>
     import Task from "./Task";
 
     function sortProperties(properties, required) {
-        if (!properties) {
-            return properties;
+        if(!properties.length) {
+            return [];
         }
+        return properties.sort((a, b) => {
+            if (a[0] === "id" || a[0] === "forced") {
+                return -1;
+            } else if (b[0] === "id" || b[0] === "forced") {
+                return 1;
+            }
 
-        return Object.entries(properties)
-            .sort((a, b) => {
-                if (a[0] === "id" || a[0] === "forced") {
-                    return -1;
-                } else if (b[0] === "id" || b[0] === "forced") {
-                    return 1;
-                }
+            const aRequired = (required || []).includes(
+                a[0],
+            );
+            const bRequired = (required || []).includes(
+                b[0],
+            );
 
-                const aRequired = (required || []).includes(
-                    a[0],
-                );
-                const bRequired = (required || []).includes(
-                    b[0],
-                );
+            if (aRequired && !bRequired) {
+                return -1;
+            } else if (!aRequired && bRequired) {
+                return 1;
+            }
 
-                if (aRequired && !bRequired) {
-                    return -1;
-                } else if (!aRequired && bRequired) {
-                    return 1;
-                }
+            const aDefault = "default" in a[1];
+            const bDefault = "default" in b[1];
 
-                const aDefault = "default" in a[1];
-                const bDefault = "default" in b[1];
+            if (aDefault && !bDefault) {
+                return 1;
+            } else if (!aDefault && bDefault) {
+                return -1;
+            }
 
-                if (aDefault && !bDefault) {
-                    return 1;
-                } else if (!aDefault && bDefault) {
-                    return -1;
-                }
-
-                return a[0].localeCompare(b[0]);
-            })
+            return a[0].localeCompare(b[0]);
+        })
     }
 
     export default {
@@ -114,24 +118,31 @@
             merge: {type: Boolean, default: false},
             metadataInputs: {type: Boolean, default: false}
         },
-        emits: ["update:modelValue"],
         data() {
             return {
                 activeNames: [],
             };
         },
         computed: {
+            filteredProperties() {
+                return this.properties ? Object.entries(this.properties).filter(([key]) => {
+                    return !(key === "type");
+                }) : [];
+            },
             sortedProperties() {
-                return sortProperties(this.properties, this.schema?.required);
+                return sortProperties(this.filteredProperties, this.schema?.required);
             },
             requiredProperties() {
                 return this.merge ? this.sortedProperties : this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));
             },
             optionalProperties() {
-                return this.merge ? [] : this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p) && !v.$deprecated);
+                return this.merge ? [] : this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p) && !v.$deprecated && v.$group !== "connection");
+            },
+            connectionProperties() {
+                return this.merge ? [] : this.sortedProperties.filter(([_,v]) => v && v.$group === "connection");
             },
             deprecatedProperties() {
-                return this.merge ? [] : this.sortedProperties.filter(([_,v]) => v && v.$deprecated);
+                return this.merge ? [] : this.sortedProperties.filter(([k,v]) => v && v.$deprecated && this.modelValue[k] !== undefined);
             },
         },
         methods: {
@@ -150,11 +161,12 @@
                     "onUpdate:modelValue": (value) => {
                         this.onObjectInput(key, value);
                     },
+                    root: this.root,
                     fieldKey: key,
                     task: this.modelValue,
                     schema: schema,
                     definitions: this.definitions,
-                    required: this.schema?.required,
+                    required: this.schema.required,
                 };
             },
         },

@@ -5,11 +5,15 @@ import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
 import Editor from "../components/inputs/Editor.vue";
 import RouteContext from "./routeContext";
-import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import action from "../models/action";
 import permission from "../models/permission";
 import {pageFromRoute} from "../utils/eventsRouter";
 import {apiUrl} from "override/utils/route";
+import {mapStores} from "pinia";
+import {useApiStore} from "../stores/api";
+import {usePluginsStore} from "../stores/plugins";
+import {useCoreStore} from "../stores/core";
 
 export default {
     mixins: [RouteContext],
@@ -31,9 +35,10 @@ export default {
         ...mapState("auth", ["user"]),
         ...mapGetters("flow", ["flow"]),
         ...mapGetters("template", ["template"]),
-        ...mapGetters("core", ["isUnsaved"]),
-        ...mapState("core", ["guidedProperties"]),
-        ...mapState("plugin", ["pluginSingleList","pluginsDocumentation"]),
+        ...mapStores(useApiStore, usePluginsStore, useCoreStore),
+        guidedProperties() {
+            return this.coreStore.guidedProperties;
+        },
         isEdit() {
             return (
                 this.$route.name === `${this.dataType}s/update` &&
@@ -183,7 +188,7 @@ export default {
         },
         save() {
             if (this.$tours["guidedTour"]?.isRunning?.value && !this.guidedProperties.saveFlow) {
-                this.$store.dispatch("api/events", {
+                this.apiStore.events({
                     type: "ONBOARDING",
                     onboarding: {
                         step: this.$tours["guidedTour"]?.currentStep?._value,
@@ -261,18 +266,9 @@ export default {
             }
         },
         updatePluginDocumentation(event) {
-            const taskType = YAML_UTILS.getTaskType(event.model.getValue(), event.position, this.pluginSingleList)
-            if (taskType) {
-                const taskElement = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.position);
-                const version = taskElement?.parents?.[taskElement.parents.length - 1]?.version;
-                
-                this.$store.dispatch("plugin/load", {cls: taskType, version})
-                    .then(plugin => {
-                        this.$store.commit("plugin/setEditorPlugin", {cls: taskType, ...plugin});
-                    });
-            } else {
-                this.$store.commit("plugin/setEditorPlugin", undefined);
-            }
+            const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+            let element = elementWrapper?.value?.type !== undefined ? elementWrapper.value : elementWrapper?.parents?.findLast(p => p.type !== undefined);
+            this.pluginsStore.updateDocumentation(element);
         },
-    }
+    },
 };

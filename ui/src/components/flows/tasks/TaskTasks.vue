@@ -3,8 +3,8 @@
         <Collapse
             title="tasks"
             :elements="items"
-            section="tasks"
-            block-type="tasks"
+            :section
+            :block-schema-path="[schemaPath, 'properties', root, 'items'].join('/')"
             @remove="(yaml) => store.commit('flow/setFlowYaml', yaml)"
             @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
         />
@@ -12,25 +12,39 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed, inject, ref} from "vue";
     import {useStore} from "vuex";
     import Collapse from "../../code/components/collapse/Collapse.vue";
+    import {SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
 
-    defineOptions({inheritAttrs: false});
+    const schemaPath = inject(SCHEMA_PATH_INJECTION_KEY, ref())
+
+    defineOptions({
+        inheritAttrs: false
+    });
 
     const store = useStore();
 
-    interface Task {id:string, type:string}
+    interface Task {
+        id:string,
+        type:string
+    }
 
     const props = withDefaults(defineProps<{
-        modelValue?: Task[]
+        modelValue?: Task[],
+        root?: string;
     }>(), {
-        modelValue: () => []
+        modelValue: () => [],
+        root: undefined
     });
 
     const items = computed(() =>
         !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     );
+
+    const section = computed(() => {
+        return props.root ?? "tasks";
+    });
 </script>
 
 <style scoped lang="scss">

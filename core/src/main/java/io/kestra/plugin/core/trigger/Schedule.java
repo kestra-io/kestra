@@ -82,12 +82,12 @@ import java.util.stream.Stream;
             code = """
                 id: daily_flow
                 namespace: company.team
-                
+
                 tasks:
                   - id: log
                     type: io.kestra.plugin.core.log.Log
                     message: It's {{ trigger.date ?? taskrun.startDate | date("HH:mm") }}
-                
+
                 triggers:
                   - id: schedule
                     type: io.kestra.plugin.core.trigger.Schedule
@@ -178,15 +178,17 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     @NotNull
     @Schema(
         title = "The cron expression.",
-        description = "A standard [unix cron expression](https://en.wikipedia.org/wiki/Cron) with 5 fields (minutes precision). Using `withSeconds: true` you can switch to 6 fields and a seconds precision.\n" +
-            "Can also be a cron extension / nickname:\n" +
-            "* `@yearly`\n" +
-            "* `@annually`\n" +
-            "* `@monthly`\n" +
-            "* `@weekly`\n" +
-            "* `@daily`\n" +
-            "* `@midnight`\n" +
-            "* `@hourly`"
+        description = """
+            A standard [unix cron expression](https://en.wikipedia.org/wiki/Cron) with 5 fields (minutes precision). Using `withSeconds: true` you can switch to 6 fields and a seconds precision.
+            Both `0` and `7` represent Sunday for the day-of-week field.
+            Can also be a cron extension / nickname:
+            * `@yearly`
+            * `@annually`
+            * `@monthly`
+            * `@weekly`
+            * `@daily`
+            * `@midnight`
+            * `@hourly`"""
     )
     @PluginProperty
     private String cron;
@@ -436,13 +438,6 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             variables,
             Optional.empty()
         );
-
-       execution = execution.toBuilder()
-            // keep to avoid breaking compatibility
-            .variables(ImmutableMap.of(
-                "schedule", execution.getTrigger().getVariables()
-            ))
-            .build();
 
        return Optional.of(execution);
     }

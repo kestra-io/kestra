@@ -19,13 +19,13 @@
 <script>
     import {computed, defineComponent, ref, getCurrentInstance} from "vue";
     import {Bar} from "vue-chartjs";
-    import {useStore} from "vuex";
+    import {useMiscStore} from "../../stores/misc";
     import Utils from "../../utils/utils";
     import {
         defaultConfig,
         tooltip,
         getFormat,
-    } from "../../utils/charts.js";
+    } from "../dashboard/composables/charts.js";
     import Logs from "../../utils/logs.js";
 
     export default defineComponent({
@@ -52,7 +52,7 @@
             const tooltipContent = ref("");
             const dataReady = computed(() => props.data.length > 0)
 
-            const store = useStore();
+            const miscStore = useMiscStore();
 
             const options = computed(() => defaultConfig({
                 plugins: {
@@ -87,7 +87,7 @@
                         position: "right",
                     }
                 },
-            }, store.getters["misc/theme"]));
+            }, miscStore.theme));
 
             const chartData = computed(() => {
                 let datasets = props.data

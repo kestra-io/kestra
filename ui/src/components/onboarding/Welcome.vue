@@ -21,10 +21,10 @@
                         width="180px"
                     >
                     <h2 class="section-1-title">
-                        {{ $t("homeDashboard.wel_text") }}
+                        {{ $t("welcome_page.wel_text") }}
                     </h2>
                     <p class="section-1-desc">
-                        {{ $t("homeDashboard.start") }}
+                        {{ $t("welcome_page.start") }}
                     </p>
                     <el-button
                         @click="startTour"
@@ -46,7 +46,7 @@
                     </el-button>
                 </div>
                 <el-divider>
-                    {{ $t("homeDashboard.guide") }}
+                    {{ $t("welcome_page.guide") }}
                 </el-divider>
                 <onboarding-bottom />
             </div>
@@ -58,6 +58,7 @@
 <script setup lang="ts">
     import {computed, getCurrentInstance} from "vue";
     import {useStore} from "vuex";
+    import {useCoreStore} from "../../stores/core";
     import {useI18n} from "vue-i18n";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Play from "vue-material-design-icons/Play.vue";
@@ -73,6 +74,7 @@
     const {topbar = true} = defineProps<{topbar?: boolean}>();
 
     const store = useStore();
+    const coreStore = useCoreStore();
     const {t} = useI18n();
     const instance = getCurrentInstance();
 
@@ -83,7 +85,7 @@
     });
 
     const routeInfo = computed(() => ({
-        title: t("homeDashboard.welcome")
+        title: t("welcome_page.welcome")
     }));
 
     const canCreate = computed(() => {
@@ -95,7 +97,10 @@
 
     const startTour = () => {
         localStorage.setItem("tourDoneOrSkip", "undefined");
-        store.commit("core/setGuidedProperties", {tourStarted: true});
+        coreStore.guidedProperties = {
+            ...coreStore.guidedProperties,
+            tourStarted: true
+        };
         (instance?.proxy as any)?.$tours["guidedTour"]?.start();
     };
 </script>

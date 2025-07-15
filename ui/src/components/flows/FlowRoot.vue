@@ -22,6 +22,8 @@
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapState, mapGetters} from "vuex";
+    import {mapStores} from "pinia";
+    import {useCoreStore} from "../../stores/core";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
@@ -56,14 +58,14 @@
                     this.load();
                 }
             },
-            guidedProperties: {
+            "coreStore.guidedProperties": {
                 deep: true,
                 immediate: true,
                 handler: function (newValue) {
                     if (newValue?.manuallyContinue) {
                         setTimeout(() => {
                             this.$tours["guidedTour"]?.nextStep();
-                            this.$store.commit("core/setGuidedProperties", {manuallyContinue: false});
+                            this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, manuallyContinue: false};
                         }, 500);
                     }
                 },
@@ -307,7 +309,7 @@
             ...mapGetters("flow", ["flow", "isAllowedEdit", "readOnlySystemLabel"]),
             ...mapState("flow", ["expandedSubflows"]),
             ...mapState("auth", ["user"]),
-            ...mapState("core", ["guidedProperties"]),
+            ...mapStores(useCoreStore),
             routeInfo() {
                 return {
                     title: this.$route.params.id,
@@ -321,11 +323,12 @@
                         {
                             label: this.$route.params.namespace,
                             link: {
-                                name: "flows/list",
-                                query: {
-                                    namespace: this.$route.params.namespace,
-                                },
-                            },
+                                name: "namespaces/update",
+                                params: {
+                                    id: this.$route.params.namespace,
+                                    tab: "flows"
+                                }
+                            }
                         },
                     ],
                     beta: this.tabs.find(tab => tab.name === this.$route.params.tab)?.props?.beta,

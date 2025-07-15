@@ -75,16 +75,19 @@
 </template>
 
 <script>
-    import {defineAsyncComponent, shallowRef} from "vue";
+    import {shallowRef} from "vue";
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
-    import {mapState, mapGetters} from "vuex";
+    import {mapGetters} from "vuex";
+    import {mapStores} from "pinia";
+    import {useCoreStore} from "../../stores/core";
+    import {useDocStore} from "../../stores/doc";
+    import {useMiscStore} from "../../stores/misc";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
-
-    const MonacoEditor = defineAsyncComponent(() => import("./MonacoEditor.vue"));
+    import MonacoEditor from "./MonacoEditor.vue";
 
     import Utils from "../../utils/utils";
 
@@ -113,6 +116,7 @@
             label: {type: String, default: undefined},
             shouldFocus: {type: Boolean, default: true},
             showScroll: {type: Boolean, default: false},
+            diffOverviewBar: {type: Boolean, default: true},
         },
         components: {
             MonacoEditor,
@@ -142,10 +146,11 @@
                 plugin: undefined,
                 taskType: undefined,
                 themeComputed: Utils.getTheme(),
+                preventCursorChange: false,
             };
         },
         mounted() {
-            this.$store.commit("doc/setDocId", "flowEditor");
+            this.docStore.docId = "flowEditor";
         },
         watch: {
             mappedTheme: {
@@ -154,11 +159,20 @@
                 },
                 immediate: true,
             },
+            modelValue(value) {
+                if (this.editor?.getValue?.() !== value) {
+                    this.preventCursorChange = true;
+                } else {
+                    this.preventCursorChange = false;
+                }
+            },
         },
         computed: {
-            ...mapState({mappedTheme: state => state.misc.theme}),
-            ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flowValidation"]),
+            ...mapStores(useCoreStore, useDocStore, useMiscStore),
+            mappedTheme() {
+                return this.miscStore.theme;
+            },
             containerClass() {
                 return [
                     !this.input ? "" : "single-line",
@@ -220,6 +234,7 @@
                     };
                     options.renderSideBySide = this.diffSideBySide;
                     options.useInlineViewWhenSpaceIsLimited = false;
+                    options.renderOverviewRuler = this.diffOverviewBar;
                 }
 
                 if (this.minimap === false) {
@@ -382,10 +397,6 @@
                     }
                 }
 
-                if (this.original !== undefined) {
-                    this.editor.updateOptions({readOnly: true});
-                }
-
                 if (!this.fullHeight) {
                     editor.onDidContentSizeChange((e) => {
                         if (!this.$refs.container) return;
@@ -396,22 +407,22 @@
 
                 if (!this.original) {
                     this.editor.onDidContentSizeChange((_) => {
-                        if (this.guidedProperties.monacoRange) {
+                        if (this.coreStore.guidedProperties.monacoRange) {
                             editor.revealLine(
-                                this.guidedProperties.monacoRange.endLineNumber,
+                                this.coreStore.guidedProperties.monacoRange.endLineNumber,
                             );
                             const decorationsToAdd = [];
                             decorationsToAdd.push({
-                                range: this.guidedProperties.monacoRange,
+                                range: this.coreStore.guidedProperties.monacoRange,
                                 options: {
                                     isWholeLine: true,
                                     inlineClassName: "highlight-text",
                                 },
                                 className: "highlight-text",
                             });
-                            if (this.guidedProperties.monacoDisableRange) {
+                            if (this.coreStore.guidedProperties.monacoDisableRange) {
                                 decorationsToAdd.push({
-                                    range: this.guidedProperties.monacoDisableRange,
+                                    range: this.coreStore.guidedProperties.monacoDisableRange,
                                     options: {
                                         isWholeLine: true,
                                         inlineClassName: "disable-text",
@@ -427,9 +438,13 @@
                     });
 
                     this.editor.onDidChangeCursorPosition?.(() => {
+                        clearTimeout(this.lastTimeout);
+                        if(this.preventCursorChange) {
+                            this.preventCursorChange = false;
+                            return;
+                        }
                         let position = this.editor.getPosition();
                         let model = this.editor.getModel();
-                        clearTimeout(this.lastTimeout);
                         this.lastTimeout = setTimeout(() => {
                             this.$emit("cursor", {
                                 position: position,
@@ -555,7 +570,7 @@
             padding-top: 7px;
 
             &.custom-dark-vs-theme {
-                background-color: var(--ks-background-input);           
+                background-color: var(--ks-background-input);
             }
 
             &.theme-light {

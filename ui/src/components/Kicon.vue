@@ -5,7 +5,7 @@
             v-if="tooltip"
             :content="tooltip"
             :raw-content="true"
-            :placement="placement"
+            v-bind="placement ? {placement} : {}"
             :persistent="false"
             transition=""
             :hide-after="0"
@@ -15,19 +15,15 @@
         <slot v-else />
     </span>
 </template>
-<script>
-    export default {
-        props:{
-            tooltip: {
-                type: String,
-                default: ""
-            },
-            placement:{
-                type: String,
-                default: "top"
-            },
-        },
-    }
+<script lang="ts" setup>
+    withDefaults(
+        defineProps<{
+            tooltip?: string;
+            placement?: string;
+        }>(),{
+            tooltip: "",
+            placement: "",
+        });
 </script>
 
 <style lang="scss" scoped>

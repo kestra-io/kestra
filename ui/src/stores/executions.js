@@ -363,6 +363,11 @@ export default {
                 .then(response => {
                     commit("setFlowsExecutable", response.data)
                 })
+        },
+        loadLatestExecutions({_}, options) {
+            return this.$http.post(`${apiUrl(this)}/executions/latest`, options.flowFilters).then(response => {
+                return response.data
+            })
         }
     },
     mutations: {

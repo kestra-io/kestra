@@ -1,9 +1,9 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button id="execute-button" :class="{'onboarding-glow': guidedProperties.tourStarted}" :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
+        <el-button id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}" :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
             {{ $t("execute") }}
         </el-button>
-        <el-dialog id="execute-flow-dialog" v-if="isOpen" v-model="isOpen" destroy-on-close :show-close="!guidedProperties.tourStarted" :before-close="(done) => beforeClose(done)" :append-to-body="true">
+        <el-dialog id="execute-flow-dialog" v-if="isOpen" v-model="isOpen" destroy-on-close :show-close="!coreStore.guidedProperties.tourStarted" :before-close="(done) => beforeClose(done)" :append-to-body="true">
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
@@ -59,6 +59,9 @@
     import {shallowRef} from "vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
     import FlowWarningDialog from "./FlowWarningDialog.vue";
+    import {mapStores} from "pinia";
+    import {useApiStore} from "../../stores/api";
+    import {useCoreStore} from "../../stores/core";
 
     export default {
         components: {
@@ -101,12 +104,12 @@
             onClick() {
                 if (this.$tours["guidedTour"]?.isRunning?.value) {
                     this.$tours["guidedTour"]?.nextStep();
-                    this.$store.dispatch("api/events", {
+                    this.apiStore.events({
                         type: "ONBOARDING",
                         onboarding: {
                             step: this.$tours["guidedTour"]?.currentStep?._value,
                             action: "next",
-                            template: this.guidedProperties.template
+                            template: this.coreStore.guidedProperties.template
                         },
                         page: pageFromRoute(this.$router.currentRoute.value)
                     });
@@ -150,7 +153,7 @@
                 this.localNamespace = undefined;
             },
             beforeClose(done){
-                if(this.guidedProperties.tourStarted) return;
+                if(this.coreStore.guidedProperties.tourStarted) return;
 
                 this.reset();
                 done()
@@ -158,9 +161,9 @@
         },
         computed: {
             ...mapState("flow", ["executeFlow"]),
-            ...mapState("core", ["guidedProperties"]),
             ...mapState("execution", ["flow", "namespaces", "flowsExecutable"]),
             ...mapState("auth", ["user"]),
+            ...mapStores(useApiStore, useCoreStore),
             computedFlowId() {
                 return this.flowId || this.localFlow?.id;
             },
@@ -176,9 +179,9 @@
             }
         },
         watch: {
-            guidedProperties: {
+            "coreStore.guidedProperties": {
                 handler() {
-                    if (this.guidedProperties.executeFlow) {
+                    if (this.coreStore.guidedProperties.executeFlow) {
                         this.onClick();
                     }
                 },

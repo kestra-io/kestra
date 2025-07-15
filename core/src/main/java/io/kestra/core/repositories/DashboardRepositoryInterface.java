@@ -24,6 +24,8 @@ public interface DashboardRepositoryInterface {
 
     List<Dashboard> findAll(String tenantId);
 
+    List<Dashboard> findAllWithNoAcl(String tenantId);
+
     default Dashboard save(Dashboard dashboard, String source) {
         return this.save(null, dashboard, source);
     }

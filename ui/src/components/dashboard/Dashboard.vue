@@ -1,122 +1,114 @@
 <template>
-    <section id="header" v-if="!embed">
-        <Header
-            :title="dashboard.title ?? t('overview')"
-            :description="dashboard.description"
-            :breadcrumb="[{label: t('dashboard_label'), link: {}}]"
-            :id="dashboard.id"
-        />
-    </section>
+    <Header v-if="header" :dashboard />
 
     <section id="filter">
         <KestraFilter
-            prefix="dashboard"
-            :language="filterLanguage"
+            :prefix="`dashboard__${dashboard.id}`"
+            :language
             :buttons="{
-                refresh: {
-                    shown: true,
-                    callback: () => refresh(),
-                },
+                refresh: {shown: true, callback: () => refreshCharts()},
                 settings: {shown: false},
             }"
-            :dashboards="{shown: route.name === 'home'}"
-            @dashboard="(value) => load(value)"
-            :key="chartSectionKey"
+            :dashboards="{shown: ALLOWED_CREATION_ROUTES.includes(String(route.name))}"
+            @dashboard="(value: Dashboard['id']) => load(value)"
         />
     </section>
 
-    <ChartsSection :charts :show-default="dashboard.id === 'default'" />
+    <Sections :key :dashboard :charts :show-default="dashboard.id === 'default'" padding />
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {computed, onBeforeMount, ref} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import {useStore} from "vuex";
-    import {useI18n} from "vue-i18n";
+
+    import type {Dashboard, Chart} from "./composables/useDashboards";
+    import {ALLOWED_CREATION_ROUTES, getDashboard, processFlowYaml} from "./composables/useDashboards";
 
     import Header from "./components/Header.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
-    import ChartsSection from "./components/ChartsSection.vue";
+    import Sections from "./sections/Sections.vue";
 
-    import DashboardFilterLanguage from "../../composables/monaco/languages/filters/impl/dashboardFilterLanguage.js";
-    import NamespaceDashboardFilterLanguage from "../../composables/monaco/languages/filters/impl/namespaceDashboardFilterLanguage.js";
-    import FlowDashboardFilterLanguage from "../../composables/monaco/languages/filters/impl/flowDashboardFilterLanguage.js";
+    import FILTER_LANGUAGE_MAIN from "../../composables/monaco/languages/filters/impl/dashboardFilterLanguage.js";
+    import FILTER_LANGUAGE_NAMESPACE from "../../composables/monaco/languages/filters/impl/namespaceDashboardFilterLanguage.js";
+    import FILTER_LANGUAGE_FLOW from "../../composables/monaco/languages/filters/impl/flowDashboardFilterLanguage.js";
 
-    import yaml from "yaml";
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    const language = computed(() => {
+        if (props.isNamespace) return FILTER_LANGUAGE_NAMESPACE;
+        if (props.isFlow) return FILTER_LANGUAGE_FLOW;
+        return FILTER_LANGUAGE_MAIN;
+    });
 
-    import YAML_MAIN from "../../assets/dashboard/default_main_definition.yaml?raw";
-    import YAML_FLOW from "../../assets/dashboard/default_flow_definition.yaml?raw";
-    import YAML_NAMESPACE from "../../assets/dashboard/default_namespace_definition.yaml?raw";
-    import Utils from "../../utils/utils.js";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
-    const router = useRouter();
+    import YAML_MAIN from "./assets/default_main_definition.yaml?raw";
+    import YAML_FLOW from "./assets/default_flow_definition.yaml?raw";
+    import YAML_NAMESPACE from "./assets/default_namespace_definition.yaml?raw";
+
+    import UTILS from "../../utils/utils.js";
+
+    import {useRoute, useRouter} from "vue-router";
     const route = useRoute();
-    const store = useStore();
-    const {t} = useI18n({useScope: "global"});
+    const router = useRouter();
+
+    import {useDashboardStore} from "../../stores/dashboard";
+    const dashboardStore = useDashboardStore();
+
+    defineOptions({inheritAttrs: false});
 
     const props = defineProps({
-        embed: {type: Boolean, default: false},
+        header: {type: Boolean, default: true},
         isFlow: {type: Boolean, default: false},
         isNamespace: {type: Boolean, default: false},
     });
 
-    const filterLanguage = computed(() => {
-        if (props.isNamespace) {
-            return NamespaceDashboardFilterLanguage;
-        }
+    const dashboard = ref<Dashboard>({id: "", charts: []});
+    const charts = ref<Chart[]>([]);
 
-        if (props.isFlow) {
-            return FlowDashboardFilterLanguage;
-        }
+    // We use a key to force re-rendering of the Sections component
+    let key = ref(UTILS.uid());
 
-        return DashboardFilterLanguage;
-    })
-
-    const initial = (dashboard) => ({id: "default", ...YAML_UTILS.parse(dashboard)});
-
-    const dashboard = ref({});
-    const charts = ref([]);
-    // We use a key to force re-rendering of the ChartsSection when the refresh button is clicked
-    const chartSectionKey = ref(Utils.uid());
-
-    const loadCharts = async (allCharts) => {
+    const loadCharts = async (allCharts: Chart[] = []) => {
         charts.value = [];
+
         for (const chart of allCharts) {
-            charts.value.push({...chart, content: yaml.stringify(chart), raw: chart});
+            charts.value.push({...chart, content: YAML_UTILS.stringify(chart)});
         }
+
+        refreshCharts()
     };
 
-    const refresh = () => {
-        chartSectionKey.value = Utils.uid();
-        loadCharts();
-    }
+    const refreshCharts = () => {
+        key.value = UTILS.uid();
+    };
 
     const load = async (id = "default", defaultYAML = YAML_MAIN) => {
-        if (!["home", "flows/update", "namespaces/update"].includes(route.name)) return;
+        if (!ALLOWED_CREATION_ROUTES.includes(String(route.name))) {
+            return;
+        }
 
-        if(!props.isFlow && !props.isNamespace) {
+        if (!props.isFlow && !props.isNamespace) {
             router.replace({
-                params: {...route.params, id},
-                query: route.params.id !== id ? {} : {...route.query},
+                params: {...route.params, dashboard: id},
+                query: route.params.dashboard !== id ? {} : {...route.query},
             });
         }
 
-        dashboard.value = id === "default" ? initial(defaultYAML) : await store.dispatch("dashboard/load", id);
+        dashboard.value = id === "default" ? {id, ...YAML_UTILS.parse(defaultYAML)} : await dashboardStore.load(id);
         loadCharts(dashboard.value.charts);
     };
 
     onBeforeMount(() => {
-        if (props.isFlow) load("default", YAML_FLOW.replace(/--NAMESPACE--/g, route.params.namespace).replace(/--FLOW--/g, route.params.id));
-        else if (props.isNamespace) load("default", YAML_NAMESPACE);
+        const ID = getDashboard(route, "id");
+
+        if (props.isFlow && ID === "default") load("default", processFlowYaml(YAML_FLOW, route.params.namespace, route.params.id));
+        else if (props.isNamespace && ID === "default") load("default", YAML_NAMESPACE);
     });
 </script>
 
-<style lang="scss" scoped>
-    @import "@kestra-io/ui-libs/src/scss/variables";
+<style scoped lang="scss">
+@import "@kestra-io/ui-libs/src/scss/variables";
 
-    section#filter {
-        margin: 2rem 0.25rem 0;
-        padding: 0 2rem;
-    }
+section#filter {
+    margin: 2rem 0.25rem 0;
+    padding: 0 2rem;
+}
 </style>

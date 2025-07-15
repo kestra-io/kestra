@@ -26,7 +26,7 @@ tasks:
   message: third all optional args {{ outputs.t2.value }}
   timeout: PT60M
   retry:
-    maxAttempt: 5
+    maxAttempts: 5
     type: constant
     interval: PT15M
 #

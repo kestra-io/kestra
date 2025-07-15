@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
@@ -18,6 +19,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
@@ -66,6 +68,9 @@ public class ExecutorService {
 
     @Inject
     private WorkerGroupExecutorInterface workerGroupExecutorInterface;
+
+    @Inject
+    private WorkerJobRunningStateStore workerJobRunningStateStore;
 
     protected FlowMetaStoreInterface flowExecutorInterface;
 
@@ -257,7 +262,8 @@ public class ExecutorService {
                 // Compute outputs for the parent Flowable task if a terminated state was resolved
                 if (workerTaskResult.getTaskRun().getState().isTerminated()) {
                     try {
-                        Output outputs = flowableParent.outputs(runContext);
+                        // as flowable tasks can save outputs during iterative execution, we must merge the maps here
+                        Map<String, Object> outputs = MapUtils.merge(workerTaskResult.getTaskRun().getOutputs(), flowableParent.outputs(runContext).toMap());
                         Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputs);
                         return Optional.of(new WorkerTaskResult(workerTaskResult
                             .getTaskRun()
@@ -664,7 +670,7 @@ public class ExecutorService {
                                 .taskRunId(workerTaskResult.getTaskRun().getId())
                                 .executionId(executor.getExecution().getId())
                                 .date(workerTaskResult.getTaskRun().getState().maxDate().plus(duration != null ? duration : timeout))
-                                .state(duration != null ? behavior.mapToState() : State.Type.FAILED)
+                                .state(duration != null ? behavior.mapToState() : State.Type.fail(pauseTask))
                                 .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
                                 .build();
                         }
@@ -732,6 +738,7 @@ public class ExecutorService {
         List<TaskRun> afterExecutionNexts = FlowableUtils.resolveSequentialNexts(executor.getExecution(), afterExecutionResolvedTasks)
             .stream()
             .map(throwFunction(NextTaskRun::getTaskRun))
+            .map(taskRun -> taskRun.withForceExecution(true)) // forceExecution so it would be executed even if the execution is killed
             .toList();
         if (!afterExecutionNexts.isEmpty()) {
             return executor.withTaskRun(afterExecutionNexts, "handleAfterExecution ");
@@ -815,7 +822,7 @@ public class ExecutorService {
                         .executionKind(executor.getExecution().getKind())
                         .build();
                     // Get worker group
-                    Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(workerTask);
+                    Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(executor.getFlow(), workerTask);
                     if (workerGroup.isPresent()) {
                         // Check if the worker group exist
                         String tenantId = executor.getFlow().getTenantId();
@@ -884,12 +891,37 @@ public class ExecutorService {
             this.addWorkerTaskResults(executor, workerTaskResults);
         }
 
-
         if (workerTasks.isEmpty() || hasMockedWorkerTask) {
             return executor;
         }
 
         Executor executorToReturn = executor;
+
+        // suspend on breakpoint: if a breakpoint is for a CREATED taskrun, set the execution state to BREAKPOINT and ends here
+        if (!ListUtils.isEmpty(executor.getExecution().getBreakpoints())) {
+            List<Breakpoint> breakpoints = executor.getExecution().getBreakpoints();
+            if (executor.getExecution()
+                .getTaskRunList()
+                .stream()
+                .anyMatch(taskRun -> shouldSuspend(taskRun, breakpoints))
+            ) {
+                List<TaskRun> newTaskRuns = executor.getExecution().getTaskRunList().stream().map(
+                    taskRun -> {
+                        if (shouldSuspend(taskRun, breakpoints)) {
+                            return taskRun.withState(State.Type.BREAKPOINT);
+                        }
+                        return taskRun;
+                    }
+                ).toList();
+                Execution newExecution = executor.getExecution().withTaskRunList(newTaskRuns).withState(State.Type.BREAKPOINT);
+                executorToReturn = executorToReturn.withExecution(newExecution, "handleBreakpoint");
+                logService.logExecution(
+                    newExecution,
+                    Level.INFO,
+                    "Flow is suspended at a breakpoint."
+                );
+            }
+        }
 
         // Ends FAILED or CANCELLED task runs by creating worker task results
         List<WorkerTask> endedTasks = workerTasks.get(true);
@@ -904,13 +936,18 @@ public class ExecutorService {
 
         // Send other TaskRun to the worker (create worker tasks)
         List<WorkerTask> processingTasks = workerTasks.get(false);
-        if (processingTasks != null && !processingTasks.isEmpty()) {
+        if (processingTasks != null && !processingTasks.isEmpty() && !executor.getExecution().getState().isBreakpoint()) {
             executorToReturn = executorToReturn.withWorkerTasks(processingTasks, "handleWorkerTask");
 
             metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_CREATED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_CREATED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution())).increment(processingTasks.size());
         }
 
         return executorToReturn;
+    }
+
+    private boolean shouldSuspend(TaskRun taskRun, List<Breakpoint> breakpoints) {
+        return taskRun.getState().getCurrent().isCreated() && breakpoints.stream()
+                .anyMatch(breakpoint -> taskRun.getTaskId().equals(breakpoint.getId()) && Objects.equals(taskRun.getValue(), breakpoint.getValue()));
     }
 
     private Executor handleExecutableTask(final Executor executor) {
@@ -1072,6 +1109,25 @@ public class ExecutorService {
             newExecution = executionService.killParentTaskruns(taskRun, newExecution);
         }
         executor.withExecution(newExecution, "addWorkerTaskResult");
+        if (taskRun.getState().isTerminated()) {
+            log.trace("TaskRun terminated: {}", taskRun);
+            workerJobRunningStateStore.deleteByKey(taskRun.getId());
+            metricRegistry
+                .counter(
+                    MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT,
+                    MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION,
+                    metricRegistry.tags(workerTaskResult)
+                )
+                .increment();
+
+            metricRegistry
+                .timer(
+                    MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION,
+                    MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION,
+                    metricRegistry.tags(workerTaskResult)
+                )
+                .record(taskRun.getState().getDuration());
+        }
     }
 
     // Note: as the flow is only used in an error branch and it can take time to load, we pass it thought a Supplier
@@ -1116,71 +1172,83 @@ public class ExecutorService {
     }
 
     public void log(Logger log, Boolean in, WorkerJob value) {
-        if (value instanceof WorkerTask workerTask) {
-            log.debug(
-                "{} {} : {}",
-                in ? "<< IN " : ">> OUT",
-                workerTask.getClass().getSimpleName(),
-                workerTask.getTaskRun().toStringState()
-            );
-        } else if (value instanceof WorkerTrigger workerTrigger) {
-            log.debug(
-                "{} {} : {}",
-                in ? "<< IN " : ">> OUT",
-                workerTrigger.getClass().getSimpleName(),
-                workerTrigger.getTriggerContext().uid()
-            );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            if (value instanceof WorkerTask workerTask) {
+                log.debug(
+                    "{} {} : {}",
+                    in ? "<< IN " : ">> OUT",
+                    workerTask.getClass().getSimpleName(),
+                    workerTask.getTaskRun().toStringState()
+                );
+            } else if (value instanceof WorkerTrigger workerTrigger) {
+                log.debug(
+                    "{} {} : {}",
+                    in ? "<< IN " : ">> OUT",
+                    workerTrigger.getClass().getSimpleName(),
+                    workerTrigger.getTriggerContext().uid()
+                );
+            }
         }
     }
 
     public void log(Logger log, Boolean in, WorkerTaskResult value) {
-        log.debug(
-            "{} {} : {}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.getTaskRun().toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} : {}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.getTaskRun().toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, SubflowExecutionResult value) {
-        log.debug(
-            "{} {} : {}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.getParentTaskRun().toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} : {}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.getParentTaskRun().toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, SubflowExecutionEnd value) {
-        log.debug(
-            "{} {} : {}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} : {}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, Execution value) {
-        log.debug(
-            "{} {} [key='{}']\n{}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.getId(),
-            value.toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} [key='{}']\n{}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.getId(),
+                value.toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, Executor value) {
-        log.debug(
-            "{} {} [key='{}', from='{}', offset='{}', crc32='{}']\n{}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.getExecution().getId(),
-            value.getFrom(),
-            value.getOffset(),
-            value.getExecution().toCrc32State(),
-            value.getExecution().toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} [key='{}', from='{}', offset='{}', crc32='{}']\n{}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.getExecution().getId(),
+                value.getFrom(),
+                value.getOffset(),
+                value.getExecution().toCrc32State(),
+                value.getExecution().toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, ExecutionKilledExecution value) {
@@ -1274,7 +1342,7 @@ public class ExecutorService {
             .state(ExecutionKilled.State.REQUESTED)
             .executionState(state)
             .executionId(execution.getId())
-            .isOnKillCascade(false) // TODO we may offer the choice to the user here
+            .isOnKillCascade(true)
             .tenantId(execution.getTenantId())
             .build()
         );

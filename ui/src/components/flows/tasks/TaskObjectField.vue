@@ -1,5 +1,13 @@
 <template>
-    <el-form-item v-if="fieldKey" :required>
+    <component
+        v-if="simpleType === 'list'"
+        ref="taskComponent"
+        :is="type"
+        v-bind="{...componentProps}"
+        :disabled
+        class="mt-1 mb-2 wrapper"
+    />
+    <el-form-item v-else-if="fieldKey" :required="isRequired">
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -11,8 +19,9 @@
                     <span v-if="props.fieldKey" class="label">
                         {{ props.fieldKey }}
                     </span>
+
                     <ClearButton
-                        v-if="isAnyOf && !required"
+                        v-if="isAnyOf && !isRequired && modelValue && Object.keys(modelValue).length > 0"
                         @click="$emit('update:modelValue', undefined); taskComponent?.resetSelectType?.();"
                     />
                 </div>
@@ -48,6 +57,7 @@
             ref="taskComponent"
             :is="type"
             v-bind="{...componentProps}"
+            :disabled
             class="mt-1 mb-2 wrapper"
         />
     </el-form-item>
@@ -65,10 +75,12 @@
     const props = defineProps<{
         schema: any;
         definitions: any;
+        root?: string;
         fieldKey: string;
         task: any;
         modelValue?: Record<string, any> | string | number | boolean | Array<any>,
         required?: string[];
+        disabled?: boolean;
     }>()
 
     const emit = defineEmits<{
@@ -77,8 +89,8 @@
 
     const taskComponent = templateRef<{resetSelectType?: () => void}>("taskComponent");
 
-    const required = computed(() => {
-        return props.required?.includes(props.fieldKey);
+    const isRequired = computed(() => {
+        return !props.disabled && props.required?.includes(props.fieldKey);// && props.schema.$required;
     })
 
     const componentProps = computed(() => {
@@ -88,9 +100,9 @@
                 emit("update:modelValue", value);
             },
             task: props.task,
-            root: props.fieldKey,
+            root: props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey,
             schema: props.schema,
-            required: required.value,
+            required: isRequired.value,
             definitions: props.definitions
         }
     })
@@ -159,7 +171,7 @@
         flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-weight: 600;
+        font-size: 0.875rem;
     }
 
     .label-anyof{

@@ -1,35 +1,31 @@
 <template>
-    <TopNavBar :title="routeInfo.title" :breadcrumb="props.breadcrumb" :description="props.description">
-        <template #additional-right v-if="canCreate">
+    <TopNavBar
+        :title="route.title"
+        :breadcrumb="[{label: t('dashboards.labels.singular'), link: {}}]"
+        :description="props.dashboard?.description"
+    >
+        <template v-if="isAllowed" #additional-right>
             <ul>
-                <li v-if="props.id && props.id !== 'default'">
+                <li
+                    v-if="props.dashboard?.id && props.dashboard?.id !== 'default'"
+                >
                     <router-link
-                        :to="{
-                            name: 'dashboards/update',
-                            params: {id: props.id},
-                        }"
-                        data-test-id="dashboard-update-dashboard-button"
+                        :to="{name: 'dashboards/update', params: {id: props.dashboard?.id}}"
                     >
                         <el-button :icon="Pencil">
-                            {{ $t("edit_custom_dashboard") }}
+                            {{ $t("dashboards.edition.label") }}
                         </el-button>
                     </router-link>
                 </li>
-                <li v-if="!props.id">
-                    <router-link
-                        :to="{name: 'dashboards/create'}"
-                        data-test-id="dashboard-create-dashboard-button"
-                    >
+                <li v-if="!props.dashboard?.id">
+                    <router-link :to="{name: 'dashboards/create'}">
                         <el-button :icon="ViewDashboardEdit">
-                            {{ $t("create_dashboard") }}
+                            {{ $t("dashboards.creation.label") }}
                         </el-button>
                     </router-link>
                 </li>
                 <li>
-                    <router-link
-                        :to="{name: 'flows/create'}"
-                        data-test-id="dashboard-create-button"
-                    >
+                    <router-link :to="{name: 'flows/create'}">
                         <el-button :icon="Plus" type="primary">
                             {{ $t("create_flow") }}
                         </el-button>
@@ -40,40 +36,31 @@
     </TopNavBar>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {computed} from "vue";
 
     import {useStore} from "vuex";
-    import {useI18n} from "vue-i18n";
+    const store = useStore();
 
-    import permission from "../../../models/permission";
-    import action from "../../../models/action";
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
 
     import TopNavBar from "../../layout/TopNavBar.vue";
 
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import ViewDashboardEdit from "vue-material-design-icons/ViewDashboardEdit.vue";
-    import useRouteContext from "../../../mixins/useRouteContext.js";
 
-    const store = useStore();
-    const {t} = useI18n({useScope: "global"});
+    import permission from "../../../models/permission";
+    import action from "../../../models/action";
 
-    const props = defineProps({
-        title: {type: String, default: undefined},
-        description: {type: String, default: undefined},
-        breadcrumb: {type: Array, default: () => []},
-        id: {type: String, default: undefined},
-    });
+    const props = defineProps({dashboard: {type: Object, default: undefined}});
 
     const user = computed(() => store.state.auth.user);
-    const canCreate = computed(() =>
-        user.value.isAllowedGlobal(permission.FLOW, action.CREATE),
-    );
+    const isAllowed = computed(() => user.value.isAllowedGlobal(permission.FLOW, action.CREATE));
 
-    const routeInfo = computed(() => ({
-        title: props.title ?? t("homeDashboard.title"),
-    }));
+    const route = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
 
-    useRouteContext(routeInfo);
+    import useRouteContext from "../../../mixins/useRouteContext";
+    useRouteContext(route);
 </script>

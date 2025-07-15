@@ -28,7 +28,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Validated
-@Controller("/api/v1/main/namespaces/{namespace}/kv")
+@Controller("/api/v1/{tenant}/namespaces/{namespace}/kv")
 public class KVController {
     @Inject
     private StorageInterface storageInterface;
@@ -70,8 +70,9 @@ public class KVController {
         @Parameter(description = "The key") @PathVariable String key,
         @RequestBody(description = "The value of the key") @Body String value
     ) throws IOException {
+        String description = httpHeaders.get("description");
         String ttl = httpHeaders.get("ttl");
-        KVMetadata metadata = new KVMetadata(ttl == null ? null : Duration.parse(ttl));
+        KVMetadata metadata = new KVMetadata(description, ttl == null ? null : Duration.parse(ttl));
         try {
             // use ION mapper to properly handle timestamp
             JsonNode jsonNode = JacksonMapper.ofIon().readTree(value);

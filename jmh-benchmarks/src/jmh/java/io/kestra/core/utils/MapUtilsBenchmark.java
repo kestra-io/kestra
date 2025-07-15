@@ -1,6 +1,7 @@
 package io.kestra.core.utils;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -21,12 +22,17 @@ public class MapUtilsBenchmark {
             mapA.put("key" + i, "valueA" + i);
             mapB.put("key" + i, "valueB" + i);
         }
-        mapA.put("nested", Map.of("a", 1));
-        mapB.put("nested", Map.of("b", 2));
+        for (int i = 0; i < 10; i++) {
+            mapA.put("nested" + i, Map.of("a", i));
+            mapB.put("nested" + i, Map.of("b", i));
+        }
+        mapA.put("deepNested", Map.of("deepNested", Map.of("deepNested", "deepNestedA", "collection", List.of("mapA"))));
+        mapB.put("deepNested", Map.of("deepNested", Map.of("deepNested", "deepNestedB", "collection", List.of("mapB"))));
     }
 
     /**
      * @see <a href="https://github.com/kestra-io/kestra/pull/8914">KESTRA#8914</a>
+     * @see <a href="https://github.com/kestra-io/kestra/pull/8917">KESTRA#8917</a>
      */
     @Benchmark
     public Map<String, Object> testMerge() {

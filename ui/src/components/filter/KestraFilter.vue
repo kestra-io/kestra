@@ -6,8 +6,8 @@
             <MonacoEditor
                 ref="monacoEditor"
                 class="border flex-grow-1 position-relative"
-                :language="`${language?.domain === undefined ? '' : (language.domain + '-')}${legacyQuery ? 'legacy-' : ''}filter`"
-                :schema-type="language?.domain"
+                :language="`${language.domain === undefined ? '' : (language.domain + '-')}${legacyQuery ? 'legacy-' : ''}filter`"
+                :schema-type="language.domain"
                 :value="filter"
                 @change="filter = $event"
                 :theme="themeComputed"
@@ -15,6 +15,7 @@
                 @editor-did-mount="editorDidMount"
                 suggestions-on-focus
                 :placeholder="placeholder ?? t('filters.label')"
+                data-testid="monaco-filter"
             />
             <el-button-group
                 class="d-inline-flex"
@@ -78,12 +79,14 @@
     import Save from "./segments/Save.vue";
     import Settings from "./segments/Settings.vue";
     import RefreshButton from "../layout/RefreshButton.vue";
-    import Dashboards from "./segments/Dashboards.vue";
+    import Dashboards from "../dashboard/components/selector/Selector.vue";
     import Properties from "./segments/Properties.vue";
     import {COMPARATORS_REGEX} from "../../composables/monaco/languages/filters/filterLanguageConfigurator.ts";
     import {Comparators, getComparator} from "../../composables/monaco/languages/filters/filterCompletion.ts";
     import {watchDebounced} from "@vueuse/core";
     import {FilterLanguage} from "../../composables/monaco/languages/filters/filterLanguage.ts";
+    import DefaultFilterLanguage from "../../composables/monaco/languages/filters/impl/defaultFilterLanguage.ts";
+    import _isEqual from "lodash/isEqual";
 
     const router = useRouter();
     const route = useRoute();
@@ -91,7 +94,7 @@
 
     const props = withDefaults(defineProps<{
         prefix?: string | undefined;
-        language?: FilterLanguage | undefined,
+        language?: FilterLanguage,
         propertiesWidth?: number,
         buttons?: (Omit<Buttons, "settings"> & {
             settings: Omit<Buttons["settings"], "charts"> & { charts?: Buttons["settings"]["charts"] }
@@ -104,7 +107,7 @@
         legacyQuery?: boolean,
     }>(), {
         prefix: undefined,
-        language: undefined,
+        language: () => DefaultFilterLanguage,
         propertiesWidth: 144,
         buttons: () => ({
             refresh: {
@@ -146,7 +149,7 @@
         }
     }));
 
-    const itemsPrefix = computed(() => props.prefix ?? route.name?.toString());
+    const itemsPrefix = computed(() => props.prefix ?? route.name?.toString() ?? "fallback-filters");
 
     const emits = defineEmits(["dashboard", "updateProperties"]);
 
@@ -160,14 +163,9 @@
             .map(([key, value]) => [value, key])
     );
 
-    const EXCLUDED_QUERY_FIELDS = ["sort", "size", "page"];
+    const queryParamsToKeep = ref<string[]>([]);
 
-    const filteredRouteQuery = computed(() => route.query === undefined
-        ? undefined
-        : Object.fromEntries(Object.entries(route.query).filter(([key]) => !EXCLUDED_QUERY_FIELDS.includes(key))) as LocationQuery
-    );
-
-    watch(filteredRouteQuery, (newVal) => {
+    watch(() => route.query, (newVal) => {
         if (skipRouteWatcherOnce.value) {
             skipRouteWatcherOnce.value = false;
             return;
@@ -177,12 +175,19 @@
             return;
         }
 
+        queryParamsToKeep.value = [];
+
         let query = newVal;
         if (props.queryNamespace !== undefined) {
             query = Object.fromEntries(
                 Object.entries(newVal)
                     .filter(([key]) => {
-                        return key.startsWith(props.queryNamespace + "[");
+                        if (key.startsWith(props.queryNamespace + "[")) {
+                            return true;
+                        }
+
+                        queryParamsToKeep.value.push(key);
+                        return false;
                     })
                     .map(([key, value]) =>
                         // We trim the queryNamespace from the key
@@ -198,17 +203,32 @@
              */
             filter.value = Object.entries(query)
                 .flatMap(([key, values]) => {
+                    const remappedFilterKey = queryRemapper[key] ?? key;
+
+                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(FilterLanguage.withNestedKeyPlaceholder(remappedFilterKey)))) {
+                        queryParamsToKeep.value.push(key);
+                        return [];
+                    }
+
                     if (!Array.isArray(values)) {
                         values = [values];
                     }
 
-                    return values.map(value => (queryRemapper?.[key] ?? key) + Comparators.EQUALS + value);
+                    return values.map(value => remappedFilterKey + Comparators.EQUALS + value);
                 }).join(" ");
         } else {
+            Object.keys(query).filter((key) => {
+                return !key.startsWith("filters[");
+            }).forEach((key) => {
+                queryParamsToKeep.value.push(key);
+            });
+
             filter.value = Object.entries(query)
                 .filter(([key]) => key.startsWith("filters["))
                 .flatMap(([key, values]) => {
                     const [_, filterKey, comparator, subKey] = key.match(/filters\[([^\]]+)]\[([^\]]+)](?:\[([^\]]+)])?/) ?? [];
+                    const remappedFilterKey = queryRemapper[filterKey] ?? filterKey;
+
                     let maybeSubKeyString;
                     if (subKey === undefined) {
                         maybeSubKeyString = "";
@@ -220,7 +240,7 @@
                         values = [values];
                     }
 
-                    return values.map(value => (queryRemapper?.[filterKey] ?? filterKey) + maybeSubKeyString + getComparator(comparator as Parameters<typeof getComparator>[0]) + (value!.includes(" ") ? `"${value}"` : value));
+                    return values.map(value => remappedFilterKey + maybeSubKeyString + getComparator(comparator as Parameters<typeof getComparator>[0]) + (value!.includes(" ") ? `"${value}"` : value));
                 })
                 .join(" ");
         }
@@ -259,7 +279,7 @@
 
             // If we're not in a {key}{comparator}{value} format, we assume it's a text search
             if (key === undefined) {
-                if (props.language?.textFilterSupported && (text === undefined || !props.language?.keyMatchers()?.some(keyMatcher => keyMatcher.test(text)))) {
+                if (props.language.textFilterSupported && (text === undefined || !props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(text)))) {
                     filters.push({
                         key: "text",
                         comparator: "EQUALS",
@@ -269,15 +289,17 @@
                 continue;
             }
 
-            if (!props.language?.keyMatchers()?.some(keyMatcher => keyMatcher.test(key))) {
+            if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(key))) {
                 continue; // Skip keys that don't match the language key matchers
             }
 
-            if (!props.language?.comparatorsPerKey()[FilterLanguage.withNestedKeyPlaceholder(key)].some(c => Comparators[c] === comparator)) {
+            if (!props.language.comparatorsPerKey()[FilterLanguage.withNestedKeyPlaceholder(key)].some(c => Comparators[c] === comparator)) {
                 continue; // Skip comparators that are not valid for the key
             }
 
-            const values = [...new Set(commaSeparatedValues?.split(",")?.filter(value => value !== "")?.map(value => value.replaceAll("\"", "")) ?? [])];
+            const values = [...new Set(
+                [...commaSeparatedValues?.matchAll(/,?(?:"([^"]*)"|([^",]+))/g) ?? []].map(([_, quotedValue, rawValue]) => quotedValue ?? rawValue) ?? [])
+            ];
             if (values.length === 0) {
                 continue; // Skip empty values
             }
@@ -308,7 +330,7 @@
 
             if (!props.legacyQuery) {
                 if (key.includes(".")) {
-                    const keyAndSubKeyMatch = queryKey.match(/([^.]+)\.([^.]+)/);
+                    const keyAndSubKeyMatch = queryKey.match(/([^.]+)\.(\S+)/);
                     const rootKey = keyAndSubKeyMatch?.[1];
                     const subKey = keyAndSubKeyMatch?.[2].replace(/^"([^"]*)"$/, "$1");
                     if (rootKey === undefined || subKey === undefined) {
@@ -443,14 +465,21 @@
     };
 
     watchDebounced(filterQueryString, () => {
+        const newQuery = {
+            ...Object.fromEntries(queryParamsToKeep.value.map(key => {
+                return [
+                    key,
+                    route.query[key]
+                ];
+            })),
+            ...filterQueryString.value
+        };
+        if (_isEqual(route.query, newQuery)) {
+            return; // Skip if the query hasn't changed
+        }
         skipRouteWatcherOnce.value = true;
         router.push({
-            query: {
-                sort: route.query.sort,
-                size: route.query.size,
-                page: route.query.page,
-                ...filterQueryString.value
-            }
+            query: newQuery
         });
     }, {immediate: true, debounce: 1000});
 </script>
@@ -466,18 +495,18 @@
         border-bottom-right-radius: var(--el-border-radius-base);
         min-width: 0;
 
-        .mtk25 {
+        .mtk25, .mtk28{
             background-color: var(--ks-badge-background);
             padding: 2px 6px;
             border-radius: var(--el-border-radius-base);
 
-            &:has(+ .mtk25) {
+            &:has(+ .mtk25), &:has(+ .mtk28) {
                 padding-right: 0;
                 border-top-right-radius: 0;
                 border-bottom-right-radius: 0;
             }
 
-            + .mtk25 {
+            + .mtk25, + .mtk28 {
                 padding-left: 0;
                 border-top-left-radius: 0;
                 border-bottom-left-radius: 0;

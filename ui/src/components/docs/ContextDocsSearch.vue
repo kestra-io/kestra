@@ -46,14 +46,14 @@
 
 <script setup>
     import {ref, computed, onMounted, onUnmounted} from "vue";
-    import {useStore} from "vuex";
+    import {useDocStore} from "../../stores/doc";
     import {useI18n} from "vue-i18n";
     import Magnify from "vue-material-design-icons/Magnify.vue";
     import ContextDocsLink from "./ContextDocsLink.vue";
     import {debounce} from "lodash-es";
 
     const {t} = useI18n({useScope: "global"});
-    const store = useStore();
+    const docStore = useDocStore();
 
     const searchQuery = ref("");
     const searchResults = ref([]);
@@ -103,7 +103,7 @@
 
         try {
             loading.value = true;
-            const results = await store.dispatch("doc/search", {q: query, scoredSearch: true});
+            const results = await docStore.search({q: query, scoredSearch: true});
 
             const processedResults = (results || []).slice(0, 10);
             searchResults.value = processedResults;

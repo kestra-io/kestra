@@ -6,6 +6,7 @@ import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import Utils from "../utils/utils";
 import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
+import {useCoreStore} from "./core";
 
 const textYamlHeader = {
     headers: {
@@ -46,8 +47,11 @@ export default {
             commit("setMetadata", null);
             commit("setHaveChange", true)
         },
-        async saveAll({dispatch, state, commit, getters}){
-            if (getters.flowErrors?.length || !state.haveChange && !state.isCreating) {
+        async saveAll({dispatch, state, commit, getters, rootState}){
+            const hasAnyDirtyTabs = rootState.editor.tabs.some(t => t.dirty === true);
+            const hasChanges = state.haveChange || hasAnyDirtyTabs;
+            
+            if (getters.flowErrors?.length || !hasChanges && !state.isCreating) {
                 return;
             }
 
@@ -56,7 +60,10 @@ export default {
             return dispatch("saveWithoutRevisionGuard");
         },
         async save({getters, dispatch, commit, state, rootState}, {content, namespace}){
-            if (getters.flowErrors?.length || !state.haveChange && !state.isCreating) {
+            const hasAnyDirtyTabs = rootState.editor.tabs.some(t => t.dirty === true);
+            const hasChanges = state.haveChange || hasAnyDirtyTabs;
+            
+            if (getters.flowErrors?.length || !hasChanges && !state.isCreating) {
                 return;
             }
 
@@ -95,7 +102,8 @@ export default {
                     dirty: false
                 }, {root: true});
 
-                dispatch("core/isUnsaved", false, {root: true});
+                const coreStore = useCoreStore();
+                coreStore.unsavedChange = false;
             }
         },
         onEdit({getters, dispatch, commit, state, rootState}, {source, currentIsFlow, editorViewType, topologyVisible}) {
@@ -103,17 +111,22 @@ export default {
             const currentTab = rootState.editor.current;
 
             if (currentIsFlow) {
+                if (!source.trim()?.length) {
+                    commit("setFlowValidation", {constraints: this.$i18n.t("flow must not be empty")})
+                    return
+                }
                 if (!state.isCreating){
                     if(!source.trim()?.length ||
                         (flowParsed &&
                         (getters.id !== flowParsed.id ||
                             getters.namespace !== flowParsed.namespace)))
                         {
-                        dispatch("core/showMessage", {
+                        const coreStore = useCoreStore();
+                        coreStore.message = {
                             variant: "error",
                             title: this.$i18n.t("readonly property"),
                             message: this.$i18n.t("namespace and id readonly"),
-                        }, {root: true});
+                        };
                         commit("setFlowYaml", YAML_UTILS.replaceIdAndNamespace(
                             source,
                             getters.id,
@@ -125,7 +138,8 @@ export default {
 
             commit("setHaveChange", true);
             if(editorViewType === "YAML") {
-                dispatch("core/isUnsaved", true, {root: true});
+                const coreStore = useCoreStore();
+                coreStore.unsavedChange = true;
             }
 
             if(!state.isCreating){
@@ -161,11 +175,12 @@ export default {
             const flowParsed = getters.flowParsed;
 
             if (flowParsed === undefined) {
-                dispatch("core/showMessage", {
+                const coreStore = useCoreStore();
+                coreStore.message = {
                     variant: "error",
                     title: this.$i18n.t("invalid flow"),
                     message: this.$i18n.t("invalid yaml"),
-                }, {root: true});
+                };
 
                 return;
             }
@@ -201,14 +216,17 @@ export default {
                 await dispatch("createFlow", {flow: flowYaml})
                     .then((response) => {
                         this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
-                        dispatch("core/isUnsaved", false, {root: true});
+                        const coreStore = useCoreStore();
+                        coreStore.unsavedChange = false;
                         commit("setIsCreating", false);
+                        commit("setHaveChange", false);
                     });
             } else {
                 await dispatch("saveFlow", {flow: flowYaml})
                     .then((response) => {
                         this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
-                        dispatch("core/isUnsaved", false, {root: true});
+                        const coreStore = useCoreStore();
+                        coreStore.unsavedChange = false;
                     });
             }
 
@@ -300,11 +318,12 @@ export default {
                 })
                 .then(response => {
                     if (response.data.exception) {
-                        commit("core/setMessage", {
+                        const coreStore = useCoreStore();
+                        coreStore.message = {
                             title: "Invalid source code",
                             message: response.data.exception,
                             variant: "danger"
-                        }, {root: true});
+                        };
                         delete response.data.exception;
                     }
                     if(options.store === false) {
@@ -473,11 +492,12 @@ export default {
                     }
 
                     if([404, 422].includes(error.response?.status) && config?.params?.subflows?.length > 0) {
-                        commit("core/setMessage", {
+                        const coreStore = useCoreStore();
+                        coreStore.message = {
                             title: "Couldn't expand subflow",
                             message: error.response.data.message,
                             variant: "danger"
-                        }, {root: true});
+                        };
                     }
 
                     return Promise.reject(error);
@@ -514,7 +534,11 @@ export default {
                 });
         },
         importFlows(_, options) {
-            return this.$http.post(`${apiUrl(this)}/flows/import`, Utils.toFormData(options), {headers: {"Content-Type": "multipart/form-data"}})
+            return this.$http.post(`${apiUrl(this)}/flows/import`, Utils.toFormData(options), {
+                headers: {"Content-Type": "multipart/form-data"}
+            }).then(response => {
+                return response;
+            });
         },
         disableFlowByIds(_, options) {
             return this.$http.post(`${apiUrl(this)}/flows/disable/by-ids`, options.ids)
@@ -770,7 +794,7 @@ export default {
             } else return false;
         },
         nextRevision(_state, getters){
-            return getters.flow.revision + 1;
+            return (getters.flow?.revision ?? 0) + 1;
         },
         yamlWithNextRevision(_state, getters){
             return `revision: ${getters.nextRevision}\n${getters.flowYaml}`;

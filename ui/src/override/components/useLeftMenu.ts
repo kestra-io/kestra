@@ -1,7 +1,9 @@
-import {computed, shallowRef} from "vue";
-import {useStore} from "vuex";
-import {useRouter} from "vue-router";
+import {shallowRef} from "vue";
+import {useRoute, useRouter} from "vue-router";
 import {useI18n} from "vue-i18n";
+import {useMiscStore} from "../../stores/misc";
+
+import {getDashboard} from "../../components/dashboard/composables/useDashboards";
 
 import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
 import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
@@ -20,8 +22,9 @@ import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue";
 
 export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"});
+    const $route = useRoute();
     const $router = useRouter();
-    const store = useStore();
+    const miscStore = useMiscStore();
 
     /**
      * Returns all route names that start with the given route
@@ -37,16 +40,17 @@ export function useLeftMenu() {
             .map((r) => r.name);
     }
 
-    const configs = computed(() => store.state.misc.configs);
-
     // This object seems to be a good candidate for a computed value
     // but cannot be. When it becomes a computed, the hack to set current
     // route as active in the blueprints activates pages forever.
     const generateMenu = () => {
         return [
             {
-                href: {name: "home"},
-                title: t("homeDashboard.title"),
+                href: {
+                    name: "home",
+                    params: {dashboard: getDashboard($route, "id")},
+                },
+                title: t("dashboards.labels.plural"),
                 icon: {
                     element: shallowRef(ViewDashboardVariantOutline),
                     class: "menu-icon",
@@ -82,7 +86,7 @@ export function useLeftMenu() {
                     element: shallowRef(ContentCopy),
                     class: "menu-icon",
                 },
-                hidden: !configs.value.isTemplateEnabled,
+                hidden: !miscStore.configs?.isTemplateEnabled,
             },
             {
                 href: {name: "executions/list"},
@@ -101,7 +105,7 @@ export function useLeftMenu() {
                     element: shallowRef(ChartTimeline),
                     class: "menu-icon",
                 },
-                hidden: !configs.value.isTaskRunEnabled,
+                hidden: !miscStore.configs?.isTaskRunEnabled,
             },
             {
                 href: {name: "logs/list"},
@@ -162,6 +166,17 @@ export function useLeftMenu() {
                     class: "menu-icon",
                 },
                 child: [
+                    {
+                        title: t("blueprints.custom"),
+                        routes: routeStartWith("blueprints/flow"),
+                        attributes: {
+                            locked: true,
+                        },
+                        href: {
+                            name: "blueprints",
+                            params: {kind: "flow", tab: "custom"},
+                        },
+                    },
                     {
                         title: t("blueprints.flows"),
                         routes: routeStartWith("blueprints/flow"),

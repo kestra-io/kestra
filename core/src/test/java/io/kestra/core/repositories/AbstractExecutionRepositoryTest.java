@@ -2,9 +2,12 @@ package io.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Field;
+import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.executions.Execution;
@@ -16,8 +19,10 @@ import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
@@ -26,6 +31,10 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.event.Level;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -35,10 +44,12 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Stream;
 
+import static io.kestra.core.models.flows.FlowScope.USER;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.groups.Tuple.tuple;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
@@ -150,6 +161,47 @@ public abstract class AbstractExecutionRepositoryTest {
             .trigger(executionTrigger)
             .kind(ExecutionKind.TEST)
             .build());
+    }
+
+    @ParameterizedTest
+    @MethodSource("filterCombinations")
+    void should_find_all(QueryFilter filter, int expectedSize){
+        inject("executionTriggerId");
+
+        ArrayListTotal<Execution> entries = executionRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter));
+
+        assertThat(entries).hasSize(expectedSize);
+    }
+
+    static Stream<Arguments> filterCombinations() {
+        return Stream.of(
+            Arguments.of(QueryFilter.builder().field(Field.QUERY).value("unittest").operation(Op.EQUALS).build(), 28),
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build(), 28),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.unittest").operation(Op.EQUALS).build(), 28),
+            Arguments.of(QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build(), 1),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.EQUALS).build(), 15),
+            Arguments.of(QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(), 28),
+            Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 28),
+            Arguments.of(QueryFilter.builder().field(Field.STATE).value(Type.RUNNING).operation(Op.EQUALS).build(), 5),
+            Arguments.of(QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(), 28),
+            Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 28)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("errorFilterCombinations")
+    void should_fail_to_find_all(QueryFilter filter){
+        assertThrows(InvalidQueryFiltersException.class, () -> executionRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter)));
+    }
+
+    static Stream<QueryFilter> errorFilterCombinations() {
+        return Stream.of(
+            QueryFilter.builder().field(Field.TIME_RANGE).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.TRIGGER_ID).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.WORKER_ID).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.EXISTING_ONLY).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.MIN_LEVEL).value(Level.DEBUG).operation(Op.EQUALS).build()
+        );
     }
 
     @Test
@@ -361,156 +413,6 @@ public abstract class AbstractExecutionRepositoryTest {
         ArrayListTotal<Execution> page1 = executionRepository.findByFlowId(MAIN_TENANT, NAMESPACE, FLOW, Pageable.from(1, 10));
 
         assertThat(page1.size()).isEqualTo(2);
-    }
-
-    @Test
-    protected void dailyGroupByFlowStatistics() throws InterruptedException {
-        for (int i = 0; i < 28; i++) {
-            executionRepository.save(builder(
-                i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
-                i < 15 ? null : "second"
-            ).build());
-        }
-
-        // mysql need some time ...
-        Thread.sleep(500);
-
-        Map<String, Map<String, List<DailyExecutionStatistics>>> result = executionRepository.dailyGroupByFlowStatistics(
-            null,
-            MAIN_TENANT,
-            null,
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            false
-        );
-
-        assertThat(result.size()).isEqualTo(1);
-        assertThat(result.get("io.kestra.unittest").size()).isEqualTo(2);
-
-        DailyExecutionStatistics full = result.get("io.kestra.unittest").get(FLOW).get(10);
-        DailyExecutionStatistics second = result.get("io.kestra.unittest").get("second").get(10);
-
-        assertThat(full.getDuration().getAvg().toMillis()).isGreaterThan(0L);
-        assertThat(full.getExecutionCounts().size()).isEqualTo(11);
-        assertThat(full.getExecutionCounts().get(State.Type.FAILED)).isEqualTo(3L);
-        assertThat(full.getExecutionCounts().get(State.Type.RUNNING)).isEqualTo(5L);
-        assertThat(full.getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(7L);
-        assertThat(full.getExecutionCounts().get(State.Type.CREATED)).isEqualTo(0L);
-
-        assertThat(second.getDuration().getAvg().toMillis()).isGreaterThan(0L);
-        assertThat(second.getExecutionCounts().size()).isEqualTo(11);
-        assertThat(second.getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(13L);
-        assertThat(second.getExecutionCounts().get(State.Type.CREATED)).isEqualTo(0L);
-
-        result = executionRepository.dailyGroupByFlowStatistics(
-            null,
-            MAIN_TENANT,
-            null,
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            true
-        );
-
-        assertThat(result.size()).isEqualTo(1);
-        assertThat(result.get("io.kestra.unittest").size()).isEqualTo(1);
-        full = result.get("io.kestra.unittest").get("*").get(10);
-        assertThat(full.getDuration().getAvg().toMillis()).isGreaterThan(0L);
-        assertThat(full.getExecutionCounts().size()).isEqualTo(11);
-        assertThat(full.getExecutionCounts().get(State.Type.FAILED)).isEqualTo(3L);
-        assertThat(full.getExecutionCounts().get(State.Type.RUNNING)).isEqualTo(5L);
-        assertThat(full.getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(20L);
-        assertThat(full.getExecutionCounts().get(State.Type.CREATED)).isEqualTo(0L);
-
-        result = executionRepository.dailyGroupByFlowStatistics(
-            null,
-            MAIN_TENANT,
-            null,
-            null,
-            List.of(ExecutionRepositoryInterface.FlowFilter.builder().namespace("io.kestra.unittest").id(FLOW).build()),
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            false
-        );
-
-        assertThat(result.size()).isEqualTo(1);
-        assertThat(result.get("io.kestra.unittest").size()).isEqualTo(1);
-        assertThat(result.get("io.kestra.unittest").get(FLOW).size()).isEqualTo(11);
-    }
-
-    @Test
-    protected void lastExecutions() throws InterruptedException {
-
-        Instant executionNow = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-
-        Execution executionOld = builder(State.Type.SUCCESS, FLOW)
-            .state(State.of(
-                State.Type.SUCCESS,
-                List.of(new State.History(
-                    State.Type.SUCCESS,
-                    executionNow.minus(1, ChronoUnit.DAYS)
-                )))
-            ).build();
-
-        Execution executionFailed = builder(State.Type.FAILED, FLOW)
-            .state(State.of(
-                State.Type.FAILED,
-                List.of(new State.History(
-                    State.Type.FAILED,
-                    executionNow.minus(1, ChronoUnit.HOURS)
-                )))
-            ).build();
-
-        Execution executionRunning = builder(State.Type.RUNNING, FLOW)
-            .state(State.of(
-                State.Type.RUNNING,
-                List.of(new State.History(State.Type.RUNNING, executionNow)))
-            ).build();
-
-        String anotherNamespace = "another";
-        Execution executionSuccessAnotherNamespace = builder(State.Type.SUCCESS, FLOW, anotherNamespace)
-            .state(State.of(
-                State.Type.SUCCESS,
-                List.of(new State.History(
-                    State.Type.SUCCESS,
-                    executionNow.minus(30, ChronoUnit.MINUTES)
-                )))
-            ).build();
-
-        executionRepository.save(executionOld);
-        executionRepository.save(executionFailed);
-        executionRepository.save(executionRunning);
-
-        executionRepository.save(executionSuccessAnotherNamespace);
-
-        // mysql need some time ...
-        Thread.sleep(500);
-
-        List<Execution> result = executionRepository.lastExecutions(
-            MAIN_TENANT,
-            List.of(
-                ExecutionRepositoryInterface.FlowFilter.builder()
-                    .id(FLOW)
-                    .namespace(NAMESPACE).build(),
-                ExecutionRepositoryInterface.FlowFilter.builder()
-                    .id(FLOW)
-                    .namespace(anotherNamespace).build()
-            )
-        );
-
-        assertThat(result.size()).isEqualTo(2);
-        assertThat(result)
-            .extracting(
-                r -> r.getState().getCurrent(),
-                Execution::getNamespace
-            )
-            .containsExactlyInAnyOrder(
-                tuple(State.Type.FAILED, NAMESPACE),
-                tuple(State.Type.SUCCESS, anotherNamespace)
-            );
     }
 
     @Test

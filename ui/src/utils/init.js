@@ -33,6 +33,7 @@ import {
 } from "chart.js";
 import Vue3Tour from "vue3-tour"
 import VueVirtualScroller from "vue-virtual-scroller";
+import {createPinia} from "pinia";
 
 import Toast from "./toast";
 import filters from "./filters";
@@ -40,12 +41,12 @@ import ElementPlus from "element-plus";
 import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
 import "./global"
+import {useDocStore} from "../stores/doc";
 
 
 import LeftMenuLink from "../components/LeftMenuLink.vue";
 import RouterMd from "../components/utils/RouterMd.vue";
 import Utils from "./utils";
-
 
 
 export default async (app, routes, stores, translations, additionalTranslations = {}) => {
@@ -71,6 +72,28 @@ export default async (app, routes, stores, translations, additionalTranslations 
     let store = createStore(stores);
     app.use(store);
 
+    let piniaStore = createPinia();
+    piniaStore.use(({store:piniaStoreLocal}) => {
+        piniaStoreLocal.vuexStore = store;
+        piniaStoreLocal.$http = {
+            get: (url, config) => {
+                return store.$http.get(url, config);
+            },
+            post: (url, data, config) => {
+                return store.$http.post(url, data, config);
+            },
+            put: (url, data, config) => {
+                return store.$http.put(url, data, config);
+            },
+            delete: (url, config) => {
+                return store.$http.delete(url, config);
+            },
+            patch: (url, data, config) => {
+                return store.$http.patch(url, data, config);
+            }
+        }
+    });
+    app.use(piniaStore);
 
     // router
     let router = createRouter({
@@ -86,7 +109,9 @@ export default async (app, routes, stores, translations, additionalTranslations 
         // so it has a default
         const pathArray = to.path.split("/");
         const docId = pathArray[pathArray.length-1];
-        store.commit("doc/setDocId", docId);
+        
+        const docStore = useDocStore();
+        docStore.docId = docId;
 
         // propagate showDocId query param
         // to the next page to facilitate docs binding
@@ -177,5 +202,5 @@ export default async (app, routes, stores, translations, additionalTranslations 
 
     app.config.globalProperties.append = (path, pathToAppend) => path + (path.endsWith("/") ? "" : "/") + pathToAppend
 
-    return {store, router};
+    return {store, router, piniaStore};
 }

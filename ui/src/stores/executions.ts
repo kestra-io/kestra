@@ -1,10 +1,31 @@
 import axios from "axios";
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
-import Utils from "../utils/utils"
+import Utils from "../utils/utils";
 
-export default defineStore("executions", {
-    state: () => ({
+interface LogsState {
+    total: number;
+    results: any[];
+}
+
+interface ExecutionsState {
+    executions: any[] | undefined;
+    execution: any | undefined;
+    taskRun: any | undefined;
+    total: number;
+    logs: LogsState;
+    metrics: any[];
+    metricsTotal: number;
+    filePreview: any | undefined;
+    subflowsExecutions: Record<string, any>;
+    flow: any | undefined;
+    flowGraph: any | undefined;
+    namespaces: string[];
+    flowsExecutable: any[];
+}
+
+export const useExecutionsStore = defineStore("executions", {
+    state: (): ExecutionsState => ({
         executions: undefined,
         execution: undefined,
         taskRun: undefined,
@@ -23,7 +44,7 @@ export default defineStore("executions", {
         flowsExecutable: []
     }),
     actions: {
-        restartExecution(options) {
+        restartExecution(options: { executionId: string; revision?: number }) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/${options.executionId}/restart`,
                 null,
@@ -33,40 +54,40 @@ export default defineStore("executions", {
                     }
                 })
         },
-        bulkRestartExecution(options) {
+        bulkRestartExecution(options: { executionsId: string[] }) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/restart/by-ids`,
                 options.executionsId
             )
         },
-        queryRestartExecution(options) {
+        queryRestartExecution(options: Record<string, any>) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/restart/by-query`,
                 {},
                 {params: options}
             )
         },
-        bulkResumeExecution(options) {
+        bulkResumeExecution(options: { executionsId: string[] }) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/resume/by-ids`,
                 options.executionsId
             )
         },
-        queryResumeExecution(options) {
+        queryResumeExecution(options: Record<string, any>) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/resume/by-query`,
                 {},
                 {params: options}
             )
         },
-        bulkReplayExecution(options) {
+        bulkReplayExecution(options: { executionsId: string[] } & Record<string, any>) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/replay/by-ids`,
                 options.executionsId,
                 {params: options}
             )
         },
-        bulkChangeExecutionStatus(options) {
+        bulkChangeExecutionStatus(options: { executionsId: string[]; newStatus: string }) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/change-status/by-ids`,
                 options.executionsId,
@@ -77,21 +98,21 @@ export default defineStore("executions", {
                 }
             )
         },
-        queryReplayExecution(options) {
+        queryReplayExecution(options: Record<string, any>) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/replay/by-query`,
                 {},
                 {params: options}
             )
         },
-        queryChangeExecutionStatus(options) {
+        queryChangeExecutionStatus(options: Record<string, any>) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/change-status/by-query`,
                 {},
                 {params: options}
             )
         },
-        replayExecution(options) {
+        replayExecution(options: { executionId: string; taskRunId?: string; revision?: number }) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/${options.executionId}/replay`,
                 null,
@@ -102,7 +123,7 @@ export default defineStore("executions", {
                     }
                 })
         },
-        changeExecutionStatus(options) {
+        changeExecutionStatus(options: { executionId: string; state: string }) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/${options.executionId}/change-status`,
                 null,
@@ -112,7 +133,7 @@ export default defineStore("executions", {
                     }
                 })
         },
-        changeStatus(options) {
+        changeStatus(options: { executionId: string; taskRunId?: string; state: string }) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/${options.executionId}/state`,
                 {
@@ -120,16 +141,16 @@ export default defineStore("executions", {
                     state: options.state,
                 })
         },
-        kill(options) {
+        kill(options: { id: string; isOnKillCascade?: boolean }) {
             return this.$http.delete(`${apiUrl(this.vuexStore)}/executions/${options.id}/kill?isOnKillCascade=${options.isOnKillCascade}`);
         },
-        bulkKill(options) {
+        bulkKill(options: { executionsId: string[] }) {
             return this.$http.delete(`${apiUrl(this.vuexStore)}/executions/kill/by-ids`, {data: options.executionsId});
         },
-        queryKill(options) {
+        queryKill(options: Record<string, any>) {
             return this.$http.delete(`${apiUrl(this.vuexStore)}/executions/kill/by-query`, {params: options});
         },
-        resume(options) {
+        resume(options: { id: string; formData: any }) {
             return this.$http.post(`${apiUrl(this.vuexStore)}/executions/${options.id}/resume`, Utils.toFormData(options.formData), {
                 timeout: 60 * 60 * 1000,
                 headers: {
@@ -137,7 +158,7 @@ export default defineStore("executions", {
                 }
             });
         },
-        validateResume(options) {
+        validateResume(options: { id: string; formData: any }) {
             return this.$http.post(`${apiUrl(this.vuexStore)}/executions/${options.id}/resume/validate`, Utils.toFormData(options.formData), {
                 timeout: 60 * 60 * 1000,
                 headers: {
@@ -145,40 +166,38 @@ export default defineStore("executions", {
                 }
             });
         },
-        pause(options) {
+        pause(options: { id: string }) {
             return this.$http.post(`${apiUrl(this.vuexStore)}/executions/${options.id}/pause`);
         },
-        bulkPauseExecution(options) {
+        bulkPauseExecution(options: { executionsId: string[] }) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/pause/by-ids`,
                 options.executionsId
             )
         },
-        queryPauseExecution(options) {
+        queryPauseExecution(options: Record<string, any>) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/pause/by-query`,
                 {},
                 {params: options}
             )
         },
-        loadExecution(options) {
+        loadExecution(options: { id: string }) {
             return this.$http.get(`${apiUrl(this.vuexStore)}/executions/${options.id}`).then(response => {
-                this.execution = response.data
-
+                this.execution = response.data;
                 return response.data;
             })
         },
-        findExecutions(options) {
+        findExecutions(options: { commit?: boolean } & Record<string, any>) {
             return this.$http.get(`${apiUrl(this.vuexStore)}/executions/search`, {params: options}).then(response => {
                 if (options.commit !== false) {
-                    this.executions = response.data.results
-                    this.total = response.data.total
+                    this.executions = response.data.results;
+                    this.total = response.data.total;
                 }
-
-                return response.data
+                return response.data;
             })
         },
-        validateExecution(options) {
+        validateExecution(options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }) {
             return this.$http.post(`${apiUrl(this.vuexStore)}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
                 timeout: 60 * 60 * 1000,
                 headers: {
@@ -190,7 +209,7 @@ export default defineStore("executions", {
                 }
             })
         },
-        triggerExecution(options) {
+        triggerExecution(options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }) {
             return this.$http.post(`${apiUrl(this.vuexStore)}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
                 timeout: 60 * 60 * 1000,
                 headers: {
@@ -202,78 +221,78 @@ export default defineStore("executions", {
                 }
             })
         },
-        deleteExecution(options) {
-            const {id, deleteLogs, deleteMetrics, deleteStorage} = options
-            const qs = Object.entries({deleteLogs, deleteMetrics, deleteStorage}).map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join("&");
+        deleteExecution(options: { id: string; deleteLogs?: boolean; deleteMetrics?: boolean; deleteStorage?: boolean }) {
+            const {id, deleteLogs, deleteMetrics, deleteStorage} = options;
+            const qs = Object.entries({deleteLogs, deleteMetrics, deleteStorage})
+                .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+                .join("&");
 
             return this.$http.delete(`${apiUrl(this.vuexStore)}/executions/${id}?${qs}`).then(() => {
-                this.execution = null
+                this.execution = null;
             })
         },
-        bulkDeleteExecution(options) {
+        bulkDeleteExecution(options: { executionsId: string[] } & Record<string, any>) {
             return this.$http.delete(`${apiUrl(this.vuexStore)}/executions/by-ids`, {data: options.executionsId, params: {...options}})
         },
-        queryDeleteExecution(options) {
+        queryDeleteExecution(options: Record<string, any>) {
             return this.$http.delete(`${apiUrl(this.vuexStore)}/executions/by-query`, {params: options})
         },
-        followExecution(options) {
+        followExecution(options: { id: string }) {
             return new EventSource(`${apiUrl(this.vuexStore)}/executions/${options.id}/follow`, {withCredentials: true});
         },
-        followLogs(options) {
+        followLogs(options: { id: string }) {
             return new EventSource(`${apiUrl(this.vuexStore)}/logs/${options.id}/follow`, {withCredentials: true});
         },
-        loadLogs( options) {
+        loadLogs(options: { executionId: string; params?: Record<string, any>; store?: boolean }) {
             return this.$http.get(`${apiUrl(this.vuexStore)}/logs/${options.executionId}`, {
                 params: options.params
             }).then(response => {
                 if (options.store === false) {
-                    return response.data
+                    return response.data;
                 }
-                this.logs = response.data
-
-                return response.data
+                this.logs = response.data;
+                return response.data;
             });
         },
-        loadMetrics( options) {
+        loadMetrics(options: { executionId: string; params?: Record<string, any>; store?: boolean }) {
             return this.$http.get(`${apiUrl(this.vuexStore)}/metrics/${options.executionId}`, {
                 params: options.params
             }).then(response => {
                 if (options.store === false) {
-                    return response.data
+                    return response.data;
                 }
-                this.metrics = response.data.results
-                this.total =  response.data.total
-
-                return response.data
+                this.metrics = response.data.results;
+                this.total = response.data.total;
+                return response.data;
             });
         },
-        downloadLogs(options) {
+        downloadLogs(options: { executionId: string; params?: Record<string, any> }) {
             return this.$http.get(`${apiUrl(this.vuexStore)}/logs/${options.executionId}/download`, {
                 params: options.params
             }).then(response => {
-                return response.data
+                return response.data;
             })
         },
-        deleteLogs(options) {
+        deleteLogs(options: { executionId: string; params?: Record<string, any> }) {
             return this.$http.delete(`${apiUrl(this.vuexStore)}/logs/${options.executionId}`, {
                 params: options.params
             }).then(response => {
-                return response.data
+                return response.data;
             })
         },
-        filePreview(options) {
+        filePreview(options: { executionId: string } & Record<string, any>) {
             return this.$http.get(`${apiUrl(this.vuexStore)}/executions/${options.executionId}/file/preview`, {
                 params: options
             }).then(response => {
-                let data = {...response.data}
+                let data = {...response.data};
 
                 // WORKAROUND, related to https://github.com/kestra-io/plugin-aws/issues/456
-                if(data.extension === "ion") {
-                    const notObjects = data.content.some(e => typeof e !== "object");
+                if (data.extension === "ion") {
+                    const notObjects = data.content.some((e: any) => typeof e !== "object");
 
-                    if(notObjects) {
+                    if (notObjects) {
                         const content = data.content.length === 1 ? data.content[0] : data.content.join("\n");
-                        data = {...data, type: "TEXT", content}
+                        data = {...data, type: "TEXT", content};
                     }
                 }
 
@@ -281,7 +300,7 @@ export default defineStore("executions", {
                 return data;
             })
         },
-        setLabels(options) {
+        setLabels(options: { executionId: string; labels: any }) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/${options.executionId}/labels`,
                 options.labels,
@@ -291,100 +310,103 @@ export default defineStore("executions", {
                     }
                 })
         },
-        querySetLabels(options) {
+        querySetLabels(options: { data: any; params: Record<string, any> }) {
             return this.$http.post(`${apiUrl(this.vuexStore)}/executions/labels/by-query`, options.data, {
-                params: options.params})
+                params: options.params
+            })
         },
-        bulkSetLabels(options) {
-            return this.$http.post(`${apiUrl(this.vuexStore)}/executions/labels/by-ids`,  options)
+        bulkSetLabels(options: any) {
+            return this.$http.post(`${apiUrl(this.vuexStore)}/executions/labels/by-ids`, options)
         },
-        unqueue(options) {
+        unqueue(options: { id: string; state: string }) {
             return this.$http.post(`${apiUrl(this.vuexStore)}/executions/${options.id}/unqueue?state=${options.state}`);
         },
-        bulkUnqueueExecution(options) {
+        bulkUnqueueExecution(options: { executionsId: string[]; newStatus: string }) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/unqueue/by-ids?state=${options.newStatus}`,
                 options.executionsId
             )
         },
-        queryUnqueueExecution(options) {
+        queryUnqueueExecution(options: { newStatus: string } & Record<string, any>) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/unqueue/by-query?state=${options.newStatus}`,
                 {},
                 {params: options}
             )
         },
-        forceRun(options) {
+        forceRun(options: { id: string }) {
             return this.$http.post(`${apiUrl(this.vuexStore)}/executions/${options.id}/force-run`);
         },
-        bulkForceRunExecution(options) {
+        bulkForceRunExecution(options: { executionsId: string[] }) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/force-run/by-ids`,
                 options.executionsId
             )
         },
-        queryForceRunExecution(options) {
+        queryForceRunExecution(options: Record<string, any>) {
             return this.$http.post(
                 `${apiUrl(this.vuexStore)}/executions/force-run/by-query`,
                 {},
                 {params: options}
             )
         },
-        loadFlowForExecution(options) {
+        loadFlowForExecution(options: { namespace: string; flowId: string; revision?: number }) {
             const revision = options.revision ? `?revision=${options.revision}` : "";
             return this.$http.get(`${apiUrl(this.vuexStore)}/executions/flows/${options.namespace}/${options.flowId}${revision}`)
                 .then(response => {
-                    this.flow = response.data
+                    this.flow = response.data;
                     return response.data;
                 });
         },
-        loadFlowForExecutionByExecutionId(options) {
+        loadFlowForExecutionByExecutionId(options: { id: string }) {
             return this.$http.get(`${apiUrl(this.vuexStore)}/executions/${options.id}/flow`)
                 .then(response => {
-                    this.flow = response.data
+                    this.flow = response.data;
                     return response.data;
                 });
         },
-        loadGraph(options) {
+        loadGraph(options: { id: string; params?: Record<string, any> }) {
             const params = options.params ? options.params : {};
             return axios.get(`${apiUrl(this.vuexStore)}/executions/${options.id}/graph`, {params, withCredentials: true, paramsSerializer: {indexes: null}})
                 .then(response => {
-                    this.flowGraph = response.data
+                    this.flowGraph = response.data;
                 })
         },
         loadNamespaces() {
             return this.$http.get(`${apiUrl(this.vuexStore)}/executions/namespaces`)
                 .then(response => {
-                    this.namespaces = response.data
+                    this.namespaces = response.data;
                 })
         },
-        loadFlowsExecutable(options) {
+        loadFlowsExecutable(options: { namespace: string }) {
             return this.$http.get(`${apiUrl(this.vuexStore)}/executions/namespaces/${options.namespace}/flows`)
                 .then(response => {
-                    this.flowsExecutable = response.data
+                    this.flowsExecutable = response.data;
                 })
         },
-        loadLatestExecutions(options) {
+        loadLatestExecutions(options: { flowFilters: any }) {
             return this.$http.post(`${apiUrl(this.vuexStore)}/executions/latest`, options.flowFilters).then(response => {
-                return response.data
+                return response.data;
             })
         },
         // mutations
-        addSubflowExecution(params) {
-            this.subflowsExecutions[params.subflow] = params.execution
+        addSubflowExecution(params: { subflow: string; execution: any }) {
+            this.subflowsExecutions[params.subflow] = params.execution;
         },
-        removeSubflowExecution(subflow) {
-            delete this.subflowsExecutions[subflow]
+        removeSubflowExecution(subflow: string) {
+            delete this.subflowsExecutions[subflow];
         },
         resetLogs() {
-            this.logs = {results:[], total:0}
+            this.logs = {results: [], total: 0};
         },
-        appendLogs(logs) {
-            this.logs.results = this.logs.results.concat(logs.results)
+        appendLogs(logs: { results: any[] }) {
+            this.logs.results = this.logs.results.concat(logs.results);
         },
-        appendFollowedLogs(logs) {
-            this.logs.results.push(logs)
-            this.logs.total = this.logs.results.length
+        appendFollowedLogs(logs: any) {
+            this.logs.results.push(logs);
+            this.logs.total = this.logs.results.length;
         },
     },
-})
+});
+
+export default useExecutionsStore;

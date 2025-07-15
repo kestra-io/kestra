@@ -97,8 +97,8 @@ public interface StorageInterface extends AutoCloseable, Plugin {
     List<URI> deleteByPrefix(String tenantId, @Nullable String namespace, URI storagePrefix) throws IOException;
 
     @Retryable(includes = {IOException.class})
-    default URI from(Execution execution, String input, File file) throws IOException {
-        URI uri = StorageContext.forInput(execution, input, file.getName()).getContextStorageURI();
+    default URI from(Execution execution, String input, String fileName, File file) throws IOException {
+        URI uri = StorageContext.forInput(execution, input, fileName).getContextStorageURI();
         return this.put(execution.getTenantId(), execution.getNamespace(), uri, new BufferedInputStream(new FileInputStream(file)));
     }
 

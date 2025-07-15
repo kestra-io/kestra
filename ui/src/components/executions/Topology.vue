@@ -29,7 +29,7 @@
     import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants.ts";
     import {Utils, State} from "@kestra-io/ui-libs";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
-    import useExecutionsStore from "../../stores/executions";
+    import {useExecutionsStore} from "../../stores/executions";
     export default {
         components: {
             LowCodeEditor

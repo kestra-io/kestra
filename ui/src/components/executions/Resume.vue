@@ -38,7 +38,7 @@
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import {inputsToFormDate} from "../../utils/submitTask";
     import {mapStores} from "pinia";
-    import useExecutionsStore from "../../stores/executions";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         components: {InputsForm},

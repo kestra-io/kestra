@@ -408,5 +408,3 @@ export const useExecutionsStore = defineStore("executions", {
         },
     },
 });
-
-export default useExecutionsStore;

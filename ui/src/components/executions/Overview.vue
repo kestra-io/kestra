@@ -205,7 +205,7 @@
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import Markdown from "../../components/layout/Markdown.vue";
     import {mapStores} from "pinia";
-    import useExecutionsStore from "../../stores/executions";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         inheritAttrs: false,

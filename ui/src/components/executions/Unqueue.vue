@@ -33,7 +33,7 @@
                         <span v-html="item.label" />
                     </template>
                 </el-option>
-            </el-select>           
+            </el-select>
         </template>
 
         <template #footer>
@@ -88,11 +88,10 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("execution", ["flow"]),
             states() {
-                return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({                
+                return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
                     code: value,
-                    label: this.$t("unqueue as", {status: value}),                
+                    label: this.$t("unqueue as", {status: value}),
                 }));
             },
             enabled() {

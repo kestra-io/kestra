@@ -426,17 +426,5 @@ export default {
         setFlowsExecutable(state, flowsExecutable) {
             state.flowsExecutable = flowsExecutable
         }
-    },
-    getters: {
-        execution(state) {
-            if (state.execution) {
-                return state.execution;
-            }
-        },
-        subflowsExecutions(state) {
-            if (state.subflowsExecutions) {
-                return state.subflowsExecutions;
-            }
-        }
     }
 }

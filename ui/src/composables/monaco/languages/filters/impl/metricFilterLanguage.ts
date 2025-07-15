@@ -5,7 +5,7 @@ const metricFilterKeys: Record<string, FilterKeyCompletions> = {
     metric: new FilterKeyCompletions(
         [Comparators.EQUALS],
         async (store) => {
-            const execution = store.getters["execution/execution"];
+            const execution = store.state.execution.execution;
 
             const taskRuns: {id: string, taskId: string, value?: string}[] = execution.taskRunList ?? [];
             return taskRuns.map(taskRun => new Completion(

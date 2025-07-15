@@ -24,7 +24,7 @@
 </template>
 <script>
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
-    import {mapGetters, mapState} from "vuex";
+    import {mapState} from "vuex";
     import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants.ts";
     import {Utils, State} from "@kestra-io/ui-libs";
     import throttle from "lodash/throttle";
@@ -35,7 +35,7 @@
         computed: {
             ...mapState("flow", ["flow"]),
             ...mapState("execution", ["execution", "flowGraph"]),
-            ...mapGetters("execution", ["subflowsExecutions"])
+            ...mapState("execution", ["subflowsExecutions"])
         },
         data() {
             return {

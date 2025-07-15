@@ -23,19 +23,26 @@
     </el-card>
 </template>
 <script>
-    import LowCodeEditor from "../inputs/LowCodeEditor.vue";
+    import throttle from "lodash/throttle";
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
     import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants.ts";
     import {Utils, State} from "@kestra-io/ui-libs";
-    import throttle from "lodash/throttle";
+    import LowCodeEditor from "../inputs/LowCodeEditor.vue";
+    import useExecutionsStore from "../../stores/executions";
     export default {
         components: {
             LowCodeEditor
         },
         computed: {
             ...mapState("flow", ["flow"]),
-            ...mapState("execution", ["execution", "flowGraph"]),
-            ...mapState("execution", ["subflowsExecutions"])
+            ...mapStores(useExecutionsStore),
+            execution() {
+                return this.executionsStore.execution;
+            },
+            flowGraph() {
+                return this.executionsStore.flowGraph;
+            }
         },
         data() {
             return {
@@ -45,8 +52,11 @@
                 previousExpandedSubflows: [],
                 sseBySubflow: {},
                 throttledExecutionUpdate: throttle(function (subflow, executionEvent) {
-                    const previousExecution = this.subflowsExecutions[subflow];
-                    this.$store.commit("execution/addSubflowExecution", {subflow, execution: JSON.parse(executionEvent.data)});
+                    const previousExecution = this.executionsStore.subflowsExecutions[subflow];
+                    this.executionsStore.addSubflowExecution({
+                        subflow,
+                        execution: JSON.parse(executionEvent.data)
+                    });
 
                     // add subflow execution id to graph
                     if(previousExecution === undefined) {
@@ -70,7 +80,7 @@
             closeSSE(subflow) {
                 this.sseBySubflow[subflow].close();
                 delete this.sseBySubflow[subflow];
-                this.$store.commit("execution/removeSubflowExecution", subflow)
+                this.executionsStore.removeSubflowExecution(subflow)
             },
             forwardEvent(type, event) {
                 this.$emit(type, event);
@@ -97,7 +107,7 @@
                 }
 
                 const nodeExecution = nodeToCheck.executionId === this.execution?.id ? this.execution
-                    : Object.values(this.subflowsExecutions).filter(execution => execution.id === nodeToCheck.executionId)?.[0];
+                    : Object.values(this.executionsStore.subflowsExecutions).filter(execution => execution.id === nodeToCheck.executionId)?.[0];
 
                 if (!nodeExecution) {
                     return true;
@@ -135,8 +145,9 @@
                                     .sort((a, b) => b.length - a.length)?.[0]
 
                                 if(parentSubflow) {
-                                    if(parentSubflow in this.subflowsExecutions) {
-                                        node.executionId = this.subflowsExecutions[parentSubflow].id;
+                                    const subflowsExecutions = this.executionsStore.subflowsExecutions;
+                                    if(parentSubflow in subflowsExecutions) {
+                                        node.executionId = subflowsExecutions[parentSubflow]?.id;
                                     }
 
                                     return;
@@ -201,7 +212,7 @@
                     .sort((s1, s2) => s2.length - s1.length);
 
                 if(parentSubflows.length > 0) {
-                    parentExecution = this.subflowsExecutions[parentSubflows[0]];
+                    parentExecution = this.executionsStore.subflowsExecutions[parentSubflows[0]];
                 }
 
                 if(!parentExecution) {

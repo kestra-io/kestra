@@ -41,6 +41,8 @@
 <script>
     import {h, ref} from "vue"
     import {ElCheckbox, ElMessageBox} from "element-plus"
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
 
     import TriggerFlow from "../flows/TriggerFlow.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
@@ -48,7 +50,7 @@
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
     import {apiUrl} from "override/utils/route";
-    import {mapState} from "vuex";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         components: {
@@ -62,8 +64,11 @@
             }
         },
         computed: {
-            ...mapState("execution", ["execution"]),
+            ...mapStores(useExecutionsStore),
             ...mapState("auth", ["user"]),
+            execution() {
+                return this.executionStore.execution;
+            },
             finalApiUrl() {
                 return apiUrl(this.$store);
             },

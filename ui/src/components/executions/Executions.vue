@@ -33,7 +33,7 @@
         <data-table
             @page-changed="onPageChanged"
             ref="dataTable"
-            :total="total"
+            :total="executionsStore.total"
             :size="pageSize"
             :page="pageNumber"
             :embed="embed"
@@ -64,7 +64,7 @@
             <template #table>
                 <select-table
                     ref="selectTable"
-                    :data="executions"
+                    :data="executionsStore.executions"
                     :default-sort="{prop: 'state.startDate', order: 'descending'}"
                     table-layout="auto"
                     fixed
@@ -78,7 +78,7 @@
                         <bulk-select
                             :select-all="queryBulkAction"
                             :selections="selection"
-                            :total="total"
+                            :total="executionsStore.total"
                             @update:select-all="toggleAllSelection"
                             @unselect="toggleAllUnselected"
                         >
@@ -368,7 +368,7 @@
         </template>
 
         <template #default>
-            <p v-html="$t('unqueue title multiple', {count: queryBulkAction ? total : selection.length})" />
+            <p v-html="$t('unqueue title multiple', {count: queryBulkAction ? executionsStore.total : selection.length})" />
 
             <el-select
                 :required="true"
@@ -479,6 +479,7 @@
     import Utils from "../../utils/utils";
 
     import {filterLabels} from "./utils"
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -629,10 +630,9 @@
             }
         },
         computed: {
-            ...mapState("execution", ["executions", "total"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
-            ...mapStores(useMiscStore),
+            ...mapStores(useMiscStore, useExecutionsStore),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -813,7 +813,7 @@
             },
             genericConfirmAction(toast, queryAction, byIdAction, success, showCancelButton = true) {
                 this.$toast().confirm(
-                    this.$t(toast, {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t(toast, {"executionCount": this.queryBulkAction ? this.executionsStore.total : this.selection.length}),
                     () => this.genericConfirmCallback(queryAction, byIdAction, success),
                     () => {},
                     showCancelButton
@@ -907,7 +907,7 @@
                 );
             },
             changeReplayToast() {
-                return this.$t("bulk replay", {"executionCount": this.queryBulkAction ? this.total : this.selection.length});
+                return this.$t("bulk replay", {"executionCount": this.queryBulkAction ? this.executionsStore.total : this.selection.length});
             },
             changeStatus() {
                 this.changeStatusDialogVisible = false;
@@ -920,7 +920,7 @@
                 );
             },
             changeStatusToast() {
-                return this.$t("bulk change state", {"executionCount": this.queryBulkAction ? this.total : this.selection.length});
+                return this.$t("bulk change state", {"executionCount": this.queryBulkAction ? this.executionsStore.total : this.selection.length});
             },
             deleteExecutions() {
                 const includeNonTerminated = ref(false);
@@ -932,7 +932,7 @@
                 const message = () => h("div", null, [
                     h(
                         "p",
-                        {innerHTML: this.$t("bulk delete", {"executionCount": this.queryBulkAction ? this.total : this.selection.length})}
+                        {innerHTML: this.$t("bulk delete", {"executionCount": this.queryBulkAction ? this.executionsStore.total : this.selection.length})}
                     ),
                     h(ElFormItem, {
                         class: "mt-3",
@@ -1003,7 +1003,7 @@
                 }
 
                 this.$toast().confirm(
-                    this.$t("bulk set labels", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t("bulk set labels", {"executionCount": this.queryBulkAction ? this.executionsStore.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
@@ -1054,7 +1054,7 @@
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: states
                 })).then(() => {
-                    this.$emit("state-count", this.total);
+                    this.$emit("state-count", this.executionsStore.total);
                 });
             }
         },

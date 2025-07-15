@@ -67,7 +67,6 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("execution", ["flow"]),
             enabled() {
                 if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;

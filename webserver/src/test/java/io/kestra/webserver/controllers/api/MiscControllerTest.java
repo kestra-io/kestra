@@ -57,18 +57,18 @@ class MiscControllerTest {
         try {
             Assertions.assertThrows(
                 HttpClientResponseException.class,
-                () -> client.toBlocking().retrieve("/api/v1/configs", MiscController.Configuration.class)
+                () -> client.toBlocking().retrieve("/api/v1/main/dashboards", MiscController.Configuration.class)
             );
             Assertions.assertThrows(
                 HttpClientResponseException.class,
                 () -> client.toBlocking().retrieve(
-                    HttpRequest.GET("/api/v1/configs")
+                    HttpRequest.GET("/api/v1/main/dashboards")
                         .basicAuth("bad.user@kestra.io", "badPassword"),
                     MiscController.Configuration.class
                 )
             );
             Assertions.assertDoesNotThrow(() -> client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/configs")
+                HttpRequest.GET("/api/v1/main/dashboards")
                     .basicAuth(username, password),
                 MiscController.Configuration.class)
             );

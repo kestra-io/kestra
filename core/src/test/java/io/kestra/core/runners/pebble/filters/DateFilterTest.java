@@ -101,7 +101,7 @@ class DateFilterTest {
     }
 
     @Test
-    void instantnano() throws IllegalVariableEvaluationException {
+    void instantNano() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render(
             "{{ zoned | timestampNano(timeZone=\"Europe/Paris\") }}",
             ImmutableMap.of(
@@ -113,7 +113,7 @@ class DateFilterTest {
     }
 
     @Test
-    void instantmicro() throws IllegalVariableEvaluationException {
+    void instantMicro() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render(
             "{{ zoned | timestampMicro(timeZone=\"Europe/Paris\") }}",
             ImmutableMap.of(
@@ -122,6 +122,18 @@ class DateFilterTest {
         );
 
         assertThat(render).isEqualTo("1378653552000123456");
+    }
+
+    @Test
+    void instantMilli() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            "{{ zoned | timestampMilli(timeZone=\"Europe/Paris\") }}",
+            ImmutableMap.of(
+                "zoned", NOW
+            )
+        );
+
+        assertThat(render).isEqualTo("1378653552123");
     }
 
     @Test

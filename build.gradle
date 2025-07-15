@@ -71,6 +71,11 @@ dependencies {
  * Dependencies
  **********************************************************************************************************************/
 allprojects {
+
+    tasks.withType(GenerateModuleMetadata).configureEach {
+        suppressedValidationErrors.add('enforced-platform')
+    }
+
     if (it.name != 'platform') {
         group = "io.kestra"
 
@@ -613,11 +618,6 @@ subprojects {subProject ->
                     dependsOn rootProject.tasks.named("executableJar")
                 }
             }
-        }
-
-        tasks.withType(GenerateModuleMetadata).configureEach {
-            // Suppression this validation error as we want to enforce the Kestra platform
-            suppressedValidationErrors.add('enforced-platform')
         }
     }
 }

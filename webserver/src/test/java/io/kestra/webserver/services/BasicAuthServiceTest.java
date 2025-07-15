@@ -7,6 +7,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.Await;
 import io.kestra.webserver.models.events.Event;
+import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import org.junit.jupiter.api.AfterEach;
@@ -21,6 +22,8 @@ import java.util.concurrent.TimeoutException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @WireMockTest(httpPort = 28181)
 class BasicAuthServiceTest {
@@ -53,6 +56,30 @@ class BasicAuthServiceTest {
         settingRepositoryInterface.delete(Setting.builder().key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY).build());
 
         ctx.stop();
+    }
+
+    @Test
+    void isBasicAuthInitialized(){
+        settingRepositoryInterface.save(Setting.builder()
+            .key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY)
+            .value(new BasicAuthConfiguration("username", "password", null, null))
+            .build());
+        assertTrue(basicAuthService.isBasicAuthInitialized());
+
+        settingRepositoryInterface.delete(Setting.builder().key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY).build());
+        assertFalse(basicAuthService.isBasicAuthInitialized());
+
+        settingRepositoryInterface.save(Setting.builder()
+            .key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY)
+            .value(new BasicAuthConfiguration("username", null, null, null))
+            .build());
+        assertFalse(basicAuthService.isBasicAuthInitialized());
+
+        settingRepositoryInterface.save(Setting.builder()
+            .key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY)
+            .value(new BasicAuthConfiguration(null, null, null, null))
+            .build());
+        assertFalse(basicAuthService.isBasicAuthInitialized());
     }
 
     @Test

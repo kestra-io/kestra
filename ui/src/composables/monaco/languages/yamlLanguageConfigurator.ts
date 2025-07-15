@@ -14,7 +14,16 @@ import IDisposable = monaco.IDisposable;
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
-import {endOfWordColumn, NO_SUGGESTIONS, registerFunctionParametersAutoCompletion, registerNestedValueAutoCompletion, registerPebbleAutocompletion} from "./pebbleLanguageConfigurator.ts";
+import {
+    endOfWordColumn,
+    NO_SUGGESTIONS,
+    registerFunctionParametersAutoCompletion,
+    registerNestedValueAutoCompletion,
+    registerPebbleAutocompletion
+} from "./pebbleLanguageConfigurator.ts";
+import {usePluginsStore} from "../../../stores/plugins.ts";
+import {languages} from "monaco-editor/esm/vs/editor/editor.api";
+import CompletionItem = languages.CompletionItem;
 
 
 export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
@@ -25,7 +34,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         this._yamlAutoCompletion = yamlAutoCompletion;
     }
 
-    async configureLanguage() {
+    async configureLanguage(pluginsStore: ReturnType<typeof usePluginsStore>) {
         configureMonacoYaml(monaco, {
             enableSchemaRequest: true,
             hover: true,
@@ -53,59 +62,63 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 return defaultCompletion;
             }
 
-            (defaultCompletion.suggestions as {
-                label: string,
-                filterText: string,
-                insertText: string,
-                sortText?: string
-            }[]).forEach(suggestion => {
-                if (suggestion.label.endsWith("...") && suggestion.insertText.includes(suggestion.label.substring(0, suggestion.label.length - 3))) {
-                    suggestion.label = suggestion.insertText;
-                }
-
-                const wordAtPosition = model.getWordAtPosition(position)?.word?.toLowerCase();
-                if (wordAtPosition !== undefined) {
-                    const sortBumperText = "a1".repeat(10);
+            return {
+                ...defaultCompletion,
+                suggestions: (defaultCompletion.suggestions as (CompletionItem & {label: string})[]).map(suggestion => {
+                    if (suggestion.label.endsWith("...") && suggestion.insertText.includes(suggestion.label.substring(0, suggestion.label.length - 3))) {
+                        return {...suggestion, label: suggestion.insertText};
+                    }
+                    return suggestion;
+                }).filter(suggestion => {
                     if (suggestion.label.includes(".")) {
-                        const dotSplit = suggestion.label.toLowerCase().split(/\.(?=\w)/);
-                        if (dotSplit[dotSplit.length - 1].startsWith(wordAtPosition)) {
-                            suggestion.sortText = sortBumperText.repeat(5) + suggestion.label;
-                        } else if (dotSplit[dotSplit.length - 1].includes(wordAtPosition)) {
-                            suggestion.sortText = sortBumperText.repeat(4) + suggestion.label;
-                        } else {
-                            suggestion.sortText = dotSplit.splice(dotSplit.length - 1, 1).reduceRight((prefix, part) => {
-                                let sortBumperPrefixForPart;
-                                if (part.startsWith(wordAtPosition)) {
-                                    sortBumperPrefixForPart = sortBumperText.repeat(3)
-                                } else if (part.includes(wordAtPosition)) {
-                                    sortBumperPrefixForPart = sortBumperText.repeat(2);
-                                }
+                        return !pluginsStore.deprecatedTypes.includes(suggestion.label);
+                    }
 
-                                if (sortBumperPrefixForPart === undefined || prefix.length >= sortBumperPrefixForPart.length) {
-                                    return prefix;
-                                }
+                    return true;
+                }).map(suggestion => {
+                    const wordAtPosition = model.getWordAtPosition(position)?.word?.toLowerCase();
+                    if (wordAtPosition !== undefined) {
+                        const sortBumperText = "a1".repeat(10);
+                        if (suggestion.label.includes(".")) {
+                            const dotSplit = suggestion.label.toLowerCase().split(/\.(?=\w)/);
+                            if (dotSplit[dotSplit.length - 1].startsWith(wordAtPosition)) {
+                                suggestion.sortText = sortBumperText.repeat(5) + suggestion.label;
+                            } else if (dotSplit[dotSplit.length - 1].includes(wordAtPosition)) {
+                                suggestion.sortText = sortBumperText.repeat(4) + suggestion.label;
+                            } else {
+                                suggestion.sortText = dotSplit.splice(dotSplit.length - 1, 1).reduceRight((prefix, part) => {
+                                    let sortBumperPrefixForPart;
+                                    if (part.startsWith(wordAtPosition)) {
+                                        sortBumperPrefixForPart = sortBumperText.repeat(3)
+                                    } else if (part.includes(wordAtPosition)) {
+                                        sortBumperPrefixForPart = sortBumperText.repeat(2);
+                                    }
 
-                                return sortBumperPrefixForPart;
-                            }, "") + suggestion.label;
+                                    if (sortBumperPrefixForPart === undefined || prefix.length >= sortBumperPrefixForPart.length) {
+                                        return prefix;
+                                    }
+
+                                    return sortBumperPrefixForPart;
+                                }, "") + suggestion.label;
+                            }
+
+                            suggestion.filterText = (suggestion.label.includes(wordAtPosition) ? wordAtPosition + " " : "") + suggestion.label.toLowerCase();
                         }
 
-                        suggestion.filterText = (suggestion.label.includes(wordAtPosition) ? wordAtPosition + " " : "") + suggestion.label.toLowerCase();
+                        if (suggestion.sortText === undefined && suggestion.label.includes(wordAtPosition)) {
+                            suggestion.sortText = sortBumperText + suggestion.label;
+                        }
                     }
 
-                    if (suggestion.sortText === undefined && suggestion.label.includes(wordAtPosition)) {
-                        suggestion.sortText = sortBumperText + suggestion.label;
-                    }
-                }
+                    suggestion.sortText = suggestion.sortText?.toLowerCase();
 
-                suggestion.sortText = suggestion.sortText?.toLowerCase();
-            });
-
-            return defaultCompletion;
+                    return suggestion;
+                })
+            };
         };
     }
 
     configureAutoCompletion(_: ReturnType<typeof useI18n>["t"], __: Store<Record<string, any>>, ___: monaco.editor.ICodeEditor | undefined) {
-
         const autoCompletionProviders: IDisposable[] = [];
         const yamlAutoCompletion = this._yamlAutoCompletion;
 

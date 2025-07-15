@@ -10,8 +10,6 @@ import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,9 +28,25 @@ class AuthenticationFilterTest {
     private AuthenticationFilter filter;
 
     @Test
+    void testConfigEndpointAlwaysOpen() {
+        var response =  client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+    }
+
+    @Test
     void testUnauthorized() {
-        assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
-            .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker")));
+        HttpClientResponseException httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/main/dashboards").header("Authorization", "")));
+        assertThat(httpClientResponseException.getResponse().getHeaders().get("WWW-Authenticate")).isEqualTo("Basic");
+
+        httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/main/dashboards").basicAuth("anonymous", "hacker")));
+        assertThat(httpClientResponseException.getResponse().getHeaders().get("WWW-Authenticate")).isEqualTo("Basic");
+
+        httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/main/dashboards").header("Authorization", "").header("Referer", "http://localhost/login")));
+        assertThat(httpClientResponseException.getResponse().getHeaders().get("WWW-Authenticate")).isNull();
     }
 
     @Test
@@ -64,7 +78,7 @@ class AuthenticationFilterTest {
     void should_unauthorized_with_wrong_username() {
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class,
             () -> client.toBlocking()
-                .exchange(HttpRequest.GET("/api/v1/configs").basicAuth(
+                .exchange(HttpRequest.GET("/api/v1/main/dashboards").basicAuth(
                     "incorrect",
                     basicAuthConfiguration.getPassword()
                 )));
@@ -76,7 +90,7 @@ class AuthenticationFilterTest {
     void should_unauthorized_with_wrong_password() {
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class,
             () -> client.toBlocking()
-                .exchange(HttpRequest.GET("/api/v1/configs").basicAuth(
+                .exchange(HttpRequest.GET("/api/v1/main/dashboards").basicAuth(
                     basicAuthConfiguration.getUsername(),
                     "incorrect"
                 )));
@@ -87,7 +101,7 @@ class AuthenticationFilterTest {
     @Test
     void should_unauthorized_without_token(){
         MutableHttpResponse<?> response = Mono.from(filter.doFilter(
-            HttpRequest.GET("/api/v1/configs"), null)).block();
+            HttpRequest.GET("/api/v1/main/dashboards"), null)).block();
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
     }
 }

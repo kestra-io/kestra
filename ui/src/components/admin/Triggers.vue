@@ -197,6 +197,7 @@
                                         @click="restart(scope.row)"
                                         size="small"
                                         type="primary"
+                                        :disabled="scope.row.disabled || scope.row.codeDisabled"
                                     >
                                         {{ $t("backfill executions") }}
                                     </el-button>

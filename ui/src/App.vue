@@ -5,13 +5,13 @@
         <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
             <router-view />
         </component>
-        <VueTour />
+        <VueTour v-if="shouldRenderApp && $route?.name && !isAnonymousRoute" />
     </el-config-provider>
 </template>
 
 <script>
     import ErrorToast from "./components/ErrorToast.vue";
-    import {mapGetters, mapState} from "vuex";
+    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import Utils from "./utils/utils";
     import {shallowRef} from "vue";
@@ -26,6 +26,8 @@
     import {useLayoutStore} from "./stores/layout";
     import {useCoreStore} from "./stores/core";
     import {useDocStore} from "./stores/doc";
+    import {useMiscStore} from "./stores/misc";
+    import * as BasicAuth from "./utils/basicAuth";
 
     // Main App
     export default {
@@ -47,66 +49,42 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["overallTotal"]),
-            ...mapGetters("misc", ["configs"]),
-            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore),
+            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore),
             envName() {
-                return this.layoutStore.envName || this.configs?.environment?.name;
+                return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
             },
             isOSS(){
                 return true;
             },
             shouldRenderApp() {
-                return !this.configs || this.isSetupRoute() || this.configs.isBasicAuthEnabled || localStorage.getItem("basicAuthSetupCompleted") === "true";
-            }
+                return this.loaded
+            },
+            isAnonymousRoute() {
+                return (this.isLoginRoute || this.isSetupRoute);
+            },
+            isLoginRoute() {
+                return this.$route?.name?.startsWith("login")
+            },
+            isSetupRoute() {
+                return this.$route?.name === "setup"
+            },
         },
         async created() {
-            const {name: currentRoute} = this.$route;
-            const isAuthRoute = currentRoute === "login" || currentRoute === "setup";
-            const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null;
+            this.setTitleEnvSuffix()
 
-            this.setTitleEnvSuffix();
-
-            if (!this.created && !isAuthRoute) {
+            if (!this.isAnonymousRoute && BasicAuth.isLoggedIn()) {
                 try {
-                    const config = await this.loadGeneralResources();
-                    if (config === null) {
-                        this.displayApp();
-                        return;
-                    }
-
-                    // Basic auth enabled: redirect to login if no credentials
-                    if (this.configs && this.configs.isBasicAuthEnabled && !hasCredentials) {
-                        this.$router.push({name: "login"});
-                        this.displayApp();
-                        return;
-                    }
-
-                    // Basic auth disabled: redirect to setup if incomplete
-                    if (this.configs && !this.configs.isBasicAuthEnabled && !this.isSetupRoute() && localStorage.getItem("basicAuthSetupCompleted") !== "true") {
-                        this.$router.push({name: "setup"});
-                        this.displayApp();
-                        return;
-                    }
+                    await this.loadGeneralResources()
                 } catch (error) {
-                    if (error?.response?.status === 401) {
-                        localStorage.removeItem("basicAuthCredentials");
-                        this.$router.push({name: "login"});
-                        this.displayApp();
-                        return;
-                    }
+                    console.warn("Failed to load general resources:", error)
                 }
-            } else if (!isAuthRoute && !hasCredentials) {
-                // Fallback: redirect to login when configs unavailable
-                this.$router.push({name: "login"});
-                this.displayApp();
-                return;
             }
 
             this.displayApp();
         },
         methods: {
             displayApp() {
-                Utils.switchTheme(this.$store);
+                Utils.switchTheme(this.miscStore);
 
                 document.getElementById("loader-wrapper").style.display = "none";
                 document.getElementById("app-container").style.display = "block";
@@ -123,13 +101,13 @@
                     localStorage.setItem("uid", newUid);
                     return newUid;
                 })();
-                
-                if (!localStorage.getItem("basicAuthCredentials")) {
+
+                if (!BasicAuth.isLoggedIn()) {
                     return null;
                 }
-                
+
+                const config = await this.miscStore.loadConfigs();
                 this.pluginsStore.fetchIcons()
-                const config = await this.$store.dispatch("misc/loadConfigs");
 
                 await this.docStore.initResourceUrlTemplate(config.version);
 
@@ -143,7 +121,7 @@
                     .then(apiConfig => {
                         this.initStats(apiConfig, config, uid);
                     })
-                
+
                 return config;
             },
             initStats(apiConfig, config, uid) {
@@ -172,7 +150,6 @@
                 }
 
 
-                // close survey on page change
                 let surveyVisible = false;
                 window.addEventListener("PHSurveyShown", () => {
                     surveyVisible = true;
@@ -199,12 +176,6 @@
                         type: "OSS"
                     }
                 }
-            },
-            isLoginRoute() {
-                return this.$route?.name?.startsWith("login");
-            },
-            isSetupRoute() {
-                return this.$route?.name === "setup";
             },
         },
         watch: {

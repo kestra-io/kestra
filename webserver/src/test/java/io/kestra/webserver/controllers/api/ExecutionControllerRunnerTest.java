@@ -46,6 +46,7 @@ import io.micronaut.reactor.http.client.ReactorSseClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +62,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -731,11 +733,7 @@ class ExecutionControllerRunnerTest {
         assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
 
         // check that the execution is no more paused
-        Thread.sleep(100);
-        Execution execution = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution.getId()),
-            Execution.class);
-        assertThat(execution.getState().isPaused()).isFalse();
+        Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
         assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
     }
 
@@ -764,11 +762,7 @@ class ExecutionControllerRunnerTest {
         assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
 
         // check that the execution is no more paused
-        Thread.sleep(100);
-        Execution execution = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution.getId()),
-            Execution.class);
-        assertThat(execution.getState().isPaused()).isFalse();
+        Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
 
         Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("onResume");
         assertThat(outputs.get("asked")).isEqualTo("myString");
@@ -795,17 +789,8 @@ class ExecutionControllerRunnerTest {
         assertThat(resumeResponse.getCount()).isEqualTo(2);
 
         // check that the executions are no more paused
-        Thread.sleep(100);
-        Execution resumedExecution1 = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution1.getId()),
-            Execution.class
-        );
-        Execution resumedExecution2 = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution2.getId()),
-            Execution.class
-        );
-        assertThat(resumedExecution1.getState().isPaused()).isFalse();
-        assertThat(resumedExecution2.getState().isPaused()).isFalse();
+        awaitExecution(pausedExecution1.getId(), exec -> !exec.getState().isPaused());
+        awaitExecution(pausedExecution2.getId(), exec -> !exec.getState().isPaused());
 
         // attempt to resume no more paused executions
         HttpClientResponseException e = assertThrows(
@@ -835,17 +820,8 @@ class ExecutionControllerRunnerTest {
         assertThat(resumeResponse.getCount()).isEqualTo(2);
 
         // check that the executions are no more paused
-        Thread.sleep(100);
-        Execution resumedExecution1 = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution1.getId()),
-            Execution.class
-        );
-        Execution resumedExecution2 = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution2.getId()),
-            Execution.class
-        );
-        assertThat(resumedExecution1.getState().isPaused()).isFalse();
-        assertThat(resumedExecution2.getState().isPaused()).isFalse();
+        awaitExecution(pausedExecution1.getId(), exec -> !exec.getState().isPaused());
+        awaitExecution(pausedExecution2.getId(), exec -> !exec.getState().isPaused());
 
         // attempt to resume no more paused executions
         HttpClientResponseException e = assertThrows(
@@ -1032,11 +1008,7 @@ class ExecutionControllerRunnerTest {
         assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
 
         // check that the execution is no more paused
-        Thread.sleep(100);
-        Execution execution = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution.getId()),
-            Execution.class);
-        assertThat(execution.getState().isPaused()).isFalse();
+        awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
     }
 
     // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow
@@ -1081,10 +1053,7 @@ class ExecutionControllerRunnerTest {
         assertThat(executionKilledId.get()).isEqualTo(runningExecution.getId());
 
         // retrieve the execution from the API and check that the task has been set to killed
-        Thread.sleep(1000);
-        Execution execution = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + runningExecution.getId()),
-            Execution.class);
+        Execution execution = awaitExecution(runningExecution.getId(), exec -> !exec.getState().isPaused());
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(execution.getTaskRunList().size()).isEqualTo(2);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
@@ -1579,9 +1548,13 @@ class ExecutionControllerRunnerTest {
 
 
     private Execution triggerExecutionExecution(String namespace, String flowId, MultipartBody requestBody, Boolean wait) {
+        return triggerExecutionExecution(namespace, flowId, requestBody, wait, null);
+    }
+
+    private Execution triggerExecutionExecution(String namespace, String flowId, MultipartBody requestBody, Boolean wait, String breakpoint) {
         return client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/main/executions/" + namespace + "/" + flowId + "?labels=a:label-1&labels=b:label-2&labels=url:" + ENCODED_URL_LABEL_VALUE + (wait ? "&wait=true" : ""), requestBody)
+                .POST("/api/v1/main/executions/" + namespace + "/" + flowId + "?labels=a:label-1&labels=b:label-2&labels=url:" + ENCODED_URL_LABEL_VALUE + (wait ? "&wait=true" : "") + (breakpoint != null ? "&breakpoints=" + breakpoint : ""), requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );
@@ -1688,6 +1661,35 @@ class ExecutionControllerRunnerTest {
         assertThat(e.getMessage()).contains("System labels can only be set by Kestra itself");
     }
 
+    @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
+    void shouldSuspendAtBreakpointThenResume() throws QueueException, TimeoutException, InterruptedException {
+        Execution execution = triggerExecutionExecution(TESTS_FLOW_NS, "minimal", null, false, "date");
+        assertThat(execution).isNotNull();
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CREATED);
+
+        // check that the execution is suspended
+        Execution suspended = awaitExecution(execution.getId(), State.Type.BREAKPOINT);
+        assertThat(suspended.getTaskRunList()).hasSize(1);
+        assertThat(suspended.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
+
+        // resume the suspended execution
+        HttpResponse<Void> resume = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + suspended.getId() + "/resume-from-breakpoint", null),
+            Void.class
+        );
+        assertThat(resume.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // wait for the exec to be terminated
+        Execution terminated = runnerUtils.awaitExecution(
+            it -> execution.getId().equals(it.getId()) && it.getState().isTerminated(),
+            () -> {},
+            Duration.ofSeconds(10));
+        assertThat(terminated.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(terminated.getTaskRunList()).hasSize(1);
+        assertThat(terminated.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
     private List<Label> getExecutionNonSystemLabels(List<Label> labels) {
         return labels == null ? List.of() :
             labels.stream()
@@ -1706,5 +1708,35 @@ class ExecutionControllerRunnerTest {
         List<Label> systemLabels = getExecutionSystemLabels(allLabels);
         assertThat(customLabels).as("Custom label count").hasSize(expectedCustomCount);
         assertThat("System label count", systemLabels, hasSize(expectedSystemMatcher));
+    }
+
+    private Execution awaitExecution(String executionId) {
+        return Awaitility.await()
+            .atMost(Duration.ofSeconds(10))
+            .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
+            .until(
+                () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/" + executionId), Execution.class),
+                execution -> execution.getState().isTerminated()
+            );
+    }
+
+    private Execution awaitExecution(String executionId, State.Type state) {
+        return Awaitility.await()
+            .atMost(Duration.ofSeconds(10))
+            .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
+            .until(
+                () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/" + executionId), Execution.class),
+                execution -> execution.getState().getCurrent() == state
+            );
+    }
+
+    private Execution awaitExecution(String executionId, Predicate<Execution> predicate) {
+        return Awaitility.await()
+            .atMost(Duration.ofSeconds(10))
+            .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
+            .until(
+                () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/" + executionId), Execution.class),
+                predicate
+            );
     }
 }

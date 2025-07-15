@@ -4,7 +4,6 @@ import execution from "./executions"
 import flow from "./flow"
 import graph from "./graph"
 import namespace from "./namespaces"
-import misc from "./miscs"
 import template from "./template"
 import editor from "./editor";
 import service from "./service"
@@ -16,7 +15,6 @@ export default {
         template,
         execution,
         namespace,
-        misc,
         auth,
         graph,
         editor,

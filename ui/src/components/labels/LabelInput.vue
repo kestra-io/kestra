@@ -34,7 +34,8 @@
 </script>
 
 <script>
-    import {mapGetters} from "vuex";
+    import {mapStores} from "pinia";
+    import {useMiscStore} from "../../stores/misc";
 
     export default {
         props: {
@@ -56,7 +57,7 @@
         },
         emits: ["update:labels"],
         computed: {
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useMiscStore),
         },
         created() {
             if (this.labels.length === 0) {

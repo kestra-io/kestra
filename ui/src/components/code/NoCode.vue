@@ -9,7 +9,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, provide, ref} from "vue";
+    import {computed, provide, ref, onMounted, getCurrentInstance} from "vue";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {
         CLOSE_TASK_FUNCTION_INJECTION_KEY,

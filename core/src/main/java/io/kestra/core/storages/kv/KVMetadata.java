@@ -1,37 +1,46 @@
 package io.kestra.core.storages.kv;
 
+import lombok.Getter;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+@Getter
 public class KVMetadata {
+    private String description;
     private Instant expirationDate;
 
-    public KVMetadata(Duration ttl) {
+    public KVMetadata(String description, Duration ttl) {
         if (ttl != null && ttl.isNegative()) {
             throw new IllegalArgumentException("ttl cannot be negative");
         }
 
+
+        this.description = description;
         if (ttl != null) {
             this.expirationDate = Instant.now().plus(ttl);
         }
     }
 
     public KVMetadata(Map<String, String> metadata) {
-        this.expirationDate = Optional.ofNullable(metadata)
-            .map(map -> map.get("expirationDate"))
+        if (metadata == null) {
+            return;
+        }
+
+        this.description = metadata.get("description");
+        this.expirationDate = Optional.ofNullable(metadata.get("expirationDate"))
             .map(Instant::parse)
             .orElse(null);
     }
 
-    public Instant getExpirationDate() {
-        return expirationDate;
-    }
-
     public Map<String, String> toMap() {
         Map<String, String> map = new HashMap<>();
+        if (description != null) {
+            map.put("description", description);
+        }
         if (expirationDate != null) {
             map.put("expirationDate", expirationDate.toString());
         }

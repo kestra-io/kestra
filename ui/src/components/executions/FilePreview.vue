@@ -96,7 +96,9 @@
     import Editor from "../inputs/Editor.vue";
     import ListPreview from "../ListPreview.vue";
     import PdfPreview from "../PdfPreview.vue";
-    import {mapGetters, mapState} from "vuex";
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useMiscStore} from "../../stores/misc";
     import Markdown from "../layout/Markdown.vue";
     import Drawer from "../Drawer.vue";
 
@@ -138,7 +140,7 @@
         },
         computed: {
             ...mapState("execution", ["filePreview"]),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useMiscStore),
             extensionToMonacoLang() {
                 switch (this.preview.extension) {
                 case "json":
@@ -168,10 +170,10 @@
         emits: ["preview"],
         methods: {
             configPreviewInitialRows() {
-                return this.configs?.preview.initial || 100
+                return this.miscStore.configs?.preview.initial || 100
             },
             configPreviewMaxRows() {
-                return this.configs?.preview.max || 5000
+                return this.miscStore.configs?.preview.max || 5000
             },
             getFilePreview() {
                 const data = {

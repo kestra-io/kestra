@@ -1,5 +1,6 @@
 <template>
-    <div class="schema-wrapper" :class="{bordered: !merge}">
+    <slot v-if="transparent" name="tasks" />
+    <div v-else class="schema-wrapper" :class="{bordered: !merge}">
         <slot name="tasks" />
     </div>
 </template>
@@ -7,7 +8,7 @@
 <script lang="ts" setup>
     defineOptions({name: "TaskWrapper"});
 
-    defineProps<{merge?: boolean}>();
+    defineProps<{merge?: boolean, transparent?: boolean}>();
 </script>
 
 <style lang="scss" scoped>

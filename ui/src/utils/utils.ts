@@ -1,7 +1,7 @@
 import {computed} from "vue";
-import {Store, useStore} from "vuex";
 import moment from "moment";
 import humanizeDuration from "humanize-duration";
+import {useMiscStore} from "../stores/misc";
 
 const humanizeDurationLanguages = {
     "en" : {
@@ -195,7 +195,7 @@ export default class Utils {
         return null; // Return null if no filename is found
     }
 
-    static switchTheme(store: Store<any>, theme: string | undefined) {
+    static switchTheme(miscStore: any, theme: string | undefined) {
         // default theme
         if (theme === undefined) {
             if (localStorage.getItem("theme")) {
@@ -229,7 +229,9 @@ export default class Utils {
             removeClasses();
             htmlClass.add(theme);
         }
-        store.commit("misc/setTheme", theme);
+        
+        miscStore.theme = theme;
+        
         localStorage.setItem("theme", theme);
     }
 
@@ -310,6 +312,35 @@ export default class Utils {
 }
 
 export const useTheme = () => {
-    const store = useStore();
-    return computed<"light" | "dark">(() => store.getters["misc/theme"]);
+    const miscStore = useMiscStore();
+    return computed<"light" | "dark">(() => miscStore.theme as "light" | "dark");
+}
+
+function resolve$ref(obj: Record<string, any>, fullObject: Record<string, any>) {
+    if (obj === undefined || obj === null) {
+        return;
+    }
+    if(obj.$ref){
+        return getValueAtJsonPath(fullObject, obj.$ref);
+    }
+    return obj
+}
+
+export function getValueAtJsonPath(obj: Record<string, any>, path: string): any {
+    if (!obj || !path || typeof path !== "string") {
+        return undefined;
+    }
+
+    const keys = path.replace(/^#\//, "").split("/");
+    let current = obj;
+
+    for (const key of keys) {
+        if (current && key in current) {
+            current = resolve$ref(current[key], obj);
+        } else {
+            return undefined;
+        }
+    }
+
+    return current;
 }

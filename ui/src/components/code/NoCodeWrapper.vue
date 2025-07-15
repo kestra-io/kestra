@@ -3,12 +3,11 @@
         :flow="lastValidFlowYaml"
         :parent-path="parentPath"
         :ref-path="refPath"
-        :block-type="blockType"
         :creating-task="creatingTask"
         :editing-task="editingTask"
         :field-name="fieldName"
         :position
-        @update-metadata="(e) => onUpdateMetadata(e)"
+        :block-schema-path="blockSchemaPath"
         @update-task="(e) => editorUpdate(e)"
         @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
         @close-task="() => emit('closeTask')"
@@ -21,32 +20,32 @@
     import {useStore} from "vuex";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import NoCode from "./NoCode.vue";
-    import {BlockType} from "./utils/types";
     import {CREATE_TASK_FUNCTION_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY} from "./injectionKeys";
 
     export interface NoCodeProps {
         creatingTask?: boolean;
         editingTask?: boolean;
-        blockType?: BlockType | "pluginDefaults";
         parentPath?: string;
         refPath?: number;
         position?: "before" | "after";
+        blockSchemaPath?: string;
         fieldName?: string | undefined;
     }
 
     defineProps<NoCodeProps>();
 
     const emit = defineEmits<{
-        (e: "createTask", blockType: string, parentPath: string, refPath: number | undefined, position: "after" | "before"): boolean | void;
-        (e: "editTask", blockType: string, parentPath: string, refPath?: number): boolean | void;
+        (e: "createTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;
+        (e: "editTask", parentPath: string, blockSchemaPath: string, refPath?: number): boolean | void;
         (e: "closeTask"): boolean | void;
     }>();
 
-    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
-        emit("createTask", blockType, parentPath, refPath, "after")
+    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {
+        emit("createTask", parentPath, blockSchemaPath, refPath, "after")
     });
-    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
-        emit("editTask", blockType, parentPath, refPath)
+
+    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, ( parentPath, blockSchemaPath, refPath) => {
+        emit("editTask", parentPath, blockSchemaPath, refPath)
     });
 
     const store = useStore();
@@ -66,20 +65,6 @@
     const validateFlow = debounce(() => {
         store.dispatch("flow/validateFlow", {flow: flowYaml.value});
     }, 500);
-
-    const onUpdateMetadata = (metadata: any) => {
-        store.commit("flow/setMetadata", {
-            ...metadata.value,
-            ...((metadata.concurrency?.limit ?? -1) === 0 ? {
-                concurrency: null
-            } : metadata)});
-        store.dispatch("flow/onSaveMetadata");
-        validateFlow()
-        store.commit("editor/setTabDirty", {
-            name: "Flow",
-            dirty: true
-        });
-    };
 
     const timeout = ref();
 

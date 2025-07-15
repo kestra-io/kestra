@@ -41,6 +41,7 @@
     "add task": "Добавить задачу",
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
     "add_new_item": "Добавить новый элемент",
+    "additionalPlugins": "Дополнительные плагины",
     "administration": "Администрирование",
     "advanced configuration": "Другие свойства",
     "after": "после",
@@ -55,6 +56,7 @@
     "all executions": "Все выполнения",
     "all tags": "Все теги",
     "api": "API",
+    "appBlocks": "Блоки приложения",
     "apps": "Приложения",
     "attempt": "Попытка",
     "attempts": "Попытка(и)",
@@ -133,7 +135,7 @@
         "Ошибочные tasks будут выполнены."
       ],
       "RUNNING": [
-        "Flow перезапустится и выполнит все следующие tasks.",
+        "Flow будет перезапущен и выполнит все следующие tasks.",
         "Все заблокированные tasks будут выполнены."
       ],
       "SUCCESS": [
@@ -150,6 +152,7 @@
     "change state tooltip": "Изменить состояние выполнения",
     "chart": "График",
     "chart preview": "Предварительный просмотр диаграммы",
+    "charts": "Графики",
     "choice": "Выбор",
     "choose file": "Выберите файл или перетащите его сюда...",
     "close": "Закрыть",
@@ -206,10 +209,12 @@
         "confirmation": "Вы уверены, что хотите удалить панель <code>{title}</code>?"
       },
       "edition": {
+        "chart": "Редактировать этот график",
         "confirmation": "Изменения в панели <code>{title}</code> сохранены.",
         "label": "Редактировать Dashboard"
       },
       "empty": "Нет результатов для отображения.",
+      "export": "Экспорт в CSV",
       "labels": {
         "plural": "Панели управления",
         "singular": "Панель управления"
@@ -217,6 +222,7 @@
       "preview": "Предварительный просмотр Dashboard"
     },
     "data": "Данные",
+    "dataFilters": "Фильтры данных",
     "data_not_protected": "Ваши данные не защищены. Не потеряйте их. <b>Включите наши бесплатные функции безопасности или попробуйте платную версию.</b>",
     "date": "Дата",
     "date count": "{count} на {date}",
@@ -696,6 +702,7 @@
     "last execution date": "Дата последнего выполнения",
     "last execution state": "Последнее состояние",
     "last execution status": "Последний статус выполнения",
+    "last modified": "Последнее изменение",
     "launch execution": "Выполнить",
     "learn_more": "Узнать больше",
     "light_background": "Это предпочтительный вариант при работе со светлым фоном.",
@@ -704,6 +711,7 @@
     "live help": "Живая помощь",
     "loaded x dependencies": "{count} зависимости загружены",
     "log expand setting": "Отображение logs по умолчанию",
+    "logExporters": "Экспортеры Log",
     "logs": "Логи",
     "logs_view": {
       "compact": "Вид по умолчанию",
@@ -840,6 +848,7 @@
         "conditions": "Добавить условие",
         "errors": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
+        "inputs": "Добавить поле input",
         "pluginDefaults": "Добавить плагин по умолчанию",
         "tasks": "Добавить task",
         "triggers": "Добавить trigger"
@@ -848,16 +857,19 @@
         "general": {
           "concurrency": "Конкурентность",
           "disabled": "Отключено",
-          "inputs": "Входные данные",
           "labels": "Метки",
+          "listeners": "Слушатели",
           "outputs": "Выходы",
           "retry": "Повторить попытку",
           "sla": "SLA",
-          "variables": "Переменные"
+          "taskDefaults": "Значения по умолчанию для Task",
+          "variables": "Переменные",
+          "workerGroup": "Группа Worker"
         },
         "main": {
           "description": "Описание",
-          "flow_id": "ID потока",
+          "id": "ID flow",
+          "inputs": "Входные данные",
           "namespace": "Namespace"
         }
       },
@@ -885,6 +897,7 @@
         "conditions": "Выберите условие",
         "errors": "Выберите task",
         "finally": "Выберите task",
+        "inputs": "Выберите тип поля input",
         "pluginDefaults": "Выберите плагин",
         "tasks": "Выберите task",
         "triggers": "Выберите trigger"
@@ -1172,6 +1185,73 @@
       },
       "label": "Настройки"
     },
+    "setup": {
+      "config": {
+        "basicauth": "Базовая аутентификация",
+        "queue": "Очередь",
+        "repository": "База данных",
+        "storage": "Внутреннее хранилище"
+      },
+      "confirm": {
+        "config_title": "Подтвердите, что конфигурация действительна",
+        "confirm": "Подтвердить",
+        "not_valid": "Нет, это недействительно",
+        "valid": "Да, это допустимо"
+      },
+      "form": {
+        "email": "Электронная почта",
+        "firstName": "Имя",
+        "lastName": "Фамилия",
+        "password": "Пароль"
+      },
+      "login": "Войти",
+      "logout": "Выход",
+      "steps": {
+        "complete": "Запустить Kestra UI",
+        "config": "Проверить конфигурацию",
+        "survey": "Расскажите нам больше",
+        "user": "Создайте своего первого пользователя"
+      },
+      "subtitles": {
+        "complete": "Настройка успешно завершена!",
+        "config": "Вот детали вашей конфигурации",
+        "survey": "Помогите нам улучшить Kestra Open Source Edition",
+        "user": "Настройте ваш экземпляр, создав первого пользователя"
+      },
+      "success": {
+        "subtitle": "Вы готовы!",
+        "title": "Поздравляем!"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "Личное использование",
+        "company_size": "Каков размер вашей компании?",
+        "continue": "Продолжить",
+        "newsletter": "Подпишитесь на новостную рассылку Kestra — оставайтесь в курсе последних функций и изменений.",
+        "skip": "Пропустить",
+        "use_case": "Каков ваш основной сценарий использования?",
+        "use_case_business": "Бизнес-процессы",
+        "use_case_data": "Рабочие процессы данных",
+        "use_case_infrastructure": "Автоматизация инфраструктуры",
+        "use_case_ml": "ML/AI конвейеры",
+        "use_case_other": "Другое"
+      },
+      "titles": {
+        "survey": "Расскажите подробнее",
+        "user": "Создать первого пользователя"
+      },
+      "validation": {
+        "email_invalid": "Недействительный email",
+        "email_required": "Требуется Email",
+        "email_temporary_not_allowed": "Временные или одноразовые адреса электронной почты не разрешены",
+        "firstName_required": "Имя обязательно",
+        "lastName_required": "Требуется фамилия",
+        "password_invalid": "Неверный пароль"
+      }
+    },
     "show": "Показать",
     "show chart": "Показать диаграмму",
     "show description": "Показать описание",
@@ -1217,9 +1297,9 @@
     "task logs": "Журналы задач",
     "task run id": "ID выполнения задачи",
     "taskDefaults": "Задача по умолчанию",
+    "taskRunners": "Запускатели Task",
     "task_id_exists": "Id задачи уже существует",
     "task_id_message": "Id задачи ${existingTask} уже существует в flow.",
-    "task_runners": "Запускатели задач",
     "taskid column details": "Последний task выполняется и количество его попыток.",
     "taskruns": "Запуски задач",
     "tasks": "Задачи",

@@ -47,7 +47,6 @@ kestra:
     access-log:
       enabled: false
     basic-auth:
-      enabled: false
       username: admin@kestra.io
       password: kestra
       open-urls:

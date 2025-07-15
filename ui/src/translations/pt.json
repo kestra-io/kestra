@@ -41,6 +41,7 @@
     "add task": "Adicionar uma task",
     "add-trigger-in-editor": "Adicione um Trigger ao seu Flow primeiro",
     "add_new_item": "Adicionar novo item",
+    "additionalPlugins": "Plugins Adicionais",
     "administration": "Administração",
     "advanced configuration": "Outras propriedades",
     "after": "depois",
@@ -55,6 +56,7 @@
     "all executions": "Todas as execuções",
     "all tags": "Todas as tags",
     "api": "API",
+    "appBlocks": "Blocos do App",
     "apps": "Aplicativos",
     "attempt": "Tentativa",
     "attempts": "Tentativa(s)",
@@ -150,6 +152,7 @@
     "change state tooltip": "Alterar o estado de execução",
     "chart": "Gráfico",
     "chart preview": "Pré-visualização do gráfico",
+    "charts": "Gráficos",
     "choice": "Escolha",
     "choose file": "Escolha um arquivo ou solte-o aqui...",
     "close": "Fechar",
@@ -206,10 +209,12 @@
         "confirmation": "Tem certeza de que deseja excluir o dashboard <code>{title}</code>?"
       },
       "edition": {
+        "chart": "Edite este gráfico",
         "confirmation": "As alterações no dashboard <code>{title}</code> foram salvas.",
         "label": "Editar Dashboard"
       },
       "empty": "Não há resultados para serem exibidos.",
+      "export": "Exportar para CSV",
       "labels": {
         "plural": "Dashboards",
         "singular": "Dashboard"
@@ -217,6 +222,7 @@
       "preview": "Visualizar Dashboard"
     },
     "data": "Dados",
+    "dataFilters": "Filtros de Dados",
     "data_not_protected": "Seus dados não estão protegidos. Não os perca. <b>Ative nossos recursos de segurança gratuitos ou experimente nossa oferta paga.</b>",
     "date": "Data",
     "date count": "{count} em {date}",
@@ -696,6 +702,7 @@
     "last execution date": "Data da última execução",
     "last execution state": "Último estado",
     "last execution status": "Último status de execução",
+    "last modified": "Última modificação",
     "launch execution": "Executar",
     "learn_more": "Saiba mais",
     "light_background": "Esta é a opção preferida ao trabalhar com um fundo claro.",
@@ -704,6 +711,7 @@
     "live help": "Ajuda ao vivo",
     "loaded x dependencies": "{count} dependências carregadas",
     "log expand setting": "Exibição padrão do Log",
+    "logExporters": "Exportadores de Log",
     "logs": "Logs",
     "logs_view": {
       "compact": "Visualização padrão",
@@ -840,6 +848,7 @@
         "conditions": "Adicionar uma condição",
         "errors": "Adicionar um manipulador de erro",
         "finally": "Adicionar um bloco finally",
+        "inputs": "Adicionar um campo de input",
         "pluginDefaults": "Adicionar um padrão de plugin",
         "tasks": "Adicionar uma task",
         "triggers": "Adicionar um trigger"
@@ -848,16 +857,19 @@
         "general": {
           "concurrency": "Concorrência",
           "disabled": "Desativado",
-          "inputs": "Entradas",
           "labels": "Etiquetas",
+          "listeners": "Ouvintes",
           "outputs": "Saídas",
           "retry": "Repetir",
           "sla": "SLA",
-          "variables": "Variáveis"
+          "taskDefaults": "Padrões de Task",
+          "variables": "Variáveis",
+          "workerGroup": "Grupo de Worker"
         },
         "main": {
           "description": "Descrição",
-          "flow_id": "ID do Flow",
+          "id": "ID do Flow",
+          "inputs": "Entradas",
           "namespace": "Namespace"
         }
       },
@@ -885,6 +897,7 @@
         "conditions": "Selecione uma condição",
         "errors": "Selecione uma task",
         "finally": "Selecione uma task",
+        "inputs": "Selecione um tipo de campo de input",
         "pluginDefaults": "Selecione um plugin",
         "tasks": "Selecione uma task",
         "triggers": "Selecione um trigger"
@@ -1172,6 +1185,73 @@
       },
       "label": "Configurações"
     },
+    "setup": {
+      "config": {
+        "basicauth": "Autenticação básica",
+        "queue": "Fila",
+        "repository": "Banco de Dados",
+        "storage": "Armazenamento Interno"
+      },
+      "confirm": {
+        "config_title": "Confirme que a configuração é válida",
+        "confirm": "Confirmar",
+        "not_valid": "Não, não é válido",
+        "valid": "Sim, é válido"
+      },
+      "form": {
+        "email": "Email",
+        "firstName": "Nome",
+        "lastName": "Sobrenome",
+        "password": "Senha"
+      },
+      "login": "Login",
+      "logout": "Sair",
+      "steps": {
+        "complete": "Iniciar Kestra UI",
+        "config": "Validar Configuração",
+        "survey": "Conte-nos mais",
+        "user": "Crie seu primeiro usuário"
+      },
+      "subtitles": {
+        "complete": "Configuração concluída com sucesso!",
+        "config": "Aqui estão os detalhes da sua configuração",
+        "survey": "Ajude-nos a melhorar o Kestra Open Source Edition",
+        "user": "Configure sua instância criando seu primeiro usuário"
+      },
+      "success": {
+        "subtitle": "Você está pronto!",
+        "title": "Parabéns!"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "Uso pessoal",
+        "company_size": "Qual é o tamanho da sua empresa?",
+        "continue": "Continuar",
+        "newsletter": "Inscreva-se na newsletter da Kestra – mantenha-se atualizado com os <br> últimos recursos e mudanças.",
+        "skip": "Pular",
+        "use_case": "Qual é o seu caso de uso principal?",
+        "use_case_business": "Processos de negócio",
+        "use_case_data": "Fluxos de trabalho de dados",
+        "use_case_infrastructure": "Automação de infraestrutura",
+        "use_case_ml": "Pipelines de ML/AI",
+        "use_case_other": "Outros"
+      },
+      "titles": {
+        "survey": "Conte-nos mais",
+        "user": "Criar primeiro usuário"
+      },
+      "validation": {
+        "email_invalid": "E-mail inválido",
+        "email_required": "O e-mail é obrigatório",
+        "email_temporary_not_allowed": "Endereços de e-mail temporários ou descartáveis não são permitidos",
+        "firstName_required": "Nome é obrigatório",
+        "lastName_required": "Sobrenome obrigatório",
+        "password_invalid": "Senha inválida"
+      }
+    },
     "show": "Mostrar",
     "show chart": "Mostrar Gráfico",
     "show description": "Mostrar uma descrição",
@@ -1217,9 +1297,9 @@
     "task logs": "Task logs",
     "task run id": "ID do TaskRun",
     "taskDefaults": "Padrões da Task",
+    "taskRunners": "Executores de Task",
     "task_id_exists": "Id da Task já existe",
     "task_id_message": "O Task Id ${existingTask} já existe no flow.",
-    "task_runners": "Executores de Task",
     "taskid column details": "Última task sendo executada e seu número de tentativas.",
     "taskruns": "Execuções de Tasks",
     "tasks": "Tasks",

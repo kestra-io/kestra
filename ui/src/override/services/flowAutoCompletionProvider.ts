@@ -110,9 +110,9 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     async nestedFieldAutoCompletion(source: string, parsed: any | undefined, parentField: string): Promise<string[]> {
         switch (parentField) {
             case "inputs":
-                return Promise.resolve(parsed?.inputs?.map((input: {id: string}) => input.id) ?? []);
+                return Promise.resolve(parsed?.inputs?.map((input: {id?: string}) => input.id) ?? []);
             case "outputs":
-                return Promise.resolve(this.tasks(source).map(task => task.get("id")));
+                return Promise.resolve(parsed?.tasks?.map((task: {id?: string}) => task.id).filter(Boolean) ?? []);
             case "labels":
                 return Promise.resolve(Object.keys(parsed?.labels ?? {}));
             case "flow":

@@ -164,7 +164,7 @@ class YamlParserTest {
         Flow flow = this.parse("flows/valids/minimal.yaml");
 
         String s = MAPPER.writeValueAsString(flow);
-        assertThat(s).isEqualTo("{\"id\":\"minimal\",\"namespace\":\"io.kestra.tests\",\"revision\":2,\"disabled\":false,\"deleted\":false,\"labels\":[{\"key\":\"system.readOnly\",\"value\":\"true\"}],\"tasks\":[{\"id\":\"date\",\"type\":\"io.kestra.plugin.core.debug.Return\",\"format\":\"{{taskrun.startDate}}\"}]}");
+        assertThat(s).isEqualTo("{\"id\":\"minimal\",\"namespace\":\"io.kestra.tests\",\"revision\":2,\"disabled\":false,\"deleted\":false,\"labels\":[{\"key\":\"system.readOnly\",\"value\":\"true\"},{\"key\":\"existing\",\"value\":\"label\"}],\"tasks\":[{\"id\":\"date\",\"type\":\"io.kestra.plugin.core.debug.Return\",\"format\":\"{{taskrun.startDate}}\"}]}");
     }
 
     @Test

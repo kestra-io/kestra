@@ -1,6 +1,5 @@
 import ai from "./ai"
 import auth from "./auth"
-import execution from "./executions"
 import flow from "./flow"
 import graph from "./graph"
 import namespace from "./namespaces"
@@ -13,7 +12,6 @@ export default {
         ai,
         flow,
         template,
-        execution,
         namespace,
         auth,
         graph,

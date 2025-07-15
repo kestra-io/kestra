@@ -84,6 +84,10 @@
 
     & > .icon {
         width: 1.25rem;
+
+        &:empty {
+            display: none;
+        }
     }
 
     & > .label {

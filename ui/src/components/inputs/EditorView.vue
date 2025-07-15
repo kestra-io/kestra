@@ -177,7 +177,7 @@
                     </transition>
                     <AcceptDecline
                         v-if="draftSource !== undefined"
-                        class="position-absolute prompt"
+                        class="position-absolute actions"
                         @accept="acceptDraft"
                         @decline="declineDraft"
                     />
@@ -1553,6 +1553,10 @@
         bottom: 10%;
         width: calc(100% - 4rem);
         left: 2rem;
+    }
+
+    .actions{
+        bottom: 10%;
     }
 </style>
 

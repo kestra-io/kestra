@@ -71,7 +71,7 @@
                 this.$toast()
                     .confirm(this.$t("resumed confirm", {id: this.execution.id}), () => {
                         return this.resume();
-                    });
+                    }, () => {}, false);
             },
             resumeWithInputs(formRef) {
                 if (formRef) {

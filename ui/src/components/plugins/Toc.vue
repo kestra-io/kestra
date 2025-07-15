@@ -117,8 +117,7 @@
                                     .map(([elementType, elements]) => [
                                         elementType,
                                         elements.filter(({deprecated}) => !deprecated)
-                                            .map(({cls}) => cls)
-                                            .filter(element => element.toLowerCase().includes(this.searchInput.toLowerCase()))
+                                            .filter(({cls}) => cls.toLowerCase().includes(this.searchInput.toLowerCase()))
                                     ])
                             )
                         }

@@ -11,7 +11,7 @@
             :value="item"
         >
             <span class="options">
-                <task-icon :cls="item" :only-icon="true" :icons="pluginsStore.icons" />
+                <task-icon v-if="blockType !== 'inputs'" :cls="item" :only-icon="true" :icons="pluginsStore.icons" />
                 <span>
                     {{ item }}
                 </span>
@@ -19,7 +19,7 @@
         </el-option>
 
         <template #prefix>
-            <task-icon v-if="modelValue" :cls="modelValue" :only-icon="true" :icons="pluginsStore.icons" />
+            <task-icon v-if="modelValue && blockType !== 'inputs'" :cls="modelValue" :only-icon="true" :icons="pluginsStore.icons" />
         </template>
     </el-select>
 </template>

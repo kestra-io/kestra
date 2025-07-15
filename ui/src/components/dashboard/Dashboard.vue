@@ -37,7 +37,7 @@
         return FILTER_LANGUAGE_MAIN;
     });
 
-    import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import YAML_MAIN from "./assets/default_main_definition.yaml?raw";
     import YAML_FLOW from "./assets/default_flow_definition.yaml?raw";
@@ -70,7 +70,7 @@
         charts.value = [];
 
         for (const chart of allCharts) {
-            charts.value.push({...chart, content: stringify(chart)});
+            charts.value.push({...chart, content: YAML_UTILS.stringify(chart)});
         }
 
         refreshCharts()
@@ -92,7 +92,7 @@
             });
         }
 
-        dashboard.value = id === "default" ? {id, ...parse(defaultYAML)} : await dashboardStore.load(id);
+        dashboard.value = id === "default" ? {id, ...YAML_UTILS.parse(defaultYAML)} : await dashboardStore.load(id);
         loadCharts(dashboard.value.charts);
     };
 

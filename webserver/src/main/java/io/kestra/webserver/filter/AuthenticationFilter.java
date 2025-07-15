@@ -71,7 +71,10 @@ public class AuthenticationFilter implements HttpServerFilter {
                     !AuthUtils.encodePassword(basicAuthConfiguration.getSalt(),
                         basicAuth.get().password()).equals(basicAuthConfiguration.getPassword())
                 ) {
-                    return Flux.just(HttpResponse.unauthorized().header("WWW-Authenticate", "Basic"));
+                    Boolean isFromLoginPage = Optional.ofNullable(request.getHeaders().get("Referer")).map(referer -> referer.split("\\?")[0].endsWith("/login")).orElse(false);
+
+                    return Mono.just(HttpResponse.unauthorized())
+                        .map(response -> isFromLoginPage ? response : response.header("WWW-Authenticate", "Basic"));
                 }
 
                 return chain.proceed(request);

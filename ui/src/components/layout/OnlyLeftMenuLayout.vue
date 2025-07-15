@@ -1,5 +1,5 @@
 <template>
-    <left-menu v-if="configs" @menu-collapse="onMenuCollapse" />
+    <left-menu v-if="miscStore.configs" @menu-collapse="onMenuCollapse" />
     <main>
         <errors v-if="error" :code="error" />
         <slot v-else />
@@ -9,13 +9,12 @@
 <script setup>
     import LeftMenu from "override/components/LeftMenu.vue";
     import Errors from "../errors/Errors.vue";
-    import {useStore} from "vuex";
     import {useCoreStore} from "../../stores/core";
+    import {useMiscStore} from "../../stores/misc";
     import {computed, onMounted} from "vue";
 
-    const store = useStore();
     const coreStore = useCoreStore();
-    const configs = computed(() => store.getters["misc/configs"]);
+    const miscStore = useMiscStore();
     const error = computed(() => coreStore.error);
 
     function onMenuCollapse(collapse) {

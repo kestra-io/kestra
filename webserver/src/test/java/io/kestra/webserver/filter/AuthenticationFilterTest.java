@@ -43,6 +43,10 @@ class AuthenticationFilterTest {
         httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
             .exchange(HttpRequest.GET("/api/v1/main/dashboards").basicAuth("anonymous", "hacker")));
         assertThat(httpClientResponseException.getResponse().getHeaders().get("WWW-Authenticate")).isEqualTo("Basic");
+
+        httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/main/dashboards").header("Authorization", "").header("Referer", "http://localhost/login")));
+        assertThat(httpClientResponseException.getResponse().getHeaders().get("WWW-Authenticate")).isNull();
     }
 
     @Test

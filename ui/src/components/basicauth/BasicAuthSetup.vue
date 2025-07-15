@@ -279,7 +279,7 @@
     const setupConfiguration = computed(() => usageData.value?.configurations ?? {})
 
     const trackSetupEvent = (eventName: string, additionalData: Record<string, any> = {}) => {
-        const configs = miscStore.getConfigs
+        const configs = miscStore.configs
         const uid = localStorage.getItem("uid")
 
         if (!configs || !uid || configs.isAnonymousUsageEnabled === false) return
@@ -337,7 +337,7 @@
 
     const setupConfigurationLines = computed<ConfigLine[]>(() => {
         if (!setupConfiguration.value) return []
-        const configs = miscStore.getConfigs
+        const configs = miscStore.configs
         return [
             {name: "repository", icon: Database, value: setupConfiguration.value.repositoryType},
             {name: "queue", icon: CurrentDc, value: setupConfiguration.value.queueType},

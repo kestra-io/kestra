@@ -9,6 +9,7 @@ import en from "./translations/en.json";
 import stores from "./stores/store";
 import {setupTenantRouter} from "./composables/useTenant";
 import * as BasicAuth from "./utils/basicAuth";
+import {useMiscStore} from "./stores/misc";
 
 
 const app = createApp(App)
@@ -36,7 +37,8 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
         }
 
         try {
-            const configs = await store.dispatch("misc/loadConfigs")
+            const miscStore = useMiscStore();
+            const configs = await miscStore.loadConfigs();
 
             if(!configs.isBasicAuthInitialized) {
                 // If basic auth is not initialized, redirect to set it up

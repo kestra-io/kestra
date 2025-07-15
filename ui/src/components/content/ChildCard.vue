@@ -10,7 +10,7 @@
                 <div class="card-body d-flex align-items-center">
                     <span class="card-icon">
                         <img
-                            :src="$store.getters['doc/resourceUrl'](item.icon)"
+                            :src="docStore.resourceUrl(item.icon)"
                             :alt="item.title"
                             width="50px"
                             height="50px"
@@ -32,10 +32,10 @@
 
 <script setup>
     import {useRoute} from "vue-router";
-    import {useStore} from "vuex";
+    import {useDocStore} from "../../stores/doc";
 
     const route = useRoute();
-    const store = useStore();
+    const docStore = useDocStore();
 
     const props = defineProps({
         pageUrl: {
@@ -54,7 +54,7 @@
 
     currentPage = currentPage.replace(/^\/?(.*?)\/?$/, "$1");
 
-    const resourcesWithMetadata = await store.dispatch("doc/children", currentPage);
+    const resourcesWithMetadata = await docStore.children(currentPage);
     let parentMetadata;
     if (props.pageUrl) {
         parentMetadata = {...resourcesWithMetadata[currentPage]};

@@ -16,29 +16,27 @@
             @keydown.exact.ctrl.enter.prevent="submitPrompt"
         />
         <template #footer>
-            <div class="d-flex flex-column gap-3">
-                <el-text v-if="error !== undefined" type="danger" size="default" class="me-auto">
-                    {{ error }}
+            <div class="d-flex justify-content-between">
+                <el-text class="text-tertiary" size="small">
+                    ALT / ⌥ + K {{ t("to toggle") }}
                 </el-text>
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div v-if="waitingForReply" class="d-flex loading-text">
-                            <div v-loading="true" />
-                            <span>{{ t('ai.flow.generating') }}</span>
-                        </div>
-                        <el-button
-                            v-else
-                            type="primary"
-                            :icon="KeyboardReturn"
-                            :disabled="prompt.length === 0"
-                            @click="submitPrompt"
-                        >
-                            {{ t('submit') }}
-                        </el-button>
-                    </div>
-                    <el-text class="text-tertiary" size="small">
-                        ALT / ⌥ + K {{ t("to toggle") }}
+                <div class="d-flex flex-column align-items-end gap-3">
+                    <el-text v-if="error !== undefined" type="danger" size="default" class="me-auto">
+                        {{ error }}
                     </el-text>
+                    <div v-if="waitingForReply" class="d-flex loading-text">
+                        <div v-loading="true" />
+                        <span>{{ t('ai.flow.generating') }}</span>
+                    </div>
+                    <el-button
+                        v-else
+                        type="primary"
+                        :icon="KeyboardReturn"
+                        :disabled="prompt.length === 0"
+                        @click="submitPrompt"
+                    >
+                        {{ t('submit') }}
+                    </el-button>
                 </div>
             </div>
         </template>

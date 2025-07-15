@@ -2,8 +2,8 @@
     <div class="w-100">
         <Element
             :section="root"
-            block-type="tasks"
             :parent-path-complete="parentPathComplete"
+            :block-schema-path="[schemaPath, 'properties', root.split('.').pop()].join('/')"
             :element="{
                 id: model?.id ?? 'Set a task',
                 type: model?.type,
@@ -14,11 +14,12 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject} from "vue";
+    import {computed, inject, ref} from "vue";
     import {
         PARENT_PATH_INJECTION_KEY,
         REF_PATH_INJECTION_KEY,
-        CREATING_TASK_INJECTION_KEY
+        CREATING_TASK_INJECTION_KEY,
+        SCHEMA_PATH_INJECTION_KEY
     } from "../../code/injectionKeys";
     import Element from "../../code/components/collapse/Element.vue";
 
@@ -37,6 +38,7 @@
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
     const creatingTask = inject(CREATING_TASK_INJECTION_KEY, false);
+    const schemaPath = inject(SCHEMA_PATH_INJECTION_KEY, ref())
 
     const parentPathComplete = computed(() => {
         return `${[

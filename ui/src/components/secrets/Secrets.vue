@@ -1,6 +1,6 @@
 <template>
     <Navbar :title="routeInfo.title">
-        <template #additional-right v-if="configs?.secretsEnabled">
+        <template #additional-right v-if="miscStore.configs?.secretsEnabled">
             <ul>
                 <li>
                     <el-button :icon="Plus" type="primary" @click="addSecretModalVisible = true">
@@ -13,9 +13,9 @@
     <section
         data-component="FILENAME_PLACEHOLDER"
         class="d-flex flex-column fill-height padding-bottom"
-        :class="configs?.secretsEnabled === undefined ? 'mt-0 p-0' : 'container'"
+        :class="miscStore.configs?.secretsEnabled === undefined ? 'mt-0 p-0' : 'container'"
     >
-        <EmptyTemplate v-if="configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
+        <EmptyTemplate v-if="miscStore.configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
             <div class="no-secret-manager-block d-flex flex-column gap-6">
                 <div class="header-block d-flex align-items-center">
                     <div class="d-flex flex-column">
@@ -60,7 +60,7 @@
                     v-show="hasData === true"
                     :filterable="false"
                     key-only
-                    :namespace="configs?.systemNamespace ?? 'system'"
+                    :namespace="miscStore.configs?.systemNamespace ?? 'system'"
                     :add-secret-modal-visible="addSecretModalVisible"
                     @update:add-secret-modal-visible="addSecretModalVisible = $event"
                     @has-data="hasData = $event"
@@ -82,15 +82,13 @@
     import Navbar from "../layout/TopNavBar.vue";
     import {useI18n} from "vue-i18n";
     import {computed, ref} from "vue";
-    import {useStore} from "vuex";
     import useRouteContext from "../../mixins/useRouteContext.js";
+    import {useMiscStore} from "../../stores/misc";
     import sourceImg from "../../assets/demo/secrets.png";
     import DemoButtons from "../demo/DemoButtons.vue";
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
 
-    const store = useStore();
-
-    const configs = computed(() => store.getters["misc/configs"]);
+    const miscStore = useMiscStore();
 
     const addSecretModalVisible = ref(false);
     const hasData = ref(undefined);

@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.emptyOrNullString;
 
 @KestraTest
-@WireMockTest(httpPort = 28183)
+@WireMockTest(httpPort = 28181)
 class BlueprintControllerTest {
 
     // GET "/v1/blueprints/kinds/{kind}/versions/{version}"

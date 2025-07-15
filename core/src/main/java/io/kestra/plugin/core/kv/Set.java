@@ -58,6 +58,11 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
     )
     private Property<String> key;
 
+    @Schema(
+        title = "The description of the KV."
+    )
+    private Property<String> kvDescription;
+
     @NotNull
     @Schema(
         title = "The value to map to the key."
@@ -110,7 +115,10 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
             }
 
         kvStore.put(renderedKey, new KVValueAndMetadata(
-            new KVMetadata(runContext.render(ttl).as(Duration.class).orElse(null)), renderedValue),
+            new KVMetadata(
+                runContext.render(kvDescription).as(String.class).orElse(null),
+                runContext.render(ttl).as(Duration.class).orElse(null)
+            ), renderedValue),
             runContext.render(this.overwrite).as(Boolean.class).orElseThrow()
         );
 

@@ -241,10 +241,10 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         this.tracer = tracerFactory.getTracer(JdbcExecutor.class, "EXECUTOR");
         this.maintenanceService = maintenanceService;
 
-        // By default, we start half-available processors count threads with a minimum of 4 by executor service
+        // By default, we start available processors count threads with a minimum of 4 by executor service
         // for the worker task result queue and the execution queue.
         // Other queues would not benefit from more consumers.
-        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, Runtime.getRuntime().availableProcessors() / 2);
+        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, Runtime.getRuntime().availableProcessors());
         this.workerTaskResultExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "jdbc-worker-task-result-executor");
         this.executionExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "jdbc-execution-executor");
     }
@@ -1013,11 +1013,25 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             }
 
             if (!shouldSend) {
+                Execution execution = executor.getExecution();
+
                 // delete the execution from the state storage if ended
                 // IMPORTANT: it must be done here as it's when the execution arrives 'again' with a terminated state,
                 // so we are sure at this point that no new executions will be created otherwise the tate storage would be re-created by the execution queue.
                 if (executorService.canBePurged(executor)) {
-                    executorStateStorage.delete(executor.getExecution());
+                    executorStateStorage.delete(execution);
+                }
+
+                // purge the trigger: reset scheduler trigger at end
+                // IMPORTANT: this is to cover an edge case, execution created for failed trigger didn't have any taskrun so they will arrives directly here.
+                // We need to detect that and reset them as they will never reach the reset code later on this method.
+                if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
+                    FlowWithSource flow = executor.getFlow();
+                    triggerRepository
+                        .findByExecution(execution)
+                        .ifPresent(trigger -> {
+                            this.triggerState.update(executionService.resetExecution(flow, execution, trigger));
+                        });
                 }
 
                 return;

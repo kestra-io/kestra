@@ -237,18 +237,16 @@ public class PluginController {
     @Get("/groups/subgroups")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugins group by subgroups")
-    public List<Plugin> getPluginBySubgroups(
-        @Parameter(description = "Whether to include deprecated plugins") @QueryValue(value = "includeDeprecated", defaultValue = "true") boolean includeDeprecated
-    ) {
+    public List<Plugin> getPluginBySubgroups() {
         return Stream.concat(
                 pluginRegistry.plugins()
                     .stream()
-                    .map(p -> Plugin.of(p, null, includeDeprecated)),
+                    .map(p -> Plugin.of(p, null)),
                 pluginRegistry.plugins()
                     .stream()
                     .flatMap(p -> p.subGroupNames()
                         .stream()
-                        .map(subgroup -> Plugin.of(p, subgroup, includeDeprecated))
+                        .map(subgroup -> Plugin.of(p, subgroup))
                     )
             )
             .distinct()

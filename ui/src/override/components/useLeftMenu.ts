@@ -1,7 +1,7 @@
-import {computed, shallowRef} from "vue";
-import {useStore} from "vuex";
+import {shallowRef} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {useI18n} from "vue-i18n";
+import {useMiscStore} from "../../stores/misc";
 
 import {getDashboard} from "../../components/dashboard/composables/useDashboards";
 
@@ -24,7 +24,7 @@ export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"});
     const $route = useRoute();
     const $router = useRouter();
-    const store = useStore();
+    const miscStore = useMiscStore();
 
     /**
      * Returns all route names that start with the given route
@@ -39,8 +39,6 @@ export function useLeftMenu() {
             )
             .map((r) => r.name);
     }
-
-    const configs = computed(() => store.state.misc.configs);
 
     // This object seems to be a good candidate for a computed value
     // but cannot be. When it becomes a computed, the hack to set current
@@ -88,7 +86,7 @@ export function useLeftMenu() {
                     element: shallowRef(ContentCopy),
                     class: "menu-icon",
                 },
-                hidden: !configs.value.isTemplateEnabled,
+                hidden: !miscStore.configs?.isTemplateEnabled,
             },
             {
                 href: {name: "executions/list"},
@@ -107,7 +105,7 @@ export function useLeftMenu() {
                     element: shallowRef(ChartTimeline),
                     class: "menu-icon",
                 },
-                hidden: !configs.value.isTaskRunEnabled,
+                hidden: !miscStore.configs?.isTaskRunEnabled,
             },
             {
                 href: {name: "logs/list"},

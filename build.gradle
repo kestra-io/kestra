@@ -71,6 +71,11 @@ dependencies {
  * Dependencies
  **********************************************************************************************************************/
 allprojects {
+
+    tasks.withType(GenerateModuleMetadata).configureEach {
+        suppressedValidationErrors.add('enforced-platform')
+    }
+
     if (it.name != 'platform') {
         group = "io.kestra"
 
@@ -598,6 +603,9 @@ subprojects {subProject ->
                         classifier = "exec"
                         extension  = "zip"
                     }
+                    pub.artifact(tasks.named("sourcesJar").get())
+                    pub.artifact(tasks.named("javadocJar").get())
+
                 }
 
                 /* 3. Disable Gradle-module metadata for this publication to
@@ -610,11 +618,6 @@ subprojects {subProject ->
                     dependsOn rootProject.tasks.named("executableJar")
                 }
             }
-        }
-
-        tasks.withType(GenerateModuleMetadata).configureEach {
-            // Suppression this validation error as we want to enforce the Kestra platform
-            suppressedValidationErrors.add('enforced-platform')
         }
     }
 }

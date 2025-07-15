@@ -275,7 +275,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                 WorkerTriggerResult workerTriggerResult = either.getLeft();
                 if (workerTriggerResult.getTrigger() instanceof RealtimeTriggerInterface && workerTriggerResult.getExecution().isPresent()) {
                     this.emitExecution(workerTriggerResult.getExecution().get(), workerTriggerResult.getTriggerContext());
-                } else if (workerTriggerResult.getSuccess() && workerTriggerResult.getExecution().isPresent()) {
+                } else if (workerTriggerResult.getExecution().isPresent()) {
                     SchedulerExecutionWithTrigger triggerExecution = new SchedulerExecutionWithTrigger(
                         workerTriggerResult.getExecution().get(),
                         workerTriggerResult.getTriggerContext()

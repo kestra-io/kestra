@@ -18,13 +18,16 @@
                 />
             </template>
 
-            <Controls :show-interactive="false">
-                <ControlButton>
-                    <el-tooltip :content="$t('expand dependencies')" :persistent="false" transition="" :hide-after="0" effect="light">
-                        <el-button :icon="ArrowExpandAll" size="small" @click="expandAll" />
-                    </el-tooltip>
-                </ControlButton>
-            </Controls>
+            <Panel position="top-right">
+                <el-switch
+                    v-model="expandAll"
+                    :disabled="expandAll"
+                    :inactive-text="t('expand all')"
+                    @change="load(route.params)"
+                />
+            </Panel>
+
+            <Controls :show-interactive="false" />
         </VueFlow>
     </el-card>
 </template>
@@ -32,11 +35,10 @@
 <script setup>
     import {ref, onMounted, inject, nextTick, getCurrentInstance} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
-    import {Controls, ControlButton} from "@vue-flow/controls"
+    import {VueFlow, Panel, useVueFlow, Position, MarkerType} from "@vue-flow/core"
+    import {Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background";
     import dagre from "dagre"
-    import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue";
 
     import {cssVariable} from "@kestra-io/ui-libs";
     import {DependenciesNode} from "@kestra-io/ui-libs"
@@ -65,10 +67,11 @@
     const isLoading = ref(false);
     const initialLoad = ref(true);
 
+    const expandAll = ref(false);
     const load = (options) => {
         isLoading.value = true;
         return axios
-            .get(`${apiUrl(store)}/flows/${options.namespace}/${options.id}/dependencies`)
+            .get(`${apiUrl(store)}/flows/${options.namespace}/${options.id}/dependencies${expandAll.value ? "?expandAll=true" : ""}`)
             .then(response => {
                 loaded.value.push(`${options.namespace}_${options.id}`)
 
@@ -95,14 +98,6 @@
                     generateGraph();
                 })
             })
-    };
-
-    const expandAll =() =>  {
-        for (const node of dependencies.value.nodes) {
-            if (loaded.value.indexOf(node.uid) < 0) {
-                load({namespace: node.namespace, id: node.id});
-            }
-        }
     };
 
     const expand = (data) => {

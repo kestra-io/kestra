@@ -7,7 +7,7 @@
     >
         <template #navbar>
             <KestraFilter
-                :language="MetricFilterLanguage"
+                :language="metricFilterLang"
                 :placeholder="`${t('display metric for specific task')}...`"
                 legacy-query
             />
@@ -19,7 +19,7 @@
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import {useExecutionsStore} from "../../stores/executions";
-    import MetricFilterLanguage from "../../composables/monaco/languages/filters/impl/metricFilterLanguage.ts";
+    import {MetricFilterLanguage} from "../../composables/monaco/languages/filters/impl/metricFilterLanguage.ts";
     import MetricsTable from "../executions/MetricsTable.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
 
@@ -29,6 +29,8 @@
     const table = ref<typeof MetricsTable>();
 
     const executionStore = useExecutionsStore();
+
+    const metricFilterLang = new MetricFilterLanguage(executionStore)
 
     onMounted(() => {
         table.value!.loadData(table.value!.onDataLoaded);

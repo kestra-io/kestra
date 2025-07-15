@@ -153,6 +153,8 @@
     import {useStore} from "vuex";
     const store = useStore();
 
+    import {useExecutionsStore} from "../../../stores/executions";
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
@@ -251,7 +253,9 @@
         () => (cascader.value as any)?.menus?.length > 1,
     );
 
-    const execution = computed(() => store.state.execution.execution);
+    const executionsStore = useExecutionsStore();
+
+    const execution = computed(() => executionsStore.execution);
 
     function isValidURL(url) {
         try {
@@ -365,7 +369,7 @@
         return result;
     };
     const outputs = computed(() => {
-        const tasks = store.state.execution?.execution?.taskRunList?.map((task) => {
+        const tasks = executionsStore?.execution?.taskRunList?.map((task) => {
             return {
                 label: task.taskId,
                 value: task.taskId,
@@ -402,9 +406,9 @@
 
         const mapped = {};
 
-        getTaskIcons(store.state.execution?.flow?.tasks || [], mapped);
-        getTaskIcons(store.state.execution?.flow?.errors || [], mapped);
-        getTaskIcons(store.state.execution?.flow?.finally || [], mapped);
+        getTaskIcons(executionsStore?.flow?.tasks || [], mapped);
+        getTaskIcons(executionsStore?.flow?.errors || [], mapped);
+        getTaskIcons(executionsStore?.flow?.finally || [], mapped);
 
         return mapped;
     });

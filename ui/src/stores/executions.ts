@@ -8,9 +8,17 @@ interface LogsState {
     results: any[];
 }
 
+interface Execution{
+    taskRunList:  {
+        id: string,
+        taskId: string,
+        value?: string
+    }[]
+}
+
 interface ExecutionsState {
-    executions: any[] | undefined;
-    execution: any | undefined;
+    executions: Execution[] | undefined;
+    execution: Execution | undefined;
     taskRun: any | undefined;
     total: number;
     logs: LogsState;
@@ -228,7 +236,7 @@ export const useExecutionsStore = defineStore("executions", {
                 .join("&");
 
             return this.$http.delete(`${apiUrl(this.vuexStore)}/executions/${id}?${qs}`).then(() => {
-                this.execution = null;
+                this.execution = undefined;
             })
         },
         bulkDeleteExecution(options: { executionsId: string[] } & Record<string, any>) {

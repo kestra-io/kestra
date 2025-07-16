@@ -6,7 +6,6 @@ declare module "@vue/runtime-core" {
         template:any
         namespace:any
         auth:any
-        graph:any
         editor:any
     }
 

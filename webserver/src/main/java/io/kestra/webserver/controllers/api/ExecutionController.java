@@ -2265,6 +2265,7 @@ public class ExecutionController {
 
     @Introspected
     public record LastExecutionResponse(
+        @Parameter(description = "The execution's ID") String id,
         @Parameter(description = "The flow's ID") String flowId,
         @Parameter(description = "The namespace") String namespace,
         @Parameter(description = "The start date") Instant startDate,
@@ -2273,6 +2274,7 @@ public class ExecutionController {
 
         public static LastExecutionResponse ofExecution(Execution execution) {
             return new LastExecutionResponse(
+                execution.getId(),
                 execution.getFlowId(),
                 execution.getNamespace(),
                 execution.getState().getStartDate(),

@@ -2,11 +2,13 @@ package io.kestra.core.models.property;
 
 import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.StorageContext;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -14,7 +16,7 @@ import java.util.List;
  * It supports reading from the following schemes: {@link #SUPPORTED_SCHEMES}.
  */
 public class URIFetcher {
-    private static final List<String> SUPPORTED_SCHEMES = List.of(StorageContext.KESTRA_SCHEME, LocalPath.FILE_SCHEME);
+    private static final List<String> SUPPORTED_SCHEMES = List.of(StorageContext.KESTRA_SCHEME, LocalPath.FILE_SCHEME, Namespace.NAMESPACE_FILE_SCHEME);
 
     private final URI uri;
 
@@ -87,6 +89,11 @@ public class URIFetcher {
         return switch (uri.getScheme()) {
             case StorageContext.KESTRA_SCHEME -> runContext.storage().getFile(uri);
             case LocalPath.FILE_SCHEME -> runContext.localPath().get(uri);
+            case Namespace.NAMESPACE_FILE_SCHEME -> {
+                var namespace = uri.getAuthority() == null ? runContext.storage().namespace() : runContext.storage().namespace(uri.getAuthority());
+                var nsFileUri = namespace.get(Path.of(uri.getPath())).uri();
+                yield runContext.storage().getFile(nsFileUri);
+            }
             default -> throw new IllegalArgumentException("Scheme not supported: " + uri.getScheme());
         };
     }

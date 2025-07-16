@@ -81,9 +81,11 @@ public abstract class AbstractTaskRunnerTest {
 
     @Test
     protected void inputAndOutputFiles() throws Exception {
-        RunContext runContext = runContext(this.runContextFactory, Map.of("internalStorageFile", "kestra://some/internalStorage.txt"));
+        RunContext runContext = runContext(this.runContextFactory, Map.of("internalStorageFile", "kestra:///internalStorage.txt"));
 
         var commands = initScriptCommands(runContext);
+        Mockito.when(commands.relativeWorkingDirectoryFilesPaths()).thenCallRealMethod();
+        Mockito.when(commands.relativeWorkingDirectoryFilesPaths(false)).thenCallRealMethod();
 
         // Generate internal storage file
         FileUtils.writeStringToFile(Path.of("/tmp/unittest/main/internalStorage.txt").toFile(), "Hello from internal storage", StandardCharsets.UTF_8);

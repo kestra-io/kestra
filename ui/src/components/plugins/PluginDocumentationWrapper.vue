@@ -1,18 +1,15 @@
 <template>
-    <div class="plugin-doc-wrapper" :class="{editorPlugin: plugin}">
-        <PluginDocumentation :key="theme" />
+    <div class="plugin-doc-wrapper" :class="{editorPlugin: pluginsStore.editorPlugin}">
+        <PluginDocumentation :key="miscStore.theme" />
     </div>
 </template>
 <script lang="ts" setup>
-    import {computed} from "vue";
-    import {useStore} from "vuex";
     import PluginDocumentation from "./PluginDocumentation.vue"
     import {usePluginsStore} from "../../stores/plugins";
+    import {useMiscStore} from "../../stores/misc";
 
-    const store = useStore();
     const pluginsStore = usePluginsStore()
-    const plugin = computed(() => pluginsStore.editorPlugin);
-    const theme = computed(() => store.getters["misc/theme"]);
+    const miscStore = useMiscStore();
 </script>
 
 <style scoped lang="scss">

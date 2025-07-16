@@ -14,11 +14,11 @@
 <script setup lang="ts">
     import {computed, getCurrentInstance} from "vue";
     import {useI18n} from "vue-i18n";
-    import {useStore} from "vuex";
+    import {useCoreStore} from "../../stores/core";
     import OnboardingCard from "../../components/onboarding/OnboardingCard.vue";
 
     const {t} = useI18n();
-    const store = useStore();
+    const coreStore = useCoreStore();
     const instance = getCurrentInstance();
 
     interface Card {
@@ -35,7 +35,10 @@
     ]);
     const startTour = () => {
         localStorage.setItem("tourDoneOrSkip", "undefined");
-        store.commit("core/setGuidedProperties", {tourStarted: true});
+        coreStore.guidedProperties = {
+            ...coreStore.guidedProperties,
+            tourStarted: true
+        };
         (instance?.proxy as any)?.$tours["guidedTour"]?.start();
     };
 

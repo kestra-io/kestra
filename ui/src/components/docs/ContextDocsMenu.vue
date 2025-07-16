@@ -32,7 +32,7 @@
 
 <script setup>
     import {ref, computed, watch} from "vue";
-    import {useStore} from "vuex";
+    import {useDocStore} from "../../stores/doc";
     import {useI18n} from "vue-i18n";
 
     const {t} = useI18n({useScope: "global"});
@@ -42,7 +42,7 @@
     import RecursiveToc from "./RecursiveToc.vue";
     import ContextDocsLink from "./ContextDocsLink.vue";
 
-    const store = useStore();
+    const docStore = useDocStore();
 
     const menuOpen = ref(false);
 
@@ -77,7 +77,7 @@
     }
 
     const rawStructure = ref(undefined);
-    const currentDocPath = computed(() => store.getters["doc/docPath"]);
+    const currentDocPath = computed(() => docStore.docPath);
 
     const normalizePath = (path) => {
         if (!path) return "";
@@ -104,7 +104,7 @@
 
     watch(menuOpen, async (val) => {
         if(!val || rawStructure.value !== undefined) return;
-        rawStructure.value = await store.dispatch("doc/children");
+        rawStructure.value = await docStore.children();
     });
 
     const toc = computed(() => {

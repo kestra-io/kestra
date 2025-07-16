@@ -1,16 +1,21 @@
 import {defineStore} from "pinia";
 import {apiUrlWithoutTenants} from "override/utils/route";
-import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import semver from "semver";
 import {useApiStore} from "./api";
 import {Schemas} from "../components/code/utils/types";
+import InitialFlowSchema from "./flow-schema.json"
+import {toRaw} from "vue";
+import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
 
 interface PluginComponent {
     icon?: string;
     cls?: string;
+    deprecated?: boolean;
+    version?: string;
     description?: string;
     properties?: Record<string, any>;
     schema: Schemas;
+    markdown?: string;
 }
 
 interface Plugin {
@@ -27,16 +32,23 @@ interface Plugin {
 }
 
 interface State {
-    plugin: PluginComponent | undefined;
-    versions: string[] | undefined;
-    pluginAllProps: any | undefined;
-    plugins: Plugin[] | undefined;
-    pluginSingleList: PluginComponent[] | undefined;
-    icons: Record<string, string> | undefined;
+    plugin?: PluginComponent;
+    versions?: string[];
+    pluginAllProps?: any;
+    deprecatedTypes?: string[];
+    plugins?: Plugin[];
+    icons?: Record<string, string>;
     pluginsDocumentation: Record<string, PluginComponent>;
-    editorPlugin: (PluginComponent & { cls: string }) | undefined;
-    inputSchema: any | undefined;
-    inputsType: any | undefined;
+    editorPlugin?: (PluginComponent & {cls: string});
+    inputSchema?: any;
+    inputsType?: any;
+    schemaType?: Record<string, any>;
+    currentlyLoading?: {
+        type?: string;
+        version?: string;
+    };
+    forceIncludeProperties?: Record<string, any>;
+    _iconsPromise: Promise<Record<string, string>> | undefined;
 }
 
 interface LoadOptions {
@@ -46,36 +58,89 @@ interface LoadOptions {
     commit?: boolean;
 }
 
+interface JsonSchemaDef {
+    $ref?: string,
+    allOf?: JsonSchemaDef[],
+    type?: string,
+    properties?: Record<string, any>,
+}
+
+export function removeRefPrefix(ref?: string): string {
+    return ref?.replace(/^#\/definitions\//, "") ?? "";
+}
+
 export const usePluginsStore = defineStore("plugins", {
     state: (): State => ({
         plugin: undefined,
         versions: undefined,
         pluginAllProps: undefined,
         plugins: undefined,
-        pluginSingleList: undefined,
         icons: undefined,
         pluginsDocumentation: {},
         editorPlugin: undefined,
         inputSchema: undefined,
-        inputsType: undefined
+        inputsType: undefined,
+        schemaType: undefined,
+        _iconsPromise: undefined
     }),
-
     getters: {
-        getPluginSingleList: (state): PluginComponent[] | undefined => state.pluginSingleList,
-        getPluginsDocumentation: (state): Record<string, PluginComponent> => state.pluginsDocumentation,
-        getIcons: (state): Record<string, string> | undefined => state.icons
+        flowSchema(state): {
+            definitions: any,
+            $ref: string,
+        } {
+            return state.schemaType?.flow ?? InitialFlowSchema;
+        },
+        flowDefinitions(): Record<string, any> | undefined {
+            return this.flowSchema.definitions;
+        },
+        flowRootSchema(): Record<string, any> | undefined {
+            return this.flowDefinitions?.[removeRefPrefix(this.flowSchema.$ref)];
+        },
+        flowRootProperties(): Record<string, any> | undefined {
+            return this.flowRootSchema?.properties;
+        },
+        allTypes(): string[] {
+            return this.plugins?.flatMap(plugin => Object.entries(plugin))
+                ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+                ?.flatMap(([, value]: [string, PluginComponent[]]) => value.map(({cls}) => cls!)) ?? [];
+        },
+        deprecatedTypes(): string[] {
+            return this.plugins?.flatMap(plugin => Object.entries(plugin))
+                ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+                ?.flatMap(([, value]: [string, PluginComponent[]]) => value.filter(({deprecated}) => deprecated === true).map(({cls}) => cls!)) ?? [];
+        }
     },
-
     actions: {
+        resolveRef(obj: JsonSchemaDef): JsonSchemaDef {
+            if (obj?.$ref) {
+                return this.flowDefinitions?.[removeRefPrefix(obj.$ref)];
+            }
+            if (obj?.allOf) {
+                const def = obj.allOf.reduce((acc: any, item) => {
+                    if (item.$ref) {
+                        const ref = toRaw(this.flowDefinitions?.[removeRefPrefix(item.$ref)]);
+                        if (ref?.type === "object" && ref?.properties) {
+                            acc.properties = {
+                                ...acc.properties,
+                                ...ref.properties
+                            };
+                        }
+                    }
+                    if (item.type === "object" && item.properties) {
+                        acc.properties = {
+                            ...acc.properties,
+                            ...item.properties
+                        };
+                    }
+                    return acc;
+                }, {});
+                return def
+            }
+            return obj;
+        },
         async list() {
             const response = await this.$http.get<Plugin[]>(`${apiUrlWithoutTenants()}/plugins`);
             this.plugins = response.data;
-            this.pluginSingleList = response.data
-                .map(plugin => plugin.tasks
-                    .concat(plugin.triggers, plugin.conditions, plugin.controllers,
-                           plugin.storages, plugin.taskRunners, plugin.charts,
-                           plugin.dataFilters, plugin.aliases, plugin.logExporters))
-                .flat();
             return response.data;
         },
 
@@ -84,12 +149,6 @@ export const usePluginsStore = defineStore("plugins", {
                 params: options
             });
             this.plugins = response.data;
-            this.pluginSingleList = response.data
-                .map(plugin => plugin.tasks
-                    .concat(plugin.triggers, plugin.conditions, plugin.controllers,
-                           plugin.storages, plugin.taskRunners, plugin.charts,
-                           plugin.dataFilters, plugin.aliases, plugin.logExporters))
-                .flat();
             return response.data;
         },
 
@@ -129,7 +188,7 @@ export const usePluginsStore = defineStore("plugins", {
             return response.data;
         },
 
-        loadVersions(options: { cls: string; commit?: boolean }) {
+        loadVersions(options: {cls: string; commit?: boolean}) {
             const promise = this.$http.get(
                 `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions`
             );
@@ -142,23 +201,39 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
         fetchIcons() {
-            const apiStore = useApiStore();
-            return Promise.all([
-                this.$http.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}),
-                apiStore.pluginIcons()
-            ]).then(responses => {
-                const icons = responses[0].data;
+            if (this.icons) {
+                return Promise.resolve(this.icons);
+            }
 
-                for (const [key, plugin] of Object.entries(responses[1].data)) {
-                    if (icons[key] === undefined) {
-                        icons[key] = plugin;
+            if (this._iconsPromise) {
+                return this._iconsPromise;
+            }
+
+            const apiStore = useApiStore();
+
+            const apiPromise = apiStore.pluginIcons().then(response => {
+                this.icons = response.data ?? {};
+                for (const [key, plugin] of Object.entries(response.data)) {
+                    if (this.icons && this.icons[key] === undefined) {
+                        this.icons[key] = plugin as string;
                     }
                 }
-
-                this.icons = icons;
-
-                return icons;
             });
+
+            const iconsPromise =
+                this.$http.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(response => {
+                    const icons = response.data ?? {};
+                    this.icons = this.icons ? {
+                        ...icons,
+                        ...this.icons
+                    } : icons;
+                });
+
+            this._iconsPromise = Promise.all([apiPromise, iconsPromise]).then(() => {
+                return this.icons ?? {};
+            })
+
+            return this._iconsPromise;
         },
 
         groupIcons() {
@@ -183,51 +258,67 @@ export const usePluginsStore = defineStore("plugins", {
                 return response.data;
             });
         },
+
         loadSchemaType(options: {type: string} = {type: "flow"}) {
             return this.$http.get(`${apiUrlWithoutTenants()}/plugins/schemas/${options.type}`, {}).then(response => {
+                this.schemaType = this.schemaType || {};
+                this.schemaType[options.type] = response.data;
                 return response.data;
             });
         },
 
 
-        async updateDocumentation(options: { task?: string; event?: { model: { getValue: () => string }, position: any } }) {
-            const taskType = options.event ? (options.task !== undefined ? options.task : YamlUtils.getTypeAtPosition(
-                options.event.model.getValue(),
-                options.event.position,
-                this.getPluginSingleList
-            )) : options.task;
-
-            const taskVersion: string | undefined = options.event
-                ? YamlUtils.getVersionAtPosition(
-                    options?.event?.model?.getValue(),
-                    options?.event?.position
-                )
-                : undefined;
-
-            if (taskType) {
-                let payload:LoadOptions = {cls: taskType};
-                if (taskVersion !== undefined) {
-                    // Check if the version is valid to avoid error
-                    // when loading plugin
-                    if (semver.valid(taskVersion) !== null ||
-                        "latest" === taskVersion.toString().toLowerCase() ||
-                        "oldest" === taskVersion.toString().toLowerCase()
-                    ) {
-                        payload = {
-                            ...payload,
-                            version: taskVersion
-                        };
-                    }
-                }
-                this.load(payload).then((plugin) => {
-                    this.editorPlugin = {
-                        cls: taskType,
-                        ...plugin,
-                    };
-                });
-            } else {
+        async updateDocumentation(pluginElement: ({type: string, version?: string} & Record<string, any>) | undefined) {
+            if (!pluginElement?.type || !this.allTypes.includes(pluginElement.type)) {
                 this.editorPlugin = undefined;
+                this.currentlyLoading = undefined;
+                return;
             }
+
+            const {type, version} = pluginElement;
+
+            // Avoid rerunning the same request twice in a row
+            if (this.currentlyLoading?.type === type &&
+                this.currentlyLoading?.version === version) {
+                return
+            }
+
+            // No need to reload if the plugin has not changed
+            if (this.editorPlugin?.cls === type &&
+                this.editorPlugin?.version === version) {
+                return;
+            }
+
+            let payload: LoadOptions = {cls: type};
+
+            if (version !== undefined) {
+                // Check if the version is valid to avoid error
+                // when loading plugin
+                if (semver.valid(version) !== null ||
+                    "latest" === version.toString().toLowerCase() ||
+                    "oldest" === version.toString().toLowerCase()
+                ) {
+                    payload = {
+                        ...payload,
+                        version
+                    };
+                }
+            }
+
+            this.currentlyLoading = {
+                type,
+                version,
+            };
+
+            this.load(payload).then((plugin) => {
+                this.editorPlugin = {
+                    cls: type,
+                    version,
+                    ...plugin,
+                };
+
+                this.forceIncludeProperties = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version");
+            });
         }
     },
 

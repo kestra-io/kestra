@@ -57,6 +57,9 @@ public class Extension extends AbstractExtension {
     @Nullable
     private ErrorLogsFunction errorLogsFunction;
 
+    @Inject
+    private HttpFunction httpFunction;
+
     @Override
     public List<TokenParser> getTokenParsers() {
         return null;
@@ -88,6 +91,7 @@ public class Extension extends AbstractExtension {
         filters.put("dateAdd", new DateAddFilter());
         filters.put("timestamp", new TimestampFilter());
         filters.put("timestampMicro", new TimestampMicroFilter());
+        filters.put("timestampMilli", new TimestampMilliFilter());
         filters.put("timestampNano", new TimestampNanoFilter());
         filters.put("jq", new JqFilter());
         filters.put("escapeChar", new EscapeCharFilter());
@@ -135,15 +139,15 @@ public class Extension extends AbstractExtension {
         functions.put("json", new JsonFunction());
         functions.put("fromJson", new FromJsonFunction());
         functions.put("currentEachOutput", new CurrentEachOutputFunction());
-        functions.put("secret", secretFunction);
+        functions.put(SecretFunction.NAME, secretFunction);
         functions.put("kv", kvFunction);
         functions.put("read", readFileFunction);
         functions.put("fileURI", fileURIFunction);
-        if (this.renderFunction != null) {
-            functions.put("render", renderFunction);
+        if (renderFunction != null) {
+            functions.put(renderFunction.functionName(), renderFunction);
         }
-        if (this.renderOnceFunction != null) {
-            functions.put("renderOnce", renderOnceFunction);
+        if (renderOnceFunction != null) {
+            functions.put(renderOnceFunction.functionName(), renderOnceFunction);
         }
         functions.put("encrypt", new EncryptFunction());
         functions.put("decrypt", new DecryptFunction());
@@ -161,7 +165,8 @@ public class Extension extends AbstractExtension {
         functions.put("randomPort", new RandomPortFunction());
         functions.put("fileExists", fileExistsFunction);
         functions.put("isFileEmpty", isFileEmptyFunction);
-        functions.put("tasksWithState", new TasksWithState());
+        functions.put("tasksWithState", new TasksWithStateFunction());
+        functions.put(HttpFunction.NAME, httpFunction);
         return functions;
     }
 

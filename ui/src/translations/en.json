@@ -195,6 +195,7 @@
     "change state": "Change state",
     "change state done": "Task state has been updated",
     "change state confirm": "Are you sure you want to change the task run state for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will then restart the execution from the next task and restart the parent execution if any.",
+    "change queue confirm": "Are you sure you want to change the queue state for the execution <code>{id}</code>?<br/>",
     "change state current state": "Current status is:",
     "change state hint": {
       "WARNING": [
@@ -221,6 +222,7 @@
     "change execution state confirm": "Are you sure you want to change the state of the execution <code>{id}</code>?",
     "change execution state done": "Execution state updated",
     "mark as": "Mark as <code>{status}</code>",
+    "unqueue as": "Unqueue as <code>{status}</code>",
     "kill": "Kill",
     "kill parents and subflow": "Kill parents and subflows",
     "kill only parents": "Kill parents only",
@@ -235,7 +237,8 @@
     "pause confirm": "Are you sure you want to pause execution <code>{id}</code>?",
     "pause done": "Execution is paused",
     "unqueue": "Unqueue",
-    "unqueue title": "Unqueue execution <code>{id}</code>.<br/>Note that it will not obey the flow concurrency limit, so more executions could be running than the allowed limit.",
+    "unqueue title": "Are you sure you want to Unqueue execution <code>{id}</code>?<br/><br/>Note that it will not obey the flow concurrency limit, so more executions could be running than the allowed limit.",
+    "unqueue title multiple": "Are you sure you want to Unqueue <code>{count}</code> executions?<br/><br/>Note that it will not obey the flow concurrency limit, so more executions could be running than the allowed limit.",
     "unqueue confirm": "Are you sure you want to unqueue execution <code>{id}</code>?",
     "unqueue done": "Execution is unqueued",
     "force run": "Force run",
@@ -464,7 +467,7 @@
     "export all templates": "Export all templates",
     "flow_export": "Export flow",
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
-    "flows exported": "Flows exported",
+    "flows exported": "<code>{count}</code> Flow(s) exported",
     "export all flows": "Export all flows",
     "import": "Import",
     "disable": "Disable",
@@ -1162,19 +1165,22 @@
       },
       "fields": {
         "main": {
-          "flow_id": "Flow ID",
+          "id": "Flow ID",
           "namespace": "Namespace",
-          "description": "Description"
+          "description": "Description",
+          "inputs": "Inputs"
         },
         "general": {
           "retry": "Retry",
           "sla": "SLA",
           "labels": "Labels",
-          "inputs": "Inputs",
           "outputs": "Outputs",
           "variables": "Variables",
           "concurrency": "Concurrency",
-          "disabled": "Disabled"
+          "disabled": "Disabled",
+          "listeners": "Listeners",
+          "taskDefaults": "Task Defaults",
+          "workerGroup": "Worker Group"
         }
       },
       "select": {
@@ -1184,7 +1190,8 @@
         "finally": "Select a task",
         "pluginDefaults": "Select a plugin",
         "afterExecution": "Select a task",
-        "conditions": "Select a condition"
+        "conditions": "Select a condition",
+        "inputs": "Select an input field type"
       },
       "creation": {
         "tasks": "Add a task",
@@ -1193,7 +1200,8 @@
         "finally": "Add a finally block",
         "pluginDefaults": "Add a plugin default",
         "afterExecution": "Add an after execution block",
-        "conditions": "Add a condition"
+        "conditions": "Add a condition",
+        "inputs": "Add an input field"
       },
       "close": {
         "tasks": "Close task",
@@ -1266,7 +1274,12 @@
     "select": "Select your {{section}}",
     "for flow": "for flow",
     "confirm": "Confirm",
-    "task_runners": "Task Runners",
+    "taskRunners": "Task Runners",
+    "additionalPlugins": "Additional Plugins",
+    "appBlocks": "App Blocks",
+    "charts": "Charts",
+    "dataFilters": "Data Filters",
+    "logExporters": "Log Exporters",
     "empty": {
       "announcements": {
         "title": "You have no announcements yet!",
@@ -1338,12 +1351,93 @@
       },
       "edition": {
         "label": "Edit Dashboard",
-        "confirmation": "Changes in dashboard <code>{title}</code> are saved."
+        "confirmation": "Changes in dashboard <code>{title}</code> are saved.",
+        "chart": "Edit this chart"
       },
       "deletion": {
         "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
       },
-      "chart_preview": "Click on a chart source code to see its preview"
-    }
+      "chart_preview": "Click on a chart source code to see its preview",
+      "export": "Export to CSV"
+    },
+    "setup": {
+      "login": "Login",
+      "logout": "Logout",
+      "steps": {
+        "user": "Create your first user",
+        "config": "Validate Configuration",
+        "survey": "Tell us more",
+        "complete": "Start Kestra UI"
+      },
+      "titles": {
+        "user": "Create first user",
+        "survey": "Tell us more"
+      },
+      "subtitles": {
+        "user": "Set up your instance by creating your first user",
+        "config": "Here are the details of your configuration",
+        "survey": "Help us improve Kestra Open Source Edition",
+        "complete": "Setup completed successfully!"
+      },
+      "form": {
+        "email": "Email",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "password": "Password"
+      },
+      "validation": {
+        "email_required": "Email is required",
+        "email_invalid": "Invalid email",
+        "email_temporary_not_allowed": "Temporary or disposable email addresses are not allowed",
+        "firstName_required": "First name required",
+        "lastName_required": "Last name required",
+        "password_invalid": "Invalid password"
+      },
+      "config": {
+        "repository": "Database",
+        "queue": "Queue",
+        "storage": "Internal Storage",
+        "basicauth": "Basic authentication"
+      },
+      "confirm": {
+        "confirm": "Confirm",
+        "config_title": "Confirm the configuration is valid",
+        "not_valid": "No, it's not valid",
+        "valid": "Yes, it's valid"
+      },
+      "survey": {
+        "skip": "Skip",
+        "company_size": "What’s you company size?",
+        "company_1_10": "1-10",
+        "company_11_50": "11-50",
+        "company_50_250": "50-250",
+        "company_250_plus": "250+",
+        "company_personal": "Personal use",
+        "use_case": "What’s your primary use case?",
+        "use_case_infrastructure": "Infrastructure automation",
+        "use_case_business": "Business processes",
+        "use_case_data": "Data workflows",
+        "use_case_ml": "ML/AI pipelines",
+        "use_case_other": "Other",
+        "newsletter": "Subscribe to the Kestra newsletter – stay up-to-date with the <br> latest features and changes.",
+        "continue": "Continue"
+      },
+      "success": {
+        "title": "Congratulations!",
+        "subtitle": "You’re all set!"
+      }
+    },
+    "ai": {
+      "flow": {
+        "title": "AI Agent",
+        "prompt_placeholder": "Enter instructions to create your Kestra flow.",
+        "generating": "Generating Flow YAML for you..."
+      }
+    },
+    "submit": "Submit",
+    "to toggle": "to toggle",
+    "accept": "Accept",
+    "decline": "Decline",
+    "last modified": "Last modified"
   }
 }

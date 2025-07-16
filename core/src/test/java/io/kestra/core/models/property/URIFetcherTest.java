@@ -2,11 +2,13 @@ package io.kestra.core.models.property;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.*;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,6 +17,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -79,6 +82,28 @@ class URIFetcherTest {
         }
     }
 
+    @Test
+    void shouldFetchFromNsfile() throws IOException {
+        URI uri = createNsFile(false);
+        RunContext runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", "namespace")));
+
+        try (var fetch = URIFetcher.of(uri).fetch(runContext)) {
+            String fetchedContent = new String(fetch.readAllBytes());
+            assertThat(fetchedContent).isEqualTo("Hello World");
+        }
+    }
+
+    @Test
+    void shouldFetchFromNsfileFromOtherNs() throws IOException {
+        URI uri = createNsFile(true);
+        RunContext runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", "other")));
+
+        try (var fetch = URIFetcher.of(uri).fetch(runContext)) {
+            String fetchedContent = new String(fetch.readAllBytes());
+            assertThat(fetchedContent).isEqualTo("Hello World");
+        }
+    }
+
     private RunContext buildRunContext() {
         return buildRunContext(Collections.emptyList(), Collections.emptyList());
     }
@@ -112,5 +137,13 @@ class URIFetcherTest {
             new URI("/file/storage/file.txt"),
             new FileInputStream(tempFile)
         );
+    }
+
+    private URI createNsFile(boolean nsInAuthority) throws IOException {
+        String namespace = "namespace";
+        String filePath = "file.txt";
+        storage.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storage.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 }

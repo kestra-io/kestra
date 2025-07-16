@@ -58,7 +58,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections :charts show-default />
+                <Sections :dashboard="{id: 'default'}" :charts show-default />
             </template>
 
             <template #table>
@@ -115,7 +115,7 @@
                                         <el-dropdown-item v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
                                             {{ $t("pause") }}
                                         </el-dropdown-item>
-                                        <el-dropdown-item v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueExecutions()">
+                                        <el-dropdown-item v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
                                             {{ $t("unqueue") }}
                                         </el-dropdown-item>
                                         <el-dropdown-item v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
@@ -323,7 +323,7 @@
         </data-table>
     </section>
 
-    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="uuid" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -362,7 +362,46 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="uuid" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroy-on-close :append-to-body="true">
+        <template #header>
+            <h5>{{ $t("confirmation") }}</h5>
+        </template>
+
+        <template #default>
+            <p v-html="$t('unqueue title multiple', {count: queryBulkAction ? total : selection.length})" />
+
+            <el-select
+                :required="true"
+                v-model="selectedStatus"
+                :persistent="false"
+            >
+                <el-option
+                    v-for="item in unQueuestates"
+                    :key="item.code"
+                    :value="item.code"
+                >
+                    <template #default>
+                        <status size="small" :label="false" class="me-1" :status="item.code" />
+                        <span v-html="item.label" />
+                    </template>
+                </el-option>
+            </el-select>
+        </template>
+
+        <template #footer>
+            <el-button @click="unqueueDialogVisible = false">
+                {{ $t('cancel') }}
+            </el-button>
+            <el-button
+                type="primary"
+                @click="unqueueExecutions()"
+            >
+                {{ $t('ok') }}
+            </el-button>
+        </template>
+    </el-dialog>
+
+    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -411,8 +450,9 @@
 </script>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
+    import {mapState} from "vuex";
     import {mapStores} from "pinia";
+    import {useMiscStore} from "../../stores/misc";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -424,7 +464,6 @@
     import Labels from "../layout/Labels.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
     import {State} from "@kestra-io/ui-libs"
-    import {useStatStore} from "../../stores/stat";
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
@@ -437,6 +476,7 @@
     import DateAgo from "../layout/DateAgo.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import Utils from "../../utils/utils";
 
     import {filterLabels} from "./utils"
 
@@ -571,6 +611,7 @@
                 lastRefreshDate: new Date(),
                 isOpenReplayModal: false,
                 changeStatusDialogVisible: false,
+                unqueueDialogVisible: false,
                 selectedStatus: undefined,
                 loading: false
             };
@@ -591,8 +632,7 @@
             ...mapState("execution", ["executions", "total"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
-            ...mapStores(useStatStore),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useMiscStore),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -648,10 +688,16 @@
                     };
                 });
             },
+            unQueuestates() {
+                return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
+                    code: value,
+                    label: this.$t("unqueue as", {status: value}),
+                }));
+            },
             executionsCount() {
-                return this.statStore.dailyData?.reduce((a, b) => {  
-                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);  
-                }, 0) ?? 0; 
+                return [...this.daily].reduce((a, b) => {
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
+                }, 0);
             },
             selectedNamespace(){
                 return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;
@@ -692,7 +738,7 @@
         },
         methods: {
             filteredLabels(labels) {
-                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
 
                 // Extract only the keys from the route query labels
                 const allowedLabels = this.$route.query.labels ? this.$route.query.labels.map(label => label.split(":")[0]) : [];
@@ -765,11 +811,12 @@
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
             },
-            genericConfirmAction(toast, queryAction, byIdAction, success) {
+            genericConfirmAction(toast, queryAction, byIdAction, success, showCancelButton = true) {
                 this.$toast().confirm(
                     this.$t(toast, {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => this.genericConfirmCallback(queryAction, byIdAction, success),
-                    () => {}
+                    () => {},
+                    showCancelButton
                 );
             },
             genericConfirmCallback(queryAction, byIdAction, success, params) {
@@ -811,7 +858,8 @@
                     "bulk resume",
                     "execution/queryResumeExecution",
                     "execution/bulkResumeExecution",
-                    "executions resumed"
+                    "executions resumed",
+                    false
                 );
             },
             pauseExecutions() {
@@ -823,8 +871,10 @@
                 );
             },
             unqueueExecutions() {
-                this.genericConfirmAction(
-                    "bulk unqueue",
+                this.unqueueDialogVisible = false;
+                this.actionOptions.newStatus = this.selectedStatus;
+
+                this.genericConfirmCallback(
                     "execution/queryUnqueueExecution",
                     "execution/bulkUnqueueExecution",
                     "executions unqueue"

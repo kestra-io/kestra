@@ -2,12 +2,12 @@ package io.kestra.webserver.services;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.kestra.core.models.Setting;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.Await;
 import io.kestra.webserver.models.events.Event;
+import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import org.junit.jupiter.api.AfterEach;
@@ -22,6 +22,8 @@ import java.util.concurrent.TimeoutException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @WireMockTest(httpPort = 28181)
 class BasicAuthServiceTest {
@@ -41,7 +43,7 @@ class BasicAuthServiceTest {
             post(urlEqualTo("/v1/reports/events"))
                 .willReturn(aResponse().withStatus(200))
         );
-        ctx = ApplicationContext.run(Map.of("kestra.server.basic-auth.enabled", "true"), Environment.TEST);
+        ctx = ApplicationContext.run(Map.of(), Environment.TEST);
 
         basicAuthService = ctx.getBean(BasicAuthService.class);
         basicAuthConfiguration = ctx.getBean(BasicAuthService.BasicAuthConfiguration.class);
@@ -57,16 +59,38 @@ class BasicAuthServiceTest {
     }
 
     @Test
-    void initFromYamlConfig() throws TimeoutException, QueueException {
-        assertThat(basicAuthService.isEnabled()).isTrue();
+    void isBasicAuthInitialized(){
+        settingRepositoryInterface.save(Setting.builder()
+            .key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY)
+            .value(new BasicAuthConfiguration("username", "password", null, null))
+            .build());
+        assertTrue(basicAuthService.isBasicAuthInitialized());
 
+        settingRepositoryInterface.delete(Setting.builder().key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY).build());
+        assertFalse(basicAuthService.isBasicAuthInitialized());
+
+        settingRepositoryInterface.save(Setting.builder()
+            .key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY)
+            .value(new BasicAuthConfiguration("username", null, null, null))
+            .build());
+        assertFalse(basicAuthService.isBasicAuthInitialized());
+
+        settingRepositoryInterface.save(Setting.builder()
+            .key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY)
+            .value(new BasicAuthConfiguration(null, null, null, null))
+            .build());
+        assertFalse(basicAuthService.isBasicAuthInitialized());
+    }
+
+    @Test
+    void initFromYamlConfig() throws TimeoutException {
         assertConfigurationMatchesApplicationYaml();
 
         awaitOssAuthEventApiCall("admin@kestra.io");
     }
 
     @Test
-    void secure() throws TimeoutException, QueueException {
+    void secure() throws TimeoutException {
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
             IllegalArgumentException.class,
             () -> basicAuthService.save(basicAuthConfiguration.withUsernamePassword("not-an-email", "password"))
@@ -78,24 +102,6 @@ class BasicAuthServiceTest {
 
         basicAuthService.save(basicAuthConfiguration.withUsernamePassword("some@email.com", "password"));
         awaitOssAuthEventApiCall("some@email.com");
-    }
-
-    @Test
-    void unsecure() {
-        assertThat(basicAuthService.isEnabled()).isTrue();
-        BasicAuthService.SaltedBasicAuthConfiguration previousConfiguration = basicAuthService.configuration();
-
-        basicAuthService.unsecure();
-
-        assertThat(basicAuthService.isEnabled()).isFalse();
-        BasicAuthService.SaltedBasicAuthConfiguration newConfiguration = basicAuthService.configuration();
-
-
-        assertThat(newConfiguration.getEnabled()).isFalse();
-        assertThat(newConfiguration.getUsername()).isEqualTo(previousConfiguration.getUsername());
-        assertThat(newConfiguration.getPassword()).isEqualTo(previousConfiguration.getPassword());
-        assertThat(newConfiguration.getRealm()).isEqualTo(previousConfiguration.getRealm());
-        assertThat(newConfiguration.getOpenUrls()).isEqualTo(previousConfiguration.getOpenUrls());
     }
 
     private void assertConfigurationMatchesApplicationYaml() {

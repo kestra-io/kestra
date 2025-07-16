@@ -8,6 +8,7 @@ import io.kestra.core.http.client.apache.*;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.micronaut.http.MediaType;
 import jakarta.annotation.Nullable;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
@@ -279,10 +280,12 @@ public class HttpClient implements Closeable {
     private <T> T bodyHandler(Class<?> cls, HttpEntity entity) throws IOException, ParseException {
         if (entity == null) {
             return null;
-        } else if (cls.isAssignableFrom(String.class)) {
+        } else if (String.class.isAssignableFrom(cls)) {
             return (T) EntityUtils.toString(entity);
-        } else if (cls.isAssignableFrom(Byte[].class)) {
+        } else if (Byte[].class.isAssignableFrom(cls)) {
             return (T) ArrayUtils.toObject(EntityUtils.toByteArray(entity));
+        } else if (MediaType.APPLICATION_YAML.equals(entity.getContentType()) || "application/yaml".equals(entity.getContentType())) {
+            return (T) JacksonMapper.ofYaml().readValue(entity.getContent(), cls);
         } else {
             return (T) JacksonMapper.ofJson(false).readValue(entity.getContent(), cls);
         }

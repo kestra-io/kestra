@@ -41,16 +41,16 @@
             </template>
         </el-table-column>
         <el-table-column
-            prop="creationDate"
+            prop="description"
             sortable="custom"
             :sort-orders="['ascending', 'descending']"
-            :label="$t('created date')"
+            :label="$t('description')"
         />
         <el-table-column
             prop="updateDate"
             sortable="custom"
             :sort-orders="['ascending', 'descending']"
-            :label="$t('updated date')"
+            :label="$t('last modified')"
         />
         <el-table-column
             prop="expirationDate"
@@ -162,6 +162,10 @@
                 />
             </el-form-item>
 
+            <el-form-item :label="$t('description')" prop="description">
+                <el-input v-model="kv.description" />
+            </el-form-item>
+
             <el-form-item :label="$t('expiration')" prop="ttl">
                 <time-select
                     :from-now="false"
@@ -225,7 +229,11 @@
                 return this.$route.query.q;
             },
             filteredKvs() {
-                return this.kvs?.filter(kv => !this.searchQuery || kv.key.toLowerCase().includes(this.searchQuery.toLowerCase()));
+                return this.kvs?.filter(kv =>
+                    !this.searchQuery ||
+                    kv.key.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                    kv.description.toLowerCase().includes(this.searchQuery.toLowerCase())
+                );
             },
             kvModalTitle() {
                 return this.kv.key ? this.$t("kv.update", {key: this.kv.key}) : this.$t("kv.add");

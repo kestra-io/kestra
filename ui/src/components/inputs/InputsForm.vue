@@ -157,10 +157,10 @@
                         type="file"
                         @change="onFileChange(input, $event)"
                         autocomplete="off"
-                        :style="{display: typeof(inputsValues[input.id]) === 'string' && inputsValues[input.id].startsWith('kestra:///') ? 'none': ''}"
+                        :style="{display: isFile(inputsValues[input.id]) ? 'none': ''}"
                     >
                     <label
-                        v-if="typeof(inputsValues[input.id]) === 'string' && inputsValues[input.id].startsWith('kestra:///')"
+                        v-if="isFile(inputsValues[input.id])"
                         :for="input.id+'-file'"
                     >Kestra Internal Storage File</label>
                 </div>
@@ -435,11 +435,13 @@
                 }
 
                 const files = e.target.files || e.dataTransfer.files;
+
                 if (!files.length) {
                     return;
                 }
-                this.inputsValues[input.id] = e.target.files[0];
-                this.onChange(input);
+
+                this.inputsValues[input.id] = files[0];
+                setTimeout(() => this.onChange(input), 300);
             },
             onYamlChange(input, e) {
                 this.inputsValues[input.id] = e.target.value;
@@ -575,6 +577,9 @@
                 [items[index], items[targetIndex]] = [items[targetIndex], items[index]];
 
                 this.updateArrayValue(input);
+            },
+            isFile(data) {
+                return typeof data === "string" && (data.startsWith("kestra:///") || data.startsWith("file://") || data.startsWith("nsfile://"));
             }
         },
         watch: {
@@ -638,6 +643,15 @@
 .el-input-file {
     display: flex;
     align-items: center;
+
+    .el-input__inner {
+        cursor: pointer;
+    }
+
+    .el-input__wrapper {
+        padding: 0.5rem;
+    }
+    
 }
 
 .preview {

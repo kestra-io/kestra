@@ -2,15 +2,15 @@
 set -e
 
 # Default values
-DOCKER_IMAGE_TAG="kestra/kestra:develop-no-plugins"
+KESTRA_DOCKER_IMAGE_TO_TEST="kestra/kestra:develop-no-plugins"
 E2E_TEST_CONFIG_DIR="./"
 KESTRA_BASE_URL="http://127.0.0.1:9011/ui/"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --docker-image-tag)
-      DOCKER_IMAGE_TAG="$2"
+    --kestra-docker-image-to-test)
+      KESTRA_DOCKER_IMAGE_TO_TEST="$2"
       shift 2
       ;;
     *)
@@ -20,12 +20,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-echo "Running E2E with:"
-echo "  DOCKER_IMAGE_TAG=$DOCKER_IMAGE_TAG"
-
-# Pull Docker image
-echo "Pulling Docker image: $DOCKER_IMAGE_TAG"
-docker pull "$DOCKER_IMAGE_TAG"
+echo "Start E2E backend with:"
+echo "  KESTRA_DOCKER_IMAGE_TO_TEST=$KESTRA_DOCKER_IMAGE_TO_TEST"
 
 # Prepare configuration
 mkdir -p "$E2E_TEST_CONFIG_DIR/data"
@@ -33,7 +29,7 @@ touch "$E2E_TEST_CONFIG_DIR/data/application-secrets.yml"
 
 # Start Docker Compose (default to postgres backend)
 cd "$E2E_TEST_CONFIG_DIR"
-echo "KESTRA_DOCKER_IMAGE=$DOCKER_IMAGE_TAG" > .env
+echo "KESTRA_DOCKER_IMAGE=$KESTRA_DOCKER_IMAGE_TO_TEST" > .env
 docker compose -f "docker-compose-postgres.yml" up -d
 
 # Wait for Kestra UI

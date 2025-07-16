@@ -47,6 +47,12 @@ services:
       - bash
       - -c
     command: "/app/entrypoint.sh"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fs http://localhost:8080/health" ]
+      interval: 2s
+      timeout: 30s
+      retries: 30
+      start_period: 5s
     volumes:
       - dind-socket:/dind
       - tmp-data:/tmp/kestra-wd:rw

@@ -9,6 +9,7 @@
         :persistent="false"
         filterable
         :allow-create="allowCreate"
+        default-first-option
     >
         <el-option
             v-for="item in groupedNamespaces"
@@ -20,7 +21,9 @@
     </el-select>
 </template>
 <script>
-    import {mapState, mapGetters} from "vuex";
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useMiscStore} from "../../../stores/misc";
     import _uniqBy from "lodash/uniqBy";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
@@ -71,7 +74,7 @@
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
             ...mapState("auth", ["user"]),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useMiscStore),
         },
         data() {
             return {
@@ -128,7 +131,7 @@
                             (namespace) =>
                                 this.includeSystemNamespace ||
                                 namespace.code !==
-                                (this.configs?.systemNamespace || "system")
+                                (this.miscStore.configs?.systemNamespace || "system")
                         );
                     });
                 if (this.all) {
@@ -140,7 +143,7 @@
                             (namespace) =>
                                 this.includeSystemNamespace ||
                                 namespace.code !==
-                                (this.configs?.systemNamespace || "system")
+                                (this.miscStore.configs?.systemNamespace || "system")
                         ));
                         // Remove duplicates after merge
                         this.groupedNamespaces = _uniqBy(concatNamespaces, "code").filter(

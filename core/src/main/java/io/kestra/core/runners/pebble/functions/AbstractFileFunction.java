@@ -3,6 +3,8 @@ package io.kestra.core.runners.pebble.functions;
 import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.LocalPathFactory;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.storages.InternalNamespace;
+import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Slugify;
@@ -15,6 +17,7 @@ import jakarta.inject.Inject;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -76,12 +79,13 @@ abstract class AbstractFileFunction implements Function {
                     fileUri = URI.create(str);
                     namespace = checkAllowedFileAndReturnNamespace(context, fileUri);
                 } else if (str.startsWith(LocalPath.FILE_PROTOCOL)) {
-                    if (!enableFileProtocol) {
-                        throw new SecurityException("The file:// protocol has been disabled inside the Kestra configuration.");
-                    }
-
                     fileUri = URI.create(str);
-                    namespace = (String) Optional.ofNullable(args.get(NAMESPACE)).orElse(flow.get(NAMESPACE));
+                    namespace = checkEnabledLocalFileAndReturnNamespace(args, flow);
+                } else if(str.startsWith(Namespace.NAMESPACE_FILE_SCHEME)) {
+                    URI nsFileUri = URI.create(str);
+                    namespace = checkedAllowedNamespaceAndReturnNamespace(args, nsFileUri, tenantId, flow);
+                    InternalNamespace internalNamespace = new InternalNamespace(flow.get(TENANT_ID), namespace, storageInterface);
+                    fileUri = internalNamespace.get(Path.of(nsFileUri.getPath())).uri();
                 } else if (URI_PATTERN.matcher(str).matches()) {
                     // it is an unsupported URI
                     throw new IllegalArgumentException(SCHEME_NOT_SUPPORTED_ERROR.formatted(str));
@@ -179,5 +183,26 @@ abstract class AbstractFileFunction implements Function {
         flowService.checkAllowedNamespace(tenantId, namespace, tenantId, fromNamespace);
 
         return namespace;
+    }
+
+    private String checkEnabledLocalFileAndReturnNamespace(Map<String, Object> args, Map<String, String> flow) {
+        if (!enableFileProtocol) {
+            throw new SecurityException("The file:// protocol has been disabled inside the Kestra configuration.");
+        }
+
+        return (String) Optional.ofNullable(args.get(NAMESPACE)).orElse(flow.get(NAMESPACE));
+    }
+
+    private String checkedAllowedNamespaceAndReturnNamespace(Map<String, Object> args, URI nsFileUri, String tenantId, Map<String, String> flow) {
+        if (args.get(NAMESPACE) != null && nsFileUri.getAuthority() != null) {
+            throw new IllegalArgumentException("You cannot set a namespace both as the function argument and inside the URI");
+        }
+
+        // we will transform nsfile URI into a kestra URI so it is handled seamlessly by all functions
+        String customNs = Optional.ofNullable((String) args.get(NAMESPACE)).orElse(nsFileUri.getAuthority());
+        if (customNs != null) {
+            flowService.checkAllowedNamespace(tenantId, customNs, tenantId, flow.get(NAMESPACE));
+        }
+        return Optional.ofNullable(customNs).orElse(flow.get(NAMESPACE));
     }
 }

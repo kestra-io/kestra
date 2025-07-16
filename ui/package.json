@@ -97,7 +97,7 @@
         "@types/nprogress": "^0.2.3",
         "@types/path-browserify": "^1.0.3",
         "@types/semver": "^7.7.0",
-        "@types/testing-library__jest-dom": "^5.14.9",
+        "@types/testing-library__jest-dom": "^6.0.0",
         "@types/testing-library__user-event": "^4.1.1",
         "@typescript-eslint/parser": "^8.36.0",
         "@vitejs/plugin-vue": "^6.0.0",

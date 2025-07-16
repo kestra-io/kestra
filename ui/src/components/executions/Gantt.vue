@@ -1,9 +1,9 @@
 <template>
-    <ExecutionPending 
-        v-if="!isExecutionStarted" 
+    <ExecutionPending
+        v-if="!isExecutionStarted"
         :execution="execution"
     />
-    <el-card id="gantt" shadow="never" v-else-if="execution && flow">
+    <el-card id="gantt" shadow="never" v-else-if="execution && executionsStore.flow">
         <template #header>
             <div class="d-flex">
                 <duration class="th text-end" :histories="execution.state.histories" />
@@ -84,7 +84,7 @@
                                     level="TRACE"
                                     @follow="forwardEvent('follow', $event)"
                                     :target-execution="execution"
-                                    :target-flow="flow"
+                                    :target-flow="executionsStore.flow"
                                     :show-logs="taskTypeByTaskRunId[item.id] !== 'io.kestra.plugin.core.flow.ForEachItem' && taskTypeByTaskRunId[item.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
                                     class="mh-100 mx-3"
                                 />
@@ -98,7 +98,6 @@
 </template>
 <script>
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    import {mapState} from "vuex";
     import {State} from "@kestra-io/ui-libs"
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
@@ -109,17 +108,19 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import Warning from "vue-material-design-icons/Alert.vue";
     import ExecutionPending from "./ExecutionPending.vue";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
 
     const ts = date => new Date(date).getTime();
     const TASKRUN_THRESHOLD = 50;
     export default {
         components: {
             DynamicScroller,
-            Warning, 
-            DynamicScrollerItem, 
-            TaskRunDetails, 
-            Duration, 
-            ChevronRight, 
+            Warning,
+            DynamicScrollerItem,
+            TaskRunDetails,
+            Duration,
+            ChevronRight,
             ChevronDown,
             ExecutionPending
         },
@@ -131,7 +132,14 @@
                 duration: undefined,
                 selectedTaskRuns: [],
                 regularPaintingInterval: undefined,
-                taskTypesToExclude: ["io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"]
+                taskTypesToExclude: [
+                    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit",
+                    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs",
+                    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
+                    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit",
+                    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs",
+                    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"
+                ]
             };
         },
         watch: {
@@ -160,7 +168,10 @@
             }
         },
         computed: {
-            ...mapState("execution", ["flow", "execution"]),
+            ...mapStores(useExecutionsStore),
+            execution(){
+                return this.executionsStore.execution
+            },
             taskRunsCount() {
                 return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
             },
@@ -326,7 +337,7 @@
                 this.selectedTaskRuns.push(taskRunId);
             },
             taskType(taskRun) {
-                const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
+                const task = FlowUtils.findTaskById(this.executionsStore.flow, taskRun.taskId);
                 return task?.type;
             }
         },

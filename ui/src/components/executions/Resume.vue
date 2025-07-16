@@ -37,6 +37,8 @@
     import ExecutionUtils from "../../utils/executionUtils";
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import {inputsToFormDate} from "../../utils/submitTask";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         components: {InputsForm},
@@ -87,8 +89,8 @@
 
             },
             resume(formData) {
-                this.$store
-                    .dispatch("execution/resume", {
+                this.executionsStore
+                    .resume({
                         id: this.execution.id,
                         formData: formData
                     })
@@ -98,7 +100,7 @@
                     });
             },
             loadDefinition() {
-                this.$store.dispatch("execution/loadFlowForExecution", {
+                this.executionsStore.loadFlowForExecution({
                     flowId: this.execution.flowId,
                     namespace: this.execution.namespace
                 });
@@ -106,7 +108,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("execution", ["flow"]),
+            ...mapStores(useExecutionsStore),
             enabled() {
                 if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
@@ -120,7 +122,7 @@
                     return [];
                 }
 
-                const findTaskById = FlowUtils.findTaskById(this.flow, findTaskRunByState[0].taskId);
+                const findTaskById = FlowUtils.findTaskById(this.executionsStore.flow, findTaskRunByState[0].taskId);
 
                 return findTaskById && findTaskById.inputs !== null ? findTaskById.inputs : [];
             },

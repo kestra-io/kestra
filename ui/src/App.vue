@@ -27,6 +27,7 @@
     import {useCoreStore} from "./stores/core";
     import {useDocStore} from "./stores/doc";
     import {useMiscStore} from "./stores/misc";
+    import {useExecutionsStore} from "./stores/executions";
     import * as BasicAuth from "./utils/basicAuth";
 
     // Main App
@@ -49,7 +50,7 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["overallTotal"]),
-            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore),
+            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore, useExecutionsStore),
             envName() {
                 return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
             },
@@ -183,7 +184,7 @@
                 async handler(route) {
                     if(route.name === "home" && this.isOSS) {
                         await this.$store.dispatch("flow/findFlows", {size: 10, sort: "id:asc"})
-                        await this.$store.dispatch("execution/findExecutions", {size: 10}).then(response => {
+                        await this.executionsStore.findExecutions({size: 10}).then(response => {
                             this.executions = response?.total ?? 0;
                         })
 

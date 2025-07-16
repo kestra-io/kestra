@@ -10,5 +10,9 @@
         align-self: center;
         justify-self: center;
         background: center url("../../assets/icons/ai-agent.svg#file");
+
+        html.light & {
+            background: center url("../../assets/icons/ai-agent-light.svg#file");
+        }
     }
 </style>

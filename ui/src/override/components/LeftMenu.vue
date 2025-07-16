@@ -1,5 +1,5 @@
 <template>
-    <side-bar :generate-menu="generateMenu" @menu-collapse="onCollapse">
+    <side-bar :generate-menu="generateMenu" :show-link="showLink" @menu-collapse="onCollapse">
         <template #footer>
             <auth />    
         </template>
@@ -10,6 +10,8 @@
     import {useLeftMenu} from "override/components/useLeftMenu";
     import SideBar from "../../components/layout/SideBar.vue";
     import Auth from "../../override/components/auth/Auth.vue";
+
+    defineProps({showLink: {type: Boolean, default: true}})
 
     const $emit = defineEmits(["menu-collapse"])
 

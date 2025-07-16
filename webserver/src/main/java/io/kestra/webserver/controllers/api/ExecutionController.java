@@ -21,12 +21,11 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.runners.*;
 import io.kestra.core.runners.pebble.functions.SecretFunction;
 import io.kestra.core.services.*;
+import io.kestra.core.storages.InternalNamespace;
+import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
@@ -98,6 +97,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -183,6 +183,12 @@ public class ExecutionController {
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
+
+    @Inject
+    private LocalPathFactory localPathFactory;
+
+    @Value("${" + LocalPath.ENABLE_PREVIEW_CONFIG + ":true}")
+    private boolean enableLocalFilePreview;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -751,6 +757,21 @@ public class ExecutionController {
     }
 
     protected <T> HttpResponse<T> validateFile(Execution execution, URI path, String redirect) {
+        if (LocalPath.FILE_SCHEME.equals(path.getScheme())) {
+            if (!enableLocalFilePreview) {
+                throw new SecurityException("Local file preview is disabled");
+            }
+            return null;
+        }
+
+        if (Namespace.NAMESPACE_FILE_SCHEME.equals(path.getScheme())) {
+            // if there is an authority, it means the namespace file is for another namespace, so we check it
+            if (path.getAuthority() != null) {
+                flowService.checkAllowedNamespace(execution.getTenantId(), path.getAuthority(), execution.getTenantId(), execution.getNamespace());
+            }
+            return null;
+        }
+
         String prefix = StorageContext
             .forExecution(execution)
             .getExecutionStorageURI().getPath();
@@ -808,10 +829,23 @@ public class ExecutionController {
             return httpResponse;
         }
 
-        InputStream fileHandler = storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+        InputStream fileHandler = switch (path.getScheme()) {
+            case StorageContext.KESTRA_SCHEME -> storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+            case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().get(path);
+            case Namespace.NAMESPACE_FILE_SCHEME -> {
+                URI uri = nsFileToInternalStorageURI(path, execution.get());
+                yield storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), uri);
+            }
+            default -> throw new IllegalArgumentException("Scheme not supported: " + path.getScheme());
+        };
         return HttpResponse.ok(new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
             .attach(FilenameUtils.getName(path.toString()))
         );
+    }
+
+    private URI nsFileToInternalStorageURI(URI path, Execution execution) {
+        InternalNamespace internalNamespace = new InternalNamespace(execution.getTenantId(), execution.getNamespace(), storageInterface);
+        return internalNamespace.get(Path.of(path.getPath())).uri();
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -831,8 +865,18 @@ public class ExecutionController {
             return httpResponse;
         }
 
+        long size = switch (path.getScheme()) {
+            case StorageContext.KESTRA_SCHEME -> storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize();
+            case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().getAttributes(path).size();
+            case Namespace.NAMESPACE_FILE_SCHEME -> {
+                URI uri = nsFileToInternalStorageURI(path, execution.get());
+                yield storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), uri).getSize();
+            }
+            default -> throw new IllegalArgumentException("Scheme not supported: " + path.getScheme());
+        };
+
         return HttpResponse.ok(FileMetas.builder()
-            .size(storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize())
+            .size(size)
             .build()
         );
     }
@@ -1757,7 +1801,17 @@ public class ExecutionController {
             throw new IllegalArgumentException("Unable to preview using encoding '" + encoding + "'");
         }
 
-        try (InputStream fileStream = storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path)) {
+        InputStream fileStream = switch (path.getScheme()) {
+            case StorageContext.KESTRA_SCHEME -> storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+            case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().get(path);
+            case Namespace.NAMESPACE_FILE_SCHEME -> {
+                URI uri = nsFileToInternalStorageURI(path, execution.get());
+                yield storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), uri);
+            }
+            default -> throw new IllegalArgumentException("Scheme not supported: " + path.getScheme());
+        };
+
+        try (fileStream) {
             FileRender fileRender = FileRenderBuilder.of(
                 extension,
                 fileStream,
@@ -1920,14 +1974,15 @@ public class ExecutionController {
     @Post(uri = "/{executionId}/unqueue")
     @Operation(tags = {"Executions"}, summary = "Unqueue an execution")
     public Execution unqueueExecution(
-        @Parameter(description = "The execution id") @PathVariable String executionId
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The new state of the execution") @Nullable @QueryValue State.Type state
     ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isEmpty()) {
             return null;
         }
 
-        Execution restart = concurrencyLimitService.unqueue(execution.get());
+        Execution restart = concurrencyLimitService.unqueue(execution.get(), state);
         executionQueue.emit(restart);
         eventPublisher.publishEvent(new CrudEvent<>(restart, execution.get(), CrudEventType.UPDATE));
 
@@ -1940,7 +1995,8 @@ public class ExecutionController {
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
     @ApiResponse(responseCode = "422", description = "Unqueued with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> unqueueExecutionsByIds(
-        @RequestBody(description = "The list of executions id") @Body List<String> executionsId
+        @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
+        @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type state
     ) throws Exception {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
@@ -1977,7 +2033,7 @@ public class ExecutionController {
             );
         }
         for (Execution execution : executions) {
-            Execution restart = concurrencyLimitService.unqueue(execution);
+            Execution restart = concurrencyLimitService.unqueue(execution, state);
             executionQueue.emit(restart);
             eventPublisher.publishEvent(new CrudEvent<>(restart, execution, CrudEventType.UPDATE));
         }
@@ -2004,7 +2060,8 @@ public class ExecutionController {
         @Deprecated @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+        @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type newState
     ) throws Exception {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -2026,7 +2083,7 @@ public class ExecutionController {
 
         var ids = getExecutionIds(filters);
 
-        return unqueueExecutionsByIds(ids);
+        return unqueueExecutionsByIds(ids, newState);
     }
 
     @ExecuteOn(TaskExecutors.IO)

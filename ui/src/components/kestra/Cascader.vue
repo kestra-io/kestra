@@ -33,7 +33,7 @@
     const {t} = useI18n({useScope: "global"});
 
     const isFile = (data: any) =>
-        typeof data === "string" && data.startsWith("kestra:///");
+        typeof data === "string" && (data.startsWith("kestra:///") || data.startsWith("file://") || data.startsWith("nsfile://"));
 
     interface Options {
         label: string;
@@ -44,7 +44,7 @@
     const props = defineProps<{ options: Options; execution: any, id: string }>();
 
     onMounted(() => {
-        const nodes = document.querySelectorAll(`#${props.id} .el-cascader-node`);    
+        const nodes = document.querySelectorAll(`#${props.id} .el-cascader-node`);
         if(nodes.length > 0) nodes[0].click();
     });
 </script>

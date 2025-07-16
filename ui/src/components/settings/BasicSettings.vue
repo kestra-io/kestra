@@ -155,7 +155,23 @@
 
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.environment_name')">
+                        <el-tooltip
+                            v-if="isEnvNameFromConfig"
+                            :content="$t('settings.blocks.theme.fields.envNameTooltip')"
+                            placement="top"
+                        >
+                            <el-input
+                                v-model="pendingSettings.envName"
+                                @change="onEnvNameChange"
+                                :placeholder="$t('name')"
+                                clearable
+                                show-word-limit
+                                maxlength="30"
+                            />
+                        </el-tooltip>
+
                         <el-input
+                            v-else
                             v-model="pendingSettings.envName"
                             @change="onEnvNameChange"
                             :placeholder="$t('name')"
@@ -436,7 +452,7 @@
                     .dispatch("flow/findFlows", {size: 1, page: 1})
                     .then((result) => {
                         const flowCount = result.total;
-                        
+
                         return this.$store
                             .dispatch("flow/exportFlowByQuery", {})
                             .then(() => {
@@ -739,6 +755,9 @@
                         label: this.$t("auditlogs")
                     },
                 ]
+            },
+            isEnvNameFromConfig() {
+                return !this.layoutStore.envName && !!this.miscStore.configs?.environment?.name;
             }
         },
         watch: {

@@ -782,6 +782,7 @@
             "logs_font_size": "Logs Font Size",
             "editor_font_family": "Editor Font Family",
             "editor_folding_stratgy": "Automatic Code Folding in the Editor",
+            "envNameTooltip": "This environment name is set from the config but can be changed.",
             "environment_name": "Environment Name",
             "environment_color": "Environment Color",
             "chart_color_scheme": {

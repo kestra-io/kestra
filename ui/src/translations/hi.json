@@ -1176,6 +1176,7 @@
             "editor_folding_stratgy": "संपादक में स्वचालित कोड फोल्डिंग",
             "editor_font_family": "संपादक फ़ॉन्ट परिवार",
             "editor_font_size": "संपादक फ़ॉन्ट आकार",
+            "envNameTooltip": "यह एनवायरनमेंट नाम कॉन्फ़िग से सेट किया गया है, लेकिन आप इसे बदल सकते हैं।",
             "environment_color": "पर्यावरण रंग",
             "environment_name": "पर्यावरण नाम",
             "logs_font_size": "लॉग्स फ़ॉन्ट आकार",

@@ -1178,6 +1178,7 @@
             "editor_font_size": "Tamaño de Fuente del Editor",
             "environment_color": "Color del Entorno",
             "environment_name": "Nombre del Entorno",
+            "envNameTooltip": "Este nombre de entorno se establece desde la configuración pero se puede cambiar.",
             "logs_font_size": "Tamaño de Fuente de Logs",
             "theme": "Tema"
           },

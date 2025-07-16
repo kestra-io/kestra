@@ -1178,6 +1178,7 @@
             "editor_font_size": "Taille de Police de l'éditeur",
             "environment_color": "Couleur de l'Environnement",
             "environment_name": "Nom de l'Environnement",
+            "envNameTooltip": "Ce nom d’environnement est défini par la configuration, mais peut être modifié.",
             "logs_font_size": "Taille de police des Logs",
             "theme": "Modèle"
           },

@@ -1176,6 +1176,7 @@
             "editor_folding_stratgy": "Automatyczne Zwijanie Kodu w Edytorze",
             "editor_font_family": "Rodzina Czcionki Edytora",
             "editor_font_size": "Rozmiar Czcionki Edytora",
+            "envNameTooltip": "Ta nazwa środowiska pochodzi z konfiguracji, ale można ją zmienić.",
             "environment_color": "Kolor Środowiska",
             "environment_name": "Nazwa Środowiska",
             "logs_font_size": "Rozmiar czcionki logów",

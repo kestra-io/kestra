@@ -1178,6 +1178,7 @@
             "editor_font_size": "Editor-Schriftgröße",
             "environment_color": "Umgebungsfarbe",
             "environment_name": "Umgebungsname",
+            "envNameTooltip": "Dieser Umgebungsname wird aus der Konfiguration übernommen, kann aber geändert werden.",
             "logs_font_size": "Logs Schriftgröße",
             "theme": "Modus"
           },

@@ -1176,6 +1176,7 @@
             "editor_folding_stratgy": "Dobramento Automático de Código no Editor",
             "editor_font_family": "Família de Fonte do Editor",
             "editor_font_size": "Tamanho da Fonte do Editor",
+            "envNameTooltip": "Este nome de ambiente é definido na configuração, mas pode ser alterado.",
             "environment_color": "Cor do Ambiente",
             "environment_name": "Nome do Ambiente",
             "logs_font_size": "Tamanho da Fonte dos Logs",

@@ -21,12 +21,11 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.runners.*;
 import io.kestra.core.runners.pebble.functions.SecretFunction;
 import io.kestra.core.services.*;
+import io.kestra.core.storages.InternalNamespace;
+import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
@@ -98,6 +97,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -183,6 +183,12 @@ public class ExecutionController {
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
+
+    @Inject
+    private LocalPathFactory localPathFactory;
+
+    @Value("${" + LocalPath.ENABLE_PREVIEW_CONFIG + ":true}")
+    private boolean enableLocalFilePreview;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -751,6 +757,21 @@ public class ExecutionController {
     }
 
     protected <T> HttpResponse<T> validateFile(Execution execution, URI path, String redirect) {
+        if (LocalPath.FILE_SCHEME.equals(path.getScheme())) {
+            if (!enableLocalFilePreview) {
+                throw new SecurityException("Local file preview is disabled");
+            }
+            return null;
+        }
+
+        if (Namespace.NAMESPACE_FILE_SCHEME.equals(path.getScheme())) {
+            // if there is an authority, it means the namespace file is for another namespace, so we check it
+            if (path.getAuthority() != null) {
+                flowService.checkAllowedNamespace(execution.getTenantId(), path.getAuthority(), execution.getTenantId(), execution.getNamespace());
+            }
+            return null;
+        }
+
         String prefix = StorageContext
             .forExecution(execution)
             .getExecutionStorageURI().getPath();
@@ -808,10 +829,23 @@ public class ExecutionController {
             return httpResponse;
         }
 
-        InputStream fileHandler = storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+        InputStream fileHandler = switch (path.getScheme()) {
+            case StorageContext.KESTRA_SCHEME -> storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+            case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().get(path);
+            case Namespace.NAMESPACE_FILE_SCHEME -> {
+                URI uri = nsFileToInternalStorageURI(path, execution.get());
+                yield storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), uri);
+            }
+            default -> throw new IllegalArgumentException("Scheme not supported: " + path.getScheme());
+        };
         return HttpResponse.ok(new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
             .attach(FilenameUtils.getName(path.toString()))
         );
+    }
+
+    private URI nsFileToInternalStorageURI(URI path, Execution execution) {
+        InternalNamespace internalNamespace = new InternalNamespace(execution.getTenantId(), execution.getNamespace(), storageInterface);
+        return internalNamespace.get(Path.of(path.getPath())).uri();
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -831,8 +865,18 @@ public class ExecutionController {
             return httpResponse;
         }
 
+        long size = switch (path.getScheme()) {
+            case StorageContext.KESTRA_SCHEME -> storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize();
+            case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().getAttributes(path).size();
+            case Namespace.NAMESPACE_FILE_SCHEME -> {
+                URI uri = nsFileToInternalStorageURI(path, execution.get());
+                yield storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), uri).getSize();
+            }
+            default -> throw new IllegalArgumentException("Scheme not supported: " + path.getScheme());
+        };
+
         return HttpResponse.ok(FileMetas.builder()
-            .size(storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize())
+            .size(size)
             .build()
         );
     }
@@ -1757,7 +1801,17 @@ public class ExecutionController {
             throw new IllegalArgumentException("Unable to preview using encoding '" + encoding + "'");
         }
 
-        try (InputStream fileStream = storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path)) {
+        InputStream fileStream = switch (path.getScheme()) {
+            case StorageContext.KESTRA_SCHEME -> storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+            case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().get(path);
+            case Namespace.NAMESPACE_FILE_SCHEME -> {
+                URI uri = nsFileToInternalStorageURI(path, execution.get());
+                yield storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), uri);
+            }
+            default -> throw new IllegalArgumentException("Scheme not supported: " + path.getScheme());
+        };
+
+        try (fileStream) {
             FileRender fileRender = FileRenderBuilder.of(
                 extension,
                 fileStream,

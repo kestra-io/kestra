@@ -1,5 +1,7 @@
 package io.kestra.webserver.services;
 
+import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
+
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
@@ -113,7 +115,7 @@ public class BasicAuthService {
     public SaltedBasicAuthConfiguration configuration() {
         return settingRepository.findByKey(BASIC_AUTH_SETTINGS_KEY)
             .map(Setting::getValue)
-            .map(value -> JacksonMapper.toMap(value, SaltedBasicAuthConfiguration.class))
+            .map(value -> JacksonMapper.ofJson(false).convertValue(value, SaltedBasicAuthConfiguration.class))
             .orElse(null);
     }
 

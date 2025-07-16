@@ -38,7 +38,7 @@
     </transition>
     <AcceptDecline
         v-if="draftSource !== undefined"
-        class="position-absolute prompt"
+        class="position-absolute actions"
         @accept="acceptDraft"
         @reject="declineDraft"
     />
@@ -267,5 +267,9 @@
         &:hover {
             background-color: #262A35;
         }
+    }
+
+    .actions {
+        bottom: 10%;
     }
 </style>

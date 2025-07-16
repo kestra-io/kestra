@@ -195,6 +195,7 @@
     "change state": "Change state",
     "change state done": "Task state has been updated",
     "change state confirm": "Are you sure you want to change the task run state for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will then restart the execution from the next task and restart the parent execution if any.",
+    "change queue confirm": "Are you sure you want to change the queue state for the execution <code>{id}</code>?<br/>",
     "change state current state": "Current status is:",
     "change state hint": {
       "WARNING": [
@@ -221,6 +222,7 @@
     "change execution state confirm": "Are you sure you want to change the state of the execution <code>{id}</code>?",
     "change execution state done": "Execution state updated",
     "mark as": "Mark as <code>{status}</code>",
+    "unqueue as": "Unqueue as <code>{status}</code>",
     "kill": "Kill",
     "kill parents and subflow": "Kill parents and subflows",
     "kill only parents": "Kill parents only",
@@ -235,7 +237,8 @@
     "pause confirm": "Are you sure you want to pause execution <code>{id}</code>?",
     "pause done": "Execution is paused",
     "unqueue": "Unqueue",
-    "unqueue title": "Unqueue execution <code>{id}</code>.<br/>Note that it will not obey the flow concurrency limit, so more executions could be running than the allowed limit.",
+    "unqueue title": "Are you sure you want to Unqueue execution <code>{id}</code>?<br/><br/>Note that it will not obey the flow concurrency limit, so more executions could be running than the allowed limit.",
+    "unqueue title multiple": "Are you sure you want to Unqueue <code>{count}</code> executions?<br/><br/>Note that it will not obey the flow concurrency limit, so more executions could be running than the allowed limit.",
     "unqueue confirm": "Are you sure you want to unqueue execution <code>{id}</code>?",
     "unqueue done": "Execution is unqueued",
     "force run": "Force run",

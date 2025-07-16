@@ -9,6 +9,7 @@
         :persistent="false"
         filterable
         :allow-create="allowCreate"
+        default-first-option
     >
         <el-option
             v-for="item in groupedNamespaces"

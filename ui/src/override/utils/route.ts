@@ -12,7 +12,7 @@ const createBaseUrl = (): string => {
 }
 
 export const baseUrl = createBaseUrl().replace(/\/$/, "")
-export const basePath = "/api/v1/main"
+export const basePath = () => "/api/v1/main"
 
 export const apiUrl = (_: Store<any>): string => {
     return `${baseUrl}${basePath}`;

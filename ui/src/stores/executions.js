@@ -299,17 +299,17 @@ export default {
             return this.$http.post(`${apiUrl(this)}/executions/labels/by-ids`,  options)
         },
         unqueue(_, options) {
-            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/unqueue`);
+            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/unqueue?state=${options.state}`);
         },
         bulkUnqueueExecution(_, options) {
             return this.$http.post(
-                `${apiUrl(this)}/executions/unqueue/by-ids`,
+                `${apiUrl(this)}/executions/unqueue/by-ids?state=${options.newStatus}`,
                 options.executionsId
             )
         },
         queryUnqueueExecution(_, options) {
             return this.$http.post(
-                `${apiUrl(this)}/executions/unqueue/by-query`,
+                `${apiUrl(this)}/executions/unqueue/by-query?state=${options.newStatus}`,
                 {},
                 {params: options}
             )

@@ -11,7 +11,7 @@
             :value="item"
         >
             <span class="options">
-                <task-icon :cls="item" :only-icon="true" :icons="pluginsStore.icons" />
+                <task-icon v-if="hasIcons" :cls="item" :only-icon="true" :icons="pluginsStore.icons" />
                 <span>
                     {{ item }}
                 </span>
@@ -19,7 +19,7 @@
         </el-option>
 
         <template #prefix>
-            <task-icon v-if="modelValue" :cls="modelValue" :only-icon="true" :icons="pluginsStore.icons" />
+            <task-icon v-if="modelValue && hasIcons" :cls="modelValue" :only-icon="true" :icons="pluginsStore.icons" />
         </template>
     </el-select>
 </template>
@@ -86,10 +86,8 @@
 
         return allRefs.reduce((acc: string[], item: string) => {
             const def = pluginsStore.flowDefinitions?.[item]
-            if (!def) {
-                return acc;
-            }
-            if (Boolean(def.$deprecated) === true) {
+            
+            if (!def || def.$deprecated) {
                 return acc;
             }
 
@@ -103,6 +101,10 @@
             return acc
         }, []).sort();
     })
+
+    const hasIcons = computed(() => {
+        return pluginsStore.icons && Object.keys(pluginsStore.icons).filter(plugin => taskModels.value.includes(plugin)).length > 0;
+    });
 
     const {t} = useI18n();
 

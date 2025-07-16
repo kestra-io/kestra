@@ -1360,6 +1360,24 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/flow-concurrency-queue.yml",
+        "flows/valids/minimal.yaml"})
+    void shouldUnqueueAQueuedFlowToCancelledState() throws QueueException, TimeoutException {
+        // run a first flow so the second is queued
+        runnerUtils.runOneUntilRunning(TENANT_ID, "io.kestra.tests", "flow-concurrency-queue");
+        Execution result1 = runUntilQueued("io.kestra.tests", "flow-concurrency-queue");
+
+        var cancelResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/executions/" + result1.getId() + "/unqueue?state=CANCELLED", null)
+        );
+        assertThat(cancelResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        Optional<Execution> cancelledExecution = executionRepositoryInterface.findById(TENANT_ID, result1.getId());
+        assertThat(cancelledExecution.isPresent()).isTrue();
+        assertThat(cancelledExecution.get().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+    }
+
+    @Test
     @LoadFlows({"flows/valids/flow-concurrency-queue.yml"})
     void shouldUnqueueExecutionByIdsQueuedFlows() throws TimeoutException, QueueException {
         // run a first flow so the others are queued

@@ -14,6 +14,9 @@
                             <chevron-up v-if="isExpanded" />
                             <chevron-down v-else />
                         </span>
+                        <span v-if="!errorLogs">
+                            {{ $t('error detected') }}
+                        </span>
                     </div>
                 </template>
                 <div v-if="isExpanded && errorLogs" class="error-stack">

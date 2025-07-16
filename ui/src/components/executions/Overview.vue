@@ -283,9 +283,8 @@
                 return this.execution.labels?.find( it => it.key === "system.replay" && (it.value === "true" || it.value === true)) !== undefined;
             },
             load() {
-                this.$store
-                    .dispatch(
-                        "execution/loadExecution",
+                this.executionsStore
+                    .loadExecution(
                         this.$route.params
                     )
                     .then(() => {
@@ -293,8 +292,8 @@
                     })
             },
             fetchErrorLogs() {
-                this.$store
-                    .dispatch("execution/loadLogs", {
+                this.executionsStore
+                    .loadLogs({
                         store: false,
                         executionId: this.execution.id,
                         params: {
@@ -323,7 +322,7 @@
                         sort: "state.startDate:desc"
                     };
 
-                    const result = await this.$store.dispatch("execution/findExecutions", params);
+                    const result = await this.executionsStore.findExecutions(params);
                     if (!result || !result.results || !result.results.length) {
                         return null;
                     }

@@ -89,8 +89,8 @@
 
             },
             resume(formData) {
-                this.$store
-                    .dispatch("execution/resume", {
+                this.executionsStore
+                    .resume({
                         id: this.execution.id,
                         formData: formData
                     })
@@ -100,7 +100,7 @@
                     });
             },
             loadDefinition() {
-                this.$store.dispatch("execution/loadFlowForExecution", {
+                this.executionsStore.loadFlowForExecution({
                     flowId: this.execution.flowId,
                     namespace: this.execution.namespace
                 });

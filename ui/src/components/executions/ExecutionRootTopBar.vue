@@ -67,7 +67,7 @@
             ...mapStores(useExecutionsStore),
             ...mapState("auth", ["user"]),
             execution() {
-                return this.executionStore.execution;
+                return this.executionsStore.execution;
             },
             finalApiUrl() {
                 return apiUrl(this.$store);
@@ -82,7 +82,7 @@
                 return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
             },
             isATestExecution() {
-                return this.execution.labels && this.execution.labels.some(label => label.key === "system.test" && label.value === "true");
+                return this.execution && this.execution.labels && this.execution.labels.some(label => label.key === "system.test" && label.value === "true");
             }
         },
         methods: {
@@ -116,8 +116,8 @@
                         customStyle: "min-width: 600px",
                         callback: (value) => {
                             if(value === "confirm") {
-                                return this.$store
-                                    .dispatch("execution/deleteExecution", {
+                                return this.executionsStore
+                                    .deleteExecution({
                                         ...item,
                                         deleteLogs: deleteLogs.value,
                                         deleteMetrics: deleteMetrics.value,

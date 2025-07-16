@@ -246,10 +246,10 @@ export const useExecutionsStore = defineStore("executions", {
             return this.$http.delete(`${apiUrl(this.vuexStore)}/executions/by-query`, {params: options})
         },
         followExecution(options: { id: string }) {
-            return new EventSource(`${apiUrl(this.vuexStore)}/executions/${options.id}/follow`, {withCredentials: true});
+            return Promise.resolve(new EventSource(`${apiUrl(this.vuexStore)}/executions/${options.id}/follow`, {withCredentials: true}));
         },
         followLogs(options: { id: string }) {
-            return new EventSource(`${apiUrl(this.vuexStore)}/logs/${options.id}/follow`, {withCredentials: true});
+            return Promise.resolve(new EventSource(`${apiUrl(this.vuexStore)}/logs/${options.id}/follow`, {withCredentials: true}));
         },
         loadLogs(options: { executionId: string; params?: Record<string, any>; store?: boolean }) {
             return this.$http.get(`${apiUrl(this.vuexStore)}/logs/${options.executionId}`, {

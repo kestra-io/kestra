@@ -3,7 +3,7 @@
         ref="table"
         :task-run-id="route.query.metric?.[0] ?? undefined"
         :show-task="true"
-        :execution="executionStore.execution"
+        :execution="executionsStore.execution"
     >
         <template #navbar>
             <KestraFilter
@@ -28,9 +28,9 @@
 
     const table = ref<typeof MetricsTable>();
 
-    const executionStore = useExecutionsStore();
+    const executionsStore = useExecutionsStore();
 
-    const metricFilterLang = new MetricFilterLanguage(executionStore)
+    const metricFilterLang = new MetricFilterLanguage(executionsStore)
 
     onMounted(() => {
         table.value!.loadData(table.value!.onDataLoaded);

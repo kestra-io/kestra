@@ -17,7 +17,9 @@ const metricFilterKeys: (executionsStore: ReturnType<typeof useExecutionsStore>)
 })
 
 export class MetricFilterLanguage extends FilterLanguage {
-    constructor(executionStore: ReturnType<typeof useExecutionsStore>) {
-        super("metrics", metricFilterKeys(executionStore));
+    constructor(executionsStore: ReturnType<typeof useExecutionsStore>) {
+        super("metrics", metricFilterKeys(executionsStore));
     }
 }
+
+export default MetricFilterLanguage;

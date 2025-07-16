@@ -210,7 +210,7 @@
                     if (!this.localNamespace) {
                         return;
                     }
-                    this.$store.dispatch("execution/loadFlowsExecutable", {
+                    this.executionsStore.loadFlowsExecutable({
                         namespace: this.localNamespace
                     });
                 },
@@ -221,7 +221,7 @@
                     if (!this.localFlow) {
                         return;
                     }
-                    this.$store.commit("execution/setFlow", this.localFlow);
+                    this.executionsStore.flow = this.localFlow;
                 },
                 immediate: true
             }

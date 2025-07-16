@@ -801,7 +801,7 @@
             loadData(callback) {
                 this.lastRefreshDate = new Date();
 
-                this.$store.dispatch("execution/findExecutions", this.loadQuery({
+                this.executionsStore.findExecutions(this.loadQuery({
                     size: parseInt(this.$route.query.size || this.internalPageSize),
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
                     sort: this.$route.query.sort || "state.startDate:desc",
@@ -1006,8 +1006,8 @@
                     this.$t("bulk set labels", {"executionCount": this.queryBulkAction ? this.executionsStore.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("execution/querySetLabels", {
+                            return this.executionsStore
+                                .querySetLabels({
                                     params: this.loadQuery({
                                         sort: this.$route.query.sort || "state.startDate:desc",
                                         state: this.$route.query.state ? [this.$route.query.state] : this.statuses
@@ -1019,8 +1019,8 @@
                                     this.loadData();
                                 })
                         } else {
-                            return this.$store
-                                .dispatch("execution/bulkSetLabels", {
+                            return this.executionsStore
+                                .bulkSetLabels({
                                     executionsId: this.selection,
                                     executionLabels: filtered.labels
                                 })
@@ -1048,7 +1048,7 @@
                 })
             },
             emitStateCount(states) {
-                this.$store.dispatch("execution/findExecutions", this.loadQuery({
+                this.executionsStore.findExecutions(this.loadQuery({
                     size: parseInt(this.$route.query.size || this.internalPageSize),
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
                     sort: this.$route.query.sort || "state.startDate:desc",

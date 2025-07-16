@@ -270,6 +270,8 @@
 <script>
     import {toRaw} from "vue";
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
     import debounce from "lodash/debounce";
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
@@ -287,6 +289,7 @@
     export default {
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapStores(useExecutionsStore),
             inputErrors() {
                 // we only keep errors that don't target an input directly
                 const keepErrors = this.inputsMetaData.filter(it => it.id === undefined);
@@ -478,13 +481,13 @@
 
                 if (this.flow !== undefined) {
                     const options = {namespace: this.flow.namespace, id: this.flow.id};
-                    const {data} = await this.$store.dispatch("execution/validateExecution", {...options, formData})
+                    const {data} = await this.executionsStore.validateExecution({...options, formData})
 
                     metadataCallback(data);
 
                 } else if (this.execution !== undefined) {
                     const options = {id: this.execution.id};
-                    const {data} = await this.$store.dispatch("execution/validateResume", {...options, formData})
+                    const {data} = await this.executionsStore.validateResume({...options, formData})
 
                     metadataCallback(data);
                 } else {

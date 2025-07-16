@@ -122,7 +122,7 @@
 
                 if (this.execution && (force || (this.flowGraph === undefined || this.previousExecutionId !== this.execution.id))) {
                     this.previousExecutionId = this.execution.id;
-                    this.$store.dispatch("execution/loadGraph", {
+                    this.executionsStore.loadGraph({
                         id: this.execution.id,
                         params: {
                             subflows: this.expandedSubflows
@@ -167,8 +167,8 @@
                                 return this.isUnused(nodeByUid, edge.target) || this.isUnused(nodeByUid, edge.source);
                             }).forEach(edge => edge.unused = true);
 
-                        // force refresh
-                        this.$store.commit("execution/setFlowGraph", Object.assign({}, this.flowGraph));
+                        // force refresh - Create a new object reference to trigger reactivity
+                        this.executionsStore.flowGraph = Object.assign({}, this.flowGraph);
                     }).catch(() => {
                         this.expandedSubflows = this.previousExpandedSubflows;
 
@@ -235,7 +235,7 @@
                     return;
                 }
 
-                this.$store.dispatch("execution/followExecution", {id: executionId})
+                this.executionsStore.followExecution({id: executionId})
                     .then(sse => {
                         this.sseBySubflow[subflow] = sse;
                         sse.onmessage = (executionEvent) => {

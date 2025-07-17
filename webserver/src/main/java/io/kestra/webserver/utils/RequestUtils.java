@@ -37,7 +37,7 @@ public class RequestUtils {
                 }
 
                 final String key = split[0].trim();
-                final String value = s.substring(s.indexOf(QUERY_STRING_SEPARATOR) + 1).trim();
+                final String value = split[1].trim();
 
                 if (key.isEmpty() || value.isEmpty()) {
                     throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Can't have an empty part of queryString");

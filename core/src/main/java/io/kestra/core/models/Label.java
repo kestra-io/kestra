@@ -39,7 +39,7 @@ public record Label(@NotNull String key, @NotNull String value) {
      * @return the flat {@link Map}.
      */
     public static Map<String, String> toMap(@Nullable List<Label> labels) {
-        if (labels == null || labels.isEmpty()) return Map.of();
+        if (labels == null || labels.isEmpty()) return Collections.emptyMap();
         return labels.stream()
             .filter(label -> label.value() != null && label.key() != null)
             // using an accumulator in case labels with the same key exists: the second is kept
@@ -54,7 +54,7 @@ public record Label(@NotNull String key, @NotNull String value) {
      * @return the deduplicated {@link List}.
      */
     public static List<Label> deduplicate(@Nullable List<Label> labels) {
-        if (labels == null || labels.isEmpty()) return new ArrayList<>();
+        if (labels == null || labels.isEmpty()) return Collections.emptyList();
         return toMap(labels).entrySet().stream()
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .collect(Collectors.toCollection(ArrayList::new));

@@ -2,7 +2,6 @@ package io.kestra.plugin.core.flow;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -137,5 +136,28 @@ class RuntimeLabelsTest {
             new Label("boolValue", "true"),
             new Label("floatValue", "3.14"),
             new Label("taskRunId", labelsTaskRunId));
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/labels-update-task-deduplicate.yml"})
+    void updateGetsDeduplicated() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "labels-update-task-deduplicate",
+            null,
+            (flow, createdExecution) -> Map.of(),
+            null,
+            List.of()
+        );
+
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        assertThat(execution.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution.getId()),
+            new Label("fromStringKey", "value2"),
+            new Label("fromListKey", "value2")
+        );
     }
 }

@@ -478,9 +478,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
         var flow = workerTrigger.getConditionContext().getFlow();
         if (flow.getLabels() != null) {
             evaluate = evaluate.map(execution -> {
-                    List<Label> executionLabels = execution.getLabels();
-                    executionLabels.addAll(LabelService.labelsExcludingSystem(flow));
-                    return execution.withLabels(executionLabels);
+                    List<Label> tmpLabels = new ArrayList<>(execution.getLabels());
+                    tmpLabels.addAll(LabelService.labelsExcludingSystem(flow));
+
+                    return execution.withLabels(tmpLabels);
                 }
             );
         }

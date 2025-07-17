@@ -385,11 +385,14 @@
                     return;
                 }
                 this.$store.dispatch("trigger/update", {...trigger, disabled: !value})
-                    .then(trigger => {
-                        // replace the update trigger in the list
+                    .then(updatedTrigger => {
                         this.triggers = this.triggers.map(t => {
-                            if (t.id === trigger.id) {
-                                return {triggerContext: trigger, abstractTrigger: t.abstractTrigger};
+                            const triggerContextMatches = t.triggerContext && 
+                                t.triggerContext.flowId === updatedTrigger.flowId &&
+                                t.triggerContext.triggerId === updatedTrigger.triggerId;
+                        
+                            if (triggerContextMatches) {
+                                return {triggerContext: updatedTrigger, abstractTrigger: t.abstractTrigger};
                             }
                             return t;
                         });

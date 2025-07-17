@@ -402,6 +402,7 @@
       "move_line": "移动行",
       "reset_fontsize": "重置字体大小",
       "save_flow": "保存flow",
+      "toggle_ai_agent": "切换AI代理",
       "trigger_autocompletion": "触发自动完成",
       "uncomment": "取消注释"
     },
@@ -1036,6 +1037,7 @@
     "read-more": "了解更多关于",
     "readonly property": "只读属性",
     "refresh": "刷新",
+    "reject": "拒绝",
     "relative": "相对",
     "relative end date": "相对结束日期",
     "relative start date": "相对开始日期",

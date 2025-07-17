@@ -402,6 +402,7 @@
       "move_line": "行を移動",
       "reset_fontsize": "フォントサイズをリセット",
       "save_flow": "フローを保存",
+      "toggle_ai_agent": "AIエージェントを切り替える",
       "trigger_autocompletion": "オートコンプリートをトリガー",
       "uncomment": "コメント解除"
     },
@@ -1036,6 +1037,7 @@
     "read-more": "続きを読む",
     "readonly property": "読み取り専用プロパティ",
     "refresh": "更新",
+    "reject": "拒否",
     "relative": "相対",
     "relative end date": "相対終了日",
     "relative start date": "相対開始日",

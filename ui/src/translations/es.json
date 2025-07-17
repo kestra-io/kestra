@@ -402,6 +402,7 @@
       "move_line": "Mover línea",
       "reset_fontsize": "Restablecer tamaño de fuente",
       "save_flow": "Guardar flow",
+      "toggle_ai_agent": "Alternar agente de AI",
       "trigger_autocompletion": "Activar autocompletado",
       "uncomment": "Descomentar"
     },
@@ -1036,6 +1037,7 @@
     "read-more": "Leer más sobre",
     "readonly property": "Propiedad de solo lectura",
     "refresh": "Actualizar",
+    "reject": "Rechazar",
     "relative": "Relativo",
     "relative end date": "Fecha de fin relativa",
     "relative start date": "Fecha de inicio relativa",

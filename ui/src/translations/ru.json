@@ -402,6 +402,7 @@
       "move_line": "Переместить строку",
       "reset_fontsize": "Сбросить размер шрифта",
       "save_flow": "Сохранить flow",
+      "toggle_ai_agent": "Переключить AI agent",
       "trigger_autocompletion": "Запустить автозаполнение",
       "uncomment": "Раскомментировать"
     },
@@ -1036,6 +1037,7 @@
     "read-more": "Узнать больше о",
     "readonly property": "Свойство только для чтения",
     "refresh": "Обновить",
+    "reject": "Отклонить",
     "relative": "Относительный",
     "relative end date": "Относительная дата окончания",
     "relative start date": "Относительная дата начала",

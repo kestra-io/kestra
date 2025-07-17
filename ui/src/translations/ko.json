@@ -402,6 +402,7 @@
       "move_line": "줄 이동",
       "reset_fontsize": "글꼴 크기 재설정",
       "save_flow": "Flow 저장",
+      "toggle_ai_agent": "AI 에이전트 전환",
       "trigger_autocompletion": "자동 완성 트리거",
       "uncomment": "주석 해제"
     },
@@ -1036,6 +1037,7 @@
     "read-more": "자세히 알아보기",
     "readonly property": "읽기 전용 속성",
     "refresh": "새로 고침",
+    "reject": "거부",
     "relative": "상대적",
     "relative end date": "상대적 종료 날짜",
     "relative start date": "상대적 시작 날짜",

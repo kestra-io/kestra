@@ -82,10 +82,6 @@ public class ExecutionService {
     private MetricRepositoryInterface metricRepository;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    protected QueueInterface<Execution> executionQueue;
-
-    @Inject
     private FlowInputOutput flowInputOutput;
 
     @Inject

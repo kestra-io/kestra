@@ -99,10 +99,15 @@
     :deep(.el-card__header) {
         font-size: 12px;
         line-height: 1;
+        border-bottom: none;
 
         .title :not(:first-child) {
             margin-left: 6px;
         }
+    }
+
+    :deep(.el-card__footer) {
+        border-top: none;
     }
 
     .loading-text {

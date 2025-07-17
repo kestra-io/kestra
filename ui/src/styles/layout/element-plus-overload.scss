@@ -22,6 +22,9 @@
         --el-button-border-color: var(--ks-button-background-primary);
         --el-button-hover-bg-color: var(--ks-button-background-primary-hover);
         --el-button-active-bg-color: var(--ks-button-background-primary-active);
+        --el-button-disabled-text-color: var(--ks-content-inactive);
+        --el-button-disabled-bg-color: var(--ks-button-background-inactive);
+        --el-button-disabled-border-color: var(--ks-button-background-inactive);
     }
 
     &.el-button--success {

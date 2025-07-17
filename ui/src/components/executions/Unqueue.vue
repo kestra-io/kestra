@@ -33,7 +33,7 @@
                         <span v-html="item.label" />
                     </template>
                 </el-option>
-            </el-select>           
+            </el-select>
         </template>
 
         <template #footer>
@@ -50,6 +50,8 @@
 
 <script>
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
@@ -75,8 +77,8 @@
         },
         methods: {
             unqueue() {
-                this.$store
-                    .dispatch("execution/unqueue", {
+                this.executionsStore
+                    .unqueue({
                         id: this.execution.id,
                         state: this.selectedStatus
                     })
@@ -88,11 +90,11 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("execution", ["flow"]),
+            ...mapStores(useExecutionsStore),
             states() {
-                return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({                
+                return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
                     code: value,
-                    label: this.$t("unqueue as", {status: value}),                
+                    label: this.$t("unqueue as", {status: value}),
                 }));
             },
             enabled() {

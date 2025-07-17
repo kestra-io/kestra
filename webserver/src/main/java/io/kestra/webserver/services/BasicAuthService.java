@@ -1,5 +1,7 @@
 package io.kestra.webserver.services;
 
+import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
+
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
@@ -23,13 +25,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 
-// Force an eager crash of the app in case of misconfigured basic authentication (e.g. invalid username)
 @Context
 @Singleton
 @Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
 public class BasicAuthService {
     public static final String BASIC_AUTH_SETTINGS_KEY = "kestra.server.basic-auth";
+    public static final String BASIC_AUTH_ERROR_CONFIG = "kestra.server.authentication-configuration-error";
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$");
     private static final int EMAIL_PASSWORD_MAX_LEN = 256;
 
@@ -37,6 +40,7 @@ public class BasicAuthService {
     private SettingRepositoryInterface settingRepository;
 
     @Inject
+    @Setter
     private BasicAuthConfiguration basicAuthConfiguration;
 
     @Inject
@@ -48,24 +52,12 @@ public class BasicAuthService {
     public BasicAuthService() {}
 
     @PostConstruct
-    private void init() {
-        Optional<Setting> persistedConfig = settingRepository.findByKey(BASIC_AUTH_SETTINGS_KEY);
-        if (persistedConfig.isPresent()) {
+    protected void init() {
+        if (basicAuthConfiguration == null ||
+            (StringUtils.isBlank(basicAuthConfiguration.getUsername()) && StringUtils.isBlank(basicAuthConfiguration.getPassword()))){
             return;
         }
-        if (basicAuthConfiguration == null){
-            settingRepository.save(Setting.builder()
-                .key(BASIC_AUTH_SETTINGS_KEY)
-                .value(new BasicAuthConfiguration())
-                .build());
-        } else if (basicAuthConfiguration.getUsername() == null || basicAuthConfiguration.getPassword() == null){
-            settingRepository.save(Setting.builder()
-                .key(BASIC_AUTH_SETTINGS_KEY)
-                .value(basicAuthConfiguration)
-                .build());
-        } else {
-            save(basicAuthConfiguration);
-        }
+        save(basicAuthConfiguration);
     }
 
     public void save(BasicAuthConfiguration basicAuthConfiguration) {
@@ -123,7 +115,7 @@ public class BasicAuthService {
     public SaltedBasicAuthConfiguration configuration() {
         return settingRepository.findByKey(BASIC_AUTH_SETTINGS_KEY)
             .map(Setting::getValue)
-            .map(value -> JacksonMapper.toMap(value, SaltedBasicAuthConfiguration.class))
+            .map(value -> JacksonMapper.ofJson(false).convertValue(value, SaltedBasicAuthConfiguration.class))
             .orElse(null);
     }
 

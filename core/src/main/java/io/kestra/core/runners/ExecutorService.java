@@ -263,8 +263,9 @@ public class ExecutorService {
                 if (workerTaskResult.getTaskRun().getState().isTerminated()) {
                     try {
                         // as flowable tasks can save outputs during iterative execution, we must merge the maps here
-                        Map<String, Object> outputs = MapUtils.merge(workerTaskResult.getTaskRun().getOutputs(), flowableParent.outputs(runContext).toMap());
-                        Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputs);
+                        Output outputs = flowableParent.outputs(runContext);
+                        Map<String, Object> outputMap = MapUtils.merge(workerTaskResult.getTaskRun().getOutputs(), outputs == null ? null : outputs.toMap());
+                        Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputMap);
                         return Optional.of(new WorkerTaskResult(workerTaskResult
                             .getTaskRun()
                             .withOutputs(variables)

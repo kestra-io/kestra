@@ -115,6 +115,7 @@
     import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
+    import {useExecutionsStore} from "../../stores/executions";
     import ForEachStatus from "../executions/ForEachStatus.vue";
     import TaskRunLine from "../executions/TaskRunLine.vue";
     import FlowUtils from "../../utils/flowUtils";
@@ -276,8 +277,7 @@
                     }
 
                     if (!this.targetFlow) {
-                        this.flow = await this.$store.dispatch(
-                            "execution/loadFlowForExecution",
+                        this.flow = await this.executionsStore.loadFlowForExecution(
                             {
                                 namespace: newExecution.namespace,
                                 flowId: newExecution.flowId,
@@ -325,7 +325,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore),
+            ...mapStores(useCoreStore, useExecutionsStore),
             Download() {
                 return Download
             },
@@ -479,8 +479,8 @@
                     this.showLogs
             },
             followExecution(executionId) {
-                this.$store
-                    .dispatch("execution/followExecution", {id: executionId})
+                this.executionsStore
+                    .followExecution({id: executionId})
                     .then(sse => {
                         this.executionSSE = sse;
                         this.executionSSE.onmessage = executionEvent => {
@@ -499,8 +499,8 @@
                     });
             },
             followLogs(executionId) {
-                this.$store
-                    .dispatch("execution/followLogs", {id: executionId})
+                this.executionsStore
+                    .followLogs({id: executionId})
                     .then(sse => {
                         this.logsSSE = sse;
 
@@ -604,7 +604,7 @@
                     return;
                 }
 
-                this.$store.dispatch("execution/loadLogs", {
+                this.executionsStore.loadLogs({
                     executionId,
                     params: {
                         minLevel: this.level

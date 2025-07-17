@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_SETTINGS_KEY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -53,30 +54,29 @@ class BasicAuthServiceTest {
 
     @AfterEach
     void stopApp() {
-        settingRepositoryInterface.delete(Setting.builder().key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY).build());
-
+        deleteSetting();
         ctx.stop();
     }
 
     @Test
     void isBasicAuthInitialized(){
         settingRepositoryInterface.save(Setting.builder()
-            .key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY)
+            .key(BASIC_AUTH_SETTINGS_KEY)
             .value(new BasicAuthConfiguration("username", "password", null, null))
             .build());
         assertTrue(basicAuthService.isBasicAuthInitialized());
 
-        settingRepositoryInterface.delete(Setting.builder().key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY).build());
+        deleteSetting();
         assertFalse(basicAuthService.isBasicAuthInitialized());
 
         settingRepositoryInterface.save(Setting.builder()
-            .key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY)
+            .key(BASIC_AUTH_SETTINGS_KEY)
             .value(new BasicAuthConfiguration("username", null, null, null))
             .build());
         assertFalse(basicAuthService.isBasicAuthInitialized());
 
         settingRepositoryInterface.save(Setting.builder()
-            .key(BasicAuthService.BASIC_AUTH_SETTINGS_KEY)
+            .key(BASIC_AUTH_SETTINGS_KEY)
             .value(new BasicAuthConfiguration(null, null, null, null))
             .build());
         assertFalse(basicAuthService.isBasicAuthInitialized());
@@ -112,7 +112,8 @@ class BasicAuthServiceTest {
         );
         assertThat(actualConfiguration).isEqualTo(applicationYamlConfiguration);
 
-        Optional<Setting> maybeSetting = settingRepositoryInterface.findByKey(BasicAuthService.BASIC_AUTH_SETTINGS_KEY);
+        Optional<Setting> maybeSetting = settingRepositoryInterface.findByKey(
+            BASIC_AUTH_SETTINGS_KEY);
         assertThat(maybeSetting.isPresent()).isTrue();
         assertThat(maybeSetting.get().getValue()).isEqualTo(JacksonMapper.toMap(applicationYamlConfiguration));
     }
@@ -136,5 +137,12 @@ class BasicAuthServiceTest {
                 return false;
             }
         }, Duration.ofMillis(100), Duration.ofSeconds(10));
+    }
+
+    private void deleteSetting() {
+        if (settingRepositoryInterface.findByKey(BASIC_AUTH_SETTINGS_KEY).isPresent()){
+            settingRepositoryInterface.delete(
+                Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build());
+        }
     }
 }

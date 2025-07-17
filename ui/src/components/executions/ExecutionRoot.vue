@@ -28,6 +28,7 @@
 
     import ExecutionMetric from "./ExecutionMetric.vue";
     import throttle from "lodash/throttle";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         mixins: [RouteContext],
@@ -41,14 +42,14 @@
                 previousExecutionId: undefined,
                 throttledExecutionUpdate: throttle(function (executionEvent) {
                     let execution = JSON.parse(executionEvent.data);
+                    const flow = this.executionsStore.flow
 
-                    if ((!this.flow ||
-                        execution.flowId !== this.flow.id ||
-                        execution.namespace !== this.flow.namespace ||
-                        execution.flowRevision !== this.flow.revision)
+                    if ((!flow ||
+                        execution.flowId !== flow.id ||
+                        execution.namespace !== flow.namespace ||
+                        execution.flowRevision !== flow.revision)
                     ) {
-                        this.$store.dispatch(
-                            "execution/loadFlowForExecutionByExecutionId",
+                        this.executionsStore.loadFlowForExecutionByExecutionId(
                             {
                                 id: execution.id,
                                 revision: this.$route.query.revision
@@ -56,7 +57,7 @@
                         );
                     }
 
-                    this.$store.commit("execution/setExecution", execution);
+                    this.executionsStore.execution = execution;
                 }, 500)
             };
         },
@@ -74,15 +75,15 @@
         },
         watch: {
             $route(newValue, oldValue) {
-                this.$store.commit("execution/setTaskRun", undefined);
+                this.executionsStore.taskRun = undefined;
                 if (oldValue.name === newValue.name && this.previousExecutionId !== this.$route.params.id) {
                     this.follow()
                 }
                 // if we change the execution id, we need to close the sse
-                if (this.execution && this.$route.params.id != this.execution.id) {
+                if (this.executionsStore.execution && this.$route.params.id != this.executionsStore.execution.id) {
                     this.closeSSE();
                     window.removeEventListener("popstate", this.follow)
-                    this.$store.commit("execution/setExecution", undefined);
+                    this.executionsStore.execution = undefined;
                     this.$store.commit("flow/setFlow", undefined);
                     this.$store.commit("flow/setFlowGraph", undefined);
                 }
@@ -92,8 +93,7 @@
             follow() {
                 this.closeSSE();
                 this.previousExecutionId = this.$route.params.id;
-                this.$store
-                    .dispatch("execution/followExecution", this.$route.params)
+                this.executionsStore.followExecution(this.$route.params)
                     .then(sse => {
                         this.sse = sse;
                         this.sse.onmessage = (executionEvent) => {
@@ -114,7 +114,7 @@
                         // we can safely assume that the error is a 404
                         // if execution is not defined
                         this.sse.onerror = () => {
-                            if (!this.execution) {
+                            if (!this.executionsStore.execution) {
                                 this.coreStore.message = {
                                     variant: "error",
                                     title: this.$t("error"),
@@ -181,10 +181,8 @@
             },
         },
         computed: {
-            // ...mapState("flow", ["flow", "revisions"]),
-            ...mapState("execution", ["execution", "flow"]),
             ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore),
+            ...mapStores(useCoreStore, useExecutionsStore),
             tabs() {
                 return this.getTabs();
             },
@@ -233,22 +231,28 @@
                 };
             },
             isAllowedTrigger() {
-                return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
+                return this.user
+                    && this.executionsStore.execution
+                    && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.executionsStore.execution.namespace);
             },
             isAllowedEdit() {
-                return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
+                return this.user
+                    && this.executionsStore.execution
+                    && this.user.isAllowed(permission.FLOW, action.UPDATE, this.executionsStore.execution.namespace);
             },
             canDelete() {
-                return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace);
+                return this.user
+                    && this.executionsStore.execution
+                    && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.executionsStore.execution.namespace);
             },
             ready() {
-                return this.execution !== undefined;
+                return this.executionsStore.execution !== undefined;
             }
         },
         beforeUnmount() {
             this.closeSSE();
             window.removeEventListener("popstate", this.follow)
-            this.$store.commit("execution/setExecution", undefined);
+            this.executionsStore.execution = undefined;
             this.$store.commit("flow/setFlow", undefined);
             this.$store.commit("flow/setFlowGraph", undefined);
         }

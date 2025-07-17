@@ -2,8 +2,8 @@ package io.kestra.webserver.filter;
 
 import io.kestra.core.utils.AuthUtils;
 import io.kestra.webserver.services.BasicAuthService;
+import io.kestra.webserver.services.BasicAuthService.SaltedBasicAuthConfiguration;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
@@ -18,7 +18,6 @@ import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.RouteMatchUtils;
 import jakarta.inject.Inject;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
 
 import java.util.Base64;
 import java.util.Collection;
@@ -47,7 +46,13 @@ public class AuthenticationFilter implements HttpServerFilter {
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
-        return Mono.fromCallable(basicAuthService::configuration)
+        return Mono.fromCallable(() -> {
+                SaltedBasicAuthConfiguration configuration = basicAuthService.configuration();
+                if (configuration == null ){
+                    configuration = new SaltedBasicAuthConfiguration();
+                }
+                return configuration;
+            })
             .subscribeOn(Schedulers.boundedElastic())
             .flux()
             .flatMap(basicAuthConfiguration -> {

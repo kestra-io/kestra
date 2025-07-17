@@ -1,5 +1,7 @@
 package io.kestra.webserver.filter;
 
+import io.kestra.core.models.Setting;
+import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
@@ -12,6 +14,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
+import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_SETTINGS_KEY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -27,8 +30,19 @@ class AuthenticationFilterTest {
     @Inject
     private AuthenticationFilter filter;
 
+    @Inject
+    private SettingRepositoryInterface settingRepository;
+
     @Test
     void testConfigEndpointAlwaysOpen() {
+        var response =  client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+    }
+
+    @Test
+    void shouldWorkWithoutPersistedConfiguration() {
+        settingRepository.delete(Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build());
         var response =  client.toBlocking()
             .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());

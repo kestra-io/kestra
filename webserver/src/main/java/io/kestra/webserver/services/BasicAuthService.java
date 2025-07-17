@@ -179,7 +179,7 @@ public class BasicAuthService {
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = true)
     public static class SaltedBasicAuthConfiguration extends BasicAuthConfiguration {
-        private final String salt;
+        private String salt;
 
         public SaltedBasicAuthConfiguration(String salt, BasicAuthConfiguration basicAuthConfiguration) {
             super(basicAuthConfiguration);
@@ -187,6 +187,10 @@ public class BasicAuthService {
                 ? AuthUtils.generateSalt()
                 : salt;
             this.password = AuthUtils.encodePassword(this.salt, basicAuthConfiguration.getPassword());
+        }
+
+        public SaltedBasicAuthConfiguration() {
+            super();
         }
     }
 }

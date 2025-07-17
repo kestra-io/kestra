@@ -362,7 +362,8 @@
     "triggerflow disabled": "Trigger is disabled from flow definition",
     "conditions": "conditions",
     "taskruns": "Task Runs",
-    "Fold auto": "Editor: automatic fold of multilines",
+    "Fold auto": "Editor: automatic fold of multi-lines",
+    "Hover description": "Editor: Show description of field when hovering on key or value",
     "Fold content lines": "Fold multiline strings",
     "Unfold content lines": "Unfold multiline strings",
     "Total": "Total",
@@ -782,6 +783,7 @@
             "logs_font_size": "Logs Font Size",
             "editor_font_family": "Editor Font Family",
             "editor_folding_stratgy": "Automatic Code Folding in the Editor",
+            "editor_hover_description": "Hover on property to see description",
             "environment_name": "Environment Name",
             "environment_color": "Environment Color",
             "chart_color_scheme": {

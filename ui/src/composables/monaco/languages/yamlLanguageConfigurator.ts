@@ -37,7 +37,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
     async configureLanguage(pluginsStore: ReturnType<typeof usePluginsStore>) {
         configureMonacoYaml(monaco, {
             enableSchemaRequest: true,
-            hover: true,
+            hover: localStorage.getItem("hoverTextEditor") === "true",
             completion: true,
             validate: true,
             format: true,

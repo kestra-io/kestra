@@ -22,6 +22,7 @@ dependencies {
     def opensearchRestVersion = "3.1.0"
     def flyingSaucerVersion = "9.13.0"
     def jacksonVersion = "2.19.1"
+    def jugVersion = "5.1.0"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
@@ -57,6 +58,7 @@ dependencies {
         api("com.fasterxml.jackson.datatype:jackson-datatype-guava:$jacksonVersion")
         api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
         api("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion")
+        api("com.fasterxml.uuid:java-uuid-generator:$jugVersion")
         // issue with the Docker lib having a too old version for the k8s extension
         api("org.apache.commons:commons-compress:1.27.1")
         // Kafka

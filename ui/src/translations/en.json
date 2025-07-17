@@ -1228,7 +1228,6 @@
       "command_palette": "Show command palette",
       "save_flow": "Save flow",
       "execute_flow": "Execute flow",
-      "toggle_ai_agent": "Toggle AI agent",
       "move_line": "Move line",
       "duplicate_cursor": "Duplicate cursor",
       "fold_unfold": "Fold/Unfold code",
@@ -1440,7 +1439,6 @@
     "submit": "Submit",
     "to toggle": "to toggle",
     "accept": "Accept",
-    "reject": "Reject",
     "last modified": "Last modified"
   }
 }

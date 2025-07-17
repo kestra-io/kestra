@@ -1,6 +1,7 @@
 package io.kestra.webserver.services;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
@@ -10,8 +11,9 @@ import io.kestra.webserver.models.events.Event;
 import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
+import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -19,15 +21,24 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_ERROR_CONFIG;
 import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_SETTINGS_KEY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @WireMockTest(httpPort = 28181)
 class BasicAuthServiceTest {
+
+    public static final String PASSWORD = "Password123";
+    public static final String USER_NAME = "user@kestra.io";
+
     private BasicAuthService basicAuthService;
 
     private BasicAuthService.BasicAuthConfiguration basicAuthConfiguration;
@@ -88,20 +99,66 @@ class BasicAuthServiceTest {
 
         awaitOssAuthEventApiCall("admin@kestra.io");
     }
+    @MethodSource("getConfigs")
+    @ParameterizedTest
+    void should_no_save_config_at_init(BasicAuthConfiguration config){
+        deleteSetting();
+        basicAuthService.setBasicAuthConfiguration(config);
+        basicAuthService.init();
+        assertThat(basicAuthService.configuration()).isNull();
+    }
+
+    static Stream<BasicAuthConfiguration> getConfigs() {
+        return Stream.of(
+            null,
+            new BasicAuthConfiguration(null, null),
+            new BasicAuthConfiguration(null, PASSWORD),
+            new BasicAuthConfiguration("", PASSWORD),
+            new BasicAuthConfiguration(USER_NAME, null),
+            new BasicAuthConfiguration(USER_NAME, "")
+        );
+    }
 
     @Test
-    void secure() throws TimeoutException {
-        IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> basicAuthService.save(basicAuthConfiguration.withUsernamePassword("not-an-email", "password"))
+    void saveValidAuthConfig() throws TimeoutException {
+        basicAuthService.save(basicAuthConfiguration.withUsernamePassword(USER_NAME, PASSWORD));
+        awaitOssAuthEventApiCall(USER_NAME);
+    }
+
+    @Test
+    void should_throw_exception_when_saving_invalid_config() {
+        assertThrows(ValidationErrorException.class, () -> basicAuthService.save(new BasicAuthConfiguration(null, null)));
+    }
+
+    @MethodSource("invalidConfigs")
+    @ParameterizedTest
+    void should_save_error_when_validation_errors(BasicAuthConfiguration config, String errorMessage){
+        deleteSetting();
+        basicAuthService.setBasicAuthConfiguration(config);
+        basicAuthService.init();
+        List<String> errors = basicAuthService.validationErrors();
+        assertThat(errors).containsExactly(errorMessage);
+    }
+
+    static Stream<Arguments> invalidConfigs() {
+        return Stream.of(
+            Arguments.of(new BasicAuthConfiguration("username", PASSWORD), "Invalid username for Basic Authentication. Please provide a valid email address."),
+            Arguments.of(new BasicAuthConfiguration(null, PASSWORD), "No user name set for Basic Authentication. Please provide a user name."),
+            Arguments.of(new BasicAuthConfiguration(USER_NAME + "a".repeat(244), PASSWORD), "The length of email or password should not exceed 256 characters."),
+            Arguments.of(new BasicAuthConfiguration(USER_NAME, "pas"), "Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number"),
+            Arguments.of(new BasicAuthConfiguration(USER_NAME, null), "No password set for Basic Authentication. Please provide a password."),
+            Arguments.of(new BasicAuthConfiguration(USER_NAME, PASSWORD + "a".repeat(246)), "The length of email or password should not exceed 256 characters.")
+
         );
+    }
 
-        assertThat(illegalArgumentException.getMessage()).isEqualTo("Invalid username for Basic Authentication. Please provide a valid email address.");
-
-        assertConfigurationMatchesApplicationYaml();
-
-        basicAuthService.save(basicAuthConfiguration.withUsernamePassword("some@email.com", "password"));
-        awaitOssAuthEventApiCall("some@email.com");
+    @Test
+    void should_remove_validation_error_when_init_with_correct_config(){
+        deleteSetting();
+        settingRepositoryInterface.save(Setting.builder().key(BASIC_AUTH_ERROR_CONFIG).value(List.of("errors")).build());
+        basicAuthService.init();
+        List<String> errors = basicAuthService.validationErrors();
+        assertThat(errors).isEmpty();
     }
 
     private void assertConfigurationMatchesApplicationYaml() {
@@ -136,7 +193,7 @@ class BasicAuthServiceTest {
             } catch (AssertionError e) {
                 return false;
             }
-        }, Duration.ofMillis(100), Duration.ofSeconds(10));
+        }, Duration.ofMillis(100), Duration.ofSeconds(20));
     }
 
     private void deleteSetting() {

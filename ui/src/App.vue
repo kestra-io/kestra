@@ -97,17 +97,17 @@
                 document.title = document.title.replace(/( - .+)?$/, envSuffix);
             },
             async loadGeneralResources() {
+                const config = await this.miscStore.loadConfigs();
                 const uid = localStorage.getItem("uid") || (() => {
                     const newUid = Utils.uid();
                     localStorage.setItem("uid", newUid);
                     return newUid;
                 })();
 
-                if (!BasicAuth.isLoggedIn()) {
+                if (!config.isBasicAuthInitialized || !BasicAuth.isLoggedIn()) {
                     return null;
                 }
 
-                const config = await this.miscStore.loadConfigs();
                 this.pluginsStore.fetchIcons()
 
                 await this.docStore.initResourceUrlTemplate(config.version);

@@ -408,12 +408,6 @@
                     title: this.$t("flows"),
                 };
             },
-            endDate() {
-                return new Date();
-            },
-            startDate() {
-                return this.$moment(this.endDate).add(-30, "days").toDate();
-            },
             canCheck() {
                 return this.canRead || this.canDelete || this.canUpdate;
             },
@@ -468,7 +462,6 @@
             );
             const query = {...to.query};
             let queryHasChanged = false;
-
             const queryKeys = Object.keys(query);
             if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
                 query["filters[namespace][PREFIX]"] = defaultNamespace;
@@ -717,10 +710,10 @@
                     e => e.flowId === row.id && e.namespace === row.namespace
                 ) ?? null;
             },
-            loadQuery(base, ignoreDateFilters = true) {
+            loadQuery(base) {
                 let queryFilter = this.queryWithFilter(
                     undefined,
-                    ignoreDateFilters ? ["startDate", "endDate", "timeRange"] : []
+                    []
                 );
 
                 if (this.namespace) {

@@ -106,7 +106,7 @@
         const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
         // Default to the last 7 days if no time range is set
-        if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
+        if (route.name !== "flows/list" && !Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
             router.push({query: {...route.query, "filters[timeRange][EQUALS]": "PT168H"}});
         }
 

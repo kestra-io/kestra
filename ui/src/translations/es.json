@@ -1248,6 +1248,7 @@
         "survey": "Cuéntanos más",
         "user": "Crear una cuenta"
       },
+      "troubleshooting": "¿Olvidaste la contraseña?",
       "validation": {
         "email_invalid": "Correo electrónico no válido",
         "email_required": "Se requiere el email",

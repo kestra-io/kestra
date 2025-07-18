@@ -1248,6 +1248,7 @@
         "survey": "告诉我们更多信息",
         "user": "创建账户"
       },
+      "troubleshooting": "忘记密码？",
       "validation": {
         "email_invalid": "无效的电子邮件",
         "email_required": "需要提供电子邮件",

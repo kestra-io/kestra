@@ -1248,6 +1248,7 @@
         "survey": "Расскажите подробнее",
         "user": "Создать аккаунт"
       },
+      "troubleshooting": "Забыли пароль?",
       "validation": {
         "email_invalid": "Недействительный email",
         "email_required": "Требуется Email",

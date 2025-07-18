@@ -1248,6 +1248,7 @@
         "survey": "Conte-nos mais",
         "user": "Criar uma conta"
       },
+      "troubleshooting": "Esqueceu a Senha?",
       "validation": {
         "email_invalid": "E-mail inválido",
         "email_required": "O e-mail é obrigatório",

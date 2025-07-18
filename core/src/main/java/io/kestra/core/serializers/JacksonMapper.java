@@ -107,6 +107,11 @@ public final class JacksonMapper {
     public static List<Object> toList(String json) throws JsonProcessingException {
         return MAPPER.readValue(json, LIST_TYPE_REFERENCE);
     }
+
+    public static List<String> toList(Object object) {
+        return MAPPER.convertValue(object, new TypeReference<>() {});
+    }
+
     public static Object toObject(String json) throws JsonProcessingException {
         return MAPPER.readValue(json, OBJECT_TYPE_REFERENCE);
     }

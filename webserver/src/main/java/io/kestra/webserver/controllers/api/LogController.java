@@ -30,6 +30,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.io.InputStream;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -157,6 +158,7 @@ public class LogController {
                 // consume in realtime
                 logStreamingService.registerSubscriber(executionId, subscriberId, emitter, levels);
             }, FluxSink.OverflowStrategy.BUFFER)
+            .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
             .doFinally(ignored -> logStreamingService.unregisterSubscriber(executionId, subscriberId));
     }
 

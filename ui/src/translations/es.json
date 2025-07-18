@@ -10,6 +10,7 @@
     "Finish": "Finalizar",
     "Fold auto": "Editor: plegado automático de multilíneas",
     "Fold content lines": "Plegar cadenas multilínea",
+    "Hover description": "Editor: Mostrar descripción del campo al pasar el cursor sobre key o value",
     "Language": "Idioma",
     "Next step": "Siguiente paso",
     "Per page": "por página",
@@ -124,6 +125,7 @@
     "cannot swap tasks": "No se pueden intercambiar las tasks",
     "change execution state confirm": "¿Está seguro de que desea cambiar el estado de la ejecución <code>{id}</code>?",
     "change execution state done": "Estado de ejecución actualizado",
+    "change queue confirm": "¿Está seguro de que desea cambiar el estado de la cola para la ejecución <code>{id}</code>?<br/>",
     "change state": "Cambiar estado",
     "change state confirm": "¿Está seguro de que desea cambiar el estado de ejecución de la tarea <code>{task}</code> en la ejecución <code>{id}</code>?",
     "change state current state": "Estado actual es:",
@@ -268,7 +270,6 @@
     },
     "days": "Días",
     "debug": "Depuración",
-    "decline": "Rechazar",
     "default": "Predeterminado",
     "delete": "Eliminar",
     "delete backfill": "Eliminar el backfill",
@@ -401,6 +402,7 @@
       "move_line": "Mover línea",
       "reset_fontsize": "Restablecer tamaño de fuente",
       "save_flow": "Guardar flow",
+      "toggle_ai_agent": "Alternar agente de AI",
       "trigger_autocompletion": "Activar autocompletado",
       "uncomment": "Descomentar"
     },
@@ -600,6 +602,7 @@
         },
         "empty": "Todavía no has guardado ninguna búsqueda.",
         "label": "Búsquedas guardadas",
+        "name_already_used": "La etiqueta de búsqueda ya está en uso.",
         "remove": "Eliminar",
         "tooltip": "No puedes guardar criterios de búsqueda vacíos."
       },
@@ -1035,6 +1038,7 @@
     "read-more": "Leer más sobre",
     "readonly property": "Propiedad de solo lectura",
     "refresh": "Actualizar",
+    "reject": "Rechazar",
     "relative": "Relativo",
     "relative end date": "Fecha de fin relativa",
     "relative start date": "Fecha de inicio relativa",
@@ -1175,6 +1179,7 @@
             "editor_folding_stratgy": "Plegado Automático de Código en el Editor",
             "editor_font_family": "Familia de Fuente del Editor",
             "editor_font_size": "Tamaño de Fuente del Editor",
+            "editor_hover_description": "Pasa el cursor sobre la propiedad para ver la descripción",
             "environment_color": "Color del Entorno",
             "environment_name": "Nombre del Entorno",
             "logs_font_size": "Tamaño de Fuente de Logs",
@@ -1210,13 +1215,13 @@
         "complete": "Iniciar Kestra UI",
         "config": "Validar Configuración",
         "survey": "Cuéntanos más",
-        "user": "Crea tu primer usuario"
+        "user": "Crea tu cuenta"
       },
       "subtitles": {
         "complete": "¡Configuración completada con éxito!",
         "config": "Aquí están los detalles de tu configuración",
         "survey": "Ayúdanos a mejorar Kestra Open Source Edition",
-        "user": "Configura tu instancia creando tu primer usuario"
+        "user": "Configura tu instancia creando una cuenta"
       },
       "success": {
         "subtitle": "¡Todo listo!",
@@ -1241,8 +1246,9 @@
       },
       "titles": {
         "survey": "Cuéntanos más",
-        "user": "Crear primer usuario"
+        "user": "Crear una cuenta"
       },
+      "troubleshooting": "¿Olvidaste la contraseña?",
       "validation": {
         "email_invalid": "Correo electrónico no válido",
         "email_required": "Se requiere el email",
@@ -1380,9 +1386,11 @@
       "warning": "Podría llevar a ejecuciones concurrentes para el mismo trigger y debe considerarse como una opción de último recurso."
     },
     "unqueue": "Desencolar",
+    "unqueue as": "Desencolar como <code>{status}</code>",
     "unqueue confirm": "¿Está seguro de descolar la ejecución <code>{id}</code>?",
     "unqueue done": "La ejecución está descolada",
     "unqueue title": "Desencolar ejecución <code>{id}</code>.<br/>Tenga en cuenta que no respetará el límite de concurrencia del flow, por lo que podrían estar ejecutándose más ejecuciones de las permitidas.",
+    "unqueue title multiple": "¿Está seguro de que desea descolar <code>{count}</code> ejecuciones?<br/><br/>Tenga en cuenta que no respetará el límite de concurrencia del flow, por lo que podrían estar ejecutándose más ejecuciones de las permitidas.",
     "unsaved changed ?": "Tienes cambios no guardados, ¿quieres salir de esta página?",
     "up trend": "Aumentando",
     "update": "Actualizar",

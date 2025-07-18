@@ -392,7 +392,7 @@
                         },
                     });
 
-                    if (localStorage.getItem("autofoldTextEditor") === "1") {
+                    if (localStorage.getItem("autofoldTextEditor") === "true") {
                         this.autoFold(true);
                     }
                 }

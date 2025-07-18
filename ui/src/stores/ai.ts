@@ -1,19 +1,16 @@
-import type {Module} from "vuex";
-
 import axios from "axios";
-
+import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
 
-const ai: Module<any, unknown> = {
-    namespaced: true,
+export const useAiStore = defineStore("ai", {
     actions: {
-        async generateFlow(_, {userPrompt, flowYaml}: {userPrompt: string, flowYaml: string}) {
-            return (await axios.post(`${apiUrl(this)}/ai/generate/flow`, {
+        async generateFlow({userPrompt, flowYaml}: {userPrompt: string, flowYaml: string}) {
+            const response = await axios.post(`${apiUrl(this.vuexStore)}/ai/generate/flow`, {
                 userPrompt,
                 flowYaml
-            })).data;
+            });
+            
+            return response.data;
         }
-    },
-};
-
-export default ai;
+    }
+});

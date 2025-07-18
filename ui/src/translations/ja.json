@@ -10,6 +10,7 @@
     "Finish": "完了",
     "Fold auto": "エディター：複数行の自動折りたたみ",
     "Fold content lines": "複数行文字列を折りたたむ",
+    "Hover description": "エディター: key または value にホバーするとフィールドの説明を表示",
     "Language": "言語",
     "Next step": "次のステップ",
     "Per page": "ページごと",
@@ -124,6 +125,7 @@
     "cannot swap tasks": "taskを入れ替えできません",
     "change execution state confirm": "実行<code>{id}</code>の状態を変更してもよろしいですか？",
     "change execution state done": "実行状態が更新されました",
+    "change queue confirm": "実行<code>{id}</code>のキュー状態を変更してもよろしいですか？<br/>",
     "change state": "状態を変更",
     "change state confirm": "タスク <code>{task}</code> の実行 <code>{id}</code> のタスク実行状態を変更してもよろしいですか？",
     "change state current state": "現在のステータスは:",
@@ -268,7 +270,6 @@
     },
     "days": "日数",
     "debug": "デバッグ",
-    "decline": "辞退",
     "default": "デフォルト",
     "delete": "削除",
     "delete backfill": "backfillを削除",
@@ -401,6 +402,7 @@
       "move_line": "行を移動",
       "reset_fontsize": "フォントサイズをリセット",
       "save_flow": "フローを保存",
+      "toggle_ai_agent": "AIエージェントを切り替える",
       "trigger_autocompletion": "オートコンプリートをトリガー",
       "uncomment": "コメント解除"
     },
@@ -600,6 +602,7 @@
         },
         "empty": "検索をまだ保存していません。",
         "label": "保存済み検索",
+        "name_already_used": "ラベルはすでに使用されています。",
         "remove": "削除",
         "tooltip": "空の検索条件を保存することはできません。"
       },
@@ -1035,6 +1038,7 @@
     "read-more": "続きを読む",
     "readonly property": "読み取り専用プロパティ",
     "refresh": "更新",
+    "reject": "拒否",
     "relative": "相対",
     "relative end date": "相対終了日",
     "relative start date": "相対開始日",
@@ -1175,6 +1179,7 @@
             "editor_folding_stratgy": "エディタでの自動コード折りたたみ",
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
+            "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
             "environment_color": "環境色",
             "environment_name": "環境名",
             "logs_font_size": "ログフォントサイズ",
@@ -1210,13 +1215,13 @@
         "complete": "Kestra UIを開始",
         "config": "設定を検証",
         "survey": "詳細を教えてください",
-        "user": "最初のユーザーを作成する"
+        "user": "アカウントを作成する"
       },
       "subtitles": {
         "complete": "セットアップが正常に完了しました！",
         "config": "こちらはあなたの設定の詳細です",
         "survey": "Kestra Open Source Edition の改善にご協力ください",
-        "user": "最初のユーザーを作成してインスタンスをセットアップする"
+        "user": "アカウントを作成してインスタンスをセットアップする"
       },
       "success": {
         "subtitle": "準備完了です！",
@@ -1241,8 +1246,9 @@
       },
       "titles": {
         "survey": "詳細を教えてください",
-        "user": "最初のユーザーを作成"
+        "user": "アカウントを作成"
       },
+      "troubleshooting": "パスワードをお忘れですか？",
       "validation": {
         "email_invalid": "無効なメールアドレス",
         "email_required": "メールが必要です",
@@ -1380,9 +1386,11 @@
       "warning": "これは同じtriggerに対する並行実行につながる可能性があり、最後の手段として考慮されるべきです。"
     },
     "unqueue": "キューから削除",
+    "unqueue as": "<code>{status}</code>としてキューから外す",
     "unqueue confirm": "実行 <code>{id}</code> をキューから外してもよろしいですか？",
     "unqueue done": "実行はキューから外されました",
     "unqueue title": "実行 <code>{id}</code> をキューから外します。<br/>ただし、flowの並行性制限には従わないため、許可された制限を超えて実行が行われる可能性があります。",
+    "unqueue title multiple": "<code>{count}</code>件の実行をキューから外してもよろしいですか？<br/><br/>flowの並行性制限を守らないため、許可された制限を超えて実行される可能性があります。",
     "unsaved changed ?": "保存されていない変更があります。このページを離れますか？",
     "up trend": "増加",
     "update": "更新",

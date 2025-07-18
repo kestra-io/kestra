@@ -10,6 +10,7 @@
     "Finish": "완료",
     "Fold auto": "편집기: 다중 라인 자동 접기",
     "Fold content lines": "다중 라인 문자열 접기",
+    "Hover description": "편집기: key 또는 value에 마우스를 올리면 필드 설명 표시",
     "Language": "언어",
     "Next step": "다음 단계",
     "Per page": "페이지당",
@@ -124,6 +125,7 @@
     "cannot swap tasks": "task를 교환할 수 없음",
     "change execution state confirm": "실행 <code>{id}</code>의 상태를 변경하시겠습니까?",
     "change execution state done": "실행 상태가 업데이트되었습니다",
+    "change queue confirm": "큐 상태를 실행 <code>{id}</code>에 대해 변경하시겠습니까?<br/>",
     "change state": "상태 변경",
     "change state confirm": "----------\n                \n정말로 실행 <code>{id}</code>에서 <code>{task}</code> task의 상태를 변경하시겠습니까?",
     "change state current state": "현재 상태는:",
@@ -268,7 +270,6 @@
     },
     "days": "일",
     "debug": "디버그",
-    "decline": "거부",
     "default": "기본값",
     "delete": "삭제",
     "delete backfill": "backfill 삭제",
@@ -401,6 +402,7 @@
       "move_line": "줄 이동",
       "reset_fontsize": "글꼴 크기 재설정",
       "save_flow": "Flow 저장",
+      "toggle_ai_agent": "AI 에이전트 전환",
       "trigger_autocompletion": "자동 완성 트리거",
       "uncomment": "주석 해제"
     },
@@ -600,6 +602,7 @@
         },
         "empty": "아직 검색을 저장하지 않았습니다.",
         "label": "저장된 검색",
+        "name_already_used": "이미 사용 중인 label입니다.",
         "remove": "제거",
         "tooltip": "빈 검색 기준을 저장할 수 없습니다."
       },
@@ -1035,6 +1038,7 @@
     "read-more": "자세히 알아보기",
     "readonly property": "읽기 전용 속성",
     "refresh": "새로 고침",
+    "reject": "거부",
     "relative": "상대적",
     "relative end date": "상대적 종료 날짜",
     "relative start date": "상대적 시작 날짜",
@@ -1175,6 +1179,7 @@
             "editor_folding_stratgy": "편집기에서 자동 코드 접기",
             "editor_font_family": "편집기 글꼴 패밀리",
             "editor_font_size": "편집기 글꼴 크기",
+            "editor_hover_description": "속성을 가리키면 설명이 표시됩니다.",
             "environment_color": "환경 색상",
             "environment_name": "환경 이름",
             "logs_font_size": "로그 글꼴 크기",
@@ -1210,13 +1215,13 @@
         "complete": "Kestra UI 시작",
         "config": "구성 유효성 검사",
         "survey": "자세히 알려주세요",
-        "user": "첫 번째 사용자 생성"
+        "user": "계정 생성"
       },
       "subtitles": {
         "complete": "설정이 성공적으로 완료되었습니다!",
         "config": "여기 귀하의 구성 세부 정보가 있습니다",
         "survey": "Kestra 오픈 소스 에디션 개선에 도움을 주세요",
-        "user": "첫 번째 사용자를 생성하여 인스턴스를 설정하세요."
+        "user": "계정을 생성하여 인스턴스를 설정하세요"
       },
       "success": {
         "subtitle": "모두 준비되었습니다!",
@@ -1241,8 +1246,9 @@
       },
       "titles": {
         "survey": "자세히 알려주세요",
-        "user": "첫 사용자 생성"
+        "user": "계정 생성"
       },
+      "troubleshooting": "비밀번호를 잊으셨습니까?",
       "validation": {
         "email_invalid": "유효하지 않은 이메일",
         "email_required": "이메일이 필요합니다",
@@ -1380,9 +1386,11 @@
       "warning": "이는 동일한 trigger에 대해 동시 실행을 초래할 수 있으며 최후의 수단으로 고려해야 합니다."
     },
     "unqueue": "대기열에서 제거",
+    "unqueue as": "<code>{status}</code>로 대기열에서 제거",
     "unqueue confirm": "실행 <code>{id}</code>의 대기열을 해제하시겠습니까?",
     "unqueue done": "실행이 대기열에서 제거되었습니다.",
     "unqueue title": "실행 <code>{id}</code>을(를) 대기열에서 제거합니다.<br/>이 작업은 flow 동시성 제한을 따르지 않으므로 허용된 제한보다 더 많은 실행이 진행될 수 있습니다.",
+    "unqueue title multiple": "<code>{count}</code>개의 실행을 대기열에서 제거하시겠습니까?<br/><br/>이 작업은 flow 동시성 제한을 따르지 않으므로 허용된 제한보다 더 많은 실행이 진행될 수 있습니다.",
     "unsaved changed ?": "저장되지 않은 변경 사항이 있습니다. 이 페이지를 떠나시겠습니까?",
     "up trend": "증가 중",
     "update": "업데이트",

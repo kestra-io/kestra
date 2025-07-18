@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -44,7 +45,14 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -57,6 +65,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import static io.kestra.core.models.flows.State.Type.*;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
@@ -682,9 +693,44 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(RUNNING));
 
+        DefaultRunContext runContext = runContextInitializer.forWorker((DefaultRunContext) workerTask.getRunContext(), workerTask);
+        Optional<String> hash = Optional.empty();
+        if (workerTask.getTask().getTaskCache() != null && workerTask.getTask().getTaskCache().getEnabled()) {
+            runContext.logger().debug("Task output caching is enabled for task '{}''", workerTask.getTask().getId());
+            hash = hashTask(runContext, workerTask.getTask());
+            if (hash.isPresent()) {
+                try {
+                    Optional<InputStream> cacheFile = runContext.storage().getCacheFile(hash.get(), workerTask.getTaskRun().getValue(), workerTask.getTask().getTaskCache().getTtl());
+                    if (cacheFile.isPresent()) {
+                        runContext.logger().info("Skipping task execution for task '{}' as there is an existing cache entry for it", workerTask.getTask().getId());
+                        try (ZipInputStream archive = new ZipInputStream(cacheFile.get())) {
+                            if (archive.getNextEntry() != null) {
+                                byte[] cache = archive.readAllBytes();
+                                Map<String, Object> outputMap = JacksonMapper.ofIon().readValue(cache, JacksonMapper.MAP_TYPE_REFERENCE);
+                                Variables variables = variablesService.of(StorageContext.forTask(workerTask.getTaskRun()), outputMap);
+
+                                TaskRunAttempt attempt = TaskRunAttempt.builder()
+                                    .state(new io.kestra.core.models.flows.State().withState(SUCCESS))
+                                    .workerId(this.id)
+                                    .build();
+                                List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
+                                TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts).withOutputs(variables).withState(SUCCESS);
+                                WorkerTaskResult workerTaskResult = new WorkerTaskResult(taskRun);
+                                this.workerTaskResultQueue.emit(workerTaskResult);
+                                return workerTaskResult;
+                            }
+                        }
+                    }
+                } catch (IOException | RuntimeException | QueueException e) {
+                    // in case of any exception, log an error and continue
+                    runContext.logger().error("Unexpected exception while loading the cache for task '{}', the task will be executed instead.", workerTask.getTask().getId(), e);
+                }
+            }
+        }
+
         try {
             // run
-            workerTask = this.runAttempt(workerTask);
+            workerTask = this.runAttempt(runContext, workerTask);
 
             // get last state
             TaskRunAttempt lastAttempt = workerTask.getTaskRun().lastAttempt();
@@ -719,6 +765,28 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun(), dynamicTaskRuns);
             this.workerTaskResultQueue.emit(workerTaskResult);
+
+            // upload the cache file, hash may not be present if we didn't succeed in computing it
+            if (workerTask.getTask().getTaskCache() != null && workerTask.getTask().getTaskCache().getEnabled() && hash.isPresent() &&
+                (state == State.Type.SUCCESS || state == State.Type.WARNING)) {
+                runContext.logger().info("Uploading a cache entry for task '{}'", workerTask.getTask().getId());
+
+                try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                     ZipOutputStream archive = new ZipOutputStream(bos)) {
+                    var zipEntry = new ZipEntry("outputs.ion");
+                    archive.putNextEntry(zipEntry);
+                    archive.write(JacksonMapper.ofIon().writeValueAsBytes(workerTask.getTaskRun().getOutputs()));
+                    archive.closeEntry();
+                    archive.finish();
+                    Path archiveFile = runContext.workingDir().createTempFile( ".zip");
+                    Files.write(archiveFile, bos.toByteArray());
+                    URI uri = runContext.storage().putCacheFile(archiveFile.toFile(), hash.get(), workerTask.getTaskRun().getValue());
+                    runContext.logger().debug("Caching entry uploaded in URI {}", uri);
+                } catch (IOException | RuntimeException e) {
+                    // in case of any exception, log an error and continue
+                    runContext.logger().error("Unexpected exception while uploading the cache entry for task '{}', the task not be cached.", workerTask.getTask().getId(), e);
+                }
+            }
             return workerTaskResult;
         } catch (QueueException e) {
             // If there is a QueueException it can either be caused by the message limit or another queue issue.
@@ -744,6 +812,22 @@ public class Worker implements Service, Runnable, AutoCloseable {
             if (cleanUp) {
                 workerTask.getRunContext().cleanup();
             }
+        }
+    }
+
+    private Optional<String> hashTask(RunContext runContext, Task task) {
+        try {
+            var map = JacksonMapper.toMap(task);
+            var rMap = runContext.render(map);
+            var json = JacksonMapper.ofJson().writeValueAsBytes(rMap);
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(json);
+            byte[] bytes = digest.digest();
+            return Optional.of(HexFormat.of().formatHex(bytes));
+        } catch (RuntimeException | IllegalVariableEvaluationException | JsonProcessingException |
+                 NoSuchAlgorithmException e) {
+            runContext.logger().error("Unable to create the cache key for the task '{}'", task.getId(), e);
+            return Optional.empty();
         }
     }
 
@@ -802,9 +886,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
     }
 
-    private WorkerTask runAttempt(final WorkerTask workerTask) throws QueueException {
-        DefaultRunContext runContext = runContextInitializer.forWorker((DefaultRunContext) workerTask.getRunContext(), workerTask);
-
+    private WorkerTask runAttempt(RunContext runContext, final WorkerTask workerTask) throws QueueException {
         Logger logger = runContext.logger();
 
         if (!(workerTask.getTask() instanceof RunnableTask<?> task)) {

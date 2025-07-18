@@ -303,6 +303,8 @@
 
 <script>
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -400,6 +402,7 @@
         computed: {
             ...mapState("flow", ["flows", "total"]),
             ...mapState("auth", ["user"]),
+            ...mapStores(useExecutionsStore),
             routeInfo() {
                 return {
                     title: this.$t("flows"),
@@ -743,8 +746,7 @@
                             permission.EXECUTION,
                             action.READ,
                         )) {
-                            this.$store.dispatch(
-                                "execution/loadLatestExecutions",
+                            this.executionsStore.loadLatestExecutions(
                                 {
                                     flowFilters: data.results.map(flow => {
                                         return {

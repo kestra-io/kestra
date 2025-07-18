@@ -193,6 +193,7 @@
     import action from "../../models/action";
     import {usePluginsStore} from "../../stores/plugins";
     import {useCoreStore} from "../../stores/core";
+    import {useExecutionsStore} from "../../stores/executions";
     import {mapStores} from "pinia";
 
     export default {
@@ -247,7 +248,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(usePluginsStore, useCoreStore),
+            ...mapStores(usePluginsStore, useCoreStore, useExecutionsStore),
             SECTIONS() {
                 return SECTIONS
             },
@@ -297,7 +298,7 @@
             },
             downloadContent(currentTaskRunId) {
                 const params = this.params
-                this.$store.dispatch("execution/downloadLogs", {
+                this.executionsStore.downloadLogs({
                     executionId: this.followedExecution.id,
                     params: {...params, taskRunId: currentTaskRunId}
                 }).then((response) => {
@@ -306,7 +307,7 @@
             },
             copyContent(currentTaskRunId) {
                 const params = this.params
-                this.$store.dispatch("execution/downloadLogs", {
+                this.executionsStore.downloadLogs({
                     executionId: this.followedExecution.id,
                     params: {...params, taskRunId: currentTaskRunId}
                 }).then((response) => {
@@ -324,7 +325,7 @@
                 this.$toast().confirm(
                     this.$t("delete_log"),
                     () => {
-                        this.$store.dispatch("execution/deleteLogs", {
+                        this.executionsStore.deleteLogs({
                             executionId: this.followedExecution.id,
                             params: {...params, taskRunId: currentTaskRunId}
                         }).then((_) => {

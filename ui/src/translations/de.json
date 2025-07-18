@@ -10,6 +10,7 @@
     "Finish": "Beenden",
     "Fold auto": "Editor: Automatisches Falten von Mehrzeilen",
     "Fold content lines": "Mehrzeilige Zeichenfolgen falten",
+    "Hover description": "Editor: Beschreibung des Feldes anzeigen, wenn auf Key oder Value gehalten wird",
     "Language": "Sprache",
     "Next step": "Nächster Schritt",
     "Per page": "pro Seite",
@@ -124,6 +125,7 @@
     "cannot swap tasks": "Tasks können nicht getauscht werden",
     "change execution state confirm": "Sind Sie sicher, dass Sie den Zustand der Ausführung <code>{id}</code> ändern möchten?",
     "change execution state done": "Ausführungszustand aktualisiert",
+    "change queue confirm": "Möchten Sie den Zustand der Warteschlange für die Ausführung <code>{id}</code> wirklich ändern?<br/>",
     "change state": "Zustand ändern",
     "change state confirm": "Sind Sie sicher, dass Sie den Task-Laufzustand für den <code>{task}</code>-Task in der Ausführung <code>{id}</code> ändern möchten?",
     "change state current state": "Aktueller Zustand ist:",
@@ -268,7 +270,6 @@
     },
     "days": "Tage",
     "debug": "Debuggen",
-    "decline": "Ablehnen",
     "default": "Standard",
     "delete": "Löschen",
     "delete backfill": "Backfill löschen",
@@ -401,6 +402,7 @@
       "move_line": "Zeile verschieben",
       "reset_fontsize": "Schriftgröße zurücksetzen",
       "save_flow": "Flow speichern",
+      "toggle_ai_agent": "AI-Agent umschalten",
       "trigger_autocompletion": "Autovervollständigung auslösen",
       "uncomment": "Entkommentieren"
     },
@@ -600,6 +602,7 @@
         },
         "empty": "Sie haben noch keine Suche gespeichert.",
         "label": "Gespeicherte Suchen",
+        "name_already_used": "Suchbegriff {label} bereits verwendet.",
         "remove": "Entfernen",
         "tooltip": "Sie können keine leeren Suchkriterien speichern."
       },
@@ -1035,6 +1038,7 @@
     "read-more": "Mehr erfahren über",
     "readonly property": "Schreibgeschützte Eigenschaft",
     "refresh": "Aktualisieren",
+    "reject": "Ablehnen",
     "relative": "Relativ",
     "relative end date": "Relatives Enddatum",
     "relative start date": "Relatives Startdatum",
@@ -1175,6 +1179,7 @@
             "editor_folding_stratgy": "Automatisch Code im Editor zusammenklappen",
             "editor_font_family": "Editor-Schriftfamilie",
             "editor_font_size": "Editor-Schriftgröße",
+            "editor_hover_description": "Fahren Sie mit der Maus über die Eigenschaft, um die Beschreibung zu sehen",
             "environment_color": "Umgebungsfarbe",
             "environment_name": "Umgebungsname",
             "logs_font_size": "Logs Schriftgröße",
@@ -1210,13 +1215,13 @@
         "complete": "Kestra UI starten",
         "config": "Konfiguration validieren",
         "survey": "Erzählen Sie uns mehr",
-        "user": "Erstellen Sie Ihren ersten Benutzer"
+        "user": "Erstellen Sie Ihr Konto"
       },
       "subtitles": {
         "complete": "Einrichtung erfolgreich abgeschlossen!",
         "config": "Hier sind die Details Ihrer Konfiguration",
         "survey": "Helfen Sie uns, die Kestra Open Source Edition zu verbessern",
-        "user": "Richten Sie Ihre Instanz ein, indem Sie Ihren ersten Benutzer erstellen"
+        "user": "Richten Sie Ihre Instanz ein, indem Sie ein Konto erstellen"
       },
       "success": {
         "subtitle": "Alles bereit!",
@@ -1241,8 +1246,9 @@
       },
       "titles": {
         "survey": "Erzählen Sie uns mehr",
-        "user": "Ersten Benutzer erstellen"
+        "user": "Konto erstellen"
       },
+      "troubleshooting": "Passwort vergessen?",
       "validation": {
         "email_invalid": "Ungültige E-Mail-Adresse",
         "email_required": "E-Mail ist erforderlich",
@@ -1380,9 +1386,11 @@
       "warning": "Dies könnte zu gleichzeitigen Ausführungen für denselben Trigger führen und sollte als letzte Option betrachtet werden."
     },
     "unqueue": "Aus Warteschlange entfernen",
+    "unqueue as": "Aus der Warteschlange entfernen als <code>{status}</code>",
     "unqueue confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> aus der Warteschlange entfernen möchten?",
     "unqueue done": "Ausführung ist nicht in der Warteschlange",
     "unqueue title": "Ausführung <code>{id}</code> aus der Warteschlange entfernen.<br/>Bitte beachten Sie, dass dies das Nebenläufigkeitslimit des Flows nicht berücksichtigt, sodass mehr Ausführungen laufen könnten als das erlaubte Limit.",
+    "unqueue title multiple": "Sind Sie sicher, dass Sie <code>{count}</code> Ausführungen aus der Warteschlange entfernen möchten?<br/><br/>Beachten Sie, dass dies das Nebenläufigkeitslimit des flow nicht beachtet, sodass mehr Ausführungen laufen könnten als das erlaubte Limit.",
     "unsaved changed ?": "Sie haben ungespeicherte Änderungen, möchten Sie diese Seite verlassen?",
     "up trend": "Steigend",
     "update": "Aktualisieren",

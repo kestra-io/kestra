@@ -51,6 +51,16 @@
                     {{ t("setup.login") }}
                 </el-button>
             </el-form-item>
+            <el-form-item>
+                <el-button
+                    type="default"
+                    class="w-100"
+                    size="large"
+                    @click="openTroubleshootingGuide"
+                >
+                    {{ t("setup.troubleshooting") }}
+                </el-button>
+            </el-form-item>
         </el-form>
     </div>
 </template>
@@ -183,6 +193,10 @@
         }
     }
 
+    const openTroubleshootingGuide = () => {
+        window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting", "_blank")
+    }
+
     onMounted(async () => {
         try {
             const isInitialized = await checkServerInitialization()
@@ -209,7 +223,6 @@
 
         .el-button.el-button--default {
             background: var(--bs-gray-200);
-            height: 54px;
 
             html.dark & {
                 background: var(--input-bg);

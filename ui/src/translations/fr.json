@@ -1248,6 +1248,7 @@
         "survey": "Dites-nous en plus",
         "user": "Créer un compte"
       },
+      "troubleshooting": "Mot de passe oublié ?",
       "validation": {
         "email_invalid": "E-mail invalide",
         "email_required": "L'email est requis",

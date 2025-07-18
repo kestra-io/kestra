@@ -1248,6 +1248,7 @@
         "survey": "Dicci di più",
         "user": "Crea un account"
       },
+      "troubleshooting": "Password dimenticata?",
       "validation": {
         "email_invalid": "Email non valido",
         "email_required": "L'email è obbligatoria",

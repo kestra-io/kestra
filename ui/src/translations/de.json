@@ -1248,6 +1248,7 @@
         "survey": "Erzählen Sie uns mehr",
         "user": "Konto erstellen"
       },
+      "troubleshooting": "Passwort vergessen?",
       "validation": {
         "email_invalid": "Ungültige E-Mail-Adresse",
         "email_required": "E-Mail ist erforderlich",

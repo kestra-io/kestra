@@ -1248,6 +1248,7 @@
         "survey": "हमें और बताएं",
         "user": "खाता बनाएं"
       },
+      "troubleshooting": "पासवर्ड भूल गए?",
       "validation": {
         "email_invalid": "अमान्य ईमेल",
         "email_required": "ईमेल आवश्यक है",

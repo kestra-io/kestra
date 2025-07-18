@@ -1248,6 +1248,7 @@
         "survey": "자세히 알려주세요",
         "user": "계정 생성"
       },
+      "troubleshooting": "비밀번호를 잊으셨습니까?",
       "validation": {
         "email_invalid": "유효하지 않은 이메일",
         "email_required": "이메일이 필요합니다",

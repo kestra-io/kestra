@@ -1248,6 +1248,7 @@
         "survey": "Powiedz nam więcej",
         "user": "Utwórz konto"
       },
+      "troubleshooting": "Zapomniałeś hasła?",
       "validation": {
         "email_invalid": "Nieprawidłowy email",
         "email_required": "Email jest wymagany",

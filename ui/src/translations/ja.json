@@ -1248,6 +1248,7 @@
         "survey": "詳細を教えてください",
         "user": "アカウントを作成"
       },
+      "troubleshooting": "パスワードをお忘れですか？",
       "validation": {
         "email_invalid": "無効なメールアドレス",
         "email_required": "メールが必要です",

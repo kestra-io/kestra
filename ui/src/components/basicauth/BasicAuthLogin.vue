@@ -51,6 +51,16 @@
                     {{ t("setup.login") }}
                 </el-button>
             </el-form-item>
+            <el-form-item>
+                <el-button
+                    type="secondary"
+                    class="w-100"
+                    size="large"
+                    @click="openTroubleshootingGuide"
+                >
+                    {{ t("setup.troubleshooting") }}
+                </el-button>
+            </el-form-item>
         </el-form>
     </div>
 </template>
@@ -181,6 +191,10 @@
         } finally {
             isLoading.value = false
         }
+    }
+
+    const openTroubleshootingGuide = () => {
+        window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting", "_blank")
     }
 
     onMounted(async () => {

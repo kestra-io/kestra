@@ -1367,6 +1367,7 @@
     "setup": {
       "login": "Login",
       "logout": "Logout",
+      "troubleshooting": "Forgot Password",
       "steps": {
         "user": "Create your account",
         "config": "Validate Configuration",

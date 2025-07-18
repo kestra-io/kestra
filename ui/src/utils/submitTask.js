@@ -31,12 +31,6 @@ export const inputsToFormDate = (submitor, inputsList, values) => {
                 formData.append(inputName, submitor.$moment(inputValue).format("YYYY-MM-DD"));
             } else if (input.type === "TIME") {
                 formData.append(inputName, submitor.$moment(inputValue).format("hh:mm:ss"));
-            } else if (input.type === "FILE") {
-                if (typeof (inputValue) === "string") {
-                    formData.append(inputName, inputValue);
-                } else if (inputValue !== null) {
-                    formData.append("files", inputValue, inputName);
-                }
             } else {
                 formData.append(inputName, inputValue);
             }

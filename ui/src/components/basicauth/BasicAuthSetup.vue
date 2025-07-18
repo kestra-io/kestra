@@ -304,14 +304,10 @@
         try {
             const config = await miscStore.loadConfigs()
 
-            const setupCompleted = localStorage.getItem("basicAuthSetupCompleted") === "true"
-            
-            // If setup is marked as completed
-            // OR if basic auth is initialized, redirect to welcome
-            if (setupCompleted || (config && config.isBasicAuthInitialized)) {
+            if (config && config.isBasicAuthInitialized) {
                 localStorage.removeItem("basicAuthSetupInProgress")
                 localStorage.removeItem("setupStartTime")
-                router.push({name: "welcome"})
+                router.push({name: "login"})
                 return
             }
 

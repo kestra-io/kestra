@@ -1396,7 +1396,9 @@
         "email_temporary_not_allowed": "Temporary or disposable email addresses are not allowed",
         "firstName_required": "First name required",
         "lastName_required": "Last name required",
-        "password_invalid": "Invalid password"
+        "password_invalid": "Invalid password",
+        "incorrect_creds": "Invalid username or password. Make sure your credentials are correct.",
+        "config_message": "Make sure to update your configuration to fix this error message"
       },
       "config": {
         "repository": "Database",

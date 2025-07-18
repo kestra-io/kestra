@@ -25,6 +25,11 @@ export const useMiscStore = defineStore("misc", {
             return response.data;
         },
 
+        async loadBasicAuthValidationErrors() {
+            const response = await this.$http.get(`${apiUrlWithoutTenants()}/basicAuthValidationErrors`);
+            return response.data;
+        },
+
         async loadAllUsages() {
             if(this.configs.isBasicAuthInitialized && BasicAuth.isLoggedIn()){
                 const response = await this.$http.get(`${apiUrl(this.vuexStore)}/usages/all`);

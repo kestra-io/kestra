@@ -1214,13 +1214,13 @@
         "complete": "Iniciar Kestra UI",
         "config": "Validar Configuração",
         "survey": "Conte-nos mais",
-        "user": "Crie seu primeiro usuário"
+        "user": "Crie sua conta"
       },
       "subtitles": {
         "complete": "Configuração concluída com sucesso!",
         "config": "Aqui estão os detalhes da sua configuração",
         "survey": "Ajude-nos a melhorar o Kestra Open Source Edition",
-        "user": "Configure sua instância criando seu primeiro usuário"
+        "user": "Configure sua instância criando uma conta"
       },
       "success": {
         "subtitle": "Você está pronto!",
@@ -1245,7 +1245,7 @@
       },
       "titles": {
         "survey": "Conte-nos mais",
-        "user": "Criar primeiro usuário"
+        "user": "Criar uma conta"
       },
       "validation": {
         "email_invalid": "E-mail inválido",

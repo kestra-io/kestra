@@ -24,7 +24,7 @@ public class DateAddFilter extends AbstractDate implements Filter {
             return null;
         }
 
-        final Long amount = (Long) args.get("amount");
+        final Long amount = getAsLong(args.get("amount"), lineNumber, self);
         final String unit = (String) args.get("unit");
         final String timeZone = (String) args.get("timeZone");
         final String existingFormat = (String) args.get("existingFormat");
@@ -36,4 +36,24 @@ public class DateAddFilter extends AbstractDate implements Filter {
 
         return format(plus, args, context);
     }
+
+    public static Long getAsLong(Object value, int lineNumber, PebbleTemplate self) {
+        if (value instanceof Long longValue) {
+            return longValue;
+        } else if (value instanceof Integer integerValue) {
+            return integerValue.longValue();
+        } else if (value instanceof Number numberValue) {
+            return numberValue.longValue();
+        } else if (value instanceof String stringValue) {
+            try {
+                return Long.parseLong(stringValue);
+            } catch (NumberFormatException e) {
+                throw new PebbleException(e, "%s can't be converted to long".formatted(stringValue),
+                    lineNumber, self != null ? self.getName() : "Unknown");
+            }
+        }
+        throw new PebbleException(null, "Incorrect %s format, must be a number".formatted(value),
+            lineNumber, self != null ? self.getName() : "Unknown");
+    }
+
 }

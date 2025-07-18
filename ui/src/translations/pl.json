@@ -602,6 +602,7 @@
         },
         "empty": "Nie zapisałeś jeszcze żadnego wyszukiwania.",
         "label": "Zapisane wyszukiwania",
+        "name_already_used": "Szukana label już używana.",
         "remove": "Usuń",
         "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
       },

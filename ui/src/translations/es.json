@@ -602,6 +602,7 @@
         },
         "empty": "Todavía no has guardado ninguna búsqueda.",
         "label": "Búsquedas guardadas",
+        "name_already_used": "La etiqueta de búsqueda ya está en uso.",
         "remove": "Eliminar",
         "tooltip": "No puedes guardar criterios de búsqueda vacíos."
       },

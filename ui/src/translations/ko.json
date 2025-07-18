@@ -602,6 +602,7 @@
         },
         "empty": "아직 검색을 저장하지 않았습니다.",
         "label": "저장된 검색",
+        "name_already_used": "이미 사용 중인 label입니다.",
         "remove": "제거",
         "tooltip": "빈 검색 기준을 저장할 수 없습니다."
       },

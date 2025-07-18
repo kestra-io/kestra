@@ -229,7 +229,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.taskRunList,
             this.inputs,
             this.outputs,
-            Label.deduplicate(labels),
+            this.labels,
             this.variables,
             this.state.withState(state),
             this.parentId,
@@ -246,7 +246,6 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public Execution withLabels(List<Label> labels) {
-
         return new Execution(
             this.tenantId,
             this.id,
@@ -296,7 +295,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             newTaskRunList,
             this.inputs,
             this.outputs,
-            Label.deduplicate(labels),
+            this.labels,
             this.variables,
             this.state,
             this.parentId,
@@ -322,7 +321,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.taskRunList,
             this.inputs,
             this.outputs,
-            Label.deduplicate(labels),
+            this.labels,
             this.variables,
             this.state,
             this.parentId,
@@ -349,7 +348,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             taskRunList,
             this.inputs,
             this.outputs,
-            Label.deduplicate(labels),
+            this.labels,
             this.variables,
             state,
             childExecutionId != null ? this.getId() : null,

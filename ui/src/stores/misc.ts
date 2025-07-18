@@ -1,6 +1,7 @@
 import {defineStore} from "pinia";
 import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
 import {useApiStore} from "./api";
+import * as BasicAuth from "../utils/basicAuth"
 
 interface MiscState {
     configs: any | undefined;
@@ -25,7 +26,7 @@ export const useMiscStore = defineStore("misc", {
         },
 
         async loadAllUsages() {
-            if(this.configs.isBasicAuthInitialized){
+            if(this.configs.isBasicAuthInitialized && BasicAuth.isLoggedIn()){
                 const response = await this.$http.get(`${apiUrl(this.vuexStore)}/usages/all`);
                 return response.data;
             }

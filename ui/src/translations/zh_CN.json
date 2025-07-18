@@ -10,6 +10,7 @@
     "Finish": "完成",
     "Fold auto": "编辑器：自动折叠多行",
     "Fold content lines": "折叠多行字符串",
+    "Hover description": "编辑器：当鼠标悬停在key或value上时显示字段描述",
     "Language": "语言",
     "Next step": "下一步",
     "Per page": "每页",
@@ -269,7 +270,6 @@
     },
     "days": "天数",
     "debug": "调试",
-    "decline": "拒绝",
     "default": "默认值",
     "delete": "删除",
     "delete backfill": "删除回填",
@@ -402,6 +402,7 @@
       "move_line": "移动行",
       "reset_fontsize": "重置字体大小",
       "save_flow": "保存flow",
+      "toggle_ai_agent": "切换AI代理",
       "trigger_autocompletion": "触发自动完成",
       "uncomment": "取消注释"
     },
@@ -601,6 +602,7 @@
         },
         "empty": "您还没有保存任何搜索。",
         "label": "已保存的搜索",
+        "name_already_used": "搜索标签已被使用。",
         "remove": "移除",
         "tooltip": "您不能保存空的搜索条件。"
       },
@@ -1036,6 +1038,7 @@
     "read-more": "了解更多关于",
     "readonly property": "只读属性",
     "refresh": "刷新",
+    "reject": "拒绝",
     "relative": "相对",
     "relative end date": "相对结束日期",
     "relative start date": "相对开始日期",
@@ -1177,6 +1180,7 @@
             "editor_font_family": "编辑器字体家族",
             "editor_font_size": "编辑器字体大小",
             "envNameTooltip": "该环境名称由配置设置，但可以更改。",
+            "editor_hover_description": "将鼠标悬停在属性上查看描述",
             "environment_color": "环境颜色",
             "environment_name": "环境名称",
             "logs_font_size": "日志字体大小",
@@ -1212,13 +1216,13 @@
         "complete": "启动 Kestra UI",
         "config": "验证配置",
         "survey": "请告诉我们更多信息",
-        "user": "创建您的第一个用户"
+        "user": "创建您的账户"
       },
       "subtitles": {
         "complete": "设置成功完成！",
         "config": "以下是您的配置详情",
         "survey": "帮助我们改进 Kestra Open Source Edition",
-        "user": "通过创建您的第一个用户来设置您的实例"
+        "user": "通过创建账户来设置您的实例"
       },
       "success": {
         "subtitle": "一切准备就绪！",
@@ -1243,8 +1247,9 @@
       },
       "titles": {
         "survey": "告诉我们更多信息",
-        "user": "创建第一个用户"
+        "user": "创建账户"
       },
+      "troubleshooting": "忘记密码？",
       "validation": {
         "email_invalid": "无效的电子邮件",
         "email_required": "需要提供电子邮件",

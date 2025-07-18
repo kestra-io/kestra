@@ -342,10 +342,10 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void pluginSchemaShouldNotResolveTaskAndTriggerSubtypes() throws URISyntaxException {
+    void pluginSchemaShouldNotResolveTaskAndTriggerSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
-        assertThat(definitions.size(), is(26));
+        assertThat(definitions.size(), is(27));
     }
 
     @SuppressWarnings("unchecked")

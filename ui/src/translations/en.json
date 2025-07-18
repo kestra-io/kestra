@@ -362,7 +362,8 @@
     "triggerflow disabled": "Trigger is disabled from flow definition",
     "conditions": "conditions",
     "taskruns": "Task Runs",
-    "Fold auto": "Editor: automatic fold of multilines",
+    "Fold auto": "Editor: automatic fold of multi-lines",
+    "Hover description": "Editor: Show description of field when hovering on key or value",
     "Fold content lines": "Fold multiline strings",
     "Unfold content lines": "Unfold multiline strings",
     "Total": "Total",
@@ -783,6 +784,7 @@
             "editor_font_family": "Editor Font Family",
             "editor_folding_stratgy": "Automatic Code Folding in the Editor",
             "envNameTooltip": "This environment name is set from the config but can be changed.",
+            "editor_hover_description": "Hover on property to see description",
             "environment_name": "Environment Name",
             "environment_color": "Environment Color",
             "chart_color_scheme": {
@@ -1123,6 +1125,7 @@
         "remove": "Remove",
         "empty": "You still haven't saved any search.",
         "tooltip": "You can't save empty search criteria.",
+        "name_already_used": "Search label already used.",
         "dialog": {
           "heading": "Save current search",
           "placeholder": "Label",
@@ -1227,6 +1230,7 @@
       "command_palette": "Show command palette",
       "save_flow": "Save flow",
       "execute_flow": "Execute flow",
+      "toggle_ai_agent": "Toggle AI agent",
       "move_line": "Move line",
       "duplicate_cursor": "Duplicate cursor",
       "fold_unfold": "Fold/Unfold code",
@@ -1364,18 +1368,19 @@
     "setup": {
       "login": "Login",
       "logout": "Logout",
+      "troubleshooting": "Forgot Password?",
       "steps": {
-        "user": "Create your first user",
+        "user": "Create your account",
         "config": "Validate Configuration",
         "survey": "Tell us more",
         "complete": "Start Kestra UI"
       },
       "titles": {
-        "user": "Create first user",
+        "user": "Create an account",
         "survey": "Tell us more"
       },
       "subtitles": {
-        "user": "Set up your instance by creating your first user",
+        "user": "Set up your instance by creating an account",
         "config": "Here are the details of your configuration",
         "survey": "Help us improve Kestra Open Source Edition",
         "complete": "Setup completed successfully!"
@@ -1438,7 +1443,7 @@
     "submit": "Submit",
     "to toggle": "to toggle",
     "accept": "Accept",
-    "decline": "Decline",
+    "reject": "Reject",
     "last modified": "Last modified"
   }
 }

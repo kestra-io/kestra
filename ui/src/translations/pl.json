@@ -10,6 +10,7 @@
     "Finish": "Zakończ",
     "Fold auto": "Edytor: automatyczne składanie wieloliniowych",
     "Fold content lines": "Złóż wieloliniowe ciągi",
+    "Hover description": "Edytor: Pokaż opis pola po najechaniu na key lub value",
     "Language": "Język",
     "Next step": "Następny krok",
     "Per page": "na stronę",
@@ -269,7 +270,6 @@
     },
     "days": "Dni",
     "debug": "Debugowanie",
-    "decline": "Odrzuć",
     "default": "Domyślny",
     "delete": "Usuń",
     "delete backfill": "Usuń backfill",
@@ -402,6 +402,7 @@
       "move_line": "Przenieś linię",
       "reset_fontsize": "Zresetuj rozmiar czcionki",
       "save_flow": "Zapisz flow",
+      "toggle_ai_agent": "Przełącz agenta AI",
       "trigger_autocompletion": "Wyzwól autouzupełnianie",
       "uncomment": "Odkomentuj"
     },
@@ -601,6 +602,7 @@
         },
         "empty": "Nie zapisałeś jeszcze żadnego wyszukiwania.",
         "label": "Zapisane wyszukiwania",
+        "name_already_used": "Szukana label już używana.",
         "remove": "Usuń",
         "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
       },
@@ -1036,6 +1038,7 @@
     "read-more": "Czytaj więcej o",
     "readonly property": "Właściwość tylko do odczytu",
     "refresh": "Odśwież",
+    "reject": "Odrzuć",
     "relative": "Względny",
     "relative end date": "Względna data zakończenia",
     "relative start date": "Względna data rozpoczęcia",
@@ -1177,6 +1180,7 @@
             "editor_font_family": "Rodzina Czcionki Edytora",
             "editor_font_size": "Rozmiar Czcionki Edytora",
             "envNameTooltip": "Ta nazwa środowiska pochodzi z konfiguracji, ale można ją zmienić.",
+            "editor_hover_description": "Najedź na właściwość, aby zobaczyć opis",
             "environment_color": "Kolor Środowiska",
             "environment_name": "Nazwa Środowiska",
             "logs_font_size": "Rozmiar czcionki logów",
@@ -1212,13 +1216,13 @@
         "complete": "Uruchom Kestra UI",
         "config": "Sprawdź Konfigurację",
         "survey": "Powiedz nam więcej",
-        "user": "Utwórz pierwszego użytkownika"
+        "user": "Utwórz swoje konto"
       },
       "subtitles": {
         "complete": "Konfiguracja zakończona sukcesem!",
         "config": "Oto szczegóły Twojej konfiguracji",
         "survey": "Pomóż nam ulepszyć Kestra Open Source Edition",
-        "user": "Skonfiguruj swoją instancję, tworząc pierwszego użytkownika"
+        "user": "Skonfiguruj swoją instancję, tworząc konto"
       },
       "success": {
         "subtitle": "Jesteś gotowy!",
@@ -1243,8 +1247,9 @@
       },
       "titles": {
         "survey": "Powiedz nam więcej",
-        "user": "Utwórz pierwszego użytkownika"
+        "user": "Utwórz konto"
       },
+      "troubleshooting": "Zapomniałeś hasła?",
       "validation": {
         "email_invalid": "Nieprawidłowy email",
         "email_required": "Email jest wymagany",

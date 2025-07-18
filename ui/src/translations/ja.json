@@ -10,6 +10,7 @@
     "Finish": "完了",
     "Fold auto": "エディター：複数行の自動折りたたみ",
     "Fold content lines": "複数行文字列を折りたたむ",
+    "Hover description": "エディター: key または value にホバーするとフィールドの説明を表示",
     "Language": "言語",
     "Next step": "次のステップ",
     "Per page": "ページごと",
@@ -269,7 +270,6 @@
     },
     "days": "日数",
     "debug": "デバッグ",
-    "decline": "辞退",
     "default": "デフォルト",
     "delete": "削除",
     "delete backfill": "backfillを削除",
@@ -402,6 +402,7 @@
       "move_line": "行を移動",
       "reset_fontsize": "フォントサイズをリセット",
       "save_flow": "フローを保存",
+      "toggle_ai_agent": "AIエージェントを切り替える",
       "trigger_autocompletion": "オートコンプリートをトリガー",
       "uncomment": "コメント解除"
     },
@@ -601,6 +602,7 @@
         },
         "empty": "検索をまだ保存していません。",
         "label": "保存済み検索",
+        "name_already_used": "ラベルはすでに使用されています。",
         "remove": "削除",
         "tooltip": "空の検索条件を保存することはできません。"
       },
@@ -1036,6 +1038,7 @@
     "read-more": "続きを読む",
     "readonly property": "読み取り専用プロパティ",
     "refresh": "更新",
+    "reject": "拒否",
     "relative": "相対",
     "relative end date": "相対終了日",
     "relative start date": "相対開始日",
@@ -1177,6 +1180,7 @@
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
             "envNameTooltip": "この環境名は設定ファイルから設定されていますが、変更可能です。",
+            "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
             "environment_color": "環境色",
             "environment_name": "環境名",
             "logs_font_size": "ログフォントサイズ",
@@ -1212,13 +1216,13 @@
         "complete": "Kestra UIを開始",
         "config": "設定を検証",
         "survey": "詳細を教えてください",
-        "user": "最初のユーザーを作成する"
+        "user": "アカウントを作成する"
       },
       "subtitles": {
         "complete": "セットアップが正常に完了しました！",
         "config": "こちらはあなたの設定の詳細です",
         "survey": "Kestra Open Source Edition の改善にご協力ください",
-        "user": "最初のユーザーを作成してインスタンスをセットアップする"
+        "user": "アカウントを作成してインスタンスをセットアップする"
       },
       "success": {
         "subtitle": "準備完了です！",
@@ -1243,8 +1247,9 @@
       },
       "titles": {
         "survey": "詳細を教えてください",
-        "user": "最初のユーザーを作成"
+        "user": "アカウントを作成"
       },
+      "troubleshooting": "パスワードをお忘れですか？",
       "validation": {
         "email_invalid": "無効なメールアドレス",
         "email_required": "メールが必要です",

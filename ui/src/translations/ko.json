@@ -10,6 +10,7 @@
     "Finish": "완료",
     "Fold auto": "편집기: 다중 라인 자동 접기",
     "Fold content lines": "다중 라인 문자열 접기",
+    "Hover description": "편집기: key 또는 value에 마우스를 올리면 필드 설명 표시",
     "Language": "언어",
     "Next step": "다음 단계",
     "Per page": "페이지당",
@@ -269,7 +270,6 @@
     },
     "days": "일",
     "debug": "디버그",
-    "decline": "거부",
     "default": "기본값",
     "delete": "삭제",
     "delete backfill": "backfill 삭제",
@@ -402,6 +402,7 @@
       "move_line": "줄 이동",
       "reset_fontsize": "글꼴 크기 재설정",
       "save_flow": "Flow 저장",
+      "toggle_ai_agent": "AI 에이전트 전환",
       "trigger_autocompletion": "자동 완성 트리거",
       "uncomment": "주석 해제"
     },
@@ -601,6 +602,7 @@
         },
         "empty": "아직 검색을 저장하지 않았습니다.",
         "label": "저장된 검색",
+        "name_already_used": "이미 사용 중인 label입니다.",
         "remove": "제거",
         "tooltip": "빈 검색 기준을 저장할 수 없습니다."
       },
@@ -1036,6 +1038,7 @@
     "read-more": "자세히 알아보기",
     "readonly property": "읽기 전용 속성",
     "refresh": "새로 고침",
+    "reject": "거부",
     "relative": "상대적",
     "relative end date": "상대적 종료 날짜",
     "relative start date": "상대적 시작 날짜",
@@ -1177,6 +1180,7 @@
             "editor_font_family": "편집기 글꼴 패밀리",
             "editor_font_size": "편집기 글꼴 크기",
             "envNameTooltip": "이 환경 이름은 구성에서 설정되었지만 변경할 수 있습니다.",
+            "editor_hover_description": "속성을 가리키면 설명이 표시됩니다.",
             "environment_color": "환경 색상",
             "environment_name": "환경 이름",
             "logs_font_size": "로그 글꼴 크기",
@@ -1212,13 +1216,13 @@
         "complete": "Kestra UI 시작",
         "config": "구성 유효성 검사",
         "survey": "자세히 알려주세요",
-        "user": "첫 번째 사용자 생성"
+        "user": "계정 생성"
       },
       "subtitles": {
         "complete": "설정이 성공적으로 완료되었습니다!",
         "config": "여기 귀하의 구성 세부 정보가 있습니다",
         "survey": "Kestra 오픈 소스 에디션 개선에 도움을 주세요",
-        "user": "첫 번째 사용자를 생성하여 인스턴스를 설정하세요."
+        "user": "계정을 생성하여 인스턴스를 설정하세요"
       },
       "success": {
         "subtitle": "모두 준비되었습니다!",
@@ -1243,8 +1247,9 @@
       },
       "titles": {
         "survey": "자세히 알려주세요",
-        "user": "첫 사용자 생성"
+        "user": "계정 생성"
       },
+      "troubleshooting": "비밀번호를 잊으셨습니까?",
       "validation": {
         "email_invalid": "유효하지 않은 이메일",
         "email_required": "이메일이 필요합니다",

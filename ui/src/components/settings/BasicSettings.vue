@@ -148,8 +148,11 @@
                 </Row>
 
                 <Row>
-                    <Column :overrides="{sm: 24, md: 24, lg: 24, xl: 24}" :label="$t('settings.blocks.theme.fields.editor_folding_stratgy')">
+                    <Column :label="$t('settings.blocks.theme.fields.editor_folding_stratgy')">
                         <el-switch :aria-label="$t('Fold auto')" :model-value="pendingSettings.autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
+                    </Column>
+                    <Column :label="$t('settings.blocks.theme.fields.editor_hover_description')">
+                        <el-switch :aria-label="$t('Hover description')" :model-value="pendingSettings.hoverTextEditor" @update:model-value="onHoverTextEditor" />
                     </Column>
                 </Row>
 
@@ -346,6 +349,7 @@
             this.pendingSettings.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
             this.pendingSettings.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.pendingSettings.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
+            this.pendingSettings.hoverTextEditor = localStorage.getItem("hoverTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
             this.pendingSettings.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
             this.pendingSettings.editorFontSize = parseInt(localStorage.getItem("editorFontSize")) || 12;
@@ -445,6 +449,10 @@
             },
             onAutofoldTextEditor(value) {
                 this.pendingSettings.autofoldTextEditor = value;
+                this.checkForChanges();
+            },
+            onHoverTextEditor(value) {
+                this.pendingSettings.hoverTextEditor = value;
                 this.checkForChanges();
             },
             exportFlows() {

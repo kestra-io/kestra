@@ -10,6 +10,7 @@
     "Finish": "Fine",
     "Fold auto": "Editor: piegatura automatica delle righe multiple",
     "Fold content lines": "Piega stringhe multilinea",
+    "Hover description": "Editor: Mostra la descrizione del campo quando si passa il mouse su key o value",
     "Language": "Lingua",
     "Next step": "Passo successivo",
     "Per page": "per pagina",
@@ -269,7 +270,6 @@
     },
     "days": "Giorni",
     "debug": "Debug",
-    "decline": "Rifiuta",
     "default": "Predefinito",
     "delete": "Elimina",
     "delete backfill": "Elimina il backfill",
@@ -402,6 +402,7 @@
       "move_line": "Sposta linea",
       "reset_fontsize": "Reimposta dimensione del font",
       "save_flow": "Salva flow",
+      "toggle_ai_agent": "Attiva/disattiva agente AI",
       "trigger_autocompletion": "Attiva autocompletamento",
       "uncomment": "Decommenta"
     },
@@ -601,6 +602,7 @@
         },
         "empty": "Non hai ancora salvato alcuna ricerca.",
         "label": "Ricerche salvate",
+        "name_already_used": "Etichetta di ricerca già utilizzata.",
         "remove": "Rimuovi",
         "tooltip": "Non puoi salvare criteri di ricerca vuoti."
       },
@@ -1036,6 +1038,7 @@
     "read-more": "Leggi di più su",
     "readonly property": "Proprietà di sola lettura",
     "refresh": "Aggiorna",
+    "reject": "Rifiuta",
     "relative": "Relativo",
     "relative end date": "Data di fine relativa",
     "relative start date": "Data di inizio relativa",
@@ -1177,6 +1180,7 @@
             "editor_font_family": "Famiglia del Font dell'Editor",
             "editor_font_size": "Dimensione del Font dell'Editor",
             "envNameTooltip": "Questo nome dell’ambiente è impostato dalla configurazione ma può essere modificato.",
+            "editor_hover_description": "Passa il mouse sulla proprietà per vedere la descrizione",
             "environment_color": "Colore dell'Ambiente",
             "environment_name": "Nome dell'Ambiente",
             "logs_font_size": "Dimensione Font dei Log",
@@ -1212,13 +1216,13 @@
         "complete": "Avvia Kestra UI",
         "config": "Convalida Configurazione",
         "survey": "Dicci di più",
-        "user": "Crea il tuo primo utente"
+        "user": "Crea il tuo account"
       },
       "subtitles": {
         "complete": "Impostazione completata con successo!",
         "config": "Ecco i dettagli della tua configurazione",
         "survey": "Aiutaci a migliorare Kestra Open Source Edition",
-        "user": "Configura la tua istanza creando il tuo primo utente"
+        "user": "Configura la tua istanza creando un account"
       },
       "success": {
         "subtitle": "Sei pronto!",
@@ -1243,8 +1247,9 @@
       },
       "titles": {
         "survey": "Dicci di più",
-        "user": "Crea primo utente"
+        "user": "Crea un account"
       },
+      "troubleshooting": "Password dimenticata?",
       "validation": {
         "email_invalid": "Email non valido",
         "email_required": "L'email è obbligatoria",

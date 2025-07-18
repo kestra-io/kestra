@@ -1,7 +1,7 @@
 <template>
     <div class="wrapper">
-        <el-button class="decline-button" @click="emit('decline')">
-            {{ t('decline') }}
+        <el-button class="reject-button" @click="emit('reject')">
+            {{ t('reject') }}
         </el-button>
         <el-button type="success" class="accept-button" @click="emit('accept')">
             {{ t('accept') }}
@@ -15,7 +15,7 @@
     const t = getCurrentInstance()!.appContext.config.globalProperties.$t;
     const emit = defineEmits<{
         accept: [];
-        decline: [];
+        reject: [];
     }>();
 </script>
 
@@ -34,12 +34,12 @@
         background: #F8F9FA80;
     }
 
-    .el-button--success, .decline-button {
+    .el-button--success, .reject-button {
         padding: 4px 12px;
         margin: 0;
     }
     
-    .decline-button {
+    .reject-button {
         border-color: var(--ks-border-failed);
         color: var(--ks-content-failed);
     }

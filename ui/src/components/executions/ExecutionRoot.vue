@@ -27,6 +27,8 @@
     import DemoAuditLogs from "../demo/AuditLogs.vue";
 
     import ExecutionMetric from "./ExecutionMetric.vue";
+    import ExecutionDependencies from "./ExecutionDependencies.vue";
+
     import throttle from "lodash/throttle";
     import {useExecutionsStore} from "../../stores/executions";
 
@@ -169,6 +171,14 @@
                         name: "metrics",
                         component: ExecutionMetric,
                         title: title("metrics")
+                    },
+                    {
+                        name: "dependencies",
+                        component: ExecutionDependencies,
+                        title: title("dependencies"),
+                        props: {
+                            isReadOnly: true,
+                        },
                     },
                     {
                         name: "auditlogs",

@@ -10,6 +10,7 @@
     "Finish": "Finalizar",
     "Fold auto": "Editor: dobra automática de multilinhas",
     "Fold content lines": "Dobrar strings multilinhas",
+    "Hover description": "Editor: Mostrar descrição do campo ao passar o mouse sobre o key ou value",
     "Language": "Idioma",
     "Next step": "Próximo passo",
     "Per page": "por página",
@@ -269,7 +270,6 @@
     },
     "days": "Dias",
     "debug": "Depurar",
-    "decline": "Recusar",
     "default": "Padrão",
     "delete": "Deletar",
     "delete backfill": "Deletar o backfill",
@@ -402,6 +402,7 @@
       "move_line": "Mover linha",
       "reset_fontsize": "Redefinir tamanho da fonte",
       "save_flow": "Salvar flow",
+      "toggle_ai_agent": "Alternar agente de IA",
       "trigger_autocompletion": "Acionar autocompletar",
       "uncomment": "Descomentar"
     },
@@ -601,6 +602,7 @@
         },
         "empty": "Você ainda não salvou nenhuma pesquisa.",
         "label": "Pesquisas salvas",
+        "name_already_used": "A etiqueta de pesquisa já está em uso.",
         "remove": "Remover",
         "tooltip": "Você não pode salvar critérios de pesquisa vazios."
       },
@@ -1036,6 +1038,7 @@
     "read-more": "Leia mais sobre",
     "readonly property": "Propriedade somente leitura",
     "refresh": "Atualizar",
+    "reject": "Rejeitar",
     "relative": "Relativo",
     "relative end date": "Data de término relativa",
     "relative start date": "Data de início relativa",
@@ -1177,6 +1180,7 @@
             "editor_font_family": "Família de Fonte do Editor",
             "editor_font_size": "Tamanho da Fonte do Editor",
             "envNameTooltip": "Este nome de ambiente é definido na configuração, mas pode ser alterado.",
+            "editor_hover_description": "Passe o cursor sobre a propriedade para ver a descrição",
             "environment_color": "Cor do Ambiente",
             "environment_name": "Nome do Ambiente",
             "logs_font_size": "Tamanho da Fonte dos Logs",
@@ -1212,13 +1216,13 @@
         "complete": "Iniciar Kestra UI",
         "config": "Validar Configuração",
         "survey": "Conte-nos mais",
-        "user": "Crie seu primeiro usuário"
+        "user": "Crie sua conta"
       },
       "subtitles": {
         "complete": "Configuração concluída com sucesso!",
         "config": "Aqui estão os detalhes da sua configuração",
         "survey": "Ajude-nos a melhorar o Kestra Open Source Edition",
-        "user": "Configure sua instância criando seu primeiro usuário"
+        "user": "Configure sua instância criando uma conta"
       },
       "success": {
         "subtitle": "Você está pronto!",
@@ -1243,8 +1247,9 @@
       },
       "titles": {
         "survey": "Conte-nos mais",
-        "user": "Criar primeiro usuário"
+        "user": "Criar uma conta"
       },
+      "troubleshooting": "Esqueceu a Senha?",
       "validation": {
         "email_invalid": "E-mail inválido",
         "email_required": "O e-mail é obrigatório",

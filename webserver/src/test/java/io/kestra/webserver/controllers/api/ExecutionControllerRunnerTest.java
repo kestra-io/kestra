@@ -282,6 +282,18 @@ class ExecutionControllerRunnerTest {
         assertThat(results.getLast().getData().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(results.getFirst().getId()).isEqualTo("start");
         assertThat(results.getLast().getId()).isEqualTo("end");
+
+        // check that a second call work: calling follow on an already terminated execution.
+        results = sseClient
+            .eventStream("/api/v1/main/executions/" + result.getId() + "/follow", Execution.class)
+            .collectList()
+            .block();
+
+        assertThat(results).isNotNull();
+        assertThat(results.size()).isGreaterThan(0);
+        assertThat(results.getLast().getData().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(results.getFirst().getId()).isEqualTo("start");
+        assertThat(results.getLast().getId()).isEqualTo("end");
     }
 
     @Test
@@ -812,6 +824,26 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(execution.getTrigger().getVariables().get("body")).isEqualTo("{\\\"a\\\":\\\"\\\",\\\"b\\\":{\\\"c\\\":{\\\"d\\\":{\\\"e\\\":\\\"\\\",\\\"f\\\":\\\"1\\\"}}}}");
 
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/webhook-wait.yaml"})
+    void shouldWaitForWebhookAndReturnOutput() {
+        Flow webhook = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "webhook-wait").orElseThrow();
+        String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
+
+        var execution = client.toBlocking().retrieve(
+            HttpRequest
+                .GET(
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-wait/" + key
+                ),
+            ExecutionController.WebhookResponse.class
+        );
+
+        assertThat(execution.state().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.url().toString()).isEqualTo("http://localhost:8081/ui/main/executions/io.kestra.tests/webhook-wait/" + execution.id());
+        assertThat(execution.outputs()).hasSize(1);
+        assertThat(execution.outputs()).containsEntry("output", "output");
     }
 
     @Test
@@ -1801,6 +1833,54 @@ class ExecutionControllerRunnerTest {
         assertThat(terminated.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(terminated.getTaskRunList()).hasSize(1);
         assertThat(terminated.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/subflow-parent.yaml", "flows/valids/subflow-child.yaml", "flows/valids/subflow-grand-child.yaml"})
+    void triggerExecutionAndFollowDependencies() {
+        Execution result = triggerExecutionExecution(TESTS_FLOW_NS, "subflow-parent", null, true);
+
+        List<Event<ExecutionStatusEvent>> results = sseClient
+            .eventStream("/api/v1/main/executions/" + result.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
+            .collectList()
+            .block();
+
+        assertThat(results).isNotNull();
+        assertThat(results.size()).isGreaterThan(1);
+        assertThat(results.getFirst().getId()).isEqualTo("start");
+        assertThat(results.getLast().getId()).isEqualTo("end-all");
+        // check that we have 3 end events and 3 result in SUCCESS
+        assertThat(results.stream().filter(event -> event.getId().equals("end"))).hasSize(3);
+        assertThat(results.stream().filter(event -> event.getData().state() != null && event.getData().state().getCurrent().equals(State.Type.SUCCESS))).hasSize(3);
+
+        // check that a second call work: calling follow on an already terminated execution.
+        results = sseClient
+            .eventStream("/api/v1/main/executions/" + result.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
+            .collectList()
+            .block();
+
+        assertThat(results).isNotNull();
+        assertThat(results.size()).isGreaterThan(1);
+        assertThat(results.getFirst().getId()).isEqualTo("start");
+        assertThat(results.getLast().getId()).isEqualTo("end-all");
+        // check that we have 3 end events and 3 results in SUCCESS
+        assertThat(results.stream().filter(event -> event.getId().equals("end"))).hasSize(3);
+        assertThat(results.stream().filter(event -> event.getData().state() != null && event.getData().state().getCurrent().equals(State.Type.SUCCESS))).hasSize(3);
+
+        // check that a without expandAll it would return only the immediate dependencies.
+        results = sseClient
+            .eventStream("/api/v1/main/executions/" + result.getId() + "/follow-dependencies", ExecutionStatusEvent.class)
+            .collectList()
+            .block();
+
+        assertThat(results).isNotNull();
+        assertThat(results.size()).isGreaterThan(1);
+        assertThat(results.getFirst().getId()).isEqualTo("start");
+        assertThat(results.getLast().getId()).isEqualTo("end-all");
+        // check that we have 2 end events and 2 results in SUCCESS
+        assertThat(results.stream().filter(event -> event.getId().equals("end"))).hasSize(2);
+        assertThat(results.stream().filter(event -> event.getData().state() != null && event.getData().state().getCurrent().equals(State.Type.SUCCESS))).hasSize(2);
+
     }
 
     private List<Label> getExecutionNonSystemLabels(List<Label> labels) {

@@ -115,7 +115,7 @@
                             <Check class="text-success" v-if="config.value === true" />
                             <Close class="text-danger" v-else-if="config.value === false" />
                             <el-text v-else size="small">
-                                {{ (config.value ?? "NOT SETUP").toString().capitalize() }}
+                                {{ config.value === "NOT SETUP" ? config.value : config.value.toString().capitalize() }}
                             </el-text>
                         </el-row>
                     </el-card>
@@ -304,7 +304,11 @@
         try {
             const config = await miscStore.loadConfigs()
 
-            if (config && config.isBasicAuthInitialized && localStorage.getItem("basicAuthSetupCompleted") === "true") {
+            const setupCompleted = localStorage.getItem("basicAuthSetupCompleted") === "true"
+            
+            // If setup is marked as completed
+            // OR if basic auth is initialized, redirect to welcome
+            if (setupCompleted || (config && config.isBasicAuthInitialized)) {
                 localStorage.removeItem("basicAuthSetupInProgress")
                 localStorage.removeItem("setupStartTime")
                 router.push({name: "welcome"})
@@ -313,10 +317,6 @@
 
             localStorage.setItem("basicAuthSetupInProgress", "true")
             localStorage.setItem("setupStartTime", Date.now().toString())
-
-            if (config && config.isBasicAuthInitialized) {
-                activeStep.value = 0
-            }
 
             usageData.value = await miscStore.loadAllUsages()
             trackSetupEvent("setup_flow:started", {step_number: 1})
@@ -338,11 +338,14 @@
     const setupConfigurationLines = computed<ConfigLine[]>(() => {
         if (!setupConfiguration.value) return []
         const configs = miscStore.configs
+        
+        const basicAuthValue = activeStep.value >= 1 || configs?.isBasicAuthInitialized
+        
         return [
-            {name: "repository", icon: Database, value: setupConfiguration.value.repositoryType},
-            {name: "queue", icon: CurrentDc, value: setupConfiguration.value.queueType},
-            {name: "storage", icon: CloudOutline, value: setupConfiguration.value.storageType},
-            {name: "basicauth", icon: Lock, value: activeStep.value >= 1 ? true : configs?.isBasicAuthInitialized}
+            {name: "repository", icon: Database, value: setupConfiguration.value.repositoryType || "NOT SETUP"},
+            {name: "queue", icon: CurrentDc, value: setupConfiguration.value.queueType || "NOT SETUP"},
+            {name: "storage", icon: CloudOutline, value: setupConfiguration.value.storageType || "NOT SETUP"},
+            {name: "basicauth", icon: Lock, value: basicAuthValue}
         ]
     })
 
@@ -448,6 +451,9 @@
             })
 
             trackSetupEvent("setup_flow:user_form_submitted", {is_form_valid: isUserStepValid.value})
+            
+            localStorage.setItem("basicAuthUserCreated", "true")
+            
             nextStep()
         } catch (error: any) {
             trackSetupEvent("setup_flow:account_creation_failed", {
@@ -525,6 +531,7 @@
         localStorage.removeItem("basicAuthSetupInProgress")
         localStorage.removeItem("setupStartTime")
         localStorage.removeItem("basicAuthSurveyData")
+        localStorage.removeItem("basicAuthUserCreated")
         localStorage.setItem("basicAuthSetupCompletedAt", new Date().toISOString())
 
         router.push({name: "login"})

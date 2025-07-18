@@ -1124,6 +1124,7 @@
         "remove": "Remove",
         "empty": "You still haven't saved any search.",
         "tooltip": "You can't save empty search criteria.",
+        "name_already_used": "Search label already used.",
         "dialog": {
           "heading": "Save current search",
           "placeholder": "Label",

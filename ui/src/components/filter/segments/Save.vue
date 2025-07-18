@@ -48,7 +48,10 @@
                 <el-button @click="toggle()">
                     {{ t("cancel") }}
                 </el-button>
-                <el-button :disabled="!label" type="primary" @click="save()">
+                <el-button v-if="validationErrorMessage" disabled type="danger">
+                    {{ validationErrorMessage }}
+                </el-button>
+                <el-button v-if="!validationErrorMessage" :disabled="!label" type="primary" @click="save()">
                     {{ t("save") }}
                 </el-button>
             </div>
@@ -57,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-    import {getCurrentInstance, ref} from "vue";
+    import {computed, getCurrentInstance, ref} from "vue";
     import {ElInput} from "element-plus";
     import KestraIcon from "../../Kicon.vue";
     import {Save} from "../utils/icons";
@@ -88,6 +91,16 @@
 
     const input = ref<InstanceType<typeof ElInput> | null>(null);
     const label = ref("");
+
+    const validationErrorMessage = computed(() =>{
+        const items = getSavedItems();
+        if(items && items.map(i => i.name).find(name => name === label.value)){
+            return t("filters.save.name_already_used");
+        } else {
+            return null;
+        }
+    });
+
     const save = () => {
         const items = getSavedItems();
 

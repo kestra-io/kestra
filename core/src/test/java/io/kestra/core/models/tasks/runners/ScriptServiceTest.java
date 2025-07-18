@@ -69,6 +69,31 @@ class ScriptServiceTest {
     }
 
     @Test
+    void replaceInternalStorageUnicode() throws IOException {
+        var runContext = runContextFactory.of();
+
+        Path path = Path.of("/tmp/unittest/main/file-龍.txt");
+        if (!path.toFile().exists()) {
+            Files.createFile(path);
+        }
+
+        String internalStorageUri = "kestra://some/file-龍.txt";
+        File localFile = null;
+        try {
+            var command = ScriptService.replaceInternalStorage(runContext, "my command with an internal storage file: " + internalStorageUri, false);
+
+            Matcher matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(command);
+            assertThat(matcher.matches()).isTrue();
+            Path absoluteLocalFilePath = Path.of(matcher.group(1));
+            localFile = absoluteLocalFilePath.toFile();
+            assertThat(localFile.exists()).isTrue();
+        } finally {
+            localFile.delete();
+            path.toFile().delete();
+        }
+    }
+
+    @Test
     void uploadInputFiles() throws IOException {
         var runContext = runContextFactory.of();
 

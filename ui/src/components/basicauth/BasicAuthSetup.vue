@@ -304,7 +304,7 @@
         try {
             const config = await miscStore.loadConfigs()
 
-            if (config && config.isBasicAuthInitialized) {
+            if (config?.isBasicAuthInitialized) {
                 localStorage.removeItem("basicAuthSetupInProgress")
                 localStorage.removeItem("setupStartTime")
                 router.push({name: "login"})

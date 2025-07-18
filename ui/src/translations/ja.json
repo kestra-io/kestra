@@ -1214,13 +1214,13 @@
         "complete": "Kestra UIを開始",
         "config": "設定を検証",
         "survey": "詳細を教えてください",
-        "user": "最初のユーザーを作成する"
+        "user": "アカウントを作成する"
       },
       "subtitles": {
         "complete": "セットアップが正常に完了しました！",
         "config": "こちらはあなたの設定の詳細です",
         "survey": "Kestra Open Source Edition の改善にご協力ください",
-        "user": "最初のユーザーを作成してインスタンスをセットアップする"
+        "user": "アカウントを作成してインスタンスをセットアップする"
       },
       "success": {
         "subtitle": "準備完了です！",
@@ -1245,7 +1245,7 @@
       },
       "titles": {
         "survey": "詳細を教えてください",
-        "user": "最初のユーザーを作成"
+        "user": "アカウントを作成"
       },
       "validation": {
         "email_invalid": "無効なメールアドレス",

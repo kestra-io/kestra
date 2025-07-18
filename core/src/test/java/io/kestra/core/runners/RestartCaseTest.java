@@ -261,4 +261,78 @@ public class RestartCaseTest {
         assertTrue(successLatch.await(1, TimeUnit.MINUTES));
         receiveSubflows.blockLast();
     }
+
+    public void restartFailedWithFinally() throws Exception {
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "restart-with-finally").orElseThrow();
+
+        Execution firstExecution = runnerUtils.runOne(MAIN_TENANT, flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
+
+        assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(firstExecution.getTaskRunList()).hasSize(3);
+        assertThat(firstExecution.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // wait
+        Execution finishedRestartedExecution = runnerUtils.awaitExecution(
+            execution -> execution.getState().getCurrent() == State.Type.SUCCESS && execution.getId().equals(firstExecution.getId()),
+            throwRunnable(() -> {
+                Execution restartedExec = executionService.restart(firstExecution, null);
+                assertThat(restartedExec).isNotNull();
+                assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
+                assertThat(restartedExec.getParentId()).isNull();
+                assertThat(restartedExec.getTaskRunList().size()).isEqualTo(2);
+                assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+
+                executionQueue.emit(restartedExec);
+            }),
+            Duration.ofSeconds(60)
+        );
+
+        assertThat(finishedRestartedExecution).isNotNull();
+        assertThat(finishedRestartedExecution.getId()).isEqualTo(firstExecution.getId());
+        assertThat(finishedRestartedExecution.getParentId()).isNull();
+        assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(4);
+
+        finishedRestartedExecution
+            .getTaskRunList()
+            .stream()
+            .map(TaskRun::getState)
+            .forEach(state -> assertThat(state.getCurrent()).isIn(State.Type.SUCCESS, State.Type.SKIPPED));
+    }
+
+    public void restartFailedWithAfterExecution() throws Exception {
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "restart-with-after-execution").orElseThrow();
+
+        Execution firstExecution = runnerUtils.runOne(MAIN_TENANT, flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
+
+        assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(firstExecution.getTaskRunList()).hasSize(3);
+        assertThat(firstExecution.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // wait
+        Execution finishedRestartedExecution = runnerUtils.awaitExecution(
+            execution -> executionService.isTerminated(flow, execution) && execution.getId().equals(firstExecution.getId()),
+            throwRunnable(() -> {
+                Execution restartedExec = executionService.restart(firstExecution, null);
+                assertThat(restartedExec).isNotNull();
+                assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
+                assertThat(restartedExec.getParentId()).isNull();
+                assertThat(restartedExec.getTaskRunList().size()).isEqualTo(2);
+                assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+
+                executionQueue.emit(restartedExec);
+            }),
+            Duration.ofSeconds(60)
+        );
+
+        assertThat(finishedRestartedExecution).isNotNull();
+        assertThat(finishedRestartedExecution.getId()).isEqualTo(firstExecution.getId());
+        assertThat(finishedRestartedExecution.getParentId()).isNull();
+        assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(4);
+
+        finishedRestartedExecution
+            .getTaskRunList()
+            .stream()
+            .map(TaskRun::getState)
+            .forEach(state -> assertThat(state.getCurrent()).isIn(State.Type.SUCCESS, State.Type.SKIPPED));
+    }
 }

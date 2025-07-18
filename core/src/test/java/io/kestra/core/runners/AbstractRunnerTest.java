@@ -185,6 +185,18 @@ public abstract class AbstractRunnerTest {
         restartCaseTest.restartSubflow();
     }
 
+    @Test
+    @LoadFlows({"flows/valids/restart-with-finally.yaml"})
+    protected void restartFailedWithFinally() throws Exception {
+        restartCaseTest.restartFailedWithFinally();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/restart-with-after-execution.yaml"})
+    protected void restartFailedWithAfterExecution() throws Exception {
+        restartCaseTest.restartFailedWithAfterExecution();
+    }
+
     @RetryingTest(5)
     @LoadFlows({"flows/valids/trigger-flow-listener-no-inputs.yaml",
         "flows/valids/trigger-flow-listener.yaml",

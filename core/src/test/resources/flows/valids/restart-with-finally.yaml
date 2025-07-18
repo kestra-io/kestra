@@ -1,0 +1,21 @@
+id: restart-with-finally
+namespace: io.kestra.tests
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀
+
+  - id: fail_randomly
+    type: io.kestra.plugin.core.execution.Fail
+    runIf: "{{taskrun.attemptsCount == 0}}"
+    errorMessage: Bad value returned!
+
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: should finish here
+
+finally:
+  - id: end
+    type: io.kestra.plugin.core.log.Log
+    message: finally!

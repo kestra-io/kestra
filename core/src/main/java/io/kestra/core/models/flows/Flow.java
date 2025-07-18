@@ -19,7 +19,6 @@ import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.Introspected;
@@ -30,8 +29,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -189,17 +186,30 @@ public class Flow extends AbstractFlow implements HasUID {
             .toList();
     }
 
-    public List<Task> allErrorsWithChilds() {
+    public List<Task> allErrorsWithChildrend() {
         var allErrors = allTasksWithChilds().stream()
             .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
             .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream())
             .collect(Collectors.toCollection(ArrayList::new));
 
-        if (this.getErrors() != null && !this.getErrors().isEmpty()) {
+        if (!ListUtils.isEmpty(this.getErrors())) {
             allErrors.addAll(this.getErrors());
         }
 
         return allErrors;
+    }
+
+    public List<Task> allFinallyWithChildren() {
+        var allFinally = allTasksWithChilds().stream()
+            .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getFinally() != null)
+            .flatMap(task -> ((FlowableTask<?>) task).getFinally().stream())
+            .collect(Collectors.toCollection(ArrayList::new));
+
+        if (!ListUtils.isEmpty(this.getFinally())) {
+            allFinally.addAll(this.getFinally());
+        }
+
+        return allFinally;
     }
 
     public Task findParentTasksByTaskId(String taskId) {

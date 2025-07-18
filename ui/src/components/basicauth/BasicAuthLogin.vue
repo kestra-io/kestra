@@ -53,7 +53,7 @@
             </el-form-item>
             <el-form-item>
                 <el-button
-                    type="secondary"
+                    type="default"
                     class="w-100"
                     size="large"
                     @click="openTroubleshootingGuide"
@@ -223,7 +223,6 @@
 
         .el-button.el-button--default {
             background: var(--bs-gray-200);
-            height: 54px;
 
             html.dark & {
                 background: var(--input-bg);

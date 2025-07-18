@@ -150,13 +150,9 @@ public class BasicAuthService {
 
         SaltedBasicAuthConfiguration configuration = configuration();
 
-        if (configuration != null && configuration.getUsername() != null && configuration.getPassword() != null) {
-            return true;
-        }
-        
-        return basicAuthConfiguration != null && 
-               !StringUtils.isBlank(basicAuthConfiguration.getUsername()) && 
-               !StringUtils.isBlank(basicAuthConfiguration.getPassword());
+        return configuration != null && 
+               !StringUtils.isBlank(configuration.getUsername()) && 
+               !StringUtils.isBlank(configuration.getPassword());
     }
 
     @Getter

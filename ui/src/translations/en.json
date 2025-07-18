@@ -1368,17 +1368,17 @@
       "login": "Login",
       "logout": "Logout",
       "steps": {
-        "user": "Create your first user",
+        "user": "Create your account",
         "config": "Validate Configuration",
         "survey": "Tell us more",
         "complete": "Start Kestra UI"
       },
       "titles": {
-        "user": "Create first user",
+        "user": "Create an account",
         "survey": "Tell us more"
       },
       "subtitles": {
-        "user": "Set up your instance by creating your first user",
+        "user": "Set up your instance by creating an account",
         "config": "Here are the details of your configuration",
         "survey": "Help us improve Kestra Open Source Edition",
         "complete": "Setup completed successfully!"

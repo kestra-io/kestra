@@ -602,6 +602,7 @@
         },
         "empty": "您还没有保存任何搜索。",
         "label": "已保存的搜索",
+        "name_already_used": "搜索标签已被使用。",
         "remove": "移除",
         "tooltip": "您不能保存空的搜索条件。"
       },
@@ -1214,13 +1215,13 @@
         "complete": "启动 Kestra UI",
         "config": "验证配置",
         "survey": "请告诉我们更多信息",
-        "user": "创建您的第一个用户"
+        "user": "创建您的账户"
       },
       "subtitles": {
         "complete": "设置成功完成！",
         "config": "以下是您的配置详情",
         "survey": "帮助我们改进 Kestra Open Source Edition",
-        "user": "通过创建您的第一个用户来设置您的实例"
+        "user": "通过创建账户来设置您的实例"
       },
       "success": {
         "subtitle": "一切准备就绪！",
@@ -1245,7 +1246,7 @@
       },
       "titles": {
         "survey": "告诉我们更多信息",
-        "user": "创建第一个用户"
+        "user": "创建账户"
       },
       "validation": {
         "email_invalid": "无效的电子邮件",

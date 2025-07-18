@@ -48,10 +48,10 @@
     import Close from "vue-material-design-icons/Close.vue";
     import KeyboardReturn from "vue-material-design-icons/KeyboardReturn.vue";
     import AiIcon from "./AiIcon.vue";
-    import {useStore} from "vuex";
+    import {useAiStore} from "../../stores/ai";
 
     const t = getCurrentInstance()!.appContext.config.globalProperties.$t;
-    const store = useStore();
+    const aiStore = useAiStore();
     const emit = defineEmits<{
         close: [];
         generatedYaml: [string];
@@ -82,7 +82,7 @@
 
         let aiResponse;
         try {
-            aiResponse = await store.dispatch("ai/generateFlow", {
+            aiResponse = await aiStore.generateFlow({
                 userPrompt: prompt.value,
                 flowYaml: props.flow
             }) as string;

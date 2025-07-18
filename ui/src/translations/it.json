@@ -602,6 +602,7 @@
         },
         "empty": "Non hai ancora salvato alcuna ricerca.",
         "label": "Ricerche salvate",
+        "name_already_used": "Etichetta di ricerca già utilizzata.",
         "remove": "Rimuovi",
         "tooltip": "Non puoi salvare criteri di ricerca vuoti."
       },
@@ -1214,13 +1215,13 @@
         "complete": "Avvia Kestra UI",
         "config": "Convalida Configurazione",
         "survey": "Dicci di più",
-        "user": "Crea il tuo primo utente"
+        "user": "Crea il tuo account"
       },
       "subtitles": {
         "complete": "Impostazione completata con successo!",
         "config": "Ecco i dettagli della tua configurazione",
         "survey": "Aiutaci a migliorare Kestra Open Source Edition",
-        "user": "Configura la tua istanza creando il tuo primo utente"
+        "user": "Configura la tua istanza creando un account"
       },
       "success": {
         "subtitle": "Sei pronto!",
@@ -1245,7 +1246,7 @@
       },
       "titles": {
         "survey": "Dicci di più",
-        "user": "Crea primo utente"
+        "user": "Crea un account"
       },
       "validation": {
         "email_invalid": "Email non valido",

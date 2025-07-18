@@ -602,6 +602,7 @@
         },
         "empty": "Sie haben noch keine Suche gespeichert.",
         "label": "Gespeicherte Suchen",
+        "name_already_used": "Suchbegriff {label} bereits verwendet.",
         "remove": "Entfernen",
         "tooltip": "Sie können keine leeren Suchkriterien speichern."
       },
@@ -1214,13 +1215,13 @@
         "complete": "Kestra UI starten",
         "config": "Konfiguration validieren",
         "survey": "Erzählen Sie uns mehr",
-        "user": "Erstellen Sie Ihren ersten Benutzer"
+        "user": "Erstellen Sie Ihr Konto"
       },
       "subtitles": {
         "complete": "Einrichtung erfolgreich abgeschlossen!",
         "config": "Hier sind die Details Ihrer Konfiguration",
         "survey": "Helfen Sie uns, die Kestra Open Source Edition zu verbessern",
-        "user": "Richten Sie Ihre Instanz ein, indem Sie Ihren ersten Benutzer erstellen"
+        "user": "Richten Sie Ihre Instanz ein, indem Sie ein Konto erstellen"
       },
       "success": {
         "subtitle": "Alles bereit!",
@@ -1245,7 +1246,7 @@
       },
       "titles": {
         "survey": "Erzählen Sie uns mehr",
-        "user": "Ersten Benutzer erstellen"
+        "user": "Konto erstellen"
       },
       "validation": {
         "email_invalid": "Ungültige E-Mail-Adresse",

@@ -248,6 +248,9 @@ export const useExecutionsStore = defineStore("executions", {
         followExecution(options: { id: string }) {
             return Promise.resolve(new EventSource(`${apiUrl(this.vuexStore)}/executions/${options.id}/follow`, {withCredentials: true}));
         },
+        followExecutionDependencies(options: { id: string; expandAll?: boolean }) {
+            return Promise.resolve(new EventSource(`${apiUrl(this.vuexStore)}/executions/${options.id}/follow-dependencies${options.expandAll ? "?expandAll=true" : ""}`, {withCredentials: true}));
+        },
         followLogs(options: { id: string }) {
             return Promise.resolve(new EventSource(`${apiUrl(this.vuexStore)}/logs/${options.id}/follow`, {withCredentials: true}));
         },

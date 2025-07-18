@@ -30,5 +30,5 @@ public class ExecutionRunning {
         return IdUtils.fromPartsAndSeparator('|', this.tenantId, this.namespace, this.flowId, this.execution.getId());
     }
 
-    public enum ConcurrencyState { CREATED, RUNNING, QUEUED }
+    public enum ConcurrencyState { CREATED, RUNNING, QUEUED, CANCELLED, FAILED }
 }

@@ -21,12 +21,17 @@ public record TestSuiteRunResult(
 ) {
 
     public static TestSuiteRunResult of(String id, String testSuiteId, String namespace, String flowId, List<UnitTestResult> results) {
+        boolean allSkipped = true;
         for (UnitTestResult result : results) {
+            if(!result.state().equals(TestState.SKIPPED)) {
+                allSkipped = false;
+            }
             if(result.state().equals(TestState.ERROR) || result.state().equals(TestState.FAILED)) {
                 return new TestSuiteRunResult(id, testSuiteId, namespace, flowId, result.state(), results);
             }
         }
-        return new TestSuiteRunResult(id, testSuiteId, namespace, flowId, TestState.SUCCESS, results);
+        var state = allSkipped ? TestState.SKIPPED : TestState.SUCCESS;
+        return new TestSuiteRunResult(id, testSuiteId, namespace, flowId, state, results);
     }
 
     public static TestSuiteRunResult ofDisabledTestSuite(String id, String testSuiteId, String namespace, String flowId) {

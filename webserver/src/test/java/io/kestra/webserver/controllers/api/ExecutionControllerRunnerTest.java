@@ -21,9 +21,11 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.InputsTest;
+import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.tenant.TenantService;
+import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -32,6 +34,7 @@ import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpRequest;
@@ -47,24 +50,31 @@ import io.micronaut.reactor.http.client.ReactorSseClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static io.micronaut.http.HttpRequest.GET;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -77,6 +87,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @KestraTest(startRunner = true)
+@Property(name = LocalPath.ALLOWED_PATHS_CONFIG, value = "/tmp")
 class ExecutionControllerRunnerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
     public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
@@ -111,6 +122,9 @@ class ExecutionControllerRunnerTest {
 
     @Inject
     protected RunnerUtils runnerUtils;
+
+    @Inject
+    private StorageInterface storageInterface;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TENANT_ID = "main";
@@ -259,6 +273,18 @@ class ExecutionControllerRunnerTest {
         Execution result = triggerExecutionInputsFlowExecution(false);
 
         List<Event<Execution>> results = sseClient
+            .eventStream("/api/v1/main/executions/" + result.getId() + "/follow", Execution.class)
+            .collectList()
+            .block();
+
+        assertThat(results).isNotNull();
+        assertThat(results.size()).isGreaterThan(0);
+        assertThat(results.getLast().getData().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(results.getFirst().getId()).isEqualTo("start");
+        assertThat(results.getLast().getId()).isEqualTo("end");
+
+        // check that a second call work: calling follow on an already terminated execution.
+        results = sseClient
             .eventStream("/api/v1/main/executions/" + result.getId() + "/follow", Execution.class)
             .collectList()
             .block();
@@ -568,7 +594,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/inputs.yaml"})
-    void downloadDownloadFileFromExecution() throws TimeoutException, QueueException{
+    void downloadInternalStorageFileFromExecution() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
         assertThat(execution.getTaskRunList()).hasSize(14);
 
@@ -606,7 +632,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/inputs.yaml"})
-    void downloadFileFromExecutionPreview() throws TimeoutException, QueueException{
+    void previewInternalStorageFileFromExecution() throws TimeoutException, QueueException{
         Execution defaultExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
         assertThat(defaultExecution.getTaskRunList()).hasSize(14);
 
@@ -652,6 +678,88 @@ class ExecutionControllerRunnerTest {
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(e.getMessage()).contains("using encoding 'foo'");
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
+    void previewLocalFileFromExecution() throws TimeoutException, QueueException, IOException {
+        HashMap<String, Object> newInputs = new HashMap<>(InputsTest.inputs);
+        URI file = createFile();
+        newInputs.put("file", file);
+
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "inputs",
+            null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, newInputs)
+        );
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // get the metadata of the file
+        FileMetas metas = client.retrieve(
+            GET("/api/v1/main/executions/" + execution.getId() + "/file/metas?path=" + file),
+            FileMetas.class
+        ).block();
+        assertThat(metas).isNotNull();
+        assertThat(metas.getSize()).isEqualTo(11L);
+
+        // preview the file
+        Map<String, Object> preview = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + execution.getId() + "/file/preview?path=" + file),
+            Map.class
+        );
+        assertThat(preview).isNotNull();
+        assertThat(preview).containsEntry("extension", "txt");
+        assertThat(preview).containsEntry("content", "Hello World");
+
+        // download the file
+        String content = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + execution.getId() + "/file?path=" + file),
+            String.class
+        );
+        assertThat(content).isEqualTo("Hello World");
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
+    void previewNsFileFromExecution() throws TimeoutException, QueueException, IOException {
+        HashMap<String, Object> newInputs = new HashMap<>(InputsTest.inputs);
+        URI file = createNsFile(false);
+        newInputs.put("file", file);
+
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "inputs",
+            null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, newInputs)
+        );
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // get the metadata of the file
+        FileMetas metas = client.retrieve(
+            GET("/api/v1/main/executions/" + execution.getId() + "/file/metas?path=" + file),
+            FileMetas.class
+        ).block();
+        assertThat(metas).isNotNull();
+        assertThat(metas.getSize()).isEqualTo(11L);
+
+        // preview the file
+        Map<String, Object> preview = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + execution.getId() + "/file/preview?path=" + file),
+            Map.class
+        );
+        assertThat(preview).isNotNull();
+        assertThat(preview).containsEntry("extension", "txt");
+        assertThat(preview).containsEntry("content", "Hello World");
+
+        // download the file
+        String content = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + execution.getId() + "/file?path=" + file),
+            String.class
+        );
+        assertThat(content).isEqualTo("Hello World");
     }
 
     @SuppressWarnings("unchecked")
@@ -719,6 +827,26 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/webhook-wait.yaml"})
+    void shouldWaitForWebhookAndReturnOutput() {
+        Flow webhook = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "webhook-wait").orElseThrow();
+        String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
+
+        var execution = client.toBlocking().retrieve(
+            HttpRequest
+                .GET(
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-wait/" + key
+                ),
+            ExecutionController.WebhookResponse.class
+        );
+
+        assertThat(execution.state().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.url().toString()).isEqualTo("http://localhost:8081/ui/main/executions/io.kestra.tests/webhook-wait/" + execution.id());
+        assertThat(execution.outputs()).hasSize(1);
+        assertThat(execution.outputs()).containsEntry("output", "output");
+    }
+
+    @Test
     @LoadFlows({"flows/valids/pause.yaml"})
     @SuppressWarnings("unchecked")
     void resumeExecutionPaused() throws TimeoutException, InterruptedException, QueueException, InternalException {
@@ -732,11 +860,7 @@ class ExecutionControllerRunnerTest {
         assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
 
         // check that the execution is no more paused
-        Thread.sleep(100);
-        Execution execution = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution.getId()),
-            Execution.class);
-        assertThat(execution.getState().isPaused()).isFalse();
+        Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
         assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
     }
 
@@ -765,11 +889,7 @@ class ExecutionControllerRunnerTest {
         assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
 
         // check that the execution is no more paused
-        Thread.sleep(100);
-        Execution execution = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution.getId()),
-            Execution.class);
-        assertThat(execution.getState().isPaused()).isFalse();
+        Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
 
         Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("onResume");
         assertThat(outputs.get("asked")).isEqualTo("myString");
@@ -796,17 +916,8 @@ class ExecutionControllerRunnerTest {
         assertThat(resumeResponse.getCount()).isEqualTo(2);
 
         // check that the executions are no more paused
-        Thread.sleep(100);
-        Execution resumedExecution1 = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution1.getId()),
-            Execution.class
-        );
-        Execution resumedExecution2 = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution2.getId()),
-            Execution.class
-        );
-        assertThat(resumedExecution1.getState().isPaused()).isFalse();
-        assertThat(resumedExecution2.getState().isPaused()).isFalse();
+        awaitExecution(pausedExecution1.getId(), exec -> !exec.getState().isPaused());
+        awaitExecution(pausedExecution2.getId(), exec -> !exec.getState().isPaused());
 
         // attempt to resume no more paused executions
         HttpClientResponseException e = assertThrows(
@@ -836,17 +947,8 @@ class ExecutionControllerRunnerTest {
         assertThat(resumeResponse.getCount()).isEqualTo(2);
 
         // check that the executions are no more paused
-        Thread.sleep(100);
-        Execution resumedExecution1 = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution1.getId()),
-            Execution.class
-        );
-        Execution resumedExecution2 = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution2.getId()),
-            Execution.class
-        );
-        assertThat(resumedExecution1.getState().isPaused()).isFalse();
-        assertThat(resumedExecution2.getState().isPaused()).isFalse();
+        awaitExecution(pausedExecution1.getId(), exec -> !exec.getState().isPaused());
+        awaitExecution(pausedExecution2.getId(), exec -> !exec.getState().isPaused());
 
         // attempt to resume no more paused executions
         HttpClientResponseException e = assertThrows(
@@ -1033,11 +1135,7 @@ class ExecutionControllerRunnerTest {
         assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
 
         // check that the execution is no more paused
-        Thread.sleep(100);
-        Execution execution = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + pausedExecution.getId()),
-            Execution.class);
-        assertThat(execution.getState().isPaused()).isFalse();
+        awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
     }
 
     // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow
@@ -1082,10 +1180,7 @@ class ExecutionControllerRunnerTest {
         assertThat(executionKilledId.get()).isEqualTo(runningExecution.getId());
 
         // retrieve the execution from the API and check that the task has been set to killed
-        Thread.sleep(1000);
-        Execution execution = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + runningExecution.getId()),
-            Execution.class);
+        Execution execution = awaitExecution(runningExecution.getId(), exec -> !exec.getState().isPaused());
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(execution.getTaskRunList().size()).isEqualTo(2);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
@@ -1389,6 +1484,24 @@ class ExecutionControllerRunnerTest {
 
         var notRunning = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + completed.getId() + "/unqueue", null)));
         assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-concurrency-queue.yml",
+        "flows/valids/minimal.yaml"})
+    void shouldUnqueueAQueuedFlowToCancelledState() throws QueueException, TimeoutException {
+        // run a first flow so the second is queued
+        runnerUtils.runOneUntilRunning(TENANT_ID, "io.kestra.tests", "flow-concurrency-queue");
+        Execution result1 = runUntilQueued("io.kestra.tests", "flow-concurrency-queue");
+
+        var cancelResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/executions/" + result1.getId() + "/unqueue?state=CANCELLED", null)
+        );
+        assertThat(cancelResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        Optional<Execution> cancelledExecution = executionRepositoryInterface.findById(TENANT_ID, result1.getId());
+        assertThat(cancelledExecution.isPresent()).isTrue();
+        assertThat(cancelledExecution.get().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
     }
 
     @Test
@@ -1701,11 +1814,7 @@ class ExecutionControllerRunnerTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CREATED);
 
         // check that the execution is suspended
-        Thread.sleep(250);
-        Execution suspended = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + execution.getId()),
-            Execution.class);
-        assertThat(suspended.getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
+        Execution suspended = awaitExecution(execution.getId(), State.Type.BREAKPOINT);
         assertThat(suspended.getTaskRunList()).hasSize(1);
         assertThat(suspended.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
 
@@ -1726,6 +1835,54 @@ class ExecutionControllerRunnerTest {
         assertThat(terminated.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
+    @Test
+    @LoadFlows({"flows/valids/subflow-parent.yaml", "flows/valids/subflow-child.yaml", "flows/valids/subflow-grand-child.yaml"})
+    void triggerExecutionAndFollowDependencies() {
+        Execution result = triggerExecutionExecution(TESTS_FLOW_NS, "subflow-parent", null, true);
+
+        List<Event<ExecutionStatusEvent>> results = sseClient
+            .eventStream("/api/v1/main/executions/" + result.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
+            .collectList()
+            .block();
+
+        assertThat(results).isNotNull();
+        assertThat(results.size()).isGreaterThan(1);
+        assertThat(results.getFirst().getId()).isEqualTo("start");
+        assertThat(results.getLast().getId()).isEqualTo("end-all");
+        // check that we have 3 end events and 3 result in SUCCESS
+        assertThat(results.stream().filter(event -> event.getId().equals("end"))).hasSize(3);
+        assertThat(results.stream().filter(event -> event.getData().state() != null && event.getData().state().getCurrent().equals(State.Type.SUCCESS))).hasSize(3);
+
+        // check that a second call work: calling follow on an already terminated execution.
+        results = sseClient
+            .eventStream("/api/v1/main/executions/" + result.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
+            .collectList()
+            .block();
+
+        assertThat(results).isNotNull();
+        assertThat(results.size()).isGreaterThan(1);
+        assertThat(results.getFirst().getId()).isEqualTo("start");
+        assertThat(results.getLast().getId()).isEqualTo("end-all");
+        // check that we have 3 end events and 3 results in SUCCESS
+        assertThat(results.stream().filter(event -> event.getId().equals("end"))).hasSize(3);
+        assertThat(results.stream().filter(event -> event.getData().state() != null && event.getData().state().getCurrent().equals(State.Type.SUCCESS))).hasSize(3);
+
+        // check that a without expandAll it would return only the immediate dependencies.
+        results = sseClient
+            .eventStream("/api/v1/main/executions/" + result.getId() + "/follow-dependencies", ExecutionStatusEvent.class)
+            .collectList()
+            .block();
+
+        assertThat(results).isNotNull();
+        assertThat(results.size()).isGreaterThan(1);
+        assertThat(results.getFirst().getId()).isEqualTo("start");
+        assertThat(results.getLast().getId()).isEqualTo("end-all");
+        // check that we have 2 end events and 2 results in SUCCESS
+        assertThat(results.stream().filter(event -> event.getId().equals("end"))).hasSize(2);
+        assertThat(results.stream().filter(event -> event.getData().state() != null && event.getData().state().getCurrent().equals(State.Type.SUCCESS))).hasSize(2);
+
+    }
+
     private List<Label> getExecutionNonSystemLabels(List<Label> labels) {
         return labels == null ? List.of() :
             labels.stream()
@@ -1744,5 +1901,49 @@ class ExecutionControllerRunnerTest {
         List<Label> systemLabels = getExecutionSystemLabels(allLabels);
         assertThat(customLabels).as("Custom label count").hasSize(expectedCustomCount);
         assertThat("System label count", systemLabels, hasSize(expectedSystemMatcher));
+    }
+
+    private URI createFile() throws IOException {
+        File tempFile = File.createTempFile("file", ".txt");
+        Files.write(tempFile.toPath(), "Hello World".getBytes());
+        return tempFile.toPath().toUri();
+    }
+
+    private URI createNsFile(boolean nsInAuthority) throws IOException {
+        String namespace = "io.kestra.tests";
+        String filePath = "file.txt";
+        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
+    }
+
+    private Execution awaitExecution(String executionId) {
+        return Awaitility.await()
+            .atMost(Duration.ofSeconds(10))
+            .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
+            .until(
+                () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/" + executionId), Execution.class),
+                execution -> execution.getState().isTerminated()
+            );
+    }
+
+    private Execution awaitExecution(String executionId, State.Type state) {
+        return Awaitility.await()
+            .atMost(Duration.ofSeconds(10))
+            .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
+            .until(
+                () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/" + executionId), Execution.class),
+                execution -> execution.getState().getCurrent() == state
+            );
+    }
+
+    private Execution awaitExecution(String executionId, Predicate<Execution> predicate) {
+        return Awaitility.await()
+            .atMost(Duration.ofSeconds(10))
+            .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
+            .until(
+                () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/" + executionId), Execution.class),
+                predicate
+            );
     }
 }

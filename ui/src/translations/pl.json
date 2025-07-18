@@ -10,6 +10,7 @@
     "Finish": "Zakończ",
     "Fold auto": "Edytor: automatyczne składanie wieloliniowych",
     "Fold content lines": "Złóż wieloliniowe ciągi",
+    "Hover description": "Edytor: Pokaż opis pola po najechaniu na key lub value",
     "Language": "Język",
     "Next step": "Następny krok",
     "Per page": "na stronę",
@@ -124,6 +125,7 @@
     "cannot swap tasks": "Nie można zamienić tasks",
     "change execution state confirm": "Czy na pewno chcesz zmienić stan wykonania <code>{id}</code>?",
     "change execution state done": "Stan wykonania zaktualizowany",
+    "change queue confirm": "Czy na pewno chcesz zmienić stan kolejki dla wykonania <code>{id}</code>?<br/>",
     "change state": "Zmień stan",
     "change state confirm": "Czy na pewno chcesz zmienić stan uruchomienia task dla task <code>{task}</code> w wykonaniu <code>{id}</code>?",
     "change state current state": "Aktualny status to:",
@@ -214,6 +216,7 @@
         "label": "Edytuj Dashboard"
       },
       "empty": "Brak wyników do wyświetlenia.",
+      "export": "Eksportuj do CSV",
       "labels": {
         "plural": "Dashboardy",
         "singular": "Dashboard"
@@ -267,7 +270,6 @@
     },
     "days": "Dni",
     "debug": "Debugowanie",
-    "decline": "Odrzuć",
     "default": "Domyślny",
     "delete": "Usuń",
     "delete backfill": "Usuń backfill",
@@ -400,6 +402,7 @@
       "move_line": "Przenieś linię",
       "reset_fontsize": "Zresetuj rozmiar czcionki",
       "save_flow": "Zapisz flow",
+      "toggle_ai_agent": "Przełącz agenta AI",
       "trigger_autocompletion": "Wyzwól autouzupełnianie",
       "uncomment": "Odkomentuj"
     },
@@ -599,6 +602,7 @@
         },
         "empty": "Nie zapisałeś jeszcze żadnego wyszukiwania.",
         "label": "Zapisane wyszukiwania",
+        "name_already_used": "Szukana label już używana.",
         "remove": "Usuń",
         "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
       },
@@ -1034,6 +1038,7 @@
     "read-more": "Czytaj więcej o",
     "readonly property": "Właściwość tylko do odczytu",
     "refresh": "Odśwież",
+    "reject": "Odrzuć",
     "relative": "Względny",
     "relative end date": "Względna data zakończenia",
     "relative start date": "Względna data rozpoczęcia",
@@ -1174,6 +1179,7 @@
             "editor_folding_stratgy": "Automatyczne Zwijanie Kodu w Edytorze",
             "editor_font_family": "Rodzina Czcionki Edytora",
             "editor_font_size": "Rozmiar Czcionki Edytora",
+            "editor_hover_description": "Najedź na właściwość, aby zobaczyć opis",
             "environment_color": "Kolor Środowiska",
             "environment_name": "Nazwa Środowiska",
             "logs_font_size": "Rozmiar czcionki logów",
@@ -1209,13 +1215,13 @@
         "complete": "Uruchom Kestra UI",
         "config": "Sprawdź Konfigurację",
         "survey": "Powiedz nam więcej",
-        "user": "Utwórz pierwszego użytkownika"
+        "user": "Utwórz swoje konto"
       },
       "subtitles": {
         "complete": "Konfiguracja zakończona sukcesem!",
         "config": "Oto szczegóły Twojej konfiguracji",
         "survey": "Pomóż nam ulepszyć Kestra Open Source Edition",
-        "user": "Skonfiguruj swoją instancję, tworząc pierwszego użytkownika"
+        "user": "Skonfiguruj swoją instancję, tworząc konto"
       },
       "success": {
         "subtitle": "Jesteś gotowy!",
@@ -1240,8 +1246,9 @@
       },
       "titles": {
         "survey": "Powiedz nam więcej",
-        "user": "Utwórz pierwszego użytkownika"
+        "user": "Utwórz konto"
       },
+      "troubleshooting": "Zapomniałeś hasła?",
       "validation": {
         "email_invalid": "Nieprawidłowy email",
         "email_required": "Email jest wymagany",
@@ -1379,9 +1386,11 @@
       "warning": "Może to prowadzić do równoczesnych wykonań dla tego samego trigger i powinno być traktowane jako ostateczność."
     },
     "unqueue": "Usuń z kolejki",
+    "unqueue as": "Usuń z kolejki jako <code>{status}</code>",
     "unqueue confirm": "Czy na pewno chcesz usunąć z kolejki wykonanie <code>{id}</code>?",
     "unqueue done": "Wykonanie jest odkolejkowane",
     "unqueue title": "Usuń z kolejki wykonanie <code>{id}</code>.<br/>Zwróć uwagę, że nie będzie to przestrzegać limitu współbieżności flow, więc może być uruchomionych więcej wykonań niż dozwolony limit.",
+    "unqueue title multiple": "Czy na pewno chcesz usunąć z kolejki <code>{count}</code> wykonania?<br/><br/>Zauważ, że nie będzie to przestrzegać limitu współbieżności flow, więc może być uruchomionych więcej wykonań niż dozwolony limit.",
     "unsaved changed ?": "Masz niezapisane zmiany, czy chcesz opuścić tę stronę?",
     "up trend": "Rosnący",
     "update": "Aktualizuj",

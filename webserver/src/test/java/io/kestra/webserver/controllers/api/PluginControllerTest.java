@@ -55,7 +55,7 @@ class PluginControllerTest {
         assertThat(template.getDescription()).isEqualTo("Plugin template for Kestra");
 
         assertThat(template.getTasks().size()).isEqualTo(1);
-        assertThat(template.getTasks().getFirst()).isEqualTo("io.kestra.plugin.templates.ExampleTask");
+        assertThat(template.getTasks().getFirst().cls()).isEqualTo("io.kestra.plugin.templates.ExampleTask");
 
         assertThat(template.getGuides().size()).isEqualTo(2);
         assertThat(template.getGuides().getFirst()).isEqualTo("authentication");
@@ -145,19 +145,30 @@ class PluginControllerTest {
         Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getSchema().getProperties().get("properties");
 
         assertThat(doc.getMarkdown()).contains("io.kestra.plugin.templates.ExampleTask");
-        assertThat(properties.size()).isEqualTo(17);
+        assertThat(properties.size()).isEqualTo(18);
         assertThat(properties.get("id").size()).isEqualTo(5);
         assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
     }
 
     @Test
-    void flow() {
+    void flowSchema() {
         Map<String, Object> doc = client.toBlocking().retrieve(
             HttpRequest.GET(PATH + "/schemas/flow"),
             Argument.mapOf(String.class, Object.class)
         );
 
         assertThat(doc.get("$ref")).isEqualTo("#/definitions/io.kestra.core.models.flows.Flow");
+    }
+
+    @Test
+    void flowProperties() {
+        Map<String, Object> doc = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/properties/flow"),
+            Argument.mapOf(String.class, Object.class)
+        );
+
+        assertThat((Map<String, Object>) doc.get("properties")).hasSize(23);
+        assertThat((List<String>) doc.get("required")).hasSize(3);
     }
 
     @Test

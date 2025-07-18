@@ -1,9 +1,11 @@
 import {onMounted, computed, ref} from "vue";
-import {useDashboardStore} from "../../../stores/dashboard";
-import type {RouteParams, RouteLocation} from "vue-router";
-import {useRoute} from "vue-router";
-import {useI18n} from "vue-i18n";
 
+import {useRoute} from "vue-router";
+import type {RouteParams, RouteLocation} from "vue-router";
+
+import {useDashboardStore} from "../../../stores/dashboard";
+
+import {useI18n} from "vue-i18n";
 
 import {decodeSearchParams} from "../../filter/utils/helpers.ts";
 
@@ -28,7 +30,7 @@ export type Chart = {
         };
         [key: string]: unknown;
     };
-    data?: {      
+    data?: {
         columns?: {
             [key: string]: Record<string, any>;
         };
@@ -41,6 +43,21 @@ export type Chart = {
         [key: string]: unknown;
     };
     [key: string]: unknown;
+};
+
+export type Request = {
+    chart: Chart["content"];
+    globalFilter?: Parameters;
+};
+
+export type Parameters = {
+    pageNumber?: number;
+    pageSize?: number;
+    startDate?: Date;
+    endDate?: Date;
+    namespace?: string;
+    labels?: Record<string, string>;
+    filters?: Record<string, any>;
 };
 
 export const ALLOWED_CREATION_ROUTES = ["home", "flows/update", "namespaces/update"];
@@ -91,13 +108,15 @@ export const TYPES: Record<string, any> = {
 
 export const isKPIChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.KPI";
 
+export const isTableChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.Table";
+
 export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id;
 
 export const getPropertyValue = (data: Record<string, any>, property: "value" | "description"): string => data.results?.[0]?.[property];
 
 export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions?.pagination?.enabled ?? false;
 
-export const processFlowYaml = (yaml: string, namespace: string, flow: string): string => yaml.replace(/--NAMESPACE--/g, namespace).replace(/--FLOW--/g, flow)
+export const processFlowYaml = (yaml: string, namespace: string, flow: string): string => yaml.replace(/--NAMESPACE--/g, namespace).replace(/--FLOW--/g, flow);
 
 export function useChartGenerator(props: {chart: Chart; filters: string[]; showDefault: boolean;}, includeHooks: boolean = true) {
     const percentageShown = computed(() => props.chart?.chartOptions?.numberType === "PERCENTAGE");
@@ -112,21 +131,17 @@ export function useChartGenerator(props: {chart: Chart; filters: string[]; showD
     const data = ref();
     const generate = async (id: string, pagination?: { pageNumber: number; pageSize: number }) => {
         const filters = props.filters.concat(decodeSearchParams(route.query, undefined, []) ?? []);
+        const parameters: Parameters = {...(pagination ?? {}), ...(filters ?? {})};
 
         if (!props.showDefault) {
-            let params = {id, chartId: props.chart.id, filters};
-
-            if (pagination) params = {...params, ...pagination};
-
-            if (filters) params.filters = filters;
-
-            data.value = await dashboardStore.generate(params);
+            data.value = await dashboardStore.generate(id, props.chart.id, parameters);
         } else {
-            const params = {chart: props.chart.content, globalFilter: {filters}};
+            if (!props.chart.content){
+                throw new Error("Chart content must exist for preview.");
+            }
 
-            if (pagination) params.globalFilter = {...params.globalFilter, ...pagination};
-
-            data.value = await dashboardStore.chartPreview(params);
+            const request: Request = {chart: props.chart.content, globalFilter: parameters};
+            data.value = await dashboardStore.chartPreview(request);
         }
 
         return data.value;

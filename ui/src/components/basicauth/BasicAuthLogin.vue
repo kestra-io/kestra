@@ -51,6 +51,16 @@
                     {{ t("setup.login") }}
                 </el-button>
             </el-form-item>
+            <el-form-item>
+                <el-button
+                    type="default"
+                    class="w-100"
+                    size="large"
+                    @click="openTroubleshootingGuide"
+                >
+                    {{ t("setup.troubleshooting") }}
+                </el-button>
+            </el-form-item>
         </el-form>
     </div>
 </template>
@@ -68,10 +78,10 @@
     import Lock from "vue-material-design-icons/Lock.vue"
     import Logo from "../home/Logo.vue"
 
-    import {useMiscStore} from "../../stores/misc"
     import {useCoreStore} from "../../stores/core"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
+    import * as BasicAuth from "../../utils/basicAuth";
 
     interface Credentials {
         username: string
@@ -82,7 +92,6 @@
     const route = useRoute()
     const store = useStore()
     const {t} = useI18n()
-    const miscStore = useMiscStore()
     const coreStore = useCoreStore()
     const {shouldShowHelloDialog} = useSurveySkip()
 
@@ -102,15 +111,22 @@
     )
 
     const validateCredentials = async (auth: string) => {
-        await axios.get(`${apiUrl(store)}/usages/all`, {
-            headers: {Authorization: `Basic ${auth}`},
-            timeout: 10000
-        })
+        try {
+            document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`;
+            await axios.get(`${apiUrl(store)}/usages/all`, {
+                timeout: 10000,
+                withCredentials: true
+            })
+        } catch(e) {
+            BasicAuth.logout();
+            throw e;
+        }
     }
 
     const checkServerInitialization = async () => {
         const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {
-            timeout: 10000
+            timeout: 10000,
+            withCredentials: true
         })
         return response.data?.isBasicAuthInitialized
     }
@@ -148,13 +164,9 @@
                 return
             }
 
-            localStorage.setItem("basicAuthCredentials", auth)
+            BasicAuth.signIn(trimmedUsername, password)
             localStorage.removeItem("basicAuthSetupInProgress")
             sessionStorage.setItem("sessionActive", "true")
-
-            if (miscStore.$http?.defaults?.headers?.common) {
-                miscStore.$http.defaults.headers.common.Authorization = `Basic ${auth}`
-            }
 
             credentials.value = {username: "", password: ""}
 
@@ -179,6 +191,10 @@
         } finally {
             isLoading.value = false
         }
+    }
+
+    const openTroubleshootingGuide = () => {
+        window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting", "_blank")
     }
 
     onMounted(async () => {
@@ -207,7 +223,6 @@
 
         .el-button.el-button--default {
             background: var(--bs-gray-200);
-            height: 54px;
 
             html.dark & {
                 background: var(--input-bg);

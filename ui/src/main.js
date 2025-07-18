@@ -8,13 +8,15 @@ import routes from "./routes/routes";
 import en from "./translations/en.json";
 import stores from "./stores/store";
 import {setupTenantRouter} from "./composables/useTenant";
+import * as BasicAuth from "./utils/basicAuth";
+import {useMiscStore} from "./stores/misc";
 
 
 const app = createApp(App)
 
 const handleAuthError = (error, to) => {
-    if (error.message?.includes("401") || error.message?.includes("HTTP 401")) {
-        localStorage.removeItem("basicAuthCredentials")
+    if (error.message?.includes("401")) {
+        BasicAuth.logout()
         const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
         return {name: "login", query: fromPath ? {from: fromPath} : {}}
     }
@@ -22,12 +24,12 @@ const handleAuthError = (error, to) => {
 }
 
 initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
-    router.beforeEach(async (to, from, next) => {
+    router.beforeEach(async (to, _from, next) => {
         if (["login", "setup"].includes(to.name)) {
             return next();
         }
 
-        const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null
+        const hasCredentials = BasicAuth.isLoggedIn()
 
         if (!hasCredentials) {
             const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
@@ -35,7 +37,13 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
         }
 
         try {
-            await store.dispatch("misc/loadConfigs")
+            const miscStore = useMiscStore();
+            const configs = await miscStore.loadConfigs();
+
+            if(!configs.isBasicAuthInitialized) {
+                // If basic auth is not initialized, redirect to set it up
+                return next({name: "setup"})
+            }
 
             // Check if basic auth setup is still in progress
             const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress")

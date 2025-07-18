@@ -5,16 +5,18 @@
                 <Logo style="width: 14rem;" />
             </div>
             <el-steps :space="60" direction="vertical" :active="activeStep" finish-status="success">
-                <el-step :icon="activeStep > 0 ? CheckBold : AccountPlus" :title="t('setup.steps.user')" />
+                <el-step :icon="activeStep > 0 ? CheckBold : AccountPlus" :title="t('setup.steps.user')" :class="{'primary-icon': activeStep <= 0}" />
                 <el-step
                     :icon="activeStep > 1 ? CheckBold : Cogs"
                     :title="t('setup.steps.config')"
+                    :class="{'primary-icon': activeStep <= 1}"
                 />
                 <el-step
                     :icon="activeStep > 2 ? CheckBold : MessageOutline"
                     :title="t('setup.steps.survey')"
+                    :class="{'primary-icon': activeStep <= 2}"
                 />
-                <el-step :icon="LightningBolt" :title="t('setup.steps.complete')" />
+                <el-step :icon="LightningBolt" :title="t('setup.steps.complete')" class="primary-icon" />
             </el-steps>
         </div>
         <div class="setup-main">
@@ -37,7 +39,7 @@
                     </el-button>
                 </div>
             </div>
-            
+
             <div class="setup-card-body">
                 <div v-if="activeStep === 0">
                     <el-form ref="userForm" label-position="top" :rules="userRules" :model="formData" :show-message="false" @submit.prevent="handleUserFormSubmit()">
@@ -94,7 +96,7 @@
                         </el-button>
                     </div>
                 </div>
-                
+
                 <div class="d-flex flex-column gap-4" v-else-if="activeStep === 1">
                     <el-card v-if="isLoading">
                         <el-text>Loading configuration...</el-text>
@@ -113,7 +115,7 @@
                             <Check class="text-success" v-if="config.value === true" />
                             <Close class="text-danger" v-else-if="config.value === false" />
                             <el-text v-else size="small">
-                                {{ (config.value ?? "NOT SETUP").toString().capitalize() }}
+                                {{ config.value === "NOT SETUP" ? config.value : config.value.toString().capitalize() }}
                             </el-text>
                         </el-row>
                     </el-card>
@@ -132,12 +134,12 @@
                         </el-button>
                     </div>
                 </div>
-                
+
                 <div v-else-if="activeStep === 2">
                     <el-form ref="surveyForm" label-position="top" :model="surveyData" :show-message="false">
                         <el-form-item :label="t('setup.survey.company_size')">
                             <el-radio-group v-model="surveyData.companySize" class="survey-radio-group">
-                                <el-radio 
+                                <el-radio
                                     v-for="option in companySizeOptions"
                                     :key="option.value"
                                     :value="option.value"
@@ -152,7 +154,7 @@
                         <el-form-item :label="t('setup.survey.use_case')">
                             <div class="use-case-checkboxes">
                                 <el-checkbox-group v-model="surveyData.useCases">
-                                    <el-checkbox 
+                                    <el-checkbox
                                         v-for="option in useCaseOptions"
                                         :key="option.value"
                                         :value="option.value"
@@ -172,14 +174,14 @@
                             </el-checkbox>
                         </el-form-item>
                     </el-form>
-                    
+
                     <div class="d-flex">
                         <el-button type="primary" @click="handleSurveyContinue()">
                             {{ t("setup.survey.continue") }}
                         </el-button>
                     </div>
                 </div>
-                
+
                 <div v-else-if="activeStep === 3" class="success-step">
                     <img :src="success" alt="success" class="success-img">
                     <div class="success-content">
@@ -222,6 +224,7 @@
     import CloudOutline from "vue-material-design-icons/CloudOutline.vue"
     import Lock from "vue-material-design-icons/Lock.vue"
     import success from "../../assets/success.svg"
+    import * as BasicAuth from "../../utils/basicAuth";
 
     interface UserFormData {
         firstName: string
@@ -276,17 +279,17 @@
     const setupConfiguration = computed(() => usageData.value?.configurations ?? {})
 
     const trackSetupEvent = (eventName: string, additionalData: Record<string, any> = {}) => {
-        const configs = miscStore.getConfigs
+        const configs = miscStore.configs
         const uid = localStorage.getItem("uid")
-    
+
         if (!configs || !uid || configs.isAnonymousUsageEnabled === false) return
-    
+
         const userInfo = activeStep.value >= 1 ? {
             user_firstname: userFormData.value.firstName || undefined,
             user_lastname: userFormData.value.lastName || undefined,
             user_email: userFormData.value.username || undefined
         } : {}
-    
+
         apiStore.posthogEvents({
             type: eventName,
             setup_step_current: activeStep.value,
@@ -300,21 +303,21 @@
     const initializeSetup = async () => {
         try {
             const config = await miscStore.loadConfigs()
+
+            const setupCompleted = localStorage.getItem("basicAuthSetupCompleted") === "true"
             
-            if (config && config.isBasicAuthInitialized && localStorage.getItem("basicAuthSetupCompleted") === "true") {
+            // If setup is marked as completed
+            // OR if basic auth is initialized, redirect to welcome
+            if (setupCompleted || (config && config.isBasicAuthInitialized)) {
                 localStorage.removeItem("basicAuthSetupInProgress")
                 localStorage.removeItem("setupStartTime")
                 router.push({name: "welcome"})
                 return
             }
-            
+
             localStorage.setItem("basicAuthSetupInProgress", "true")
             localStorage.setItem("setupStartTime", Date.now().toString())
-            
-            if (config && config.isBasicAuthInitialized) {
-                activeStep.value = 1
-            }
-            
+
             usageData.value = await miscStore.loadAllUsages()
             trackSetupEvent("setup_flow:started", {step_number: 1})
         } catch {
@@ -334,12 +337,15 @@
 
     const setupConfigurationLines = computed<ConfigLine[]>(() => {
         if (!setupConfiguration.value) return []
-        const configs = miscStore.getConfigs
+        const configs = miscStore.configs
+        
+        const basicAuthValue = activeStep.value >= 1 || configs?.isBasicAuthInitialized
+        
         return [
-            {name: "repository", icon: Database, value: setupConfiguration.value.repositoryType},
-            {name: "queue", icon: CurrentDc, value: setupConfiguration.value.queueType},
-            {name: "storage", icon: CloudOutline, value: setupConfiguration.value.storageType},
-            {name: "basicauth", icon: Lock, value: activeStep.value >= 1 ? true : configs?.isBasicAuthInitialized}
+            {name: "repository", icon: Database, value: setupConfiguration.value.repositoryType || "NOT SETUP"},
+            {name: "queue", icon: CurrentDc, value: setupConfiguration.value.queueType || "NOT SETUP"},
+            {name: "storage", icon: CloudOutline, value: setupConfiguration.value.storageType || "NOT SETUP"},
+            {name: "basicauth", icon: Lock, value: basicAuthValue}
         ]
     })
 
@@ -373,17 +379,17 @@
             callback(new Error(t("setup.validation.email_required")))
             return
         }
-    
+
         if (!EMAIL_REGEX.test(value)) {
             callback(new Error(t("setup.validation.email_invalid")))
             return
         }
-    
+
         if (!MailChecker.isValid(value)) {
             callback(new Error(t("setup.validation.email_temporary_not_allowed")))
             return
         }
-    
+
         callback()
     }
 
@@ -427,25 +433,27 @@
                 username: userFormData.value.username,
                 password: userFormData.value.password
             })
-            
-            const credentials = btoa(`${userFormData.value.username}:${userFormData.value.password}`)
-            localStorage.setItem("basicAuthCredentials", credentials)
-            
+
+            BasicAuth.signIn(userFormData.value.username, userFormData.value.password)
+
             await miscStore.loadConfigs()
-            
+
             try {
                 usageData.value = await miscStore.loadAllUsages()
             } catch {
                 /* Silently handle usage data loading  */
             }
-            
+
             trackSetupEvent("setup_flow:account_created", {
                 user_firstname: userFormData.value.firstName,
                 user_lastname: userFormData.value.lastName,
                 user_email: userFormData.value.username
             })
-            
+
             trackSetupEvent("setup_flow:user_form_submitted", {is_form_valid: isUserStepValid.value})
+            
+            localStorage.setItem("basicAuthUserCreated", "true")
+            
             nextStep()
         } catch (error: any) {
             trackSetupEvent("setup_flow:account_creation_failed", {
@@ -461,7 +469,7 @@
 
     const handleSurveyContinue = () => {
         localStorage.setItem("basicAuthSurveyData", JSON.stringify(surveyData.value))
-    
+
         const surveySelections: Record<string, any> = {
             company_size: surveyData.value.companySize,
             use_cases: surveyData.value.useCases,
@@ -469,18 +477,18 @@
             newsletter_opted_in: surveyData.value.newsletter,
             survey_action: "submitted"
         }
-    
+
         if (surveyData.value.useCases.length > 0) {
             surveyData.value.useCases.forEach(useCase => {
                 surveySelections[`use_case_${useCase}`] = true
             })
         }
-    
+
         trackSetupEvent("setup_flow:marketing_survey_submitted", {
             step_number: 3,
             ...surveySelections
         })
-    
+
         nextStep()
     }
 
@@ -488,29 +496,29 @@
         const surveySelections: Record<string, any> = {
             survey_action: "skipped"
         }
-    
+
         if (surveyData.value.useCases.length > 0) {
             surveyData.value.useCases.forEach(useCase => {
                 surveySelections[`use_case_${useCase}`] = true
             })
         }
-    
+
         storeSurveySkipData({
             step_number: 3,
             ...surveySelections
         })
-    
+
         trackSetupEvent("setup_flow:marketing_survey_skipped", {
             step_number: 3,
             ...surveySelections
         })
-    
+
         nextStep()
     }
 
     const completeSetup = () => {
         const savedSurveyData = localStorage.getItem("basicAuthSurveyData")
-        const surveySelections = savedSurveyData ? JSON.parse(savedSurveyData) : {}    
+        const surveySelections = savedSurveyData ? JSON.parse(savedSurveyData) : {}
 
         trackSetupEvent("setup_flow:completed", {
             user_firstname: userFormData.value.firstName,
@@ -518,13 +526,14 @@
             user_email: userFormData.value.username,
             ...surveySelections
         })
-    
+
         localStorage.setItem("basicAuthSetupCompleted", "true")
         localStorage.removeItem("basicAuthSetupInProgress")
         localStorage.removeItem("setupStartTime")
         localStorage.removeItem("basicAuthSurveyData")
+        localStorage.removeItem("basicAuthUserCreated")
         localStorage.setItem("basicAuthSetupCompletedAt", new Date().toISOString())
-    
+
         router.push({name: "login"})
     }
 </script>
@@ -541,7 +550,7 @@ $mobile-breakpoint: 992px;
     margin: 0 auto;
     padding: 20px;
     align-items: start;
-    
+
     @media (min-width: $mobile-breakpoint) {
         grid-template-columns: 219px 564px;
         width: 911px;
@@ -560,16 +569,16 @@ $mobile-breakpoint: 992px;
     box-shadow: 0 4.21px 28.08px var(--Shadows);
     display: flex;
     flex-direction: column;
-    
+
     @media (min-width: $mobile-breakpoint) {
         width: 219px;
         height: 432px;
         padding: 0;
     }
-    
+
     .logo-container {
         padding-bottom: 24px;
-        
+
         @media (min-width: $mobile-breakpoint) {
             padding-bottom: 32px;
         }
@@ -586,7 +595,7 @@ $mobile-breakpoint: 992px;
     box-shadow: 0 2px 4px var(--ks-card-shadow);
     display: flex;
     flex-direction: column;
-    
+
     @media (min-width: $mobile-breakpoint) {
         padding: 2rem;
     }
@@ -594,14 +603,14 @@ $mobile-breakpoint: 992px;
 
 .setup-card {
     min-width: 100%;
-    
+
     &-body {
         flex: 1;
         display: flex;
         flex-direction: column;
         justify-content: center;
     }
-    
+
     @media (min-width: $mobile-breakpoint) {
         min-width: 800px;
     }
@@ -627,7 +636,7 @@ $mobile-breakpoint: 992px;
         vertical-align: middle;
         line-height: 43px;
         color: var(--ks-content-inactive);
-        
+
         &.is-process {
             color: var(--ks-content-primary);
             font-weight: 400;
@@ -647,7 +656,7 @@ $mobile-breakpoint: 992px;
     color: var(--ks-content-primary);
     font-size: 14px;
     font-weight: 400;
-    
+
     &:hover {
         color: var(--ks-content-secondary);
     }
@@ -662,7 +671,7 @@ $mobile-breakpoint: 992px;
 
 .password-requirements {
     margin-top: -8px;
-    
+
     .el-text {
         color: var(--ks-content-tertiary);
         font-size: 14px;
@@ -704,13 +713,13 @@ $mobile-breakpoint: 992px;
 
 .use-case-checkboxes {
     margin-top: 10px;
-    
+
     :deep(.el-checkbox-group) {
         display: flex;
         flex-wrap: wrap;
         gap: 16px 40px;
     }
-    
+
     .survey-checkbox {
         display: flex;
         align-items: center;
@@ -725,7 +734,7 @@ $mobile-breakpoint: 992px;
     margin-top: 16px;
     display: flex;
     align-items: center;
-    
+
     :deep(.el-checkbox__label) {
         padding-left: 8px;
     }
@@ -735,14 +744,14 @@ $mobile-breakpoint: 992px;
     :deep(.el-checkbox__input) {
         margin-right: 8px;
         align-self: center;
-        
+
         .el-checkbox__inner {
             border: 2px solid #918BA9;
             background-color: transparent;
             width: 18px;
             height: 18px;
             position: relative;
-            
+
             &::after {
                 content: "";
                 position: absolute;
@@ -757,23 +766,23 @@ $mobile-breakpoint: 992px;
                 left: 4px;
             }
         }
-        
+
         &.is-checked .el-checkbox__inner {
             border-color: #8405FF;
             background-color: #8405FF;
-            
+
             &::after {
                 opacity: 1;
             }
         }
     }
-    
+
     :deep(.el-checkbox__label) {
-        color: #e2e8f0;
         font-size: 14px;
         padding-left: 0;
         line-height: 1.4;
         align-self: center;
+        color: var(--ks-content-primary);
     }
 }
 
@@ -783,18 +792,18 @@ $mobile-breakpoint: 992px;
     align-items: center;
     justify-content: center;
     text-align: center;
-    
+
     .success-img {
         width: 65%;
         margin-top: -8rem;
     }
-    
+
     .success-content {
         margin-top: -8rem;
         position: relative;
         padding: 2rem;
     }
-    
+
     .success-title {
         font-weight: 600;
         font-size: 24px;
@@ -802,7 +811,7 @@ $mobile-breakpoint: 992px;
         color: var(--ks-content-primary);
         margin: 0;
     }
-    
+
     .success-subtitle {
         font-weight: 600;
         font-size: 18.4px;
@@ -810,7 +819,7 @@ $mobile-breakpoint: 992px;
         color: var(--ks-content-primary);
         margin: 0;
     }
-    
+
     .success-button {
         margin-top: 16px;
     }
@@ -850,7 +859,7 @@ $mobile-breakpoint: 992px;
     .el-divider {
         flex: 1;
     }
-    
+
     .el-col .el-card:deep(.el-card__header) {
         border-bottom: 0;
     }
@@ -858,5 +867,11 @@ $mobile-breakpoint: 992px;
 
 html.dark .el-col .el-card * {
     color: var(--ks-content-primary);
+}
+
+.primary-icon {
+    :deep(.el-step__icon-inner) {
+        color: var(--ks-content-primary);
+    }
 }
 </style>

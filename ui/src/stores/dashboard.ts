@@ -1,10 +1,22 @@
 import {defineStore} from "pinia";
+
+import type {AxiosRequestConfig, AxiosResponse} from "axios";
+
+const header: AxiosRequestConfig = {headers: {"Content-Type": "application/x-yaml"}};
+const response: AxiosRequestConfig = {responseType: "blob" as const};
+const validateStatus = (status: number) => status === 200 || status === 404;
+const downloadHandler = (response: AxiosResponse, filename: string) => {
+    const blob = new Blob([response.data], {type: "application/octet-stream"});
+    const url = window.URL.createObjectURL(blob);
+
+    Utils.downloadUrl(url, `${filename}.csv`);
+};
+
 import {apiUrl} from "override/utils/route";
 
-import type {Dashboard, Chart} from "../components/dashboard/composables/useDashboards";
+import Utils from "../utils/utils";
 
-const header = {headers: {"Content-Type": "application/x-yaml"}};
-const validateStatus = (status: number) => status === 200 || status === 404;
+import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/composables/useDashboards";
 
 export interface State {
     dashboard?: Dashboard;
@@ -49,7 +61,7 @@ export const useDashboardStore = defineStore("dashboard", {
             return response.data;
         },
 
-        async update({id, source}: { id: Dashboard["id"]; source: Dashboard["sourceCode"] }) {
+        async update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
             const response = await this.$http.put(`${apiUrl(this.vuexStore)}/dashboards/${id}`, source, header);
             return response.data;
         },
@@ -64,8 +76,8 @@ export const useDashboardStore = defineStore("dashboard", {
             return response.data;
         },
 
-        async generate({id, chartId, ...filters}: {id: Dashboard["id"]; chartId: Chart["id"]} & Record<string, any>) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/${id}/charts/${chartId}`, Object.keys(filters).length > 0 ? filters : null, {validateStatus});
+        async generate(id: Dashboard["id"], chartId: Chart["id"], parameters: Parameters) {
+            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/${id}/charts/${chartId}`, parameters, {validateStatus});
             return response.data;
         },
 
@@ -75,9 +87,22 @@ export const useDashboardStore = defineStore("dashboard", {
             return response.data;
         },
 
-        async chartPreview(data: {chart: Chart["source"]; globalFilter: Record<string, any>}) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/charts/preview`, data);
+        async chartPreview(request: Request) {
+            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/charts/preview`, request);
             return response.data;
+        },
+
+        async export(dashboard: Dashboard, chart: Chart, parameters: Parameters) {
+            const isDefault = dashboard.id === "default";
+
+            const path = isDefault ? "/charts/export/to-csv" : `/${dashboard.id}/charts/${chart.id}/export/to-csv`;
+            const payload = isDefault ? {chart: chart.content, globalFilter: parameters} : parameters;
+
+            const filename = `chart__${chart.id}`;
+
+            return this.$http
+                .post(`${apiUrl(this.vuexStore)}/dashboards${path}`, payload, response)
+                .then((res) => downloadHandler(res, filename));
         },
     },
 });

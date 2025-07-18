@@ -8,6 +8,7 @@ import {useValues} from "../../../../components/filter/composables/useValues";
 import {Comparators, Completion, PICK_DATE_VALUE} from "./filterCompletion";
 import loadFilterLanguages from "override/services/filterLanguagesProvider";
 import IWordAtPosition = editor.IWordAtPosition;
+import {usePluginsStore} from "../../../../stores/plugins.ts";
 
 const legacyFilterRegex = /.*((?<=.)-)?legacy-filter/;
 export const languages = [/.*((?<=.)-)?filter/, legacyFilterRegex];
@@ -38,7 +39,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
         return legacyFilterRegex.test(this.language);
     }
 
-    async configure(store: Store<Record<string, any>>, t: ReturnType<typeof useI18n>["t"], editorInstance: editor.ICodeEditor | undefined): Promise<monaco.IDisposable[]> {
+    async configure(store: Store<Record<string, any>>, pluginsStore: ReturnType<typeof usePluginsStore>, t: ReturnType<typeof useI18n>["t"], editorInstance: editor.ICodeEditor | undefined): Promise<monaco.IDisposable[]> {
         filterLanguages = await loadFilterLanguages();
 
         this._filterLanguage = filterLanguages.find(filterLanguage => filterLanguage.domain === this._domain);
@@ -53,7 +54,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                     ?.join("|") + ")"
             ));
 
-        return super.configure(store, t, editorInstance);
+        return super.configure(store, pluginsStore, t, editorInstance);
     }
 
     async configureLanguage(): Promise<void> {

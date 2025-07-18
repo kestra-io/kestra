@@ -13,7 +13,7 @@
     }
 
     .plugin-title {
-        min-width: 150px;
+        min-width: 50px;
     }
 
     .plugin-schema {
@@ -52,6 +52,16 @@
 
             > .collapse-button:not(.collapsed) {
                 color: var(--ks-content-link);
+            }
+
+            [id$="-body"] span {
+                font-size: 1rem !important;
+            }
+
+            [id$="-body"] .type-box,
+            [id$="-body"] .type-box *,
+            [id$="-body"] span.type-box {
+                font-size: 0.75rem !important;
             }
 
             .property {

@@ -12,6 +12,9 @@
             :flow-id="flowId"
             :namespace="namespace"
             :expanded-subflows="props.expandedSubflows"
+            :icons="pluginsStore.icons"
+            :execution="executionsStore.execution"
+            :subflows-executions="executionsStore.subflowsExecutions"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -24,7 +27,6 @@
             @swapped-task="onSwappedTask"
             @message="message"
             @expand-subflow="expandSubflow"
-            :icons="pluginsStore.icons"
         />
 
         <!-- Drawer to create/add task -->
@@ -107,7 +109,7 @@
 <script lang="ts" setup>
     // Core
     import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
-    import {useCoreStore} from "../../stores/core";
+
     import {useI18n} from "vue-i18n";
     import {useStorage} from "@vueuse/core";
     import {useRouter} from "vue-router";
@@ -135,8 +137,12 @@
     const {fitView} = useVueFlow(vueflowId.value);
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
+    import {useCoreStore} from "../../stores/core";
     import {usePluginsStore} from "../../stores/plugins";
+    import {useExecutionsStore} from "../../stores/executions";
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
+
+    const executionsStore = useExecutionsStore();
 
     // props
     const props = withDefaults(

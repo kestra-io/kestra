@@ -316,7 +316,7 @@
         <!-- Move dialog -->
         <el-dialog
             v-model="moveDialog.visible"
-            :title="$t('namespace files.move.files', {count: selectedNodes.length})"
+            :title="$t('namespace files.move.files', {count: filesToMove.length})"
             width="500"
             @keydown.enter.prevent="moveItems"
         >
@@ -335,7 +335,7 @@
                     v-for="folder in folders"
                     :key="folder"
                     :value="folder"
-                    :label="folder === '__ROOT__' ? $t('namespace files.dialog.root_folder') : folder"
+                    :label="folder === ROOT_FOLDER ? $t('namespace files.dialog.root_folder') : folder" 
                 />
             </el-select>
             <template #footer>
@@ -434,6 +434,8 @@
         folder: undefined,
     };
 
+    const ROOT_FOLDER = "#";
+
     export default {
         props: {
             currentNS: {
@@ -468,6 +470,7 @@
                 selectedFiles: [], // Tracks selected file paths
                 selectedNodes: [], // Tracks selected node IDs
                 lastClickedIndex: null, // Tracks the last clicked file index
+                filesToMove: [],
             };
         },
         computed: {
@@ -501,7 +504,7 @@
                     return paths;
                 }
 
-                return ["__ROOT__", ...extractPaths(undefined, this.items)];
+                return [ROOT_FOLDER, ...extractPaths(undefined, this.items)];
             },
             confirmationTitle() {
                 if (!this.confirmation.nodes || this.confirmation.nodes.length === 0) {
@@ -541,6 +544,9 @@
                 "exportFileDirectory",
             ]),
 
+            isMac() {
+                return navigator.userAgent.includes("Mac");
+            },
             flattenTree(items, parentPath = "") {
                 const result = [];
 
@@ -568,7 +574,7 @@
                     this.selectedFiles = flatList.slice(start, end + 1).map(item => item.path);
                     this.selectedNodes = flatList.slice(start, end + 1).map(item => item.id);
 
-                } else if (window.event.ctrlKey || window.event.metaKey) {
+                } else if ((this.isMac() && window.event.metaKey) || (!this.isMac() && window.event.ctrlKey)) {
                     const isAlreadySelected = this.selectedFiles.includes(path);
 
                     if (isAlreadySelected) {
@@ -798,11 +804,15 @@
                 this.renameDialog = {...RENAME_DEFAULTS};
             },
             toggleMoveDialog(isShown) {
-                if (isShown) this.moveDialog.visible = true;
-                else this.moveDialog = {...MOVE_DEFAULTS};
+                if (isShown) {
+                    this.filesToMove = [...this.selectedFiles];
+                    this.moveDialog.visible = true;
+                } else {
+                    this.moveDialog = {...MOVE_DEFAULTS};
+                }
             },
             async moveItems() {
-                const selectedFilesToMove = [...this.selectedFiles];
+                const selectedFilesToMove = [...this.filesToMove];
 
                 const topLevelPaths = selectedFilesToMove.filter(path => {
                     return !selectedFilesToMove.some(otherPath => {
@@ -829,29 +839,26 @@
                     return;
                 }
 
-                let successCount = 0;
-                let errorCount = 0;
+                const movePromises = itemsToMove.map(item => {
+                    const newPath = this.moveDialog.folder === ROOT_FOLDER
+                        ? item.node.fileName
+                        : `${this.moveDialog.folder}/${item.node.fileName}`;
 
-                for (const item of itemsToMove) {
-                    try {
-                        const newPath = this.moveDialog.folder === "__ROOT__"
-                            ? item.node.fileName
-                            : `${this.moveDialog.folder}/${item.node.fileName}`;
-
-                        await this.moveFileDirectory({
-                            namespace: this.namespaceId,
-                            old: item.path,
-                            new: newPath,
-                            type: item.node.type,
-                        });
-
-                        successCount++;
-                    } catch (error) {
-                        errorCount++;
+                    return this.moveFileDirectory({
+                        namespace: this.namespaceId,
+                        old: item.path,
+                        new: newPath,
+                        type: item.node.type,
+                    }).catch(error => {
                         console.error(`Failed to move file: ${item.node.fileName}`, error);
                         this.$toast().error(this.$t("namespace files.move.error", {fileName: item.node.fileName}));
-                    }
-                }
+                        return {error: true, item: item};
+                    });
+                });
+
+                const results = await Promise.all(movePromises);
+                const successCount = results.filter(r => !r?.error).length;
+                const errorCount = results.filter(r => r?.error).length;
 
                 this.moveDialog = {...MOVE_DEFAULTS};
                 this.items = undefined;
@@ -865,6 +872,8 @@
                 if (errorCount > 0) {
                     this.$toast().warning(`${successCount} items moved successfully, ${errorCount} failed`);
                 }
+
+                this.filesToMove = [];
             },
             async nodeMoved(draggedNode) {
                 try {
@@ -1294,8 +1303,10 @@
             },
         },
         mounted() {
+            document.addEventListener("click", this.clearSelection);
         },
         beforeUnmount() {
+            document.removeEventListener("click", this.clearSelection);
         },
         watch: {
             flow: {

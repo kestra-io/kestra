@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted} from "vue"
+    import {ref, computed} from "vue"
     import {useRouter, useRoute} from "vue-router"
     import {useStore} from "vuex"
     import {useI18n} from "vue-i18n"
@@ -139,7 +139,7 @@
             (!error.response && error.message.includes("Network Error"))
     }
 
-    const loadAuthConfigErrors = async () => {
+    const loadAuthConfigErrors = async (showIncorrectCredsMessage = true) => {
         try {
             const errors = await miscStore.loadBasicAuthValidationErrors()
             if (errors && errors.length > 0) {
@@ -150,7 +150,7 @@
                         showClose: false
                     })
                 })
-            } else {
+            } else if (showIncorrectCredsMessage) {
                 ElMessage.error(t("setup.validation.incorrect_creds"))
             }
         } catch (error) {
@@ -217,19 +217,6 @@
     const openTroubleshootingGuide = () => {
         window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting", "_blank")
     }
-
-    onMounted(async () => {
-        try {
-            const isInitialized = await checkServerInitialization()
-            if (!isInitialized) {
-                router.push({name: "setup"})
-            }
-        } catch (error: any) {
-            if (handleNetworkError(error) || error?.response?.status === 404) {
-                router.push({name: "setup"})
-            }
-        }
-    })
 </script>
 
 <style lang="scss" scoped>

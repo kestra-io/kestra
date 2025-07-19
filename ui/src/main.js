@@ -29,20 +29,30 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
             return next();
         }
 
-        const hasCredentials = BasicAuth.isLoggedIn()
-
-        if (!hasCredentials) {
-            const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
-            return next({name: "login", query: fromPath ? {from: fromPath} : {}})
-        }
-
         try {
             const miscStore = useMiscStore();
             const configs = await miscStore.loadConfigs();
 
             if(!configs.isBasicAuthInitialized) {
-                // If basic auth is not initialized, redirect to set it up
-                return next({name: "setup"})
+                // Since, Configs takes preference 
+                // we need to check if any regex validation error in BE.
+                const validationErrors = await miscStore.loadBasicAuthValidationErrors()
+                
+                if (validationErrors?.length > 0) {
+                    // Creds exist in config but failed validation
+                    // Route to login to show errors
+                    return next({name: "login"})
+                } else {
+                    // No creds in config - redirect to set it up
+                    return next({name: "setup"})
+                }
+            }
+
+            const hasCredentials = BasicAuth.isLoggedIn()
+
+            if (!hasCredentials) {
+                const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
+                return next({name: "login", query: fromPath ? {from: fromPath} : {}})
             }
 
             // Check if basic auth setup is still in progress

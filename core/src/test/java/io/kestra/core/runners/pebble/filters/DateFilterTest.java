@@ -6,6 +6,7 @@ import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -33,35 +34,53 @@ class DateFilterTest {
         );
 
         String render = variableRenderer.render(
-            "{{ date | date(format='iso', timeZone='Europe/Paris') }}\n" +
-                "{{ instant | date(format=\"iso_sec\", timeZone=\"Europe/Paris\") }}\n" +
-                "{{ zoned | date(format=\"iso\", timeZone=\"Europe/Paris\") }}\n" +
-                "{{ local | date(format=\"yyyy-MM-dd HH:mm:ss.SSSSSSXXX\", timeZone=\"Europe/Paris\") }}\n" +
-                "{{ local | date(format=\"yyyy-MM-dd HH:mm:ss.SSSSSSXXX\", timeZone=\"UTC\") }}",
+            """
+                {{ date | date(format='iso', timeZone='Europe/Paris') }}
+                {{ instant | date(format="iso_sec", timeZone="Europe/Paris") }}
+                {{ instant | date(format="iso_milli", timeZone="Europe/Paris") }}
+                {{ zoned | date(format="iso", timeZone="Europe/Paris") }}
+                {{ zoned | date(format="iso_milli", timeZone="Europe/Paris") }}
+                {{ local | date(format="yyyy-MM-dd HH:mm:ss.SSSSSSXXX", timeZone="Europe/Paris") }}
+                {{ local | date(format="yyyy-MM-dd HH:mm:ss.SSS", timeZone="UTC") }}
+                {{ local | date(format="sql", timeZone="UTC") }}
+                {{ local | date(format="sql_seq", timeZone="UTC") }}
+                {{ local | date(format="sql_milli", timeZone="UTC") }}
+                {{ local | date(format="yyyy-MM-dd HH:mm:ss.SSSSSSXXX", timeZone="UTC") }}""",
             vars
         );
 
-        assertThat(render).isEqualTo("2013-09-08T17:19:12.000000+02:00\n" +
-            "2013-09-08T17:19:12+02:00\n" +
-            "2013-09-08T17:19:12.123456+02:00\n" +
-            "2013-09-08 16:19:12.123456+02:00\n" +
-            "2013-09-08 16:19:12.123456Z");
+        assertThat(render).isEqualTo("""
+            2013-09-08T17:19:12.000000+02:00
+            2013-09-08T17:19:12+02:00
+            2013-09-08T17:19:12.123+02:00
+            2013-09-08T17:19:12.123456+02:00
+            2013-09-08T17:19:12.123+02:00
+            2013-09-08 16:19:12.123456+02:00
+            2013-09-08 16:19:12.123
+            2013-09-08 16:19:12.123456
+            2013-09-08 16:19:12
+            2013-09-08 16:19:12.123
+            2013-09-08 16:19:12.123456Z""");
     }
 
     @Test
     void dateStringFormat() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render(
-            "{{ \"July 24, 2001\" | date(\"yyyy-MM-dd\", existingFormat=\"MMMM dd, yyyy\") }}\n" +
-                "{{ \"2013-09-08T17:19:12+02:00\" | date(timeZone=\"Europe/Paris\") }}\n" +
-                "{{ \"2013-09-08T17:19:12\" | date(timeZone=\"Europe/Paris\") }}\n" +
-                "{{ \"2013-09-08\" | date(timeZone=\"Europe/Paris\") }}\n",
+            """
+                {{ "July 24, 2001" | date("yyyy-MM-dd", existingFormat="MMMM dd, yyyy") }}
+                {{ "2013-09-08T17:19:12+02:00" | date(timeZone="Europe/Paris") }}
+                {{ "2013-09-08T17:19:12" | date(timeZone="Europe/Paris") }}
+                {{ "2013-09-08" | date(timeZone="Europe/Paris") }}
+                """,
             Map.of()
         );
 
-        assertThat(render).isEqualTo("2001-07-24\n" +
-            "2013-09-08T17:19:12.000000+02:00\n" +
-            "2013-09-08T17:19:12.000000+02:00\n" +
-            "2013-09-08T00:00:00.000000+02:00\n");
+        assertThat(render).isEqualTo("""
+            2001-07-24
+            2013-09-08T17:19:12.000000+02:00
+            2013-09-08T17:19:12.000000+02:00
+            2013-09-08T00:00:00.000000+02:00
+            """);
     }
 
     @Test
@@ -149,6 +168,10 @@ class DateFilterTest {
         render = variableRenderer.render("{{ now(format=\"iso_local_date\") }}", ImmutableMap.of());
 
         assertThat(render).isEqualTo(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ISO_LOCAL_DATE));
+
+        render = variableRenderer.render("{{ now(format=\"sql_milli\") }}", ImmutableMap.of());
+
+        assertThat(render).isEqualTo(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")));
     }
 
     @Test

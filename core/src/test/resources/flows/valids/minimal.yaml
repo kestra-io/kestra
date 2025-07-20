@@ -4,6 +4,7 @@ revision: 2
 
 labels:
   system.readOnly: "true"
+  existing: label
 
 tasks:
 - id: date

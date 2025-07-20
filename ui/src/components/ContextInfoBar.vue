@@ -23,12 +23,12 @@
             :persistent="false"
             transition=""
             :hide-after="0"
-            :disabled="!configs.commitId"
+            :disabled="!miscStore.configs.commitId"
         >
             <template #content>
-                <code>{{ configs.commitId }}</code> <DateAgo v-if="configs.commitDate" :inverted="true" :date="configs.commitDate" />
+                <code>{{ miscStore.configs.commitId }}</code> <DateAgo v-if="miscStore.configs.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
             </template>
-            <span class="versionNumber">{{ configs?.version }}</span>
+            <span class="versionNumber">{{ miscStore.configs?.version }}</span>
         </el-tooltip>
         <el-button class="theme-switcher" @click="onSwitchTheme">
             <WeatherNight v-if="themeIsDark" />
@@ -68,18 +68,17 @@
     import Star from "vue-material-design-icons/Star.vue"
 
     import {useStorage} from "@vueuse/core"
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import Utils from "../utils/utils";
     import {useApiStore} from "../stores/api";
+    import {useMiscStore} from "../stores/misc";
 
     const {t} = useI18n({useScope: "global"});
 
-    const store = useStore();
     const apiStore = useApiStore();
+    const miscStore = useMiscStore();
 
-    const configs = computed(() => store.getters["misc/configs"]);
-    const activeTab = computed(() => store.getters["misc/contextInfoBarOpenTab"])
+    const activeTab = computed(() => miscStore.contextInfoBarOpenTab)
 
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
 
@@ -182,9 +181,9 @@
 
     function setActiveTab(tab: string) {
         if (activeTab.value === tab) {
-            store.commit("misc/setContextInfoBarOpenTab", "")
+            miscStore.contextInfoBarOpenTab = "";
         } else {
-            store.commit("misc/setContextInfoBarOpenTab", tab)
+            miscStore.contextInfoBarOpenTab = tab;
         }
     }
 
@@ -192,7 +191,8 @@
 
     const onSwitchTheme = () => {
         themeIsDark.value = !themeIsDark.value;
-        Utils.switchTheme(store, themeIsDark.value ? "dark" : "light");
+        const theme = themeIsDark.value ? "dark" : "light";
+        Utils.switchTheme(miscStore, theme);
     }
 </script>
 

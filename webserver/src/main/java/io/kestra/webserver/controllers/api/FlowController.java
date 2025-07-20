@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -87,9 +88,6 @@ public class FlowController {
     private FlowTopologyService flowTopologyService;
 
     @Inject
-    private FlowTopologyRepositoryInterface flowTopologyRepository;
-
-    @Inject
     private FlowService flowService;
 
     @Inject
@@ -97,6 +95,9 @@ public class FlowController {
 
     @Inject
     private TenantService tenantService;
+
+    @Inject
+    private JsonSchemaGenerator jsonSchemaGenerator;
 
 
     @ExecuteOn(TaskExecutors.IO)
@@ -282,7 +283,7 @@ public class FlowController {
     }
 
     /**
-     * @deprecated use {@link #create(String)} instead
+     * @deprecated use {@link #createFlow(String)} (String)} instead
      */
     @ExecuteOn(TaskExecutors.IO)
     @Post(consumes = MediaType.ALL)
@@ -604,30 +605,12 @@ public class FlowController {
         @Parameter(description = "If true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly,
         @Parameter(description = "If true, expand all dependencies recursively") @QueryValue(defaultValue = "false") boolean expandAll
     ) {
-        List<FlowTopology> flowTopologies = flowTopologyRepository.findByFlow(tenantService.resolveTenant(), namespace, id, destinationOnly);
-        Stream<FlowTopology> flowTopologyStream = expandAll ? recursiveFlowTopology(tenantService.resolveTenant(), namespace, id, destinationOnly) : flowTopologies.stream();
+        Stream<FlowTopology> flowTopologyStream = flowService.findDependencies(tenantService.resolveTenant(), namespace, id, destinationOnly, expandAll);
 
         return flowTopologyService.graph(
             flowTopologyStream,
             (flowNode -> flowNode)
         );
-    }
-
-    protected Stream<FlowTopology> recursiveFlowTopology(String tenantId, String namespace, String flowId, boolean destinationOnly) {
-        List<FlowTopology> flowTopologies = flowTopologyRepository.findByFlow(tenantId, namespace, flowId, destinationOnly);
-        List<FlowTopology> subTopologies = flowTopologies.stream()
-            // filter on destination is not the current node to avoid an infinite loop
-            .filter(topology -> !(topology.getDestination().getTenantId().equals(tenantId) && topology.getDestination().getNamespace().equals(namespace) && topology.getDestination().getId().equals(flowId)))
-            .toList();
-
-        if (subTopologies.isEmpty()) {
-            return flowTopologies.stream();
-        } else {
-            return Stream.concat(flowTopologies.stream(), subTopologies.stream()
-                .map(topology -> topology.getDestination())
-                // recursively fetch child nodes
-                .flatMap(destination -> recursiveFlowTopology(destination.getTenantId(), destination.getNamespace(), destination.getId(), destinationOnly)));
-        }
     }
 
     @ExecuteOn(TaskExecutors.IO)

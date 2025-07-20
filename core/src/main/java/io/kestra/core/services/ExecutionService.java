@@ -82,10 +82,6 @@ public class ExecutionService {
     private MetricRepositoryInterface metricRepository;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    protected QueueInterface<Execution> executionQueue;
-
-    @Inject
     private FlowInputOutput flowInputOutput;
 
     @Inject
@@ -843,7 +839,7 @@ public class ExecutionService {
         }
 
         if (execution.getState().getCurrent() == State.Type.QUEUED) {
-            return concurrencyLimitService.unqueue(execution);
+            return concurrencyLimitService.unqueue(execution,State.Type.RUNNING);
         }
 
         if (execution.getState().getCurrent() == State.Type.PAUSED) {

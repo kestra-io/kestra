@@ -10,6 +10,7 @@
     "Finish": "완료",
     "Fold auto": "편집기: 다중 라인 자동 접기",
     "Fold content lines": "다중 라인 문자열 접기",
+    "Hover description": "편집기: key 또는 value에 마우스를 올리면 필드 설명 표시",
     "Language": "언어",
     "Next step": "다음 단계",
     "Per page": "페이지당",
@@ -41,6 +42,7 @@
     "add task": "task 추가",
     "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
     "add_new_item": "새 항목 추가",
+    "additionalPlugins": "추가 플러그인",
     "administration": "관리",
     "advanced configuration": "다른 속성",
     "after": "이후",
@@ -55,6 +57,7 @@
     "all executions": "모든 실행",
     "all tags": "모든 태그",
     "api": "API",
+    "appBlocks": "앱 블록",
     "apps": "앱",
     "attempt": "시도",
     "attempts": "시도 횟수",
@@ -122,6 +125,7 @@
     "cannot swap tasks": "task를 교환할 수 없음",
     "change execution state confirm": "실행 <code>{id}</code>의 상태를 변경하시겠습니까?",
     "change execution state done": "실행 상태가 업데이트되었습니다",
+    "change queue confirm": "큐 상태를 실행 <code>{id}</code>에 대해 변경하시겠습니까?<br/>",
     "change state": "상태 변경",
     "change state confirm": "----------\n                \n정말로 실행 <code>{id}</code>에서 <code>{task}</code> task의 상태를 변경하시겠습니까?",
     "change state current state": "현재 상태는:",
@@ -133,7 +137,7 @@
         "오류 task가 실행됩니다."
       ],
       "RUNNING": [
-        "Flow가 재시작되며 모든 다음 task가 실행됩니다.",
+        "flow가 재시작되고 모든 다음 task가 실행됩니다.",
         "모든 차단된 task가 실행됩니다."
       ],
       "SUCCESS": [
@@ -150,6 +154,7 @@
     "change state tooltip": "실행 상태 변경",
     "chart": "차트",
     "chart preview": "차트 미리보기",
+    "charts": "차트",
     "choice": "선택",
     "choose file": "파일을 선택하거나 여기에 드롭하세요...",
     "close": "닫기",
@@ -206,10 +211,12 @@
         "confirmation": "<code>{title}</code> 대시보드를 삭제하시겠습니까?"
       },
       "edition": {
+        "chart": "이 차트 편집",
         "confirmation": "대시보드 <code>{title}</code>의 변경 사항이 저장되었습니다.",
         "label": "대시보드 편집"
       },
       "empty": "결과가 표시되지 않습니다.",
+      "export": "CSV로 내보내기",
       "labels": {
         "plural": "대시보드",
         "singular": "대시보드"
@@ -217,6 +224,7 @@
       "preview": "미리보기 대시보드"
     },
     "data": "데이터",
+    "dataFilters": "데이터 필터",
     "data_not_protected": "귀하의 데이터는 보호되지 않습니다. 잃어버리지 마세요. <b>무료 보안 기능을 활성화하거나 유료 서비스를 시도해 보세요.</b>",
     "date": "날짜",
     "date count": "{date}에 {count}",
@@ -262,7 +270,6 @@
     },
     "days": "일",
     "debug": "디버그",
-    "decline": "거부",
     "default": "기본값",
     "delete": "삭제",
     "delete backfill": "backfill 삭제",
@@ -395,6 +402,7 @@
       "move_line": "줄 이동",
       "reset_fontsize": "글꼴 크기 재설정",
       "save_flow": "Flow 저장",
+      "toggle_ai_agent": "AI 에이전트 전환",
       "trigger_autocompletion": "자동 완성 트리거",
       "uncomment": "주석 해제"
     },
@@ -594,6 +602,7 @@
         },
         "empty": "아직 검색을 저장하지 않았습니다.",
         "label": "저장된 검색",
+        "name_already_used": "이미 사용 중인 label입니다.",
         "remove": "제거",
         "tooltip": "빈 검색 기준을 저장할 수 없습니다."
       },
@@ -696,6 +705,7 @@
     "last execution date": "마지막 실행 날짜",
     "last execution state": "마지막 상태",
     "last execution status": "마지막 실행 상태",
+    "last modified": "마지막 수정",
     "launch execution": "실행",
     "learn_more": "자세히 알아보기",
     "light_background": "밝은 배경에서 작업할 때 선호되는 옵션입니다.",
@@ -704,6 +714,7 @@
     "live help": "실시간 도움말",
     "loaded x dependencies": "{count} 개의 종속성이 로드되었습니다",
     "log expand setting": "기본 Log 표시",
+    "logExporters": "로그 Exporters",
     "logs": "Logs",
     "logs_view": {
       "compact": "기본 보기",
@@ -1027,6 +1038,7 @@
     "read-more": "자세히 알아보기",
     "readonly property": "읽기 전용 속성",
     "refresh": "새로 고침",
+    "reject": "거부",
     "relative": "상대적",
     "relative end date": "상대적 종료 날짜",
     "relative start date": "상대적 시작 날짜",
@@ -1167,6 +1179,7 @@
             "editor_folding_stratgy": "편집기에서 자동 코드 접기",
             "editor_font_family": "편집기 글꼴 패밀리",
             "editor_font_size": "편집기 글꼴 크기",
+            "editor_hover_description": "속성을 가리키면 설명이 표시됩니다.",
             "environment_color": "환경 색상",
             "environment_name": "환경 이름",
             "logs_font_size": "로그 글꼴 크기",
@@ -1176,6 +1189,74 @@
         }
       },
       "label": "설정"
+    },
+    "setup": {
+      "config": {
+        "basicauth": "기본 인증",
+        "queue": "큐",
+        "repository": "데이터베이스",
+        "storage": "내부 저장소"
+      },
+      "confirm": {
+        "config_title": "구성이 유효한지 확인하십시오",
+        "confirm": "확인",
+        "not_valid": "아니요, 유효하지 않습니다",
+        "valid": "네, 유효합니다"
+      },
+      "form": {
+        "email": "이메일",
+        "firstName": "이름",
+        "lastName": "성씨",
+        "password": "비밀번호"
+      },
+      "login": "로그인",
+      "logout": "로그아웃",
+      "steps": {
+        "complete": "Kestra UI 시작",
+        "config": "구성 유효성 검사",
+        "survey": "자세히 알려주세요",
+        "user": "계정 생성"
+      },
+      "subtitles": {
+        "complete": "설정이 성공적으로 완료되었습니다!",
+        "config": "여기 귀하의 구성 세부 정보가 있습니다",
+        "survey": "Kestra 오픈 소스 에디션 개선에 도움을 주세요",
+        "user": "계정을 생성하여 인스턴스를 설정하세요"
+      },
+      "success": {
+        "subtitle": "모두 준비되었습니다!",
+        "title": "축하합니다!"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "개인용",
+        "company_size": "귀하의 회사 규모는 어떻게 되십니까?",
+        "continue": "계속",
+        "newsletter": "Kestra 뉴스레터를 구독하세요 – 최신 기능과 변경 사항을 계속 업데이트 받으세요.",
+        "skip": "건너뛰기",
+        "use_case": "주요 사용 사례는 무엇입니까?",
+        "use_case_business": "비즈니스 프로세스",
+        "use_case_data": "데이터 워크플로우",
+        "use_case_infrastructure": "인프라 자동화",
+        "use_case_ml": "ML/AI 파이프라인",
+        "use_case_other": "기타"
+      },
+      "titles": {
+        "survey": "자세히 알려주세요",
+        "user": "계정 생성"
+      },
+      "troubleshooting": "비밀번호를 잊으셨습니까?",
+      "validation": {
+        "email_invalid": "유효하지 않은 이메일",
+        "email_required": "이메일이 필요합니다",
+        "email_temporary_not_allowed": "임시 또는 일회용 이메일 주소는 허용되지 않습니다",
+        "firstName_required": "이름이 필요합니다",
+        "lastName_required": "성을 입력해야 합니다",
+        "password_invalid": "잘못된 비밀번호"
+      }
     },
     "show": "보기",
     "show chart": "차트 보기",
@@ -1222,9 +1303,9 @@
     "task logs": "Task Logs",
     "task run id": "TaskRun ID",
     "taskDefaults": "Task 기본값",
+    "taskRunners": "작업 실행기",
     "task_id_exists": "Task ID가 이미 존재합니다.",
     "task_id_message": "Flow에 Task Id ${existingTask}가 이미 존재합니다.",
-    "task_runners": "작업 실행기",
     "taskid column details": "마지막으로 실행된 task 및 시도 횟수.",
     "taskruns": "Task 실행들",
     "tasks": "Tasks",
@@ -1305,9 +1386,11 @@
       "warning": "이는 동일한 trigger에 대해 동시 실행을 초래할 수 있으며 최후의 수단으로 고려해야 합니다."
     },
     "unqueue": "대기열에서 제거",
+    "unqueue as": "<code>{status}</code>로 대기열에서 제거",
     "unqueue confirm": "실행 <code>{id}</code>의 대기열을 해제하시겠습니까?",
     "unqueue done": "실행이 대기열에서 제거되었습니다.",
     "unqueue title": "실행 <code>{id}</code>을(를) 대기열에서 제거합니다.<br/>이 작업은 flow 동시성 제한을 따르지 않으므로 허용된 제한보다 더 많은 실행이 진행될 수 있습니다.",
+    "unqueue title multiple": "<code>{count}</code>개의 실행을 대기열에서 제거하시겠습니까?<br/><br/>이 작업은 flow 동시성 제한을 따르지 않으므로 허용된 제한보다 더 많은 실행이 진행될 수 있습니다.",
     "unsaved changed ?": "저장되지 않은 변경 사항이 있습니다. 이 페이지를 떠나시겠습니까?",
     "up trend": "증가 중",
     "update": "업데이트",

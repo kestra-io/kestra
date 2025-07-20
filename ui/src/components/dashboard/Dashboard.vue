@@ -14,7 +14,7 @@
         />
     </section>
 
-    <Sections :key :charts :show-default="dashboard.id === 'default'" padding />
+    <Sections :key :dashboard :charts :show-default="dashboard.id === 'default'" padding />
 </template>
 
 <script setup lang="ts">
@@ -99,7 +99,7 @@
     onBeforeMount(() => {
         const ID = getDashboard(route, "id");
 
-        if (props.isFlow && ID === "default") load("default", processFlowYaml(YAML_FLOW, route.params.namespace, route.params.id));
+        if (props.isFlow && ID === "default") load("default", processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string));
         else if (props.isNamespace && ID === "default") load("default", YAML_NAMESPACE);
     });
 </script>

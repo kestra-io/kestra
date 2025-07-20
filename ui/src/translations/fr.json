@@ -10,6 +10,7 @@
     "Finish": "Terminer",
     "Fold auto": "Éditeur : Replier automatiquement le contenu multi-lignes",
     "Fold content lines": "Replier les multilignes",
+    "Hover description": "Éditeur : Afficher la description du champ lors du survol du key ou value",
     "Language": "Langue",
     "Next step": "Étape suivante",
     "Per page": "par page",
@@ -41,6 +42,7 @@
     "add task": "Ajouter une tâche",
     "add-trigger-in-editor": "Ajoutez d'abord un Trigger à votre Flow",
     "add_new_item": "Ajouter un nouvel élément",
+    "additionalPlugins": "Plugins supplémentaires",
     "administration": "Administration",
     "advanced configuration": "Autres propriétés",
     "after": "après",
@@ -55,6 +57,7 @@
     "all executions": "Toutes les exécutions",
     "all tags": "Toutes catégories",
     "api": "API",
+    "appBlocks": "Blocs d'application",
     "apps": "Applications",
     "attempt": "Essai",
     "attempts": "Tentative(s)",
@@ -122,6 +125,7 @@
     "cannot swap tasks": "Impossible de permuter les tâches",
     "change execution state confirm": "Êtes-vous sûr de vouloir changer l'état de l'exécution <code>{id}</code> ?",
     "change execution state done": "État d'exécution mis à jour",
+    "change queue confirm": "Êtes-vous sûr de vouloir changer l'état de la file d'attente pour l'exécution <code>{id}</code>?<br/>",
     "change state": "Changer l'état",
     "change state confirm": "Êtes-vous sûr de vouloir changer l'état d'exécution de la tâche <code>{task}</code> dans l'exécution <code>{id}</code> ?",
     "change state current state": "Statut actuel :",
@@ -150,6 +154,7 @@
     "change state tooltip": "Changer l'état d'exécution",
     "chart": "Graphique",
     "chart preview": "Aperçu du graphique",
+    "charts": "Graphiques",
     "choice": "Choix",
     "choose file": "Choisir un fichier ou le glisser le ici...",
     "close": "Fermer",
@@ -206,10 +211,12 @@
         "confirmation": "Êtes-vous sûr de vouloir supprimer le tableau de bord <code>{title}</code> ?"
       },
       "edition": {
+        "chart": "Modifier ce graphique",
         "confirmation": "Les modifications dans le tableau de bord <code>{title}</code> sont enregistrées.",
         "label": "Modifier le tableau de bord"
       },
       "empty": "Il n'y a aucun résultat à afficher.",
+      "export": "Exporter vers CSV",
       "labels": {
         "plural": "Tableaux de bord",
         "singular": "Tableau de bord"
@@ -217,6 +224,7 @@
       "preview": "Aperçu du Dashboard"
     },
     "data": "Données",
+    "dataFilters": "Filtres de données",
     "data_not_protected": "Vos données ne sont pas protégées. Ne les perdez pas. <b>Activez nos fonctionnalités de sécurité gratuites ou essayez notre offre payante.</b>",
     "date": "Date",
     "date count": "{count} le {date}",
@@ -262,7 +270,6 @@
     },
     "days": "Jours",
     "debug": "Déboguer",
-    "decline": "Refuser",
     "default": "Par défaut",
     "delete": "Effacer",
     "delete backfill": "Supprimer le backfill",
@@ -395,6 +402,7 @@
       "move_line": "Déplacer la ligne",
       "reset_fontsize": "Réinitialiser la taille de la police",
       "save_flow": "Enregistrer le flow",
+      "toggle_ai_agent": "Basculer l'agent AI",
       "trigger_autocompletion": "Déclencher l'autocomplétion",
       "uncomment": "Décommenter"
     },
@@ -594,6 +602,7 @@
         },
         "empty": "Vous n'avez pas encore enregistré de recherche.",
         "label": "Recherches enregistrées",
+        "name_already_used": "Le label de recherche est déjà utilisé.",
         "remove": "Supprimer",
         "tooltip": "Vous ne pouvez pas enregistrer des critères de recherche vides."
       },
@@ -696,6 +705,7 @@
     "last execution date": "Dernière exécution",
     "last execution state": "Dernier état",
     "last execution status": "Statut de la dernière exécution",
+    "last modified": "Dernière modification",
     "launch execution": "Déclencher",
     "learn_more": "En savoir plus",
     "light_background": "C'est l'option préférée lorsque vous travaillez avec un fond clair.",
@@ -704,6 +714,7 @@
     "live help": "Aide en direct",
     "loaded x dependencies": "{count} dépendances chargées",
     "log expand setting": "Affichage par défaut des journaux",
+    "logExporters": "Exportateurs de Logs",
     "logs": "Fichiers journaux",
     "logs_view": {
       "compact": "Vue par défaut",
@@ -1027,6 +1038,7 @@
     "read-more": "En savoir plus sur",
     "readonly property": "Propriété non modifiable",
     "refresh": "Rafraîchir",
+    "reject": "Rejeter",
     "relative": "Relative",
     "relative end date": "Date de fin relative",
     "relative start date": "Date de début relative",
@@ -1167,6 +1179,7 @@
             "editor_folding_stratgy": "Stratégie de Pliage Automatique ou Multi-Lignes de l'Éditeur",
             "editor_font_family": "Police de caractères de l'éditeur",
             "editor_font_size": "Taille de Police de l'éditeur",
+            "editor_hover_description": "Survolez la propriété pour voir la description",
             "environment_color": "Couleur de l'Environnement",
             "environment_name": "Nom de l'Environnement",
             "logs_font_size": "Taille de police des Logs",
@@ -1176,6 +1189,74 @@
         }
       },
       "label": "Paramètres"
+    },
+    "setup": {
+      "config": {
+        "basicauth": "Authentification basique",
+        "queue": "File d'attente",
+        "repository": "Base de données",
+        "storage": "Stockage Interne"
+      },
+      "confirm": {
+        "config_title": "Confirmez que la configuration est valide",
+        "confirm": "Confirmer",
+        "not_valid": "Non, ce n'est pas valide",
+        "valid": "Oui, c'est valide"
+      },
+      "form": {
+        "email": "E-mail",
+        "firstName": "Prénom",
+        "lastName": "Nom de famille",
+        "password": "Mot de passe"
+      },
+      "login": "Connexion",
+      "logout": "Déconnexion",
+      "steps": {
+        "complete": "Démarrer l'UI de Kestra",
+        "config": "Valider la Configuration",
+        "survey": "Dites-nous en plus",
+        "user": "Créez votre compte"
+      },
+      "subtitles": {
+        "complete": "Configuration terminée avec succès !",
+        "config": "Voici les détails de votre configuration",
+        "survey": "Aidez-nous à améliorer Kestra Open Source Edition",
+        "user": "Configurez votre instance en créant un compte"
+      },
+      "success": {
+        "subtitle": "Vous êtes prêt !",
+        "title": "Félicitations !"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "Usage personnel",
+        "company_size": "Quelle est la taille de votre entreprise ?",
+        "continue": "Continuer",
+        "newsletter": "Abonnez-vous à la newsletter de Kestra – restez à jour avec les dernières fonctionnalités et modifications.",
+        "skip": "Passer",
+        "use_case": "Quel est votre cas d'utilisation principal ?",
+        "use_case_business": "Processus métier",
+        "use_case_data": "Flux de données",
+        "use_case_infrastructure": "Automatisation de l'infrastructure",
+        "use_case_ml": "Pipelines ML/AI",
+        "use_case_other": "Autre"
+      },
+      "titles": {
+        "survey": "Dites-nous en plus",
+        "user": "Créer un compte"
+      },
+      "troubleshooting": "Mot de passe oublié ?",
+      "validation": {
+        "email_invalid": "E-mail invalide",
+        "email_required": "L'email est requis",
+        "email_temporary_not_allowed": "Les adresses email temporaires ou jetables ne sont pas autorisées",
+        "firstName_required": "Prénom requis",
+        "lastName_required": "Nom de famille requis",
+        "password_invalid": "Mot de passe invalide"
+      }
     },
     "show": "Afficher",
     "show chart": "Afficher le graphique",
@@ -1222,9 +1303,9 @@
     "task logs": "Journaux de la tâche",
     "task run id": "ID d'exécution de tâche",
     "taskDefaults": "Valeur de tâches par défaut",
+    "taskRunners": "Exécuteurs de Task",
     "task_id_exists": "L'ID de la tâche existe déjà",
     "task_id_message": "L'Id de la tâche ${existingTask} existe déjà dans le flow.",
-    "task_runners": "Exécuteurs de tâches",
     "taskid column details": "ID de la dernière tâche exécuté ainsi que son nombre de tentatives.",
     "taskruns": "Exécution de tâches",
     "tasks": "Tâches",
@@ -1305,9 +1386,11 @@
       "warning": "Cela pourrait amener à de multiples exécutions concurrentes pour le même déclencheur et devrait être considéré comme une solution de dernier recours."
     },
     "unqueue": "Défilement",
+    "unqueue as": "Se désenfile en tant que <code>{status}</code>",
     "unqueue confirm": "Êtes-vous sûr de vouloir retirer de la file d'attente l'exécution <code>{id}</code> ?",
     "unqueue done": "L'exécution est retirée de la file d'attente",
     "unqueue title": "Défilér l'exécution <code>{id}</code>.<br/>Notez qu'elle ne respectera pas la limite de concurrence du flow, donc plus d'exécutions pourraient être en cours que la limite autorisée.",
+    "unqueue title multiple": "Êtes-vous sûr de vouloir désenfiler <code>{count}</code> exécutions ?<br/><br/>Notez que cela ne respectera pas la limite de concurrence du flow, donc plus d'exécutions pourraient être en cours que la limite autorisée.",
     "unsaved changed ?": "Vous avez des changements non sauvegardés, voulez-vous quitter la page ?",
     "up trend": "En augmentation",
     "update": "Mettre à jour",

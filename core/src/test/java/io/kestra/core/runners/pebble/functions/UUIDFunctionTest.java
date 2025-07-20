@@ -19,5 +19,6 @@ class UUIDFunctionTest {
             variableRenderer.render(
                 "{{ uuid() }}", Collections.emptyMap());
         assertThat(!rendered.isEmpty()).as(rendered).isTrue();
+        assertThat(rendered.length()).isEqualTo(36);
     }
 }

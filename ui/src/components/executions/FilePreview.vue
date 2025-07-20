@@ -96,9 +96,11 @@
     import Editor from "../inputs/Editor.vue";
     import ListPreview from "../ListPreview.vue";
     import PdfPreview from "../PdfPreview.vue";
-    import {mapGetters, mapState} from "vuex";
+    import {mapStores} from "pinia";
     import Markdown from "../layout/Markdown.vue";
     import Drawer from "../Drawer.vue";
+    import {useMiscStore} from "../../stores/misc";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         components: {Markdown, ListPreview, PdfPreview, Editor, Drawer},
@@ -137,8 +139,7 @@
             this.encoding = this.encodingOptions[0].value;
         },
         computed: {
-            ...mapState("execution", ["filePreview"]),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useMiscStore, useExecutionsStore),
             extensionToMonacoLang() {
                 switch (this.preview.extension) {
                 case "json":
@@ -168,10 +169,10 @@
         emits: ["preview"],
         methods: {
             configPreviewInitialRows() {
-                return this.configs?.preview.initial || 100
+                return this.miscStore.configs?.preview.initial || 100
             },
             configPreviewMaxRows() {
-                return this.configs?.preview.max || 5000
+                return this.miscStore.configs?.preview.max || 5000
             },
             getFilePreview() {
                 const data = {
@@ -181,11 +182,10 @@
                 };
                 this.selectedPreview = this.value;
                 if (this.executionId !== undefined) {
-                    this.$store
-                        .dispatch("execution/filePreview", {
-                            executionId: this.executionId,
-                            ...data
-                        })
+                    this.executionsStore.filePreview({
+                        executionId: this.executionId,
+                        ...data
+                    })
                         .then(response => {
                             this.preview = response;
                             this.isPreviewOpen = true;

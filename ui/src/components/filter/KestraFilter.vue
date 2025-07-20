@@ -72,7 +72,7 @@
     import {computed, getCurrentInstance, ref, Ref, watch} from "vue";
     import Utils, {useTheme} from "../../utils/utils";
     import {Buttons, Property, Shown} from "./utils/types";
-    import {editor} from "monaco-editor/esm/vs/editor/editor.api";
+    import {editor, KeyCode} from "monaco-editor/esm/vs/editor/editor.api";
     import Items from "./segments/Items.vue";
     import {cssVariable} from "@kestra-io/ui-libs";
     import {LocationQuery, useRoute, useRouter} from "vue-router";
@@ -428,7 +428,7 @@
         contextmenu: false,
         lineDecorationsWidth: 0,
         automaticLayout: true,
-        wordWrap: "on",
+        wordWrap: "off",
         fontFamily: "var(--bs-body-font-family)",
         wrappingStrategy: "advanced",
         readOnly: props.readOnly
@@ -445,9 +445,17 @@
                 e.contentHeight + "px";
         });
 
+        mountedEditor.onKeyDown((e) => {
+            if (e.keyCode === KeyCode.Enter) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
         mountedEditor.onDidChangeModelContent(e => {
-            if (e.changes.length === 1 && (e.changes[0].text === " " || e.changes[0].text === "\n")) {
-                if (mountedEditor.getModel()?.getValue().charAt(e.changes[0].rangeOffset - 1) === ",") {
+            if (e.changes.length === 1 && e.changes[0].text === " ") {
+                const model = mountedEditor.getModel();
+                if (model && model.getValue().charAt(e.changes[0].rangeOffset - 1) === ",") {
                     mountedEditor.executeEdits("", [
                         {
                             range: {
@@ -459,6 +467,18 @@
                             forceMoveMarkers: true
                         }
                     ]);
+                }
+            }
+
+            // Remove any newlines (e.g., with paste)
+            if (e.changes.some(change => change.text.includes("\n"))) {
+                const model = mountedEditor.getModel();
+                if (model) {
+                    const currentValue = model.getValue();
+                    if (currentValue.includes("\n")) {
+                        const newValue = currentValue.replace(/\n/g, " ");
+                        model.setValue(newValue);
+                    }
                 }
             }
         });

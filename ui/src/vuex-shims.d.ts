@@ -4,15 +4,9 @@ declare module "@vue/runtime-core" {
     interface State {
         flow:any
         template:any
-        execution:any
         namespace:any
-        misc:any
         auth:any
-        graph:any
-        taskrun:any
         editor:any
-        doc:any
-        code:any
     }
 
     interface ComponentCustomProperties {

@@ -38,6 +38,15 @@ export default defineConfig({
             }
         }
     },
+    server: {
+        proxy: {
+            "^/api": {
+                target: "http://kestra:8080", // Make sure to change your /etc/hosts file, to contain this line: 127.0.0.1 kestra
+                ws: true,
+                changeOrigin: true
+            }
+        }
+    },
     resolve: {
         alias: {
             "override": path.resolve(__dirname, "src/override/"),
@@ -45,7 +54,6 @@ export default defineConfig({
             "#build/mdc-image-component.mjs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
             "#mdc-imports": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
             "#mdc-configs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
-            "shiki": path.resolve(__dirname, "node_modules/shiki/dist"),
             "vuex": path.resolve(__dirname, "node_modules/vuex/dist/vuex.esm-bundler.js"),
             "@storybook/addon-actions": "storybook/actions",
         },

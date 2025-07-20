@@ -70,9 +70,10 @@
 </script>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
+    import {useMiscStore} from "../../stores/misc";
+    import {useExecutionsStore} from "../../stores/executions";
     import {executeTask} from "../../utils/submitTask"
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
@@ -112,9 +113,13 @@
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
         computed: {
-            ...mapState("execution", ["flow", "execution"]),
-            ...mapGetters("misc", ["configs"]),
-            ...mapStores(useCoreStore),
+            ...mapStores(useCoreStore, useMiscStore, useExecutionsStore),
+            flow() {
+                return this.executionsStore.flow
+            },
+            execution() {
+                return this.executionsStore.execution
+            },
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             },
@@ -139,7 +144,7 @@
             },
             fillInputsFromExecution(){
                 // Add all labels except the one from flow to prevent duplicates
-                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
                 this.executionLabels = this.getExecutionLabels().filter(item => !toIgnore.some(prefix => item.key.startsWith(prefix)));
 
                 if (!this.flow.inputs) {

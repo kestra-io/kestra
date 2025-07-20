@@ -143,12 +143,12 @@ class DateFilterTest {
 
         render = variableRenderer.render("{{ now(timeZone=\"Europe/Lisbon\") }}", ImmutableMap.of());
 
-        assertThat(render)
-            .contains(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ISO_LOCAL_DATE))
-            .contains(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ofPattern("HH:mm")));
+        assertThat(render).contains(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ISO_LOCAL_DATE));
+        assertThat(render).contains(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ofPattern("HH:mm")));
 
         render = variableRenderer.render("{{ now(format=\"iso_local_date\") }}", ImmutableMap.of());
-        assertThat(render).isEqualTo(ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
+
+        assertThat(render).isEqualTo(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ISO_LOCAL_DATE));
     }
 
     @Test

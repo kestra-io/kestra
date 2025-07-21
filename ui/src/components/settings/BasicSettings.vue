@@ -252,6 +252,7 @@
     import {mapStores} from "pinia";
     import {useLayoutStore} from "../../stores/layout";
     import {useMiscStore} from "../../stores/misc";
+    import {useTemplateStore} from "../../stores/template";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {logDisplayTypes, storageKeys} from "../../utils/constants";
@@ -457,8 +458,8 @@
                     });
             },
             exportTemplates() {
-                return this.$store
-                    .dispatch("template/exportTemplateByQuery", {})
+                return this.templateStore
+                    .exportTemplateByQuery({})
                     .then(_ => {
                         this.$toast().success(this.$t("templates exported"));
                     })
@@ -587,7 +588,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(useLayoutStore, useMiscStore),
+            ...mapStores(useLayoutStore, useMiscStore, useTemplateStore),
             mappedTheme() {
                 return this.miscStore.theme;
             },

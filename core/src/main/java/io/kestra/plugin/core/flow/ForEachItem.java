@@ -516,16 +516,30 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                             TaskRun updatedTaskRun = currentTaskRun.toBuilder()
                                 .outputs(Variables.inMemory(outputs.toMap()))
                                 .iteration(iteration)
-                                .namespace(resolvedNamespace)
-                                .flowId(resolvedFlowId)
+                                // Do NOT set namespace/flowId on the task run itself for dynamic subflows
                                 .build();
+
+                            // Create a new ForEachItemExecutable for this iteration with the resolved namespace/flowId/revision
+                            ForEachItemExecutable dynamicSubflowTask = new ForEachItemExecutable(
+                                this.getId(),
+                                this.inputs,
+                                this.inheritLabels,
+                                this.labels,
+                                this.wait,
+                                this.transmitFailed,
+                                this.scheduleOn,
+                                resolvedNamespace,
+                                resolvedFlowId,
+                                this.revision,
+                                this.restartBehavior
+                            );
 
                             return ExecutableUtils.subflowExecution(
                                 runContext,
                                 flowExecutorInterface,
                                 currentExecution,
                                 currentFlow,
-                                this,
+                                dynamicSubflowTask,
                                 updatedTaskRun,
                                 inputs,
                                 labels,
@@ -599,7 +613,11 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
 
         @Override
         public SubflowId subflowId() {
-            // Not used for dynamic subflowId, set per TaskRun above
+            // For static namespace/flowId, return the subflow identifier for topology/dependency tracking
+            if (namespace != null && flowId != null && !namespace.contains("{{") && !flowId.contains("{{")) {
+                return new SubflowId(namespace, flowId, revision);
+            }
+            // For dynamic cases, we cannot statically determine the subflow(s)
             return null;
         }
     }

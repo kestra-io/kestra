@@ -103,6 +103,15 @@
                                         {{ t("multi_panel_editor.close_all_tabs") }}
                                     </span>
                                 </el-dropdown-item>
+                                <el-dropdown-item 
+                                    v-if="panel.activeTab?.value === 'code'"
+                                    :icon="Keyboard" 
+                                    @click="showKeyShortcuts()"
+                                >
+                                    <span class="small-text">
+                                        {{ t("editor_shortcuts.label") }}
+                                    </span>
+                                </el-dropdown-item>
                             </el-dropdown-menu>
                         </template>
                     </el-dropdown>
@@ -163,6 +172,7 @@
     import {Splitpanes, Pane} from "splitpanes"
 
     import {VISIBLE_PANELS_INJECTION_KEY} from "./code/injectionKeys";
+    import {useKeyShortcuts} from "../utils/useKeyShortcuts";
 
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
@@ -171,8 +181,10 @@
     import DockLeft from "vue-material-design-icons/DockLeft.vue";
     import DockRight from "vue-material-design-icons/DockRight.vue";
     import Close from "vue-material-design-icons/Close.vue";
+    import Keyboard from "vue-material-design-icons/Keyboard.vue";
 
     const {t} = useI18n({useScope: "global"});
+    const {showKeyShortcuts} = useKeyShortcuts();
 
     function throttle(callback: () => void, limit: number): () => void {
         let waiting = false;

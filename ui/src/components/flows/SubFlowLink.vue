@@ -9,6 +9,9 @@
 </script>
 
 <script>
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
+
     export default {
         props: {
             component: {
@@ -50,10 +53,10 @@
                         },
                     });
                 } else if (this.executionId) {
-                    this.$store
-                        .dispatch("execution/loadExecution", {id: this.executionId})
+                    this.executionsStore
+                        .loadExecution({id: this.executionId})
                         .then(value => {
-                            this.$store.commit("execution/setExecution", value);
+                            this.executionsStore.execution = value;
                             this.$router.push({name: this.routeName, params: this.params(value)})
                         })
                 } else {
@@ -69,6 +72,7 @@
             },
         },
         computed : {
+            ...mapStores(useExecutionsStore),
             routeName () {
                 return this.executionId ? "executions/update" : "flows/update"
             },

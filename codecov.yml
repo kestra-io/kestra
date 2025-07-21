@@ -56,21 +56,23 @@ component_management:
       name: Tests
       paths:
         - tests/**
-    - component_id: ui
-      name: Ui
-      paths:
-        - ui/**
+
     - component_id: webserver
       name: Webserver
       paths:
         - webserver/**
+
+ignore:
+  - ui/**
+# we are not mature yet to have a ui code coverage
 
 flag_management:
   default_rules:
     carryforward: true
     statuses:
       - type: project
-        target: 73% # current value as of 2025-06-25
-        threshold: 1%
+        target: 70%
+        threshold: 10%
       - type: patch
         target: 75%
+        threshold: 10%

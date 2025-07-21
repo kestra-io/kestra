@@ -25,6 +25,18 @@
                         </div>
                         <div id="charts_buttons">
                             <KestraIcon
+                                v-if="isTableChart(chart.type)"
+                                :tooltip="t('dashboards.export')"
+                            >
+                                <el-button
+                                    @click="dashboardStore.export(dashboard, chart, {filters})"
+                                    :icon="Download"
+                                    link
+                                    class="ms-2"
+                                />
+                            </KestraIcon>
+
+                            <KestraIcon
                                 v-if="props.dashboard?.id !== 'default'"
                                 :tooltip="t('dashboards.edition.chart')"
                             >
@@ -38,7 +50,7 @@
                                     link
                                     class="ms-2"
                                 />
-                            </KestraIcon>                            
+                            </KestraIcon>
                         </div>
                     </div>
 
@@ -60,16 +72,21 @@
     import {onMounted, ref} from "vue";
 
     import type {Dashboard, Chart} from "../composables/useDashboards";
-    import {TYPES, isKPIChart, getChartTitle} from "../composables/useDashboards";
+    import {TYPES, isKPIChart, isTableChart, getChartTitle} from "../composables/useDashboards";
 
     import {useRoute, useRouter} from "vue-router";
     const route = useRoute();
     const router = useRouter();
 
+    import {useDashboardStore} from "../../../stores/dashboard";
+    const dashboardStore = useDashboardStore();
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
     import KestraIcon from "../../Kicon.vue";
+
+    import Download from "vue-material-design-icons/Download.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
 
     const props = defineProps<{
@@ -95,7 +112,7 @@
 
         if (route.name === "flows/update") {
             filters.value.push({field: "namespace", operation: "EQUALS", value: route.params.namespace});
-            filters.value.push({field: "flowId", operation: "EQUALS", value: route.params.id})
+            filters.value.push({field: "flowId", operation: "EQUALS", value: route.params.id});
         }
 
         if (route.name === "namespaces/update") {

@@ -16,7 +16,7 @@
                     <sub-flow-link :execution-id="scope.row.value" />
                 </template>
                 <template v-else>
-                    <var-value :execution="execution" :value="scope.row.value" />
+                    <var-value :execution="executionsStore.execution" :value="scope.row.value" />
                 </template>
             </template>
         </el-table-column>
@@ -28,7 +28,8 @@
     import VarValue from "./VarValue.vue";
     import DateAgo from "../../components/layout/DateAgo.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue"
-    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         components: {
@@ -48,7 +49,7 @@
             }
         },
         computed: {
-            ...mapState("execution", ["execution"]),
+            ...mapStores(useExecutionsStore),
             variables() {
                 return Utils.executionVars(this.data);
             },

@@ -47,9 +47,8 @@ kestra:
     access-log:
       enabled: false
     basic-auth:
-      enabled: false
       username: admin@kestra.io
-      password: kestra
+      password: Kestra123
       open-urls:
         - "/ping"
         - "/api/v1/executions/webhook/"

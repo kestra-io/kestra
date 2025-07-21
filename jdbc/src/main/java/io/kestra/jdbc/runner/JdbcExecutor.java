@@ -241,10 +241,10 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         this.tracer = tracerFactory.getTracer(JdbcExecutor.class, "EXECUTOR");
         this.maintenanceService = maintenanceService;
 
-        // By default, we start half-available processors count threads with a minimum of 4 by executor service
+        // By default, we start available processors count threads with a minimum of 4 by executor service
         // for the worker task result queue and the execution queue.
         // Other queues would not benefit from more consumers.
-        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, Runtime.getRuntime().availableProcessors() / 2);
+        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, Runtime.getRuntime().availableProcessors());
         this.workerTaskResultExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "jdbc-worker-task-result-executor");
         this.executionExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "jdbc-execution-executor");
     }

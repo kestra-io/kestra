@@ -1,22 +1,12 @@
 <template>
-    <el-tooltip
-        :content="$t('editor_shortcuts.label')"
-        :hide-after="0"
-        :persistent="false"
-        effect="light"
-        placement="top"
-    >
-        <Keyboard @click="isShown = true" />
-    </el-tooltip>
-
-    <el-dialog v-model="isShown" top="25vh" header-class="p-3" body-class="p-2">
+    <el-dialog v-model="isKeyShortcutsDialogShown" top="25vh" header-class="p-3" body-class="p-2">
         <template #header>
             <div class="d-flex align-items-center gap-2 fw-normal">
                 <el-icon :size="30">
                     <Keyboard />
                 </el-icon>
                 <span class="fs-6">
-                    {{ $t("editor_shortcuts.label") }}
+                    {{ t("editor_shortcuts.label") }}
                 </span>
             </div>
         </template>
@@ -37,7 +27,7 @@
                     </template>
                 </div>
                 <div class="text-break">
-                    {{ $t(command.description) }}
+                    {{ t(command.description) }}
                 </div>
             </div>
         </div>
@@ -45,10 +35,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
+    import {useI18n} from "vue-i18n";
     import Keyboard from "vue-material-design-icons/Keyboard.vue";
+    import {useKeyShortcuts} from "../../utils/useKeyShortcuts";
 
-    const isShown = ref(false);
+    const {t} = useI18n();
+    const {isKeyShortcutsDialogShown} = useKeyShortcuts();
 
     const commands = [
         {
@@ -66,6 +58,10 @@
         {
             keys: ["⌘ Cmd/Ctrl", "e"],
             description: "editor_shortcuts.execute_flow",
+        },
+        {
+            keys: ["⌘ Cmd/Ctrl", "⌥ Option/Alt", "Shift", "K"],
+            description: "editor_shortcuts.toggle_ai_agent",
         },
         {
             keys: ["⌥ Option/Alt", "↑", "↓"],

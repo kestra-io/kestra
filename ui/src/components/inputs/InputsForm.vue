@@ -157,10 +157,10 @@
                         type="file"
                         @change="onFileChange(input, $event)"
                         autocomplete="off"
-                        :style="{display: typeof(inputsValues[input.id]) === 'string' && inputsValues[input.id].startsWith('kestra:///') ? 'none': ''}"
+                        :style="{display: isFile(inputsValues[input.id]) ? 'none': ''}"
                     >
                     <label
-                        v-if="typeof(inputsValues[input.id]) === 'string' && inputsValues[input.id].startsWith('kestra:///')"
+                        v-if="isFile(inputsValues[input.id])"
                         :for="input.id+'-file'"
                     >Kestra Internal Storage File</label>
                 </div>
@@ -270,6 +270,8 @@
 <script>
     import {toRaw} from "vue";
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
     import debounce from "lodash/debounce";
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
@@ -287,6 +289,7 @@
     export default {
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapStores(useExecutionsStore),
             inputErrors() {
                 // we only keep errors that don't target an input directly
                 const keepErrors = this.inputsMetaData.filter(it => it.id === undefined);
@@ -435,11 +438,13 @@
                 }
 
                 const files = e.target.files || e.dataTransfer.files;
+
                 if (!files.length) {
                     return;
                 }
-                this.inputsValues[input.id] = e.target.files[0];
-                this.onChange(input);
+
+                this.inputsValues[input.id] = files[0];
+                setTimeout(() => this.onChange(input), 300);
             },
             onYamlChange(input, e) {
                 this.inputsValues[input.id] = e.target.value;
@@ -476,13 +481,13 @@
 
                 if (this.flow !== undefined) {
                     const options = {namespace: this.flow.namespace, id: this.flow.id};
-                    const {data} = await this.$store.dispatch("execution/validateExecution", {...options, formData})
+                    const {data} = await this.executionsStore.validateExecution({...options, formData})
 
                     metadataCallback(data);
 
                 } else if (this.execution !== undefined) {
                     const options = {id: this.execution.id};
-                    const {data} = await this.$store.dispatch("execution/validateResume", {...options, formData})
+                    const {data} = await this.executionsStore.validateResume({...options, formData})
 
                     metadataCallback(data);
                 } else {
@@ -575,6 +580,9 @@
                 [items[index], items[targetIndex]] = [items[targetIndex], items[index]];
 
                 this.updateArrayValue(input);
+            },
+            isFile(data) {
+                return typeof data === "string" && (data.startsWith("kestra:///") || data.startsWith("file://") || data.startsWith("nsfile://"));
             }
         },
         watch: {
@@ -638,6 +646,15 @@
 .el-input-file {
     display: flex;
     align-items: center;
+
+    .el-input__inner {
+        cursor: pointer;
+    }
+
+    .el-input__wrapper {
+        padding: 0.5rem;
+    }
+    
 }
 
 .preview {

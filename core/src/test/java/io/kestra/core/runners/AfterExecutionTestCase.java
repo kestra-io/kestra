@@ -19,7 +19,7 @@ public class AfterExecutionTestCase {
         assertThat(execution.getTaskRunList()).hasSize(2);
 
         TaskRun taskRun = execution.getTaskRunList().getFirst();
-        assertThat(taskRun.getTaskId()).isEqualTo("hello");
+        assertThat(taskRun.getTaskId()).isEqualTo("mytask");
         assertThat(taskRun.getState().getCurrent()).isEqualTo(SUCCESS);
 
         TaskRun afterExecution = execution.getTaskRunList().getLast();
@@ -29,6 +29,8 @@ public class AfterExecutionTestCase {
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(execution.getState().getEndDate().orElseThrow());
         Map<String, Object> outputs = (Map<String, Object> ) afterExecution.getOutputs().get("values");
         assertThat(outputs.get("state")).isEqualTo("SUCCESS");
+        // afterExecution should be able to access execution outputs
+        assertThat(outputs.get("output")).isEqualTo("this is a task output used as a final flow output");
     }
 
     @SuppressWarnings("unchecked")

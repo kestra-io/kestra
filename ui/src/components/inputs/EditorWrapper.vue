@@ -19,13 +19,10 @@
         :diff-side-by-side="false"
     >
         <template #absolute>
-            <div class="d-flex flex-column align-items-end gap-2" v-if="isCurrentTabFlow">
+            <div class="d-flex flex-column align-items-end gap-2 mt-2" v-if="isCurrentTabFlow">
                 <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
                     {{ $t("ai.flow.title") }}
                 </el-button>
-                <span>
-                    <KeyShortcuts />
-                </span>
             </div>
             <ContentSave v-else @click="saveFileContent" />
         </template>
@@ -41,9 +38,9 @@
     </transition>
     <AcceptDecline
         v-if="draftSource !== undefined"
-        class="position-absolute prompt"
+        class="position-absolute actions"
         @accept="acceptDraft"
-        @decline="declineDraft"
+        @reject="declineDraft"
     />
 </template>
 
@@ -51,7 +48,6 @@
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useStore} from "vuex";
     import Editor from "./Editor.vue";
-    import KeyShortcuts from "./KeyShortcuts.vue";
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
@@ -60,21 +56,26 @@
     const route = useRoute()
     const router = useRouter()
 
-    import {EDITOR_CURSOR_INJECTION_KEY} from "../code/injectionKeys";
+    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
+    import {useMiscStore} from "../../stores/misc";
 
     import AiAgent from "../ai/AiAgent.vue";
     import AiIcon from "../ai/AiIcon.vue";
     import AcceptDecline from "./AcceptDecline.vue";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     const store = useStore();
+    const miscStore = useMiscStore();
 
-    const aiEnabled = computed(() => store.state.misc.configs?.isAiEnabled);
+    const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const cursor = ref();
 
     const toggleAiShortcut = (event: KeyboardEvent) => {
-        if (event.altKey && event.key === "k" && isCurrentTabFlow.value) {
+        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value && aiEnabled.value) {
             event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             draftSource.value = undefined;
             aiAgentOpened.value = !aiAgentOpened.value;
         }
@@ -98,6 +99,8 @@
         dirty: false,
         flow: true
     });
+
+    provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
 
     const source = computed(() => {
         return props.flow
@@ -183,8 +186,10 @@
     }
 
 
-    function updatePluginDocumentation(event: any, task: string | undefined) {
-        pluginsStore.updateDocumentation({event, task});
+    function updatePluginDocumentation(event: any) {
+        const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+        let element = (elementWrapper?.value?.type !== undefined ? elementWrapper.value : elementWrapper?.parents?.findLast(p => p.type !== undefined)) as Parameters<typeof pluginsStore.updateDocumentation>[0];
+        pluginsStore.updateDocumentation(element);
     };
 
     const flowParsed = computed(() => store.getters["flow/flowParsed"]);
@@ -247,7 +252,24 @@
 <style scoped lang="scss">
     .prompt {
         bottom: 10%;
-        width: calc(100% - 4rem);
-        left: 2rem;
+        width: calc(100% - 5rem);
+        left: 3rem;
+        max-width: 700px;
+        background-color: var(--ks-background-panel);
+        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+    }
+
+    .rounded-pill {
+        background-color: #262A35;
+        color: #ffffff;
+        box-shadow: 0px 4px 4px 0px #00000040;
+
+        &:hover {
+            background-color: #262A35;
+        }
+    }
+
+    .actions {
+        bottom: 10%;
     }
 </style>

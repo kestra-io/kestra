@@ -17,9 +17,6 @@
             <inputs-form :initial-inputs="inputsList" :execution="execution" v-model="inputs" />
         </el-form>
         <template #footer>
-            <el-button @click="cancel()">
-                {{ $t('cancel') }}
-            </el-button>
             <el-button :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" native-type="submit">
                 {{ $t('resume') }}
             </el-button>
@@ -40,6 +37,8 @@
     import ExecutionUtils from "../../utils/executionUtils";
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import {inputsToFormDate} from "../../utils/submitTask";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         components: {InputsForm},
@@ -74,7 +73,7 @@
                 this.$toast()
                     .confirm(this.$t("resumed confirm", {id: this.execution.id}), () => {
                         return this.resume();
-                    });
+                    }, () => {}, false);
             },
             resumeWithInputs(formRef) {
                 if (formRef) {
@@ -90,8 +89,8 @@
 
             },
             resume(formData) {
-                this.$store
-                    .dispatch("execution/resume", {
+                this.executionsStore
+                    .resume({
                         id: this.execution.id,
                         formData: formData
                     })
@@ -100,18 +99,8 @@
                         this.$toast().success(this.$t("resumed done"));
                     });
             },
-            cancel() {
-                this.$store
-                    .dispatch("execution/kill", {
-                        id: this.execution.id,
-                    })
-                    .then(() => {
-                        this.isDrawerOpen = false;
-                        this.$toast().success(this.$t("killed done"));
-                    });
-            },
             loadDefinition() {
-                this.$store.dispatch("execution/loadFlowForExecution", {
+                this.executionsStore.loadFlowForExecution({
                     flowId: this.execution.flowId,
                     namespace: this.execution.namespace
                 });
@@ -119,7 +108,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("execution", ["flow"]),
+            ...mapStores(useExecutionsStore),
             enabled() {
                 if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
@@ -133,7 +122,7 @@
                     return [];
                 }
 
-                const findTaskById = FlowUtils.findTaskById(this.flow, findTaskRunByState[0].taskId);
+                const findTaskById = FlowUtils.findTaskById(this.executionsStore.flow, findTaskRunByState[0].taskId);
 
                 return findTaskById && findTaskById.inputs !== null ? findTaskById.inputs : [];
             },

@@ -156,13 +156,10 @@
                         :diff-side-by-side="false"
                     >
                         <template #absolute>
-                            <div class="d-flex flex-column align-items-end gap-2" v-if="isCurrentTabFlow">
+                            <div class="d-flex flex-column align-items-end gap-2 mt-2" v-if="isCurrentTabFlow">
                                 <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
                                     {{ $t("ai.flow.title") }}
                                 </el-button>
-                                <span>
-                                    <KeyShortcuts />
-                                </span>
                             </div>
                         </template>
                     </editor>
@@ -177,9 +174,9 @@
                     </transition>
                     <AcceptDecline
                         v-if="draftSource !== undefined"
-                        class="position-absolute prompt"
+                        class="position-absolute actions"
                         @accept="acceptDraft"
-                        @decline="declineDraft"
+                        @reject="declineDraft"
                     />
                 </template>
                 <div v-else class="no-tabs-opened">
@@ -269,7 +266,6 @@
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
                 @reorder="(yaml) => handleReorder(yaml)"
-                @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
             />
         </div>
         <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
@@ -469,6 +465,7 @@
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
     import {useCoreStore} from "../../stores/core";
+    import {useMiscStore} from "../../stores/misc";
     import {useRoute, useRouter} from "vue-router";
     import {useStorage} from "@vueuse/core";
 
@@ -487,7 +484,6 @@
 
     import TypeIcon from "../utils/icons/Type.vue"
     import SwitchView from "./SwitchView.vue";
-    import KeyShortcuts from "./KeyShortcuts.vue";
 
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -507,13 +503,15 @@
     import MetadataEditor from "../flows/MetadataEditor.vue";
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
     import {usePluginsStore} from "../../stores/plugins";
+    import * as FLOW_YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import AiAgent from "../ai/AiAgent.vue";
     import AiIcon from "../ai/AiIcon.vue";
     import AcceptDecline from "./AcceptDecline.vue";
 
     const store = useStore();
     const coreStore = useCoreStore();
-    const aiEnabled = computed(() => store.state.misc.configs?.isAiEnabled);
+    const miscStore = useMiscStore();
+    const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);
@@ -524,8 +522,10 @@
     const tabsScrollRef = ref();
 
     const toggleAiShortcut = (event) => {
-        if (event.altKey && event.key === "k" && isCurrentTabFlow.value) {
+        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value && aiEnabled.value) {
             event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             draftSource.value = undefined;
             aiAgentOpened.value = !aiAgentOpened.value;
         }
@@ -812,8 +812,10 @@
         emit(type, event);
     };
 
-    const updatePluginDocumentation = (event, task) => {
-        pluginsStore.updateDocumentation({event,task});
+    const updatePluginDocumentation = (event) => {
+        const elementWrapper = FLOW_YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+        let element = elementWrapper.value.type !== undefined ? elementWrapper.value : elementWrapper.parents.findLast(p => p.type !== undefined);
+        pluginsStore.updateDocumentation(element);
     };
 
     const fetchGraph = () => {
@@ -1547,8 +1549,25 @@
 
     .prompt {
         bottom: 10%;
-        width: calc(100% - 4rem);
-        left: 2rem;
+        width: calc(100% - 5rem);
+        left: 3rem;
+        max-width: 700px;
+        background-color: var(--ks-background-panel);
+        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+    }
+
+    .rounded-pill {
+        background-color: #262A35;
+        color: #ffffff;
+        box-shadow: 0px 4px 4px 0px #00000040;
+
+        &:hover {
+            background-color: #262A35;
+        }
+    }
+
+    .actions{
+        bottom: 10%;
     }
 </style>
 

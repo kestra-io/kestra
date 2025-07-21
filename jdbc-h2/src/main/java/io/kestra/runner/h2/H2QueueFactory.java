@@ -42,7 +42,7 @@ public class H2QueueFactory implements QueueFactoryInterface {
     }
 
     @Override
-    @Prototype // must be prototype so we can create two Worker in the same application context for testing purpose.
+    @Singleton
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)
     @Bean(preDestroy = "close")
     public QueueInterface<WorkerJob> workerJob() {

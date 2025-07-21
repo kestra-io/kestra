@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -14,12 +15,12 @@ import java.util.Map;
 @Setter
 @NoArgsConstructor
 @SuperBuilder
-public class GlobalFilter {
+public class ChartFiltersOverrides {
     private ZonedDateTime startDate;
     private ZonedDateTime endDate;
     private Integer pageSize;
     private Integer pageNumber;
     private String namespace;
     private Map<String, String> labels;
-    private List<QueryFilter> filters;
+    private List<QueryFilter> filters = new ArrayList<>();
 }

@@ -18,7 +18,7 @@
                         v-model="localNamespace"
                     >
                         <el-option
-                            v-for="np in namespaces"
+                            v-for="np in executionsStore.namespaces"
                             :key="np"
                             :label="np"
                             :value="np"
@@ -26,7 +26,7 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item
-                    v-if="localNamespace && flowsExecutable.length > 0"
+                    v-if="localNamespace && executionsStore.flowsExecutable.length > 0"
                     :label="$t('flow')"
                 >
                     <el-select
@@ -34,10 +34,10 @@
                         value-key="id"
                     >
                         <el-option
-                            v-for="flow in flowsExecutable"
-                            :key="flow.id"
-                            :label="flow.id"
-                            :value="flow"
+                            v-for="exFlow in executionsStore.flowsExecutable"
+                            :key="exFlow.id"
+                            :label="exFlow.id"
+                            :value="exFlow"
                         />
                     </el-select>
                 </el-form-item>
@@ -62,6 +62,7 @@
     import {mapStores} from "pinia";
     import {useApiStore} from "../../stores/api";
     import {useCoreStore} from "../../stores/core";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         components: {
@@ -123,7 +124,7 @@
                     this.toggleModal()
                 }
                 else {
-                    this.$store.dispatch("execution/loadNamespaces");
+                    this.executionsStore.loadNamespaces();
                     this.isSelectFlowOpen = !this.isSelectFlowOpen;
                 }
             },
@@ -138,10 +139,10 @@
                 this.isOpen = false;
             },
             isDisabled() {
-                return this.disabled || this.flow?.deleted;
+                return this.disabled || this.executionsStore.flow?.deleted;
             },
             async loadDefinition() {
-                await this.$store.dispatch("execution/loadFlowForExecution", {
+                await this.executionsStore.loadFlowForExecution({
                     flowId: this.flowId,
                     namespace: this.namespace
                 });
@@ -161,9 +162,8 @@
         },
         computed: {
             ...mapState("flow", ["executeFlow"]),
-            ...mapState("execution", ["flow", "namespaces", "flowsExecutable"]),
             ...mapState("auth", ["user"]),
-            ...mapStores(useApiStore, useCoreStore),
+            ...mapStores(useApiStore, useCoreStore, useExecutionsStore),
             computedFlowId() {
                 return this.flowId || this.localFlow?.id;
             },
@@ -210,7 +210,7 @@
                     if (!this.localNamespace) {
                         return;
                     }
-                    this.$store.dispatch("execution/loadFlowsExecutable", {
+                    this.executionsStore.loadFlowsExecutable({
                         namespace: this.localNamespace
                     });
                 },
@@ -221,7 +221,7 @@
                     if (!this.localFlow) {
                         return;
                     }
-                    this.$store.commit("execution/setFlow", this.localFlow);
+                    this.executionsStore.flow = this.localFlow;
                 },
                 immediate: true
             }

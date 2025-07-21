@@ -10,6 +10,7 @@
     "Finish": "Fine",
     "Fold auto": "Editor: piegatura automatica delle righe multiple",
     "Fold content lines": "Piega stringhe multilinea",
+    "Hover description": "Editor: Mostra la descrizione del campo quando si passa il mouse su key o value",
     "Language": "Lingua",
     "Next step": "Passo successivo",
     "Per page": "per pagina",
@@ -41,6 +42,7 @@
     "add task": "Aggiungi un task",
     "add-trigger-in-editor": "Aggiungi un Trigger al tuo Flow prima",
     "add_new_item": "Aggiungi nuovo elemento",
+    "additionalPlugins": "Plugin Aggiuntivi",
     "administration": "Amministrazione",
     "advanced configuration": "Altre proprietà",
     "after": "dopo",
@@ -55,6 +57,7 @@
     "all executions": "Tutte le esecuzioni",
     "all tags": "Tutti i tag",
     "api": "API",
+    "appBlocks": "Blocchi App",
     "apps": "Applicazioni",
     "attempt": "Tentativo",
     "attempts": "Tentativi",
@@ -122,6 +125,7 @@
     "cannot swap tasks": "Impossibile scambiare i tasks",
     "change execution state confirm": "Sei sicuro di voler cambiare lo stato dell'esecuzione <code>{id}</code>?",
     "change execution state done": "Stato di esecuzione aggiornato",
+    "change queue confirm": "Sei sicuro di voler cambiare lo stato della coda per l'esecuzione <code>{id}</code>?<br/>",
     "change state": "Cambia stato",
     "change state confirm": "Sei sicuro di voler cambiare lo stato di esecuzione del task <code>{task}</code> nell'esecuzione <code>{id}</code>?",
     "change state current state": "Lo stato attuale è:",
@@ -150,6 +154,7 @@
     "change state tooltip": "Cambia lo stato di esecuzione",
     "chart": "Grafico",
     "chart preview": "Anteprima grafico",
+    "charts": "Grafici",
     "choice": "Scelta",
     "choose file": "Scegli un file o trascinalo qui...",
     "close": "Chiudi",
@@ -211,6 +216,7 @@
         "label": "Modifica Dashboard"
       },
       "empty": "Non ci sono risultati da mostrare.",
+      "export": "Esporta in CSV",
       "labels": {
         "plural": "Dashboard",
         "singular": "Dashboard"
@@ -218,6 +224,7 @@
       "preview": "Anteprima Dashboard"
     },
     "data": "Dati",
+    "dataFilters": "Filtri Dati",
     "data_not_protected": "I tuoi dati non sono protetti. Non perderli. <b>Abilita le nostre funzionalità di sicurezza gratuite o prova la nostra offerta a pagamento.</b>",
     "date": "Data",
     "date count": "{count} il {date}",
@@ -263,7 +270,6 @@
     },
     "days": "Giorni",
     "debug": "Debug",
-    "decline": "Rifiuta",
     "default": "Predefinito",
     "delete": "Elimina",
     "delete backfill": "Elimina il backfill",
@@ -396,6 +402,7 @@
       "move_line": "Sposta linea",
       "reset_fontsize": "Reimposta dimensione del font",
       "save_flow": "Salva flow",
+      "toggle_ai_agent": "Attiva/disattiva agente AI",
       "trigger_autocompletion": "Attiva autocompletamento",
       "uncomment": "Decommenta"
     },
@@ -595,6 +602,7 @@
         },
         "empty": "Non hai ancora salvato alcuna ricerca.",
         "label": "Ricerche salvate",
+        "name_already_used": "Etichetta di ricerca già utilizzata.",
         "remove": "Rimuovi",
         "tooltip": "Non puoi salvare criteri di ricerca vuoti."
       },
@@ -697,6 +705,7 @@
     "last execution date": "Data ultima esecuzione",
     "last execution state": "Ultimo stato",
     "last execution status": "Ultimo stato di esecuzione",
+    "last modified": "Ultima modifica",
     "launch execution": "Esegui",
     "learn_more": "Scopri di più",
     "light_background": "Questa è l'opzione preferita quando si lavora con uno sfondo chiaro.",
@@ -705,6 +714,7 @@
     "live help": "Assistenza live",
     "loaded x dependencies": "{count} dipendenze caricate",
     "log expand setting": "Visualizzazione predefinita del Log",
+    "logExporters": "Esportatori di Log",
     "logs": "Logs",
     "logs_view": {
       "compact": "Vista predefinita",
@@ -1028,6 +1038,7 @@
     "read-more": "Leggi di più su",
     "readonly property": "Proprietà di sola lettura",
     "refresh": "Aggiorna",
+    "reject": "Rifiuta",
     "relative": "Relativo",
     "relative end date": "Data di fine relativa",
     "relative start date": "Data di inizio relativa",
@@ -1168,6 +1179,7 @@
             "editor_folding_stratgy": "Piegatura automatica del codice nell'Editor",
             "editor_font_family": "Famiglia del Font dell'Editor",
             "editor_font_size": "Dimensione del Font dell'Editor",
+            "editor_hover_description": "Passa il mouse sulla proprietà per vedere la descrizione",
             "environment_color": "Colore dell'Ambiente",
             "environment_name": "Nome dell'Ambiente",
             "logs_font_size": "Dimensione Font dei Log",
@@ -1177,6 +1189,74 @@
         }
       },
       "label": "Impostazioni"
+    },
+    "setup": {
+      "config": {
+        "basicauth": "Autenticazione di base",
+        "queue": "Coda",
+        "repository": "Database",
+        "storage": "Archiviazione Interna"
+      },
+      "confirm": {
+        "config_title": "Conferma che la configurazione sia valida",
+        "confirm": "Conferma",
+        "not_valid": "No, non è valido",
+        "valid": "Sì, è valido"
+      },
+      "form": {
+        "email": "Email",
+        "firstName": "Nome",
+        "lastName": "Cognome",
+        "password": "Password"
+      },
+      "login": "Accedi",
+      "logout": "Logout",
+      "steps": {
+        "complete": "Avvia Kestra UI",
+        "config": "Convalida Configurazione",
+        "survey": "Dicci di più",
+        "user": "Crea il tuo account"
+      },
+      "subtitles": {
+        "complete": "Impostazione completata con successo!",
+        "config": "Ecco i dettagli della tua configurazione",
+        "survey": "Aiutaci a migliorare Kestra Open Source Edition",
+        "user": "Configura la tua istanza creando un account"
+      },
+      "success": {
+        "subtitle": "Sei pronto!",
+        "title": "Congratulazioni!"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "Uso personale",
+        "company_size": "Qual è la dimensione della tua azienda?",
+        "continue": "Continua",
+        "newsletter": "Iscriviti alla newsletter di Kestra – rimani aggiornato con le <br> ultime funzionalità e modifiche.",
+        "skip": "Salta",
+        "use_case": "Qual è il tuo caso d'uso principale?",
+        "use_case_business": "Processi aziendali",
+        "use_case_data": "Workflow dei dati",
+        "use_case_infrastructure": "Automazione dell'infrastruttura",
+        "use_case_ml": "Pipeline ML/AI",
+        "use_case_other": "Altro"
+      },
+      "titles": {
+        "survey": "Dicci di più",
+        "user": "Crea un account"
+      },
+      "troubleshooting": "Password dimenticata?",
+      "validation": {
+        "email_invalid": "Email non valido",
+        "email_required": "L'email è obbligatoria",
+        "email_temporary_not_allowed": "Indirizzi email temporanei o usa e getta non sono consentiti",
+        "firstName_required": "Nome richiesto",
+        "lastName_required": "Cognome obbligatorio",
+        "password_invalid": "Password non valida"
+      }
     },
     "show": "Mostra",
     "show chart": "Mostra Grafico",
@@ -1223,9 +1303,9 @@
     "task logs": "Task logs",
     "task run id": "ID di TaskRun",
     "taskDefaults": "Task Defaults",
+    "taskRunners": "Runner di Task",
     "task_id_exists": "L'ID del task esiste già",
     "task_id_message": "L'ID del Task ${existingTask} esiste già nel flow.",
-    "task_runners": "Esecutori di Task",
     "taskid column details": "Ultimo task in esecuzione e il numero di tentativi.",
     "taskruns": "Esecuzioni dei tasks",
     "tasks": "Tasks",
@@ -1306,9 +1386,11 @@
       "warning": "Potrebbe portare a esecuzioni concorrenti per lo stesso trigger e dovrebbe essere considerata come ultima risorsa."
     },
     "unqueue": "Rimuovi dalla coda",
+    "unqueue as": "Dequeued come <code>{status}</code>",
     "unqueue confirm": "Sei sicuro di voler rimuovere dalla coda l'esecuzione <code>{id}</code>?",
     "unqueue done": "L'esecuzione è in coda",
     "unqueue title": "Metti in coda l'esecuzione <code>{id}</code>.<br/>Nota che non rispetterà il limite di concorrenza del flow, quindi potrebbero esserci più esecuzioni in corso rispetto al limite consentito.",
+    "unqueue title multiple": "Sei sicuro di voler rimuovere dalla coda <code>{count}</code> esecuzioni?<br/><br/>Nota che non rispetterà il limite di concurrency del flow, quindi potrebbero essere in esecuzione più esecuzioni del limite consentito.",
     "unsaved changed ?": "Hai modifiche non salvate, vuoi lasciare questa pagina?",
     "up trend": "In aumento",
     "update": "Aggiorna",

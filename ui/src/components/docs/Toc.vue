@@ -31,6 +31,8 @@
 </template>
 
 <script setup>
+    import {mapStores} from "pinia";
+    import {useDocStore} from "../../stores/doc";
     import RecursiveToc from "./RecursiveToc.vue";
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
@@ -74,6 +76,7 @@
             }
         },
         computed: {
+            ...mapStores(useDocStore),
             toc() {
                 if (this.rawStructure === undefined) {
                     return undefined;
@@ -107,11 +110,11 @@
             }
         },
         async mounted() {
-            this.rawStructure = await this.$store.dispatch("doc/children");
+            this.rawStructure = await this.docStore.children();
         },
         methods: {
             async search(query, cb) {
-                cb(await this.$store.dispatch("doc/search", {q: query}));
+                cb(await this.docStore.search({q: query}));
             }
         }
     };

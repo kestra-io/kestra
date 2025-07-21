@@ -71,6 +71,8 @@ class DateFilterTest {
                 {{ "2013-09-08T17:19:12+02:00" | date(timeZone="Europe/Paris") }}
                 {{ "2013-09-08T17:19:12" | date(timeZone="Europe/Paris") }}
                 {{ "2013-09-08" | date(timeZone="Europe/Paris") }}
+                {{ "08.09.2023" | date("yyyy-MM-dd", existingFormat="dd.MM.yyyy") }}
+                {{ "08092023" | date("yyyy-MM-dd", existingFormat="ddMMyyyy") }}
                 """,
             Map.of()
         );
@@ -80,6 +82,8 @@ class DateFilterTest {
             2013-09-08T17:19:12.000000+02:00
             2013-09-08T17:19:12.000000+02:00
             2013-09-08T00:00:00.000000+02:00
+            2023-09-08
+            2023-09-08
             """);
     }
 
@@ -187,4 +191,41 @@ class DateFilterTest {
 
         assertThat(render).isEqualTo("2013-09-07T17:19:12.123456+02:00");
     }
+
+    @Test
+    void timestampDateFormat() throws IllegalVariableEvaluationException {
+    String render =
+        variableRenderer.render(
+            """
+                {{ 1378653552 | date(format="iso_sec", timeZone="Europe/Paris") }}
+                {{ 1378653552123 | date(format="iso_milli", timeZone="Europe/Paris") }}
+                {{ 1378653552123 | date(timeZone="Europe/Paris") }}
+                {{ 1378653552123 | date(format="iso_zoned_date_time", timeZone="Europe/Paris") }}
+                {{ 1378653552123456000 | date(format="iso", timeZone="Europe/Paris") }}
+                {{ 1378653552000123456 | date(format="iso", timeZone="Europe/Paris") }}
+                {{ 1378653552 | date(format="sql_sec", timeZone="Europe/Paris") }}
+                {{ 1378653552123 | date(format="sql_milli", timeZone="Europe/Paris") }}
+                {{ 1378653552123456000 | date(format="sql", timeZone="Europe/Paris") }}
+                {{ 1378653552000123456 | date(format="sql", timeZone="Europe/Paris") }}
+                {{ 1378653552123 | date(format="sql_milli", timeZone="UTC") }}
+                {{ "1378653552123" | number | date(format="sql_milli", timeZone="UTC") }}
+                """,
+            Map.of());
+
+        assertThat(render).isEqualTo("""
+            2013-09-08T17:19:12+02:00
+            2013-09-08T17:19:12.123+02:00
+            2013-09-08T17:19:12.123000+02:00
+            2013-09-08T17:19:12.123+02:00[Europe/Paris]
+            2013-09-08T17:19:12.123456+02:00
+            2013-09-08T17:19:12.123456+02:00
+            2013-09-08 17:19:12
+            2013-09-08 17:19:12.123
+            2013-09-08 17:19:12.123456
+            2013-09-08 17:19:12.123456
+            2013-09-08 15:19:12.123
+            2013-09-08 15:19:12.123
+            """);
+    }
+
 }

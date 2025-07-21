@@ -43,7 +43,7 @@ class DateFilterTest {
                 {{ local | date(format="yyyy-MM-dd HH:mm:ss.SSSSSSXXX", timeZone="Europe/Paris") }}
                 {{ local | date(format="yyyy-MM-dd HH:mm:ss.SSS", timeZone="UTC") }}
                 {{ local | date(format="sql", timeZone="UTC") }}
-                {{ local | date(format="sql_seq", timeZone="UTC") }}
+                {{ local | date(format="sql_sec", timeZone="UTC") }}
                 {{ local | date(format="sql_milli", timeZone="UTC") }}
                 {{ local | date(format="yyyy-MM-dd HH:mm:ss.SSSSSSXXX", timeZone="UTC") }}""",
             vars

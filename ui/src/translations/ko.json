@@ -1294,6 +1294,7 @@
     "success": "성공",
     "sum": "합계",
     "switch-view": "보기 전환",
+    "system overview": "시스템 개요",
     "system_namespace": "플랫폼을 시스템 flows로 점검하세요.",
     "system_namespace_description": "유지 관리 작업을 자동화하세요, 실패 경고부터 자동 정리까지.",
     "tags": "태그들",

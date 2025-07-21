@@ -1294,6 +1294,7 @@
     "success": "Success",
     "sum": "合計",
     "switch-view": "ビューを切り替え",
+    "system overview": "システム概要",
     "system_namespace": "プラットフォームをシステムフローで管理しましょう。",
     "system_namespace_description": "メンテナンスタスクを自動化し、FAILUREアラートから自動クリーンアップまで対応します。",
     "tags": "タグ",

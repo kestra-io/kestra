@@ -71,6 +71,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 public class JdbcExecutor implements ExecutorInterface, Service {
     private static final ObjectMapper MAPPER = JdbcMapper.of();
+    private static final String DESERIALIZATION_EXCEPTION_ID = "__kestra_deserializationExceptionId__";
 
     private final ScheduledExecutorService scheduledDelay = Executors.newSingleThreadScheduledExecutor();
 
@@ -287,19 +288,41 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         this.receiveCancellations.addFirst(((JdbcQueue<Execution>) this.executionQueue).receiveBatch(
             Executor.class,
             executions -> {
-                List<CompletableFuture<Void>> futures = executions.stream()
+                // We need to simulate FIFO by executionId as processing concurrently messages for the same execution may erase outputs of one message by another.
+                // Moreover, as we lock by execution, this is suboptimal to process them concurrently.
+                Map<String, List<Either<Execution, DeserializationException>>> executionById = executions.stream()
+                    .collect(Collectors.groupingBy(either -> either.isLeft() ? either.getLeft().getId() : DESERIALIZATION_EXCEPTION_ID));
+
+                // execute concurrently "singles" including the first of "multiples"
+                List<Either<Execution, DeserializationException>> concurrent = executionById.values().stream().flatMap(l -> l.stream().limit(1)).toList();
+                List<CompletableFuture<Void>> futures = concurrent.stream()
                     .map(execution -> CompletableFuture.runAsync(() -> executionQueue(execution), executionExecutorService))
                     .toList();
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+                // execute one-by-one "multiples" that are not yet processed
+                List<Either<Execution, DeserializationException>> executionMultiple = executionById.values().stream().flatMap(l -> l.stream().skip(1)).toList();
+                executionMultiple.forEach(exec -> executionQueue(exec));
             }
         ));
         this.receiveCancellations.addFirst(((JdbcQueue<WorkerTaskResult>) this.workerTaskResultQueue).receiveBatch(
             Executor.class,
             workerTaskResults -> {
-                List<CompletableFuture<Void>> futures = workerTaskResults.stream()
+                // We need to simulate FIFO by executionId as processing concurrently messages for the same execution may erase outputs of one message by another.
+                // Moreover, as we lock by execution, this is suboptimal to process them concurrently.
+                Map<String, List<Either<WorkerTaskResult, DeserializationException>>> workerTaskResultById = workerTaskResults.stream()
+                    .collect(Collectors.groupingBy(either -> either.isLeft() ? either.getLeft().getTaskRun().getExecutionId() : DESERIALIZATION_EXCEPTION_ID));
+
+                // execute concurrently "singles" including the first of "multiples"
+                List<Either<WorkerTaskResult, DeserializationException>> concurrent = workerTaskResultById.values().stream().flatMap(l -> l.stream().limit(1)).toList();
+                List<CompletableFuture<Void>> futures = concurrent.stream()
                     .map(workerTaskResult -> CompletableFuture.runAsync(() -> workerTaskResultQueue(workerTaskResult), workerTaskResultExecutorService))
                     .toList();
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+                // execute one-by-one "multiples" that are not yet processed
+                List<Either<WorkerTaskResult, DeserializationException>> executionMultiple = workerTaskResultById.values().stream().flatMap(l -> l.stream().skip(1)).toList();
+                executionMultiple.forEach(workerTaskResult -> workerTaskResultQueue(workerTaskResult));
             }
         ));
         this.receiveCancellations.addFirst(this.killQueue.receive(Executor.class, this::killQueue));

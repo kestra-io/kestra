@@ -26,13 +26,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,7 +52,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Getter
-    private final JdbcFilterService filterService;
+    protected final JdbcFilterService filterService;
 
     protected Map<Logs.Fields, String> getFieldsMapping() {
       return Map.of(

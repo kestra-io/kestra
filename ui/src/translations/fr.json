@@ -1250,10 +1250,12 @@
       },
       "troubleshooting": "Mot de passe oublié ?",
       "validation": {
+        "config_message": "Assurez-vous de mettre à jour votre configuration pour corriger ce message d'erreur",
         "email_invalid": "E-mail invalide",
         "email_required": "L'email est requis",
         "email_temporary_not_allowed": "Les adresses email temporaires ou jetables ne sont pas autorisées",
         "firstName_required": "Prénom requis",
+        "incorrect_creds": "Nom d'utilisateur ou mot de passe invalide. Assurez-vous que vos identifiants sont corrects.",
         "lastName_required": "Nom de famille requis",
         "password_invalid": "Mot de passe invalide"
       }

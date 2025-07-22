@@ -1250,10 +1250,12 @@
       },
       "troubleshooting": "पासवर्ड भूल गए?",
       "validation": {
+        "config_message": "अपने configuration को अपडेट करना सुनिश्चित करें ताकि इस त्रुटि संदेश को ठीक किया जा सके।",
         "email_invalid": "अमान्य ईमेल",
         "email_required": "ईमेल आवश्यक है",
         "email_temporary_not_allowed": "अस्थायी या डिस्पोजेबल ईमेल पते की अनुमति नहीं है",
         "firstName_required": "पहला नाम आवश्यक है",
+        "incorrect_creds": "अमान्य उपयोगकर्ता नाम या पासवर्ड। सुनिश्चित करें कि आपके प्रमाण-पत्र सही हैं।",
         "lastName_required": "अंतिम नाम आवश्यक है",
         "password_invalid": "अमान्य पासवर्ड"
       }

@@ -1932,7 +1932,7 @@ class ExecutionControllerRunnerTest {
             Execution.class
         );
 
-        Thread.sleep(2000);
+        Thread.sleep(250);
 
         BulkResponse result = client.toBlocking().retrieve(
             POST("/api/v1/main/executions/restart/by-ids",

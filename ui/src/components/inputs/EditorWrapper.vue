@@ -108,10 +108,8 @@
             : store.state.editor.tabs.find((t: any) => t.path === props.path)?.content;
     })
 
-    async function loadFile() {
-        const isDirty = store.state.editor.tabs.find((t: any) => t.path === props.path)?.dirty;
-        
-        if (isDirty || props.flow) {
+    async function loadFile() {       
+        if (props.dirty || props.flow) {
             return;
         }
         const content = await store.dispatch("namespace/readFile", {

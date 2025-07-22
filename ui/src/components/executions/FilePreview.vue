@@ -182,14 +182,13 @@
                 };
                 this.selectedPreview = this.value;
                 if (this.executionId !== undefined) {
-                    this.executionsStore.filePreview({
+                    this.executionsStore.filePreviewing({
                         executionId: this.executionId,
                         ...data
-                    })
-                        .then(response => {
-                            this.preview = response;
-                            this.isPreviewOpen = true;
-                        });
+                    }).then(response => {
+                        this.preview = response;
+                        this.isPreviewOpen = true;
+                    });
                 } else {
                     this.$emit("preview", {
                         data: data,

@@ -291,7 +291,7 @@ export const useExecutionsStore = defineStore("executions", {
                 return response.data;
             })
         },
-        filePreview(options: { executionId: string } & Record<string, any>) {
+        filePreviewing(options: { executionId: string } & Record<string, any>) {
             return this.$http.get(`${apiUrl(this.vuexStore)}/executions/${options.executionId}/file/preview`, {
                 params: options
             }).then(response => {

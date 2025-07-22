@@ -147,8 +147,12 @@ public class BasicAuthService {
     }
 
     public boolean isBasicAuthInitialized(){
+
         SaltedBasicAuthConfiguration configuration = configuration();
-        return configuration != null && configuration.getUsername() != null && configuration.getPassword() != null;
+
+        return configuration != null && 
+               !StringUtils.isBlank(configuration.getUsername()) && 
+               !StringUtils.isBlank(configuration.getPassword());
     }
 
     @Getter

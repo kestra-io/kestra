@@ -1294,6 +1294,7 @@
     "success": "सफलता",
     "sum": "योग",
     "switch-view": "दृश्य स्विच करें",
+    "system overview": "सिस्टम अवलोकन",
     "system_namespace": "अपने प्लेटफ़ॉर्म को सिस्टम flows के साथ नियंत्रण में रखें।",
     "system_namespace_description": "रखरखाव के tasks को स्वचालित करें, failure alerts से लेकर automated cleanups तक।",
     "tags": "टैग्स",

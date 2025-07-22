@@ -156,6 +156,7 @@ public class Extension extends AbstractExtension {
         functions.put("fetchContext", new FetchContextFunction());
         functions.put("uuid", new UUIDFunction());
         functions.put("id", new IDFunction());
+        functions.put("ksuid", new KSUIDFunction());
         functions.put("fromIon", new FromIonFunction());
         functions.put("fileSize", fileSizeFunction);
         if (this.errorLogsFunction != null) {

@@ -1250,10 +1250,12 @@
       },
       "troubleshooting": "Passwort vergessen?",
       "validation": {
+        "config_message": "Stellen Sie sicher, dass Sie Ihre Konfiguration aktualisieren, um diese Fehlermeldung zu beheben.",
         "email_invalid": "Ungültige E-Mail-Adresse",
         "email_required": "E-Mail ist erforderlich",
         "email_temporary_not_allowed": "Temporäre oder Einweg-E-Mail-Adressen sind nicht erlaubt",
         "firstName_required": "Vorname erforderlich",
+        "incorrect_creds": "Ungültiger Benutzername oder Passwort. Stellen Sie sicher, dass Ihre Anmeldedaten korrekt sind.",
         "lastName_required": "Nachname erforderlich",
         "password_invalid": "Ungültiges Passwort"
       }

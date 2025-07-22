@@ -107,7 +107,10 @@
                 item.value === this.modelValue?.type ||
                 (typeof this.modelValue === "string" && item.value === "string") ||
                 (typeof this.modelValue === "number" && item.value === "integer") ||
-                (Array.isArray(this.modelValue) && item.value === "array"),
+                (Array.isArray(this.modelValue) && item.value === "array") ||
+                // this last line needs to stay after the array one.
+                // If not, arrays will be detected as objects
+                (typeof this.modelValue === "object" && item.value === "object"),
             );
 
             this.selectedSchema = schema?.value;

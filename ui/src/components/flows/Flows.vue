@@ -230,7 +230,7 @@
                                     >
                                         <Status :status="getLastExecution(scope.row)?.status" size="small" />
                                         <div class="height: 100px;">
-                                            <Bar :chart="CHART_DEFINITION" show-default short />
+                                            <Bar :chart="mappedChart(scope.row.id, scope.row.namespace)" show-default short />
                                         </div>
                                     </div>
                                 </template>
@@ -282,7 +282,6 @@
     import {ref} from "vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import Plus from "vue-material-design-icons/Plus.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import Download from "vue-material-design-icons/Download.vue";
@@ -292,30 +291,9 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
     import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
-    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
     import Sections from "../dashboard/sections/Sections.vue";
-    
-    import Bar from "../dashboard/sections/Bar.vue";
-    
-    const CHART_DEFINITION = {
-        id: "executions_per_namespace_bars",
-        type: "io.kestra.plugin.core.dashboard.chart.Bar",
-        chartOptions: {
-            displayName: "Executions (per namespace)",
-            legend: {enabled: false},
-            column: "total",
-            width: 12,
-        },
-        data: {
-            type: "io.kestra.plugin.core.dashboard.data.Executions",
-            columns: {
-                state: {field: "STATE"},
-                total: {displayName: "Excutions", agg: "COUNT"},
-            },
-        },
-    };
 
-    CHART_DEFINITION.content = YAML_UTILS.stringify(CHART_DEFINITION);
+    import Bar from "../dashboard/sections/Bar.vue";
 
     const file = ref(null);
 </script>
@@ -341,6 +319,43 @@
     import Kicon from "../Kicon.vue";
     import Labels from "../layout/Labels.vue";
     import {storageKeys} from "../../utils/constants";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+
+
+    const CHART_DEFINITION = {
+        id: "executions_per_namespace_bars",
+        type: "io.kestra.plugin.core.dashboard.chart.Bar",
+        chartOptions: {
+            displayName: "Executions (per namespace)",
+            legend: {enabled: false},
+            column: "total",
+            width: 12,
+        },
+        data: {
+            type: "io.kestra.plugin.core.dashboard.data.Executions",
+            columns: {
+                date: {field: "START_DATE", displayName: "Date"},
+                state: {field: "STATE"},
+                total: {displayName: "Executions", agg: "COUNT"},
+            },
+            where: [
+                {
+                    field: "NAMESPACE",
+                    type: "EQUAL_TO",
+                    value: "${namespace}",
+                },
+                {
+                    field: "FLOW_ID",
+                    type: "EQUAL_TO",
+                    value: "${flow_id}",
+                }
+            ]
+        },
+    };
+
+    CHART_DEFINITION.content = YAML_UTILS.stringify(CHART_DEFINITION);
+
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -778,7 +793,18 @@
             rowClasses(row) {
                 return row && row.row && row.row.disabled ? "disabled" : "";
             },
-        },
+            mappedChart(id, namespace) {
+                let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION));
+                MAPPED_CHARTS.content = MAPPED_CHARTS.content
+                    .replace(
+                        "${namespace}",
+                        namespace
+                    )
+                    .replace("${flow_id}",id);
+
+                return MAPPED_CHARTS;
+            }
+        }
     };
 </script>
 

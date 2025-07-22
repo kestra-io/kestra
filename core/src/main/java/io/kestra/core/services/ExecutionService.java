@@ -205,7 +205,7 @@ public class ExecutionService {
 
         // We need to remove global error tasks and flowable error tasks if any
         flow
-            .allErrorsWithChildrend()
+            .allErrorsWithChildren()
             .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
 
         // We need to remove global finally tasks and flowable error tasks if any

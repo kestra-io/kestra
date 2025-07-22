@@ -108,7 +108,7 @@
             : store.state.editor.tabs.find((t: any) => t.path === props.path)?.content;
     })
 
-    async function loadFile() {       
+    async function loadFile() {
         if (props.dirty || props.flow) {
             return;
         }

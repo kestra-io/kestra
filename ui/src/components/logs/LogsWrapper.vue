@@ -194,10 +194,10 @@
                 let queryFilter = this.filters ?? this.queryWithFilter();
 
                 if (this.isFlowEdit) {
-                    queryFilter["namespace"] = this.namespace;
-                    queryFilter["flowId"] = this.flowId;
+                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
+                    queryFilter["filters[flowId][EQUALS]"] = this.flowId;
                 } else if (this.isNamespaceEdit) {
-                    queryFilter["namespace"] = this.namespace;
+                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
                 }
 
                 if (!queryFilter["startDate"] || !queryFilter["endDate"]) {

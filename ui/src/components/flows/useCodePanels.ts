@@ -4,7 +4,7 @@ import type {Panel} from "../MultiPanelTabs.vue";
 import EditorWrapper, {EditorTabProps} from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
 
-const CODE_PREFIX = "code"
+export const CODE_PREFIX = "code"
 
 export function getTabFromCodeTab(tab: EditorTabProps){
     return {

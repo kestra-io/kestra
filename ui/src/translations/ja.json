@@ -1250,10 +1250,12 @@
       },
       "troubleshooting": "パスワードをお忘れですか？",
       "validation": {
+        "config_message": "このエラーメッセージを修正するために設定を更新してください。",
         "email_invalid": "無効なメールアドレス",
         "email_required": "メールが必要です",
         "email_temporary_not_allowed": "一時的または使い捨てのメールアドレスは使用できません",
         "firstName_required": "名が必要です",
+        "incorrect_creds": "ユーザー名またはパスワードが無効です。資格情報が正しいことを確認してください。",
         "lastName_required": "姓が必要です",
         "password_invalid": "無効なパスワード"
       }

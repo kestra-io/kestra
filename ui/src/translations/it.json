@@ -1250,10 +1250,12 @@
       },
       "troubleshooting": "Password dimenticata?",
       "validation": {
+        "config_message": "Assicurati di aggiornare la tua configurazione per correggere questo messaggio di errore",
         "email_invalid": "Email non valido",
         "email_required": "L'email è obbligatoria",
         "email_temporary_not_allowed": "Indirizzi email temporanei o usa e getta non sono consentiti",
         "firstName_required": "Nome richiesto",
+        "incorrect_creds": "Nome utente o password non validi. Assicurati che le tue credenziali siano corrette.",
         "lastName_required": "Cognome obbligatorio",
         "password_invalid": "Password non valida"
       }

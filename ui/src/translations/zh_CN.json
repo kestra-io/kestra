@@ -1250,10 +1250,12 @@
       },
       "troubleshooting": "忘记密码？",
       "validation": {
+        "config_message": "请确保更新您的配置以修复此错误消息",
         "email_invalid": "无效的电子邮件",
         "email_required": "需要提供电子邮件",
         "email_temporary_not_allowed": "不允许使用临时或一次性邮箱地址",
         "firstName_required": "名字为必填项",
+        "incorrect_creds": "用户名或密码无效。请确保您的凭据正确。",
         "lastName_required": "姓氏为必填项",
         "password_invalid": "密码无效"
       }

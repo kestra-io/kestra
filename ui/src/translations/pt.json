@@ -1250,10 +1250,12 @@
       },
       "troubleshooting": "Esqueceu a Senha?",
       "validation": {
+        "config_message": "Certifique-se de atualizar sua configuração para corrigir esta mensagem de erro",
         "email_invalid": "E-mail inválido",
         "email_required": "O e-mail é obrigatório",
         "email_temporary_not_allowed": "Endereços de e-mail temporários ou descartáveis não são permitidos",
         "firstName_required": "Nome é obrigatório",
+        "incorrect_creds": "Nome de usuário ou senha inválidos. Certifique-se de que suas credenciais estão corretas.",
         "lastName_required": "Sobrenome obrigatório",
         "password_invalid": "Senha inválida"
       }

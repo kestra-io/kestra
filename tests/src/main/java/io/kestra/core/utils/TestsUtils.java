@@ -1,7 +1,5 @@
 package io.kestra.core.utils;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Files;
@@ -23,7 +21,6 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.plugin.core.log.Log;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
@@ -40,6 +37,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 abstract public class TestsUtils {
     private static final ObjectMapper mapper = JacksonMapper.ofYaml();
@@ -118,24 +117,13 @@ abstract public class TestsUtils {
     }
 
     public static Execution mockExecution(FlowInterface flow, Map<String, Object> inputs) {
-        return TestsUtils.mockExecution(flow, inputs, null, null);
-    }
-
-
-    public static Execution mockExecution(FlowInterface flow, State.Type state) {
-        return TestsUtils.mockExecution(flow, null, null, state);
-    }
-
-    public static Execution mockExecution(FlowInterface flow, Map<String, Object> inputs, Map<String, Object> outputs) {
-        return TestsUtils.mockExecution(flow, inputs, outputs, null);
+        return TestsUtils.mockExecution(flow, inputs, null);
     }
 
     public static Execution mockExecution(FlowInterface flow,
-                                           Map<String, Object> inputs,
-                                           Map<String, Object> outputs,
-                                          State.Type state) {
-
-        Execution execution = Execution.builder()
+                                          Map<String, Object> inputs,
+                                          Map<String, Object> outputs) {
+        return Execution.builder()
             .id(IdUtils.create())
             .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
@@ -144,26 +132,10 @@ abstract public class TestsUtils {
             .state(new State())
             .outputs(outputs)
             .build()
-            .withState(state != null ? state : State.Type.RUNNING);
-
-        return execution.toBuilder().taskRunList(
-            List.of(mockTaskRun(
-                execution,
-                Log.builder()
-                    .id(IdUtils.create())
-                    .type(Log.class.getName())
-                    .message("Hello World")
-                    .build(),
-                State.Type.FAILED
-            ))
-        ).build();
+            .withState(State.Type.RUNNING);
     }
 
     public static TaskRun mockTaskRun(Execution execution, Task task) {
-        return mockTaskRun(execution, task, null);
-    }
-
-    public static TaskRun mockTaskRun(Execution execution, Task task, State.Type state) {
         return TaskRun.builder()
             .id(IdUtils.create())
             .executionId(execution.getId())
@@ -173,7 +145,7 @@ abstract public class TestsUtils {
             .taskId(task.getId())
             .state(new State())
             .build()
-            .withState(state != null ? state : State.Type.RUNNING);
+            .withState(State.Type.RUNNING);
     }
 
     public static Map.Entry<ConditionContext, Trigger> mockTrigger(RunContextFactory runContextFactory, AbstractTrigger trigger) {
@@ -243,14 +215,14 @@ abstract public class TestsUtils {
         Runnable receiveCancellation = queueType == null ? queue.receive(consumerGroup, eitherConsumer, false) : queue.receive(consumerGroup, queueType, eitherConsumer, false);
 
         return Flux.<T>create(sink -> {
-            DeserializationException exception = exceptionRef.get();
-            if (exception == null) {
-                elements.forEach(sink::next);
-                sink.complete();
-            } else {
-                sink.error(exception);
-            }
-        })
+                DeserializationException exception = exceptionRef.get();
+                if (exception == null) {
+                    elements.forEach(sink::next);
+                    sink.complete();
+                } else {
+                    sink.error(exception);
+                }
+            })
             .timeout(Optional.ofNullable(timeout).orElse(Duration.ofMinutes(1)))
             .doFinally(signalType -> receiveCancellation.run());
     }

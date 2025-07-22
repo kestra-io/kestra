@@ -1177,7 +1177,10 @@ class ExecutionControllerRunnerTest {
         assertThat(executionKilledId.get()).isEqualTo(runningExecution.getId());
 
         // retrieve the execution from the API and check that the task has been set to killed
-        Execution execution = awaitExecution(runningExecution.getId(), exec -> !exec.getState().isPaused());
+        Thread.sleep(250);
+        Execution execution = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + runningExecution.getId()),
+            Execution.class);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(execution.getTaskRunList().size()).isEqualTo(2);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
@@ -1953,7 +1956,7 @@ class ExecutionControllerRunnerTest {
             Execution.class
         );
 
-        Thread.sleep(1000);
+        Thread.sleep(250);
 
         // EXECUTION TERMINATED STATE
         HttpClientResponseException e = assertThrows(
@@ -1993,7 +1996,7 @@ class ExecutionControllerRunnerTest {
             Execution.class
         );
 
-        Thread.sleep(1000);
+        Thread.sleep(250);
 
         BulkResponse result = client.toBlocking().retrieve(
             DELETE("/api/v1/main/executions/kill/by-ids",

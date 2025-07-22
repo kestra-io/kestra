@@ -14,6 +14,7 @@
             v-for="(pair, index) in internalPairs"
             :key="index"
             :gutter="10"
+            align="middle"
         >
             <el-col :span="8">
                 <InputText

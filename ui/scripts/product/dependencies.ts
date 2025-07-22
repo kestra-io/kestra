@@ -1,7 +1,5 @@
 type Node = {
     id: string;
-    namespace: string;
-    uid: string;
 };
 
 type Edge = {
@@ -9,26 +7,23 @@ type Edge = {
     target: string;
 };
 
-const teams = ["platform", "infra", "data", "devops", "frontend", "backend", "mobile", "ml", "security", "qa"]
-const companies = ["openai", "google", "microsoft", "netflix", "amazon", "airbnb", "uber", "stripe", "slack", "github"]
-const services = ["auth", "billing", "notify", "search", "analytics", "scheduler", "workflow", "events", "images"];
+type Element = {
+    data: {
+        id: string;
+        source?: string;
+        target?: string;
+    };
+};
 
-/**
- * Returns a random element from the given array.
- */
 function getRandom<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 
 /**
- * Generates a synthetic lineage graph of nodes and edges.
- *
- * @param count - Total number of nodes to generate. Must be >= 2.
- * @param singleRoot - If true, all nodes (except the first) are direct children of a single root node.
- *                     If false, multiple roots and a deeper graph structure will be created.
- * @returns An object containing an array of nodes and their connecting edges.
+ * Returns Cytoscape-compatible elements from synthetic lineage data.
+ * Node IDs will be in the format: flow-<ONE LETTER>-<NUMBER>
  */
-export function getData(count: number, singleRoot: boolean): { nodes: Node[]; edges: Edge[] } {
+export function getDependencies(count: number, singleRoot: boolean): Element[] {
     if (count < 2) {
         throw new Error("Count must be at least 2.");
     }
@@ -36,13 +31,11 @@ export function getData(count: number, singleRoot: boolean): { nodes: Node[]; ed
     const nodes: Node[] = [];
 
     for (let i = 0; i < count; i++) {
-        const company = getRandom(companies);
-        const team = getRandom(teams);
-        const id = `${getRandom(services)}_${i}`;
-        const namespace = `${company}.${team}`;
-        const uid = `main_${namespace}_${id}`;
+        const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
+        const number = Math.floor(Math.random() * 90 + 10); // 10–99
+        const id = `flow-${letter}-${number}`;
 
-        nodes.push({uid, namespace, id});
+        nodes.push({id});
     }
 
     const edges: Edge[] = [];
@@ -51,42 +44,36 @@ export function getData(count: number, singleRoot: boolean): { nodes: Node[]; ed
         const root = nodes[0];
 
         for (let i = 1; i < nodes.length; i++) {
-            edges.push({
-                source: root.uid,
-                target: nodes[i].uid,
-            });
+            edges.push({source: root.id, target: nodes[i].id});
         }
     } else {
         const parentNodes: Node[] = nodes.slice(0, Math.max(1, Math.floor(count / 10)));
 
-        const connected = new Set<string>(parentNodes.map((n) => n.uid));
-        const unconnected = nodes.filter((n) => !connected.has(n.uid));
+        const connected = new Set<string>(parentNodes.map((n) => n.id));
+        const unconnected = nodes.filter((n) => !connected.has(n.id));
 
         for (const node of unconnected) {
-            const parent = getRandom(
-                Array.from(connected).map((uid) => nodes.find((n) => n.uid === uid)!)
-            );
+            const parent = getRandom(Array.from(connected).map((id) => nodes.find((n) => n.id === id)!));
 
-            edges.push({
-                source: parent.uid,
-                target: node.uid,
-            });
-
-            connected.add(node.uid);
+            edges.push({source: parent.id, target: node.id});
+            connected.add(node.id);
         }
 
-        // Add additional edges for complexity
         const extraEdgeCount = Math.floor(count * 0.5);
-
         for (let i = 0; i < extraEdgeCount; i++) {
             const source = getRandom(nodes);
             const target = getRandom(nodes);
 
-            if (source.uid !== target.uid) {
-                edges.push({source: source.uid, target: target.uid});
+            if (source.id !== target.id) {
+                edges.push({source: source.id, target: target.id});
             }
         }
     }
 
-    return {nodes, edges};
+    const elements: Element[] = [
+        ...nodes.map((node) => ({data: {id: node.id}})),
+        ...edges.map((edge, i) => ({data: {id: `e${i}`, source: edge.source, target: edge.target}})),
+    ];
+
+    return elements;
 }

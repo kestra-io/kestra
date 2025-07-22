@@ -109,7 +109,9 @@
     })
 
     async function loadFile() {
-        if (props.dirty || props.flow) {
+        const isDirty = store.state.editor.tabs.find((t: any) => t.path === props.path)?.dirty;
+        
+        if (isDirty || props.flow) {
             return;
         }
         const content = await store.dispatch("namespace/readFile", {
@@ -196,6 +198,12 @@
     const save = async () => {
         clearTimeout(timeout.value);
         const result = await store.dispatch("flow/save", {content: editorDomElement.value.$refs.monacoEditor.value})
+
+        store.commit("editor/setTabDirty", {
+            path: props.path,
+            dirty: false
+        });
+        
         if (result === "redirect_to_update") {
             await router.push({
                 name: "flows/update",

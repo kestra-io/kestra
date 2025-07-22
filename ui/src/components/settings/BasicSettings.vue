@@ -209,7 +209,7 @@
                             <el-option
                                 v-for="item in dateFormats"
                                 :key="pendingSettings.timezone + item.value"
-                                :label="$filters.date(now, item.value)"
+                                :label="item.text ? `${item.text} - ${$filters.date(now, item.value)}` : $filters.date(now, item.value)"
                                 :value="item.value"
                             />
                         </el-select>
@@ -621,13 +621,21 @@
             },
             dateFormats() {
                 return  [
-                    {value: "YYYY-MM-DDTHH:mm:ssZ"},
-                    {value: "YYYY-MM-DD hh:mm:ss A"},
-                    {value: "DD/MM/YYYY HH:mm:ss"},
-                    {value: "lll"},
-                    {value: "llll"},
-                    {value: "LLL"},
-                    {value: "LLLL"}
+                    {value: "YYYY-MM-DDTHH:mm:ssZ", text: "ISO-8601 (2023-01-15T14:30:25+00:00)"},
+                    {value: "YYYY-MM-DD hh:mm:ss A", text: "Date with 12h time (2023-01-15 02:30:25 PM)"},
+                    {value: "DD/MM/YYYY HH:mm:ss", text: "European format (15/01/2023 14:30:25)"},
+                    {value: "MM/DD/YYYY HH:mm:ss", text: "US format (01/15/2023 14:30:25)"},
+                    {value: "YYYY.MM.DD HH:mm:ss", text: "Dotted format (2023.01.15 14:30:25)"},
+                    {value: "DD.MM.YYYY HH:mm:ss", text: "European dotted format (15.01.2023 14:30:25)"},
+                    {value: "YYYY-MM-DD HH:mm:ss.SSS", text: "With milliseconds (2023-01-15 14:30:25.123)"},
+                    {value: "HH:mm:ss DD/MM/YYYY", text: "Time first (14:30:25 15/01/2023)"},
+                    {value: "HH:mm:ss MM/DD/YYYY", text: "Time first US (14:30:25 01/15/2023)"},
+                    {value: "ddd, DD MMM YYYY HH:mm:ss", text: "With day name (Sun, 15 Jan 2023 14:30:25)"},
+                    {value: "dddd, MMMM Do YYYY, h:mm:ss a", text: "Full date (Sunday, January 15th 2023, 2:30:25 pm)"},
+                    {value: "lll", text: "Locale format (Jan 15, 2023 2:30 PM)"},
+                    {value: "llll", text: "Locale with day (Sun, Jan 15, 2023 2:30 PM)"},
+                    {value: "LLL", text: "Locale long (January 15, 2023 2:30 PM)"},
+                    {value: "LLLL", text: "Locale long with day (Sunday, January 15, 2023 2:30 PM)"}
                 ]
             },
             canReadFlows() {

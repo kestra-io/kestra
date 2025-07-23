@@ -18,9 +18,12 @@
                             {{ tab.title }}
                         </button>
                     </div>
-                    <el-button class="kill-run-button" type="danger" @click="killRun">
-                        kill run
-                    </el-button>
+                    <div class="extra-options">
+                        <Kill
+                            v-if="executionsStore.execution"
+                            :execution="executionsStore.execution"
+                        />
+                    </div>
                 </div>
                 <div v-if="activeTab?.component && playgroundStore.latestExecution" class="tab-content">
                     <component
@@ -61,6 +64,7 @@
     import {usePlaygroundStore} from "../../stores/playground";
     import EmptyVisualPlayground from "../../assets/empty_visuals/playground.svg"
     import {useExecutionsStore} from "../../stores/executions";
+    import Kill from "../executions/Kill.vue";
 
     const {t} = useI18n();
 
@@ -101,12 +105,6 @@
     });
 
     const historyVisible = ref(false);
-
-    function killRun() {
-        if (executionsStore.execution) {
-            executionsStore.kill({id: executionsStore.execution.id});
-        }
-    }
 </script>
 
 <style lang="scss" scoped>
@@ -146,6 +144,12 @@
 
     .current-run {
         flex: 1;
+    }
+
+    .extra-options{
+        display: flex;
+        gap: 8px;
+        margin-right: 4rem;
     }
 
     .toggle-history{

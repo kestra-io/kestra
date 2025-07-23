@@ -44,7 +44,7 @@ public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Option(names = {"-f", "--flow-path"}, description = "the flow path containing flow to inject at startup (when running with a memory flow repository)")
     private File flowPath;
 
-    @CommandLine.Option(names = "--tenant-id", description = "Tenant identifier, Required to load flows from path with the enterprise edition")
+    @CommandLine.Option(names = "--tenant", description = "Tenant identifier, Required to load flows from path with the enterprise edition")
     private String tenantId;
 
     @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker threads, defaults to four times the number of available processors. Set it to 0 to avoid starting a worker.")

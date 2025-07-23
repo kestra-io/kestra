@@ -37,7 +37,7 @@ public abstract class AbstractApiCommand extends AbstractCommand {
     @CommandLine.Option(names = {"--user"}, paramLabel = "<user:password>", description = "Server user and password")
     protected String user;
 
-    @CommandLine.Option(names = {"--tenant"}, description = "Tenant identifier (EE only, when multi-tenancy is enabled)")
+    @CommandLine.Option(names = {"--tenant"}, description = "Tenant identifier (EE only)")
     protected String tenantId;
 
     @CommandLine.Option(names = {"--api-token"}, description = "API Token (EE only).")

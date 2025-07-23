@@ -24,7 +24,6 @@ interface ExecutionsState {
     logs: LogsState;
     metrics: any[];
     metricsTotal: number;
-    filePreview: any | undefined;
     subflowsExecutions: Record<string, any>;
     flow: any | undefined;
     flowGraph: any | undefined;
@@ -44,7 +43,6 @@ export const useExecutionsStore = defineStore("executions", {
         },
         metrics: [],
         metricsTotal: 0,
-        filePreview: undefined,
         subflowsExecutions: {},
         flow: undefined,
         flowGraph: undefined,
@@ -307,7 +305,6 @@ export const useExecutionsStore = defineStore("executions", {
                     }
                 }
 
-                this.filePreview = data;
                 return data;
             })
         },

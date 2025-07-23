@@ -475,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "Expressão de Renderização",
       "title": "Expressão de Depuração",
       "tooltip": "Renderizar qualquer expressão Pebble e inspecionar o contexto da Execução."
     },

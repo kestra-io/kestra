@@ -1,6 +1,6 @@
 <template>
     <div class="button-wrapper">
-        <FlowPlaygroundToggle />
+        <FlowPlaygroundToggle v-if="isSettingsPlaygroundEnabled" />
 
         <ValidationError
             class="validation"
@@ -62,6 +62,7 @@
 
     const {translateError, translateErrorWithKey} = useFlowOutdatedErrors();
 
+    const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "true");
     const isCreating = computed(() => store.state.flow.isCreating === true)
     const isReadOnly = computed(() => store.getters["flow/isReadOnly"])
     const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"])

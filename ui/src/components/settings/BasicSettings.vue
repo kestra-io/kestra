@@ -82,6 +82,9 @@
                             />
                         </el-select>
                     </Column>
+                    <Column :label="$t('settings.blocks.configuration.fields.playground')">
+                        <el-switch :model-value="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
+                    </Column>
                 </Row>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')">
@@ -303,6 +306,7 @@
                     executeDefaultTab: undefined,
                     autoRefreshInterval: undefined,
                     flowDefaultTab: undefined,
+                    editorPlayground: undefined,
                     logsFontSize: undefined
                 },
                 settingsKeyMapping: {
@@ -341,6 +345,7 @@
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
             this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview";
+            this.pendingSettings.editorPlayground = localStorage.getItem("editorPlayground") || "false";
             this.pendingSettings.envName = this.layoutStore.envName || this.miscStore.configs?.environment?.name;
             this.pendingSettings.envColor = this.layoutStore.envColor || this.miscStore.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
@@ -497,6 +502,10 @@
             },
             onFlowDefaultTabChange(value){
                 this.pendingSettings.flowDefaultTab = value;
+                this.checkForChanges();
+            },
+            onEditorPlaygroundChange(value) {
+                this.pendingSettings.editorPlayground = value;
                 this.checkForChanges();
             },
             onLogsFontSize(value) {

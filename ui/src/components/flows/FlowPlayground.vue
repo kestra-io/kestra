@@ -6,16 +6,21 @@
         </h2>
         <div class="content">
             <div class="current-run">
-                <div class="pillTabs">
-                    <button
-                        v-for="tab in tabs"
-                        :key="tab.name"
-                        type="button"
-                        :class="[{activeTab: tab.name === activeTab.name}]"
-                        @click="activeTab = tab"
-                    >
-                        {{ tab.title }}
-                    </button>
+                <div class="current-run-header">
+                    <div class="pillTabs">
+                        <button
+                            v-for="tab in tabs"
+                            :key="tab.name"
+                            type="button"
+                            :class="[{activeTab: tab.name === activeTab.name}]"
+                            @click="activeTab = tab"
+                        >
+                            {{ tab.title }}
+                        </button>
+                    </div>
+                    <el-button class="kill-run-button" type="danger" @click="killRun">
+                        kill run
+                    </el-button>
                 </div>
                 <div v-if="activeTab?.component && playgroundStore.latestExecution" class="tab-content">
                     <component
@@ -96,6 +101,12 @@
     });
 
     const historyVisible = ref(false);
+
+    function killRun() {
+        if (executionsStore.execution) {
+            executionsStore.kill({id: executionsStore.execution.id});
+        }
+    }
 </script>
 
 <style lang="scss" scoped>
@@ -176,8 +187,18 @@
         }
     }
 
+    .current-run-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .kill-run-button{
+        margin-right: 4rem
+    }
+
     .pillTabs {
-        display: inline-flex;
+        display: flex;
         padding: 4px;
         background-color:var(--ks-background-card) ;
         margin: 1rem;

@@ -1250,10 +1250,12 @@
       },
       "troubleshooting": "¿Olvidaste la contraseña?",
       "validation": {
+        "config_message": "Asegúrate de actualizar tu configuración para corregir este mensaje de error",
         "email_invalid": "Correo electrónico no válido",
         "email_required": "Se requiere el email",
         "email_temporary_not_allowed": "No se permiten direcciones de correo electrónico temporales o desechables.",
         "firstName_required": "Nombre requerido",
+        "incorrect_creds": "Nombre de usuario o contraseña inválidos. Asegúrate de que tus credenciales sean correctas.",
         "lastName_required": "Apellido requerido",
         "password_invalid": "Contraseña inválida"
       }

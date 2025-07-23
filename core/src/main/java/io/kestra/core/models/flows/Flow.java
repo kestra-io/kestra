@@ -186,7 +186,7 @@ public class Flow extends AbstractFlow implements HasUID {
             .toList();
     }
 
-    public List<Task> allErrorsWithChildrend() {
+    public List<Task> allErrorsWithChildren() {
         var allErrors = allTasksWithChilds().stream()
             .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
             .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream())

@@ -54,7 +54,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Getter
-    private final JdbcFilterService filterService;
+    protected final JdbcFilterService filterService;
 
     protected Map<Logs.Fields, String> getFieldsMapping() {
       return Map.of(

@@ -1250,10 +1250,12 @@
       },
       "troubleshooting": "비밀번호를 잊으셨습니까?",
       "validation": {
+        "config_message": "구성 설정을 업데이트하여 이 오류 메시지를 수정하십시오.",
         "email_invalid": "유효하지 않은 이메일",
         "email_required": "이메일이 필요합니다",
         "email_temporary_not_allowed": "임시 또는 일회용 이메일 주소는 허용되지 않습니다",
         "firstName_required": "이름이 필요합니다",
+        "incorrect_creds": "잘못된 사용자 이름 또는 비밀번호입니다. 자격 증명이 올바른지 확인하세요.",
         "lastName_required": "성을 입력해야 합니다",
         "password_invalid": "잘못된 비밀번호"
       }

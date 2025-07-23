@@ -475,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "Espressione di Render",
       "title": "Espressione di Debug",
       "tooltip": "Esegui qualsiasi espressione Pebble e ispeziona il contesto dell'esecuzione."
     },
@@ -1250,10 +1251,12 @@
       },
       "troubleshooting": "Password dimenticata?",
       "validation": {
+        "config_message": "Assicurati di aggiornare la tua configurazione per correggere questo messaggio di errore",
         "email_invalid": "Email non valido",
         "email_required": "L'email è obbligatoria",
         "email_temporary_not_allowed": "Indirizzi email temporanei o usa e getta non sono consentiti",
         "firstName_required": "Nome richiesto",
+        "incorrect_creds": "Nome utente o password non validi. Assicurati che le tue credenziali siano corrette.",
         "lastName_required": "Cognome obbligatorio",
         "password_invalid": "Password non valida"
       }
@@ -1294,6 +1297,7 @@
     "success": "Success",
     "sum": "Somma",
     "switch-view": "Cambia vista",
+    "system overview": "Panoramica del sistema",
     "system_namespace": "Mantieni la tua piattaforma sotto controllo con i system flows.",
     "system_namespace_description": "Automatizza le attività di manutenzione, dagli avvisi di errore alle pulizie automatiche.",
     "tags": "Tag",

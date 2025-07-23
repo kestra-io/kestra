@@ -475,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "Rendre l'expression",
       "title": "Expression de débogage",
       "tooltip": "Vous devez choisir une tâche pour évaluer une expression."
     },
@@ -1250,10 +1251,12 @@
       },
       "troubleshooting": "Mot de passe oublié ?",
       "validation": {
+        "config_message": "Assurez-vous de mettre à jour votre configuration pour corriger ce message d'erreur",
         "email_invalid": "E-mail invalide",
         "email_required": "L'email est requis",
         "email_temporary_not_allowed": "Les adresses email temporaires ou jetables ne sont pas autorisées",
         "firstName_required": "Prénom requis",
+        "incorrect_creds": "Nom d'utilisateur ou mot de passe invalide. Assurez-vous que vos identifiants sont corrects.",
         "lastName_required": "Nom de famille requis",
         "password_invalid": "Mot de passe invalide"
       }
@@ -1294,6 +1297,7 @@
     "success": "Succès",
     "sum": "Somme",
     "switch-view": "Changer de vue",
+    "system overview": "Vue d'ensemble du système",
     "system_namespace": "Gardez votre plateforme sous contrôle avec les system flows.",
     "system_namespace_description": "Automatisez les tâches de maintenance, des alertes de défaillance aux nettoyages automatisés.",
     "tags": "Tags",

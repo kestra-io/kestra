@@ -1,7 +1,7 @@
 <template>
     <div class="outputs">
         <div
-            class="d-flex flex-column left"
+            class="d-flex flex-column overflow-x-auto left"
             :style="{width: leftWidth + '%'}"
         >
             <el-cascader-panel
@@ -9,7 +9,7 @@
                 v-model="selected"
                 :options="outputs"
                 :border="false"
-                class="flex-grow-1 overflow-x-auto cascader"
+                class="flex-grow-1 cascader"
                 @expand-change="() => scrollRight()"
             >
                 <template #default="{data}">
@@ -52,7 +52,7 @@
             </el-cascader-panel>
         </div>
         <div class="slider" @mousedown="startDragging" />
-        <div class="right wrapper" :style="{width: 100 - leftWidth + '%'}">
+        <div class="right wrapper" :style="{width: 100 - leftWidth + '%', 'z-index': 999}">
             <div
                 v-if="multipleSelected || selectedValue"
                 class="w-100 overflow-auto p-3"
@@ -465,6 +465,10 @@
     .values {
         pointer-events: none;
         margin: 0.75rem 0 1.25rem 0;
+    }
+
+    .el-cascader-panel {
+        height: 100%;
     }
 
     .debug {

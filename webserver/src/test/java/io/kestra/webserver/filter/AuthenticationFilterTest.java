@@ -38,6 +38,10 @@ class AuthenticationFilterTest {
         var response =  client.toBlocking()
             .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        response =  client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/basicAuthValidationErrors").basicAuth("anonymous", "hacker"));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
     }
 
     @Test

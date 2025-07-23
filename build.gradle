@@ -148,6 +148,7 @@ allprojects {
             implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names'
             implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
             implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310'
+            implementation group: 'com.fasterxml.uuid', name: 'java-uuid-generator'
 
             // kestra
             implementation group: 'com.devskiller.friendly-id', name: 'friendly-id'

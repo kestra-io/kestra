@@ -56,7 +56,9 @@ public class AuthenticationFilter implements HttpServerFilter {
             .subscribeOn(Schedulers.boundedElastic())
             .flux()
             .flatMap(basicAuthConfiguration -> {
-                boolean isConfigEndpoint = request.getPath().endsWith("/configs") || request.getPath().endsWith("/basicAuth");
+                boolean isConfigEndpoint = request.getPath().endsWith("/configs")
+                    || request.getPath().endsWith("/basicAuth")
+                    || request.getPath().endsWith("/basicAuthValidationErrors");
 
                 boolean isOpenUrl = Optional.ofNullable(basicAuthConfiguration.getOpenUrls())
                     .map(Collection::stream)

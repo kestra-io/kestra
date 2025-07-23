@@ -475,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "Renderuj Wyrażenie",
       "title": "Debugowanie Wyrażenia",
       "tooltip": "Renderuj dowolne wyrażenie Pebble i sprawdź kontekst wykonania."
     },
@@ -1250,10 +1251,12 @@
       },
       "troubleshooting": "Zapomniałeś hasła?",
       "validation": {
+        "config_message": "Upewnij się, że zaktualizowałeś swoją konfigurację, aby naprawić ten komunikat o błędzie.",
         "email_invalid": "Nieprawidłowy email",
         "email_required": "Email jest wymagany",
         "email_temporary_not_allowed": "Tymczasowe lub jednorazowe adresy e-mail nie są dozwolone",
         "firstName_required": "Imię jest wymagane",
+        "incorrect_creds": "Nieprawidłowa nazwa użytkownika lub hasło. Upewnij się, że Twoje dane uwierzytelniające są poprawne.",
         "lastName_required": "Wymagane nazwisko",
         "password_invalid": "Nieprawidłowe hasło"
       }
@@ -1294,6 +1297,7 @@
     "success": "Sukces",
     "sum": "Suma",
     "switch-view": "Przełącz widok",
+    "system overview": "Przegląd Systemu",
     "system_namespace": "Zachowaj kontrolę nad swoją platformą dzięki systemowym flows.",
     "system_namespace_description": "Automatyzuj zadania konserwacyjne, od alertów o awariach po automatyczne czyszczenie.",
     "tags": "Tagi",

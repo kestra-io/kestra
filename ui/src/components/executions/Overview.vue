@@ -138,7 +138,7 @@
 
         <div v-if="execution.trigger" class="my-5">
             <h5>{{ $t("trigger") }}</h5>
-            <KestraCascader
+            <TriggerCascader
                 id="triggers"
                 :options="transform({
                     ...execution.trigger,
@@ -197,6 +197,7 @@
     import {toRaw} from "vue";
     import ChangeExecutionStatus from "./ChangeExecutionStatus.vue";
     import KestraCascader from "../../components/kestra/Cascader.vue"
+    import TriggerCascader from "./TriggerCascader.vue"
     import LogLine from "../../components/logs/LogLine.vue"
     import Alert from "vue-material-design-icons/Alert.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
@@ -224,6 +225,7 @@
             DateAgo,
             Labels,
             KestraCascader,
+            TriggerCascader,
             LogLine,
             Alert,
             ChevronDown,

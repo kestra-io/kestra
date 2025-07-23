@@ -820,6 +820,27 @@
                 );
             },
             genericConfirmCallback(queryAction, byIdAction, success, params) {
+                const actionMap = {
+                    "queryResumeExecution": () => this.executionsStore.queryResumeExecution,
+                    "bulkResumeExecution": () => this.executionsStore.bulkResumeExecution,
+                    "queryPauseExecution": () => this.executionsStore.queryPauseExecution,
+                    "bulkPauseExecution": () => this.executionsStore.bulkPauseExecution,
+                    "queryUnqueueExecution": () => this.executionsStore.queryUnqueueExecution,
+                    "bulkUnqueueExecution": () => this.executionsStore.bulkUnqueueExecution,
+                    "queryForceRunExecution": () => this.executionsStore.queryForceRunExecution,
+                    "bulkForceRunExecution": () => this.executionsStore.bulkForceRunExecution,
+                    "queryRestartExecution": () => this.executionsStore.queryRestartExecution,
+                    "bulkRestartExecution": () => this.executionsStore.bulkRestartExecution,
+                    "queryReplayExecution": () => this.executionsStore.queryReplayExecution,
+                    "bulkReplayExecution": () => this.executionsStore.bulkReplayExecution,
+                    "queryChangeExecutionStatus": () => this.executionsStore.queryChangeExecutionStatus,
+                    "bulkChangeExecutionStatus": () => this.executionsStore.bulkChangeExecutionStatus,
+                    "queryDeleteExecution": () => this.executionsStore.queryDeleteExecution,
+                    "bulkDeleteExecution": () => this.executionsStore.bulkDeleteExecution,
+                    "queryKill": () => this.executionsStore.queryKill,
+                    "bulkKill": () => this.executionsStore.bulkKill,
+                };
+
                 if (this.queryBulkAction) {
                     const query = this.loadQuery({
                         sort: this.$route.query.sort || "state.startDate:desc",
@@ -829,8 +850,9 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    return this.$store
-                        .dispatch(queryAction, options)
+                    
+                    const action = actionMap[queryAction]();
+                    return action(options)
                         .then(r => {
                             this.$toast().success(this.$t(success, {executionCount: r.data.count}));
                             this.loadData();
@@ -841,8 +863,9 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    return this.$store
-                        .dispatch(byIdAction, options)
+                    
+                    const action = actionMap[byIdAction]();
+                    return action(options)
                         .then(r => {
                             this.$toast().success(this.$t(success, {executionCount: r.data.count}));
                             this.loadData();
@@ -856,8 +879,8 @@
             resumeExecutions() {
                 this.genericConfirmAction(
                     "bulk resume",
-                    "execution/queryResumeExecution",
-                    "execution/bulkResumeExecution",
+                    "queryResumeExecution",
+                    "bulkResumeExecution",
                     "executions resumed",
                     false
                 );
@@ -865,8 +888,8 @@
             pauseExecutions() {
                 this.genericConfirmAction(
                     "bulk pause",
-                    "execution/queryPauseExecution",
-                    "execution/bulkPauseExecution",
+                    "queryPauseExecution",
+                    "bulkPauseExecution",
                     "executions paused"
                 );
             },
@@ -875,24 +898,24 @@
                 this.actionOptions.newStatus = this.selectedStatus;
 
                 this.genericConfirmCallback(
-                    "execution/queryUnqueueExecution",
-                    "execution/bulkUnqueueExecution",
+                    "queryUnqueueExecution",
+                    "bulkUnqueueExecution",
                     "executions unqueue"
                 );
             },
             forceRunExecutions() {
                 this.genericConfirmAction(
                     "bulk force run",
-                    "execution/queryForceRunExecution",
-                    "execution/bulkForceRunExecution",
+                    "queryForceRunExecution",
+                    "bulkForceRunExecution",
                     "executions force run"
                 );
             },
             restartExecutions() {
                 this.genericConfirmAction(
                     "bulk restart",
-                    "execution/queryRestartExecution",
-                    "execution/bulkRestartExecution",
+                    "queryRestartExecution",
+                    "bulkRestartExecution",
                     "executions restarted"
                 );
             },
@@ -900,8 +923,8 @@
                 this.isOpenReplayModal = false;
 
                 this.genericConfirmCallback(
-                    "execution/queryReplayExecution",
-                    "execution/bulkReplayExecution",
+                    "queryReplayExecution",
+                    "bulkReplayExecution",
                     "executions replayed",
                     {latestRevision: latestRevision}
                 );
@@ -914,8 +937,8 @@
                 this.actionOptions.newStatus = this.selectedStatus;
 
                 this.genericConfirmCallback(
-                    "execution/queryChangeExecutionStatus",
-                    "execution/bulkChangeExecutionStatus",
+                    "queryChangeExecutionStatus",
+                    "bulkChangeExecutionStatus",
                     "executions state changed"
                 );
             },
@@ -980,8 +1003,8 @@
                     this.actionOptions.deleteStorage = deleteStorage.value;
 
                     this.genericConfirmCallback(
-                        "execution/queryDeleteExecution",
-                        "execution/bulkDeleteExecution",
+                        "queryDeleteExecution",
+                        "bulkDeleteExecution",
                         "executions deleted"
                     );
                 });
@@ -989,8 +1012,8 @@
             killExecutions() {
                 this.genericConfirmAction(
                     "bulk kill",
-                    "execution/queryKill",
-                    "execution/bulkKill",
+                    "queryKill",
+                    "bulkKill",
                     "executions killed"
                 );
             },

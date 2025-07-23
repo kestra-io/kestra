@@ -1,4 +1,4 @@
-package io.kestra.cli.commands.servers;
+package io.kestra.cli.services;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 

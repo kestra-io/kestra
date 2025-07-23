@@ -24,7 +24,6 @@ interface ExecutionsState {
     logs: LogsState;
     metrics: any[];
     metricsTotal: number;
-    filePreview: any | undefined;
     subflowsExecutions: Record<string, any>;
     flow: any | undefined;
     flowGraph: any | undefined;
@@ -44,7 +43,6 @@ export const useExecutionsStore = defineStore("executions", {
         },
         metrics: [],
         metricsTotal: 0,
-        filePreview: undefined,
         subflowsExecutions: {},
         flow: undefined,
         flowGraph: undefined,
@@ -291,7 +289,7 @@ export const useExecutionsStore = defineStore("executions", {
                 return response.data;
             })
         },
-        filePreviewing(options: { executionId: string } & Record<string, any>) {
+        filePreview(options: { executionId: string } & Record<string, any>) {
             return this.$http.get(`${apiUrl(this.vuexStore)}/executions/${options.executionId}/file/preview`, {
                 params: options
             }).then(response => {
@@ -307,7 +305,6 @@ export const useExecutionsStore = defineStore("executions", {
                     }
                 }
 
-                this.filePreview = data;
                 return data;
             })
         },

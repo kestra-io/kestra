@@ -9,8 +9,7 @@
                 v-model="selected"
                 :options="options"
                 :border="false"
-                class="flex-grow-1 overflow-x-auto cascader"
-                @expand-change="onExpandChange"
+                class="flex-grow-1 cascader"
                 @change="onSelectionChange"
             >
                 <template #default="{data}">
@@ -30,11 +29,11 @@
                 </template>
             </el-cascader-panel>
         </div>
-        <div class="right wrapper" :style="{width: 100 - leftWidth + '%'}">
+        <div class="right wrapper fixed-right" :style="{width: 100 - leftWidth + '%'}">
             <div class="w-100 overflow-auto debug-wrapper">
                 <div class="debug">
                     <div class="debug-title mb-3">
-                        <span>{{ $t("eval.title") }}</span>
+                        <span>{{ $t("eval.render") }}</span>
                     </div>
 
                     <div class="d-flex flex-column p-3 debug">
@@ -120,6 +119,7 @@
         value: string;
         children?: CascaderOption[];
         path?: string;
+        [key: string]: any;
     }
 
     const props = defineProps<{
@@ -314,12 +314,20 @@
 <style scoped lang="scss">
 .outputs {
     height: fit-content;
+    display: flex;
+    position: relative;
+}
+
+.left {
+    overflow-x: auto;
 }
 
 .el-cascader-panel {
     min-height: 197px;
     border: 1px solid var(--ks-border-primary);
     border-radius: 0;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
 
     :deep(.el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child) {
         pointer-events: auto !important;
@@ -331,9 +339,16 @@
         cursor: pointer !important;
     }
 
+    :deep(.el-cascader-panel__wrap) {
+        overflow-x: auto !important;
+        display: flex !important;
+        min-width: max-content !important;
+    }
+
     .el-cascader-menu {
         min-width: 300px;
         max-width: 300px;
+        flex-shrink: 0;
 
         &:last-child {
             border-right: 1px solid var(--ks-border-primary);
@@ -387,7 +402,12 @@
     height: fit-content;
     overflow: hidden;
     z-index: 1000;
-    position: relative;
+
+    &.fixed-right {
+        position: sticky;
+        right: 0;
+        top: 0;
+    }
 
     .debug-wrapper {
         min-height: 197px;
@@ -396,8 +416,6 @@
         border-radius: 0;
         padding: 0;
         background-color: var(--ks-background-body);
-
-
     }
 
     .debug-title {

@@ -475,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "Espressione di Render",
       "title": "Espressione di Debug",
       "tooltip": "Esegui qualsiasi espressione Pebble e ispeziona il contesto dell'esecuzione."
     },

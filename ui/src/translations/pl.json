@@ -475,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "Renderuj Wyrażenie",
       "title": "Debugowanie Wyrażenia",
       "tooltip": "Renderuj dowolne wyrażenie Pebble i sprawdź kontekst wykonania."
     },

@@ -18,7 +18,7 @@
             class="fill-height"
         >
             <el-table-column
-                v-if="namespaceColumn !== undefined ? namespaceColumn : namespace === undefined"
+                v-if="namespace === undefined || namespaceColumn"
                 prop="namespace"
                 sortable="custom"
                 :sort-orders="['ascending', 'descending']"
@@ -83,7 +83,7 @@
         >
             <el-form class="ks-horizontal" :model="secret" :rules="rules" ref="form">
                 <el-form-item
-                    v-if="namespaceColumn !== undefined ? namespaceColumn : namespace === undefined"
+                    v-if="namespace === undefined"
                     :label="$t('namespace')"
                     prop="namespace"
                     required
@@ -235,7 +235,7 @@
             },
             namespaceColumn: {
                 type: Boolean,
-                default: true
+                default: undefined
             }
         },
         emits: [

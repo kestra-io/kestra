@@ -35,9 +35,6 @@ public class FlowTestCommand extends AbstractApiCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @Inject
-    private TenantIdSelectorService tenantService;
-
     @CommandLine.Parameters(index = "0", description = "The flow file to test")
     private Path file;
 
@@ -80,6 +77,7 @@ public class FlowTestCommand extends AbstractApiCommand {
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         FlowInputOutput flowInputOutput = applicationContext.getBean(FlowInputOutput.class);
         RunnerUtils runnerUtils = applicationContext.getBean(RunnerUtils.class);
+        TenantIdSelectorService tenantService =  applicationContext.getBean(TenantIdSelectorService.class);
 
         Map<String, Object> inputs = new HashMap<>();
 

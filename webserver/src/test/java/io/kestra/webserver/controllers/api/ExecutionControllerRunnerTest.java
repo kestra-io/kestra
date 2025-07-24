@@ -50,6 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
@@ -1835,7 +1836,7 @@ class ExecutionControllerRunnerTest {
         assertThat(terminated.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
-    @Test
+    @RepeatedTest(10)
     @LoadFlows({"flows/valids/subflow-parent.yaml", "flows/valids/subflow-child.yaml", "flows/valids/subflow-grand-child.yaml"})
     void triggerExecutionAndFollowDependencies() {
         Execution result = triggerExecutionExecution(TESTS_FLOW_NS, "subflow-parent", null, true);
@@ -1850,7 +1851,10 @@ class ExecutionControllerRunnerTest {
         assertThat(results.getFirst().getId()).isEqualTo("start");
         assertThat(results.getLast().getId()).isEqualTo("end-all");
         // check that we have 3 end events and 3 result in SUCCESS
-        assertThat(results.stream().filter(event -> event.getId().equals("end"))).hasSize(3);
+        // temporal debug log to try to understnand what's going on in CI
+        var finalResults = results;
+        assertThat(results.stream().filter(event -> event.getId().equals("end"))).hasSize(3)
+            .overridingErrorMessage(() -> finalResults.stream().map(e ->e.getId() + e.getData()).collect(Collectors.joining("\n")));
         assertThat(results.stream().filter(event -> event.getData().state() != null && event.getData().state().getCurrent().equals(State.Type.SUCCESS))).hasSize(3);
 
         // check that a second call work: calling follow on an already terminated execution.

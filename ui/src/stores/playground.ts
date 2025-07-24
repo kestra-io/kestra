@@ -41,7 +41,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // if all tasks prior to current task in the graph are identical
         // to the previous execution's revision,
         // we can skip them and start the execution at the current task using replayExecution()
-        if (executions.value.length && graph && executions.value[0].graph && VueFlowUtils.areTasksIdenticalInGraphUntilTask(executions.value[0].graph, graph, taskId)) {
+        if (taskId && executions.value.length && graph && executions.value[0].graph && VueFlowUtils.areTasksIdenticalInGraphUntilTask(executions.value[0].graph, graph, taskId)) {
             return await executionsStore.replayExecution({
                 executionId: executions.value[0].id,
                 taskRunId: taskId,
@@ -92,9 +92,11 @@ export const usePlaygroundStore = defineStore("playground", () => {
         addExecution(execution, graph);
     }
 
-    function updateExecution(execution: Execution) {
+    function updateExecution(execution: ExecutionWithGraph) {
         const index = executions.value.findIndex(e => e.id === execution.id);
         if (index !== -1) {
+            const graph = executions.value[index].graph;
+            execution.graph = graph; // keep the graph reference
             executions.value[index] = execution;
         }
     }

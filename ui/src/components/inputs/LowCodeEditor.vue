@@ -8,7 +8,7 @@
             :is-allowed-edit="isAllowedEdit"
             :source="source"
             :toggle-orientation-button="toggleOrientationButton"
-            :flow-graph="executionsStore.flowGraph ?? props.flowGraph"
+            :flow-graph="playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph"
             :flow-id="flowId"
             :namespace="namespace"
             :expanded-subflows="props.expandedSubflows"

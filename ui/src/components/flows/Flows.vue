@@ -322,7 +322,6 @@
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
 
-
     const CHART_DEFINITION = {
         id: "executions_per_namespace_bars",
         type: "io.kestra.plugin.core.dashboard.chart.Bar",
@@ -355,7 +354,6 @@
     };
 
     CHART_DEFINITION.content = YAML_UTILS.stringify(CHART_DEFINITION);
-
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -795,12 +793,8 @@
             },
             mappedChart(id, namespace) {
                 let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION));
-                MAPPED_CHARTS.content = MAPPED_CHARTS.content
-                    .replace(
-                        "${namespace}",
-                        namespace
-                    )
-                    .replace("${flow_id}",id);
+                
+                MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id);
 
                 return MAPPED_CHARTS;
             }

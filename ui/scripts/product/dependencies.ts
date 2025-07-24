@@ -20,15 +20,16 @@ function getRandom<T>(arr: T[]): T {
 }
 
 /**
- * Generates a synthetic lineage graph as Cytoscape-compatible elements.
+ * Generates a synthetic dependency graph as an array of Cytoscape-compatible elements.
  *
- * Each node has an ID in the format: `flow-<LETTER>-<NUMBER>`.
- * Nodes are connected either in a single-root structure or as a randomly connected DAG.
+ * Each node ID is formatted as `flow-<LETTER>-<NUMBER>` (e.g., `flow-A-42`).
+ * Depending on the `singleRoot` flag, the graph is structured either as a star topology
+ * or as a randomly connected directed acyclic graph (DAG) with additional cross-links.
  *
- * @param count - Total number of nodes to generate (must be ≥ 2).
- * @param singleRoot - If true, creates a star topology with one root node connected to all others.
- *                     If false, builds a randomly connected acyclic graph with additional cross-links.
- * @returns An array of Cytoscape-compatible elements (nodes and edges) to be used in a graph visualization.
+ * @param count - The total number of nodes to generate. Must be at least 2.
+ * @param singleRoot - If `true`, a single root node connects to all others.
+ *                     If `false`, nodes are randomly connected with some extra edges.
+ * @returns An array of Cytoscape-compatible `Element` objects, including both nodes and edges.
  */
 export function getDependencies(count: number, singleRoot: boolean): Element[] {
     if (count < 2) {

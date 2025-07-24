@@ -62,10 +62,10 @@ export abstract class FilterLanguage {
         return this._filterKeyCompletions
             .filter(([_, {forbiddenConcurrentKeys}]) => {
                 return !usedKeys.some(usedKey => forbiddenConcurrentKeys.includes(usedKey));
-            }).map(([{key}, {comparators}]) => {
+            }).map(([{key}]) => {
                 return new Completion(
                     key.replaceAll(/\$(\{[^}]*})/g, "$1"),
-                    key.replaceAll(/\$?\{([^}]*)}/g, "") + (key.includes("{") ? "" : comparators[0])
+                    key.replaceAll(/\$?\{([^}]*)}/g, "") + (key.includes("{") ? "" : "")
                 );
             });
     }

@@ -15,6 +15,7 @@
             :icons="pluginsStore.icons"
             :execution="executionsStore.execution"
             :subflows-executions="executionsStore.subflowsExecutions"
+            :playground-enabled="playgroundStore.enabled"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -27,6 +28,7 @@
             @swapped-task="onSwappedTask"
             @message="message"
             @expand-subflow="expandSubflow"
+            @run-task="playgroundStore.runUntilTask($event.task.id)"
         />
     </div>
 </template>
@@ -56,9 +58,11 @@
     import {useCoreStore} from "../../stores/core";
     import {usePluginsStore} from "../../stores/plugins";
     import {useExecutionsStore} from "../../stores/executions";
+    import {usePlaygroundStore} from "../../stores/playground";
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
 
     const executionsStore = useExecutionsStore();
+    const playgroundStore = usePlaygroundStore();
 
     // props
     const props = withDefaults(

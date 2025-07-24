@@ -1457,6 +1457,7 @@
     "to toggle": "to toggle",
     "accept": "Accept",
     "reject": "Reject",
-    "last modified": "Last modified"
+    "last modified": "Last modified",
+    "run task in playground": "Run task in playground"
   }
 }

@@ -1,6 +1,5 @@
 import _cloneDeep from "lodash/cloneDeep"
 import {useExecutionsStore} from "../stores/executions"
-import {usePlaygroundStore} from "../stores/playground"
 
 export const inputsToFormData = (submitor, inputsList, values) => {
     let inputValuesCloned = _cloneDeep(values)
@@ -44,7 +43,6 @@ export const inputsToFormData = (submitor, inputsList, values) => {
 export const executeTask = (submitor, flow, values, options) => {
     const formData = inputsToFormData(submitor, flow.inputs, values);
     const executionsStore = useExecutionsStore();
-    const playgroundStore = usePlaygroundStore();
 
     executionsStore
         .triggerExecution({
@@ -53,9 +51,6 @@ export const executeTask = (submitor, flow, values, options) => {
         })
         .then(response => {
             executionsStore.execution = response.data;
-            if(playgroundStore.enabled) {
-                playgroundStore.addExecution(response.data);
-            }
             if (options.redirect) {
                 if (options.newTab) {
                     const resolved = submitor.$router.resolve({

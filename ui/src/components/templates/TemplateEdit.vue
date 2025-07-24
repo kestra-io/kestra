@@ -31,7 +31,8 @@
 
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
-    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useTemplateStore} from "../../stores/template";
 
     export default {
         mixins: [flowTemplateEdit],
@@ -41,7 +42,7 @@
             };
         },
         computed: {
-            ...mapState("template", ["template"]),
+            ...mapStores(useTemplateStore),
         },
         watch: {
             "$route.params"() {
@@ -52,13 +53,13 @@
             this.reload()
         },
         unmounted() {
-            this.$store.commit("template/setTemplate", undefined);
+            this.templateStore.template = undefined;
         },
         methods: {
             reload() {
                 if (this.$route.name === "templates/update") {
-                    this.$store
-                        .dispatch("template/loadTemplate", this.$route.params)
+                    this.templateStore
+                        .loadTemplate(this.$route.params)
                         .then(this.loadFile);
                 }
             },

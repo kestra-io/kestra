@@ -325,7 +325,7 @@ The table below lists Pebble functions and filter expressions:
 | `fileExists`     | `{{ fileExists(output.download.uri) }}` — Returns true if file is present at the given uri location.                             |
 | `isFileEmpty`    | `{{ isFileEmpty(output.download.uri) }}` — Returns true if file present at the given uri location is empty.                      |
 | `string`         | `{{ 123 \| string }}` — Converts 123 into a string.                                                                              |
-
+| `isIn`           | `{{ execution.state isIn ['SUCCESS', 'KILLED', 'CANCELLED'] }}` — Returns true if the value on the left is present in the list on the right. Useful for conditions such as `runIf`. |
 
 
 ### Links to learn more

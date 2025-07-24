@@ -181,9 +181,6 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     @Inject
     private VariablesService variablesService;
 
-    @Value("${kestra.jdbc.executor.thread-count:0}")
-    private int threadCount;
-
     @Value("${kestra.jdbc.executor.clean.execution-queue:true}")
     private boolean cleanExecutionQueue;
 
@@ -232,7 +229,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         final TracerFactory tracerFactory,
         final ExecutorsUtils executorsUtils,
-        final MaintenanceService maintenanceService
+        final MaintenanceService maintenanceService,
+        @Value("${kestra.jdbc.executor.thread-count:0}") final int threadCount
         ) {
         this.serviceLivenessCoordinator = serviceLivenessCoordinator;
         this.flowMetaStore = flowMetaStore;

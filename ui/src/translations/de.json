@@ -475,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "Ausdruck rendern",
       "title": "Debug-Ausdruck",
       "tooltip": "Beliebigen Pebble-Ausdruck rendern und den Ausführungskontext inspizieren."
     },

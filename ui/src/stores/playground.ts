@@ -96,10 +96,12 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     function updateExecution(execution: ExecutionWithGraph) {
         const index = executions.value.findIndex(e => e.id === execution.id);
-        execution.taskRunList.forEach(taskRun => {
-            // map taskId to taskRunId for later use in replayExecution()
-            taskIdToTaskRunIdMap[taskRun.taskId] = taskRun.id;
-        });
+        if(execution.taskRunList){
+            for(const taskRun of execution.taskRunList) {
+                // map taskId to taskRunId for later use in replayExecution()
+                taskIdToTaskRunIdMap[taskRun.taskId] = taskRun.id;
+            }
+        }
         if (index !== -1) {
             const graph = executions.value[index].graph;
             execution.graph = graph; // keep the graph reference

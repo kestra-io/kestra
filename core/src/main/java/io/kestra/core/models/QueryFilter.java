@@ -6,9 +6,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.utils.Enums;
-import java.util.ArrayList;
 import lombok.Builder;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -49,42 +49,27 @@ public record QueryFilter(
         PREFIX
     }
 
+    @SuppressWarnings("unchecked")
     private List<Object> asValues(Object value) {
         return value instanceof String valueStr ? Arrays.asList(valueStr.split(",")) : (List<Object>) value;
     }
 
-    @SuppressWarnings("unchecked")
     public <T extends Enum<T>> AbstractFilter<T> toDashboardFilterBuilder(T field, Object value) {
-        switch (this.operation) {
-            case EQUALS:
-                return EqualTo.<T>builder().field(field).value(value).build();
-            case NOT_EQUALS:
-                return NotEqualTo.<T>builder().field(field).value(value).build();
-            case GREATER_THAN:
-                return GreaterThan.<T>builder().field(field).value(value).build();
-            case LESS_THAN:
-                return LessThan.<T>builder().field(field).value(value).build();
-            case GREATER_THAN_OR_EQUAL_TO:
-                return GreaterThanOrEqualTo.<T>builder().field(field).value(value).build();
-            case LESS_THAN_OR_EQUAL_TO:
-                return LessThanOrEqualTo.<T>builder().field(field).value(value).build();
-            case IN:
-                return In.<T>builder().field(field).values(asValues(value)).build();
-            case NOT_IN:
-                return NotIn.<T>builder().field(field).values(asValues(value)).build();
-            case STARTS_WITH:
-                return StartsWith.<T>builder().field(field).value(value.toString()).build();
-            case ENDS_WITH:
-                return EndsWith.<T>builder().field(field).value(value.toString()).build();
-            case CONTAINS:
-                return Contains.<T>builder().field(field).value(value.toString()).build();
-            case REGEX:
-                return Regex.<T>builder().field(field).value(value.toString()).build();
-            case PREFIX:
-                return Regex.<T>builder().field(field).value("^" + value.toString().replace(".", "\\.") + "(?:\\..+)?$").build();
-            default:
-                throw new IllegalArgumentException("Unsupported operation: " + this.operation);
-        }
+        return switch (this.operation) {
+            case EQUALS -> EqualTo.<T>builder().field(field).value(value).build();
+            case NOT_EQUALS -> NotEqualTo.<T>builder().field(field).value(value).build();
+            case GREATER_THAN -> GreaterThan.<T>builder().field(field).value(value).build();
+            case LESS_THAN -> LessThan.<T>builder().field(field).value(value).build();
+            case GREATER_THAN_OR_EQUAL_TO -> GreaterThanOrEqualTo.<T>builder().field(field).value(value).build();
+            case LESS_THAN_OR_EQUAL_TO -> LessThanOrEqualTo.<T>builder().field(field).value(value).build();
+            case IN -> In.<T>builder().field(field).values(asValues(value)).build();
+            case NOT_IN -> NotIn.<T>builder().field(field).values(asValues(value)).build();
+            case STARTS_WITH -> StartsWith.<T>builder().field(field).value(value.toString()).build();
+            case ENDS_WITH -> EndsWith.<T>builder().field(field).value(value.toString()).build();
+            case CONTAINS -> Contains.<T>builder().field(field).value(value.toString()).build();
+            case REGEX -> Regex.<T>builder().field(field).value(value.toString()).build();
+            case PREFIX -> Regex.<T>builder().field(field).value("^" + value.toString().replace(".", "\\.") + "(?:\\..+)?$").build();
+        };
     }
 
     public enum Field {

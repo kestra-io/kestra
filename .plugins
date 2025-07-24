@@ -8,6 +8,7 @@
 #plugin-airflow:io.kestra.plugin:plugin-airflow:LATEST
 #plugin-amqp:io.kestra.plugin:plugin-amqp:LATEST
 #plugin-ansible:io.kestra.plugin:plugin-ansible:LATEST
+#plugin-anthropic:io.kestra.plugin:plugin-anthropic:LATEST
 #plugin-aws:io.kestra.plugin:plugin-aws:LATEST
 #plugin-azure:io.kestra.plugin:plugin-azure:LATEST
 #plugin-cassandra:io.kestra.plugin:plugin-cassandra:LATEST
@@ -70,15 +71,18 @@
 #plugin-malloy:io.kestra.plugin:plugin-malloy:LATEST
 #plugin-meilisearch:io.kestra.plugin:plugin-meilisearch:LATEST
 #plugin-minio:io.kestra.plugin:plugin-minio:LATEST
+#plugin-mistral:io.kestra.plugin:plugin-mistral:LATEST
 #plugin-modal:io.kestra.plugin:plugin-modal:LATEST
 #plugin-mongodb:io.kestra.plugin:plugin-mongodb:LATEST
 #plugin-mqtt:io.kestra.plugin:plugin-mqtt:LATEST
 #plugin-nats:io.kestra.plugin:plugin-nats:LATEST
 #plugin-neo4j:io.kestra.plugin:plugin-neo4j:LATEST
 #plugin-notifications:io.kestra.plugin:plugin-notifications:LATEST
+#plugin-notion:io.kestra.plugin:plugin-notion:LATEST
 #plugin-ollama:io.kestra.plugin:plugin-ollama:LATEST
 #plugin-openai:io.kestra.plugin:plugin-openai:LATEST
 #plugin-opensearch:io.kestra.plugin:plugin-opensearch:LATEST
+#plugin-perplexity:io.kestra.plugin:plugin-perplexity:LATEST
 #plugin-powerbi:io.kestra.plugin:plugin-powerbi:LATEST
 #plugin-pulsar:io.kestra.plugin:plugin-pulsar:LATEST
 #plugin-redis:io.kestra.plugin:plugin-redis:LATEST

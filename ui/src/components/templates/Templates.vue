@@ -35,7 +35,7 @@
             <data-table
                 @page-changed="onPageChanged"
                 ref="dataTable"
-                :total="total"
+                :total="templateStore.total"
             >
                 <template #navbar>
                     <el-form-item>
@@ -53,7 +53,7 @@
                 <template #table>
                     <select-table
                         ref="selectTable"
-                        :data="templates"
+                        :data="templateStore.templates"
                         :default-sort="{prop: 'id', order: 'ascending'}"
                         table-layout="auto"
                         fixed
@@ -67,7 +67,7 @@
                             <bulk-select
                                 :select-all="queryBulkAction"
                                 :selections="selection"
-                                :total="total"
+                                :total="templateStore.total"
                                 @update:select-all="toggleAllSelection"
                                 @unselect="toggleAllUnselected"
                             >
@@ -138,6 +138,8 @@
 
 <script>
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useTemplateStore} from "../../stores/template";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
@@ -170,12 +172,12 @@
             return {
                 isDefaultNamespaceAllow: true,
                 permission: permission,
-                action: action
+                action: action,
             };
         },
         computed: {
-            ...mapState("template", ["templates", "total"]),
             ...mapState("auth", ["user"]),
+            ...mapStores(useTemplateStore),
             routeInfo() {
                 return {
                     title: this.$t("templates")
@@ -195,8 +197,8 @@
                 return _merge(base, queryFilter)
             },
             loadData(callback) {
-                this.$store
-                    .dispatch("template/findTemplates", this.loadQuery({
+                this.templateStore
+                    .findTemplates(this.loadQuery({
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
                         sort: this.$route.query.sort || "id:asc",
@@ -213,11 +215,11 @@
             },
             exportTemplates() {
                 this.$toast().confirm(
-                    this.$t("template export", {"templateCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t("template export", {"templateCount": this.queryBulkAction ? this.templateStore.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("template/exportTemplateByQuery", this.loadQuery({
+                            return this.templateStore
+                                .exportTemplateByQuery(this.loadQuery({
                                     namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
                                     q: this.$route.query.q ? [this.$route.query.q] : undefined,
                                 }, false))
@@ -225,8 +227,8 @@
                                     this.$toast().success(this.$t("templates exported"));
                                 })
                         } else {
-                            return this.$store
-                                .dispatch("template/exportTemplateByIds", {ids: this.selection})
+                            return this.templateStore
+                                .exportTemplateByIds({ids: this.selection})
                                 .then(_ => {
                                     this.$toast().success(this.$t("templates exported"));
                                 })
@@ -239,8 +241,8 @@
             importTemplates() {
                 const formData = new FormData();
                 formData.append("fileUpload", this.$refs.file.files[0]);
-                this.$store
-                    .dispatch("template/importTemplates", formData)
+                this.templateStore
+                    .importTemplates(formData)
                     .then(_ => {
                         this.$toast().success(this.$t("templates imported"));
                         this.loadData(() => {
@@ -249,11 +251,11 @@
             },
             deleteTemplates() {
                 this.$toast().confirm(
-                    this.$t("template delete", {"templateCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t("template delete", {"templateCount": this.queryBulkAction ? this.templateStore.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("template/deleteTemplateByQuery", this.loadQuery({
+                            return this.templateStore
+                                .deleteTemplateByQuery(this.loadQuery({
                                     namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
                                     q: this.$route.query.q ? [this.$route.query.q] : undefined,
                                 }, false))
@@ -263,8 +265,8 @@
                                     })
                                 })
                         } else {
-                            return this.$store
-                                .dispatch("template/deleteTemplateByIds", {ids: this.selection})
+                            return this.templateStore
+                                .deleteTemplateByIds({ids: this.selection})
                                 .then(r => {
                                     this.$toast().success(this.$t("templates deleted", {count: r.data.count}));
                                     this.loadData(() => {

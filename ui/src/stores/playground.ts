@@ -37,6 +37,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
     const store = useStore();
     const executionsStore = useExecutionsStore();
 
+    const taskIdToTaskRunIdMap: Record<string, string>  = {};
+
     async function replayOrTriggerExecution(taskId?: string, nextTaskId?: string, graph?: any) {
         // if all tasks prior to current task in the graph are identical
         // to the previous execution's revision,
@@ -44,7 +46,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         if (taskId && executions.value.length && graph && executions.value[0].graph && VueFlowUtils.areTasksIdenticalInGraphUntilTask(executions.value[0].graph, graph, taskId)) {
             return await executionsStore.replayExecution({
                 executionId: executions.value[0].id,
-                taskRunId: taskId,
+                taskRunId: taskIdToTaskRunIdMap[taskId],
                 breakpoints: nextTaskId ? [nextTaskId] : undefined,
             });
         }
@@ -94,6 +96,10 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     function updateExecution(execution: ExecutionWithGraph) {
         const index = executions.value.findIndex(e => e.id === execution.id);
+        execution.taskRunList.forEach(taskRun => {
+            // map taskId to taskRunId for later use in replayExecution()
+            taskIdToTaskRunIdMap[taskRun.taskId] = taskRun.id;
+        });
         if (index !== -1) {
             const graph = executions.value[index].graph;
             execution.graph = graph; // keep the graph reference

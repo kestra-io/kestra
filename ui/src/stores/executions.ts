@@ -7,6 +7,7 @@ import {useStore, Store} from "vuex";
 import {useCoreStore} from "./core";
 import {throttle} from "lodash";
 import {useRoute} from "vue-router";
+import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants.ts";
 
 interface LogsState {
     total: number;
@@ -509,12 +510,102 @@ export const useExecutionsStore = defineStore("executions", () => {
             });
     }
 
-    const loadGraph = (options: { id: string; params?: Record<string, any> }) => {
+    const fetchGraph = (options: { id: string; params?: Record<string, any> }) => {
         const params = options.params ? options.params : {};
         return axios.get(`${apiUrl(store)}/executions/${options.id}/graph`, {params, withCredentials: true, paramsSerializer: {indexes: null}})
             .then(response => {
-                flowGraph.value = response.data;
+                return response.data;
             })
+    }
+
+    function loadGraph(options: { id: string; params?: Record<string, any> }) {
+        return fetchGraph(options).then(graph => {
+            // force refresh - Create a new object reference to trigger reactivity
+            flowGraph.value = Object.assign({}, graph);
+        });
+    }
+
+    function isUnused(nodeByUid: Record<string, any>, nodeUid: string): boolean {
+            const nodeToCheck = nodeByUid[nodeUid];
+
+            if(!nodeToCheck) {
+                return false;
+            }
+
+            if(!nodeToCheck.task) {
+                // check if parent is unused (current node is probably a cluster root or end)
+                const splitUid = nodeToCheck.uid.split(".");
+                splitUid.pop();
+                return isUnused(nodeByUid, splitUid.join("."));
+            }
+
+            if (!nodeToCheck.executionId) {
+                return true;
+            }
+
+            const nodeExecution = nodeToCheck.executionId === execution.value?.id ? execution.value
+                : Object.values(subflowsExecutions.value).filter(execution => execution.id === nodeToCheck.executionId)?.[0];
+
+            if (!nodeExecution) {
+                return true;
+            }
+
+            return !nodeExecution.taskRunList?.some((taskRun: { taskId: string }) => taskRun.taskId === nodeToCheck.task?.id);
+
+
+        }
+
+    const loadAugmentedGraph = async (options: { id: string; params?: Record<string, any> }) => {
+        const params = options.params ? options.params : {};
+        const graph: {
+            nodes: any[];
+            edges: any[];
+            clusters?: any[];
+        } = await fetchGraph({id: options.id, params});
+        // Augment the graph with additional properties
+
+        const subflowPaths = graph.clusters
+            ?.map(c => c.cluster)
+            ?.filter(cluster => cluster.type.endsWith("SubflowGraphCluster"))
+            ?.map(cluster => cluster.uid.replace(CLUSTER_PREFIX, ""))
+            ?? [];
+        const nodeByUid: Record<string, any> = {};
+
+        graph.nodes
+            // lowest depth first to be available in nodeByUid map for child-to-parent unused check
+            .sort((a, b) => a.uid.length - b.uid.length)
+            .forEach(node => {
+                nodeByUid[node.uid] = node;
+
+                const parentSubflow = subflowPaths.filter(subflowPath => node.uid.startsWith(subflowPath + "."))
+                    .sort((a, b) => b.length - a.length)?.[0]
+
+                if(parentSubflow) {
+                    if(parentSubflow in subflowsExecutions.value) {
+                        node.executionId = subflowsExecutions.value[parentSubflow]?.id;
+                    }
+
+                    return;
+                }
+
+                node.executionId = options.id;
+
+                // reduce opacity for cluster root & end
+                if(!node.task && isUnused(nodeByUid, node.uid)) {
+                    node.unused = true;
+                }
+            });
+
+        graph.edges
+            // keep only unused (or skipped) paths
+            .filter(edge => {
+                return isUnused(nodeByUid, edge.target) || isUnused(nodeByUid, edge.source);
+            }).forEach(edge => edge.unused = true);
+
+        // force refresh - Create a new object reference to trigger reactivity
+        flowGraph.value = Object.assign({}, graph);
+
+        return graph;
     }
 
     const loadNamespaces = () => {
@@ -635,6 +726,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         loadFlowForExecution,
         loadFlowForExecutionByExecutionId,
         loadGraph,
+        loadAugmentedGraph,
         loadNamespaces,
         loadFlowsExecutable,
         loadLatestExecutions,

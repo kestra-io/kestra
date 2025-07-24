@@ -135,14 +135,15 @@ export const useExecutionsStore = defineStore("executions", () => {
         )
     }
 
-    const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number }) => {
+    const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }) => {
         return store.$http.post(
             `${apiUrl(store)}/executions/${options.executionId}/replay`,
             null,
             {
                 params: {
                     taskRunId: options.taskRunId,
-                    revision: options.revision
+                    revision: options.revision,
+                    breakpoints: options.breakpoints ? options.breakpoints : undefined
                 }
             })
     }

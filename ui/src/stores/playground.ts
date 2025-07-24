@@ -75,7 +75,10 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         // find the node uid of the task with the given taskId
         const taskNode = graph.nodes.find((node: any) => node?.task?.id === taskId);
-        const nextTasksIds = VueFlowUtils.getNextTaskNodes(taskNode, graph).map((node: any) => node.task.id);
+
+        const nextTasksNodes = VueFlowUtils.getNextTaskNodes(graph, taskNode);
+
+        const nextTasksIds = nextTasksNodes.map((node: any) => node.task.id);
 
         return {nextTasksIds, graph};
     }
@@ -86,6 +89,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // get the next task id to break on. If current task is provided to breakpoint,
         // the task specified by the user will not be executed.
         const {nextTasksIds, graph} = await getNextTaskIds(taskId) ?? {};
+
         const nextTaskId = nextTasksIds.length ? nextTasksIds[0] : undefined;
 
         const {data: execution} = await replayOrTriggerExecution(taskId, nextTaskId, graph);

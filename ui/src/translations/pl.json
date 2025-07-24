@@ -903,6 +903,7 @@
         "finally": "Wybierz task",
         "inputs": "Wybierz typ pola input",
         "pluginDefaults": "Wybierz plugin",
+        "task": "Wybierz task",
         "tasks": "Wybierz task",
         "triggers": "Wybierz trigger"
       },
@@ -1011,6 +1012,14 @@
     "pause confirm": "Czy na pewno chcesz wstrzymać wykonanie <code>{id}</code>?",
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
+    "playground": {
+      "empty": "Kliknij przycisk \"Run task\", aby przetestować swój workflow za pomocą symulowanej execution.",
+      "history": "Ostatnie 10 uruchomień",
+      "run_all_tasks": "Uruchom Wszystkie Taski",
+      "run_task": "Uruchom Task",
+      "title": "Plac zabaw",
+      "toggle": "Plac zabaw"
+    },
     "pluginDefaults": "Domyślne ustawienia pluginu",
     "pluginPage": {
       "alt": "Ikona wtyczek",
@@ -1072,6 +1081,7 @@
     "revision": "Wersja",
     "revisions": "Wersje",
     "row count": "Liczba wierszy",
+    "run task in playground": "Uruchom task w playgroundzie",
     "runners": "Biegacze",
     "running duration": "Czas trwania w trakcie działania",
     "save": "Zapisz",
@@ -1145,7 +1155,8 @@
             "language": "Język",
             "log_display": "Domyślne Wyświetlanie Log",
             "log_level": "Domyślna Poziom Logs",
-            "multi_panel_editor": "Edytor Wielopanelowy"
+            "multi_panel_editor": "Edytor Wielopanelowy",
+            "playground": "Plac zabaw"
           },
           "label": "Główna konfiguracja"
         },

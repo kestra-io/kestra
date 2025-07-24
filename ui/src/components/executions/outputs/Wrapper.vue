@@ -134,7 +134,7 @@
 
                 <VarValue
                     v-if="displayVarValue()"
-                    :value="selectedValue.uri ? selectedValue.uri : selectedValue"
+                    :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
                     :execution="execution"
                 />
                 <SubFlowLink
@@ -422,7 +422,7 @@
     const displayVarValue = () =>
         isFile(selectedValue.value) ||
         selectedValue.value !== debugExpression.value;
-
+    
     const leftWidth = ref(70);
     const startDragging = (event: MouseEvent) => {
         const startX = event.clientX;

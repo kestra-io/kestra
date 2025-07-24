@@ -195,7 +195,6 @@ export const usePlaygroundStore = defineStore("playground", () => {
         enabled,
         executions,
         latestExecution: computed(() => executions.value[executions.value.length - 1]),
-        addExecution,
         clearExecutions,
         runUntilTask
     }

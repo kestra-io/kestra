@@ -903,6 +903,7 @@
         "finally": "Selecione uma task",
         "inputs": "Selecione um tipo de campo de input",
         "pluginDefaults": "Selecione um plugin",
+        "task": "Selecione uma task",
         "tasks": "Selecione uma task",
         "triggers": "Selecione um trigger"
       },
@@ -1011,6 +1012,14 @@
     "pause confirm": "Tem certeza de que deseja pausar a execução <code>{id}</code>?",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
+    "playground": {
+      "empty": "Clique no botão \"Run task\" para testar seu fluxo de trabalho com uma execução simulada.",
+      "history": "Últimas 10 execuções",
+      "run_all_tasks": "Executar Todas as Tasks",
+      "run_task": "Executar Task",
+      "title": "Playground",
+      "toggle": "Playground"
+    },
     "pluginDefaults": "Padrões do plugin",
     "pluginPage": {
       "alt": "Ícone de Plugins",
@@ -1072,6 +1081,7 @@
     "revision": "Revisão",
     "revisions": "Revisões",
     "row count": "Contagem de linhas",
+    "run task in playground": "Executar task no playground",
     "runners": "Corredores",
     "running duration": "Duração em execução",
     "save": "Salvar",
@@ -1145,7 +1155,8 @@
             "language": "Idioma",
             "log_display": "Exibição de Log Padrão",
             "log_level": "Nível de Log Padrão",
-            "multi_panel_editor": "Editor de Painel Múltiplo"
+            "multi_panel_editor": "Editor de Painel Múltiplo",
+            "playground": "Playground"
           },
           "label": "Configuração Principal"
         },

@@ -46,7 +46,7 @@
                             }"
                             @dragleave.prevent
                             :data-tab-id="tab.value"
-                            @click="panel.activeTab = tab"
+                            @click="handleTabClick(panel, tab)"
                             @mouseup="middleMouseClose($event, panelIndex, tab)"
                         >
                             <component :is="tab.button.icon" class="tab-icon" />
@@ -172,7 +172,11 @@
     import {Splitpanes, Pane} from "splitpanes"
 
     import {VISIBLE_PANELS_INJECTION_KEY} from "./code/injectionKeys";
+    import {CODE_PREFIX} from "./flows/useCodePanels";
     import {useKeyShortcuts} from "../utils/useKeyShortcuts";
+
+    import {useStore} from "vuex"
+    const store = useStore()
 
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
@@ -243,6 +247,21 @@
     const realDragging = ref(false);
     const leftPanelDragover = ref(false);
     const rightPanelDragover = ref(false);
+
+    const handleTabClick = (panel: Panel, tab: Tab) => {
+        panel.activeTab = tab
+
+        if(tab.value.startsWith(CODE_PREFIX)){
+            store.commit("editor/setCurrentTab", {
+                dirty: tab.dirty ?? false,
+                extension: tab.value.split(".").pop(),
+                flow: tab.value === CODE_PREFIX,
+                name: tab.value,
+                path: tab.value,
+                persistent: tab.value === CODE_PREFIX,
+            });
+        }
+    };
 
     const showDropZones = computed(() =>
         realDragging.value &&

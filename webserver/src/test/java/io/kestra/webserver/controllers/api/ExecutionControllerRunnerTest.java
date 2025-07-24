@@ -37,10 +37,7 @@ import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
+import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
@@ -76,7 +73,8 @@ import java.util.stream.IntStream;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
-import static io.micronaut.http.HttpRequest.GET;
+import static io.micronaut.http.HttpRequest.*;
+import static io.micronaut.http.HttpRequest.DELETE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -84,7 +82,6 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @Slf4j
 @KestraTest(startRunner = true)
 @Property(name = LocalPath.ALLOWED_PATHS_CONFIG, value = "/tmp")
@@ -1180,7 +1177,10 @@ class ExecutionControllerRunnerTest {
         assertThat(executionKilledId.get()).isEqualTo(runningExecution.getId());
 
         // retrieve the execution from the API and check that the task has been set to killed
-        Execution execution = awaitExecution(runningExecution.getId(), exec -> !exec.getState().isPaused());
+        Thread.sleep(250);
+        Execution execution = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + runningExecution.getId()),
+            Execution.class);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(execution.getTaskRunList().size()).isEqualTo(2);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
@@ -1881,6 +1881,132 @@ class ExecutionControllerRunnerTest {
         assertThat(results.stream().filter(event -> event.getId().equals("end"))).hasSize(2);
         assertThat(results.stream().filter(event -> event.getData().state() != null && event.getData().state().getCurrent().equals(State.Type.SUCCESS))).hasSize(2);
 
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/logs.yaml"})
+    void restartExecutionByIdShouldFailed() throws InterruptedException {
+        Execution execution = client.toBlocking().retrieve(
+            POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/logs",
+                null
+            ),
+            Execution.class
+        );
+
+        // EXECUTION NOT FAILED STATE
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/main/executions/restart/by-ids",
+                    List.of(execution.getId())
+                ),
+                MutableHttpResponse.class
+            ));
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(e.getMessage()).contains("invalid bulk restart");
+
+        // EXECUTION NOT FOUND
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/main/executions/restart/by-ids",
+                    List.of("NotExists")
+                ),
+                MutableHttpResponse.class
+            ));
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(e.getMessage()).contains("invalid bulk restart");
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/failed-first.yaml"})
+    void restartExecutionByIdShouldSucceed() throws InterruptedException {
+        Execution execution = client.toBlocking().retrieve(
+            POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/failed-first",
+                null
+            ),
+            Execution.class
+        );
+
+        Thread.sleep(250);
+
+        BulkResponse result = client.toBlocking().retrieve(
+            POST("/api/v1/main/executions/restart/by-ids",
+                List.of(execution.getId())
+            ),
+            BulkResponse.class
+        );
+
+        assertThat(result).isNotNull();
+        assertThat(result.getCount()).isEqualTo(1);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/logs.yaml"})
+    void killByIdShouldFailed() throws InterruptedException {
+        Execution execution = client.toBlocking().retrieve(
+            POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/logs",
+                null
+            ),
+            Execution.class
+        );
+
+        Thread.sleep(250);
+
+        // EXECUTION TERMINATED STATE
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                DELETE("/api/v1/main/executions/kill/by-ids",
+                    List.of(execution.getId())
+                ),
+                MutableHttpResponse.class
+            ));
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(e.getMessage()).contains("invalid bulk kill");
+
+        // EXECUTION NOT FOUND
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                DELETE("/api/v1/main/executions/kill/by-ids",
+                    List.of("NotExists")
+                ),
+                MutableHttpResponse.class
+            ));
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(e.getMessage()).contains("invalid bulk kill");
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/sleep-long.yml"})
+    void killExecutionByIdShouldSucceed() throws InterruptedException {
+        Execution execution = client.toBlocking().retrieve(
+            POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/sleep-long",
+                null
+            ),
+            Execution.class
+        );
+
+        Thread.sleep(250);
+
+        BulkResponse result = client.toBlocking().retrieve(
+            DELETE("/api/v1/main/executions/kill/by-ids",
+                List.of(execution.getId())
+            ),
+            BulkResponse.class
+        );
+
+        assertThat(result).isNotNull();
+        assertThat(result.getCount()).isEqualTo(1);
     }
 
     private List<Label> getExecutionNonSystemLabels(List<Label> labels) {

@@ -14,6 +14,7 @@ import {mapStores} from "pinia";
 import {useApiStore} from "../stores/api";
 import {usePluginsStore} from "../stores/plugins";
 import {useCoreStore} from "../stores/core";
+import {useTemplateStore} from "../stores/template";
 
 export default {
     mixins: [RouteContext],
@@ -34,8 +35,7 @@ export default {
     computed: {
         ...mapState("auth", ["user"]),
         ...mapGetters("flow", ["flow"]),
-        ...mapGetters("template", ["template"]),
-        ...mapStores(useApiStore, usePluginsStore, useCoreStore),
+        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore),
         guidedProperties() {
             return this.coreStore.guidedProperties;
         },
@@ -108,7 +108,7 @@ export default {
             }
 
             if (this.dataType === "template") {
-                this.content = YAML_UTILS.stringify(this.template);
+                this.content = YAML_UTILS.stringify(this.templateStore.template);
                 this.previousContent = this.content;
             } else {
                 if (this.flow) {
@@ -167,8 +167,12 @@ export default {
                     .then(message => {
                         this.$toast()
                             .confirm(message, () => {
-                                return this.$store
-                                    .dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item)
+                                // TODO: When flow store is migrated to Pinia, this will be simplified:
+                                const deletePromise = this.dataType === "template" 
+                                    ? this.templateStore.deleteTemplate(item)
+                                    : this.$store.dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item);
+                                
+                                return deletePromise
                                     .then(() => {
                                         this.content = ""
                                         this.previousContent = ""
@@ -244,8 +248,12 @@ export default {
                     return;
                 }
                 this.previousContent = YAML_UTILS.stringify(this.item);
-                this.$store
-                    .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content})
+                // TODO: When flow store is migrated to Pinia, this will be simplified:
+                const createPromise = this.dataType === "template" 
+                    ? this.templateStore.createTemplate({template: this.content})
+                    : this.$store.dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content});
+                
+                createPromise
                     .then((data) => {
                         this.previousContent = data.source ? data.source : YAML_UTILS.stringify(data);
                         this.content = data.source ? data.source : YAML_UTILS.stringify(data);

@@ -93,7 +93,7 @@
     function disabledCurrentRoute(items) {
         return items
             .map(r => {
-                if (r.href === $route.path) {
+                if (r.href?.name === $route.name) {
                     r.disabled = true;
                 }
 
@@ -279,10 +279,12 @@
             &.vsm--link_open, &.vsm--link_open:hover {
                 background-color: var(--ks-background-left-menu);
                 color: var(--ks-content-primary);
+
             }
 
             &_disabled {
                 pointer-events: auto;
+                opacity: 1;
             }
 
             &:hover, body &_hover {

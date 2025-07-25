@@ -252,7 +252,6 @@
         focus,
         destroy,
         monaco,
-        highlightRange
     })
 
     const editorResolved = computed(() => {
@@ -778,20 +777,6 @@
         emit("editorDidMount", editorResolved.value);
 
         highlightLine();
-    }
-
-    function highlightRange(range: monaco.Range) {
-        const editor = editorResolved.value;
-        if (editor) {
-            return editor.createDecorationsCollection([{
-                range: range,
-                options: {
-                    className: "kestra-highlight",
-                    isWholeLine: true,
-                    stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
-                }
-            }]);
-        }
     }
 
     const current = computed(() => {

@@ -40,6 +40,7 @@
     import Task from "./Task";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import getTaskComponent from "./getTaskComponent";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     /**
      * merge allOf schemas if they exist
@@ -106,7 +107,10 @@
                 item.value === this.modelValue?.type ||
                 (typeof this.modelValue === "string" && item.value === "string") ||
                 (typeof this.modelValue === "number" && item.value === "integer") ||
-                (Array.isArray(this.modelValue) && item.value === "array"),
+                (Array.isArray(this.modelValue) && item.value === "array") ||
+                // this last line needs to stay after the array one.
+                // If not, arrays will be detected as objects
+                (typeof this.modelValue === "object" && item.value === "object"),
             );
 
             this.selectedSchema = schema?.value;
@@ -168,6 +172,20 @@
                     }
                     this.onInput(defaultValues)
                 }
+
+                // When switching form string to object/array,
+                // We try to parse the string as YAML
+                // If the value is not yaml it has no point on being kept.
+                if(typeof this.modelValue === "string" && (value === "object" || value === "array")) {
+                    let parsedValue = {}
+                    try{
+                        parsedValue = YAML_UTILS.parse(this.modelValue) ?? {};
+                    } catch {
+                        // eat an error
+                    }
+
+                    this.$emit("update:modelValue", parsedValue);
+                }
             },
             onAnyOfInput(value) {
                 if(this.constantType?.length && typeof value === "object") {
@@ -228,7 +246,7 @@
                 return this.selectedSchema ? getTaskComponent(this.currentSchema) : undefined;
             },
             isSelectingPlugins() {
-                return this.schemaOptions.some((schema) => schema.label.startsWith("io.kestra")) || this.schemas.length > 3;
+                return this.schemas.length > 4;
             },
             schemaOptions() {
                 if (!this.schemas?.length || !this.definitions) {

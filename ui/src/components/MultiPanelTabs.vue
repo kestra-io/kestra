@@ -5,9 +5,9 @@
             min-size="10"
             :key="panelIndex"
             :size="panel.size"
-            @dragover.prevent="(e) => panelDragOver(e, panelIndex)"
+            @dragover.prevent="(e:DragEvent) => panelDragOver(e, panelIndex)"
             @dragleave.prevent="panelDragLeave"
-            @drop.prevent="(e) => panelDrop(e, panelIndex)"
+            @drop.prevent="(e:DragEvent) => panelDrop(e, panelIndex)"
             :class="{'panel-dragover': panel.dragover}"
         >
             <div class="editor-tabs-container">

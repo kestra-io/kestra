@@ -903,6 +903,7 @@
         "finally": "Sélectionnez une task",
         "inputs": "Sélectionnez un type de champ input",
         "pluginDefaults": "Sélectionner un plugin",
+        "task": "Sélectionnez une task",
         "tasks": "Sélectionnez une task",
         "triggers": "Sélectionner un trigger"
       },
@@ -1011,6 +1012,14 @@
     "pause confirm": "Êtes-vous sûr de vouloir mettre en pause l'exécution <code>{id}</code> ?",
     "pause done": "L'exécution est en PAUSE",
     "pause title": "Mettre en pause l'exécution <code>{id}</code>.<br/>Notez que les tasks actuellement en cours d'exécution seront toujours traitées, et l'exécution devra être reprise manuellement.",
+    "playground": {
+      "empty": "Cliquez sur le bouton \"Run task\" pour tester votre workflow avec une exécution simulée.",
+      "history": "Dernières 10 exécutions",
+      "run_all_tasks": "Exécuter toutes les tasks",
+      "run_task": "Exécuter la Task",
+      "title": "Aire de jeu",
+      "toggle": "Terrain de jeu"
+    },
     "pluginDefaults": "Par défaut du plugin",
     "pluginPage": {
       "alt": "Icône des plugins",
@@ -1072,6 +1081,7 @@
     "revision": "Révision",
     "revisions": "Révisions",
     "row count": "Nombre de lignes",
+    "run task in playground": "Exécuter la task dans le playground",
     "runners": "Coureurs",
     "running duration": "Durée de traitement",
     "save": "Enregistrer",
@@ -1145,7 +1155,8 @@
             "language": "Langue",
             "log_display": "Affichage des journaux par défaut",
             "log_level": "Niveau d'affichage des journaux par défaut",
-            "multi_panel_editor": "Éditeur Multi-Panneaux"
+            "multi_panel_editor": "Éditeur Multi-Panneaux",
+            "playground": "Aire de jeu"
           },
           "label": "Configuration Principale"
         },

@@ -13,7 +13,8 @@
             type="textarea"
             :placeholder="t('ai.flow.prompt_placeholder')"
             v-model="prompt"
-            @keydown.exact.ctrl.enter.prevent="submitPrompt"
+            @keydown.exact.ctrl.enter="$event.preventDefault(); prompt += '\n'"
+            @keydown.exact.enter.prevent="submitPrompt"
         />
         <template #footer>
             <div class="d-flex justify-content-between">

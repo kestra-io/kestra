@@ -24,9 +24,13 @@ const handleAuthError = (error, to) => {
 }
 
 initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
-    router.beforeEach(async (to, _from, next) => {
+    router.beforeEach(async (to, from, next) => {
         if (["login", "setup"].includes(to.name)) {
             return next();
+        }
+
+        if(to.path === from.path && to.query === from.query) {
+            return next(); // Prevent navigation if the path and query are the same
         }
 
         try {
@@ -63,6 +67,7 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
 
             return next();
         } catch (error) {
+            console.error("Error during authentication check:", error);
             return next(handleAuthError(error, to))
         }
     });

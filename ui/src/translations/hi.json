@@ -903,6 +903,7 @@
         "finally": "एक task चुनें",
         "inputs": "इनपुट फ़ील्ड प्रकार चुनें",
         "pluginDefaults": "एक प्लगइन चुनें",
+        "task": "किसी task का चयन करें",
         "tasks": "कार्य चुनें",
         "triggers": "ट्रिगर चुनें"
       },
@@ -1011,6 +1012,14 @@
     "pause confirm": "क्या आप वाकई <code>{id}</code> की execution को PAUSE करना चाहते हैं?",
     "pause done": "निष्पादन PAUSED है",
     "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
+    "playground": {
+      "empty": "\"Run task\" बटन पर क्लिक करें ताकि आप अपने workflow को एक simulated execution के साथ परीक्षण कर सकें।",
+      "history": "पिछले 10 रन",
+      "run_all_tasks": "सभी Tasks चलाएं",
+      "run_task": "टास्क चलाएं",
+      "title": "प्लेग्राउंड",
+      "toggle": "प्लेग्राउंड"
+    },
     "pluginDefaults": "प्लगइन डिफॉल्ट्स",
     "pluginPage": {
       "alt": "प्लगइन्स आइकन",
@@ -1072,6 +1081,7 @@
     "revision": "संशोधन",
     "revisions": "पुनरीक्षण",
     "row count": "पंक्ति संख्या",
+    "run task in playground": "प्लेग्राउंड में task चलाएं",
     "runners": "धावक",
     "running duration": "चलने की अवधि",
     "save": "सहेजें",
@@ -1145,7 +1155,8 @@
             "language": "भाषा",
             "log_display": "Log प्रदर्शन",
             "log_level": "Log स्तर",
-            "multi_panel_editor": "मल्टी पैनल एडिटर"
+            "multi_panel_editor": "मल्टी पैनल एडिटर",
+            "playground": "प्लेग्राउंड"
           },
           "label": "मुख्य कॉन्फ़िगरेशन"
         },

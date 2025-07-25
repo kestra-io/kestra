@@ -50,19 +50,19 @@
 
     import {cssVariable} from "@kestra-io/ui-libs";
     import BasicNode from "@kestra-io/ui-libs/src/components/nodes/BasicNode.vue";
-    
+
     import {apiUrl} from "override/utils/route";
 
     import {linkedElements} from "../../utils/vueFlow";
     import {useCoreStore} from "../../stores/core";
     import {useExecutionsStore} from "../../stores/executions";
-    
+
     import {useStore} from "vuex";
     const store = useStore();
-    
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
-    
+
     const {
         id,
         addNodes,
@@ -142,32 +142,29 @@
         },
         {deep: true},
     );
+
     const openSSE = () => {
         closeSSE();
 
-        executionsStore.followExecutionDependencies({id: route.params.id, expandAll: expandAll.value})
-            .then((response) => {
-                sse.value = response;
+        sse.value = executionsStore.followExecutionDependencies({id: route.params.id, expandAll: expandAll.value})
+        sse.value.onmessage = (executionEvent) => {
+            const isEnd = executionEvent && executionEvent.lastEventId === "end-all";
+            if (isEnd) closeSSE();
 
-                sse.value.onmessage = (executionEvent) => {
-                    const isEnd = executionEvent && executionEvent.lastEventId === "end-all";
-                    if (isEnd) closeSSE();
+            const message = JSON.parse(executionEvent.data);
 
-                    const message = JSON.parse(executionEvent.data);
+            if (!message.state) return;
 
-                    if (!message.state) return;
+            messages.value.push(message);
+        };
 
-                    messages.value.push(message);
-                };
-
-                sse.value.onerror = () => {
-                    coreStore.message = {
-                        variant: "error",
-                        title: t("error"),
-                        message: t("something_went_wrong.loading_execution"),
-                    };
-                };
-            });
+        sse.value.onerror = () => {
+            coreStore.message = {
+                variant: "error",
+                title: t("error"),
+                message: t("something_went_wrong.loading_execution"),
+            };
+        };
     };
     const closeSSE = () => {
         if (!sse.value) return;

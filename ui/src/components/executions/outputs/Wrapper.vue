@@ -198,7 +198,7 @@
         const filter = selected.value?.length
             ? selected.value[0]
             : (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.label;
-        const taskRunList = [...execution.value.taskRunList];
+        const taskRunList = [...execution.value?.taskRunList ?? []];
         return taskRunList.find((e) => e.taskId === filter);
     };
     const onDebugExpression = (expression: string) => {

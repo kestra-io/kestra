@@ -35,7 +35,7 @@
 
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
-    import {mapGetters, mapState} from "vuex";
+    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
     import TriggerFlow from "./TriggerFlow.vue"
@@ -63,8 +63,7 @@
             };
         },
         computed: {
-            ...mapGetters("flow", ["flow"]),
-            ...mapState("flow", ["total"]),
+            ...mapState("flow", ["flow", "total"]),
             ...mapStores(useCoreStore),
         },
         methods: {

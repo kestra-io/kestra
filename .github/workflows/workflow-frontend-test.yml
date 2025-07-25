@@ -68,19 +68,3 @@ jobs:
       - name: Run storybook component tests
         working-directory: ui
         run: npm run test:storybook -- --coverage
-
-      - name: Codecov - Upload coverage reports
-        uses: codecov/codecov-action@v5
-        if: ${{ !cancelled() && github.event.pull_request.head.repo.full_name == github.repository }}
-        continue-on-error: true
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: frontend
-
-      - name: Codecov - Upload test results
-        uses: codecov/test-results-action@v1
-        if: ${{ !cancelled() }}
-        continue-on-error: true
-        with:
-          token: ${{ secrets.CODECOV_TOKEN && github.event.pull_request.head.repo.full_name == github.repository }}
-          flags: frontend

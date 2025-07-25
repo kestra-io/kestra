@@ -903,6 +903,7 @@
         "finally": "タスクを選択",
         "inputs": "入力フィールドタイプを選択",
         "pluginDefaults": "プラグインを選択",
+        "task": "タスクを選択",
         "tasks": "タスクを選択",
         "triggers": "トリガーを選択"
       },
@@ -1011,6 +1012,14 @@
     "pause confirm": "実行 <code>{id}</code> を一時停止してもよろしいですか？",
     "pause done": "実行がPAUSEDされています",
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
+    "playground": {
+      "empty": "「Run task」ボタンをクリックして、シミュレーション実行でワークフローをテストします。",
+      "history": "直近10回の実行",
+      "run_all_tasks": "すべてのタスクを実行",
+      "run_task": "タスクを実行",
+      "title": "プレイグラウンド",
+      "toggle": "プレイグラウンド"
+    },
     "pluginDefaults": "プラグインのデフォルト",
     "pluginPage": {
       "alt": "プラグインアイコン",
@@ -1072,6 +1081,7 @@
     "revision": "リビジョン",
     "revisions": "リビジョン",
     "row count": "行数",
+    "run task in playground": "プレイグラウンドでタスクを実行",
     "runners": "ランナー",
     "running duration": "実行期間",
     "save": "保存",
@@ -1145,7 +1155,8 @@
             "language": "言語",
             "log_display": "デフォルトLog表示",
             "log_level": "デフォルトLogレベル",
-            "multi_panel_editor": "マルチパネルエディタ"
+            "multi_panel_editor": "マルチパネルエディタ",
+            "playground": "プレイグラウンド"
           },
           "label": "メイン設定"
         },

@@ -903,6 +903,7 @@
         "finally": "작업 선택",
         "inputs": "입력 필드 유형 선택",
         "pluginDefaults": "플러그인 선택",
+        "task": "작업 선택",
         "tasks": "작업 선택",
         "triggers": "트리거 선택"
       },
@@ -1011,6 +1012,14 @@
     "pause confirm": "실행 <code>{id}</code>을(를) 일시 중지하시겠습니까?",
     "pause done": "실행이 PAUSED 상태입니다.",
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
+    "playground": {
+      "empty": "\"Run task\" 버튼을 클릭하여 시뮬레이션된 실행으로 워크플로우를 테스트하세요.",
+      "history": "최근 10회 실행",
+      "run_all_tasks": "모든 Task 실행",
+      "run_task": "작업 실행",
+      "title": "플레이그라운드",
+      "toggle": "플레이그라운드"
+    },
     "pluginDefaults": "플러그인 기본값",
     "pluginPage": {
       "alt": "플러그인 아이콘",
@@ -1072,6 +1081,7 @@
     "revision": "수정본",
     "revisions": "수정본들",
     "row count": "행 수",
+    "run task in playground": "플레이그라운드에서 task 실행",
     "runners": "러너",
     "running duration": "실행 중 지속 시간",
     "save": "저장",
@@ -1145,7 +1155,8 @@
             "language": "언어",
             "log_display": "기본 Log 표시",
             "log_level": "기본 Log 레벨",
-            "multi_panel_editor": "멀티 패널 편집기"
+            "multi_panel_editor": "멀티 패널 편집기",
+            "playground": "플레이그라운드"
           },
           "label": "기본 구성"
         },

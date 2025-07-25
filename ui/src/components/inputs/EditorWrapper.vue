@@ -21,7 +21,7 @@
         <template #absolute>
             <div class="d-flex flex-column align-items-end gap-2 mt-2" v-if="isCurrentTabFlow">
                 <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
-                    {{ $t("ai.flow.title") }}
+                    {{ t("ai.flow.title") }}
                 </el-button>
             </div>
             <ContentSave v-else @click="saveFileContent" />
@@ -47,11 +47,14 @@
 <script lang="ts" setup>
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
     import Editor from "./Editor.vue";
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
     import {useRoute, useRouter} from "vue-router";
+
+    const {t} = useI18n();
 
     const route = useRoute()
     const router = useRouter()
@@ -201,7 +204,7 @@
             path: props.path,
             dirty: false
         });
-        
+
         if (result === "redirect_to_update") {
             await router.push({
                 name: "flows/update",

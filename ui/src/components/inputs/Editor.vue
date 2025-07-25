@@ -49,14 +49,15 @@
                     :options="options"
                     :diff-editor="original !== undefined"
                     :original="original"
-                    @change="onInput"
-                    @editor-did-mount="editorDidMount"
                     :language="lang"
                     :extension="extension"
                     :schema-type="schemaType"
                     :input="input"
                     :creating="creating"
                     :large-suggestions="largeSuggestions"
+                    @mouse-move="emit('mouse-move', $event)"
+                    @change="onInput"
+                    @editor-did-mount="editorDidMount"
                 />
                 <div
                     v-show="showPlaceholder"
@@ -127,6 +128,7 @@
         (e: "update:modelValue", value: string): void;
         (e: "cursor", payload: {position: monaco.Position, model: monaco.editor.ITextModel}): void;
         (e: "confirm", value?: string): void;
+        (e: "mouse-move", event: MouseEvent): void;
     }>();
 
 

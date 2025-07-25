@@ -71,7 +71,7 @@
 
     const store = useStore();
     const currentInstance = getCurrentInstance()!;
-    const t: ReturnType<typeof useI18n>["t"] = currentInstance.appContext?.config?.globalProperties?.$t;
+    const {t} = useI18n();
 
     export type ThemeBase = editor.BuiltinTheme | "light" | "dark";
 

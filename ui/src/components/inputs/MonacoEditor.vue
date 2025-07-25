@@ -130,7 +130,7 @@
 
     const highlight = inject(EDITOR_HIGHLIGHT_INJECTION_KEY, ref());
     const isInFlowEditor = inject(EDITOR_WRAPPER_INJECTION_KEY, false);
-    
+
     watch(highlight, (line) => {
         if (!line) return;
 
@@ -172,7 +172,7 @@
         }
     };
 
-    type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean };
+    export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean };
     const props = withDefaults(defineProps<{
         path?: string,
         original?: string,
@@ -246,12 +246,13 @@
     const suggestWidgetObserver = ref<MutationObserver>()
     const suggestWidget = ref<HTMLElement>()
 
-    const emit = defineEmits(["editorDidMount", "change"])
+    const emit = defineEmits(["editorDidMount", "change", "mouseMove"])
 
     defineExpose({
         focus,
         destroy,
         monaco,
+        highlightRange
     })
 
     const editorResolved = computed(() => {
@@ -639,7 +640,10 @@
         const $el = editorRef.value
         if ($el !== null) {
             const modifiedEditorWidgets = $el.querySelector(".editor.modified .overflowingContentWidgets");
-            suggestWidgetResizeObserver.value.observe(modifiedEditorWidgets ?? $el.querySelector(".overflowingContentWidgets"), {childList: true})
+            const el = modifiedEditorWidgets ?? $el.querySelector(".overflowingContentWidgets")
+            if(el){
+                suggestWidgetResizeObserver.value.observe(el, {childList: true})
+            }
         }
     }
 
@@ -741,6 +745,10 @@
                         localEditor.value!.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {});
                     }
                 }, 300))
+
+                localEditor.value.onMouseMove((e) => {
+                    emit("mouseMove", e);
+                });
             }
 
             if (!props.input) {
@@ -770,6 +778,20 @@
         emit("editorDidMount", editorResolved.value);
 
         highlightLine();
+    }
+
+    function highlightRange(range: monaco.Range) {
+        const editor = editorResolved.value;
+        if (editor) {
+            return editor.createDecorationsCollection([{
+                range: range,
+                options: {
+                    className: "kestra-highlight",
+                    isWholeLine: true,
+                    stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
+                }
+            }]);
+        }
     }
 
     const current = computed(() => {
@@ -888,5 +910,9 @@
                 padding-right: 0 !important;
             }
         }
+    }
+
+    .kestra-highlight{
+        background-color: red;
     }
 </style>

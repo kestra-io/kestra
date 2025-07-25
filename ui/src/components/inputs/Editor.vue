@@ -89,6 +89,8 @@
     import MonacoEditor from "./MonacoEditor.vue";
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
+    const {t} = useI18n()
+
 
     const props = defineProps({
         modelValue: {type: String, default: ""},
@@ -128,11 +130,11 @@
         (e: "update:modelValue", value: string): void;
         (e: "cursor", payload: {position: monaco.Position, model: monaco.editor.ITextModel}): void;
         (e: "confirm", value?: string): void;
-        (e: "mouse-move", event: MouseEvent): void;
+        (e: "mouse-move", event: monaco.editor.IEditorMouseEvent): void;
     }>();
 
 
-    let editor: monaco.editor.IStandaloneCodeEditor | undefined = undefined
+    let editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined = undefined
 
     const focus = ref(false)
     const icon = {
@@ -150,7 +152,7 @@
     })
 
     watch(() => props.modelValue, (value) => {
-        if (editor?.getValue?.() !== value) {
+        if (isCodeEditor(editor) && editor?.getValue?.() !== value) {
             preventCursorChange.value = true;
         } else {
             preventCursorChange.value = false;
@@ -275,8 +277,13 @@
     let lastTimeout: number | undefined = undefined
     let decorations: monaco.editor.IEditorDecorationsCollection | undefined = undefined
 
-    const {t} = useI18n()
-    function editorDidMount(monacoMounted: monaco.editor.IStandaloneCodeEditor) {
+
+    function isCodeEditor(editor?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor): editor is monaco.editor.IStandaloneCodeEditor{
+        return typeof !(editor as monaco.editor.IStandaloneDiffEditor)?.getModifiedEditor === "function"
+    }
+
+    function editorDidMount(monacoMounted?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor) {
+
         const monacoRef = monacoEditor.value
 
         editor = monacoMounted;
@@ -286,15 +293,23 @@
             return;
         }
 
+
+
         // avoid double import of monaco editor, use a reference
         const KeyCode = monacoRef.monaco.KeyCode;
         const KeyMod = monacoRef.monaco.KeyMod;
 
         decorations = editor.createDecorationsCollection();
 
+        if(!isCodeEditor(editor)){
+            return
+        }
+
         if (!props.original) {
             editor.onDidBlurEditorWidget?.(() => {
-                emit("focusout", editor?.getValue());
+                emit("focusout", isCodeEditor(editor)
+                    ? editor.getValue()
+                    : undefined);
                 focus.value = false;
             });
 
@@ -424,6 +439,7 @@
                     preventCursorChange.value = false;
                     return;
                 }
+                if(!isCodeEditor(editor))return
                 let position = editor.getPosition();
                 let model = editor.getModel();
                 lastTimeout = setTimeout(() => {
@@ -440,6 +456,7 @@
         // attach an imperative method to the element so tests can programmatically update
         // the value of the editor without dealing with how Monaco handles the exact keystrokes
         monacoRef.$el.querySelector(".ks-monaco-editor").__setValueInTests = (value: string) => {
+            if(!isCodeEditor(editor))return
             editor?.setValue(value);
         };
     }
@@ -487,6 +504,7 @@
     })
 
     function highlightPebble() {
+        if(!isCodeEditor(editor))return
         // Highlight code that match pebble content
         let model = editor?.getModel?.();
         let text = model?.getValue?.();
@@ -519,6 +537,10 @@
 <style lang="scss">
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 @import "../../styles/layout/root-dark.scss";
+
+.highlight-lines{
+    background-color: #ffca16;
+}
 
 :not(.namespace-defaults, .el-drawer__body) > .ks-editor {
     flex-direction: column;

@@ -15,6 +15,7 @@
         @cursor="updatePluginDocumentation"
         @save="isCurrentTabFlow ? save(): saveFileContent()"
         @execute="execute"
+        @mouse-move="(e) => lineHovered = JSON.stringify(Object.keys(e.target?.position ?? {}))"
         :original="draftSource === undefined ? undefined : source"
         :diff-side-by-side="false"
     >
@@ -27,6 +28,19 @@
             <ContentSave v-else @click="saveFileContent" />
         </template>
     </editor>
+    <div class="position-absolute start-0 top-0 d-flex gap-2">
+        <el-button @click="highlight">
+            highlight line 4 to 7
+        </el-button>
+
+        <el-button @click="clearHighlights">
+            clearHighlights
+        </el-button>
+
+        <div>
+            lineHovered : {{ lineHovered }}
+        </div>
+    </div>
     <transition name="el-zoom-in-center">
         <AiAgent
             v-if="aiAgentOpened"
@@ -49,6 +63,8 @@
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import Editor from "./Editor.vue";
+
+    const lineHovered = ref<string>("")
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
@@ -140,7 +156,18 @@
         window.removeEventListener("keydown", toggleAiShortcut);
     });
 
-    const editorDomElement = ref<any>(null);
+    const editorDomElement = ref<InstanceType<typeof Editor>>();
+
+    function highlight() {
+        editorDomElement.value?.highlightLinesRange({
+            start: 4,
+            end: 7
+        })
+    }
+
+    function clearHighlights(){
+        editorDomElement.value?.clearHighlights()
+    }
 
     const namespace = computed(() => store.state.flow.namespace);
     const flowStore = computed(() => store.state.flow.flow);
@@ -198,7 +225,9 @@
     const flowParsed = computed(() => store.getters["flow/flowParsed"]);
     const save = async () => {
         clearTimeout(timeout.value);
-        const result = await store.dispatch("flow/save", {content: editorDomElement.value.$refs.monacoEditor.value})
+        const editorRef = editorDomElement.value
+        if(!editorRef?.$refs.monacoEditor) return
+        const result = await store.dispatch("flow/save", {content:(editorRef.$refs.monacoEditor as any).value})
 
         store.commit("editor/setTabDirty", {
             path: props.path,
@@ -223,7 +252,7 @@
         await store.dispatch("namespace/createFile", {
             namespace: namespace.value,
             path: props.path,
-            content: editorDomElement.value.modelValue,
+            content: editorDomElement.value?.modelValue,
         });
         store.commit("editor/setTabDirty", {
             path: props.path,

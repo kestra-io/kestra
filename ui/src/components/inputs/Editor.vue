@@ -539,7 +539,7 @@
 @import "../../styles/layout/root-dark.scss";
 
 .highlight-lines{
-    background-color: #ffca16;
+    background-color: rgba($base-blue-400, .2);
 }
 
 :not(.namespace-defaults, .el-drawer__body) > .ks-editor {

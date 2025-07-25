@@ -15,7 +15,7 @@
         @cursor="updatePluginDocumentation"
         @save="isCurrentTabFlow ? save(): saveFileContent()"
         @execute="execute"
-        @mouse-move="(e) => lineHovered = JSON.stringify(Object.keys(e.target?.position ?? {}))"
+        @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
         :original="draftSource === undefined ? undefined : source"
         :diff-side-by-side="false"
     >
@@ -28,19 +28,6 @@
             <ContentSave v-else @click="saveFileContent" />
         </template>
     </editor>
-    <div class="position-absolute start-0 top-0 d-flex gap-2">
-        <el-button @click="highlight">
-            highlight line 4 to 7
-        </el-button>
-
-        <el-button @click="clearHighlights">
-            clearHighlights
-        </el-button>
-
-        <div>
-            lineHovered : {{ lineHovered }}
-        </div>
-    </div>
     <transition name="el-zoom-in-center">
         <AiAgent
             v-if="aiAgentOpened"
@@ -63,8 +50,7 @@
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import Editor from "./Editor.vue";
-
-    const lineHovered = ref<string>("")
+    import * as FlowYamlUtils from "@kestra-io/ui-libs/flow-yaml-utils"
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
@@ -83,6 +69,7 @@
     import AiIcon from "../ai/AiIcon.vue";
     import AcceptDecline from "./AcceptDecline.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {usePlaygroundStore} from "../../stores/playground";
 
     const store = useStore();
     const miscStore = useMiscStore();
@@ -157,17 +144,6 @@
     });
 
     const editorDomElement = ref<InstanceType<typeof Editor>>();
-
-    function highlight() {
-        editorDomElement.value?.highlightLinesRange({
-            start: 4,
-            end: 7
-        })
-    }
-
-    function clearHighlights(){
-        editorDomElement.value?.clearHighlights()
-    }
 
     const namespace = computed(() => store.state.flow.namespace);
     const flowStore = computed(() => store.state.flow.flow);
@@ -284,6 +260,33 @@
     function declineDraft() {
         draftSource.value = undefined;
         aiAgentOpened.value = true;
+    }
+
+    const taskLineMap = computed(() => {
+        return isCurrentTabFlow.value ? FlowYamlUtils.getTasksLines(source.value) : {}
+    })
+
+    const playgroundStore = usePlaygroundStore()
+
+    function highlightHoveredTask(lineNumber?:number){
+        if(lineNumber === undefined || !playgroundStore.enabled) return
+        const hoveredTaskIds = Object.keys(taskLineMap.value).filter(taskId => {
+            const {start, end} = taskLineMap.value[taskId];
+            return start <= lineNumber && end >= lineNumber;
+        }).sort((aId, bId) => {
+            const a = taskLineMap.value[aId];
+            const b = taskLineMap.value[bId];
+            // the longest distance between start and end last
+            return (a.end - a.start) - (b.end - b.start);
+        })
+        editorDomElement.value?.clearHighlights();
+        if(hoveredTaskIds.length === 0) return
+        if(!taskLineMap.value[hoveredTaskIds[0]]) return
+        const {start, end} = taskLineMap.value[hoveredTaskIds[0]]
+        editorDomElement.value?.highlightLinesRange({
+            start,
+            end
+        });
     }
 </script>
 

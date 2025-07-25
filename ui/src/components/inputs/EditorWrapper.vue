@@ -104,7 +104,7 @@
 
     const source = computed(() => {
         return props.flow
-            ? store.getters["flow/flowYaml"]
+            ? store.state.flow.flowYaml
             : store.state.editor.tabs.find((t: any) => t.path === props.path)?.content;
     })
 
@@ -139,8 +139,8 @@
 
     const editorDomElement = ref<any>(null);
 
-    const namespace = computed(() => store.getters["flow/namespace"]);
-    const flowStore = computed(() => store.getters["flow/flow"]);
+    const namespace = computed(() => store.state.flow.namespace);
+    const flowStore = computed(() => store.state.flow.flow);
     const isCreating = computed(() => store.state.flow.isCreating);
     const isCurrentTabFlow = computed(() => props.flow)
     const isReadOnly = computed(() => flowStore.value?.deleted || !store.getters["flow/isAllowedEdit"] || store.getters["flow/readOnlySystemLabel"]);

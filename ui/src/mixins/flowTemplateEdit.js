@@ -1,5 +1,5 @@
 import {canSaveFlowTemplate, saveFlowTemplate} from "../utils/flowTemplate";
-import {mapGetters, mapState} from "vuex";
+import {mapState} from "vuex";
 
 import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
@@ -34,7 +34,7 @@ export default {
     },
     computed: {
         ...mapState("auth", ["user"]),
-        ...mapGetters("flow", ["flow"]),
+        ...mapState("flow", ["flow"]),
         ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore),
         guidedProperties() {
             return this.coreStore.guidedProperties;

@@ -14,6 +14,7 @@
             v-for="(pair, index) in internalPairs"
             :key="index"
             :gutter="10"
+            align="middle"
         >
             <el-col :span="8">
                 <InputText
@@ -24,12 +25,14 @@
                 />
             </el-col>
             <el-col :span="16" class="d-flex">
-                <InputText
-                    :model-value="pair[1]"
-                    :placeholder="t('value')"
-                    @update:model-value="(changed) => updateValue(index, changed)"
-                    class="w-100 me-2"
-                />
+                <slot name="value-field" :value="pair[1]" :key="pair[0]">
+                    <InputText
+                        :model-value="pair[1]"
+                        :placeholder="t('value')"
+                        @update:model-value="(changed) => updateValue(index, changed)"
+                        class="w-100 me-2"
+                    />
+                </slot>
                 <DeleteOutline @click="removePair(index)" class="delete" />
             </el-col>
         </el-row>

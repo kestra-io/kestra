@@ -47,7 +47,7 @@
                             :icon="Flash"
                             class="flow-run-trigger-button"
                             :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}"
-                            @click="onSubmit($refs.form); executeClicked = true;"
+                            @click.prevent="onSubmit($refs.form); executeClicked = true;"
                             type="primary"
                             native-type="submit"
                             :disabled="!flowCanBeExecuted"
@@ -74,6 +74,7 @@
     import {useCoreStore} from "../../stores/core";
     import {useMiscStore} from "../../stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
+    import {usePlaygroundStore} from "../../stores/playground";
     import {executeTask} from "../../utils/submitTask"
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
@@ -84,7 +85,11 @@
     import moment from "moment-timezone";
 
     export default {
-        components: {LabelInput, InputsForm, Curl},
+        components: {
+            LabelInput,
+            InputsForm,
+            Curl
+        },
         props: {
             redirect: {
                 type: Boolean,
@@ -113,7 +118,7 @@
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
         computed: {
-            ...mapStores(useCoreStore, useMiscStore, useExecutionsStore),
+            ...mapStores(useCoreStore, useMiscStore, useExecutionsStore, usePlaygroundStore),
             flow() {
                 return this.executionsStore.flow
             },
@@ -166,7 +171,6 @@
                             return false;
                         }
 
-
                         executeTask(this, this.flow, this.inputs, {
                             redirect: this.redirect,
                             newTab: this.newTab,
@@ -178,7 +182,7 @@
                                     .map(label => `${label.key}:${label.value}`)
                             )],
                             scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
-                            nextStep: true
+                            nextStep: true,
                         })
                         this.$emit("executionTrigger");
                     });

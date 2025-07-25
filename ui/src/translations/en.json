@@ -774,6 +774,7 @@
             "execute_default_tab": "Default Execution Tab",
             "multi_panel_editor": "Multi Panel Editor",
             "flow_default_tab": "Default Flow Tab",
+            "playground": "Playground",
             "auto_refresh_interval": "Auto Refresh Interval"
           }
         },
@@ -1189,6 +1190,7 @@
         }
       },
       "select": {
+        "task": "Select a task",
         "tasks": "Select a task",
         "triggers": "Select a trigger",
         "errors": "Select a task",
@@ -1443,10 +1445,19 @@
         "generating": "Generating Flow YAML for you..."
       }
     },
+    "playground": {
+      "title": "Playground",
+      "empty": "Click the \"Run task\" button to test your workflow with a simulated execution.",
+      "toggle": "Playground",
+      "run_task": "Run Task",
+      "run_all_tasks": "Run All Tasks",
+      "history": "Last 10 runs"
+    },
     "submit": "Submit",
     "to toggle": "to toggle",
     "accept": "Accept",
     "reject": "Reject",
-    "last modified": "Last modified"
+    "last modified": "Last modified",
+    "run task in playground": "Run task in playground"
   }
 }

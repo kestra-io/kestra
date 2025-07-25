@@ -82,7 +82,6 @@
             @follow="forwardEvent('follow', $event)"
             @opened-taskruns-count="openedTaskrunsCount = $event"
             @log-indices-by-level="Object.entries($event).forEach(([levelName, indices]) => logIndicesByLevel[levelName] = indices)"
-            :target-execution="executionsStore.execution"
             :target-flow="executionsStore.flow"
             :show-progress-bar="false"
         />

@@ -903,6 +903,7 @@
         "finally": "选择一个task",
         "inputs": "选择一个input字段类型",
         "pluginDefaults": "选择插件",
+        "task": "选择一个task",
         "tasks": "选择一个task",
         "triggers": "选择一个trigger"
       },
@@ -1011,6 +1012,14 @@
     "pause confirm": "您确定要暂停执行<code>{id}</code>吗？",
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
+    "playground": {
+      "empty": "单击“Run task”按钮，通过模拟执行测试您的工作流。",
+      "history": "最近10次运行",
+      "run_all_tasks": "运行所有Tasks",
+      "run_task": "运行Task",
+      "title": "游乐场",
+      "toggle": "游乐场"
+    },
     "pluginDefaults": "插件默认值",
     "pluginPage": {
       "alt": "插件图标",
@@ -1072,6 +1081,7 @@
     "revision": "修订版",
     "revisions": "修订版",
     "row count": "行数",
+    "run task in playground": "在playground中运行task",
     "runners": "运行者",
     "running duration": "运行时间",
     "save": "保存",
@@ -1145,7 +1155,8 @@
             "language": "语言",
             "log_display": "默认日志显示",
             "log_level": "默认日志级别",
-            "multi_panel_editor": "多面板编辑器"
+            "multi_panel_editor": "多面板编辑器",
+            "playground": "游乐场"
           },
           "label": "主要配置"
         },

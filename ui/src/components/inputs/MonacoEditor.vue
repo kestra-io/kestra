@@ -900,8 +900,4 @@
             }
         }
     }
-
-    .kestra-highlight{
-        background-color: red;
-    }
 </style>

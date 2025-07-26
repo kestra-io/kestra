@@ -9,7 +9,11 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
 
     const playgroundStore = usePlaygroundStore()
 
-    const highlightedLines = ref<{taskId: string, start: number, end: number}>();
+    const highlightedLines = ref<{
+        taskId: string,
+        start: number,
+        end: number
+    }>();
 
     const showRunTaskButton = ref<boolean>(false);
     const ln = ref<number>(-1);
@@ -35,7 +39,14 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
         }
 
         const {start, end} = taskLineMap.value[taskId]
-        return {taskId, start, end};
+
+        // get this hovered tasks code, find the longest line
+        const taskCodeLines = source.value.split("\n").slice(start - 1, end);
+        const longestLineLength = taskCodeLines.reduce((longest, current) => {
+            return Math.max(longest, current.length);
+        }, 0);
+
+        return {taskId, start, end, longestLineLength, firstLineLength: taskCodeLines[0].length};
     })
 
     function highlightLines(range?: {start: number, end: number}) {
@@ -47,7 +58,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
         editorRefElement.value?.highlightLinesRange(range);
     }
 
-    function addButtonToHoveredTask(taskCode?: {taskId: string, start: number, end: number}) {
+    function addButtonToHoveredTask(taskCode?: {taskId: string, start: number, end: number, longestLineLength:number, firstLineLength: number}) {
         if(highlightedLines.value && highlightedLines.value.taskId !== taskCode?.taskId) {
             editorRefElement.value?.removeContentWidget(`task-hovered-${highlightedLines.value.taskId}`);
         }
@@ -61,22 +72,16 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             return;
         }
 
-        // get this hovered tasks code, find the longest line
-        const taskCodeLines = source.value.split("\n").slice(taskCode.start - 1, taskCode.end);
-        const longestLineLength = taskCodeLines.reduce((longest, current) => {
-            return Math.max(longest, current.length);
-        }, 0);
-
         // now the size of this longest line determines where
         // we will want to add the editor content widget
         editorRefElement.value?.addContentWidget({
             id: `task-hovered-${taskCode.taskId}`,
             position: {
                 lineNumber: taskCode.start,
-                column: longestLineLength + 1
+                column: taskCode.longestLineLength + 1
             },
             height: (taskCode.end - taskCode.start) + 1,
-            marginLeft: ((longestLineLength - taskCodeLines[0].length))
+            marginLeft: (taskCode.longestLineLength - taskCode.firstLineLength),
         });
 
         nextTick(() => {
@@ -103,7 +108,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
         addButtonToHoveredTask(res);
 
         highlightedLines.value = res;
-    })
+    }, {deep: true});
 
 
     function highlightHoveredTask(lineNumber?:number){

@@ -88,6 +88,7 @@
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
     import MonacoEditor from "./MonacoEditor.vue";
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+    import {nextTick} from "process";
 
     const {t} = useI18n()
 
@@ -560,6 +561,8 @@
         return node;
     })()
 
+    const showTeleport = ref(false)
+
     function addContentWidget(widget: {
         id: string;
         position: monaco.IPosition;
@@ -590,6 +593,9 @@
                 return widgetNode
             },
         });
+        nextTick(() => {
+            showTeleport.value = true;
+        })
     }
 
     function removeContentWidget(id: string) {

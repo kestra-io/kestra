@@ -1,8 +1,9 @@
 import {computed, nextTick, ref, Ref, watch} from "vue";
 import * as FlowYamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import {usePlaygroundStore} from "../../stores/playground";
+import Editor from "../../components/inputs/Editor.vue";
 
-export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean>, editorRefElement: Ref<any>, source: Ref<string>) {
+export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean>, editorRefElement: Ref<InstanceType<typeof Editor> | undefined>, source: Ref<string>) {
     const taskLineMap = computed(() => {
         return isCurrentTabFlow.value ? FlowYamlUtils.getTasksLines(source.value) : {}
     })
@@ -12,7 +13,9 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
     const highlightedLines = ref<{
         taskId: string,
         start: number,
-        end: number
+        end: number,
+        longestLineLength: number,
+        firstLineLength: number
     }>();
 
     const showRunTaskButton = ref<boolean>(false);
@@ -46,7 +49,13 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             return Math.max(longest, current.length);
         }, 0);
 
-        return {taskId, start, end, longestLineLength, firstLineLength: taskCodeLines[0].length};
+        return {
+            taskId,
+            start,
+            end,
+            longestLineLength,
+            firstLineLength: taskCodeLines[0].length
+        };
     })
 
     function highlightLines(range?: {start: number, end: number}) {
@@ -59,18 +68,12 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
     }
 
     function addButtonToHoveredTask(taskCode?: {taskId: string, start: number, end: number, longestLineLength:number, firstLineLength: number}) {
-        if(highlightedLines.value && highlightedLines.value.taskId !== taskCode?.taskId) {
-            editorRefElement.value?.removeContentWidget(`task-hovered-${highlightedLines.value.taskId}`);
-        }
-
         if(!taskCode) {
             showRunTaskButton.value = false;
             return
         }
 
-        if(highlightedLines.value && highlightedLines.value.taskId === taskCode.taskId) {
-            return;
-        }
+        editorRefElement.value?.removeContentWidget(`task-hovered-${taskCode.taskId}`);
 
         // now the size of this longest line determines where
         // we will want to add the editor content widget
@@ -97,10 +100,10 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             return;
         }
 
+        const hv = highlightedLines.value as Record<string, any> | undefined;
+
         // in case identical setting change nothing
-        if(highlightedLines.value
-            && highlightedLines.value.start === res.start
-            && highlightedLines.value.end === res.end) {
+        if(hv && !Object.keys(hv).some((key) => hv[key] !== (res as Record<string, any>)[key])) {
             return;
         }
 

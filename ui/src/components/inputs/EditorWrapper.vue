@@ -15,7 +15,7 @@
         @cursor="updatePluginDocumentation"
         @save="isCurrentTabFlow ? save(): saveFileContent()"
         @execute="execute"
-        @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
+        @mouse-move="(e:any) => highlightHoveredTask(e.target?.position?.lineNumber)"
         :original="draftSource === undefined ? undefined : source"
         :diff-side-by-side="false"
     >
@@ -34,7 +34,7 @@
             class="position-absolute prompt"
             @close="aiAgentOpened = false"
             :flow="flowContent"
-            @generated-yaml="yaml => {draftSource = yaml; aiAgentOpened = false}"
+            @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
         />
     </transition>
     <AcceptDecline

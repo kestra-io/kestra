@@ -279,7 +279,7 @@
 
 
     function isCodeEditor(editor?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor): editor is monaco.editor.IStandaloneCodeEditor{
-        return typeof !(editor as monaco.editor.IStandaloneDiffEditor)?.getModifiedEditor === "function"
+        return editor?.getEditorType() === monacoEditor.value?.monaco.editor.EditorType.ICodeEditor
     }
 
     function editorDidMount(monacoMounted?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor) {
@@ -480,18 +480,25 @@
         editor?.focus();
     }
 
-    function highlightLinesRange(range: {start: number, end: number}) {
-        const monacoRef = monacoEditor.value;
-        if (!monacoRef || !decorations) return;
-        const decoration = {
-            range: new monacoRef.monaco.Range(range.start, 1, range.end, 1),
+    const decorationsList: {
+        pebble?: monaco.editor.IModelDeltaDecoration[],
+        lines?: monaco.editor.IModelDeltaDecoration[]
+    } = {}
+
+    function getHighlightDecoration(range: {start: number, end: number}) {
+        if (!monacoEditor.value) return ;
+        const monacoRef = monacoEditor.value.monaco;
+        return [{
+            range: new monacoRef.Range(range.start, 1, range.end, 1),
             options: {
                 isWholeLine: true,
                 className: "highlight-lines",
             },
-        };
+        }] as monaco.editor.IModelDeltaDecoration[];
+    }
 
-        decorations?.set([decoration]);
+    function highlightLinesRange(range: {start: number, end: number}) {
+        decorationsList.lines = getHighlightDecoration(range);
     }
 
     function clearHighlights() {
@@ -501,7 +508,19 @@
     defineExpose({
         highlightLinesRange,
         clearHighlights,
+        addContentWidget,
+        removeContentWidget,
     })
+
+    function setDecorations() {
+        decorations?.clear()
+        if(decorationsList.lines){
+            decorations?.append(decorationsList.lines);
+        }
+        if(decorationsList.pebble){
+            decorations?.append(decorationsList.pebble);
+        }
+    }
 
     function highlightPebble() {
         if(!isCodeEditor(editor))return
@@ -510,7 +529,7 @@
         let text = model?.getValue?.();
         let regex = new RegExp("\\{\\{(.+?)}}", "g");
         let match;
-        const decorationsToAdd = [];
+        const decorationsToAdd: monaco.editor.IModelDeltaDecoration[] = [];
         while (text && model && (match = regex.exec(text)) !== null) {
             let startPos = model.getPositionAt(match.index);
             let endPos = model.getPositionAt(match.index + match[0].length);
@@ -526,7 +545,67 @@
                 },
             });
         }
-        decorations?.set(decorationsToAdd);
+
+        decorationsList.pebble = decorationsToAdd;
+        setDecorations();
+    }
+
+    const widgetNode = (() => {
+        const node = document.createElement("div");
+        node.className = "editor-content-widget";
+        const content = document.createElement("div")
+        content.className = "editor-content-widget-content";
+        node.appendChild(content)
+        return node;
+    })()
+
+    function addContentWidget(widget: {
+        id: string;
+        position: monaco.IPosition;
+        height: number
+        marginLeft: number
+    }) {
+        if(!isCodeEditor(editor)) return
+        if(!monacoEditor.value) return
+        const monacoRefTypes = monacoEditor.value.monaco
+        editor?.addContentWidget({
+            getId(){
+                return widget.id
+            },
+            getPosition(){
+                return {
+                    position: widget.position,
+                    preference: [
+                        monacoRefTypes.editor.ContentWidgetPositionPreference.EXACT,
+                    ],
+                }
+            },
+            getDomNode: () => {
+                const content = widgetNode.querySelector(".editor-content-widget-content") as HTMLDivElement;
+                widgetNode.style.marginLeft = widget.marginLeft / 2.2 + "rem";
+                if(content){
+                    content.style.height = (widget.height * 18) + "px";
+                }
+                return widgetNode
+            },
+        });
+    }
+
+    function removeContentWidget(id: string) {
+        if(!isCodeEditor(editor)) return
+        editor?.removeContentWidget({
+            getId: () => id,
+            getPosition(){
+                return {
+                    position: {lineNumber: 0, column: 0},
+                    preference: [],
+                }
+            },
+            getDomNode: () => {
+                return widgetNode;
+            },
+        });
+
     }
 </script>
 
@@ -540,6 +619,15 @@
 
 .highlight-lines{
     background-color: rgba($base-blue-400, .2);
+}
+
+.editor-content-widget-content{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    padding: 0 4rem;
 }
 
 :not(.namespace-defaults, .el-drawer__body) > .ks-editor {

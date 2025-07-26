@@ -27,6 +27,14 @@
             </div>
             <ContentSave v-else @click="saveFileContent" />
         </template>
+        <template v-if="playgroundStore.enabled" #widget-content>
+            <el-button
+                class="el-button--playground"
+                @click="playgroundStore.runUntilTask(highlightedLines?.taskId)"
+            >
+                {{ t('playground.run_task') }}
+            </el-button>
+        </template>
     </editor>
     <transition name="el-zoom-in-center">
         <AiAgent
@@ -43,14 +51,6 @@
         @accept="acceptDraft"
         @reject="declineDraft"
     />
-    <Teleport v-if="playgroundStore.enabled && showRunTaskButton" to=".editor-content-widget-content">
-        <el-button
-            class="el-button--playground"
-            @click="playgroundStore.runUntilTask(highlightedLines?.taskId)"
-        >
-            {{ t('playground.run_task') }}
-        </el-button>
-    </Teleport>
 </template>
 
 <script lang="ts" setup>
@@ -110,7 +110,7 @@
     const props = withDefaults(defineProps<EditorTabProps>(), {
         extension: undefined,
         dirty: false,
-        flow: true
+        flow: true,
     });
 
     provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
@@ -273,7 +273,6 @@
         playgroundStore,
         highlightHoveredTask,
         highlightedLines,
-        showRunTaskButton
     } = useFlowEditorRunTaskButton(isCurrentTabFlow, editorRefElement, source);
 </script>
 

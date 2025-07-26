@@ -71,6 +71,9 @@
                 </div>
             </div>
         </div>
+        <Teleport v-if="showWidgetContent" to=".editor-content-widget-content">
+            <slot name="widget-content" />
+        </Teleport>
     </div>
 </template>
 
@@ -561,7 +564,7 @@
         return node;
     })()
 
-    const showTeleport = ref(false)
+    const showWidgetContent = ref(false)
 
     function addContentWidget(widget: {
         id: string;
@@ -594,11 +597,12 @@
             },
         });
         nextTick(() => {
-            showTeleport.value = true;
+            showWidgetContent.value = true;
         })
     }
 
     function removeContentWidget(id: string) {
+        showWidgetContent.value = false;
         if(!isCodeEditor(editor)) return
         editor?.removeContentWidget({
             getId: () => id,

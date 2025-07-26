@@ -1,4 +1,4 @@
-import {computed, nextTick, ref, Ref, watch} from "vue";
+import {computed, ref, Ref, watch} from "vue";
 import * as FlowYamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import {usePlaygroundStore} from "../../stores/playground";
 import Editor from "../../components/inputs/Editor.vue";
@@ -18,7 +18,6 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
         firstLineLength: number
     }>();
 
-    const showRunTaskButton = ref<boolean>(false);
     const ln = ref<number>(-1);
 
     const hoveredTaskProperties = computed(() => {
@@ -69,7 +68,6 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
 
     function addButtonToHoveredTask(taskCode?: {taskId: string, start: number, end: number, longestLineLength:number, firstLineLength: number}) {
         if(!taskCode) {
-            showRunTaskButton.value = false;
             return
         }
 
@@ -86,16 +84,11 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             height: (taskCode.end - taskCode.start) + 1,
             marginLeft: (taskCode.longestLineLength - taskCode.firstLineLength),
         });
-
-        nextTick(() => {
-            showRunTaskButton.value = true;
-        });
     }
 
     watch(hoveredTaskProperties, (res) => {
         if(!res || !playgroundStore.enabled || !isCurrentTabFlow.value) {
             highlightedLines.value = undefined;
-            showRunTaskButton.value = false;
             editorRefElement.value?.clearHighlights();
             return;
         }
@@ -127,6 +120,5 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
         highlightHoveredTask,
         playgroundStore,
         highlightedLines,
-        showRunTaskButton,
     }
 }

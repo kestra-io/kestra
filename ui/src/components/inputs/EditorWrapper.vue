@@ -1,7 +1,7 @@
 <template>
     <editor
         id="editorWrapper"
-        ref="editorDomElement"
+        ref="editorRefElement"
         :model-value="draftSource === undefined ? source : draftSource"
         :schema-type="isCurrentTabFlow ? 'flow': undefined"
         :lang="extension === undefined ? 'yaml' : undefined"
@@ -43,6 +43,14 @@
         @accept="acceptDraft"
         @reject="declineDraft"
     />
+    <Teleport v-if="playgroundStore.enabled && showRunTaskButton" to=".editor-content-widget-content">
+        <el-button
+            class="el-button--playground"
+            @click="playgroundStore.runUntilTask(highlightedLines?.taskId)"
+        >
+            {{ t('playground.run_task') }}
+        </el-button>
+    </Teleport>
 </template>
 
 <script lang="ts" setup>
@@ -50,7 +58,6 @@
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import Editor from "./Editor.vue";
-    import * as FlowYamlUtils from "@kestra-io/ui-libs/flow-yaml-utils"
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
@@ -69,7 +76,7 @@
     import AiIcon from "../ai/AiIcon.vue";
     import AcceptDecline from "./AcceptDecline.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import {usePlaygroundStore} from "../../stores/playground";
+    import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
 
     const store = useStore();
     const miscStore = useMiscStore();
@@ -108,7 +115,7 @@
 
     provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
 
-    const source = computed(() => {
+    const source = computed<string>(() => {
         return props.flow
             ? store.state.flow.flowYaml
             : store.state.editor.tabs.find((t: any) => t.path === props.path)?.content;
@@ -143,7 +150,7 @@
         window.removeEventListener("keydown", toggleAiShortcut);
     });
 
-    const editorDomElement = ref<InstanceType<typeof Editor>>();
+    const editorRefElement = ref<InstanceType<typeof Editor>>();
 
     const namespace = computed(() => store.state.flow.namespace);
     const flowStore = computed(() => store.state.flow.flow);
@@ -201,7 +208,7 @@
     const flowParsed = computed(() => store.getters["flow/flowParsed"]);
     const save = async () => {
         clearTimeout(timeout.value);
-        const editorRef = editorDomElement.value
+        const editorRef = editorRefElement.value
         if(!editorRef?.$refs.monacoEditor) return
         const result = await store.dispatch("flow/save", {content:(editorRef.$refs.monacoEditor as any).value})
 
@@ -228,7 +235,7 @@
         await store.dispatch("namespace/createFile", {
             namespace: namespace.value,
             path: props.path,
-            content: editorDomElement.value?.modelValue,
+            content: editorRefElement.value?.modelValue,
         });
         store.commit("editor/setTabDirty", {
             path: props.path,
@@ -262,32 +269,12 @@
         aiAgentOpened.value = true;
     }
 
-    const taskLineMap = computed(() => {
-        return isCurrentTabFlow.value ? FlowYamlUtils.getTasksLines(source.value) : {}
-    })
-
-    const playgroundStore = usePlaygroundStore()
-
-    function highlightHoveredTask(lineNumber?:number){
-        if(lineNumber === undefined || !playgroundStore.enabled) return
-        const hoveredTaskIds = Object.keys(taskLineMap.value).filter(taskId => {
-            const {start, end} = taskLineMap.value[taskId];
-            return start <= lineNumber && end >= lineNumber;
-        }).sort((aId, bId) => {
-            const a = taskLineMap.value[aId];
-            const b = taskLineMap.value[bId];
-            // the longest distance between start and end last
-            return (a.end - a.start) - (b.end - b.start);
-        })
-        editorDomElement.value?.clearHighlights();
-        if(hoveredTaskIds.length === 0) return
-        if(!taskLineMap.value[hoveredTaskIds[0]]) return
-        const {start, end} = taskLineMap.value[hoveredTaskIds[0]]
-        editorDomElement.value?.highlightLinesRange({
-            start,
-            end
-        });
-    }
+    const {
+        playgroundStore,
+        highlightHoveredTask,
+        highlightedLines,
+        showRunTaskButton
+    } = useFlowEditorRunTaskButton(isCurrentTabFlow, editorRefElement, source);
 </script>
 
 <style scoped lang="scss">

@@ -480,7 +480,7 @@
         editor?.focus();
     }
 
-    const decorationsList: {
+    const decorationsLists: {
         pebble?: monaco.editor.IModelDeltaDecoration[],
         lines?: monaco.editor.IModelDeltaDecoration[]
     } = {}
@@ -498,7 +498,8 @@
     }
 
     function highlightLinesRange(range: {start: number, end: number}) {
-        decorationsList.lines = getHighlightDecoration(range);
+        decorationsLists.lines = getHighlightDecoration(range);
+        setDecorations();
     }
 
     function clearHighlights() {
@@ -514,11 +515,11 @@
 
     function setDecorations() {
         decorations?.clear()
-        if(decorationsList.lines){
-            decorations?.append(decorationsList.lines);
+        if(decorationsLists.lines){
+            decorations?.append(decorationsLists.lines);
         }
-        if(decorationsList.pebble){
-            decorations?.append(decorationsList.pebble);
+        if(decorationsLists.pebble){
+            decorations?.append(decorationsLists.pebble);
         }
     }
 
@@ -546,7 +547,7 @@
             });
         }
 
-        decorationsList.pebble = decorationsToAdd;
+        decorationsLists.pebble = decorationsToAdd;
         setDecorations();
     }
 

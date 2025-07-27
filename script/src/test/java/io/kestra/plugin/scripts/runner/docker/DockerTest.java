@@ -37,4 +37,29 @@ class DockerTest extends AbstractTaskRunnerTest {
         assertThat(result.getExitCode()).isZero();
         Assertions.assertThat(result.getLogConsumer().getStdOutCount()).isEqualTo(1);
     }
+
+    @Test
+    void shouldSetCorrectCPULimitsInContainer() throws Exception {
+        var runContext = runContext(this.runContextFactory);
+
+        var cpuConfig = Cpu.builder()
+            .cpus(Property.ofValue(1.5))
+            .build();
+
+        var docker = Docker.builder()
+            .image("rockylinux:9.3-minimal")
+            .cpu(cpuConfig)
+            .build();
+
+        var taskCommands = new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of(
+            "/bin/sh", "-c",
+            "cat /sys/fs/cgroup/cpu.max || cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us"
+        )));
+
+        var result = docker.run(runContext, taskCommands, Collections.emptyList());
+
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
+        Assertions.assertThat(result.getLogConsumer().getStdOutCount()).isEqualTo(1);
+    }
 }

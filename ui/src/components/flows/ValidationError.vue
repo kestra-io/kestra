@@ -161,7 +161,7 @@
         }
 
         &.success {
-            border-color: rgb(var(--bs-success-rgb));
+            border-color: rgb(var(--ks-border-success));
         }
 
         &:not(.success) span:not(.material-design-icon) {
@@ -183,12 +183,10 @@
         width: fit-content;
         min-width: 20vw;
         max-width: 50vw;
+        max-height: 500px;
         border-radius: $border-radius-lg;
-        color: $black;
-
-        html.dark & {
-            color: white;
-        }
+        color: var(--ks-content-primary);
+        overflow-y: auto;
 
         > * {
             height: fit-content;
@@ -209,18 +207,14 @@
         }
 
         .el-main {
-            padding: 2rem 1rem !important;
+            padding: 1.5rem 1rem !important;
             font-family: $font-family-monospace;
-            background-color: white;
+            background-color: var(--ks-background-card);
             white-space: normal;
-            border-top: 1px solid var(--bs-gray-300);
+            border-top: 1px solid var(--ks-border-primary);
             text-wrap: wrap;
-
-            html.dark & {
-                color: white;
-                background-color: var(--bs-gray-400);
-                border-top: 1px solid var(--bs-gray-600);
-            }
+            min-height: fit-content;
+            color: var(--ks-content-primary);
         }
     }
 

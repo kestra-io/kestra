@@ -171,7 +171,9 @@ class DateFilterTest {
 
         render = variableRenderer.render("{{ now(format=\"sql_milli\") }}", ImmutableMap.of());
 
-        assertThat(render).isEqualTo(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")));
+        // a millisecond can pass between the render and now so we can't assert on a precise to millisecond date
+        assertThat(render).startsWith(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        assertThat(render).hasSize(23);
     }
 
     @Test

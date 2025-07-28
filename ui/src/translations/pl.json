@@ -10,6 +10,7 @@
     "Finish": "Zakończ",
     "Fold auto": "Edytor: automatyczne składanie wieloliniowych",
     "Fold content lines": "Złóż wieloliniowe ciągi",
+    "Hover description": "Edytor: Pokaż opis pola po najechaniu na key lub value",
     "Language": "Język",
     "Next step": "Następny krok",
     "Per page": "na stronę",
@@ -269,7 +270,6 @@
     },
     "days": "Dni",
     "debug": "Debugowanie",
-    "decline": "Odrzuć",
     "default": "Domyślny",
     "delete": "Usuń",
     "delete backfill": "Usuń backfill",
@@ -402,6 +402,7 @@
       "move_line": "Przenieś linię",
       "reset_fontsize": "Zresetuj rozmiar czcionki",
       "save_flow": "Zapisz flow",
+      "toggle_ai_agent": "Przełącz agenta AI",
       "trigger_autocompletion": "Wyzwól autouzupełnianie",
       "uncomment": "Odkomentuj"
     },
@@ -474,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "Renderuj Wyrażenie",
       "title": "Debugowanie Wyrażenia",
       "tooltip": "Renderuj dowolne wyrażenie Pebble i sprawdź kontekst wykonania."
     },
@@ -601,6 +603,7 @@
         },
         "empty": "Nie zapisałeś jeszcze żadnego wyszukiwania.",
         "label": "Zapisane wyszukiwania",
+        "name_already_used": "Szukana label już używana.",
         "remove": "Usuń",
         "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
       },
@@ -900,6 +903,7 @@
         "finally": "Wybierz task",
         "inputs": "Wybierz typ pola input",
         "pluginDefaults": "Wybierz plugin",
+        "task": "Wybierz task",
         "tasks": "Wybierz task",
         "triggers": "Wybierz trigger"
       },
@@ -1008,6 +1012,14 @@
     "pause confirm": "Czy na pewno chcesz wstrzymać wykonanie <code>{id}</code>?",
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
+    "playground": {
+      "empty": "Kliknij przycisk \"Run task\", aby przetestować swój workflow za pomocą symulowanej execution.",
+      "history": "Ostatnie 10 uruchomień",
+      "run_all_tasks": "Uruchom Wszystkie Taski",
+      "run_task": "Uruchom Task",
+      "title": "Plac zabaw",
+      "toggle": "Plac zabaw"
+    },
     "pluginDefaults": "Domyślne ustawienia pluginu",
     "pluginPage": {
       "alt": "Ikona wtyczek",
@@ -1036,6 +1048,7 @@
     "read-more": "Czytaj więcej o",
     "readonly property": "Właściwość tylko do odczytu",
     "refresh": "Odśwież",
+    "reject": "Odrzuć",
     "relative": "Względny",
     "relative end date": "Względna data zakończenia",
     "relative start date": "Względna data rozpoczęcia",
@@ -1068,6 +1081,7 @@
     "revision": "Wersja",
     "revisions": "Wersje",
     "row count": "Liczba wierszy",
+    "run task in playground": "Uruchom task w playgroundzie",
     "runners": "Biegacze",
     "running duration": "Czas trwania w trakcie działania",
     "save": "Zapisz",
@@ -1141,7 +1155,8 @@
             "language": "Język",
             "log_display": "Domyślne Wyświetlanie Log",
             "log_level": "Domyślna Poziom Logs",
-            "multi_panel_editor": "Edytor Wielopanelowy"
+            "multi_panel_editor": "Edytor Wielopanelowy",
+            "playground": "Plac zabaw"
           },
           "label": "Główna konfiguracja"
         },
@@ -1176,8 +1191,10 @@
             "editor_folding_stratgy": "Automatyczne Zwijanie Kodu w Edytorze",
             "editor_font_family": "Rodzina Czcionki Edytora",
             "editor_font_size": "Rozmiar Czcionki Edytora",
+            "editor_hover_description": "Najedź na właściwość, aby zobaczyć opis",
             "environment_color": "Kolor Środowiska",
             "environment_name": "Nazwa Środowiska",
+            "environment_name_tooltip": "Nazwa tego środowiska jest ustawiona z config, ale można ją zmienić.",
             "logs_font_size": "Rozmiar czcionki logów",
             "theme": "Motyw"
           },
@@ -1211,13 +1228,13 @@
         "complete": "Uruchom Kestra UI",
         "config": "Sprawdź Konfigurację",
         "survey": "Powiedz nam więcej",
-        "user": "Utwórz pierwszego użytkownika"
+        "user": "Utwórz swoje konto"
       },
       "subtitles": {
         "complete": "Konfiguracja zakończona sukcesem!",
         "config": "Oto szczegóły Twojej konfiguracji",
         "survey": "Pomóż nam ulepszyć Kestra Open Source Edition",
-        "user": "Skonfiguruj swoją instancję, tworząc pierwszego użytkownika"
+        "user": "Skonfiguruj swoją instancję, tworząc konto"
       },
       "success": {
         "subtitle": "Jesteś gotowy!",
@@ -1242,13 +1259,16 @@
       },
       "titles": {
         "survey": "Powiedz nam więcej",
-        "user": "Utwórz pierwszego użytkownika"
+        "user": "Utwórz konto"
       },
+      "troubleshooting": "Zapomniałeś hasła?",
       "validation": {
+        "config_message": "Upewnij się, że zaktualizowałeś swoją konfigurację, aby naprawić ten komunikat o błędzie.",
         "email_invalid": "Nieprawidłowy email",
         "email_required": "Email jest wymagany",
         "email_temporary_not_allowed": "Tymczasowe lub jednorazowe adresy e-mail nie są dozwolone",
         "firstName_required": "Imię jest wymagane",
+        "incorrect_creds": "Nieprawidłowa nazwa użytkownika lub hasło. Upewnij się, że Twoje dane uwierzytelniające są poprawne.",
         "lastName_required": "Wymagane nazwisko",
         "password_invalid": "Nieprawidłowe hasło"
       }
@@ -1289,6 +1309,7 @@
     "success": "Sukces",
     "sum": "Suma",
     "switch-view": "Przełącz widok",
+    "system overview": "Przegląd Systemu",
     "system_namespace": "Zachowaj kontrolę nad swoją platformą dzięki systemowym flows.",
     "system_namespace_description": "Automatyzuj zadania konserwacyjne, od alertów o awariach po automatyczne czyszczenie.",
     "tags": "Tagi",

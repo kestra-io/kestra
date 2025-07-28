@@ -156,13 +156,10 @@
                         :diff-side-by-side="false"
                     >
                         <template #absolute>
-                            <div class="d-flex flex-column align-items-end gap-2" v-if="isCurrentTabFlow">
+                            <div class="d-flex flex-column align-items-end gap-2 mt-2" v-if="isCurrentTabFlow">
                                 <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
                                     {{ $t("ai.flow.title") }}
                                 </el-button>
-                                <span>
-                                    <KeyShortcuts />
-                                </span>
                             </div>
                         </template>
                     </editor>
@@ -179,7 +176,7 @@
                         v-if="draftSource !== undefined"
                         class="position-absolute actions"
                         @accept="acceptDraft"
-                        @decline="declineDraft"
+                        @reject="declineDraft"
                     />
                 </template>
                 <div v-else class="no-tabs-opened">
@@ -487,7 +484,6 @@
 
     import TypeIcon from "../utils/icons/Type.vue"
     import SwitchView from "./SwitchView.vue";
-    import KeyShortcuts from "./KeyShortcuts.vue";
 
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -526,8 +522,10 @@
     const tabsScrollRef = ref();
 
     const toggleAiShortcut = (event) => {
-        if (event.altKey && event.key === "k" && isCurrentTabFlow.value) {
+        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value && aiEnabled.value) {
             event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             draftSource.value = undefined;
             aiAgentOpened.value = !aiAgentOpened.value;
         }
@@ -676,7 +674,7 @@
     const editorWidth = useStorage("editor-size", 50);
     const validationDomElement = ref(null);
     const isLoading = ref(false);
-    const flowYaml = computed(() => store.getters["flow/flowYaml"]);
+    const flowYaml = computed(() => store.state.flow.flowYaml);
     const flowYamlOrigin = computed(() => store.state.flow.flowYamlOrigin);
     const user = computed(() => store.getters["auth/user"]);
     const metadata = computed(() => store.state.flow.metadata);
@@ -720,7 +718,7 @@
     };
 
     const taskErrors = computed(() => {
-        return store.getters["flow/taskError"]?.split(/, ?/);
+        return store.state.flow.taskError?.split(/, ?/);
     });
 
     watch(
@@ -1551,8 +1549,21 @@
 
     .prompt {
         bottom: 10%;
-        width: calc(100% - 4rem);
-        left: 2rem;
+        width: calc(100% - 5rem);
+        left: 3rem;
+        max-width: 700px;
+        background-color: var(--ks-background-panel);
+        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+    }
+
+    .rounded-pill {
+        background-color: #262A35;
+        color: #ffffff;
+        box-shadow: 0px 4px 4px 0px #00000040;
+
+        &:hover {
+            background-color: #262A35;
+        }
     }
 
     .actions{

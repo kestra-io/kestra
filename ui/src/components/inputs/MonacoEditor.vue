@@ -53,7 +53,7 @@
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import configureLanguage from "../../composables/monaco/languages/languagesConfigurator";
 
-    import {EDITOR_HIGHLIGHT_INJECTION_KEY} from "../code/injectionKeys";
+    import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
 
     import YamlWorker from "./yaml.worker.js?worker";
     import Utils from "../../utils/utils";
@@ -129,6 +129,8 @@
     }
 
     const highlight = inject(EDITOR_HIGHLIGHT_INJECTION_KEY, ref());
+    const isInFlowEditor = inject(EDITOR_WRAPPER_INJECTION_KEY, false);
+    
     watch(highlight, (line) => {
         if (!line) return;
 
@@ -650,6 +652,11 @@
                 showClasses: false,
                 showWords: false
             },
+            ...(isInFlowEditor && {
+                padding: {
+                    top: 28
+                }
+            }),
             ...props.options
         };
 

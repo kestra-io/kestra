@@ -22,7 +22,7 @@
         computed: {
             routeInfo() {
                 return {
-                    title: this.$t("stats")
+                    title: this.$t("system overview"),
                 }
             }
         }

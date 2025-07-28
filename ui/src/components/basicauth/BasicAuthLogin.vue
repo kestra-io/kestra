@@ -51,12 +51,22 @@
                     {{ t("setup.login") }}
                 </el-button>
             </el-form-item>
+            <el-form-item>
+                <el-button
+                    type="default"
+                    class="w-100"
+                    size="large"
+                    @click="openTroubleshootingGuide"
+                >
+                    {{ t("setup.troubleshooting") }}
+                </el-button>
+            </el-form-item>
         </el-form>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted} from "vue"
+    import {ref, computed} from "vue"
     import {useRouter, useRoute} from "vue-router"
     import {useStore} from "vuex"
     import {useI18n} from "vue-i18n"
@@ -69,6 +79,7 @@
     import Logo from "../home/Logo.vue"
 
     import {useCoreStore} from "../../stores/core"
+    import {useMiscStore} from "../../stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
     import * as BasicAuth from "../../utils/basicAuth";
@@ -83,6 +94,7 @@
     const store = useStore()
     const {t} = useI18n()
     const coreStore = useCoreStore()
+    const miscStore = useMiscStore()
     const {shouldShowHelloDialog} = useSurveySkip()
 
     const form = ref<FormInstance>()
@@ -125,6 +137,25 @@
         return error.code === "ERR_NETWORK" ||
             error.code === "ECONNREFUSED" ||
             (!error.response && error.message.includes("Network Error"))
+    }
+
+    const loadAuthConfigErrors = async (showIncorrectCredsMessage = true) => {
+        try {
+            const errors = await miscStore.loadBasicAuthValidationErrors()
+            if (errors && errors.length > 0) {
+                errors.forEach((error: string) => {
+                    ElMessage.error({
+                        message: `${error}. ${t("setup.validation.config_message")}`,
+                        duration: 5000,
+                        showClose: false
+                    })
+                })
+            } else if (showIncorrectCredsMessage) {
+                ElMessage.error(t("setup.validation.incorrect_creds"))
+            }
+        } catch (error) {
+            console.error("Failed to load auth config errors:", error)
+        }
     }
 
     const handleSubmit = async (event: Event) => {
@@ -172,7 +203,7 @@
             }
 
             if (error?.response?.status === 401) {
-                ElMessage.error("Invalid credentials")
+                await loadAuthConfigErrors()
             } else if (error?.response?.status === 404) {
                 router.push({name: "setup"})
             } else {
@@ -183,18 +214,9 @@
         }
     }
 
-    onMounted(async () => {
-        try {
-            const isInitialized = await checkServerInitialization()
-            if (!isInitialized) {
-                router.push({name: "setup"})
-            }
-        } catch (error: any) {
-            if (handleNetworkError(error) || error?.response?.status === 404) {
-                router.push({name: "setup"})
-            }
-        }
-    })
+    const openTroubleshootingGuide = () => {
+        window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting", "_blank")
+    }
 </script>
 
 <style lang="scss" scoped>
@@ -209,7 +231,6 @@
 
         .el-button.el-button--default {
             background: var(--bs-gray-200);
-            height: 54px;
 
             html.dark & {
                 background: var(--input-bg);

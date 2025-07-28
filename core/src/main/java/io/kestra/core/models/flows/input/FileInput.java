@@ -21,6 +21,7 @@ public class FileInput extends Input<URI> {
     private static final String DEFAULT_EXTENSION = ".upl";
 
     @Builder.Default
+    @Deprecated(since = "0.24", forRemoval = true)
     public String extension = DEFAULT_EXTENSION;
 
     @Override

@@ -286,7 +286,7 @@
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
     import DurationPicker from "./DurationPicker.vue";
-    import {inputsToFormDate} from "../../utils/submitTask"
+    import {inputsToFormData} from "../../utils/submitTask"
 
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
@@ -476,7 +476,7 @@
                     return;
                 }
 
-                const formData = inputsToFormDate(this, this.inputsMetaData, this.inputsValues);
+                const formData = inputsToFormData(this, this.inputsMetaData, this.inputsValues);
 
                 const metadataCallback = (response) => {
                     this.inputsMetaData = response.inputs.reduce((acc,it) => {
@@ -663,7 +663,7 @@
     .el-input__wrapper {
         padding: 0.5rem;
     }
-    
+
 }
 
 .preview {

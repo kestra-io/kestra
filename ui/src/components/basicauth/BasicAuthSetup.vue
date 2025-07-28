@@ -115,7 +115,7 @@
                             <Check class="text-success" v-if="config.value === true" />
                             <Close class="text-danger" v-else-if="config.value === false" />
                             <el-text v-else size="small">
-                                {{ (config.value ?? "NOT SETUP").toString().capitalize() }}
+                                {{ config.value === "NOT SETUP" ? config.value : config.value.toString().capitalize() }}
                             </el-text>
                         </el-row>
                     </el-card>
@@ -207,8 +207,8 @@
     import {useI18n} from "vue-i18n"
     import MailChecker from "mailchecker"
     import {useMiscStore} from "../../stores/misc"
-    import {useApiStore} from "../../stores/api"
     import {useSurveySkip} from "../../composables/useSurveyData"
+    import {initPostHogForSetup, trackSetupEvent} from "../../utils/setupPosthog"
 
     import Cogs from "vue-material-design-icons/Cogs.vue"
     import AccountPlus from "vue-material-design-icons/AccountPlus.vue"
@@ -251,7 +251,6 @@
     }
 
     const miscStore = useMiscStore()
-    const apiStore = useApiStore()
     const router = useRouter()
     const {t} = useI18n()
     const {storeSurveySkipData} = useSurveySkip()
@@ -278,48 +277,23 @@
     const formData = computed(() => userFormData.value)
     const setupConfiguration = computed(() => usageData.value?.configurations ?? {})
 
-    const trackSetupEvent = (eventName: string, additionalData: Record<string, any> = {}) => {
-        const configs = miscStore.configs
-        const uid = localStorage.getItem("uid")
-
-        if (!configs || !uid || configs.isAnonymousUsageEnabled === false) return
-
-        const userInfo = activeStep.value >= 1 ? {
-            user_firstname: userFormData.value.firstName || undefined,
-            user_lastname: userFormData.value.lastName || undefined,
-            user_email: userFormData.value.username || undefined
-        } : {}
-
-        apiStore.posthogEvents({
-            type: eventName,
-            setup_step_current: activeStep.value,
-            instance_id: configs.uuid,
-            user_id: uid,
-            ...userInfo,
-            ...additionalData
-        })
-    }
-
     const initializeSetup = async () => {
         try {
             const config = await miscStore.loadConfigs()
 
-            if (config && config.isBasicAuthInitialized && localStorage.getItem("basicAuthSetupCompleted") === "true") {
+            if (config?.isBasicAuthInitialized) {
                 localStorage.removeItem("basicAuthSetupInProgress")
                 localStorage.removeItem("setupStartTime")
-                router.push({name: "welcome"})
+                router.push({name: "login"})
                 return
             }
+
+            await initPostHogForSetup(config)
 
             localStorage.setItem("basicAuthSetupInProgress", "true")
             localStorage.setItem("setupStartTime", Date.now().toString())
 
-            if (config && config.isBasicAuthInitialized) {
-                activeStep.value = 0
-            }
-
             usageData.value = await miscStore.loadAllUsages()
-            trackSetupEvent("setup_flow:started", {step_number: 1})
         } catch {
             /* Silently handle usage data loading errors */
         } finally {
@@ -338,11 +312,14 @@
     const setupConfigurationLines = computed<ConfigLine[]>(() => {
         if (!setupConfiguration.value) return []
         const configs = miscStore.configs
+        
+        const basicAuthValue = activeStep.value >= 1 || configs?.isBasicAuthInitialized
+        
         return [
-            {name: "repository", icon: Database, value: setupConfiguration.value.repositoryType},
-            {name: "queue", icon: CurrentDc, value: setupConfiguration.value.queueType},
-            {name: "storage", icon: CloudOutline, value: setupConfiguration.value.storageType},
-            {name: "basicauth", icon: Lock, value: activeStep.value >= 1 ? true : configs?.isBasicAuthInitialized}
+            {name: "repository", icon: Database, value: setupConfiguration.value.repositoryType || "NOT SETUP"},
+            {name: "queue", icon: CurrentDc, value: setupConfiguration.value.queueType || "NOT SETUP"},
+            {name: "storage", icon: CloudOutline, value: setupConfiguration.value.storageType || "NOT SETUP"},
+            {name: "basicauth", icon: Lock, value: basicAuthValue}
         ]
     })
 
@@ -411,15 +388,11 @@
     }
 
     const nextStep = () => {
-        const currentStep = activeStep.value
         activeStep.value++
-        trackSetupEvent("setup_flow:step_advanced", {from_step_number: currentStep, to_step_number: activeStep.value})
     }
 
     const previousStep = () => {
-        const currentStep = activeStep.value
         activeStep.value--
-        trackSetupEvent("setup_flow:step_back", {from_step_number: currentStep, to_step_number: activeStep.value})
     }
 
     const handleUserFormSubmit = async () => {
@@ -445,14 +418,16 @@
                 user_firstname: userFormData.value.firstName,
                 user_lastname: userFormData.value.lastName,
                 user_email: userFormData.value.username
-            })
+            }, userFormData.value)
 
-            trackSetupEvent("setup_flow:user_form_submitted", {is_form_valid: isUserStepValid.value})
+            
+            localStorage.setItem("basicAuthUserCreated", "true")
+            
             nextStep()
         } catch (error: any) {
             trackSetupEvent("setup_flow:account_creation_failed", {
                 error_message: error.message || "Unknown error"
-            })
+            }, userFormData.value)
             console.error("Failed to create basic auth account:", error)
         }
     }
@@ -479,9 +454,8 @@
         }
 
         trackSetupEvent("setup_flow:marketing_survey_submitted", {
-            step_number: 3,
             ...surveySelections
-        })
+        }, userFormData.value)
 
         nextStep()
     }
@@ -498,14 +472,12 @@
         }
 
         storeSurveySkipData({
-            step_number: 3,
             ...surveySelections
         })
 
         trackSetupEvent("setup_flow:marketing_survey_skipped", {
-            step_number: 3,
             ...surveySelections
-        })
+        }, userFormData.value)
 
         nextStep()
     }
@@ -519,12 +491,13 @@
             user_lastname: userFormData.value.lastName,
             user_email: userFormData.value.username,
             ...surveySelections
-        })
+        }, userFormData.value)
 
         localStorage.setItem("basicAuthSetupCompleted", "true")
         localStorage.removeItem("basicAuthSetupInProgress")
         localStorage.removeItem("setupStartTime")
         localStorage.removeItem("basicAuthSurveyData")
+        localStorage.removeItem("basicAuthUserCreated")
         localStorage.setItem("basicAuthSetupCompletedAt", new Date().toISOString())
 
         router.push({name: "login"})

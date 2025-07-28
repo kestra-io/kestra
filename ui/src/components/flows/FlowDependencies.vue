@@ -18,11 +18,11 @@
                 />
             </template>
 
-            <Panel position="top-right">
+            <Panel position="top-left">
                 <el-switch
                     v-model="expandAll"
                     :disabled="expandAll"
-                    :inactive-text="t('expand all')"
+                    :active-text="t('expand all')"
                     @change="load(route.params)"
                 />
             </Panel>

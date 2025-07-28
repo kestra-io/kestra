@@ -253,6 +253,7 @@
     "output": "Output",
     "eval": {
       "title": "Debug Expression",
+      "render": "Render Expression",
       "tooltip": "Render any Pebble expression and inspect the Execution context."
     },
     "attempt": "Attempt",
@@ -287,6 +288,7 @@
     "stream": "Stream",
     "execution statistics": "Execution statistics",
     "stats": "Stats",
+    "system overview": "System Overview",
     "your usage": "Your usage",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
@@ -362,7 +364,8 @@
     "triggerflow disabled": "Trigger is disabled from flow definition",
     "conditions": "conditions",
     "taskruns": "Task Runs",
-    "Fold auto": "Editor: automatic fold of multilines",
+    "Fold auto": "Editor: automatic fold of multi-lines",
+    "Hover description": "Editor: Show description of field when hovering on key or value",
     "Fold content lines": "Fold multiline strings",
     "Unfold content lines": "Unfold multiline strings",
     "Total": "Total",
@@ -771,6 +774,7 @@
             "execute_default_tab": "Default Execution Tab",
             "multi_panel_editor": "Multi Panel Editor",
             "flow_default_tab": "Default Flow Tab",
+            "playground": "Playground",
             "auto_refresh_interval": "Auto Refresh Interval"
           }
         },
@@ -782,7 +786,9 @@
             "logs_font_size": "Logs Font Size",
             "editor_font_family": "Editor Font Family",
             "editor_folding_stratgy": "Automatic Code Folding in the Editor",
+            "editor_hover_description": "Hover on property to see description",
             "environment_name": "Environment Name",
+            "environment_name_tooltip": "This environment name is set from the config but can be changed.",
             "environment_color": "Environment Color",
             "chart_color_scheme": {
               "label": "Chart Color Scheme",
@@ -1122,6 +1128,7 @@
         "remove": "Remove",
         "empty": "You still haven't saved any search.",
         "tooltip": "You can't save empty search criteria.",
+        "name_already_used": "Search label already used.",
         "dialog": {
           "heading": "Save current search",
           "placeholder": "Label",
@@ -1184,6 +1191,7 @@
         }
       },
       "select": {
+        "task": "Select a task",
         "tasks": "Select a task",
         "triggers": "Select a trigger",
         "errors": "Select a task",
@@ -1226,6 +1234,7 @@
       "command_palette": "Show command palette",
       "save_flow": "Save flow",
       "execute_flow": "Execute flow",
+      "toggle_ai_agent": "Toggle AI agent",
       "move_line": "Move line",
       "duplicate_cursor": "Duplicate cursor",
       "fold_unfold": "Fold/Unfold code",
@@ -1363,18 +1372,19 @@
     "setup": {
       "login": "Login",
       "logout": "Logout",
+      "troubleshooting": "Forgot Password?",
       "steps": {
-        "user": "Create your first user",
+        "user": "Create your account",
         "config": "Validate Configuration",
         "survey": "Tell us more",
         "complete": "Start Kestra UI"
       },
       "titles": {
-        "user": "Create first user",
+        "user": "Create an account",
         "survey": "Tell us more"
       },
       "subtitles": {
-        "user": "Set up your instance by creating your first user",
+        "user": "Set up your instance by creating an account",
         "config": "Here are the details of your configuration",
         "survey": "Help us improve Kestra Open Source Edition",
         "complete": "Setup completed successfully!"
@@ -1391,7 +1401,9 @@
         "email_temporary_not_allowed": "Temporary or disposable email addresses are not allowed",
         "firstName_required": "First name required",
         "lastName_required": "Last name required",
-        "password_invalid": "Invalid password"
+        "password_invalid": "Invalid password",
+        "incorrect_creds": "Invalid username or password. Make sure your credentials are correct.",
+        "config_message": "Make sure to update your configuration to fix this error message"
       },
       "config": {
         "repository": "Database",
@@ -1434,10 +1446,19 @@
         "generating": "Generating Flow YAML for you..."
       }
     },
+    "playground": {
+      "title": "Playground",
+      "empty": "Click the \"Run task\" button to test your workflow with a simulated execution.",
+      "toggle": "Playground",
+      "run_task": "Run Task",
+      "run_all_tasks": "Run All Tasks",
+      "history": "Last 10 runs"
+    },
     "submit": "Submit",
     "to toggle": "to toggle",
     "accept": "Accept",
-    "decline": "Decline",
-    "last modified": "Last modified"
+    "reject": "Reject",
+    "last modified": "Last modified",
+    "run task in playground": "Run task in playground"
   }
 }

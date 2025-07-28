@@ -25,10 +25,10 @@
 
     const store = useStore();
 
-    const flowYaml = computed(() => store.getters["flow/flowYaml"]);
+    const flowYaml = computed(() => store.state.flow.flowYaml);
     const flowGraph = computed(() => store.state.flow.flowGraph);
-    const flowId = computed(() => store.getters["flow/id"]);
-    const namespace = computed(() => store.getters["flow/namespace"]);
+    const flowId = computed(() => store.state.flow.id);
+    const namespace = computed(() => store.state.flow.namespace);
     const expandedSubflows = computed<string[]>(() => store.state.flow.expandedSubflows);
     const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"]);
     const isReadOnly = computed(() => store.getters["flow/isReadOnly"]);

@@ -10,6 +10,7 @@
     "Finish": "Beenden",
     "Fold auto": "Editor: Automatisches Falten von Mehrzeilen",
     "Fold content lines": "Mehrzeilige Zeichenfolgen falten",
+    "Hover description": "Editor: Beschreibung des Feldes anzeigen, wenn auf Key oder Value gehalten wird",
     "Language": "Sprache",
     "Next step": "Nächster Schritt",
     "Per page": "pro Seite",
@@ -269,7 +270,6 @@
     },
     "days": "Tage",
     "debug": "Debuggen",
-    "decline": "Ablehnen",
     "default": "Standard",
     "delete": "Löschen",
     "delete backfill": "Backfill löschen",
@@ -402,6 +402,7 @@
       "move_line": "Zeile verschieben",
       "reset_fontsize": "Schriftgröße zurücksetzen",
       "save_flow": "Flow speichern",
+      "toggle_ai_agent": "AI-Agent umschalten",
       "trigger_autocompletion": "Autovervollständigung auslösen",
       "uncomment": "Entkommentieren"
     },
@@ -474,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "Ausdruck rendern",
       "title": "Debug-Ausdruck",
       "tooltip": "Beliebigen Pebble-Ausdruck rendern und den Ausführungskontext inspizieren."
     },
@@ -601,6 +603,7 @@
         },
         "empty": "Sie haben noch keine Suche gespeichert.",
         "label": "Gespeicherte Suchen",
+        "name_already_used": "Suchbegriff {label} bereits verwendet.",
         "remove": "Entfernen",
         "tooltip": "Sie können keine leeren Suchkriterien speichern."
       },
@@ -900,6 +903,7 @@
         "finally": "Wählen Sie eine Task aus",
         "inputs": "Wählen Sie einen Input-Feldtyp aus",
         "pluginDefaults": "Wählen Sie ein Plugin aus",
+        "task": "Wählen Sie eine Task aus",
         "tasks": "Wählen Sie eine Task aus",
         "triggers": "Wählen Sie einen Trigger aus"
       },
@@ -1008,6 +1012,14 @@
     "pause confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> pausieren möchten?",
     "pause done": "Die Ausführung ist PAUSED.",
     "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss.",
+    "playground": {
+      "empty": "Klicken Sie auf die Schaltfläche \"Run task\", um Ihren Workflow mit einer simulierten Ausführung zu testen.",
+      "history": "Letzte 10 Ausführungen",
+      "run_all_tasks": "Alle Tasks ausführen",
+      "run_task": "Task ausführen",
+      "title": "Spielwiese",
+      "toggle": "Spielplatz"
+    },
     "pluginDefaults": "Plugin-Standardeinstellungen",
     "pluginPage": {
       "alt": "Plugins-Symbol",
@@ -1036,6 +1048,7 @@
     "read-more": "Mehr erfahren über",
     "readonly property": "Schreibgeschützte Eigenschaft",
     "refresh": "Aktualisieren",
+    "reject": "Ablehnen",
     "relative": "Relativ",
     "relative end date": "Relatives Enddatum",
     "relative start date": "Relatives Startdatum",
@@ -1068,6 +1081,7 @@
     "revision": "Revision",
     "revisions": "Revisionen",
     "row count": "Zeilenanzahl",
+    "run task in playground": "Task im Playground ausführen",
     "runners": "Läufer",
     "running duration": "Laufzeitdauer",
     "save": "Speichern",
@@ -1141,7 +1155,8 @@
             "language": "Sprache",
             "log_display": "Standard-Log-Anzeige",
             "log_level": "Standard-Log-Ebene",
-            "multi_panel_editor": "Multi-Panel-Editor"
+            "multi_panel_editor": "Multi-Panel-Editor",
+            "playground": "Spielplatz"
           },
           "label": "Hauptkonfiguration"
         },
@@ -1176,8 +1191,10 @@
             "editor_folding_stratgy": "Automatisch Code im Editor zusammenklappen",
             "editor_font_family": "Editor-Schriftfamilie",
             "editor_font_size": "Editor-Schriftgröße",
+            "editor_hover_description": "Fahren Sie mit der Maus über die Eigenschaft, um die Beschreibung zu sehen",
             "environment_color": "Umgebungsfarbe",
             "environment_name": "Umgebungsname",
+            "environment_name_tooltip": "Dieser Umgebungsname wird aus der Konfiguration festgelegt, kann jedoch geändert werden.",
             "logs_font_size": "Logs Schriftgröße",
             "theme": "Modus"
           },
@@ -1211,13 +1228,13 @@
         "complete": "Kestra UI starten",
         "config": "Konfiguration validieren",
         "survey": "Erzählen Sie uns mehr",
-        "user": "Erstellen Sie Ihren ersten Benutzer"
+        "user": "Erstellen Sie Ihr Konto"
       },
       "subtitles": {
         "complete": "Einrichtung erfolgreich abgeschlossen!",
         "config": "Hier sind die Details Ihrer Konfiguration",
         "survey": "Helfen Sie uns, die Kestra Open Source Edition zu verbessern",
-        "user": "Richten Sie Ihre Instanz ein, indem Sie Ihren ersten Benutzer erstellen"
+        "user": "Richten Sie Ihre Instanz ein, indem Sie ein Konto erstellen"
       },
       "success": {
         "subtitle": "Alles bereit!",
@@ -1242,13 +1259,16 @@
       },
       "titles": {
         "survey": "Erzählen Sie uns mehr",
-        "user": "Ersten Benutzer erstellen"
+        "user": "Konto erstellen"
       },
+      "troubleshooting": "Passwort vergessen?",
       "validation": {
+        "config_message": "Stellen Sie sicher, dass Sie Ihre Konfiguration aktualisieren, um diese Fehlermeldung zu beheben.",
         "email_invalid": "Ungültige E-Mail-Adresse",
         "email_required": "E-Mail ist erforderlich",
         "email_temporary_not_allowed": "Temporäre oder Einweg-E-Mail-Adressen sind nicht erlaubt",
         "firstName_required": "Vorname erforderlich",
+        "incorrect_creds": "Ungültiger Benutzername oder Passwort. Stellen Sie sicher, dass Ihre Anmeldedaten korrekt sind.",
         "lastName_required": "Nachname erforderlich",
         "password_invalid": "Ungültiges Passwort"
       }
@@ -1289,6 +1309,7 @@
     "success": "Erfolg",
     "sum": "Summe",
     "switch-view": "Ansicht wechseln",
+    "system overview": "Systemübersicht",
     "system_namespace": "Behalten Sie Ihre Plattform mit Systemflows im Blick.",
     "system_namespace_description": "Automatisieren Sie Wartungsaufgaben, von Fehlerwarnungen bis hin zu automatisierten Bereinigungen.",
     "tags": "Tags",

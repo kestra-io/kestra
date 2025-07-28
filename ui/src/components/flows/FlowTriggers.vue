@@ -270,7 +270,7 @@
 
 <script>
     import Markdown from "../layout/Markdown.vue";
-    import {mapGetters, mapState} from "vuex";
+    import {mapState} from "vuex";
     import Kicon from "../Kicon.vue"
     import DateAgo from "../layout/DateAgo.vue";
     import Vars from "../executions/Vars.vue";
@@ -283,7 +283,7 @@
     import {storageKeys} from "../../utils/constants.js";
     import {mapStores} from "pinia";
     import {useTriggerStore} from "../../stores/trigger";
-    
+
     export default {
         components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper},
         props:{
@@ -319,7 +319,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapGetters("flow", ["flow"]),
+            ...mapState("flow", ["flow"]),
             ...mapStores(useTriggerStore),
             query() {
                 return Array.isArray(this.$route.query.q) ? this.$route.query.q[0] : this.$route.query.q;

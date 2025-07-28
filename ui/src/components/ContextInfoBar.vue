@@ -99,11 +99,15 @@
                 hasUnreadMarker: false;
             }>>,
             default: () => ({})
+        },
+        communityButton: {
+            type: Boolean,
+            default: true
         }
     });
 
 
-    const buttonsList: Record<string, {
+    const allButtonsList: Record<string, {
         title:string,
         icon: Component,
         component?: Component,
@@ -142,6 +146,17 @@
             url: "https://github.com/kestra-io/kestra"
         }
     }
+
+    const buttonsList = computed(() => {
+        if (props.communityButton) {
+            return allButtonsList;
+        }
+        let updatedButtons = allButtonsList;
+        delete updatedButtons["issue"];
+        delete updatedButtons["demo"];
+        delete updatedButtons["star"];
+        return updatedButtons;
+    });
 
     const panelWidth = ref(640)
 

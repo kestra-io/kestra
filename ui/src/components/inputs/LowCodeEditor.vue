@@ -8,13 +8,14 @@
             :is-allowed-edit="isAllowedEdit"
             :source="source"
             :toggle-orientation-button="toggleOrientationButton"
-            :flow-graph="props.flowGraph"
+            :flow-graph="playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph"
             :flow-id="flowId"
             :namespace="namespace"
             :expanded-subflows="props.expandedSubflows"
             :icons="pluginsStore.icons"
             :execution="executionsStore.execution"
             :subflows-executions="executionsStore.subflowsExecutions"
+            :playground-enabled="playgroundStore.enabled"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -27,82 +28,8 @@
             @swapped-task="onSwappedTask"
             @message="message"
             @expand-subflow="expandSubflow"
+            @run-task="playgroundStore.runUntilTask($event.task.id)"
         />
-
-        <!-- Drawer to create/add task -->
-        <task-edit
-            v-if="source"
-            component="div"
-            is-hidden
-            class="node-action"
-            :section="taskEditData?.section"
-            :task="taskObject"
-            :flow-id="flowId"
-            size="small"
-            :namespace="namespace"
-            :revision="execution ? execution.flowRevision : undefined"
-            @update:task="confirmEdit"
-            @close="closeEdit()"
-            :flow-source="source"
-            ref="taskEditDomElement"
-        />
-
-        <!--    Drawer to task informations (logs, description, ..)   -->
-        <!--    Assuming selectedTask is always the id and the required data for the opened drawer    -->
-        <drawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
-            <template #header>
-                <code>{{ selectedTask.id }}</code>
-            </template>
-            <div v-if="isShowLogsOpen">
-                <collapse>
-                    <el-form-item>
-                        <search-field
-                            :router="false"
-                            @search="onSearch"
-                            class="me-2"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <log-level-selector
-                            :value="logLevel"
-                            @update:model-value="onLevelChange"
-                        />
-                    </el-form-item>
-                </collapse>
-                <task-run-details
-                    v-for="taskRun in selectedTask.taskRuns"
-                    :key="taskRun.id"
-                    :target-execution-id="selectedTask.execution?.id"
-                    :task-run-id="taskRun.id"
-                    :filter="logFilter"
-                    :exclude-metas="[
-                        'namespace',
-                        'flowId',
-                        'taskId',
-                        'executionId',
-                    ]"
-                    :level="logLevel"
-                    @follow="emit('follow', $event)"
-                />
-            </div>
-            <div v-if="isShowDescriptionOpen">
-                <markdown
-                    class="markdown-tooltip"
-                    :source="selectedTask.description"
-                />
-            </div>
-            <div v-if="isShowConditionOpen">
-                <editor
-                    :read-only="true"
-                    :input="true"
-                    :full-height="false"
-                    :navbar="false"
-                    :model-value="selectedTask.runIf"
-                    lang="yaml"
-                    class="mt-3"
-                />
-            </div>
-        </drawer>
     </div>
 </template>
 
@@ -115,21 +42,12 @@
     import {useRouter} from "vue-router";
     import {useVueFlow} from "@vue-flow/core";
 
-    import TaskEdit from "../flows/TaskEdit.vue";
-    import SearchField from "../layout/SearchField.vue";
-    import LogLevelSelector from "../logs/LogLevelSelector.vue";
-    import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    import Collapse from "../layout/Collapse.vue";
-    import Drawer from "../Drawer.vue";
-
     // Topology
     import {Topology} from "@kestra-io/ui-libs";
 
     // Utils
     import {SECTIONS} from "@kestra-io/ui-libs";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import Markdown from "../layout/Markdown.vue";
-    import Editor from "./Editor.vue";
 
     const router = useRouter();
 
@@ -140,9 +58,11 @@
     import {useCoreStore} from "../../stores/core";
     import {usePluginsStore} from "../../stores/plugins";
     import {useExecutionsStore} from "../../stores/executions";
+    import {usePlaygroundStore} from "../../stores/playground";
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
 
     const executionsStore = useExecutionsStore();
+    const playgroundStore = usePlaygroundStore();
 
     // props
     const props = withDefaults(
@@ -190,12 +110,9 @@
     const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"));
     const vueFlow = ref<HTMLDivElement>();
     const timer = ref<ReturnType<typeof setTimeout>>();
-    const taskObject = ref();
     const taskEditData = ref();
     const taskEditDomElement = ref();
     const isShowLogsOpen = ref(false);
-    const logFilter = ref("");
-    const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO");
     const isDrawerOpen = ref(false);
     const isShowDescriptionOpen = ref(false);
     const isShowConditionOpen = ref(false);
@@ -207,6 +124,14 @@
         observeWidth();
         pluginsStore.fetchIcons()
     });
+
+    watch(() => executionsStore.execution?.id, (id) => {
+        if (id) {
+            executionsStore.loadAugmentedGraph({
+                id,
+            });
+        }
+    }, {immediate: true});
 
     watch(
         () => isDrawerOpen.value,
@@ -300,74 +225,6 @@
         taskEditDomElement.value.$refs.taskEdit.click();
     };
 
-    const confirmEdit = (event: string) => {
-        const source = props.source ?? "";
-        const task = YAML_UTILS.extractBlock({
-            section: "tasks",
-            source: props.source ?? "",
-            key: YAML_UTILS.parse(event).id
-        });
-        if (
-            task === undefined ||
-            (task && YAML_UTILS.parse(event).id === taskEditData.value.oldTaskId)
-        ) {
-            switch (taskEditData.value.action) {
-            case "create_task":
-                emit(
-                    "on-edit",
-                    YAML_UTILS.insertBlock({
-                        section: "tasks",
-                        source,
-                        parentKey: taskEditData.value.insertionDetails[0],
-                        newBlock:event,
-                        position: taskEditData.value.insertionDetails[1],
-                    }),
-                    true,
-                );
-                return;
-            case "edit_task":
-                emit(
-                    "on-edit",
-                    YAML_UTILS.replaceBlockInDocument({
-                        section: "tasks",
-                        source,
-                        key: taskEditData.value.oldTaskId,
-                        keyName: "id",
-                        newContent: event,
-                    }),
-                    true,
-                );
-                return;
-            case "add_flowable_error":
-                emit(
-                    "on-edit",
-                    YAML_UTILS.insertErrorInFlowable(
-                        props.source,
-                        event,
-                        taskEditData.value.taskId,
-                    ),
-                    true,
-                );
-                return;
-            }
-        } else {
-            coreStore.message = {
-                variant: "error",
-                title: t("error detected"),
-                message: t("Task Id already exist in the flow", {
-                    taskId: YAML_UTILS.parse(event).id,
-                }),
-            };
-        }
-        taskEditData.value = null;
-        taskObject.value = null;
-    };
-
-    const closeEdit = () => {
-        taskEditData.value = null;
-        taskObject.value = null;
-    };
-
     const fitViewOrientation = () => {
         if(vueFlow.value){
             const resizeObserver = new ResizeObserver(() => {
@@ -419,14 +276,6 @@
         selectedTask.value = event;
         isShowLogsOpen.value = true;
         isDrawerOpen.value = true;
-    };
-
-    const onSearch = (search: string) => {
-        logFilter.value = search;
-    };
-
-    const onLevelChange = (level: string) => {
-        logLevel.value = level;
     };
 
     const showDescription = (event: string) => {

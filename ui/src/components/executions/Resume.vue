@@ -36,7 +36,7 @@
     import FlowUtils from "../../utils/flowUtils";
     import ExecutionUtils from "../../utils/executionUtils";
     import InputsForm from "../../components/inputs/InputsForm.vue";
-    import {inputsToFormDate} from "../../utils/submitTask";
+    import {inputsToFormData} from "../../utils/submitTask";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
 
@@ -82,7 +82,7 @@
                             return false;
                         }
 
-                        const formData = inputsToFormDate(this, this.inputsList, this.inputs);
+                        const formData = inputsToFormData(this, this.inputsList, this.inputs);
                         this.resume(formData);
                     });
                 }

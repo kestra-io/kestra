@@ -10,6 +10,7 @@
     "Finish": "完了",
     "Fold auto": "エディター：複数行の自動折りたたみ",
     "Fold content lines": "複数行文字列を折りたたむ",
+    "Hover description": "エディター: key または value にホバーするとフィールドの説明を表示",
     "Language": "言語",
     "Next step": "次のステップ",
     "Per page": "ページごと",
@@ -269,7 +270,6 @@
     },
     "days": "日数",
     "debug": "デバッグ",
-    "decline": "辞退",
     "default": "デフォルト",
     "delete": "削除",
     "delete backfill": "backfillを削除",
@@ -402,6 +402,7 @@
       "move_line": "行を移動",
       "reset_fontsize": "フォントサイズをリセット",
       "save_flow": "フローを保存",
+      "toggle_ai_agent": "AIエージェントを切り替える",
       "trigger_autocompletion": "オートコンプリートをトリガー",
       "uncomment": "コメント解除"
     },
@@ -474,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "式をレンダリング",
       "title": "デバッグ式",
       "tooltip": "任意のPebble式をレンダリングし、実行コンテキストを検査します。"
     },
@@ -601,6 +603,7 @@
         },
         "empty": "検索をまだ保存していません。",
         "label": "保存済み検索",
+        "name_already_used": "ラベルはすでに使用されています。",
         "remove": "削除",
         "tooltip": "空の検索条件を保存することはできません。"
       },
@@ -900,6 +903,7 @@
         "finally": "タスクを選択",
         "inputs": "入力フィールドタイプを選択",
         "pluginDefaults": "プラグインを選択",
+        "task": "タスクを選択",
         "tasks": "タスクを選択",
         "triggers": "トリガーを選択"
       },
@@ -1008,6 +1012,14 @@
     "pause confirm": "実行 <code>{id}</code> を一時停止してもよろしいですか？",
     "pause done": "実行がPAUSEDされています",
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
+    "playground": {
+      "empty": "「Run task」ボタンをクリックして、シミュレーション実行でワークフローをテストします。",
+      "history": "直近10回の実行",
+      "run_all_tasks": "すべてのタスクを実行",
+      "run_task": "タスクを実行",
+      "title": "プレイグラウンド",
+      "toggle": "プレイグラウンド"
+    },
     "pluginDefaults": "プラグインのデフォルト",
     "pluginPage": {
       "alt": "プラグインアイコン",
@@ -1036,6 +1048,7 @@
     "read-more": "続きを読む",
     "readonly property": "読み取り専用プロパティ",
     "refresh": "更新",
+    "reject": "拒否",
     "relative": "相対",
     "relative end date": "相対終了日",
     "relative start date": "相対開始日",
@@ -1068,6 +1081,7 @@
     "revision": "リビジョン",
     "revisions": "リビジョン",
     "row count": "行数",
+    "run task in playground": "プレイグラウンドでタスクを実行",
     "runners": "ランナー",
     "running duration": "実行期間",
     "save": "保存",
@@ -1141,7 +1155,8 @@
             "language": "言語",
             "log_display": "デフォルトLog表示",
             "log_level": "デフォルトLogレベル",
-            "multi_panel_editor": "マルチパネルエディタ"
+            "multi_panel_editor": "マルチパネルエディタ",
+            "playground": "プレイグラウンド"
           },
           "label": "メイン設定"
         },
@@ -1176,8 +1191,10 @@
             "editor_folding_stratgy": "エディタでの自動コード折りたたみ",
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
+            "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
             "environment_color": "環境色",
             "environment_name": "環境名",
+            "environment_name_tooltip": "この環境名はconfigから設定されていますが、変更可能です。",
             "logs_font_size": "ログフォントサイズ",
             "theme": "テーマ"
           },
@@ -1211,13 +1228,13 @@
         "complete": "Kestra UIを開始",
         "config": "設定を検証",
         "survey": "詳細を教えてください",
-        "user": "最初のユーザーを作成する"
+        "user": "アカウントを作成する"
       },
       "subtitles": {
         "complete": "セットアップが正常に完了しました！",
         "config": "こちらはあなたの設定の詳細です",
         "survey": "Kestra Open Source Edition の改善にご協力ください",
-        "user": "最初のユーザーを作成してインスタンスをセットアップする"
+        "user": "アカウントを作成してインスタンスをセットアップする"
       },
       "success": {
         "subtitle": "準備完了です！",
@@ -1242,13 +1259,16 @@
       },
       "titles": {
         "survey": "詳細を教えてください",
-        "user": "最初のユーザーを作成"
+        "user": "アカウントを作成"
       },
+      "troubleshooting": "パスワードをお忘れですか？",
       "validation": {
+        "config_message": "このエラーメッセージを修正するために設定を更新してください。",
         "email_invalid": "無効なメールアドレス",
         "email_required": "メールが必要です",
         "email_temporary_not_allowed": "一時的または使い捨てのメールアドレスは使用できません",
         "firstName_required": "名が必要です",
+        "incorrect_creds": "ユーザー名またはパスワードが無効です。資格情報が正しいことを確認してください。",
         "lastName_required": "姓が必要です",
         "password_invalid": "無効なパスワード"
       }
@@ -1289,6 +1309,7 @@
     "success": "Success",
     "sum": "合計",
     "switch-view": "ビューを切り替え",
+    "system overview": "システム概要",
     "system_namespace": "プラットフォームをシステムフローで管理しましょう。",
     "system_namespace_description": "メンテナンスタスクを自動化し、FAILUREアラートから自動クリーンアップまで対応します。",
     "tags": "タグ",

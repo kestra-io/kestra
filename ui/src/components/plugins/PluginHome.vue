@@ -12,7 +12,6 @@
                     v-model="searchText"
                     :placeholder="$t('pluginPage.search', {count: countPlugin})"
                     clearable
-                    class="search-input"
                     @input="updateSearch"
                 />
             </el-col>

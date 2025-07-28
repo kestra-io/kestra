@@ -170,7 +170,6 @@
 </script>
 
 <style scoped lang="scss">
-    
     .plugins-container {
         display: grid;
         gap: 16px;

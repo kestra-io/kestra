@@ -164,7 +164,7 @@
                         <el-tooltip
                             v-if="isEnvNameFromConfig"
                             :content="$t('settings.blocks.theme.fields.environment_name_tooltip')"
-                            placement="top"
+                            placement="bottom"
                         >
                             <el-input
                                 v-model="pendingSettings.envName"
@@ -180,8 +180,6 @@
                             @change="onEnvNameChange"
                             :placeholder="$t('name')"
                             clearable
-                            show-word-limit
-                            maxlength="30"
                         />
                     </Column>
 

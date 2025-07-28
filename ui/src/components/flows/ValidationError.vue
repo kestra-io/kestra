@@ -66,7 +66,6 @@
             </template>
             <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="warning square">
                 <alert class="text-warning" />
-                <span class="text-warning label">{{ t("warning detected") }}</span>
             </el-button>
         </el-tooltip>
 

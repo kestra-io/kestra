@@ -1972,8 +1972,11 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/subflow-parent.yaml", "flows/valids/subflow-child.yaml", "flows/valids/subflow-grand-child.yaml"})
-    void triggerExecutionAndFollowDependencies() {
+    void triggerExecutionAndFollowDependencies() throws InterruptedException {
         Execution result = triggerExecutionExecution(TESTS_FLOW_NS, "subflow-parent", null, true);
+
+        // without this slight delay, the event stream may miss some 'end' events
+        Thread.sleep(250);
 
         List<Event<ExecutionStatusEvent>> results = sseClient
             .eventStream("/api/v1/main/executions/" + result.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
@@ -1981,7 +1984,7 @@ class ExecutionControllerRunnerTest {
             .block();
 
         assertThat(results).isNotNull();
-        assertThat(results.size()).isGreaterThan(1);
+        assertThat(results.size()).isGreaterThanOrEqualTo(5);
         assertThat(results.getFirst().getId()).isEqualTo("start");
         assertThat(results.getLast().getId()).isEqualTo("end-all");
         // check that we have 3 end events and 3 result in SUCCESS

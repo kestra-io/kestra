@@ -242,7 +242,7 @@
                         </el-button>
                     </Column>
                     <Column>
-                        <el-button v-if="canReadTemplates" :icon="Download" @click="exportTemplates()" :hidden="!configs?.isTemplateEnabled" class="w-100">
+                        <el-button v-if="canReadTemplates" :icon="Download" @click="exportTemplates()" :hidden="!miscStore?.configs?.isTemplateEnabled" class="w-100">
                             {{ $t("settings.blocks.export.fields.templates") }}
                         </el-button>
                     </Column>

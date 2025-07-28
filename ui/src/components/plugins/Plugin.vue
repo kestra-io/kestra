@@ -170,6 +170,9 @@
                         this.isLoading = false
                         this.pluginType = params.cls;
                     });
+                } else {
+                    this.pluginType = undefined;
+                    this.version = undefined;
                 }
             },
 

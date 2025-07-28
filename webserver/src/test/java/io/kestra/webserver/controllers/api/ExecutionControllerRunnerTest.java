@@ -2082,7 +2082,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/logs.yaml"})
-    void killByIdShouldFailed() throws InterruptedException {
+    void killByIdShouldFailed() {
         Execution execution = client.toBlocking().retrieve(
             POST(
                 "/api/v1/main/executions/" + TESTS_FLOW_NS + "/logs",
@@ -2091,7 +2091,7 @@ class ExecutionControllerRunnerTest {
             Execution.class
         );
 
-        Thread.sleep(250);
+        awaitExecution(execution.getId());
 
         // EXECUTION TERMINATED STATE
         HttpClientResponseException e = assertThrows(

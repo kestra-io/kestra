@@ -625,9 +625,6 @@
             }
             this.displayColumns = localStorage.getItem("columns_executions")?.split(",")
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
-            if (this.isConcurrency) {
-                this.emitStateCount([State.RUNNING, State.PAUSED])
-            }
         },
         computed: {
             ...mapState("auth", ["user"]),
@@ -796,6 +793,11 @@
                     queryFilter["filters[flowId][EQUALS]"] = this.flowId;
                 }
 
+                const hasStateFilters = Object.keys(queryFilter).some(key => key.startsWith("filters[state]")) || queryFilter.state;
+                if (!hasStateFilters && this.statuses?.length > 0) {
+                    queryFilter["filters[state][IN]"] = this.statuses.join(",");
+                }
+
                 return _merge(base, queryFilter)
             },
             loadData(callback) {
@@ -806,7 +808,11 @@
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                })).finally(callback);
+                })).then(() => {
+                    if (this.isConcurrency) {
+                        this.emitStateCount();
+                    }
+                }).finally(callback);
             },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
@@ -1070,15 +1076,12 @@
                     }
                 })
             },
-            emitStateCount(states) {
-                this.executionsStore.findExecutions(this.loadQuery({
-                    size: parseInt(this.$route.query.size || this.internalPageSize),
-                    page: parseInt(this.$route.query.page || this.internalPageNumber),
-                    sort: this.$route.query.sort || "state.startDate:desc",
-                    state: states
-                })).then(() => {
-                    this.$emit("state-count", this.executionsStore.total);
-                });
+            emitStateCount() {
+                const runningCount = this.executionsStore.executions.filter(execution => 
+                    execution.state.current === State.RUNNING
+                )?.length;
+                const totalCount = this.executionsStore.total;
+                this.$emit("state-count", {runningCount, totalCount});
             }
         },
         watch: {

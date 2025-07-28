@@ -1194,6 +1194,7 @@
             "editor_hover_description": "Passa il mouse sulla proprietà per vedere la descrizione",
             "environment_color": "Colore dell'Ambiente",
             "environment_name": "Nome dell'Ambiente",
+            "environment_name_tooltip": "Il nome di questo ambiente è impostato dalla configurazione ma può essere modificato.",
             "logs_font_size": "Dimensione Font dei Log",
             "theme": "Modello"
           },

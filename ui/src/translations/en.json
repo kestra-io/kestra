@@ -1459,6 +1459,8 @@
     "accept": "Accept",
     "reject": "Reject",
     "last modified": "Last modified",
-    "run task in playground": "Run task in playground"
+    "run task in playground": "Run task in playground",
+    "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
+    "no_file_choosen": "No file chosen"
   }
 }

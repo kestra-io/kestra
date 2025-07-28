@@ -69,6 +69,8 @@ dependencies {
 
         // we need at least 0.14, it could be removed when Micronaut contains a recent only version in their BOM
         api "io.micrometer:micrometer-core:1.15.2"
+        // We need at least 6.17, it could be removed when Micronaut contains a recent only version in their BOM
+        api "io.micronaut.openapi:micronaut-openapi-bom:6.17.3"
 
         // Other libs
         api("org.projectlombok:lombok:1.18.38")

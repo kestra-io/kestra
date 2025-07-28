@@ -16,9 +16,12 @@
                 <chevron-left v-else />
             </el-button>
             <div class="logo">
-                <router-link :to="{name: 'home'}">
+                <router-link v-if="showLink" :to="{name: 'home'}">
                     <span class="img" />
                 </router-link>
+                <div v-else class="logo-img">
+                    <span class="img" />
+                </div>
             </div>
             <Environment />
         </template>
@@ -56,6 +59,10 @@
         generateMenu: {
             type: Function,
             required: true
+        },
+        showLink: {
+            type: Boolean,
+            default: true
         }
     })
 
@@ -86,7 +93,7 @@
     function disabledCurrentRoute(items) {
         return items
             .map(r => {
-                if (r.href === $route.path) {
+                if (r.href?.name === $route.name) {
                     r.disabled = true;
                 }
 
@@ -205,7 +212,7 @@
             height: 112px;
             position: relative;
 
-            a {
+            a, .logo-img {
                 transition: 0.2s all;
                 position: absolute;
                 left: 37px;
@@ -272,10 +279,12 @@
             &.vsm--link_open, &.vsm--link_open:hover {
                 background-color: var(--ks-background-left-menu);
                 color: var(--ks-content-primary);
+
             }
 
             &_disabled {
                 pointer-events: auto;
+                opacity: 1;
             }
 
             &:hover, body &_hover {

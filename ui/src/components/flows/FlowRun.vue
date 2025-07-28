@@ -47,7 +47,7 @@
                             :icon="Flash"
                             class="flow-run-trigger-button"
                             :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}"
-                            @click="onSubmit($refs.form); executeClicked = true;"
+                            @click.prevent="onSubmit($refs.form); executeClicked = true;"
                             type="primary"
                             native-type="submit"
                             :disabled="!flowCanBeExecuted"
@@ -70,9 +70,11 @@
 </script>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
+    import {useMiscStore} from "../../stores/misc";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {usePlaygroundStore} from "../../stores/playground";
     import {executeTask} from "../../utils/submitTask"
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
@@ -83,7 +85,11 @@
     import moment from "moment-timezone";
 
     export default {
-        components: {LabelInput, InputsForm, Curl},
+        components: {
+            LabelInput,
+            InputsForm,
+            Curl
+        },
         props: {
             redirect: {
                 type: Boolean,
@@ -112,9 +118,13 @@
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
         computed: {
-            ...mapState("execution", ["flow", "execution"]),
-            ...mapGetters("misc", ["configs"]),
-            ...mapStores(useCoreStore),
+            ...mapStores(useCoreStore, useMiscStore, useExecutionsStore, usePlaygroundStore),
+            flow() {
+                return this.executionsStore.flow
+            },
+            execution() {
+                return this.executionsStore.execution
+            },
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             },
@@ -139,7 +149,7 @@
             },
             fillInputsFromExecution(){
                 // Add all labels except the one from flow to prevent duplicates
-                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
                 this.executionLabels = this.getExecutionLabels().filter(item => !toIgnore.some(prefix => item.key.startsWith(prefix)));
 
                 if (!this.flow.inputs) {
@@ -161,7 +171,6 @@
                             return false;
                         }
 
-
                         executeTask(this, this.flow, this.inputs, {
                             redirect: this.redirect,
                             newTab: this.newTab,
@@ -173,7 +182,7 @@
                                     .map(label => `${label.key}:${label.value}`)
                             )],
                             scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
-                            nextStep: true
+                            nextStep: true,
                         })
                         this.$emit("executionTrigger");
                     });

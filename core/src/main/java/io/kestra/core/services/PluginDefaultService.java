@@ -25,6 +25,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.flow.Template;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
@@ -84,6 +85,10 @@ public class PluginDefaultService {
 
     @Inject
     protected Provider<LogService> logService; // lazy-init
+
+    @Value("{kestra.templates.enabled:false}")
+    private boolean templatesEnabled;
+
 
     private final AtomicBoolean warnOnce = new AtomicBoolean(false);
 
@@ -400,7 +405,7 @@ public class PluginDefaultService {
             .source(source)
             .build();
 
-        if (tenant != null) {
+        if (templatesEnabled && tenant != null) {
             // This is a hack to set the tenant in template tasks.
             // When using the Template task, we need the tenant to fetch the Template from the database.
             // However, as the task is executed on the Executor we cannot retrieve it from the tenant service and have no other options.

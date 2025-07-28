@@ -65,16 +65,14 @@
     </data-table>
 </template>
 
-<script setup lang="ts">
-
-</script>
-
 <script>
     import Kicon from "../Kicon.vue";
     import Timer from "vue-material-design-icons/Timer.vue";
     import Counter from "vue-material-design-icons/Numeric.vue";
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../layout/DataTable.vue";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         mixins: [DataTableActions],
@@ -114,6 +112,9 @@
                 this.loadData(this.onDataLoaded);
             }
         },
+        computed: {
+            ...mapStores(useExecutionsStore),
+        },
         methods: {
             loadData(callback) {
                 let params = {};
@@ -136,7 +137,7 @@
                     params.sort = "name:asc";
                 }
 
-                this.$store.dispatch("execution/loadMetrics", {
+                this.executionsStore.loadMetrics({
                     executionId: this.execution.id,
                     params: params,
                     store: false

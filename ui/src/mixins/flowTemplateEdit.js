@@ -1,5 +1,5 @@
 import {canSaveFlowTemplate, saveFlowTemplate} from "../utils/flowTemplate";
-import {mapGetters, mapState} from "vuex";
+import {mapState} from "vuex";
 
 import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
@@ -14,6 +14,7 @@ import {mapStores} from "pinia";
 import {useApiStore} from "../stores/api";
 import {usePluginsStore} from "../stores/plugins";
 import {useCoreStore} from "../stores/core";
+import {useTemplateStore} from "../stores/template";
 
 export default {
     mixins: [RouteContext],
@@ -33,10 +34,8 @@ export default {
     },
     computed: {
         ...mapState("auth", ["user"]),
-        ...mapGetters("flow", ["flow"]),
-        ...mapGetters("template", ["template"]),
-        ...mapState("plugin", ["pluginSingleList","pluginsDocumentation"]),
-        ...mapStores(useApiStore, usePluginsStore, useCoreStore),
+        ...mapState("flow", ["flow"]),
+        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore),
         guidedProperties() {
             return this.coreStore.guidedProperties;
         },
@@ -109,7 +108,7 @@ export default {
             }
 
             if (this.dataType === "template") {
-                this.content = YAML_UTILS.stringify(this.template);
+                this.content = YAML_UTILS.stringify(this.templateStore.template);
                 this.previousContent = this.content;
             } else {
                 if (this.flow) {
@@ -168,8 +167,12 @@ export default {
                     .then(message => {
                         this.$toast()
                             .confirm(message, () => {
-                                return this.$store
-                                    .dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item)
+                                // TODO: When flow store is migrated to Pinia, this will be simplified:
+                                const deletePromise = this.dataType === "template" 
+                                    ? this.templateStore.deleteTemplate(item)
+                                    : this.$store.dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item);
+                                
+                                return deletePromise
                                     .then(() => {
                                         this.content = ""
                                         this.previousContent = ""
@@ -245,8 +248,12 @@ export default {
                     return;
                 }
                 this.previousContent = YAML_UTILS.stringify(this.item);
-                this.$store
-                    .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content})
+                // TODO: When flow store is migrated to Pinia, this will be simplified:
+                const createPromise = this.dataType === "template" 
+                    ? this.templateStore.createTemplate({template: this.content})
+                    : this.$store.dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content});
+                
+                createPromise
                     .then((data) => {
                         this.previousContent = data.source ? data.source : YAML_UTILS.stringify(data);
                         this.content = data.source ? data.source : YAML_UTILS.stringify(data);
@@ -267,18 +274,9 @@ export default {
             }
         },
         updatePluginDocumentation(event) {
-            const taskType = YAML_UTILS.getTypeAtPosition(event.model.getValue(), event.position, this.pluginSingleList)
-            if (taskType) {
-                const taskElement = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.position);
-                const version = taskElement?.parents?.[taskElement.parents.length - 1]?.version;
-
-                this.pluginsStore.load({cls: taskType, version})
-                    .then(plugin => {
-                        this.pluginsStore.editorPlugin = {cls: taskType, ...plugin};
-                    });
-            } else {
-                this.pluginsStore.editorPlugin = undefined;
-            }
+            const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+            let element = elementWrapper?.value?.type !== undefined ? elementWrapper.value : elementWrapper?.parents?.findLast(p => p.type !== undefined);
+            this.pluginsStore.updateDocumentation(element);
         },
     },
 };

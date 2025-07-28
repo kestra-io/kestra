@@ -1,13 +1,12 @@
 import {Comparators, Completion, FilterKeyCompletions} from "../filterCompletion.ts";
+import type {useExecutionsStore} from "../../../../../stores/executions";
 import {FilterLanguage} from "../filterLanguage.ts";
 
-const metricFilterKeys: Record<string, FilterKeyCompletions> = {
+const metricFilterKeys: (executionsStore: ReturnType<typeof useExecutionsStore>) => Record<string, FilterKeyCompletions> = (executionsStore) => ({
     metric: new FilterKeyCompletions(
         [Comparators.EQUALS],
-        async (store) => {
-            const execution = store.getters["execution/execution"];
-
-            const taskRuns: {id: string, taskId: string, value?: string}[] = execution.taskRunList ?? [];
+        async () => {
+            const taskRuns = executionsStore.execution?.taskRunList ?? [];
             return taskRuns.map(taskRun => new Completion(
                 taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}` : ""),
                 taskRun.id
@@ -15,14 +14,12 @@ const metricFilterKeys: Record<string, FilterKeyCompletions> = {
         },
         true
     ),
-}
+})
 
-class MetricFilterLanguage extends FilterLanguage {
-    static readonly INSTANCE = new MetricFilterLanguage();
-
-    private constructor() {
-        super("metrics", metricFilterKeys);
+export class MetricFilterLanguage extends FilterLanguage {
+    constructor(executionsStore: ReturnType<typeof useExecutionsStore>) {
+        super("metrics", metricFilterKeys(executionsStore));
     }
 }
 
-export default MetricFilterLanguage.INSTANCE as FilterLanguage;
+export default MetricFilterLanguage;

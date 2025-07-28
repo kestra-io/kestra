@@ -1,6 +1,7 @@
 import {defineStore} from "pinia";
 import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
 import {useApiStore} from "./api";
+import * as BasicAuth from "../utils/basicAuth"
 
 interface MiscState {
     configs: any | undefined;
@@ -15,11 +16,7 @@ export const useMiscStore = defineStore("misc", {
         theme: "light"
     }),
 
-    getters: {
-        getConfigs: (state) => state.configs,
-        getContextInfoBarOpenTab: (state) => state.contextInfoBarOpenTab,
-        getTheme: (state) => state.theme,
-    },
+
 
     actions: {
         async loadConfigs() {
@@ -28,9 +25,17 @@ export const useMiscStore = defineStore("misc", {
             return response.data;
         },
 
-        async loadAllUsages() {
-            const response = await this.$http.get(`${apiUrl(this.vuexStore)}/usages/all`);
+        async loadBasicAuthValidationErrors() {
+            const response = await this.$http.get(`${apiUrlWithoutTenants()}/basicAuthValidationErrors`);
             return response.data;
+        },
+
+        async loadAllUsages() {
+            if(this.configs.isBasicAuthInitialized && BasicAuth.isLoggedIn()){
+                const response = await this.$http.get(`${apiUrl(this.vuexStore)}/usages/all`);
+                return response.data;
+            }
+            return [];
         },
 
         async addBasicAuth(options: {
@@ -40,7 +45,7 @@ export const useMiscStore = defineStore("misc", {
             password: string;
         }) {
             const email = options.username;
-            
+
             localStorage.setItem("firstName", options.firstName);
             localStorage.setItem("lastName", options.lastName);
 
@@ -60,18 +65,6 @@ export const useMiscStore = defineStore("misc", {
                 counter: 0,
                 email: email
             });
-        },
-
-        setTheme(theme: string) {
-            this.theme = theme;
-        },
-
-        setConfigs(configs: any) {
-            this.configs = configs;
-        },
-
-        setContextInfoBarOpenTab(value: string) {
-            this.contextInfoBarOpenTab = value;
         }
     }
 });

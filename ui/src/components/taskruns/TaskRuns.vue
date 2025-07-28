@@ -102,6 +102,7 @@
     import TaskRunFilterLanguage from "../../composables/monaco/languages/filters/impl/taskRunFilterLanguage.js";
 </script>
 <script>
+    import {mapStores} from "pinia";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -115,6 +116,7 @@
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
     import {stateGlobalChartTypes, storageKeys} from "../../utils/constants";
+    import {useTaskRunsStore} from "../../stores/taskruns";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -137,6 +139,7 @@
             };
         },
         computed: {
+            ...mapStores(useTaskRunsStore),
             routeInfo() {
                 return {
                     title: this.$t("taskruns")

@@ -10,6 +10,7 @@
     "Finish": "Finalizar",
     "Fold auto": "Editor: dobra automática de multilinhas",
     "Fold content lines": "Dobrar strings multilinhas",
+    "Hover description": "Editor: Mostrar descrição do campo ao passar o mouse sobre o key ou value",
     "Language": "Idioma",
     "Next step": "Próximo passo",
     "Per page": "por página",
@@ -124,6 +125,7 @@
     "cannot swap tasks": "Não é possível trocar as tasks",
     "change execution state confirm": "Tem certeza de que deseja alterar o estado da execução <code>{id}</code>?",
     "change execution state done": "Estado de execução atualizado",
+    "change queue confirm": "Tem certeza de que deseja alterar o estado da fila para a execução <code>{id}</code>?<br/>",
     "change state": "Alterar estado",
     "change state confirm": "Tem certeza de que deseja alterar o estado de execução da task <code>{task}</code> na execução <code>{id}</code>?",
     "change state current state": "Status atual é:",
@@ -214,6 +216,7 @@
         "label": "Editar Dashboard"
       },
       "empty": "Não há resultados para serem exibidos.",
+      "export": "Exportar para CSV",
       "labels": {
         "plural": "Dashboards",
         "singular": "Dashboard"
@@ -267,7 +270,6 @@
     },
     "days": "Dias",
     "debug": "Depurar",
-    "decline": "Recusar",
     "default": "Padrão",
     "delete": "Deletar",
     "delete backfill": "Deletar o backfill",
@@ -400,6 +402,7 @@
       "move_line": "Mover linha",
       "reset_fontsize": "Redefinir tamanho da fonte",
       "save_flow": "Salvar flow",
+      "toggle_ai_agent": "Alternar agente de IA",
       "trigger_autocompletion": "Acionar autocompletar",
       "uncomment": "Descomentar"
     },
@@ -472,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "Expressão de Renderização",
       "title": "Expressão de Depuração",
       "tooltip": "Renderizar qualquer expressão Pebble e inspecionar o contexto da Execução."
     },
@@ -599,6 +603,7 @@
         },
         "empty": "Você ainda não salvou nenhuma pesquisa.",
         "label": "Pesquisas salvas",
+        "name_already_used": "A etiqueta de pesquisa já está em uso.",
         "remove": "Remover",
         "tooltip": "Você não pode salvar critérios de pesquisa vazios."
       },
@@ -701,6 +706,7 @@
     "last execution date": "Data da última execução",
     "last execution state": "Último estado",
     "last execution status": "Último status de execução",
+    "last modified": "Última modificação",
     "launch execution": "Executar",
     "learn_more": "Saiba mais",
     "light_background": "Esta é a opção preferida ao trabalhar com um fundo claro.",
@@ -897,6 +903,7 @@
         "finally": "Selecione uma task",
         "inputs": "Selecione um tipo de campo de input",
         "pluginDefaults": "Selecione um plugin",
+        "task": "Selecione uma task",
         "tasks": "Selecione uma task",
         "triggers": "Selecione um trigger"
       },
@@ -1005,6 +1012,14 @@
     "pause confirm": "Tem certeza de que deseja pausar a execução <code>{id}</code>?",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
+    "playground": {
+      "empty": "Clique no botão \"Run task\" para testar seu fluxo de trabalho com uma execução simulada.",
+      "history": "Últimas 10 execuções",
+      "run_all_tasks": "Executar Todas as Tasks",
+      "run_task": "Executar Task",
+      "title": "Playground",
+      "toggle": "Playground"
+    },
     "pluginDefaults": "Padrões do plugin",
     "pluginPage": {
       "alt": "Ícone de Plugins",
@@ -1033,6 +1048,7 @@
     "read-more": "Leia mais sobre",
     "readonly property": "Propriedade somente leitura",
     "refresh": "Atualizar",
+    "reject": "Rejeitar",
     "relative": "Relativo",
     "relative end date": "Data de término relativa",
     "relative start date": "Data de início relativa",
@@ -1065,6 +1081,7 @@
     "revision": "Revisão",
     "revisions": "Revisões",
     "row count": "Contagem de linhas",
+    "run task in playground": "Executar task no playground",
     "runners": "Corredores",
     "running duration": "Duração em execução",
     "save": "Salvar",
@@ -1138,7 +1155,8 @@
             "language": "Idioma",
             "log_display": "Exibição de Log Padrão",
             "log_level": "Nível de Log Padrão",
-            "multi_panel_editor": "Editor de Painel Múltiplo"
+            "multi_panel_editor": "Editor de Painel Múltiplo",
+            "playground": "Playground"
           },
           "label": "Configuração Principal"
         },
@@ -1173,8 +1191,10 @@
             "editor_folding_stratgy": "Dobramento Automático de Código no Editor",
             "editor_font_family": "Família de Fonte do Editor",
             "editor_font_size": "Tamanho da Fonte do Editor",
+            "editor_hover_description": "Passe o cursor sobre a propriedade para ver a descrição",
             "environment_color": "Cor do Ambiente",
             "environment_name": "Nome do Ambiente",
+            "environment_name_tooltip": "Este nome de ambiente é definido a partir da configuração, mas pode ser alterado.",
             "logs_font_size": "Tamanho da Fonte dos Logs",
             "theme": "Tema"
           },
@@ -1208,13 +1228,13 @@
         "complete": "Iniciar Kestra UI",
         "config": "Validar Configuração",
         "survey": "Conte-nos mais",
-        "user": "Crie seu primeiro usuário"
+        "user": "Crie sua conta"
       },
       "subtitles": {
         "complete": "Configuração concluída com sucesso!",
         "config": "Aqui estão os detalhes da sua configuração",
         "survey": "Ajude-nos a melhorar o Kestra Open Source Edition",
-        "user": "Configure sua instância criando seu primeiro usuário"
+        "user": "Configure sua instância criando uma conta"
       },
       "success": {
         "subtitle": "Você está pronto!",
@@ -1239,13 +1259,16 @@
       },
       "titles": {
         "survey": "Conte-nos mais",
-        "user": "Criar primeiro usuário"
+        "user": "Criar uma conta"
       },
+      "troubleshooting": "Esqueceu a Senha?",
       "validation": {
+        "config_message": "Certifique-se de atualizar sua configuração para corrigir esta mensagem de erro",
         "email_invalid": "E-mail inválido",
         "email_required": "O e-mail é obrigatório",
         "email_temporary_not_allowed": "Endereços de e-mail temporários ou descartáveis não são permitidos",
         "firstName_required": "Nome é obrigatório",
+        "incorrect_creds": "Nome de usuário ou senha inválidos. Certifique-se de que suas credenciais estão corretas.",
         "lastName_required": "Sobrenome obrigatório",
         "password_invalid": "Senha inválida"
       }
@@ -1286,6 +1309,7 @@
     "success": "Sucesso",
     "sum": "Soma",
     "switch-view": "Alternar visualização",
+    "system overview": "Visão Geral do Sistema",
     "system_namespace": "Mantenha sua plataforma sob controle com system flows.",
     "system_namespace_description": "Automatize tarefas de manutenção, desde alertas de falha até limpezas automatizadas.",
     "tags": "Tags",
@@ -1378,9 +1402,11 @@
       "warning": "Isso pode levar a execuções concorrentes para o mesmo trigger e deve ser considerado como uma última opção."
     },
     "unqueue": "Desenfileirar",
+    "unqueue as": "Desenfileirar como <code>{status}</code>",
     "unqueue confirm": "Tem certeza de que deseja desagendar a execução <code>{id}</code>?",
     "unqueue done": "A execução está fora da fila",
     "unqueue title": "Desenfileirar execução <code>{id}</code>.<br/>Observe que isso não obedecerá ao limite de concorrência do flow, portanto, mais execuções podem estar em execução do que o limite permitido.",
+    "unqueue title multiple": "Tem certeza de que deseja Desenfileirar <code>{count}</code> execuções?<br/><br/>Observe que isso não obedecerá ao limite de concorrência do flow, portanto, mais execuções podem estar em execução do que o limite permitido.",
     "unsaved changed ?": "Você tem alterações não salvas, deseja sair desta página?",
     "up trend": "Aumentando",
     "update": "Atualizar",

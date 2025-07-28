@@ -1,7 +1,7 @@
 <template>
     <editor
         id="editorWrapper"
-        ref="editorDomElement"
+        ref="editorRefElement"
         :model-value="draftSource === undefined ? source : draftSource"
         :schema-type="isCurrentTabFlow ? 'flow': undefined"
         :lang="extension === undefined ? 'yaml' : undefined"
@@ -15,19 +15,26 @@
         @cursor="updatePluginDocumentation"
         @save="isCurrentTabFlow ? save(): saveFileContent()"
         @execute="execute"
+        @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
+        @mouse-leave="() => highlightHoveredTask(-1)"
         :original="draftSource === undefined ? undefined : source"
         :diff-side-by-side="false"
     >
         <template #absolute>
-            <div class="d-flex flex-column align-items-end gap-2" v-if="isCurrentTabFlow">
+            <div class="d-flex flex-column align-items-end gap-2 mt-2" v-if="isCurrentTabFlow">
                 <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
-                    {{ $t("ai.flow.title") }}
+                    {{ t("ai.flow.title") }}
                 </el-button>
-                <span>
-                    <KeyShortcuts />
-                </span>
             </div>
             <ContentSave v-else @click="saveFileContent" />
+        </template>
+        <template v-if="playgroundStore.enabled" #widget-content>
+            <el-button
+                class="el-button--playground"
+                @click="playgroundStore.runUntilTask(highlightedLines?.taskId)"
+            >
+                {{ t('playground.run_task') }}
+            </el-button>
         </template>
     </editor>
     <transition name="el-zoom-in-center">
@@ -36,45 +43,53 @@
             class="position-absolute prompt"
             @close="aiAgentOpened = false"
             :flow="flowContent"
-            @generated-yaml="yaml => {draftSource = yaml; aiAgentOpened = false}"
+            @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
         />
     </transition>
     <AcceptDecline
         v-if="draftSource !== undefined"
-        class="position-absolute prompt"
+        class="position-absolute actions"
         @accept="acceptDraft"
-        @decline="declineDraft"
+        @reject="declineDraft"
     />
 </template>
 
 <script lang="ts" setup>
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
     import Editor from "./Editor.vue";
-    import KeyShortcuts from "./KeyShortcuts.vue";
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
     import {useRoute, useRouter} from "vue-router";
 
+    const {t} = useI18n();
+
     const route = useRoute()
     const router = useRouter()
 
-    import {EDITOR_CURSOR_INJECTION_KEY} from "../code/injectionKeys";
+    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
+    import {useMiscStore} from "../../stores/misc";
 
     import AiAgent from "../ai/AiAgent.vue";
     import AiIcon from "../ai/AiIcon.vue";
     import AcceptDecline from "./AcceptDecline.vue";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
 
     const store = useStore();
+    const miscStore = useMiscStore();
 
-    const aiEnabled = computed(() => store.state.misc.configs?.isAiEnabled);
+    const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const cursor = ref();
 
     const toggleAiShortcut = (event: KeyboardEvent) => {
-        if (event.altKey && event.key === "k" && isCurrentTabFlow.value) {
+        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value && aiEnabled.value) {
             event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             draftSource.value = undefined;
             aiAgentOpened.value = !aiAgentOpened.value;
         }
@@ -96,12 +111,14 @@
     const props = withDefaults(defineProps<EditorTabProps>(), {
         extension: undefined,
         dirty: false,
-        flow: true
+        flow: true,
     });
 
-    const source = computed(() => {
+    provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
+
+    const source = computed<string>(() => {
         return props.flow
-            ? store.getters["flow/flowYaml"]
+            ? store.state.flow.flowYaml
             : store.state.editor.tabs.find((t: any) => t.path === props.path)?.content;
     })
 
@@ -134,10 +151,10 @@
         window.removeEventListener("keydown", toggleAiShortcut);
     });
 
-    const editorDomElement = ref<any>(null);
+    const editorRefElement = ref<InstanceType<typeof Editor>>();
 
-    const namespace = computed(() => store.getters["flow/namespace"]);
-    const flowStore = computed(() => store.getters["flow/flow"]);
+    const namespace = computed(() => store.state.flow.namespace);
+    const flowStore = computed(() => store.state.flow.flow);
     const isCreating = computed(() => store.state.flow.isCreating);
     const isCurrentTabFlow = computed(() => props.flow)
     const isReadOnly = computed(() => flowStore.value?.deleted || !store.getters["flow/isAllowedEdit"] || store.getters["flow/readOnlySystemLabel"]);
@@ -183,14 +200,24 @@
     }
 
 
-    function updatePluginDocumentation(event: any, task: string | undefined) {
-        pluginsStore.updateDocumentation({event, task});
+    function updatePluginDocumentation(event: any) {
+        const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+        let element = (elementWrapper?.value?.type !== undefined ? elementWrapper.value : elementWrapper?.parents?.findLast(p => p.type !== undefined)) as Parameters<typeof pluginsStore.updateDocumentation>[0];
+        pluginsStore.updateDocumentation(element);
     };
 
     const flowParsed = computed(() => store.getters["flow/flowParsed"]);
     const save = async () => {
         clearTimeout(timeout.value);
-        const result = await store.dispatch("flow/save", {content: editorDomElement.value.$refs.monacoEditor.value})
+        const editorRef = editorRefElement.value
+        if(!editorRef?.$refs.monacoEditor) return
+        const result = await store.dispatch("flow/save", {content:(editorRef.$refs.monacoEditor as any).value})
+
+        store.commit("editor/setTabDirty", {
+            path: props.path,
+            dirty: false
+        });
+
         if (result === "redirect_to_update") {
             await router.push({
                 name: "flows/update",
@@ -209,7 +236,7 @@
         await store.dispatch("namespace/createFile", {
             namespace: namespace.value,
             path: props.path,
-            content: editorDomElement.value.modelValue,
+            content: editorRefElement.value?.modelValue,
         });
         store.commit("editor/setTabDirty", {
             path: props.path,
@@ -242,12 +269,35 @@
         draftSource.value = undefined;
         aiAgentOpened.value = true;
     }
+
+    const {
+        playgroundStore,
+        highlightHoveredTask,
+        highlightedLines,
+    } = useFlowEditorRunTaskButton(isCurrentTabFlow, editorRefElement, source);
 </script>
 
 <style scoped lang="scss">
     .prompt {
         bottom: 10%;
-        width: calc(100% - 4rem);
-        left: 2rem;
+        width: calc(100% - 5rem);
+        left: 3rem;
+        max-width: 700px;
+        background-color: var(--ks-background-panel);
+        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+    }
+
+    .rounded-pill {
+        background-color: #262A35;
+        color: #ffffff;
+        box-shadow: 0px 4px 4px 0px #00000040;
+
+        &:hover {
+            background-color: #262A35;
+        }
+    }
+
+    .actions {
+        bottom: 10%;
     }
 </style>

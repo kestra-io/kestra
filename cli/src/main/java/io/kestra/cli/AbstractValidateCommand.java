@@ -1,5 +1,6 @@
 package io.kestra.cli;
 
+import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.serializers.YamlParser;
@@ -9,6 +10,7 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
+import jakarta.inject.Inject;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -30,6 +32,9 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
 
     @CommandLine.Parameters(index = "0", description = "the directory containing files to check")
     protected Path directory;
+
+    @Inject
+    private TenantIdSelectorService tenantService;
 
     /** {@inheritDoc} **/
     @Override
@@ -112,7 +117,7 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
 
             try(DefaultHttpClient client = client()) {
                 MutableHttpRequest<String> request = HttpRequest
-                    .POST(apiUri("/flows/validate"), body).contentType(MediaType.APPLICATION_YAML);
+                    .POST(apiUri("/flows/validate", tenantService.getTenantId(tenantId)), body).contentType(MediaType.APPLICATION_YAML);
 
                 List<ValidateConstraintViolation> validations = client.toBlocking().retrieve(
                     this.requestOptions(request),

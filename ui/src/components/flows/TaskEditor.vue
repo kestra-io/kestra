@@ -1,4 +1,12 @@
 <template>
+    <div v-if="playgroundStore.enabled && isTask && taskObject?.id" class="flow-playground">
+        <el-button
+            class="el-button--playground"
+            @click="playgroundStore.runUntilTask(taskObject?.id)"
+        >
+            {{ t('playground.run_task') }}
+        </el-button>
+    </div>
     <el-form label-position="top">
         <el-form-item>
             <template #label>
@@ -14,7 +22,7 @@
         </el-form-item>
     </el-form>
 
-    <div @click="if(isPlugin)pluginsStore.updateDocumentation({task: selectedTaskType});">
+    <div @click="isPlugin && pluginsStore.updateDocumentation(taskObject as Parameters<typeof pluginsStore.updateDocumentation>[0])">
         <TaskObject
             v-loading="isLoading"
             v-if="selectedTaskType && schema"
@@ -38,10 +46,11 @@
     import {
         SCHEMA_PATH_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
-        BLOCK_SCHEMA_PATH_INJECTION_KEY
+        BLOCK_SCHEMA_PATH_INJECTION_KEY,
     } from "../code/injectionKeys";
     import {removeNullAndUndefined} from "../code/utils/cleanUp";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
+    import {usePlaygroundStore} from "../../stores/playground";
     import {getValueAtJsonPath} from "../../utils/utils";
 
     const {t} = useI18n();
@@ -54,6 +63,7 @@
     const modelValue = defineModel<string>();
 
     const pluginsStore = usePluginsStore();
+    const playgroundStore = usePlaygroundStore();
 
     type PartialCodeElement = Partial<NoCodeElement>;
 
@@ -68,6 +78,8 @@
     provide(SCHEMA_PATH_INJECTION_KEY, computed(() => `#/definitions/${selectedTaskType.value}`))
 
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
+
+    const isTask = computed(() => ["task", "tasks"].includes(parentPath.split(".").pop() ?? ""));
 
     const isPluginDefaults = computed(() => {
         return parentPath.startsWith("pluginDefaults")
@@ -140,7 +152,7 @@
     // when tab is opened, load the documentation
     onActivated(() => {
         if(selectedTaskType.value && parentPath !== "inputs"){
-            pluginsStore.updateDocumentation({task: selectedTaskType.value});
+            pluginsStore.updateDocumentation(taskObject.value as Parameters<typeof pluginsStore.updateDocumentation>[0]);
         }
     });
 
@@ -181,7 +193,7 @@
         if (task) {
             load();
             if(isPlugin.value){
-                pluginsStore.updateDocumentation({task});
+                pluginsStore.updateDocumentation(taskObject.value as Parameters<typeof pluginsStore.updateDocumentation>[0]);
             }
         }
     }, {immediate: true});
@@ -250,5 +262,10 @@
         code {
             color: var(--ks-content-primary);
         }
+    }
+
+    .flow-playground{
+        display: flex;
+        justify-content: end;
     }
 </style>

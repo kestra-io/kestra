@@ -18,8 +18,6 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
@@ -38,7 +36,6 @@ import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.http.multipart.CompletedPart;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -80,10 +77,6 @@ public class ExecutionService {
 
     @Inject
     private MetricRepositoryInterface metricRepository;
-
-    @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    protected QueueInterface<Execution> executionQueue;
 
     @Inject
     private FlowInputOutput flowInputOutput;
@@ -212,7 +205,16 @@ public class ExecutionService {
 
         // We need to remove global error tasks and flowable error tasks if any
         flow
-            .allErrorsWithChilds()
+            .allErrorsWithChildren()
+            .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+
+        // We need to remove global finally tasks and flowable error tasks if any
+        flow
+            .allFinallyWithChildren()
+            .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+
+        // We need to remove afterExecution tasks
+        ListUtils.emptyOnNull(flow.getAfterExecution())
             .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
 
         // Build and launch new execution
@@ -843,7 +845,7 @@ public class ExecutionService {
         }
 
         if (execution.getState().getCurrent() == State.Type.QUEUED) {
-            return concurrencyLimitService.unqueue(execution);
+            return concurrencyLimitService.unqueue(execution,State.Type.RUNNING);
         }
 
         if (execution.getState().getCurrent() == State.Type.PAUSED) {

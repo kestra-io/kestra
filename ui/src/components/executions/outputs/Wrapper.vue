@@ -1,7 +1,7 @@
 <template>
     <div class="outputs">
         <div
-            class="d-flex flex-column left"
+            class="d-flex flex-column overflow-x-auto left"
             :style="{width: leftWidth + '%'}"
         >
             <el-cascader-panel
@@ -9,7 +9,7 @@
                 v-model="selected"
                 :options="outputs"
                 :border="false"
-                class="flex-grow-1 overflow-x-auto cascader"
+                class="flex-grow-1 cascader"
                 @expand-change="() => scrollRight()"
             >
                 <template #default="{data}">
@@ -52,7 +52,7 @@
             </el-cascader-panel>
         </div>
         <div class="slider" @mousedown="startDragging" />
-        <div class="right wrapper" :style="{width: 100 - leftWidth + '%'}">
+        <div class="right wrapper" :style="{width: 100 - leftWidth + '%', 'z-index': 999}">
             <div
                 v-if="multipleSelected || selectedValue"
                 class="w-100 overflow-auto p-3"
@@ -134,7 +134,7 @@
 
                 <VarValue
                     v-if="displayVarValue()"
-                    :value="selectedValue.uri ? selectedValue.uri : selectedValue"
+                    :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
                     :execution="execution"
                 />
                 <SubFlowLink
@@ -152,6 +152,8 @@
 
     import {useStore} from "vuex";
     const store = useStore();
+
+    import {useExecutionsStore} from "../../../stores/executions";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -196,7 +198,7 @@
         const filter = selected.value?.length
             ? selected.value[0]
             : (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.label;
-        const taskRunList = [...execution.value.taskRunList];
+        const taskRunList = [...execution.value?.taskRunList ?? []];
         return taskRunList.find((e) => e.taskId === filter);
     };
     const onDebugExpression = (expression: string) => {
@@ -251,7 +253,9 @@
         () => (cascader.value as any)?.menus?.length > 1,
     );
 
-    const execution = computed(() => store.state.execution.execution);
+    const executionsStore = useExecutionsStore();
+
+    const execution = computed(() => executionsStore.execution);
 
     function isValidURL(url) {
         try {
@@ -365,7 +369,7 @@
         return result;
     };
     const outputs = computed(() => {
-        const tasks = store.state.execution?.execution?.taskRunList?.map((task) => {
+        const tasks = executionsStore?.execution?.taskRunList?.map((task) => {
             return {
                 label: task.taskId,
                 value: task.taskId,
@@ -402,9 +406,9 @@
 
         const mapped = {};
 
-        getTaskIcons(store.state.execution?.flow?.tasks || [], mapped);
-        getTaskIcons(store.state.execution?.flow?.errors || [], mapped);
-        getTaskIcons(store.state.execution?.flow?.finally || [], mapped);
+        getTaskIcons(executionsStore?.flow?.tasks || [], mapped);
+        getTaskIcons(executionsStore?.flow?.errors || [], mapped);
+        getTaskIcons(executionsStore?.flow?.finally || [], mapped);
 
         return mapped;
     });
@@ -414,11 +418,11 @@
             ? value
             : `${value.substring(0, 16)}...`;
     const isFile = (value) =>
-        typeof value === "string" && value.startsWith("kestra:///");
+        typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
     const displayVarValue = () =>
         isFile(selectedValue.value) ||
         selectedValue.value !== debugExpression.value;
-
+    
     const leftWidth = ref(70);
     const startDragging = (event: MouseEvent) => {
         const startX = event.clientX;
@@ -461,6 +465,10 @@
     .values {
         pointer-events: none;
         margin: 0.75rem 0 1.25rem 0;
+    }
+
+    .el-cascader-panel {
+        height: 100%;
     }
 
     .debug {

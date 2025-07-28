@@ -19,6 +19,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
@@ -101,49 +102,39 @@ public class ExecutorService {
         return this.flowExecutorInterface;
     }
 
-    public Executor checkConcurrencyLimit(Executor executor, FlowInterface flow, Execution execution, long count) {
-        // if above the limit, handle concurrency limit based on its behavior
-        if (count >= flow.getConcurrency().getLimit()) {
+    public ExecutionRunning processExecutionRunning(FlowInterface flow, int runningCount, ExecutionRunning executionRunning) {
+        // if concurrency was removed, it can be null as we always get the latest flow definition
+        if (flow.getConcurrency() != null && runningCount >= flow.getConcurrency().getLimit()) {
             return switch (flow.getConcurrency().getBehavior()) {
                 case QUEUE -> {
-                    var newExecution = execution.withState(State.Type.QUEUED);
-
-                    ExecutionRunning executionRunning = ExecutionRunning.builder()
-                        .tenantId(flow.getTenantId())
-                        .namespace(flow.getNamespace())
-                        .flowId(flow.getId())
-                        .execution(newExecution)
-                        .concurrencyState(ExecutionRunning.ConcurrencyState.QUEUED)
-                        .build();
-
-                    // when max concurrency is reached, we throttle the execution and stop processing
                     logService.logExecution(
-                        newExecution,
+                        executionRunning.getExecution(),
                         Level.INFO,
-                        "Flow is queued due to concurrency limit exceeded, {} running(s)",
-                        count
+                        "Execution is queued due to concurrency limit exceeded, {} running(s)",
+                        runningCount
                     );
-                    // return the execution queued
-                    yield executor
-                        .withExecutionRunning(executionRunning)
-                        .withExecution(newExecution, "checkConcurrencyLimit");
+                    var newExecution = executionRunning.getExecution().withState(State.Type.QUEUED);
+                    metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+                    yield executionRunning
+                        .withExecution(newExecution)
+                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.QUEUED);
                 }
                 case CANCEL ->
-                    executor.withExecution(execution.withState(State.Type.CANCELLED), "checkConcurrencyLimit");
+                    executionRunning
+                        .withExecution(executionRunning.getExecution().withState(State.Type.CANCELLED))
+                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
                 case FAIL ->
-                    executor.withException(new IllegalStateException("Flow is FAILED due to concurrency limit exceeded"), "checkConcurrencyLimit");
+                    executionRunning
+                        .withExecution(executionRunning.getExecution().failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to concurrency limit exceeded")).getExecution())
+                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
+
             };
         }
 
-        // if under the limit, update the executor with a RUNNING ExecutionRunning to track them
-        var executionRunning = new ExecutionRunning(
-            flow.getTenantId(),
-            flow.getNamespace(),
-            flow.getId(),
-            executor.getExecution(),
-            ExecutionRunning.ConcurrencyState.RUNNING
-        );
-        return executor.withExecutionRunning(executionRunning);
+        // if under the limit, run it!
+        return executionRunning
+            .withExecution(executionRunning.getExecution().withState(State.Type.RUNNING))
+            .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
     }
 
     public Executor process(Executor executor) {
@@ -261,8 +252,10 @@ public class ExecutorService {
                 // Compute outputs for the parent Flowable task if a terminated state was resolved
                 if (workerTaskResult.getTaskRun().getState().isTerminated()) {
                     try {
+                        // as flowable tasks can save outputs during iterative execution, we must merge the maps here
                         Output outputs = flowableParent.outputs(runContext);
-                        Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputs);
+                        Map<String, Object> outputMap = MapUtils.merge(workerTaskResult.getTaskRun().getOutputs(), outputs == null ? null : outputs.toMap());
+                        Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputMap);
                         return Optional.of(new WorkerTaskResult(workerTaskResult
                             .getTaskRun()
                             .withOutputs(variables)
@@ -945,7 +938,7 @@ public class ExecutorService {
 
     private boolean shouldSuspend(TaskRun taskRun, List<Breakpoint> breakpoints) {
         return taskRun.getState().getCurrent().isCreated() && breakpoints.stream()
-                .anyMatch(breakpoint -> taskRun.getTaskId().equals(breakpoint.getId()) && Objects.equals(taskRun.getValue(), breakpoint.getValue()));
+                .anyMatch(breakpoint -> taskRun.getTaskId().equals(breakpoint.getId()) && (breakpoint.getValue() == null || Objects.equals(taskRun.getValue(), breakpoint.getValue())));
     }
 
     private Executor handleExecutableTask(final Executor executor) {
@@ -1170,71 +1163,83 @@ public class ExecutorService {
     }
 
     public void log(Logger log, Boolean in, WorkerJob value) {
-        if (value instanceof WorkerTask workerTask) {
-            log.debug(
-                "{} {} : {}",
-                in ? "<< IN " : ">> OUT",
-                workerTask.getClass().getSimpleName(),
-                workerTask.getTaskRun().toStringState()
-            );
-        } else if (value instanceof WorkerTrigger workerTrigger) {
-            log.debug(
-                "{} {} : {}",
-                in ? "<< IN " : ">> OUT",
-                workerTrigger.getClass().getSimpleName(),
-                workerTrigger.getTriggerContext().uid()
-            );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            if (value instanceof WorkerTask workerTask) {
+                log.debug(
+                    "{} {} : {}",
+                    in ? "<< IN " : ">> OUT",
+                    workerTask.getClass().getSimpleName(),
+                    workerTask.getTaskRun().toStringState()
+                );
+            } else if (value instanceof WorkerTrigger workerTrigger) {
+                log.debug(
+                    "{} {} : {}",
+                    in ? "<< IN " : ">> OUT",
+                    workerTrigger.getClass().getSimpleName(),
+                    workerTrigger.getTriggerContext().uid()
+                );
+            }
         }
     }
 
     public void log(Logger log, Boolean in, WorkerTaskResult value) {
-        log.debug(
-            "{} {} : {}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.getTaskRun().toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} : {}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.getTaskRun().toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, SubflowExecutionResult value) {
-        log.debug(
-            "{} {} : {}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.getParentTaskRun().toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} : {}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.getParentTaskRun().toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, SubflowExecutionEnd value) {
-        log.debug(
-            "{} {} : {}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} : {}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, Execution value) {
-        log.debug(
-            "{} {} [key='{}']\n{}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.getId(),
-            value.toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} [key='{}']\n{}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.getId(),
+                value.toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, Executor value) {
-        log.debug(
-            "{} {} [key='{}', from='{}', offset='{}', crc32='{}']\n{}",
-            in ? "<< IN " : ">> OUT",
-            value.getClass().getSimpleName(),
-            value.getExecution().getId(),
-            value.getFrom(),
-            value.getOffset(),
-            value.getExecution().toCrc32State(),
-            value.getExecution().toStringState()
-        );
+        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+            log.debug(
+                "{} {} [key='{}', from='{}', offset='{}', crc32='{}']\n{}",
+                in ? "<< IN " : ">> OUT",
+                value.getClass().getSimpleName(),
+                value.getExecution().getId(),
+                value.getFrom(),
+                value.getOffset(),
+                value.getExecution().toCrc32State(),
+                value.getExecution().toStringState()
+            );
+        }
     }
 
     public void log(Logger log, Boolean in, ExecutionKilledExecution value) {

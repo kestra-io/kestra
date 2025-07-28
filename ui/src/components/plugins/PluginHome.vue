@@ -14,11 +14,22 @@
             />
         </el-row>
         <section class="px-3 plugins-container">
-            <el-tooltip v-for="(plugin, index) in pluginsList" :show-after="1000" :key="plugin.name + '-' + index" effect="light">
+            <el-tooltip
+                v-for="(plugin, index) in pluginsList"
+                :show-after="1000"
+                :key="plugin.name + '-' + index"
+                effect="light"
+            >
                 <template #content>
                     <div class="tasks-tooltips">
-                        <template v-for="([elementType, elements]) in allElementsByTypeEntries(plugin)" :key="elementType">
-                            <p v-if="elements.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
+                        <template
+                            v-for="([elementType, elements]) in allElementsByTypeEntries(plugin)"
+                            :key="elementType"
+                        >
+                            <p
+                                v-if="elements.filter(t => t.toLowerCase().includes(searchInput)).length > 0"
+                                class="mb-0"
+                            >
                                 {{ $t(elementType) }}
                             </p>
                             <ul>
@@ -115,7 +126,8 @@
         methods: {
             openGroup(plugin) {
                 const defaultElement = Object.entries(plugin)
-                    .find(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements) && elements.length > 0)?.[1]?.[0];
+                    .filter(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements))
+                    .flatMap(([, elements]) => elements.filter(({deprecated}) => !deprecated).map(({cls}) => cls))?.[0];
                 this.openPlugin(defaultElement);
             },
             openPlugin(cls) {
@@ -132,6 +144,10 @@
             },
             allElementsByTypeEntries(plugin) {
                 return Object.entries(plugin).filter(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements))
+                    .map(([elementType, elements]) => [
+                        elementType,
+                        elements.filter(({deprecated}) => !deprecated).map(({cls}) => cls)
+                    ]);
             },
             allElements(plugin) {
                 return this.allElementsByTypeEntries(plugin).flatMap(([_, elements]) => elements);
@@ -191,7 +207,7 @@
         background-color: var(--ks-button-background-secondary);
         color: var(--ks-content-primary);
 
-        &:hover{
+        &:hover {
             border-color: var(--ks-border-active);
             background-color: var(--ks-button-background-secondary-hover);
         }

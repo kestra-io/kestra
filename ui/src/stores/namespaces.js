@@ -68,6 +68,7 @@ export default {
                     {
                         headers: {
                             "Content-Type": payload.contentType,
+                            "description": payload.description,
                             "ttl": payload.ttl
                         }
                     }

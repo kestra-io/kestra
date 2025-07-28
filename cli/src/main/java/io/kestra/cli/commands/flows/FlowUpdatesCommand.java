@@ -2,6 +2,7 @@ package io.kestra.cli.commands.flows;
 
 import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.AbstractValidateCommand;
+import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.serializers.YamlParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -9,6 +10,7 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
+import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -35,6 +37,9 @@ public class FlowUpdatesCommand extends AbstractApiCommand {
 
     @CommandLine.Option(names = {"--namespace"}, description = "The parent namespace of the flows, if not set, every namespace are allowed.")
     public String namespace;
+
+    @Inject
+    private TenantIdSelectorService tenantIdSelectorService;
 
     @SuppressWarnings("deprecation")
     @Override
@@ -66,7 +71,7 @@ public class FlowUpdatesCommand extends AbstractApiCommand {
                     namespaceQuery = "&namespace=" + namespace;
                 }
                 MutableHttpRequest<String> request = HttpRequest
-                    .POST(apiUri("/flows/bulk") + "?allowNamespaceChild=true&delete=" + delete + namespaceQuery, body).contentType(MediaType.APPLICATION_YAML);
+                    .POST(apiUri("/flows/bulk", tenantIdSelectorService.getTenantId(tenantId)) + "?allowNamespaceChild=true&delete=" + delete + namespaceQuery, body).contentType(MediaType.APPLICATION_YAML);
 
                 List<UpdateResult> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),

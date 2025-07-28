@@ -161,6 +161,11 @@ public class ErrorController {
     }
 
     @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, ValidationErrorException e) {
+        return jsonError(request, e, HttpStatus.BAD_REQUEST, e.formatedInvalidObjects());
+    }
+
+    @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, HttpStatusException e) {
         return jsonError(request, e, e.getStatus(), e.getStatus().getReason());
     }
@@ -220,9 +225,11 @@ public class ErrorController {
 
     public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, Throwable e, HttpStatus status, String reason) {
         if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
-            log.error(e.getMessage(), e);
+            var prefixMessage = "Server error: ";
+            log.error(prefixMessage + (e.getMessage() != null ? e.getMessage() : ""), e);
         } else {
-            log.trace(e.getMessage(), e);
+            var prefixMessage = "Client error: ";
+            log.trace(prefixMessage + (e.getMessage() != null ? e.getMessage() : ""), e);
         }
 
         JsonError error = new JsonError(reason + (e.getMessage() != null ? ": " + e.getMessage() : ""))

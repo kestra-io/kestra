@@ -104,31 +104,30 @@
             :class="combinedEditor ? 'editor-combined' : ''"
             style="flex: 1;"
         >
-            <template v-if="isCreating || openedTabs.length">
-                <editor
-                    class="position-relative"
-                    ref="editorDomElement"
-                    @save="save"
-                    @execute="execute"
-                    :path="currentTab?.path"
-                    :diff-overview-bar="false"
-                    :model-value="draftSource === undefined ? flowYaml : draftSource"
-                    :schema-type="isCurrentTabFlow? 'flow': undefined"
-                    :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
-                    :extension="currentTab?.extension"
-                    @update:model-value="editorUpdate"
-                    @cursor="updatePluginDocumentation"
-                    :creating="isCreating"
-                    @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
-                    @tab-loaded="onTabLoaded"
-                    :read-only="isReadOnly"
-                    :navbar="false"
-                    :original="draftSource === undefined ? undefined : flowYaml"
-                    :diff-side-by-side="false"
-                />
-            </template>
-            <div v-else class="no-tabs-opened">
-                <div class="img mb-1" />
+            <template v-if="editorViewType === 'YAML'">
+                <template v-if="isCreating || openedTabs.length">
+                    <editor
+                        class="position-relative"
+                        ref="editorDomElement"
+                        @save="save"
+                        @execute="execute"
+                        :path="currentTab?.path"
+                        :diff-overview-bar="false"
+                        :model-value="draftSource === undefined ? flowYaml : draftSource"
+                        :schema-type="isCurrentTabFlow? 'flow': undefined"
+                        :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
+                        :extension="currentTab?.extension"
+                        @update:model-value="editorUpdate"
+                        @cursor="updatePluginDocumentation"
+                        :creating="isCreating"
+                        @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
+                        @tab-loaded="onTabLoaded"
+                        :read-only="isReadOnly"
+                        :navbar="false"
+                        :original="draftSource === undefined ? undefined : flowYaml"
+                        :diff-side-by-side="false"
+                    />
+                </template>
 
                 <div>
                     <h5 class="mb-0 fw-bold">
@@ -203,7 +202,7 @@
                         allowfullscreen
                     />
                 </div>
-            </div>
+            </template>
         </div>
     </div>
     <el-dialog
@@ -294,16 +293,6 @@
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
     const tours = getCurrentInstance().appContext.config.globalProperties.$tours;
     const tabsScrollRef = ref();
-
-    const toggleAiShortcut = (event) => {
-        if (event.altKey && event.key === "k" && isCurrentTabFlow.value) {
-            event.preventDefault();
-            draftSource.value = undefined;
-            aiAgentOpened.value = !aiAgentOpened.value;
-        }
-    };
-    const aiAgentOpened = ref(false);
-    const draftSource = ref(undefined);
 
     const props = defineProps({
         flowGraph: {
@@ -444,7 +433,7 @@
     const editorWidth = useStorage("editor-size", 50);
     const validationDomElement = ref(null);
     const isLoading = ref(false);
-    const flowYaml = computed(() => store.getters["flow/flowYaml"]);
+    const flowYaml = computed(() => store.state.flow.flowYaml);
     const flowYamlOrigin = computed(() => store.state.flow.flowYamlOrigin);
     const user = computed(() => store.getters["auth/user"]);
     const metadata = computed(() => store.state.flow.metadata);
@@ -538,8 +527,6 @@
         if (props.isCreating) {
             store.commit("editor/closeTabs");
         }
-
-        window.addEventListener("keydown", toggleAiShortcut);
     });
 
     onBeforeUnmount(() => {
@@ -554,7 +541,6 @@
         store.commit("editor/closeAllTabs");
 
         document.removeEventListener("click", hideTabContextMenu);
-        window.removeEventListener("keydown", toggleAiShortcut);
     });
 
     const stopTour = () => {
@@ -589,11 +575,7 @@
     };
 
     const onEdit = (source, currentIsFlow = false) => {
-        if (draftSource.value !== undefined) {
-            draftSource.value = source;
-        } else {
-            store.commit("flow/setFlowYaml", source);
-        }
+        store.commit("flow/setFlowYaml", source);
         return store.dispatch("flow/onEdit", {
             source,
             currentIsFlow,
@@ -1122,8 +1104,25 @@
 
     .prompt {
         bottom: 10%;
-        width: calc(100% - 4rem);
-        left: 2rem;
+        width: calc(100% - 5rem);
+        left: 3rem;
+        max-width: 700px;
+        background-color: var(--ks-background-panel);
+        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+    }
+
+    .rounded-pill {
+        background-color: #262A35;
+        color: #ffffff;
+        box-shadow: 0px 4px 4px 0px #00000040;
+
+        &:hover {
+            background-color: #262A35;
+        }
+    }
+
+    .actions{
+        bottom: 10%;
     }
 </style>
 

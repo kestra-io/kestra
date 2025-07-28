@@ -14,6 +14,9 @@
                             <chevron-up v-if="isExpanded" />
                             <chevron-down v-else />
                         </span>
+                        <span v-if="!errorLogs">
+                            {{ $t('error detected') }}
+                        </span>
                     </div>
                 </template>
                 <div v-if="isExpanded && errorLogs" class="error-stack">
@@ -121,9 +124,9 @@
                 </el-icon>
                 {{ $t('prev_execution') }}
             </el-button>
-            
-            <el-button 
-                :disabled="!hasNextExecution" 
+
+            <el-button
+                :disabled="!hasNextExecution"
                 @click="navigateToExecution('next')"
             >
                 {{ $t('next_execution') }}
@@ -135,9 +138,12 @@
 
         <div v-if="execution.trigger" class="my-5">
             <h5>{{ $t("trigger") }}</h5>
-            <KestraCascader
+            <TriggerCascader
                 id="triggers"
-                :options="transform({...execution.trigger, ...(execution.trigger.trigger ? execution.trigger.trigger : {})})"
+                :options="transform({
+                    ...execution.trigger,
+                    ...(execution.trigger.trigger ? execution.trigger.trigger : {})
+                })"
                 :execution
                 class="overflow-auto"
             />
@@ -175,7 +181,6 @@
     </div>
 </template>
 <script>
-    import {mapState} from "vuex";
     import Status from "../Status.vue";
     import SetLabels from "./SetLabels.vue";
     import Restart from "./Restart.vue";
@@ -192,6 +197,7 @@
     import {toRaw} from "vue";
     import ChangeExecutionStatus from "./ChangeExecutionStatus.vue";
     import KestraCascader from "../../components/kestra/Cascader.vue"
+    import TriggerCascader from "./TriggerCascader.vue"
     import LogLine from "../../components/logs/LogLine.vue"
     import Alert from "vue-material-design-icons/Alert.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
@@ -199,6 +205,8 @@
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import Markdown from "../../components/layout/Markdown.vue";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         inheritAttrs: false,
@@ -217,6 +225,7 @@
             DateAgo,
             Labels,
             KestraCascader,
+            TriggerCascader,
             LogLine,
             Alert,
             ChevronDown,
@@ -276,9 +285,8 @@
                 return this.execution.labels?.find( it => it.key === "system.replay" && (it.value === "true" || it.value === true)) !== undefined;
             },
             load() {
-                this.$store
-                    .dispatch(
-                        "execution/loadExecution",
+                this.executionsStore
+                    .loadExecution(
                         this.$route.params
                     )
                     .then(() => {
@@ -286,8 +294,8 @@
                     })
             },
             fetchErrorLogs() {
-                this.$store
-                    .dispatch("execution/loadLogs", {
+                this.executionsStore
+                    .loadLogs({
                         store: false,
                         executionId: this.execution.id,
                         params: {
@@ -315,8 +323,8 @@
                         pageSize: 100,
                         sort: "state.startDate:desc"
                     };
-                    
-                    const result = await this.$store.dispatch("execution/findExecutions", params);
+
+                    const result = await this.executionsStore.findExecutions(params);
                     if (!result || !result.results || !result.results.length) {
                         return null;
                     }
@@ -400,7 +408,10 @@
             };
         },
         computed: {
-            ...mapState("execution", ["flow", "execution"]),
+            ...mapStores(useExecutionsStore),
+            execution() {
+                return this.executionsStore.execution;
+            },
             errorMessage() {
                 return `${this.$t("execution_failed")}: ${this.errorLast?.message}`;
             },
@@ -456,13 +467,13 @@
                 return ret;
             },
             inputs() {
-                if (!this.flow) {
+                if (!this.executionsStore.flow) {
                     return []
                 }
 
                 let inputs = toRaw(this.execution.inputs);
                 Object.keys(inputs).forEach(key => {
-                    (this.flow.inputs || []).forEach(input => {
+                    (this.executionsStore.flow.inputs || []).forEach(input => {
                         if (key === input.name && input.type === "SECRET") {
                             inputs[key] = "******";
                         }

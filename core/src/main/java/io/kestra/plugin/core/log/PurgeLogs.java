@@ -65,6 +65,11 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
     private Property<String> flowId;
 
     @Schema(
+        title = "The Execution ID of the logs to be purged."
+    )
+    private Property<String> executionId;
+
+    @Schema(
         title = "The levels of the logs to be purged.",
         description = "If not set, log for any levels will be purged."
     )
@@ -102,6 +107,7 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
             flowInfo.tenantId(),
             runContext.render(namespace).as(String.class).orElse(null),
             runContext.render(flowId).as(String.class).orElse(null),
+            runContext.render(executionId).as(String.class).orElse(null),
             logLevelsRendered.isEmpty() ? null : logLevelsRendered,
             renderedDate != null ? ZonedDateTime.parse(renderedDate) : null,
             ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow())

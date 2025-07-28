@@ -49,7 +49,7 @@
     });
 
     const store = useStore();
-    const flowYaml = computed<string>(() => store.getters["flow/flowYaml"]);
+    const flowYaml = computed<string>(() => store.state.flow.flowYaml);
 
     const lastValidFlowYaml = computed<string>(
         (oldValue) => {

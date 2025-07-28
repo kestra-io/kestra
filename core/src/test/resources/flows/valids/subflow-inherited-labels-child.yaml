@@ -1,0 +1,11 @@
+id: subflow-inherited-labels-child
+namespace: io.kestra.tests
+
+labels:
+  childFlowLabel1: value1
+  childFlowLabel2: value2
+
+tasks:
+  - id: return
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ execution.id }}"

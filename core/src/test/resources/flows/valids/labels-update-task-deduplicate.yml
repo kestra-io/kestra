@@ -1,0 +1,14 @@
+id: labels-update-task-deduplicate
+namespace: io.kestra.tests
+
+tasks:
+  - id: from-string
+    type: io.kestra.plugin.core.execution.Labels
+    labels: "{ \"fromStringKey\": \"value1\", \"fromStringKey\": \"value2\" }"
+  - id: from-list
+    type: io.kestra.plugin.core.execution.Labels
+    labels:
+      - key: "fromListKey"
+        value: "value1"
+      - key: "fromListKey"
+        value: "value2"

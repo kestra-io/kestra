@@ -56,20 +56,15 @@ component_management:
       name: Tests
       paths:
         - tests/**
-    - component_id: ui
-      name: Ui
-      paths:
-        - ui/**
-      statuses:
-        - type: project
-          target: auto
-        - type: patch
-          target: auto
 
     - component_id: webserver
       name: Webserver
       paths:
         - webserver/**
+
+ignore:
+  - ui/**
+# we are not mature yet to have a ui code coverage
 
 flag_management:
   default_rules:

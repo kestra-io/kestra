@@ -148,20 +148,22 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
     }
 
-    private static boolean checkObjectFieldsWithPatterns(Object object, List<Pattern> Patterns) {
+    private static boolean checkObjectFieldsWithPatterns(Object object, List<Pattern> patterns) {
+        if (object == null) {
+            return true;
+
+        }
         List<Field> fields = Arrays.asList(object.getClass().getDeclaredFields());
 
         return fields.stream()
-            .anyMatch(field -> Patterns.stream()
+            .anyMatch(field -> patterns.stream()
                 .anyMatch(inputPattern -> {
                     field.setAccessible(true);
                     try {
                         Optional<?> value=Optional.ofNullable(field.get(object));
 
-                        if(value.isEmpty())
-                            return false;
+                        return value.filter(o -> inputPattern.matcher(o.toString()).find()).isPresent();
 
-                        return inputPattern.matcher(value.get().toString()).find();
                     } catch (IllegalAccessException e) {
                         throw new RuntimeException(e);
                     }

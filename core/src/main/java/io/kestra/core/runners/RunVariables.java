@@ -215,7 +215,7 @@ public final class RunVariables {
 
                 executionMap.put("id", execution.getId());
 
-                if (execution.getState() != null) { // can occurs in tests
+                if (execution.getState() != null) { // can occur in tests
                     executionMap.put("state", execution.getState().getCurrent());
                 }
 
@@ -224,6 +224,10 @@ public final class RunVariables {
 
                 Optional.ofNullable(execution.getOriginalId())
                     .ifPresent(originalId -> executionMap.put("originalId", originalId));
+
+                if (execution.getOutputs() != null) {
+                    executionMap.put("outputs", execution.getOutputs());
+                }
 
                 builder.put("execution", executionMap.build());
 

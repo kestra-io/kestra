@@ -8,5 +8,5 @@
     import EditorSidebar from "./EditorSidebar.vue";
 
     const store = useStore();
-    const namespace = computed(() => store.getters["flow/namespace"]);
+    const namespace = computed(() => store.state.flow.namespace);
 </script>

@@ -71,6 +71,7 @@
     import {useStore} from "vuex";
     import useNamespaces, {Namespace} from "../../../composables/useNamespaces.ts";
     import {useI18n} from "vue-i18n";
+    import {useMiscStore} from "../../../stores/misc";
 
     import Navbar from "../../../components/layout/TopNavBar.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
@@ -121,9 +122,9 @@
         () => loadData(),
     );
 
-    const configs = computed(() => store.getters["misc/configs"]);
+    const miscStore = useMiscStore();
     const systemNamespace = computed(
-        () => configs.value?.systemNamespace || "system",
+        () => miscStore.configs?.systemNamespace || "system",
     );
 
     const namespacesHierarchy = computed(() => {

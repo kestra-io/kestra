@@ -36,6 +36,15 @@ jobs:
         with:
           path: kestra
 
+      # Setup build
+      - uses: kestra-io/actions/.github/actions/setup-build@main
+        name: Setup - Build
+        id: build
+        with:
+          java-enabled: true
+          node-enabled: true
+          python-enabled: true
+
       - name: Install Npm dependencies
         run: |
           cd kestra/ui
@@ -44,8 +53,8 @@ jobs:
 
       - name: Run E2E Tests
         run: |
-          cd kestra/ui
-          npm run test:e2e
+          cd kestra
+          sh build-and-start-e2e-tests.sh
 
       - name: Upload Playwright Report as Github artifact
         # 'With this report, you can analyze locally the results of the tests. see https://playwright.dev/docs/ci-intro#html-report'
@@ -53,7 +62,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
-          path: kestra/playwright-report/
+          path: kestra/ui/playwright-report/
           retention-days: 7
         # Allure check
         # TODO I don't know what it should do

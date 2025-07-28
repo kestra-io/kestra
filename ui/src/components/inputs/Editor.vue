@@ -56,6 +56,7 @@
                     :creating="creating"
                     :large-suggestions="largeSuggestions"
                     @mouse-move="emit('mouse-move', $event)"
+                    @mouse-leave="emit('mouse-leave', $event)"
                     @change="onInput"
                     @editor-did-mount="editorDidMount"
                 />
@@ -135,6 +136,7 @@
         (e: "cursor", payload: {position: monaco.Position, model: monaco.editor.ITextModel}): void;
         (e: "confirm", value?: string): void;
         (e: "mouse-move", event: monaco.editor.IEditorMouseEvent): void;
+        (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void;
     }>();
 
 
@@ -616,7 +618,6 @@
                 return widgetNode;
             },
         });
-
     }
 </script>
 

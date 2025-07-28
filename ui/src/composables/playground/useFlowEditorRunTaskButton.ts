@@ -86,10 +86,14 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
         });
     }
 
+    const highlightedTaskId = ref<string | undefined>(undefined);
+
     watch(hoveredTaskProperties, (res) => {
         if(!res || !playgroundStore.enabled || !isCurrentTabFlow.value) {
             highlightedLines.value = undefined;
             editorRefElement.value?.clearHighlights();
+            editorRefElement.value?.removeContentWidget(`task-hovered-${highlightedTaskId.value}`);
+            highlightedTaskId.value = undefined;
             return;
         }
 
@@ -99,6 +103,8 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
         if(hv && !Object.keys(hv).some((key) => hv[key] !== (res as Record<string, any>)[key])) {
             return;
         }
+
+        highlightedTaskId.value = res.taskId;
 
         highlightLines(res)
         addButtonToHoveredTask(res);

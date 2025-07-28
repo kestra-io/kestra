@@ -15,7 +15,8 @@
         @cursor="updatePluginDocumentation"
         @save="isCurrentTabFlow ? save(): saveFileContent()"
         @execute="execute"
-        @mouse-move="(e:any) => highlightHoveredTask(e.target?.position?.lineNumber)"
+        @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
+        @mouse-leave="() => highlightHoveredTask(-1)"
         :original="draftSource === undefined ? undefined : source"
         :diff-side-by-side="false"
     >

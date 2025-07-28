@@ -262,6 +262,7 @@
         (e:"editorDidMount", editor?: typeof editorResolved.value): void,
         (e:"change", value: string, event?: editor.IModelContentChangedEvent): void,
         (e: "mouseMove", event: monaco.editor.IEditorMouseEvent): void;
+        (e: "mouseLeave", event: monaco.editor.IPartialEditorMouseEvent): void;
     }>()
 
     const editorRef = ref<HTMLDivElement | null>(null);
@@ -753,6 +754,10 @@
 
                 localEditor.value.onMouseMove((e) => {
                     emit("mouseMove", e);
+                });
+
+                localEditor.value.onMouseLeave((e) => {
+                    emit("mouseLeave", e);
                 });
             }
 

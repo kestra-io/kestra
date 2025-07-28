@@ -170,10 +170,7 @@
 </script>
 
 <style scoped lang="scss">
-    .search-input {
-        width: 100%;
-    }
-
+    
     .plugins-container {
         display: grid;
         gap: 16px;

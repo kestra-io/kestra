@@ -475,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "渲染表达式",
       "title": "调试表达式",
       "tooltip": "渲染任何Pebble表达式并检查执行上下文。"
     },
@@ -902,6 +903,7 @@
         "finally": "选择一个task",
         "inputs": "选择一个input字段类型",
         "pluginDefaults": "选择插件",
+        "task": "选择一个task",
         "tasks": "选择一个task",
         "triggers": "选择一个trigger"
       },
@@ -1010,6 +1012,14 @@
     "pause confirm": "您确定要暂停执行<code>{id}</code>吗？",
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
+    "playground": {
+      "empty": "单击“Run task”按钮，通过模拟执行测试您的工作流。",
+      "history": "最近10次运行",
+      "run_all_tasks": "运行所有Tasks",
+      "run_task": "运行Task",
+      "title": "游乐场",
+      "toggle": "游乐场"
+    },
     "pluginDefaults": "插件默认值",
     "pluginPage": {
       "alt": "插件图标",
@@ -1071,6 +1081,7 @@
     "revision": "修订版",
     "revisions": "修订版",
     "row count": "行数",
+    "run task in playground": "在playground中运行task",
     "runners": "运行者",
     "running duration": "运行时间",
     "save": "保存",
@@ -1144,7 +1155,8 @@
             "language": "语言",
             "log_display": "默认日志显示",
             "log_level": "默认日志级别",
-            "multi_panel_editor": "多面板编辑器"
+            "multi_panel_editor": "多面板编辑器",
+            "playground": "游乐场"
           },
           "label": "主要配置"
         },
@@ -1251,10 +1263,12 @@
       },
       "troubleshooting": "忘记密码？",
       "validation": {
+        "config_message": "请确保更新您的配置以修复此错误消息",
         "email_invalid": "无效的电子邮件",
         "email_required": "需要提供电子邮件",
         "email_temporary_not_allowed": "不允许使用临时或一次性邮箱地址",
         "firstName_required": "名字为必填项",
+        "incorrect_creds": "用户名或密码无效。请确保您的凭据正确。",
         "lastName_required": "姓氏为必填项",
         "password_invalid": "密码无效"
       }
@@ -1295,6 +1309,7 @@
     "success": "成功",
     "sum": "总计",
     "switch-view": "切换视图",
+    "system overview": "系统概览",
     "system_namespace": "保持您的平台通过系统flows进行检查。",
     "system_namespace_description": "自动化维护任务，从故障警报到自动清理。",
     "tags": "标签",

@@ -79,7 +79,7 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
-    import {mapGetters} from "vuex";
+    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
     import {useDocStore} from "../../stores/doc";
@@ -168,7 +168,7 @@
             },
         },
         computed: {
-            ...mapGetters("flow", ["flowValidation"]),
+            ...mapState("flow", ["flowValidation"]),
             ...mapStores(useCoreStore, useDocStore, useMiscStore),
             mappedTheme() {
                 return this.miscStore.theme;

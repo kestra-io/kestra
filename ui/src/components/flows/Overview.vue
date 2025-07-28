@@ -18,8 +18,8 @@
     import NoExecutions from "../flows/NoExecutions.vue";
 
     const store = useStore();
+    const flow = computed(() => store.state.flow.flow);
     const executionsStore = useExecutionsStore();
-    const flow = computed(() => store.getters["flow/flow"]);
 
     const total = ref(0);
     const loaded = ref(false);

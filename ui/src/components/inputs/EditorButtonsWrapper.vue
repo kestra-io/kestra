@@ -1,5 +1,7 @@
 <template>
-    <div style="display: flex; align-items: center; margin: .5rem; gap: .5rem;">
+    <div class="button-wrapper">
+        <FlowPlaygroundToggle v-if="isSettingsPlaygroundEnabled" />
+
         <ValidationError
             class="validation"
             tooltip-placement="bottom-start"
@@ -7,6 +9,7 @@
             :warnings="flowWarnings"
             :infos="flowInfos"
         />
+
         <EditorButtons
             :is-creating="isCreating"
             :is-read-only="isReadOnly"
@@ -39,6 +42,7 @@
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import EditorButtons from "./EditorButtons.vue";
+    import FlowPlaygroundToggle from "./FlowPlaygroundToggle.vue";
     import ValidationError from "../flows/ValidationError.vue";
 
     import localUtils from "../../utils/utils";
@@ -47,7 +51,7 @@
     const {t} = useI18n();
 
     const exportYaml = () => {
-        const blob = new Blob([store.getters["flow/flowYaml"]], {type: "text/yaml"});
+        const blob = new Blob([store.state.flow.flowYaml], {type: "text/yaml"});
         localUtils.downloadUrl(window.URL.createObjectURL(blob), "flow.yaml");
     };
 
@@ -58,13 +62,14 @@
 
     const {translateError, translateErrorWithKey} = useFlowOutdatedErrors();
 
+    const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "true");
     const isCreating = computed(() => store.state.flow.isCreating === true)
     const isReadOnly = computed(() => store.getters["flow/isReadOnly"])
     const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"])
     const flowHaveTasks = computed(() => store.getters["flow/flowHaveTasks"])
     const flowErrors = computed(() => store.getters["flow/flowErrors"]?.map(translateError));
     const flowInfos = computed(() => store.getters["flow/flowInfos"])
-    const flowParsed = computed(() => store.getters["flow/flow"])
+    const flowParsed = computed(() => store.state.flow.flow)
     const tabs = computed<{dirty:boolean}[]>(() => store.state.editor.tabs)
     const metadata = computed(() => store.state.flow.metadata);
     const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
@@ -123,3 +128,12 @@
             });
     };
 </script>
+
+<style lang="scss" scoped>
+    .button-wrapper {
+        display: flex;
+        align-items: center;
+        margin: .5rem;
+        gap: .5rem;
+    }
+</style>

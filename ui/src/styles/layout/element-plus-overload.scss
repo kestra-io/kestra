@@ -8,7 +8,7 @@
 
 // button
 .el-button {
-    &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info), &--default {
+    &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info):not(.el-button--playground), &--default {
         --el-button-hover-text-color: var(--ks-content-primary);
         --el-button-hover-border-color: var(--ks-border-primary);
         --el-button-bg-color: var(--ks-button-background-secondary);
@@ -25,6 +25,14 @@
         --el-button-disabled-text-color: var(--ks-content-inactive);
         --el-button-disabled-bg-color: var(--ks-button-background-inactive);
         --el-button-disabled-border-color: var(--ks-button-background-inactive);
+    }
+
+    &.el-button--playground {
+        #{--el-button-text-color}: $base-white;
+        #{--el-button-hover-text-color}: $base-white;
+        #{--el-button-bg-color}: $base-blue-500;
+        #{--el-button-hover-bg-color}: $base-blue-400;
+        #{--el-button-active-bg-color}: $base-blue-600;
     }
 
     &.el-button--success {

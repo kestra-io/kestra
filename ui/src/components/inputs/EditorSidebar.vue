@@ -114,7 +114,7 @@
             draggable
             node-key="id"
             v-loading="items === undefined"
-            :props="{class: 'node', isLeaf: 'leaf'}"
+            :props="{class: 'nodeClass', isLeaf: 'leaf'}"
             class="mt-3"
             @node-click="handleNodeClick"
             @node-drag-start="
@@ -149,7 +149,6 @@
                     <el-row
                         justify="space-between"
                         class="w-100"
-                        :class="{'selected-node': selectedNodes.includes(data.id)}"
                         @click="(event) => handleNodeClick(data, node)"
                     >
                         <el-col class="w-100">
@@ -490,7 +489,12 @@
                 "importFileDirectory",
                 "exportFileDirectory",
             ]),
-
+            nodeClass(data) {
+                if (this.selectedNodes.includes(data.id)) {
+                    return "node selected-tree-node";
+                }
+                return "node";
+            },
             flattenTree(items, parentPath = "") {
                 const result = [];
 
@@ -1305,6 +1309,7 @@
             }
 
             &:hover{
+                background-color: var(--ks-button-background-primary);
                 border: 1px solid var(--ks-border-active);
             }
         }
@@ -1321,7 +1326,7 @@
             min-width: fit-content;
             border: 1px solid var(--ks-border-active)
         }
-        .el-tree-node:has(.selected-node) > .el-tree-node__content {
+        .el-tree-node.selected-tree-node > .el-tree-node__content {
             background-color: var(--ks-button-background-primary);
             min-width: fit-content;
         }

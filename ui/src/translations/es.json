@@ -475,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "Renderizar Expresión",
       "title": "Depurar Expresión",
       "tooltip": "Renderiza cualquier expresión Pebble e inspecciona el contexto de la ejecución."
     },
@@ -902,6 +903,7 @@
         "finally": "Seleccionar una task",
         "inputs": "Seleccione un tipo de campo de input",
         "pluginDefaults": "Seleccionar un plugin",
+        "task": "Selecciona una task",
         "tasks": "Seleccionar una task",
         "triggers": "Seleccione un trigger"
       },
@@ -1010,6 +1012,14 @@
     "pause confirm": "¿Está seguro de pausar la ejecución <code>{id}</code>?",
     "pause done": "La ejecución está PAUSED",
     "pause title": "Pausar la ejecución <code>{id}</code>.<br/>Tenga en cuenta que las tasks que se están ejecutando actualmente seguirán siendo procesadas, y la ejecución tendrá que reanudarse manualmente.",
+    "playground": {
+      "empty": "Haz clic en el botón \"Run task\" para probar tu flujo de trabajo con una ejecución simulada.",
+      "history": "Últimas 10 ejecuciones",
+      "run_all_tasks": "Ejecutar Todas las Tasks",
+      "run_task": "Ejecutar Task",
+      "title": "Área de Pruebas",
+      "toggle": "Área de pruebas"
+    },
     "pluginDefaults": "Valores predeterminados del plugin",
     "pluginPage": {
       "alt": "Icono de Plugins",
@@ -1071,6 +1081,7 @@
     "revision": "Revisión",
     "revisions": "Revisiones",
     "row count": "Recuento de filas",
+    "run task in playground": "Ejecutar task en el playground",
     "runners": "Corredores",
     "running duration": "Duración en ejecución",
     "save": "Guardar",
@@ -1144,7 +1155,8 @@
             "language": "Idioma",
             "log_display": "Visualización de Log Predeterminada",
             "log_level": "Nivel de Log Predeterminado",
-            "multi_panel_editor": "Editor de Panel Múltiple"
+            "multi_panel_editor": "Editor de Panel Múltiple",
+            "playground": "Área de pruebas"
           },
           "label": "Configuración Principal"
         },
@@ -1251,10 +1263,12 @@
       },
       "troubleshooting": "¿Olvidaste la contraseña?",
       "validation": {
+        "config_message": "Asegúrate de actualizar tu configuración para corregir este mensaje de error",
         "email_invalid": "Correo electrónico no válido",
         "email_required": "Se requiere el email",
         "email_temporary_not_allowed": "No se permiten direcciones de correo electrónico temporales o desechables.",
         "firstName_required": "Nombre requerido",
+        "incorrect_creds": "Nombre de usuario o contraseña inválidos. Asegúrate de que tus credenciales sean correctas.",
         "lastName_required": "Apellido requerido",
         "password_invalid": "Contraseña inválida"
       }
@@ -1295,6 +1309,7 @@
     "success": "Éxito",
     "sum": "Suma",
     "switch-view": "Cambiar vista",
+    "system overview": "Visión General del Sistema",
     "system_namespace": "Mantén tu plataforma bajo control con los system flows.",
     "system_namespace_description": "Automatiza tareas de mantenimiento, desde alertas de fallo hasta limpiezas automatizadas.",
     "tags": "Etiquetas",

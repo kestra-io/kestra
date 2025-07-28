@@ -82,6 +82,9 @@
                             />
                         </el-select>
                     </Column>
+                    <Column :label="$t('settings.blocks.configuration.fields.playground')">
+                        <el-switch :model-value="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
+                    </Column>
                 </Row>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')">
@@ -268,6 +271,7 @@
     import {mapStores} from "pinia";
     import {useLayoutStore} from "../../stores/layout";
     import {useMiscStore} from "../../stores/misc";
+    import {useTemplateStore} from "../../stores/template";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {logDisplayTypes, storageKeys} from "../../utils/constants";
@@ -319,6 +323,7 @@
                     executeDefaultTab: undefined,
                     autoRefreshInterval: undefined,
                     flowDefaultTab: undefined,
+                    editorPlayground: undefined,
                     logsFontSize: undefined
                 },
                 settingsKeyMapping: {
@@ -357,6 +362,7 @@
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
             this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview";
+            this.pendingSettings.editorPlayground = localStorage.getItem("editorPlayground") === "true";
             this.pendingSettings.envName = this.layoutStore.envName || this.miscStore.configs?.environment?.name;
             this.pendingSettings.envColor = this.layoutStore.envColor || this.miscStore.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
@@ -473,8 +479,8 @@
                     });
             },
             exportTemplates() {
-                return this.$store
-                    .dispatch("template/exportTemplateByQuery", {})
+                return this.templateStore
+                    .exportTemplateByQuery({})
                     .then(_ => {
                         this.$toast().success(this.$t("templates exported"));
                     })
@@ -513,6 +519,10 @@
             },
             onFlowDefaultTabChange(value){
                 this.pendingSettings.flowDefaultTab = value;
+                this.checkForChanges();
+            },
+            onEditorPlaygroundChange(value) {
+                this.pendingSettings.editorPlayground = value;
                 this.checkForChanges();
             },
             onLogsFontSize(value) {
@@ -603,7 +613,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(useLayoutStore, useMiscStore),
+            ...mapStores(useLayoutStore, useMiscStore, useTemplateStore),
             mappedTheme() {
                 return this.miscStore.theme;
             },

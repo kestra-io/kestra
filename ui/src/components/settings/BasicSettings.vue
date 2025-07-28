@@ -163,7 +163,7 @@
                     <Column :label="$t('settings.blocks.theme.fields.environment_name')">
                         <el-tooltip
                             v-if="isEnvNameFromConfig"
-                            :content="$t('settings.blocks.theme.fields.envNameTooltip')"
+                            :content="$t('settings.blocks.theme.fields.environment_name_tooltip')"
                             placement="top"
                         >
                             <el-input

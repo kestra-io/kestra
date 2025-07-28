@@ -1191,7 +1191,6 @@
             "editor_folding_stratgy": "Автоматическое сворачивание кода в редакторе",
             "editor_font_family": "Шрифт редактора",
             "editor_font_size": "Размер шрифта редактора",
-            "envNameTooltip": "Это имя среды задано в конфигурации, но его можно изменить.",
             "editor_hover_description": "Наведите курсор на свойство, чтобы увидеть описание",
             "environment_color": "Цвет окружения",
             "environment_name": "Имя окружения",

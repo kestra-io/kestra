@@ -1191,7 +1191,6 @@
             "editor_folding_stratgy": "편집기에서 자동 코드 접기",
             "editor_font_family": "편집기 글꼴 패밀리",
             "editor_font_size": "편집기 글꼴 크기",
-            "envNameTooltip": "이 환경 이름은 구성에서 설정되었지만 변경할 수 있습니다.",
             "editor_hover_description": "속성을 가리키면 설명이 표시됩니다.",
             "environment_color": "환경 색상",
             "environment_name": "환경 이름",

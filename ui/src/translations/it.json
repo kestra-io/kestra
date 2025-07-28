@@ -1191,7 +1191,6 @@
             "editor_folding_stratgy": "Piegatura automatica del codice nell'Editor",
             "editor_font_family": "Famiglia del Font dell'Editor",
             "editor_font_size": "Dimensione del Font dell'Editor",
-            "envNameTooltip": "Questo nome dell’ambiente è impostato dalla configurazione ma può essere modificato.",
             "editor_hover_description": "Passa il mouse sulla proprietà per vedere la descrizione",
             "environment_color": "Colore dell'Ambiente",
             "environment_name": "Nome dell'Ambiente",

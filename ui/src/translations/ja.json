@@ -1194,6 +1194,7 @@
             "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
             "environment_color": "環境色",
             "environment_name": "環境名",
+            "environment_name_tooltip": "この環境名はconfigから設定されていますが、変更可能です。",
             "logs_font_size": "ログフォントサイズ",
             "theme": "テーマ"
           },

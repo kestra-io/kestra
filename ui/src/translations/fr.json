@@ -1194,6 +1194,7 @@
             "editor_hover_description": "Survolez la propriété pour voir la description",
             "environment_color": "Couleur de l'Environnement",
             "environment_name": "Nom de l'Environnement",
+            "environment_name_tooltip": "Ce nom d'environnement est défini à partir de la configuration mais peut être modifié.",
             "logs_font_size": "Taille de police des Logs",
             "theme": "Modèle"
           },

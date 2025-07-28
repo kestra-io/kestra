@@ -788,6 +788,7 @@
             "editor_folding_stratgy": "Automatic Code Folding in the Editor",
             "editor_hover_description": "Hover on property to see description",
             "environment_name": "Environment Name",
+            "environment_name_tooltip": "This environment name is set from the config but can be changed.",
             "environment_color": "Environment Color",
             "chart_color_scheme": {
               "label": "Chart Color Scheme",

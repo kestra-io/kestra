@@ -1194,6 +1194,7 @@
             "editor_hover_description": "Najedź na właściwość, aby zobaczyć opis",
             "environment_color": "Kolor Środowiska",
             "environment_name": "Nazwa Środowiska",
+            "environment_name_tooltip": "Nazwa tego środowiska jest ustawiona z config, ale można ją zmienić.",
             "logs_font_size": "Rozmiar czcionki logów",
             "theme": "Motyw"
           },

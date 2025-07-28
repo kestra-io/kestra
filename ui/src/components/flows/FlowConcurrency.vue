@@ -1,6 +1,6 @@
 <template>
     <template v-if="flow.concurrency">
-        <div v-if="runningCount > 0 || !runningCountSet" :class="{'d-none': !runningCountSet}">
+        <div v-if="totalCount > 0 || !runningCountSet" :class="{'d-none': !runningCountSet}">
             <el-card class="mb-3">
                 <div class="row mb-3">
                     <span class="col d-flex align-items-center">
@@ -50,13 +50,20 @@
         data() {
             return {
                 runningCount: 0,
+                totalCount: 0,
                 runningCountSet: false,
             }
         },
         methods: {
             setRunningCount(count) {
-                this.runningCount = count
-                this.runningCountSet = true
+                if (typeof count === "object") {
+                    this.runningCount = count.runningCount;
+                    this.totalCount = count.totalCount;
+                } else {
+                    this.runningCount = count;
+                    this.totalCount = count;
+                }
+                this.runningCountSet = true;
             }
         },
         computed: {
@@ -88,5 +95,9 @@
         .el-progress-bar, .el-progress-bar__outer, .el-progress-bar__inner {
             border-radius: var(--bs-border-radius);
         }
+    }
+
+    :deep(.el-card) {
+        background-color: var(--ks-background-panel);
     }
 </style>

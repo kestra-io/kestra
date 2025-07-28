@@ -1194,6 +1194,7 @@
             "editor_hover_description": "Наведите курсор на свойство, чтобы увидеть описание",
             "environment_color": "Цвет окружения",
             "environment_name": "Имя окружения",
+            "environment_name_tooltip": "Имя этой среды установлено из конфигурации, но может быть изменено.",
             "logs_font_size": "Размер шрифта Logs",
             "theme": "Тема"
           },

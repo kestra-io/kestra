@@ -21,12 +21,13 @@
         :diff-side-by-side="false"
     >
         <template #absolute>
-            <div class="box" v-if="isCurrentTabFlow">
-                <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
-                    {{ t("ai.flow.title") }}
-                </el-button>
-            </div>
-            <ContentSave v-else @click="saveFileContent" />
+            <AITriggerButton 
+                :show="isCurrentTabFlow"
+                :enabled="aiEnabled"
+                :opened="aiAgentOpened"
+                @click="draftSource = undefined; aiAgentOpened = true"
+            />
+            <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
         </template>
         <template v-if="playgroundStore.enabled" #widget-content>
             <el-button
@@ -74,7 +75,7 @@
     import {useMiscStore} from "../../stores/misc";
 
     import AiAgent from "../ai/AiAgent.vue";
-    import AiIcon from "../ai/AiIcon.vue";
+    import AITriggerButton from "../ai/AITriggerButton.vue";
     import AcceptDecline from "./AcceptDecline.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
@@ -285,51 +286,6 @@
     max-width: 700px;
     background-color: var(--ks-background-panel);
     box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
-}
-
-.box {
-    --border-angle: 0turn;
-    --main-bg: conic-gradient(from calc(var(--border-angle) + 50.37deg) at 50% 50%, #3991FF 0deg, #8C4BFF 124.62deg, #A396FF 205.96deg, #3991FF 299.42deg, #E0E0FF 342.69deg, #3991FF 360deg);
-    --gradient-border: conic-gradient(from calc(var(--border-angle) + 50.37deg) at 50% 50%, #3991FF 0deg, #8C4BFF 124.62deg, #A396FF 205.96deg, #3991FF 299.42deg, #E0E0FF 342.69deg, #3991FF 360deg);
-    
-    display: flex;
-    flex-direction: column;
-    align-items: end;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-    border: solid 1px transparent;
-    border-radius: 3rem;
-    background:
-        var(--main-bg) padding-box,
-        var(--gradient-border) border-box,
-        var(--main-bg) border-box;
-
-    background-position: center center;
-    animation: bg-spin 3s linear infinite;
-
-    @keyframes bg-spin {
-        to {
-            --border-angle: 1turn;
-        }
-    }
-
-    .rounded-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background-color: var(--ks-button-background-secondary);
-        color: var(--ks-content-primary);
-        box-shadow: 0px 4px 4px 0px #00000040;
-        font-size: 12px;
-        font-weight: 700;
-        border: none;
-    }
-}
-
-@property --border-angle {
-    syntax: "<angle>";
-    inherits: true;
-    initial-value: 0turn;
 }
 
 .actions {

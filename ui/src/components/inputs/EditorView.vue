@@ -141,7 +141,7 @@
                         @execute="execute"
                         :path="currentTab?.path"
                         :diff-overview-bar="false"
-                        :model-value="draftSource === undefined ? flowYaml : draftSource"
+                        :model-value="flowYaml"
                         :schema-type="isCurrentTabFlow? 'flow': undefined"
                         :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
                         :extension="currentTab?.extension"
@@ -152,31 +152,8 @@
                         @tab-loaded="onTabLoaded"
                         :read-only="isReadOnly"
                         :navbar="false"
-                        :original="draftSource === undefined ? undefined : flowYaml"
+                        :original="flowYaml"
                         :diff-side-by-side="false"
-                    >
-                        <template #absolute>
-                            <div class="box" v-if="isCurrentTabFlow">
-                                <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
-                                    {{ $t("ai.flow.title") }}
-                                </el-button>
-                            </div>
-                        </template>
-                    </editor>
-                    <transition name="el-zoom-in-center">
-                        <AiAgent
-                            v-if="aiAgentOpened"
-                            class="position-absolute prompt"
-                            @close="aiAgentOpened = false"
-                            :flow="editorContent"
-                            @generated-yaml="yaml => {draftSource = yaml; aiAgentOpened = false}"
-                        />
-                    </transition>
-                    <AcceptDecline
-                        v-if="draftSource !== undefined"
-                        class="position-absolute actions"
-                        @accept="acceptDraft"
-                        @reject="declineDraft"
                     />
                 </template>
                 <div v-else class="no-tabs-opened">
@@ -465,7 +442,6 @@
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
     import {useCoreStore} from "../../stores/core";
-    import {useMiscStore} from "../../stores/misc";
     import {useRoute, useRouter} from "vue-router";
     import {useStorage} from "@vueuse/core";
 
@@ -504,14 +480,9 @@
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
     import {usePluginsStore} from "../../stores/plugins";
     import * as FLOW_YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import AiAgent from "../ai/AiAgent.vue";
-    import AiIcon from "../ai/AiIcon.vue";
-    import AcceptDecline from "./AcceptDecline.vue";
 
     const store = useStore();
     const coreStore = useCoreStore();
-    const miscStore = useMiscStore();
-    const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);
@@ -520,18 +491,6 @@
     const tours = getCurrentInstance().appContext.config.globalProperties.$tours;
     const lowCodeEditorRef = ref(null);
     const tabsScrollRef = ref();
-
-    const toggleAiShortcut = (event) => {
-        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value && aiEnabled.value) {
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-            draftSource.value = undefined;
-            aiAgentOpened.value = !aiAgentOpened.value;
-        }
-    };
-    const aiAgentOpened = ref(false);
-    const draftSource = ref(undefined);
 
     const props = defineProps({
         flowGraph: {
@@ -779,8 +738,6 @@
         if (props.isCreating) {
             store.commit("editor/closeTabs");
         }
-
-        window.addEventListener("keydown", toggleAiShortcut);
     });
 
     onBeforeUnmount(() => {
@@ -795,7 +752,6 @@
         store.commit("editor/closeAllTabs");
 
         document.removeEventListener("click", hideTabContextMenu);
-        window.removeEventListener("keydown", toggleAiShortcut);
     });
 
     const stopTour = () => {
@@ -836,11 +792,7 @@
     };
 
     const onEdit = (source, currentIsFlow = false) => {
-        if (draftSource.value !== undefined) {
-            draftSource.value = source;
-        } else {
-            store.commit("flow/setFlowYaml", source);
-        }
+        store.commit("flow/setFlowYaml", source);
         return store.dispatch("flow/onEdit", {
             source,
             currentIsFlow,
@@ -1341,17 +1293,6 @@
         store.commit("editor/refreshTree");
         event.target.value = "";
     };
-
-    function acceptDraft() {
-        const accepted = draftSource.value;
-        draftSource.value = undefined;
-        editorUpdate(accepted);
-    }
-
-    function declineDraft() {
-        draftSource.value = undefined;
-        aiAgentOpened.value = true;
-    }
 </script>
 
 <style lang="scss" scoped>
@@ -1549,64 +1490,6 @@ ul.tabs-context {
             color: var(--ks-content-secondary);
         }
     }
-}
-
-.prompt {
-    bottom: 10%;
-    width: calc(100% - 5rem);
-    left: 3rem;
-    max-width: 700px;
-    background-color: var(--ks-background-panel);
-    box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
-}
-
-.box {
-    --border-angle: 0turn;
-    --main-bg: conic-gradient(from calc(var(--border-angle) + 50.37deg) at 50% 50%, #3991FF 0deg, #8C4BFF 124.62deg, #A396FF 205.96deg, #3991FF 299.42deg, #E0E0FF 342.69deg, #3991FF 360deg);
-    --gradient-border: conic-gradient(from calc(var(--border-angle) + 50.37deg) at 50% 50%, #3991FF 0deg, #8C4BFF 124.62deg, #A396FF 205.96deg, #3991FF 299.42deg, #E0E0FF 342.69deg, #3991FF 360deg);
-    
-    display: flex;
-    flex-direction: column;
-    align-items: end;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-    border: solid 1px transparent;
-    border-radius: 3rem;
-    background:
-        var(--main-bg) padding-box,
-        var(--gradient-border) border-box,
-        var(--main-bg) border-box;
-
-    background-position: center center;
-    animation: bg-spin 3s linear infinite;
-
-    @keyframes bg-spin {
-        to {
-            --border-angle: 1turn;
-        }
-    }
-
-    .rounded-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background-color: var(--ks-button-background-secondary);
-        color: var(--ks-content-primary);
-        box-shadow: 0px 4px 4px 0px #00000040;
-        font-size: 12px;
-        font-weight: 700;
-        border: none;
-    }
-}
-
-@property --border-angle {
-    syntax: "<angle>";
-    inherits: true;
-    initial-value: 0turn;
-}
-
-.actions {
-    bottom: 10%;
 }
 </style>
 

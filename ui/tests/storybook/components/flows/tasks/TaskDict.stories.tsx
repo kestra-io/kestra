@@ -2,10 +2,25 @@ import {ref} from "vue";
 import TaskDict from "../../../../../src/components/flows/tasks/TaskDict.vue";
 import {userEvent, waitFor, within, expect} from "storybook/internal/test";
 import {Meta, StoryObj} from "@storybook/vue3-vite";
+import {vueRouter} from "storybook-vue3-router";
 
 const meta: Meta<typeof TaskDict> = {
     title: "components/flows/tasks/TaskDict",
     component: TaskDict,
+    decorators: [
+            vueRouter([
+                {
+                    path: "/",
+                    name: "home",
+                    component: TaskDict
+                },
+                {
+                    path: "/flows/edit/:namespace/:id",
+                    name: "flows/update",
+                    component: {template: "<div>update flow</div>"}
+                },
+            ])
+        ],
 }
 
 export default meta;

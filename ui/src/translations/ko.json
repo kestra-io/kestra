@@ -1194,6 +1194,7 @@
             "editor_hover_description": "속성을 가리키면 설명이 표시됩니다.",
             "environment_color": "환경 색상",
             "environment_name": "환경 이름",
+            "environment_name_tooltip": "이 환경 이름은 config에서 설정되었지만 변경할 수 있습니다.",
             "logs_font_size": "로그 글꼴 크기",
             "theme": "테마"
           },

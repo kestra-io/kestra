@@ -1194,6 +1194,7 @@
             "editor_hover_description": "प्रॉपर्टी पर होवर करें विवरण देखने के लिए",
             "environment_color": "पर्यावरण रंग",
             "environment_name": "पर्यावरण नाम",
+            "environment_name_tooltip": "इस environment नाम को config से सेट किया गया है लेकिन इसे बदला जा सकता है।",
             "logs_font_size": "लॉग्स फ़ॉन्ट आकार",
             "theme": "मोडस"
           },

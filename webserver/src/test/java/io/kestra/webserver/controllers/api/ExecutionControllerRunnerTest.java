@@ -82,6 +82,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 @Slf4j
 @KestraTest(startRunner = true)
 @Property(name = LocalPath.ALLOWED_PATHS_CONFIG, value = "/tmp")
@@ -1976,7 +1977,7 @@ class ExecutionControllerRunnerTest {
         Execution result = triggerExecutionExecution(TESTS_FLOW_NS, "subflow-parent", null, true);
 
         // without this slight delay, the event stream may miss some 'end' events
-        Thread.sleep(250);
+        Thread.sleep(500);
 
         List<Event<ExecutionStatusEvent>> results = sseClient
             .eventStream("/api/v1/main/executions/" + result.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)

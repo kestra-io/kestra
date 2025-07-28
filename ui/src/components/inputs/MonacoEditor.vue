@@ -103,7 +103,7 @@
     const route = useRoute();
 
     const highlightLine = () => {
-        if(!route.query.highlight) return;
+        if(!route?.query.highlight) return;
 
         const editor = getModifiedEditor();
 

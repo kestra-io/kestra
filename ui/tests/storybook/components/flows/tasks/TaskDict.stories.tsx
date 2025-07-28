@@ -13,12 +13,7 @@ const meta: Meta<typeof TaskDict> = {
                     path: "/",
                     name: "home",
                     component: TaskDict
-                },
-                {
-                    path: "/flows/edit/:namespace/:id",
-                    name: "flows/update",
-                    component: {template: "<div>update flow</div>"}
-                },
+                }
             ])
         ],
 }

@@ -246,6 +246,14 @@
     const suggestWidgetObserver = ref<MutationObserver>()
     const suggestWidget = ref<HTMLElement>()
 
+
+
+    defineExpose({
+        focus,
+        destroy,
+        monaco,
+    })
+
     const editorResolved = computed(() => {
         return props.diffEditor ? localDiffEditor.value : localEditor.value;
     })
@@ -255,12 +263,6 @@
         (e:"change", value: string, event?: editor.IModelContentChangedEvent): void,
         (e: "mouseMove", event: monaco.editor.IEditorMouseEvent): void;
     }>()
-
-    defineExpose({
-        focus,
-        destroy,
-        monaco,
-    })
 
     const editorRef = ref<HTMLDivElement | null>(null);
 

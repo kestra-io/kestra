@@ -156,7 +156,7 @@
                         :diff-side-by-side="false"
                     >
                         <template #absolute>
-                            <div class="d-flex flex-column align-items-end gap-2 mt-2" v-if="isCurrentTabFlow">
+                            <div class="box" v-if="isCurrentTabFlow">
                                 <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
                                     {{ $t("ai.flow.title") }}
                                 </el-button>
@@ -1355,220 +1355,259 @@
 </script>
 
 <style lang="scss" scoped>
-    @use "element-plus/theme-chalk/src/mixins/mixins" as *;
-    @import "@kestra-io/ui-libs/src/scss/variables";
+@use "element-plus/theme-chalk/src/mixins/mixins" as *;
+@import "@kestra-io/ui-libs/src/scss/variables";
 
-    .main-editor {
-        padding: .5rem 0px;
-        background: var(--ks-background-body);
-        display: flex;
-        height: calc(100% - 49px);
-        min-height: 0;
-        max-height: 100%;
+.main-editor {
+    padding: .5rem 0px;
+    background: var(--ks-background-body);
+    display: flex;
+    height: calc(100% - 49px);
+    min-height: 0;
+    max-height: 100%;
 
-        > * {
-            flex: 1;
-        }
+    >* {
+        flex: 1;
+    }
+
+    html.dark & {
+        background-color: var(--bs-gray-100);
+    }
+}
+
+.editor-combined {
+    width: 50%;
+    min-width: 0;
+}
+
+.vueflow {
+    width: 100%;
+}
+
+html.dark .el-card :deep(.enhance-readability) {
+    background-color: var(--bs-gray-500);
+}
+
+:deep(.combined-right-view),
+.combined-right-view {
+    flex: 1;
+    position: relative;
+    overflow-y: auto;
+    height: 100%;
+
+    &.enhance-readability {
+        padding: 1.5rem;
+        background-color: var(--bs-gray-100);
+    }
+}
+
+.hide-view {
+    width: 0;
+    overflow: hidden;
+}
+
+.plugin-doc {
+    overflow-x: scroll;
+}
+
+.slider {
+    flex: 0 0 3px;
+    border-radius: 0.15rem;
+    margin: 0 4px;
+    background-color: var(--ks-border-primary);
+    border: none;
+    cursor: col-resize;
+    user-select: none;
+    /* disable selection */
+
+    &:hover {
+        background-color: var(--ks-border-active);
+    }
+}
+
+.vueflow {
+    height: 100%;
+}
+
+.topology-display .el-alert {
+    margin-top: 3rem;
+}
+
+.toggle-button {
+    font-size: var(--el-font-size-small);
+}
+
+.tabs {
+    flex: 1;
+    width: 100px;
+    white-space: nowrap;
+
+    .tab-active {
+        background: var(--bs-gray-200) !important;
+        color: black;
+        cursor: default;
 
         html.dark & {
-            background-color: var(--bs-gray-100);
-        }
-    }
-
-    .editor-combined {
-        width: 50%;
-        min-width: 0;
-    }
-
-    .vueflow {
-        width: 100%;
-    }
-
-    html.dark .el-card :deep(.enhance-readability) {
-        background-color: var(--bs-gray-500);
-    }
-
-    :deep(.combined-right-view),
-    .combined-right-view {
-        flex: 1;
-        position: relative;
-        overflow-y: auto;
-        height: 100%;
-
-        &.enhance-readability {
-            padding: 1.5rem;
-            background-color: var(--bs-gray-100);
-        }
-    }
-
-    .hide-view {
-        width: 0;
-        overflow: hidden;
-    }
-
-    .plugin-doc {
-        overflow-x: scroll;
-    }
-
-    .slider {
-        flex: 0 0 3px;
-        border-radius: 0.15rem;
-        margin: 0 4px;
-        background-color: var(--ks-border-primary);
-        border: none;
-        cursor: col-resize;
-        user-select: none; /* disable selection */
-
-        &:hover {
-            background-color: var(--ks-border-active);
-        }
-    }
-
-    .vueflow {
-        height: 100%;
-    }
-
-    .topology-display .el-alert {
-        margin-top: 3rem;
-    }
-
-    .toggle-button {
-        font-size: var(--el-font-size-small);
-    }
-
-    .tabs {
-        flex: 1;
-        width: 100px;
-        white-space: nowrap;
-
-        .tab-active {
-            background: var(--bs-gray-200) !important;
-            color: black;
-            cursor: default;
-
-            html.dark & {
-                color: white;
-            }
-
-            .tab-name {
-                font-weight: 600;
-            }
+            color: white;
         }
 
         .tab-name {
-            font-family: "Public sans", sans-serif;
-            font-size: 12px;
-            font-style: normal;
-            font-weight: 500;
-        }
-    }
-
-    .no-tabs-opened {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        max-width: 800px;
-        width: 100%;
-        padding: 2rem;
-        padding-bottom: 0;
-        margin: 0 auto;
-        height: 100%;
-
-        .img {
-            background: url("../../assets/empty-ns-files.png") no-repeat center;
-            background-size: contain;
-            width: 180px;
-            height: 180px;
-        }
-
-        h2 {
-            line-height: 30px;
-            font-size: 20px;
             font-weight: 600;
         }
+    }
 
-        p {
-            line-height: 22px;
-            font-size: 14px;
-            margin-bottom: 1rem;
-            color: var(--ks-content-secondary);
-        }
+    .tab-name {
+        font-family: "Public sans", sans-serif;
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 500;
+    }
+}
 
-        .empty-state-actions {
-            margin-bottom: 2.5rem;
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            width: 100%;
-        }
-        :deep(.el-divider__text) {
-            font-size: 12px;
-            padding: 0 15px;
-            color: var(--ks-content-secondary);
-            background-color: #f9f9fa;
-            html.dark & {
-                background-color: #1C1E27;
-            }
-        }
-        .video-container {
-            width: 100%;
-            margin-top: 1rem;
-            border: 1px solid var(--ks-border-primary);
-            border-radius: 0.5rem;
+.no-tabs-opened {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    max-width: 800px;
+    width: 100%;
+    padding: 2rem;
+    padding-bottom: 0;
+    margin: 0 auto;
+    height: 100%;
 
-            iframe {
-                width: 100%;
-                min-height: 380px;
-                height: auto;
-            }
-        }
+    .img {
+        background: url("../../assets/empty-ns-files.png") no-repeat center;
+        background-size: contain;
+        width: 180px;
+        height: 180px;
+    }
 
-        .hidden {
-            display: none;
+    h2 {
+        line-height: 30px;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    p {
+        line-height: 22px;
+        font-size: 14px;
+        margin-bottom: 1rem;
+        color: var(--ks-content-secondary);
+    }
+
+    .empty-state-actions {
+        margin-bottom: 2.5rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    :deep(.el-divider__text) {
+        font-size: 12px;
+        padding: 0 15px;
+        color: var(--ks-content-secondary);
+        background-color: #f9f9fa;
+
+        html.dark & {
+            background-color: #1C1E27;
         }
     }
 
-    ul.tabs-context {
-        position: fixed;
-        z-index: 9999;
-        border-right: none;
+    .video-container {
+        width: 100%;
+        margin-top: 1rem;
+        border: 1px solid var(--ks-border-primary);
+        border-radius: 0.5rem;
 
-        & li {
-            height: 30px;
-            padding: 16px;
-            font-size: var(--el-font-size-small);
-            color: var(--bs-gray-700);
-
-            &:hover {
-                color: var(--ks-content-secondary);
-            }
+        iframe {
+            width: 100%;
+            min-height: 380px;
+            height: auto;
         }
     }
 
-    .prompt {
-        bottom: 10%;
-        width: calc(100% - 5rem);
-        left: 3rem;
-        max-width: 700px;
-        background-color: var(--ks-background-panel);
-        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+    .hidden {
+        display: none;
+    }
+}
+
+ul.tabs-context {
+    position: fixed;
+    z-index: 9999;
+    border-right: none;
+
+    & li {
+        height: 30px;
+        padding: 16px;
+        font-size: var(--el-font-size-small);
+        color: var(--bs-gray-700);
+
+        &:hover {
+            color: var(--ks-content-secondary);
+        }
+    }
+}
+
+.prompt {
+    bottom: 10%;
+    width: calc(100% - 5rem);
+    left: 3rem;
+    max-width: 700px;
+    background-color: var(--ks-background-panel);
+    box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+}
+
+.box {
+    --border-angle: 0turn;
+    --main-bg: conic-gradient(from calc(var(--border-angle) + 50.37deg) at 50% 50%, #3991FF 0deg, #8C4BFF 124.62deg, #A396FF 205.96deg, #3991FF 299.42deg, #E0E0FF 342.69deg, #3991FF 360deg);
+    --gradient-border: conic-gradient(from calc(var(--border-angle) + 50.37deg) at 50% 50%, #3991FF 0deg, #8C4BFF 124.62deg, #A396FF 205.96deg, #3991FF 299.42deg, #E0E0FF 342.69deg, #3991FF 360deg);
+    
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    border: solid 1px transparent;
+    border-radius: 3rem;
+    background:
+        var(--main-bg) padding-box,
+        var(--gradient-border) border-box,
+        var(--main-bg) border-box;
+
+    background-position: center center;
+    animation: bg-spin 3s linear infinite;
+
+    @keyframes bg-spin {
+        to {
+            --border-angle: 1turn;
+        }
     }
 
     .rounded-pill {
-        background-color: #262A35;
-        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background-color: var(--ks-button-background-secondary);
+        color: var(--ks-content-primary);
         box-shadow: 0px 4px 4px 0px #00000040;
-
-        &:hover {
-            background-color: #262A35;
-        }
+        font-size: 12px;
+        font-weight: 700;
+        border: none;
     }
+}
 
-    .actions{
-        bottom: 10%;
-    }
+@property --border-angle {
+    syntax: "<angle>";
+    inherits: true;
+    initial-value: 0turn;
+}
+
+.actions {
+    bottom: 10%;
+}
 </style>
 
 <style lang="scss">

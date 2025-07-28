@@ -171,8 +171,6 @@
                                 @change="onEnvNameChange"
                                 :placeholder="$t('name')"
                                 clearable
-                                show-word-limit
-                                maxlength="30"
                             />
                         </el-tooltip>
 

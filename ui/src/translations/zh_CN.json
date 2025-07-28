@@ -1194,6 +1194,7 @@
             "editor_hover_description": "将鼠标悬停在属性上查看描述",
             "environment_color": "环境颜色",
             "environment_name": "环境名称",
+            "environment_name_tooltip": "此环境名称是从配置中设置的，但可以更改。",
             "logs_font_size": "日志字体大小",
             "theme": "主题"
           },

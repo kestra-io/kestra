@@ -161,13 +161,25 @@
 
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.environment_name')">
+                        <el-tooltip
+                            v-if="isEnvNameFromConfig"
+                            :content="$t('settings.blocks.theme.fields.environment_name_tooltip')"
+                            placement="bottom"
+                        >
+                            <el-input
+                                v-model="pendingSettings.envName"
+                                @change="onEnvNameChange"
+                                :placeholder="$t('name')"
+                                clearable
+                            />
+                        </el-tooltip>
+
                         <el-input
+                            v-else
                             v-model="pendingSettings.envName"
                             @change="onEnvNameChange"
                             :placeholder="$t('name')"
                             clearable
-                            show-word-limit
-                            maxlength="30"
                         />
                     </Column>
 
@@ -230,7 +242,7 @@
                         </el-button>
                     </Column>
                     <Column>
-                        <el-button v-if="canReadTemplates" :icon="Download" @click="exportTemplates()" :hidden="!configs?.isTemplateEnabled" class="w-100">
+                        <el-button v-if="canReadTemplates" :icon="Download" @click="exportTemplates()" :hidden="!miscStore?.configs?.isTemplateEnabled" class="w-100">
                             {{ $t("settings.blocks.export.fields.templates") }}
                         </el-button>
                     </Column>
@@ -757,6 +769,9 @@
                         label: this.$t("auditlogs")
                     },
                 ]
+            },
+            isEnvNameFromConfig() {
+                return !this.layoutStore.envName && !!this.miscStore.configs?.environment?.name;
             }
         },
         watch: {

@@ -4,7 +4,7 @@
             class="el-button--playground"
             @click="playgroundStore.runUntilTask(taskObject?.id)"
         >
-            Run Task
+            {{ t('playground.run_task') }}
         </el-button>
     </div>
     <el-form label-position="top">

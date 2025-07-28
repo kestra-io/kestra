@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
 abstract public class JdbcQueueTest {
@@ -83,27 +84,24 @@ abstract public class JdbcQueueTest {
 
     @Test
     void withType() throws InterruptedException, QueueException {
-        // first one
-        flowQueue.emit(builder("io.kestra.f1"));
-
         CountDownLatch countDownLatch = new CountDownLatch(1);
         Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, Indexer.class, either -> {
             countDownLatch.countDown();
         });
 
-        countDownLatch.await(5, TimeUnit.SECONDS);
-
+        // first one
+        flowQueue.emit(builder("io.kestra.f1"));
+        assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
         assertThat(receive.blockLast().getNamespace()).isEqualTo("io.kestra.f1");
-
-        // second one only
-        flowQueue.emit(builder("io.kestra.f2"));
 
         CountDownLatch countDownLatch2 = new CountDownLatch(1);
         receive = TestsUtils.receive(flowQueue, Indexer.class, either -> {
             countDownLatch2.countDown();
         });
-        countDownLatch2.await(5, TimeUnit.SECONDS);
 
+        // second one only
+        flowQueue.emit(builder("io.kestra.f2"));
+        assertTrue(countDownLatch2.await(5, TimeUnit.SECONDS));
         assertThat(receive.blockLast().getNamespace()).isEqualTo("io.kestra.f2");
     }
 

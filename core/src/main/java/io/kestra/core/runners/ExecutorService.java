@@ -102,49 +102,39 @@ public class ExecutorService {
         return this.flowExecutorInterface;
     }
 
-    public Executor checkConcurrencyLimit(Executor executor, FlowInterface flow, Execution execution, long count) {
-        // if above the limit, handle concurrency limit based on its behavior
-        if (count >= flow.getConcurrency().getLimit()) {
+    public ExecutionRunning processExecutionRunning(FlowInterface flow, int runningCount, ExecutionRunning executionRunning) {
+        // if concurrency was removed, it can be null as we always get the latest flow definition
+        if (flow.getConcurrency() != null && runningCount >= flow.getConcurrency().getLimit()) {
             return switch (flow.getConcurrency().getBehavior()) {
                 case QUEUE -> {
-                    var newExecution = execution.withState(State.Type.QUEUED);
-
-                    ExecutionRunning executionRunning = ExecutionRunning.builder()
-                        .tenantId(flow.getTenantId())
-                        .namespace(flow.getNamespace())
-                        .flowId(flow.getId())
-                        .execution(newExecution)
-                        .concurrencyState(ExecutionRunning.ConcurrencyState.QUEUED)
-                        .build();
-
-                    // when max concurrency is reached, we throttle the execution and stop processing
                     logService.logExecution(
-                        newExecution,
+                        executionRunning.getExecution(),
                         Level.INFO,
-                        "Flow is queued due to concurrency limit exceeded, {} running(s)",
-                        count
+                        "Execution is queued due to concurrency limit exceeded, {} running(s)",
+                        runningCount
                     );
-                    // return the execution queued
-                    yield executor
-                        .withExecutionRunning(executionRunning)
-                        .withExecution(newExecution, "checkConcurrencyLimit");
+                    var newExecution = executionRunning.getExecution().withState(State.Type.QUEUED);
+                    metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+                    yield executionRunning
+                        .withExecution(newExecution)
+                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.QUEUED);
                 }
                 case CANCEL ->
-                    executor.withExecution(execution.withState(State.Type.CANCELLED), "checkConcurrencyLimit");
+                    executionRunning
+                        .withExecution(executionRunning.getExecution().withState(State.Type.CANCELLED))
+                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
                 case FAIL ->
-                    executor.withException(new IllegalStateException("Flow is FAILED due to concurrency limit exceeded"), "checkConcurrencyLimit");
+                    executionRunning
+                        .withExecution(executionRunning.getExecution().failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to concurrency limit exceeded")).getExecution())
+                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
+
             };
         }
 
-        // if under the limit, update the executor with a RUNNING ExecutionRunning to track them
-        var executionRunning = new ExecutionRunning(
-            flow.getTenantId(),
-            flow.getNamespace(),
-            flow.getId(),
-            executor.getExecution(),
-            ExecutionRunning.ConcurrencyState.RUNNING
-        );
-        return executor.withExecutionRunning(executionRunning);
+        // if under the limit, run it!
+        return executionRunning
+            .withExecution(executionRunning.getExecution().withState(State.Type.RUNNING))
+            .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
     }
 
     public Executor process(Executor executor) {

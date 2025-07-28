@@ -6,7 +6,7 @@
                     <el-button-group>
                         <el-tooltip
                             effect="light"
-                            :content="$t('Fold content lines')"
+                            :content="t('Fold content lines')"
                             :persistent="false"
                             transition=""
                             :hide-after="0"
@@ -19,7 +19,7 @@
                         </el-tooltip>
                         <el-tooltip
                             effect="light"
-                            :content="$t('Unfold content lines')"
+                            :content="t('Unfold content lines')"
                             :persistent="false"
                             transition=""
                             :hide-after="0"
@@ -41,7 +41,7 @@
         <span v-if="label" class="label">{{ label }}</span>
         <div class="editor-container" ref="container" :class="[containerClass, {'mb-2': label}]">
             <div ref="editorContainer" class="editor-wrapper position-relative">
-                <monaco-editor
+                <MonacoEditor
                     ref="monacoEditor"
                     :path="path"
                     :theme="themeComputed"
@@ -49,15 +49,16 @@
                     :options="options"
                     :diff-editor="original !== undefined"
                     :original="original"
-                    @change="onInput"
-                    @editor-did-mount="editorDidMount"
-                    @tab-loaded="(...args) => $emit('tabLoaded', ...args)"
                     :language="lang"
                     :extension="extension"
                     :schema-type="schemaType"
                     :input="input"
                     :creating="creating"
                     :large-suggestions="largeSuggestions"
+                    @mouse-move="emit('mouse-move', $event)"
+                    @mouse-leave="emit('mouse-leave', $event)"
+                    @change="onInput"
+                    @editor-did-mount="editorDidMount"
                 />
                 <div
                     v-show="showPlaceholder"
@@ -71,437 +72,553 @@
                 </div>
             </div>
         </div>
+        <Teleport v-if="showWidgetContent" to=".editor-content-widget-content">
+            <slot name="widget-content" />
+        </Teleport>
     </div>
 </template>
 
-<script>
-    import {shallowRef} from "vue";
+<script setup lang="ts">
+    import {computed, onMounted, ref, shallowRef, watch} from "vue";
+    import {useI18n} from "vue-i18n";
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
-    import {mapState} from "vuex";
-    import {mapStores} from "pinia";
-    import {useCoreStore} from "../../stores/core";
     import {useDocStore} from "../../stores/doc";
     import {useMiscStore} from "../../stores/misc";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
+    // @ts-expect-error no clean way to have focus on inputs
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
     import MonacoEditor from "./MonacoEditor.vue";
+    import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+    import {nextTick} from "process";
 
-    import Utils from "../../utils/utils";
+    const {t} = useI18n()
 
-    export default {
-        props: {
-            modelValue: {type: String, default: ""},
-            original: {type: String, default: undefined},
-            lang: {type: String, default: undefined},
-            path: {type: String, default: undefined},
-            extension: {type: String, default: undefined},
-            schemaType: {type: String, default: undefined},
-            navbar: {type: Boolean, default: true},
-            input: {type: Boolean, default: false},
-            keepFocused: {type: Boolean, default: undefined},
-            largeSuggestions: {type: Boolean, required: false},
-            fullHeight: {type: Boolean, default: true},
-            customHeight: {type: Number, default: 7},
-            theme: {type: String, default: undefined},
-            placeholder: {type: [String, Number], default: ""},
-            diffSideBySide: {type: Boolean, default: true},
-            readOnly: {type: Boolean, default: false},
-            wordWrap: {type: Boolean, default: true},
-            lineNumbers: {type: Boolean, default: undefined},
-            minimap: {type: Boolean, default: false},
-            creating: {type: Boolean, default: false},
-            label: {type: String, default: undefined},
-            shouldFocus: {type: Boolean, default: true},
-            showScroll: {type: Boolean, default: false},
-            diffOverviewBar: {type: Boolean, default: true},
-        },
-        components: {
-            MonacoEditor,
-        },
-        emits: [
-            "save",
-            "execute",
-            "focusout",
-            "tabLoaded",
-            "update:modelValue",
-            "cursor",
-            "confirm",
-            "tabLoaded",
-        ],
-        editor: undefined,
-        data() {
-            return {
-                focus: false,
-                icon: {
-                    UnfoldLessHorizontal: shallowRef(UnfoldLessHorizontal),
-                    UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal),
-                    Help: shallowRef(Help),
-                    BookMultipleOutline: shallowRef(BookMultipleOutline),
-                    Close: shallowRef(Close),
-                },
-                editorDocumentation: undefined,
-                plugin: undefined,
-                taskType: undefined,
-                themeComputed: Utils.getTheme(),
-                preventCursorChange: false,
+
+    const props = defineProps({
+        modelValue: {type: String, default: ""},
+        original: {type: String, default: undefined},
+        lang: {type: String, default: undefined},
+        path: {type: String, default: undefined},
+        extension: {type: String, default: undefined},
+        schemaType: {type: String, default: undefined},
+        navbar: {type: Boolean, default: true},
+        input: {type: Boolean, default: false},
+        keepFocused: {type: Boolean, default: undefined},
+        largeSuggestions: {type: Boolean, required: false},
+        fullHeight: {type: Boolean, default: true},
+        customHeight: {type: Number, default: 7},
+        theme: {type: String, default: undefined},
+        placeholder: {type: [String, Number], default: ""},
+        diffSideBySide: {type: Boolean, default: true},
+        readOnly: {type: Boolean, default: false},
+        wordWrap: {type: Boolean, default: true},
+        lineNumbers: {type: Boolean, default: undefined},
+        minimap: {type: Boolean, default: false},
+        creating: {type: Boolean, default: false},
+        label: {type: String, default: undefined},
+        shouldFocus: {type: Boolean, default: true},
+        showScroll: {type: Boolean, default: false},
+        diffOverviewBar: {type: Boolean, default: true},
+    })
+
+    defineOptions({
+        name: "Editor",
+    })
+
+    const emit = defineEmits<{
+        (e: "save", value?: string): void;
+        (e: "execute", value?: string): void;
+        (e: "focusout", value?: string): void;
+        (e: "update:modelValue", value: string): void;
+        (e: "cursor", payload: {position: monaco.Position, model: monaco.editor.ITextModel}): void;
+        (e: "confirm", value?: string): void;
+        (e: "mouse-move", event: monaco.editor.IEditorMouseEvent): void;
+        (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void;
+    }>();
+
+
+    let editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined = undefined
+
+    const focus = ref(false)
+    const icon = {
+        UnfoldLessHorizontal: shallowRef(UnfoldLessHorizontal),
+        UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal),
+        Help: shallowRef(Help),
+        BookMultipleOutline: shallowRef(BookMultipleOutline),
+        Close: shallowRef(Close),
+    } as const
+    const editorDocumentation = ref()
+    const preventCursorChange = ref(false)
+
+    onMounted(() => {
+        useDocStore().docId = "flowEditor";
+    })
+
+    watch(() => props.modelValue, (value) => {
+        if (isCodeEditor(editor) && editor?.getValue?.() !== value) {
+            preventCursorChange.value = true;
+        } else {
+            preventCursorChange.value = false;
+        }
+    })
+
+    const themeComputed = computed(() => {
+        return useMiscStore().theme;
+    })
+
+    const containerClass = computed(() => {
+        return [
+            !props.input ? "" : "single-line",
+            "theme-" + themeComputed.value,
+            themeComputed.value === "dark" ? "custom-dark-vs-theme" : "",
+        ];
+    })
+
+    const showPlaceholder = computed(() => {
+        return (
+            props.input === true &&
+            !props.shouldFocus &&
+            (!props.modelValue || props.modelValue.trim() === "") &&
+            !focus.value
+        );
+    })
+
+    const options = computed(() => {
+        const options: monaco.editor.IStandaloneEditorConstructionOptions & {
+            renderSideBySide?:boolean
+            useInlineViewWhenSpaceIsLimited?:boolean
+            renderOverviewRuler?:boolean
+        } = {};
+
+        if (props.input && !props.lineNumbers) {
+            options.lineNumbers = "off";
+            options.folding = false;
+            options.renderLineHighlight = "none";
+            options.wordBasedSuggestions = "off";
+            options.occurrencesHighlight = "off";
+            options.hideCursorInOverviewRuler = true;
+            options.overviewRulerBorder = false;
+            options.overviewRulerLanes = 0;
+            options.lineNumbersMinChars = 0;
+            options.fontSize = 13;
+            options.minimap = {
+                enabled: false,
             };
-        },
-        mounted() {
-            this.docStore.docId = "flowEditor";
-        },
-        watch: {
-            mappedTheme: {
-                handler() {
-                    this.themeComputed = Utils.getTheme();
+            options.scrollBeyondLastColumn = 0;
+            options.overviewRulerLanes = 0;
+            options.scrollbar = {
+                vertical: !props.showScroll ? "hidden" : "visible",
+                horizontal: "hidden",
+                alwaysConsumeMouseWheel: false,
+                handleMouseWheel: true,
+                horizontalScrollbarSize: 0,
+                verticalScrollbarSize: !props.showScroll ? 0 : 5,
+                useShadows: false,
+            };
+            options.stickyScroll = {
+                enabled: false,
+            };
+            options.find = {
+                addExtraSpaceOnTop: false,
+                autoFindInSelection: "never",
+                seedSearchStringFromSelection: "never",
+            };
+            options.contextmenu = false;
+            options.lineDecorationsWidth = 0;
+
+        } else {
+            options.scrollbar = {
+                vertical: props.original !== undefined ? "hidden" : "auto",
+                verticalScrollbarSize: props.original !== undefined ? 0 : 10,
+                alwaysConsumeMouseWheel: false,
+            };
+            options.renderSideBySide = props.diffSideBySide;
+            options.useInlineViewWhenSpaceIsLimited = false;
+            options.renderOverviewRuler = props.diffOverviewBar;
+        }
+
+
+        options.minimap = props.minimap ? undefined : {
+            enabled: false,
+        };
+
+        options.readOnly = props.readOnly;
+
+        options.wordWrap = props.wordWrap ? "on" : "off";
+        options.automaticLayout = true;
+
+        const settingsEditorFontSize = localStorage.getItem("editorFontSize")
+
+        return {
+            ...{
+                tabSize: 2,
+                fontFamily: localStorage.getItem("editorFontFamily")
+                    ? localStorage.getItem("editorFontFamily")
+                    : "'Source Code Pro', monospace",
+                fontSize: settingsEditorFontSize
+                    ? parseInt(settingsEditorFontSize)
+                    : 12,
+                showFoldingControls: "always",
+                scrollBeyondLastLine: false,
+                roundedSelection: false,
+            },
+            ...options,
+        } as monaco.editor.IStandaloneEditorConstructionOptions & {
+            renderSideBySide?:boolean
+            useInlineViewWhenSpaceIsLimited?:boolean
+            renderOverviewRuler?:boolean
+        };
+    })
+
+    editorDocumentation.value =
+        localStorage.getItem("editorDocumentation") !== "false" &&
+        props.navbar;
+
+    const monacoEditor = ref<InstanceType<typeof MonacoEditor>>()
+    const container = ref<HTMLDivElement>();
+
+    let lastTimeout: number | undefined = undefined
+    let decorations: monaco.editor.IEditorDecorationsCollection | undefined = undefined
+
+
+    function isCodeEditor(editor?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor): editor is monaco.editor.IStandaloneCodeEditor{
+        return editor?.getEditorType() === monacoEditor.value?.monaco.editor.EditorType.ICodeEditor
+    }
+
+    function editorDidMount(monacoMounted?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor) {
+
+        const monacoRef = monacoEditor.value
+
+        editor = monacoMounted;
+
+        if(!editor || !monacoRef) {
+            console.error("Monaco editor is not mounted properly.");
+            return;
+        }
+
+
+
+        // avoid double import of monaco editor, use a reference
+        const KeyCode = monacoRef.monaco.KeyCode;
+        const KeyMod = monacoRef.monaco.KeyMod;
+
+        decorations = editor.createDecorationsCollection();
+
+        if(!isCodeEditor(editor)){
+            return
+        }
+
+        if (!props.original) {
+            editor.onDidBlurEditorWidget?.(() => {
+                emit("focusout", isCodeEditor(editor)
+                    ? editor.getValue()
+                    : undefined);
+                focus.value = false;
+            });
+
+            if(props.shouldFocus){
+                editor.onDidFocusEditorText?.(() => {
+                    focus.value = true;
+                });
+
+                monacoRef?.focus();
+            }
+        }
+
+        if (!props.readOnly) {
+            editor.addAction({
+                id: "kestra-save",
+                label: t("save"),
+                keybindings: [KeyMod.CtrlCmd | KeyCode.KeyS],
+                contextMenuGroupId: "navigation",
+                contextMenuOrder: 1.5,
+                run: (ed) => {
+                    emit("save", ed.getValue());
                 },
-                immediate: true,
+            });
+        } else {
+            if (props.lang === "json") {
+                editor.getAction("editor.action.formatDocument")?.run();
+            }
+        }
+
+        editor.addAction({
+            id: "kestra-execute",
+            label: t("execute flow behaviour"),
+            keybindings: [KeyMod.CtrlCmd | KeyCode.KeyE],
+            contextMenuGroupId: "navigation",
+            contextMenuOrder: 1.5,
+            run: (ed) => {
+                emit("execute", ed.getValue());
             },
-            modelValue(value) {
-                if (this.editor?.getValue?.() !== value) {
-                    this.preventCursorChange = true;
-                } else {
-                    this.preventCursorChange = false;
-                }
+        });
+
+        editor.addAction({
+            id: "confirm",
+            label: t("confirm"),
+            keybindings: [KeyMod.CtrlCmd | KeyCode.Enter],
+            contextMenuGroupId: "navigation",
+            contextMenuOrder: 1.5,
+            run: (ed) => {
+                emit("confirm", ed.getValue());
             },
-        },
-        computed: {
-            ...mapState("flow", ["flowValidation"]),
-            ...mapStores(useCoreStore, useDocStore, useMiscStore),
-            mappedTheme() {
-                return this.miscStore.theme;
-            },
-            containerClass() {
-                return [
-                    !this.input ? "" : "single-line",
-                    "theme-" + this.themeComputed,
-                    this.themeComputed === "dark" ? "custom-dark-vs-theme" : "",
-                ];
-            },
-            showPlaceholder() {
-                return (
-                    this.input === true &&
-                    !this.shouldFocus &&
-                    (!this.modelValue || this.modelValue.trim() === "") &&
-                    !this.focus
+        });
+
+        // TabFocus is global to all editor so revert the behavior on non inputs
+        editor.onDidFocusEditorText?.(() => {
+            TabFocus.setTabFocusMode(props.keepFocused === undefined ? props.input : false);
+        });
+
+        if (props.input) {
+            editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyH, () => {});
+            editor.addCommand(KeyCode.F1, () => {});
+
+            if (!props.readOnly) {
+                editor.addCommand(
+                    KeyMod.CtrlCmd | KeyCode.KeyF,
+                    () => {},
                 );
-            },
-            options() {
-                const options = {};
+            }
+        }
 
-                if (this.input && !this.lineNumbers) {
-                    options.lineNumbers = "off";
-                    options.folding = false;
-                    options.renderLineHighlight = "none";
-                    options.wordBasedSuggestions = false;
-                    options.occurrencesHighlight = false;
-                    options.hideCursorInOverviewRuler = true;
-                    options.overviewRulerBorder = false;
-                    options.overviewRulerLanes = 0;
-                    options.lineNumbersMinChars = 0;
-                    options.fontSize = 13;
-                    options.minimap = {
-                        enabled: false,
-                    };
-                    options.scrollBeyondLastColumn = 0;
-                    options.overviewRulerLanes = 0;
-                    options.scrollbar = {
-                        vertical: !this.showScroll ? "hidden" : "visible",
-                        horizontal: "hidden",
-                        alwaysConsumeMouseWheel: false,
-                        handleMouseWheel: true,
-                        horizontalScrollbarSize: 0,
-                        verticalScrollbarSize: !this.showScroll ? 0 : 5,
-                        useShadows: false,
-                    };
-                    options.stickyScroll = {
-                        enabled: false,
-                    };
-                    options.find = {
-                        addExtraSpaceOnTop: false,
-                        autoFindInSelection: "never",
-                        seedSearchStringFromSelection: false,
-                    };
-                    options.contextmenu = false;
-                    options.lineDecorationsWidth = 0;
-                } else {
-                    options.scrollbar = {
-                        vertical: this.original !== undefined ? "hidden" : "auto",
-                        verticalScrollbarSize: this.original !== undefined ? 0 : 10,
-                        alwaysConsumeMouseWheel: false,
-                    };
-                    options.renderSideBySide = this.diffSideBySide;
-                    options.useInlineViewWhenSpaceIsLimited = false;
-                    options.renderOverviewRuler = this.diffOverviewBar;
-                }
+        if (props.original === undefined && props.navbar && props.fullHeight) {
+            editor.addAction({
+                id: "fold-multiline",
+                label: t("fold_all_multi_lines"),
+                keybindings: [KeyCode.F10],
+                contextMenuGroupId: "fold",
+                contextMenuOrder: 1.5,
+                async run(ed) {
+                    const foldingContrib = ed.getContribution(
+                        "editor.contrib.folding",
+                    ) as any;
+                    const foldingModel = await foldingContrib?.getFoldingModel();
+                    let editorModel = foldingModel.textModel;
+                    let regions = foldingModel.regions;
+                    let toToggle = [];
+                    for (let i = regions.length - 1; i >= 0; i--) {
+                        if (regions.isCollapsed(i) === false) {
+                            let startLineNumber =
+                                regions.getStartLineNumber(i);
 
-                if (this.minimap === false) {
-                    options.minimap = {
-                        enabled: false,
-                    };
-                }
-
-                if (this.readOnly) {
-                    options.readOnly = true;
-                }
-
-                options.wordWrap = this.wordWrap;
-                options.automaticLayout = true;
-
-                return {
-                    ...{
-                        tabSize: 2,
-                        fontFamily: localStorage.getItem("editorFontFamily")
-                            ? localStorage.getItem("editorFontFamily")
-                            : "'Source Code Pro', monospace",
-                        fontSize: localStorage.getItem("editorFontSize")
-                            ? parseInt(localStorage.getItem("editorFontSize"))
-                            : 12,
-                        showFoldingControls: "always",
-                        scrollBeyondLastLine: false,
-                        roundedSelection: false,
-                    },
-                    ...options,
-                };
-            },
-        },
-        created() {
-            this.editorDocumentation =
-                localStorage.getItem("editorDocumentation") !== "false" &&
-                this.navbar;
-        },
-        methods: {
-            editorDidMount(editor) {
-                // avoid double import of monaco editor, use a reference
-                const KeyCode = this.$refs.monacoEditor.monaco.KeyCode;
-                const KeyMod = this.$refs.monacoEditor.monaco.KeyMod;
-
-                this.editor = editor;
-
-                this.decorations = this.editor.createDecorationsCollection();
-
-                if (!this.original) {
-                    this.editor.onDidBlurEditorWidget?.(() => {
-                        this.$emit("focusout", editor.getValue());
-                        this.focus = false;
-                    });
-
-                    if(this.shouldFocus){
-                        this.editor.onDidFocusEditorText?.(() => {
-                            this.focus = true;
-                        });
-
-                        this.$refs.monacoEditor.focus();
-                    }
-                }
-
-                if (!this.readOnly) {
-                    this.editor.addAction({
-                        id: "kestra-save",
-                        label: this.$t("save"),
-                        keybindings: [KeyMod.CtrlCmd | KeyCode.KeyS],
-                        contextMenuGroupId: "navigation",
-                        contextMenuOrder: 1.5,
-                        run: (ed) => {
-                            this.$emit("save", ed.getValue());
-                        },
-                    });
-                } else {
-                    if (this.lang === "json") {
-                        editor.getAction("editor.action.formatDocument").run();
-                    }
-                }
-
-                this.editor.addAction({
-                    id: "kestra-execute",
-                    label: this.$t("execute flow behaviour"),
-                    keybindings: [KeyMod.CtrlCmd | KeyCode.KeyE],
-                    contextMenuGroupId: "navigation",
-                    contextMenuOrder: 1.5,
-                    run: (ed) => {
-                        this.$emit("execute", ed.getValue());
-                    },
-                });
-
-                this.editor.addAction({
-                    id: "confirm",
-                    label: this.$t("confirm"),
-                    keybindings: [KeyMod.CtrlCmd | KeyCode.Enter],
-                    contextMenuGroupId: "navigation",
-                    contextMenuOrder: 1.5,
-                    run: (ed) => {
-                        this.$emit("confirm", ed.getValue());
-                    },
-                });
-
-                // TabFocus is global to all editor so revert the behavior on non inputs
-                this.editor.onDidFocusEditorText?.(() => {
-                    TabFocus.setTabFocusMode(this.keepFocused === undefined ? this.input : false);
-                });
-
-                if (this.input) {
-                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyH, () => {});
-                    this.editor.addCommand(KeyCode.F1, () => {});
-
-                    if (!this.readOnly) {
-                        this.editor.addCommand(
-                            KeyMod.CtrlCmd | KeyCode.KeyF,
-                            () => {},
-                        );
-                    }
-                }
-
-                if (this.original === undefined && this.navbar && this.fullHeight) {
-                    this.editor.addAction({
-                        id: "fold-multiline",
-                        label: this.$t("fold_all_multi_lines"),
-                        keybindings: [KeyCode.F10],
-                        contextMenuGroupId: "fold",
-                        contextMenuOrder: 1.5,
-                        run: (ed) => {
-                            const foldingContrib = ed.getContribution(
-                                "editor.contrib.folding",
-                            );
-                            foldingContrib
-                                .getFoldingModel()
-                                .then((foldingModel) => {
-                                    let editorModel = foldingModel.textModel;
-                                    let regions = foldingModel.regions;
-                                    let toToggle = [];
-                                    for (let i = regions.length - 1; i >= 0; i--) {
-                                        if (regions.isCollapsed(i) === false) {
-                                            let startLineNumber =
-                                                regions.getStartLineNumber(i);
-
-                                            if (
-                                                editorModel
-                                                    .getLineContent(startLineNumber)
-                                                    .trim()
-                                                    .endsWith("|")
-                                            ) {
-                                                toToggle.push(regions.toRegion(i));
-                                            }
-                                        }
-                                    }
-                                    foldingModel.toggleCollapseState(toToggle);
-                                });
-
-                            return null;
-                        },
-                    });
-
-                    if (localStorage.getItem("autofoldTextEditor") === "true") {
-                        this.autoFold(true);
-                    }
-                }
-
-                if (!this.fullHeight) {
-                    editor.onDidContentSizeChange((e) => {
-                        if (!this.$refs.container) return;
-                        this.$refs.container.style.height =
-                            e.contentHeight + this.customHeight + "px";
-                    });
-                }
-
-                if (!this.original) {
-                    this.editor.onDidContentSizeChange((_) => {
-                        if (this.coreStore.guidedProperties.monacoRange) {
-                            editor.revealLine(
-                                this.coreStore.guidedProperties.monacoRange.endLineNumber,
-                            );
-                            const decorationsToAdd = [];
-                            decorationsToAdd.push({
-                                range: this.coreStore.guidedProperties.monacoRange,
-                                options: {
-                                    isWholeLine: true,
-                                    inlineClassName: "highlight-text",
-                                },
-                                className: "highlight-text",
-                            });
-                            if (this.coreStore.guidedProperties.monacoDisableRange) {
-                                decorationsToAdd.push({
-                                    range: this.coreStore.guidedProperties.monacoDisableRange,
-                                    options: {
-                                        isWholeLine: true,
-                                        inlineClassName: "disable-text",
-                                    },
-                                    className: "disable-text",
-                                });
+                            if (
+                                editorModel
+                                    .getLineContent(startLineNumber)
+                                    .trim()
+                                    .endsWith("|")
+                            ) {
+                                toToggle.push(regions.toRegion(i));
                             }
-
-                            this.decorations.set(decorationsToAdd);
-                        } else {
-                            this.highlightPebble();
                         }
-                    });
+                    }
+                    foldingModel.toggleCollapseState(toToggle);
 
-                    this.editor.onDidChangeCursorPosition?.(() => {
-                        clearTimeout(this.lastTimeout);
-                        if(this.preventCursorChange) {
-                            this.preventCursorChange = false;
-                            return;
-                        }
-                        let position = this.editor.getPosition();
-                        let model = this.editor.getModel();
-                        this.lastTimeout = setTimeout(() => {
-                            this.$emit("cursor", {
-                                position: position,
-                                model: model,
-                            });
-                        }, 100);
-                        this.highlightPebble();
-                    });
-                }
+                    return;
+                },
+            });
 
-                // attach an imperative method to the element so tests can programmatically update
-                // the value of the editor without dealing with how Monaco handles the exact keystrokes
-                this.$refs.monacoEditor.$el.querySelector(".ks-monaco-editor").__setValueInTests = (value) => {
-                    this.editor.setValue(value);
-                };
-            },
-            autoFold(autoFold) {
-                if (autoFold) {
-                    this.editor.trigger("fold", "fold-multiline");
+            if (localStorage.getItem("autofoldTextEditor") === "true") {
+                autoFold(true);
+            }
+        }
+
+        if (!props.fullHeight) {
+            editor.onDidContentSizeChange((e) => {
+                if (!container.value) return;
+                container.value.style.height =
+                    e.contentHeight + props.customHeight + "px";
+            });
+        }
+
+        if (!props.original) {
+            editor.onDidContentSizeChange((_) => {
+                highlightPebble();
+            });
+
+            editor.onDidChangeCursorPosition?.(() => {
+                clearTimeout(lastTimeout);
+                if(!editor) return
+                if(preventCursorChange.value) {
+                    preventCursorChange.value = false;
+                    return;
                 }
-            },
-            unfoldAll() {
-                this.editor.trigger("unfold", "editor.unfoldAll");
-            },
-            onInput(value) {
-                this.$emit("update:modelValue", value);
-            },
-            onPlaceholderClick() {
-                this.editor.layout();
-                this.editor.focus();
-            },
-            highlightPebble() {
-                // Highlight code that match pebble content
-                let model = this.editor?.getModel?.();
-                let text = model?.getValue?.();
-                let regex = new RegExp("\\{\\{(.+?)}}", "g");
-                let match;
-                const decorationsToAdd = [];
-                while ((match = regex.exec(text)) !== null) {
-                    let startPos = model.getPositionAt(match.index);
-                    let endPos = model.getPositionAt(match.index + match[0].length);
-                    decorationsToAdd.push({
-                        range: {
-                            startLineNumber: startPos.lineNumber,
-                            startColumn: startPos.column,
-                            endLineNumber: endPos.lineNumber,
-                            endColumn: endPos.column,
-                        },
-                        options: {
-                            inlineClassName: "highlight-pebble",
-                        },
+                if(!isCodeEditor(editor))return
+                let position = editor.getPosition();
+                let model = editor.getModel();
+                lastTimeout = setTimeout(() => {
+                    if(!position || !model) return;
+                    emit("cursor", {
+                        position: position,
+                        model: model,
                     });
-                }
-                this.decorations.set(decorationsToAdd);
+                }, 100) as unknown as number;
+                highlightPebble();
+            });
+        }
+
+        // attach an imperative method to the element so tests can programmatically update
+        // the value of the editor without dealing with how Monaco handles the exact keystrokes
+        monacoRef.$el.querySelector(".ks-monaco-editor").__setValueInTests = (value: string) => {
+            if(!isCodeEditor(editor))return
+            editor?.setValue(value);
+        };
+    }
+
+    function autoFold(autoFold?: boolean) {
+        if (autoFold && editor) {
+            editor.trigger("fold", "fold-multiline", {});
+        }
+    }
+
+    function unfoldAll() {
+        editor?.trigger("unfold", "editor.unfoldAll", {});
+    }
+
+    function onInput(value: string) {
+        emit("update:modelValue", value);
+    }
+
+    function onPlaceholderClick() {
+        editor?.layout();
+        editor?.focus();
+    }
+
+    const decorationsLists: {
+        pebble?: monaco.editor.IModelDeltaDecoration[],
+        lines?: monaco.editor.IModelDeltaDecoration[]
+    } = {}
+
+    function getHighlightDecoration(range: {start: number, end: number}) {
+        if (!monacoEditor.value) return ;
+        const monacoRef = monacoEditor.value.monaco;
+        return [{
+            range: new monacoRef.Range(range.start, 1, range.end, 1),
+            options: {
+                isWholeLine: true,
+                className: "highlight-lines",
             },
-        },
-    };
+        }] as monaco.editor.IModelDeltaDecoration[];
+    }
+
+    function highlightLinesRange(range: {start: number, end: number}) {
+        decorationsLists.lines = getHighlightDecoration(range);
+        setDecorations();
+    }
+
+    function clearHighlights() {
+        decorations?.clear();
+    }
+
+    defineExpose({
+        highlightLinesRange,
+        clearHighlights,
+        addContentWidget,
+        removeContentWidget,
+    })
+
+    function setDecorations() {
+        decorations?.clear()
+        if(decorationsLists.lines){
+            decorations?.append(decorationsLists.lines);
+        }
+        if(decorationsLists.pebble){
+            decorations?.append(decorationsLists.pebble);
+        }
+    }
+
+    function highlightPebble() {
+        if(!isCodeEditor(editor))return
+        // Highlight code that match pebble content
+        let model = editor?.getModel?.();
+        let text = model?.getValue?.();
+        let regex = new RegExp("\\{\\{(.+?)}}", "g");
+        let match;
+        const decorationsToAdd: monaco.editor.IModelDeltaDecoration[] = [];
+        while (text && model && (match = regex.exec(text)) !== null) {
+            let startPos = model.getPositionAt(match.index);
+            let endPos = model.getPositionAt(match.index + match[0].length);
+            decorationsToAdd.push({
+                range: {
+                    startLineNumber: startPos.lineNumber,
+                    startColumn: startPos.column,
+                    endLineNumber: endPos.lineNumber,
+                    endColumn: endPos.column,
+                },
+                options: {
+                    inlineClassName: "highlight-pebble",
+                },
+            });
+        }
+
+        decorationsLists.pebble = decorationsToAdd;
+        setDecorations();
+    }
+
+    const widgetNode = (() => {
+        const node = document.createElement("div");
+        node.className = "editor-content-widget";
+        const content = document.createElement("div")
+        content.className = "editor-content-widget-content";
+        node.appendChild(content)
+        return node;
+    })()
+
+    const showWidgetContent = ref(false)
+
+    function addContentWidget(widget: {
+        id: string;
+        position: monaco.IPosition;
+        height: number
+        marginLeft: number
+    }) {
+        if(!isCodeEditor(editor)) return
+        if(!monacoEditor.value) return
+        const monacoRefTypes = monacoEditor.value.monaco
+        editor?.addContentWidget({
+            getId(){
+                return widget.id
+            },
+            getPosition(){
+                return {
+                    position: widget.position,
+                    preference: [
+                        monacoRefTypes.editor.ContentWidgetPositionPreference.EXACT,
+                    ],
+                }
+            },
+            getDomNode: () => {
+                const content = widgetNode.querySelector(".editor-content-widget-content") as HTMLDivElement;
+                widgetNode.style.marginLeft = widget.marginLeft / 2.2 + "rem";
+                if(content){
+                    content.style.height = (widget.height * 18) + "px";
+                }
+                return widgetNode
+            },
+        });
+        nextTick(() => {
+            showWidgetContent.value = true;
+        })
+    }
+
+    function removeContentWidget(id: string) {
+        showWidgetContent.value = false;
+        if(!isCodeEditor(editor)) return
+        editor?.removeContentWidget({
+            getId: () => id,
+            getPosition(){
+                return {
+                    position: {lineNumber: 0, column: 0},
+                    preference: [],
+                }
+            },
+            getDomNode: () => {
+                return widgetNode;
+            },
+        });
+    }
 </script>
 
 <style scoped lang="scss">
@@ -511,6 +628,19 @@
 <style lang="scss">
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 @import "../../styles/layout/root-dark.scss";
+
+.highlight-lines{
+    background-color: rgba($base-blue-400, .2);
+}
+
+.editor-content-widget-content{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    padding: 0 4rem;
+}
 
 :not(.namespace-defaults, .el-drawer__body) > .ks-editor {
     flex-direction: column;

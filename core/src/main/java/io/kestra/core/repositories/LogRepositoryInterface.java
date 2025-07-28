@@ -82,6 +82,8 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
     Flux<LogEntry> findAsync(
         @Nullable String tenantId,
         @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable String executionId,
         @Nullable Level minLevel,
         ZonedDateTime startDate
     );

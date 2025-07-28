@@ -1,7 +1,7 @@
 <template>
     <Header v-if="header" :dashboard />
 
-    <section id="filter">
+    <section id="filter" :class="{filterPadding: !isFlow}">
         <KestraFilter
             :prefix="`dashboard__${dashboard.id}`"
             :language
@@ -14,7 +14,7 @@
         />
     </section>
 
-    <Sections :key :dashboard :charts :show-default="dashboard.id === 'default'" padding />
+    <Sections :key :dashboard :charts :show-default="dashboard.id === 'default'" :padding="!isFlow" />
 </template>
 
 <script setup lang="ts">
@@ -107,7 +107,7 @@
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
 
-section#filter {
+.filterPadding {
     margin: 2rem 0.25rem 0;
     padding: 0 2rem;
 }

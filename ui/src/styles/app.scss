@@ -65,7 +65,7 @@ html {
     }
 
     ::-webkit-scrollbar-corner {
-        background: var(--ks-background-body) !important;   
+        background: var(--ks-background-body) !important;
     }
 }
 
@@ -83,7 +83,7 @@ main {
         margin: 24px 0;
         min-width: 100%;
         transition: padding 0.3s ease;
-        padding: 0 32px;
+        padding: 0 24px;
 
         &.gantt-container {
             &:has(> .execution-pending) {

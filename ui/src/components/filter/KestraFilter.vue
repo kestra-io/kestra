@@ -447,6 +447,11 @@
 
         mountedEditor.onKeyDown((e) => {
             if (e.keyCode === KeyCode.Enter) {
+                const suggestController = mountedEditor.getContribution("editor.contrib.suggestController") as any;
+                
+                if (suggestController && suggestController.widget) {
+                    return;
+                }
                 e.preventDefault();
                 e.stopPropagation();
             }

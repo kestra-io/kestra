@@ -252,7 +252,7 @@ export function useLeftMenu() {
                     {
                         href: {name: "admin/stats"},
                         routes: routeStartWith("admin/stats"),
-                        title: t("stats"),
+                        title: t("system overview"),
                     },
                 ],
             }

@@ -1,6 +1,6 @@
-import {pascalCase} from  "change-case";
+import {pascalCase} from "change-case";
 
-const TasksComponents = import.meta.glob<{default: any}>("./Task*.vue", {eager: true});
+const TasksComponents = import.meta.glob<{ default: any }>("./Task*.vue", {eager: true});
 
 function getType(property: any, key?: string, schema?: any): string {
     if (property.enum !== undefined) {
@@ -20,24 +20,28 @@ function getType(property: any, key?: string, schema?: any): string {
             return "task-runner"
         }
 
+        if (property.$ref.includes("io.kestra.preload")) {
+            return "list"
+        }
+
         return "complex";
     }
 
-    if( Object.prototype.hasOwnProperty.call(property, "allOf")) {
+    if (Object.prototype.hasOwnProperty.call(property, "allOf")) {
         if (property.allOf.length === 2
-                && property.allOf[0].$ref && !property.allOf[1].properties) {
+            && property.allOf[0].$ref && !property.allOf[1].properties) {
             return "complex";
         }
     }
 
     if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
-        if( key === "labels" && property.anyOf.length === 2
-                && property.anyOf[0].type === "array" && property.anyOf[1].type === "object") {
+        if (key === "labels" && property.anyOf.length === 2
+            && property.anyOf[0].type === "array" && property.anyOf[1].type === "object") {
             return "KV-pairs";
         }
 
         // for dag tasks
-        if(property.anyOf.length > 10) {
+        if (property.anyOf.length > 10) {
             return "task"
         }
         return "any-of";
@@ -51,7 +55,7 @@ function getType(property: any, key?: string, schema?: any): string {
         return "number";
     }
 
-    if( key === "version" && property.type === "string") {
+    if (key === "version" && property.type === "string") {
         return "version";
     }
 
@@ -69,8 +73,8 @@ function getType(property: any, key?: string, schema?: any): string {
         return "subflow-inputs";
     }
 
-    if( property.type === "array") {
-        if(property.items?.anyOf?.length > 10 || key === "pluginDefaults") {
+    if (property.type === "array") {
+        if (property.items?.anyOf?.length === 0 || property.items?.anyOf?.length > 10 || key === "pluginDefaults") {
             return "list";
         }
 
@@ -81,7 +85,7 @@ function getType(property: any, key?: string, schema?: any): string {
         return "constant"
     }
 
-    if( property.type === "object" && !property.properties) {
+    if (property.type === "object" && !property.properties) {
         return "KV-pairs";
     }
 

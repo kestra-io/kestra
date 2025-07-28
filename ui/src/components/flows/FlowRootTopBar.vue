@@ -40,7 +40,7 @@
     const user = computed(() => store.state.auth.user);
 
     const isDeleted = computed(() => flow.value?.deleted || false);
-    const isAllowedToEdit = computed(() => 
+    const isAllowedToEdit = computed(() =>
         user.value?.isAllowed(permission.FLOW, action.UPDATE, flow.value?.namespace)
     );
 </script>

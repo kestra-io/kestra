@@ -1,0 +1,21 @@
+id: flow-concurrency-for-each-item
+namespace: io.kestra.tests
+
+inputs:
+  - id: file
+    type: FILE
+  - id: batch
+    type: INT
+
+tasks:
+  - id: each
+    type: io.kestra.plugin.core.flow.ForEachItem
+    items: "{{ inputs.file }}"
+    batch:
+      rows: "{{inputs.batch}}"
+    namespace: io.kestra.tests
+    flowId: flow-concurrency-queue
+    wait: true
+    transmitFailed: true
+    inputs:
+      items: "{{ taskrun.items }}"

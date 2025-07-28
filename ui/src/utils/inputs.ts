@@ -1,8 +1,10 @@
 import moment from "moment/moment";
-import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+
+type InputType = "STRING" | "NUMBER" | "BOOLEAN" | "BOOL" | "DATE" | "DATETIME" | "TIME" | "ARRAY" | "MULTISELECT" | "JSON" | "YAML";
 
 export default class Inputs {
-    static normalize(type, value) {
+    static normalize(type: InputType | undefined, value: any) {
         let res = value;
 
         if (type === "BOOLEAN" && value === undefined) {
@@ -29,7 +31,7 @@ export default class Inputs {
         return res;
     }
 
-    static normalizeForComponents(type, value) {
+    static normalizeForComponents(type: InputType | undefined, value: any) {
         let res = value;
 
         if (value === null) {

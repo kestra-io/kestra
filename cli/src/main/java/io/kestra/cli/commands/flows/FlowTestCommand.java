@@ -1,7 +1,8 @@
 package io.kestra.cli.commands.flows;
 
 import com.google.common.collect.ImmutableMap;
-import io.kestra.cli.AbstractCommand;
+import io.kestra.cli.AbstractApiCommand;
+import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeoutException;
     description = "Test a flow"
 )
 @Slf4j
-public class FlowTestCommand extends AbstractCommand {
+public class FlowTestCommand extends AbstractApiCommand {
     @Inject
     private ApplicationContext applicationContext;
 
@@ -76,6 +77,7 @@ public class FlowTestCommand extends AbstractCommand {
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         FlowInputOutput flowInputOutput = applicationContext.getBean(FlowInputOutput.class);
         RunnerUtils runnerUtils = applicationContext.getBean(RunnerUtils.class);
+        TenantIdSelectorService tenantService =  applicationContext.getBean(TenantIdSelectorService.class);
 
         Map<String, Object> inputs = new HashMap<>();
 
@@ -89,7 +91,7 @@ public class FlowTestCommand extends AbstractCommand {
 
         try {
             runner.run();
-            repositoryLoader.load(file.toFile());
+            repositoryLoader.load(tenantService.getTenantId(tenantId), file.toFile());
 
             List<Flow> all = flowRepository.findAllForAllTenants();
             if (all.size() != 1) {

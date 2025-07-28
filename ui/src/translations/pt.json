@@ -475,6 +475,7 @@
       }
     },
     "eval": {
+      "render": "Expressão de Renderização",
       "title": "Expressão de Depuração",
       "tooltip": "Renderizar qualquer expressão Pebble e inspecionar o contexto da Execução."
     },
@@ -902,6 +903,7 @@
         "finally": "Selecione uma task",
         "inputs": "Selecione um tipo de campo de input",
         "pluginDefaults": "Selecione um plugin",
+        "task": "Selecione uma task",
         "tasks": "Selecione uma task",
         "triggers": "Selecione um trigger"
       },
@@ -1010,6 +1012,14 @@
     "pause confirm": "Tem certeza de que deseja pausar a execução <code>{id}</code>?",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
+    "playground": {
+      "empty": "Clique no botão \"Run task\" para testar seu fluxo de trabalho com uma execução simulada.",
+      "history": "Últimas 10 execuções",
+      "run_all_tasks": "Executar Todas as Tasks",
+      "run_task": "Executar Task",
+      "title": "Playground",
+      "toggle": "Playground"
+    },
     "pluginDefaults": "Padrões do plugin",
     "pluginPage": {
       "alt": "Ícone de Plugins",
@@ -1071,6 +1081,7 @@
     "revision": "Revisão",
     "revisions": "Revisões",
     "row count": "Contagem de linhas",
+    "run task in playground": "Executar task no playground",
     "runners": "Corredores",
     "running duration": "Duração em execução",
     "save": "Salvar",
@@ -1144,7 +1155,8 @@
             "language": "Idioma",
             "log_display": "Exibição de Log Padrão",
             "log_level": "Nível de Log Padrão",
-            "multi_panel_editor": "Editor de Painel Múltiplo"
+            "multi_panel_editor": "Editor de Painel Múltiplo",
+            "playground": "Playground"
           },
           "label": "Configuração Principal"
         },
@@ -1182,6 +1194,7 @@
             "editor_hover_description": "Passe o cursor sobre a propriedade para ver a descrição",
             "environment_color": "Cor do Ambiente",
             "environment_name": "Nome do Ambiente",
+            "environment_name_tooltip": "Este nome de ambiente é definido a partir da configuração, mas pode ser alterado.",
             "logs_font_size": "Tamanho da Fonte dos Logs",
             "theme": "Tema"
           },
@@ -1250,10 +1263,12 @@
       },
       "troubleshooting": "Esqueceu a Senha?",
       "validation": {
+        "config_message": "Certifique-se de atualizar sua configuração para corrigir esta mensagem de erro",
         "email_invalid": "E-mail inválido",
         "email_required": "O e-mail é obrigatório",
         "email_temporary_not_allowed": "Endereços de e-mail temporários ou descartáveis não são permitidos",
         "firstName_required": "Nome é obrigatório",
+        "incorrect_creds": "Nome de usuário ou senha inválidos. Certifique-se de que suas credenciais estão corretas.",
         "lastName_required": "Sobrenome obrigatório",
         "password_invalid": "Senha inválida"
       }
@@ -1294,6 +1309,7 @@
     "success": "Sucesso",
     "sum": "Soma",
     "switch-view": "Alternar visualização",
+    "system overview": "Visão Geral do Sistema",
     "system_namespace": "Mantenha sua plataforma sob controle com system flows.",
     "system_namespace_description": "Automatize tarefas de manutenção, desde alertas de falha até limpezas automatizadas.",
     "tags": "Tags",

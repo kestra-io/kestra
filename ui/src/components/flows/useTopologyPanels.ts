@@ -40,7 +40,7 @@ export function useTopologyPanels(
         const target = findTopologyIndexes(panels.value);
 
         const path = YAML_UTILS.getPathFromSectionAndId({
-            source: store.getters["flow/flowYaml"],
+            source: store.state.flow.flowYaml,
             section: params.section,
             id: params.id,
         })

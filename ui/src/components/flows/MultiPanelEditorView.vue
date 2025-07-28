@@ -1,6 +1,6 @@
 <template>
     <div class="multi-panel-editor-wrapper">
-        <div class="tabs-wrapper">
+        <div class="tabs-wrapper" :class="{playgroundMode}">
             <div class="tabs">
                 <button
                     v-for="element of EDITOR_ELEMENTS"
@@ -15,20 +15,30 @@
             <EditorButtonsWrapper />
         </div>
         <div class="editor-wrapper">
-            <MultiPanelTabs v-model="panels" class="editor-panels" @remove-tab="onRemoveTab" />
+            <Splitpanes class="default-theme editor-panels" horizontal>
+                <Pane>
+                    <MultiPanelTabs v-model="panels" @remove-tab="onRemoveTab" />
+                </Pane>
+                <Pane v-if="playgroundMode">
+                    <FlowPlayground />
+                </Pane>
+            </Splitpanes>
         </div>
         <KeyShortcuts />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, Ref, watch} from "vue";
+    import {computed, onMounted, onUnmounted, Ref, watch} from "vue";
     import {useStorage} from "@vueuse/core";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
+    import {Splitpanes, Pane} from "splitpanes"
     import {useCoreStore} from "../../stores/core";
+    import {usePlaygroundStore} from "../../stores/playground";
 
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
+    import FlowPlayground from "./FlowPlayground.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import KeyShortcuts from "../inputs/KeyShortcuts.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
@@ -51,6 +61,15 @@
 
     onMounted(() => {
         store.state.editor.explorerVisible = false
+    })
+
+    const playgroundStore = usePlaygroundStore()
+
+    const playgroundMode = computed(() => playgroundStore.enabled)
+
+    onUnmounted(() => {
+        playgroundStore.enabled = false
+        playgroundStore.clearExecutions()
     })
 
     /**
@@ -231,7 +250,7 @@
 </script>
 
 <style lang="scss" scoped>
-
+    @use "@kestra-io/ui-libs/src/scss/color-palette.scss" as colorPalette;
     .multi-panel-editor-wrapper{
         display: grid;
         grid-template-rows: auto 1fr;
@@ -251,6 +270,16 @@
         align-items: center;
         justify-content: space-between;
         border-bottom: 1px solid var(--ks-border-primary);
+        background-image: linear-gradient(
+            to right,
+            colorPalette.$base-blue-500 0%,
+            colorPalette.$base-blue-700 30%,
+            transparent 50%,
+            transparent 100%
+        );
+        background-size: 220% 100%;
+        background-position: 100% 0;
+        transition: background-position .2s;
     }
     .tabs{
         padding: .5rem 1rem;
@@ -283,5 +312,25 @@
     .tabs-icon {
         margin-right: .25rem;
         vertical-align: bottom;
+    }
+
+    .playgroundMode {
+        #{--el-color-primary}: colorPalette.$base-blue-500;
+        color: colorPalette.$base-white;
+        background-position: 0 0;
+    }
+
+    .default-theme{
+        .splitpanes__pane {
+            background-color: var(--ks-background-panel);
+        }
+
+        :deep(.splitpanes__splitter){
+            border-top-color: var(--ks-border-primary);
+            background-color: var(--ks-background-panel);
+            &:before, &:after{
+                background-color: var(--ks-content-secondary);
+            }
+        }
     }
 </style>

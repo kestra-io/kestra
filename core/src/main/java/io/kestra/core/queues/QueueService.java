@@ -27,8 +27,6 @@ public class QueueService {
             return ((Executor) object).getExecution().getId();
         } else if (object.getClass() == MetricEntry.class) {
             return null;
-        } else if (object.getClass() == ExecutionRunning.class) {
-            return ((ExecutionRunning) object).getExecution().getId();
         } else if (object.getClass() == SubflowExecutionEnd.class) {
             return ((SubflowExecutionEnd) object).getParentExecutionId();
         } else {

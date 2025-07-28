@@ -146,7 +146,7 @@
     const lastValidatedValue = ref<string | null>(null);
 
     // Computed properties
-    const errors = computed(() => store.getters["flow/taskError"]?.split(/, ?/));
+    const errors = computed(() => store.state.flow.taskError?.split(/, ?/));
     const pluginMarkdown = computed(() => {
         if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse(taskYaml.value)?.type) {
             return pluginsStore?.plugin.markdown;

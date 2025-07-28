@@ -81,7 +81,7 @@
 
     const store = useStore();
     const currentInstance = getCurrentInstance()!;
-    const t: ReturnType<typeof useI18n>["t"] = currentInstance.appContext?.config?.globalProperties?.$t;
+    const {t} = useI18n();
 
     export type ThemeBase = editor.BuiltinTheme | "light" | "dark";
 
@@ -140,7 +140,7 @@
 
     const highlight = inject(EDITOR_HIGHLIGHT_INJECTION_KEY, ref());
     const isInFlowEditor = inject(EDITOR_WRAPPER_INJECTION_KEY, false);
-    
+
     watch(highlight, (line) => {
         if (!line) return;
 
@@ -182,7 +182,7 @@
         }
     };
 
-    type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean };
+    export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean };
     const props = withDefaults(defineProps<{
         path?: string,
         original?: string,
@@ -256,7 +256,7 @@
     const suggestWidgetObserver = ref<MutationObserver>()
     const suggestWidget = ref<HTMLElement>()
 
-    const emit = defineEmits(["editorDidMount", "change"])
+
 
     defineExpose({
         focus,
@@ -267,6 +267,13 @@
     const editorResolved = computed(() => {
         return props.diffEditor ? localDiffEditor.value : localEditor.value;
     })
+
+    const emit = defineEmits<{
+        (e:"editorDidMount", editor?: typeof editorResolved.value): void,
+        (e:"change", value: string, event?: editor.IModelContentChangedEvent): void,
+        (e: "mouseMove", event: monaco.editor.IEditorMouseEvent): void;
+        (e: "mouseLeave", event: monaco.editor.IPartialEditorMouseEvent): void;
+    }>()
 
     const editorRef = ref<HTMLDivElement | null>(null);
 
@@ -676,7 +683,10 @@
         const $el = editorRef.value
         if ($el !== null) {
             const modifiedEditorWidgets = $el.querySelector(".editor.modified .overflowingContentWidgets");
-            suggestWidgetResizeObserver.value.observe(modifiedEditorWidgets ?? $el.querySelector(".overflowingContentWidgets"), {childList: true})
+            const el = modifiedEditorWidgets ?? $el.querySelector(".overflowingContentWidgets")
+            if(el){
+                suggestWidgetResizeObserver.value.observe(el, {childList: true})
+            }
         }
     }
 
@@ -778,6 +788,14 @@
                         localEditor.value!.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {});
                     }
                 }, 300))
+
+                localEditor.value.onMouseMove((e) => {
+                    emit("mouseMove", e);
+                });
+
+                localEditor.value.onMouseLeave((e) => {
+                    emit("mouseLeave", e);
+                });
             }
 
             if (!props.input) {

@@ -674,7 +674,7 @@
     const editorWidth = useStorage("editor-size", 50);
     const validationDomElement = ref(null);
     const isLoading = ref(false);
-    const flowYaml = computed(() => store.getters["flow/flowYaml"]);
+    const flowYaml = computed(() => store.state.flow.flowYaml);
     const flowYamlOrigin = computed(() => store.state.flow.flowYamlOrigin);
     const user = computed(() => store.getters["auth/user"]);
     const metadata = computed(() => store.state.flow.metadata);
@@ -718,7 +718,7 @@
     };
 
     const taskErrors = computed(() => {
-        return store.getters["flow/taskError"]?.split(/, ?/);
+        return store.state.flow.taskError?.split(/, ?/);
     });
 
     watch(

@@ -42,6 +42,7 @@ public class BasicAuthService {
 
     @Inject
     @Setter
+    @Getter
     private BasicAuthConfiguration basicAuthConfiguration;
 
     @Inject
@@ -150,8 +151,8 @@ public class BasicAuthService {
 
         SaltedBasicAuthConfiguration configuration = configuration();
 
-        return configuration != null && 
-               !StringUtils.isBlank(configuration.getUsername()) && 
+        return configuration != null &&
+               !StringUtils.isBlank(configuration.getUsername()) &&
                !StringUtils.isBlank(configuration.getPassword());
     }
 

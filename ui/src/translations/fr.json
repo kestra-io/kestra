@@ -271,6 +271,7 @@
     "days": "Jours",
     "debug": "Déboguer",
     "default": "Par défaut",
+    "defaultsToNamespaceFile": "Par défaut, fichier de namespace : <code>{name}</code>",
     "delete": "Effacer",
     "delete backfill": "Supprimer le backfill",
     "delete backfills": "Supprimer les backfills",
@@ -912,6 +913,7 @@
       "version_oss_placeholder": "Kestra Enterprise permet de versionner les plugins"
     },
     "no_data": "On dirait qu'il n'y a rien ici… pour l'instant !<br/>Ajustez vos filtres, ou réessayez !",
+    "no_file_choosen": "Aucun fichier choisi",
     "no_logs_data": "Pas de données",
     "no_logs_data_description": "Soit aucun flow n'est en cours d'exécution, soit vous devez ajuster vos filtres.",
     "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",

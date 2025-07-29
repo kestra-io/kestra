@@ -16,11 +16,10 @@ const FADED = "faded";
  *
  * @see {@link https://js.cytoscape.org/#core | Cytoscape core options documentation}
  */
-const coreOptions: Omit<cytoscape.CytoscapeOptions, "container"> = {
+const options: Omit<cytoscape.CytoscapeOptions, "container"> = {
     elements: getDependencies({}),
     minZoom: 0.25,
-    maxZoom: 1.5,
-    wheelSensitivity: 0.05,
+    maxZoom: 1.5
 };
 
 /**
@@ -28,7 +27,7 @@ const coreOptions: Omit<cytoscape.CytoscapeOptions, "container"> = {
  *
  * @see {@link https://js.cytoscape.org/#layouts/cose | COSE layout options documentation}
  */
-const layoutOptions: cytoscape.CoseLayoutOptions = {
+const layout: cytoscape.CoseLayoutOptions = {
     name: "cose",
     animate: true,
     padding: 20,
@@ -96,6 +95,8 @@ function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular): void {
     connectedEdges.connectedNodes().forEach((connectedNode) => {
         connectedNode.removeClass(FADED).addClass(SELECTED);
     });
+
+    cy.animate({center: {eles: node}, zoom: 1.5}, {duration: 500});
 }
 
 /**
@@ -105,12 +106,8 @@ function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular): void {
  */
 function hoverHandler(cy: cytoscape.Core): void {
     ["node", "edge"].forEach((type) => {
-        cy.on("mouseover", type, (event: cytoscape.EventObject) => {
-            event.target.addClass("hovered");
-        });
-        cy.on("mouseout", type, (event: cytoscape.EventObject) => {
-            event.target.removeClass("hovered");
-        });
+        cy.on("mouseover", type, (event: cytoscape.EventObject) => event.target.addClass("hovered"));
+        cy.on("mouseout", type, (event: cytoscape.EventObject) => event.target.removeClass("hovered"));
     });
 }
 
@@ -124,17 +121,13 @@ export function useDependencies(container: Ref<HTMLElement | null>): void {
     onMounted(() => {
         if (!container.value) return;
 
-        // Merge container into base options for initialization
-        const options: cytoscape.CytoscapeOptions = {container: container.value, ...coreOptions, style};
-
-        const cy: cytoscape.Core = cytoscape(options);
+        const cy: cytoscape.Core = cytoscape({container: container.value, layout, ...options, style});
 
         // Dynamically size nodes based on connectivity
         setNodeSizes(cy);
 
-        // Run layout
-        const layout = cy.layout(layoutOptions);
-        layout.run();
+        // Setup hover handlers for nodes and edges
+        hoverHandler(cy);
 
         // Animate dashed selected edges
         let dashOffset = 0;
@@ -150,22 +143,15 @@ export function useDependencies(container: Ref<HTMLElement | null>): void {
             const node = event.target;
 
             selectHandler(cy, node);
-
-            cy.animate({center: {eles: node}, zoom: 1.5}, {duration: 500});
         });
 
-        // Setup hover handlers for nodes and edges
-        hoverHandler(cy);
-
         // Preselect the first node after layout completes
-        layout.promiseOn("layoutstop").then(() => {
+        cy.on("layoutstop", () => {
             const node = cy.nodes()[0];
 
             if (!node) return;
 
             selectHandler(cy, node);
-
-            cy.animate({center: {eles: node}, zoom: 1.5}, {duration: 500});
         });
     });
 }

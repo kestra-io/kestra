@@ -42,6 +42,9 @@ on:
       SONATYPE_GPG_FILE:
         description: "The Sonatype GPG file."
         required: true
+      GH_PERSONAL_TOKEN:
+        description: "GH personnal Token."
+        required: true
 jobs:
   build-artifacts:
     name: Build - Artifacts

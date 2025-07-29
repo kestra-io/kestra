@@ -1,6 +1,7 @@
 name: Github - Release
 
 on:
+  workflow_dispatch:
   workflow_call:
     secrets:
       GH_PERSONAL_TOKEN:

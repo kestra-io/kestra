@@ -13,6 +13,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import java.util.List;
 import java.util.stream.Stream;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,12 +50,17 @@ class BasicAuthServiceTest {
 
     private ApplicationContext ctx;
 
+    @SneakyThrows
     @BeforeEach
     void mockEventsAndStartApp() {
         stubFor(
             post(urlEqualTo("/v1/reports/events"))
                 .willReturn(aResponse().withStatus(200))
         );
+
+        //A sleep is required here because Kestra may start up before wiremock is ready, leading in the event we are looking for being missed
+        Thread.sleep(500L);
+
         ctx = ApplicationContext.run(Map.of(), Environment.TEST);
 
         basicAuthService = ctx.getBean(BasicAuthService.class);

@@ -93,7 +93,7 @@
     function disabledCurrentRoute(items) {
         return items
             .map(r => {
-                if (r.href?.name === $route.name) {
+                if (r.href?.path === $route.path) {
                     r.disabled = true;
                 }
 

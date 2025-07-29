@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Segnalibri",
+    "bulk action async warning": "Questo potrebbe richiedere alcuni istanti.",
     "bulk change state": "Sei sicuro di voler cambiare lo stato di <code>{executionCount}</code> esecuzione/i?",
     "bulk delete": "Sei sicuro di voler eliminare <code>{executionCount}</code> esecuzione/i?",
     "bulk delete backfills": "Elimina {count} backfill",
@@ -271,6 +272,7 @@
     "days": "Giorni",
     "debug": "Debug",
     "default": "Predefinito",
+    "defaultsToNamespaceFile": "Predefinito al file namespace: <code>{name}</code>",
     "delete": "Elimina",
     "delete backfill": "Elimina il backfill",
     "delete backfills": "Elimina i backfills",
@@ -912,6 +914,7 @@
       "version_oss_placeholder": "Sblocca il Versioning dei Plugin con l'Enterprise Edition"
     },
     "no_data": "Sembra che non ci sia ancora nulla qui… per ora!<br/>Modifica i tuoi filtri o riprova!",
+    "no_file_choosen": "Nessun file selezionato",
     "no_logs_data": "Nessun dato",
     "no_logs_data_description": "O non ci sono flow in esecuzione, oppure potrebbe essere necessario modificare i filtri.",
     "no_namespaces": "Nessun namespace corrisponde ai criteri di ricerca.",

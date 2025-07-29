@@ -947,6 +947,7 @@
       "button": "Talk to us"
     },
     "flow_only": "Only available on Flow tab.",
+    "bulk action async warning": "This might take a few moments.",
     "bulk unpause backfills": "Unpause {count} backfill",
     "bulk pause backfills": "Pause {count} backfill",
     "bulk delete backfills": "Delete {count} backfill",
@@ -1459,6 +1460,8 @@
     "accept": "Accept",
     "reject": "Reject",
     "last modified": "Last modified",
-    "run task in playground": "Run task in playground"
+    "run task in playground": "Run task in playground",
+    "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
+    "no_file_choosen": "No file chosen"
   }
 }

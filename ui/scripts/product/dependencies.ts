@@ -1,3 +1,5 @@
+import {getRandomFlowID} from "./flow";
+
 type Node = {
     id: string;
 };
@@ -24,21 +26,6 @@ type Element = {
  */
 function getRandomNumber(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-/**
- * Generates a unique node label in the format `<prefix>-<LETTER>-<NUMBER>`.
- *
- * The prefix is customizable, while the letter is a random uppercase
- * character (A–Z) and the number is a two-digit integer (10–99).
- *
- * @param prefix - The prefix to use for the node label. Defaults to `"flow"`.
- * @returns A string representing a unique node label.
- */
-function getNodeLabel(prefix: string = "flow"): string {
-    const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
-    const number = Math.floor(Math.random() * 90 + 10); // 10–99
-    return `${prefix}-${letter}-${number}`;
 }
 
 /**
@@ -78,7 +65,7 @@ export function getDependencies(options: DependencyOptions): Element[] {
 
     // Create the initial root nodes
     const rootNodes: Node[] = Array.from({length: roots}, () => {
-        const node = {id: getNodeLabel()};
+        const node = {id: getRandomFlowID()};
         nodes.push(node);
         return node;
     });
@@ -96,7 +83,7 @@ export function getDependencies(options: DependencyOptions): Element[] {
             const childrenCount = Math.min(getRandomNumber(childrenRange[0], childrenRange[1]), total - createdCount);
 
             for (let i = 0; i < childrenCount; i++) {
-                const child = {id: getNodeLabel()};
+                const child = {id: getRandomFlowID()};
 
                 nodes.push(child);
                 edges.push({source: parent.id, target: child.id});

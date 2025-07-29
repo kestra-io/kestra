@@ -418,11 +418,11 @@
                 }
             },
             onChange(input) {
-                // give a second for the user to finish their edit
+                // give 2 seconds for the user to finish their edit
                 // and for the server to return with validated content
                 setTimeout(() => {
                     this.inputsValidated.add(input.id);
-                }, 300);
+                }, 2000);
                 this.$emit("update:modelValue", this.inputsValues);
             },
             onSubmit() {

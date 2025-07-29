@@ -15,73 +15,107 @@ type Element = {
     };
 };
 
-function getRandom<T>(arr: T[]): T {
-    return arr[Math.floor(Math.random() * arr.length)];
+/**
+ * Returns a random integer between the given minimum and maximum values, inclusive.
+ *
+ * @param min - The minimum value that can be returned.
+ * @param max - The maximum value that can be returned.
+ * @returns A random integer between `min` and `max`.
+ */
+function getRandomNumber(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /**
- * Generates a synthetic dependency graph as an array of Cytoscape-compatible elements.
+ * Generates a unique node label in the format `<prefix>-<LETTER>-<NUMBER>`.
  *
- * Each node ID is formatted as `flow-<LETTER>-<NUMBER>` (e.g., `flow-A-42`).
- * Depending on the `singleRoot` flag, the graph is structured either as a star topology
- * or as a randomly connected directed acyclic graph (DAG) with additional cross-links.
+ * The prefix is customizable, while the letter is a random uppercase
+ * character (A–Z) and the number is a two-digit integer (10–99).
  *
- * @param count - The total number of nodes to generate. Must be at least 2.
- * @param singleRoot - If `true`, a single root node connects to all others.
- *                     If `false`, nodes are randomly connected with some extra edges.
- * @returns An array of Cytoscape-compatible `Element` objects, including both nodes and edges.
+ * @param prefix - The prefix to use for the node label. Defaults to `"flow"`.
+ * @returns A string representing a unique node label.
  */
-export function getDependencies(count: number, singleRoot: boolean): Element[] {
-    if (count < 2) {
-        throw new Error("Count must be at least 2.");
+function getNodeLabel(prefix: string = "flow"): string {
+    const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+    const number = Math.floor(Math.random() * 90 + 10); // 10–99
+    return `${prefix}-${letter}-${number}`;
+}
+
+/**
+ * Configuration options for generating a synthetic dependency graph.
+ *
+ * @property roots - The number of root nodes at the top level of the graph. Defaults to 1.
+ * @property depth - The number of hierarchy levels to generate. Defaults to 2.
+ * @property childrenRange - A tuple specifying the minimum and maximum number of children per parent. Defaults to [2, 4].
+ * @property total - The maximum number of nodes in the graph. Defaults to 20.
+ */
+export interface DependencyOptions {
+    roots?: number;
+    depth?: number;
+    childrenRange?: [number, number];
+    total?: number;
+}
+
+/**
+ * Generates a synthetic dependency graph as an array of cytoscape-compatible elements.
+ *
+ * The graph is structured as a tree-like hierarchy, beginning with the specified
+ * number of root nodes and expanding according to the depth and children range.
+ *
+ * @param options - The configuration options for graph generation.
+ * @returns An array of cytoscape-compatible elements representing the nodes and edges.
+ * @throws Will throw an error if the total number of nodes is less than the number of roots.
+ */
+export function getDependencies(options: DependencyOptions): Element[] {
+    const {roots = 1, depth = 5, childrenRange = [2, 20], total = 100} = options;
+
+    if (total < roots) {
+        throw new Error("Total must be greater than or equal to the number of roots.");
     }
 
     const nodes: Node[] = [];
-
-    for (let i = 0; i < count; i++) {
-        const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
-        const number = Math.floor(Math.random() * 90 + 10); // 10–99
-        const id = `flow-${letter}-${number}`;
-
-        nodes.push({id});
-    }
-
     const edges: Edge[] = [];
 
-    if (singleRoot) {
-        const root = nodes[0];
+    // Create the initial root nodes
+    const rootNodes: Node[] = Array.from({length: roots}, () => {
+        const node = {id: getNodeLabel()};
+        nodes.push(node);
+        return node;
+    });
 
-        for (let i = 1; i < nodes.length; i++) {
-            edges.push({source: root.id, target: nodes[i].id});
-        }
-    } else {
-        const parentNodes: Node[] = nodes.slice(0, Math.max(1, Math.floor(count / 10)));
+    let currentLevelNodes = rootNodes;
+    let createdCount = roots;
 
-        const connected = new Set<string>(parentNodes.map((n) => n.id));
-        const unconnected = nodes.filter((n) => !connected.has(n.id));
+    // Generate child nodes for each level
+    for (let level = 1; level <= depth; level++) {
+        const nextLevelNodes: Node[] = [];
 
-        for (const node of unconnected) {
-            const parent = getRandom(Array.from(connected).map((id) => nodes.find((n) => n.id === id)!));
+        for (const parent of currentLevelNodes) {
+            if (createdCount >= total) break;
 
-            edges.push({source: parent.id, target: node.id});
-            connected.add(node.id);
-        }
+            const childrenCount = Math.min(getRandomNumber(childrenRange[0], childrenRange[1]), total - createdCount);
 
-        const extraEdgeCount = Math.floor(count * 0.5);
-        for (let i = 0; i < extraEdgeCount; i++) {
-            const source = getRandom(nodes);
-            const target = getRandom(nodes);
+            for (let i = 0; i < childrenCount; i++) {
+                const child = {id: getNodeLabel()};
 
-            if (source.id !== target.id) {
-                edges.push({source: source.id, target: target.id});
+                nodes.push(child);
+                edges.push({source: parent.id, target: child.id});
+
+                nextLevelNodes.push(child);
+                createdCount++;
+
+                if (createdCount >= total) break;
             }
         }
+
+        // Proceed to the next level if there are new children
+        currentLevelNodes = nextLevelNodes;
+        if (!currentLevelNodes.length || createdCount >= total) break;
     }
 
-    const elements: Element[] = [
+    // Return cytoscape-compatible elements
+    return [
         ...nodes.map((node) => ({data: {id: node.id}})),
         ...edges.map((edge, i) => ({data: {id: `e${i}`, source: edge.source, target: edge.target}})),
     ];
-
-    return elements;
 }

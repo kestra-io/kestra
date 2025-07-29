@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@KestraTest
+@KestraTest(rebuildContext = true)
 class TriggerTest {
     @Inject
     private ApplicationContext applicationContext;

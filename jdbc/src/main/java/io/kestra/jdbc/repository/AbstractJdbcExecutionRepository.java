@@ -867,6 +867,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return counts;
     }
 
+    @Override
     public List<Execution> lastExecutions(
         @Nullable String tenantId,
         List<FlowFilter> flows

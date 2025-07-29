@@ -73,3 +73,7 @@ export const EDITOR_CURSOR_INJECTION_KEY = Symbol("editor-cursor-injection-key")
 * The range inside the code editor that we want to highlight
 */
 export const EDITOR_HIGHLIGHT_INJECTION_KEY = Symbol("editor-highlight-injection-key") as InjectionKey<Ref<number | undefined>>
+/**
+* Indicates if the Monaco editor is being used within EditorWrapper context for flow editing
+*/
+export const EDITOR_WRAPPER_INJECTION_KEY = Symbol("editor-wrapper-injection-key") as InjectionKey<boolean>

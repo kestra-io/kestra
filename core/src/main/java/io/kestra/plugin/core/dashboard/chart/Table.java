@@ -40,12 +40,12 @@ import lombok.experimental.SuperBuilder;
                                 field: LEVEL
                                 count:
                                     agg: COUNT
-                            where:
-                                - field: NAMESPACE
-                                type: IN
-                                values:
-                                    - dev_graph
-                                    - prod_graph
+                        where:
+                            - field: NAMESPACE
+                              type: IN
+                              values:
+                                - dev_graph
+                                - prod_graph
                 """
             }
         )

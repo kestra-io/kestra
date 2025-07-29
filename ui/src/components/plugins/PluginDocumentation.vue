@@ -8,7 +8,7 @@
                     onlyIcon
                     :icons="pluginsStore.icons"
                 />
-                <h4 class="mb-0">
+                <h4 class="mb-0 plugin-title text-truncate">
                     {{ pluginName }}
                 </h4>
                 <el-button
@@ -22,11 +22,17 @@
                 </el-button>
             </div>
             <Suspense>
-                <SchemaToHtml class="plugin-schema" :darkMode="theme === 'dark'" :schema="pluginsStore.editorPlugin.schema" :pluginType="pluginsStore.editorPlugin.cls">
+                <schema-to-html
+                    class="plugin-schema"
+                    :dark-mode="miscStore.theme === 'dark'"
+                    :schema="pluginsStore.editorPlugin.schema"
+                    :plugin-type="pluginsStore.editorPlugin.cls"
+                    :force-include-properties="pluginsStore.forceIncludeProperties"
+                >
                     <template #markdown="{content}">
                         <Markdown font-size-var="font-size-base" :source="content" />
                     </template>
-                </SchemaToHtml>
+                </schema-to-html>
             </Suspense>
         </template>
         <Markdown v-else :source="introContent" :class="{'position-absolute': absolute}" />
@@ -40,11 +46,12 @@
 </script>
 
 <script>
-    import {mapGetters} from "vuex";
     import intro from "../../assets/docs/basic.md?raw";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {mapStores} from "pinia";
     import {usePluginsStore} from "../../stores/plugins";
+    import {useMiscStore} from "../../stores/misc";
+
     export default {
         props: {
             overrideIntro: {
@@ -61,8 +68,7 @@
             }
         },
         computed: {
-            ...mapGetters("misc", ["theme"]),
-            ...mapStores(usePluginsStore),
+            ...mapStores(usePluginsStore, useMiscStore),
             introContent () {
                 return this.overrideIntro ?? intro
             },

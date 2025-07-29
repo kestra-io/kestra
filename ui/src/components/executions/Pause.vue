@@ -27,6 +27,8 @@
 
 <script>
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
@@ -55,8 +57,8 @@
                     });
             },
             pause() {
-                this.$store
-                    .dispatch("execution/pause", {
+                this.executionsStore
+                    .pause({
                         id: this.execution.id
                     })
                     .then(() => {
@@ -67,7 +69,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("execution", ["flow"]),
+            ...mapStores(useExecutionsStore),
             enabled() {
                 if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;

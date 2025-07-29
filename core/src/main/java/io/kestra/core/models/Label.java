@@ -1,11 +1,10 @@
 package io.kestra.core.models;
 
 import io.kestra.core.utils.MapUtils;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public record Label(@NotNull String key, @NotNull String value) {
@@ -29,11 +28,36 @@ public record Label(@NotNull String key, @NotNull String value) {
      * @return the nested {@link Map}.
      */
     public static Map<String, Object> toNestedMap(List<Label> labels) {
-        Map<String, Object> asMap = labels.stream()
+        return MapUtils.flattenToNestedMap(toMap(labels));
+    }
+
+    /**
+     * Static helper method for converting a list of labels to a flat map.
+     * Key order is kept.
+     *
+     * @param labels The list of {@link Label} to be converted.
+     * @return the flat {@link Map}.
+     */
+    public static Map<String, String> toMap(@Nullable List<Label> labels) {
+        if (labels == null || labels.isEmpty()) return Collections.emptyMap();
+        return labels.stream()
             .filter(label -> label.value() != null && label.key() != null)
-            // using an accumulator in case labels with the same key exists: the first is kept
-            .collect(Collectors.toMap(Label::key, Label::value, (first, second) -> first));
-        return MapUtils.flattenToNestedMap(asMap);
+            // using an accumulator in case labels with the same key exists: the second is kept
+            .collect(Collectors.toMap(Label::key, Label::value, (first, second) -> second, LinkedHashMap::new));
+    }
+
+    /**
+     * Static helper method for deduplicating a list of labels by their key.
+     * Value of the last key occurrence is kept.
+     *
+     * @param labels The list of {@link Label} to be deduplicated.
+     * @return the deduplicated {@link List}.
+     */
+    public static List<Label> deduplicate(@Nullable List<Label> labels) {
+        if (labels == null || labels.isEmpty()) return Collections.emptyList();
+        return toMap(labels).entrySet().stream()
+            .map(entry -> new Label(entry.getKey(), entry.getValue()))
+            .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**

@@ -41,12 +41,15 @@ class SetTest {
             .type(Set.class.getName())
             .key(new Property<>("{{ inputs.key }}"))
             .value(new Property<>("{{ inputs.value }}"))
+            .kvDescription(new Property<>("{{ inputs.description }}"))
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
+        String description = "myDescription";
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, set, Map.of(
             "key", TEST_KEY,
-            "value", value
+            "value", value,
+            "description", description
         ));
 
         // When
@@ -56,6 +59,7 @@ class SetTest {
         final KVStore kv = runContext.namespaceKv(runContext.flowInfo().namespace());
         assertThat(kv.getValue(TEST_KEY)).isEqualTo(Optional.of(new KVValue(value)));
         assertThat(kv.list().getFirst().expirationDate()).isNull();
+        assertThat(kv.list().getFirst().description()).isEqualTo(description);
     }
 
     @Test

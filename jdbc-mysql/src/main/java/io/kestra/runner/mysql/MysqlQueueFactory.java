@@ -42,7 +42,7 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     }
 
     @Override
-    @Prototype // must be prototype so we can create two Worker in the same application context for testing purpose.
+    @Singleton
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)
     @Bean(preDestroy = "close")
     public QueueInterface<WorkerJob> workerJob() {
@@ -143,5 +143,13 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     @Bean(preDestroy = "close")
     public QueueInterface<SubflowExecutionEnd> subflowExecutionEnd() {
         return new MysqlQueue<>(SubflowExecutionEnd.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.EXECUTION_RUNNING_NAMED)
+    @Bean(preDestroy = "close")
+    public QueueInterface<ExecutionRunning> executionRunning() {
+        return new MysqlQueue<>(ExecutionRunning.class, applicationContext);
     }
 }

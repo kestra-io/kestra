@@ -92,6 +92,24 @@ class ScheduleValidationTest {
 
         assertThat(modelValidator.isValid(build).isPresent()).isTrue();
         assertThat(modelValidator.isValid(build).get().getMessage()).contains("interval: must be null");
+    }
 
+    @Test
+    void sundayDayOfTheWeekAlias() {
+        Schedule sundayAsZero = Schedule.builder()
+            .id(IdUtils.create())
+            .type(Schedule.class.getName())
+            .cron("0 9 * * 0")
+            .build();
+
+        assertThat(modelValidator.isValid(sundayAsZero)).isNotPresent();
+
+        Schedule sundayAsSeven = Schedule.builder()
+            .id(IdUtils.create())
+            .type(Schedule.class.getName())
+            .cron("0 9 * * 7")
+            .build();
+
+        assertThat(modelValidator.isValid(sundayAsSeven)).isNotPresent();
     }
 }

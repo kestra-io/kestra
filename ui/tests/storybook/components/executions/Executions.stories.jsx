@@ -1,6 +1,7 @@
 import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import Executions from "../../../../src/components/executions/Executions.vue";
+import {useMiscStore} from "../../../../src/stores/misc";
 import fixture from "./Executions.fixture.json"
 import fixtureS from "./Executions-s.fixture.json"
 
@@ -10,6 +11,7 @@ function getDecorators(data) {
             return {
                 setup () {
                     const store = useStore()
+                    const miscStore = useMiscStore()
                     store.commit("auth/setUser", {
                         id: "123",
                         firstName: "John",
@@ -18,9 +20,9 @@ function getDecorators(data) {
                         isAllowed: () => true,
                         hasAnyActionOnAnyNamespace: () => true,
                     })
-                    store.commit("misc/setConfigs", {
+                    miscStore.configs = {
                         hiddenLabelsPrefixes: ["system_"]
-                    })
+                    }
                     store.$http = {
                         get(a) {
                             if (a.endsWith("executions/search")) {

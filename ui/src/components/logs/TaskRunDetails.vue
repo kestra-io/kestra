@@ -15,23 +15,23 @@
                 :data-index="currentTaskRunIndex"
             >
                 <el-card class="attempt-wrapper">
-                    <task-run-line
+                    <TaskRunLine
                         :current-task-run="currentTaskRun"
                         :followed-execution="followedExecution"
                         :flow="flow"
                         :forced-attempt-number="forcedAttemptNumber"
                         :task-run-id="taskRunId"
-                        @toggle-show-attempt="toggleShowAttempt"
-                        @swap-displayed-attempt="swapDisplayedAttempt"
                         :selected-attempt-number-by-task-run-id="selectedAttemptNumberByTaskRunId"
                         :shown-attempts-uid="shownAttemptsUid"
                         :logs="filteredLogs"
+                        @toggle-show-attempt="toggleShowAttempt"
+                        @swap-displayed-attempt="swapDisplayedAttempt"
                         @update-logs="loadLogs"
                     >
                         <template #buttons>
                             <div id="buttons" />
                         </template>
-                    </task-run-line>
+                    </TaskRunLine>
                     <for-each-status
                         v-if="shouldDisplayProgressBar(currentTaskRun)"
                         :execution-id="currentTaskRun.executionId"
@@ -115,10 +115,10 @@
     import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
+    import {useExecutionsStore} from "../../stores/executions";
     import ForEachStatus from "../executions/ForEachStatus.vue";
     import TaskRunLine from "../executions/TaskRunLine.vue";
     import FlowUtils from "../../utils/flowUtils";
-    import throttle from "lodash/throttle";
     import FilePreview from "../executions/FilePreview.vue";
     import {apiUrl} from "override/utils/route";
     import Utils from "../../utils/utils";
@@ -165,12 +165,6 @@
                 type: Number,
                 default: undefined
             },
-            // allows to pass directly a raw execution (since it is already fetched by parent component)
-            targetExecution: {
-                type: Object,
-                required: false,
-                default: undefined
-            },
             // allows to fetch the execution at startup
             targetExecutionId: {
                 type: String,
@@ -205,16 +199,12 @@
                 timer: undefined,
                 timeout: undefined,
                 selectedAttemptNumberByTaskRunId: {},
-                followedExecution: undefined,
                 executionSSE: undefined,
                 logsSSE: undefined,
                 flow: undefined,
                 logsBuffer: [],
                 shownSubflowsIds: [],
                 logFileSizeByPath: {},
-                throttledExecutionUpdate: throttle(function (event) {
-                    this.followedExecution = JSON.parse(event.data)
-                }, 500),
                 selectedLogLevel: undefined,
                 childrenLogIndicesByLevelByChildUid: {},
                 logsScrollerRefs: {},
@@ -229,11 +219,6 @@
                 this.rawLogs = [];
                 this.loadLogs(this.followedExecution.id);
             },
-            execution: function () {
-                if (this.execution && this.execution.state.current !== State.RUNNING && this.execution.state.current !== State.PAUSED) {
-                    this.closeExecutionSSE();
-                }
-            },
             currentTaskRuns: {
                 handler(taskRuns) {
                     // by default we preselect the last attempt for each task run
@@ -243,18 +228,18 @@
                 immediate: true,
                 deep: true
             },
-            targetExecution: {
-                handler: function (newExecution) {
-                    if (newExecution) {
-                        this.followedExecution = newExecution;
-                    }
-                },
-                immediate: true
-            },
             targetFlow: {
                 handler: function (flowSource) {
                     if (flowSource) {
                         this.flow = flowSource;
+                    }
+                },
+                immediate: true
+            },
+            "followedExecution.id": {
+                handler: function (executionId, oldExecutionId) {
+                    if (executionId && executionId !== oldExecutionId) {
+                        this.followExecution(executionId);
                     }
                 },
                 immediate: true
@@ -276,8 +261,7 @@
                     }
 
                     if (!this.targetFlow) {
-                        this.flow = await this.$store.dispatch(
-                            "execution/loadFlowForExecution",
+                        this.flow = await this.executionsStore.loadFlowForExecution(
                             {
                                 namespace: newExecution.namespace,
                                 flowId: newExecution.flowId,
@@ -287,9 +271,9 @@
                     }
 
                     if (![State.RUNNING, State.PAUSED].includes(this.followedExecution.state.current)) {
-                        this.closeExecutionSSE()
                         // wait a bit to make sure we don't miss logs as log indexer is asynchronous
                         setTimeout(() => {
+                            this.closeExecutionSSE()
                             this.closeLogsSSE()
                         }, 2000);
 
@@ -317,15 +301,14 @@
             }
         },
         mounted() {
-            if (this.targetExecutionId) {
-                this.followExecution(this.targetExecutionId);
-            }
-
             this.autoExpandBasedOnSettings();
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore),
+            ...mapStores(useCoreStore, useExecutionsStore),
+            followedExecution() {
+                return this.executionsStore.execution;
+            },
             Download() {
                 return Download
             },
@@ -429,10 +412,7 @@
                 this.logFileSizeByPath[path] = Utils.humanFileSize(axiosResponse.data.size);
             },
             closeExecutionSSE() {
-                if (this.executionSSE) {
-                    this.executionSSE.close();
-                    this.executionSSE = undefined;
-                }
+                this.executionsStore.closeSSE();
             },
             closeLogsSSE() {
                 if (this.logsSSE) {
@@ -479,28 +459,13 @@
                     this.showLogs
             },
             followExecution(executionId) {
-                this.$store
-                    .dispatch("execution/followExecution", {id: executionId})
-                    .then(sse => {
-                        this.executionSSE = sse;
-                        this.executionSSE.onmessage = executionEvent => {
-                            const isEnd = executionEvent && executionEvent.lastEventId === "end";
-                            if (isEnd) {
-                                this.closeExecutionSSE();
-                            }
-                            // we are receiving a first "fake" event to force initializing the connection: ignoring it
-                            if (executionEvent.lastEventId !== "start") {
-                                this.throttledExecutionUpdate(executionEvent);
-                            }
-                            if (isEnd) {
-                                this.throttledExecutionUpdate.flush();
-                            }
-                        }
-                    });
+                this.closeExecutionSSE();
+                this.executionsStore
+                    .followExecution({id: executionId}, this.$t)
             },
             followLogs(executionId) {
-                this.$store
-                    .dispatch("execution/followLogs", {id: executionId})
+                this.executionsStore
+                    .followLogs({id: executionId})
                     .then(sse => {
                         this.logsSSE = sse;
 
@@ -604,7 +569,7 @@
                     return;
                 }
 
-                this.$store.dispatch("execution/loadLogs", {
+                this.executionsStore.loadLogs({
                     executionId,
                     params: {
                         minLevel: this.level

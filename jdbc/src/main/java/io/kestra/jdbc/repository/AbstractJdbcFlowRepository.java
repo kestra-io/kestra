@@ -361,6 +361,29 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
+    public List<FlowWithSource> findAllWithSourceWithNoAcl(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .select(
+                        field("value"),
+                        field("source_code"),
+                        field("namespace"),
+                        field("tenant_id")
+                    )
+                    .from(fromLastRevision(true))
+                    .where(this.noAclDefaultFilter(tenantId));
+
+                return select.fetch().map(record -> FlowWithSource.of(
+                    (Flow)jdbcRepository.map(record),
+                    record.get(SOURCE_FIELD)
+                ));
+            });
+    }
+
+    @Override
     public List<FlowWithSource> findAllWithSourceForAllTenants() {
         return this.jdbcRepository
             .getDslContextWrapper()

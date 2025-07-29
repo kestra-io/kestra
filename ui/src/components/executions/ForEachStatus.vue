@@ -93,7 +93,7 @@
                 }
 
                 if (state) {
-                    queries.state = state;
+                    queries["filters[state][EQUALS]"] = state;
                 }
 
                 return {

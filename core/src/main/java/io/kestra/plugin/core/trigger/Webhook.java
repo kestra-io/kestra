@@ -62,7 +62,7 @@ import jakarta.validation.constraints.Size;
                   - id: log_hello_world
                     type: io.kestra.plugin.core.log.Log
                     message: Hello World! 🚀
-                
+
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
@@ -82,7 +82,7 @@ import jakarta.validation.constraints.Size;
                   - id: log_hello_world
                     type: io.kestra.plugin.core.log.Log
                     message: Hello World! 🚀
-                
+
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
@@ -98,6 +98,9 @@ import jakarta.validation.constraints.Size;
 )
 @WebhookValidation
 public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Output> {
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
+        .setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS);
+
     @Size(max = 256)
     @NotNull
     @Schema(
@@ -111,10 +114,12 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
     @PluginProperty(dynamic = true)
     private String key;
 
+    @PluginProperty
+    @Builder.Default
+    private Boolean wait = false;
+
     public Optional<Execution> evaluate(HttpRequest<String> request, io.kestra.core.models.flows.Flow flow) {
         String body = request.getBody().orElse(null);
-
-        ObjectMapper mapper = JacksonMapper.ofJson().setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS);
 
         Execution.ExecutionBuilder builder = Execution.builder()
             .id(IdUtils.create())
@@ -126,8 +131,8 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
             .trigger(ExecutionTrigger.of(
                 this,
                 Output.builder()
-                    .body(tryMap(mapper, body)
-                        .or(() -> tryArray(mapper, body))
+                    .body(tryMap(body)
+                        .or(() -> tryArray(body))
                         .orElse(body)
                     )
                     .headers(request.getHeaders().asMap())
@@ -138,17 +143,17 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
         return Optional.of(builder.build());
     }
 
-    private Optional<Object> tryMap(ObjectMapper mapper, String body) {
+    private Optional<Object> tryMap(String body) {
         try {
-            return Optional.of(mapper.readValue(body, new TypeReference<Map<String, Object>>() {}));
+            return Optional.of(MAPPER.readValue(body, new TypeReference<Map<String, Object>>() {}));
         } catch (Exception ignored) {
             return Optional.empty();
         }
     }
 
-    private Optional<Object> tryArray(ObjectMapper mapper, String body) {
+    private Optional<Object> tryArray(String body) {
         try {
-            return Optional.of(mapper.readValue(body, new TypeReference<List<Object>>() {}));
+            return Optional.of(MAPPER.readValue(body, new TypeReference<List<Object>>() {}));
         } catch (Exception ignored) {
             return Optional.empty();
         }

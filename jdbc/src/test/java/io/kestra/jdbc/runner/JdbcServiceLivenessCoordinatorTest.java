@@ -111,7 +111,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         CountDownLatch resubmitLatch = new CountDownLatch(1);
 
         // create first worker
-        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
+        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
         worker.run();
 
         Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
@@ -130,7 +130,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         worker.shutdown(); // stop processing task
 
         // create second worker (this will revoke previously one).
-        Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
+        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
         newWorker.run();
         boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
         assertThat(resubmitLatchAwait).isTrue();
@@ -147,7 +147,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         CountDownLatch resubmitLatch = new CountDownLatch(1);
 
         // create first worker
-        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, "workerGroupKey");
+        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
         worker.run();
 
         Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
@@ -166,7 +166,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         worker.shutdown(); // stop processing task
 
         // create second worker (this will revoke previously one).
-        Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, "workerGroupKey");
+        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
         newWorker.run();
         boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
         assertThat(resubmitLatchAwait).isTrue();
@@ -181,7 +181,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     void taskResubmitSkipExecution() throws Exception {
         CountDownLatch runningLatch = new CountDownLatch(1);
 
-        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
+        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null);
         worker.run();
 
         WorkerTask workerTask = workerTask(Duration.ofSeconds(5));
@@ -203,7 +203,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         assertThat(runningLatchAwait).isTrue();
         worker.shutdown();
 
-        Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
+        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
         newWorker.run();
 
         // wait a little to be sure there is no resubmit
@@ -215,7 +215,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
 
     @Test
     void shouldReEmitTriggerWhenWorkerIsDetectedAsNonResponding() throws Exception {
-        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
+        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
         worker.run();
 
         WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5));
@@ -236,7 +236,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         receiveTrigger.blockLast();
         worker.shutdown();
 
-        Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
+        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
         newWorker.run();
         assertThat(countDownLatch.await(30, TimeUnit.SECONDS)).isTrue();
 
@@ -246,7 +246,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
 
     @Test
     void shouldReEmitTriggerToTheSameWorkerGroup() throws Exception {
-        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, "workerGroupKey");
+        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
         worker.run();
 
         WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5), "workerGroupKey");
@@ -267,7 +267,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         receiveTrigger.blockLast();
         worker.shutdown();
 
-        Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, "workerGroupKey");
+        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
         newWorker.run();
         assertThat(countDownLatch.await(30, TimeUnit.SECONDS)).isTrue();
 

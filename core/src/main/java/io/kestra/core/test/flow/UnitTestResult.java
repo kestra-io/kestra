@@ -13,9 +13,7 @@ public record UnitTestResult(
     String testId,
     @NotNull
     String testType,
-    @NotNull
     String executionId,
-    @NotNull
     URI url,
     @NotNull
     TestState state,
@@ -33,5 +31,9 @@ public record UnitTestResult(
             state = results.stream().anyMatch(assertion -> !assertion.isSuccess()) ? TestState.FAILED : TestState.SUCCESS;
         }
         return new UnitTestResult(unitTestId, unitTestType, executionId, url, state, results, errors, fixtures);
+    }
+
+    public static UnitTestResult ofDisabled(String unitTestId, String unitTestType, @Nullable Fixtures fixtures) {
+        return new UnitTestResult(unitTestId, unitTestType, null, null, TestState.SKIPPED, List.of(), List.of(), fixtures);
     }
 }

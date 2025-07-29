@@ -122,26 +122,27 @@ public abstract class StorageTestSuite {
 
     @Test
     void filesByPrefix() throws IOException {
-        storageInterface.put(MAIN_TENANT, "namespace", URI.create("/namespace/file.txt"), new ByteArrayInputStream(new byte[0]));
-        storageInterface.put("tenant", "namespace", URI.create("/namespace/tenant_file.txt"), new ByteArrayInputStream(new byte[0]));
-        storageInterface.put(MAIN_TENANT, "namespace", URI.create("/namespace/another_file.json"), new ByteArrayInputStream(new byte[0]));
-        storageInterface.put(MAIN_TENANT, "namespace", URI.create("/namespace/folder/file.txt"), new ByteArrayInputStream(new byte[0]));
-        storageInterface.put(MAIN_TENANT, "namespace", URI.create("/namespace/folder/some.yaml"), new ByteArrayInputStream(new byte[0]));
-        storageInterface.put(MAIN_TENANT, "namespace", URI.create("/namespace/folder/sub/script.py"), new ByteArrayInputStream(new byte[0]));
+        var namespaceName ="filesByPrefix_test_namespace";
+        storageInterface.put(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/file.txt"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put("tenant", namespaceName, URI.create("/filesByPrefix_test_namespace/tenant_file.txt"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/another_file.json"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/folder/file.txt"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/folder/some.yaml"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/folder/sub/script.py"), new ByteArrayInputStream(new byte[0]));
 
-        List<URI> res = storageInterface.allByPrefix(MAIN_TENANT, "namespace", URI.create("kestra:///namespace/"), false);
-        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///namespace/file.txt"), URI.create("kestra:///namespace/another_file.json"), URI.create("kestra:///namespace/folder/file.txt"), URI.create("kestra:///namespace/folder/some.yaml"), URI.create("kestra:///namespace/folder/sub/script.py"));
+        List<URI> res = storageInterface.allByPrefix(MAIN_TENANT, namespaceName, URI.create("kestra:///filesByPrefix_test_namespace/"), false);
+        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///filesByPrefix_test_namespace/file.txt"), URI.create("kestra:///filesByPrefix_test_namespace/another_file.json"), URI.create("kestra:///filesByPrefix_test_namespace/folder/file.txt"), URI.create("kestra:///filesByPrefix_test_namespace/folder/some.yaml"), URI.create("kestra:///filesByPrefix_test_namespace/folder/sub/script.py"));
 
-        res = storageInterface.allByPrefix("tenant", "namespace", URI.create("/namespace"), false);
-        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///namespace/tenant_file.txt"));
+        res = storageInterface.allByPrefix("tenant", namespaceName, URI.create("/filesByPrefix_test_namespace"), false);
+        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///filesByPrefix_test_namespace/tenant_file.txt"));
 
-        res = storageInterface.allByPrefix(MAIN_TENANT, "namespace", URI.create("/namespace/folder"), false);
-        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///namespace/folder/file.txt"), URI.create("kestra:///namespace/folder/some.yaml"), URI.create("kestra:///namespace/folder/sub/script.py"));
+        res = storageInterface.allByPrefix(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/folder"), false);
+        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///filesByPrefix_test_namespace/folder/file.txt"), URI.create("kestra:///filesByPrefix_test_namespace/folder/some.yaml"), URI.create("kestra:///filesByPrefix_test_namespace/folder/sub/script.py"));
 
-        res = storageInterface.allByPrefix(MAIN_TENANT, "namespace", URI.create("/namespace/folder/sub"), false);
-        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///namespace/folder/sub/script.py"));
+        res = storageInterface.allByPrefix(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/folder/sub"), false);
+        assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///filesByPrefix_test_namespace/folder/sub/script.py"));
 
-        res = storageInterface.allByPrefix(MAIN_TENANT, "namespace", URI.create("/namespace/non-existing"), false);
+        res = storageInterface.allByPrefix(MAIN_TENANT, namespaceName, URI.create("/filesByPrefix_test_namespace/non-existing"), false);
         assertThat(res).isEmpty();
     }
 

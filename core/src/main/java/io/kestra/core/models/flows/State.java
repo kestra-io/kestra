@@ -169,6 +169,11 @@ public class State {
     }
 
     @JsonIgnore
+    public boolean isBreakpoint() {
+        return this.current.isBreakpoint();
+    }
+
+    @JsonIgnore
     public boolean isRetrying() {
         return this.current.isRetrying();
     }
@@ -216,7 +221,8 @@ public class State {
         QUEUED,
         RETRYING,
         RETRIED,
-        SKIPPED;
+        SKIPPED,
+        BREAKPOINT;
 
         public boolean isTerminated() {
             return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this == Type.CANCELLED || this == Type.RETRIED || this == Type.SKIPPED;
@@ -240,6 +246,10 @@ public class State {
 
         public boolean isPaused() {
             return this == Type.PAUSED;
+        }
+
+        public boolean isBreakpoint() {
+            return this == Type.BREAKPOINT;
         }
 
         public boolean isRetrying() {

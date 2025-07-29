@@ -1,6 +1,6 @@
 <template>
     <rapi-doc
-        :spec-url="store.getters['doc/resourceUrl']('kestra-ee.yml')"
+        :spec-url="docStore.resourceUrl('kestra-ee.yml')"
         :theme="theme"
         render-style="view"
         show-header="false"
@@ -15,9 +15,9 @@
 
 <script setup lang="ts">
     import {ref} from "vue";
-    import {useStore} from "vuex";
+    import {useDocStore} from "../../stores/doc";
     
-    const store = useStore();
+    const docStore = useDocStore();
     const ready = ref(false)
     // @ts-expect-error rapidoc is not typed
     import("rapidoc").then(() => {

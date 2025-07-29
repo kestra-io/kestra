@@ -32,9 +32,9 @@ plugins {
 
     // release
     id 'net.researchgate.release' version '3.1.0'
-    id "com.gorylenko.gradle-git-properties" version "2.5.0"
+    id "com.gorylenko.gradle-git-properties" version "2.5.2"
     id 'signing'
-    id "com.vanniktech.maven.publish" version "0.33.0"
+    id "com.vanniktech.maven.publish" version "0.34.0"
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.1.3" apply false
@@ -71,6 +71,11 @@ dependencies {
  * Dependencies
  **********************************************************************************************************************/
 allprojects {
+
+    tasks.withType(GenerateModuleMetadata).configureEach {
+        suppressedValidationErrors.add('enforced-platform')
+    }
+
     if (it.name != 'platform') {
         group = "io.kestra"
 
@@ -143,6 +148,7 @@ allprojects {
             implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names'
             implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
             implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310'
+            implementation group: 'com.fasterxml.uuid', name: 'java-uuid-generator'
 
             // kestra
             implementation group: 'com.devskiller.friendly-id', name: 'friendly-id'
@@ -613,11 +619,6 @@ subprojects {subProject ->
                     dependsOn rootProject.tasks.named("executableJar")
                 }
             }
-        }
-
-        tasks.withType(GenerateModuleMetadata).configureEach {
-            // Suppression this validation error as we want to enforce the Kestra platform
-            suppressedValidationErrors.add('enforced-platform')
         }
     }
 }

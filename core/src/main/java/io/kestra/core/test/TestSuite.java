@@ -89,8 +89,35 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
         return this.toBuilder().deleted(true).build();
     }
 
+    public TestSuite disable() {
+        var disabled = true;
+        return this.toBuilder()
+            .disabled(disabled)
+            .source(toggleDisabledInYamlSource(this.source, disabled))
+            .build();
+    }
+
+    public TestSuite enable() {
+        var disabled = false;
+        return this.toBuilder()
+            .disabled(disabled)
+            .source(toggleDisabledInYamlSource(this.source, disabled))
+            .build();
+    }
+
     @Override
     public String source() {
         return this.getSource();
+    }
+
+    protected static String toggleDisabledInYamlSource(String yamlSource, boolean disabled) {
+        String regex = disabled ? "^disabled\\s*:\\s*false\\s*" : "^disabled\\s*:\\s*true\\s*";
+
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile(regex, java.util.regex.Pattern.MULTILINE);
+        if (p.matcher(yamlSource).find()) {
+            return p.matcher(yamlSource).replaceAll(String.format("disabled: %s\n", disabled));
+        }
+
+        return yamlSource + String.format("\ndisabled: %s", disabled);
     }
 }

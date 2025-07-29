@@ -184,7 +184,6 @@ kestra:
 
   server:
     basic-auth:
-      enabled: false
       # These URLs will not be authenticated, by default we open some of the Micronaut default endpoints but not all for security reasons
       open-urls:
         - "/ping"

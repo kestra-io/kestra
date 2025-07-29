@@ -1,0 +1,9 @@
+id: cache
+namespace: io.kestra.tests
+
+tasks:
+  - id: cache
+    type: io.kestra.core.runners.TaskCacheTest$CounterTask
+    taskCache:
+      enabled: true
+      ttl: PT1S

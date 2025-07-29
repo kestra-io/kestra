@@ -185,14 +185,19 @@ export function backgroundFromState(state, alpha = 1) {
 }
 
 export function getConsistentHEXColor(theme, value) {
+    // TODO: This was added as part of https://github.com/kestra-io/kestra/issues/10055
+    // Idea is to separate the value to parts and only use the status
+    // Needs to be made more generic and robust as part of the https://github.com/kestra-io/kestra/issues/9149#issuecomment-2969506266
+    const result = value.includes(",") ? value.split(",").pop().trim() : value;
+    
     let hex;
 
-    hex = getSchemeValue(value, "executions");
+    hex = getSchemeValue(result, "executions");
     if (hex && hex !== "transparent") {
         return hex;
     }
 
-    hex = getSchemeValue(value, "logs");
+    hex = getSchemeValue(result, "logs");
     if (hex) {
         return hex;
     }

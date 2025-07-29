@@ -46,7 +46,7 @@ public abstract class AbstractLogRepositoryTest {
             .flowId("flowId")
             .namespace("io.kestra.unittest")
             .taskId("taskId")
-            .executionId(IdUtils.create())
+            .executionId("executionId")
             .taskRunId(IdUtils.create())
             .attemptNumber(0)
             .timestamp(Instant.now())
@@ -253,36 +253,32 @@ public abstract class AbstractLogRepositoryTest {
     }
 
     @Test
-    void delete() {
-        LogEntry log1 = logEntry(Level.INFO).build();
-        logRepository.save(log1);
-
-        logRepository.deleteByQuery(MAIN_TENANT, log1.getExecutionId(), null, (String) null, null, null);
-
-        ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(MAIN_TENANT, log1.getExecutionId(), null, Pageable.from(1, 50));
-        assertThat(find.size()).isZero();
-
-        logRepository.save(log1);
-
-        logRepository.deleteByQuery(MAIN_TENANT, "io.kestra.unittest", "flowId", List.of(Level.TRACE, Level.DEBUG, Level.INFO), null, ZonedDateTime.now().plusMinutes(1));
-
-        find = logRepository.findByExecutionId(MAIN_TENANT, log1.getExecutionId(), null, Pageable.from(1, 50));
-        assertThat(find.size()).isZero();
-    }
-
-    @Test
     void deleteByQuery() {
         LogEntry log1 = logEntry(Level.INFO).build();
         logRepository.save(log1);
 
-        logRepository.deleteByQuery(MAIN_TENANT, log1.getExecutionId(), null, (String) null, null, null);
+        logRepository.deleteByQuery(MAIN_TENANT, log1.getExecutionId(), null, null, null, null);
 
         ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(MAIN_TENANT, log1.getExecutionId(), null, Pageable.from(1, 50));
+        assertThat(find.size()).isZero();
+
+        logRepository.save(log1);
+
+        logRepository.deleteByQuery(MAIN_TENANT, "io.kestra.unittest", "flowId", null, List.of(Level.TRACE, Level.DEBUG, Level.INFO), null, ZonedDateTime.now().plusMinutes(1));
+
+        find = logRepository.findByExecutionId(MAIN_TENANT, log1.getExecutionId(), null, Pageable.from(1, 50));
         assertThat(find.size()).isZero();
 
         logRepository.save(log1);
 
         logRepository.deleteByQuery(MAIN_TENANT, "io.kestra.unittest", "flowId", null);
+
+        find = logRepository.findByExecutionId(MAIN_TENANT, log1.getExecutionId(), null, Pageable.from(1, 50));
+        assertThat(find.size()).isZero();
+
+        logRepository.save(log1);
+
+        logRepository.deleteByQuery(MAIN_TENANT, null, null, log1.getExecutionId(), List.of(Level.TRACE, Level.DEBUG, Level.INFO), null, ZonedDateTime.now().plusMinutes(1));
 
         find = logRepository.findByExecutionId(MAIN_TENANT, log1.getExecutionId(), null, Pageable.from(1, 50));
         assertThat(find.size()).isZero();
@@ -297,19 +293,23 @@ public abstract class AbstractLogRepositoryTest {
 
         ZonedDateTime startDate = ZonedDateTime.now().minusSeconds(1);
 
-        Flux<LogEntry> find = logRepository.findAsync(MAIN_TENANT, "io.kestra.unittest", Level.INFO, startDate);
+        Flux<LogEntry> find = logRepository.findAsync(MAIN_TENANT, "io.kestra.unittest", null, null, Level.INFO, startDate);
         List<LogEntry> logEntries = find.collectList().block();
         assertThat(logEntries).hasSize(3);
 
-        find = logRepository.findAsync(MAIN_TENANT, null, Level.ERROR, startDate);
+        find = logRepository.findAsync(MAIN_TENANT, null, null, null, Level.ERROR, startDate);
         logEntries = find.collectList().block();
         assertThat(logEntries).hasSize(1);
 
-        find = logRepository.findAsync(MAIN_TENANT, "io.kestra.unused", Level.INFO, startDate);
+        find = logRepository.findAsync(MAIN_TENANT, "io.kestra.unittest", "flowId", null, Level.ERROR, startDate);
+        logEntries = find.collectList().block();
+        assertThat(logEntries).hasSize(1);
+
+        find = logRepository.findAsync(MAIN_TENANT, "io.kestra.unused", "flowId", "executionId", Level.INFO, startDate);
         logEntries = find.collectList().block();
         assertThat(logEntries).hasSize(0);
 
-        find = logRepository.findAsync(MAIN_TENANT, null, Level.INFO, startDate.plusSeconds(2));
+        find = logRepository.findAsync(MAIN_TENANT, null, null, null, Level.INFO, startDate.plusSeconds(2));
         logEntries = find.collectList().block();
         assertThat(logEntries).hasSize(0);
     }

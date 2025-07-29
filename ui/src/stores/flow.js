@@ -13,6 +13,7 @@ const textYamlHeader = {
         "Content-Type": "application/x-yaml"
     }
 }
+
 export default {
     namespaced: true,
     state: {
@@ -50,19 +51,19 @@ export default {
         async saveAll({dispatch, state, commit, getters, rootState}){
             const hasAnyDirtyTabs = rootState.editor.tabs.some(t => t.dirty === true);
             const hasChanges = state.haveChange || hasAnyDirtyTabs;
-            
+
             if (getters.flowErrors?.length || !hasChanges && !state.isCreating) {
                 return;
             }
 
-            await dispatch("editor/saveAllTabs", {namespace: getters.namespace}, {root: true});
+            await dispatch("editor/saveAllTabs", {namespace: state.flow.namespace}, {root: true});
             commit("setFlowYamlOrigin", state.flowYaml);
             return dispatch("saveWithoutRevisionGuard");
         },
         async save({getters, dispatch, commit, state, rootState}, {content, namespace}){
             const hasAnyDirtyTabs = rootState.editor.tabs.some(t => t.dirty === true);
             const hasChanges = state.haveChange || hasAnyDirtyTabs;
-            
+
             if (getters.flowErrors?.length || !hasChanges && !state.isCreating) {
                 return;
             }
@@ -92,7 +93,7 @@ export default {
                 if(!currentTab?.dirty) return;
 
                 await dispatch("namespace/createFile", {
-                    namespace: namespace ?? getters.namespace,
+                    namespace: namespace ?? state.flow.namespace,
                     path: currentTab.path ?? currentTab.name,
                     content,
                 }, {root: true});
@@ -118,8 +119,8 @@ export default {
                 if (!state.isCreating){
                     if(!source.trim()?.length ||
                         (flowParsed &&
-                        (getters.id !== flowParsed.id ||
-                            getters.namespace !== flowParsed.namespace)))
+                        (state.flow.id !== flowParsed.id ||
+                            state.flow.namespace !== flowParsed.namespace)))
                         {
                         const coreStore = useCoreStore();
                         coreStore.message = {
@@ -129,8 +130,8 @@ export default {
                         };
                         commit("setFlowYaml", YAML_UTILS.replaceIdAndNamespace(
                             source,
-                            getters.id,
-                            getters.namespace
+                            state.flow.id,
+                            state.flow.namespace
                         ));
                     }
                 }
@@ -254,6 +255,7 @@ export default {
             });
         },
         async initYamlSource({getters, commit, dispatch, state}, {viewType}) {
+            if(!getters.flow) return;
             const {source} = getters.flow;
             commit("setFlowYaml", source);
             commit("setFlowYamlOrigin", source);
@@ -713,49 +715,26 @@ export default {
             const currentTab = rootState.editor.current;
             return currentTab?.flow !== undefined || state.isCreating;
         },
-        lastSaveFlow(state){
-            if(state.lastSavedFlow){
-                return state.lastSavedFlow;
-            }
-        },
-        flow(state) {
-            if (state.flow) {
-                return state.flow;
-            }
-        },
-        flowYaml(state) {
-            return state.flowYaml;
-        },
-        flowValidation(state) {
-            if (state.flowValidation) {
-                return state.flowValidation;
-            }
-        },
-        taskError(state) {
-            if (state.taskError) {
-                return state.taskError;
-            }
-        },
-        isAllowedEdit(_state, getters, _rootState, rootGetters) {
-            if (!getters.flow || !rootGetters["auth/user"]) {
+        isAllowedEdit(state, _getters, _rootState, rootGetters) {
+            if (!state.flow || !rootGetters["auth/user"]) {
                 return false;
             }
 
             return rootGetters["auth/user"].isAllowed(
                 permission.FLOW,
                 action.UPDATE,
-                getters.flow.namespace,
+                state.flow.namespace,
             );
         },
-        isReadOnly(_state, getters) {
-            return getters.flow?.deleted || !getters.isAllowedEdit || getters.readOnlySystemLabel;
+        isReadOnly(state, getters) {
+            return state.flow?.deleted || !getters.isAllowedEdit || getters.readOnlySystemLabel;
         },
-        readOnlySystemLabel(_state, getters) {
-            if (!getters.flow) {
+        readOnlySystemLabel(state) {
+            if (!state.flow) {
                 return false;
             }
 
-            return (getters.flow.labels?.["system.readOnly"] === "true") || (getters.flow.labels?.["system.readOnly"] === true);
+            return (state.flow.labels?.["system.readOnly"] === "true") || (state.flow.labels?.["system.readOnly"] === true);
         },
         baseOutdatedTranslationKey(state) {
                 const createOrUpdateKey = state.isCreating ? "create" : "update";
@@ -789,15 +768,15 @@ export default {
         },
         flowHaveTasks(state, getters){
             if (getters.isFlow) {
-                const flow = state.isCreating ? getters.flow.source : state.flowYaml;
+                const flow = state.isCreating ? state.flow.source : state.flowYaml;
                 return flow ? YAML_UTILS.flowHaveTasks(flow) : false;
             } else return false;
         },
-        nextRevision(_state, getters){
-            return (getters.flow?.revision ?? 0) + 1;
+        nextRevision(state){
+            return (state.flow?.revision ?? 0) + 1;
         },
-        yamlWithNextRevision(_state, getters){
-            return `revision: ${getters.nextRevision}\n${getters.flowYaml}`;
+        yamlWithNextRevision(state, getters){
+            return `revision: ${getters.nextRevision}\n${state.flowYaml}`;
         },
         flowParsed(state){
             try{
@@ -805,12 +784,6 @@ export default {
             }catch{
                 return undefined
             }
-        },
-        namespace(state){
-            return state.flow?.namespace;
-        },
-        id(state){
-            return state.flow?.id;
         },
         flowYamlMetadata(state){
             return YAML_UTILS.getMetadata(state.flowYaml);

@@ -159,4 +159,9 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         CHILD,
         MAIN
     }
+
+    List<Execution> lastExecutions(
+        @Nullable String tenantId,
+        @Nullable List<FlowFilter> flows
+    );
 }

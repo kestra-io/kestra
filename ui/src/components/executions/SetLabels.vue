@@ -49,7 +49,10 @@
 </script>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useMiscStore} from "../../stores/misc";
+    import {useExecutionsStore} from "../../stores/executions";
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {State} from "@kestra-io/ui-libs"
 
@@ -82,18 +85,18 @@
                 }
 
                 this.isOpen = false;
-                this.$store.dispatch("execution/setLabels", {
+                this.executionsStore.setLabels({
                     labels: filtered.labels,
                     executionId: this.execution.id
                 }).then(response => {
-                    this.$store.commit("execution/setExecution", response.data)
+                    this.executionsStore.execution = response.data
                     this.$toast().success(this.$t("Set labels done"));
                 })
             },
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useMiscStore, useExecutionsStore),
             enabled() {
                 if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
@@ -112,7 +115,7 @@
             isOpen() {
                 this.executionLabels = [];
 
-                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
 
                 if (this.execution.labels) {
                     this.executionLabels = this.execution.labels.filter(label => !toIgnore.some(prefix => label.key?.startsWith(prefix)));

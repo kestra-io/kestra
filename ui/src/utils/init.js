@@ -41,6 +41,7 @@ import ElementPlus from "element-plus";
 import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
 import "./global"
+import {useDocStore} from "../stores/doc";
 
 
 import LeftMenuLink from "../components/LeftMenuLink.vue";
@@ -108,7 +109,9 @@ export default async (app, routes, stores, translations, additionalTranslations 
         // so it has a default
         const pathArray = to.path.split("/");
         const docId = pathArray[pathArray.length-1];
-        store.commit("doc/setDocId", docId);
+        
+        const docStore = useDocStore();
+        docStore.docId = docId;
 
         // propagate showDocId query param
         // to the next page to facilitate docs binding

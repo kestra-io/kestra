@@ -6,6 +6,7 @@ import {QUOTE, YamlAutoCompletion} from "../../services/autoCompletionProvider";
 import RegexProvider from "../../utils/regex";
 import {State} from "@kestra-io/ui-libs";
 import {usePluginsStore} from "../../stores/plugins";
+import {ComputedRef} from "vue";
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []));
@@ -15,11 +16,13 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     store: Store<Record<string, any>>;
     flowsInputsCache: Record<string, string[]> = {};
     pluginsStore: ReturnType<typeof usePluginsStore>;
+    private readonly completionSource: ComputedRef<string | undefined> | undefined;
 
-    constructor(store: Store<Record<string, any>>, pluginsStore: ReturnType<typeof usePluginsStore>) {
+    constructor(store: Store<Record<string, any>>, pluginsStore: ReturnType<typeof usePluginsStore>, completionSource?: ComputedRef<string | undefined>) {
         super();
         this.store = store;
         this.pluginsStore = pluginsStore;
+        this.completionSource = completionSource;
     }
 
     rootFieldAutoCompletion(): Promise<string[]> {
@@ -76,7 +79,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     }
 
     private async outputsFor(taskId: string, source: string): Promise<string[]> {
-        const taskType = this.tasks(source).filter(task => task.get("id") === taskId)
+        const taskType = this.tasks(this.completionSource?.value ?? source).filter(task => task.get("id") === taskId)
             .map(task => task.get("type"))
             ?.[0];
 
@@ -86,7 +89,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
 
         const pluginDoc = await this.pluginsStore.load({cls: taskType, commit: false});
 
-        return Object.keys(pluginDoc?.schema?.outputs?.properties ?? {});
+        return Object.keys((pluginDoc?.schema as any)?.outputs?.properties ?? {});
     }
 
     private async triggerVars(flowAsJs?: {triggers?: {type: string}[]}): Promise<string[]> {
@@ -110,15 +113,15 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     async nestedFieldAutoCompletion(source: string, parsed: any | undefined, parentField: string): Promise<string[]> {
         switch (parentField) {
             case "inputs":
-                return Promise.resolve(parsed?.inputs?.map((input: {id: string}) => input.id) ?? []);
+                return Promise.resolve(parsed?.inputs?.map((input: {id?: string}) => input.id) ?? []);
             case "outputs":
-                return Promise.resolve(this.tasks(source).map(task => task.get("id")));
+                return Promise.resolve(parsed?.tasks?.map((task: {id?: string}) => task.id).filter(Boolean) ?? []);
             case "labels":
                 return Promise.resolve(Object.keys(parsed?.labels ?? {}));
             case "flow":
                 return Promise.resolve(["id", "namespace", "revision", "tenantId"]);
             case "execution":
-                return Promise.resolve(["id", "startDate", "state", "originalId"]);
+                return Promise.resolve(["id", "startDate", "state", "originalId", "outputs"]);
             case "vars":
                 return Promise.resolve(Object.keys(parsed?.variables ?? {}));
             case "trigger":

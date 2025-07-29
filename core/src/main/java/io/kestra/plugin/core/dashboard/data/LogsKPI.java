@@ -29,7 +29,7 @@ import java.util.Set;
         @Example(
             title = "Display a chart with a count of Logs per date grouped by level.",
             full = true,
-            code = """
+            code = { """
             charts:
               - id: logs_timeseries
                 type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -52,7 +52,8 @@ import java.util.Set;
                       displayName: Total Executions
                       agg: COUNT
                       graphStyle: BARS
-            """                
+            """
+          }                
         )
     }
 )

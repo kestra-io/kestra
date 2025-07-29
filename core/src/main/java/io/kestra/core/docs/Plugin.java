@@ -23,29 +23,25 @@ public class Plugin {
     private String group;
     private String version;
     private Map<String, String> manifest;
-    private List<String> tasks;
-    private List<String> triggers;
-    private List<String> conditions;
-    private List<String> controllers;
-    private List<String> storages;
-    private List<String> secrets;
-    private List<String> taskRunners;
     private List<String> guides;
     private List<String> aliases;
-    private List<String> apps;
-    private List<String> appBlocks;
-    private List<String> charts;
-    private List<String> dataFilters;
-    private List<String> logExporters;
-    private List<String> additionalPlugins;
+    private List<PluginElementMetadata> tasks;
+    private List<PluginElementMetadata> triggers;
+    private List<PluginElementMetadata> conditions;
+    private List<PluginElementMetadata> controllers;
+    private List<PluginElementMetadata> storages;
+    private List<PluginElementMetadata> secrets;
+    private List<PluginElementMetadata> taskRunners;
+    private List<PluginElementMetadata> apps;
+    private List<PluginElementMetadata> appBlocks;
+    private List<PluginElementMetadata> charts;
+    private List<PluginElementMetadata> dataFilters;
+    private List<PluginElementMetadata> logExporters;
+    private List<PluginElementMetadata> additionalPlugins;
     private List<PluginSubGroup.PluginCategory> categories;
     private String subGroup;
 
     public static Plugin of(RegisteredPlugin registeredPlugin, @Nullable String subgroup) {
-        return Plugin.of(registeredPlugin, subgroup, true);
-    }
-
-    public static Plugin of(RegisteredPlugin registeredPlugin, @Nullable String subgroup, boolean includeDeprecated) {
         Plugin plugin = new Plugin();
         plugin.name = registeredPlugin.name();
         PluginSubGroup subGroupInfos = null;
@@ -90,18 +86,18 @@ public class Plugin {
         plugin.subGroup = subgroup;
 
         Predicate<Class<?>> packagePredicate = c -> subgroup == null || c.getPackageName().equals(subgroup);
-        plugin.tasks = filterAndGetClassName(registeredPlugin.getTasks(), includeDeprecated, packagePredicate);
-        plugin.triggers = filterAndGetClassName(registeredPlugin.getTriggers(), includeDeprecated, packagePredicate);
-        plugin.conditions = filterAndGetClassName(registeredPlugin.getConditions(), includeDeprecated, packagePredicate);
-        plugin.storages = filterAndGetClassName(registeredPlugin.getStorages(), includeDeprecated, packagePredicate);
-        plugin.secrets = filterAndGetClassName(registeredPlugin.getSecrets(), includeDeprecated, packagePredicate);
-        plugin.taskRunners = filterAndGetClassName(registeredPlugin.getTaskRunners(), includeDeprecated, packagePredicate);
-        plugin.apps = filterAndGetClassName(registeredPlugin.getApps(), includeDeprecated, packagePredicate);
-        plugin.appBlocks = filterAndGetClassName(registeredPlugin.getAppBlocks(), includeDeprecated, packagePredicate);
-        plugin.charts = filterAndGetClassName(registeredPlugin.getCharts(), includeDeprecated, packagePredicate);
-        plugin.dataFilters = filterAndGetClassName(registeredPlugin.getDataFilters(), includeDeprecated, packagePredicate);
-        plugin.logExporters = filterAndGetClassName(registeredPlugin.getLogExporters(), includeDeprecated, packagePredicate);
-        plugin.additionalPlugins = filterAndGetClassName(registeredPlugin.getAdditionalPlugins(), includeDeprecated, packagePredicate);
+        plugin.tasks = filterAndGetTypeWithMetadata(registeredPlugin.getTasks(), packagePredicate);
+        plugin.triggers = filterAndGetTypeWithMetadata(registeredPlugin.getTriggers(), packagePredicate);
+        plugin.conditions = filterAndGetTypeWithMetadata(registeredPlugin.getConditions(), packagePredicate);
+        plugin.storages = filterAndGetTypeWithMetadata(registeredPlugin.getStorages(), packagePredicate);
+        plugin.secrets = filterAndGetTypeWithMetadata(registeredPlugin.getSecrets(), packagePredicate);
+        plugin.taskRunners = filterAndGetTypeWithMetadata(registeredPlugin.getTaskRunners(), packagePredicate);
+        plugin.apps = filterAndGetTypeWithMetadata(registeredPlugin.getApps(), packagePredicate);
+        plugin.appBlocks = filterAndGetTypeWithMetadata(registeredPlugin.getAppBlocks(), packagePredicate);
+        plugin.charts = filterAndGetTypeWithMetadata(registeredPlugin.getCharts(), packagePredicate);
+        plugin.dataFilters = filterAndGetTypeWithMetadata(registeredPlugin.getDataFilters(), packagePredicate);
+        plugin.logExporters = filterAndGetTypeWithMetadata(registeredPlugin.getLogExporters(), packagePredicate);
+        plugin.additionalPlugins = filterAndGetTypeWithMetadata(registeredPlugin.getAdditionalPlugins(), packagePredicate);
 
         return plugin;
     }
@@ -111,17 +107,18 @@ public class Plugin {
      * Those classes are only filtered from the documentation to ensure backward compatibility.
      *
      * @param list              The list of classes?
-     * @param includeDeprecated whether to include deprecated plugins or not
      * @return a filtered streams.
      */
-    private static List<String> filterAndGetClassName(final List<? extends Class<?>> list, boolean includeDeprecated, Predicate<Class<?>> clazzFilter) {
+    private static List<PluginElementMetadata> filterAndGetTypeWithMetadata(final List<? extends Class<?>> list, Predicate<Class<?>> clazzFilter) {
         return list
             .stream()
             .filter(not(io.kestra.core.models.Plugin::isInternal))
-            .filter(p -> includeDeprecated || !io.kestra.core.models.Plugin.isDeprecated(p))
             .filter(clazzFilter)
-            .map(Class::getName)
-            .filter(c -> !c.startsWith("org.kestra."))
+            .filter(c -> !c.getName().startsWith("org.kestra."))
+            .map(c -> new PluginElementMetadata(c.getName(), io.kestra.core.models.Plugin.isDeprecated(c) ? true : null))
             .toList();
+    }
+
+    public record PluginElementMetadata(String cls, Boolean deprecated) {
     }
 }

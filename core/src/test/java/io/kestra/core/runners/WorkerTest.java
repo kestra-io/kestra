@@ -23,6 +23,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -35,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static io.kestra.core.utils.Rethrow.throwSupplier;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@KestraTest(rebuildContext = true)
 class WorkerTest {
     @Inject
     ApplicationContext applicationContext;

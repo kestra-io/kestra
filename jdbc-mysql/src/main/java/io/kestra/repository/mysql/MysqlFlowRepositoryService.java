@@ -45,6 +45,6 @@ public abstract class MysqlFlowRepositoryService {
 
             });
         }
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.or(conditions);
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 }

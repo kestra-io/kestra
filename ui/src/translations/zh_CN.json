@@ -10,6 +10,7 @@
     "Finish": "完成",
     "Fold auto": "编辑器：自动折叠多行",
     "Fold content lines": "折叠多行字符串",
+    "Hover description": "编辑器：当鼠标悬停在key或value上时显示字段描述",
     "Language": "语言",
     "Next step": "下一步",
     "Per page": "每页",
@@ -41,6 +42,7 @@
     "add task": "添加任务",
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
     "add_new_item": "添加新项目",
+    "additionalPlugins": "附加插件",
     "administration": "管理",
     "advanced configuration": "其他属性",
     "after": "之后",
@@ -55,6 +57,7 @@
     "all executions": "所有执行",
     "all tags": "所有标签",
     "api": "API",
+    "appBlocks": "应用模块",
     "apps": "应用程序",
     "attempt": "尝试",
     "attempts": "尝试",
@@ -88,6 +91,7 @@
       "title": "蓝图"
     },
     "bookmark": "书签",
+    "bulk action async warning": "这可能需要一些时间。",
     "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
     "bulk delete": "确定要删除 <code>{executionCount}</code> 个执行吗？",
     "bulk delete backfills": "删除 {count} 回填",
@@ -122,6 +126,7 @@
     "cannot swap tasks": "无法交换任务",
     "change execution state confirm": "您确定要更改执行<code>{id}</code>的状态吗？",
     "change execution state done": "执行状态已更新",
+    "change queue confirm": "您确定要更改执行 <code>{id}</code> 的队列状态吗？<br/>",
     "change state": "更改状态",
     "change state confirm": "您确定要更改执行 <code>{id}</code> 中 <code>{task}</code> 任务的任务运行状态吗？",
     "change state current state": "当前状态是：",
@@ -132,7 +137,10 @@
         "不会执行其他task。",
         "将执行错误tasks。"
       ],
-      "RUNNING": "流程将重新启动，并将执行所有下一个任务。所有被阻止的任务将被执行。",
+      "RUNNING": [
+        "flow将重新启动，并将执行所有后续task。",
+        "所有被阻止的task将被执行。"
+      ],
       "SUCCESS": [
         "由于此任务成功，flow 将重新启动。",
         "所有被阻止的任务将被执行。",
@@ -147,6 +155,7 @@
     "change state tooltip": "更改执行状态",
     "chart": "图表",
     "chart preview": "图表预览",
+    "charts": "图表",
     "choice": "选择",
     "choose file": "选择文件或拖放到此处...",
     "close": "关闭",
@@ -203,10 +212,12 @@
         "confirmation": "您确定要删除<code>{title}</code>仪表板吗？"
       },
       "edition": {
+        "chart": "编辑此图表",
         "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
         "label": "编辑仪表板"
       },
       "empty": "没有结果显示。",
+      "export": "导出为CSV",
       "labels": {
         "plural": "仪表板",
         "singular": "仪表板"
@@ -214,6 +225,7 @@
       "preview": "预览仪表板"
     },
     "data": "数据",
+    "dataFilters": "数据过滤器",
     "data_not_protected": "您的数据未受保护。不要丢失它。<b>启用我们的免费安全功能或试用我们的付费服务。</b>",
     "date": "日期",
     "date count": "{date}的{count}",
@@ -259,8 +271,8 @@
     },
     "days": "天数",
     "debug": "调试",
-    "decline": "拒绝",
     "default": "默认值",
+    "defaultsToNamespaceFile": "默认为 namespace 文件：<code>{name}</code>",
     "delete": "删除",
     "delete backfill": "删除回填",
     "delete backfills": "删除回填",
@@ -392,6 +404,7 @@
       "move_line": "移动行",
       "reset_fontsize": "重置字体大小",
       "save_flow": "保存flow",
+      "toggle_ai_agent": "切换AI代理",
       "trigger_autocompletion": "触发自动完成",
       "uncomment": "取消注释"
     },
@@ -464,6 +477,7 @@
       }
     },
     "eval": {
+      "render": "渲染表达式",
       "title": "调试表达式",
       "tooltip": "渲染任何Pebble表达式并检查执行上下文。"
     },
@@ -591,6 +605,7 @@
         },
         "empty": "您还没有保存任何搜索。",
         "label": "已保存的搜索",
+        "name_already_used": "搜索标签已被使用。",
         "remove": "移除",
         "tooltip": "您不能保存空的搜索条件。"
       },
@@ -693,6 +708,7 @@
     "last execution date": "最后执行日期",
     "last execution state": "上一次状态",
     "last execution status": "上次执行状态",
+    "last modified": "上次修改",
     "launch execution": "执行",
     "learn_more": "了解更多",
     "light_background": "这是在使用浅色背景时的首选选项。",
@@ -701,6 +717,7 @@
     "live help": "实时帮助",
     "loaded x dependencies": "已加载 {count} 个依赖项",
     "log expand setting": "日志默认显示",
+    "logExporters": "日志导出器",
     "logs": "日志",
     "logs_view": {
       "compact": "默认视图",
@@ -888,6 +905,7 @@
         "finally": "选择一个task",
         "inputs": "选择一个input字段类型",
         "pluginDefaults": "选择插件",
+        "task": "选择一个task",
         "tasks": "选择一个task",
         "triggers": "选择一个trigger"
       },
@@ -896,6 +914,7 @@
       "version_oss_placeholder": "解锁企业版插件版本控制"
     },
     "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
+    "no_file_choosen": "未选择文件",
     "no_logs_data": "无数据",
     "no_logs_data_description": "要么没有正在运行的flows，要么您可能需要调整您的筛选器。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
@@ -996,6 +1015,14 @@
     "pause confirm": "您确定要暂停执行<code>{id}</code>吗？",
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
+    "playground": {
+      "empty": "单击“Run task”按钮，通过模拟执行测试您的工作流。",
+      "history": "最近10次运行",
+      "run_all_tasks": "运行所有Tasks",
+      "run_task": "运行Task",
+      "title": "游乐场",
+      "toggle": "游乐场"
+    },
     "pluginDefaults": "插件默认值",
     "pluginPage": {
       "alt": "插件图标",
@@ -1024,6 +1051,7 @@
     "read-more": "了解更多关于",
     "readonly property": "只读属性",
     "refresh": "刷新",
+    "reject": "拒绝",
     "relative": "相对",
     "relative end date": "相对结束日期",
     "relative start date": "相对开始日期",
@@ -1056,6 +1084,7 @@
     "revision": "修订版",
     "revisions": "修订版",
     "row count": "行数",
+    "run task in playground": "在playground中运行task",
     "runners": "运行者",
     "running duration": "运行时间",
     "save": "保存",
@@ -1129,7 +1158,8 @@
             "language": "语言",
             "log_display": "默认日志显示",
             "log_level": "默认日志级别",
-            "multi_panel_editor": "多面板编辑器"
+            "multi_panel_editor": "多面板编辑器",
+            "playground": "游乐场"
           },
           "label": "主要配置"
         },
@@ -1164,8 +1194,10 @@
             "editor_folding_stratgy": "编辑器中的自动代码折叠",
             "editor_font_family": "编辑器字体家族",
             "editor_font_size": "编辑器字体大小",
+            "editor_hover_description": "将鼠标悬停在属性上查看描述",
             "environment_color": "环境颜色",
             "environment_name": "环境名称",
+            "environment_name_tooltip": "此环境名称是从配置中设置的，但可以更改。",
             "logs_font_size": "日志字体大小",
             "theme": "主题"
           },
@@ -1173,6 +1205,76 @@
         }
       },
       "label": "设置"
+    },
+    "setup": {
+      "config": {
+        "basicauth": "基本认证",
+        "queue": "队列",
+        "repository": "数据库",
+        "storage": "内部存储"
+      },
+      "confirm": {
+        "config_title": "确认配置有效",
+        "confirm": "确认",
+        "not_valid": "不，这无效",
+        "valid": "是的，它是有效的"
+      },
+      "form": {
+        "email": "电子邮件",
+        "firstName": "名字",
+        "lastName": "姓氏",
+        "password": "密码"
+      },
+      "login": "登录",
+      "logout": "注销",
+      "steps": {
+        "complete": "启动 Kestra UI",
+        "config": "验证配置",
+        "survey": "请告诉我们更多信息",
+        "user": "创建您的账户"
+      },
+      "subtitles": {
+        "complete": "设置成功完成！",
+        "config": "以下是您的配置详情",
+        "survey": "帮助我们改进 Kestra Open Source Edition",
+        "user": "通过创建账户来设置您的实例"
+      },
+      "success": {
+        "subtitle": "一切准备就绪！",
+        "title": "恭喜！"
+      },
+      "survey": {
+        "company_11_50": "11-50",
+        "company_1_10": "1-10",
+        "company_250_plus": "250+",
+        "company_50_250": "50-250",
+        "company_personal": "个人使用",
+        "company_size": "您的公司规模是多少？",
+        "continue": "继续",
+        "newsletter": "订阅 Kestra 新闻通讯 – 及时了解最新功能和更改。",
+        "skip": "跳过",
+        "use_case": "您的主要使用案例是什么？",
+        "use_case_business": "业务流程",
+        "use_case_data": "数据工作流",
+        "use_case_infrastructure": "基础设施自动化",
+        "use_case_ml": "ML/AI 管道",
+        "use_case_other": "其他"
+      },
+      "titles": {
+        "survey": "告诉我们更多信息",
+        "user": "创建账户"
+      },
+      "troubleshooting": "忘记密码？",
+      "validation": {
+        "config_message": "请确保更新您的配置以修复此错误消息",
+        "email_invalid": "无效的电子邮件",
+        "email_required": "需要提供电子邮件",
+        "email_temporary_not_allowed": "不允许使用临时或一次性邮箱地址",
+        "firstName_required": "名字为必填项",
+        "incorrect_creds": "用户名或密码无效。请确保您的凭据正确。",
+        "lastName_required": "姓氏为必填项",
+        "password_invalid": "密码无效"
+      }
     },
     "show": "显示",
     "show chart": "显示图表",
@@ -1210,6 +1312,7 @@
     "success": "成功",
     "sum": "总计",
     "switch-view": "切换视图",
+    "system overview": "系统概览",
     "system_namespace": "保持您的平台通过系统flows进行检查。",
     "system_namespace_description": "自动化维护任务，从故障警报到自动清理。",
     "tags": "标签",
@@ -1219,9 +1322,9 @@
     "task logs": "任务日志",
     "task run id": "任务运行 ID",
     "taskDefaults": "任务默认值",
+    "taskRunners": "任务 Runners",
     "task_id_exists": "任务ID已存在",
     "task_id_message": "任务ID ${existingTask} 已经存在于flow中。",
-    "task_runners": "任务运行器",
     "taskid column details": "最后执行的任务及其尝试次数。",
     "taskruns": "任务运行",
     "tasks": "任务",
@@ -1302,9 +1405,11 @@
       "warning": "这可能会导致同一触发器的并发执行，应作为最后的选择。"
     },
     "unqueue": "出队列",
+    "unqueue as": "取消排队为<code>{status}</code>",
     "unqueue confirm": "您确定要取消排队执行<code>{id}</code>吗？",
     "unqueue done": "执行已出队列",
     "unqueue title": "取消执行 <code>{id}</code>。<br/>请注意，它将不遵循 flow 并发限制，因此可能会有超过允许限制的执行正在运行。",
+    "unqueue title multiple": "您确定要取消排队 <code>{count}</code> 个执行吗？<br/><br/>请注意，这将不遵循flow的并发限制，因此可能会有超过允许限制的执行正在运行。",
     "unsaved changed ?": "你有未保存的更改，是否要离开此页面？",
     "up trend": "增加",
     "update": "更新",
@@ -1322,6 +1427,12 @@
     "warning flow with triggers": "此流程包含触发器，如果此流程依赖触发表达式，则手动执行将失败。",
     "watch": "监视",
     "watch_video": "观看视频",
+    "webhook": {
+      "curl_command": "Webhook cURL 命令",
+      "curl_note": "使用此 cURL 命令通过 webhook 触发 flow，并使用自定义 JSON 负载",
+      "no_triggers": "此flow没有启用的webhook triggers",
+      "payload": "Webhook Payload (JSON)"
+    },
     "webhook link copied": "Webhook链接已复制。",
     "weeks": "周",
     "welcome": {

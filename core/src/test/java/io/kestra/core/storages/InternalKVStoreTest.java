@@ -52,9 +52,10 @@ class InternalKVStoreTest {
 
         assertThat(kv.list().size()).isZero();
 
-        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), complexValue));
-        kv.put("my-second-key", new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(10)), complexValue));
-        kv.put("expired-key", new KVValueAndMetadata(new KVMetadata(Duration.ofMillis(1)), complexValue));
+        String description = "myDescription";
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(description, Duration.ofMinutes(5)), complexValue));
+        kv.put("my-second-key", new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(10)), complexValue));
+        kv.put("expired-key", new KVValueAndMetadata(new KVMetadata(null, Duration.ofMillis(1)), complexValue));
 
         List<KVEntry> list = kv.list();
         assertThat(list.size()).isEqualTo(2);
@@ -71,10 +72,12 @@ class InternalKVStoreTest {
         KVEntry myKeyValue = map.get(TEST_KV_KEY);
         assertThat(myKeyValue.creationDate().plus(Duration.ofMinutes(4)).isBefore(myKeyValue.expirationDate()) &&
             myKeyValue.creationDate().plus(Duration.ofMinutes(6)).isAfter(myKeyValue.expirationDate())).isTrue();
+        assertThat(myKeyValue.description()).isEqualTo(description);
 
         KVEntry mySecondKeyValue = map.get("my-second-key");
         assertThat(mySecondKeyValue.creationDate().plus(Duration.ofMinutes(9)).isBefore(mySecondKeyValue.expirationDate()) &&
             mySecondKeyValue.creationDate().plus(Duration.ofMinutes(11)).isAfter(mySecondKeyValue.expirationDate())).isTrue();
+        assertThat(mySecondKeyValue.description()).isNull();
     }
 
     @Test
@@ -84,7 +87,8 @@ class InternalKVStoreTest {
 
         // When
         Instant before = Instant.now();
-        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), complexValue));
+        String description = "myDescription";
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(description, Duration.ofMinutes(5)), complexValue));
 
         // Then
         StorageObject withMetadata = storageInterface.getWithMetadata(null, kv.namespace(), URI.create("/" + kv.namespace().replace(".", "/") + "/_kv/my-key.ion"));
@@ -92,9 +96,10 @@ class InternalKVStoreTest {
         Instant expirationDate = Instant.parse(withMetadata.metadata().get("expirationDate"));
         assertThat(expirationDate.isAfter(before.plus(Duration.ofMinutes(4))) && expirationDate.isBefore(before.plus(Duration.ofMinutes(6)))).isTrue();
         assertThat(valueFile).isEqualTo(JacksonMapper.ofIon().writeValueAsString(complexValue));
+        assertThat(withMetadata.metadata().get("description")).isEqualTo(description);
 
         // Re-When
-        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(10)), "some-value"));
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(10)), "some-value"));
 
         // Then
         withMetadata = storageInterface.getWithMetadata(null, kv.namespace(), URI.create("/" + kv.namespace().replace(".", "/") + "/_kv/my-key.ion"));
@@ -108,7 +113,7 @@ class InternalKVStoreTest {
     void shouldGetGivenEntryWithNullValue() throws IOException, ResourceExpiredException {
         // Given
         final InternalKVStore kv = kv();
-        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), null));
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(5)), null));
 
         // When
         Optional<KVValue> value = kv.getValue(TEST_KV_KEY);
@@ -121,7 +126,7 @@ class InternalKVStoreTest {
     void shouldGetGivenEntryWithComplexValue() throws IOException, ResourceExpiredException {
         // Given
         final InternalKVStore kv = kv();
-        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), complexValue));
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(5)), complexValue));
 
         // When
         Optional<KVValue> value = kv.getValue(TEST_KV_KEY);
@@ -146,7 +151,7 @@ class InternalKVStoreTest {
     void shouldThrowGivenExpiredEntry() throws IOException {
         // Given
         final InternalKVStore kv = kv();
-        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofNanos(1)), complexValue));
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Duration.ofNanos(1)), complexValue));
 
         // When
         Assertions.assertThrows(ResourceExpiredException.class, () -> kv.getValue(TEST_KV_KEY));
@@ -161,7 +166,7 @@ class InternalKVStoreTest {
         assertThat(illegalArgumentException.getMessage()).isEqualTo(expectedErrorMessage);
         illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> kv.getValue("a/b"));
         assertThat(illegalArgumentException.getMessage()).isEqualTo(expectedErrorMessage);
-        illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> kv.put("a/b", new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), "content")));
+        illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> kv.put("a/b", new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(5)), "content")));
         assertThat(illegalArgumentException.getMessage()).isEqualTo(expectedErrorMessage);
         illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> kv.delete("a/b"));
         assertThat(illegalArgumentException.getMessage()).isEqualTo(expectedErrorMessage);

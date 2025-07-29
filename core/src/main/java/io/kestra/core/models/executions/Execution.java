@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
+import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.Label;
@@ -24,6 +25,7 @@ import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
@@ -120,6 +122,9 @@ public class Execution implements DeletedInterface, TenantInterface {
     @Nullable
     ExecutionKind kind;
 
+    @Nullable
+    List<Breakpoint> breakpoints;
+
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow}.
      *
@@ -132,7 +137,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public List<Label> getLabels() {
-        return Optional.ofNullable(this.labels).orElse(new ArrayList<>());
+        return ListUtils.emptyOnNull(this.labels);
     }
 
     /**
@@ -177,7 +182,21 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
 
+    /**
+     * Customization of Lombok-generated builder.
+     */
     public static class ExecutionBuilder {
+
+        /**
+         * Enforce unique values of {@link Label} when using the builder.
+         *
+         * @param labels The labels.
+         * @return Deduplicated labels.
+         */
+        public ExecutionBuilder labels(List<Label> labels) {
+            this.labels = Label.deduplicate(labels);
+            return this;
+        }
 
         void prebuild() {
             this.originalId = this.id;
@@ -221,12 +240,12 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.scheduleDate,
             this.traceParent,
             this.fixtures,
-            this.kind
+            this.kind,
+            this.breakpoints
         );
     }
 
     public Execution withLabels(List<Label> labels) {
-
         return new Execution(
             this.tenantId,
             this.id,
@@ -236,7 +255,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.taskRunList,
             this.inputs,
             this.outputs,
-            labels,
+            Label.deduplicate(labels),
             this.variables,
             this.state,
             this.parentId,
@@ -247,7 +266,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.scheduleDate,
             this.traceParent,
             this.fixtures,
-            this.kind
+            this.kind,
+            this.breakpoints
         );
     }
 
@@ -286,7 +306,34 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.scheduleDate,
             this.traceParent,
             this.fixtures,
-            this.kind
+            this.kind,
+            this.breakpoints
+        );
+    }
+
+    public Execution withBreakpoints(List<Breakpoint> newBreakpoints) {
+        return new Execution(
+            this.tenantId,
+            this.id,
+            this.namespace,
+            this.flowId,
+            this.flowRevision,
+            this.taskRunList,
+            this.inputs,
+            this.outputs,
+            this.labels,
+            this.variables,
+            this.state,
+            this.parentId,
+            this.originalId,
+            this.trigger,
+            this.deleted,
+            this.metadata,
+            this.scheduleDate,
+            this.traceParent,
+            this.fixtures,
+            this.kind,
+            newBreakpoints
         );
     }
 
@@ -312,7 +359,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.scheduleDate,
             this.traceParent,
             this.fixtures,
-            this.kind
+            this.kind,
+            this.breakpoints
         );
     }
 
@@ -366,7 +414,7 @@ public class Execution implements DeletedInterface, TenantInterface {
      *
      * @param resolvedTasks normal tasks
      * @param resolvedErrors errors tasks
-     * @param resolvedErrors finally tasks
+     * @param resolvedFinally finally tasks
      * @return the flow we need to follow
      */
     public List<ResolvedTask> findTaskDependingFlowState(

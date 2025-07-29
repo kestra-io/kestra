@@ -39,11 +39,11 @@
 
 <style scoped lang="scss">
     @font-face {
-        font-family: 'SquareFont';
-        src:  url('../../assets/fonts/obscure.woff2') format('woff2');
+        font-family: 'DiscFont';
+        src:  url('../../assets/fonts/obscure-disc.woff2') format('woff2');
     }
 
     .secret-value:deep(textarea:not(:placeholder-shown)) {
-        font-family: 'SquareFont', serif;
+        font-family: 'DiscFont', serif;
     }
 </style>

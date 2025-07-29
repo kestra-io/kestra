@@ -98,7 +98,7 @@
     };
 
     const data = ref();
-    const {EMPTY_TEXT, generate} = useChartGenerator(props);
+    const {EMPTY_TEXT, generate} = useChartGenerator(props, false);
 
     import {useRoute} from "vue-router";
     const route = useRoute();
@@ -106,7 +106,7 @@
     const getData = async (ID: string) => (data.value = await generate(ID, pagination.value));
 
     const pageNumber = ref(1);
-    const pageSize = ref(10);
+    const pageSize = ref(25);
 
     const pagination = computed(() => {
         return isPaginationEnabled(props.chart)
@@ -114,9 +114,11 @@
             : undefined;
     });
 
-    const dashboardID = (route: RouteLocation) => getDashboard(route, "id") as string
+    const dashboardID = (route: RouteLocation) => getDashboard(route, "id") as string;
 
     const handlePageChange = async (options: { page: number; size: number }) => {
+        if (pageNumber.value === options.page && pageSize.value === options.size) return;
+
         pageNumber.value = options.page;
         pageSize.value = options.size;
 

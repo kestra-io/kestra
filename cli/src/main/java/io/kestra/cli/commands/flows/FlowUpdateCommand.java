@@ -2,11 +2,13 @@ package io.kestra.cli.commands.flows;
 
 import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.AbstractValidateCommand;
+import io.kestra.cli.services.TenantIdSelectorService;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
+import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -29,6 +31,9 @@ public class FlowUpdateCommand extends AbstractApiCommand {
     @CommandLine.Parameters(index = "2", description = "The ID of the flow")
     public String id;
 
+    @Inject
+    private TenantIdSelectorService tenantService;
+
     @SuppressWarnings("deprecation")
     @Override
     public Integer call() throws Exception {
@@ -40,7 +45,7 @@ public class FlowUpdateCommand extends AbstractApiCommand {
 
         try(DefaultHttpClient client = client()) {
             MutableHttpRequest<String> request = HttpRequest
-                .PUT(apiUri("/flows/" + namespace + "/" + id ), body).contentType(MediaType.APPLICATION_YAML);
+                .PUT(apiUri("/flows/" + namespace + "/" + id, tenantService.getTenantId(tenantId)), body).contentType(MediaType.APPLICATION_YAML);
 
             client.toBlocking().retrieve(
                 this.requestOptions(request),

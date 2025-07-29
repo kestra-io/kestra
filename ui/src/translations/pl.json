@@ -271,6 +271,7 @@
     "days": "Dni",
     "debug": "Debugowanie",
     "default": "Domyślny",
+    "defaultsToNamespaceFile": "Domyślnie do pliku namespace: <code>{name}</code>",
     "delete": "Usuń",
     "delete backfill": "Usuń backfill",
     "delete backfills": "Usuń backfills",
@@ -912,6 +913,7 @@
       "version_oss_placeholder": "Odblokuj wersjonowanie pluginów z Enterprise Edition"
     },
     "no_data": "Wygląda na to, że nic tu nie ma... jeszcze!<br/>Dostosuj swoje filtry lub spróbuj ponownie!",
+    "no_file_choosen": "Nie wybrano pliku",
     "no_logs_data": "Brak danych",
     "no_logs_data_description": "Albo żadne flow nie są uruchomione, albo musisz dostosować swoje filtry.",
     "no_namespaces": "Zero namespaces spełnia kryteria wyszukiwania.",

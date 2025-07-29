@@ -271,6 +271,7 @@
     "days": "日数",
     "debug": "デバッグ",
     "default": "デフォルト",
+    "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: <code>{name}</code>",
     "delete": "削除",
     "delete backfill": "backfillを削除",
     "delete backfills": "backfillを削除",
@@ -912,6 +913,7 @@
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック"
     },
     "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
+    "no_file_choosen": "ファイルが選択されていません",
     "no_logs_data": "データなし",
     "no_logs_data_description": "フローが実行中でないか、フィルターを調整する必要があるかもしれません。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",

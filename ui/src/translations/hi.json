@@ -271,6 +271,7 @@
     "days": "दिन",
     "debug": "डिबग",
     "default": "डिफ़ॉल्ट",
+    "defaultsToNamespaceFile": "डिफ़ॉल्ट रूप से namespace फ़ाइल: <code>{name}</code>",
     "delete": "हटाएं",
     "delete backfill": "Backfill हटाएं",
     "delete backfills": "Backfills हटाएं",
@@ -912,6 +913,7 @@
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें"
     },
     "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
+    "no_file_choosen": "कोई फ़ाइल चयनित नहीं",
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",

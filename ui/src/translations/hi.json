@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "बुकमार्क्स",
+    "bulk action async warning": "यह कुछ क्षणों का समय ले सकता है।",
     "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
     "bulk delete": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को हटाना चाहते हैं?",
     "bulk delete backfills": "{count} backfill को हटाएं",

@@ -947,6 +947,7 @@
       "button": "Talk to us"
     },
     "flow_only": "Only available on Flow tab.",
+    "bulk action async warning": "This might take a few moments.",
     "bulk unpause backfills": "Unpause {count} backfill",
     "bulk pause backfills": "Pause {count} backfill",
     "bulk delete backfills": "Delete {count} backfill",

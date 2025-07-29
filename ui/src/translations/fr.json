@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Favoris",
+    "bulk action async warning": "Cela peut prendre quelques instants.",
     "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?",
     "bulk delete": "Êtes-vous sur de vouloir supprimer <code>{executionCount}</code> exécution(s) ?",
     "bulk delete backfills": "Supprimer {count} backfill",

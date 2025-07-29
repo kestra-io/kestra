@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "ブックマーク",
+    "bulk action async warning": "少々お待ちください。",
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
     "bulk delete backfills": "{count}個のbackfillを削除",

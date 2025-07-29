@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Закладки",
+    "bulk action async warning": "Это может занять несколько минут.",
     "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?",
     "bulk delete": "Вы уверены, что хотите удалить <code>{executionCount}</code> выполнение(я)?",
     "bulk delete backfills": "Удалить {count} заполнение",

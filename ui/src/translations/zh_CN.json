@@ -91,6 +91,7 @@
       "title": "蓝图"
     },
     "bookmark": "书签",
+    "bulk action async warning": "这可能需要一些时间。",
     "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
     "bulk delete": "确定要删除 <code>{executionCount}</code> 个执行吗？",
     "bulk delete backfills": "删除 {count} 回填",

@@ -2,7 +2,7 @@
     <Dashboard
         v-if="loaded && total && flow"
         :header="false"
-        :is-flow="true"
+        is-flow
     />
     <NoExecutions v-else-if="loaded && flow && !total" />
 </template>

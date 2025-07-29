@@ -1427,6 +1427,12 @@
     "warning flow with triggers": "Ce flow contient des déclencheurs, une exécution manuelle peut ne pas fonctionner si celui-ci dépend de variables de déclencheurs !",
     "watch": "Regarder",
     "watch_video": "Regarder la vidéo",
+    "webhook": {
+      "curl_command": "Commande cURL Webhook",
+      "curl_note": "Utilisez cette commande cURL pour déclencher le flow via webhook avec une charge utile JSON personnalisée",
+      "no_triggers": "Ce flow n'a pas de triggers webhook activés",
+      "payload": "Payload Webhook (JSON)"
+    },
     "webhook link copied": "Lien du webhook copié.",
     "weeks": "Semaines",
     "welcome": {

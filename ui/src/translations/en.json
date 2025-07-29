@@ -1011,6 +1011,12 @@
       "command": "cURL command",
       "note": "Note that for SECRET and FILE input type, the command must be accommodated to match the real values."
     },
+    "webhook": {
+      "curl_command": "Webhook cURL command",
+      "payload": "Webhook Payload (JSON)",
+      "curl_note": "Use this cURL command to trigger the flow via webhook with custom JSON payload",
+      "no_triggers": "This flow has no enabled webhook triggers"
+    },
     "logs_view": {
       "raw": "Temporal view",
       "raw_details": "Show full task logs and flow logs in a raw, timestamp-ordered format",

@@ -1427,6 +1427,12 @@
     "warning flow with triggers": "此流程包含触发器，如果此流程依赖触发表达式，则手动执行将失败。",
     "watch": "监视",
     "watch_video": "观看视频",
+    "webhook": {
+      "curl_command": "Webhook cURL 命令",
+      "curl_note": "使用此 cURL 命令通过 webhook 触发 flow，并使用自定义 JSON 负载",
+      "no_triggers": "此flow没有启用的webhook triggers",
+      "payload": "Webhook Payload (JSON)"
+    },
     "webhook link copied": "Webhook链接已复制。",
     "weeks": "周",
     "welcome": {

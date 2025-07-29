@@ -1427,6 +1427,12 @@
     "warning flow with triggers": "이 flow는 triggers를 포함하고 있으며, 이 flow가 trigger expressions에 의존하는 경우 수동 실행이 실패합니다. 해당 Flow는 Trigger를 포함하고 있으며,  Trigger Expression을 의존하는 경우 수동 실행이 실패할 수 있습니다. ",
     "watch": "시청",
     "watch_video": "비디오 보기",
+    "webhook": {
+      "curl_command": "Webhook cURL 명령어",
+      "curl_note": "이 cURL 명령어를 사용하여 사용자 정의 JSON 페이로드로 웹훅을 통해 flow를 trigger하십시오.",
+      "no_triggers": "이 flow에는 활성화된 webhook trigger가 없습니다.",
+      "payload": "Webhook Payload (JSON)"
+    },
     "webhook link copied": "웹훅 링크가 복사되었습니다.",
     "weeks": "주",
     "welcome": {

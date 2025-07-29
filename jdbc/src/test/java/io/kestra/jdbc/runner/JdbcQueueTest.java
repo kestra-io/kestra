@@ -55,7 +55,7 @@ abstract public class JdbcQueueTest {
 
         flowQueue.emit(builder("io.kestra.f1"));
 
-        countDownLatch.await(5, TimeUnit.SECONDS);
+        assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
         receive.blockLast();
 
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
@@ -76,7 +76,7 @@ abstract public class JdbcQueueTest {
 
         flowQueue.emit("consumer_group", builder("io.kestra.f1"));
 
-        countDownLatch.await(5, TimeUnit.SECONDS);
+        assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
         receive.blockLast();
 
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
@@ -105,28 +105,27 @@ abstract public class JdbcQueueTest {
         assertThat(receive.blockLast().getNamespace()).isEqualTo("io.kestra.f2");
     }
 
+    // FIXME
     @Test
     void withGroupAndType() throws InterruptedException, QueueException {
-        // first one
-        flowQueue.emit("consumer_group", builder("io.kestra.f1"));
-
         CountDownLatch countDownLatch = new CountDownLatch(1);
         Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, "consumer_group", Indexer.class, either -> {
             countDownLatch.countDown();
         });
 
-        countDownLatch.await(5, TimeUnit.SECONDS);
-
+        // first one
+        flowQueue.emit("consumer_group", builder("io.kestra.f1"));
+        assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
         assertThat(receive.blockLast().getNamespace()).isEqualTo("io.kestra.f1");
-
-        // second one only
-        flowQueue.emit("consumer_group", builder("io.kestra.f2"));
 
         CountDownLatch countDownLatch2 = new CountDownLatch(1);
         receive = TestsUtils.receive(flowQueue, "consumer_group", Indexer.class, either -> {
             countDownLatch2.countDown();
         });
-        countDownLatch2.await(5, TimeUnit.SECONDS);
+
+        // second one only
+        flowQueue.emit("consumer_group", builder("io.kestra.f2"));
+        assertTrue(countDownLatch2.await(5, TimeUnit.SECONDS));
 
         assertThat(receive.blockLast().getNamespace()).isEqualTo("io.kestra.f2");
     }

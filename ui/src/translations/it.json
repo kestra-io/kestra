@@ -1427,6 +1427,12 @@
     "warning flow with triggers": "Questo flow contiene triggers e un'esecuzione manuale fallirà se questo flow dipende da espressioni di trigger.",
     "watch": "Guarda",
     "watch_video": "Guarda Video",
+    "webhook": {
+      "curl_command": "Comando cURL Webhook",
+      "curl_note": "Usa questo comando cURL per trigger il flow tramite webhook con payload JSON personalizzato",
+      "no_triggers": "Questo flow non ha webhook trigger abilitati",
+      "payload": "Payload Webhook (JSON)"
+    },
     "webhook link copied": "Link del Webhook copiato.",
     "weeks": "Settimane",
     "welcome": {

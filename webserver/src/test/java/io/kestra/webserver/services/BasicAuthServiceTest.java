@@ -93,7 +93,7 @@ class BasicAuthServiceTest {
 
     @Test
     void initFromYamlConfig() throws TimeoutException {
-        basicAuthService.setBasicAuthConfiguration(basicAuthConfiguration);
+        basicAuthService.basicAuthConfiguration = basicAuthConfiguration;
         basicAuthService.init();
         assertConfigurationMatchesApplicationYaml();
 
@@ -104,7 +104,7 @@ class BasicAuthServiceTest {
     @ParameterizedTest
     void should_no_save_config_at_init(ConfigWrapper configWrapper){
         deleteSetting();
-        basicAuthService.setBasicAuthConfiguration(configWrapper.config);
+        basicAuthService.basicAuthConfiguration = configWrapper.config;
         basicAuthService.init();
         assertThat(basicAuthService.configuration()).isNull();
     }
@@ -135,7 +135,7 @@ class BasicAuthServiceTest {
     @ParameterizedTest
     void should_save_error_when_validation_errors(ConfigWrapper configWrapper, String errorMessage){
         deleteSetting();
-        basicAuthService.setBasicAuthConfiguration(configWrapper.config);
+        basicAuthService.basicAuthConfiguration = configWrapper.config;
         basicAuthService.init();
         List<String> errors = basicAuthService.validationErrors();
         assertThat(errors).containsExactly(errorMessage);
@@ -157,7 +157,7 @@ class BasicAuthServiceTest {
     void should_remove_validation_error_when_init_with_correct_config(){
         deleteSetting();
         settingRepositoryInterface.save(Setting.builder().key(BASIC_AUTH_ERROR_CONFIG).value(List.of("errors")).build());
-        basicAuthService.setBasicAuthConfiguration(basicAuthConfiguration);
+        basicAuthService.basicAuthConfiguration = basicAuthConfiguration;
         basicAuthService.init();
         List<String> errors = basicAuthService.validationErrors();
         assertThat(errors).isEmpty();
@@ -167,7 +167,7 @@ class BasicAuthServiceTest {
         BasicAuthService.SaltedBasicAuthConfiguration actualConfiguration = basicAuthService.configuration();
         BasicAuthService.SaltedBasicAuthConfiguration applicationYamlConfiguration = new BasicAuthService.SaltedBasicAuthConfiguration(
             actualConfiguration.getSalt(),
-            basicAuthService.getBasicAuthConfiguration()
+            basicAuthService.basicAuthConfiguration
         );
         assertThat(actualConfiguration).isEqualTo(applicationYamlConfiguration);
 

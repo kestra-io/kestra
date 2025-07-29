@@ -41,9 +41,7 @@ public class BasicAuthService {
     private SettingRepositoryInterface settingRepository;
 
     @Inject
-    @Setter
-    @Getter
-    private BasicAuthConfiguration basicAuthConfiguration;
+    BasicAuthConfiguration basicAuthConfiguration;
 
     @Inject
     private InstanceService instanceService;

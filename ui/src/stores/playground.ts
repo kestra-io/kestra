@@ -32,6 +32,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     function clearExecutions() {
         executions.value = [];
+        executionsStore.execution = undefined;
     }
 
     const store = useStore();

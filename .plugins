@@ -26,6 +26,7 @@
 #plugin-debezium:io.kestra.plugin:plugin-debezium-oracle:LATEST
 #plugin-debezium:io.kestra.plugin:plugin-debezium-postgres:LATEST
 #plugin-debezium:io.kestra.plugin:plugin-debezium-sqlserver:LATEST
+#plugin-deepseek:io.kestra.plugin:plugin-deepseek:LATEST
 #plugin-docker:io.kestra.plugin:plugin-docker:LATEST
 #plugin-elasticsearch:io.kestra.plugin:plugin-elasticsearch:LATEST
 #plugin-fivetran:io.kestra.plugin:plugin-fivetran:LATEST

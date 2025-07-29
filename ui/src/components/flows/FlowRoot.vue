@@ -28,7 +28,7 @@
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
     import Overview from "./Overview.vue";
-    import FlowDependencies from "./FlowDependencies.vue";
+    import Dependencies from "../dependencies/Dependencies.vue";
     import Empty from "../layout/empty/Empty.vue";
     import FlowMetrics from "./FlowMetrics.vue";
     import FlowEditor from "./FlowEditor.vue";
@@ -342,7 +342,7 @@
             },
             routeFlowDependencies() {
                 const EMPTY = () => h(Empty, {type: "dependencies"});
-                return this.dependenciesCount > 0 ? FlowDependencies : EMPTY;
+                return this.dependenciesCount > 0 ? Dependencies : EMPTY;
             }
         },
         unmounted() {

@@ -1427,6 +1427,12 @@
     "warning flow with triggers": "Этот flow содержит triggers, и ручное выполнение завершится неудачей, если этот flow зависит от trigger выражений.",
     "watch": "Наблюдение",
     "watch_video": "Смотреть видео",
+    "webhook": {
+      "curl_command": "Команда cURL для Webhook",
+      "curl_note": "Используйте эту команду cURL, чтобы trigger flow через webhook с пользовательским JSON payload",
+      "no_triggers": "Этот flow не имеет включенных webhook trigger",
+      "payload": "Payload Webhook (JSON)"
+    },
     "webhook link copied": "Ссылка на Webhook скопирована.",
     "weeks": "Недели",
     "welcome": {

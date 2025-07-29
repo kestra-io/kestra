@@ -947,6 +947,7 @@
       "button": "Talk to us"
     },
     "flow_only": "Only available on Flow tab.",
+    "bulk action async warning": "This might take a few moments.",
     "bulk unpause backfills": "Unpause {count} backfill",
     "bulk pause backfills": "Pause {count} backfill",
     "bulk delete backfills": "Delete {count} backfill",
@@ -1009,6 +1010,12 @@
     "curl": {
       "command": "cURL command",
       "note": "Note that for SECRET and FILE input type, the command must be accommodated to match the real values."
+    },
+    "webhook": {
+      "curl_command": "Webhook cURL command",
+      "payload": "Webhook Payload (JSON)",
+      "curl_note": "Use this cURL command to trigger the flow via webhook with custom JSON payload",
+      "no_triggers": "This flow has no enabled webhook triggers"
     },
     "logs_view": {
       "raw": "Temporal view",
@@ -1459,6 +1466,8 @@
     "accept": "Accept",
     "reject": "Reject",
     "last modified": "Last modified",
-    "run task in playground": "Run task in playground"
+    "run task in playground": "Run task in playground",
+    "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
+    "no_file_choosen": "No file chosen"
   }
 }

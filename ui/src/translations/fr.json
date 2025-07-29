@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Favoris",
+    "bulk action async warning": "Cela peut prendre quelques instants.",
     "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?",
     "bulk delete": "Êtes-vous sur de vouloir supprimer <code>{executionCount}</code> exécution(s) ?",
     "bulk delete backfills": "Supprimer {count} backfill",
@@ -271,6 +272,7 @@
     "days": "Jours",
     "debug": "Déboguer",
     "default": "Par défaut",
+    "defaultsToNamespaceFile": "Par défaut, fichier de namespace : <code>{name}</code>",
     "delete": "Effacer",
     "delete backfill": "Supprimer le backfill",
     "delete backfills": "Supprimer les backfills",
@@ -912,6 +914,7 @@
       "version_oss_placeholder": "Kestra Enterprise permet de versionner les plugins"
     },
     "no_data": "On dirait qu'il n'y a rien ici… pour l'instant !<br/>Ajustez vos filtres, ou réessayez !",
+    "no_file_choosen": "Aucun fichier choisi",
     "no_logs_data": "Pas de données",
     "no_logs_data_description": "Soit aucun flow n'est en cours d'exécution, soit vous devez ajuster vos filtres.",
     "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",
@@ -1424,6 +1427,12 @@
     "warning flow with triggers": "Ce flow contient des déclencheurs, une exécution manuelle peut ne pas fonctionner si celui-ci dépend de variables de déclencheurs !",
     "watch": "Regarder",
     "watch_video": "Regarder la vidéo",
+    "webhook": {
+      "curl_command": "Commande cURL Webhook",
+      "curl_note": "Utilisez cette commande cURL pour déclencher le flow via webhook avec une charge utile JSON personnalisée",
+      "no_triggers": "Ce flow n'a pas de triggers webhook activés",
+      "payload": "Payload Webhook (JSON)"
+    },
     "webhook link copied": "Lien du webhook copié.",
     "weeks": "Semaines",
     "welcome": {

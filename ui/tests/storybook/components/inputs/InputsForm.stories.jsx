@@ -1,10 +1,20 @@
 import {defineComponent, ref} from "vue";
 import {expect, userEvent, waitFor, within} from "storybook/test";
+import {vueRouter} from "storybook-vue3-router";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
 
 const meta = {
     title: "inputs/InputsForm",
-    component: InputsForm
+    component: InputsForm,
+    decorators: [
+                vueRouter([
+                    {
+                        path: "/",
+                        name: "home",
+                        component: InputsForm
+                    }
+                ])
+            ],
 };
 
 export default meta;

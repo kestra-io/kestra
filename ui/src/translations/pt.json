@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Favoritos",
+    "bulk action async warning": "Isso pode levar alguns instantes.",
     "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
     "bulk delete": "Tem certeza de que deseja deletar <code>{executionCount}</code> execução(ões)?",
     "bulk delete backfills": "Excluir {count} backfill",
@@ -271,6 +272,7 @@
     "days": "Dias",
     "debug": "Depurar",
     "default": "Padrão",
+    "defaultsToNamespaceFile": "Padrões para arquivo de namespace: <code>{name}</code>",
     "delete": "Deletar",
     "delete backfill": "Deletar o backfill",
     "delete backfills": "Deletar backfills",
@@ -912,6 +914,7 @@
       "version_oss_placeholder": "Desbloqueie a Versionamento de Plugin com a Enterprise Edition"
     },
     "no_data": "Parece que não há nada aqui... ainda!<br/>Ajuste seus filtros ou tente novamente!",
+    "no_file_choosen": "Nenhum arquivo selecionado",
     "no_logs_data": "Sem Dados",
     "no_logs_data_description": "Nenhum flow está em execução, ou você pode precisar ajustar seus filtros.",
     "no_namespaces": "Nenhum namespace corresponde aos critérios de busca.",
@@ -1424,6 +1427,12 @@
     "warning flow with triggers": "Este flow contém triggers e uma execução manual falhará se este flow depender de expressões de trigger.",
     "watch": "Assistir",
     "watch_video": "Assistir Vídeo",
+    "webhook": {
+      "curl_command": "Comando cURL do Webhook",
+      "curl_note": "Use este comando cURL para acionar o flow via webhook com carga útil JSON personalizada",
+      "no_triggers": "Este flow não possui triggers de webhook habilitados",
+      "payload": "Payload do Webhook (JSON)"
+    },
     "webhook link copied": "Link do Webhook copiado.",
     "weeks": "Semanas",
     "welcome": {

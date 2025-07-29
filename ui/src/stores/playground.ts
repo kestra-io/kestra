@@ -39,15 +39,17 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     const taskIdToTaskRunIdMap: Record<string, string>  = {};
 
-    async function replayOrTriggerExecution(taskId?: string, nextTaskId?: string, graph?: any) {
+    async function replayOrTriggerExecution(taskId?: string, nextTasksIds?: string[], graph?: any) {
         // if all tasks prior to current task in the graph are identical
         // to the previous execution's revision,
         // we can skip them and start the execution at the current task using replayExecution()
-        if (taskId && executions.value.length && graph && executions.value[0].graph && VueFlowUtils.areTasksIdenticalInGraphUntilTask(executions.value[0].graph, graph, taskId)) {
+        if (taskId && executions.value.length && graph
+            && executions.value[0].graph
+            && VueFlowUtils.areTasksIdenticalInGraphUntilTask(executions.value[0].graph, graph, taskId)) {
             return await executionsStore.replayExecution({
                 executionId: executions.value[0].id,
                 taskRunId: taskIdToTaskRunIdMap[taskId],
-                breakpoints: nextTaskId ? [nextTaskId] : undefined,
+                breakpoints: nextTasksIds,
             });
         }
 
@@ -62,7 +64,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             namespace: store.state.flow.flow?.namespace,
             formData: defaultInputValues,
             kind: "PLAYGROUND",
-            breakpoints: nextTaskId ? [nextTaskId] : undefined,
+            breakpoints: nextTasksIds,
         })
     }
 
@@ -90,9 +92,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // the task specified by the user will not be executed.
         const {nextTasksIds, graph} = await getNextTaskIds(taskId) ?? {};
 
-        const nextTaskId = nextTasksIds.length ? nextTasksIds[0] : undefined;
-
-        const {data: execution} = await replayOrTriggerExecution(taskId, nextTaskId, graph);
+        const {data: execution} = await replayOrTriggerExecution(taskId, nextTasksIds, graph);
         executionsStore.execution = execution;
 
         addExecution(execution, graph);
@@ -123,7 +123,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     return {
         enabled,
         executions,
-        latestExecution: computed(() => executions.value[executions.value.length - 1]),
+        latestExecution: computed(() => executions.value[0]),
         clearExecutions,
         runUntilTask
     }

@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Lesezeichen",
+    "bulk action async warning": "Dies kann einige Augenblicke dauern.",
     "bulk change state": "Sind Sie sicher, dass Sie den Zustand von <code>{executionCount}</code> Ausführung(en) ändern möchten?",
     "bulk delete": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) löschen möchten?",
     "bulk delete backfills": "{count} Backfill löschen",
@@ -271,6 +272,7 @@
     "days": "Tage",
     "debug": "Debuggen",
     "default": "Standard",
+    "defaultsToNamespaceFile": "Standardmäßig auf namespace-Datei: <code>{name}</code> eingestellt",
     "delete": "Löschen",
     "delete backfill": "Backfill löschen",
     "delete backfills": "Backfills löschen",
@@ -912,6 +914,7 @@
       "version_oss_placeholder": "Entsperren Sie die Plugin-Versionierung mit der Enterprise Edition"
     },
     "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!<br/>Passen Sie Ihre Filter an oder versuchen Sie es erneut!",
+    "no_file_choosen": "Keine Datei ausgewählt",
     "no_logs_data": "Keine Daten",
     "no_logs_data_description": "Entweder laufen keine Flows, oder Sie müssen Ihre Filter anpassen.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
@@ -1424,6 +1427,12 @@
     "warning flow with triggers": "Dieser Flow enthält Trigger und eine manuelle Ausführung wird fehlschlagen, wenn dieser Flow von Trigger-Ausdrücken abhängt.",
     "watch": "Beobachten",
     "watch_video": "Video ansehen",
+    "webhook": {
+      "curl_command": "Webhook-cURL-Befehl",
+      "curl_note": "Verwenden Sie diesen cURL-Befehl, um den flow über Webhook mit benutzerdefiniertem JSON-Payload zu triggern.",
+      "no_triggers": "Dieser flow hat keine aktivierten Webhook-Triggers.",
+      "payload": "Webhook-Payload (JSON)"
+    },
     "webhook link copied": "Webhook-Link kopiert.",
     "weeks": "Wochen",
     "welcome": {

@@ -111,8 +111,9 @@ public class Labels extends Task implements ExecutionUpdatableTask {
                     })
                 ).collect(Collectors.toMap(
                     Map.Entry::getKey,
-                    Map.Entry::getValue
-                ));
+                    Map.Entry::getValue,
+                    (first, second) -> second)
+                );
         } else if (labels instanceof Map<?, ?> map) {
             labelsAsMap = map.entrySet()
                 .stream()

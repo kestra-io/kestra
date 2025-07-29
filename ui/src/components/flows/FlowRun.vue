@@ -30,6 +30,9 @@
                 <el-collapse-item :title="$t('curl.command')" name="curl">
                     <curl :flow="flow" :execution-labels="executionLabels" :inputs="inputs" />
                 </el-collapse-item>
+                <el-collapse-item v-if="hasWebhookTriggers" :title="$t('webhook.curl_command')" name="webhook-curl">
+                    <WebhookCurl :flow="flow" />
+                </el-collapse-item>
             </el-collapse>
 
             <div class="bottom-buttons" v-if="!embed">
@@ -79,6 +82,7 @@
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
     import Curl from "./Curl.vue";
+    import WebhookCurl from "./WebhookCurl.vue";
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
     import Inputs from "../../utils/inputs";
     import {TIMEZONE_STORAGE_KEY} from "../settings/BasicSettings.vue";
@@ -88,7 +92,8 @@
         components: {
             LabelInput,
             InputsForm,
-            Curl
+            Curl,
+            WebhookCurl
         },
         props: {
             redirect: {
@@ -130,6 +135,15 @@
             },
             flowCanBeExecuted() {
                 return this.flow && !this.flow.disabled && !this.haveBadLabels;
+            },
+            hasWebhookTriggers() {
+                if (!this.flow?.triggers) {
+                    return false;
+                }
+                return this.flow.triggers.some(trigger => 
+                    trigger.type === "io.kestra.plugin.core.trigger.Webhook" && 
+                    (trigger.disabled === undefined || trigger.disabled === false)
+                );
             }
         },
         methods: {

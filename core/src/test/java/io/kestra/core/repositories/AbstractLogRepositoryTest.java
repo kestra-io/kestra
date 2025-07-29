@@ -46,7 +46,7 @@ public abstract class AbstractLogRepositoryTest {
             .flowId("flowId")
             .namespace("io.kestra.unittest")
             .taskId("taskId")
-            .executionId(IdUtils.create())
+            .executionId("executionId")
             .taskRunId(IdUtils.create())
             .attemptNumber(0)
             .timestamp(Instant.now())
@@ -293,19 +293,23 @@ public abstract class AbstractLogRepositoryTest {
 
         ZonedDateTime startDate = ZonedDateTime.now().minusSeconds(1);
 
-        Flux<LogEntry> find = logRepository.findAsync(MAIN_TENANT, "io.kestra.unittest", Level.INFO, startDate);
+        Flux<LogEntry> find = logRepository.findAsync(MAIN_TENANT, "io.kestra.unittest", null, null, Level.INFO, startDate);
         List<LogEntry> logEntries = find.collectList().block();
         assertThat(logEntries).hasSize(3);
 
-        find = logRepository.findAsync(MAIN_TENANT, null, Level.ERROR, startDate);
+        find = logRepository.findAsync(MAIN_TENANT, null, null, null, Level.ERROR, startDate);
         logEntries = find.collectList().block();
         assertThat(logEntries).hasSize(1);
 
-        find = logRepository.findAsync(MAIN_TENANT, "io.kestra.unused", Level.INFO, startDate);
+        find = logRepository.findAsync(MAIN_TENANT, "io.kestra.unittest", "flowId", null, Level.ERROR, startDate);
+        logEntries = find.collectList().block();
+        assertThat(logEntries).hasSize(1);
+
+        find = logRepository.findAsync(MAIN_TENANT, "io.kestra.unused", "flowId", "executionId", Level.INFO, startDate);
         logEntries = find.collectList().block();
         assertThat(logEntries).hasSize(0);
 
-        find = logRepository.findAsync(MAIN_TENANT, null, Level.INFO, startDate.plusSeconds(2));
+        find = logRepository.findAsync(MAIN_TENANT, null, null, null, Level.INFO, startDate.plusSeconds(2));
         logEntries = find.collectList().block();
         assertThat(logEntries).hasSize(0);
     }

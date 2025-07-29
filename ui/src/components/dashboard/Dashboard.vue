@@ -1,7 +1,7 @@
 <template>
     <Header v-if="header" :dashboard />
 
-    <section id="filter">
+    <section id="filter" :class="{filterPadding: padding}">
         <KestraFilter
             :prefix="`dashboard__${dashboard.id}`"
             :language
@@ -14,7 +14,7 @@
         />
     </section>
 
-    <Sections :key :dashboard :charts :show-default="dashboard.id === 'default'" padding />
+    <Sections :key :dashboard :charts :show-default="dashboard.id === 'default'" :padding="padding" />
 </template>
 
 <script setup lang="ts">
@@ -59,6 +59,8 @@
         isFlow: {type: Boolean, default: false},
         isNamespace: {type: Boolean, default: false},
     });
+
+    const padding = computed(() => !props.isFlow && !props.isNamespace);
 
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const charts = ref<Chart[]>([]);
@@ -107,7 +109,7 @@
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
 
-section#filter {
+.filterPadding {
     margin: 2rem 0.25rem 0;
     padding: 0 2rem;
 }

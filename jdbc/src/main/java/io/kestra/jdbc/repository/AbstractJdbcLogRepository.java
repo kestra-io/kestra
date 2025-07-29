@@ -26,13 +26,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -162,12 +160,28 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         return select;
     }
 
+    private static <T extends Record> SelectConditionStep<T> addFlowId(SelectConditionStep<T> select, String flowId) {
+        if (flowId != null) {
+            select = select.and(field("flow_id").eq(flowId));
+        }
+        return select;
+    }
+
+    private static <T extends Record> SelectConditionStep<T> addExecutionId(SelectConditionStep<T> select, String executionId) {
+        if (executionId != null) {
+            select = select.and(field("execution_id").eq(executionId));
+        }
+        return select;
+    }
+
     @Override
     public Flux<LogEntry> findAsync(
-        @Nullable String tenantId,
-        @Nullable String namespace,
-        @Nullable Level minLevel,
-        ZonedDateTime startDate
+            @Nullable String tenantId,
+            @Nullable String namespace,
+            @Nullable String flowId,
+            @Nullable String executionId,
+            @Nullable Level minLevel,
+            ZonedDateTime startDate
     ){
         return Flux.create(emitter -> this.jdbcRepository
             .getDslContextWrapper()
@@ -181,6 +195,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .where(this.defaultFilter(tenantId))
                     .and(NORMAL_KIND_CONDITION);
                 addNamespace(select, namespace);
+                addFlowId(select, flowId);
+                addExecutionId(select, executionId);
                 addMinLevel(select, minLevel);
                 select = select.and(field("timestamp").greaterThan(startDate.toOffsetDateTime()));
 
@@ -215,24 +231,6 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     emitter.complete();
                 }
             }), FluxSink.OverflowStrategy.BUFFER);
-    }
-
-
-
-    private List<LogStatistics> fillDate(List<LogStatistics> result, ZonedDateTime startDate, ZonedDateTime endDate) {
-        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
-
-        if (groupByType.equals(DateUtils.GroupType.MONTH)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.MONTHS, "YYYY-MM");
-        } else if (groupByType.equals(DateUtils.GroupType.WEEK)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.WEEKS, "YYYY-ww");
-        } else if (groupByType.equals(DateUtils.GroupType.DAY)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.DAYS, "YYYY-MM-DD");
-        } else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.HOURS, "YYYY-MM-DD HH");
-        } else {
-            return fillDate(result, startDate, endDate, ChronoUnit.MINUTES, "YYYY-MM-DD HH:mm");
-        }
     }
 
     private List<LogStatistics> fillDate(

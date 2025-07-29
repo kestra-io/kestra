@@ -212,7 +212,7 @@ export const usePluginsStore = defineStore("plugins", {
             const apiStore = useApiStore();
 
             const apiPromise = apiStore.pluginIcons().then(response => {
-                this.icons = response.data ?? {};
+                this.icons = this.icons ?? {};
                 for (const [key, plugin] of Object.entries(response.data)) {
                     if (this.icons && this.icons[key] === undefined) {
                         this.icons[key] = plugin as string;

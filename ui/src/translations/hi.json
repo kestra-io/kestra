@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "बुकमार्क्स",
+    "bulk action async warning": "यह कुछ क्षणों का समय ले सकता है।",
     "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
     "bulk delete": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को हटाना चाहते हैं?",
     "bulk delete backfills": "{count} backfill को हटाएं",
@@ -271,6 +272,7 @@
     "days": "दिन",
     "debug": "डिबग",
     "default": "डिफ़ॉल्ट",
+    "defaultsToNamespaceFile": "डिफ़ॉल्ट रूप से namespace फ़ाइल: <code>{name}</code>",
     "delete": "हटाएं",
     "delete backfill": "Backfill हटाएं",
     "delete backfills": "Backfills हटाएं",
@@ -912,6 +914,7 @@
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें"
     },
     "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
+    "no_file_choosen": "कोई फ़ाइल चयनित नहीं",
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
@@ -1424,6 +1427,12 @@
     "warning flow with triggers": "इस flow में triggers शामिल हैं और यदि यह flow trigger अभिव्यक्तियों पर निर्भर करता है तो मैन्युअल निष्पादन विफल हो जाएगा।",
     "watch": "देखें",
     "watch_video": "वीडियो देखें",
+    "webhook": {
+      "curl_command": "Webhook cURL कमांड",
+      "curl_note": "इस cURL कमांड का उपयोग कस्टम JSON payload के साथ webhook के माध्यम से flow को trigger करने के लिए करें।",
+      "no_triggers": "इस flow में कोई सक्षम वेबहुक triggers नहीं हैं",
+      "payload": "Webhook Payload (JSON)"
+    },
     "webhook link copied": "Webhook लिंक कॉपी किया गया।",
     "weeks": "सप्ताह",
     "welcome": {

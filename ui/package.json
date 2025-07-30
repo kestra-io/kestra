@@ -108,7 +108,7 @@
         "@vue/test-utils": "^2.4.6",
         "@vueuse/router": "^13.5.0",
         "change-case": "5.4.4",
-        "cross-env": "^7.0.3",
+        "cross-env": "^10.0.0",
         "decompress": "^4.2.1",
         "eslint": "^9.31.0",
         "eslint-plugin-storybook": "^9.0.18",

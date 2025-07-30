@@ -260,7 +260,7 @@
                             class-name="shrink"
                         >
                             <template #default="scope">
-                                <span>{{ scope.row.flowRevision }}</span>
+                                <code class="code-text">{{ scope.row.flowRevision }}</code>
                             </template>
                         </el-table-column>
 
@@ -293,12 +293,12 @@
                                 </el-tooltip>
                             </template>
                             <template #default="scope">
-                                <span>
+                                <code class="code-text">
                                     {{ scope.row.taskRunList?.slice(-1)[0].taskId }}
                                     {{
                                         scope.row.taskRunList?.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList?.slice(-1)[0].attempts.length})` : ""
                                     }}
-                                </span>
+                                </code>
                             </template>
                         </el-table-column>
 
@@ -1121,6 +1121,9 @@
         :deep(.el-alert__icon) {
             color: #ffb703;
         }
+    }
+    .code-text {
+        color: var(--ks-content-primary);
     }
 </style>
 

@@ -149,7 +149,7 @@
             "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7"
         },
         "el-table-infinite-scroll": {
-            "vue": "$vue"
+            "vue": "^3.5.18"
         },
         "storybook": "$storybook"
     },

@@ -165,6 +165,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
             return
         }
 
+        readyToStart.value = false;
+
         if(store.state.flow.isCreating){
             toast.confirm(
                 "You cannot run the playground while creating a flow. Launching a playground run will create the flow.",

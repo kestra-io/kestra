@@ -1016,10 +1016,13 @@
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
     "playground": {
-      "empty": "单击“Run task”按钮，通过模拟执行测试您的工作流。",
       "history": "最近10次运行",
+      "play_icon_info": "您还可以在无代码或拓扑视图中点击播放图标。",
       "run_all_tasks": "运行所有Tasks",
       "run_task": "运行Task",
+      "run_task_and_downstream": "运行 task 和下游",
+      "run_task_info": "将鼠标悬停在Flow Code编辑器中的任何task上，然后点击“Run task”按钮以测试您的task。",
+      "run_this_task": "运行此task",
       "title": "游乐场",
       "toggle": "游乐场"
     },

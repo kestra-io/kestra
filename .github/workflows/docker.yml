@@ -55,9 +55,6 @@ jobs:
     name: Build Artifacts
     if: ${{ github.event.inputs.force-download-artifact == 'true' }}
     uses: ./.github/workflows/workflow-build-artifacts.yml
-    secrets:
-      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   docker:
     name: Publish Docker

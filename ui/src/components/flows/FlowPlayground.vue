@@ -33,9 +33,8 @@
                 </div>
                 <div v-else class="empty-state">
                     <img :src="EmptyVisualPlayground">
-                    <p>
-                        {{ t("playground.empty") }}
-                    </p>
+                    <p>{{ t("playground.run_task_info") }}</p>
+                    <p>{{ t("playground.play_icon_info") }}</p>
                 </div>
             </div>
             <div class="run-history" :class="{'history-visible': historyVisible}">

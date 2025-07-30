@@ -270,7 +270,7 @@
                         );
                     }
 
-                    if (![State.RUNNING, State.PAUSED].includes(this.followedExecution.state.current)) {
+                    if (!State.isRunning(this.followedExecution.state.current)) {
                         // wait a bit to make sure we don't miss logs as log indexer is asynchronous
                         setTimeout(() => {
                             this.closeExecutionSSE()

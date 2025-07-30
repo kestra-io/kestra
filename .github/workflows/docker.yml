@@ -20,6 +20,15 @@ on:
         required: false
         type: string
         default: "LATEST"
+      force-download-artifact:
+        description: 'Force download artifact'
+        required: false
+        type: string
+        default: "true"
+        options:
+          - "true"
+          - "false"
+
 env:
   PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
 jobs:
@@ -73,13 +82,26 @@ jobs:
           else
             echo "plugins=${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT
           fi
-      # Download release
-      - name: Download release
+
+      # [workflow_dispatch]
+      # Download executable from GitHub Release
+      - name: Artifacts - Download release (workflow_dispatch)
+        id: download-github-release
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.force-download-artifact == 'false'
         uses: robinraju/release-downloader@v1.12
         with:
           tag: ${{steps.vars.outputs.tag}}
           fileName: 'kestra-*'
           out-file-path: build/executable
+
+      # [workflow_call]
+      # Download executable from artifact
+      - name: Artifacts - Download executable
+        if: github.event_name != 'workflow_dispatch' || steps.download-github-release.outcome == 'skipped'
+        uses: actions/download-artifact@v4
+        with:
+          name: exe
+          path: build/executable
 
       - name: Copy exe to image
         run: |

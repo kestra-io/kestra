@@ -55,14 +55,7 @@
                         :language="FlowFilterLanguage"
                         :buttons="{
                             refresh: {shown: false},
-                            settings: {
-                                shown: true,
-                                charts: {
-                                    shown: true,
-                                    value: showChart,
-                                    callback: onShowChartChange,
-                                },
-                            },
+                            settings: {shown: false}
                         }"
                         :properties="{
                             shown: true,
@@ -72,10 +65,6 @@
                         }"
                         @update-properties="updateDisplayColumns"
                     />
-                </template>
-
-                <template v-if="showStatChart()" #top>
-                    <Sections :dashboard="{id: 'default'}" :charts show-default />
                 </template>
 
                 <template #table>
@@ -291,7 +280,6 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
     import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
-    import Sections from "../dashboard/sections/Sections.vue";
 
     import Bar from "../dashboard/sections/Bar.vue";
 
@@ -423,9 +411,6 @@
                 permission: permission,
                 action: action,
                 file: undefined,
-                showChart: ["true", null].includes(
-                    localStorage.getItem(storageKeys.SHOW_FLOWS_CHART),
-                ),
                 loading: false,
                 lastExecutionByFlowReady: false,
                 latestExecutions: []
@@ -542,13 +527,6 @@
             },
             updateDisplayColumns(newColumns) {
                 this.displayColumns = newColumns;
-            },
-            showStatChart() {
-                return this.showChart;
-            },
-            onShowChartChange(value) {
-                this.showChart = value;
-                localStorage.setItem(storageKeys.SHOW_FLOWS_CHART, value);
             },
             exportFlows() {
                 this.$toast().confirm(

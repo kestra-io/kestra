@@ -89,7 +89,7 @@
             showKeyShortcuts();
             return;
         }
-        
+
         if(openTabs.value.includes(tabValue)){
             focusTab(tabValue)
             return
@@ -130,6 +130,7 @@
             const [
                 ,
                 parentPath,
+                _blockSchemaPath,
                 refPath,
             ] = args
             const editKey = getEditTabKey({
@@ -271,12 +272,21 @@
         justify-content: space-between;
         border-bottom: 1px solid var(--ks-border-primary);
         background-image: linear-gradient(
-            to right,
-            colorPalette.$base-blue-500 0%,
-            colorPalette.$base-blue-700 30%,
-            transparent 50%,
-            transparent 100%
-        );
+                to right,
+                colorPalette.$base-blue-400 0%,
+                colorPalette.$base-blue-500 50%,
+                transparent 50%,
+                transparent 100%
+            );
+        .dark{
+            background-image: linear-gradient(
+                to right,
+                colorPalette.$base-blue-500 0%,
+                colorPalette.$base-blue-700 30%,
+                transparent 50%,
+                transparent 100%
+            );
+        }
         background-size: 220% 100%;
         background-position: 100% 0;
         transition: background-position .2s;

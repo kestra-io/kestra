@@ -29,12 +29,8 @@ const options: Omit<cytoscape.CytoscapeOptions, "container"> = {
  */
 const layout: cytoscape.CoseLayoutOptions = {
     name: "cose",
-    animate: true,
-    padding: 20,
     nodeRepulsion: 800000,
     idealEdgeLength: 200,
-    edgeElasticity: 200,
-    gravity: 10,
     numIter: 1000,
     coolingFactor: 0.95,
 };

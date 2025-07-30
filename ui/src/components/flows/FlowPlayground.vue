@@ -219,7 +219,7 @@
             border: none;
             border-radius: 4px;
             &.activeTab {
-                color: var(--ks-content-primary);
+                color: $base-white;
                 background-color: $base-blue-500;
             }
         }

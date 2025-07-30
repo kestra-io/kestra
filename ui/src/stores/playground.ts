@@ -74,6 +74,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             return await executionsStore.replayExecution({
                 executionId: executions.value[0].id,
                 taskRunId: taskIdToTaskRunIdMap[taskId],
+                revision: store.state.flow.flow.revision,
                 breakpoints,
             });
         }

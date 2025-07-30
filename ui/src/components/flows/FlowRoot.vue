@@ -276,6 +276,7 @@
                         component: this.routeFlowDependencies,
                         title: this.$t("dependencies"),
                         count: this.dependenciesCount,
+                        maximized: true
                     });
                 }
 

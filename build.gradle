@@ -225,14 +225,14 @@ subprojects {
         }
 
         testlogger {
-            theme 'mocha-parallel'
-            showExceptions true
-            showFullStackTraces true
-            showCauses true
-            slowThreshold 2000
-            showStandardStreams true
-            showPassedStandardStreams false
-            showSkippedStandardStreams true
+            theme = 'mocha-parallel'
+            showExceptions = true
+            showFullStackTraces = true
+            showCauses = true
+            slowThreshold = 2000
+            showStandardStreams = true
+            showPassedStandardStreams = false
+            showSkippedStandardStreams = true
         }
     }
 }
@@ -410,7 +410,7 @@ jar {
 shadowJar {
     archiveClassifier.set(null)
     mergeServiceFiles()
-    zip64 true
+    zip64 = true
 }
 
 distZip.dependsOn shadowJar
@@ -427,8 +427,8 @@ def executableDir = layout.buildDirectory.dir("executable")
 def executable = layout.buildDirectory.file("executable/${project.name}-${project.version}").get().asFile
 
 tasks.register('writeExecutableJar') {
-    group "build"
-    description "Write an executable jar from shadow jar"
+    group = "build"
+    description = "Write an executable jar from shadow jar"
     dependsOn = [shadowJar]
 
     final shadowJarFile =  tasks.shadowJar.outputs.files.singleFile
@@ -454,8 +454,8 @@ tasks.register('writeExecutableJar') {
 }
 
 tasks.register('executableJar', Zip) {
-    group "build"
-    description "Zip the executable jar"
+    group = "build"
+    description = "Zip the executable jar"
     dependsOn = [writeExecutableJar]
 
     archiveFileName = "${project.name}-${project.version}.zip"

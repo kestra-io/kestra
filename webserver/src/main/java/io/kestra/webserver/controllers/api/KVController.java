@@ -23,9 +23,11 @@ import jakarta.inject.Inject;
 
 import java.io.*;
 import java.time.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 
 @Validated
 @Controller("/api/v1/{tenant}/namespaces/{namespace}/kv")
@@ -42,6 +44,21 @@ public class KVController {
         @Parameter(description = "The namespace id") @PathVariable String namespace
     ) throws IOException {
         return kvStore(namespace).list();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get("/inheritance")
+    @Operation(tags = {"KV"}, summary = "List all keys for a namespace and parent namespaces")
+    public List<KVForNamespace> listKeysWithInheritence(
+        @Parameter(description = "The namespace id") @PathVariable String namespace
+    ) throws IOException {
+        List<KVForNamespace> kvForNamespaces = new ArrayList<>();
+
+        for (String ns : collapseNamespace(namespace)) {
+            List<KVEntry> kvEntries = kvStore(ns).list();
+            kvForNamespaces.add(new KVForNamespace(ns, kvEntries));
+        }
+        return kvForNamespaces;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -146,6 +163,22 @@ public class KVController {
         public List<String> keys() {
             return Optional.ofNullable(keys).orElse(List.of());
         }
+    }
+
+    public static List<String> collapseNamespace(String namespace) {
+        List<String> result = new ArrayList<>();
+        String current = namespace;
+
+        while (StringUtils.isNotBlank(current)) {
+            result.add(current);
+            int lastDot = current.lastIndexOf('.');
+            if (lastDot == -1) {
+                break;
+            }
+            current = current.substring(0, lastDot);
+        }
+
+        return result;
     }
 
     private KVStore kvStore(String namespace) {

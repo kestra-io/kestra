@@ -10,6 +10,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVEntry;
+import io.kestra.core.storages.kv.KVForNamespace;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.webserver.controllers.api.KVController.ApiDeleteBulkRequest;
 import io.kestra.webserver.controllers.api.KVController.ApiDeleteBulkResponse;
@@ -78,6 +79,32 @@ class KVControllerTest {
         KVEntry secondKv = res.stream().filter(entry -> entry.key().equals("my-second-key")).findFirst().get();
         assertThat(secondKv.expirationDate()).isEqualTo(mySecondKeyExpirationDate);
         assertThat(secondKv.description()).isEqualTo(secondKvDescription);
+    }
+
+    @Test
+    void listKeysWithInheritance() throws IOException {
+        Instant myKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(5)).truncatedTo(ChronoUnit.MILLIS);
+        String namespaceParent = "io";
+        String namespaceDescription = "in the namespace";
+        String namespaceParentDescription = "in the parent namespace";
+
+        storageInterface.put(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "my-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceDescription), new ByteArrayInputStream("my-value".getBytes())));
+        storageInterface.put(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "my-second-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceDescription), new ByteArrayInputStream("my-second-value".getBytes())));
+
+        storageInterface.put(TENANT_ID, namespaceParent, toKVUri(namespaceParent, "my-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceParentDescription), new ByteArrayInputStream("my-value".getBytes())));
+        storageInterface.put(TENANT_ID, namespaceParent, toKVUri(namespaceParent, "my-second-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceParentDescription), new ByteArrayInputStream("my-second-value".getBytes())));
+
+        List<KVForNamespace> res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/inheritance"), Argument.of(List.class, KVForNamespace.class));
+
+        assertThat(res).hasSize(2);
+        assertThat(res.get(0).namespace()).isEqualTo(NAMESPACE);
+        assertThat(res.get(0).kvEntries()).hasSize(2);
+        assertThat(res.get(0).kvEntries().getFirst().description()).isEqualTo(namespaceDescription);
+
+        assertThat(res.get(1).namespace()).isEqualTo(namespaceParent);
+        assertThat(res.get(1).kvEntries()).hasSize(2);
+        assertThat(res.get(1).kvEntries().getFirst().description()).isEqualTo(namespaceParentDescription);
+
     }
 
     static Stream<Arguments> kvGetKeyValueArgs() {

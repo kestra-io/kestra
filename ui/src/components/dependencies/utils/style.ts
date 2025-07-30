@@ -30,7 +30,7 @@ const VARIABLES = {
 };
 
 const commonNode: Record<string, any> = {
-    label: "data(id)",
+    label: "data(flow)",
     "border-width": 2,
     "border-style": "solid",
     color: "white",

@@ -1,27 +1,24 @@
+import {v4 as uuid} from "uuid";
+
 import {getRandomFlowID} from "./flow";
 
 type Node = {
     id: string;
+    type: "NODE";
+    flow: string;
     namespace: string;
     revision: number;
     state: string;
 };
 
 type Edge = {
+    id: string;
+    type: "EDGE";
     source: string;
     target: string;
 };
 
-type Element = {
-    data: {
-        id: string;
-        source?: string;
-        target?: string;
-        namespace?: string;
-        revision?: number;
-        state?: string;
-    };
-};
+type Element = { data: Node } | { data: Edge };
 
 export interface DependencyOptions {
     roots?: number;
@@ -30,15 +27,15 @@ export interface DependencyOptions {
     total?: number;
 }
 
-const namespaces = ["company", "team", "github", "qa", "system", "dev", "test", "data", "infra", "cloud"];
+const namespaces = ["company", "team", "github", "qa", "system", "dev", "test", "data", "infra", "cloud", "backend", "frontend", "api", "services", "database", "mobile", "security"];
 
 const states = ["CANCELLED", "CREATED", "FAILED", "KILLED", "KILLING", "PAUSED", "QUEUED", "RESTARTED", "RETRIED", "RETRYING", "RUNNING", "SKIPPED", "SUCCESS", "WARNING"];
 
 /**
  * Returns a random integer between the given minimum and maximum values (inclusive).
  *
- * @param min - The minimum value.
- * @param max - The maximum value.
+ * @param min - The minimum integer value.
+ * @param max - The maximum integer value.
  * @returns A random integer between `min` and `max`.
  */
 function getRandomNumber(min: number, max: number): number {
@@ -46,11 +43,9 @@ function getRandomNumber(min: number, max: number): number {
 }
 
 /**
- * Generates a random hierarchical namespace string with a depth of 1–4 levels.
+ * Generates a random hierarchical namespace string with a depth of 1 to 4 levels.
  *
- * Example output: `"company.team.github"`
- *
- * @returns A dot-separated namespace string.
+ * @returns A dot-separated namespace string, e.g., "company.team.github".
  */
 function getRandomNamespace(): string {
     const depth = getRandomNumber(1, 4);
@@ -65,16 +60,19 @@ function getRandomNamespace(): string {
 }
 
 /**
- * Generates a synthetic dependency graph as an array of Cytoscape-compatible elements.
+ * Generates a synthetic dependency graph as an array of cytoscape compatible elements.
  *
- * The graph starts with the specified number of root nodes and grows hierarchically
- * according to depth and children range. Each node contains a namespace, revision,
- * and state.
+ * The graph starts with `roots` root nodes and grows hierarchically up to the specified
+ * `depth`. Each node includes a namespace, revision, and state.
  *
- * @param options - Graph configuration options.
- * @returns An array of Cytoscape-compatible elements (nodes and edges).
+ * @param options - Graph generation options.
+ * @param options.roots - Number of root nodes (default 1).
+ * @param options.depth - Hierarchy depth levels (default 5).
+ * @param options.childrenRange - Min and max children per node (default [2, 20]).
+ * @param options.total - Maximum total nodes to generate (default 100).
+ * @returns An array of cytoscape compatible elements (nodes and edges).
  *
- * @throws If the total number of nodes is less than the number of roots.
+ * @throws Will throw an error if `total` is less than `roots`.
  */
 export function getDependencies(options: DependencyOptions): Element[] {
     const {roots = 1, depth = 5, childrenRange = [2, 20], total = 100} = options;
@@ -89,7 +87,9 @@ export function getDependencies(options: DependencyOptions): Element[] {
     // Create root nodes
     const rootNodes: Node[] = Array.from({length: roots}, () => {
         const node: Node = {
-            id: getRandomFlowID(),
+            id: uuid(),
+            type: "NODE",
+            flow: getRandomFlowID(),
             namespace: getRandomNamespace(),
             revision: getRandomNumber(1, 100),
             state: states[getRandomNumber(0, states.length - 1)],
@@ -112,14 +112,16 @@ export function getDependencies(options: DependencyOptions): Element[] {
 
             for (let i = 0; i < childrenCount; i++) {
                 const child: Node = {
-                    id: getRandomFlowID(),
+                    id: uuid(),
+                    type: "NODE",
+                    flow: getRandomFlowID(),
                     namespace: getRandomNamespace(),
                     revision: getRandomNumber(1, 100),
                     state: states[getRandomNumber(0, states.length - 1)],
                 };
 
                 nodes.push(child);
-                edges.push({source: parent.id, target: child.id});
+                edges.push({id: uuid(), type: "EDGE", source: parent.id, target: child.id});
 
                 nextLevelNodes.push(child);
                 createdCount++;
@@ -132,22 +134,9 @@ export function getDependencies(options: DependencyOptions): Element[] {
         if (!currentLevelNodes.length || createdCount >= total) break;
     }
 
-    // Convert nodes and edges into Cytoscape elements
+    // Convert nodes and edges into cytoscape elements and return combined array
     return [
-        ...nodes.map((node) => ({
-            data: {
-                id: node.id,
-                namespace: node.namespace,
-                revision: node.revision,
-                state: node.state,
-            },
-        })),
-        ...edges.map((edge, i) => ({
-            data: {
-                id: `e${i}`,
-                source: edge.source,
-                target: edge.target,
-            },
-        })),
+        ...nodes.map(({id, flow, namespace, revision, state, type}) => ({data: {id, type, flow, namespace, revision, state}})),
+        ...edges.map(({id, source, target, type}) => ({data: {id, type, source, target}})),
     ];
 }

@@ -18,9 +18,9 @@ type Edge = {
     target: string;
 };
 
-type Element = { data: Node } | { data: Edge };
+export type Element = { data: Node } | { data: Edge };
 
-export interface DependencyOptions {
+type DependencyOptions = {
     roots?: number;
     depth?: number;
     childrenRange?: [number, number];

@@ -4,7 +4,7 @@ import type {Ref} from "vue";
 
 import cytoscape from "cytoscape";
 
-import {getDependencies} from "../../../../scripts/product/dependencies";
+import {type Element, getDependencies} from "../../../../scripts/product/dependencies";
 import {style} from "../utils/style";
 
 const SELECTED = "selected";
@@ -16,7 +16,7 @@ const FADED = "faded";
  *
  * @see {@link https://js.cytoscape.org/#core | Cytoscape core options documentation}
  */
-export const options: Omit<cytoscape.CytoscapeOptions, "container"> = {
+export const options: {elements: Element[]} & Omit<cytoscape.CytoscapeOptions, "container" | "elements"> = {
     elements: getDependencies({}),
     minZoom: 0.25,
     maxZoom: 1.5

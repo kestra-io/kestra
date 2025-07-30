@@ -16,7 +16,7 @@ const FADED = "faded";
  *
  * @see {@link https://js.cytoscape.org/#core | Cytoscape core options documentation}
  */
-const options: Omit<cytoscape.CytoscapeOptions, "container"> = {
+export const options: Omit<cytoscape.CytoscapeOptions, "container"> = {
     elements: getDependencies({}),
     minZoom: 0.25,
     maxZoom: 1.5

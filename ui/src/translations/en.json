@@ -1455,9 +1455,12 @@
     },
     "playground": {
       "title": "Playground",
-      "empty": "Click the \"Run task\" button to test your workflow with a simulated execution.",
+      "run_task_info": "Hover over any task in the Flow Code editor and click the \"Run task\" button to test your task.",
+      "play_icon_info": "You can also hit the Play icon in the No-Code or Topology views.",
       "toggle": "Playground",
-      "run_task": "Run Task",
+      "run_task": "Run task",
+      "run_this_task": "Run this task",
+      "run_task_and_downstream": "Run task & downstream",
       "run_all_tasks": "Run All Tasks",
       "history": "Last 10 runs"
     },

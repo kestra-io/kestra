@@ -33,6 +33,8 @@
         #{--el-button-bg-color}: $base-blue-500;
         #{--el-button-hover-bg-color}: $base-blue-400;
         #{--el-button-active-bg-color}: $base-blue-600;
+        #{--el-button-active-border-color}: $base-blue-700;
+        #{--el-button-outline-color}: $base-blue-700;
     }
 
     &.el-button--success {

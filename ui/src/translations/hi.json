@@ -1016,10 +1016,13 @@
     "pause done": "निष्पादन PAUSED है",
     "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
     "playground": {
-      "empty": "\"Run task\" बटन पर क्लिक करें ताकि आप अपने workflow को एक simulated execution के साथ परीक्षण कर सकें।",
       "history": "पिछले 10 रन",
+      "play_icon_info": "आप No-Code या Topology दृश्य में Play आइकन पर भी क्लिक कर सकते हैं।",
       "run_all_tasks": "सभी Tasks चलाएं",
       "run_task": "टास्क चलाएं",
+      "run_task_and_downstream": "टास्क चलाएं और डाउनस्ट्रीम",
+      "run_task_info": "Flow Code संपादक में किसी भी task पर होवर करें और अपने task का परीक्षण करने के लिए \"Run task\" बटन पर क्लिक करें।",
+      "run_this_task": "इस task को चलाएं",
       "title": "प्लेग्राउंड",
       "toggle": "प्लेग्राउंड"
     },

@@ -40,7 +40,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     const taskIdToTaskRunIdMap: Record<string, string>  = {};
 
-    async function replayOrTriggerExecution(taskId?: string, nextTasksIds?: string[], graph?: any) {
+    async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any) {
         // if all tasks prior to current task in the graph are identical
         // to the previous execution's revision,
         // we can skip them and start the execution at the current task using replayExecution()
@@ -50,7 +50,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             return await executionsStore.replayExecution({
                 executionId: executions.value[0].id,
                 taskRunId: taskIdToTaskRunIdMap[taskId],
-                breakpoints: nextTasksIds,
+                breakpoints,
             });
         }
 
@@ -65,7 +65,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             namespace: store.state.flow.flow?.namespace,
             formData: defaultInputValues,
             kind: "PLAYGROUND",
-            breakpoints: nextTasksIds,
+            breakpoints,
         })
     }
 
@@ -86,14 +86,14 @@ export const usePlaygroundStore = defineStore("playground", () => {
         return {nextTasksIds, graph};
     }
 
-    async function runUntilTask(taskId?: string) {
+    async function runUntilTask(taskId?: string, runDownstreamTasks = false) {
         await store.dispatch("flow/saveAll")
 
         // get the next task id to break on. If current task is provided to breakpoint,
         // the task specified by the user will not be executed.
-        const {nextTasksIds, graph} = await getNextTaskIds(taskId) ?? {};
+        const {nextTasksIds, graph} = await getNextTaskIds(runDownstreamTasks ? undefined : taskId) ?? {};
 
-        const {data: execution} = await replayOrTriggerExecution(taskId, nextTasksIds, graph);
+        const {data: execution} = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph);
         executionsStore.execution = execution;
 
         addExecution(execution, graph);
@@ -121,8 +121,11 @@ export const usePlaygroundStore = defineStore("playground", () => {
         }
     })
 
+    const dropdownOpened = ref<boolean>(false);
+
     return {
         enabled,
+        dropdownOpened,
         executions,
         latestExecution: computed(() => executions.value[0]),
         clearExecutions,

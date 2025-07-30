@@ -30,12 +30,7 @@
             <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
         </template>
         <template v-if="playgroundStore.enabled" #widget-content>
-            <el-button
-                class="el-button--playground"
-                @click="playgroundStore.runUntilTask(highlightedLines?.taskId)"
-            >
-                {{ t('playground.run_task') }}
-            </el-button>
+            <PlaygroundRunTaskButton :task-id="highlightedLines?.taskId" />
         </template>
     </editor>
     <transition name="el-zoom-in-center">
@@ -58,14 +53,11 @@
 <script lang="ts" setup>
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useStore} from "vuex";
-    import {useI18n} from "vue-i18n";
     import Editor from "./Editor.vue";
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
     import {useRoute, useRouter} from "vue-router";
-
-    const {t} = useI18n();
 
     const route = useRoute()
     const router = useRouter()
@@ -79,6 +71,7 @@
     import AcceptDecline from "./AcceptDecline.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
+    import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
 
     const store = useStore();
     const miscStore = useMiscStore();

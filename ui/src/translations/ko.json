@@ -1016,10 +1016,13 @@
     "pause done": "실행이 PAUSED 상태입니다.",
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
     "playground": {
-      "empty": "\"Run task\" 버튼을 클릭하여 시뮬레이션된 실행으로 워크플로우를 테스트하세요.",
       "history": "최근 10회 실행",
+      "play_icon_info": "또한 No-Code 또는 Topology 보기에서 Play 아이콘을 클릭할 수 있습니다.",
       "run_all_tasks": "모든 Task 실행",
       "run_task": "작업 실행",
+      "run_task_and_downstream": "Task 및 다운스트림 실행",
+      "run_task_info": "Flow Code 편집기에서 어떤 task 위에 마우스를 올리고 \"Run task\" 버튼을 클릭하여 task를 테스트하세요.",
+      "run_this_task": "이 task 실행",
       "title": "플레이그라운드",
       "toggle": "플레이그라운드"
     },

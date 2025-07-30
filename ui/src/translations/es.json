@@ -1016,10 +1016,13 @@
     "pause done": "La ejecución está PAUSED",
     "pause title": "Pausar la ejecución <code>{id}</code>.<br/>Tenga en cuenta que las tasks que se están ejecutando actualmente seguirán siendo procesadas, y la ejecución tendrá que reanudarse manualmente.",
     "playground": {
-      "empty": "Haz clic en el botón \"Run task\" para probar tu flujo de trabajo con una ejecución simulada.",
       "history": "Últimas 10 ejecuciones",
+      "play_icon_info": "También puedes presionar el ícono de Play en las vistas No-Code o Topology.",
       "run_all_tasks": "Ejecutar Todas las Tasks",
       "run_task": "Ejecutar Task",
+      "run_task_and_downstream": "Ejecutar task y downstream",
+      "run_task_info": "Pasa el cursor sobre cualquier task en el editor de Flow Code y haz clic en el botón \"Run task\" para probar tu task.",
+      "run_this_task": "Ejecutar esta task",
       "title": "Área de Pruebas",
       "toggle": "Área de pruebas"
     },

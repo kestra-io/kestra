@@ -263,6 +263,9 @@ public class DashboardController {
             throw new IllegalArgumentException("`endDate` must be after `startDate`.");
         }
         Pageable pageable = null;
+        if (globalFilter != null && globalFilter.getPageSize() != null && globalFilter.getPageNumber() != null) {
+            pageable = PageableUtils.from(globalFilter.getPageNumber(), globalFilter.getPageSize());
+        }
 
         return new FetchChartDataQuery(chart, filters, startDate, endDate, tenantId, pageable);
     }

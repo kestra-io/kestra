@@ -163,16 +163,11 @@
             },
             getTabClasses(tab) {
                 const isEnterpriseTab = tab.locked;
-                const isGanttTab = tab.name === "gantt";
-                const ROUTES = ["/flows/edit/", "/namespaces/edit/"];
-                const EDIT_ROUTES = ROUTES.some(route => this.$route.path.startsWith(route));
-                const isOverviewTab = EDIT_ROUTES && tab.title === "Overview";
 
                 return {
-                    "container": !isEnterpriseTab && !isOverviewTab,
-                    "mt-4": !isEnterpriseTab && !isOverviewTab,
-                    "px-0": isEnterpriseTab && isOverviewTab,
-                    "gantt-container": isGanttTab
+                    "container": !isEnterpriseTab,
+                    "mt-4": !isEnterpriseTab,
+                    "px-0": isEnterpriseTab,
                 };
             },
         },

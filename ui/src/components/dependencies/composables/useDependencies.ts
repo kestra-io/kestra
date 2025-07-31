@@ -7,6 +7,7 @@ import cytoscape from "cytoscape";
 import {type Element, getDependencies} from "../../../../scripts/product/dependencies";
 import {style} from "../utils/style";
 
+const HOVERED = "hovered";
 const SELECTED = "selected";
 const FADED = "faded";
 
@@ -108,6 +109,10 @@ function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular): void {
         connectedNode.removeClass(FADED).addClass(SELECTED);
     });
 
+    // Remove all hovered classes on selection to reset hover state
+    cy.nodes(`.${HOVERED}`).removeClass(HOVERED);
+    cy.edges(`.${HOVERED}`).removeClass(HOVERED);
+
     cy.animate({center: {eles: node}, zoom: 1.2}, {duration: 500});
 }
 
@@ -118,8 +123,8 @@ function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular): void {
  */
 function hoverHandler(cy: cytoscape.Core): void {
     ["node", "edge"].forEach((type) => {
-        cy.on("mouseover", type, (event: cytoscape.EventObject) => event.target.addClass("hovered"));
-        cy.on("mouseout", type, (event: cytoscape.EventObject) => event.target.removeClass("hovered"));
+        cy.on("mouseover", type, (event: cytoscape.EventObject) => event.target.addClass(HOVERED));
+        cy.on("mouseout", type, (event: cytoscape.EventObject) => event.target.removeClass(HOVERED));
     });
 }
 

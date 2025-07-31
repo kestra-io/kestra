@@ -1476,6 +1476,10 @@
     "task was skipped": "Task was skipped",
     "task sent a warning": "Task sent a warning",
     "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
-    "no_file_choosen": "No file chosen"
+    "no_file_choosen": "No file chosen",
+    "deps_search": {
+      "placeholder": "Search by flow or namespace...",
+      "no_results": "No results found for {term}"
+    }
   }
 }

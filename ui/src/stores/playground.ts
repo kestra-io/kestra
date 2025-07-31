@@ -8,6 +8,7 @@ import Inputs from "../utils/inputs";
 import {useRoute, useRouter} from "vue-router";
 import {State} from "@kestra-io/ui-libs";
 import {useToast} from "../utils/toast";
+import {useI18n} from "vue-i18n";
 
 interface ExecutionWithGraph extends Execution {
     graph?: VueFlowUtils.FlowGraph;
@@ -160,9 +161,11 @@ export const usePlaygroundStore = defineStore("playground", () => {
         }
     }
 
+    const {t} = useI18n();
+
     async function runUntilTask(taskId?: string, runDownstreamTasks = false) {
         if(readyToStart.value === false) {
-            console.warn("Playground is not ready to start, latest execution is not in a non-final state.");
+            console.warn("Playground is not ready to start, latest execution is still in progress");
             return
         }
 
@@ -170,7 +173,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         if(store.state.flow.isCreating){
             toast.confirm(
-                "You cannot run the playground while creating a flow. Launching a playground run will create the flow.",
+                t("playground.confirm_create"),
                 async () => {
                     await store.dispatch("flow/saveAll");
                     navigateToEdit(taskId, runDownstreamTasks);

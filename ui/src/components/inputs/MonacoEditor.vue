@@ -662,11 +662,11 @@
                 showClasses: false,
                 showWords: false
             },
-            ...(isInFlowEditor && {
+            ...(isInFlowEditor ? {
                 padding: {
-                    top: 28
+                    top: 16
                 }
-            }),
+            } : {}),
             ...props.options
         };
 

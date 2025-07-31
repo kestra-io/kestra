@@ -324,18 +324,24 @@ export default {
                         coreStore.message = {
                             title: "Invalid source code",
                             message: response.data.exception,
-                            variant: "danger"
+                            variant: "error"
                         };
+                        // add this error to the list of errors
+                        commit("setFlowValidation", {
+                            constraints: response.data.exception
+                        });
                         delete response.data.exception;
                     }
                     if(options.store === false) {
                         return response.data;
                     }
+
                     commit("setFlow", response.data);
                     commit("setFlowYaml", response.data.source);
                     commit("setFlowYamlOrigin", response.data.source);
                     commit("setFlowYamlBeforeAdd", response.data.source);
                     commit("setOverallTotal", 1)
+
                     return response.data;
                 })
         },

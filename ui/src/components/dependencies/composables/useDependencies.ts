@@ -108,7 +108,7 @@ function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular): void {
         connectedNode.removeClass(FADED).addClass(SELECTED);
     });
 
-    cy.animate({center: {eles: node}, zoom: 1.5}, {duration: 500});
+    cy.animate({center: {eles: node}, zoom: 1.2}, {duration: 500});
 }
 
 /**

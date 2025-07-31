@@ -161,7 +161,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     }
 
     List<Execution> lastExecutions(
-        @Nullable String tenantId,
+        String tenantId,
         @Nullable List<FlowFilter> flows
     );
 }

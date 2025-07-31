@@ -131,7 +131,7 @@ export function useChartGenerator(props: {chart: Chart; filters: string[]; showD
     const data = ref();
     const generate = async (id: string, pagination?: { pageNumber: number; pageSize: number }) => {
         const filters = props.filters.concat(decodeSearchParams(route.query, undefined, []) ?? []);
-        const parameters: Parameters = {...(pagination ?? {}), ...(filters ?? {})};
+        const parameters: Parameters = {...(pagination ?? {}), filters: (filters ?? {})};
 
         if (!props.showDefault) {
             data.value = await dashboardStore.generate(id, props.chart.id, parameters);

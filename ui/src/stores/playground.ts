@@ -193,6 +193,9 @@ export const usePlaygroundStore = defineStore("playground", () => {
     function updateExecution(execution: ExecutionWithGraph) {
         const index = executions.value.findIndex(e => e.id === execution.id);
         if(execution.taskRunList){
+            // don't keep taskRunIds from previous executions
+            // because of https://github.com/kestra-io/kestra/issues/10462
+            taskIdToTaskRunIdMap.clear();
             for(const taskRun of execution.taskRunList) {
                 // map taskId to taskRunId for later use in replayExecution()
                 taskIdToTaskRunIdMap.set(taskRun.taskId, taskRun.id);

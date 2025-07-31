@@ -12,13 +12,15 @@
         :empty-text="t('deps_search.no_results', {term: search})"
         :show-header="false"
         class="nodes"
-        @row-click="(row: { data: Node }) => console.log(row.data)"
+        @row-click="(row: { data: Node }) => emits('select', row.data.id)"
     >
         <el-table-column>
             <template #default="{row}">
                 <section id="row">
                     <section id="left">
-                        <Link :node="row.data" :subtype="row.data.metadata.subtype" />
+                        <div id="link">
+                            <Link :node="row.data" :subtype="row.data.metadata.subtype" />
+                        </div>
 
                         <p class="description">
                             {{ row.data.metadata.subtype === FLOW ? row.data.namespace : `${row.data.namespace}.${row.data.flow}` }}
@@ -52,7 +54,8 @@
 
     import {FLOW, EXECUTION, type Node} from "../../../../scripts/product/dependencies";
 
-    const props = defineProps<{ nodes: { data: Node }[] }>();
+    const emits = defineEmits<{ (e: "select", id: Node["id"]): void; }>();
+    const props = defineProps<{ nodes: { data: Node }[]; }>();
 
     const search = ref("");
     const results = computed(() => {
@@ -98,6 +101,7 @@ section#row {
     padding: 0.75rem 0 0.75rem 0.75rem;
     font-size: var(--font-size-xs);
     color: var(--ks-button-content-primary);
+    cursor: pointer;
 
     & section#left {
         display: flex;
@@ -109,6 +113,10 @@ section#row {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        & > div#link {
+            width: fit-content;
         }
 
         & p.description {

@@ -4,7 +4,7 @@ import type {Ref} from "vue";
 
 import cytoscape from "cytoscape";
 
-import {type Element, getDependencies} from "../../../../scripts/product/dependencies";
+import {type Node, type Element, getDependencies} from "../../../../scripts/product/dependencies";
 import {style} from "../utils/style";
 
 const HOVERED = "hovered";
@@ -134,11 +134,28 @@ function hoverHandler(cy: cytoscape.Core): void {
  *
  * @param container - A Vue ref to an HTML element which will host the cytoscape graph.
  */
-export function useDependencies(container: Ref<HTMLElement | null>): void {
+export function useDependencies(container: Ref<HTMLElement | null>) {
+    let cy: cytoscape.Core;
+
+    /**
+     * Selects a node in the cytoscape graph by its ID.
+     *
+     * @param id - The ID of the node to select.
+     */
+    const selectNode = (id: Node["id"]): void =>{
+        if (!cy) return;
+
+        const node = cy.getElementById(id);
+
+        if (node.nonempty()) {
+            selectHandler(cy, node);
+        }
+    }
+
     onMounted(() => {
         if (!container.value) return;
 
-        const cy: cytoscape.Core = cytoscape({container: container.value, layout, ...options, style});
+        cy = cytoscape({container: container.value, layout, ...options, style});
 
         // Dynamically size nodes based on connectivity
         setNodeSizes(cy);
@@ -171,4 +188,6 @@ export function useDependencies(container: Ref<HTMLElement | null>): void {
             selectHandler(cy, node);
         });
     });
+
+    return {selectNode};
 }

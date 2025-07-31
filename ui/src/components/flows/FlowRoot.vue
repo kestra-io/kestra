@@ -106,30 +106,33 @@
                                 this.$store.dispatch("flow/loadGraph", {
                                     flow: this.flow,
                                 });
-                                this.$http
-                                    .get(
-                                        `${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`,
-                                    )
-                                    .then((response) => {
-                                        this.dependenciesCount =
-                                            response.data && response.data.nodes
-                                                ? [
-                                                    ...new Set(
-                                                        response.data.nodes.map(
-                                                            (r) => r.uid,
-                                                        ),
-                                                    ),
-                                                ].length
-                                                : 0;
-                                    });
+                                this.loadDependencies()
                             }
                         });
                 }
             },
+            loadDependencies(){
+                return this.$http
+                    .get(
+                        `${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`,
+                    )
+                    .then((response) => {
+                        this.dependenciesCount =
+                            response.data?.nodes
+                                ? [
+                                    ...new Set(
+                                        response.data.nodes.map(
+                                            (r) => r.uid,
+                                        ),
+                                    ),
+                                ].length
+                                : 0;
+                    });
+            },
             flowKey() {
                 return this.$route.params.namespace + "/" + this.$route.params.id;
             },
-            getTabs() {
+            getTabs(dependenciesCount) {
                 let tabs = [
                     {
                         name: undefined,
@@ -275,7 +278,7 @@
                         name: "dependencies",
                         component: this.routeFlowDependencies,
                         title: this.$t("dependencies"),
-                        count: this.dependenciesCount,
+                        count: dependenciesCount,
                     });
                 }
 
@@ -335,7 +338,7 @@
                 };
             },
             tabs() {
-                return this.getTabs();
+                return this.getTabs(this.dependenciesCount);
             },
             ready() {
                 return this.user && this.flow;

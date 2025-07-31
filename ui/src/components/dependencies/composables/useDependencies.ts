@@ -29,10 +29,26 @@ export const options: {elements: Element[]} & Omit<cytoscape.CytoscapeOptions, "
  */
 const layout: cytoscape.CoseLayoutOptions = {
     name: "cose",
-    nodeRepulsion: 800000,
-    idealEdgeLength: 200,
-    numIter: 1000,
-    coolingFactor: 0.95,
+
+    // Physical forces
+    nodeRepulsion: 2_000_000,
+    edgeElasticity: 100,
+    idealEdgeLength: 250,
+
+    // Gravity settings
+    gravity: 0.05,
+
+    // Layout iterations & cooling
+    numIter: 10_000,
+    initialTemp: 200,
+    minTemp: 1,
+
+    // Spacing and padding
+    padding: 50,
+    componentSpacing: 150,
+
+    // Node sizing
+    nodeDimensionsIncludeLabels: true,
 };
 
 /**

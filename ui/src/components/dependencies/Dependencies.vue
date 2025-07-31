@@ -19,17 +19,17 @@
 
     import {options, useDependencies} from "./composables/useDependencies";
 
-    import type {Element} from "../../../scripts/product/dependencies";
+    import {NODE, type Node} from "../../../scripts/product/dependencies";
 
     const container = ref(null);
     useDependencies(container);
 
-    const nodes = computed((): Element[] => {
+    const nodes = computed((): { data: Node }[] => {
         const elements = options.elements;
 
         if (!elements || !Array.isArray(elements)) return [];
 
-        return elements.filter((element: Element) => element.data.type === "NODE");
+        return elements.filter((element): element is { data: Node } => element.data.type === NODE);
     });
 </script>
 
@@ -43,7 +43,11 @@
         height: 100%;
         overflow: hidden scroll;
         background-color: transparent;
-        background-image: radial-gradient(circle, var(--ks-dots-topology) 1px, transparent 1px);
+        background-image: radial-gradient(
+            circle,
+            var(--ks-dots-topology) 1px,
+            transparent 1px
+        );
         background-repeat: repeat;
         background-size: 24px 24px;
     }

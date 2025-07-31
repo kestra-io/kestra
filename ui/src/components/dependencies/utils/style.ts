@@ -93,9 +93,7 @@ export const style: cytoscape.StylesheetJson = [
     {
         selector: "node.selected",
         style: {
-            "background-color": cssVariable(
-                VARIABLES.node.selected.background,
-            )!,
+            "background-color": cssVariable(VARIABLES.node.selected.background)!,
             "border-color": cssVariable(VARIABLES.node.selected.border)!,
             color: "white",
         },

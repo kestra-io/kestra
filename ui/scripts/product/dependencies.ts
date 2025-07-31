@@ -2,13 +2,28 @@ import {v4 as uuid} from "uuid";
 
 import {getRandomFlowID} from "./flow";
 
-type Node = {
+export const NODE = "NODE" as const;
+export const EDGE = "EDGE" as const;
+
+export const FLOW = "FLOW" as const;
+export const EXECUTION = "EXECUTION" as const;
+
+type Flow = {
+    subtype: typeof FLOW;
+    revision: number;
+};
+
+type Execution = {
+    subtype: typeof EXECUTION;
+    state: string;
+};
+
+export type Node = {
     id: string;
     type: "NODE";
     flow: string;
     namespace: string;
-    revision: number;
-    state: string;
+    metadata: Flow | Execution;
 };
 
 type Edge = {
@@ -25,7 +40,8 @@ type DependencyOptions = {
     depth?: number;
     childrenRange?: [number, number];
     total?: number;
-}
+    subtype?: typeof FLOW | typeof EXECUTION;
+};
 
 const namespaces = ["company", "team", "github", "qa", "system", "dev", "test", "data", "infra", "cloud", "backend", "frontend", "api", "services", "database", "mobile", "security"];
 
@@ -60,6 +76,31 @@ function getRandomNamespace(): string {
 }
 
 /**
+ * Creates a random node with either Flow or Execution metadata.
+ *
+ * @param subtype - The type of node to create (`FLOW` or `EXECUTION`).
+ * @returns A randomly generated Node object.
+ */
+function createNode(subtype: typeof FLOW | typeof EXECUTION): Node {
+    return {
+        id: uuid(),
+        type: NODE,
+        flow: getRandomFlowID(),
+        namespace: getRandomNamespace(),
+        metadata:
+            subtype === FLOW
+                ? {
+                      subtype: FLOW,
+                      revision: getRandomNumber(1, 100),
+                  }
+                : {
+                      subtype: EXECUTION,
+                      state: states[getRandomNumber(0, states.length - 1)],
+                  },
+    };
+}
+
+/**
  * Generates a synthetic dependency graph as an array of cytoscape compatible elements.
  *
  * The graph starts with `roots` root nodes and grows hierarchically up to the specified
@@ -70,12 +111,13 @@ function getRandomNamespace(): string {
  * @param options.depth - Hierarchy depth levels (default 5).
  * @param options.childrenRange - Min and max children per node (default [2, 20]).
  * @param options.total - Maximum total nodes to generate (default 100).
+ * @param options.subtype - The type of dependency graph to generate (`FLOW` or `EXECUTION`, default `FLOW`).
  * @returns An array of cytoscape compatible elements (nodes and edges).
  *
  * @throws Will throw an error if `total` is less than `roots`.
  */
 export function getDependencies(options: DependencyOptions): Element[] {
-    const {roots = 1, depth = 5, childrenRange = [2, 20], total = 100} = options;
+    const {roots = 1, depth = 5, childrenRange = [2, 20], total = 100, subtype = FLOW} = options;
 
     if (total < roots) {
         throw new Error("Total must be greater than or equal to the number of roots.");
@@ -86,14 +128,7 @@ export function getDependencies(options: DependencyOptions): Element[] {
 
     // Create root nodes
     const rootNodes: Node[] = Array.from({length: roots}, () => {
-        const node: Node = {
-            id: uuid(),
-            type: "NODE",
-            flow: getRandomFlowID(),
-            namespace: getRandomNamespace(),
-            revision: getRandomNumber(1, 100),
-            state: states[getRandomNumber(0, states.length - 1)],
-        };
+        const node = createNode(subtype);
         nodes.push(node);
         return node;
     });
@@ -111,17 +146,9 @@ export function getDependencies(options: DependencyOptions): Element[] {
             const childrenCount = Math.min(getRandomNumber(childrenRange[0], childrenRange[1]), total - createdCount);
 
             for (let i = 0; i < childrenCount; i++) {
-                const child: Node = {
-                    id: uuid(),
-                    type: "NODE",
-                    flow: getRandomFlowID(),
-                    namespace: getRandomNamespace(),
-                    revision: getRandomNumber(1, 100),
-                    state: states[getRandomNumber(0, states.length - 1)],
-                };
-
+                const child = createNode(subtype);
                 nodes.push(child);
-                edges.push({id: uuid(), type: "EDGE", source: parent.id, target: child.id});
+                edges.push({id: uuid(), type: EDGE, source: parent.id, target: child.id});
 
                 nextLevelNodes.push(child);
                 createdCount++;
@@ -136,7 +163,7 @@ export function getDependencies(options: DependencyOptions): Element[] {
 
     // Convert nodes and edges into cytoscape elements and return combined array
     return [
-        ...nodes.map(({id, flow, namespace, revision, state, type}) => ({data: {id, type, flow, namespace, revision, state}})),
-        ...edges.map(({id, source, target, type}) => ({data: {id, type, source, target}})),
+        ...nodes.map(({id, type, flow, namespace, metadata}) => ({data: {id, type, flow, namespace, metadata}})),
+        ...edges.map(({id, type, source, target}) => ({data: {id, type, source, target}})),
     ];
 }

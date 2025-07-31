@@ -63,7 +63,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     const store = useStore();
     const executionsStore = useExecutionsStore();
 
-    const taskIdToTaskRunIdMap: Map<string, string>  = new Map();
+    const taskIdToTaskRunIdMap: Map<string, string> = new Map();
 
     async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any) {
         // if all tasks prior to current task in the graph are identical

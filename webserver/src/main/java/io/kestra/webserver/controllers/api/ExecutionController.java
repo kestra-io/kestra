@@ -1806,9 +1806,11 @@ public class ExecutionController {
                     // Register for updates
                     streamingService.registerSubscriber(executionId, subscriberId, emitter, flow);
                 } catch (TimeoutException e) {
+                    log.error("Unable to find execution {}", executionId, e);
                     emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
                         "Unable to find execution " + executionId));
                 } catch (IllegalStateException e) {
+                    log.error("Unable to find flow for execution {}", executionId, e);
                     emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
                         "Unable to find flow for execution " + executionId));
                 }

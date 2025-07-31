@@ -1016,6 +1016,7 @@
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
     "playground": {
+      "confirm_create": "Nie można uruchomić playground podczas tworzenia flow. Uruchomienie playground run utworzy flow.",
       "history": "Ostatnie 10 uruchomień",
       "play_icon_info": "Możesz również kliknąć ikonę Play w widokach No-Code lub Topology.",
       "run_all_tasks": "Uruchom Wszystkie Taski",

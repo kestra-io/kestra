@@ -664,7 +664,7 @@
             },
             ...(isInFlowEditor ? {
                 padding: {
-                    top: 18
+                    top: 16
                 }
             } : {}),
             ...props.options

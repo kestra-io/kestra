@@ -208,48 +208,50 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             return Optional.empty();
         }
 
-        boolean isOutputsAllowed = runContext
-            .<Boolean>pluginConfiguration(PLUGIN_FLOW_OUTPUTS_ENABLED)
-            .orElse(true);
-
         final Output.OutputBuilder builder = Output.builder()
             .executionId(execution.getId())
             .state(execution.getState().getCurrent());
 
-        final Map<String, Object> subflowOutputs = Optional
-            .ofNullable(flow.getOutputs())
-            .map(outputs -> outputs
-                .stream()
-                .collect(Collectors.toMap(
-                    io.kestra.core.models.flows.Output::getId,
-                    io.kestra.core.models.flows.Output::getValue)
-                )
-            )
-            .orElseGet(() -> isOutputsAllowed ? this.getOutputs() : null);
-
         VariablesService variablesService = ((DefaultRunContext) runContext).getApplicationContext().getBean(VariablesService.class);
-        if (subflowOutputs != null) {
-            try {
-                Map<String, Object> outputs = runContext.render(subflowOutputs);
-                FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class); // this is hacking
-                if (flow.getOutputs() != null && flowInputOutput != null) {
-                    outputs = flowInputOutput.typedOutputs(flow, execution, outputs);
-                }
-                builder.outputs(outputs);
-            } catch (Exception e) {
-                runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
-                var state = State.Type.fail(this);
-                Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
-                taskRun = taskRun
-                    .withState(state)
-                    .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
-                    .withOutputs(variables);
+        if (this.wait) { // we only compute outputs if we wait for the subflow
+            boolean isOutputsAllowed = runContext
+                .<Boolean>pluginConfiguration(PLUGIN_FLOW_OUTPUTS_ENABLED)
+                .orElse(true);
 
-                return Optional.of(SubflowExecutionResult.builder()
-                    .executionId(execution.getId())
-                    .state(State.Type.FAILED)
-                    .parentTaskRun(taskRun)
-                    .build());
+            final Map<String, Object> subflowOutputs = Optional
+                .ofNullable(flow.getOutputs())
+                .map(outputs -> outputs
+                    .stream()
+                    .collect(Collectors.toMap(
+                        io.kestra.core.models.flows.Output::getId,
+                        io.kestra.core.models.flows.Output::getValue)
+                    )
+                )
+                .orElseGet(() -> isOutputsAllowed ? this.getOutputs() : null);
+
+            if (subflowOutputs != null) {
+                try {
+                    Map<String, Object> outputs = runContext.render(subflowOutputs);
+                    FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class); // this is hacking
+                    if (flow.getOutputs() != null && flowInputOutput != null) {
+                        outputs = flowInputOutput.typedOutputs(flow, execution, outputs);
+                    }
+                    builder.outputs(outputs);
+                } catch (Exception e) {
+                    runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
+                    var state = State.Type.fail(this);
+                    Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
+                    taskRun = taskRun
+                        .withState(state)
+                        .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
+                        .withOutputs(variables);
+
+                    return Optional.of(SubflowExecutionResult.builder()
+                        .executionId(execution.getId())
+                        .state(State.Type.FAILED)
+                        .parentTaskRun(taskRun)
+                        .build());
+                }
             }
         }
 

@@ -1364,6 +1364,8 @@
     "topology": "拓扑",
     "topology-graph": {
       "graph-orientation": "图表方向",
+      "invalid": "图形错误",
+      "invalid_description": "加载图表时发生错误。请检查源代码中的错误。",
       "zoom-fit": "适应屏幕",
       "zoom-in": "放大",
       "zoom-out": "缩小",

@@ -1364,6 +1364,8 @@
     "topology": "토폴로지",
     "topology-graph": {
       "graph-orientation": "그래프 방향",
+      "invalid": "그래프 오류",
+      "invalid_description": "그래프를 로드하는 중 오류가 발생했습니다. 소스 코드에서 오류를 확인하세요.",
       "zoom-fit": "맞춤",
       "zoom-in": "확대",
       "zoom-out": "축소",

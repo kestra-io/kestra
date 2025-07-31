@@ -1364,6 +1364,8 @@
     "topology": "Topologie",
     "topology-graph": {
       "graph-orientation": "Graph-Ausrichtung",
+      "invalid": "Graph-Fehler",
+      "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte überprüfen Sie den Quellcode auf Fehler.",
       "zoom-fit": "Anpassen",
       "zoom-in": "Vergrößern",
       "zoom-out": "Verkleinern",

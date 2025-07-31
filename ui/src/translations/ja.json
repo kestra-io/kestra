@@ -1364,6 +1364,8 @@
     "topology": "トポロジー",
     "topology-graph": {
       "graph-orientation": "グラフの向き",
+      "invalid": "グラフエラー",
+      "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。",
       "zoom-fit": "フィット",
       "zoom-in": "ズームイン",
       "zoom-out": "ズームアウト",

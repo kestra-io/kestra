@@ -7,7 +7,13 @@
         />
     </section>
 
-    <el-table :data="results" :show-header="false" :empty-text="t('deps_search.no_results', {term: search})" class="nodes">
+    <el-table
+        :data="results"
+        :empty-text="t('deps_search.no_results', {term: search})"
+        :show-header="false"
+        class="nodes"
+        @row-click="(row: { data: Node }) => console.log(row.data)"
+    >
         <el-table-column>
             <template #default="{row}">
                 <section id="row">

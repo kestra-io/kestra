@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, nextTick, onMounted, ref, shallowRef, watch} from "vue";
+    import {computed, onMounted, ref, shallowRef, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
@@ -607,9 +607,13 @@
         showWidgetContent.value = true
     }
 
+    async function wait(time: number){
+        return new Promise(resolve => setTimeout(resolve, time));
+    }
+
     async function waitForWidgetContentNode() {
-        await nextTick();
-        if (widgetNode.querySelector(".editor-content-widget-content") === null) {
+        await wait(30);
+        if (document.querySelector(".editor-content-widget-content") === null) {
             return waitForWidgetContentNode();
         }
     }

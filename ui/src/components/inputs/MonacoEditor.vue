@@ -429,7 +429,7 @@
         codeEditor.removeContentWidget(datePickerWidget);
     }
 
-    watch(suggestWidget, (newVal) => {
+    watch(suggestWidget, async (newVal) => {
         const asCodeEditor = editorResolved.value?.getEditorType() === EditorType.ICodeEditor ? editorResolved.value as editor.ICodeEditor : undefined;
 
         if (newVal !== undefined) {
@@ -481,7 +481,7 @@
                                 };
                             }
 
-                            asCodeEditor.addContentWidget(datePickerWidget);
+                            await asCodeEditor.addContentWidget(datePickerWidget);
                             datePicker.value!.handleOpen();
                             setTimeout(() => {
                                 datePicker.value!.focus();

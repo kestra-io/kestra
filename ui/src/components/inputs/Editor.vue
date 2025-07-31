@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref, shallowRef, watch} from "vue";
+    import {computed, nextTick, onMounted, ref, shallowRef, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
@@ -92,7 +92,6 @@
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
     import MonacoEditor from "./MonacoEditor.vue";
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-    import {nextTick} from "process";
 
     const {t} = useI18n()
 
@@ -568,11 +567,11 @@
 
     const showWidgetContent = ref(false)
 
-    function addContentWidget(widget: {
+    async function addContentWidget(widget: {
         id: string;
         position: monaco.IPosition;
         height: number
-        marginLeft: number
+        right: string
     }) {
         if(!isCodeEditor(editor)) return
         if(!monacoEditor.value) return
@@ -591,16 +590,28 @@
             },
             getDomNode: () => {
                 const content = widgetNode.querySelector(".editor-content-widget-content") as HTMLDivElement;
-                widgetNode.style.marginLeft = widget.marginLeft / 2.2 + "rem";
                 if(content){
-                    content.style.height = (widget.height * 18) + "px";
+                    content.style.height = widget.height + "rem";
                 }
-                return widgetNode
+                return widgetNode;
             },
+            afterRender() {
+                const boundingClientRect = monacoEditor.value!.$el.querySelector(".ks-monaco-editor .monaco-scrollable-element").getBoundingClientRect();
+                // Since we must position the widget on the right side but our anchor is from the left, we add the width of the editor minus the right offset (150px is a rough estimate of the widget's width)
+                widgetNode.style.left = `calc(${boundingClientRect.width}px - 150px - ${widget.right})`;
+            }
         });
-        nextTick(() => {
-            showWidgetContent.value = true;
-        })
+
+        await waitForWidgetContentNode()
+
+        showWidgetContent.value = true
+    }
+
+    async function waitForWidgetContentNode() {
+        await nextTick();
+        if (widgetNode.querySelector(".editor-content-widget-content") === null) {
+            return waitForWidgetContentNode();
+        }
     }
 
     function removeContentWidget(id: string) {
@@ -637,9 +648,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100%;
-    width: 100%;
-    padding: 0 4rem;
+
+    .el-button-group {
+        display: inline-flex;
+    }
 }
 
 :not(.namespace-defaults, .el-drawer__body) > .ks-editor {

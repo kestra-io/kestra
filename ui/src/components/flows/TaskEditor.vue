@@ -1,11 +1,6 @@
 <template>
     <div v-if="playgroundStore.enabled && isTask && taskObject?.id" class="flow-playground">
-        <el-button
-            class="el-button--playground"
-            @click="playgroundStore.runUntilTask(taskObject?.id)"
-        >
-            {{ t('playground.run_task') }}
-        </el-button>
+        <PlaygroundRunTaskButton :task-id="taskObject?.id" />
     </div>
     <el-form label-position="top">
         <el-form-item>
@@ -52,6 +47,7 @@
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {usePlaygroundStore} from "../../stores/playground";
     import {getValueAtJsonPath} from "../../utils/utils";
+    import PlaygroundRunTaskButton from "../inputs/PlaygroundRunTaskButton.vue";
 
     const {t} = useI18n();
 

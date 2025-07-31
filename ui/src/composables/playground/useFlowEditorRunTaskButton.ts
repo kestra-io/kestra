@@ -67,7 +67,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
     }
 
     function addButtonToHoveredTask(taskCode?: {taskId: string, start: number, end: number, longestLineLength:number, firstLineLength: number}) {
-        if(!taskCode) {
+        if(!taskCode || playgroundStore.dropdownOpened) {
             return
         }
 
@@ -79,16 +79,20 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             id: `task-hovered-${taskCode.taskId}`,
             position: {
                 lineNumber: taskCode.start,
-                column: taskCode.longestLineLength + 1
+                column: 0
             },
-            height: (taskCode.end - taskCode.start) + 1,
-            marginLeft: (taskCode.longestLineLength - taskCode.firstLineLength),
+            height: Math.max(taskCode.end - taskCode.start + 1, 1),
+            right: "1rem",
         });
     }
 
     const highlightedTaskId = ref<string | undefined>(undefined);
 
     watch(hoveredTaskProperties, (res) => {
+        if (playgroundStore.dropdownOpened) {
+            return;
+        }
+
         if(!res || !playgroundStore.enabled || !isCurrentTabFlow.value) {
             highlightedLines.value = undefined;
             editorRefElement.value?.clearHighlights();

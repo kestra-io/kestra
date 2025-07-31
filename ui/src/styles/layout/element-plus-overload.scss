@@ -28,6 +28,7 @@
     }
 
     &.el-button--playground {
+        #{--el-button-disabled-text-color}: $base-blue-50;
         #{--el-button-text-color}: $base-white;
         #{--el-button-hover-text-color}: $base-white;
         #{--el-button-bg-color}: $base-blue-500;

@@ -1470,6 +1470,11 @@
     "reject": "Reject",
     "last modified": "Last modified",
     "run task in playground": "Run task in playground",
+    "task is running": "Task is running",
+    "task was successful": "Task was successful",
+    "task failed": "Task failed",
+    "task was skipped": "Task was skipped",
+    "task sent a warning": "Task sent a warning",
     "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
     "no_file_choosen": "No file chosen"
   }

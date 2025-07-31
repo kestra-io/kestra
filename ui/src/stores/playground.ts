@@ -5,6 +5,9 @@ import {useUrlSearchParams} from "@vueuse/core"
 import * as VueFlowUtils from "@kestra-io/ui-libs/vue-flow-utils"
 import {Execution, useExecutionsStore} from "./executions";
 import Inputs from "../utils/inputs";
+import {useRoute, useRouter} from "vue-router";
+import {State} from "@kestra-io/ui-libs";
+import {useToast} from "../utils/toast";
 
 interface ExecutionWithGraph extends Execution {
     graph?: VueFlowUtils.FlowGraph;
@@ -23,6 +26,27 @@ export const usePlaygroundStore = defineStore("playground", () => {
             params.playground = ""
         }
     })
+
+    const route = useRoute();
+    const router = useRouter();
+
+    function navigateToEdit(runUntilTaskId?: string, runDownstreamTasks?: boolean) {
+        const flowParsed = store.state.flow.flow;
+        router.push({
+            name: "flows/update",
+            params: {
+                id: flowParsed.id,
+                namespace: flowParsed.namespace,
+                tab: "edit",
+                tenant: route.params.tenant,
+            },
+            query: {
+                playground: "on",
+                runUntilTaskId,
+                runDownstreamTasks: runDownstreamTasks ? "true" : undefined,
+            }
+        });
+    }
 
     const executions = ref<ExecutionWithGraph[]>([])
     function addExecution(execution: ExecutionWithGraph, graph: VueFlowUtils.FlowGraph) {
@@ -50,6 +74,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             return await executionsStore.replayExecution({
                 executionId: executions.value[0].id,
                 taskRunId: taskIdToTaskRunIdMap[taskId],
+                revision: store.state.flow.flow.revision,
                 breakpoints,
             });
         }
@@ -86,9 +111,74 @@ export const usePlaygroundStore = defineStore("playground", () => {
         return {nextTasksIds, graph};
     }
 
-    async function runUntilTask(taskId?: string, runDownstreamTasks = false) {
-        await store.dispatch("flow/saveAll")
+    const latestExecution = computed(() => executions.value[0]);
 
+    const nonFinalStates = [
+        State.KILLING,
+        State.RUNNING,
+        State.RESTARTED,
+        State.CREATED,
+    ]
+
+    const executionState = computed(() => {
+        return latestExecution.value?.state.current;
+    })
+
+    const readyToStartPure = computed(() => {
+        return !latestExecution.value || !nonFinalStates.includes(executionState.value)
+    })
+
+    const readyToStart = ref(readyToStartPure.value);
+    watch(readyToStartPure, (newValue) => {
+        if(newValue) {
+            setTimeout(() => {
+                readyToStart.value = newValue;
+            }, 1000);
+        } else {
+            readyToStart.value = newValue
+        }
+    });
+
+    const toast = useToast();
+
+    function runFromQuery(){
+        if(route.query.runUntilTaskId) {
+            const {runUntilTaskId, runDownstreamTasks} = route.query;
+            runUntilTask(runUntilTaskId.toString(), Boolean(runDownstreamTasks));
+
+            // remove the query parameters to avoid running the same task again
+            router.replace({
+                name: route.name,
+                params: route.params,
+                query: {
+                    ...route.query,
+                    runUntilTaskId: undefined,
+                    runDownstreamTasks: undefined,  // remove the query parameter
+                }
+            });
+        }
+    }
+
+    async function runUntilTask(taskId?: string, runDownstreamTasks = false) {
+        if(readyToStart.value === false) {
+            console.warn("Playground is not ready to start, latest execution is not in a non-final state.");
+            return
+        }
+
+        readyToStart.value = false;
+
+        if(store.state.flow.isCreating){
+            toast.confirm(
+                "You cannot run the playground while creating a flow. Launching a playground run will create the flow.",
+                async () => {
+                    await store.dispatch("flow/saveAll");
+                    navigateToEdit(taskId, runDownstreamTasks);
+                }
+            );
+            return;
+        }
+
+        await store.dispatch("flow/saveAll")
         // get the next task id to break on. If current task is provided to breakpoint,
         // the task specified by the user will not be executed.
         const {nextTasksIds, graph} = await getNextTaskIds(runDownstreamTasks ? undefined : taskId) ?? {};
@@ -126,9 +216,12 @@ export const usePlaygroundStore = defineStore("playground", () => {
     return {
         enabled,
         dropdownOpened,
+        readyToStart,
         executions,
-        latestExecution: computed(() => executions.value[0]),
+        latestExecution,
         clearExecutions,
-        runUntilTask
+        runUntilTask,
+        runFromQuery,
+        executionState
     }
 })

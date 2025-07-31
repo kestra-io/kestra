@@ -24,6 +24,7 @@ export default {
         total: 0,
         overallTotal: undefined,
         flowGraph: undefined,
+        invalidGraph: false,
         revisions: undefined,
         flowValidation: undefined,
         taskError: undefined,
@@ -470,9 +471,12 @@ export default {
                 params["revision"] = flow.revision;
             }
             return this.$http.get(`${apiUrl(this)}/flows/${flow.namespace}/${flow.id}/graph`, {params}).then(response => {
+                commit("setInvalidGraph", false)
                 commit("setFlowGraph", response.data)
                 return response.data;
-            })
+            }).catch(() => {
+                commit("setInvalidGraph", true)
+            });
         },
         loadGraphFromSource({commit, state}, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
@@ -617,6 +621,9 @@ export default {
         },
     },
     mutations: {
+        setInvalidGraph(state, value) {
+            state.invalidGraph = value;
+        },
         setFlows(state, flows) {
             state.flows = flows
         },

@@ -275,7 +275,9 @@
       "zoom-in": "Zoom in",
       "zoom-out": "Zoom out",
       "zoom-reset": "Reset zoom",
-      "zoom-fit": "Fit"
+      "zoom-fit": "Fit",
+      "invalid": "Graph error",
+      "invalid_description": "An error occurred while loading the graph. Please check the source code for errors."
     },
     "show task logs": "Show task logs",
     "show task condition": "Show task condition",

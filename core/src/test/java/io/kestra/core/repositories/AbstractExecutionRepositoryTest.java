@@ -44,6 +44,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.USER;
@@ -740,4 +741,16 @@ public abstract class AbstractExecutionRepositoryTest {
         executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
         assertThat(executions.size()).isEqualTo(0L);
     }
+
+    @Test
+    protected void shouldReturnLastExecutionsWhenInputsAreNull() {
+        inject();
+
+        List<Execution> lastExecutions = executionRepository.lastExecutions(MAIN_TENANT, null);
+
+        assertThat(lastExecutions).isNotEmpty();
+        Set<String> flowIds = lastExecutions.stream().map(Execution::getFlowId).collect(Collectors.toSet());
+        assertThat(flowIds.size()).isEqualTo(lastExecutions.size());
+    }
+
 }

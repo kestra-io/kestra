@@ -7,9 +7,7 @@ on:
       GH_PERSONAL_TOKEN:
         description: "The Github personal token."
         required: true
-  push:
-    tags:
-      - '*'
+
 
 jobs:
   publish:

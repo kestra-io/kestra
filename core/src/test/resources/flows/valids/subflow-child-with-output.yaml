@@ -1,0 +1,12 @@
+id: subflow-child-with-output
+namespace: io.kestra.tests
+
+tasks:
+  - id: return
+    type: io.kestra.plugin.core.debug.Return
+    format: "Some value"
+
+outputs:
+  - id: flow_a_output
+    type: STRING
+    value: "{{ outputs.return.value }}"

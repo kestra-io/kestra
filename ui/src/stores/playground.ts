@@ -8,6 +8,7 @@ import Inputs from "../utils/inputs";
 import {useRoute, useRouter} from "vue-router";
 import {State} from "@kestra-io/ui-libs";
 import {useToast} from "../utils/toast";
+import {useI18n} from "vue-i18n";
 
 interface ExecutionWithGraph extends Execution {
     graph?: VueFlowUtils.FlowGraph;
@@ -62,7 +63,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     const store = useStore();
     const executionsStore = useExecutionsStore();
 
-    const taskIdToTaskRunIdMap: Record<string, string>  = {};
+    const taskIdToTaskRunIdMap: Map<string, string>  = new Map();
 
     async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any) {
         // if all tasks prior to current task in the graph are identical
@@ -70,10 +71,11 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // we can skip them and start the execution at the current task using replayExecution()
         if (taskId && executions.value.length && graph
             && executions.value[0].graph
-            && VueFlowUtils.areTasksIdenticalInGraphUntilTask(executions.value[0].graph, graph, taskId)) {
+            && VueFlowUtils.areTasksIdenticalInGraphUntilTask(executions.value[0].graph, graph, taskId)
+            && taskIdToTaskRunIdMap.has(taskId)) {
             return await executionsStore.replayExecution({
                 executionId: executions.value[0].id,
-                taskRunId: taskIdToTaskRunIdMap[taskId],
+                taskRunId: taskIdToTaskRunIdMap.get(taskId),
                 revision: store.state.flow.flow.revision,
                 breakpoints,
             });
@@ -159,9 +161,11 @@ export const usePlaygroundStore = defineStore("playground", () => {
         }
     }
 
+    const {t} = useI18n();
+
     async function runUntilTask(taskId?: string, runDownstreamTasks = false) {
         if(readyToStart.value === false) {
-            console.warn("Playground is not ready to start, latest execution is not in a non-final state.");
+            console.warn("Playground is not ready to start, latest execution is still in progress");
             return
         }
 
@@ -169,7 +173,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         if(store.state.flow.isCreating){
             toast.confirm(
-                "You cannot run the playground while creating a flow. Launching a playground run will create the flow.",
+                t("playground.confirm_create"),
                 async () => {
                     await store.dispatch("flow/saveAll");
                     navigateToEdit(taskId, runDownstreamTasks);
@@ -184,6 +188,11 @@ export const usePlaygroundStore = defineStore("playground", () => {
         const {nextTasksIds, graph} = await getNextTaskIds(runDownstreamTasks ? undefined : taskId) ?? {};
 
         const {data: execution} = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph);
+
+        // don't keep taskRunIds from previous executions
+        // because of https://github.com/kestra-io/kestra/issues/10462
+        taskIdToTaskRunIdMap.clear();
+
         executionsStore.execution = execution;
 
         addExecution(execution, graph);
@@ -194,7 +203,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         if(execution.taskRunList){
             for(const taskRun of execution.taskRunList) {
                 // map taskId to taskRunId for later use in replayExecution()
-                taskIdToTaskRunIdMap[taskRun.taskId] = taskRun.id;
+                taskIdToTaskRunIdMap.set(taskRun.taskId, taskRun.id);
             }
         }
         if (index !== -1) {

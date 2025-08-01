@@ -869,8 +869,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     @Override
     public List<Execution> lastExecutions(
-        @Nullable String tenantId,
-        List<FlowFilter> flows
+        String tenantId,
+        @Nullable List<FlowFilter> flows
     ) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -892,14 +892,19 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .and(NORMAL_KIND_CONDITION)
                     .and(field("end_date").isNotNull())
                     .and(DSL.or(
-                        flows
-                            .stream()
-                            .map(flow -> DSL.and(
-                                field("namespace").eq(flow.getNamespace()),
-                                field("flow_id").eq(flow.getId())
-                            ))
-                            .toList()
-                    ));
+                        ListUtils.emptyOnNull(flows).isEmpty() ?
+                            DSL.trueCondition()
+                        :
+                            DSL.or(
+                                flows.stream()
+                                    .map(flow -> DSL.and(
+                                        field("namespace").eq(flow.getNamespace()),
+                                        field("flow_id").eq(flow.getId())
+                                    ))
+                                    .toList()
+                            )
+                        )
+                    );
 
                 Table<Record2<Object, Integer>> cte = subquery.asTable("cte");
 

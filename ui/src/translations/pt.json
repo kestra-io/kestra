@@ -1016,6 +1016,7 @@
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
     "playground": {
+      "confirm_create": "Você não pode executar o playground enquanto cria um flow. Iniciar uma execução do playground criará o flow.",
       "history": "Últimas 10 execuções",
       "play_icon_info": "Você também pode clicar no ícone de Play nas visualizações No-Code ou Topology.",
       "run_all_tasks": "Executar Todas as Tasks",
@@ -1364,6 +1365,8 @@
     "topology": "Topologia",
     "topology-graph": {
       "graph-orientation": "Orientação do gráfico",
+      "invalid": "Erro no gráfico",
+      "invalid_description": "Ocorreu um erro ao carregar o gráfico. Por favor, verifique o código-fonte para erros.",
       "zoom-fit": "Ajustar",
       "zoom-in": "Aumentar zoom",
       "zoom-out": "Diminuir zoom",

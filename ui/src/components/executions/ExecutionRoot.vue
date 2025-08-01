@@ -80,13 +80,6 @@
                 this.executionsStore.followExecution(this.$route.params, this.$t);
             },
             getTabs() {
-
-            },
-        },
-        computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore, useExecutionsStore),
-            tabs() {
                 return [
                     {
                         name: undefined,
@@ -135,6 +128,13 @@
                         locked: true
                     }
                 ];
+            }
+        },
+        computed: {
+            ...mapState("auth", ["user"]),
+            ...mapStores(useCoreStore, useExecutionsStore),
+            tabs() {
+                return this.getTabs();
             },
             routeInfo() {
                 const ns = this.$route.params.namespace;

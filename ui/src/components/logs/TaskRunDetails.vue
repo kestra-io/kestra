@@ -346,7 +346,7 @@
 
                 return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));
             },
-            autoExpandTaskrunStates() {
+            autoExpandTaskRunStates() {
                 switch (localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT) {
                 case logDisplayTypes.ERROR:
                     return [State.FAILED, State.RUNNING, State.PAUSED]
@@ -428,7 +428,7 @@
                 }
             },
             autoExpandBasedOnSettings() {
-                if (this.autoExpandTaskrunStates.length === 0) {
+                if (this.autoExpandTaskRunStates.length === 0) {
                     return;
                 }
 
@@ -441,7 +441,7 @@
                         return;
                     }
 
-                    if (this.taskRunId === taskRun.id || this.autoExpandTaskrunStates.includes(taskRun.state.current)) {
+                    if (this.taskRunId === taskRun.id || this.autoExpandTaskRunStates.includes(taskRun.state.current)) {
                         this.showAttempt(this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id]));
                     }
                 });
@@ -550,7 +550,7 @@
                 return `${taskRunId}-${attemptNumber}`
             },
             scrollToBottomFailedTask() {
-                if (this.autoExpandTaskrunStates.includes(this.followedExecution.state.current)) {
+                if (this.autoExpandTaskRunStates.includes(this.followedExecution.state.current)) {
                     this.currentTaskRuns.forEach((taskRun) => {
                         if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
                             const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : (this.forcedAttemptNumber ?? 0)

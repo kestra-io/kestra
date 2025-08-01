@@ -1464,7 +1464,8 @@
       "run_this_task": "Run this task",
       "run_task_and_downstream": "Run task & downstream",
       "run_all_tasks": "Run All Tasks",
-      "history": "Last 10 runs"
+      "history": "Last 10 runs",
+      "confirm_create": "You cannot run the playground while creating a flow. Launching a playground run will create the flow."
     },
     "submit": "Submit",
     "to toggle": "to toggle",

@@ -7,7 +7,7 @@ import cytoscape from "cytoscape";
 import {type Node, type Element, getDependencies} from "../../../../scripts/product/dependencies";
 
 import {style} from "../utils/style";
-const SELECTED = "selected", HIGHLIGHTED = "highlighted", FADED = "faded",  HOVERED = "hovered";
+const SELECTED = "selected", FADED = "faded",  HOVERED = "hovered";
 
 /**
  * Cytoscape initialization options, including graph elements and interaction settings.
@@ -38,7 +38,7 @@ const layout: cytoscape.CoseLayoutOptions = {
     gravity: 0.05,
 
     // Layout iterations & cooling
-    numIter: 10_000,
+    numIter: 100,
     initialTemp: 200,
     minTemp: 1,
 
@@ -74,38 +74,38 @@ export function setNodeSizes(cy: cytoscape.Core, baseSize = 20, scale = 2, maxSi
 }
 
 /**
- * Handles selecting a node in the Cytoscape graph.
+ * Handles selecting a node in the cytoscape graph.
  *
- * - Clears any "hovered" state on nodes and edges.
- * - Fades out previously selected elements.
- * - Highlights the clicked node, its connected edges, and directly connected nodes.
+ * - Clears any "selected" and "hovered" state on nodes and edges.
+ * - Applies a faded style to the selected node’s connected edges and neighbor nodes.
+ * - Highlights the selected node itself.
+ * - Updates the provided Vue ref with the selected node's ID.
  * - Animates the viewport to center and zoom into the selected node.
  *
- * @param cy           - The Cytoscape core instance managing the graph.
- * @param node         - The node element to select.
- * @param selected     - Vue ref to store the selected node ID.
- * @param id           - Optional explicit ID to set on the ref (defaults to node.id()).
+ * @param cy       - The cytoscape core instance managing the graph.
+ * @param node     - The node element to select.
+ * @param selected - Vue ref to store the selected node ID.
+ * @param id       - Optional explicit ID to set on the ref (defaults to node.id()).
  */
 function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, id?: Node["id"]): void {
-    // Reset any existing hover effects
-    cy.$(`.${HOVERED}`).removeClass(HOVERED);
+    // Remove all selected and hovered classes from nodes and edges
+    cy.$(`.${SELECTED}, .${HOVERED}`).removeClass(`${SELECTED} ${HOVERED}`);
 
-    // Remove faded class from all previously faded elements
-    cy.$(`.${FADED}`).removeClass(FADED);
+    // Get edges and neighbor nodes connected directly to the selected node
+    const connected = node
+        .connectedEdges()
+        .union(node.connectedEdges().connectedNodes());
 
-    // Fade out all previously selected elements
-    cy.$(`.${SELECTED}`).removeClass(SELECTED).addClass(FADED);
+    // Add faded styling to the connected edges and nodes
+    connected.addClass(FADED);
 
-    // Highlight the newly selected node
-    node.addClass(HIGHLIGHTED);
+    // Highlight the selected node itself
+    node.addClass(SELECTED);
 
-    // Highlight connected edges and neighbor nodes in one chain
-    node.connectedEdges().union(node.connectedEdges().connectedNodes()).addClass(SELECTED);
-
-    // Update the ref with the chosen ID
+    // Update the Vue ref with the selected node ID
     selected.value = id ?? node.id();
 
-    // Smoothly center and zoom into the selected node
+    // Animate viewport to center and zoom into the selected node
     cy.animate({center: {eles: node}, zoom: 1.2}, {duration: 500});
 }
 

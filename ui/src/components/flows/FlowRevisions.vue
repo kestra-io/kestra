@@ -131,7 +131,7 @@
     function load() {
         const currentRevision = flow.value.revision;
 
-        revisions.value = [...Array(currentRevision).keys()].map(((k, i) => {
+        revisions.value = [...Array(currentRevision).keys()].map(((_, i) => {
             if (currentRevision === revisionNumber(i)) {
                 return flow.value;
             }

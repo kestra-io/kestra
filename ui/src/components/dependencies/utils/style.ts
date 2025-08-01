@@ -8,13 +8,13 @@ const VARIABLES = {
             background: "--ks-dependencies-node-background",
             border: "--ks-dependencies-node-border",
         },
-        hover: {
+        hovered: {
             background: "--ks-dependencies-node-background-hover",
             border: "--ks-dependencies-node-border-hover",
         },
         selected: {
-            background: "--ks-dependencies-node-background-selected",
-            border: "--ks-dependencies-node-border-selected",
+            background: "--ks-dependencies-node-background-hover",
+            border: "--ks-dependencies-node-border-hover",
         },
         faded: {
             background: "--ks-dependencies-node-background-selected-level2",
@@ -23,13 +23,13 @@ const VARIABLES = {
     },
     edge: {
         default: "--ks-dependencies-edge",
-        hover: "--ks-dependencies-edge-hover",
+        hovered: "--ks-dependencies-edge-hover",
         selected: "--ks-dependencies-edge-selected",
         faded: "--ks-dependencies-edge-selected-level2",
     },
 };
 
-const commonNode: Record<string, any> = {
+const nodeBase: cytoscape.Css.Node = {
     label: "data(flow)",
     "border-width": 2,
     "border-style": "solid",
@@ -39,118 +39,58 @@ const commonNode: Record<string, any> = {
     "text-margin-y": 10,
 };
 
-const commonEdge: Record<string, any> = {
+const edgeBase: cytoscape.Css.Edge = {
     "target-arrow-shape": "triangle",
     "curve-style": "bezier",
+    width: 1,
+    "line-style": "solid",
 };
 
-const hoverEdge: Record<string, any> = {
-    "line-color": cssVariable(VARIABLES.edge.hover)!,
-    "target-arrow-color": cssVariable(VARIABLES.edge.hover)!,
-    width: 2,
-};
+function nodeColors(type: keyof typeof VARIABLES.node): Partial<cytoscape.Css.Node> {
+    return {
+        "background-color": cssVariable(VARIABLES.node[type].background)!,
+        "border-color": cssVariable(VARIABLES.node[type].border)!,
+    };
+}
 
-const selectedEdge: Record<string, any> = {
-    "line-style": "dashed",
-    "line-dash-pattern": [3, 5],
-    width: 2,
-};
+function edgeColors(type: keyof typeof VARIABLES.edge): Partial<cytoscape.Css.Edge> {
+    return {
+        "line-color": cssVariable(VARIABLES.edge[type])!,
+        "target-arrow-color": cssVariable(VARIABLES.edge[type])!,
+    };
+}
 
 export const style: cytoscape.StylesheetJson = [
     {
         selector: "node",
-        style: {
-            ...commonNode,
-            "background-color": cssVariable(VARIABLES.node.default.background)!,
-            "border-color": cssVariable(VARIABLES.node.default.border)!,
-        },
-    },
-    {
-        selector: "node.faded",
-        style: {
-            "background-color": cssVariable(VARIABLES.node.faded.background)!,
-            "border-color": cssVariable(VARIABLES.node.faded.border)!,
-            "background-opacity": 0.75,
-            "border-opacity": 0.75,
-            color: "white",
-        },
+        style: {...nodeBase, ...nodeColors("default")},
     },
     {
         selector: "node.hovered",
-        style: {
-            "background-color": cssVariable(VARIABLES.node.hover.background)!,
-            "border-color": cssVariable(VARIABLES.node.hover.border)!,
-        },
-    },
-    {
-        selector: "node.faded.hovered",
-        style: {
-            "background-color": cssVariable(VARIABLES.node.hover.background)!,
-            "border-color": cssVariable(VARIABLES.node.hover.border)!,
-            opacity: 1,
-        },
+        style: {...nodeBase, ...nodeColors("hovered")},
     },
     {
         selector: "node.selected",
-        style: {
-            "background-color": cssVariable(VARIABLES.node.selected.background)!,
-            "border-color": cssVariable(VARIABLES.node.selected.border)!,
-            color: "white",
-        },
+        style: {...nodeBase, ...nodeColors("selected"), color: "white"},
     },
     {
-        selector: "node.selected.hovered",
-        style: {
-            "background-color": cssVariable(VARIABLES.node.hover.background)!,
-            "border-color": cssVariable(VARIABLES.node.hover.border)!,
-            color: "white",
-        },
+        selector: "node.faded",
+        style: {...nodeBase, ...nodeColors("faded"), "background-opacity": 0.75, "border-opacity": 0.75, color: "white"},
     },
     {
         selector: "edge",
-        style: {
-            ...commonEdge,
-            width: 1,
-            "line-color": cssVariable(VARIABLES.edge.default)!,
-            "target-arrow-color": cssVariable(VARIABLES.edge.default)!,
-            "line-style": "solid",
-        },
-    },
-    {
-        selector: "edge.faded",
-        style: {
-            "line-color": cssVariable(VARIABLES.edge.faded)!,
-            "target-arrow-color": cssVariable(VARIABLES.edge.faded)!,
-            width: 1,
-            opacity: 0.75,
-            "line-style": "solid",
-        },
+        style: {...edgeBase, ...edgeColors("default")},
     },
     {
         selector: "edge.hovered",
-        style: hoverEdge,
-    },
-    {
-        selector: "edge.faded.hovered",
-        style: {
-            ...hoverEdge,
-            opacity: 1,
-            "line-style": "solid",
-        },
+        style: {...edgeBase, ...edgeColors("hovered"), width: 2},
     },
     {
         selector: "edge.selected",
-        style: {
-            ...selectedEdge,
-            "line-color": cssVariable(VARIABLES.edge.selected)!,
-            "target-arrow-color": cssVariable(VARIABLES.edge.selected)!,
-        },
+        style: {...edgeBase, ...edgeColors("selected"), "line-style": "dashed", "line-dash-pattern": [3, 5], width: 2},
     },
     {
-        selector: "edge.selected.hovered",
-        style: {
-            ...selectedEdge,
-            ...hoverEdge,
-        },
+        selector: "edge.faded",
+        style: {...edgeBase, ...edgeColors("faded"), width: 1, opacity: 0.75},
     },
 ];

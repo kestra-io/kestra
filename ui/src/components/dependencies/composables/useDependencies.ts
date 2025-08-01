@@ -90,6 +90,9 @@ function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selecte
     // Reset any existing hover effects
     cy.$(`.${HOVERED}`).removeClass(HOVERED);
 
+    // Remove faded class from all previously faded elements
+    cy.$(`.${FADED}`).removeClass(FADED);
+
     // Fade out all previously selected elements
     cy.$(`.${SELECTED}`).removeClass(SELECTED).addClass(FADED);
 

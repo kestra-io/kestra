@@ -424,7 +424,6 @@
         computed: {
             ...mapState({
                 flow: (state) => state.flow.flow,
-                treeRefresh: (state) => state.editor.treeRefresh,
             }),
             namespaceId() {
                 return this.currentNS ?? this.$route.params.namespace;

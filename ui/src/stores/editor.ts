@@ -1,6 +1,6 @@
 import {defineStore} from "pinia"
 
-interface Tab {
+export interface EditorTabProps {
     name: string;
     extension?: string;
     persistent?: boolean;
@@ -15,8 +15,8 @@ export const useEditorStore = defineStore("editor", {
         onboarding: false,
         explorerVisible: false,
         explorerWidth: 20,
-        current: undefined as Tab | undefined,
-        tabs: [] as Tab[],
+        current: undefined as EditorTabProps | undefined,
+        tabs: [] as EditorTabProps[],
         view: undefined,
         treeData: [],
         treeRefresh: 0,
@@ -39,7 +39,7 @@ export const useEditorStore = defineStore("editor", {
                 })
             );
         },
-        openTab(payload: Tab) {
+        openTab(payload: EditorTabProps) {
             const {name, extension, persistent, path, flow} = payload;
 
             const index = this.tabs.findIndex((tab) => {
@@ -106,7 +106,7 @@ export const useEditorStore = defineStore("editor", {
         changeExplorerWidth(width: number) {
             this.explorerWidth = width > 40 ? 40 : width < 20 ? 20 : width;
         },
-        setTabContent(payload: Tab) {
+        setTabContent(payload: EditorTabProps) {
             const tab = this.tabs.find((tab) => tab.path === payload.path);
             if(tab){
                 tab.content = payload.content;

@@ -81,10 +81,12 @@ export function setNodeSizes(cy: cytoscape.Core, baseSize = 20, scale = 2, maxSi
  * - Highlights the clicked node, its connected edges, and directly connected nodes.
  * - Animates the viewport to center and zoom into the selected node.
  *
- * @param cy   - The Cytoscape core instance managing the graph.
- * @param node - The node element to select.
+ * @param cy           - The Cytoscape core instance managing the graph.
+ * @param node         - The node element to select.
+ * @param selected     - Vue ref to store the selected node ID.
+ * @param id           - Optional explicit ID to set on the ref (defaults to node.id()).
  */
-function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular): void {
+function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, id?: Node["id"]): void {
     // Reset any existing hover effects
     cy.$(`.${HOVERED}`).removeClass(HOVERED);
 
@@ -96,6 +98,9 @@ function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular): void {
 
     // Highlight connected edges and neighbor nodes in one chain
     node.connectedEdges().union(node.connectedEdges().connectedNodes()).addClass(SELECTED);
+
+    // Update the ref with the chosen ID
+    selected.value = id ?? node.id();
 
     // Smoothly center and zoom into the selected node
     cy.animate({center: {eles: node}, zoom: 1.2}, {duration: 500});
@@ -135,8 +140,7 @@ export function useDependencies(container: Ref<HTMLElement | null>) {
         const node = cy.getElementById(id);
 
         if (node.nonempty()) {
-            selectHandler(cy, node);
-            selectedNodeID.value = id;
+            selectHandler(cy, node, selectedNodeID, id);
         }
     };
 
@@ -164,8 +168,7 @@ export function useDependencies(container: Ref<HTMLElement | null>) {
         cy.on("tap", "node", (event: cytoscape.EventObject) => {
             const node = event.target;
 
-            selectHandler(cy, node);
-            selectedNodeID.value = node.id();
+            selectHandler(cy, node, selectedNodeID);
         });
 
         // Preselect the first node after layout completes
@@ -174,8 +177,7 @@ export function useDependencies(container: Ref<HTMLElement | null>) {
 
             if (!node) return;
 
-            selectHandler(cy, node);
-            selectedNodeID.value = node.id();
+            selectHandler(cy, node, selectedNodeID);
         });
     });
 

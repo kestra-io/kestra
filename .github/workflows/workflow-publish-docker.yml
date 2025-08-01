@@ -41,8 +41,6 @@ jobs:
     name: Build Artifacts
     if: ${{ github.event.inputs.force-download-artifact == 'true' }}
     uses: ./.github/workflows/workflow-build-artifacts.yml
-    with:
-      plugin-version: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
   # ********************************************************************************************************************
   # Docker
   # ********************************************************************************************************************

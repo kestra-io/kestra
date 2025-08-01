@@ -49,8 +49,6 @@ jobs:
   build-artifacts:
     name: Build - Artifacts
     uses: ./.github/workflows/workflow-build-artifacts.yml
-    with:
-      plugin-version: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
 
   Docker:
     name: Publish Docker

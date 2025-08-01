@@ -1,4 +1,4 @@
-import {onMounted} from "vue";
+import {onMounted, ref} from "vue";
 
 import type {Ref} from "vue";
 
@@ -137,6 +137,8 @@ function hoverHandler(cy: cytoscape.Core): void {
 export function useDependencies(container: Ref<HTMLElement | null>) {
     let cy: cytoscape.Core;
 
+    const selectedNodeID: Ref<Node["id"] | undefined> = ref(undefined);
+
     /**
      * Selects a node in the cytoscape graph by its ID.
      *
@@ -150,6 +152,7 @@ export function useDependencies(container: Ref<HTMLElement | null>) {
         if (node.nonempty()) {
             removeClasses(cy);
             selectHandler(cy, node);
+            selectedNodeID.value = id;
         }
     }
 
@@ -178,6 +181,7 @@ export function useDependencies(container: Ref<HTMLElement | null>) {
             const node = event.target;
 
             selectHandler(cy, node);
+            selectedNodeID.value = node.id();
         });
 
         // Preselect the first node after layout completes
@@ -187,8 +191,9 @@ export function useDependencies(container: Ref<HTMLElement | null>) {
             if (!node) return;
 
             selectHandler(cy, node);
+            selectedNodeID.value = node.id();
         });
     });
 
-    return {selectNode};
+    return {selectedNodeID, selectNode};
 }

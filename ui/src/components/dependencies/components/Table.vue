@@ -13,6 +13,7 @@
         :show-header="false"
         class="nodes"
         @row-click="(row: { data: Node }) => emits('select', row.data.id)"
+        :row-class-name="({row}: { row: { data: Node } }) => row.data.id === props.selected ? 'selected' : ''"
     >
         <el-table-column>
             <template #default="{row}">
@@ -55,7 +56,10 @@
     import {FLOW, EXECUTION, type Node} from "../../../../scripts/product/dependencies";
 
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
-    const props = defineProps<{ nodes: { data: Node }[] }>();
+    const props = defineProps<{
+        nodes: { data: Node }[];
+        selected: Node["id"] | undefined;
+    }>();
 
     const search = ref("");
     const results = computed(() => {
@@ -93,6 +97,15 @@ section#input {
     :deep(.el-table__empty-text) {
         width: 100%;
         font-size: var(--font-size-sm);
+    }
+
+    & :deep(.el-table__row.selected) {
+        background-color: var(--ks-button-background-primary);
+        color: var(--ks-text-white);
+
+        &:hover {
+            --el-table-row-hover-bg-color: var(--ks-button-background-primary-hover);
+        }
     }
 }
 

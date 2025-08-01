@@ -5,7 +5,7 @@
         </el-splitter-panel>
 
         <el-splitter-panel id="table">
-            <Table :nodes @select="selectNode" />
+            <Table :nodes @select="selectNode" :selected="selectedNodeID" />
         </el-splitter-panel>
     </el-splitter>
 </template>
@@ -22,7 +22,7 @@
     import {NODE, type Node} from "../../../scripts/product/dependencies";
 
     const container = ref(null);
-    const {selectNode} = useDependencies(container);
+    const {selectedNodeID, selectNode} = useDependencies(container);
 
     const nodes = computed((): { data: Node }[] => {
         const elements = options.elements;

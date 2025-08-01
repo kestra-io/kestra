@@ -76,36 +76,34 @@ export function setNodeSizes(cy: cytoscape.Core, baseSize = 20, scale = 2, maxSi
 /**
  * Handles selecting a node in the cytoscape graph.
  *
- * - Clears any "selected" and "hovered" state on nodes and edges.
- * - Applies a faded style to the selected node’s connected edges and neighbor nodes.
- * - Highlights the selected node itself.
- * - Updates the provided Vue ref with the selected node's ID.
- * - Animates the viewport to center and zoom into the selected node.
+ * - Removes all existing "selected", "faded", and "hovered" states from nodes and edges.
+ * - Marks the chosen node as selected.
+ * - Applies a faded style to the node’s directly connected edges and neighbor nodes.
+ * - Updates the provided Vue ref with the selected node’s ID.
+ * - Smoothly centers and zooms the viewport on the selected node.
  *
- * @param cy       - The cytoscape core instance managing the graph.
- * @param node     - The node element to select.
- * @param selected - Vue ref to store the selected node ID.
- * @param id       - Optional explicit ID to set on the ref (defaults to node.id()).
+ * @param cy - The cytoscape core instance managing the graph.
+ * @param node - The node element to select.
+ * @param selected - Vue ref storing the currently selected node ID.
+ * @param id - Optional explicit ID to assign to the ref (defaults to the node’s own ID).
  */
 function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, id?: Node["id"]): void {
-    // Remove all selected and hovered classes from nodes and edges
-    cy.$(`.${SELECTED}, .${HOVERED}`).removeClass(`${SELECTED} ${HOVERED}`);
+    // Remove all "selected", "faded", and "hovered" classes from every element
+    cy.elements().removeClass(`${SELECTED} ${FADED} ${HOVERED}`);
 
-    // Get edges and neighbor nodes connected directly to the selected node
-    const connected = node
-        .connectedEdges()
-        .union(node.connectedEdges().connectedNodes());
-
-    // Add faded styling to the connected edges and nodes
-    connected.addClass(FADED);
-
-    // Highlight the selected node itself
+    // Mark the chosen node as selected
     node.addClass(SELECTED);
 
-    // Update the Vue ref with the selected node ID
+    // Find edges and neighbor nodes directly connected to the selected node
+    const connected = node.connectedEdges().union(node.connectedEdges().connectedNodes());
+
+    // Apply faded styling to connected edges and neighbor nodes
+    connected.addClass(FADED);
+
+    // Update the Vue ref with the selected node’s ID
     selected.value = id ?? node.id();
 
-    // Animate viewport to center and zoom into the selected node
+    // Center and zoom the viewport on the selected node
     cy.animate({center: {eles: node}, zoom: 1.2}, {duration: 500});
 }
 

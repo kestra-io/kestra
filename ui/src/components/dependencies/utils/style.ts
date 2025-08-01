@@ -8,13 +8,13 @@ const VARIABLES = {
             background: "--ks-dependencies-node-background",
             border: "--ks-dependencies-node-border",
         },
-        selected: {
-            background: "--ks-dependencies-node-background-selected",
-            border: "--ks-dependencies-node-border-selected",
-        },
         faded: {
             background: "--ks-dependencies-node-background-selected-level2",
             border: "--ks-dependencies-node-border-selected-level2",
+        },
+        selected: {
+            background: "--ks-dependencies-node-background-selected",
+            border: "--ks-dependencies-node-border-selected",
         },
         hovered: {
             background: "--ks-dependencies-node-background-hover",
@@ -23,8 +23,8 @@ const VARIABLES = {
     },
     edge: {
         default: "--ks-dependencies-edge",
-        selected: "--ks-dependencies-edge-selected",
         faded: "--ks-dependencies-edge-selected-level2",
+        selected: "--ks-dependencies-edge-selected",
         hovered: "--ks-dependencies-edge-hover",
     },
 };
@@ -66,12 +66,12 @@ export const style: cytoscape.StylesheetJson = [
         style: {...nodeBase, ...nodeColors("default")},
     },
     {
-        selector: "node.selected",
-        style: {...nodeBase, ...nodeColors("selected"), color: "white"},
-    },
-    {
         selector: "node.faded",
         style: {...nodeBase, ...nodeColors("faded"), "background-opacity": 0.75, "border-opacity": 0.75, color: "white"},
+    },
+    {
+        selector: "node.selected",
+        style: {...nodeBase, ...nodeColors("selected"), color: "white"},
     },
     {
         selector: "node.hovered",
@@ -82,12 +82,12 @@ export const style: cytoscape.StylesheetJson = [
         style: {...edgeBase, ...edgeColors("default")},
     },
     {
-        selector: "edge.selected",
-        style: {...edgeBase, ...edgeColors("selected"), "line-style": "dashed", "line-dash-pattern": [3, 5], width: 2},
-    },
-    {
         selector: "edge.faded",
         style: {...edgeBase, ...edgeColors("faded"), width: 1, opacity: 0.75},
+    },
+    {
+        selector: "edge.selected",
+        style: {...edgeBase, ...edgeColors("selected"), "line-style": "dashed", "line-dash-pattern": [3, 5], width: 2},
     },
     {
         selector: "edge.hovered",

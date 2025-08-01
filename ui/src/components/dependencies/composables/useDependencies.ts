@@ -5,11 +5,9 @@ import type {Ref} from "vue";
 import cytoscape from "cytoscape";
 
 import {type Node, type Element, getDependencies} from "../../../../scripts/product/dependencies";
-import {style} from "../utils/style";
 
-const HOVERED = "hovered";
-const SELECTED = "selected";
-const FADED = "faded";
+import {style} from "../utils/style";
+const HOVERED = "hovered", SELECTED = "selected", FADED = "faded";
 
 /**
  * Cytoscape initialization options, including graph elements and interaction settings.
@@ -17,10 +15,10 @@ const FADED = "faded";
  *
  * @see {@link https://js.cytoscape.org/#core | Cytoscape core options documentation}
  */
-export const options: {elements: Element[]} & Omit<cytoscape.CytoscapeOptions, "container" | "elements"> = {
+export const options: { elements: Element[] } & Omit<cytoscape.CytoscapeOptions, "container" | "elements"> = {
     elements: getDependencies({}),
     minZoom: 0.25,
-    maxZoom: 1.5
+    maxZoom: 1.5,
 };
 
 /**
@@ -76,43 +74,30 @@ export function setNodeSizes(cy: cytoscape.Core, baseSize = 20, scale = 2, maxSi
 }
 
 /**
- * Removes the 'selected' and 'faded' classes from all nodes and edges.
+ * Handles selecting a node in the Cytoscape graph.
  *
- * @param cy - The cytoscape core instance containing the graph.
- */
-function removeClasses(cy: cytoscape.Core): void {
-    cy.nodes(`.${SELECTED}, .${FADED}`).removeClass(`${SELECTED} ${FADED}`);
-    cy.edges(`.${SELECTED}, .${FADED}`).removeClass(`${SELECTED} ${FADED}`);
-}
-
-/**
- * Selects a node along with its connected edges and nodes,
- * managing 'selected' and 'faded' classes accordingly.
+ * - Clears any "hovered" state on nodes and edges.
+ * - Fades out previously selected elements.
+ * - Highlights the clicked node, its connected edges, and directly connected nodes.
+ * - Animates the viewport to center and zoom into the selected node.
  *
- * @param cy - The cytoscape core instance containing the graph.
- * @param node - The node to select.
+ * @param cy   - The Cytoscape core instance managing the graph.
+ * @param node - The node element to select.
  */
 function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular): void {
-    if (node.hasClass(FADED)) {
-        removeClasses(cy);
-    } else {
-        cy.nodes(`.${SELECTED}`).removeClass(SELECTED).addClass(FADED);
-        cy.edges(`.${SELECTED}`).removeClass(SELECTED).addClass(FADED);
-    }
+    // Reset any existing hover effects
+    cy.$(`.${HOVERED}`).removeClass(HOVERED);
 
-    node.removeClass(FADED).addClass(SELECTED);
+    // Fade out all previously selected elements
+    cy.$(`.${SELECTED}`).removeClass(SELECTED).addClass(FADED);
 
-    const connectedEdges = node.connectedEdges();
-    connectedEdges.removeClass(FADED).addClass(SELECTED);
+    // Highlight the newly selected node
+    node.addClass(SELECTED);
 
-    connectedEdges.connectedNodes().forEach((connectedNode) => {
-        connectedNode.removeClass(FADED).addClass(SELECTED);
-    });
+    // Highlight connected edges and neighbor nodes in one chain
+    node.connectedEdges().union(node.connectedEdges().connectedNodes()).addClass(SELECTED);
 
-    // Remove all hovered classes on selection to reset hover state
-    cy.nodes(`.${HOVERED}`).removeClass(HOVERED);
-    cy.edges(`.${HOVERED}`).removeClass(HOVERED);
-
+    // Smoothly center and zoom into the selected node
     cy.animate({center: {eles: node}, zoom: 1.2}, {duration: 500});
 }
 
@@ -144,17 +129,16 @@ export function useDependencies(container: Ref<HTMLElement | null>) {
      *
      * @param id - The ID of the node to select.
      */
-    const selectNode = (id: Node["id"]): void =>{
+    const selectNode = (id: Node["id"]): void => {
         if (!cy) return;
 
         const node = cy.getElementById(id);
 
         if (node.nonempty()) {
-            removeClasses(cy);
             selectHandler(cy, node);
             selectedNodeID.value = id;
         }
-    }
+    };
 
     onMounted(() => {
         if (!container.value) return;

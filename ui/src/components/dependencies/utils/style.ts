@@ -8,24 +8,24 @@ const VARIABLES = {
             background: "--ks-dependencies-node-background",
             border: "--ks-dependencies-node-border",
         },
-        hovered: {
-            background: "--ks-dependencies-node-background-hover",
-            border: "--ks-dependencies-node-border-hover",
-        },
         selected: {
-            background: "--ks-dependencies-node-background-hover",
-            border: "--ks-dependencies-node-border-hover",
+            background: "--ks-dependencies-node-background-selected",
+            border: "--ks-dependencies-node-border-selected",
         },
         faded: {
             background: "--ks-dependencies-node-background-selected-level2",
             border: "--ks-dependencies-node-border-selected-level2",
         },
+        hovered: {
+            background: "--ks-dependencies-node-background-hover",
+            border: "--ks-dependencies-node-border-hover",
+        },
     },
     edge: {
         default: "--ks-dependencies-edge",
-        hovered: "--ks-dependencies-edge-hover",
         selected: "--ks-dependencies-edge-selected",
         faded: "--ks-dependencies-edge-selected-level2",
+        hovered: "--ks-dependencies-edge-hover",
     },
 };
 
@@ -66,10 +66,6 @@ export const style: cytoscape.StylesheetJson = [
         style: {...nodeBase, ...nodeColors("default")},
     },
     {
-        selector: "node.hovered",
-        style: {...nodeBase, ...nodeColors("hovered")},
-    },
-    {
         selector: "node.selected",
         style: {...nodeBase, ...nodeColors("selected"), color: "white"},
     },
@@ -78,12 +74,12 @@ export const style: cytoscape.StylesheetJson = [
         style: {...nodeBase, ...nodeColors("faded"), "background-opacity": 0.75, "border-opacity": 0.75, color: "white"},
     },
     {
-        selector: "edge",
-        style: {...edgeBase, ...edgeColors("default")},
+        selector: "node.hovered",
+        style: {...nodeBase, ...nodeColors("hovered")},
     },
     {
-        selector: "edge.hovered",
-        style: {...edgeBase, ...edgeColors("hovered"), width: 2},
+        selector: "edge",
+        style: {...edgeBase, ...edgeColors("default")},
     },
     {
         selector: "edge.selected",
@@ -92,5 +88,9 @@ export const style: cytoscape.StylesheetJson = [
     {
         selector: "edge.faded",
         style: {...edgeBase, ...edgeColors("faded"), width: 1, opacity: 0.75},
+    },
+    {
+        selector: "edge.hovered",
+        style: {...edgeBase, ...edgeColors("hovered"), width: 2},
     },
 ];

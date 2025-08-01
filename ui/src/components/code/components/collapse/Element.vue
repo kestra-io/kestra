@@ -1,6 +1,6 @@
 <template>
     <div @click="handleClick" class="d-flex my-2 p-2 rounded element" :class="{'moved': moved}">
-        <div class="me-2 icon">
+        <div v-if="props.parentPathComplete !== 'inputs'" class="me-2 icon">
             <TaskIcon :cls="element.type" :icons only-icon />
         </div>
 

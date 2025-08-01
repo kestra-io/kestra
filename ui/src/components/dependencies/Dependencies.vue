@@ -42,7 +42,6 @@
     import SelectionRemove from "vue-material-design-icons/SelectionRemove.vue";
     import FitToScreenOutline from "vue-material-design-icons/FitToScreenOutline.vue";
 
-
     const container = ref(null);
     const {loading, selectedNodeID, selectNode} = useDependencies(container);
 

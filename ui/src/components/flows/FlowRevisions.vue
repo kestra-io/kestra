@@ -136,6 +136,10 @@
                 return flow.value;
             }
 
+            if(revisions.value[i] && revisions.value[i].revision === i + 1) {
+                return revisions.value[i];
+            }
+
             return {revision: i + 1};
         }));
 

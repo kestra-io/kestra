@@ -413,7 +413,8 @@
                 file: undefined,
                 loading: false,
                 lastExecutionByFlowReady: false,
-                latestExecutions: []
+                latestExecutions: [],
+                dblClickRouteName: "flows/update"
             };
         },
         computed: {

@@ -135,6 +135,7 @@
             if (currentRevision === revisionNumber(i)) {
                 return flow.value;
             }
+
             return {revision: i + 1};
         }));
 
@@ -230,14 +231,9 @@
             .map(({revision}) => ({value: revisionIndex(revision.toString()), text: revision}));
     }
 
-    async function loadRevisionContent(index: number | undefined, side: "left" | "right") {
+    async function loadRevisionContent(index: number | undefined) {
         if (index === undefined) {
-            if (side === "left") {
-                revisionLeftText.value = undefined;
-            } else {
-                revisionRightText.value = undefined;
-            }
-            return;
+            return undefined;
         }
 
         const revisionObject = revisions.value[index];
@@ -247,17 +243,13 @@
             source = (await fetchRevision(revisionObject.revision.toString())).source;
         }
 
-        if (side === "left") {
-            revisionLeftText.value = source;
-        } else {
-            revisionRightText.value = source;
-        }
+        return source;
     }
 
     watch(revisionLeftIndex, async (newValue) => {
         isLoadingRevisions.value = true;
         try {
-            await loadRevisionContent(newValue, "left");
+            revisionLeftText.value = await loadRevisionContent(newValue);
         } finally {
             isLoadingRevisions.value = false;
         }
@@ -266,7 +258,7 @@
     watch(revisionRightIndex, async (newValue) => {
         isLoadingRevisions.value = true;
         try {
-            await loadRevisionContent(newValue, "right");
+            revisionRightText.value = await loadRevisionContent(newValue);
         } finally {
             isLoadingRevisions.value = false;
         }

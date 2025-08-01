@@ -24,8 +24,10 @@ import java.util.Optional;
 @NoArgsConstructor
 @Schema(
     title = "Return a value for debugging purposes.",
-    description = "This task is mostly useful for troubleshooting.\n\n" +
-        "It allows you to return some templated functions, inputs or outputs. In some cases you might want to trim all white spaces from the rendered values so downstream tasks can use them properly"
+    description = """
+        This task is mostly useful for troubleshooting.
+
+        It allows you to return some templated functions, inputs or outputs. In some cases you might want to trim all white spaces from the rendered values so downstream tasks can use them properly."""
 )
 @Plugin(
     examples = {
@@ -50,7 +52,7 @@ import java.util.Optional;
                     Bearer {{ inputs.token }}
                     {%- elseif inputs.username is not empty and inputs.password is not empty -%}
                     Basic {{ (inputs.username + ':' + inputs.password) | base64encode }}
-                    {%- endif -%} 
+                    {%- endif -%}
                 """
         )
     },

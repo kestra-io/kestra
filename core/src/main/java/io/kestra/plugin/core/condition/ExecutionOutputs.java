@@ -35,8 +35,8 @@ import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
     examples = {
         @Example(
             title = """
-                The upstream `flow_a` must explicitly define its outputs 
-                to be used in the `ExecutionOutputs` condition. 
+                The upstream `flow_a` must explicitly define its outputs
+                to be used in the `ExecutionOutputs` condition.
 
                 ```yaml
                 id: flow_a
@@ -58,7 +58,7 @@ import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
                     value: "{{ outputs.hello.value }}"
                 ```
 
-                The `flow_condition_executionoutputs` will run whenever `flow_a` finishes successfully 
+                The `flow_condition_executionoutputs` will run whenever `flow_a` finishes successfully
                 and returns an output matching the value 'hello':
                 """,
             full = true,

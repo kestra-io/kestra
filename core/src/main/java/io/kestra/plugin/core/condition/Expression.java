@@ -35,19 +35,19 @@ import jakarta.validation.constraints.NotNull;
             code = """
                 id: myflow
                 namespace: company.team
-                
+
                 tasks:
                   - id: hello
                     type: io.kestra.plugin.core.log.Log
                     message: Average value has gone below 10
-                
+
                 triggers:
                   - id: expression_trigger
                     type: io.kestra.plugin.core.trigger.Schedule
                     cron: "*/1 * * * *"
                     conditions:
                       - type: io.kestra.plugin.core.condition.Expression
-                        expression: "{{ kv('average_value') < 10 }}"    
+                        expression: "{{ kv('average_value') < 10 }}"
                 """
         )
     },

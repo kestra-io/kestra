@@ -23,7 +23,7 @@
                         <el-button :icon="FileCode" @click="seeRevision(revisionLeftIndex, revisionLeftText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ t('see full revision') }}</span>
                         </el-button>
-                        <el-button :icon="Restore" :disabled="revisionNumber(revisionLeftIndex) === flow.revision" @click="restoreRevision(revisionLeftIndex)">
+                        <el-button :icon="Restore" :disabled="revisionNumber(revisionLeftIndex) === flow.revision" @click="restoreRevision(revisionLeftIndex, revisionLeftText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ t('restore') }}</span>
                         </el-button>
                     </el-button-group>
@@ -45,7 +45,7 @@
                         <el-button :icon="FileCode" @click="seeRevision(revisionRightIndex, revisionRightText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ t('see full revision') }}</span>
                         </el-button>
-                        <el-button :icon="Restore" :disabled="revisionNumber(revisionRightIndex) === flow.revision" @click="restoreRevision(revisionRightIndex)">
+                        <el-button :icon="Restore" :disabled="revisionNumber(revisionRightIndex) === flow.revision" @click="restoreRevision(revisionRightIndex, revisionRightText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ t('restore') }}</span>
                         </el-button>
                     </el-button-group>
@@ -105,9 +105,6 @@
     }
 
     const {t} = useI18n();
-
-    load();
-
     const store = useStore();
     const route = useRoute();
     const router = useRouter();
@@ -173,6 +170,7 @@
 
         return revisionInt - 1;
     }
+
     function revisionNumber(index: number) {
         return index + 1;
     }
@@ -184,9 +182,12 @@
         isModalOpen.value = true;
     }
 
-    function restoreRevision(index: number) {
+    function restoreRevision(index: number, revisionSource: string) {
         toast.confirm(t("restore confirm", {revision: revisionNumber(index)}), () => {
-            return saveFlowTemplate({$store: store}, revision, "flow")
+            return saveFlowTemplate({
+                $store: store,
+                $toast: () => toast,
+            }, revisionSource, "flow")
                 .then((response:any) => {
                     store.commit("flow/setFlowYaml", response.source);
                     store.commit("flow/setFlowYamlOrigin", response.source);
@@ -195,7 +196,7 @@
                 .then(() => {
                     router.push({query: {}});
                 });
-        });
+        })
     }
 
     function addQuery() {
@@ -222,6 +223,7 @@
 
         return revisionFetched;
     }
+
     function options(excludeRevisionIndex: number | undefined) {
         return revisions.value
             .filter((_, index) => index !== excludeRevisionIndex)
@@ -288,6 +290,8 @@
           },
           {deep: true}
     )
+
+    load();
 </script>
 
 <style scoped lang="scss">

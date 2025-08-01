@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
+    import {watch, nextTick, ref, computed} from "vue";
 
     import Link from "./Link.vue";
     import Status from "../../Status.vue";
@@ -60,6 +60,22 @@
         nodes: { data: Node }[];
         selected: Node["id"] | undefined;
     }>();
+
+    const focusSelectedRow = ()=>{
+        const row = document.querySelector<HTMLElement>(".el-table__row.selected");
+
+        if (!row) return;
+
+        row.scrollIntoView({behavior: "smooth", block: "center"});
+    }
+
+    watch(() => props.selected, async (ID) => {
+        if (!ID) return;
+
+        await nextTick();
+
+        focusSelectedRow();
+    });
 
     const search = ref("");
     const results = computed(() => {

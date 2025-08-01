@@ -2,14 +2,14 @@
     <section id="input">
         <el-input
             v-model="search"
-            :placeholder="t('deps_search.placeholder')"
+            :placeholder="t('dependency.search.placeholder')"
             clearable
         />
     </section>
 
     <el-table
         :data="results"
-        :empty-text="t('deps_search.no_results', {term: search})"
+        :empty-text="t('dependency.search.no_results', {term: search})"
         :show-header="false"
         class="nodes"
         @row-click="(row: { data: Node }) => emits('select', row.data.id)"

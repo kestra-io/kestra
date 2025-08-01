@@ -1480,9 +1480,17 @@
     "task sent a warning": "Task sent a warning",
     "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
     "no_file_choosen": "No file chosen",
-    "deps_search": {
-      "placeholder": "Search by flow or namespace...",
-      "no_results": "No results found for {term}"
+    "dependency": {
+      "controls": {
+        "zoom_in": "Zoom in",
+        "zoom_out": "Zoom out",
+        "clear_selection": "Clear selection",
+        "fit_view": "Fit to screen"
+      },
+      "search": {
+        "placeholder": "Search by flow or namespace...",
+        "no_results": "No results found for {term}"
+      }
     }
   }
 }

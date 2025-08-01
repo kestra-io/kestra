@@ -54,8 +54,8 @@
 
     import {FLOW, EXECUTION, type Node} from "../../../../scripts/product/dependencies";
 
-    const emits = defineEmits<{ (e: "select", id: Node["id"]): void; }>();
-    const props = defineProps<{ nodes: { data: Node }[]; }>();
+    const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
+    const props = defineProps<{ nodes: { data: Node }[] }>();
 
     const search = ref("");
     const results = computed(() => {
@@ -66,20 +66,23 @@
         return props.nodes.filter(({data}) => {
             const {flow, namespace} = data;
 
-            return flow.toLowerCase().includes(f) || namespace.toLowerCase().includes(f);
+            return (flow.toLowerCase().includes(f) || namespace.toLowerCase().includes(f));
         });
     });
 </script>
 
 <style scoped lang="scss">
 section#input {
-  padding: 0.5rem;
-  background-color: var(--ks-background-input);
+    position: sticky;
+    top: 0;
+    z-index: 10; // keeps it above table rows
+    padding: 0.5rem;
+    background-color: var(--ks-background-input);
 
-  :deep(.el-input__wrapper) {
-    box-shadow: none !important;
-    font-size: var(--font-size-sm);
-  }
+    :deep(.el-input__wrapper) {
+        box-shadow: none !important;
+        font-size: var(--font-size-sm);
+    }
 }
 
 .el-table.nodes {

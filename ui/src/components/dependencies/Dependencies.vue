@@ -51,5 +51,11 @@
         background-repeat: repeat;
         background-size: 24px 24px;
     }
+
+    & div#table {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
 }
 </style>

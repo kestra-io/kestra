@@ -96,9 +96,6 @@ public class FlowController {
     @Inject
     private TenantService tenantService;
 
-    @Inject
-    private JsonSchemaGenerator jsonSchemaGenerator;
-
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph")

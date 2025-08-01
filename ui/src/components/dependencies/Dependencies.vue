@@ -1,7 +1,7 @@
 <template>
     <el-splitter class="dependencies">
         <el-splitter-panel id="graph" v-bind="PANEL">
-            <div ref="container" />
+            <div v-loading="loading" ref="container" />
         </el-splitter-panel>
 
         <el-splitter-panel id="table">
@@ -22,7 +22,7 @@
     import {NODE, type Node} from "../../../scripts/product/dependencies";
 
     const container = ref(null);
-    const {selectedNodeID, selectNode} = useDependencies(container);
+    const {loading, selectedNodeID, selectNode} = useDependencies(container);
 
     const nodes = computed((): { data: Node }[] => {
         const elements = options.elements;

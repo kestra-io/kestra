@@ -38,7 +38,7 @@ const layout: cytoscape.CoseLayoutOptions = {
     gravity: 0.05,
 
     // Layout iterations & cooling
-    numIter: 100,
+    numIter: 10_000,
     initialTemp: 200,
     minTemp: 1,
 
@@ -128,6 +128,8 @@ function hoverHandler(cy: cytoscape.Core): void {
 export function useDependencies(container: Ref<HTMLElement | null>) {
     let cy: cytoscape.Core;
 
+    const loading = ref(true);
+
     const selectedNodeID: Ref<Node["id"] | undefined> = ref(undefined);
 
     /**
@@ -174,6 +176,8 @@ export function useDependencies(container: Ref<HTMLElement | null>) {
 
         // Preselect the first node after layout completes
         cy.on("layoutstop", () => {
+            loading.value = false;
+
             const node = cy.nodes()[0];
 
             if (!node) return;
@@ -182,5 +186,5 @@ export function useDependencies(container: Ref<HTMLElement | null>) {
         });
     });
 
-    return {selectedNodeID, selectNode};
+    return {loading, selectedNodeID, selectNode};
 }

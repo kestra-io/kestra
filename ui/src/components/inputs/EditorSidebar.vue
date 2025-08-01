@@ -355,7 +355,7 @@
 </template>
 
 <script>
-    import {mapActions, mapMutations, mapState} from "vuex";
+    import {mapActions, mapState} from "vuex";
 
     import Utils from "../../utils/utils";
 
@@ -368,6 +368,8 @@
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue";
 
     import TypeIcon from "../utils/icons/Type.vue";
+    import {mapStores} from "pinia";
+    import {useEditorStore} from "../../stores/editor";
 
     const DIALOG_DEFAULTS = {
         visible: false,
@@ -422,7 +424,6 @@
         computed: {
             ...mapState({
                 flow: (state) => state.flow.flow,
-                explorerVisible: (state) => state.editor.explorerVisible,
                 treeRefresh: (state) => state.editor.treeRefresh,
             }),
             namespaceId() {
@@ -470,14 +471,7 @@
             },
         },
         methods: {
-            ...mapMutations("editor", [
-                "toggleExplorerVisibility",
-                "setTabDirty",
-            ]),
-            ...mapActions("editor", [
-                "openTab",
-                "closeTab",
-            ]),
+            ...mapStores(useEditorStore),
             ...mapActions("namespace", [
                 "createDirectory",
                 "readDirectory",
@@ -527,7 +521,7 @@
                     this.selectedNodes = [node.data.id];
                     this.lastClickedIndex = currentIndex;
                     if (data.leaf) {
-                        this.openTab({
+                        this.editorStore.openTab({
                             name: data.fileName,
                             path: path,
                             extension: data.fileName.split(".").pop(),
@@ -665,7 +659,7 @@
                 return this.searchResults;
             },
             chooseSearchResults(item) {
-                this.openTab({
+                this.editorStore.openTab({
                     name: item.split("/").pop(),
                     extension: item.split(".").pop(),
                     path: item,
@@ -920,7 +914,7 @@
                         creation: true,
                     });
 
-                    this.openTab({
+                    this.editorStore.openTab({
                         name: NAME,
                         path,
                         extension: extension,
@@ -1017,7 +1011,7 @@
                             type: node.type,
                         });
                         this.$refs.tree.remove(node.id);
-                        this.closeTab({
+                        this.editorStore.closeTab({
                             name: node.fileName,
                         });
                     } catch (error) {
@@ -1176,7 +1170,7 @@
             flow: {
                 handler(flow) {
                     if (flow) {
-                        this.openTab({
+                        this.editorStore.openTab({
                             name: "Flow",
                             path: "Flow.yaml",
                             persistent: true,
@@ -1187,7 +1181,7 @@
                 immediate: true,
                 deep: true,
             },
-            treeRefresh: {
+            "editorStore.treeRefresh": {
                 async handler() {
                     if (this.$refs.tree) {
                         this.items = undefined;

@@ -55,11 +55,11 @@
 </template>
 
 <script>
-    import {mapState, mapMutations} from "vuex";
-
     import EditorSidebar from "./inputs/EditorSidebar.vue";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
     import BlueprintDetail from "./flows/blueprints/BlueprintDetail.vue";
+    import {useEditorStore} from "../stores/editor";
+    import {mapStores} from "pinia";
 
     export default {
         components: {EditorSidebar, EnterpriseBadge,BlueprintDetail},
@@ -120,7 +120,7 @@
             this.setActiveName();
         },
         methods: {
-            ...mapMutations("editor", ["changeExplorerWidth", "closeExplorer"]),
+            ...mapStores(useEditorStore),
             dragSidebar(e){
                 const SELF = this;
 
@@ -133,7 +133,7 @@
 
                 document.onmousemove = function onMouseMove(e) {
                     let percent = blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100;
-                    SELF.changeExplorerWidth(percent)
+                    SELF.editorStore.changeExplorerWidth(percent)
                 };
 
                 document.onmouseup = () => {
@@ -172,7 +172,6 @@
             },
         },
         computed: {
-            ...mapState("editor", ["explorerVisible", "explorerWidth"]),
             containerClass() {
                 return this.getTabClasses(this.activeTab);
             },
@@ -191,7 +190,7 @@
                 ) {
                     if (TAB === "files") return true;
 
-                    this.closeExplorer();
+                    this.editorStore.closeExplorer();
                     return false;
                 }
 

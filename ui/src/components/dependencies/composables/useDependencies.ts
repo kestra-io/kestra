@@ -7,7 +7,7 @@ import cytoscape from "cytoscape";
 import {type Node, type Element, getDependencies} from "../../../../scripts/product/dependencies";
 
 import {style} from "../utils/style";
-const HOVERED = "hovered", SELECTED = "selected", FADED = "faded";
+const SELECTED = "selected", HIGHLIGHTED = "highlighted", FADED = "faded",  HOVERED = "hovered";
 
 /**
  * Cytoscape initialization options, including graph elements and interaction settings.
@@ -94,7 +94,7 @@ function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selecte
     cy.$(`.${SELECTED}`).removeClass(SELECTED).addClass(FADED);
 
     // Highlight the newly selected node
-    node.addClass(SELECTED);
+    node.addClass(HIGHLIGHTED);
 
     // Highlight connected edges and neighbor nodes in one chain
     node.connectedEdges().union(node.connectedEdges().connectedNodes()).addClass(SELECTED);

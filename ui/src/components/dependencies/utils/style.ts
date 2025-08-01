@@ -12,6 +12,10 @@ const VARIABLES = {
             background: "--ks-dependencies-node-background-selected",
             border: "--ks-dependencies-node-border-selected",
         },
+        highlighted: {
+            background: "--ks-dependencies-node-background-hover",
+            border: "--ks-dependencies-node-border-hover",
+        },
         faded: {
             background: "--ks-dependencies-node-background-selected-level2",
             border: "--ks-dependencies-node-border-selected-level2",
@@ -68,6 +72,10 @@ export const style: cytoscape.StylesheetJson = [
     {
         selector: "node.selected",
         style: {...nodeBase, ...nodeColors("selected"), color: "white"},
+    },
+    {
+        selector: "node.highlighted",
+        style: {...nodeBase, ...nodeColors("highlighted")},
     },
     {
         selector: "node.faded",

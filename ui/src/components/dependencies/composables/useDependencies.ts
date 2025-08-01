@@ -148,6 +148,7 @@ export function useDependencies(container: Ref<HTMLElement | null>) {
         const node = cy.getElementById(id);
 
         if (node.nonempty()) {
+            removeClasses(cy);
             selectHandler(cy, node);
         }
     }

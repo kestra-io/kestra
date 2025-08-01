@@ -67,7 +67,7 @@ export const useEditorStore = defineStore("editor", {
                 flow
             }
         },
-        closeTab(payload: {name: string, index?: number, path?: string}) {
+        closeTab(payload: {name?: string, index?: number, path?: string}) {
             const {name, index, path} = payload;
 
             this.tabs = this.tabs.filter((tab) => {
@@ -106,13 +106,13 @@ export const useEditorStore = defineStore("editor", {
         changeExplorerWidth(width: number) {
             this.explorerWidth = width > 40 ? 40 : width < 20 ? 20 : width;
         },
-        setTabContent(payload: EditorTabProps) {
+        setTabContent(payload: Partial<EditorTabProps>) {
             const tab = this.tabs.find((tab) => tab.path === payload.path);
             if(tab){
                 tab.content = payload.content;
             }
         },
-        setTabDirty(payload: {name: string, dirty: boolean, path?: string}) {
+        setTabDirty(payload: {name?: string, dirty: boolean, path?: string}) {
             const {name, dirty, path} =
                 payload;
 

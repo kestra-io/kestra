@@ -117,7 +117,7 @@
         if (!fileNamespace) return;
 
         const content = await store.dispatch("namespace/readFile", {namespace: fileNamespace, path: props.path})
-        store.commit("editor/setTabContent", {path: props.path, content})
+        editorStore.setTabContent({path: props.path, content})
     }
 
     onMounted(() => {
@@ -162,11 +162,11 @@
                 store.commit("flow/setFlowYaml", newValue);
             }
         }
-        store.commit("editor/setTabContent", {
+        editorStore.setTabContent({
             content: newValue,
             path: props.path
         });
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             path: props.path,
             dirty: true
         });
@@ -197,7 +197,7 @@
         if(!editorRef?.$refs.monacoEditor) return
         const result = await store.dispatch("flow/save", {content:(editorRef.$refs.monacoEditor as any).value})
 
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             path: props.path,
             dirty: false
         });
@@ -222,7 +222,7 @@
             path: props.path,
             content: editorRefElement.value?.modelValue,
         });
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             path: props.path,
             dirty: false
         });

@@ -606,7 +606,7 @@
 
                     this.renderNodes(items);
                     this.items = this.sorted(this.items);
-                    this.$store.commit("editor/setTreeData", this.items);
+                    this.editorStore.setTreeData(this.items);
                     resolve(this.items);
                 } else if (node.level >= 1) {
                     const payload = {

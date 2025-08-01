@@ -624,7 +624,9 @@ public class ExecutionController {
         }
     }
 
-    public record WebhookResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, ExecutionTrigger trigger, Map<String, Object> outputs, List<Label> labels, State state, URI url) {
+    public record WebhookResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision,
+                                  ExecutionTrigger trigger, Map<String, Object> outputs, List<Label> labels,
+                                  State state, URI url) {
         public static WebhookResponse fromExecution(Execution execution, URI url) {
             return new WebhookResponse(execution.getTenantId(), execution.getId(), execution.getNamespace(), execution.getFlowId(), execution.getFlowRevision(), execution.getTrigger(), execution.getOutputs(), execution.getLabels(), execution.getState(), url);
         }
@@ -750,7 +752,7 @@ public class ExecutionController {
 
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
         ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs, Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata, Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, URI url) {
-            super(tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate, traceParent, fixtures,kind, breakpoints);
+            super(tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate, traceParent, fixtures, kind, breakpoints);
 
             this.url = url;
         }
@@ -870,7 +872,8 @@ public class ExecutionController {
         }
 
         InputStream fileHandler = switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME -> storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+            case StorageContext.KESTRA_SCHEME ->
+                storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().get(path);
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 URI uri = nsFileToInternalStorageURI(path, execution.get());
@@ -906,7 +909,8 @@ public class ExecutionController {
         }
 
         long size = switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME -> storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize();
+            case StorageContext.KESTRA_SCHEME ->
+                storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize();
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().getAttributes(path).size();
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 URI uri = nsFileToInternalStorageURI(path, execution.get());
@@ -1805,12 +1809,25 @@ public class ExecutionController {
 
                     // Register for updates
                     streamingService.registerSubscriber(executionId, subscriberId, emitter, flow);
-                } catch (TimeoutException e) {
-                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
-                        "Unable to find execution " + executionId));
+
+                    // Fetch again the execution to avoid race when execution is ended before we are subscribed
+                    execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null);
+                    if (streamingService.isStopFollow(flow, execution)) {
+                        emitter.next(Event.of(execution).id("end"));
+                        emitter.complete();
+                    }
+
+                    if (execution.getState().isBreakpoint()) {
+                        emitter.next(Event.of(execution).id("progress"));
+                    }
                 } catch (IllegalStateException e) {
+                    log.error(e.getMessage(), e);
                     emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
                         "Unable to find flow for execution " + executionId));
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
+                        "Unable to find execution " + executionId));
                 }
             }, FluxSink.OverflowStrategy.BUFFER)
             .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
@@ -1843,7 +1860,8 @@ public class ExecutionController {
         }
 
         InputStream fileStream = switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME -> storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+            case StorageContext.KESTRA_SCHEME ->
+                storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().get(path);
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 URI uri = nsFileToInternalStorageURI(path, execution.get());
@@ -1959,8 +1977,8 @@ public class ExecutionController {
         }
 
         executions.forEach(execution -> setLabelsOnTerminatedExecution(
-                execution,
-                Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels())))
+            execution,
+            Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels())))
         );
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }

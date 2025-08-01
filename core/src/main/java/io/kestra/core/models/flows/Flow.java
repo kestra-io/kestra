@@ -61,13 +61,10 @@ public class Flow extends AbstractFlow implements HasUID {
             }
         });
 
-    String description;
-
     Map<String, Object> variables;
 
     @Valid
     @NotEmpty
-
     @Schema(additionalProperties = Schema.AdditionalPropertiesValue.TRUE)
     List<Task> tasks;
 

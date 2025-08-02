@@ -119,37 +119,31 @@
                     (ns) => namespaces.includes(ns.code) || this.isFilter,
                 );
             },
-            load() {
-                this.$store
-                    .dispatch("namespace/loadNamespacesForDatatype", {
+            async load() {
+                try {
+                    await this.$store.dispatch("namespace/loadNamespacesForDatatype", {
                         dataType: this.dataType
-                    })
-                    .then(() => {
-                        this.groupedNamespaces = this.groupNamespaces(
-                            this.datatypeNamespaces
-                        ).filter(
-                            (namespace) =>
-                                this.includeSystemNamespace ||
-                                namespace.code !==
-                                (this.miscStore.configs?.systemNamespace || "system")
-                        );
                     });
-                if (this.all) {
-                    // Then include datatype namespaces + all from namespaces tables
-                    this.$store.dispatch("namespace/autocomplete" + (this.value ? "?q=" + this.value : "")).then(namespaces => {
-                        const concatNamespaces = this.groupedNamespaces.concat(this.groupNamespaces(
-                            namespaces
-                        ).filter(
-                            (namespace) =>
-                                this.includeSystemNamespace ||
-                                namespace.code !==
-                                (this.miscStore.configs?.systemNamespace || "system")
-                        ));
-                        // Remove duplicates after merge
-                        this.groupedNamespaces = _uniqBy(concatNamespaces, "code").filter(
-                            (ns) => namespaces.includes(ns.code) || this.isFilter,
-                        ).sort((a,b) => a.code > b.code)
-                    })
+
+                    let namespaces = [...this.datatypeNamespaces];
+
+                    if (this.all) {
+                        const allNamespaces = await this.$store.dispatch("namespace/autocomplete", {
+                            q: this.value || "",
+                            ids: [],
+                            apiUrl: undefined
+                        });
+                        namespaces = [...new Set([...namespaces, ...allNamespaces])];
+                    }
+
+                    this.groupedNamespaces = this.groupNamespaces(namespaces)
+                        .filter(namespace => 
+                            this.includeSystemNamespace || 
+                            namespace.code !== (this.miscStore.configs?.systemNamespace || "system")
+                        )
+                        .sort((a, b) => a.code.localeCompare(b.code));
+                } catch (error) {
+                    console.error("Error loading namespaces:", error);
                 }
             }
         },

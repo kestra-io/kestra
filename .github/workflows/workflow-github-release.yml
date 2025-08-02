@@ -7,6 +7,10 @@ on:
       GH_PERSONAL_TOKEN:
         description: "The Github personal token."
         required: true
+      SLACK_RELEASES_WEBHOOK_URL:
+        description: "The Slack webhook URL."
+        required: true
+
 
 
 jobs:

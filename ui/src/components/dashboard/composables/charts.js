@@ -121,9 +121,7 @@ export function chartClick(moment, router, route, event, parsedData, elements, t
                 state = parsedData.labels[element.index];
             }
             if (state) {
-                // Extract state
-                const extractedState = extractState(state);
-                query.state = extractedState;
+                query.state = extractState(state);
                 query.scope = "USER";
                 query.size = 100;
                 query.page = 1;
@@ -153,8 +151,7 @@ export function chartClick(moment, router, route, event, parsedData, elements, t
     }
 
     if (event.state) {
-        const extractedState = extractState(event.state);
-        query.state = extractedState;
+        query.state = extractState(event.state);
     }
 
     if (route.query.namespace) {

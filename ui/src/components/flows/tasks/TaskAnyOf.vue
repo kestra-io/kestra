@@ -99,6 +99,7 @@
             return {
                 isOpen: false,
                 selectedSchema: undefined,
+                delayedSelectedSchema: undefined,
                 finishedMounting: false,
             };
         },
@@ -150,10 +151,40 @@
                 }
                 this.onAnyOfInput(this.modelValue || {type: val});
             },
+            selectedSchema(val) {
+                this.$nextTick(() => {
+                    this.delayedSelectedSchema = val;
+                });
+            },
         },
 
         methods: {
             onSelectType(value) {
+                // When switching form string to object/array,
+                // We try to parse the string as YAML
+                // If the value is not yaml it has no point on being kept.
+                if(typeof this.modelValue === "string" && (value === "object" || value === "array")) {
+                    let parsedValue = {}
+                    try{
+                        parsedValue = YAML_UTILS.parse(this.modelValue) ?? {};
+                        if(value === "array" && !Array.isArray(parsedValue)) {
+                            parsedValue = [parsedValue];
+                        }
+                    } catch {
+                        // eat an error
+                    }
+
+                    this.$emit("update:modelValue", parsedValue);
+                }
+
+                if(value === "string") {
+                    if(Array.isArray(this.modelValue) && this.modelValue.length === 1) {
+                        this.$emit("update:modelValue", this.modelValue[0]);
+                    }else{
+                        this.$emit("update:modelValue", YAML_UTILS.stringify(this.modelValue));
+                    }
+                }
+
                 this.selectedSchema = value;
                 // Set up default values
                 if (
@@ -172,20 +203,7 @@
                     }
                     this.onInput(defaultValues)
                 }
-
-                // When switching form string to object/array,
-                // We try to parse the string as YAML
-                // If the value is not yaml it has no point on being kept.
-                if(typeof this.modelValue === "string" && (value === "object" || value === "array")) {
-                    let parsedValue = {}
-                    try{
-                        parsedValue = YAML_UTILS.parse(this.modelValue) ?? {};
-                    } catch {
-                        // eat an error
-                    }
-
-                    this.$emit("update:modelValue", parsedValue);
-                }
+                this.delayedSelectedSchema = value;
             },
             onAnyOfInput(value) {
                 if(this.constantType?.length && typeof value === "object") {
@@ -233,7 +251,7 @@
                 }) : [];
             },
             currentSchema() {
-                const rawSchema = this.definitions[this.selectedSchema] ?? this.schemaByType[this.selectedSchema]
+                const rawSchema = this.definitions[this.delayedSelectedSchema] ?? this.schemaByType[this.delayedSelectedSchema]
                 return consolidateAllOfSchemas(rawSchema, this.definitions);
             },
             schemaByType() {
@@ -243,7 +261,7 @@
                 }, {});
             },
             currentSchemaType() {
-                return this.selectedSchema ? getTaskComponent(this.currentSchema) : undefined;
+                return this.delayedSelectedSchema ? getTaskComponent(this.currentSchema) : undefined;
             },
             isSelectingPlugins() {
                 return this.schemas.length > 4;

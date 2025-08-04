@@ -21,6 +21,7 @@
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import NoCode from "./NoCode.vue";
     import {CREATE_TASK_FUNCTION_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY} from "./injectionKeys";
+    import {useEditorStore} from "../../stores/editor";
 
     export interface NoCodeProps {
         creatingTask?: boolean;
@@ -67,12 +68,13 @@
     }, 500);
 
     const timeout = ref();
+    const editorStore = useEditorStore();
 
     const editorUpdate = (source: string) => {
         store.commit("flow/setFlowYaml", source);
         store.commit("flow/setHaveChange", true);
         validateFlow();
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             name: "Flow",
             dirty: true
         });

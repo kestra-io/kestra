@@ -140,6 +140,7 @@
     onBeforeUnmount(() => {
         window.removeEventListener("keydown", handleGlobalSave);
         window.removeEventListener("keydown", toggleAiShortcut);
+        pluginsStore.editorPlugin = undefined;
     });
 
     const editorRefElement = ref<InstanceType<typeof Editor>>();

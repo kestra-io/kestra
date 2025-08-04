@@ -2,14 +2,14 @@ import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "..
 import {FilterLanguage} from "../filterLanguage.ts";
 import permission from "../../../../../models/permission.ts";
 import action from "../../../../../models/action.ts";
-import {Me} from "../../../../../stores/auth.ts";
+import {useAuthStore} from "override/stores/auth.ts";
 
 const namespaceDashboardFilterKeys: Record<string, FilterKeyCompletions> = {
     flowId: new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.CONTAINS, Comparators.STARTS_WITH, Comparators.ENDS_WITH, Comparators.REGEX],
         async (store) => {
             const namespaceId = store.state.namespace.namespace?.id
-            const user = store.getters["auth/user"] as Me;
+            const user = useAuthStore().user;
             if (namespaceId !== undefined && user && user.hasAnyActionOnAnyNamespace(permission.FLOW, action.READ)) {
                 return ((await store.dispatch("flow/flowsByNamespace", namespaceId)) as { id: string }[])
                     .map(({id}) => new Completion(id, id));

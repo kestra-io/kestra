@@ -171,7 +171,6 @@
         },
         computed: {
             ...mapState("flow", ["executeFlow"]),
-            ...mapState("auth", ["user"]),
             ...mapStores(useApiStore, useCoreStore, useExecutionsStore, usePlaygroundStore),
             computedFlowId() {
                 return this.flowId || this.localFlow?.id;

@@ -35,6 +35,7 @@
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
+    import {useAuthStore} from "override/stores/auth";
 
     const {t} = useI18n();
 
@@ -44,16 +45,17 @@
     const route = useRoute();
 
     const flow = computed(() => store.state.flow.flow);
-    const user = computed(() => store.state.auth.user);
     const deleted = computed(() => flow.value?.deleted || false);
     const tab = computed(() => route.params?.tab as string);
 
+    const authStore = useAuthStore();
+
     const canExecute = computed(() =>
-        flow.value && user.value?.isAllowed(permission.EXECUTION, action.CREATE, flow.value.namespace)
+        flow.value && authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, flow.value.namespace)
     );
 
     const canEdit = computed(() =>
-        user.value?.isAllowed(permission.FLOW, action.UPDATE, flow.value?.namespace)
+        authStore.user?.isAllowed(permission.FLOW, action.UPDATE, flow.value?.namespace)
     );
 
     const editFlow = () => {

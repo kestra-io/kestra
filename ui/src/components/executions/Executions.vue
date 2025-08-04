@@ -627,7 +627,6 @@
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
             ...mapStores(useMiscStore, useExecutionsStore),
             routeInfo() {
@@ -659,19 +658,19 @@
                 return this.canDelete || this.canUpdate;
             },
             canCreate() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
             },
             canUpdate() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
             },
             canDelete() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
             },
             isAllowedEdit() {
-                return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
             },
             hasAnyExecute() {
-                return this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
+                return this.authStore.user?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
             },
             isDisplayedTop() {
                 if(this.visibleCharts) return true;
@@ -856,7 +855,7 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    
+
                     const action = actionMap[queryAction]();
                     return action(options)
                         .then(r => {
@@ -869,7 +868,7 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    
+
                     const action = actionMap[byIdAction]();
                     return action(options)
                         .then(r => {
@@ -1077,7 +1076,7 @@
                 })
             },
             emitStateCount() {
-                const runningCount = this.executionsStore.executions.filter(execution => 
+                const runningCount = this.executionsStore.executions.filter(execution =>
                     execution.state.current === State.RUNNING
                 )?.length;
                 const totalCount = this.executionsStore.total;

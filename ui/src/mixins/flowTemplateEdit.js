@@ -15,6 +15,7 @@ import {useApiStore} from "../stores/api";
 import {usePluginsStore} from "../stores/plugins";
 import {useCoreStore} from "../stores/core";
 import {useTemplateStore} from "../stores/template";
+import {useAuthStore} from "override/stores/auth";
 
 export default {
     mixins: [RouteContext],
@@ -33,9 +34,8 @@ export default {
         };
     },
     computed: {
-        ...mapState("auth", ["user"]),
         ...mapState("flow", ["flow"]),
-        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore),
+        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore, useAuthStore),
         guidedProperties() {
             return this.coreStore.guidedProperties;
         },
@@ -46,13 +46,13 @@ export default {
             );
         },
         canSave() {
-            return canSaveFlowTemplate(true, this.user, this.item, this.dataType);
+            return canSaveFlowTemplate(true, this.authStore.user, this.item, this.dataType);
         },
         canCreate() {
-            return this.dataType === "flow" && this.user.isAllowed(permission.FLOW, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user.isAllowed(permission.FLOW, action.CREATE, this.item.namespace)
         },
         canExecute() {
-            return this.dataType === "flow" && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
         },
         routeInfo() {
             let route = {
@@ -90,8 +90,7 @@ export default {
             return (
                 this.item &&
                 this.isEdit &&
-                this.user &&
-                this.user.isAllowed(
+                this.authStore.user?.isAllowed(
                     permission[this.dataType.toUpperCase()],
                     action.DELETE,
                     this.item.namespace
@@ -168,10 +167,10 @@ export default {
                         this.$toast()
                             .confirm(message, () => {
                                 // TODO: When flow store is migrated to Pinia, this will be simplified:
-                                const deletePromise = this.dataType === "template" 
+                                const deletePromise = this.dataType === "template"
                                     ? this.templateStore.deleteTemplate(item)
                                     : this.$store.dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item);
-                                
+
                                 return deletePromise
                                     .then(() => {
                                         this.content = ""
@@ -249,10 +248,10 @@ export default {
                 }
                 this.previousContent = YAML_UTILS.stringify(this.item);
                 // TODO: When flow store is migrated to Pinia, this will be simplified:
-                const createPromise = this.dataType === "template" 
+                const createPromise = this.dataType === "template"
                     ? this.templateStore.createTemplate({template: this.content})
                     : this.$store.dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content});
-                
+
                 createPromise
                     .then((data) => {
                         this.previousContent = data.source ? data.source : YAML_UTILS.stringify(data);

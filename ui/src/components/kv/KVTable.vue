@@ -205,6 +205,7 @@
 </script>
 
 <script lang="ts">
+    import {mapStores} from "pinia";
     import Id from "../Id.vue";
     import Drawer from "../Drawer.vue";
     import SelectTableActions from "../../mixins/selectTableActions";
@@ -214,6 +215,7 @@
     import {mapState, mapMutations} from "vuex";
     import action from "../../models/action";
     import permission from "../../models/permission";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         inheritAttrs: false,
@@ -223,8 +225,8 @@
             Drawer
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapState("namespace", ["addKvModalVisible"]),
+            ...mapStores(useAuthStore),
             searchQuery() {
                 return this.$route.query.q;
             },
@@ -315,13 +317,13 @@
         },
         methods: {
             ...mapMutations("namespace", ["changeKVModalVisibility"]),
-            canUpdate(kv) {
-                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
+            canUpdate(kv: {namespace: string}) {
+                return kv.namespace !== undefined && this.authStore.user?.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
             },
-            canDelete(kv) {
-                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
+            canDelete(kv: {namespace: string}) {
+                return kv.namespace !== undefined && this.authStore.user?.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
             },
-            jsonValidator(rule, value, callback) {
+            jsonValidator(_rule: any, value: string, callback: (error?: Error) => void) {
                 try {
                     const parsed = JSON.parse(value);
                     if (typeof parsed !== "object" || parsed === null) {
@@ -333,7 +335,7 @@
                     callback(new Error(this.$t("Invalid input: Expected a JSON formatted string")));
                 }
             },
-            durationValidator(rule, value, callback) {
+            durationValidator(_rule: any, value: string, callback: (error?: Error) => void) {
                 if (value !== undefined && !value.match(/^P(?=[^T]|T.)(?:\d*D)?(?:T(?=.)(?:\d*H)?(?:\d*M)?(?:\d*S)?)?$/)) {
                     callback(new Error(this.$t("datepicker.error")));
                 } else {

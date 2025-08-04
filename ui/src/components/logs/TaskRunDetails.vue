@@ -112,7 +112,6 @@
     import {logDisplayTypes} from "../../utils/constants";
     import Download from "vue-material-design-icons/Download.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
     import {useExecutionsStore} from "../../stores/executions";
@@ -304,7 +303,6 @@
             this.autoExpandBasedOnSettings();
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useCoreStore, useExecutionsStore),
             followedExecution() {
                 return this.executionsStore.execution;

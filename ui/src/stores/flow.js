@@ -7,6 +7,7 @@ import Utils from "../utils/utils";
 import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
+import {useAuthStore} from "override/stores/auth";
 
 const textYamlHeader = {
     headers: {
@@ -728,12 +729,13 @@ export default {
             const currentTab = rootState.editor.current;
             return currentTab?.flow !== undefined || state.isCreating;
         },
-        isAllowedEdit(state, _getters, _rootState, rootGetters) {
-            if (!state.flow || !rootGetters["auth/user"]) {
+        isAllowedEdit(state, _getters, _rootState) {
+            const user = useAuthStore().user;
+            if (!state.flow || !user) {
                 return false;
             }
 
-            return rootGetters["auth/user"].isAllowed(
+            return user.isAllowed(
                 permission.FLOW,
                 action.UPDATE,
                 state.flow.namespace,

@@ -28,9 +28,9 @@
     import Circle from "vue-material-design-icons/Circle.vue";
 </script>
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth"
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
@@ -58,10 +58,9 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useAuthStore),
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace))) {
                     return false;
                 }
 
@@ -79,7 +78,7 @@
     }
     .m-dropdown-menu {
         width: fit-content !important;
-        
+
         :deep(.el-dropdown-menu__item:hover) {
             background-color: var(--ks-log-background-error) !important;
             color: var(--ks-content-error) !important;

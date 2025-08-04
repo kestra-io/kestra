@@ -95,6 +95,7 @@
     import Markdown from "../layout/Markdown.vue";
     import ValidationError from "./ValidationError.vue";
     import {usePluginsStore} from "../../stores/plugins";
+    import {useAuthStore} from "../../override/stores/auth";
 
     // Types
     interface Props {
@@ -154,8 +155,10 @@
         return null;
     });
 
+    const authStore = useAuthStore();
+
     const canSave = computed(() => {
-        const user = store.state.auth.user;
+        const user = authStore.user;
         return canSaveFlowTemplate(true, user, {namespace: props.namespace}, "flow");
     });
 

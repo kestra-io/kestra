@@ -263,7 +263,6 @@
     import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
     import Utils from "../../utils/utils";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useLayoutStore} from "../../stores/layout";
     import {useMiscStore} from "../../stores/misc";
@@ -276,6 +275,7 @@
     import Block from "./components/block/Block.vue"
     import Row from "./components/block/Row.vue"
     import Column from "./components/block/Column.vue"
+    import {useAuthStore} from "override/stores/auth"
 
     export const DATE_FORMAT_STORAGE_KEY = "dateFormat";
     export const TIMEZONE_STORAGE_KEY = "timezone";
@@ -608,8 +608,7 @@
             document.removeEventListener("click", this.handleNavigationClick, true);
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useLayoutStore, useMiscStore, useTemplateStore),
+            ...mapStores(useLayoutStore, useMiscStore, useTemplateStore, useAuthStore),
             mappedTheme() {
                 return this.miscStore.theme;
             },
@@ -653,10 +652,10 @@
                 ]
             },
             canReadFlows() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.READ);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.READ);
             },
             canReadTemplates() {
-                return this.user && this.user.isAllowed(permission.TEMPLATE, action.READ);
+                return this.authStore.user?.isAllowed(permission.TEMPLATE, action.READ);
             },
             logDisplayOptions() {
                 return  [

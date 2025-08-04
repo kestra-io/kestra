@@ -6,7 +6,7 @@ export class Me {
     }
 
 
-    hasAnyAction(_permission: any, _action: any, _namespace: any) {
+    hasAnyAction(_permission: any, _action: any, _namespace?: any) {
         return true;
     }
 
@@ -37,7 +37,7 @@ export const useAuthStore = defineStore("auth", {
     }),
     actions: {
         logout(){
-            return true
+            return Promise.resolve(true)
         }
     },
 })

@@ -283,6 +283,7 @@
     import {storageKeys} from "../../utils/constants.js";
     import {mapStores} from "pinia";
     import {useTriggerStore} from "../../stores/trigger";
+    import {useAuthStore} from "../../override/stores/auth.js";
 
     export default {
         components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper},
@@ -318,9 +319,8 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
-            ...mapStores(useTriggerStore),
+            ...mapStores(useTriggerStore, useAuthStore),
             query() {
                 return Array.isArray(this.$route.query.q) ? this.$route.query.q[0] : this.$route.query.q;
             },
@@ -396,7 +396,7 @@
         },
         methods: {
             userCan(action) {
-                return this.user.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flow.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flow.namespace);
             },
             loadData() {
                 if(!this.triggersWithType.length) return;

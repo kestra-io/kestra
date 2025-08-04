@@ -166,14 +166,15 @@
 </script>
 
 <script lang="ts">
+    import {mapStores} from "pinia";
     import Id from "../Id.vue";
     import Drawer from "../Drawer.vue";
     import SelectTableActions from "../../mixins/selectTableActions";
     import {SecretIterator} from "../../composables/useSecrets";
     import {useNamespaceSecrets, useAllSecrets} from "../../composables/useSecrets";
-    import {mapState} from "vuex";
     import action from "../../models/action";
     import permission from "../../models/permission";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         mixins: [SelectTableActions],
@@ -182,7 +183,7 @@
             Drawer
         },
         computed: {
-            ...mapState("auth", ["user"]),
+            ...mapStores(useAuthStore),
             searchQuery() {
                 return this.$route.query.q;
             },
@@ -301,14 +302,14 @@
         },
         methods: {
             canUpdate(secret) {
-                return secret.namespace !== undefined && this.user.isAllowed(permission.SECRET, action.UPDATE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
+                return secret.namespace !== undefined && this.authStore.user.isAllowed(permission.SECRET, action.UPDATE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
             },
             canDelete(secret) {
-                return secret.namespace !== undefined && this.user.isAllowed(permission.SECRET, action.DELETE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
+                return secret.namespace !== undefined && this.authStore.user.isAllowed(permission.SECRET, action.DELETE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
             },
             async fetchSecrets() {
                 if (this.secretsIterator === undefined) {
-                    this.secretsIterator = this.namespace === undefined ? useAllSecrets(this.$store, 20) : useNamespaceSecrets(this.$store, this.namespace, 20, {
+                    this.secretsIterator = this.namespace === undefined ? useAllSecrets(this.$store, this.authStore.user, 20) : useNamespaceSecrets(this.$store, this.namespace, 20, {
                         sort: this.$route.query.sort || "key:asc",
                         ...(this.searchQuery === undefined ? {} : {filters: {
                             q: {

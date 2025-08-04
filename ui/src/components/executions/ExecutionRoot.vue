@@ -13,7 +13,6 @@
 </template>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
 
     import Gantt from "./Gantt.vue";
@@ -33,6 +32,7 @@
     import ExecutionDependencies from "./ExecutionDependencies.vue";
 
     import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         mixins: [RouteContext],
@@ -131,8 +131,7 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore, useExecutionsStore),
+            ...mapStores(useCoreStore, useExecutionsStore, useAuthStore),
             tabs() {
                 return this.getTabs();
             },
@@ -181,19 +180,16 @@
                 };
             },
             isAllowedTrigger() {
-                return this.user
-                    && this.executionsStore.execution
-                    && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.executionsStore.execution.namespace);
+                return this.executionsStore.execution
+                    && this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.executionsStore.execution.namespace);
             },
             isAllowedEdit() {
-                return this.user
-                    && this.executionsStore.execution
-                    && this.user.isAllowed(permission.FLOW, action.UPDATE, this.executionsStore.execution.namespace);
+                return this.executionsStore.execution
+                    && this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.executionsStore.execution.namespace);
             },
             canDelete() {
-                return this.user
-                    && this.executionsStore.execution
-                    && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.executionsStore.execution.namespace);
+                return this.executionsStore.execution
+                    && this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.executionsStore.execution.namespace);
             },
             ready() {
                 return this.executionsStore.execution !== undefined;

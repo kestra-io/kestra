@@ -26,6 +26,7 @@
     import NavBar from "../layout/TopNavBar.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {useAuthStore} from "override/stores/auth";
 
     defineProps<{
         routeInfo: {
@@ -36,8 +37,9 @@
     }>();
 
     const store = useStore();
+    const authStore = useAuthStore();
     const flow = computed(() => store.state.flow.flow);
-    const user = computed(() => store.state.auth.user);
+    const user = computed(() => authStore.user);
 
     const isDeleted = computed(() => flow.value?.deleted || false);
     const isAllowedToEdit = computed(() =>

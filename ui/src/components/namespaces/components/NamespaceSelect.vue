@@ -27,6 +27,7 @@
     import _uniqBy from "lodash/uniqBy";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         props: {
@@ -62,8 +63,7 @@
         emits: ["update:modelValue"],
         created() {
             if (
-                this.user &&
-                this.user.hasAnyActionOnAnyNamespace(
+                this.authStore.user?.hasAnyActionOnAnyNamespace(
                     permission.NAMESPACE,
                     action.READ,
                 )
@@ -73,8 +73,7 @@
         },
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
-            ...mapState("auth", ["user"]),
-            ...mapStores(useMiscStore),
+            ...mapStores(useMiscStore, useAuthStore),
         },
         data() {
             return {
@@ -137,8 +136,8 @@
                     }
 
                     this.groupedNamespaces = this.groupNamespaces(namespaces)
-                        .filter(namespace => 
-                            this.includeSystemNamespace || 
+                        .filter(namespace =>
+                            this.includeSystemNamespace ||
                             namespace.code !== (this.miscStore.configs?.systemNamespace || "system")
                         )
                         .sort((a, b) => a.code.localeCompare(b.code));

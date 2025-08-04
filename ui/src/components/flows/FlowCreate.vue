@@ -70,7 +70,6 @@ tasks:
         },
         computed: {
             ...mapState("flow", ["flowGraph", "flowYaml", "flow", "flowValidation", "flowYaml"]),
-            ...mapState("auth", ["user"]),
             ...mapStores(useBlueprintsStore, useCoreStore),
             routeInfo() {
                 return {

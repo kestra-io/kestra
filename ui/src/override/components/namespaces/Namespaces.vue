@@ -82,6 +82,7 @@
 
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
+    import {useAuthStore} from "../../stores/auth.ts";
 
     interface Node {
         id: string;
@@ -101,10 +102,9 @@
 
     const store = useStore();
 
-    const user = computed(() => store.state.auth.user);
+    const authStore = useAuthStore();
     const canCreate = computed(() => {
-        if (Object.keys(user.value).length === 0) return false;
-        return user.value.hasAnyAction(permission.NAMESPACE, action.CREATE);
+        return authStore.user?.hasAnyAction(permission.NAMESPACE, action.CREATE);
     });
 
     const namespaces = ref([]) as Ref<Namespace[]>;

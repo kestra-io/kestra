@@ -37,6 +37,7 @@
     import FlowRootTopBar from "./FlowRootTopBar.vue";
     import FlowConcurrency from "./FlowConcurrency.vue";
     import DemoAuditLogs from "../demo/AuditLogs.vue";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         mixins: [RouteContext],
@@ -308,8 +309,10 @@
         computed: {
             ...mapGetters("flow", ["isAllowedEdit", "readOnlySystemLabel"]),
             ...mapState("flow", ["flow", "expandedSubflows"]),
-            ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore),
+            ...mapStores(useCoreStore, useAuthStore),
+            user() {
+                return this.authStore.user;
+            },
             routeInfo() {
                 return {
                     title: this.$route.params.id,

@@ -94,12 +94,12 @@
 <script>
     import Markdown from "../../layout/Markdown.vue";
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
-    import {mapState} from "vuex";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
     import {mapStores} from "pinia";
     import {usePluginsStore} from "../../../stores/plugins";
     import {useBlueprintsStore} from "../../../stores/blueprints";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {Markdown, CopyToClipboard},
@@ -203,10 +203,9 @@
                 });
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(usePluginsStore, useBlueprintsStore),
+            ...mapStores(usePluginsStore, useBlueprintsStore, useAuthStore),
             userCanCreateFlow() {
-                return this.user.hasAnyAction(permission.FLOW, action.CREATE);
+                return this.authStore.user?.hasAnyAction(permission.FLOW, action.CREATE);
             },
             parsedFlow() {
                 return {

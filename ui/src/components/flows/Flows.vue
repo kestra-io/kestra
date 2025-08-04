@@ -309,6 +309,7 @@
     import {storageKeys} from "../../utils/constants";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import {useAuthStore} from "../../override/stores/auth.ts";
 
     const CHART_DEFINITION = {
         id: "executions_per_namespace_bars",
@@ -419,8 +420,10 @@
         },
         computed: {
             ...mapState("flow", ["flows", "total"]),
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useAuthStore),
+            user() {
+                return this.authStore.user;
+            },
             routeInfo() {
                 return {
                     title: this.$t("flows"),
@@ -431,8 +434,7 @@
             },
             canCreate() {
                 return (
-                    this.user &&
-                    this.user.hasAnyActionOnAnyNamespace(
+                    this.user?.hasAnyActionOnAnyNamespace(
                         permission.FLOW,
                         action.CREATE,
                     )
@@ -440,8 +442,7 @@
             },
             canRead() {
                 return (
-                    this.user &&
-                    this.user.isAllowed(
+                    this.user?.isAllowed(
                         permission.FLOW,
                         action.READ,
                         this.$route.query.namespace,
@@ -450,8 +451,7 @@
             },
             canDelete() {
                 return (
-                    this.user &&
-                    this.user.isAllowed(
+                    this.user?.isAllowed(
                         permission.FLOW,
                         action.DELETE,
                         this.$route.query.namespace,
@@ -460,8 +460,7 @@
             },
             canUpdate() {
                 return (
-                    this.user &&
-                    this.user.isAllowed(
+                    this.user?.isAllowed(
                         permission.FLOW,
                         action.UPDATE,
                         this.$route.query.namespace,
@@ -772,7 +771,7 @@
             },
             mappedChart(id, namespace) {
                 let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION));
-                
+
                 MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id);
 
                 return MAPPED_CHARTS;

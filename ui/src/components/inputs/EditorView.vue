@@ -480,6 +480,7 @@
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
     import {usePluginsStore} from "../../stores/plugins";
     import * as FLOW_YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {useAuthStore} from "../../override/stores/auth";
 
     const store = useStore();
     const coreStore = useCoreStore();
@@ -635,7 +636,6 @@
     const isLoading = ref(false);
     const flowYaml = computed(() => store.state.flow.flowYaml);
     const flowYamlOrigin = computed(() => store.state.flow.flowYamlOrigin);
-    const user = computed(() => store.getters["auth/user"]);
     const metadata = computed(() => store.state.flow.metadata);
     const newTrigger = ref(null);
     const isNewTriggerOpen = ref(false);
@@ -986,8 +986,10 @@
         store.commit("flow/executeFlow", true);
     };
 
+    const authStore = useAuthStore();
+
     const canDelete = () => {
-        return user.value?.isAllowed(permission.FLOW, action.DELETE, props.namespace);
+        return authStore.user?.isAllowed(permission.FLOW, action.DELETE, props.namespace);
     };
 
     const deleteFlow = () => {

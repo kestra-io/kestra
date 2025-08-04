@@ -33,7 +33,7 @@ const nodeBase: cytoscape.Css.Node = {
     label: "data(flow)",
     "border-width": 2,
     "border-style": "solid",
-    color: "white",
+    color: cssVariable("--ks-content-primary"),
     "font-size": 10,
     "text-valign": "bottom",
     "text-margin-y": 10,
@@ -67,11 +67,21 @@ export const style: cytoscape.StylesheetJson = [
     },
     {
         selector: "node.faded",
-        style: {...nodeBase, ...nodeColors("faded"), "background-opacity": 0.75, "border-opacity": 0.75, color: "white"},
+        style: {
+            ...nodeBase,
+            ...nodeColors("faded"),
+            "background-opacity": 0.75,
+            "border-opacity": 0.75,
+            color: cssVariable("--ks-dependencies-node-background-selected-level2"),
+        },
     },
     {
         selector: "node.selected",
-        style: {...nodeBase, ...nodeColors("selected"), color: "white"},
+        style: {
+            ...nodeBase,
+            ...nodeColors("selected"),
+            color: cssVariable("--ks-dependencies-node-background-selected"),
+        },
     },
     {
         selector: "node.hovered",

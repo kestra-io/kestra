@@ -116,11 +116,10 @@ section#input {
     }
 
     & :deep(.el-table__row.selected) {
-        background-color: var(--ks-button-background-primary);
-        color: var(--ks-text-white);
+        background-color: var(--ks-tag-background);
 
         &:hover {
-            --el-table-row-hover-bg-color: var(--ks-button-background-primary-hover);
+            --el-table-row-hover-bg-color: var(--ks-tag-background-hover);
         }
     }
 }
@@ -132,7 +131,6 @@ section#row {
     max-width: 100%;
     padding: 0.75rem 0 0.75rem 0.75rem;
     font-size: var(--font-size-xs);
-    color: var(--ks-button-content-primary);
     cursor: pointer;
 
     & section#left {
@@ -153,6 +151,7 @@ section#row {
 
         & p.description {
             margin: 0;
+            color: var(--ks-content-primary);
         }
     }
 

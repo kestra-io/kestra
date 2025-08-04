@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.BDDAssertions.within;
 
@@ -46,7 +47,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 class KVControllerTest {
 
     private static final String NAMESPACE = "io.namespace";
-    public static final String TENANT_ID = "main";
 
     @Inject
     @Client("/")
@@ -57,7 +57,7 @@ class KVControllerTest {
 
     @BeforeEach
     public void init() throws IOException {
-        storageInterface.delete(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, null));
+        storageInterface.delete(MAIN_TENANT, NAMESPACE, toKVUri(NAMESPACE, null));
     }
 
     @SuppressWarnings("unchecked")
@@ -65,9 +65,9 @@ class KVControllerTest {
     void listKeys() throws IOException {
         Instant myKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(5)).truncatedTo(ChronoUnit.MILLIS);
         Instant mySecondKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(10)).truncatedTo(ChronoUnit.MILLIS);
-        storageInterface.put(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "my-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString()), new ByteArrayInputStream("my-value".getBytes())));
+        storageInterface.put(MAIN_TENANT, NAMESPACE, toKVUri(NAMESPACE, "my-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString()), new ByteArrayInputStream("my-value".getBytes())));
         String secondKvDescription = "myDescription";
-        storageInterface.put(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "my-second-key"), new StorageObject(Map.of("expirationDate", mySecondKeyExpirationDate.toString(), "description", secondKvDescription), new ByteArrayInputStream("my-second-value".getBytes())));
+        storageInterface.put(MAIN_TENANT, NAMESPACE, toKVUri(NAMESPACE, "my-second-key"), new StorageObject(Map.of("expirationDate", mySecondKeyExpirationDate.toString(), "description", secondKvDescription), new ByteArrayInputStream("my-second-value".getBytes())));
 
         List<KVEntry> res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv"), Argument.of(List.class, KVEntry.class));
         res.stream().forEach(entry -> {
@@ -88,11 +88,11 @@ class KVControllerTest {
         String namespaceDescription = "in the namespace";
         String namespaceParentDescription = "in the parent namespace";
 
-        storageInterface.put(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "shared-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceDescription), new ByteArrayInputStream("my-value".getBytes())));
-        storageInterface.put(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "child-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceDescription), new ByteArrayInputStream("my-second-value".getBytes())));
+        storageInterface.put(MAIN_TENANT, NAMESPACE, toKVUri(NAMESPACE, "shared-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceDescription), new ByteArrayInputStream("my-value".getBytes())));
+        storageInterface.put(MAIN_TENANT, NAMESPACE, toKVUri(NAMESPACE, "child-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceDescription), new ByteArrayInputStream("my-second-value".getBytes())));
 
-        storageInterface.put(TENANT_ID, namespaceParent, toKVUri(namespaceParent, "shared-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceParentDescription), new ByteArrayInputStream("my-value".getBytes())));
-        storageInterface.put(TENANT_ID, namespaceParent, toKVUri(namespaceParent, "parent-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceParentDescription), new ByteArrayInputStream("my-second-value".getBytes())));
+        storageInterface.put(MAIN_TENANT, namespaceParent, toKVUri(namespaceParent, "shared-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceParentDescription), new ByteArrayInputStream("my-value".getBytes())));
+        storageInterface.put(MAIN_TENANT, namespaceParent, toKVUri(namespaceParent, "parent-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceParentDescription), new ByteArrayInputStream("my-second-value".getBytes())));
 
         List<KVEntry> res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/inheritance"), Argument.of(List.class, KVEntry.class));
 
@@ -124,7 +124,7 @@ class KVControllerTest {
     @MethodSource("kvGetKeyValueArgs")
     void getKeyValue(String storedIonValue, KVType expectedType, String expectedValue) throws IOException {
         storageInterface.put(
-            TENANT_ID,
+            MAIN_TENANT,
             NAMESPACE,
             toKVUri(NAMESPACE, "my-key"),
             new StorageObject(
@@ -148,7 +148,7 @@ class KVControllerTest {
     @Test
     void getKeyValueExpired() throws IOException {
         storageInterface.put(
-            TENANT_ID,
+            MAIN_TENANT,
             NAMESPACE,
             toKVUri(NAMESPACE, "my-key"),
             new StorageObject(
@@ -183,7 +183,7 @@ class KVControllerTest {
         String myDescription = "myDescription";
         client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", value).contentType(mediaType).header("ttl", "PT5M").header("description", myDescription));
 
-        KVStore kvStore = new InternalKVStore(TENANT_ID, NAMESPACE, storageInterface);
+        KVStore kvStore = new InternalKVStore(MAIN_TENANT, NAMESPACE, storageInterface);
         Class<?> valueClazz = kvStore.getValue("my-key").get().value().getClass();
         assertThat(expectedClass.isAssignableFrom(valueClazz)).as("Expected value to be a " + expectedClass + " but was " + valueClazz).isTrue();
 
@@ -198,7 +198,7 @@ class KVControllerTest {
     @Test
     void deleteKeyValue() throws IOException {
         storageInterface.put(
-            TENANT_ID,
+            MAIN_TENANT,
             NAMESPACE,
             toKVUri(NAMESPACE, "my-key"),
             new StorageObject(
@@ -207,17 +207,17 @@ class KVControllerTest {
             )
         );
 
-        assertThat(storageInterface.exists(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isTrue();
+        assertThat(storageInterface.exists(MAIN_TENANT, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isTrue();
         client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key"));
 
-        assertThat(storageInterface.exists(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isFalse();
+        assertThat(storageInterface.exists(MAIN_TENANT, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isFalse();
     }
 
     @Test
     void shouldReturnSuccessForDeleteKeyValueBulkOperationGivenExistingKeys() throws IOException {
         // Given
         storageInterface.put(
-            TENANT_ID,
+            MAIN_TENANT,
             NAMESPACE,
             toKVUri(NAMESPACE, "my-key"),
             new StorageObject(
@@ -225,7 +225,7 @@ class KVControllerTest {
                 new ByteArrayInputStream("\"content\"".getBytes())
             )
         );
-        assertThat(storageInterface.exists(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isTrue();
+        assertThat(storageInterface.exists(MAIN_TENANT, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isTrue();
 
         // When
         HttpResponse<ApiDeleteBulkResponse> response = client.toBlocking()

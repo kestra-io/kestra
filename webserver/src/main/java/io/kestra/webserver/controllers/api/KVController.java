@@ -38,7 +38,7 @@ public class KVController {
     @Inject
     private StorageInterface storageInterface;
     @Inject
-    private TenantService tenantService;
+    protected TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get
@@ -55,11 +55,17 @@ public class KVController {
     public List<KVEntry> listKeysWithInheritence(
         @Parameter(description = "The namespace id") @PathVariable String namespace
     ) throws IOException {
+        List<String> namespaces = NamespaceUtils.asTree(namespace);
+        return getKvEntriesWithInheritance(namespaces);
+    }
+
+    protected List<KVEntry> getKvEntriesWithInheritance(List<String> namespaces) throws IOException {
         List<KVEntry> kvEntries = new ArrayList<>();
         Set<String> keys = new HashSet<>();
-        List<String> namespaces = NamespaceUtils.asTree(namespace);
-        namespaces.sort(Comparator.comparingInt(String::length).reversed());
-        for (String ns : namespaces) {
+        List<String> sortedNamespaces = namespaces.stream()
+            .sorted(Comparator.comparingInt(String::length).reversed())
+            .toList();
+        for (String ns : sortedNamespaces) {
             List<KVEntry> entries = kvStore(ns).list();
             entries.forEach(key -> {
                 if (!keys.contains(key.key())) {

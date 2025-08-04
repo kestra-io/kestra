@@ -42,8 +42,13 @@ const nodeBase: cytoscape.Css.Node = {
 const edgeBase: cytoscape.Css.Edge = {
     "target-arrow-shape": "triangle",
     "curve-style": "bezier",
-    width: 1,
+    width: 2,
     "line-style": "solid",
+};
+
+const edgeAnimated: cytoscape.Css.Edge = {
+    "line-style": "dashed",
+    "line-dash-pattern": [3, 5]
 };
 
 function nodeColors(type: keyof typeof VARIABLES.node): Partial<cytoscape.Css.Node> {
@@ -79,18 +84,18 @@ export const style: cytoscape.StylesheetJson = [
     },
     {
         selector: "edge",
-        style: {...edgeBase, ...edgeColors("default")},
+        style: {...edgeBase, ...edgeColors("default"), width: 1},
     },
     {
         selector: "edge.faded",
-        style: {...edgeBase, ...edgeColors("faded"), width: 1, opacity: 0.75},
+        style: {...edgeBase, ...edgeColors("faded"), ...edgeAnimated},
     },
     {
         selector: "edge.selected",
-        style: {...edgeBase, ...edgeColors("selected"), "line-style": "dashed", "line-dash-pattern": [3, 5], width: 2},
+        style: {...edgeBase, ...edgeColors("selected"), ...edgeAnimated},
     },
     {
         selector: "edge.hovered",
-        style: {...edgeBase, ...edgeColors("hovered"), width: 2},
+        style: {...edgeBase, ...edgeColors("hovered")},
     },
 ];

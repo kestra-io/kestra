@@ -55,7 +55,7 @@
         <div class="right wrapper" :style="{width: 100 - leftWidth + '%', 'z-index': 999}">
             <div
                 v-if="multipleSelected || selectedValue"
-                class="w-100 overflow-auto p-3"
+                class="w-100 overflow-auto p-3 content-container"
             >
                 <div class="d-flex justify-content-between pe-none fs-5 values">
                     <code class="d-block">
@@ -189,8 +189,6 @@
         if (!task) return "";
 
         let path = expandedValue.value;
-        if (!path) return `{{ outputs${formatTask(task)} }}`;
-
         return `{{ outputs${formatPath(path)} }}`;
     });
 
@@ -463,6 +461,7 @@
     display: flex;
     width: 100%;
     height: 100vh;
+    overflow: hidden;
 
     .el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child,
     .values {
@@ -488,6 +487,40 @@
 
     .wrapper {
         background: var(--ks-background-card);
+    }
+
+    .content-container {
+        height: calc(100vh - 0px);
+        overflow-y: auto !important;
+        overflow-x: hidden;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+
+    :deep(.el-collapse) {
+        .el-collapse-item__wrap {
+            overflow-y: auto !important;
+            max-height: none !important;
+        }
+        
+        .el-collapse-item__content {
+            overflow-y: auto !important;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+    }
+
+    :deep(.var-value) {
+        overflow-y: auto !important;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+
+    :deep(pre) {
+        white-space: pre-wrap !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
     }
 
     .el-cascader-menu {

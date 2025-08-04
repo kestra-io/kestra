@@ -128,12 +128,12 @@
                     let namespaces = [...this.datatypeNamespaces];
 
                     if (this.all) {
-                        const allNamespaces = await this.$store.dispatch("namespace/autocomplete", {
+                        const allNamespaces = await this.$store.dispatch("namespace/search", {
                             q: this.value || "",
                             ids: [],
                             apiUrl: undefined
                         });
-                        namespaces = [...new Set([...namespaces, ...allNamespaces])];
+                        namespaces = [...new Set([...namespaces, ...allNamespaces.results.map(n => n.id)])];
                     }
 
                     this.groupedNamespaces = this.groupNamespaces(namespaces)

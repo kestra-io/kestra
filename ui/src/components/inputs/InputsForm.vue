@@ -57,15 +57,6 @@
                     :placeholder="$t('custom value')"
                 />
             </el-radio-group>
-            <el-button
-                v-if="(input.type === 'ENUM' || input.type === 'SELECT') && input.isRadio && inputsValues[input.id] !== undefined && inputsValues[input.id] !== null"
-                @click="inputsValues[input.id] = null; onChange(input)"
-                type="text"
-                class="clear-selection-btn"
-                :data-testid="`clear-selection-${input.id}`"
-            >
-                {{ $t('clear selection') }}
-            </el-button>
             <el-select
                 :full-height="false"
                 :input="true"
@@ -162,12 +153,16 @@
                     <input
                         :data-testid="`input-form-${input.id}`"
                         :id="input.id+'-file'"
-                        class="el-input__inner custom-file-input"
+                        class="el-input__inner"
                         type="file"
                         @change="onFileChange(input, $event)"
                         autocomplete="off"
+                        :style="{display: isFile(inputsValues[input.id]) ? 'none': ''}"
                     >
-                    <span class="file-placeholder" v-html="getFilePlaceholder(inputsValues[input.id])" />
+                    <label
+                        v-if="isFile(inputsValues[input.id])"
+                        :for="input.id+'-file'"
+                    >Kestra Internal Storage File</label>
                 </div>
             </div>
             <div
@@ -423,11 +418,11 @@
                 }
             },
             onChange(input) {
-                // give 2 seconds for the user to finish their edit
+                // give a second for the user to finish their edit
                 // and for the server to return with validated content
                 setTimeout(() => {
                     this.inputsValidated.add(input.id);
-                }, 2000);
+                }, 300);
                 this.$emit("update:modelValue", this.inputsValues);
             },
             onSubmit() {
@@ -586,15 +581,9 @@
 
                 this.updateArrayValue(input);
             },
-            getFilePlaceholder(value) {
-                if (typeof value === "string" && value.startsWith("nsfile://")) {
-                    return this.$t("defaultsToNamespaceFile", {name: value.substring(10)});
-                }
-                if (value && typeof value.name === "string") {
-                    return value.name;
-                }
-                return this.$t("no_file_choosen");
-            },
+            isFile(data) {
+                return typeof data === "string" && (data.startsWith("kestra:///") || data.startsWith("file://") || data.startsWith("nsfile://"));
+            }
         },
         watch: {
             flow () {
@@ -765,25 +754,10 @@
 }
 
 :deep(.editor-container){
-    max-height: 200px;
+        max-height: 200px;
 
-    & .ks-monaco-editor {
-        overflow-x: hidden;
+        & .ks-monaco-editor {
+            overflow-x: hidden;
+        }
     }
-}
-
-.custom-file-input {
-  color: transparent;
-  width: 120px;
-}
-
-.custom-file-input::-webkit-file-upload-text {
-  visibility: hidden;
-}
-
-.file-placeholder {
-  margin-left: 8px;
-  color: var(--ks-content-secondary);
-  font-size: 0.9em;
-}
 </style>

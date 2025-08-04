@@ -94,7 +94,7 @@
         },
         inheritAttrs: false,
         mixins: [Task],
-        emits: ["update:modelValue"],
+        emits: ["update:modelValue", "update:selectedSchema"],
         data() {
             return {
                 isOpen: false,
@@ -149,6 +149,9 @@
                     }
                 }
                 this.onAnyOfInput(this.modelValue || {type: val});
+            },
+            selectedSchema(val) {
+                this.$emit("update:selectedSchema", val);
             },
         },
 

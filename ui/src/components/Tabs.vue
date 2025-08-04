@@ -49,6 +49,7 @@
             ref="tabContent"
             :is="activeTab.component"
             @go-to-detail="blueprintId => selectedBlueprintId = blueprintId"
+            :namespace
             :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
         />
     </section>

@@ -17,8 +17,8 @@ const SELECTED = "selected", FADED = "faded",  HOVERED = "hovered";
  */
 export const options: { elements: Element[] } & Omit<cytoscape.CytoscapeOptions, "container" | "elements"> = {
     elements: getDependencies({}),
-    minZoom: 0.25,
-    maxZoom: 1.5,
+    minZoom: 0.1,
+    maxZoom: 2,
 };
 
 /**

@@ -87,6 +87,7 @@
     import Inputs from "../../utils/inputs";
     import {TIMEZONE_STORAGE_KEY} from "../settings/BasicSettings.vue";
     import moment from "moment-timezone";
+    import {mapState} from "vuex";
 
     export default {
         components: {
@@ -123,10 +124,8 @@
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
         computed: {
+            ...mapState("flow", ["flow"]),
             ...mapStores(useCoreStore, useMiscStore, useExecutionsStore, usePlaygroundStore),
-            flow() {
-                return this.executionsStore.flow
-            },
             execution() {
                 return this.executionsStore.execution
             },

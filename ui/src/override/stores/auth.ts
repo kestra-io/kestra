@@ -1,3 +1,5 @@
+import {defineStore} from "pinia";
+
 export class Me {
     hasAny(_permission: any, _namespace: any) {
         return true;
@@ -28,27 +30,14 @@ export class Me {
     }
 }
 
-export default {
-    namespaced: true,
-    state: {
-        user: new Me()
-    },
+export const useAuthStore = defineStore("auth", {
+    state: () => ({
+        user: new Me(),
+        isLogged: true,
+    }),
     actions: {
         logout(){
             return true
         }
     },
-    mutations: {
-        setUser(state: {user: Me}, user: Me) {
-            state.user = user
-        },
-    },
-    getters: {
-        isLogged: () => {
-            return true;
-        },
-        user: (state: {user: Me}): Me => {
-            return state.user;
-        }
-    }
-}
+})

@@ -48,7 +48,6 @@
             };
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapState("flow", ["overallTotal"]),
             ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore, useExecutionsStore),
             envName() {

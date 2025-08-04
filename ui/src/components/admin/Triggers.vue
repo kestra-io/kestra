@@ -270,13 +270,13 @@
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import Id from "../Id.vue";
-    import {mapState} from "vuex";
     import SelectTableActions from "../../mixins/selectTableActions";
     import _merge from "lodash/merge";
     import LogsWrapper from "../logs/LogsWrapper.vue";
     import KestraFilter from "../filter/KestraFilter.vue"
     import {mapStores} from "pinia";
     import {useTriggerStore} from "../../stores/trigger";
+    import {useAuthStore} from "../../stores/auth.ts";
 
 
     export default {
@@ -504,8 +504,7 @@
             },
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useTriggerStore),
+            ...mapStores(useTriggerStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$t("triggers")

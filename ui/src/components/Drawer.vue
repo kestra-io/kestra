@@ -1,8 +1,7 @@
 <template>
     <el-drawer
         data-component="FILENAME_PLACEHOLDER"
-        :model-value="props.modelValue"
-        @update:model-value="emit('update:modelValue', $event)"
+        v-model="modelValue"
         destroy-on-close
         lock-scroll
         size=""
@@ -16,7 +15,7 @@
                 <slot name="header" />
             </span>
             <el-button link class="full-screen">
-                <Fullscreen :title="$t('toggle fullscreen')" @click="toggleFullScreen" />
+                <Fullscreen :title="t('toggle fullscreen')" @click="toggleFullScreen" />
             </el-button>
         </template>
 
@@ -30,28 +29,28 @@
     </el-drawer>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     import {ref} from "vue";
+    import {useI18n} from "vue-i18n";
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
 
+    const {t} = useI18n();
+
     const props = defineProps({
-        modelValue: {
-            type: Boolean,
-            required: true
-        },
         title: {
             type: String,
-            required: false,
             default: undefined
         },
         fullScreen: {
             type: Boolean,
-            required: false,
             default: false
         }
     });
 
-    const emit = defineEmits(["update:modelValue"])
+    const modelValue = defineModel({
+        type: Boolean,
+        required: true
+    });
 
     const fullScreen = ref(props.fullScreen);
 

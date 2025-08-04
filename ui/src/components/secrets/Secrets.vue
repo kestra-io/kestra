@@ -71,6 +71,7 @@
             v-else
             filterable
             :add-secret-modal-visible="addSecretModalVisible"
+            :namespace="props.namespace"
             @update:add-secret-modal-visible="addSecretModalVisible = $event"
         />
     </section>
@@ -89,6 +90,13 @@
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
 
     const miscStore = useMiscStore();
+
+    const props = defineProps({
+        namespace: {
+            type: String,
+            default: undefined
+        }
+    });
 
     const addSecretModalVisible = ref(false);
     const hasData = ref(undefined);

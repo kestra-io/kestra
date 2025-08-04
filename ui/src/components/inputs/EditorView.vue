@@ -480,7 +480,8 @@
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
     import {usePluginsStore} from "../../stores/plugins";
     import * as FLOW_YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import {useAuthStore} from "../../override/stores/auth";
+    import {useAuthStore} from "override/stores/auth";
+    import {useEditorStore} from "../../stores/editor";
 
     const store = useStore();
     const coreStore = useCoreStore();
@@ -650,7 +651,9 @@
     const blueprintsLoaded = ref(false);
     const confirmOutdatedSaveDialog = ref(false);
 
-    const onboarding = computed(() => store.state.editor.onboarding);
+    const editorStore = useEditorStore();
+
+    const onboarding = computed(() => editorStore.onboarding);
     watch(onboarding, (started) => {
         if(!started) return;
 
@@ -659,16 +662,16 @@
     });
 
     const toggleExplorer = ref(null);
-    const explorerVisible = computed(() => store.state.editor.explorerVisible);
+    const explorerVisible = computed(() => editorStore.explorerVisible);
     const toggleExplorerVisibility = () => {
         toggleExplorer.value.hide();
-        store.commit("editor/toggleExplorerVisibility");
+        editorStore.toggleExplorerVisibility();
     };
-    const currentTab = computed(() => store.state.editor.current);
-    const openedTabs = computed(() => store.state.editor.tabs);
+    const currentTab = computed(() => editorStore.current);
+    const openedTabs = computed(() => editorStore.tabs);
 
     const changeCurrentTab = (tab) => {
-        store.dispatch("editor/openTab", tab);
+        editorStore.openTab(tab);
     };
 
     const persistViewType = (value) => {
@@ -711,9 +714,9 @@
             initViewType()
             await store.dispatch("flow/initYamlSource", {viewType: viewType.value});
         } else {
-            store.commit("editor/closeAllTabs");
+            editorStore.closeAllTabs();
             switchViewType(editorViewTypes.SOURCE, false)
-            store.commit("editor/toggleExplorerVisibility", true);
+            editorStore.toggleExplorerVisibility(true);
         }
 
         // Save on ctrl+s in topology
@@ -736,7 +739,7 @@
         window.addEventListener("resize", onResize);
 
         if (props.isCreating) {
-            store.commit("editor/closeTabs");
+            editorStore.closeTabs();
         }
     });
 
@@ -749,7 +752,7 @@
             stopTour();
         });
 
-        store.commit("editor/closeAllTabs");
+        editorStore.closeAllTabs();
 
         document.removeEventListener("click", hideTabContextMenu);
     });
@@ -1100,7 +1103,7 @@
         event.preventDefault();
         const from = draggedTabIndex.value;
         if (from !== to) {
-            store.commit("editor/reorderTabs", {from, to});
+            editorStore.reorderTabs({from, to});
         }
         draggedTabIndex.value = null;
         dragOverTabIndex.value = null;
@@ -1175,17 +1178,17 @@
         document.removeEventListener("click", hideTabContextMenu);
     };
 
-    const FLOW_TAB = computed(() => store.state.editor?.tabs?.find(tab => tab.name === "Flow"))
+    const FLOW_TAB = computed(() => editorStore.tabs?.find(tab => tab.name === "Flow"))
 
     const closeTab = (tab, index) => {
-        store.dispatch("editor/closeTab", {...tab, index});
+        editorStore.closeTab({...tab, index});
     };
 
     const closeTabs = (tabsToClose, openTab) => {
         tabsToClose.forEach(tab => {
-            store.dispatch("editor/closeTab", tab);
+            editorStore.closeTab(tab);
         });
-        store.dispatch("editor/openTab", openTab);
+        editorStore.openTab(openTab);
         hideTabContextMenu();
     };
 
@@ -1214,7 +1217,7 @@
             name: undefined,
             folder: undefined
         };
-        store.commit("editor/toggleExplorerVisibility", true);
+        editorStore.toggleExplorerVisibility(true);
     };
     const createFolder = () => {
         dialog.value = {
@@ -1223,7 +1226,7 @@
             name: undefined,
             folder: undefined
         };
-        store.commit("editor/toggleExplorerVisibility", true);
+        editorStore.toggleExplorerVisibility(true);
     };
     const folders = computed(() => {
         function extractPaths(basePath = "", array) {
@@ -1242,7 +1245,7 @@
             });
             return paths;
         }
-        return extractPaths(undefined, store.state.editor.treeData);
+        return extractPaths(undefined, editorStore.treeData);
     });
     const dialogHandler = async () => {
         try {
@@ -1263,9 +1266,9 @@
                 });
             }
             dialog.value.visible = false;
-            store.commit("editor/refreshTree");
+            editorStore.refreshTree();
             if (dialog.value.type === "file") {
-                store.dispatch("editor/openTab", {
+                editorStore.openTab({
                     name: dialog.value.name,
                     path,
                     extension: dialog.value.name.split(".").pop()
@@ -1292,7 +1295,7 @@
                 path
             });
         }
-        store.commit("editor/refreshTree");
+        editorStore.refreshTree();
         event.target.value = "";
     };
 </script>

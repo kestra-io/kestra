@@ -8,6 +8,7 @@ import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
 import {useAuthStore} from "override/stores/auth";
+import {useEditorStore} from "./editor";
 
 const textYamlHeader = {
     headers: {
@@ -50,20 +51,22 @@ export default {
             commit("setMetadata", null);
             commit("setHaveChange", true)
         },
-        async saveAll({dispatch, state, commit, getters, rootState}){
-            const hasAnyDirtyTabs = rootState.editor.tabs.some(t => t.dirty === true);
+        async saveAll({dispatch, state, commit, getters}){
+            const editorStore = useEditorStore()
+            const hasAnyDirtyTabs = editorStore.tabs.some(t => t.dirty === true);
             const hasChanges = state.haveChange || hasAnyDirtyTabs;
 
             if (getters.flowErrors?.length || !hasChanges && !state.isCreating) {
                 return;
             }
 
-            await dispatch("editor/saveAllTabs", {namespace: state.flow.namespace}, {root: true});
+            await editorStore.saveAllTabs({namespace: state.flow.namespace}, {root: true});
             commit("setFlowYamlOrigin", state.flowYaml);
             return dispatch("saveWithoutRevisionGuard");
         },
-        async save({getters, dispatch, commit, state, rootState}, {content, namespace}){
-            const hasAnyDirtyTabs = rootState.editor.tabs.some(t => t.dirty === true);
+        async save({getters, dispatch, commit, state}, {content, namespace}){
+            const editorStore = useEditorStore()
+            const hasAnyDirtyTabs = editorStore.tabs.some(t => t.dirty === true);
             const hasChanges = state.haveChange || hasAnyDirtyTabs;
 
             if (getters.flowErrors?.length || !hasChanges && !state.isCreating) {
@@ -71,7 +74,7 @@ export default {
             }
 
             const source = state.flowYaml
-            const currentTab = rootState.editor.current;
+            const currentTab = editorStore.current;
 
             if (getters.isFlow) {
                 return dispatch("onEdit", {source, currentIsFlow:true}).then((validation) => {
@@ -82,12 +85,12 @@ export default {
                     commit("setFlowYamlOrigin", source);
 
                     if (currentTab && currentTab.name) {
-                        commit("editor/setTabDirty", {
+                        editorStore.setTabDirty({
                             name: "Flow",
                             path: "Flow.yaml",
                             dirty: false,
                             flow: true,
-                        }, {root: true});
+                        });
                     }
                     return res
                 });
@@ -99,19 +102,19 @@ export default {
                     path: currentTab.path ?? currentTab.name,
                     content,
                 }, {root: true});
-                commit("editor/setTabDirty", {
+                editorStore.setTabDirty({
                     path: currentTab.path,
                     name: currentTab.name,
                     dirty: false
-                }, {root: true});
+                });
 
                 const coreStore = useCoreStore();
                 coreStore.unsavedChange = false;
             }
         },
-        onEdit({getters, dispatch, commit, state, rootState}, {source, currentIsFlow, editorViewType, topologyVisible}) {
+        onEdit({getters, dispatch, commit, state}, {source, currentIsFlow, editorViewType, topologyVisible}) {
             const flowParsed = getters.flowParsed;
-            const currentTab = rootState.editor.current;
+            const currentTab = useEditorStore().current;
 
             if (currentIsFlow) {
                 if (!source.trim()?.length) {
@@ -146,12 +149,12 @@ export default {
             }
 
             if(!state.isCreating){
-                commit("editor/setTabDirty", {
+                useEditorStore().setTabDirty({
                     ...currentTab,
                     name: currentTab?.name ?? "Flow",
                     path: currentTab?.path ?? "Flow.yaml",
                     dirty: true
-                }, {root: true});
+                });
             }
 
             if(!currentIsFlow) return;
@@ -374,7 +377,7 @@ export default {
                         return Promise.reject(new Error("Server error on flow save"))
                     } else {
                         commit("setFlow", response.data);
-                        commit("editor/setTabDirty", {
+                        useEditorStore().setTabDirty({
                             name: "Flow",
                             dirty: false,
                         }, {root: true});
@@ -725,8 +728,8 @@ export default {
         },
     },
     getters: {
-        isFlow(state, _getters, rootState) {
-            const currentTab = rootState.editor.current;
+        isFlow(state, _getters) {
+            const currentTab = useEditorStore().current;
             return currentTab?.flow !== undefined || state.isCreating;
         },
         isAllowedEdit(state, _getters, _rootState) {

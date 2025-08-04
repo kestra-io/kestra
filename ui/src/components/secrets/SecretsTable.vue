@@ -93,7 +93,7 @@
                         :readonly="secret.update"
                         data-type="flow"
                         :include-system-namespace="true"
-                        :all="true"
+                        all
                     />
                 </el-form-item>
                 <el-form-item :label="$t('secret.key')" prop="key">

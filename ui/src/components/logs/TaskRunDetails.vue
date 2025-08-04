@@ -122,6 +122,7 @@
     import {apiUrl} from "override/utils/route";
     import Utils from "../../utils/utils";
     import LogUtils from "../../utils/logs.js";
+    import throttle from "lodash/throttle";
 
     export default {
         name: "TaskRunDetails",
@@ -207,7 +208,9 @@
                 selectedLogLevel: undefined,
                 childrenLogIndicesByLevelByChildUid: {},
                 logsScrollerRefs: {},
-                subflowTaskRunDetailsRefs: {}
+                subflowTaskRunDetailsRefs: {},
+                throttledExecutionUpdate: undefined,
+                targetExecution: undefined
             };
         },
         watch: {
@@ -235,14 +238,6 @@
                 },
                 immediate: true
             },
-            "followedExecution.id": {
-                handler: function (executionId, oldExecutionId) {
-                    if (executionId && executionId !== oldExecutionId) {
-                        this.followExecution(executionId);
-                    }
-                },
-                immediate: true
-            },
             followedExecution: {
                 handler: async function (newExecution, oldExecution) {
                     if (!newExecution) {
@@ -264,7 +259,8 @@
                             {
                                 namespace: newExecution.namespace,
                                 flowId: newExecution.flowId,
-                                revision: newExecution.flowRevision
+                                revision: newExecution.flowRevision,
+                                store: false
                             }
                         );
                     }
@@ -272,7 +268,6 @@
                     if (!State.isRunning(this.followedExecution.state.current)) {
                         // wait a bit to make sure we don't miss logs as log indexer is asynchronous
                         setTimeout(() => {
-                            this.closeExecutionSSE()
                             this.closeLogsSSE()
                         }, 2000);
 
@@ -300,12 +295,20 @@
             }
         },
         mounted() {
+            this.throttledExecutionUpdate = throttle((executionEvent) => {
+                this.targetExecution = JSON.parse(executionEvent.data);
+            }, 500);
+
+            if (this.targetExecutionId) {
+                this.followExecution(this.targetExecutionId);
+            }
+
             this.autoExpandBasedOnSettings();
         },
         computed: {
             ...mapStores(useCoreStore, useExecutionsStore),
             followedExecution() {
-                return this.executionsStore.execution;
+                return this.targetExecutionId === undefined ? this.executionsStore.execution : this.targetExecution;
             },
             Download() {
                 return Download
@@ -409,9 +412,6 @@
                 });
                 this.logFileSizeByPath[path] = Utils.humanFileSize(axiosResponse.data.size);
             },
-            closeExecutionSSE() {
-                this.executionsStore.closeSSE();
-            },
             closeLogsSSE() {
                 if (this.logsSSE) {
                     this.logsSSE.close();
@@ -456,10 +456,30 @@
                         this.logsWithIndexByAttemptUid[this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id])])) &&
                     this.showLogs
             },
+            closeTargetExecutionSSE() {
+                if (this.executionSSE) {
+                    this.executionSSE.close();
+                    this.executionSSE = undefined;
+                }
+            },
             followExecution(executionId) {
-                this.closeExecutionSSE();
+                this.closeTargetExecutionSSE();
                 this.executionsStore
-                    .followExecution({id: executionId}, this.$t)
+                    .followExecution({id: executionId, rawSSE: true})
+                    .then(sse => {
+                        this.executionSSE = sse;
+                        this.executionSSE.onmessage = executionEvent => {
+                            const isEnd = executionEvent && executionEvent.lastEventId === "end";
+                            // we are receiving a first "fake" event to force initializing the connection: ignoring it
+                            if (executionEvent.lastEventId !== "start") {
+                                this.throttledExecutionUpdate(executionEvent);
+                            }
+                            if (isEnd) {
+                                this.closeTargetExecutionSSE();
+                                this.throttledExecutionUpdate.flush();
+                            }
+                        }
+                    });
             },
             followLogs(executionId) {
                 this.executionsStore
@@ -548,7 +568,7 @@
                 return `${taskRunId}-${attemptNumber}`
             },
             scrollToBottomFailedTask() {
-                if (this.autoExpandTaskRunStates.includes(this.followedExecution.state.current)) {
+                if (this.autoExpandTaskRunStates.includes(this.followedExecution?.state?.current)) {
                     this.currentTaskRuns.forEach((taskRun) => {
                         if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
                             const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : (this.forcedAttemptNumber ?? 0)
@@ -632,7 +652,6 @@
             }
         },
         beforeUnmount() {
-            this.closeExecutionSSE();
             this.closeLogsSSE()
         },
     };

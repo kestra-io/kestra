@@ -2,7 +2,7 @@
     <section class="playground">
         <h2>
             <ChartTimelineIcon class="tab-icon" />
-            {{ t("playground.title") }} {{ playgroundStore.executionState }}
+            {{ t("playground.title") }}
         </h2>
         <div class="content">
             <div class="current-run">

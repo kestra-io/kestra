@@ -21,7 +21,7 @@
         :diff-side-by-side="false"
     >
         <template #absolute>
-            <AITriggerButton 
+            <AITriggerButton
                 :show="isCurrentTabFlow"
                 :enabled="aiEnabled"
                 :opened="aiAgentOpened"
@@ -65,6 +65,7 @@
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
     import {useMiscStore} from "../../stores/misc";
+    import {EditorTabProps, useEditorStore} from "../../stores/editor";
 
     import AiAgent from "../ai/AiAgent.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
@@ -75,6 +76,7 @@
 
     const store = useStore();
     const miscStore = useMiscStore();
+    const editorStore = useEditorStore();
 
     const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const cursor = ref();
@@ -93,15 +95,6 @@
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
 
-
-    export interface EditorTabProps {
-        name: string,
-        path: string,
-        extension?: string,
-        flow?: boolean,
-        dirty?: boolean,
-    }
-
     const props = withDefaults(defineProps<EditorTabProps>(), {
         extension: undefined,
         dirty: false,
@@ -113,7 +106,7 @@
     const source = computed<string>(() => {
         return props.flow
             ? store.state.flow.flowYaml
-            : store.state.editor.tabs.find((t: any) => t.path === props.path)?.content;
+            : editorStore.tabs.find((t: any) => t.path === props.path)?.content;
     })
 
     async function loadFile() {
@@ -124,7 +117,7 @@
         if (!fileNamespace) return;
 
         const content = await store.dispatch("namespace/readFile", {namespace: fileNamespace, path: props.path})
-        store.commit("editor/setTabContent", {path: props.path, content})
+        editorStore.setTabContent({path: props.path, content})
     }
 
     onMounted(() => {
@@ -169,11 +162,11 @@
                 store.commit("flow/setFlowYaml", newValue);
             }
         }
-        store.commit("editor/setTabContent", {
+        editorStore.setTabContent({
             content: newValue,
             path: props.path
         });
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             path: props.path,
             dirty: true
         });
@@ -204,7 +197,7 @@
         if(!editorRef?.$refs.monacoEditor) return
         const result = await store.dispatch("flow/save", {content:(editorRef.$refs.monacoEditor as any).value})
 
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             path: props.path,
             dirty: false
         });
@@ -229,7 +222,7 @@
             path: props.path,
             content: editorRefElement.value?.modelValue,
         });
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             path: props.path,
             dirty: false
         });

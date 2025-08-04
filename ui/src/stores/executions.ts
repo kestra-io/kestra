@@ -323,20 +323,24 @@ export const useExecutionsStore = defineStore("executions", () => {
         execution.value = _execution;
     }, 500);
 
-    const followExecution = (options: { id: string }, translate: (itn: string) => string) => {
-        closeSSE();
+    const followExecution = (options: { id: string, rawSSE?: boolean }, translate: (itn: string) => string) => {
+        if (!options.rawSSE) {
+            execution.value = undefined;
+            closeSSE();
+        }
         const serverSentEventSource = new EventSource(`${apiUrl(store)}/executions/${options.id}/follow`, {withCredentials: true});
+        if (options.rawSSE) {
+            return Promise.resolve(serverSentEventSource);
+        }
         sse.value = serverSentEventSource;
         serverSentEventSource.onmessage = (executionEvent) => {
             const isEnd = executionEvent && executionEvent.lastEventId === "end";
-            if (isEnd) {
-                closeSSE();
-            }
             // we are receiving a first "fake" event to force initializing the connection: ignoring it
             if (executionEvent.lastEventId !== "start") {
                 throttledExecutionUpdate(executionEvent);
             }
             if (isEnd) {
+                closeSSE();
                 throttledExecutionUpdate.flush();
             }
         }
@@ -494,11 +498,13 @@ export const useExecutionsStore = defineStore("executions", () => {
         )
     }
 
-    const loadFlowForExecution = (options: { namespace: string; flowId: string; revision?: number }) => {
+    const loadFlowForExecution = (options: { namespace: string; flowId: string; revision?: number, store?: boolean }) => {
         const revision = options.revision ? `?revision=${options.revision}` : "";
         return store.$http.get(`${apiUrl(store)}/executions/flows/${options.namespace}/${options.flowId}${revision}`)
             .then(response => {
-                flow.value = response.data;
+                if (options.store) {
+                    flow.value = response.data;
+                }
                 return response.data;
             });
     }

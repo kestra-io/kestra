@@ -4,22 +4,27 @@ import type {Ref} from "vue";
 
 import cytoscape from "cytoscape";
 
-import {type Node, type Element, getDependencies} from "../../../../scripts/product/dependencies";
+import {FLOW, EXECUTION, type Node, type Element, getDependencies} from "../../../../scripts/product/dependencies";
 
 import {style} from "../utils/style";
 const SELECTED = "selected", FADED = "faded",  HOVERED = "hovered";
 
 /**
- * Cytoscape initialization options, including graph elements and interaction settings.
+ * Builds cytoscape initialization options with graph elements and interaction settings.
  * The container should be set dynamically before initialization.
+ *
+ * @param subtype - The dependency subtype, either `"FLOW"` or `"EXECUTION"`.
+ * @returns A cytoscape options object excluding the container, with elements populated.
  *
  * @see {@link https://js.cytoscape.org/#core | Cytoscape core options documentation}
  */
-export const options: { elements: Element[] } & Omit<cytoscape.CytoscapeOptions, "container" | "elements"> = {
-    elements: getDependencies({}),
-    minZoom: 0.1,
-    maxZoom: 2,
-};
+export function options(subtype: typeof FLOW | typeof EXECUTION): { elements: Element[] } & Omit<cytoscape.CytoscapeOptions, "container" | "elements"> {
+    return {
+        elements: getDependencies({subtype}),
+        minZoom: 0.1,
+        maxZoom: 2,
+    };
+}
 
 /**
  * Layout options for the COSE layout algorithm used in cytoscape.
@@ -144,8 +149,9 @@ function hoverHandler(cy: cytoscape.Core): void {
  * applies styling and sizing rules, and sets up interactive behaviors.
  *
  * @param container - A Vue ref to an HTML element which will host the cytoscape graph.
+ * @param subtype - The dependency subtype, either `"FLOW"` or `"EXECUTION"`. Defaults to `"FLOW"`.
  */
-export function useDependencies(container: Ref<HTMLElement | null>) {
+export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION = FLOW) {
     let cy: cytoscape.Core;
 
     const loading = ref(true);
@@ -170,7 +176,7 @@ export function useDependencies(container: Ref<HTMLElement | null>) {
     onMounted(() => {
         if (!container.value) return;
 
-        cy = cytoscape({container: container.value, layout, ...options, style});
+        cy = cytoscape({container: container.value, layout, ...options(subtype), style});
 
         // Dynamically size nodes based on connectivity
         setNodeSizes(cy);

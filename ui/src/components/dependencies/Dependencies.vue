@@ -30,10 +30,13 @@
 
     import Table from "./components/Table.vue";
     import {options, useDependencies} from "./composables/useDependencies";
-    import {NODE, type Node} from "../../../scripts/product/dependencies";
+    import {FLOW, EXECUTION, NODE, type Node} from "../../../scripts/product/dependencies";
 
     const PANEL = {size: "70%", min: "30%", max: "80%"};
-        
+
+    import {useRoute} from "vue-router";
+    const route = useRoute();
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
@@ -42,11 +45,13 @@
     import SelectionRemove from "vue-material-design-icons/SelectionRemove.vue";
     import FitToScreenOutline from "vue-material-design-icons/FitToScreenOutline.vue";
 
+    const SUBTYPE = route.name === "flows/update" ? FLOW : EXECUTION;
+
     const container = ref(null);
-    const {loading, selectedNodeID, selectNode, handlers} = useDependencies(container);
+    const {loading, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE);
 
     const nodes = computed((): { data: Node }[] => {
-        const elements = options.elements;
+        const elements = options(SUBTYPE).elements;
 
         if (!elements || !Array.isArray(elements)) return [];
 

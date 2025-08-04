@@ -67,21 +67,11 @@ export const style: cytoscape.StylesheetJson = [
     },
     {
         selector: "node.faded",
-        style: {
-            ...nodeBase,
-            ...nodeColors("faded"),
-            "background-opacity": 0.75,
-            "border-opacity": 0.75,
-            color: cssVariable("--ks-dependencies-node-background-selected-level2"),
-        },
+        style: {...nodeBase, ...nodeColors("faded"), "background-opacity": 0.75, "border-opacity": 0.75},
     },
     {
         selector: "node.selected",
-        style: {
-            ...nodeBase,
-            ...nodeColors("selected"),
-            color: cssVariable("--ks-dependencies-node-background-selected"),
-        },
+        style: {...nodeBase, ...nodeColors("selected")},
     },
     {
         selector: "node.hovered",

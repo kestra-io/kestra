@@ -45,6 +45,9 @@ on:
       GH_PERSONAL_TOKEN:
         description: "GH personnal Token."
         required: true
+      SLACK_RELEASES_WEBHOOK_URL:
+        description: "Slack webhook for releases channel."
+        required: true
 jobs:
   build-artifacts:
     name: Build - Artifacts
@@ -79,3 +82,4 @@ jobs:
     uses: ./.github/workflows/workflow-github-release.yml
     secrets:
       GH_PERSONAL_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
+      SLACK_RELEASES_WEBHOOK_URL: ${{ secrets.SLACK_RELEASES_WEBHOOK_URL }}

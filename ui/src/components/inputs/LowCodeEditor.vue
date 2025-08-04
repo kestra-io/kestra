@@ -16,6 +16,7 @@
             :execution="executionsStore.execution"
             :subflows-executions="executionsStore.subflowsExecutions"
             :playground-enabled="playgroundStore.enabled"
+            :playground-ready-to-start="playgroundStore.readyToStart"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"

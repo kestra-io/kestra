@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Favoris",
+    "bulk action async warning": "Cela peut prendre quelques instants.",
     "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?",
     "bulk delete": "Êtes-vous sur de vouloir supprimer <code>{executionCount}</code> exécution(s) ?",
     "bulk delete backfills": "Supprimer {count} backfill",
@@ -271,6 +272,7 @@
     "days": "Jours",
     "debug": "Déboguer",
     "default": "Par défaut",
+    "defaultsToNamespaceFile": "Par défaut, fichier de namespace : <code>{name}</code>",
     "delete": "Effacer",
     "delete backfill": "Supprimer le backfill",
     "delete backfills": "Supprimer les backfills",
@@ -912,6 +914,7 @@
       "version_oss_placeholder": "Kestra Enterprise permet de versionner les plugins"
     },
     "no_data": "On dirait qu'il n'y a rien ici… pour l'instant !<br/>Ajustez vos filtres, ou réessayez !",
+    "no_file_choosen": "Aucun fichier choisi",
     "no_logs_data": "Pas de données",
     "no_logs_data_description": "Soit aucun flow n'est en cours d'exécution, soit vous devez ajuster vos filtres.",
     "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",
@@ -1013,10 +1016,14 @@
     "pause done": "L'exécution est en PAUSE",
     "pause title": "Mettre en pause l'exécution <code>{id}</code>.<br/>Notez que les tasks actuellement en cours d'exécution seront toujours traitées, et l'exécution devra être reprise manuellement.",
     "playground": {
-      "empty": "Cliquez sur le bouton \"Run task\" pour tester votre workflow avec une exécution simulée.",
+      "confirm_create": "Vous ne pouvez pas exécuter le playground lors de la création d'un flow. Lancer une exécution de playground créera le flow.",
       "history": "Dernières 10 exécutions",
+      "play_icon_info": "Vous pouvez également cliquer sur l'icône Play dans les vues No-Code ou Topology.",
       "run_all_tasks": "Exécuter toutes les tasks",
       "run_task": "Exécuter la Task",
+      "run_task_and_downstream": "Exécuter la task et en aval",
+      "run_task_info": "Survolez n'importe quelle task dans l'éditeur de Flow Code et cliquez sur le bouton \"Run task\" pour tester votre task.",
+      "run_this_task": "Exécuter cette task",
       "title": "Aire de jeu",
       "toggle": "Terrain de jeu"
     },
@@ -1314,10 +1321,15 @@
     "system_namespace_description": "Automatisez les tâches de maintenance, des alertes de défaillance aux nettoyages automatisés.",
     "tags": "Tags",
     "task": "Tâche",
+    "task failed": "Échec de la task",
     "task id": "ID de tâche",
     "task id already exists": "Identifiant de tâche déjà utilisé",
+    "task is running": "La task est en cours d'exécution",
     "task logs": "Journaux de la tâche",
     "task run id": "ID d'exécution de tâche",
+    "task sent a warning": "La tâche a envoyé un WARNING",
+    "task was skipped": "La tâche a été ignorée",
+    "task was successful": "La tâche a été un succès",
     "taskDefaults": "Valeur de tâches par défaut",
     "taskRunners": "Exécuteurs de Task",
     "task_id_exists": "L'ID de la tâche existe déjà",
@@ -1353,6 +1365,8 @@
     "topology": "Topologie",
     "topology-graph": {
       "graph-orientation": "Orientation du graph",
+      "invalid": "Erreur de graphe",
+      "invalid_description": "Une erreur s'est produite lors du chargement du graphique. Veuillez vérifier le code source pour les erreurs.",
       "zoom-fit": "Voir tout",
       "zoom-in": "Zoomer",
       "zoom-out": "Dézoomer",
@@ -1424,6 +1438,12 @@
     "warning flow with triggers": "Ce flow contient des déclencheurs, une exécution manuelle peut ne pas fonctionner si celui-ci dépend de variables de déclencheurs !",
     "watch": "Regarder",
     "watch_video": "Regarder la vidéo",
+    "webhook": {
+      "curl_command": "Commande cURL Webhook",
+      "curl_note": "Utilisez cette commande cURL pour déclencher le flow via webhook avec une charge utile JSON personnalisée",
+      "no_triggers": "Ce flow n'a pas de triggers webhook activés",
+      "payload": "Payload Webhook (JSON)"
+    },
     "webhook link copied": "Lien du webhook copié.",
     "weeks": "Semaines",
     "welcome": {

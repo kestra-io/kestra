@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Закладки",
+    "bulk action async warning": "Это может занять несколько минут.",
     "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?",
     "bulk delete": "Вы уверены, что хотите удалить <code>{executionCount}</code> выполнение(я)?",
     "bulk delete backfills": "Удалить {count} заполнение",
@@ -271,6 +272,7 @@
     "days": "Дни",
     "debug": "Отладка",
     "default": "По умолчанию",
+    "defaultsToNamespaceFile": "По умолчанию для файла namespace: <code>{name}</code>",
     "delete": "Удалить",
     "delete backfill": "Удалить backfill",
     "delete backfills": "Удалить заполнения",
@@ -912,6 +914,7 @@
       "version_oss_placeholder": "Разблокируйте Версионирование Плагинов с Enterprise Edition"
     },
     "no_data": "Похоже, здесь пока ничего нет…<br/>Измените фильтры или попробуйте снова!",
+    "no_file_choosen": "Файл не выбран",
     "no_logs_data": "Нет данных",
     "no_logs_data_description": "Либо никакие flows не выполняются, либо вам нужно изменить фильтры.",
     "no_namespaces": "Ни один namespace не соответствует критериям поиска.",
@@ -1013,10 +1016,14 @@
     "pause done": "Выполнение приостановлено",
     "pause title": "Приостановить выполнение <code>{id}</code>.<br/>Обратите внимание, что текущие RUNNING задачи все равно будут обрабатываться, и выполнение придется возобновить вручную.",
     "playground": {
-      "empty": "Нажмите кнопку \"Run task\", чтобы протестировать ваш workflow с помощью симулированного выполнения.",
+      "confirm_create": "Вы не можете запустить playground во время создания flow. Запуск playground создаст flow.",
       "history": "Последние 10 запусков",
+      "play_icon_info": "Вы также можете нажать на значок Play в представлениях No-Code или Topology.",
       "run_all_tasks": "Запустить все Tasks",
       "run_task": "Запустить Task",
+      "run_task_and_downstream": "Запустить task и downstream",
+      "run_task_info": "Наведите курсор на любую task в редакторе Flow Code и нажмите кнопку \"Run task\", чтобы протестировать вашу task.",
+      "run_this_task": "Запустить этот task",
       "title": "Песочница",
       "toggle": "Песочница"
     },
@@ -1314,10 +1321,15 @@
     "system_namespace_description": "Автоматизируйте задачи обслуживания, от предупреждений о сбоях до автоматической очистки.",
     "tags": "Теги",
     "task": "Задача",
+    "task failed": "Задача FAILED",
     "task id": "ID задачи",
     "task id already exists": "ID задачи уже существует",
+    "task is running": "Задача RUNNING",
     "task logs": "Журналы задач",
     "task run id": "ID выполнения задачи",
+    "task sent a warning": "Задача отправила предупреждение",
+    "task was skipped": "Задача была пропущена",
+    "task was successful": "Задача была успешной",
     "taskDefaults": "Задача по умолчанию",
     "taskRunners": "Запускатели Task",
     "task_id_exists": "Id задачи уже существует",
@@ -1353,6 +1365,8 @@
     "topology": "Топология",
     "topology-graph": {
       "graph-orientation": "Ориентация графика",
+      "invalid": "Ошибка графа",
+      "invalid_description": "Произошла ошибка при загрузке графа. Пожалуйста, проверьте исходный код на наличие ошибок.",
       "zoom-fit": "Подогнать",
       "zoom-in": "Увеличить",
       "zoom-out": "Уменьшить",
@@ -1424,6 +1438,12 @@
     "warning flow with triggers": "Этот flow содержит triggers, и ручное выполнение завершится неудачей, если этот flow зависит от trigger выражений.",
     "watch": "Наблюдение",
     "watch_video": "Смотреть видео",
+    "webhook": {
+      "curl_command": "Команда cURL для Webhook",
+      "curl_note": "Используйте эту команду cURL, чтобы trigger flow через webhook с пользовательским JSON payload",
+      "no_triggers": "Этот flow не имеет включенных webhook trigger",
+      "payload": "Payload Webhook (JSON)"
+    },
     "webhook link copied": "Ссылка на Webhook скопирована.",
     "weeks": "Недели",
     "welcome": {

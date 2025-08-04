@@ -480,6 +480,7 @@
 
     import {filterLabels} from "./utils"
     import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth.ts";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -628,7 +629,7 @@
         },
         computed: {
             ...mapState("flow", ["flow"]),
-            ...mapStores(useMiscStore, useExecutionsStore),
+            ...mapStores(useMiscStore, useExecutionsStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$t("executions")

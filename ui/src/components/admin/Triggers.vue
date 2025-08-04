@@ -163,7 +163,7 @@
                             </template>
                         </el-table-column>
                         <el-table-column
-                            v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                            v-if="authStore.user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                             column-key="action"
                             class-name="row-action"
                         >
@@ -193,7 +193,7 @@
 
                                     <el-button
                                         :icon="CalendarCollapseHorizontalOutline"
-                                        v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                                        v-if="authStore.user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                                         @click="restart(scope.row)"
                                         size="small"
                                         type="primary"

@@ -801,7 +801,7 @@ export default {
             }
         },
         flowYamlMetadata(state){
-            return YAML_UTILS.getMetadata(state.flowYaml);
+            return state.flowYaml ? YAML_UTILS.getMetadata(state.flowYaml) : {};
         }
     }
 }

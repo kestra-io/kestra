@@ -52,7 +52,6 @@
 </template>
 <script lang="ts" setup>
     import {computed} from "vue";
-    import {useStore} from "vuex";
 
     import {useI18n} from "vue-i18n";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
@@ -62,9 +61,10 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import {usePlaygroundStore} from "../../stores/playground";
+    import {useEditorStore} from "../../stores/editor";
 
-    const store = useStore();
     const playgroundStore = usePlaygroundStore();
+    const editorStore = useEditorStore();
 
     const {t} = useI18n();
 
@@ -91,7 +91,7 @@
 
     const canSave = computed(() => {
         if (props.isNamespace) {
-            return store.state.editor.current?.dirty || false;
+            return editorStore.current?.dirty || false;
         }
         return props.haveChange || props.isCreating;
     });

@@ -65,10 +65,6 @@ Kestra is an open-source, event-driven orchestration platform that makes both **
 
 ## 🚀 Quick Start
 
-### Try the Live Demo
-
-Try Kestra with our [**Live Demo**](https://demo.kestra.io/ui/login?auto). No installation required!
-
 ### Get Started Locally in 5 Minutes
 
 #### Launch Kestra in Docker

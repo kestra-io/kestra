@@ -103,9 +103,9 @@
                                         {{ t("multi_panel_editor.close_all_tabs") }}
                                     </span>
                                 </el-dropdown-item>
-                                <el-dropdown-item 
+                                <el-dropdown-item
                                     v-if="panel.activeTab?.value === 'code'"
-                                    :icon="Keyboard" 
+                                    :icon="Keyboard"
                                     @click="showKeyShortcuts()"
                                 >
                                     <span class="small-text">
@@ -175,8 +175,6 @@
     import {CODE_PREFIX} from "./flows/useCodePanels";
     import {useKeyShortcuts} from "../utils/useKeyShortcuts";
 
-    import {useStore} from "vuex"
-    const store = useStore()
 
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
@@ -186,8 +184,9 @@
     import DockRight from "vue-material-design-icons/DockRight.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import Keyboard from "vue-material-design-icons/Keyboard.vue";
+    import {useEditorStore} from "../stores/editor";
 
-    const {t} = useI18n({useScope: "global"});
+    const {t} = useI18n();
     const {showKeyShortcuts} = useKeyShortcuts();
 
     function throttle(callback: () => void, limit: number): () => void {
@@ -248,18 +247,20 @@
     const leftPanelDragover = ref(false);
     const rightPanelDragover = ref(false);
 
+    const editorStore = useEditorStore()
+
     const handleTabClick = (panel: Panel, tab: Tab) => {
         panel.activeTab = tab
 
         if(tab.value.startsWith(CODE_PREFIX)){
-            store.commit("editor/setCurrentTab", {
+            editorStore.current = {
                 dirty: tab.dirty ?? false,
                 extension: tab.value.split(".").pop(),
                 flow: tab.value === CODE_PREFIX,
                 name: tab.value,
                 path: tab.value,
                 persistent: tab.value === CODE_PREFIX,
-            });
+            }
         }
     };
 

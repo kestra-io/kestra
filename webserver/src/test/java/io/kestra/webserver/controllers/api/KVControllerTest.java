@@ -10,7 +10,6 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVEntry;
-import io.kestra.core.storages.kv.KVForNamespace;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.webserver.controllers.api.KVController.ApiDeleteBulkRequest;
 import io.kestra.webserver.controllers.api.KVController.ApiDeleteBulkResponse;
@@ -33,6 +32,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assertions;
@@ -88,22 +88,20 @@ class KVControllerTest {
         String namespaceDescription = "in the namespace";
         String namespaceParentDescription = "in the parent namespace";
 
-        storageInterface.put(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "my-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceDescription), new ByteArrayInputStream("my-value".getBytes())));
-        storageInterface.put(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "my-second-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceDescription), new ByteArrayInputStream("my-second-value".getBytes())));
+        storageInterface.put(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "shared-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceDescription), new ByteArrayInputStream("my-value".getBytes())));
+        storageInterface.put(TENANT_ID, NAMESPACE, toKVUri(NAMESPACE, "child-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceDescription), new ByteArrayInputStream("my-second-value".getBytes())));
 
-        storageInterface.put(TENANT_ID, namespaceParent, toKVUri(namespaceParent, "my-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceParentDescription), new ByteArrayInputStream("my-value".getBytes())));
-        storageInterface.put(TENANT_ID, namespaceParent, toKVUri(namespaceParent, "my-second-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceParentDescription), new ByteArrayInputStream("my-second-value".getBytes())));
+        storageInterface.put(TENANT_ID, namespaceParent, toKVUri(namespaceParent, "shared-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceParentDescription), new ByteArrayInputStream("my-value".getBytes())));
+        storageInterface.put(TENANT_ID, namespaceParent, toKVUri(namespaceParent, "parent-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString(), "description", namespaceParentDescription), new ByteArrayInputStream("my-second-value".getBytes())));
 
-        List<KVForNamespace> res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/inheritance"), Argument.of(List.class, KVForNamespace.class));
+        List<KVEntry> res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/inheritance"), Argument.of(List.class, KVEntry.class));
 
-        assertThat(res).hasSize(2);
-        assertThat(res.get(0).namespace()).isEqualTo(NAMESPACE);
-        assertThat(res.get(0).kvEntries()).hasSize(2);
-        assertThat(res.get(0).kvEntries().getFirst().description()).isEqualTo(namespaceDescription);
-
-        assertThat(res.get(1).namespace()).isEqualTo(namespaceParent);
-        assertThat(res.get(1).kvEntries()).hasSize(2);
-        assertThat(res.get(1).kvEntries().getFirst().description()).isEqualTo(namespaceParentDescription);
+        assertThat(res).hasSize(3);
+        Map<String, String> keyDescriptions = res.stream()
+            .collect(Collectors.toMap(KVEntry::key, KVEntry::description));
+        assertThat(keyDescriptions).isEqualTo(Map.of("shared-key", namespaceDescription,
+            "child-key", namespaceDescription,
+            "parent-key", namespaceParentDescription));
 
     }
 

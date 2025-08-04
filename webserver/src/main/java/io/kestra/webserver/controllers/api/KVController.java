@@ -8,6 +8,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.NamespaceUtils;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
@@ -24,10 +25,12 @@ import jakarta.inject.Inject;
 import java.io.*;
 import java.time.*;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import org.apache.commons.lang3.StringUtils;
+import java.util.Set;
 
 @Validated
 @Controller("/api/v1/{tenant}/namespaces/{namespace}/kv")
@@ -49,16 +52,23 @@ public class KVController {
     @ExecuteOn(TaskExecutors.IO)
     @Get("/inheritance")
     @Operation(tags = {"KV"}, summary = "List all keys for a namespace and parent namespaces")
-    public List<KVForNamespace> listKeysWithInheritence(
+    public List<KVEntry> listKeysWithInheritence(
         @Parameter(description = "The namespace id") @PathVariable String namespace
     ) throws IOException {
-        List<KVForNamespace> kvForNamespaces = new ArrayList<>();
-
-        for (String ns : collapseNamespace(namespace)) {
-            List<KVEntry> kvEntries = kvStore(ns).list();
-            kvForNamespaces.add(new KVForNamespace(ns, kvEntries));
+        List<KVEntry> kvEntries = new ArrayList<>();
+        Set<String> keys = new HashSet<>();
+        List<String> namespaces = NamespaceUtils.asTree(namespace);
+        namespaces.sort(Comparator.comparingInt(String::length).reversed());
+        for (String ns : namespaces) {
+            List<KVEntry> entries = kvStore(ns).list();
+            entries.forEach(key -> {
+                if (!keys.contains(key.key())) {
+                    keys.add(key.key());
+                    kvEntries.add(key);
+                }
+            });
         }
-        return kvForNamespaces;
+        return kvEntries;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -163,22 +173,6 @@ public class KVController {
         public List<String> keys() {
             return Optional.ofNullable(keys).orElse(List.of());
         }
-    }
-
-    public static List<String> collapseNamespace(String namespace) {
-        List<String> result = new ArrayList<>();
-        String current = namespace;
-
-        while (StringUtils.isNotBlank(current)) {
-            result.add(current);
-            int lastDot = current.lastIndexOf('.');
-            if (lastDot == -1) {
-                break;
-            }
-            current = current.substring(0, lastDot);
-        }
-
-        return result;
     }
 
     private KVStore kvStore(String namespace) {

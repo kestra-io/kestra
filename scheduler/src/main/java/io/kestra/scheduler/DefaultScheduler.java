@@ -12,7 +12,6 @@ import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.scheduler.pubsub.TriggerWorkerJobResultSubscriber;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -60,7 +59,6 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
     private final TriggerStateStore triggerStateStore;
 
     // Services
-    private final TriggerWorkerJobResultSubscriber triggerWorkerJobResultSubscriber;
     private final MetricRegistry metricRegistry;
 
     private final MaintenanceService maintenanceService;
@@ -81,10 +79,9 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                             final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
                             final TriggerEventQueue triggerEventQueue,
                             @Named("cached") final TriggerStateStore triggerStateStore,
-                            final TriggerWorkerJobResultSubscriber triggerWorkerJobResultSubscriber,
                             final MetricRegistry metricRegistry,
                             final MaintenanceService maintenanceService) {
-        this(schedulerEventLoopFactory, vNodesAssigner, executorsUtils, eventPublisher, triggerEventQueue, triggerWorkerJobResultSubscriber, triggerStateStore, metricRegistry, maintenanceService, SchedulerClock.getClock());
+        this(schedulerEventLoopFactory, vNodesAssigner, executorsUtils, eventPublisher, triggerEventQueue, triggerStateStore, metricRegistry, maintenanceService, SchedulerClock.getClock());
     }
 
     @VisibleForTesting
@@ -93,7 +90,6 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                             final ExecutorsUtils executorsUtils,
                             final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
                             final TriggerEventQueue triggerEventQueue,
-                            final TriggerWorkerJobResultSubscriber triggerWorkerJobResultSubscriber,
                             final TriggerStateStore triggerStateStore,
                             final MetricRegistry metricRegistry,
                             final MaintenanceService maintenanceService,
@@ -103,7 +99,6 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         this.executorsUtils = executorsUtils;
         this.vNodesAssigner = vNodesAssigner;
         this.triggerEventQueue = triggerEventQueue;
-        this.triggerWorkerJobResultSubscriber = triggerWorkerJobResultSubscriber;
         this.triggerStateStore = triggerStateStore;
         this.metricRegistry = metricRegistry;
         this.maintenanceService = maintenanceService;
@@ -236,7 +231,6 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         
         // (Re)start the Queues consumption
         startTriggerEventConsumers();
-        startTriggerResultConsumer();
 
         // (Re)submit all scheduling loops
         schedulingLoops.forEach(executorService::execute);
@@ -280,10 +274,6 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         consumerDisposables.forEach(Disposable::dispose);
     }
 
-    private void startTriggerResultConsumer() {
-        consumerDisposables.add(triggerWorkerJobResultSubscriber.subscribe());
-    }
-
     private void startTriggerEventConsumers() {
         Map<Integer, TriggerSchedulingLoop> schedulingLoopByVNode = getSchedulingLoopByVNode();
 
@@ -294,7 +284,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                 // Push the events to the scheduling-loop
                 CompletableFuture<Void> future = schedulingLoop.addTriggerEvents(vNode, events);
 
-                // Wait for the completion to guarantee that when this method returns all events are processed.
+                // Wait for the completion to guarantee that when this method returns, all events are processed.
                 future.join();
             } else {
                 log.error("Received trigger events for a non assigned vNode [{}]. Event skipped.", vNode);

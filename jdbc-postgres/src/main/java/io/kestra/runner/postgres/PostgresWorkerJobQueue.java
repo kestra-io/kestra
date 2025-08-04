@@ -1,6 +1,7 @@
 package io.kestra.runner.postgres;
 
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.queues.WorkerJobQueueInterface;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.queues.WorkerJobQueueInterface;
 import io.kestra.core.utils.Either;
@@ -17,7 +18,7 @@ import java.util.function.Consumer;
 @Slf4j
 public class PostgresWorkerJobQueue extends PostgresQueue<WorkerJob> implements WorkerJobQueueInterface {
     private final JdbcWorkerJobQueueService jdbcWorkerJobQueueService;
-
+    
     public PostgresWorkerJobQueue(ApplicationContext applicationContext) {
         super(WorkerJob.class, applicationContext);
         this.jdbcWorkerJobQueueService = applicationContext.getBean(JdbcWorkerJobQueueService.class);

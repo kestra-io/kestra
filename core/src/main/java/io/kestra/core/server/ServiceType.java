@@ -12,6 +12,7 @@ public enum ServiceType {
     SCHEDULER,
     WEBSERVER,
     WORKER,
+    CONTROLLER,
     INVALID;
     
     @JsonCreator

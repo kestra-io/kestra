@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 /**
  * Runtime information about a Kestra's service (e.g., WORKER, EXECUTOR, etc.).
  *
- * @param uid        The service unique identifier.
+ * @param uid       The service unique identifier.
  * @param type      The service type.
  * @param state     The state of the service.
  * @param server    The server running this service.

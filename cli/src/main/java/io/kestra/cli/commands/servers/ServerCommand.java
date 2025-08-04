@@ -17,7 +17,7 @@ import picocli.CommandLine;
         StandAloneCommand.class,
         WebServerCommand.class,
         WorkerCommand.class,
-        LocalCommand.class,
+        LocalCommand.class
     }
 )
 @Slf4j

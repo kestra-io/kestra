@@ -6,7 +6,7 @@ import java.util.Optional;
  * Service interface for updating the state of a service instance.
  *
  * @see ServiceLivenessManager
- * @see DefaultServiceLivenessCoordinator
+ * @see DefaultServiceLivenessUpdater
  */
 public interface ServiceLivenessUpdater {
 

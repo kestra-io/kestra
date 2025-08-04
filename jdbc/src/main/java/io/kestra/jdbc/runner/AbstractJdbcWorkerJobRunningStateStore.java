@@ -1,9 +1,9 @@
 package io.kestra.jdbc.runner;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.runners.WorkerJobRunning;
 import io.kestra.core.runners.TransactionContext;
-import io.kestra.executor.WorkerJobRunningStateStore;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;

@@ -56,7 +56,6 @@ micronaut:
   caches:
     default:
       maximum-weight: 10485760
-
   http:
     client:
       read-idle-timeout: 60s
@@ -112,7 +111,13 @@ jackson:
   mapper:
     ACCEPT_CASE_INSENSITIVE_ENUMS: true
 
-endpoints:
+# Disable Micronaut GRPC
+grpc:
+  server:
+    enabled: false
+    health:
+      enabled: false
+endpoints: 
   all:
     port: 8081
     enabled: true

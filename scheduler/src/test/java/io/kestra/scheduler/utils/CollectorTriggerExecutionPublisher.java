@@ -1,7 +1,7 @@
 package io.kestra.scheduler.utils;
 
 import io.kestra.core.models.executions.Execution;
-import io.kestra.scheduler.pubsub.TriggerExecutionPublisher;
+import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 
 import java.util.ArrayList;
 import java.util.List;

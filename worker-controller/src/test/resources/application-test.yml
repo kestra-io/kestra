@@ -1,0 +1,81 @@
+micronaut:
+  router:
+    static-resources:
+      ui:
+        paths: classpath:ui
+        mapping: /ui/**
+
+  http:
+    client:
+      read-idle-timeout: 60s
+      connect-timeout: 30s
+      read-timeout: 60s
+      http-version: HTTP_1_1
+    services:
+      api:
+        url: http://localhost:28181
+  server:
+    cors:
+      enabled: true
+      configurations:
+        all:
+          allowedOrigins:
+            - http://bad-origin
+jackson:
+  serialization:
+    writeDatesAsTimestamps: false
+    writeDurationsAsTimestamps: false
+  serialization-inclusion: non_null
+  deserialization:
+    FAIL_ON_UNKNOWN_PROPERTIES: false
+
+kestra:
+  url: http://localhost:8081
+  encryption:
+    secret-key: I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK
+  server-type: STANDALONE
+  storage:
+    type: local
+    local:
+      base-path: /tmp/unittest
+  anonymous-usage-report:
+    enabled: true
+    uri: https://api.kestra.io/v1/reports/usages
+    initial-delay: 5m
+    fixed-delay: 1h
+  server:
+    access-log:
+      enabled: false
+    basic-auth:
+      username: admin@kestra.io
+      password: Kestra123
+      open-urls:
+        - "/ping"
+        - "/api/v1/executions/webhook/"
+    liveness:
+      enabled: false
+    termination-grace-period: 5s
+    service:
+      purge:
+        initial-delay: 1h
+        fixed-delay: 1d
+        retention: 30d
+  queue:
+    type: h2
+  repository:
+    type: h2
+
+datasources:
+  h2:
+    url: jdbc:h2:mem:public;TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: ""
+    driverClassName: org.h2.Driver
+flyway:
+  datasources:
+    h2:
+      enabled: true
+      locations:
+        - classpath:migrations/h2
+      ignore-migration-patterns: "*:missing,*:future"
+      out-of-order: true

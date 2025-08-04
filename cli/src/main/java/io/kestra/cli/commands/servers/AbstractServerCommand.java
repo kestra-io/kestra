@@ -22,8 +22,4 @@ public abstract class AbstractServerCommand extends AbstractCommand implements S
     private long maxMemoryInMB() {
         return Runtime.getRuntime().maxMemory() / 1024 / 1024;
     }
-
-    protected static int defaultWorkerThread() {
-        return Runtime.getRuntime().availableProcessors() * 8;
-    }
 }

@@ -14,6 +14,7 @@ import jakarta.validation.constraints.NotNull;
 @Value
 @AllArgsConstructor
 @Builder
+@Deprecated(forRemoval = true, since = "2.0.0")
 public class WorkerTriggerResult implements HasUID {
     Optional<Execution> execution;
 

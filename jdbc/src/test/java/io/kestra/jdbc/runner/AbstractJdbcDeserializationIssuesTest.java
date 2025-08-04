@@ -45,11 +45,6 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
     }
 
     @Test
-    void workerTriggerDeserializationIssue() throws Exception {
-        deserializationIssuesCaseTest.workerTriggerDeserializationIssue(this::sendToQueue);
-    }
-
-    @Test
     void flowDeserializationIssue() throws Exception {
         deserializationIssuesCaseTest.flowDeserializationIssue(this::sendToQueueV2);
     }

@@ -1,6 +1,7 @@
 package io.kestra.executor;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueException;

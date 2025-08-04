@@ -41,6 +41,7 @@ dependencies {
     implementation project(":scheduler")
     implementation project(":webserver")
     implementation project(":worker")
+    implementation project(":worker-controller")
     implementation project(":indexer")
 
     //test

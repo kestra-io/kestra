@@ -31,7 +31,7 @@ import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
-import io.kestra.scheduler.pubsub.TriggerExecutionPublisher;
+import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
 import io.kestra.core.scheduler.store.TriggerStateStore;

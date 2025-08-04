@@ -7,6 +7,7 @@ import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.cli.StandAloneRunner;
+import io.kestra.core.runners.Worker;
 import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.services.StartExecutorService;
 import io.kestra.core.utils.Await;
@@ -49,7 +50,7 @@ public class StandAloneCommand extends AbstractServerCommand {
     private String tenantId;
 
     @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker threads, defaults to eight times the number of available processors. Set it to 0 to avoid starting a worker.")
-    private int workerThread = defaultWorkerThread();
+    private int workerThread = Worker.defaultNumThreads();
 
     @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "a list of execution identifiers to skip, separated by a coma; for troubleshooting only")
     private List<String> skipExecutions = Collections.emptyList();

@@ -23,6 +23,7 @@ include 'webserver'
 include 'executor'
 include 'scheduler'
 include 'worker'
+include 'worker-controller'
 include 'indexer'
 
 include 'ui'

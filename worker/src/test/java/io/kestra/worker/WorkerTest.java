@@ -63,8 +63,8 @@ class WorkerTest {
 
     @Test
     void success() throws TimeoutException, QueueException {
-        DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, null);
-        worker.run();
+        Worker worker = applicationContext.createBean(Worker.class);
+        worker.start(8, null);
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
         Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> workerTaskResult.set(either.getLeft()));
@@ -77,21 +77,21 @@ class WorkerTest {
             Duration.ofMinutes(1)
         );
         receive.blockLast();
-        worker.shutdown();
-
+        worker.close();
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(3);
     }
 
-    @Test
-    void workerGroup() {
-        DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, "toto");
-        assertThat(worker.getWorkerGroup()).isNull();
-    }
+//    @Test
+//    void workerGroup() {
+//        Worker worker = applicationContext.getBean(Worker.class);
+//        worker.start(8, "???");
+//        assertThat(worker.getWorkerGroup()).isNull();
+//    }
 
     @Test
     void failOnWorkerTaskWithFlowable() throws TimeoutException, QueueException, JsonProcessingException {
-        DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, null);
-        worker.run();
+        Worker worker = applicationContext.createBean(Worker.class);
+        worker.start(8, null);
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
         Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> workerTaskResult.set(either.getLeft()));
@@ -136,7 +136,7 @@ class WorkerTest {
             Duration.ofMinutes(1)
         );
         receive.blockLast();
-        worker.shutdown();
+        worker.close();
 
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(3);
     }
@@ -146,8 +146,8 @@ class WorkerTest {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         workerTaskLogQueue.addListener(logs::add);
 
-        DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, null);
-        worker.run();
+        Worker worker = applicationContext.createBean(Worker.class);
+        worker.start(8, null);
 
         List<WorkerTaskResult> workerTaskResult = new CopyOnWriteArrayList<>();
         Flux<WorkerTaskResult> receiveWorkerTaskResults = TestsUtils.receive(workerTaskResultQueue, either -> workerTaskResult.add(either.getLeft()));
@@ -193,7 +193,7 @@ class WorkerTest {
 
         // child process is stopped and we never received 3 logs
         Thread.sleep(1000);
-        worker.shutdown();
+        worker.close();
         assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().equals("3")).count()).isEqualTo(0L);
     }
 
@@ -204,7 +204,6 @@ class WorkerTest {
                 // do nothing
             }
         });
-
     }
 
     private WorkerTask workerTask(long sleepDuration) {

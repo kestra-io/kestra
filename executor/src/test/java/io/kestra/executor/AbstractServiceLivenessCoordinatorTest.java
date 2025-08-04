@@ -66,10 +66,6 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
-    private QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
-
-    @Inject
     private DefaultServiceLivenessCoordinator jdbcServiceLivenessHandler;
 
     @Inject
@@ -91,8 +87,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         CountDownLatch resubmitLatch = new CountDownLatch(1);
 
         // create first worker
-        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
-        worker.run();
+        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class);
+        worker.start(1, null);
 
         Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
             if (either.getLeft().getTaskRun().getState().getCurrent() == State.Type.SUCCESS) {
@@ -110,8 +106,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         worker.close(); // stop processing task
 
         // create second worker (this will revoke previously one).
-        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
-        newWorker.run();
+        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class);
+        newWorker.start(1, null);
         boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
         assertThat(resubmitLatchAwait).isTrue();
         WorkerTaskResult workerTaskResult = receive.blockLast();
@@ -129,7 +125,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         // create first worker
         Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
-        worker.run();
+        worker.start(1, null);
 
         var workerTaskResultQueueAppendLog = new ArrayList<WorkerTaskResult>();// to debug flaky test
         Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
@@ -150,7 +146,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         // create second worker (this will revoke previously one).
         Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
-        newWorker.run();
+        newWorker.start(1, null);
         boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
         assertThat(resubmitLatchAwait)
             .withFailMessage(() -> "shouldReEmitTasksToTheSameWorkerGroup: resubmitLatchAwait was not OK, workerTaskResultQueue content: " + TestsUtils.stringify(workerTaskResultQueueAppendLog))
@@ -168,7 +164,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         CountDownLatch runningLatch = new CountDownLatch(1);
 
         Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null);
-        worker.run();
+        worker.start(1, null);
 
         WorkerTask workerTask = workerTask(Duration.ofSeconds(5));
         skipExecutionService.setSkipExecutions(List.of(workerTask.getTaskRun().getExecutionId()));
@@ -190,7 +186,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         worker.close();
 
         Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
-        newWorker.run();
+        newWorker.start(1, null);
 
         // wait a little to be sure there is no resubmit
         Thread.sleep(500);
@@ -203,13 +199,9 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     @Test
     void shouldReEmitTriggerWhenWorkerIsDetectedAsNonResponding() throws Exception {
         Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
-        worker.run();
+        worker.start(1, null);
 
         WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5));
-
-        // 2 trigger should happen because of the resubmit
-        CountDownLatch countDownLatch = new CountDownLatch(2);
-        Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, workerTriggerResult -> countDownLatch.countDown());
 
         // we wait that the worker receive the trigger
         CountDownLatch receivedLatch = new CountDownLatch(1);
@@ -225,24 +217,19 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         worker.close();
         Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
-        newWorker.run();
-        assertThat(countDownLatch.await(30, TimeUnit.SECONDS)).isTrue();
-
-        receive.blockLast();
+        newWorker.start(1, null);
+        assertThat(receivedLatch.await(30, TimeUnit.SECONDS)).isTrue();
+        
         newWorker.close();
     }
 
     @Test
     void shouldReEmitTriggerToTheSameWorkerGroup() throws Exception {
         Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
-        worker.run();
+        worker.start(1, null);
 
         WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5), "workerGroupKey");
-
-        // 2 triggers should happen because of the resubmit
-        CountDownLatch countDownLatch = new CountDownLatch(2);
-        Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, workerTriggerResult -> countDownLatch.countDown());
-
+        
         // we wait that the worker receives the trigger
         CountDownLatch receivedLatch = new CountDownLatch(1);
         triggerEventQueue.subscribe(Set.of(VNodes.computeVNodeFromTrigger(workerTrigger.getTriggerContext(), 16)), 
@@ -257,10 +244,9 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         worker.close();
 
         Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
-        newWorker.run();
-        assertThat(countDownLatch.await(30, TimeUnit.SECONDS)).isTrue();
+        newWorker.start(1, null);
+        assertThat(receivedLatch.await(30, TimeUnit.SECONDS)).isTrue();
 
-        receive.blockLast();
         newWorker.close();
     }
 

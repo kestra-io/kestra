@@ -1,9 +1,9 @@
 package io.kestra.jdbc;
 
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.runners.*;
 import io.kestra.core.utils.Either;
-import io.kestra.executor.WorkerJobRunningStateStore;
 import io.kestra.jdbc.runner.JdbcQueue;
 import io.kestra.jdbc.runner.JdbcTransactionContext;
 import io.micronaut.context.ApplicationContext;

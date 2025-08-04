@@ -218,10 +218,6 @@ public class DeserializationIssuesCaseTest {
     protected QueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
-    protected QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
-
-    @Inject
     protected DispatchQueueInterface<FlowInterface> flowQueue;
 
     public record QueueMessage(Class<?> type, String key, String value) {}
@@ -247,25 +243,7 @@ public class DeserializationIssuesCaseTest {
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
         assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
-
-    public void workerTriggerDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException, QueueException{
-        AtomicReference<WorkerTriggerResult> workerTriggerResult = new AtomicReference<>();
-        Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, either -> {
-            if (either != null) {
-                workerTriggerResult.set(either.getLeft());
-            }
-        });
-
-        sendToQueue.accept(new QueueMessage(WorkerJob.class, INVALID_WORKER_TRIGGER_KEY, INVALID_WORKER_TRIGGER_VALUE));
-
-        Await.until(
-            () -> workerTriggerResult.get() != null,
-            Duration.ofMillis(100),
-            Duration.ofSeconds(10)
-        );
-        receive.blockLast();
-    }
-
+    
     public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         var subscriber = flowQueue.subscriber().subscribe(either -> {

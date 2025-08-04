@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+option java_package = "io.kestra.controller.grpc";
+option java_multiple_files = true;
+
+import "request.proto";
+
+service WorkerControllerService {
+  rpc fetchWorkerJobs(FetchWorkerJobRequest) returns (FetchWorkerJobResponse);
+
+  // [Server streaming]
+  rpc fetchWorkerJobsStream(FetchWorkerJobRequest) returns (stream FetchWorkerJobResponse);
+
+  // [Unary] Service for publishing WorkerJobResult
+  rpc sendWorkerTaskResults(WorkerTaskResultsRequest) returns (WorkerTaskResultsResponse);
+
+  //[Unary] Service for publishing WorkerTriggerResult
+  rpc sendWorkerTriggerResults(WorkerTriggerResultsRequest) returns (WorkerTriggerResultsResponse);
+
+  // [Unary] Service for publishing metric entries from worker.
+  rpc sendWorkerMetricEntries(WorkerMetricEntriesRequest) returns (WorkerMetricEntriesResponse);
+
+  // [Unary] Service for publishing log entries from worker.
+  rpc sendWorkerLogEntries(WorkerLogEntriesRequest) returns (WorkerLogEntriesResponse);
+}
+
+// WorkerJob
+message FetchWorkerJobRequest {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}
+
+message FetchWorkerJobResponse {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}
+// WorkerTriggerResult
+message WorkerTriggerResultsRequest {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}
+
+message WorkerTriggerResultsResponse {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}
+
+// WorkerTaskResult
+message WorkerTaskResultsRequest {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}
+
+message WorkerTaskResultsResponse {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}
+
+// WorkerMetricEntry
+message WorkerMetricEntriesRequest {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}
+
+message WorkerMetricEntriesResponse {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}
+
+// WorkerLogEntry
+message WorkerLogEntriesRequest {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}
+
+message WorkerLogEntriesResponse {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}

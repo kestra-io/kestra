@@ -28,6 +28,8 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 import java.util.stream.Stream;
 
+import java.util.function.Supplier;
+
 @Singleton
 @Slf4j
 public class MetricRegistry {
@@ -214,11 +216,26 @@ public class MetricRegistry {
      * statement.
      */
     public <T extends Number> T gauge(String name, String description, T number, String... tags) {
-        Gauge.builder(metricName(name), () -> number)
+        registerGauge(name, description, () -> number, tags);
+        return number;
+    }
+    
+    /**
+     * Register a gauge that reports the value of the {@link Number}.
+     *
+     * @param name   Name of the gauge being registered.
+     * @param description The metric description
+     * @param supplier A function that yields a double value for the gauge.
+     * @param tags   Sequence of dimensions for breaking down the name.
+     * @param <T>    The type of the number from which the gauge value is extracted.
+     * @return The number that was passed in so the registration can be done as part of an assignment
+     * statement.
+     */
+    public <T extends Number> Gauge registerGauge(String name, String description, Supplier<T> supplier, String... tags) {
+        return Gauge.builder(metricName(name),supplier)
             .description(description)
             .tags(tags)
             .register(this.meterRegistry);
-        return number;
     }
 
     /**

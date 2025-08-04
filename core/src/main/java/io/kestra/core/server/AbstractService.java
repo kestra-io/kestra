@@ -62,7 +62,7 @@ public class AbstractService implements Service {
     public void stop() {
         if (stopped.compareAndSet(false, true)) {
             setState(ServiceState.TERMINATING);
-            log.info("Terminating");
+            log.info("Service [{}] is terminating", getClass().getSimpleName());
             try {
                 ServiceState serviceState = doStop();
                 setState(serviceState);

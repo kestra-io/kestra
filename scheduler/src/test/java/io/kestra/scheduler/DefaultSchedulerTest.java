@@ -22,7 +22,6 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
-import io.kestra.scheduler.pubsub.TriggerWorkerJobResultSubscriber;
 import io.kestra.scheduler.stores.CachedFlowMetaStore;
 import io.kestra.scheduler.stores.CachedTriggerStateStore;
 import io.kestra.scheduler.stores.FlowMetaStore;
@@ -107,16 +106,10 @@ class DefaultSchedulerTest {
     private VNodeController vNodeController;
     private TriggerSchedulingLoopFactory triggerSchedulingLoopFactory;
     private CollectorTriggerExecutionPublisher triggerExecutionPublisher;
-    private TriggerWorkerJobResultSubscriber triggerWorkerJobResultSubscriber;
     private TestingMaintenanceService maintenanceService;
 
     @BeforeEach
     void beforeEach() {
-        // Mock
-        this.triggerWorkerJobResultSubscriber = mock(TriggerWorkerJobResultSubscriber.class);
-        when(this.triggerWorkerJobResultSubscriber.subscribe()).thenReturn(Disposable.of(() -> {
-        }));
-
         // Stores
         this.triggerStateStore = new CachedTriggerStateStore(new InMemoryTriggerStateStore(), SCHEDULER_CONFIGURATION);
         this.flowMetaStore = new CachedFlowMetaStore(new InMemoryFlowMetaStore(1, List.of()), SCHEDULER_CONFIGURATION);
@@ -270,7 +263,6 @@ class DefaultSchedulerTest {
             executorsUtils,
             eventPublisher,
             triggerEventQueue,
-            triggerWorkerJobResultSubscriber,
             triggerStateStore,
             metricRegistry,
             maintenanceService,

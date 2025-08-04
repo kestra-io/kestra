@@ -32,7 +32,7 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.scheduler.internals.NextEvaluationDate;
-import io.kestra.scheduler.pubsub.TriggerExecutionPublisher;
+import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import jakarta.inject.Inject;

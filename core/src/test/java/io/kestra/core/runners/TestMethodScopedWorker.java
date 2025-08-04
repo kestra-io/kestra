@@ -1,29 +1,32 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.WorkerGroupService;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.worker.DefaultWorker;
-import io.micronaut.context.annotation.Parameter;
-import io.micronaut.context.annotation.Prototype;
+import io.kestra.worker.WorkerAgent;
+import io.kestra.worker.WorkerJobExecutor;
+import io.kestra.worker.fetchers.WorkerJobFetcher;
+import io.kestra.worker.senders.WorkerIOSender;
 import io.micronaut.context.event.ApplicationEventPublisher;
-import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
+
+import java.util.List;
 
 /**
  * This worker is a special worker which won't close every queue allowing it to be ran and closed within a test without
  * preventing the Micronaut context to be used for further tests with queues still being up
  */
-public class TestMethodScopedWorker extends DefaultWorker {
+// TODO check if this class is still required
+public class TestMethodScopedWorker extends WorkerAgent {
     @Inject
-    public TestMethodScopedWorker(@Parameter String workerId,
-                                  @Parameter Integer numThreads,
-                                  @Nullable @Parameter String workerGroupKey,
-                                  ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
+    public TestMethodScopedWorker(ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
                                   WorkerGroupService workerGroupService,
-                                  ExecutorsUtils executorsUtils
+                                  WorkerJobExecutor workerJobExecutor,
+                                  WorkerJobFetcher workerJobFetcher,
+                                  List<WorkerIOSender> workerIOSenders,
+                                  MaintenanceService maintenanceService
     ) {
-        super(workerId, numThreads, workerGroupKey, eventPublisher, workerGroupService, executorsUtils);
+        super(eventPublisher, workerGroupService, workerJobExecutor, workerJobFetcher, workerIOSenders, maintenanceService);
     }
 
     /**
@@ -32,6 +35,6 @@ public class TestMethodScopedWorker extends DefaultWorker {
      */
     @Override
     public void close() {
-        shutdown();
+        super.close();
     }
 }

@@ -1,6 +1,7 @@
 package io.kestra.worker.endpoint;
 
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTrigger;
 import io.micronaut.context.annotation.Requires;
@@ -11,29 +12,22 @@ import lombok.Builder;
 import lombok.Getter;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.worker.DefaultWorker;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import jakarta.inject.Inject;
 
 @Endpoint(id = "worker", defaultSensitive = false)
 @Requires(property = "kestra.server-type", pattern = "(WORKER|STANDALONE)")
 public class WorkerEndpoint {
     @Inject
-    DefaultWorker worker;
+    Worker worker;
 
     @Read
     public WorkerEndpointResult running() throws Exception {
         return WorkerEndpointResult.builder()
-            .runningCount(worker.getMetricRunningCount().values()
-                .stream()
-                .mapToInt(AtomicInteger::get)
-                .sum()
-            )
+            .runningCount(worker.getRunningJobs().stream().filter(o -> o instanceof WorkerTask).count())
             .runnings(
-                worker.getWorkerThreadTasks()
+                worker.getRunningJobs()
                     .stream()
                     .map(workerTask -> new WorkerEndpointWorkerTask(
                         workerTask.getType(),
@@ -50,7 +44,7 @@ public class WorkerEndpoint {
     @Getter
     @Builder
     public static class WorkerEndpointResult {
-        private final int runningCount;
+        private final long runningCount;
         private final List<WorkerEndpointWorkerTask> runnings;
     }
 

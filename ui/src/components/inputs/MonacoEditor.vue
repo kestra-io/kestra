@@ -100,6 +100,7 @@
     });
 
     import {useRoute} from "vue-router";
+    import {useEditorStore} from "../../stores/editor.ts";
     const route = useRoute();
 
     const highlightLine = () => {
@@ -653,6 +654,8 @@
         }
     }
 
+    const editorStore = useEditorStore();
+
     async function initMonaco() {
         let options: EditorOptions = {
             value: props.value,
@@ -773,9 +776,9 @@
             if (props.value !== value) {
                 emit("change", value, event);
 
-                if (!props.input && current.value && current.value.name) {
-                    store.commit("editor/setTabDirty", {
-                        ...current.value,
+                if (!props.input && editorStore.current?.name) {
+                    editorStore.setTabDirty({
+                        ...editorStore.current,
                         dirty: true,
                     });
                 }
@@ -789,10 +792,6 @@
 
         highlightLine();
     }
-
-    const current = computed(() => {
-        return store.state.editor.current;
-    });
 
     async function changeTab(pathOrName: string, valueSupplier: () => Promise<string>, useModelCache = true) {
         let model;

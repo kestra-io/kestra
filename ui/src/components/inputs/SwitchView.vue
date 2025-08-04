@@ -24,7 +24,8 @@
 </script>
 
 <script>
-    import {mapState, mapMutations} from "vuex";
+    import {mapStores} from "pinia";
+    import {useEditorStore} from "../../stores/editor";
 
     export default {
         props: {
@@ -35,18 +36,14 @@
         },
         emits: ["switch-view"],
         computed: {
-            ...mapState({
-                currentTab: (state) => state.editor.current
-            }),
+            ...mapStores(useEditorStore),
             isFlow(){
-                return !this.currentTab || this.currentTab.name === "Flow"
+                return !this.editorStore.current || this.editorStore.current.name === "Flow"
             }
         },
         methods: {
-            ...mapMutations("editor", ["changeView"]),
-
             switchView(view) {
-                this.changeView(view)
+                this.editorStore.view = view
                 this.$emit("switch-view", view)
             },
             buttonType(view) {

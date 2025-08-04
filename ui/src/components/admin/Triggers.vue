@@ -276,7 +276,7 @@
     import KestraFilter from "../filter/KestraFilter.vue"
     import {mapStores} from "pinia";
     import {useTriggerStore} from "../../stores/trigger";
-    import {useAuthStore} from "../../stores/auth.ts";
+    import {useAuthStore} from "override/stores/auth";
 
 
     export default {

@@ -82,7 +82,7 @@
 
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
-    import {useAuthStore} from "../../stores/auth.ts";
+    import {useAuthStore} from "override/stores/auth";
 
     interface Node {
         id: string;

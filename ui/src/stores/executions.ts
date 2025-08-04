@@ -502,7 +502,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         const revision = options.revision ? `?revision=${options.revision}` : "";
         return store.$http.get(`${apiUrl(store)}/executions/flows/${options.namespace}/${options.flowId}${revision}`)
             .then(response => {
-                if (options.store !== false) {
+                if (options.store) {
                     flow.value = response.data;
                 }
                 return response.data;

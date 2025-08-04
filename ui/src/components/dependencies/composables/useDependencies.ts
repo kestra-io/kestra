@@ -74,6 +74,26 @@ export function setNodeSizes(cy: cytoscape.Core, baseSize = 20, scale = 2, maxSi
 }
 
 /**
+ * Removes the default or specified classes from all elements in the cytoscape instance.
+ *
+ * @param cy - The cytoscape core instance containing the graph.
+ * @param classes - An array of class names to remove (default: ["selected", "faded", "hovered"]).
+ */
+export function clearClasses(cy: cytoscape.Core, classes: string[] = ["selected", "faded", "hovered"]): void {
+    cy.elements().removeClass(classes.join(" "));
+}
+
+/**
+ * Fits the cytoscape viewport to include all elements, with default or specified padding.
+ *
+ * @param cy - The cytoscape core instance containing the graph.
+ * @param padding - The number of pixels to pad around the elements (default: 50).
+ */
+export function fit(cy: cytoscape.Core, padding: number = 50): void {
+    cy.fit(undefined, padding);
+}
+
+/**
  * Handles selecting a node in the cytoscape graph.
  *
  * - Removes all existing "selected", "faded", and "hovered" states from nodes and edges.
@@ -89,7 +109,7 @@ export function setNodeSizes(cy: cytoscape.Core, baseSize = 20, scale = 2, maxSi
  */
 function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, id?: Node["id"]): void {
     // Remove all "selected", "faded", and "hovered" classes from every element
-    cy.elements().removeClass(`${SELECTED} ${FADED} ${HOVERED}`);
+    clearClasses(cy);
 
     // Mark the chosen node as selected
     node.addClass(SELECTED);
@@ -186,5 +206,19 @@ export function useDependencies(container: Ref<HTMLElement | null>) {
         });
     });
 
-    return {loading, selectedNodeID, selectNode};
+    return {
+        loading,
+        selectedNodeID,
+        selectNode,
+        handlers: {
+            zoomIn: () => cy.zoom({level: cy.zoom() + 0.1, renderedPosition: cy.getElementById(selectedNodeID.value!).renderedPosition()}),
+            zoomOut: () => cy.zoom({level: cy.zoom() - 0.1, renderedPosition: cy.getElementById(selectedNodeID.value!).renderedPosition()}),
+            clearSelection: () => {
+                clearClasses(cy);
+                selectedNodeID.value = undefined;
+                fit(cy);
+            },
+            fit: () => fit(cy)
+        }
+    };
 }

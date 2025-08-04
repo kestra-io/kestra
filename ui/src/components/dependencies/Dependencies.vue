@@ -4,16 +4,16 @@
             <div v-loading="loading" ref="container" />
 
             <div class="controls">
-                <el-button size="small" :title="t('dependency.controls.zoom_in')">
+                <el-button size="small" :title="t('dependency.controls.zoom_in')" @click="handlers.zoomIn">
                     <Plus />
                 </el-button>
-                <el-button size="small" :title="t('dependency.controls.zoom_out')">
+                <el-button size="small" :title="t('dependency.controls.zoom_out')" @click="handlers.zoomOut">
                     <Minus />
                 </el-button>
-                <el-button size="small" :title="t('dependency.controls.clear_selection')">
+                <el-button size="small" :title="t('dependency.controls.clear_selection')" @click="handlers.clearSelection">
                     <SelectionRemove />
                 </el-button>
-                <el-button size="small" :title="t('dependency.controls.fit_view')">
+                <el-button size="small" :title="t('dependency.controls.fit_view')" @click="handlers.fit">
                     <FitToScreenOutline />
                 </el-button>
             </div>
@@ -43,7 +43,7 @@
     import FitToScreenOutline from "vue-material-design-icons/FitToScreenOutline.vue";
 
     const container = ref(null);
-    const {loading, selectedNodeID, selectNode} = useDependencies(container);
+    const {loading, selectedNodeID, selectNode, handlers} = useDependencies(container);
 
     const nodes = computed((): { data: Node }[] => {
         const elements = options.elements;

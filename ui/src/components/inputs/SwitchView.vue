@@ -36,14 +36,14 @@
         },
         emits: ["switch-view"],
         computed: {
+            ...mapStores(useEditorStore),
             isFlow(){
                 return !this.editorStore.current || this.editorStore.current.name === "Flow"
             }
         },
         methods: {
-            ...mapStores(useEditorStore),
             switchView(view) {
-                this.editorStore.changeView(view)
+                this.editorStore.view = view
                 this.$emit("switch-view", view)
             },
             buttonType(view) {

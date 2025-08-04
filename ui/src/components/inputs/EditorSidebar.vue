@@ -422,6 +422,7 @@
             };
         },
         computed: {
+            ...mapStores(useEditorStore),
             ...mapState({
                 flow: (state) => state.flow.flow,
             }),
@@ -470,7 +471,6 @@
             },
         },
         methods: {
-            ...mapStores(useEditorStore),
             ...mapActions("namespace", [
                 "createDirectory",
                 "readDirectory",
@@ -606,7 +606,7 @@
 
                     this.renderNodes(items);
                     this.items = this.sorted(this.items);
-                    this.editorStore.setTreeData(this.items);
+                    this.editorStore.treeData = this.items;
                     resolve(this.items);
                 } else if (node.level >= 1) {
                     const payload = {

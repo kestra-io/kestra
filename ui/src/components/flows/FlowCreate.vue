@@ -40,7 +40,6 @@
             this.$store.commit("flow/setFlowValidation", undefined);
         },
         methods: {
-            ...mapStores(useEditorStore),
             async setupFlow() {
                 const blueprintId = this.$route.query.blueprintId;
                 const blueprintSource = this.$route.query.blueprintSource;
@@ -71,7 +70,7 @@ tasks:
         computed: {
             ...mapState("flow", ["flowGraph", "flowYaml", "flow", "flowValidation", "flowYaml"]),
             ...mapState("auth", ["user"]),
-            ...mapStores(useBlueprintsStore, useCoreStore),
+            ...mapStores(useBlueprintsStore, useCoreStore, useEditorStore),
             routeInfo() {
                 return {
                     title: this.$t("flows")

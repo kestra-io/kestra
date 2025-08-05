@@ -18,7 +18,7 @@
 
     const props = defineProps({
         date: {
-            type: String,
+            type: [Date, String],
             default: undefined
         },
         inverted: {

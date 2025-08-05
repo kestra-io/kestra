@@ -250,9 +250,10 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         stateLock.lock();
         // Optional callback to be executed at the end.
         Runnable returnCallback = null;
+        
+        localServiceState = localServiceState(service);
         try {
-            localServiceState = localServiceState(service);
-
+            
             if (localServiceState == null) {
                 return null; // service has been unregistered.
             }
@@ -301,7 +302,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             // Update the local instance
             this.serviceRegistry.register(localServiceState.with(remoteInstance));
         } catch (Exception e) {
-            final ServiceInstance localInstance = localServiceState(service).instance();
+            final ServiceInstance localInstance = localServiceState.instance();
             log.error("[Service id={}, type='{}', hostname='{}'] Failed to update state to {}. Error: {}",
                 localInstance.uid(),
                 localInstance.type(),
@@ -317,7 +318,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                 returnCallback.run();
             }
         }
-        return localServiceState(service).instance();
+        return Optional.ofNullable(localServiceState(service)).map(LocalServiceState::instance).orElse(null);
     }
 
     private void mayDisableStateUpdate(final Service service, final ServiceInstance instance) {
@@ -371,9 +372,11 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                                                  final Service service,
                                                  final ServiceInstance instance,
                                                  final boolean isLivenessEnabled) {
-            // Never shutdown STANDALONE server or WEB_SERVER service.
-            if (instance.server().type().equals(ServerInstance.Type.STANDALONE) ||
-                instance.is(ServiceType.WEBSERVER)) {
+            // Never shutdown STANDALONE server or WEBSERVER and INDEXER services.
+            if (ServerInstance.Type.STANDALONE.equals(instance.server().type()) ||
+                instance.is(ServiceType.INDEXER) ||
+                instance.is(ServiceType.WEBSERVER)
+            ) {
                 // Force the RUNNING state.
                 return Optional.of(instance.state(Service.ServiceState.RUNNING, now, null));
             }

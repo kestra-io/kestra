@@ -91,6 +91,7 @@
       "title": "蓝图"
     },
     "bookmark": "书签",
+    "bulk action async warning": "这可能需要一些时间。",
     "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
     "bulk delete": "确定要删除 <code>{executionCount}</code> 个执行吗？",
     "bulk delete backfills": "删除 {count} 回填",
@@ -271,6 +272,7 @@
     "days": "天数",
     "debug": "调试",
     "default": "默认值",
+    "defaultsToNamespaceFile": "默认为 namespace 文件：<code>{name}</code>",
     "delete": "删除",
     "delete backfill": "删除回填",
     "delete backfills": "删除回填",
@@ -903,6 +905,7 @@
         "finally": "选择一个task",
         "inputs": "选择一个input字段类型",
         "pluginDefaults": "选择插件",
+        "task": "选择一个task",
         "tasks": "选择一个task",
         "triggers": "选择一个trigger"
       },
@@ -911,6 +914,7 @@
       "version_oss_placeholder": "解锁企业版插件版本控制"
     },
     "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
+    "no_file_choosen": "未选择文件",
     "no_logs_data": "无数据",
     "no_logs_data_description": "要么没有正在运行的flows，要么您可能需要调整您的筛选器。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
@@ -1011,6 +1015,18 @@
     "pause confirm": "您确定要暂停执行<code>{id}</code>吗？",
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
+    "playground": {
+      "confirm_create": "在创建flow时无法运行playground。启动playground运行将创建flow。",
+      "history": "最近10次运行",
+      "play_icon_info": "您还可以在无代码或拓扑视图中点击播放图标。",
+      "run_all_tasks": "运行所有Tasks",
+      "run_task": "运行Task",
+      "run_task_and_downstream": "运行 task 和下游",
+      "run_task_info": "将鼠标悬停在Flow Code编辑器中的任何task上，然后点击“Run task”按钮以测试您的task。",
+      "run_this_task": "运行此task",
+      "title": "游乐场",
+      "toggle": "游乐场"
+    },
     "pluginDefaults": "插件默认值",
     "pluginPage": {
       "alt": "插件图标",
@@ -1072,6 +1088,7 @@
     "revision": "修订版",
     "revisions": "修订版",
     "row count": "行数",
+    "run task in playground": "在playground中运行task",
     "runners": "运行者",
     "running duration": "运行时间",
     "save": "保存",
@@ -1145,7 +1162,8 @@
             "language": "语言",
             "log_display": "默认日志显示",
             "log_level": "默认日志级别",
-            "multi_panel_editor": "多面板编辑器"
+            "multi_panel_editor": "多面板编辑器",
+            "playground": "游乐场"
           },
           "label": "主要配置"
         },
@@ -1183,6 +1201,7 @@
             "editor_hover_description": "将鼠标悬停在属性上查看描述",
             "environment_color": "环境颜色",
             "environment_name": "环境名称",
+            "environment_name_tooltip": "此环境名称是从配置中设置的，但可以更改。",
             "logs_font_size": "日志字体大小",
             "theme": "主题"
           },
@@ -1302,10 +1321,15 @@
     "system_namespace_description": "自动化维护任务，从故障警报到自动清理。",
     "tags": "标签",
     "task": "任务",
+    "task failed": "任务失败",
     "task id": "任务ID",
     "task id already exists": "任务ID已存在",
+    "task is running": "任务正在运行",
     "task logs": "任务日志",
     "task run id": "任务运行 ID",
+    "task sent a warning": "任务发送了警告",
+    "task was skipped": "任务被跳过",
+    "task was successful": "任务成功",
     "taskDefaults": "任务默认值",
     "taskRunners": "任务 Runners",
     "task_id_exists": "任务ID已存在",
@@ -1341,6 +1365,8 @@
     "topology": "拓扑",
     "topology-graph": {
       "graph-orientation": "图表方向",
+      "invalid": "图形错误",
+      "invalid_description": "加载图表时发生错误。请检查源代码中的错误。",
       "zoom-fit": "适应屏幕",
       "zoom-in": "放大",
       "zoom-out": "缩小",
@@ -1412,6 +1438,12 @@
     "warning flow with triggers": "此流程包含触发器，如果此流程依赖触发表达式，则手动执行将失败。",
     "watch": "监视",
     "watch_video": "观看视频",
+    "webhook": {
+      "curl_command": "Webhook cURL 命令",
+      "curl_note": "使用此 cURL 命令通过 webhook 触发 flow，并使用自定义 JSON 负载",
+      "no_triggers": "此flow没有启用的webhook triggers",
+      "payload": "Webhook Payload (JSON)"
+    },
     "webhook link copied": "Webhook链接已复制。",
     "weeks": "周",
     "welcome": {

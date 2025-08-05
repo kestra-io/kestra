@@ -80,6 +80,7 @@
                                 :input="true"
                                 :navbar="false"
                                 :model-value="computedDebugValue"
+                                @update:model-value="editorValue = $event"
                                 @confirm="onDebugExpression($event)"
                                 class="w-100"
                             />
@@ -88,8 +89,9 @@
                                 type="primary"
                                 @click="
                                     onDebugExpression(
-                                        debugEditor.editor.getValue(),
+                                        editorValue.length > 0 ? editorValue : computedDebugValue,
                                     )
+
                                 "
                                 class="mt-3"
                             >
@@ -134,7 +136,7 @@
 
                 <VarValue
                     v-if="displayVarValue()"
-                    :value="selectedValue.uri ? selectedValue.uri : selectedValue"
+                    :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
                     :execution="execution"
                 />
                 <SubFlowLink
@@ -163,8 +165,9 @@
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
 
     import Editor from "../../inputs/Editor.vue";
+    const editorValue = ref("");
     const debugCollapse = ref("");
-    const debugEditor = ref(null);
+    const debugEditor = ref<InstanceType<typeof Editor>>();
     const debugExpression = ref("");
     const computedDebugValue = computed(() => {
         const formatTask = (task) => {
@@ -198,7 +201,7 @@
         const filter = selected.value?.length
             ? selected.value[0]
             : (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.label;
-        const taskRunList = [...execution.value.taskRunList];
+        const taskRunList = [...execution.value?.taskRunList ?? []];
         return taskRunList.find((e) => e.taskId === filter);
     };
     const onDebugExpression = (expression: string) => {

@@ -102,6 +102,73 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
             });
     }
 
+    private <T extends Record> SelectConditionStep<T> filter(
+        SelectConditionStep<T> select,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable String triggerId,
+        @Nullable Level minLevel,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate
+    ) {
+        select = addNamespace(select, namespace);
+
+        if (flowId != null) {
+            select = select.and(field("flow_id").eq(flowId));
+        }
+
+        if (triggerId != null) {
+            select = select.and(field("trigger_id").eq(triggerId));
+        }
+
+        select = addMinLevel(select, minLevel);
+
+        if (query != null) {
+            select = select.and(this.findCondition(query));
+        }
+
+        if (startDate != null) {
+            select = select.and(field("timestamp").greaterOrEqual(startDate.toOffsetDateTime()));
+        }
+
+        if (endDate != null) {
+            select = select.and(field("timestamp").lessOrEqual(endDate.toOffsetDateTime()));
+        }
+
+        return select;
+    }
+
+    private <T extends Record> SelectConditionStep<T> addMinLevel(SelectConditionStep<T> select,
+        Level minLevel) {
+        if (minLevel != null) {
+            select = select.and(minLevel(minLevel));
+        }
+        return select;
+    }
+
+    private static <T extends Record> SelectConditionStep<T> addNamespace(SelectConditionStep<T> select,
+        String namespace) {
+        if (namespace != null) {
+            select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+        }
+        return select;
+    }
+
+    private static <T extends Record> SelectConditionStep<T> addFlowId(SelectConditionStep<T> select, String flowId) {
+        if (flowId != null) {
+            select = select.and(field("flow_id").eq(flowId));
+        }
+        return select;
+    }
+
+    private static <T extends Record> SelectConditionStep<T> addExecutionId(SelectConditionStep<T> select, String executionId) {
+        if (executionId != null) {
+            select = select.and(field("execution_id").eq(executionId));
+        }
+        return select;
+    }
+
     @Override
     public Flux<LogEntry> findAsync(
         @Nullable String tenantId,
@@ -151,7 +218,6 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 }
             }), FluxSink.OverflowStrategy.BUFFER);
     }
-
 
     @Override
     public List<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel) {
@@ -390,7 +456,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Override
-    public int deleteByQuery(String tenantId, String namespace, String flowId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
+    public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -411,6 +477,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
                 if (flowId != null) {
                     delete = delete.and(field("flow_id").eq(flowId));
+                }
+
+                if (executionId != null) {
+                    delete = delete.and(field("execution_id").eq(executionId));
                 }
 
                 if (logLevels != null) {

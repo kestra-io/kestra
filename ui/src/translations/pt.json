@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Favoritos",
+    "bulk action async warning": "Isso pode levar alguns instantes.",
     "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
     "bulk delete": "Tem certeza de que deseja deletar <code>{executionCount}</code> execução(ões)?",
     "bulk delete backfills": "Excluir {count} backfill",
@@ -271,6 +272,7 @@
     "days": "Dias",
     "debug": "Depurar",
     "default": "Padrão",
+    "defaultsToNamespaceFile": "Padrões para arquivo de namespace: <code>{name}</code>",
     "delete": "Deletar",
     "delete backfill": "Deletar o backfill",
     "delete backfills": "Deletar backfills",
@@ -903,6 +905,7 @@
         "finally": "Selecione uma task",
         "inputs": "Selecione um tipo de campo de input",
         "pluginDefaults": "Selecione um plugin",
+        "task": "Selecione uma task",
         "tasks": "Selecione uma task",
         "triggers": "Selecione um trigger"
       },
@@ -911,6 +914,7 @@
       "version_oss_placeholder": "Desbloqueie a Versionamento de Plugin com a Enterprise Edition"
     },
     "no_data": "Parece que não há nada aqui... ainda!<br/>Ajuste seus filtros ou tente novamente!",
+    "no_file_choosen": "Nenhum arquivo selecionado",
     "no_logs_data": "Sem Dados",
     "no_logs_data_description": "Nenhum flow está em execução, ou você pode precisar ajustar seus filtros.",
     "no_namespaces": "Nenhum namespace corresponde aos critérios de busca.",
@@ -1011,6 +1015,18 @@
     "pause confirm": "Tem certeza de que deseja pausar a execução <code>{id}</code>?",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
+    "playground": {
+      "confirm_create": "Você não pode executar o playground enquanto cria um flow. Iniciar uma execução do playground criará o flow.",
+      "history": "Últimas 10 execuções",
+      "play_icon_info": "Você também pode clicar no ícone de Play nas visualizações No-Code ou Topology.",
+      "run_all_tasks": "Executar Todas as Tasks",
+      "run_task": "Executar Task",
+      "run_task_and_downstream": "Executar task & downstream",
+      "run_task_info": "Passe o cursor sobre qualquer task no editor de Flow Code e clique no botão \"Run task\" para testar sua task.",
+      "run_this_task": "Execute esta task",
+      "title": "Playground",
+      "toggle": "Playground"
+    },
     "pluginDefaults": "Padrões do plugin",
     "pluginPage": {
       "alt": "Ícone de Plugins",
@@ -1072,6 +1088,7 @@
     "revision": "Revisão",
     "revisions": "Revisões",
     "row count": "Contagem de linhas",
+    "run task in playground": "Executar task no playground",
     "runners": "Corredores",
     "running duration": "Duração em execução",
     "save": "Salvar",
@@ -1145,7 +1162,8 @@
             "language": "Idioma",
             "log_display": "Exibição de Log Padrão",
             "log_level": "Nível de Log Padrão",
-            "multi_panel_editor": "Editor de Painel Múltiplo"
+            "multi_panel_editor": "Editor de Painel Múltiplo",
+            "playground": "Playground"
           },
           "label": "Configuração Principal"
         },
@@ -1183,6 +1201,7 @@
             "editor_hover_description": "Passe o cursor sobre a propriedade para ver a descrição",
             "environment_color": "Cor do Ambiente",
             "environment_name": "Nome do Ambiente",
+            "environment_name_tooltip": "Este nome de ambiente é definido a partir da configuração, mas pode ser alterado.",
             "logs_font_size": "Tamanho da Fonte dos Logs",
             "theme": "Tema"
           },
@@ -1302,10 +1321,15 @@
     "system_namespace_description": "Automatize tarefas de manutenção, desde alertas de falha até limpezas automatizadas.",
     "tags": "Tags",
     "task": "Task",
+    "task failed": "Tarefa falhou",
     "task id": "Task ID",
     "task id already exists": "Task Id já existe",
+    "task is running": "A task está RUNNING",
     "task logs": "Task logs",
     "task run id": "ID do TaskRun",
+    "task sent a warning": "A tarefa enviou um WARNING",
+    "task was skipped": "A tarefa foi ignorada",
+    "task was successful": "A tarefa foi bem-sucedida",
     "taskDefaults": "Padrões da Task",
     "taskRunners": "Executores de Task",
     "task_id_exists": "Id da Task já existe",
@@ -1341,6 +1365,8 @@
     "topology": "Topologia",
     "topology-graph": {
       "graph-orientation": "Orientação do gráfico",
+      "invalid": "Erro no gráfico",
+      "invalid_description": "Ocorreu um erro ao carregar o gráfico. Por favor, verifique o código-fonte para erros.",
       "zoom-fit": "Ajustar",
       "zoom-in": "Aumentar zoom",
       "zoom-out": "Diminuir zoom",
@@ -1412,6 +1438,12 @@
     "warning flow with triggers": "Este flow contém triggers e uma execução manual falhará se este flow depender de expressões de trigger.",
     "watch": "Assistir",
     "watch_video": "Assistir Vídeo",
+    "webhook": {
+      "curl_command": "Comando cURL do Webhook",
+      "curl_note": "Use este comando cURL para acionar o flow via webhook com carga útil JSON personalizada",
+      "no_triggers": "Este flow não possui triggers de webhook habilitados",
+      "payload": "Payload do Webhook (JSON)"
+    },
     "webhook link copied": "Link do Webhook copiado.",
     "weeks": "Semanas",
     "welcome": {

@@ -26,6 +26,7 @@
 #plugin-debezium:io.kestra.plugin:plugin-debezium-oracle:LATEST
 #plugin-debezium:io.kestra.plugin:plugin-debezium-postgres:LATEST
 #plugin-debezium:io.kestra.plugin:plugin-debezium-sqlserver:LATEST
+#plugin-deepseek:io.kestra.plugin:plugin-deepseek:LATEST
 #plugin-docker:io.kestra.plugin:plugin-docker:LATEST
 #plugin-elasticsearch:io.kestra.plugin:plugin-elasticsearch:LATEST
 #plugin-fivetran:io.kestra.plugin:plugin-fivetran:LATEST
@@ -86,13 +87,18 @@
 #plugin-powerbi:io.kestra.plugin:plugin-powerbi:LATEST
 #plugin-pulsar:io.kestra.plugin:plugin-pulsar:LATEST
 #plugin-redis:io.kestra.plugin:plugin-redis:LATEST
+#plugin-scripts:io.kestra.plugin:plugin-script-bun:LATEST
+#plugin-scripts:io.kestra.plugin:plugin-script-deno:LATEST
 #plugin-scripts:io.kestra.plugin:plugin-script-go:LATEST
 #plugin-scripts:io.kestra.plugin:plugin-script-groovy:LATEST
 #plugin-scripts:io.kestra.plugin:plugin-script-jbang:LATEST
 #plugin-scripts:io.kestra.plugin:plugin-script-julia:LATEST
 #plugin-scripts:io.kestra.plugin:plugin-script-jython:LATEST
+#plugin-scripts:io.kestra.plugin:plugin-script-lua:LATEST
 #plugin-scripts:io.kestra.plugin:plugin-script-nashorn:LATEST
 #plugin-scripts:io.kestra.plugin:plugin-script-node:LATEST
+#plugin-scripts:io.kestra.plugin:plugin-script-perl:LATEST
+#plugin-scripts:io.kestra.plugin:plugin-script-php:LATEST
 #plugin-scripts:io.kestra.plugin:plugin-script-powershell:LATEST
 #plugin-scripts:io.kestra.plugin:plugin-script-python:LATEST
 #plugin-scripts:io.kestra.plugin:plugin-script-r:LATEST

@@ -18,7 +18,7 @@
             class="fill-height"
         >
             <el-table-column
-                v-if="namespace === undefined"
+                v-if="namespace === undefined || namespaceColumn"
                 prop="namespace"
                 sortable="custom"
                 :sort-orders="['ascending', 'descending']"
@@ -82,13 +82,17 @@
             :title="secretModalTitle"
         >
             <el-form class="ks-horizontal" :model="secret" :rules="rules" ref="form">
-                <el-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
+                <el-form-item
+                    v-if="namespace === undefined"
+                    :label="$t('namespace')"
+                    prop="namespace"
+                    required
+                >
                     <namespace-select
                         v-model="secret.namespace"
                         :readonly="secret.update"
-                        data-type="flow"
                         :include-system-namespace="true"
-                        :all="true"
+                        all
                     />
                 </el-form-item>
                 <el-form-item :label="$t('secret.key')" prop="key">
@@ -227,6 +231,10 @@
             paneView: {
                 type: Boolean,
                 default: false
+            },
+            namespaceColumn: {
+                type: Boolean,
+                default: undefined
             }
         },
         emits: [

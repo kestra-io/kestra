@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "बुकमार्क्स",
+    "bulk action async warning": "यह कुछ क्षणों का समय ले सकता है।",
     "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
     "bulk delete": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को हटाना चाहते हैं?",
     "bulk delete backfills": "{count} backfill को हटाएं",
@@ -271,6 +272,7 @@
     "days": "दिन",
     "debug": "डिबग",
     "default": "डिफ़ॉल्ट",
+    "defaultsToNamespaceFile": "डिफ़ॉल्ट रूप से namespace फ़ाइल: <code>{name}</code>",
     "delete": "हटाएं",
     "delete backfill": "Backfill हटाएं",
     "delete backfills": "Backfills हटाएं",
@@ -903,6 +905,7 @@
         "finally": "एक task चुनें",
         "inputs": "इनपुट फ़ील्ड प्रकार चुनें",
         "pluginDefaults": "एक प्लगइन चुनें",
+        "task": "किसी task का चयन करें",
         "tasks": "कार्य चुनें",
         "triggers": "ट्रिगर चुनें"
       },
@@ -911,6 +914,7 @@
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें"
     },
     "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
+    "no_file_choosen": "कोई फ़ाइल चयनित नहीं",
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
@@ -1011,6 +1015,18 @@
     "pause confirm": "क्या आप वाकई <code>{id}</code> की execution को PAUSE करना चाहते हैं?",
     "pause done": "निष्पादन PAUSED है",
     "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
+    "playground": {
+      "confirm_create": "आप एक flow बनाते समय playground नहीं चला सकते। एक playground रन शुरू करने से flow बन जाएगा।",
+      "history": "पिछले 10 रन",
+      "play_icon_info": "आप No-Code या Topology दृश्य में Play आइकन पर भी क्लिक कर सकते हैं।",
+      "run_all_tasks": "सभी Tasks चलाएं",
+      "run_task": "टास्क चलाएं",
+      "run_task_and_downstream": "टास्क चलाएं और डाउनस्ट्रीम",
+      "run_task_info": "Flow Code संपादक में किसी भी task पर होवर करें और अपने task का परीक्षण करने के लिए \"Run task\" बटन पर क्लिक करें।",
+      "run_this_task": "इस task को चलाएं",
+      "title": "प्लेग्राउंड",
+      "toggle": "प्लेग्राउंड"
+    },
     "pluginDefaults": "प्लगइन डिफॉल्ट्स",
     "pluginPage": {
       "alt": "प्लगइन्स आइकन",
@@ -1072,6 +1088,7 @@
     "revision": "संशोधन",
     "revisions": "पुनरीक्षण",
     "row count": "पंक्ति संख्या",
+    "run task in playground": "प्लेग्राउंड में task चलाएं",
     "runners": "धावक",
     "running duration": "चलने की अवधि",
     "save": "सहेजें",
@@ -1145,7 +1162,8 @@
             "language": "भाषा",
             "log_display": "Log प्रदर्शन",
             "log_level": "Log स्तर",
-            "multi_panel_editor": "मल्टी पैनल एडिटर"
+            "multi_panel_editor": "मल्टी पैनल एडिटर",
+            "playground": "प्लेग्राउंड"
           },
           "label": "मुख्य कॉन्फ़िगरेशन"
         },
@@ -1183,6 +1201,7 @@
             "editor_hover_description": "प्रॉपर्टी पर होवर करें विवरण देखने के लिए",
             "environment_color": "पर्यावरण रंग",
             "environment_name": "पर्यावरण नाम",
+            "environment_name_tooltip": "इस environment नाम को config से सेट किया गया है लेकिन इसे बदला जा सकता है।",
             "logs_font_size": "लॉग्स फ़ॉन्ट आकार",
             "theme": "मोडस"
           },
@@ -1302,10 +1321,15 @@
     "system_namespace_description": "रखरखाव के tasks को स्वचालित करें, failure alerts से लेकर automated cleanups तक।",
     "tags": "टैग्स",
     "task": "Task",
+    "task failed": "टास्क FAILED",
     "task id": "Task ID",
     "task id already exists": "Task Id पहले से मौजूद है",
+    "task is running": "टास्क RUNNING है",
     "task logs": "Task Logs",
     "task run id": "टास्करन ID",
+    "task sent a warning": "टास्क ने एक WARNING भेजा",
+    "task was skipped": "टास्क को छोड़ दिया गया था",
+    "task was successful": "टास्क सफल रहा",
     "taskDefaults": "taskDefaults",
     "taskRunners": "टास्क Runners",
     "task_id_exists": "टास्क Id पहले से मौजूद है",
@@ -1341,6 +1365,8 @@
     "topology": "टोपोलॉजी",
     "topology-graph": {
       "graph-orientation": "ग्राफ़ अभिविन्यास",
+      "invalid": "ग्राफ़ त्रुटि",
+      "invalid_description": "ग्राफ़ लोड करते समय एक त्रुटि हुई। कृपया त्रुटियों के लिए स्रोत कोड की जाँच करें।",
       "zoom-fit": "फिट",
       "zoom-in": "ज़ूम इन करें",
       "zoom-out": "ज़ूम आउट करें",
@@ -1412,6 +1438,12 @@
     "warning flow with triggers": "इस flow में triggers शामिल हैं और यदि यह flow trigger अभिव्यक्तियों पर निर्भर करता है तो मैन्युअल निष्पादन विफल हो जाएगा।",
     "watch": "देखें",
     "watch_video": "वीडियो देखें",
+    "webhook": {
+      "curl_command": "Webhook cURL कमांड",
+      "curl_note": "इस cURL कमांड का उपयोग कस्टम JSON payload के साथ webhook के माध्यम से flow को trigger करने के लिए करें।",
+      "no_triggers": "इस flow में कोई सक्षम वेबहुक triggers नहीं हैं",
+      "payload": "Webhook Payload (JSON)"
+    },
     "webhook link copied": "Webhook लिंक कॉपी किया गया।",
     "weeks": "सप्ताह",
     "welcome": {

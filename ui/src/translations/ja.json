@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "ブックマーク",
+    "bulk action async warning": "少々お待ちください。",
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
     "bulk delete backfills": "{count}個のbackfillを削除",
@@ -271,6 +272,7 @@
     "days": "日数",
     "debug": "デバッグ",
     "default": "デフォルト",
+    "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: <code>{name}</code>",
     "delete": "削除",
     "delete backfill": "backfillを削除",
     "delete backfills": "backfillを削除",
@@ -903,6 +905,7 @@
         "finally": "タスクを選択",
         "inputs": "入力フィールドタイプを選択",
         "pluginDefaults": "プラグインを選択",
+        "task": "タスクを選択",
         "tasks": "タスクを選択",
         "triggers": "トリガーを選択"
       },
@@ -911,6 +914,7 @@
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック"
     },
     "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
+    "no_file_choosen": "ファイルが選択されていません",
     "no_logs_data": "データなし",
     "no_logs_data_description": "フローが実行中でないか、フィルターを調整する必要があるかもしれません。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
@@ -1011,6 +1015,18 @@
     "pause confirm": "実行 <code>{id}</code> を一時停止してもよろしいですか？",
     "pause done": "実行がPAUSEDされています",
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
+    "playground": {
+      "confirm_create": "フローを作成中はプレイグラウンドを実行できません。プレイグラウンドの実行を開始すると、flowが作成されます。",
+      "history": "直近10回の実行",
+      "play_icon_info": "ノーコードまたはトポロジービューで再生アイコンをクリックすることもできます。",
+      "run_all_tasks": "すべてのタスクを実行",
+      "run_task": "タスクを実行",
+      "run_task_and_downstream": "タスクとダウンストリームを実行",
+      "run_task_info": "Flow Codeエディタ内の任意のtaskにカーソルを合わせ、「Run task」ボタンをクリックしてtaskをテストします。",
+      "run_this_task": "このtaskを実行",
+      "title": "プレイグラウンド",
+      "toggle": "プレイグラウンド"
+    },
     "pluginDefaults": "プラグインのデフォルト",
     "pluginPage": {
       "alt": "プラグインアイコン",
@@ -1072,6 +1088,7 @@
     "revision": "リビジョン",
     "revisions": "リビジョン",
     "row count": "行数",
+    "run task in playground": "プレイグラウンドでタスクを実行",
     "runners": "ランナー",
     "running duration": "実行期間",
     "save": "保存",
@@ -1145,7 +1162,8 @@
             "language": "言語",
             "log_display": "デフォルトLog表示",
             "log_level": "デフォルトLogレベル",
-            "multi_panel_editor": "マルチパネルエディタ"
+            "multi_panel_editor": "マルチパネルエディタ",
+            "playground": "プレイグラウンド"
           },
           "label": "メイン設定"
         },
@@ -1183,6 +1201,7 @@
             "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
             "environment_color": "環境色",
             "environment_name": "環境名",
+            "environment_name_tooltip": "この環境名はconfigから設定されていますが、変更可能です。",
             "logs_font_size": "ログフォントサイズ",
             "theme": "テーマ"
           },
@@ -1302,10 +1321,15 @@
     "system_namespace_description": "メンテナンスタスクを自動化し、FAILUREアラートから自動クリーンアップまで対応します。",
     "tags": "タグ",
     "task": "Task",
+    "task failed": "タスクが失敗しました",
     "task id": "Task ID",
     "task id already exists": "Task Idはすでに存在します",
+    "task is running": "タスクがRUNNING中",
     "task logs": "Task Logs",
     "task run id": "タスクランID",
+    "task sent a warning": "タスクがWARNINGを送信しました",
+    "task was skipped": "タスクがスキップされました",
+    "task was successful": "タスクは成功しました",
     "taskDefaults": "taskのデフォルト設定",
     "taskRunners": "タスクランナー",
     "task_id_exists": "タスクIDは既に存在します",
@@ -1341,6 +1365,8 @@
     "topology": "トポロジー",
     "topology-graph": {
       "graph-orientation": "グラフの向き",
+      "invalid": "グラフエラー",
+      "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。",
       "zoom-fit": "フィット",
       "zoom-in": "ズームイン",
       "zoom-out": "ズームアウト",
@@ -1412,6 +1438,12 @@
     "warning flow with triggers": "このflowにはtriggersが含まれており、trigger expressionsに依存する場合、手動実行は失敗します。",
     "watch": "ウォッチ",
     "watch_video": "ビデオを見る",
+    "webhook": {
+      "curl_command": "Webhook cURL コマンド",
+      "curl_note": "このcURLコマンドを使用して、カスタムJSONペイロードでwebhookを介してflowをtriggerします。",
+      "no_triggers": "このflowには有効なWebhookトリガーがありません",
+      "payload": "Webhookペイロード（JSON）"
+    },
     "webhook link copied": "Webhookリンクがコピーされました。",
     "weeks": "週間",
     "welcome": {

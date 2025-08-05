@@ -1,7 +1,7 @@
 <template>
     <editor
         id="editorWrapper"
-        ref="editorDomElement"
+        ref="editorRefElement"
         :model-value="draftSource === undefined ? source : draftSource"
         :schema-type="isCurrentTabFlow ? 'flow': undefined"
         :lang="extension === undefined ? 'yaml' : undefined"
@@ -15,16 +15,22 @@
         @cursor="updatePluginDocumentation"
         @save="isCurrentTabFlow ? save(): saveFileContent()"
         @execute="execute"
+        @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
+        @mouse-leave="() => highlightHoveredTask(-1)"
         :original="draftSource === undefined ? undefined : source"
         :diff-side-by-side="false"
     >
         <template #absolute>
-            <div class="d-flex flex-column align-items-end gap-2 mt-2" v-if="isCurrentTabFlow">
-                <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
-                    {{ $t("ai.flow.title") }}
-                </el-button>
-            </div>
-            <ContentSave v-else @click="saveFileContent" />
+            <AITriggerButton
+                :show="isCurrentTabFlow"
+                :enabled="aiEnabled"
+                :opened="aiAgentOpened"
+                @click="draftSource = undefined; aiAgentOpened = true"
+            />
+            <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
+        </template>
+        <template v-if="playgroundStore.enabled" #widget-content>
+            <PlaygroundRunTaskButton :task-id="highlightedLines?.taskId" />
         </template>
     </editor>
     <transition name="el-zoom-in-center">
@@ -33,7 +39,7 @@
             class="position-absolute prompt"
             @close="aiAgentOpened = false"
             :flow="flowContent"
-            @generated-yaml="yaml => {draftSource = yaml; aiAgentOpened = false}"
+            @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
         />
     </transition>
     <AcceptDecline
@@ -59,14 +65,18 @@
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
     import {useMiscStore} from "../../stores/misc";
+    import {EditorTabProps, useEditorStore} from "../../stores/editor";
 
     import AiAgent from "../ai/AiAgent.vue";
-    import AiIcon from "../ai/AiIcon.vue";
+    import AITriggerButton from "../ai/AITriggerButton.vue";
     import AcceptDecline from "./AcceptDecline.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
+    import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
 
     const store = useStore();
     const miscStore = useMiscStore();
+    const editorStore = useEditorStore();
 
     const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const cursor = ref();
@@ -85,41 +95,29 @@
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
 
-
-    export interface EditorTabProps {
-        name: string,
-        path: string,
-        extension?: string,
-        flow?: boolean,
-        dirty?: boolean,
-    }
-
     const props = withDefaults(defineProps<EditorTabProps>(), {
         extension: undefined,
         dirty: false,
-        flow: true
+        flow: true,
     });
 
     provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
 
-    const source = computed(() => {
+    const source = computed<string>(() => {
         return props.flow
-            ? store.getters["flow/flowYaml"]
-            : store.state.editor.tabs.find((t: any) => t.path === props.path)?.content;
+            ? store.state.flow.flowYaml
+            : editorStore.tabs.find((t: any) => t.path === props.path)?.content;
     })
 
     async function loadFile() {
-        if (props.dirty || props.flow) {
-            return;
-        }
-        const content = await store.dispatch("namespace/readFile", {
-            namespace: namespace.value,
-            path: props.path
-        })
-        store.commit("editor/setTabContent", {
-            path: props.path,
-            content
-        })
+        if (props.dirty || props.flow) return;
+
+        const fileNamespace = namespace.value ?? route.params?.namespace;
+
+        if (!fileNamespace) return;
+
+        const content = await store.dispatch("namespace/readFile", {namespace: fileNamespace, path: props.path})
+        editorStore.setTabContent({path: props.path, content})
     }
 
     onMounted(() => {
@@ -135,12 +133,13 @@
     onBeforeUnmount(() => {
         window.removeEventListener("keydown", handleGlobalSave);
         window.removeEventListener("keydown", toggleAiShortcut);
+        pluginsStore.editorPlugin = undefined;
     });
 
-    const editorDomElement = ref<any>(null);
+    const editorRefElement = ref<InstanceType<typeof Editor>>();
 
-    const namespace = computed(() => store.getters["flow/namespace"]);
-    const flowStore = computed(() => store.getters["flow/flow"]);
+    const namespace = computed(() => store.state.flow.namespace);
+    const flowStore = computed(() => store.state.flow.flow);
     const isCreating = computed(() => store.state.flow.isCreating);
     const isCurrentTabFlow = computed(() => props.flow)
     const isReadOnly = computed(() => flowStore.value?.deleted || !store.getters["flow/isAllowedEdit"] || store.getters["flow/readOnlySystemLabel"]);
@@ -164,11 +163,11 @@
                 store.commit("flow/setFlowYaml", newValue);
             }
         }
-        store.commit("editor/setTabContent", {
+        editorStore.setTabContent({
             content: newValue,
             path: props.path
         });
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             path: props.path,
             dirty: true
         });
@@ -195,13 +194,15 @@
     const flowParsed = computed(() => store.getters["flow/flowParsed"]);
     const save = async () => {
         clearTimeout(timeout.value);
-        const result = await store.dispatch("flow/save", {content: editorDomElement.value.$refs.monacoEditor.value})
+        const editorRef = editorRefElement.value
+        if(!editorRef?.$refs.monacoEditor) return
+        const result = await store.dispatch("flow/save", {content:(editorRef.$refs.monacoEditor as any).value})
 
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             path: props.path,
             dirty: false
         });
-        
+
         if (result === "redirect_to_update") {
             await router.push({
                 name: "flows/update",
@@ -220,9 +221,9 @@
         await store.dispatch("namespace/createFile", {
             namespace: namespace.value,
             path: props.path,
-            content: editorDomElement.value.modelValue,
+            content: editorRefElement.value?.modelValue,
         });
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             path: props.path,
             dirty: false
         });
@@ -253,29 +254,25 @@
         draftSource.value = undefined;
         aiAgentOpened.value = true;
     }
+
+    const {
+        playgroundStore,
+        highlightHoveredTask,
+        highlightedLines,
+    } = useFlowEditorRunTaskButton(isCurrentTabFlow, editorRefElement, source);
 </script>
 
 <style scoped lang="scss">
-    .prompt {
-        bottom: 10%;
-        width: calc(100% - 5rem);
-        left: 3rem;
-        max-width: 700px;
-        background-color: var(--ks-background-panel);
-        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
-    }
+.prompt {
+    bottom: 10%;
+    width: calc(100% - 5rem);
+    left: 3rem;
+    max-width: 700px;
+    background-color: var(--ks-background-panel);
+    box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+}
 
-    .rounded-pill {
-        background-color: #262A35;
-        color: #ffffff;
-        box-shadow: 0px 4px 4px 0px #00000040;
-
-        &:hover {
-            background-color: #262A35;
-        }
-    }
-
-    .actions {
-        bottom: 10%;
-    }
+.actions {
+    bottom: 10%;
+}
 </style>

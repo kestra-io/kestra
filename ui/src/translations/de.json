@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Lesezeichen",
+    "bulk action async warning": "Dies kann einige Augenblicke dauern.",
     "bulk change state": "Sind Sie sicher, dass Sie den Zustand von <code>{executionCount}</code> Ausführung(en) ändern möchten?",
     "bulk delete": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) löschen möchten?",
     "bulk delete backfills": "{count} Backfill löschen",
@@ -271,6 +272,7 @@
     "days": "Tage",
     "debug": "Debuggen",
     "default": "Standard",
+    "defaultsToNamespaceFile": "Standardmäßig auf namespace-Datei: <code>{name}</code> eingestellt",
     "delete": "Löschen",
     "delete backfill": "Backfill löschen",
     "delete backfills": "Backfills löschen",
@@ -903,6 +905,7 @@
         "finally": "Wählen Sie eine Task aus",
         "inputs": "Wählen Sie einen Input-Feldtyp aus",
         "pluginDefaults": "Wählen Sie ein Plugin aus",
+        "task": "Wählen Sie eine Task aus",
         "tasks": "Wählen Sie eine Task aus",
         "triggers": "Wählen Sie einen Trigger aus"
       },
@@ -911,6 +914,7 @@
       "version_oss_placeholder": "Entsperren Sie die Plugin-Versionierung mit der Enterprise Edition"
     },
     "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!<br/>Passen Sie Ihre Filter an oder versuchen Sie es erneut!",
+    "no_file_choosen": "Keine Datei ausgewählt",
     "no_logs_data": "Keine Daten",
     "no_logs_data_description": "Entweder laufen keine Flows, oder Sie müssen Ihre Filter anpassen.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
@@ -1011,6 +1015,18 @@
     "pause confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> pausieren möchten?",
     "pause done": "Die Ausführung ist PAUSED.",
     "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss.",
+    "playground": {
+      "confirm_create": "Sie können den Playground nicht ausführen, während Sie einen flow erstellen. Das Starten eines Playground-Laufs wird den flow erstellen.",
+      "history": "Letzte 10 Ausführungen",
+      "play_icon_info": "Sie können auch das Play-Symbol in den No-Code- oder Topologie-Ansichten anklicken.",
+      "run_all_tasks": "Alle Tasks ausführen",
+      "run_task": "Task ausführen",
+      "run_task_and_downstream": "Task & Downstream ausführen",
+      "run_task_info": "Bewegen Sie den Mauszeiger über eine beliebige Task im Flow-Code-Editor und klicken Sie auf die Schaltfläche \"Run task\", um Ihre Task zu testen.",
+      "run_this_task": "Führe diese Task aus",
+      "title": "Spielwiese",
+      "toggle": "Spielplatz"
+    },
     "pluginDefaults": "Plugin-Standardeinstellungen",
     "pluginPage": {
       "alt": "Plugins-Symbol",
@@ -1072,6 +1088,7 @@
     "revision": "Revision",
     "revisions": "Revisionen",
     "row count": "Zeilenanzahl",
+    "run task in playground": "Task im Playground ausführen",
     "runners": "Läufer",
     "running duration": "Laufzeitdauer",
     "save": "Speichern",
@@ -1145,7 +1162,8 @@
             "language": "Sprache",
             "log_display": "Standard-Log-Anzeige",
             "log_level": "Standard-Log-Ebene",
-            "multi_panel_editor": "Multi-Panel-Editor"
+            "multi_panel_editor": "Multi-Panel-Editor",
+            "playground": "Spielplatz"
           },
           "label": "Hauptkonfiguration"
         },
@@ -1183,6 +1201,7 @@
             "editor_hover_description": "Fahren Sie mit der Maus über die Eigenschaft, um die Beschreibung zu sehen",
             "environment_color": "Umgebungsfarbe",
             "environment_name": "Umgebungsname",
+            "environment_name_tooltip": "Dieser Umgebungsname wird aus der Konfiguration festgelegt, kann jedoch geändert werden.",
             "logs_font_size": "Logs Schriftgröße",
             "theme": "Modus"
           },
@@ -1302,10 +1321,15 @@
     "system_namespace_description": "Automatisieren Sie Wartungsaufgaben, von Fehlerwarnungen bis hin zu automatisierten Bereinigungen.",
     "tags": "Tags",
     "task": "Task",
+    "task failed": "Task fehlgeschlagen",
     "task id": "Task-ID",
     "task id already exists": "Task-Id existiert bereits",
+    "task is running": "Task läuft",
     "task logs": "Task Logs",
     "task run id": "TaskRun-ID",
+    "task sent a warning": "Task hat eine Warnung gesendet",
+    "task was skipped": "Task wurde übersprungen",
+    "task was successful": "Task war erfolgreich",
     "taskDefaults": "Task-Standards",
     "taskRunners": "Task Runners",
     "task_id_exists": "Task-ID existiert bereits",
@@ -1341,6 +1365,8 @@
     "topology": "Topologie",
     "topology-graph": {
       "graph-orientation": "Graph-Ausrichtung",
+      "invalid": "Graph-Fehler",
+      "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte überprüfen Sie den Quellcode auf Fehler.",
       "zoom-fit": "Anpassen",
       "zoom-in": "Vergrößern",
       "zoom-out": "Verkleinern",
@@ -1412,6 +1438,12 @@
     "warning flow with triggers": "Dieser Flow enthält Trigger und eine manuelle Ausführung wird fehlschlagen, wenn dieser Flow von Trigger-Ausdrücken abhängt.",
     "watch": "Beobachten",
     "watch_video": "Video ansehen",
+    "webhook": {
+      "curl_command": "Webhook-cURL-Befehl",
+      "curl_note": "Verwenden Sie diesen cURL-Befehl, um den flow über Webhook mit benutzerdefiniertem JSON-Payload zu triggern.",
+      "no_triggers": "Dieser flow hat keine aktivierten Webhook-Triggers.",
+      "payload": "Webhook-Payload (JSON)"
+    },
     "webhook link copied": "Webhook-Link kopiert.",
     "weeks": "Wochen",
     "welcome": {

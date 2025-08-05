@@ -1,4 +1,7 @@
 <template>
+    <div v-if="playgroundStore.enabled && isTask && taskObject?.id" class="flow-playground">
+        <PlaygroundRunTaskButton :task-id="taskObject?.id" />
+    </div>
     <el-form label-position="top">
         <el-form-item>
             <template #label>
@@ -38,11 +41,13 @@
     import {
         SCHEMA_PATH_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
-        BLOCK_SCHEMA_PATH_INJECTION_KEY
+        BLOCK_SCHEMA_PATH_INJECTION_KEY,
     } from "../code/injectionKeys";
     import {removeNullAndUndefined} from "../code/utils/cleanUp";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
+    import {usePlaygroundStore} from "../../stores/playground";
     import {getValueAtJsonPath} from "../../utils/utils";
+    import PlaygroundRunTaskButton from "../inputs/PlaygroundRunTaskButton.vue";
 
     const {t} = useI18n();
 
@@ -54,6 +59,7 @@
     const modelValue = defineModel<string>();
 
     const pluginsStore = usePluginsStore();
+    const playgroundStore = usePlaygroundStore();
 
     type PartialCodeElement = Partial<NoCodeElement>;
 
@@ -68,6 +74,8 @@
     provide(SCHEMA_PATH_INJECTION_KEY, computed(() => `#/definitions/${selectedTaskType.value}`))
 
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
+
+    const isTask = computed(() => ["task", "tasks"].includes(parentPath.split(".").pop() ?? ""));
 
     const isPluginDefaults = computed(() => {
         return parentPath.startsWith("pluginDefaults")
@@ -250,5 +258,10 @@
         code {
             color: var(--ks-content-primary);
         }
+    }
+
+    .flow-playground{
+        display: flex;
+        justify-content: end;
     }
 </style>

@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ModelValidator;
@@ -51,7 +52,6 @@ import java.util.stream.StreamSupport;
 @Singleton
 @Slf4j
 public class FlowService {
-
     @Inject
     Optional<FlowRepositoryInterface> flowRepository;
 
@@ -236,6 +236,7 @@ public class FlowService {
         }
 
         List<String> warnings = new ArrayList<>(checkValidSubflows(flow, tenantId));
+
         List<io.kestra.plugin.core.trigger.Flow> flowTriggers = ListUtils.emptyOnNull(flow.getTriggers()).stream()
             .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
             .map(io.kestra.plugin.core.trigger.Flow.class::cast)
@@ -243,6 +244,21 @@ public class FlowService {
         flowTriggers.forEach(flowTrigger -> {
             if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null) {
                 warnings.add("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId() + "'.");
+            }
+        });
+
+        // add warning for runnable properties (timeout, workerGroup, taskCache) when used not in a runnable
+        flow.allTasksWithChilds().forEach(task -> {
+            if (!(task instanceof RunnableTask<?>)) {
+                if (task.getTimeout() != null) {
+                    warnings.add("The task '" + task.getId() + "' cannot use the 'timeout' property as it's only relevant for runnable tasks.");
+                }
+                if (task.getTaskCache() != null) {
+                    warnings.add("The task '" + task.getId() + "' cannot use the 'taskCache' property as it's only relevant for runnable tasks.");
+                }
+                if (task.getWorkerGroup() != null) {
+                    warnings.add("The task '" + task.getId() + "' cannot use the 'workerGroup' property as it's only relevant for runnable tasks.");
+                }
             }
         });
 

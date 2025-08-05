@@ -44,14 +44,11 @@
                                     </span>
                                 </el-tooltip>
                                 <div>
-                                    <el-tooltip placement="right" :persistent="false" :hide-after="0" effect="light">
+                                    <el-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" :hide-after="0" effect="light">
                                         <template #content>
                                             <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
                                         </template>
-                                        <Warning
-                                            v-if="item.attempts > 1"
-                                            class="attempt_warn me-3"
-                                        />
+                                        <Warning class="attempt_warn me-3" />
                                     </el-tooltip>
                                 </div>
                                 <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
@@ -83,7 +80,6 @@
                                     :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
                                     level="TRACE"
                                     @follow="forwardEvent('follow', $event)"
-                                    :target-execution="execution"
                                     :target-flow="executionsStore.flow"
                                     :show-logs="taskTypeByTaskRunId[item.id] !== 'io.kestra.plugin.core.flow.ForEachItem' && taskTypeByTaskRunId[item.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
                                     class="mh-100 mx-3"

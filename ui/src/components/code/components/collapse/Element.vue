@@ -1,12 +1,16 @@
 <template>
     <div @click="handleClick" class="d-flex my-2 p-2 rounded element" :class="{'moved': moved}">
-        <div class="me-2 icon">
+        <div v-if="props.parentPathComplete !== 'inputs'" class="me-2 icon">
             <TaskIcon :cls="element.type" :icons only-icon />
         </div>
 
         <div class="flex-grow-1 label">
-            {{ taskIdentifier }}
+            {{ identifier }}
         </div>
+
+        <button v-if="playgroundStore.enabled && element.id && isTask" @click.stop="playgroundStore.runUntilTask(element.id)" type="button" class="playground-run-task">
+            <PlayIcon />
+        </button>
 
         <el-button
             @click.prevent.stop="emits('removeElement')"
@@ -24,10 +28,15 @@
 <script setup lang="ts">
     import {computed, inject} from "vue";
     import {useI18n} from "vue-i18n";
+    import PlayIcon from "vue-material-design-icons/Play.vue";
     import {usePluginsStore} from "../../../../stores/plugins";
+    import {usePlaygroundStore} from "../../../../stores/playground";
+
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
-    import {EDIT_TASK_FUNCTION_INJECTION_KEY} from "../../injectionKeys";
+    import {
+        EDIT_TASK_FUNCTION_INJECTION_KEY
+    } from "../../injectionKeys";
 
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
 
@@ -48,6 +57,9 @@
     }>();
 
     const pluginsStore = usePluginsStore();
+    const playgroundStore = usePlaygroundStore();
+
+    const isTask = computed(() => ["tasks", "task"].includes(props.parentPathComplete?.split(".").pop() ?? "not-found"));
 
     const icons = computed(() => pluginsStore.icons);
 
@@ -57,11 +69,9 @@
     );
 
     const identifier = computed(() => {
-        return props.element.id ?? props.element.type;
-    });
-
-    const taskIdentifier = computed(() => {
-        return identifier.value ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`;
+        return props.element.id
+            ?? props.element.type
+            ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`;
     });
 
     const handleClick = () => {
@@ -75,6 +85,7 @@
 
 <style scoped lang="scss">
 @import "../../styles/code.scss";
+@import "@kestra-io/ui-libs/src/scss/_color-palette";
 
 .element {
     cursor: pointer;
@@ -95,5 +106,21 @@
         background-color: var(--ks-button-background-secondary-active);
         border-color: var(--ks-border-active);
     }
+
+    .playground-run-task{
+        color: $base-white;
+        background-color: $base-blue-400;
+        height: 16px;
+        width: 16px;
+        font-size: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 4px;
+        padding: 0;
+        border: none;
+    }
 }
+
+
 </style>

@@ -275,7 +275,9 @@
       "zoom-in": "Zoom in",
       "zoom-out": "Zoom out",
       "zoom-reset": "Reset zoom",
-      "zoom-fit": "Fit"
+      "zoom-fit": "Fit",
+      "invalid": "Graph error",
+      "invalid_description": "An error occurred while loading the graph. Please check the source code for errors."
     },
     "show task logs": "Show task logs",
     "show task condition": "Show task condition",
@@ -774,6 +776,7 @@
             "execute_default_tab": "Default Execution Tab",
             "multi_panel_editor": "Multi Panel Editor",
             "flow_default_tab": "Default Flow Tab",
+            "playground": "Playground",
             "auto_refresh_interval": "Auto Refresh Interval"
           }
         },
@@ -787,6 +790,7 @@
             "editor_folding_stratgy": "Automatic Code Folding in the Editor",
             "editor_hover_description": "Hover on property to see description",
             "environment_name": "Environment Name",
+            "environment_name_tooltip": "This environment name is set from the config but can be changed.",
             "environment_color": "Environment Color",
             "chart_color_scheme": {
               "label": "Chart Color Scheme",
@@ -945,6 +949,7 @@
       "button": "Talk to us"
     },
     "flow_only": "Only available on Flow tab.",
+    "bulk action async warning": "This might take a few moments.",
     "bulk unpause backfills": "Unpause {count} backfill",
     "bulk pause backfills": "Pause {count} backfill",
     "bulk delete backfills": "Delete {count} backfill",
@@ -1007,6 +1012,12 @@
     "curl": {
       "command": "cURL command",
       "note": "Note that for SECRET and FILE input type, the command must be accommodated to match the real values."
+    },
+    "webhook": {
+      "curl_command": "Webhook cURL command",
+      "payload": "Webhook Payload (JSON)",
+      "curl_note": "Use this cURL command to trigger the flow via webhook with custom JSON payload",
+      "no_triggers": "This flow has no enabled webhook triggers"
     },
     "logs_view": {
       "raw": "Temporal view",
@@ -1189,6 +1200,7 @@
         }
       },
       "select": {
+        "task": "Select a task",
         "tasks": "Select a task",
         "triggers": "Select a trigger",
         "errors": "Select a task",
@@ -1443,10 +1455,30 @@
         "generating": "Generating Flow YAML for you..."
       }
     },
+    "playground": {
+      "title": "Playground",
+      "run_task_info": "Hover over any task in the Flow Code editor and click the \"Run task\" button to test your task.",
+      "play_icon_info": "You can also hit the Play icon in the No-Code or Topology views.",
+      "toggle": "Playground",
+      "run_task": "Run task",
+      "run_this_task": "Run this task",
+      "run_task_and_downstream": "Run task & downstream",
+      "run_all_tasks": "Run All Tasks",
+      "history": "Last 10 runs",
+      "confirm_create": "You cannot run the playground while creating a flow. Launching a playground run will create the flow."
+    },
     "submit": "Submit",
     "to toggle": "to toggle",
     "accept": "Accept",
     "reject": "Reject",
-    "last modified": "Last modified"
+    "last modified": "Last modified",
+    "run task in playground": "Run task in playground",
+    "task is running": "Task is running",
+    "task was successful": "Task was successful",
+    "task failed": "Task failed",
+    "task was skipped": "Task was skipped",
+    "task sent a warning": "Task sent a warning",
+    "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
+    "no_file_choosen": "No file chosen"
   }
 }

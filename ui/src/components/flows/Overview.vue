@@ -2,7 +2,7 @@
     <Dashboard
         v-if="loaded && total && flow"
         :header="false"
-        :is-flow="true"
+        is-flow
     />
     <NoExecutions v-else-if="loaded && flow && !total" />
 </template>
@@ -18,8 +18,8 @@
     import NoExecutions from "../flows/NoExecutions.vue";
 
     const store = useStore();
+    const flow = computed(() => store.state.flow.flow);
     const executionsStore = useExecutionsStore();
-    const flow = computed(() => store.getters["flow/flow"]);
 
     const total = ref(0);
     const loaded = ref(false);

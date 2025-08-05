@@ -9,22 +9,74 @@ import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
 import {useEditorStore} from "./editor";
 
+import {defineStore} from "pinia";
+import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
+
 const textYamlHeader = {
     headers: {
         "Content-Type": "application/x-yaml"
     }
 }
 
-export default {
-    namespaced: true,
-    state: {
-        flows: undefined,
-        flow: undefined,
-        task: undefined,
-        search: undefined,
+interface Trigger {
+    id: string;
+    type: string;
+    backfill?: {
+        start?: string;
+    };
+}
+
+interface Task {
+    id:string,
+    type:string
+}
+
+interface Flow {
+    id: string;
+    namespace: string;
+    source: string;
+    revision?: number;
+    deleted?: boolean;
+    labels?: Record<string, string | boolean>;
+    triggers?: Trigger[];
+}
+
+interface FlowState {
+    flows?: Flow[];
+    flow?: Flow;
+    task?: Task;
+    search?: any[];
+    total: number;
+    overallTotal?: number;
+    flowGraph?: FlowGraph;
+    invalidGraph: boolean;
+    revisions?: any[];
+    flowValidation?: { constraints: string, outdated?: boolean, infos?: string[] };
+    taskError?: string;
+    metrics: any[];
+    aggregatedMetrics?: any;
+    tasksWithMetrics: any[];
+    executeFlow: boolean;
+    lastSaveFlow?: string;
+    isCreating: boolean;
+    flowYaml?: string;
+    flowYamlOrigin?: string;
+    flowYamlBeforeAdd?: string;
+    confirmOutdatedSaveDialog: boolean;
+    haveChange: boolean;
+    expandedSubflows: string[];
+    metadata?: Record<string, any>;
+}
+
+export const useFlowStore = defineStore("flow", {
+    state: (): FlowState => ({
+        flows: undefined ,
+        flow: undefined ,
+        task: undefined ,
+        search: undefined ,
         total: 0,
-        overallTotal: undefined,
-        flowGraph: undefined,
+        overallTotal: undefined ,
+        flowGraph: undefined ,
         invalidGraph: false,
         revisions: undefined,
         flowValidation: undefined,
@@ -42,53 +94,53 @@ export default {
         haveChange: false,
         expandedSubflows: [],
         metadata: undefined,
-    },
+    }),
 
     actions: {
-        onSaveMetadata({commit, state}){
-            commit("setFlowYaml", YAML_UTILS.updateMetadata(state.flowYaml, state.metadata));
-            commit("setMetadata", null);
-            commit("setHaveChange", true)
+        onSaveMetadata(){
+            this.flowYaml = YAML_UTILS.updateMetadata(this.flowYaml ?? "", this.metadata ?? {});
+            this.metadata = undefined;
+            this.haveChange = true;
         },
-        async saveAll({dispatch, state, commit, getters}){
+        async saveAll(){
             const editorStore = useEditorStore()
             const hasAnyDirtyTabs = editorStore.tabs.some(t => t.dirty === true);
-            const hasChanges = state.haveChange || hasAnyDirtyTabs;
+            const hasChanges = this.haveChange || hasAnyDirtyTabs;
 
-            if (getters.flowErrors?.length || !hasChanges && !state.isCreating) {
+            if (this.flowErrors?.length || !hasChanges && !this.isCreating) {
                 return;
             }
 
-            await editorStore.saveAllTabs({namespace: state.flow.namespace}, {root: true});
-            commit("setFlowYamlOrigin", state.flowYaml);
-            return dispatch("saveWithoutRevisionGuard");
+            if(!this.flow) return;
+            await editorStore.saveAllTabs({namespace: this.flow.namespace});
+            this.flowYamlOrigin = this.flowYaml;
+            return this.saveWithoutRevisionGuard();
         },
-        async save({getters, dispatch, commit, state}, {content, namespace}){
+        async save({content, namespace}: {content?: string, namespace?: string}) {
             const editorStore = useEditorStore()
             const hasAnyDirtyTabs = editorStore.tabs.some(t => t.dirty === true);
-            const hasChanges = state.haveChange || hasAnyDirtyTabs;
+            const hasChanges = this.haveChange || hasAnyDirtyTabs;
 
-            if (getters.flowErrors?.length || !hasChanges && !state.isCreating) {
+            if (this.flowErrors?.length || !hasChanges && !this.isCreating) {
                 return;
             }
 
-            const source = state.flowYaml
+            const source = this.flowYaml
             const currentTab = editorStore.current;
 
-            if (getters.isFlow) {
-                return dispatch("onEdit", {source, currentIsFlow:true}).then((validation) => {
-                    if (validation?.outdated && !state.isCreating) {
+            if (this.isFlow && source) {
+                return this.onEdit({source, currentIsFlow:true}).then((validation) => {
+                    if (validation?.outdated && !this.isCreating) {
                         return "confirmOutdatedSaveDialog";
                     }
-                    const res = dispatch("saveWithoutRevisionGuard");
-                    commit("setFlowYamlOrigin", source);
+                    const res = this.saveWithoutRevisionGuard();
+                    this.flowYamlOrigin = source;
 
                     if (currentTab && currentTab.name) {
                         editorStore.setTabDirty({
                             name: "Flow",
                             path: "Flow.yaml",
                             dirty: false,
-                            flow: true,
                         });
                     }
                     return res
@@ -96,8 +148,8 @@ export default {
             } else {
                 if(!currentTab?.dirty) return;
 
-                await dispatch("namespace/createFile", {
-                    namespace: namespace ?? state.flow.namespace,
+                await this.vuexStore.dispatch("namespace/createFile", {
+                    namespace: namespace ?? this.flow?.namespace,
                     path: currentTab.path ?? currentTab.name,
                     content,
                 }, {root: true});
@@ -111,20 +163,27 @@ export default {
                 coreStore.unsavedChange = false;
             }
         },
-        onEdit({getters, dispatch, commit, state}, {source, currentIsFlow, editorViewType, topologyVisible}) {
-            const flowParsed = getters.flowParsed;
+        async onEdit({source, currentIsFlow, editorViewType, topologyVisible}: {
+            source: string,
+            currentIsFlow: boolean,
+            editorViewType?: string,
+            topologyVisible?: boolean
+        }) {
+            const flowParsed = this.flowParsed;
             const currentTab = useEditorStore().current;
 
             if (currentIsFlow) {
                 if (!source.trim()?.length) {
-                    commit("setFlowValidation", {constraints: this.$i18n.t("flow must not be empty")})
+                    this.flowValidation = {
+                        constraints: this.$i18n.t("flow must not be empty")
+                    };
                     return
                 }
-                if (!state.isCreating){
+                if (!this.isCreating && this.flow){
                     if(!source.trim()?.length ||
                         (flowParsed &&
-                        (state.flow.id !== flowParsed.id ||
-                            state.flow.namespace !== flowParsed.namespace)))
+                        (this.flow.id !== flowParsed.id ||
+                            this.flow.namespace !== flowParsed.namespace)))
                         {
                         const coreStore = useCoreStore();
                         coreStore.message = {
@@ -132,22 +191,22 @@ export default {
                             title: this.$i18n.t("readonly property"),
                             message: this.$i18n.t("namespace and id readonly"),
                         };
-                        commit("setFlowYaml", YAML_UTILS.replaceIdAndNamespace(
+                        this.flowYaml = YAML_UTILS.replaceIdAndNamespace(
                             source,
-                            state.flow.id,
-                            state.flow.namespace
-                        ));
+                            this.flow.id,
+                            this.flow.namespace
+                        );
                     }
                 }
             }
 
-            commit("setHaveChange", true);
+            this.haveChange = true;
             if(editorViewType === "YAML") {
                 const coreStore = useCoreStore();
                 coreStore.unsavedChange = true;
             }
 
-            if(!state.isCreating){
+            if(!this.isCreating){
                 useEditorStore().setTabDirty({
                     ...currentTab,
                     name: currentTab?.name ?? "Flow",
@@ -158,26 +217,26 @@ export default {
 
             if(!currentIsFlow) return;
 
-            return dispatch("validateFlow", {
-                flow: state.isCreating ? state.flowYaml : getters.yamlWithNextRevision
+            return this.validateFlow({
+                flow: (this.isCreating ? this.flowYaml : this.yamlWithNextRevision) ?? ""
             })
                 .then((value) => {
                     if (
                         topologyVisible &&
-                        getters.flowHaveTasks &&
+                        this.flowHaveTasks &&
                         // avoid sending empty errors
                         // they make the backend fail
                         flowParsed && (!flowParsed.errors || flowParsed.errors.every(e => typeof e.id === "string"))
                     ) {
-                        if(!value.constraints) dispatch("fetchGraph");
+                        if(!value.constraints) this.fetchGraph();
                     }
 
                     return value;
                 });
         },
-        async saveWithoutRevisionGuard ({commit, state, dispatch, getters}) {
-            const flowYaml = state.flowYaml;
-            const flowParsed = getters.flowParsed;
+        async saveWithoutRevisionGuard () {
+            const flowYaml = this.flowYaml;
+            const flowParsed = this.flowParsed;
 
             if (flowParsed === undefined) {
                 const coreStore = useCoreStore();
@@ -191,8 +250,8 @@ export default {
             }
 
             let overrideFlow = false;
-            if (getters.flowErrors) {
-                if (state.flowValidation.outdated && state.isCreating) {
+            if (this.flowErrors) {
+                if (this.flowValidation?.outdated && this.isCreating) {
                     overrideFlow = await ElMessageBox({
                         title: this.$i18n.t("override.title"),
                         message: () => {
@@ -216,18 +275,18 @@ export default {
                 }
             }
 
-            const {isCreating} = state;
-            if (state.isCreating && !overrideFlow) {
-                await dispatch("createFlow", {flow: flowYaml})
+            const {isCreating} = this;
+            if (isCreating && !overrideFlow) {
+                await this.createFlow({flow: flowYaml ?? ""})
                     .then((response) => {
                         this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
                         const coreStore = useCoreStore();
                         coreStore.unsavedChange = false;
-                        commit("setIsCreating", false);
-                        commit("setHaveChange", false);
+                        this.isCreating = false;
+                        this.haveChange = false;
                     });
             } else {
-                await dispatch("saveFlow", {flow: flowYaml})
+                await this.saveFlow({flow: flowYaml})
                     .then((response) => {
                         this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
                         const coreStore = useCoreStore();
@@ -239,18 +298,18 @@ export default {
                 return "redirect_to_update";
             }
 
-            commit("setHaveChange", false);
-            await dispatch("validateFlow", {
-                flow: isCreating ? flowYaml : getters.yamlWithNextRevision
+            this.haveChange = false;
+            await this.validateFlow({
+                flow: (isCreating ? flowYaml : this.yamlWithNextRevision) ?? ""
             });
         },
-        fetchGraph({state, dispatch}) {
-            return dispatch("loadGraphFromSource", {
-                flow: state.flowYaml,
+        fetchGraph() {
+            return this.loadGraphFromSource({
+                flow: this.flowYaml ?? "",
                 config: {
                     params: {
                         // due to usage of axios instance instead of $http which doesn't convert arrays
-                        subflows: state.expandedSubflows.join(","),
+                        subflows: this.expandedSubflows.join(","),
                     },
                     validateStatus: (status) => {
                         return status === 200;
@@ -258,71 +317,71 @@ export default {
                 },
             });
         },
-        async initYamlSource({getters, commit, dispatch, state}, {viewType}) {
-            if(!state.flow) return;
-            const {source} = state.flow;
-            commit("setFlowYaml", source);
-            commit("setFlowYamlOrigin", source);
-            if (getters.flowHaveTasks) {
+        async initYamlSource({viewType}: {viewType: string}) {
+            if(!this.flow) return;
+            const {source} = this.flow;
+            this.flowYaml = source;
+            this.flowYamlOrigin = source;
+            if (this.flowHaveTasks) {
                 if (
                     [
                         editorViewTypes.TOPOLOGY,
                         editorViewTypes.SOURCE_TOPOLOGY,
                     ].includes(viewType)
                 ) {
-                    await dispatch("fetchGraph");
+                    await this.fetchGraph();
                 } else {
-                    dispatch("fetchGraph");
+                    this.fetchGraph();
                 }
             }
 
             // validate flow on first load
-            return dispatch("validateFlow", {flow: state.isCreating ? source : getters.yamlWithNextRevision})
+            return this.validateFlow({flow: this.isCreating ? source : this.yamlWithNextRevision})
         },
-        findFlows({commit}, options) {
+        findFlows(options: { [key: string]: any }) {
             const sortString = options.sort ? `?sort=${options.sort}` : ""
             delete options.sort
-            return this.$http.get(`${apiUrl(this)}/flows/search${sortString}`, {
+            return this.$http.get(`${apiUrl(this.vuexStore)}/flows/search${sortString}`, {
                 params: options
             }).then(response => {
-                commit("setFlows", response.data.results)
-                commit("setTotal", response.data.total)
-                commit("setOverallTotal", response.data.results.filter(f => f.namespace !== "tutorial").length)
+                this.flows = response.data.results
+                this.total = response.data.total
+                this.overallTotal = response.data.results.filter(f => f.namespace !== "tutorial").length
 
                 return response.data;
             })
         },
-        searchFlows({commit}, options) {
+        searchFlows(options: { [key: string]: any }) {
             const sortString = options.sort ? `?sort=${options.sort}` : ""
             delete options.sort
-            return this.$http.get(`${apiUrl(this)}/flows/source${sortString}`, {
+            return this.$http.get(`${apiUrl(this.vuexStore)}/flows/source${sortString}`, {
                 params: options
             }).then(response => {
-                commit("setSearch", response.data.results)
-                commit("setTotal", response.data.total)
+                this.search = response.data.results
+                this.total = response.data.total
 
                 return response.data;
             })
         },
-        flowsByNamespace(_, namespace) {
-            return this.$http.get(`${apiUrl(this)}/flows/${namespace}`).then(response => {
+        flowsByNamespace(namespace: string) {
+            return this.$http.get(`${apiUrl(this.vuexStore)}/flows/${namespace}`).then(response => {
                 return response.data;
             })
         },
-        loadFlow({commit}, options) {
+        loadFlow(options: {namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any}) {
             const httpClient = options.httpClient ?? this.$http
-            return httpClient.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}`,
+            return httpClient.get(`${apiUrl(this.vuexStore)}/flows/${options.namespace}/${options.id}`,
                 {
                     params: {
                         revision: options.revision,
                         allowDeleted: options.allowDeleted,
                         source: options.source === undefined ? true : undefined
                     },
-                    validateStatus: (status) => {
+                    validateStatus: (status: number) => {
                         return options.deleted ? status === 200 || status === 404 : status === 200;
                     }
                 })
-                .then(response => {
+                .then((response: any) => {
                     if (response.data.exception) {
                         const coreStore = useCoreStore();
                         coreStore.message = {
@@ -331,27 +390,29 @@ export default {
                             variant: "error"
                         };
                         // add this error to the list of errors
-                        commit("setFlowValidation", {
-                            constraints: response.data.exception
-                        });
+                        this.flowValidation = {
+                            constraints: response.data.exception,
+                            outdated: false,
+                            infos: []
+                        };
                         delete response.data.exception;
                     }
                     if(options.store === false) {
                         return response.data;
                     }
 
-                    commit("setFlow", response.data);
-                    commit("setFlowYaml", response.data.source);
-                    commit("setFlowYamlOrigin", response.data.source);
-                    commit("setFlowYamlBeforeAdd", response.data.source);
-                    commit("setOverallTotal", 1)
+                    this.flow = response.data;
+                    this.flowYaml = response.data.source;
+                    this.flowYamlOrigin = response.data.source;
+                    this.flowYamlBeforeAdd = response.data.source;
+                    this.overallTotal = 1;
 
                     return response.data;
                 })
         },
-        loadTask({commit}, options) {
+        loadTask(options: {namespace: string, id: string, taskId: string, revision?: string}) {
             return this.$http.get(
-                `${apiUrl(this)}/flows/${options.namespace}/${options.id}/tasks/${options.taskId}${options.revision ? "?revision=" + options.revision : ""}`,
+                `${apiUrl(this.vuexStore)}/flows/${options.namespace}/${options.id}/tasks/${options.taskId}${options.revision ? "?revision=" + options.revision : ""}`,
                 {
                     validateStatus: (status) => {
                         return status === 200 || status === 404;
@@ -360,7 +421,7 @@ export default {
             )
                 .then(response => {
                     if (response.status === 200) {
-                        commit("setTask", response.data)
+                        this.task = response.data;
 
                         return response.data;
                     } else {
@@ -368,49 +429,49 @@ export default {
                     }
                 })
         },
-        saveFlow({commit}, options) {
+        saveFlow(options: {flow: string}) {
             const flowData = YAML_UTILS.parse(options.flow)
-            return this.$http.put(`${apiUrl(this)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
+            return this.$http.put(`${apiUrl(this.vuexStore)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
                 .then(response => {
                     if (response.status >= 300) {
                         return Promise.reject(new Error("Server error on flow save"))
                     } else {
-                        commit("setFlow", response.data);
+                        this.flow = response.data;
                         useEditorStore().setTabDirty({
                             name: "Flow",
                             dirty: false,
-                        }, {root: true});
+                        });
 
                         return response.data;
                     }
                 })
         },
-        updateFlowTask({commit, dispatch}, options) {
+        updateFlowTask(options: {flow: Flow, task: Task}) {
             return this.$http
-                .patch(`${apiUrl(this)}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
-                    commit("setFlow", response.data)
+                .patch(`${apiUrl(this.vuexStore)}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
+                    this.flow = response.data;
 
                     return response.data;
                 })
                 .then(flow => {
-                    dispatch("loadGraph", {flow});
+                    this.loadGraph( {flow});
 
                     return flow;
                 })
         },
-        createFlow({commit}, options) {
-            return this.$http.post(`${apiUrl(this)}/flows`, options.flow, textYamlHeader).then(response => {
-                commit("setFlow", response.data);
+        createFlow(options: {flow: string}) {
+            return this.$http.post(`${apiUrl(this.vuexStore)}/flows`, options.flow, textYamlHeader).then(response => {
+                this.flow = response.data;
 
                 return response.data;
             })
         },
-        deleteFlowAndDependencies({getters, dispatch}){
-            const metadata = getters["flowYamlMetadata"];
+        deleteFlowAndDependencies(){
+            const metadata = this.flowYamlMetadata;
 
             return new Promise((resolve, reject) => this.$http
                 .get(
-                    `${apiUrl(this)}/flows/${metadata.namespace}/${
+                    `${apiUrl(this.vuexStore)}/flows/${metadata.namespace}/${
                         metadata.id
                     }/dependencies`,
                     {params: {destinationOnly: true}}
@@ -457,48 +518,48 @@ export default {
                 .then((message) => {
                     return this.$toast.bind({$t: this.$i18n.t})()
                         .confirm(message, () => {
-                            resolve(dispatch("deleteFlow", metadata));
+                            resolve(this.deleteFlow(metadata));
                         })
                 }).catch(reject)
             )
         },
-        deleteFlow({commit}, flow) {
-            return this.$http.delete(`${apiUrl(this)}/flows/${flow.namespace}/${flow.id}`).then(() => {
-                commit("setFlow", null)
+        deleteFlow(flow: {namespace: string, id: string}) {
+            return this.$http.delete(`${apiUrl(this.vuexStore)}/flows/${flow.namespace}/${flow.id}`).then(() => {
+                this.flow = undefined;
             })
         },
-        loadGraph({commit}, options) {
+        loadGraph(options: {flow: Flow, params?: any}) {
             const flow = options.flow;
             const params = options.params ? options.params : {};
             if (flow.revision) {
                 params["revision"] = flow.revision;
             }
-            return this.$http.get(`${apiUrl(this)}/flows/${flow.namespace}/${flow.id}/graph`, {params}).then(response => {
-                commit("setInvalidGraph", false)
-                commit("setFlowGraph", response.data)
+            return this.$http.get(`${apiUrl(this.vuexStore)}/flows/${flow.namespace}/${flow.id}/graph`, {params}).then(response => {
+                this.invalidGraph = false;
+                this.flowGraph = response.data;
                 return response.data;
             }).catch(() => {
-                commit("setInvalidGraph", true)
+                this.invalidGraph = true;
             });
         },
-        loadGraphFromSource({commit, state}, options) {
+        loadGraphFromSource(options: {flow: string, config?: any}) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
             const flowParsed = YAML_UTILS.parse(options.flow);
             let flowSource = options.flow
             if (!flowParsed.id || !flowParsed.namespace) {
                 flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
-            return this.$http.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config, withCredentials: true})
+            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/graph`, flowSource, {...config, withCredentials: true})
                 .then(response => {
-                    commit("setFlowGraph", response.data)
+                    this.flowGraph = response.data
 
-                    let flow = YAML_UTILS.parse(options.flow);
-                    flow.id = state.flow?.id ?? flow.id;
-                    flow.namespace = state.flow?.namespace ?? flow.namespace;
+                    const flow = YAML_UTILS.parse(options.flow);
+                    flow.id = this.flow?.id ?? flow.id;
+                    flow.namespace = this.flow?.namespace ?? flow.namespace;
                     flow.source = options.flow;
                     // prevent losing revision when loading graph from source
-                    flow.revision = state.flow?.revision;
-                    commit("setFlow", flow);
+                    flow.revision = this.flow?.revision;
+                    this.flow = flow;
 
                     return response;
                 }).catch(error => {
@@ -518,133 +579,114 @@ export default {
                     return Promise.reject(error);
                 })
         },
-        getGraphFromSourceResponse(_, options) {
+        getGraphFromSourceResponse(options: {flow: string, config?: any}) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
             const flowParsed = YAML_UTILS.parse(options.flow);
             let flowSource = options.flow
             if (!flowParsed.id || !flowParsed.namespace) {
                 flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
-            return this.$http.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config})
+            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/graph`, flowSource, {...config})
                 .then(response => response.data)
         },
-        loadRevisions({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
-                commit("setRevisions", response.data)
+        loadRevisions(options: {namespace: string, id: string}) {
+            return this.$http.get(`${apiUrl(this.vuexStore)}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
+                this.revisions = response.data
                 return response.data;
             })
         },
-        exportFlowByIds(_, options) {
-            return this.$http.post(`${apiUrl(this)}/flows/export/by-ids`, options.ids, {responseType: "blob"})
+        exportFlowByIds(options: {ids: string[]}) {
+            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/export/by-ids`, options.ids, {responseType: "blob"})
                 .then(response => {
                     const blob = new Blob([response.data], {type: "application/octet-stream"});
                     const url = window.URL.createObjectURL(blob)
                     Utils.downloadUrl(url, "flows.zip");
                 });
         },
-        exportFlowByQuery(_, options) {
-            return this.$http.get(`${apiUrl(this)}/flows/export/by-query`, {params: options, headers: {"Accept": "application/octet-stream"}})
+        exportFlowByQuery(options: {namespace: string, id: string}) {
+            return this.$http.get(`${apiUrl(this.vuexStore)}/flows/export/by-query`, {params: options, headers: {"Accept": "application/octet-stream"}})
                 .then(response => {
                     Utils.downloadUrl(response.request.responseURL, "flows.zip");
                 });
         },
-        importFlows(_, options) {
-            return this.$http.post(`${apiUrl(this)}/flows/import`, Utils.toFormData(options), {
+        importFlows(options: {file: File, namespace: string, override?: boolean}) {
+            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/import`, Utils.toFormData(options), {
                 headers: {"Content-Type": "multipart/form-data"}
             }).then(response => {
                 return response;
             });
         },
-        disableFlowByIds(_, options) {
-            return this.$http.post(`${apiUrl(this)}/flows/disable/by-ids`, options.ids)
+        disableFlowByIds(options: {ids: string[]}) {
+            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/disable/by-ids`, options.ids)
         },
-        disableFlowByQuery(_, options) {
-            return this.$http.post(`${apiUrl(this)}/flows/disable/by-query`, options, {params: options})
+        disableFlowByQuery(options: {namespace: string, id: string}) {
+            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/disable/by-query`, options, {params: options})
         },
-        enableFlowByIds(_, options) {
-            return this.$http.post(`${apiUrl(this)}/flows/enable/by-ids`, options.ids)
+        enableFlowByIds(options: {ids: string[]}) {
+            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/enable/by-ids`, options.ids)
         },
-        enableFlowByQuery(_, options) {
-            return this.$http.post(`${apiUrl(this)}/flows/enable/by-query`, options, {params: options})
+        enableFlowByQuery(options: {namespace: string, id: string}) {
+            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/enable/by-query`, options, {params: options})
         },
-        deleteFlowByIds(_, options) {
-            return this.$http.delete(`${apiUrl(this)}/flows/delete/by-ids`, {data: options.ids})
+        deleteFlowByIds(options: {ids: string[]}) {
+            return this.$http.delete(`${apiUrl(this.vuexStore)}/flows/delete/by-ids`, {data: options.ids})
         },
-        deleteFlowByQuery(_, options) {
-            return this.$http.delete(`${apiUrl(this)}/flows/delete/by-query`, {params: options})
+        deleteFlowByQuery(options: {namespace: string, id: string}) {
+            return this.$http.delete(`${apiUrl(this.vuexStore)}/flows/delete/by-query`, {params: options})
         },
-        validateFlow({commit}, options) {
-            return this.$http.post(`${apiUrl(this)}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
+        validateFlow(options: {flow: string}) {
+            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
                 .then(response => {
-                    commit("setFlowValidation", response.data[0])
+                    this.flowValidation = response.data[0]
                     return response.data[0]
                 })
         },
-        validateTask({commit}, options) {
-            return this.$http.post(`${apiUrl(this)}/flows/validate/task`, options.task, {...textYamlHeader, withCredentials: true, params: {section: options.section}})
+        validateTask(options: {task: string, section: string}) {
+            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/validate/task`, options.task, {...textYamlHeader, withCredentials: true, params: {section: options.section}})
                 .then(response => {
-                    commit("setTaskError", response.data.constraints)
+
+                    this.taskError = response.data.constraints;
                     return response.data
                 })
         },
-        loadFlowMetrics({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/metrics/names/${options.namespace}/${options.id}`)
+        loadFlowMetrics(options: {namespace: string, id: string}) {
+            return this.$http.get(`${apiUrl(this.vuexStore)}/metrics/names/${options.namespace}/${options.id}`)
                 .then(response => {
-                    commit("setMetrics", response.data)
+                    this.metrics = response.data
                     return response.data
                 })
         },
-        loadTaskMetrics({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
+        loadTaskMetrics(options: {namespace: string, id: string, taskId: string}) {
+            return this.$http.get(`${apiUrl(this.vuexStore)}/metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
                 .then(response => {
-                    commit("setMetrics", response.data)
+                    this.metrics = response.data
                     return response.data
                 })
         },
-        loadTasksWithMetrics({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/metrics/tasks/${options.namespace}/${options.id}`)
+        loadTasksWithMetrics(options: {namespace: string, id: string}) {
+            return this.$http.get(`${apiUrl(this.vuexStore)}/metrics/tasks/${options.namespace}/${options.id}`)
                 .then(response => {
-                    commit("setTasksWithMetrics", response.data)
+                    this.tasksWithMetrics = response.data
                     return response.data
                 })
         },
-        loadFlowAggregatedMetrics({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
+        loadFlowAggregatedMetrics(options: {namespace: string, id: string, metric: string}) {
+            return this.$http.get(`${apiUrl(this.vuexStore)}/metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
                 .then(response => {
-                    commit("setAggregatedMetric", response.data)
+                    this.aggregatedMetrics = response.data
                     return response.data
                 })
         },
-        loadTaskAggregatedMetrics({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
+        loadTaskAggregatedMetrics(options: {namespace: string, id: string, taskId: string, metric: string}) {
+            return this.$http.get(`${apiUrl(this.vuexStore)}/metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
                 .then(response => {
-                    commit("setAggregatedMetric", response.data)
+                    this.aggregatedMetrics = response.data
                     return response.data
                 })
         },
-    },
-    mutations: {
-        setInvalidGraph(state, value) {
-            state.invalidGraph = value;
-        },
-        setFlows(state, flows) {
-            state.flows = flows
-        },
-        setSearch(state, search) {
-            state.search = search
-        },
-        setRevisions(state, revisions) {
-            state.revisions = revisions
-        },
-        setFlow(state, flow) {
-            state.flow = flow;
-            state.lastSaveFlow = flow;
-        },
-        setTask(state, task) {
-            state.task = task;
-        },
-        setTrigger(state, {index, trigger}) {
-            let flow = state.flow;
+
+        setTrigger({index, trigger}: {index: number, trigger: Trigger}) {
+            const flow = this.flow ?? {} as Flow;
 
             if (flow.triggers === undefined) {
                 flow.triggers = []
@@ -652,19 +694,19 @@ export default {
 
             flow.triggers[index] = trigger;
 
-            state.flow = {...flow}
+            this.flow = {...flow}
         },
-        removeTrigger(state, index) {
-            let flow = state.flow;
-            flow.triggers.splice(index, 1);
+        removeTrigger(index: number) {
+            const flow = this.flow ?? {} as Flow;
+            flow.triggers?.splice(index, 1);
 
-            state.flow = {...flow}
+            this.flow = {...flow}
         },
-        executeFlow(state, value) {
-            state.executeFlow = value;
+        setExecuteFlow(value: boolean) {
+            this.executeFlow = value;
         },
-        addTrigger(state, trigger) {
-            let flow = state.flow;
+        addTrigger(trigger: Trigger) {
+            const flow = this.flow ?? {} as Flow;
 
             if (trigger.backfill === undefined) {
                 trigger.backfill = {
@@ -678,72 +720,25 @@ export default {
 
             flow.triggers.push(trigger)
 
-            state.flow = {...flow}
-        },
-        setTotal(state, total) {
-            state.total = total
-        },
-        setOverallTotal(state, total) {
-            state.overallTotal = total
-        },
-        setFlowGraph(state, flowGraph) {
-            state.flowGraph = flowGraph
-        },
-        setFlowValidation(state, flowValidation) {
-            state.flowValidation = flowValidation
-        },
-        setTaskError(state, taskError) {
-            state.taskError = taskError
-        },
-        setMetrics(state, metrics) {
-            state.metrics = metrics
-        },
-        setAggregatedMetric(state, aggregatedMetric) {
-            state.aggregatedMetric = aggregatedMetric
-        },
-        setTasksWithMetrics(state, tasksWithMetrics) {
-            state.tasksWithMetrics = tasksWithMetrics
-        },
-        setFlowYaml(state, flowYaml) {
-            state.flowYaml = flowYaml
-        },
-        setIsCreating(state, value) {
-            state.isCreating = value
-        },
-        setFlowYamlOrigin(state, value) {
-            state.flowYamlOrigin = value
-        },
-        setFlowYamlBeforeAdd(state, value) {
-            state.flowYamlBeforeAdd = value
-        },
-        setHaveChange(state, value) {
-            state.haveChange = value
-        },
-        setExpandedSubflows(state, value) {
-            state.expandedSubflows = value
-        },
-        setMetadata(state, value) {
-            state.metadata = value
+            this.flow = {...flow}
         },
     },
     getters: {
-        isFlow(state, _getters) {
+        isFlow(state) {
             const currentTab = useEditorStore().current;
             return currentTab?.flow !== undefined || state.isCreating;
         },
-        isAllowedEdit(state, _getters, _rootState, rootGetters) {
-            if (!state.flow || !rootGetters["auth/user"]) {
+        isAllowedEdit(state): boolean {
+            const store = this.vuexStore
+            if (!state.flow || !store.getters["auth/user"]) {
                 return false;
             }
 
-            return rootGetters["auth/user"].isAllowed(
+            return store.getters["auth/user"].isAllowed(
                 permission.FLOW,
                 action.UPDATE,
                 state.flow.namespace,
             );
-        },
-        isReadOnly(state, getters) {
-            return state.flow?.deleted || !getters.isAllowedEdit || getters.readOnlySystemLabel;
         },
         readOnlySystemLabel(state) {
             if (!state.flow) {
@@ -752,19 +747,22 @@ export default {
 
             return (state.flow.labels?.["system.readOnly"] === "true") || (state.flow.labels?.["system.readOnly"] === true);
         },
+        isReadOnly(state): boolean {
+            return state.flow?.deleted || !this.isAllowedEdit || this.readOnlySystemLabel;
+        },
         baseOutdatedTranslationKey(state) {
                 const createOrUpdateKey = state.isCreating ? "create" : "update";
                 return "outdated revision save confirmation." + createOrUpdateKey;
         },
-        flowErrors(state, getters){
-            if (getters.isFlow) {
+        flowErrors(): string[] | undefined {
+            if (this.isFlow) {
                 const flowExistsError =
-                    state.flowValidation?.outdated && state.isCreating
-                        ? [`>>>>${getters.baseOutdatedTranslationKey}`] // because translating is impossible here
+                    this.flowValidation?.outdated && this.isCreating
+                        ? [`>>>>${this.baseOutdatedTranslationKey}`] // because translating is impossible here
                         : [];
 
                 const constraintsError =
-                    state.flowValidation?.constraints?.split(/, ?/) ?? [];
+                    this.flowValidation?.constraints?.split(/, ?/) ?? [];
 
                 const errors = [...flowExistsError, ...constraintsError];
 
@@ -773,8 +771,8 @@ export default {
 
             return undefined;
         },
-        flowInfos(state, getters){
-            if (getters.isFlow) {
+        flowInfos(state){
+            if (this.isFlow) {
                 const infos = state.flowValidation?.infos ?? [];
 
                 return infos.length === 0 ? undefined : infos;
@@ -782,17 +780,17 @@ export default {
 
             return undefined;
         },
-        flowHaveTasks(state, getters){
-            if (getters.isFlow) {
-                const flow = state.isCreating ? state.flow.source : state.flowYaml;
+        flowHaveTasks(state): boolean{
+            if (this.isFlow) {
+                const flow = state.isCreating ? state.flow?.source : state.flowYaml;
                 return flow ? YAML_UTILS.flowHaveTasks(flow) : false;
             } else return false;
         },
         nextRevision(state){
             return (state.flow?.revision ?? 0) + 1;
         },
-        yamlWithNextRevision(state, getters){
-            return `revision: ${getters.nextRevision}\n${state.flowYaml}`;
+        yamlWithNextRevision(state): string{
+            return `revision: ${this.nextRevision}\n${state.flowYaml}`;
         },
         flowParsed(state){
             try{
@@ -802,7 +800,7 @@ export default {
             }
         },
         flowYamlMetadata(state){
-            return YAML_UTILS.getMetadata(state.flowYaml);
+            return YAML_UTILS.getMetadata(state.flowYaml ?? "");
         }
     }
-}
+})

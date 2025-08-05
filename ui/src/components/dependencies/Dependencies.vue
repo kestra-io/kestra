@@ -29,7 +29,7 @@
     import {ref, computed} from "vue";
 
     import Table from "./components/Table.vue";
-    import {options, useDependencies} from "./composables/useDependencies";
+    import {useDependencies} from "./composables/useDependencies";
     import {FLOW, EXECUTION, NODE, type Node} from "../../../scripts/product/dependencies";
 
     const PANEL = {size: "70%", min: "30%", max: "80%"};
@@ -48,10 +48,10 @@
     const SUBTYPE = route.name === "flows/update" ? FLOW : EXECUTION;
 
     const container = ref(null);
-    const {loading, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE);
+    const {OPTIONS, loading, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE);
 
     const nodes = computed((): { data: Node }[] => {
-        const elements = options(SUBTYPE).elements;
+        const elements = OPTIONS.elements;
 
         if (!elements || !Array.isArray(elements)) return [];
 

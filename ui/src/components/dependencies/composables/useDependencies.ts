@@ -200,7 +200,7 @@ function hoverHandler(cy: cytoscape.Core): void {
 export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION = FLOW) {
     let cy: cytoscape.Core;
 
-    const OPTIONS = options(subtype);
+    const OPTIONS = ref(options(subtype));
 
     const loading = ref(true);
 
@@ -224,7 +224,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
     onMounted(() => {
         if (!container.value) return;
 
-        cy = cytoscape({container: container.value, layout, ...OPTIONS, style});
+        cy = cytoscape({container: container.value, layout, ...OPTIONS.value, style});
 
         // Dynamically size nodes based on connectivity
         setNodeSizes(cy);

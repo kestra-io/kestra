@@ -18,6 +18,7 @@ import cytoscape from "cytoscape";
 import {State, cssVariable} from "@kestra-io/ui-libs";
 
 import {NODE, EDGE, FLOW, EXECUTION, type Node, type Element} from "../utils/types";
+import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies";
 
 import {style} from "../utils/style";
 const SELECTED = "selected", FADED = "faded",  HOVERED = "hovered", EXECUTIONS = "executions";
@@ -196,10 +197,11 @@ function hoverHandler(cy: cytoscape.Core): void {
  * @param subtype - Dependency subtype, either `"FLOW"` or `"EXECUTION"`. Defaults to `"FLOW"`.
  * @param initialNodeID - Optional ID of the node to preselect after layout completes.
  * @param params - Vue Router params, expected to include `id` and `namespace`.
+ * @param isTesting - When true, bypasses API data fetching and uses mock/test data.
  * @returns An object with element getters, loading state, selected node ID,
  *          selection helpers, and control handlers.
  */
-export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION = FLOW, initialNodeID: string, params: RouteParams) {
+export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION = FLOW, initialNodeID: string, params: RouteParams, isTesting = false) {
     const store = useStore();
 
     const coreStore = useCoreStore();
@@ -232,8 +234,8 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
     onMounted(async () => {
         if (!container.value) return;
 
-        // elements = {data: getDependencies({subtype: FLOW})} // Test code only — real data loading is already implemented. Uncomment for local testing or development with mock data.
-        elements = subtype === FLOW ? await store.dispatch("flow/loadDependencies", {id: params.id, namespace: params.namespace, subtype}) : await store.dispatch("flow/loadDependencies", {id: params.flowId, namespace: params.namespace, subtype});
+        if(isTesting) elements = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
+        else elements = await store.dispatch("flow/loadDependencies", {id: subtype === FLOW ? params.id: params.flowId, namespace: params.namespace, subtype});
 
         if(subtype === EXECUTION) nextTick(() => openSSE());
 
@@ -268,7 +270,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         cy.on("layoutstop", () => {
             loading.value = false;
 
-            const node = cy.nodes().filter((n) => n.data("flow") === initialNodeID);
+            const node = isTesting ? cy.nodes()[0] : cy.nodes().filter((n) => n.data("flow") === initialNodeID);
 
             if (!node) return;
 

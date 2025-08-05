@@ -51,9 +51,9 @@
     const SUBTYPE = route.name === "flows/update" ? FLOW : EXECUTION;
 
     const container = ref(null);
-    const initialNodeID = SUBTYPE === FLOW ? route.params.id : route.params.flowId;
+    const initialNodeID: string = SUBTYPE === FLOW ? String(route.params.id) : String(route.params.flowId);
 
-    const {getElements, loading, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE, initialNodeID as string, route.params);
+    const {getElements, loading, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE, initialNodeID, route.params);
 </script>
 
 <style scoped lang="scss">

@@ -362,6 +362,18 @@
     "dependencies delete flow": "इस flow में निर्भरताएँ हैं। इसे हटाने से उनकी निर्भरताओं को निष्पादित करने से रोका जाएगा।<br /><br /> यहाँ प्रभावित flows की सूची है:",
     "dependencies loaded": "निर्भरताएँ लोड की गईं",
     "dependencies missing acls": "इस flow पर कोई अनुमतियाँ नहीं हैं",
+    "dependency": {
+      "controls": {
+        "clear_selection": "चयन साफ़ करें",
+        "fit_view": "स्क्रीन के अनुसार फिट करें",
+        "zoom_in": "ज़ूम इन करें",
+        "zoom_out": "ज़ूम आउट"
+      },
+      "search": {
+        "no_results": "{term} के लिए कोई परिणाम नहीं मिला",
+        "placeholder": "flow या namespace द्वारा खोजें..."
+      }
+    },
     "dependency task": "Task {taskId} किसी अन्य Task की निर्भरता है",
     "description": "विवरण",
     "details": "विवरण",

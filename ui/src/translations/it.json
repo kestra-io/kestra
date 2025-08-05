@@ -362,6 +362,18 @@
     "dependencies delete flow": "Questo flow ha dipendenze. Eliminarlo impedirà l'esecuzione delle loro dipendenze.<br /><br /> Ecco l'elenco dei flows interessati:",
     "dependencies loaded": "Dipendenze caricate",
     "dependencies missing acls": "Nessun permesso su questo flow",
+    "dependency": {
+      "controls": {
+        "clear_selection": "Cancella selezione",
+        "fit_view": "Adatta allo schermo",
+        "zoom_in": "Ingrandisci",
+        "zoom_out": "Riduci zoom"
+      },
+      "search": {
+        "no_results": "Nessun risultato trovato per {term}",
+        "placeholder": "Cerca per flow o namespace..."
+      }
+    },
     "dependency task": "Il task {taskId} è una dipendenza di un altro task",
     "description": "Descrizione",
     "details": "Dettagli",

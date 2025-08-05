@@ -23,7 +23,6 @@
     </el-select>
 </template>
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useMiscStore} from "../../../stores/misc";
     import _uniqBy from "lodash/uniqBy";
@@ -61,7 +60,6 @@
         },
         emits: ["update:modelValue"],
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useMiscStore),
         },
         data() {

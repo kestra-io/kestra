@@ -121,9 +121,23 @@ const pluginsStore = {
 
 const namespacesStore = {
     datatypeNamespaces: undefined,
-    loadNamespacesForDatatype: vi.fn(() => Promise.resolve(["my.namespace", "another.namespace"])),
-    inheritedSecrets: vi.fn(() => Promise.resolve({})),
-    kvsList: vi.fn(() => Promise.resolve([]))
+    loadNamespacesForDatatype: vi.fn(() => ["my.namespace", "another.namespace"]),
+    inheritedSecrets: vi.fn((params: {id: string}) => {
+        if (params.id === "my.namespace") {
+            return {"my.namespace": ["myFirstSecret", "mySecondSecret"], "my": ["myInheritedSecret"]};
+        } else if (params.id === "another.namespace") {
+            return {"another.namespace": ["anotherNsFirstSecret", "anotherNsSecondSecret"]};
+        }
+        return {};
+    }),
+    kvsList: vi.fn((params: {id: string}) => {
+        if (params.id === "my.namespace") {
+            return [{key: "myFirstKv"}, {key: "mySecondKv"}];
+        } else if (params.id === "another.namespace") {
+            return [{key: "anotherNsFirstKv"}, {key: "anotherNsSecondKv"}];
+        }
+        return [];
+    })
 } as any
 
 const provider = new FlowAutoCompletion(mockedStore, pluginsStore, namespacesStore);
@@ -211,7 +225,9 @@ describe("FlowAutoCompletionProvider", () => {
     })
 
     it("function autocompletions", async () => {
-        expect(await provider.functionAutoCompletion(parsed, "kv", {})).toEqual([]);
-        expect(await provider.functionAutoCompletion(parsed, "kv", {namespace: "'another.namespace'"})).toEqual([]);
+        expect(await provider.functionAutoCompletion(parsed, "secret", {})).toEqual(["'myFirstSecret'", "'mySecondSecret'", "'myInheritedSecret'"]);
+        expect(await provider.functionAutoCompletion(parsed, "secret", {namespace: "'another.namespace'"})).toEqual(["'anotherNsFirstSecret'", "'anotherNsSecondSecret'"]);
+        expect(await provider.functionAutoCompletion(parsed, "kv", {})).toEqual(["'myFirstKv'", "'mySecondKv'"]);
+        expect(await provider.functionAutoCompletion(parsed, "kv", {namespace: "'another.namespace'"})).toEqual(["'anotherNsFirstKv'", "'anotherNsSecondKv'"]);
     })
 })

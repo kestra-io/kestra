@@ -1,4 +1,4 @@
-import {h} from "vue";
+import {computed, h, ref} from "vue";
 import {ElMessageBox} from "element-plus";
 import permission from "../models/permission";
 import action from "../models/action";
@@ -11,6 +11,9 @@ import {useEditorStore} from "./editor";
 
 import {defineStore} from "pinia";
 import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
+import {Store, useStore} from "vuex";
+import {useI18n} from "vue-i18n";
+import {useToast} from "../utils/toast";
 
 const textYamlHeader = {
     headers: {
@@ -27,8 +30,8 @@ interface Trigger {
 }
 
 interface Task {
-    id:string,
-    type:string
+    id: string,
+    type: string
 }
 
 interface Flow {
@@ -39,768 +42,852 @@ interface Flow {
     deleted?: boolean;
     labels?: Record<string, string | boolean>;
     triggers?: Trigger[];
+    errors: { message: string; code?: string, id?: string }[];
 }
 
-interface FlowState {
-    flows?: Flow[];
-    flow?: Flow;
-    task?: Task;
-    search?: any[];
-    total: number;
-    overallTotal?: number;
-    flowGraph?: FlowGraph;
-    invalidGraph: boolean;
-    revisions?: any[];
-    flowValidation?: { constraints: string, outdated?: boolean, infos?: string[] };
-    taskError?: string;
-    metrics: any[];
-    aggregatedMetrics?: any;
-    tasksWithMetrics: any[];
-    executeFlow: boolean;
-    lastSaveFlow?: string;
-    isCreating: boolean;
-    flowYaml?: string;
-    flowYamlOrigin?: string;
-    flowYamlBeforeAdd?: string;
-    confirmOutdatedSaveDialog: boolean;
-    haveChange: boolean;
-    expandedSubflows: string[];
-    metadata?: Record<string, any>;
-}
+export const useFlowStore = defineStore("flow", () => {
+    const flows = ref<Flow[]>()
+    const flow = ref<Flow>()
+    const task = ref<Task>()
+    const search = ref<any[]>()
+    const total = ref<number>(0)
+    const overallTotal = ref<number>()
+    const flowGraph = ref<FlowGraph>()
+    const invalidGraph = ref<boolean>(false)
+    const revisions = ref<any[]>()
+    const flowValidation = ref<{ constraints: string, outdated?: boolean, infos?: string[] }>()
+    const taskError = ref<string>()
+    const metrics = ref<any[]>()
+    const aggregatedMetrics = ref<any>()
+    const tasksWithMetrics = ref<any[]>()
+    const executeFlow = ref<boolean>(false)
+    const lastSaveFlow = ref<string>()
+    const isCreating = ref<boolean>(false)
+    const flowYaml = ref<string>()
+    const flowYamlOrigin = ref<string>()
+    const flowYamlBeforeAdd = ref<string>()
+    const confirmOutdatedSaveDialog = ref<boolean>(false)
+    const haveChange = ref<boolean>(false)
+    const expandedSubflows = ref<string[]>([])
+    const metadata = ref<Record<string, any>>()
 
-export const useFlowStore = defineStore("flow", {
-    state: (): FlowState => ({
-        flows: undefined ,
-        flow: undefined ,
-        task: undefined ,
-        search: undefined ,
-        total: 0,
-        overallTotal: undefined ,
-        flowGraph: undefined ,
-        invalidGraph: false,
-        revisions: undefined,
-        flowValidation: undefined,
-        taskError: undefined,
-        metrics: [],
-        aggregatedMetrics: undefined,
-        tasksWithMetrics: [],
-        executeFlow: false,
-        lastSaveFlow: undefined,
-        isCreating: false,
-        flowYaml: undefined,
-        flowYamlOrigin: undefined,
-        flowYamlBeforeAdd: undefined,
-        confirmOutdatedSaveDialog: false,
-        haveChange: false,
-        expandedSubflows: [],
-        metadata: undefined,
-    }),
-
-    actions: {
-        onSaveMetadata(){
-            this.flowYaml = YAML_UTILS.updateMetadata(this.flowYaml ?? "", this.metadata ?? {});
-            this.metadata = undefined;
-            this.haveChange = true;
-        },
-        async saveAll(){
-            const editorStore = useEditorStore()
-            const hasAnyDirtyTabs = editorStore.tabs.some(t => t.dirty === true);
-            const hasChanges = this.haveChange || hasAnyDirtyTabs;
-
-            if (this.flowErrors?.length || !hasChanges && !this.isCreating) {
-                return;
-            }
-
-            if(!this.flow) return;
-            await editorStore.saveAllTabs({namespace: this.flow.namespace});
-            this.flowYamlOrigin = this.flowYaml;
-            return this.saveWithoutRevisionGuard();
-        },
-        async save({content, namespace}: {content?: string, namespace?: string}) {
-            const editorStore = useEditorStore()
-            const hasAnyDirtyTabs = editorStore.tabs.some(t => t.dirty === true);
-            const hasChanges = this.haveChange || hasAnyDirtyTabs;
-
-            if (this.flowErrors?.length || !hasChanges && !this.isCreating) {
-                return;
-            }
-
-            const source = this.flowYaml
-            const currentTab = editorStore.current;
-
-            if (this.isFlow && source) {
-                return this.onEdit({source, currentIsFlow:true}).then((validation) => {
-                    if (validation?.outdated && !this.isCreating) {
-                        return "confirmOutdatedSaveDialog";
-                    }
-                    const res = this.saveWithoutRevisionGuard();
-                    this.flowYamlOrigin = source;
-
-                    if (currentTab && currentTab.name) {
-                        editorStore.setTabDirty({
-                            name: "Flow",
-                            path: "Flow.yaml",
-                            dirty: false,
-                        });
-                    }
-                    return res
-                });
-            } else {
-                if(!currentTab?.dirty) return;
-
-                await this.vuexStore.dispatch("namespace/createFile", {
-                    namespace: namespace ?? this.flow?.namespace,
-                    path: currentTab.path ?? currentTab.name,
-                    content,
-                }, {root: true});
-                editorStore.setTabDirty({
-                    path: currentTab.path,
-                    name: currentTab.name,
-                    dirty: false
-                });
-
-                const coreStore = useCoreStore();
-                coreStore.unsavedChange = false;
-            }
-        },
-        async onEdit({source, currentIsFlow, editorViewType, topologyVisible}: {
-            source: string,
-            currentIsFlow: boolean,
-            editorViewType?: string,
-            topologyVisible?: boolean
-        }) {
-            const flowParsed = this.flowParsed;
-            const currentTab = useEditorStore().current;
-
-            if (currentIsFlow) {
-                if (!source.trim()?.length) {
-                    this.flowValidation = {
-                        constraints: this.$i18n.t("flow must not be empty")
-                    };
-                    return
-                }
-                if (!this.isCreating && this.flow){
-                    if(!source.trim()?.length ||
-                        (flowParsed &&
-                        (this.flow.id !== flowParsed.id ||
-                            this.flow.namespace !== flowParsed.namespace)))
-                        {
-                        const coreStore = useCoreStore();
-                        coreStore.message = {
-                            variant: "error",
-                            title: this.$i18n.t("readonly property"),
-                            message: this.$i18n.t("namespace and id readonly"),
-                        };
-                        this.flowYaml = YAML_UTILS.replaceIdAndNamespace(
-                            source,
-                            this.flow.id,
-                            this.flow.namespace
-                        );
-                    }
-                }
-            }
-
-            this.haveChange = true;
-            if(editorViewType === "YAML") {
-                const coreStore = useCoreStore();
-                coreStore.unsavedChange = true;
-            }
-
-            if(!this.isCreating){
-                useEditorStore().setTabDirty({
-                    ...currentTab,
-                    name: currentTab?.name ?? "Flow",
-                    path: currentTab?.path ?? "Flow.yaml",
-                    dirty: true
-                });
-            }
-
-            if(!currentIsFlow) return;
-
-            return this.validateFlow({
-                flow: (this.isCreating ? this.flowYaml : this.yamlWithNextRevision) ?? ""
-            })
-                .then((value) => {
-                    if (
-                        topologyVisible &&
-                        this.flowHaveTasks &&
-                        // avoid sending empty errors
-                        // they make the backend fail
-                        flowParsed && (!flowParsed.errors || flowParsed.errors.every(e => typeof e.id === "string"))
-                    ) {
-                        if(!value.constraints) this.fetchGraph();
-                    }
-
-                    return value;
-                });
-        },
-        async saveWithoutRevisionGuard () {
-            const flowYaml = this.flowYaml;
-            const flowParsed = this.flowParsed;
-
-            if (flowParsed === undefined) {
-                const coreStore = useCoreStore();
-                coreStore.message = {
-                    variant: "error",
-                    title: this.$i18n.t("invalid flow"),
-                    message: this.$i18n.t("invalid yaml"),
-                };
-
-                return;
-            }
-
-            let overrideFlow = false;
-            if (this.flowErrors) {
-                if (this.flowValidation?.outdated && this.isCreating) {
-                    overrideFlow = await ElMessageBox({
-                        title: this.$i18n.t("override.title"),
-                        message: () => {
-                            return h("div", null, [
-                                h("p", null, this.$i18n.t("override.details")),
-                            ]);
-                        },
-                        showCancelButton: true,
-                        confirmButtonText: this.$i18n.t("ok"),
-                        cancelButtonText: this.$i18n.t("cancel"),
-                        center: false,
-                        showClose: false,
-                    })
-                        .then(() => {
-                            overrideFlow = true;
-                            return true;
-                        })
-                        .catch(() => {
-                            return false;
-                        });
-                }
-            }
-
-            const {isCreating} = this;
-            if (isCreating && !overrideFlow) {
-                await this.createFlow({flow: flowYaml ?? ""})
-                    .then((response) => {
-                        this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
-                        const coreStore = useCoreStore();
-                        coreStore.unsavedChange = false;
-                        this.isCreating = false;
-                        this.haveChange = false;
-                    });
-            } else {
-                await this.saveFlow({flow: flowYaml})
-                    .then((response) => {
-                        this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
-                        const coreStore = useCoreStore();
-                        coreStore.unsavedChange = false;
-                    });
-            }
-
-            if (isCreating || overrideFlow) {
-                return "redirect_to_update";
-            }
-
-            this.haveChange = false;
-            await this.validateFlow({
-                flow: (isCreating ? flowYaml : this.yamlWithNextRevision) ?? ""
-            });
-        },
-        fetchGraph() {
-            return this.loadGraphFromSource({
-                flow: this.flowYaml ?? "",
-                config: {
-                    params: {
-                        // due to usage of axios instance instead of $http which doesn't convert arrays
-                        subflows: this.expandedSubflows.join(","),
-                    },
-                    validateStatus: (status) => {
-                        return status === 200;
-                    },
-                },
-            });
-        },
-        async initYamlSource({viewType}: {viewType: string}) {
-            if(!this.flow) return;
-            const {source} = this.flow;
-            this.flowYaml = source;
-            this.flowYamlOrigin = source;
-            if (this.flowHaveTasks) {
-                if (
-                    [
-                        editorViewTypes.TOPOLOGY,
-                        editorViewTypes.SOURCE_TOPOLOGY,
-                    ].includes(viewType)
-                ) {
-                    await this.fetchGraph();
-                } else {
-                    this.fetchGraph();
-                }
-            }
-
-            // validate flow on first load
-            return this.validateFlow({flow: this.isCreating ? source : this.yamlWithNextRevision})
-        },
-        findFlows(options: { [key: string]: any }) {
-            const sortString = options.sort ? `?sort=${options.sort}` : ""
-            delete options.sort
-            return this.$http.get(`${apiUrl(this.vuexStore)}/flows/search${sortString}`, {
-                params: options
-            }).then(response => {
-                this.flows = response.data.results
-                this.total = response.data.total
-                this.overallTotal = response.data.results.filter(f => f.namespace !== "tutorial").length
-
-                return response.data;
-            })
-        },
-        searchFlows(options: { [key: string]: any }) {
-            const sortString = options.sort ? `?sort=${options.sort}` : ""
-            delete options.sort
-            return this.$http.get(`${apiUrl(this.vuexStore)}/flows/source${sortString}`, {
-                params: options
-            }).then(response => {
-                this.search = response.data.results
-                this.total = response.data.total
-
-                return response.data;
-            })
-        },
-        flowsByNamespace(namespace: string) {
-            return this.$http.get(`${apiUrl(this.vuexStore)}/flows/${namespace}`).then(response => {
-                return response.data;
-            })
-        },
-        loadFlow(options: {namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any}) {
-            const httpClient = options.httpClient ?? this.$http
-            return httpClient.get(`${apiUrl(this.vuexStore)}/flows/${options.namespace}/${options.id}`,
-                {
-                    params: {
-                        revision: options.revision,
-                        allowDeleted: options.allowDeleted,
-                        source: options.source === undefined ? true : undefined
-                    },
-                    validateStatus: (status: number) => {
-                        return options.deleted ? status === 200 || status === 404 : status === 200;
-                    }
-                })
-                .then((response: any) => {
-                    if (response.data.exception) {
-                        const coreStore = useCoreStore();
-                        coreStore.message = {
-                            title: "Invalid source code",
-                            message: response.data.exception,
-                            variant: "error"
-                        };
-                        // add this error to the list of errors
-                        this.flowValidation = {
-                            constraints: response.data.exception,
-                            outdated: false,
-                            infos: []
-                        };
-                        delete response.data.exception;
-                    }
-                    if(options.store === false) {
-                        return response.data;
-                    }
-
-                    this.flow = response.data;
-                    this.flowYaml = response.data.source;
-                    this.flowYamlOrigin = response.data.source;
-                    this.flowYamlBeforeAdd = response.data.source;
-                    this.overallTotal = 1;
-
-                    return response.data;
-                })
-        },
-        loadTask(options: {namespace: string, id: string, taskId: string, revision?: string}) {
-            return this.$http.get(
-                `${apiUrl(this.vuexStore)}/flows/${options.namespace}/${options.id}/tasks/${options.taskId}${options.revision ? "?revision=" + options.revision : ""}`,
-                {
-                    validateStatus: (status) => {
-                        return status === 200 || status === 404;
-                    }
-                }
-            )
-                .then(response => {
-                    if (response.status === 200) {
-                        this.task = response.data;
-
-                        return response.data;
-                    } else {
-                        return null;
-                    }
-                })
-        },
-        saveFlow(options: {flow: string}) {
-            const flowData = YAML_UTILS.parse(options.flow)
-            return this.$http.put(`${apiUrl(this.vuexStore)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
-                .then(response => {
-                    if (response.status >= 300) {
-                        return Promise.reject(new Error("Server error on flow save"))
-                    } else {
-                        this.flow = response.data;
-                        useEditorStore().setTabDirty({
-                            name: "Flow",
-                            dirty: false,
-                        });
-
-                        return response.data;
-                    }
-                })
-        },
-        updateFlowTask(options: {flow: Flow, task: Task}) {
-            return this.$http
-                .patch(`${apiUrl(this.vuexStore)}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
-                    this.flow = response.data;
-
-                    return response.data;
-                })
-                .then(flow => {
-                    this.loadGraph( {flow});
-
-                    return flow;
-                })
-        },
-        createFlow(options: {flow: string}) {
-            return this.$http.post(`${apiUrl(this.vuexStore)}/flows`, options.flow, textYamlHeader).then(response => {
-                this.flow = response.data;
-
-                return response.data;
-            })
-        },
-        deleteFlowAndDependencies(){
-            const metadata = this.flowYamlMetadata;
-
-            return new Promise((resolve, reject) => this.$http
-                .get(
-                    `${apiUrl(this.vuexStore)}/flows/${metadata.namespace}/${
-                        metadata.id
-                    }/dependencies`,
-                    {params: {destinationOnly: true}}
-                )
-                .then((response) => {
-                    let warning = "";
-
-                    if (response.data && response.data.nodes) {
-                        const deps = response.data.nodes
-                            .filter(
-                                (n) =>
-                                    !(
-                                        n.namespace === metadata.namespace &&
-                                        n.id === metadata.id
-                                    )
-                            )
-                            .map(
-                                (n) =>
-                                    "<li>" +
-                                    n.namespace +
-                                    ".<code>" +
-                                    n.id +
-                                    "</code></li>"
-                            )
-                            .join("\n");
-
-                        if(deps.length){
-                            warning =
-                                "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
-                                "<div class=\"el-alert__content\">\n" +
-                                "<p class=\"el-alert__description\">\n" +
-                                this.$i18n.t("dependencies delete flow") +
-                                "<ul>\n" +
-                                deps +
-                                "</ul>\n" +
-                                "</p>\n" +
-                                "</div>\n" +
-                                "</div>";
-                        }
-                    }
-
-                    return this.$i18n.t("delete confirm", {name: metadata.id}) + warning;
-                })
-                .then((message) => {
-                    return this.$toast.bind({$t: this.$i18n.t})()
-                        .confirm(message, () => {
-                            resolve(this.deleteFlow(metadata));
-                        })
-                }).catch(reject)
-            )
-        },
-        deleteFlow(flow: {namespace: string, id: string}) {
-            return this.$http.delete(`${apiUrl(this.vuexStore)}/flows/${flow.namespace}/${flow.id}`).then(() => {
-                this.flow = undefined;
-            })
-        },
-        loadGraph(options: {flow: Flow, params?: any}) {
-            const flow = options.flow;
-            const params = options.params ? options.params : {};
-            if (flow.revision) {
-                params["revision"] = flow.revision;
-            }
-            return this.$http.get(`${apiUrl(this.vuexStore)}/flows/${flow.namespace}/${flow.id}/graph`, {params}).then(response => {
-                this.invalidGraph = false;
-                this.flowGraph = response.data;
-                return response.data;
-            }).catch(() => {
-                this.invalidGraph = true;
-            });
-        },
-        loadGraphFromSource(options: {flow: string, config?: any}) {
-            const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
-            const flowParsed = YAML_UTILS.parse(options.flow);
-            let flowSource = options.flow
-            if (!flowParsed.id || !flowParsed.namespace) {
-                flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
-            }
-            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/graph`, flowSource, {...config, withCredentials: true})
-                .then(response => {
-                    this.flowGraph = response.data
-
-                    const flow = YAML_UTILS.parse(options.flow);
-                    flow.id = this.flow?.id ?? flow.id;
-                    flow.namespace = this.flow?.namespace ?? flow.namespace;
-                    flow.source = options.flow;
-                    // prevent losing revision when loading graph from source
-                    flow.revision = this.flow?.revision;
-                    this.flow = flow;
-
-                    return response;
-                }).catch(error => {
-                    if (error.response?.status === 422 && (!config?.params?.subflows || config?.params?.subflows?.length === 0)) {
-                        return Promise.resolve(error.response);
-                    }
-
-                    if([404, 422].includes(error.response?.status) && config?.params?.subflows?.length > 0) {
-                        const coreStore = useCoreStore();
-                        coreStore.message = {
-                            title: "Couldn't expand subflow",
-                            message: error.response.data.message,
-                            variant: "danger"
-                        };
-                    }
-
-                    return Promise.reject(error);
-                })
-        },
-        getGraphFromSourceResponse(options: {flow: string, config?: any}) {
-            const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
-            const flowParsed = YAML_UTILS.parse(options.flow);
-            let flowSource = options.flow
-            if (!flowParsed.id || !flowParsed.namespace) {
-                flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
-            }
-            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/graph`, flowSource, {...config})
-                .then(response => response.data)
-        },
-        loadRevisions(options: {namespace: string, id: string}) {
-            return this.$http.get(`${apiUrl(this.vuexStore)}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
-                this.revisions = response.data
-                return response.data;
-            })
-        },
-        exportFlowByIds(options: {ids: string[]}) {
-            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/export/by-ids`, options.ids, {responseType: "blob"})
-                .then(response => {
-                    const blob = new Blob([response.data], {type: "application/octet-stream"});
-                    const url = window.URL.createObjectURL(blob)
-                    Utils.downloadUrl(url, "flows.zip");
-                });
-        },
-        exportFlowByQuery(options: {namespace: string, id: string}) {
-            return this.$http.get(`${apiUrl(this.vuexStore)}/flows/export/by-query`, {params: options, headers: {"Accept": "application/octet-stream"}})
-                .then(response => {
-                    Utils.downloadUrl(response.request.responseURL, "flows.zip");
-                });
-        },
-        importFlows(options: {file: File, namespace: string, override?: boolean}) {
-            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/import`, Utils.toFormData(options), {
-                headers: {"Content-Type": "multipart/form-data"}
-            }).then(response => {
-                return response;
-            });
-        },
-        disableFlowByIds(options: {ids: string[]}) {
-            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/disable/by-ids`, options.ids)
-        },
-        disableFlowByQuery(options: {namespace: string, id: string}) {
-            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/disable/by-query`, options, {params: options})
-        },
-        enableFlowByIds(options: {ids: string[]}) {
-            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/enable/by-ids`, options.ids)
-        },
-        enableFlowByQuery(options: {namespace: string, id: string}) {
-            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/enable/by-query`, options, {params: options})
-        },
-        deleteFlowByIds(options: {ids: string[]}) {
-            return this.$http.delete(`${apiUrl(this.vuexStore)}/flows/delete/by-ids`, {data: options.ids})
-        },
-        deleteFlowByQuery(options: {namespace: string, id: string}) {
-            return this.$http.delete(`${apiUrl(this.vuexStore)}/flows/delete/by-query`, {params: options})
-        },
-        validateFlow(options: {flow: string}) {
-            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
-                .then(response => {
-                    this.flowValidation = response.data[0]
-                    return response.data[0]
-                })
-        },
-        validateTask(options: {task: string, section: string}) {
-            return this.$http.post(`${apiUrl(this.vuexStore)}/flows/validate/task`, options.task, {...textYamlHeader, withCredentials: true, params: {section: options.section}})
-                .then(response => {
-
-                    this.taskError = response.data.constraints;
-                    return response.data
-                })
-        },
-        loadFlowMetrics(options: {namespace: string, id: string}) {
-            return this.$http.get(`${apiUrl(this.vuexStore)}/metrics/names/${options.namespace}/${options.id}`)
-                .then(response => {
-                    this.metrics = response.data
-                    return response.data
-                })
-        },
-        loadTaskMetrics(options: {namespace: string, id: string, taskId: string}) {
-            return this.$http.get(`${apiUrl(this.vuexStore)}/metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
-                .then(response => {
-                    this.metrics = response.data
-                    return response.data
-                })
-        },
-        loadTasksWithMetrics(options: {namespace: string, id: string}) {
-            return this.$http.get(`${apiUrl(this.vuexStore)}/metrics/tasks/${options.namespace}/${options.id}`)
-                .then(response => {
-                    this.tasksWithMetrics = response.data
-                    return response.data
-                })
-        },
-        loadFlowAggregatedMetrics(options: {namespace: string, id: string, metric: string}) {
-            return this.$http.get(`${apiUrl(this.vuexStore)}/metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
-                .then(response => {
-                    this.aggregatedMetrics = response.data
-                    return response.data
-                })
-        },
-        loadTaskAggregatedMetrics(options: {namespace: string, id: string, taskId: string, metric: string}) {
-            return this.$http.get(`${apiUrl(this.vuexStore)}/metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
-                .then(response => {
-                    this.aggregatedMetrics = response.data
-                    return response.data
-                })
-        },
-
-        setTrigger({index, trigger}: {index: number, trigger: Trigger}) {
-            const flow = this.flow ?? {} as Flow;
-
-            if (flow.triggers === undefined) {
-                flow.triggers = []
-            }
-
-            flow.triggers[index] = trigger;
-
-            this.flow = {...flow}
-        },
-        removeTrigger(index: number) {
-            const flow = this.flow ?? {} as Flow;
-            flow.triggers?.splice(index, 1);
-
-            this.flow = {...flow}
-        },
-        setExecuteFlow(value: boolean) {
-            this.executeFlow = value;
-        },
-        addTrigger(trigger: Trigger) {
-            const flow = this.flow ?? {} as Flow;
-
-            if (trigger.backfill === undefined) {
-                trigger.backfill = {
-                    start: undefined
-                }
-            }
-
-            if (flow.triggers === undefined) {
-                flow.triggers = []
-            }
-
-            flow.triggers.push(trigger)
-
-            this.flow = {...flow}
-        },
-    },
-    getters: {
-        isFlow(state) {
-            const currentTab = useEditorStore().current;
-            return currentTab?.flow !== undefined || state.isCreating;
-        },
-        isAllowedEdit(state): boolean {
-            const store = this.vuexStore
-            if (!state.flow || !store.getters["auth/user"]) {
-                return false;
-            }
-
-            return store.getters["auth/user"].isAllowed(
-                permission.FLOW,
-                action.UPDATE,
-                state.flow.namespace,
-            );
-        },
-        readOnlySystemLabel(state) {
-            if (!state.flow) {
-                return false;
-            }
-
-            return (state.flow.labels?.["system.readOnly"] === "true") || (state.flow.labels?.["system.readOnly"] === true);
-        },
-        isReadOnly(state): boolean {
-            return state.flow?.deleted || !this.isAllowedEdit || this.readOnlySystemLabel;
-        },
-        baseOutdatedTranslationKey(state) {
-                const createOrUpdateKey = state.isCreating ? "create" : "update";
-                return "outdated revision save confirmation." + createOrUpdateKey;
-        },
-        flowErrors(): string[] | undefined {
-            if (this.isFlow) {
-                const flowExistsError =
-                    this.flowValidation?.outdated && this.isCreating
-                        ? [`>>>>${this.baseOutdatedTranslationKey}`] // because translating is impossible here
-                        : [];
-
-                const constraintsError =
-                    this.flowValidation?.constraints?.split(/, ?/) ?? [];
-
-                const errors = [...flowExistsError, ...constraintsError];
-
-                return errors.length === 0 ? undefined : errors;
-            }
-
-            return undefined;
-        },
-        flowInfos(state){
-            if (this.isFlow) {
-                const infos = state.flowValidation?.infos ?? [];
-
-                return infos.length === 0 ? undefined : infos;
-            }
-
-            return undefined;
-        },
-        flowHaveTasks(state): boolean{
-            if (this.isFlow) {
-                const flow = state.isCreating ? state.flow?.source : state.flowYaml;
-                return flow ? YAML_UTILS.flowHaveTasks(flow) : false;
-            } else return false;
-        },
-        nextRevision(state){
-            return (state.flow?.revision ?? 0) + 1;
-        },
-        yamlWithNextRevision(state): string{
-            return `revision: ${this.nextRevision}\n${state.flowYaml}`;
-        },
-        flowParsed(state){
-            try{
-                return YAML_UTILS.parse(state.flowYaml)
-            }catch{
-                return undefined
-            }
-        },
-        flowYamlMetadata(state){
-            return YAML_UTILS.getMetadata(state.flowYaml ?? "");
+    const store = useStore() as Store<any> & {
+        $http: {
+            put: (url: string, data?: any, config?: any) => Promise<any>;
+            post: (url: string, data?: any, config?: any) => Promise<any>;
+            get: (url: string, config?: any) => Promise<any>;
+            delete: (url: string, config?: any) => Promise<any>;
+            patch: (url: string, data?: any, config?: any) => Promise<any>;
         }
+    };
+
+    const {t} = useI18n();
+
+    function onSaveMetadata() {
+        flowYaml.value = YAML_UTILS.updateMetadata(flowYaml.value ?? "", metadata.value ?? {});
+        metadata.value = undefined;
+        haveChange.value = true;
+    }
+
+    async function saveAll() {
+        const editorStore = useEditorStore()
+        const hasAnyDirtyTabs = editorStore.tabs.some(t => t.dirty === true);
+        const hasChanges = haveChange.value || hasAnyDirtyTabs;
+
+        if (flowErrors.value?.length || !hasChanges && !isCreating.value) {
+            return;
+        }
+
+        if (!flow.value) return;
+        await editorStore.saveAllTabs({namespace: flow.value.namespace});
+        flowYamlOrigin.value = flowYaml.value;
+        return saveWithoutRevisionGuard();
+    }
+
+    async function save({content, namespace}: { content?: string, namespace?: string }) {
+        const editorStore = useEditorStore()
+        const hasAnyDirtyTabs = editorStore.tabs.some(t => t.dirty === true);
+        const hasChanges = haveChange.value || hasAnyDirtyTabs;
+
+        if (flowErrors.value?.length || !hasChanges && !isCreating.value) {
+            return;
+        }
+
+        const source = flowYaml.value;
+        const currentTab = editorStore.current;
+
+        if (isFlow.value && source) {
+            return onEdit({source, currentIsFlow: true}).then((validation: any) => {
+                if (validation?.outdated && !isCreating.value) {
+                    return "confirmOutdatedSaveDialog";
+                }
+                const res = saveWithoutRevisionGuard();
+                flowYamlOrigin.value = source;
+
+                if (currentTab && currentTab.name) {
+                    editorStore.setTabDirty({
+                        name: "Flow",
+                        path: "Flow.yaml",
+                        dirty: false,
+                    });
+                }
+                return res
+            });
+        } else {
+            if (!currentTab?.dirty) return;
+
+            await store.dispatch("namespace/createFile", {
+                namespace: namespace ?? flow.value?.namespace,
+                path: currentTab.path ?? currentTab.name,
+                content,
+            }, {root: true});
+            editorStore.setTabDirty({
+                path: currentTab.path,
+                name: currentTab.name,
+                dirty: false
+            });
+
+            const coreStore = useCoreStore();
+            coreStore.unsavedChange = false;
+        }
+    }
+    async function onEdit({source, currentIsFlow, editorViewType, topologyVisible}: {
+        source: string,
+        currentIsFlow: boolean,
+        editorViewType?: string,
+        topologyVisible?: boolean
+    }) {
+        const flowParsed = flow.value;
+        const currentTab = useEditorStore().current;
+
+        if (currentIsFlow) {
+            if (!source.trim()?.length) {
+                flowValidation.value = {
+                    constraints: t("flow must not be empty")
+                };
+                return
+            }
+            if (!isCreating.value && flow.value) {
+                if (!source.trim()?.length ||
+                    (flowParsed &&
+                        (flow.value.id !== flowParsed.id ||
+                            flow.value.namespace !== flowParsed.namespace))) {
+                    const coreStore = useCoreStore();
+                    coreStore.message = {
+                        variant: "error",
+                        title: t("readonly property"),
+                        message: t("namespace and id readonly"),
+                    };
+                    flowYaml.value = YAML_UTILS.replaceIdAndNamespace(
+                        source,
+                        flow.value.id,
+                        flow.value.namespace
+                    );
+                }
+            }
+        }
+
+        haveChange.value = true;
+        if (editorViewType === "YAML") {
+            const coreStore = useCoreStore();
+            coreStore.unsavedChange = true;
+        }
+
+        if (!isCreating.value) {
+            useEditorStore().setTabDirty({
+                ...currentTab,
+                name: currentTab?.name ?? "Flow",
+                path: currentTab?.path ?? "Flow.yaml",
+                dirty: true
+            });
+        }
+
+        if (!currentIsFlow) return;
+
+        return validateFlow({
+            flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? ""
+        })
+            .then((value: {constraints?: any}) => {
+                if (
+                    topologyVisible &&
+                    flowHaveTasks.value &&
+                    // avoid sending empty errors
+                    // they make the backend fail
+                    flowParsed && (!flowParsed.errors || flowParsed.errors.every(e => typeof e.id === "string"))
+                ) {
+                    if (!value.constraints) fetchGraph();
+                }
+
+                return value;
+            });
+    }
+
+    const toast = useToast();
+
+    async function saveWithoutRevisionGuard() {
+        const flowSource = flowYaml.value ?? "";
+
+        if (flowParsed.value === undefined) {
+            const coreStore = useCoreStore();
+            coreStore.message = {
+                variant: "error",
+                title: t("invalid flow"),
+                message: t("invalid yaml"),
+            };
+
+            return;
+        }
+
+        let overrideFlow = false;
+        if (flowErrors.value) {
+            if (flowValidation.value?.outdated && isCreating.value) {
+                overrideFlow = await ElMessageBox({
+                    title: t("override.title"),
+                    message: () => {
+                        return h("div", null, [
+                            h("p", null, t("override.details")),
+                        ]);
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: t("ok"),
+                    cancelButtonText: t("cancel"),
+                    center: false,
+                    showClose: false,
+                })
+                    .then(() => {
+                        overrideFlow = true;
+                        return true;
+                    })
+                    .catch(() => {
+                        return false;
+                    });
+            }
+        }
+
+        const isCreatingBackup = isCreating.value;
+        if (isCreating.value && !overrideFlow) {
+            await createFlow({flow: flowSource ?? ""})
+                .then((response: Flow) => {
+                    toast.saved(response.id);
+                    const coreStore = useCoreStore();
+                    coreStore.unsavedChange = false;
+                    isCreating.value = false;
+                    haveChange.value = false;
+                });
+        } else {
+            await saveFlow({flow: flowSource})
+                .then((response: Flow) => {
+                    toast.saved(response.id);
+                    const coreStore = useCoreStore();
+                    coreStore.unsavedChange = false;
+                });
+        }
+
+        if (isCreatingBackup || overrideFlow) {
+            return "redirect_to_update";
+        }
+
+        haveChange.value = false;
+        await validateFlow({
+            flow: (isCreatingBackup ? flowSource : yamlWithNextRevision.value) ?? ""
+        });
+    }
+    function fetchGraph() {
+        return loadGraphFromSource({
+            flow: flowYaml.value ?? "",
+            config: {
+                params: {
+                    // due to usage of axios instance instead of $http which doesn't convert arrays
+                    subflows: expandedSubflows.value.join(","),
+                },
+                validateStatus: (status: number) => {
+                    return status === 200;
+                },
+            },
+        });
+    }
+
+    async function initYamlSource({viewType}: { viewType: string }) {
+        if (!flow.value) return;
+        const {source} = flow.value;
+        flowYaml.value = source;
+        flowYamlOrigin.value = source;
+        if (flowHaveTasks.value) {
+            if (
+                [
+                    editorViewTypes.TOPOLOGY,
+                    editorViewTypes.SOURCE_TOPOLOGY,
+                ].includes(viewType)
+            ) {
+                await fetchGraph();
+            } else {
+                fetchGraph();
+            }
+        }
+
+        // validate flow on first load
+        return validateFlow({flow: isCreating.value ? source : yamlWithNextRevision.value})
+    }
+
+    function findFlows(options: { [key: string]: any }) {
+        const sortString = options.sort ? `?sort=${options.sort}` : ""
+        delete options.sort
+        return store.$http.get(`${apiUrl(store)}/flows/search${sortString}`, {
+            params: options
+        }).then(response => {
+            flows.value = response.data.results
+            total.value = response.data.total
+            overallTotal.value = response.data.results.filter((f: any) => f.namespace !== "tutorial").length
+
+            return response.data;
+        })
+    }
+    function searchFlows(options: { [key: string]: any }) {
+        const sortString = options.sort ? `?sort=${options.sort}` : ""
+        delete options.sort
+        return store.$http.get(`${apiUrl(store)}/flows/source${sortString}`, {
+            params: options
+        }).then(response => {
+            search.value = response.data.results
+            total.value = response.data.total
+
+            return response.data;
+        })
+    }
+
+    function flowsByNamespace(namespace: string) {
+        return store.$http.get(`${apiUrl(store)}/flows/${namespace}`).then(response => {
+            return response.data;
+        })
+    }
+
+    function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any }) {
+        const httpClient = options.httpClient ?? store.$http
+        return httpClient.get(`${apiUrl(store)}/flows/${options.namespace}/${options.id}`,
+            {
+                params: {
+                    revision: options.revision,
+                    allowDeleted: options.allowDeleted,
+                    source: options.source === undefined ? true : undefined
+                },
+                validateStatus: (status: number) => {
+                    return options.deleted ? status === 200 || status === 404 : status === 200;
+                }
+            })
+            .then((response: any) => {
+                if (response.data.exception) {
+                    const coreStore = useCoreStore();
+                    coreStore.message = {
+                        title: "Invalid source code",
+                        message: response.data.exception,
+                        variant: "error"
+                    };
+                    // add this error to the list of errors
+                    flowValidation.value = {
+                        constraints: response.data.exception,
+                        outdated: false,
+                        infos: []
+                    };
+                    delete response.data.exception;
+                }
+                if (options.store === false) {
+                    return response.data;
+                }
+
+                flow.value = response.data;
+                flowYaml.value = response.data.source;
+                flowYamlOrigin.value = response.data.source;
+                flowYamlBeforeAdd.value = response.data.source;
+                overallTotal.value = 1;
+
+                return response.data;
+            })
+    }
+    function loadTask(options: { namespace: string, id: string, taskId: string, revision?: string }) {
+        return store.$http.get(
+            `${apiUrl(store)}/flows/${options.namespace}/${options.id}/tasks/${options.taskId}${options.revision ? "?revision=" + options.revision : ""}`,
+            {
+                validateStatus: (status: number) => {
+                    return status === 200 || status === 404;
+                }
+            }
+        )
+            .then(response => {
+                if (response.status === 200) {
+                    task.value = response.data;
+
+                    return response.data;
+                } else {
+                    return null;
+                }
+            })
+    }
+    function saveFlow(options: { flow: string }) {
+        const flowData = YAML_UTILS.parse(options.flow)
+        return store.$http.put(`${apiUrl(store)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
+            .then(response => {
+                if (response.status >= 300) {
+                    return Promise.reject(new Error("Server error on flow save"))
+                } else {
+                    flow.value = response.data;
+                    useEditorStore().setTabDirty({
+                        name: "Flow",
+                        dirty: false,
+                    });
+
+                    return response.data;
+                }
+            })
+    }
+    function updateFlowTask(options: { flow: Flow, task: Task }) {
+        return store.$http
+            .patch(`${apiUrl(store)}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
+                flow.value = response.data;
+
+                return response.data;
+            })
+            .then(flow => {
+                loadGraph({flow});
+
+                return flow;
+            })
+    }
+    function createFlow(options: { flow: string }) {
+        return store.$http.post(`${apiUrl(store)}/flows`, options.flow, textYamlHeader).then(response => {
+            flow.value = response.data;
+
+            return response.data;
+        })
+    }
+
+    function deleteFlowAndDependencies(){
+        const metadata = flowYamlMetadata.value;
+
+        return new Promise((resolve, reject) => store.$http
+            .get(
+                `${apiUrl(store)}/flows/${metadata.namespace}/${metadata.id
+                }/dependencies`,
+                {params: {destinationOnly: true}}
+            )
+            .then((response) => {
+                let warning = "";
+
+                if (response.data && response.data.nodes) {
+                    const deps = response.data.nodes
+                        .filter(
+                            (n: any) =>
+                                !(
+                                    n.namespace === metadata.namespace &&
+                                    n.id === metadata.id
+                                )
+                        )
+                        .map(
+                            (n: any) =>
+                                "<li>" +
+                                n.namespace +
+                                ".<code>" +
+                                n.id +
+                                "</code></li>"
+                        )
+                        .join("\n");
+
+                    if (deps.length) {
+                        warning =
+                            "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
+                            "<div class=\"el-alert__content\">\n" +
+                            "<p class=\"el-alert__description\">\n" +
+                            t("dependencies delete flow") +
+                            "<ul>\n" +
+                            deps +
+                            "</ul>\n" +
+                            "</p>\n" +
+                            "</div>\n" +
+                            "</div>";
+                    }
+                }
+
+                return t("delete confirm", {name: metadata.id}) + warning;
+            })
+            .then((message) => {
+                return toast
+                    .confirm(message, () => {
+                        return Promise.resolve(deleteFlow(metadata.value));
+                    })
+            }).catch(reject)
+        )
+    }
+
+    function deleteFlow(options: { namespace: string, id: string }) {
+        return store.$http.delete(`${apiUrl(store)}/flows/${options.namespace}/${options.id}`).then(() => {
+            flow.value = undefined;
+        })
+    }
+
+    function loadGraph(options: { flow: Flow, params?: any }) {
+        const flowVar = options.flow;
+        const params = options.params ? options.params : {};
+        if (flowVar.revision) {
+            params["revision"] = flowVar.revision;
+        }
+        return store.$http.get(`${apiUrl(store)}/flows/${flowVar.namespace}/${flowVar.id}/graph`, {params}).then(response => {
+            invalidGraph.value = false;
+            flowGraph.value = response.data;
+            return response.data;
+        }).catch(() => {
+            invalidGraph.value = true;
+        });
+    }
+    function loadGraphFromSource(options: { flow: string, config?: any }) {
+        const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
+        const flowParsed = YAML_UTILS.parse(options.flow);
+        let flowSource = options.flow
+        if (!flowParsed.id || !flowParsed.namespace) {
+            flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
+        }
+        return store.$http.post(`${apiUrl(store)}/flows/graph`, flowSource, {...config, withCredentials: true})
+            .then(response => {
+                flowGraph.value = response.data
+
+                const flowVar = YAML_UTILS.parse(options.flow);
+                flowVar.id = flow.value?.id ?? flowVar.id;
+                flowVar.namespace = flow.value?.namespace ?? flowVar.namespace;
+                flowVar.source = options.flow;
+                // prevent losing revision when loading graph from source
+                flowVar.revision = flow.value?.revision;
+                flow.value = flowVar;
+
+                return response;
+            }).catch(error => {
+                if (error.response?.status === 422 && (!config?.params?.subflows || config?.params?.subflows?.length === 0)) {
+                    return Promise.resolve(error.response);
+                }
+
+                if ([404, 422].includes(error.response?.status) && config?.params?.subflows?.length > 0) {
+                    const coreStore = useCoreStore();
+                    coreStore.message = {
+                        title: "Couldn't expand subflow",
+                        message: error.response.data.message,
+                        variant: "danger"
+                    };
+                }
+
+                return Promise.reject(error);
+            })
+    }
+
+    function getGraphFromSourceResponse(options: { flow: string, config?: any }) {
+        const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
+        const flowParsed = YAML_UTILS.parse(options.flow);
+        let flowSource = options.flow
+        if (!flowParsed.id || !flowParsed.namespace) {
+            flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
+        }
+        return store.$http.post(`${apiUrl(store)}/flows/graph`, flowSource, {...config})
+            .then(response => response.data)
+    }
+
+    function loadRevisions(options: { namespace: string, id: string }) {
+        return store.$http.get(`${apiUrl(store)}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
+            revisions.value = response.data
+            return response.data;
+        })
+    }
+
+    function exportFlowByIds(options: { ids: string[] }) {
+        return store.$http.post(`${apiUrl(store)}/flows/export/by-ids`, options.ids, {responseType: "blob"})
+            .then(response => {
+                const blob = new Blob([response.data], {type: "application/octet-stream"});
+                const url = window.URL.createObjectURL(blob)
+                Utils.downloadUrl(url, "flows.zip");
+            });
+    }
+
+    function exportFlowByQuery(options: { namespace: string, id: string }) {
+        return store.$http.get(`${apiUrl(store)}/flows/export/by-query`, {params: options, headers: {"Accept": "application/octet-stream"}})
+            .then(response => {
+                Utils.downloadUrl(response.request.responseURL, "flows.zip");
+            });
+    }
+    function importFlows(options: { file: File, namespace: string, override?: boolean }) {
+        return store.$http.post(`${apiUrl(store)}/flows/import`, Utils.toFormData(options), {
+            headers: {"Content-Type": "multipart/form-data"}
+        }).then(response => {
+            return response;
+        });
+    }
+    function disableFlowByIds(options: { ids: string[] }) {
+        return store.$http.post(`${apiUrl(store)}/flows/disable/by-ids`, options.ids)
+    }
+    function disableFlowByQuery(options: { namespace: string, id: string }) {
+        return store.$http.post(`${apiUrl(store)}/flows/disable/by-query`, options, {params: options})
+    }
+    function enableFlowByIds(options: { ids: string[] }) {
+        return store.$http.post(`${apiUrl(store)}/flows/enable/by-ids`, options.ids)
+    }
+    function enableFlowByQuery(options: { namespace: string, id: string }) {
+        return store.$http.post(`${apiUrl(store)}/flows/enable/by-query`, options, {params: options})
+    }
+    function deleteFlowByIds(options: { ids: string[] }) {
+        return store.$http.delete(`${apiUrl(store)}/flows/delete/by-ids`, {data: options.ids})
+    }
+    function deleteFlowByQuery(options: { namespace: string, id: string }) {
+        return store.$http.delete(`${apiUrl(store)}/flows/delete/by-query`, {params: options})
+    }
+    function validateFlow(options: { flow: string }) {
+        return store.$http.post(`${apiUrl(store)}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
+            .then(response => {
+                flowValidation.value = response.data[0]
+                return response.data[0]
+            })
+    }
+    function validateTask(options: { task: string, section: string }) {
+        return store.$http.post(`${apiUrl(store)}/flows/validate/task`, options.task, {...textYamlHeader, withCredentials: true, params: {section: options.section}})
+            .then(response => {
+                taskError.value = response.data.constraints;
+                return response.data
+            })
+    }
+    function loadFlowMetrics(options: { namespace: string, id: string }) {
+        return store.$http.get(`${apiUrl(store)}/metrics/names/${options.namespace}/${options.id}`)
+            .then(response => {
+                metrics.value = response.data
+                return response.data
+            })
+    }
+    function loadTaskMetrics(options: { namespace: string, id: string, taskId: string }) {
+        return store.$http.get(`${apiUrl(store)}/metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
+            .then(response => {
+                metrics.value = response.data
+                return response.data
+            })
+    }
+    function loadTasksWithMetrics(options: { namespace: string, id: string }) {
+        return store.$http.get(`${apiUrl(store)}/metrics/tasks/${options.namespace}/${options.id}`)
+            .then(response => {
+                tasksWithMetrics.value = response.data
+                return response.data
+            })
+    }
+    function loadFlowAggregatedMetrics(options: { namespace: string, id: string, metric: string }) {
+        return store.$http.get(`${apiUrl(store)}/metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
+            .then(response => {
+                aggregatedMetrics.value = response.data
+                return response.data
+            })
+    }
+    function loadTaskAggregatedMetrics(options: { namespace: string, id: string, taskId: string, metric: string }) {
+        return store.$http.get(`${apiUrl(store)}/metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
+            .then(response => {
+                aggregatedMetrics.value = response.data
+                return response.data
+            })
+    }
+
+    function setTrigger({index, trigger}: { index: number, trigger: Trigger }) {
+        const flowVar = flow.value ?? {} as Flow;
+
+        if (flowVar.triggers === undefined) {
+            flowVar.triggers = []
+        }
+
+        flowVar.triggers[index] = trigger;
+
+        flow.value = {...flowVar}
+    }
+
+    function removeTrigger(index: number) {
+        const flowVar = flow.value ?? {} as Flow;
+        flowVar.triggers?.splice(index, 1);
+
+        flow.value = {...flowVar}
+    }
+
+    function setExecuteFlow(value: boolean) {
+        executeFlow.value = value;
+    }
+
+    function addTrigger(trigger: Trigger) {
+        const flowVar = flow.value ?? {} as Flow;
+
+        if (trigger.backfill === undefined) {
+            trigger.backfill = {
+                start: undefined
+            }
+        }
+
+        if (flowVar.triggers === undefined) {
+            flowVar.triggers = []
+        }
+
+        flowVar.triggers.push(trigger)
+
+        flow.value = {...flowVar}
+    }
+
+
+    const isFlow = computed(() => {
+        const currentTab = useEditorStore().current;
+        return currentTab?.flow !== undefined || isCreating.value;
+    })
+    const isAllowedEdit = computed((): boolean => {
+        if (!flow.value || !store.getters["auth/user"]) {
+            return false;
+        }
+
+        return store.getters["auth/user"].isAllowed(
+            permission.FLOW,
+            action.UPDATE,
+            flow.value?.namespace,
+        );
+    })
+
+    const readOnlySystemLabel = computed(() => {
+        if (!flow.value || !flow.value.labels) {
+            return false;
+        }
+
+        return (flow.value.labels?.["system.readOnly"] === "true") || (flow.value.labels?.["system.readOnly"] === true);
+    })
+
+    const isReadOnly = computed(() => {
+        return flow.value?.deleted || !isAllowedEdit.value || readOnlySystemLabel.value;
+    })
+
+    const baseOutdatedTranslationKey = computed(() => {
+        const createOrUpdateKey = isCreating.value ? "create" : "update";
+        return "outdated revision save confirmation." + createOrUpdateKey;
+    })
+
+    const flowErrors = computed((): string[] | undefined => {
+        if (isFlow.value) {
+            const flowExistsError =
+                flowValidation.value?.outdated && isCreating.value
+                    ? [`>>>>${baseOutdatedTranslationKey.value}`] // because translating is impossible here
+                    : [];
+
+            const constraintsError =
+                flowValidation.value?.constraints?.split(/, ?/) ?? [];
+
+            const errors = [...flowExistsError, ...constraintsError];
+
+            return errors.length === 0 ? undefined : errors;
+        }
+
+        return undefined;
+    })
+
+    const flowInfos = computed(() => {
+        if (isFlow.value) {
+            const infos = flowValidation.value?.infos ?? [];
+
+            return infos.length === 0 ? undefined : infos;
+        }
+
+        return undefined;
+    })
+
+    const flowHaveTasks = computed((): boolean => {
+        if (isFlow.value) {
+            const flowVar = isCreating.value ? flow.value?.source : flowYaml.value;
+            return flowVar ? YAML_UTILS.flowHaveTasks(flowVar) : false;
+        } else return false;
+    })
+
+    const nextRevision = computed((): number => {
+        return (flow.value?.revision ?? 0) + 1;
+    })
+
+    const yamlWithNextRevision = computed((): string => {
+        if (!flowYaml.value) return "";
+        return `revision: ${nextRevision.value}\n${flowYaml.value}`;
+    })
+
+    const flowParsed = computed(() => {
+        try {
+            return YAML_UTILS.parse(flowYaml.value)
+        } catch {
+            return undefined
+        }
+    })
+    const flowYamlMetadata = computed(() => {
+        return YAML_UTILS.getMetadata(flowYaml.value ?? "");
+    })
+
+    return {
+        isFlow,
+        isAllowedEdit,
+        readOnlySystemLabel,
+        isReadOnly,
+        baseOutdatedTranslationKey,
+        flowErrors,
+        flowInfos,
+        flowHaveTasks,
+        nextRevision,
+        yamlWithNextRevision,
+        flowParsed,
+        flowYamlMetadata,
+        flows,
+        flow,
+        task,
+        search,
+        total,
+        overallTotal,
+        flowGraph,
+        invalidGraph,
+        revisions,
+        flowValidation,
+        taskError,
+        metrics,
+        aggregatedMetrics,
+        tasksWithMetrics,
+        executeFlow,
+        lastSaveFlow,
+        isCreating,
+        flowYaml,
+        flowYamlOrigin,
+        flowYamlBeforeAdd,
+        confirmOutdatedSaveDialog,
+        haveChange,
+        expandedSubflows,
+        metadata,
+        addTrigger,
+        setTrigger,
+        removeTrigger,
+        setExecuteFlow,
+        onSaveMetadata,
+        saveAll,
+        save,
+        onEdit,
+        initYamlSource,
+        findFlows,
+        searchFlows,
+        flowsByNamespace,
+        loadFlow,
+        loadTask,
+        saveFlow,
+        updateFlowTask,
+        createFlow,
+        deleteFlowAndDependencies,
+        deleteFlow,
+        loadGraph,
+        loadGraphFromSource,
+        getGraphFromSourceResponse,
+        loadRevisions,
+        exportFlowByIds,
+        exportFlowByQuery,
+        importFlows,
+        disableFlowByIds,
+        disableFlowByQuery,
+        enableFlowByIds,
+        enableFlowByQuery,
+        deleteFlowByIds,
+        deleteFlowByQuery,
+        validateFlow,
+        validateTask,
+        loadFlowMetrics,
+        loadTaskMetrics,
+        loadFlowAggregatedMetrics,
+        loadTaskAggregatedMetrics,
+        loadTasksWithMetrics,
     }
 })

@@ -46,7 +46,7 @@
             </el-form-item>
             <el-form-item>
                 <el-button-group class="ks-b-group">
-                    <restart :execution="executionsStore.execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
+                    <restart v-if="executionsStore.execution" :execution="executionsStore.execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
                     <el-button @click="downloadContent()">
                         <kicon :tooltip="$t('download logs')">
                             <download />

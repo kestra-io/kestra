@@ -3,7 +3,7 @@ import {FilterLanguage} from "../filterLanguage.ts";
 import {Me} from "../../../../../stores/auth.ts";
 import permission from "../../../../../models/permission.ts";
 import action from "../../../../../models/action.ts";
-import {useNamespacesStore} from "../../../../../stores/namespaces.ts";
+import {useNamespacesStore} from "override/stores/namespaces.ts";
 
 const logFilterKeys: Record<string, FilterKeyCompletions> = {
     namespace: new FilterKeyCompletions(

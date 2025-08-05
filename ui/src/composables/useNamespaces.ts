@@ -1,6 +1,6 @@
 import {Store} from "vuex";
 import {EntityIterator} from "./entityIterator.ts";
-import {useNamespacesStore} from "../stores/namespaces";
+import {useNamespacesStore} from "override/stores/namespaces.ts";
 
 export interface Namespace {
     id: string;

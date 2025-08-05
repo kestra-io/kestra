@@ -357,7 +357,7 @@
 <script>
     import {mapState} from "vuex";
     import {mapStores} from "pinia";
-    import {useNamespacesStore} from "../../stores/namespaces";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import {useEditorStore} from "../../stores/editor";
     import Utils from "../../utils/utils";
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";

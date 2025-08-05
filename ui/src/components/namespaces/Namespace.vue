@@ -13,7 +13,7 @@
     import {useTabs} from "override/components/namespaces/useTabs";
     import {useHelpers} from "./utils/useHelpers";
     import useRouteContext from "../../mixins/useRouteContext";
-    import {useNamespacesStore} from "../../stores/namespaces";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import TopNavBar from "../layout/TopNavBar.vue";
     import Actions from "override/components/namespaces/Actions.vue";
     import Tabs from "../Tabs.vue";

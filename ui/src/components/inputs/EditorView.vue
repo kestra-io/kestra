@@ -447,7 +447,7 @@
     import {Utils, YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
 
     import {useCoreStore} from "../../stores/core";
-    import {useNamespacesStore} from "../../stores/namespaces";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import {usePluginsStore} from "../../stores/plugins";
     import {useEditorStore} from "../../stores/editor";
 

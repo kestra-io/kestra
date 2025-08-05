@@ -208,7 +208,7 @@
     import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {groupBy} from "lodash";
-    import {useNamespacesStore} from "../../stores/namespaces";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import useNamespaces from "../../composables/useNamespaces";
     import {NamespaceIterator} from "../../composables/useNamespaces";
     import SelectTableActions from "../../mixins/selectTableActions";

@@ -26,7 +26,7 @@
     import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useMiscStore} from "../../../stores/misc";
-    import {useNamespacesStore} from "../../../stores/namespaces";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import _uniqBy from "lodash/uniqBy";
 
     export default {

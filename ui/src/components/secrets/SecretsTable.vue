@@ -168,7 +168,7 @@
     import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useNamespaceSecrets, useAllSecrets, SecretIterator} from "../../composables/useSecrets";
-    import {useNamespacesStore} from "../../stores/namespaces";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import action from "../../models/action";
     import permission from "../../models/permission";
     import SelectTableActions from "../../mixins/selectTableActions";

@@ -16,7 +16,7 @@
     import {computed, Ref} from "vue";
     import {useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
-    import {useNamespacesStore} from "../../../stores/namespaces";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
 
     const route = useRoute();

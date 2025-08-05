@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
-import Utils from "../utils/utils";
+import Utils from "../../utils/utils";
 
 function base(store: any, namespace: string) {
     return `${apiUrl(store.vuexStore)}/namespaces/${namespace}`;
@@ -60,7 +60,7 @@ export const useNamespacesStore = defineStore("namespaces", {
         },
 
         async kvsList(item: {id: string}) {
-            const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${item.id}/kv`, {validateStatus: (status: number) => status === 200 || status === 404});
+            const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${item.id}/kv`, VALIDATE);
             this.kvs = response.data;
             return response.data;
         },
@@ -104,7 +104,7 @@ export const useNamespacesStore = defineStore("namespaces", {
 
         async inheritedSecrets({id, commit: shouldCommit, ...params}: {id: string; commit?: boolean; [key: string]: any}) {
             const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${id}/inherited-secrets`, {
-                validateStatus: (status: number) => status === 200 || status === 404,
+                ...VALIDATE,
                 params
             });
             if (shouldCommit !== false) {
@@ -164,7 +164,7 @@ export const useNamespacesStore = defineStore("namespaces", {
 
             const URL = `${base(this, payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
             const request = await this.$http.get(URL, {
-                validateStatus: (status: number) => status === 200 || status === 404,
+                ...VALIDATE,
                 transformResponse: (response: any) => response, 
                 responseType: "json"
             });

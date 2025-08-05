@@ -3,7 +3,7 @@ import {FilterLanguage} from "../filterLanguage.ts";
 import permission from "../../../../../models/permission.ts";
 import action from "../../../../../models/action.ts";
 import {Me} from "../../../../../stores/auth.ts";
-import {useNamespacesStore} from "../../../../../stores/namespaces.ts";
+import {useNamespacesStore} from "override/stores/namespaces.ts";
 
 const namespaceDashboardFilterKeys: Record<string, FilterKeyCompletions> = {
     flowId: new FilterKeyCompletions(

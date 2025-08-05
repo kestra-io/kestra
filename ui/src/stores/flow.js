@@ -8,7 +8,7 @@ import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
 import {useEditorStore} from "./editor";
-import {useNamespacesStore} from "./namespaces";
+import {useNamespacesStore} from "override/stores/namespaces";
 
 const textYamlHeader = {
     headers: {

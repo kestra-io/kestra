@@ -6,7 +6,7 @@ import {QUOTE, YamlAutoCompletion} from "../../services/autoCompletionProvider";
 import RegexProvider from "../../utils/regex";
 import {State} from "@kestra-io/ui-libs";
 import {usePluginsStore} from "../../stores/plugins";
-import {useNamespacesStore} from "../../stores/namespaces";
+import {useNamespacesStore} from "override/stores/namespaces";
 import {ComputedRef} from "vue";
 
 function distinct<T>(val: T[] | undefined): T[] {
@@ -20,11 +20,11 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     namespacesStore: ReturnType<typeof useNamespacesStore>;
     private readonly completionSource: ComputedRef<string | undefined> | undefined;
 
-    constructor(store: Store<Record<string, any>>, pluginsStore: ReturnType<typeof usePluginsStore>, completionSource?: ComputedRef<string | undefined>) {
+    constructor(store: Store<Record<string, any>>, pluginsStore: ReturnType<typeof usePluginsStore>, namespacesStore: ReturnType<typeof useNamespacesStore>, completionSource?: ComputedRef<string | undefined>) {
         super();
         this.store = store;
         this.pluginsStore = pluginsStore;
-        this.namespacesStore = useNamespacesStore();
+        this.namespacesStore = namespacesStore;
         this.completionSource = completionSource;
     }
 

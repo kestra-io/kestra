@@ -59,7 +59,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useMiscStore} from "../../stores/misc";
     import {EditorTabProps, useEditorStore} from "../../stores/editor";
-    import {useNamespacesStore} from "../../stores/namespaces";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
 
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";

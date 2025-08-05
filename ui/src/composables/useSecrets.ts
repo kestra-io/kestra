@@ -2,7 +2,7 @@ import {Store} from "vuex";
 import {EntityIterator, FetchResult} from "./entityIterator.ts";
 import {NamespaceIterator} from "./useNamespaces.ts";
 import {Me} from "../stores/auth";
-import {useNamespacesStore} from "../stores/namespaces";
+import {useNamespacesStore} from "override/stores/namespaces.ts";
 import permissions from "../models/permission";
 import actions from "../models/action";
 import {ref} from "vue";

@@ -6,12 +6,12 @@ export const EXECUTION = "EXECUTION" as const;
 
 type Flow = {
     subtype: typeof FLOW;
-    revision: number;
+    revision?: number;
 };
 
 type Execution = {
     subtype: typeof EXECUTION;
-    state: string;
+    state?: string;
 };
 
 export type Node = {

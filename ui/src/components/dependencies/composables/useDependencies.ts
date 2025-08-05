@@ -17,7 +17,7 @@ import cytoscape from "cytoscape";
 
 import {State, cssVariable} from "@kestra-io/ui-libs";
 
-import {NODE, EDGE, FLOW, EXECUTION, type Node, type Element} from "../utils/types";
+import {NODE, EDGE, FLOW, EXECUTION, type Node, type Edge, type Element} from "../utils/types";
 import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies";
 
 import {style} from "../utils/style";
@@ -358,10 +358,10 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
  *
  * @param response - The API response object containing `nodes` and `edges` arrays.
  * @param subtype - The node subtype, either `"FLOW"` or `"EXECUTION"`.
- * @returns An array of Cytoscape elements, each with a `data` property for nodes and edges.
+ * @returns An array of cytoscape elements with correctly typed nodes and edges.
  */
-export function transformResponse(response: { nodes: Array<{ uid: string; namespace: string; id: string; revision?: string }>; edges: Array<{ source: string; target: string }> }, subtype: typeof FLOW | typeof EXECUTION): Array<{ data: any }> {
-    const nodes = response.nodes.map(node => ({id: node.uid, type: NODE, flow: node.id, namespace: node.namespace, metadata: subtype === FLOW ? {subtype: FLOW, revision: node.revision} : {subtype: EXECUTION}}));
-    const edges = response.edges.map(edge => ({id: uuid(), type: EDGE, source: edge.source, target: edge.target}));
-    return [...nodes.map(node => ({data: node})), ...edges.map(edge => ({data: edge}))];
+export function transformResponse(response: { nodes: { uid: string; namespace: string; id: string; revision?: string }[]; edges: { source: string; target: string }[] }, subtype: typeof FLOW | typeof EXECUTION): Element[] {
+  const nodes: Node[] = response.nodes.map((node) => ({id: node.uid, type: NODE, flow: node.id, namespace: node.namespace, metadata: subtype === FLOW ? {subtype: FLOW, revision: node.revision ? Number(node.revision) : undefined} : {subtype: EXECUTION}}));
+  const edges: Edge[] = response.edges.map((edge) => ({id: uuid(), type: EDGE, source: edge.source, target: edge.target}));
+  return [...nodes.map((node) => ({data: node} as Element)), ...edges.map((edge) => ({data: edge} as Element))];
 }

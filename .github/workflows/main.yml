@@ -44,7 +44,7 @@ jobs:
       SONATYPE_GPG_PASSWORD: ${{ secrets.SONATYPE_GPG_PASSWORD }}
       SONATYPE_GPG_FILE: ${{ secrets.SONATYPE_GPG_FILE }}
       GH_PERSONAL_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
-
+      SLACK_RELEASES_WEBHOOK_URL: ${{ secrets.SLACK_RELEASES_WEBHOOK_URL }}
   end:
     runs-on: ubuntu-latest
     needs:

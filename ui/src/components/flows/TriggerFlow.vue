@@ -1,6 +1,6 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled()" @click="playgroundStore.runUntilTask()">
+        <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
             {{ $t("playground.run_all_tasks") }}
         </el-button>
         <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}" :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
@@ -153,7 +153,8 @@
             async loadDefinition() {
                 await this.executionsStore.loadFlowForExecution({
                     flowId: this.flowId,
-                    namespace: this.namespace
+                    namespace: this.namespace,
+                    store: true
                 });
             },
             reset() {

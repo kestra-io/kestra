@@ -469,9 +469,12 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
     private List<FlowWithTriggers> computeSchedulable(List<FlowWithSource> flows, List<Trigger> triggerContextsToEvaluate, ScheduleContextInterface scheduleContext) {
         List<String> flowToKeep = triggerContextsToEvaluate.stream().map(Trigger::getFlowId).toList();
+        List<String> flowIds = flows.stream().map(FlowId::uidWithoutRevision).toList();
+        Map<String, Trigger> triggerById = triggerContextsToEvaluate.stream().collect(Collectors.toMap(HasUID::uid, Function.identity()));
 
+        // delete trigger which flow has been deleted
         triggerContextsToEvaluate.stream()
-            .filter(trigger -> !flows.stream().map(FlowId::uidWithoutRevision).toList().contains(FlowId.uid(trigger)))
+            .filter(trigger -> !flowIds.contains(FlowId.uid(trigger)))
             .forEach(trigger -> {
                 try {
                     this.triggerState.delete(trigger);
@@ -493,12 +496,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                 .map(abstractTrigger -> {
                     RunContext runContext = runContextFactory.of(flow, abstractTrigger);
                     ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
-                    Trigger triggerContext = null;
-                    Trigger lastTrigger = triggerContextsToEvaluate
-                        .stream()
-                        .filter(triggerContextToFind -> triggerContextToFind.uid().equals(Trigger.uid(flow, abstractTrigger)))
-                        .findFirst()
-                        .orElse(null);
+                    Trigger triggerContext;
+                    Trigger lastTrigger = triggerById.get(Trigger.uid(flow, abstractTrigger));
                     // If a trigger is not found in triggers to evaluate, then we ignore it
                     if (lastTrigger == null) {
                         return null;

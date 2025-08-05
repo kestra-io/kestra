@@ -5,6 +5,10 @@ import {useUrlSearchParams} from "@vueuse/core"
 import * as VueFlowUtils from "@kestra-io/ui-libs/vue-flow-utils"
 import {Execution, useExecutionsStore} from "./executions";
 import Inputs from "../utils/inputs";
+import {useRoute, useRouter} from "vue-router";
+import {State} from "@kestra-io/ui-libs";
+import {useToast} from "../utils/toast";
+import {useI18n} from "vue-i18n";
 
 interface ExecutionWithGraph extends Execution {
     graph?: VueFlowUtils.FlowGraph;
@@ -24,6 +28,27 @@ export const usePlaygroundStore = defineStore("playground", () => {
         }
     })
 
+    const route = useRoute();
+    const router = useRouter();
+
+    function navigateToEdit(runUntilTaskId?: string, runDownstreamTasks?: boolean) {
+        const flowParsed = store.state.flow.flow;
+        router.push({
+            name: "flows/update",
+            params: {
+                id: flowParsed.id,
+                namespace: flowParsed.namespace,
+                tab: "edit",
+                tenant: route.params.tenant,
+            },
+            query: {
+                playground: "on",
+                runUntilTaskId,
+                runDownstreamTasks: runDownstreamTasks ? "true" : undefined,
+            }
+        });
+    }
+
     const executions = ref<ExecutionWithGraph[]>([])
     function addExecution(execution: ExecutionWithGraph, graph: VueFlowUtils.FlowGraph) {
         execution.graph = graph
@@ -38,7 +63,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     const store = useStore();
     const executionsStore = useExecutionsStore();
 
-    const taskIdToTaskRunIdMap: Record<string, string>  = {};
+    const taskIdToTaskRunIdMap: Map<string, string>  = new Map();
 
     async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any) {
         // if all tasks prior to current task in the graph are identical
@@ -46,10 +71,12 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // we can skip them and start the execution at the current task using replayExecution()
         if (taskId && executions.value.length && graph
             && executions.value[0].graph
-            && VueFlowUtils.areTasksIdenticalInGraphUntilTask(executions.value[0].graph, graph, taskId)) {
+            && VueFlowUtils.areTasksIdenticalInGraphUntilTask(executions.value[0].graph, graph, taskId)
+            && taskIdToTaskRunIdMap.has(taskId)) {
             return await executionsStore.replayExecution({
                 executionId: executions.value[0].id,
-                taskRunId: taskIdToTaskRunIdMap[taskId],
+                taskRunId: taskIdToTaskRunIdMap.get(taskId),
+                revision: store.state.flow.flow.revision,
                 breakpoints,
             });
         }
@@ -86,14 +113,86 @@ export const usePlaygroundStore = defineStore("playground", () => {
         return {nextTasksIds, graph};
     }
 
-    async function runUntilTask(taskId?: string, runDownstreamTasks = false) {
-        await store.dispatch("flow/saveAll")
+    const latestExecution = computed(() => executions.value[0]);
 
+    const nonFinalStates = [
+        State.KILLING,
+        State.RUNNING,
+        State.RESTARTED,
+        State.CREATED,
+    ]
+
+    const executionState = computed(() => {
+        return latestExecution.value?.state.current;
+    })
+
+    const readyToStartPure = computed(() => {
+        return !latestExecution.value || !nonFinalStates.includes(executionState.value)
+    })
+
+    const readyToStart = ref(readyToStartPure.value);
+    watch(readyToStartPure, (newValue) => {
+        if(newValue) {
+            setTimeout(() => {
+                readyToStart.value = newValue;
+            }, 1000);
+        } else {
+            readyToStart.value = newValue
+        }
+    });
+
+    const toast = useToast();
+
+    function runFromQuery(){
+        if(route.query.runUntilTaskId) {
+            const {runUntilTaskId, runDownstreamTasks} = route.query;
+            runUntilTask(runUntilTaskId.toString(), Boolean(runDownstreamTasks));
+
+            // remove the query parameters to avoid running the same task again
+            router.replace({
+                name: route.name,
+                params: route.params,
+                query: {
+                    ...route.query,
+                    runUntilTaskId: undefined,
+                    runDownstreamTasks: undefined,  // remove the query parameter
+                }
+            });
+        }
+    }
+
+    const {t} = useI18n();
+
+    async function runUntilTask(taskId?: string, runDownstreamTasks = false) {
+        if(readyToStart.value === false) {
+            console.warn("Playground is not ready to start, latest execution is still in progress");
+            return
+        }
+
+        readyToStart.value = false;
+
+        if(store.state.flow.isCreating){
+            toast.confirm(
+                t("playground.confirm_create"),
+                async () => {
+                    await store.dispatch("flow/saveAll");
+                    navigateToEdit(taskId, runDownstreamTasks);
+                }
+            );
+            return;
+        }
+
+        await store.dispatch("flow/saveAll")
         // get the next task id to break on. If current task is provided to breakpoint,
         // the task specified by the user will not be executed.
         const {nextTasksIds, graph} = await getNextTaskIds(runDownstreamTasks ? undefined : taskId) ?? {};
 
         const {data: execution} = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph);
+
+        // don't keep taskRunIds from previous executions
+        // because of https://github.com/kestra-io/kestra/issues/10462
+        taskIdToTaskRunIdMap.clear();
+
         executionsStore.execution = execution;
 
         addExecution(execution, graph);
@@ -104,7 +203,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         if(execution.taskRunList){
             for(const taskRun of execution.taskRunList) {
                 // map taskId to taskRunId for later use in replayExecution()
-                taskIdToTaskRunIdMap[taskRun.taskId] = taskRun.id;
+                taskIdToTaskRunIdMap.set(taskRun.taskId, taskRun.id);
             }
         }
         if (index !== -1) {
@@ -126,9 +225,12 @@ export const usePlaygroundStore = defineStore("playground", () => {
     return {
         enabled,
         dropdownOpened,
+        readyToStart,
         executions,
-        latestExecution: computed(() => executions.value[0]),
+        latestExecution,
         clearExecutions,
-        runUntilTask
+        runUntilTask,
+        runFromQuery,
+        executionState
     }
 })

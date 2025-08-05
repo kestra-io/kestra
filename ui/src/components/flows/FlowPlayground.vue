@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, markRaw, watch, onUnmounted} from "vue";
+    import {computed, ref, markRaw, watch, onUnmounted, onMounted} from "vue";
     import {useI18n} from "vue-i18n";
     import ChartTimelineIcon from "vue-material-design-icons/ChartTimeline.vue";
     import HistoryIcon from "vue-material-design-icons/History.vue";
@@ -98,6 +98,10 @@
     });
 
     const activeTab = ref(tabs.value[0]);
+
+    onMounted(() => {
+        playgroundStore.runFromQuery();
+    });
 
     onUnmounted(() => {
         executionsStore.closeSSE();
@@ -215,7 +219,7 @@
             border: none;
             border-radius: 4px;
             &.activeTab {
-                color: var(--ks-content-primary);
+                color: $base-white;
                 background-color: $base-blue-500;
             }
         }

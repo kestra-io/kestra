@@ -14,19 +14,32 @@
             @expand-subflow="onExpandSubflow"
             @swapped-task="onSwappedTask"
         />
+        <div v-else-if="invalidGraph">
+            <el-alert
+                :title="t('topology-graph.invalid')"
+                type="error"
+                class="invalid-graph"
+                :closable="false"
+            >
+                {{ t('topology-graph.invalid_description') }}
+            </el-alert>
+        </div>
     </div>
 </template>
 
 <script lang="ts" setup>
     import {computed, ref} from "vue";
+    import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
     import {Utils} from "@kestra-io/ui-libs";
     import LowCodeEditor from "./LowCodeEditor.vue";
 
     const store = useStore();
+    const {t} = useI18n();
 
     const flowYaml = computed(() => store.state.flow.flowYaml);
     const flowGraph = computed(() => store.state.flow.flowGraph);
+    const invalidGraph = computed(() => store.state.flow.invalidGraph);
     const flowId = computed(() => store.state.flow.id);
     const namespace = computed(() => store.state.flow.namespace);
     const expandedSubflows = computed<string[]>(() => store.state.flow.expandedSubflows);
@@ -87,5 +100,9 @@
     }
     :deep(.vue-flow__panel.bottom) {
         bottom: 2rem !important;
+    }
+    .invalid-graph {
+        margin: 1rem;
+        width: auto;
     }
 </style>

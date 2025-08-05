@@ -132,7 +132,7 @@ public class Execution implements DeletedInterface, TenantInterface {
      * @param labels The Flow labels.
      * @return a new {@link Execution}.
      */
-    public static Execution newExecution(final Flow flow, final List<Label> labels) {
+    public static Execution newExecution(final FlowInterface flow, final List<Label> labels) {
         return newExecution(flow, null, labels, Optional.empty());
     }
 

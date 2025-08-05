@@ -80,6 +80,7 @@
                                 :input="true"
                                 :navbar="false"
                                 :model-value="computedDebugValue"
+                                @update:model-value="editorValue = $event"
                                 @confirm="onDebugExpression($event)"
                                 class="w-100"
                             />
@@ -88,8 +89,9 @@
                                 type="primary"
                                 @click="
                                     onDebugExpression(
-                                        debugEditor.editor.getValue(),
+                                        editorValue.length > 0 ? editorValue : computedDebugValue,
                                     )
+
                                 "
                                 class="mt-3"
                             >
@@ -163,8 +165,9 @@
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
 
     import Editor from "../../inputs/Editor.vue";
+    const editorValue = ref("");
     const debugCollapse = ref("");
-    const debugEditor = ref(null);
+    const debugEditor = ref<InstanceType<typeof Editor>>();
     const debugExpression = ref("");
     const computedDebugValue = computed(() => {
         const formatTask = (task) => {
@@ -422,7 +425,7 @@
     const displayVarValue = () =>
         isFile(selectedValue.value) ||
         selectedValue.value !== debugExpression.value;
-    
+
     const leftWidth = ref(70);
     const startDragging = (event: MouseEvent) => {
         const startX = event.clientX;

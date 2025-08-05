@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, computed, inject, ref, provide} from "vue";
+    import {onMounted, computed, inject, ref, provide, onActivated} from "vue";
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
     import {usePluginsStore} from "../../../stores/plugins";
@@ -72,6 +72,10 @@
         const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf;
         return !complexObject
     }
+
+    onActivated(() => {
+        pluginsStore.updateDocumentation();
+    });
 
     function onTaskUpdateField(key: string, val: any) {
         const realValue = val === null || val === undefined ? undefined :
@@ -160,10 +164,7 @@
         task: parsedFlow.value,
     })
 
-
     const fieldsFromSchemaTop = computed(() => MAIN_KEYS.map(key => getFieldFromKey(key, "main")))
-
-
 
     const fieldsFromSchemaRest = computed(() => {
         return Object.keys(pluginsStore.flowRootProperties ?? {})

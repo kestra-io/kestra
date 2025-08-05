@@ -275,7 +275,9 @@
       "zoom-in": "Zoom in",
       "zoom-out": "Zoom out",
       "zoom-reset": "Reset zoom",
-      "zoom-fit": "Fit"
+      "zoom-fit": "Fit",
+      "invalid": "Graph error",
+      "invalid_description": "An error occurred while loading the graph. Please check the source code for errors."
     },
     "show task logs": "Show task logs",
     "show task condition": "Show task condition",
@@ -1462,7 +1464,8 @@
       "run_this_task": "Run this task",
       "run_task_and_downstream": "Run task & downstream",
       "run_all_tasks": "Run All Tasks",
-      "history": "Last 10 runs"
+      "history": "Last 10 runs",
+      "confirm_create": "You cannot run the playground while creating a flow. Launching a playground run will create the flow."
     },
     "submit": "Submit",
     "to toggle": "to toggle",
@@ -1470,6 +1473,11 @@
     "reject": "Reject",
     "last modified": "Last modified",
     "run task in playground": "Run task in playground",
+    "task is running": "Task is running",
+    "task was successful": "Task was successful",
+    "task failed": "Task failed",
+    "task was skipped": "Task was skipped",
+    "task sent a warning": "Task sent a warning",
     "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
     "no_file_choosen": "No file chosen"
   }

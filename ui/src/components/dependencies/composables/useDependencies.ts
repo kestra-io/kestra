@@ -17,7 +17,7 @@ import cytoscape from "cytoscape";
 
 import {State, cssVariable} from "@kestra-io/ui-libs";
 
-import {NODE, EDGE, FLOW, EXECUTION, type Node, type Element, /*getDependencies*/} from "../../../../scripts/product/dependencies";
+import {NODE, EDGE, FLOW, EXECUTION, type Node, type Element} from "../utils/types";
 
 import {style} from "../utils/style";
 const SELECTED = "selected", FADED = "faded",  HOVERED = "hovered", EXECUTIONS = "executions";

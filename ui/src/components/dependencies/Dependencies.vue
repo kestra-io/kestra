@@ -33,7 +33,7 @@
     import Empty from "../layout/empty/Empty.vue";
 
     import {useDependencies} from "./composables/useDependencies";
-    import {FLOW, EXECUTION} from "../../../scripts/product/dependencies";
+    import {FLOW, EXECUTION} from "./utils/types";
 
     const PANEL = {size: "70%", min: "30%", max: "80%"};
 

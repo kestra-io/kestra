@@ -55,7 +55,7 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import {NODE, FLOW, EXECUTION, type Node} from "../../../../scripts/product/dependencies";
+    import {NODE, FLOW, EXECUTION, type Node} from "../utils/types";
 
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
     const props = defineProps<{

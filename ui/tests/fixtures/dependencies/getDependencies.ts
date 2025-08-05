@@ -1,39 +1,6 @@
 import {v4 as uuid} from "uuid";
 
-import {getRandomFlowID} from "./flow";
-
-export const NODE = "NODE" as const;
-export const EDGE = "EDGE" as const;
-
-export const FLOW = "FLOW" as const;
-export const EXECUTION = "EXECUTION" as const;
-
-type Flow = {
-    subtype: typeof FLOW;
-    revision: number;
-};
-
-type Execution = {
-    subtype: typeof EXECUTION;
-    state: string;
-};
-
-export type Node = {
-    id: string;
-    type: "NODE";
-    flow: string;
-    namespace: string;
-    metadata: Flow | Execution;
-};
-
-type Edge = {
-    id: string;
-    type: "EDGE";
-    source: string;
-    target: string;
-};
-
-export type Element = { data: Node } | { data: Edge };
+import {NODE, EDGE, FLOW, EXECUTION, type Node, type Edge, type Element} from "../../../src/components/dependencies/utils/types";
 
 type DependencyOptions = {
     roots?: number;
@@ -42,6 +9,8 @@ type DependencyOptions = {
     total?: number;
     subtype?: typeof FLOW | typeof EXECUTION;
 };
+
+import {getRandomFlowID} from "../../../scripts/product/flow";
 
 const namespaces = ["company", "team", "github", "qa", "system", "dev", "test", "data", "infra", "cloud", "backend", "frontend", "api", "services", "database", "mobile", "security"];
 

@@ -2,11 +2,13 @@
     <el-select
         class="fit-text"
         :model-value="value"
-        @update:model-value="onInput"
+        @update:model-value="$emit('update:modelValue', $event)"
         :disabled="readonly"
         clearable
         :placeholder="$t('Select namespace')"
         :persistent="false"
+        remote
+        :remote-method="onInput"
         filterable
         :allow-create="allowCreate"
         default-first-option
@@ -25,14 +27,12 @@
     import {mapStores} from "pinia";
     import {useMiscStore} from "../../../stores/misc";
     import _uniqBy from "lodash/uniqBy";
-    import permission from "../../../models/permission";
-    import action from "../../../models/action";
 
     export default {
         props: {
             dataType: {
                 type: String,
-                required: true,
+                default: undefined,
             },
             value: {
                 type: String,
@@ -60,19 +60,7 @@
             }
         },
         emits: ["update:modelValue"],
-        created() {
-            if (
-                this.user &&
-                this.user.hasAnyActionOnAnyNamespace(
-                    permission.NAMESPACE,
-                    action.READ,
-                )
-            ) {
-                this.load();
-            }
-        },
         computed: {
-            ...mapState("namespace", ["datatypeNamespaces"]),
             ...mapState("auth", ["user"]),
             ...mapStores(useMiscStore),
         },
@@ -85,8 +73,7 @@
         methods: {
             onInput(value) {
                 this.$emit("update:modelValue", value);
-                this.localNamespaceInput = value;
-                this.load();
+                this.load(value);
             },
             groupNamespaces(namespaces) {
                 let res = [];
@@ -119,21 +106,19 @@
                     (ns) => namespaces.includes(ns.code) || this.isFilter,
                 );
             },
-            async load() {
+            async load(value) {
                 try {
-                    await this.$store.dispatch("namespace/loadNamespacesForDatatype", {
-                        dataType: this.dataType
-                    });
-
-                    let namespaces = [...this.datatypeNamespaces];
-
+                    let namespaces;
                     if (this.all) {
-                        const allNamespaces = await this.$store.dispatch("namespace/autocomplete", {
-                            q: this.value || "",
+                        namespaces = await this.$store.dispatch("namespace/autocomplete", {
+                            q: value || "",
                             ids: [],
                             apiUrl: undefined
                         });
-                        namespaces = [...new Set([...namespaces, ...allNamespaces])];
+                    } else {
+                        namespaces = await this.$store.dispatch("namespace/loadNamespacesForDatatype", {
+                            dataType: this.dataType
+                        });
                     }
 
                     this.groupedNamespaces = this.groupNamespaces(namespaces)

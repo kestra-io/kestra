@@ -91,7 +91,6 @@
                     <namespace-select
                         v-model="secret.namespace"
                         :readonly="secret.update"
-                        data-type="flow"
                         :include-system-namespace="true"
                         all
                     />

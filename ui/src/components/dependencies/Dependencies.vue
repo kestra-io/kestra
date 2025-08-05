@@ -51,7 +51,7 @@
     const {OPTIONS, loading, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE);
 
     const nodes = computed((): { data: Node }[] => {
-        const elements = OPTIONS.elements;
+        const elements = OPTIONS?.elements;
 
         if (!elements || !Array.isArray(elements)) return [];
 

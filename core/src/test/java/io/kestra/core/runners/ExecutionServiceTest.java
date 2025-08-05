@@ -344,7 +344,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause.yaml"})
+    @LoadFlows({"flows/valids/pause-test.yaml"})
     void resumePausedToRunning() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test");
         Flow flow = flowRepository.findByExecution(execution);
@@ -364,7 +364,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause.yaml"})
+    @LoadFlows({"flows/valids/pause-test.yaml"})
     void resumePausedToKilling() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test");
         Flow flow = flowRepository.findByExecution(execution);

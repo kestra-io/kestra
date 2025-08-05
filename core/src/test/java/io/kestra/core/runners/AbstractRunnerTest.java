@@ -312,7 +312,7 @@ public abstract class AbstractRunnerTest {
     }
 
     @RetryingTest(5) // flaky on MySQL
-    @LoadFlows({"flows/valids/pause.yaml"})
+    @LoadFlows({"flows/valids/pause-test.yaml"})
     public void pauseRun() throws Exception {
         pauseTest.run(runnerUtils);
     }

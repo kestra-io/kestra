@@ -16,6 +16,6 @@ abstract public class AbstractServerCommand extends AbstractCommand implements S
     }
 
     protected static int defaultWorkerThread() {
-        return Runtime.getRuntime().availableProcessors() * 4;
+        return Runtime.getRuntime().availableProcessors() * 8;
     }
 }

@@ -498,7 +498,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         )
     }
 
-    const loadFlowForExecution = (options: { namespace: string; flowId: string; revision?: number, store?: boolean }) => {
+    const loadFlowForExecution = (options: { namespace: string; flowId: string; revision?: number, store: boolean }) => {
         const revision = options.revision ? `?revision=${options.revision}` : "";
         return store.$http.get(`${apiUrl(store)}/executions/flows/${options.namespace}/${options.flowId}${revision}`)
             .then(response => {

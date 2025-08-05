@@ -153,7 +153,8 @@
             async loadDefinition() {
                 await this.executionsStore.loadFlowForExecution({
                     flowId: this.flowId,
-                    namespace: this.namespace
+                    namespace: this.namespace,
+                    store: true
                 });
             },
             reset() {

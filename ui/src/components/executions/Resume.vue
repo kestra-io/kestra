@@ -102,7 +102,8 @@
             loadDefinition() {
                 this.executionsStore.loadFlowForExecution({
                     flowId: this.execution.flowId,
-                    namespace: this.execution.namespace
+                    namespace: this.execution.namespace,
+                    store: true
                 });
             },
         },

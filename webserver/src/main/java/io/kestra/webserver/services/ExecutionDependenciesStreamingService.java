@@ -88,6 +88,7 @@ public class ExecutionDependenciesStreamingService {
 
                                 // end the flux if there are no more dependencies to follow
                                 if (consumer.dependencies().isEmpty()) {
+                                    sink.next(Event.of(ExecutionStatusEvent.of(Execution.builder().id(executionId).build())).id("end-all"));
                                     sink.complete();
                                 }
                             } catch (Exception e) {

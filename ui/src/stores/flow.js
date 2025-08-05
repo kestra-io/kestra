@@ -9,6 +9,8 @@ import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
 import {useEditorStore} from "./editor";
 
+import {transformResponse} from "../components/dependencies/composables/useDependencies"
+
 const textYamlHeader = {
     headers: {
         "Content-Type": "application/x-yaml"
@@ -403,6 +405,14 @@ export default {
                 commit("setFlow", response.data);
 
                 return response.data;
+            })
+        },
+        loadDependencies(_, options) {
+            return this.$http.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}/dependencies?expandAll=true`).then(response => {
+                return {
+                    data: transformResponse(response.data, options.subtype),
+                    count: response.data.nodes ? [...new Set(response.data.nodes.map((r) => r.uid))].length : 0
+                };
             })
         },
         deleteFlowAndDependencies({getters, dispatch}){

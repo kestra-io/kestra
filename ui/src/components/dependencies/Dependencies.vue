@@ -1,5 +1,6 @@
 <template>
-    <el-splitter class="dependencies">
+    <Empty v-if="!loading && !getElements().length" type="dependencies" />
+    <el-splitter v-else class="dependencies">
         <el-splitter-panel id="graph" v-bind="PANEL">
             <div v-loading="loading" ref="container" />
 
@@ -20,17 +21,19 @@
         </el-splitter-panel>
 
         <el-splitter-panel id="table">
-            <Table :nodes @select="selectNode" :selected="selectedNodeID" />
+            <Table :elements="getElements()" @select="selectNode" :selected="selectedNodeID" />
         </el-splitter-panel>
     </el-splitter>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
+    import {ref} from "vue";
 
     import Table from "./components/Table.vue";
+    import Empty from "../layout/empty/Empty.vue";
+
     import {useDependencies} from "./composables/useDependencies";
-    import {FLOW, EXECUTION, NODE, type Node} from "../../../scripts/product/dependencies";
+    import {FLOW, EXECUTION} from "../../../scripts/product/dependencies";
 
     const PANEL = {size: "70%", min: "30%", max: "80%"};
 
@@ -48,15 +51,9 @@
     const SUBTYPE = route.name === "flows/update" ? FLOW : EXECUTION;
 
     const container = ref(null);
-    const {OPTIONS, loading, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE);
+    const initialNodeID = SUBTYPE === FLOW ? route.params.id : route.params.flowId;
 
-    const nodes = computed((): { data: Node }[] => {
-        const elements = OPTIONS?.value.elements;
-
-        if (!elements || !Array.isArray(elements)) return [];
-
-        return elements.filter((element): element is { data: Node } => element.data.type === NODE);
-    });
+    const {getElements, loading, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE, initialNodeID as string, route.params);
 </script>
 
 <style scoped lang="scss">

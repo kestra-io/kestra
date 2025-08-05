@@ -1,32 +1,31 @@
-import {onMounted, ref} from "vue";
+import {onMounted, onBeforeUnmount, nextTick, watch, ref} from "vue";
+
+import {useStore} from "vuex";
+
+import {useCoreStore} from "../../../stores/core";
+import {useExecutionsStore} from "../../../stores/executions";
+
+import {useI18n} from "vue-i18n";
 
 import type {Ref} from "vue";
+
+import type {RouteParams} from "vue-router";
+
+import {v4 as uuid} from "uuid";
 
 import cytoscape from "cytoscape";
 
 import {State, cssVariable} from "@kestra-io/ui-libs";
 
-import {FLOW, EXECUTION, type Node, type Element, getDependencies} from "../../../../scripts/product/dependencies";
+import {NODE, EDGE, FLOW, EXECUTION, type Node, type Element, /*getDependencies*/} from "../../../../scripts/product/dependencies";
 
 import {style} from "../utils/style";
 const SELECTED = "selected", FADED = "faded",  HOVERED = "hovered", EXECUTIONS = "executions";
 
-/**
- * Builds cytoscape initialization options with graph elements and interaction settings.
- * The container should be set dynamically before initialization.
- *
- * @param subtype - The dependency subtype, either `"FLOW"` or `"EXECUTION"`.
- * @returns A cytoscape options object excluding the container, with elements populated.
- *
- * @see {@link https://js.cytoscape.org/#core | Cytoscape core options documentation}
- */
-export function options(subtype: typeof FLOW | typeof EXECUTION): { elements: Element[] } & Omit<cytoscape.CytoscapeOptions, "container" | "elements"> {
-    return {
-        elements: getDependencies({subtype}),
-        minZoom: 0.1,
-        maxZoom: 2,
-    };
-}
+const options: Omit<cytoscape.CytoscapeOptions, "container" | "elements"> & { elements?: Element[] } = {
+  minZoom: 0.1,
+  maxZoom: 2,
+};
 
 /**
  * Layout options for the COSE layout algorithm used in cytoscape.
@@ -191,16 +190,24 @@ function hoverHandler(cy: cytoscape.Core): void {
 }
 
 /**
- * Initializes a cytoscape instance inside the provided container element,
- * applies styling and sizing rules, and sets up interactive behaviors.
+ * Initializes and manages a Cytoscape instance within a Vue component.
  *
- * @param container - A Vue ref to an HTML element which will host the cytoscape graph.
- * @param subtype - The dependency subtype, either `"FLOW"` or `"EXECUTION"`. Defaults to `"FLOW"`.
+ * @param container - Vue ref pointing to the DOM element that hosts the Cytoscape graph.
+ * @param subtype - Dependency subtype, either `"FLOW"` or `"EXECUTION"`. Defaults to `"FLOW"`.
+ * @param initialNodeID - Optional ID of the node to preselect after layout completes.
+ * @param params - Vue Router params, expected to include `id` and `namespace`.
+ * @returns An object with element getters, loading state, selected node ID,
+ *          selection helpers, and control handlers.
  */
-export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION = FLOW) {
-    let cy: cytoscape.Core;
+export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION = FLOW, initialNodeID: string, params: RouteParams) {
+    const store = useStore();
 
-    const OPTIONS = ref(options(subtype));
+    const coreStore = useCoreStore();
+    const executionsStore = useExecutionsStore();
+
+    const {t} = useI18n({useScope: "global"});
+
+    let cy: cytoscape.Core;
 
     const loading = ref(true);
 
@@ -221,10 +228,16 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         }
     };
 
-    onMounted(() => {
+    let elements: { data: cytoscape.ElementDefinition[]; count: number }  = {data: [], count: 0};
+    onMounted(async () => {
         if (!container.value) return;
 
-        cy = cytoscape({container: container.value, layout, ...OPTIONS.value, style});
+        // elements = {data: getDependencies({subtype: FLOW})} // Test code only — real data loading is already implemented. Uncomment for local testing or development with mock data.
+        elements = subtype === FLOW ? await store.dispatch("flow/loadDependencies", {id: params.id, namespace: params.namespace, subtype}) : await store.dispatch("flow/loadDependencies", {id: params.flowId, namespace: params.namespace, subtype});
+
+        if(subtype === EXECUTION) nextTick(() => openSSE());
+
+        cy = cytoscape({container: container.value, layout, ...options, style, elements: elements.data});
 
         // Dynamically size nodes based on connectivity
         setNodeSizes(cy);
@@ -251,11 +264,11 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
             selectHandler(cy, node, selectedNodeID, subtype);
         });
 
-        // Preselect the first node after layout completes
+        // Preselect the proper node after layout completes
         cy.on("layoutstop", () => {
             loading.value = false;
 
-            const node = cy.nodes()[0];
+            const node = cy.nodes().filter((n) => n.data("flow") === initialNodeID);
 
             if (!node) return;
 
@@ -263,8 +276,64 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         });
     });
 
+    const sse = ref();
+    const messages = ref<Record<string, any>[]>([]);
+
+    watch(messages, (newMessages) => {
+        if (newMessages.length <= 0) return;
+
+        newMessages.forEach((message: Record<string, any>) => {
+            const matched = cy.nodes().filter((element) => element.data("id") === `${message.tenantId}_${message.namespace}_${message.flowId}`);
+
+            if (matched.nonempty()) {
+                matched.forEach((node) => {
+                    const state = message.state.current;
+
+                    node.data({...node.data(), metadata: {...node.data("metadata"), state}});
+                    node.style({"background-color": State.getStateColor(state), "border-color": State.getStateColor(state)});
+                });
+            }
+        });
+    },
+    {deep: true},
+    );
+
+    const openSSE = () => {
+        if (subtype !== EXECUTION) return;
+
+        closeSSE();
+
+        sse.value = executionsStore.followExecutionDependencies({id: params.id as string, expandAll: true});
+        sse.value.onmessage = (event: MessageEvent) => {
+            const isEnd = event && event.lastEventId === "end-all";
+
+            if (isEnd) closeSSE();
+
+            const message = JSON.parse(event.data);
+
+            if (!message.state) return;
+
+            messages.value.push(message);
+        };
+
+        sse.value.onerror = () => {
+            coreStore.message = {variant: "error", title: t("error"), message: t("something_went_wrong.loading_execution")};
+        };
+    };
+
+    const closeSSE = () => {
+        if (!sse.value) return;
+
+        sse.value.close();
+        sse.value = undefined;
+    };
+
+    onBeforeUnmount(() => {
+        if (subtype === EXECUTION) closeSSE();
+    });
+
     return {
-        OPTIONS,
+        getElements: () => elements.data,
         loading,
         selectedNodeID,
         selectNode,
@@ -279,4 +348,18 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
             fit: () => fit(cy)
         }
     };
+}
+
+/**
+ * Transforms an API response containing nodes and edges into
+ * Cytoscape-compatible elements with the given subtype.
+ *
+ * @param response - The API response object containing `nodes` and `edges` arrays.
+ * @param subtype - The node subtype, either `"FLOW"` or `"EXECUTION"`.
+ * @returns An array of Cytoscape elements, each with a `data` property for nodes and edges.
+ */
+export function transformResponse(response: { nodes: Array<{ uid: string; namespace: string; id: string; revision?: string }>; edges: Array<{ source: string; target: string }> }, subtype: typeof FLOW | typeof EXECUTION): Array<{ data: any }> {
+    const nodes = response.nodes.map(node => ({id: node.uid, type: NODE, flow: node.id, namespace: node.namespace, metadata: subtype === FLOW ? {subtype: FLOW, revision: node.revision} : {subtype: EXECUTION}}));
+    const edges = response.edges.map(edge => ({id: uuid(), type: EDGE, source: edge.source, target: edge.target}));
+    return [...nodes.map(node => ({data: node})), ...edges.map(edge => ({data: edge}))];
 }

@@ -29,11 +29,11 @@
                     </section>
 
                     <section id="right">
-                        <span v-if="row.data.metadata.subtype === FLOW">
+                        <span v-if="row.data.metadata.subtype === FLOW && row.data.metadata.revision">
                             {{ t("revision") }}: {{ row.data.metadata.revision }}
                         </span>
                         <Status
-                            v-else-if="row.data.metadata.subtype === EXECUTION"
+                            v-else-if="row.data.metadata.subtype === EXECUTION && row.data.metadata.state"
                             :status="row.data.metadata.state"
                             size="small"
                         />
@@ -47,17 +47,19 @@
 <script setup lang="ts">
     import {watch, nextTick, ref, computed} from "vue";
 
+    import type cytoscape from "cytoscape";
+
     import Link from "./Link.vue";
     import Status from "../../Status.vue";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import {FLOW, EXECUTION, type Node} from "../../../../scripts/product/dependencies";
+    import {NODE, FLOW, EXECUTION, type Node} from "../../../../scripts/product/dependencies";
 
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
     const props = defineProps<{
-        nodes: { data: Node }[];
+        elements: cytoscape.ElementDefinition[];
         selected: Node["id"] | undefined;
     }>();
 
@@ -81,12 +83,14 @@
     const results = computed(() => {
         const f = search.value.trim().toLowerCase();
 
-        if (!f) return props.nodes;
+        const NODES = props.elements.filter(({data}) => data.type === NODE);
 
-        return props.nodes.filter(({data}) => {
+        if (!f) return NODES;
+
+        return NODES.filter(({data}) => {
             const {flow, namespace} = data;
 
-            return (flow.toLowerCase().includes(f) || namespace.toLowerCase().includes(f));
+            return (flow?.toLowerCase().includes(f) || namespace?.toLowerCase().includes(f));
         });
     });
 </script>

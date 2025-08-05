@@ -1,9 +1,9 @@
 <template>
     <RouterLink v-if="to" :to>
-        <code class="link">{{ label }}</code>
+        <code class="link">{{ props.node.flow }}</code>
     </RouterLink>
 
-    <code v-else class="link">{{ label }}</code>
+    <code v-else class="link">{{ props.node.flow }}</code>
 </template>
 
 <script setup lang="ts">
@@ -15,19 +15,7 @@
 
     const to = computed(() => {
         const base = {namespace: props.node.namespace};
-
-        if (props.subtype === EXECUTION) {
-            return {name: "executions/update", params: {...base, flowId: props.node.flow, id: props.node.id}};
-        } else if (props.subtype === FLOW) {
-            return {name: "flows/update", params: {...base, id: props.node.flow}};
-        }
-
-        // If no valid subtype, return undefined to avoid navigation
-        return undefined;
-    });
-
-    const label = computed(() => {
-        return props.subtype === EXECUTION ? props.node.id.slice(0, 8) : props.node.flow;
+        return {name: "flows/update", params: {...base, id: props.node.flow}};
     });
 </script>
 

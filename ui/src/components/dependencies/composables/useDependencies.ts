@@ -4,10 +4,12 @@ import type {Ref} from "vue";
 
 import cytoscape from "cytoscape";
 
+import {State, cssVariable} from "@kestra-io/ui-libs";
+
 import {FLOW, EXECUTION, type Node, type Element, getDependencies} from "../../../../scripts/product/dependencies";
 
 import {style} from "../utils/style";
-const SELECTED = "selected", FADED = "faded",  HOVERED = "hovered";
+const SELECTED = "selected", FADED = "faded",  HOVERED = "hovered", EXECUTIONS = "executions";
 
 /**
  * Builds cytoscape initialization options with graph elements and interaction settings.
@@ -79,12 +81,48 @@ export function setNodeSizes(cy: cytoscape.Core, baseSize = 20, scale = 2, maxSi
 }
 
 /**
+ * Retrieves the execution state color for a given node.
+ *
+ * - Looks up the node’s `metadata.state` value.
+ * - Uses the State service to resolve the corresponding color.
+ * - Returns a fallback color if no state is defined.
+ *
+ * @param node - The cytoscape node element to evaluate.
+ * @returns The color associated with the node’s execution state, or a fallback if missing.
+ */
+function getStateColor(node: cytoscape.NodeSingular): string {
+    const state = node.data("metadata")?.state;
+    return state ? State.getStateColor(state) : cssVariable("--ks-dependencies-node-background")!;
+}
+
+/**
+ * Applies execution state colors to all nodes in the cytoscape graph.
+ *
+ * - Removes all custom classes from nodes and edges.
+ * - Sets each node’s background and border color based on its execution state.
+ *
+ * @param cy - The cytoscape core instance managing the graph.
+ */
+function setExecutionNodeColors(cy: cytoscape.Core): void {
+    // Remove all existing custom classes from the graph
+    clearClasses(cy);
+
+    // Apply state-based colors to nodes
+    cy.nodes().forEach((node) => {
+        node.style({
+            "background-color": getStateColor(node),
+            "border-color": getStateColor(node)
+        });
+    });
+}
+
+/**
  * Removes the default or specified classes from all elements in the cytoscape instance.
  *
  * @param cy - The cytoscape core instance containing the graph.
- * @param classes - An array of class names to remove (default: ["selected", "faded", "hovered"]).
+ * @param classes - An array of class names to remove (default: ["selected", "faded", "hovered", "executions"]).
  */
-export function clearClasses(cy: cytoscape.Core, classes: string[] = ["selected", "faded", "hovered"]): void {
+export function clearClasses(cy: cytoscape.Core, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
     cy.elements().removeClass(classes.join(" "));
 }
 
@@ -101,29 +139,37 @@ export function fit(cy: cytoscape.Core, padding: number = 50): void {
 /**
  * Handles selecting a node in the cytoscape graph.
  *
- * - Removes all existing "selected", "faded", and "hovered" states from nodes and edges.
+ * - Removes all existing "selected", "faded", "hovered" and "executions" states from nodes and edges.
  * - Marks the chosen node as selected.
- * - Applies a faded style to the node’s directly connected edges and neighbor nodes.
+ * - Applies a faded style to connected elements based on the subtype:
+ *   - FLOW: Fades both connected edges and neighbor nodes.
+ *   - EXECUTION: Highlights connected edges with execution color, fades neighbor nodes.
  * - Updates the provided Vue ref with the selected node’s ID.
  * - Smoothly centers and zooms the viewport on the selected node.
  *
  * @param cy - The cytoscape core instance managing the graph.
  * @param node - The node element to select.
  * @param selected - Vue ref storing the currently selected node ID.
+ * @param subtype - Determines how connected elements are highlighted ("FLOW" or "EXECUTION").
  * @param id - Optional explicit ID to assign to the ref (defaults to the node’s own ID).
  */
-function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, id?: Node["id"]): void {
-    // Remove all "selected", "faded", and "hovered" classes from every element
+function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, subtype: typeof FLOW | typeof EXECUTION, id?: Node["id"]): void {
+    // Remove all "selected", "faded", "hovered" and "executions" classes from every element
     clearClasses(cy);
 
     // Mark the chosen node as selected
     node.addClass(SELECTED);
 
-    // Find edges and neighbor nodes directly connected to the selected node
-    const connected = node.connectedEdges().union(node.connectedEdges().connectedNodes());
-
-    // Apply faded styling to connected edges and neighbor nodes
-    connected.addClass(FADED);
+    if (subtype === FLOW) {
+        // FLOW: Fade both connected edges and neighbor nodes
+        node.connectedEdges().union(node.connectedEdges().connectedNodes()).addClass(FADED);
+    } else {
+        // EXECUTION: Highlight connected edges with execution color
+        node.connectedEdges().removeClass(FADED).addClass(EXECUTIONS).style({
+            "line-color": getStateColor(node),
+            "target-arrow-color": getStateColor(node)
+        });
+    }
 
     // Update the Vue ref with the selected node’s ID
     selected.value = id ?? node.id();
@@ -169,7 +215,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         const node = cy.getElementById(id);
 
         if (node.nonempty()) {
-            selectHandler(cy, node, selectedNodeID, id);
+            selectHandler(cy, node, selectedNodeID, subtype, id);
         }
     };
 
@@ -180,6 +226,9 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
         // Dynamically size nodes based on connectivity
         setNodeSizes(cy);
+
+        // Apply execution state colors to each node
+        if(subtype === EXECUTION) setExecutionNodeColors(cy);
 
         // Setup hover handlers for nodes and edges
         hoverHandler(cy);
@@ -197,7 +246,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         cy.on("tap", "node", (event: cytoscape.EventObject) => {
             const node = event.target;
 
-            selectHandler(cy, node, selectedNodeID);
+            selectHandler(cy, node, selectedNodeID, subtype);
         });
 
         // Preselect the first node after layout completes
@@ -208,7 +257,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
             if (!node) return;
 
-            selectHandler(cy, node, selectedNodeID);
+            selectHandler(cy, node, selectedNodeID, subtype);
         });
     });
 

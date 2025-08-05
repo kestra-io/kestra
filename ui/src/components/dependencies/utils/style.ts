@@ -24,16 +24,15 @@ const VARIABLES = {
     edge: {
         default: "--ks-dependencies-edge",
         faded: "--ks-dependencies-edge-selected-level2",
-        selected: "--ks-dependencies-edge-selected",
         hovered: "--ks-dependencies-edge-hover",
     },
 };
 
 const nodeBase: cytoscape.Css.Node = {
-    label: "data(flow)",
+    "label": "data(flow)",
     "border-width": 2,
     "border-style": "solid",
-    color: cssVariable("--ks-content-primary"),
+    "color": cssVariable("--ks-content-primary"),
     "font-size": 10,
     "text-valign": "bottom",
     "text-margin-y": 10,
@@ -42,7 +41,7 @@ const nodeBase: cytoscape.Css.Node = {
 const edgeBase: cytoscape.Css.Edge = {
     "target-arrow-shape": "triangle",
     "curve-style": "bezier",
-    width: 2,
+    "width": 2,
     "line-style": "solid",
 };
 
@@ -91,11 +90,11 @@ export const style: cytoscape.StylesheetJson = [
         style: {...edgeBase, ...edgeColors("faded"), ...edgeAnimated},
     },
     {
-        selector: "edge.selected",
-        style: {...edgeBase, ...edgeColors("selected"), ...edgeAnimated},
-    },
-    {
         selector: "edge.hovered",
         style: {...edgeBase, ...edgeColors("hovered")},
+    },
+    {
+        selector: "edge.executions",
+        style: {...edgeBase, ...edgeAnimated},
     },
 ];

@@ -12,9 +12,9 @@ import {useEditorStore} from "./editor";
 import {defineStore} from "pinia";
 import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
 import {Store, useStore} from "vuex";
-import {useI18n} from "vue-i18n";
-import {useToast} from "../utils/toast";
+import {makeToast} from "../utils/toast";
 import {InputType} from "../utils/inputs";
+import {globalI18n} from "../translations/i18n";
 
 const textYamlHeader = {
     headers: {
@@ -80,9 +80,9 @@ export const useFlowStore = defineStore("flow", () => {
     const executeFlow = ref<boolean>(false)
     const lastSaveFlow = ref<string>()
     const isCreating = ref<boolean>(false)
-    const flowYaml = ref<string>()
-    const flowYamlOrigin = ref<string>()
-    const flowYamlBeforeAdd = ref<string>()
+    const flowYaml = ref<string>("")
+    const flowYamlOrigin = ref<string>("")
+    const flowYamlBeforeAdd = ref<string>("")
     const confirmOutdatedSaveDialog = ref<boolean>(false)
     const haveChange = ref<boolean>(false)
     const expandedSubflows = ref<string[]>([])
@@ -98,7 +98,12 @@ export const useFlowStore = defineStore("flow", () => {
         }
     };
 
-    const {t} = useI18n();
+    const t = (key: string, values?: Record<string, any>) => {
+        if (!globalI18n.value) {
+            return key;
+        }
+        return (values ? globalI18n.value?.t(key, values) : globalI18n.value?.t(key)) ?? key;
+    };
 
     function onSaveMetadata() {
         flowYaml.value = YAML_UTILS.updateMetadata(flowYaml.value ?? "", metadata.value ?? {});
@@ -168,6 +173,7 @@ export const useFlowStore = defineStore("flow", () => {
             coreStore.unsavedChange = false;
         }
     }
+
     async function onEdit({source, currentIsFlow, editorViewType, topologyVisible}: {
         source: string,
         currentIsFlow: boolean,
@@ -239,7 +245,7 @@ export const useFlowStore = defineStore("flow", () => {
             });
     }
 
-    const toast = useToast();
+    const toast = makeToast(t);
 
     async function saveWithoutRevisionGuard() {
         const flowSource = flowYaml.value ?? "";

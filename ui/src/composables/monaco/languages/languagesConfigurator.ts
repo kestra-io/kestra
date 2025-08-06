@@ -8,9 +8,11 @@ import FilterLanguageConfigurator, {languages as filterLanguages} from "./filter
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider";
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider";
 import {usePluginsStore} from "../../../stores/plugins";
+import {useFlowStore} from "../../../stores/flow";
 
 export default async function configure(
     store: Store<Record<string, any>>,
+    flowStore: ReturnType<typeof useFlowStore>,
     pluginsStore: ReturnType<typeof usePluginsStore>,
     t: ReturnType<typeof useI18n>["t"],
     editorInstance: editor.ICodeEditor | undefined,
@@ -27,8 +29,8 @@ export default async function configure(
         }
         await new YamlLanguageConfigurator(yamlAutocompletion).configure(store, pluginsStore, t, editorInstance);
     } else if(language === "plaintext-pebble") {
-        const autoCompletion = new FlowAutoCompletion(store, pluginsStore, computed(() => store.state.flow.flowYaml));
-        await new PebbleLanguageConfigurator(autoCompletion, computed(() => store.state.flow.flowYaml))
+        const autoCompletion = new FlowAutoCompletion(store, pluginsStore, computed(() => flowStore.flowYaml));
+        await new PebbleLanguageConfigurator(autoCompletion, computed(() => flowStore.flowYaml))
             .configure(store, pluginsStore, t, editorInstance);
     } else if (filterLanguages.some(languageRegex => languageRegex.test(language))) {
         await new FilterLanguageConfigurator(language, domain)

@@ -9,12 +9,15 @@ import {useRoute, useRouter} from "vue-router";
 import {State} from "@kestra-io/ui-libs";
 import {useToast} from "../utils/toast";
 import {useI18n} from "vue-i18n";
+import {useFlowStore} from "./flow";
 
 interface ExecutionWithGraph extends Execution {
     graph?: VueFlowUtils.FlowGraph;
 }
 
 export const usePlaygroundStore = defineStore("playground", () => {
+
+    const flowStore = useFlowStore();
     const params = useUrlSearchParams("history", {
         removeFalsyValues: true
     })
@@ -32,12 +35,12 @@ export const usePlaygroundStore = defineStore("playground", () => {
     const router = useRouter();
 
     function navigateToEdit(runUntilTaskId?: string, runDownstreamTasks?: boolean) {
-        const flowParsed = store.state.flow.flow;
+        const flowParsed = flowStore.flow;
         router.push({
             name: "flows/update",
             params: {
-                id: flowParsed.id,
-                namespace: flowParsed.namespace,
+                id: flowParsed?.id,
+                namespace: flowParsed?.namespace,
                 tab: "edit",
                 tenant: route.params.tenant,
             },
@@ -76,20 +79,27 @@ export const usePlaygroundStore = defineStore("playground", () => {
             return await executionsStore.replayExecution({
                 executionId: executions.value[0].id,
                 taskRunId: taskIdToTaskRunIdMap.get(taskId),
-                revision: store.state.flow.flow.revision,
+                revision: flowStore.flow?.revision,
                 breakpoints,
             });
         }
 
+        if(!flowStore.flow) {
+            console.warn("Flow is not defined, cannot trigger execution");
+            return;
+        }
+
         const defaultInputValues: Record<string, any> = {}
-        for (const input of (store.state.flow.flow?.inputs || [])) {
+        for (const input of (flowStore.flow.inputs || [])) {
             const {type, defaults} = input;
             defaultInputValues[input.id] = Inputs.normalize(type, defaults);
         }
 
+
+
         return await executionsStore.triggerExecution({
-            id: store.state.flow.flow?.id,
-            namespace: store.state.flow.flow?.namespace,
+            id: flowStore.flow.id,
+            namespace: flowStore.flow.namespace,
             formData: defaultInputValues,
             kind: "PLAYGROUND",
             breakpoints,
@@ -97,7 +107,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     }
 
     async function getNextTaskIds(taskId?: string) {
-        const graph = await store.dispatch("flow/loadGraph", {flow: store.state.flow.flow});
+        const graph = await store.dispatch("flow/loadGraph", {flow: flowStore.flow});
 
         if (!taskId) {
             return {nextTasksIds: [], graph};
@@ -171,7 +181,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         readyToStart.value = false;
 
-        if(store.state.flow.isCreating){
+        if(flowStore.isCreating){
             toast.confirm(
                 t("playground.confirm_create"),
                 async () => {

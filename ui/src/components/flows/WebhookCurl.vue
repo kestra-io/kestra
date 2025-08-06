@@ -17,7 +17,7 @@
                     <CopyToClipboard :text="generateWebhookCurlCommand(trigger)" class="copy" />
                 </div>
             </div>
-            
+
             <el-alert type="info" show-icon :closable="false">
                 {{ t('webhook.curl_note') }}
             </el-alert>
@@ -37,6 +37,7 @@
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
     import Editor from "../inputs/Editor.vue";
     import {apiUrlWithoutTenants} from "../../override/utils/route";
+    import {useFlowStore} from "../../stores/flow";
 
     interface Flow {
         namespace: string;
@@ -59,14 +60,15 @@
     const {t} = useI18n();
     const webhookPayload = ref("{\"key1\":\"value1\",\"key2\":\"value2\"}");
 
+    const flowStore = useFlowStore();
     const webhookTriggers = computed(() => {
-        const sourceFlow = store.state.flow.flow || props.flow;
-        
+        const sourceFlow = flowStore.flow || props.flow;
+
         if (!sourceFlow?.triggers) {
             return [];
         }
-        
-        return sourceFlow.triggers.filter((trigger: Trigger) => 
+
+        return sourceFlow.triggers.filter((trigger: Trigger) =>
             trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
             (trigger.disabled === undefined || trigger.disabled === false)
         );
@@ -80,10 +82,10 @@
         if (!trigger.key) {
             return "Webhook key not available";
         }
-        
+
         const command = [`curl -X POST ${generateWebhookUrl(trigger)}`];
         command.push("-H \"Content-Type: application/json\"");
-        
+
         if (webhookPayload.value.trim()) {
             command.push(`-d '${webhookPayload.value}'`);
         }

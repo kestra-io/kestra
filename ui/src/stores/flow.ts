@@ -14,6 +14,7 @@ import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
 import {Store, useStore} from "vuex";
 import {useI18n} from "vue-i18n";
 import {useToast} from "../utils/toast";
+import {InputType} from "../utils/inputs";
 
 const textYamlHeader = {
     headers: {
@@ -34,6 +35,13 @@ interface Task {
     type: string
 }
 
+interface Input {
+    id: string;
+    type: InputType;
+    required?: boolean;
+    defaults?: any;
+}
+
 interface Flow {
     id: string;
     namespace: string;
@@ -42,6 +50,7 @@ interface Flow {
     deleted?: boolean;
     labels?: Record<string, string | boolean>;
     triggers?: Trigger[];
+    inputs?: Input[];
     errors: { message: string; code?: string, id?: string }[];
 }
 

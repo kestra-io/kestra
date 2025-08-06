@@ -67,6 +67,7 @@
     import ICodeEditor = editor.ICodeEditor;
     import debounce from "lodash/debounce";
     import {usePluginsStore} from "../../stores/plugins.ts";
+    import {useFlowStore} from "../../stores/flow.ts";
     import EditorType = editor.EditorType;
 
     const store = useStore();
@@ -503,6 +504,7 @@
     const disposeCompletions = ref<() => void>();
 
     const pluginsStore = usePluginsStore();
+    const flowStore = useFlowStore();
 
     const prefix = computed(() => props.schemaType ? `${props.schemaType}-` : "");
     onMounted(async function () {
@@ -512,6 +514,7 @@
         if (props.language !== undefined) {
             await configureLanguage(
                 store,
+                flowStore,
                 pluginsStore,
                 t,
                 props.diffEditor ? undefined : editorResolved.value as ICodeEditor,

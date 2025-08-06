@@ -355,7 +355,7 @@
 </template>
 
 <script>
-    import {mapActions, mapState} from "vuex";
+    import {mapActions} from "vuex";
 
     import Utils from "../../utils/utils";
 
@@ -370,6 +370,7 @@
     import TypeIcon from "../utils/icons/Type.vue";
     import {mapStores} from "pinia";
     import {useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
 
     const DIALOG_DEFAULTS = {
         visible: false,
@@ -422,10 +423,7 @@
             };
         },
         computed: {
-            ...mapStores(useEditorStore),
-            ...mapState({
-                flow: (state) => state.flow.flow,
-            }),
+            ...mapStores(useEditorStore, useFlowStore),
             namespaceId() {
                 return this.currentNS ?? this.$route.params.namespace;
             },
@@ -1166,7 +1164,7 @@
             document.removeEventListener("click", this.clearSelection);
         },
         watch: {
-            flow: {
+            "flowStore.flow": {
                 handler(flow) {
                     if (flow) {
                         this.editorStore.openTab({

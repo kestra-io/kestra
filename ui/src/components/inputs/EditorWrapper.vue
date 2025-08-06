@@ -106,9 +106,9 @@
     provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
 
     const source = computed<string>(() => {
-        return props.flow
+        return (props.flow
             ? flowStore.flowYaml
-            : editorStore.tabs.find((t: any) => t.path === props.path)?.content;
+            : editorStore.tabs.find((t: any) => t.path === props.path)?.content) ?? "";
     })
 
     async function loadFile() {

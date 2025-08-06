@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MapUtilsTest {
     @SuppressWarnings("unchecked")
@@ -193,5 +194,24 @@ class MapUtilsTest {
 
         assertThat(results).hasSize(1);
         // due to ordering change on each JVM restart, the result map would be different as different entries will be skipped
+    }
+
+    @Test
+    void shouldFlattenANestedMap() {
+        Map<String, Object> results = MapUtils.nestedToFlattenMap(Map.of("k1",Map.of("k2", Map.of("k3", "v1")), "k4", "v2"));
+
+        assertThat(results).hasSize(2);
+        assertThat(results).containsAllEntriesOf(Map.of(
+            "k1.k2.k3", "v1",
+            "k4", "v2"
+        ));
+    }
+
+    @Test
+    void shouldThrowIfNestedMapContainsMultipleEntries() {
+        var exception = assertThrows(IllegalArgumentException.class,
+            () -> MapUtils.nestedToFlattenMap(Map.of("k1",  Map.of("k2", Map.of("k3", "v1"), "k4", "v2")))
+        );
+        assertThat(exception.getMessage()).isEqualTo("You cannot flatten a map with an entry that is a map of more than one element, conflicting key: k1");
     }
 }

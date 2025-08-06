@@ -38,7 +38,6 @@
 
 <script setup lang="ts">
     import {computed, getCurrentInstance} from "vue";
-    import {useStore} from "vuex"
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import EditorButtons from "./EditorButtons.vue";
@@ -61,7 +60,6 @@
         localUtils.downloadUrl(window.URL.createObjectURL(blob), "flow.yaml");
     };
 
-    const store = useStore()
     const flowStore = useFlowStore();
     const editorStore = useEditorStore();
     const router = useRouter()
@@ -105,7 +103,7 @@
 
     async function save(){
         const creating = isCreating.value
-        await store.dispatch("flow/saveAll")
+        await flowStore.saveAll()
 
         if(creating){
             await router.push({
@@ -121,7 +119,7 @@
     }
 
     const deleteFlow = () => {
-        store.dispatch("flow/deleteFlowAndDependencies")
+        flowStore.deleteFlowAndDependencies()
             .then(() => {
                 return router.push({
                     name: "flows/list",

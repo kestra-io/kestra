@@ -71,7 +71,7 @@
     };
 
     const restoreFlow = () => {
-        store.dispatch("flow/createFlow", {
+        flowStore.createFlow({
             flow: YAML_UTILS.deleteMetadata(flow.value?.source, "deleted"),
         }).then(() => {
             coreStore.unsavedChange = false;

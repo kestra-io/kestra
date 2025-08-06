@@ -200,7 +200,7 @@
             "flowStore.executeFlow": {
                 handler(value) {
                     if (value && !this.isDisabled()) {
-                        this.$store.commit("flow/executeFlow", false);
+                        this.flowStore.executeFlow = false;
                         this.onClick();
                     }
                 }

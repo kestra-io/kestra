@@ -103,8 +103,8 @@
             },
             loadData(callback) {
                 if (this.$route.query["q"] !== undefined) {
-                    this.$store
-                        .dispatch("flow/searchFlows", this.loadQuery({
+                    this.flowStore
+                        .searchFlows(this.loadQuery({
                             size: parseInt(this.$route.query.size || 25),
                             page: parseInt(this.$route.query.page || 1),
                             sort: this.$route.query.sort
@@ -114,8 +114,8 @@
                         })
                         .finally(callback)
                 } else {
-                    this.$store.commit("flow/setTotal", 0);
-                    this.$store.commit("flow/setSearch", undefined);
+                    this.flowStore.total = 0;
+                    this.flowStore.search = undefined;
                     callback();
                 }
 

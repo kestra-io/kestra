@@ -171,7 +171,7 @@
     const load = async (taskId: string) => {
         if (props.revision) {
             if (!revisions.value?.[props.revision - 1]) {
-                revisions.value = await store.dispatch("flow/loadRevisions", {
+                revisions.value = await flowStore.loadRevisions({
                     namespace: props.namespace,
                     id: props.flowId,
                     store: false
@@ -212,7 +212,7 @@
         timer.value = setTimeout(() => {
             if (lastValidatedValue.value !== value) {
                 lastValidatedValue.value = value;
-                store.dispatch("flow/validateTask", {
+                flowStore.validateTask({
                     task: value,
                     section: props.section
                 });

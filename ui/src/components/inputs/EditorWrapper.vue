@@ -161,7 +161,7 @@
             if (draftSource.value !== undefined) {
                 draftSource.value = newValue;
             } else {
-                store.commit("flow/setFlowYaml", newValue);
+                flowStore.flowYaml = newValue;
             }
         }
         editorStore.setTabContent({
@@ -176,7 +176,7 @@
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {
-            store.dispatch("flow/onEdit", {
+            flowStore.onEdit({
                 source: newValue,
                 currentIsFlow: isCurrentTabFlow.value,
                 editorViewType: "YAML", // this is to be opposed to the no-code editor
@@ -192,12 +192,11 @@
         pluginsStore.updateDocumentation(element);
     };
 
-    const flowParsed = computed(() => store.getters["flow/flowParsed"]);
     const save = async () => {
         clearTimeout(timeout.value);
         const editorRef = editorRefElement.value
         if(!editorRef?.$refs.monacoEditor) return
-        const result = await store.dispatch("flow/save", {content:(editorRef.$refs.monacoEditor as any).value})
+        const result = await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
 
         editorStore.setTabDirty({
             path: props.path,
@@ -208,8 +207,8 @@
             await router.push({
                 name: "flows/update",
                 params: {
-                    id: flowParsed.value.id,
-                    namespace: flowParsed.value.namespace,
+                    id: flowStore.flow?.id,
+                    namespace: flowStore.flow?.namespace,
                     tab: "edit",
                     tenant: route.params?.tenant,
                 },
@@ -242,7 +241,7 @@
     };
 
     const execute = () => {
-        store.commit("flow/executeFlow", true);
+        flowStore.executeFlow = true;
     };
 
     function acceptDraft() {

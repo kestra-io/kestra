@@ -1,6 +1,5 @@
 import {computed, ref, watch} from "vue";
 import {defineStore} from "pinia";
-import {useStore} from "vuex";
 import {useUrlSearchParams} from "@vueuse/core"
 import * as VueFlowUtils from "@kestra-io/ui-libs/vue-flow-utils"
 import {Execution, useExecutionsStore} from "./executions";
@@ -63,7 +62,6 @@ export const usePlaygroundStore = defineStore("playground", () => {
         executionsStore.execution = undefined;
     }
 
-    const store = useStore();
     const executionsStore = useExecutionsStore();
 
     const taskIdToTaskRunIdMap: Map<string, string>  = new Map();
@@ -107,7 +105,12 @@ export const usePlaygroundStore = defineStore("playground", () => {
     }
 
     async function getNextTaskIds(taskId?: string) {
-        const graph = await store.dispatch("flow/loadGraph", {flow: flowStore.flow});
+        if(!flowStore.flow) {
+            console.warn("Flow is not defined, cannot get next task IDs");
+            return {nextTasksIds: [], graph: undefined};
+        }
+
+        const graph = await flowStore.loadGraph({flow: flowStore.flow});
 
         if (!taskId) {
             return {nextTasksIds: [], graph};
@@ -185,14 +188,14 @@ export const usePlaygroundStore = defineStore("playground", () => {
             toast.confirm(
                 t("playground.confirm_create"),
                 async () => {
-                    await store.dispatch("flow/saveAll");
+                    await flowStore.saveAll();
                     navigateToEdit(taskId, runDownstreamTasks);
                 }
             );
             return;
         }
 
-        await store.dispatch("flow/saveAll")
+        await flowStore.saveAll();
         // get the next task id to break on. If current task is provided to breakpoint,
         // the task specified by the user will not be executed.
         const {nextTasksIds, graph} = await getNextTaskIds(runDownstreamTasks ? undefined : taskId) ?? {};

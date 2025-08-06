@@ -33,7 +33,7 @@
             namespace: {
                 immediate: true,
                 async handler() {
-                    this.flowIds = (await this.$store.dispatch("flow/flowsByNamespace", this.namespace))
+                    this.flowIds = (await this.flowStore.flowsByNamespace(this.namespace))
                         .map(flow => flow.id);
 
                     if (this.namespace === this.flowStore.flow.namespace) {

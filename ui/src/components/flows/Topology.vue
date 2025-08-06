@@ -44,12 +44,12 @@
             ...mapStores(useFlowStore),
         },
         beforeUnmount() {
-            this.$store.commit("flow/setFlowValidation", undefined);
+            this.flowStore.flowValidation = undefined;
         },
         methods: {
             onExpandSubflow(event) {
                 this.$emit("expand-subflow", event);
-                this.$store.dispatch("flow/loadGraph", {
+                this.flowStore.loadGraph({
                     flow: this.flowStore.flow,
                     params: {
                         subflows: event

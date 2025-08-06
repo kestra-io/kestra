@@ -542,11 +542,9 @@
                             : this.selection.length;
 
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch(
-                                    "flow/exportFlowByQuery",
-                                    this.loadQuery(),
-                                )
+                            return this.flowStore.exportFlowByQuery(
+                                this.loadQuery(),
+                            )
                                 .then(() => {
                                     this.$toast().success(
                                         this.$t("flows exported", {
@@ -555,10 +553,9 @@
                                     );
                                 });
                         } else {
-                            return this.$store
-                                .dispatch("flow/exportFlowByIds", {
-                                    ids: this.selection,
-                                })
+                            return this.flowStore.exportFlowByIds({
+                                ids: this.selection,
+                            })
                                 .then(() => {
                                     this.$toast().success(
                                         this.$t("flows exported", {
@@ -580,11 +577,9 @@
                     }),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch(
-                                    "flow/disableFlowByQuery",
-                                    this.loadQuery(),
-                                )
+                            return this.flowStore.disableFlowByQuery(
+                                this.loadQuery(),
+                            )
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows disabled", {
@@ -594,10 +589,9 @@
                                     this.loadData(() => {});
                                 });
                         } else {
-                            return this.$store
-                                .dispatch("flow/disableFlowByIds", {
-                                    ids: this.selection,
-                                })
+                            return this.flowStore.disableFlowByIds({
+                                ids: this.selection,
+                            })
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows disabled", {
@@ -626,11 +620,9 @@
                     }),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch(
-                                    "flow/enableFlowByQuery",
-                                    this.loadQuery(),
-                                )
+                            return this.flowStore.enableFlowByQuery(
+                                this.loadQuery(),
+                            )
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows enabled", {
@@ -640,10 +632,9 @@
                                     this.loadData(() => {});
                                 });
                         } else {
-                            return this.$store
-                                .dispatch("flow/enableFlowByIds", {
-                                    ids: this.selection,
-                                })
+                            return this.flowStore.enableFlowByIds({
+                                ids: this.selection,
+                            })
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows enabled", {
@@ -666,11 +657,9 @@
                     }),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch(
-                                    "flow/deleteFlowByQuery",
-                                    this.loadQuery(),
-                                )
+                            return this.flowStore.deleteFlowByQuery(
+                                this.loadQuery(),
+                            )
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows deleted", {
@@ -680,10 +669,9 @@
                                     this.loadData(() => {});
                                 });
                         } else {
-                            return this.$store
-                                .dispatch("flow/deleteFlowByIds", {
-                                    ids: this.selection,
-                                })
+                            return this.flowStore.deleteFlowByIds({
+                                ids: this.selection,
+                            })
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows deleted", {
@@ -700,7 +688,7 @@
             importFlows() {
                 const formData = new FormData();
                 formData.append("fileUpload", this.$refs.file.files[0]);
-                this.$store.dispatch("flow/importFlows", formData)
+                this.flowStore.importFlows(formData)
                     .then((res) => {
                         if (res.data.length > 0) {
                             this.$toast().warning(
@@ -736,9 +724,8 @@
             loadData(callback) {
                 const q = this.$route.query;
 
-                this.$store
-                    .dispatch(
-                        "flow/findFlows",
+                this.flowStore
+                    .findFlows(
                         this.loadQuery({
                             size: parseInt(this.namespace ? this.internalPageSize : q.size ?? 25),
                             page: parseInt(this.namespace ? this.internalPageNumber : q.page ?? 1),

@@ -603,9 +603,11 @@ export const useFlowStore = defineStore("flow", () => {
             .then(response => response.data)
     }
 
-    function loadRevisions(options: { namespace: string, id: string }) {
+    function loadRevisions(options: { namespace: string, id: string, store?: boolean }) {
         return store.$http.get(`${apiUrl(store)}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
-            revisions.value = response.data
+            if (options.store !== false) {
+                revisions.value = response.data
+            }
             return response.data;
         })
     }

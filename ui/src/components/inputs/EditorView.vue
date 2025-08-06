@@ -559,7 +559,7 @@
         },
     });
 
-    store.commit("flow/setIsCreating", props.isCreating);
+    flowStore.isCreating = props.isCreating;
     const guidedProperties = ref(coreStore.guidedProperties);
 
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
@@ -631,7 +631,7 @@
             : localStorage.getItem("topology-orientation") === "1";
     };
 
-    store.commit("flow/setHaveChange", props.isDirty);
+    flowStore.haveChange = props.isDirty;
 
     const editorDomElement = ref(null);
     const editorWidth = useStorage("editor-size", 50);
@@ -850,7 +850,7 @@
         onEdit(YAML_UTILS.insertSection("triggers", source, newTrigger.value), true);
         newTrigger.value = null;
         isNewTriggerOpen.value = false;
-        store.commit("flow/setHaveChange", true)
+        flowStore.haveChange = true;
     };
 
     const onUpdateNewError = (event) => {
@@ -970,7 +970,7 @@
 
     const save = async () => {
         clearTimeout(timer.value);
-        const result = await store.dispatch("flow/save", {
+        const result = await flowStore.save({
             content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
             namespace: props.namespace ?? route.params.namespace,
         })
@@ -988,7 +988,7 @@
     };
 
     const execute = (_) => {
-        store.commit("flow/executeFlow", true);
+        flowStore.executeFlow = true;
     };
 
     const canDelete = () => {
@@ -996,7 +996,7 @@
     };
 
     const deleteFlow = () => {
-        store.dispatch("flow/deleteFlowAndDependencies")
+        flowStore.deleteFlowAndDependencies()
             .then(() => {
                 return router.push({
                     name: "flows/list",
@@ -1114,7 +1114,7 @@
             path,
             namespace: props.namespace ?? route.params.namespace ?? route.params.id,
         })
-        store.commit("flow/setFlowYaml", content);
+        flowStore.flowYaml = content;
     }
 
     const dirtyBeforeLoad = ref(false);

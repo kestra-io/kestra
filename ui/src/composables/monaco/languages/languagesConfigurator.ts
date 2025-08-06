@@ -23,13 +23,13 @@ export default async function configure(
     if (language === "yaml") {
         if (domain === "flow" || domain === "testsuites") {
             // flow completion seems to work fine for testsuites, quickwin
-            yamlAutocompletion = new FlowAutoCompletion(store, pluginsStore);
+            yamlAutocompletion = new FlowAutoCompletion(store, flowStore, pluginsStore);
         } else {
             yamlAutocompletion = new YamlAutoCompletion();
         }
         await new YamlLanguageConfigurator(yamlAutocompletion).configure(store, pluginsStore, t, editorInstance);
     } else if(language === "plaintext-pebble") {
-        const autoCompletion = new FlowAutoCompletion(store, pluginsStore, computed(() => flowStore.flowYaml));
+        const autoCompletion = new FlowAutoCompletion(store, flowStore, pluginsStore, computed(() => flowStore.flowYaml));
         await new PebbleLanguageConfigurator(autoCompletion, computed(() => flowStore.flowYaml))
             .configure(store, pluginsStore, t, editorInstance);
     } else if (filterLanguages.some(languageRegex => languageRegex.test(language))) {

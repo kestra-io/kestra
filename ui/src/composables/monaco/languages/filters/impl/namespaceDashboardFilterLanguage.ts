@@ -3,6 +3,7 @@ import {FilterLanguage} from "../filterLanguage.ts";
 import permission from "../../../../../models/permission.ts";
 import action from "../../../../../models/action.ts";
 import {Me} from "../../../../../stores/auth.ts";
+import {useFlowStore} from "../../../../../stores/flow.ts";
 
 const namespaceDashboardFilterKeys: Record<string, FilterKeyCompletions> = {
     flowId: new FilterKeyCompletions(
@@ -10,8 +11,9 @@ const namespaceDashboardFilterKeys: Record<string, FilterKeyCompletions> = {
         async (store) => {
             const namespaceId = store.state.namespace.namespace?.id
             const user = store.getters["auth/user"] as Me;
+            const flowStore = useFlowStore();
             if (namespaceId !== undefined && user && user.hasAnyActionOnAnyNamespace(permission.FLOW, action.READ)) {
-                return ((await store.dispatch("flow/flowsByNamespace", namespaceId)) as { id: string }[])
+                return ((await flowStore.flowsByNamespace(namespaceId)) as { id: string }[])
                     .map(({id}) => new Completion(id, id));
             }
 

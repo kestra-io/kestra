@@ -111,7 +111,7 @@
                 try {
                     let namespaces;
                     if (this.all) {
-                        namespaces = await this.namespacesStore.autocomplete({
+                        namespaces = await this.namespacesStore.loadAutocomplete({
                             q: value || ""
                         });
                     } else {

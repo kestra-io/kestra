@@ -35,7 +35,7 @@ export const useNamespacesStore = defineStore("namespaces", {
     }),
 
     actions: {
-        async autocomplete(options: {q: string}) {
+        async loadAutocomplete(options: {q: string}) {
             return (await this.search({
                 q: options.q
             })).results.map(({id}: {id: string}) => id);

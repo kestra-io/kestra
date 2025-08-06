@@ -50,14 +50,14 @@ const edgeAnimated: cytoscape.Css.Edge = {
     "line-dash-pattern": [3, 5]
 };
 
-function nodeColors(type: keyof typeof VARIABLES.node): Partial<cytoscape.Css.Node> {
+function nodeColors(type: keyof typeof VARIABLES.node = "default"): Partial<cytoscape.Css.Node> {
     return {
         "background-color": cssVariable(VARIABLES.node[type].background)!,
         "border-color": cssVariable(VARIABLES.node[type].border)!,
     };
 }
 
-function edgeColors(type: keyof typeof VARIABLES.edge): Partial<cytoscape.Css.Edge> {
+export function edgeColors(type: keyof typeof VARIABLES.edge = "default"): Partial<cytoscape.Css.Edge> {
     return {
         "line-color": cssVariable(VARIABLES.edge[type])!,
         "target-arrow-color": cssVariable(VARIABLES.edge[type])!,

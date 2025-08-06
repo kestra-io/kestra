@@ -20,7 +20,7 @@ import {State, cssVariable} from "@kestra-io/ui-libs";
 import {NODE, EDGE, FLOW, EXECUTION, type Node, type Edge, type Element} from "../utils/types";
 import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies";
 
-import {style} from "../utils/style";
+import {edgeColors, style} from "../utils/style";
 const SELECTED = "selected", FADED = "faded",  HOVERED = "hovered", EXECUTIONS = "executions";
 
 const options: Omit<cytoscape.CytoscapeOptions, "container" | "elements"> & { elements?: Element[] } = {
@@ -105,7 +105,7 @@ function getStateColor(node: cytoscape.NodeSingular): string {
  */
 function setExecutionNodeColors(cy: cytoscape.Core): void {
     // Remove all existing custom classes from the graph
-    clearClasses(cy);
+    clearClasses(cy, EXECUTION);
 
     // Apply state-based colors to nodes
     cy.nodes().forEach((node) => {
@@ -117,13 +117,22 @@ function setExecutionNodeColors(cy: cytoscape.Core): void {
 }
 
 /**
- * Removes the default or specified classes from all elements in the cytoscape instance.
+ * Removes the specified CSS classes from all elements (nodes and edges) in the cytoscape instance.
+ * 
+ * If the subtype is "EXECUTION", it also reapplies the default edge styling.
  *
- * @param cy - The cytoscape core instance containing the graph.
- * @param classes - An array of class names to remove (default: ["selected", "faded", "hovered", "executions"]).
+ * This function is typically used to clear selection, hover, and execution-related classes
+ * before applying new styles or resetting the graph state.
+ *
+ * @param cy - The cytoscape core instance containing the graph elements.
+ * @param subtype - The dependency subtype, either "FLOW" or "EXECUTION".
+ *                  Edge styles are only reset when subtype is "EXECUTION".
+ * @param classes - An array of class names to remove from all elements.
+ *                  Defaults to ["selected", "faded", "hovered", "executions"].
  */
-export function clearClasses(cy: cytoscape.Core, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
-    cy.elements().removeClass(classes.join(" "));
+export function clearClasses(cy: cytoscape.Core, subtype: typeof FLOW | typeof EXECUTION, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
+  cy.elements().removeClass(classes.join(" "));
+  if (subtype === EXECUTION) cy.edges().style(edgeColors());
 }
 
 /**
@@ -155,7 +164,7 @@ export function fit(cy: cytoscape.Core, padding: number = 50): void {
  */
 function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, subtype: typeof FLOW | typeof EXECUTION, id?: Node["id"]): void {
     // Remove all "selected", "faded", "hovered" and "executions" classes from every element
-    clearClasses(cy);
+    clearClasses(cy, subtype);
 
     // Mark the chosen node as selected
     node.addClass(SELECTED);
@@ -343,7 +352,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
             zoomIn: () => cy.zoom({level: cy.zoom() + 0.1, renderedPosition: cy.getElementById(selectedNodeID.value!).renderedPosition()}),
             zoomOut: () => cy.zoom({level: cy.zoom() - 0.1, renderedPosition: cy.getElementById(selectedNodeID.value!).renderedPosition()}),
             clearSelection: () => {
-                clearClasses(cy);
+                clearClasses(cy, subtype);
                 selectedNodeID.value = undefined;
                 fit(cy);
             },

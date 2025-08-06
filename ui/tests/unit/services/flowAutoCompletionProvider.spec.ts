@@ -122,7 +122,7 @@ const pluginsStore = {
 const namespacesStore = {
     datatypeNamespaces: undefined,
     loadNamespacesForDatatype: vi.fn(() => ["my.namespace", "another.namespace"]),
-    inheritedSecrets: vi.fn((params: {id: string}) => {
+    loadInheritedSecrets: vi.fn((params: {id: string}) => {
         if (params.id === "my.namespace") {
             return {"my.namespace": ["myFirstSecret", "mySecondSecret"], "my": ["myInheritedSecret"]};
         } else if (params.id === "another.namespace") {

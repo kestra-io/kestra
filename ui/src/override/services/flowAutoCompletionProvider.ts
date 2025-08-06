@@ -234,7 +234,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([]);
                 }
-                return Array.from(Object.entries<string[]>(await this.namespacesStore.inheritedSecrets({id: namespace})).reduce((acc: Set<string>, [_, nsSecrets]: [string, string[]]) => {
+                return Array.from(Object.entries<string[]>(await this.namespacesStore.loadInheritedSecrets({id: namespace})).reduce((acc: Set<string>, [_, nsSecrets]: [string, string[]]) => {
                     nsSecrets.forEach(secret => acc.add(QUOTE + secret + QUOTE));
                     return acc;
                 }, new Set<string>()));

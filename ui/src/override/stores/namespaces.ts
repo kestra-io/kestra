@@ -102,7 +102,7 @@ export const useNamespacesStore = defineStore("namespaces", {
             return this.kvsList({id: payload.namespace});
         },
 
-        async inheritedSecrets({id, commit: shouldCommit, ...params}: {id: string; commit?: boolean; [key: string]: any}) {
+        async loadInheritedSecrets({id, commit: shouldCommit, ...params}: {id: string; commit?: boolean; [key: string]: any}) {
             const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${id}/inherited-secrets`, {
                 ...VALIDATE,
                 params

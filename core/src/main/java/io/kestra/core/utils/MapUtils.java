@@ -206,6 +206,9 @@ public class MapUtils {
 
     /**
      * Utility method that flatten a nested map.
+     * <p>
+     * NOTE: for simplicity, this method didn't allow to flatten maps with conflicting keys that would end up in different flatten keys,
+     * this could be related later if needed by flattening {k1: k2: {k3: v1}, k1: {k4: v2}} to {k1.k2.k3: v1, k1.k4: v2} is prohibited for now.
      *
      * @param nestedMap the nested map.
      * @return the flattened map.

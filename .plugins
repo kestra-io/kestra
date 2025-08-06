@@ -19,6 +19,7 @@
 #plugin-databricks:io.kestra.plugin:plugin-databricks:LATEST
 #plugin-datahub:io.kestra.plugin:plugin-datahub:LATEST
 #plugin-dataform:io.kestra.plugin:plugin-dataform:LATEST
+#plugin-datagen:io.kestra.plugin:plugin-datagen:LATEST
 #plugin-dbt:io.kestra.plugin:plugin-dbt:LATEST
 #plugin-debezium:io.kestra.plugin:plugin-debezium-db2:LATEST
 #plugin-debezium:io.kestra.plugin:plugin-debezium-mongodb:LATEST

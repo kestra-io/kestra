@@ -53,7 +53,9 @@
     const container = ref(null);
     const initialNodeID: string = SUBTYPE === FLOW ? String(route.params.id) : String(route.params.flowId);
 
-    const {getElements, loading, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE, initialNodeID, route.params);
+    const TESTING = false; // When true, bypasses API data fetching and uses mock/test data.
+
+    const {getElements, loading, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE, initialNodeID, route.params, TESTING);
 </script>
 
 <style scoped lang="scss">

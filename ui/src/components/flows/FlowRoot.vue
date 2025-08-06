@@ -21,9 +21,10 @@
     import LogsWrapper from "../logs/LogsWrapper.vue"
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
-    import {mapState, mapGetters} from "vuex";
+    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
+    import {useFlowStore} from "../../stores/flow";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
@@ -137,7 +138,7 @@
                         title: this.$t("topology"),
                         props: {
                             isReadOnly: true,
-                            expandedSubflows: this.expandedSubflows,
+                            expandedSubflows: this.flowStore.expandedSubflows,
                         },
                     },
                 ];
@@ -157,11 +158,11 @@
 
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.EXECUTION,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -177,7 +178,7 @@
                     this.user.isAllowed(
                         permission.FLOW,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -187,19 +188,19 @@
                         containerClass: "full-container",
                         maximized: true,
                         props: {
-                            expandedSubflows: this.expandedSubflows,
-                            isReadOnly: this.deleted || !this.isAllowedEdit || this.readOnlySystemLabel,
+                            expandedSubflows: this.flowStore.expandedSubflows,
+                            isReadOnly: this.deleted || !this.flowStore.isAllowedEdit || this.flowStore.readOnlySystemLabel,
                         },
                     });
                 }
 
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.FLOW,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -212,11 +213,11 @@
 
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.FLOW,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -228,11 +229,11 @@
 
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.EXECUTION,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -249,11 +250,11 @@
 
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.EXECUTION,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -264,11 +265,11 @@
                 }
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.FLOW,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -306,10 +307,8 @@
             }
         },
         computed: {
-            ...mapGetters("flow", ["isAllowedEdit", "readOnlySystemLabel"]),
-            ...mapState("flow", ["flow", "expandedSubflows"]),
             ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore),
+            ...mapStores(useCoreStore, useFlowStore),
             routeInfo() {
                 return {
                     title: this.$route.params.id,

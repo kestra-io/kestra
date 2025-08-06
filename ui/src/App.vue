@@ -29,6 +29,7 @@
     import {useMiscStore} from "./stores/misc";
     import {useExecutionsStore} from "./stores/executions";
     import * as BasicAuth from "./utils/basicAuth";
+    import {useFlowStore} from "./stores/flow";
 
     // Main App
     export default {
@@ -49,8 +50,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("flow", ["overallTotal"]),
-            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore, useExecutionsStore),
+            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore, useExecutionsStore, useFlowStore),
             envName() {
                 return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
             },
@@ -188,7 +188,7 @@
                             this.executions = response?.total ?? 0;
                         })
 
-                        if (!this.executions && !this.overallTotal) {
+                        if (!this.executions && !this.flowStore.overallTotal) {
                             this.$router.push({name: "welcome", params: {tenant: this.$route.params.tenant}});
                         }
                     }

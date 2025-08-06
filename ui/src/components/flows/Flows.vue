@@ -70,7 +70,7 @@
                 <template #table>
                     <select-table
                         ref="selectTable"
-                        :data="flows"
+                        :data="flowStore.flows"
                         :default-sort="{prop: 'id', order: 'ascending'}"
                         table-layout="auto"
                         fixed
@@ -86,7 +86,7 @@
                             <bulk-select
                                 :select-all="queryBulkAction"
                                 :selections="selection"
-                                :total="total"
+                                :total="flowStore.total"
                                 @update:select-all="toggleAllSelection"
                                 @unselect="toggleAllUnselected"
                             >
@@ -309,6 +309,7 @@
     import {storageKeys} from "../../utils/constants";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import {useFlowStore} from "../../stores/flow.ts";
 
     const CHART_DEFINITION = {
         id: "executions_per_namespace_bars",
@@ -418,9 +419,8 @@
             };
         },
         computed: {
-            ...mapState("flow", ["flows", "total"]),
             ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useFlowStore),
             routeInfo() {
                 return {
                     title: this.$t("flows"),
@@ -533,12 +533,12 @@
                 this.$toast().confirm(
                     this.$t("flow export", {
                         flowCount: this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length,
                     }),
                     () => {
                         const flowCount = this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length;
 
                         if (this.queryBulkAction) {
@@ -575,7 +575,7 @@
                 this.$toast().confirm(
                     this.$t("flow disable", {
                         flowCount: this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length,
                     }),
                     () => {
@@ -621,7 +621,7 @@
                 this.$toast().confirm(
                     this.$t("flow enable", {
                         flowCount: this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length,
                     }),
                     () => {
@@ -661,7 +661,7 @@
                 this.$toast().confirm(
                     this.$t("flow delete", {
                         flowCount: this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length,
                     }),
                     () => {
@@ -772,7 +772,7 @@
             },
             mappedChart(id, namespace) {
                 let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION));
-                
+
                 MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id);
 
                 return MAPPED_CHARTS;

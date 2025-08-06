@@ -7,7 +7,7 @@
                 :flow-id="execution.flowId"
                 :namespace="execution.namespace"
                 :flow-graph="flowGraph"
-                :source="flow?.source"
+                :source="flowStore.flow?.source"
                 :execution="execution"
                 :expanded-subflows="expandedSubflows"
                 is-read-only
@@ -24,19 +24,18 @@
 </template>
 <script>
     import throttle from "lodash/throttle";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {Utils, State} from "@kestra-io/ui-libs";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
     import {useExecutionsStore} from "../../stores/executions";
+    import {useFlowStore} from "../../stores/flow";
     export default {
         emits: ["follow"],
         components: {
             LowCodeEditor
         },
         computed: {
-            ...mapState("flow", ["flow"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useFlowStore),
             execution() {
                 return this.executionsStore.execution;
             },

@@ -77,7 +77,7 @@
         "vue3-tour": "github:kestra-io/vue3-tour",
         "vuex": "^4.1.0",
         "xss": "^1.0.15",
-        "yaml": "^2.7.1"
+        "yaml": "^2.8.1"
     },
     "devDependencies": {
         "@codecov/vite-plugin": "^1.9.1",

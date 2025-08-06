@@ -95,7 +95,7 @@
     );
 
     const handleInput = (value: string, index: number) => {
-        emits("update:modelValue", items.value.toSpliced(index, 1, value));
+        emits("update:modelValue", [...items.value].splice(index, 1, value));
     };
 
     const newEmptyValue = computed(() => {
@@ -114,7 +114,7 @@
             emits("update:modelValue", undefined);
             return;
         }
-        emits("update:modelValue", items.value.toSpliced(index, 1));
+        emits("update:modelValue", [...items.value].splice(index, 1));
     };
 
     const moveItem = (index: number, direction: "up" | "down") => {

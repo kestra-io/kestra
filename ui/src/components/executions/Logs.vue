@@ -45,8 +45,8 @@
                 </el-tooltip>
             </el-form-item>
             <el-form-item>
-                <el-button-group class="min-w-auto">
-                    <restart :execution="executionsStore.execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
+                <el-button-group class="ks-b-group">
+                    <restart v-if="executionsStore.execution" :execution="executionsStore.execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
                     <el-button @click="downloadContent()">
                         <kicon :tooltip="$t('download logs')">
                             <download />
@@ -60,7 +60,7 @@
                 </el-button-group>
             </el-form-item>
             <el-form-item>
-                <el-button-group class="min-w-auto">
+                <el-button-group class="ks-b-group">
                     <el-button @click="loadLogs()">
                         <kicon :tooltip="$t('refresh')">
                             <refresh />
@@ -360,5 +360,10 @@
         .line {
             align-items: flex-start;
         }
+    }
+
+    .ks-b-group {
+        min-width: auto!important;
+        max-width: max-content !important;
     }
 </style>

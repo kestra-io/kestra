@@ -100,6 +100,7 @@
     });
 
     import {useRoute} from "vue-router";
+    import {useEditorStore} from "../../stores/editor.ts";
     const route = useRoute();
 
     const highlightLine = () => {
@@ -429,7 +430,7 @@
         codeEditor.removeContentWidget(datePickerWidget);
     }
 
-    watch(suggestWidget, (newVal) => {
+    watch(suggestWidget, async (newVal) => {
         const asCodeEditor = editorResolved.value?.getEditorType() === EditorType.ICodeEditor ? editorResolved.value as editor.ICodeEditor : undefined;
 
         if (newVal !== undefined) {
@@ -481,7 +482,7 @@
                                 };
                             }
 
-                            asCodeEditor.addContentWidget(datePickerWidget);
+                            await asCodeEditor.addContentWidget(datePickerWidget);
                             datePicker.value!.handleOpen();
                             setTimeout(() => {
                                 datePicker.value!.focus();
@@ -653,6 +654,8 @@
         }
     }
 
+    const editorStore = useEditorStore();
+
     async function initMonaco() {
         let options: EditorOptions = {
             value: props.value,
@@ -662,11 +665,11 @@
                 showClasses: false,
                 showWords: false
             },
-            ...(isInFlowEditor && {
+            ...(isInFlowEditor ? {
                 padding: {
-                    top: 28
+                    top: 16
                 }
-            }),
+            } : {}),
             ...props.options
         };
 
@@ -773,9 +776,9 @@
             if (props.value !== value) {
                 emit("change", value, event);
 
-                if (!props.input && current.value && current.value.name) {
-                    store.commit("editor/setTabDirty", {
-                        ...current.value,
+                if (!props.input && editorStore.current?.name) {
+                    editorStore.setTabDirty({
+                        ...editorStore.current,
                         dirty: true,
                     });
                 }
@@ -789,10 +792,6 @@
 
         highlightLine();
     }
-
-    const current = computed(() => {
-        return store.state.editor.current;
-    });
 
     async function changeTab(pathOrName: string, valueSupplier: () => Promise<string>, useModelCache = true) {
         let model;

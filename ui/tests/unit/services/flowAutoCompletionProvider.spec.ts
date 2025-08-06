@@ -162,6 +162,7 @@ describe("FlowAutoCompletionProvider", () => {
             "randomInt(lower=${1:0}, upper=${2:10})",
             "randomPort()",
             "tasksWithState(state=${1:'FAILED'})",
+            "http(uri=${1:'https://example.com'}, method=${2:'GET'})",
         ]);
     })
 

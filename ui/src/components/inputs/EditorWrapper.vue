@@ -21,7 +21,7 @@
         :diff-side-by-side="false"
     >
         <template #absolute>
-            <AITriggerButton 
+            <AITriggerButton
                 :show="isCurrentTabFlow"
                 :enabled="aiEnabled"
                 :opened="aiAgentOpened"
@@ -30,12 +30,7 @@
             <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
         </template>
         <template v-if="playgroundStore.enabled" #widget-content>
-            <el-button
-                class="el-button--playground"
-                @click="playgroundStore.runUntilTask(highlightedLines?.taskId)"
-            >
-                {{ t('playground.run_task') }}
-            </el-button>
+            <PlaygroundRunTaskButton :task-id="highlightedLines?.taskId" />
         </template>
     </editor>
     <transition name="el-zoom-in-center">
@@ -58,14 +53,11 @@
 <script lang="ts" setup>
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useStore} from "vuex";
-    import {useI18n} from "vue-i18n";
     import Editor from "./Editor.vue";
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
     import {useRoute, useRouter} from "vue-router";
-
-    const {t} = useI18n();
 
     const route = useRoute()
     const router = useRouter()
@@ -73,15 +65,18 @@
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
     import {useMiscStore} from "../../stores/misc";
+    import {EditorTabProps, useEditorStore} from "../../stores/editor";
 
     import AiAgent from "../ai/AiAgent.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import AcceptDecline from "./AcceptDecline.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
+    import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
 
     const store = useStore();
     const miscStore = useMiscStore();
+    const editorStore = useEditorStore();
 
     const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const cursor = ref();
@@ -100,15 +95,6 @@
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
 
-
-    export interface EditorTabProps {
-        name: string,
-        path: string,
-        extension?: string,
-        flow?: boolean,
-        dirty?: boolean,
-    }
-
     const props = withDefaults(defineProps<EditorTabProps>(), {
         extension: undefined,
         dirty: false,
@@ -120,7 +106,7 @@
     const source = computed<string>(() => {
         return props.flow
             ? store.state.flow.flowYaml
-            : store.state.editor.tabs.find((t: any) => t.path === props.path)?.content;
+            : editorStore.tabs.find((t: any) => t.path === props.path)?.content;
     })
 
     async function loadFile() {
@@ -131,7 +117,7 @@
         if (!fileNamespace) return;
 
         const content = await store.dispatch("namespace/readFile", {namespace: fileNamespace, path: props.path})
-        store.commit("editor/setTabContent", {path: props.path, content})
+        editorStore.setTabContent({path: props.path, content})
     }
 
     onMounted(() => {
@@ -147,6 +133,7 @@
     onBeforeUnmount(() => {
         window.removeEventListener("keydown", handleGlobalSave);
         window.removeEventListener("keydown", toggleAiShortcut);
+        pluginsStore.editorPlugin = undefined;
     });
 
     const editorRefElement = ref<InstanceType<typeof Editor>>();
@@ -176,11 +163,11 @@
                 store.commit("flow/setFlowYaml", newValue);
             }
         }
-        store.commit("editor/setTabContent", {
+        editorStore.setTabContent({
             content: newValue,
             path: props.path
         });
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             path: props.path,
             dirty: true
         });
@@ -211,7 +198,7 @@
         if(!editorRef?.$refs.monacoEditor) return
         const result = await store.dispatch("flow/save", {content:(editorRef.$refs.monacoEditor as any).value})
 
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             path: props.path,
             dirty: false
         });
@@ -236,7 +223,7 @@
             path: props.path,
             content: editorRefElement.value?.modelValue,
         });
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             path: props.path,
             dirty: false
         });

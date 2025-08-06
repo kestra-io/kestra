@@ -21,15 +21,15 @@
                     </el-select>
                     <el-button-group>
                         <el-button :icon="FileCode" @click="seeRevision(revisionLeftIndex, revisionLeftText)">
-                            <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
+                            <span class="d-none d-lg-inline-block">&nbsp;{{ t('see full revision') }}</span>
                         </el-button>
                         <el-button :icon="Restore" :disabled="revisionNumber(revisionLeftIndex) === flow.revision" @click="restoreRevision(revisionLeftIndex, revisionLeftText)">
-                            <span class="d-none d-lg-inline-block">&nbsp;{{ $t('restore') }}</span>
+                            <span class="d-none d-lg-inline-block">&nbsp;{{ t('restore') }}</span>
                         </el-button>
                     </el-button-group>
                 </div>
 
-                <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionLeftIndex)}" />
+                <crud class="mt-3" permission="FLOW" :detail="{namespace: route.params.namespace, flowId: route.params.id, revision: revisionNumber(revisionLeftIndex)}" />
             </el-col>
             <el-col :span="12" v-if="revisionRightIndex !== undefined">
                 <div class="revision-select mb-3">
@@ -43,15 +43,15 @@
                     </el-select>
                     <el-button-group>
                         <el-button :icon="FileCode" @click="seeRevision(revisionRightIndex, revisionRightText)">
-                            <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
+                            <span class="d-none d-lg-inline-block">&nbsp;{{ t('see full revision') }}</span>
                         </el-button>
                         <el-button :icon="Restore" :disabled="revisionNumber(revisionRightIndex) === flow.revision" @click="restoreRevision(revisionRightIndex, revisionRightText)">
-                            <span class="d-none d-lg-inline-block">&nbsp;{{ $t('restore') }}</span>
+                            <span class="d-none d-lg-inline-block">&nbsp;{{ t('restore') }}</span>
                         </el-button>
                     </el-button-group>
                 </div>
 
-                <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionRightIndex)}" />
+                <crud class="mt-3" permission="FLOW" :detail="{namespace: route.params.namespace, flowId: route.params.id, revision: revisionNumber(revisionRightIndex)}" />
             </el-col>
         </el-row>
 
@@ -72,7 +72,7 @@
 
         <drawer v-if="isModalOpen" v-model="isModalOpen">
             <template #header>
-                <h5>{{ $t("revision") + `: ` + revision }}</h5>
+                <h5>{{ t("revision") + `: ` + revision }}</h5>
             </template>
 
             <editor v-model="revisionYaml" lang="yaml" :full-height="false" :input="true" :navbar="false" :read-only="true" />
@@ -80,212 +80,214 @@
     </div>
     <div v-else>
         <el-alert class="mb-0" show-icon :closable="false">
-            {{ $t('no revisions found') }}
+            {{ t('no revisions found') }}
         </el-alert>
     </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
+    import {ref, computed, watch} from "vue";
+    import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
+    import {useRoute, useRouter} from "vue-router";
     import FileCode from "vue-material-design-icons/FileCode.vue";
     import Restore from "vue-material-design-icons/Restore.vue";
-</script>
-
-<script>
-    import {mapState} from "vuex";
     import Editor from "../../components/inputs/Editor.vue";
     import Crud from "override/components/auth/Crud.vue";
     import Drawer from "../Drawer.vue";
+
     import {saveFlowTemplate} from "../../utils/flowTemplate";
+    import {useToast} from "../../utils/toast";
 
-    export default {
-        components: {Editor, Crud, Drawer},
-        created() {
-            this.load();
-        },
-        methods: {
-            load() {
-                const currentRevision = this.flow.revision;
+    interface Revision {
+        revision: number;
+        source?: string;
+    }
 
-                this.revisions = [...Array(currentRevision).keys()].map(((k, i) => {
-                    if (currentRevision === this.revisionNumber(i)) {
-                        return this.flow;
-                    }
-                    return {revision: i + 1};
-                }));
+    const {t} = useI18n();
+    const store = useStore();
+    const route = useRoute();
+    const router = useRouter();
+    const toast = useToast();
 
-                if (this.$route.query.revisionRight) {
-                    this.revisionRightIndex = this.revisionIndex(
-                        this.$route.query.revisionRight
-                    );
-                    if (
-                        !this.$route.query.revisionLeft &&
-                        this.revisionRightIndex > 0
-                    ) {
-                        this.revisionLeftIndex = this.revisionRightIndex - 1;
-                    }
-                } else if (currentRevision > 0) {
-                    this.revisionRightIndex = currentRevision - 1;
-                }
+    const revisionLeftIndex = ref();
+    const revisionRightIndex = ref();
+    const revisionLeftText = ref();
+    const revisionRightText = ref();
+    const revision = ref();
+    const revisions = ref<(Revision)[]>([]);
+    const revisionId = ref();
+    const revisionYaml = ref();
+    const sideBySide = ref(true);
+    const isLoadingRevisions = ref(false);
+    const displayTypes = [
+        {value: true, text: t("side-by-side")},
+        {value: false, text:  t("line-by-line")},
+    ];
+    const isModalOpen = ref(false);
 
-                if (this.$route.query.revisionLeft) {
-                    this.revisionLeftIndex = this.revisionIndex(
-                        this.$route.query.revisionLeft
-                    );
-                } else if (currentRevision > 1) {
-                    this.revisionLeftIndex = currentRevision - 2;
-                }
-            },
-            revisionIndex(revision) {
-                const revisionInt = parseInt(revision);
+    const flow = computed(() => store.state.flow.flow);
 
-                if (revisionInt < 1 || revisionInt > this.revisions.length) {
-                    return undefined;
-                }
+    function load() {
+        const currentRevision = flow.value.revision;
 
-                return revisionInt - 1;
-            },
-            revisionNumber(index) {
-                return index + 1;
-            },
-            seeRevision(index, revision) {
-                this.revisionId = index
-                this.revisionYaml = revision
-                this.revision = this.revisionNumber(index)
-                this.isModalOpen = true;
-            },
-            restoreRevision(index, revision) {
-                this.$toast()
-                    .confirm(this.$t("restore confirm", {revision: this.revisionNumber(index)}), () => {
-                        return saveFlowTemplate(this, revision, "flow")
-                            .then(response => {
-                                this.$store.commit("flow/setFlowYaml", response.source);
-                                this.$store.commit("flow/setFlowYamlOrigin", response.source);
-                                this.load()
-                            })
-                            .then(() => {
-                                this.$router.push({query: {}});
-                            });
-                    });
-            },
-            addQuery() {
-                if (this.isLoadingRevisions) {
-                    return;
-                }
-                
-                this.$router.push({query: {
-                    ...this.$route.query,
-                    ...{revisionLeft: this.revisionLeftIndex + 1, revisionRight: this.revisionRightIndex + 1}
-                }});
-            },
-            async fetchRevision(revision) {
-                const revisionFetched = await this.$store.dispatch("flow/loadFlow", {
-                    namespace: this.flow.namespace,
-                    id: this.flow.id,
-                    revision,
-                    allowDeleted: true,
-                    store: false
+        revisions.value = [...Array(currentRevision).keys()].map(((_, i) => {
+            if (currentRevision === revisionNumber(i)) {
+                return flow.value;
+            }
+
+            if(revisions.value[i] && revisions.value[i].revision === i + 1) {
+                return revisions.value[i];
+            }
+
+            return {revision: i + 1};
+        }));
+
+        if (route.query.revisionRight) {
+            revisionRightIndex.value = revisionIndex(
+                route.query.revisionRight.toString()
+            );
+            if (
+                !route.query.revisionLeft &&
+                revisionRightIndex.value > 0
+            ) {
+                revisionLeftIndex.value = revisionRightIndex.value - 1;
+            }
+        } else if (currentRevision > 0) {
+            revisionRightIndex.value = currentRevision - 1;
+        }
+
+        if (route.query.revisionLeft) {
+            revisionLeftIndex.value = revisionIndex(
+                route.query.revisionLeft.toString()
+            );
+        } else if (currentRevision > 1) {
+            revisionLeftIndex.value = currentRevision - 2;
+        }
+    }
+
+    function revisionIndex(revision: string) {
+        const revisionInt = parseInt(revision);
+
+        if (revisionInt < 1 || revisionInt > revisions.value?.length) {
+            return -1;
+        }
+
+        return revisionInt - 1;
+    }
+
+    function revisionNumber(index: number) {
+        return index + 1;
+    }
+
+    function seeRevision(index: number, revisionParam: Revision) {
+        revisionId.value = index
+        revisionYaml.value = revisionParam
+        revision.value = revisionNumber(index)
+        isModalOpen.value = true;
+    }
+
+    function restoreRevision(index: number, revisionSource: string) {
+        toast.confirm(t("restore confirm", {revision: revisionNumber(index)}), () => {
+            return saveFlowTemplate({
+                $store: store,
+                $toast: () => toast,
+            }, revisionSource, "flow")
+                .then((response:any) => {
+                    store.commit("flow/setFlowYaml", response.source);
+                    store.commit("flow/setFlowYamlOrigin", response.source);
+                    load()
+                })
+                .then(() => {
+                    router.push({query: {}});
                 });
-                this.revisions[this.revisionIndex(revision)] = revisionFetched;
+        })
+    }
 
-                return revisionFetched;
-            },
-            options(excludeRevisionIndex) {
-                return this.revisions
-                    .filter((_, index) => index !== excludeRevisionIndex)
-                    .map(({revision}) => ({value: this.revisionIndex(revision), text: revision}));
-            },
-            async loadRevisionContent(index, side) {
-                if (index === undefined) {
-                    if (side === "left") {
-                        this.revisionLeftText = undefined;
-                    } else {
-                        this.revisionRightText = undefined;
-                    }
-                    return;
-                }
+    function addQuery() {
+        if (isLoadingRevisions.value) {
+            return;
+        }
 
-                const revision = this.revisions[index];
-                let source = revision.source;
-                
-                if (!source) {
-                    source = (await this.fetchRevision(revision.revision)).source;
-                }
+        router.push({query: {
+            ...route.query,
+            revisionLeft: revisionLeftIndex.value + 1,
+            revisionRight: revisionRightIndex.value + 1
+        }});
+    }
 
-                if (side === "left") {
-                    this.revisionLeftText = source;
-                } else {
-                    this.revisionRightText = source;
-                }
-            }
-        },
-        computed: {
-            ...mapState("flow", ["flow"])
-        },
-        watch: {
-            "$route.query": {
-                handler(newQuery, oldQuery) {
-                    if (newQuery.revisionLeft !== oldQuery.revisionLeft && newQuery.revisionLeft) {
-                        const newLeftIndex = this.revisionIndex(parseInt(newQuery.revisionLeft));
-                        if (newLeftIndex !== this.revisionLeftIndex) {
-                            this.revisionLeftIndex = newLeftIndex;
-                        }
-                    }
-                    
-                    if (newQuery.revisionRight !== oldQuery.revisionRight && newQuery.revisionRight) {
-                        const newRightIndex = this.revisionIndex(parseInt(newQuery.revisionRight));
-                        if (newRightIndex !== this.revisionRightIndex) {
-                            this.revisionRightIndex = newRightIndex;
-                        }
-                    }
-                },
-                deep: true
-            },
-            
-            revisionLeftIndex: async function (newValue, oldValue) {
-                if (newValue === oldValue) {
-                    return;
-                }
+    async function fetchRevision(revision: string) {
+        const revisionFetched = await store.dispatch("flow/loadFlow", {
+            namespace: flow.value.namespace,
+            id: flow.value.id,
+            revision,
+            allowDeleted: true,
+            store: false
+        });
+        revisions.value[revisionIndex(revision)] = revisionFetched;
 
-                this.isLoadingRevisions = true;
-                try {
-                    await this.loadRevisionContent(newValue, "left");
-                } finally {
-                    this.isLoadingRevisions = false;
-                }
-            },
-            revisionRightIndex: async function (newValue, oldValue) {
-                if (newValue === oldValue) {
-                    return;
-                }
+        return revisionFetched;
+    }
 
-                this.isLoadingRevisions = true;
-                try {
-                    await this.loadRevisionContent(newValue, "right");
-                } finally {
-                    this.isLoadingRevisions = false;
-                }
-            }
-        },
-        data() {
-            return {
-                revisionLeftIndex: undefined,
-                revisionRightIndex: undefined,
-                revisionLeftText: undefined,
-                revisionRightText: undefined,
-                revision: undefined,
-                revisions: [],
-                revisionId: undefined,
-                revisionYaml: undefined,
-                sideBySide: true,
-                isLoadingRevisions: false,
-                displayTypes: [
-                    {value: true, text: this.$t("side-by-side")},
-                    {value: false, text:  this.$t("line-by-line")},
-                ],
-                isModalOpen: false
-            };
-        },
-    };
+    function options(excludeRevisionIndex: number | undefined) {
+        return revisions.value
+            .filter((_, index) => index !== excludeRevisionIndex)
+            .map(({revision}) => ({value: revisionIndex(revision.toString()), text: revision}));
+    }
+
+    async function loadRevisionContent(index: number | undefined) {
+        if (index === undefined) {
+            return undefined;
+        }
+
+        const revisionObject = revisions.value[index];
+        let source = revisionObject.source;
+
+        if (!source) {
+            source = (await fetchRevision(revisionObject.revision.toString())).source;
+        }
+
+        return source;
+    }
+
+    watch(revisionLeftIndex, async (newValue) => {
+        isLoadingRevisions.value = true;
+        try {
+            revisionLeftText.value = await loadRevisionContent(newValue);
+        } finally {
+            isLoadingRevisions.value = false;
+        }
+    });
+
+    watch(revisionRightIndex, async (newValue) => {
+        isLoadingRevisions.value = true;
+        try {
+            revisionRightText.value = await loadRevisionContent(newValue);
+        } finally {
+            isLoadingRevisions.value = false;
+        }
+    });
+
+    watch(() => route.query,
+          (newQuery, oldQuery) => {
+              if (newQuery.revisionLeft !== oldQuery.revisionLeft && newQuery.revisionLeft) {
+                  const newLeftIndex = revisionIndex(newQuery.revisionLeft.toString());
+                  if (newLeftIndex !== revisionLeftIndex.value) {
+                      revisionLeftIndex.value = newLeftIndex;
+                  }
+              }
+
+              if (newQuery.revisionRight !== oldQuery.revisionRight && newQuery.revisionRight) {
+                  const newRightIndex = revisionIndex(newQuery.revisionRight.toString());
+                  if (newRightIndex !== revisionRightIndex.value) {
+                      revisionRightIndex.value = newRightIndex;
+                  }
+              }
+          },
+          {deep: true}
+    )
+
+    load();
 </script>
 
 <style scoped lang="scss">

@@ -85,13 +85,6 @@ main {
         transition: padding 0.3s ease;
         padding: 0 24px;
 
-        &.gantt-container {
-            &:has(> .execution-pending) {
-                margin: 0;
-                padding: 0;
-            }
-        }
-
         &.full-height {
             flex: 1;
             display: flex;

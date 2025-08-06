@@ -37,13 +37,14 @@
                     </div>
 
                     <div class="d-flex flex-column p-3 debug">
-                        <editor
+                        <Editor
                             ref="debugEditor"
                             :full-height="false"
                             :custom-height="20"
                             :input="true"
                             :navbar="false"
                             :model-value="computedDebugValue"
+                            @update:model-value="editorValue = $event"
                             @confirm="onDebugExpression($event)"
                             class="w-100"
                         />
@@ -53,7 +54,7 @@
                             :icon="Refresh"
                             @click="
                                 onDebugExpression(
-                                    debugEditor.editor.getValue(),
+                                    editorValue.length > 0 ? editorValue : computedDebugValue,
                                 )
                             "
                             class="mt-3"
@@ -61,7 +62,7 @@
                             {{ $t("eval.render") }}
                         </el-button>
 
-                        <editor
+                        <Editor
                             v-if="debugExpression"
                             :read-only="true"
                             :input="true"
@@ -98,7 +99,7 @@
 
                 <VarValue
                     v-if="selectedValue && displayVarValue()"
-                    :value="selectedValue.uri ? selectedValue.uri : selectedValue"
+                    :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
                     :execution="execution"
                 />
             </div>
@@ -129,8 +130,9 @@
     }>();
 
     const cascader = ref<any>(null);
-    const debugEditor = ref<any>(null);
+    const debugEditor = ref<InstanceType<typeof Editor>>();
     const selected = ref<string[]>([]);
+    const editorValue = ref("");
     const debugExpression = ref("");
     const debugError = ref("");
     const debugStackTrace = ref("");

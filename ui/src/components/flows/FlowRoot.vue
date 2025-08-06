@@ -89,7 +89,7 @@
         methods: {
             load() {
                 if (
-                    this.flow === undefined ||
+                    this.flowStore.flow === undefined ||
                     this.previousFlow !== this.flowKey()
                 ) {
                     const query = {...this.$route.query, allowDeleted: true};
@@ -98,15 +98,15 @@
                         ...query,
                     })
                         .then(() => {
-                            if (this.flow) {
-                                this.deleted = this.flow.deleted;
+                            if (this.flowStore.flow) {
+                                this.deleted = this.flowStore.flow.deleted;
                                 this.previousFlow = this.flowKey();
                                 this.flowStore.loadGraph({
-                                    flow: this.flow,
+                                    flow: this.flowStore.flow,
                                 });
                                 this.$http
                                     .get(
-                                        `${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`,
+                                        `${apiUrl(this.$store)}/flows/${this.flowStore.flow?.namespace}/${this.flowStore.flow?.id}/dependencies`,
                                     )
                                     .then((response) => {
                                         this.dependenciesCount =
@@ -171,7 +171,7 @@
 
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.FLOW,
                         action.READ,
@@ -334,7 +334,7 @@
                 return this.getTabs();
             },
             ready() {
-                return this.user && this.flow;
+                return this.user && this.flowStore.flow;
             },
             routeFlowDependencies() {
                 const EMPTY = () => h(Empty, {type: "dependencies"});

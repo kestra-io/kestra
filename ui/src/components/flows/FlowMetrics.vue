@@ -20,7 +20,7 @@
                 :popper-class="
                     tooltipContent === '' ? 'd-none' : 'tooltip-stats'
                 "
-                v-if="aggregatedMetric"
+                v-if="flowStore.aggregatedMetrics"
             >
                 <template #content>
                     <span v-html="tooltipContent" />

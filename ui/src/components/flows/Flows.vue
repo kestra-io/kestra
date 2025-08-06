@@ -46,7 +46,7 @@
             <data-table
                 @page-changed="onPageChanged"
                 ref="dataTable"
-                :total="total"
+                :total="flowStore.total"
                 :hide-top-pagination="!!namespace"
             >
                 <template #navbar>

@@ -266,15 +266,15 @@
 
     import KestraFilter from "../filter/KestraFilter.vue";
     import Empty from "../layout/empty/Empty.vue";
-</script>
-
-<script>
     import Markdown from "../layout/Markdown.vue";
-    import {mapState} from "vuex";
     import Kicon from "../Kicon.vue"
     import DateAgo from "../layout/DateAgo.vue";
     import Vars from "../executions/Vars.vue";
     import Drawer from "../Drawer.vue";
+</script>
+
+<script>
+    import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import moment from "moment";
@@ -286,7 +286,7 @@
     import {useFlowStore} from "../../stores/flow";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper},
+        inheritAttrs: false,
         props:{
             embed: {
                 type: Boolean,

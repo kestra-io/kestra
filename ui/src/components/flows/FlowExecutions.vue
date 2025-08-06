@@ -1,5 +1,5 @@
 <template>
-    <executions :restore-url="false" filter :topbar="false" :namespace="flow.namespace" :flow-id="flowStore.flow.id" />
+    <executions :restore-url="false" filter :topbar="false" :namespace="flowStore.flow?.namespace" :flow-id="flowStore.flow?.id" />
 </template>
 
 <script>

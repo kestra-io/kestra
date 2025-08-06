@@ -66,6 +66,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useMiscStore} from "../../stores/misc";
     import {EditorTabProps, useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
 
     import AiAgent from "../ai/AiAgent.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
@@ -77,6 +78,7 @@
     const store = useStore();
     const miscStore = useMiscStore();
     const editorStore = useEditorStore();
+    const flowStore = useFlowStore();
 
     const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const cursor = ref();
@@ -105,7 +107,7 @@
 
     const source = computed<string>(() => {
         return props.flow
-            ? store.state.flow.flowYaml
+            ? flowStore.flowYaml
             : editorStore.tabs.find((t: any) => t.path === props.path)?.content;
     })
 
@@ -138,11 +140,10 @@
 
     const editorRefElement = ref<InstanceType<typeof Editor>>();
 
-    const namespace = computed(() => store.state.flow.namespace);
-    const flowStore = computed(() => store.state.flow.flow);
-    const isCreating = computed(() => store.state.flow.isCreating);
+    const namespace = computed(() => flowStore.flow?.namespace);
+    const isCreating = computed(() => flowStore.isCreating);
     const isCurrentTabFlow = computed(() => props.flow)
-    const isReadOnly = computed(() => flowStore.value?.deleted || !store.getters["flow/isAllowedEdit"] || store.getters["flow/readOnlySystemLabel"]);
+    const isReadOnly = computed(() => flowStore.flow?.deleted || !flowStore.isAllowedEdit || flowStore.readOnlySystemLabel);
 
     const timeout = ref<any>(null);
 

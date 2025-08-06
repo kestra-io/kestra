@@ -82,9 +82,7 @@
             // Specifically, it would be a problem when saving a new flow
             // and moving to edit mode.
             // NOTE: Flow creation component is ./FlowCreate.vue
-            this.$store.commit("flow/setIsCreating", false);
-
-            this.$store.commit("flow/setIsCreating", false);
+            this.flowStore.isCreating = false;
 
             this.load();
         },
@@ -95,16 +93,15 @@
                     this.previousFlow !== this.flowKey()
                 ) {
                     const query = {...this.$route.query, allowDeleted: true};
-                    return this.$store
-                        .dispatch("flow/loadFlow", {
-                            ...this.$route.params,
-                            ...query,
-                        })
+                    return this.flowStore.loadFlow({
+                        ...this.$route.params,
+                        ...query,
+                    })
                         .then(() => {
                             if (this.flow) {
                                 this.deleted = this.flow.deleted;
                                 this.previousFlow = this.flowKey();
-                                this.$store.dispatch("flow/loadGraph", {
+                                this.flowStore.loadGraph({
                                     flow: this.flow,
                                 });
                                 this.$http
@@ -300,7 +297,7 @@
                 return tabs;
             },
             updateExpandedSubflows(expandedSubflows) {
-                this.$store.commit("flow/setExpandedSubflows", expandedSubflows);
+                this.flowStore.expandedSubflows = expandedSubflows;
             },
             activeTabName() {
                 return this.$refs.currentTab?.activeTab?.name ?? "home";
@@ -345,8 +342,8 @@
             }
         },
         unmounted() {
-            this.$store.commit("flow/setFlow", undefined);
-            this.$store.commit("flow/setFlowGraph", undefined);
+            this.flowStore.flow = undefined;
+            this.flowStore.flowGraph = undefined;
         },
     };
 </script>

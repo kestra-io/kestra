@@ -464,7 +464,8 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {storageKeys, editorViewTypes} from "../../utils/constants";
-    import {Utils, YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
+    import {Utils, SECTIONS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     // editor components
     import Editor from "./Editor.vue";
@@ -485,6 +486,7 @@
 
     const store = useStore();
     const coreStore = useCoreStore();
+    const flowStore = useFlowStore();
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);
@@ -565,21 +567,21 @@
 
     const {translateError, translateErrorWithKey} = useFlowOutdatedErrors()
 
-    const baseOutdatedTranslationKey = computed(() => store.getters["flow/baseOutdatedTranslationKey"]);
-    const flowErrors = computed(() => store.getters["flow/flowErrors"]?.map(translateError));
+    const baseOutdatedTranslationKey = computed(() => flowStore.baseOutdatedTranslationKey);
+    const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
     const flowWarnings = computed(() => {
         if (isFlow.value) {
             const outdatedWarning =
-                store.state.flow.flowValidation?.outdated && !store.state.flow.isCreating
-                    ? [translateErrorWithKey(store.getters["flow/baseOutdatedTranslationKey"])]
+                flowStore.flowValidation?.outdated && !flowStore.isCreating
+                    ? [translateErrorWithKey(flowStore.flowValidation?.constraints ?? "")]
                     : [];
 
             const deprecationWarnings =
-                store.state.flow.flowValidation?.deprecationPaths?.map(
+                flowStore.flowValidation?.deprecationPaths?.map(
                     (f) => `${f} ${t("is deprecated")}.`
                 ) ?? [];
 
-            const otherWarnings = store.state.flow.flowValidation?.warnings ?? [];
+            const otherWarnings = flowStore.flowValidation?.warnings ?? [];
 
             const warnings = [
                 ...outdatedWarning,
@@ -592,8 +594,8 @@
 
         return undefined;
     });
-    const flowInfos = computed(() => store.getters["flow/flowInfos"]);
-    const flowHaveTasks = computed(() => Boolean(store.getters["flow/flowHaveTasks"]));
+    const flowInfos = computed(() => flowStore.flowInfos);
+    const flowHaveTasks = computed(() => Boolean(flowStore.flowHaveTasks));
 
     const editorViewType = useStorage(storageKeys.EDITOR_VIEW_TYPE, "YAML");
 
@@ -635,10 +637,10 @@
     const editorWidth = useStorage("editor-size", 50);
     const validationDomElement = ref(null);
     const isLoading = ref(false);
-    const flowYaml = computed(() => store.state.flow.flowYaml);
-    const flowYamlOrigin = computed(() => store.state.flow.flowYamlOrigin);
+    const flowYaml = computed(() => flowStore.flowYaml);
+    const flowYamlOrigin = computed(() => flowStore.flowYamlOrigin);
     const user = computed(() => store.getters["auth/user"]);
-    const metadata = computed(() => store.state.flow.metadata);
+    const metadata = computed(() => flowStore.metadata);
     const newTrigger = ref(null);
     const isNewTriggerOpen = ref(false);
     const newError = ref(null);
@@ -680,7 +682,6 @@
         localStorage.setItem(editorViewTypes.STORAGE_KEY, value);
     };
 
-    const flowStore = useFlowStore();
     const taskErrors = computed(() => {
         return flowStore.taskError?.split(/, ?/);
     });
@@ -714,7 +715,7 @@
 
         if(!props.isNamespace) {
             initViewType()
-            await store.dispatch("flow/initYamlSource", {viewType: viewType.value});
+            await flowStore.initYamlSource({viewType: viewType.value});
         } else {
             editorStore.closeAllTabs();
             switchViewType(editorViewTypes.SOURCE, false)
@@ -767,7 +768,7 @@
         };
     };
 
-    const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"]);
+    const isAllowedEdit = computed(() => flowStore.isAllowedEdit);
 
     const forwardEvent = (type, event) => {
         emit(type, event);
@@ -782,7 +783,7 @@
     const fetchGraph = () => {
         if(props.isNamespace) return;
 
-        return store.dispatch("flow/loadGraphFromSource", {
+        return flowStore.loadGraphFromSource({
             flow: flowYaml.value,
             config: {
                 params: {
@@ -797,8 +798,8 @@
     };
 
     const onEdit = (source, currentIsFlow = false) => {
-        store.commit("flow/setFlowYaml", source);
-        return store.dispatch("flow/onEdit", {
+        flowStore.flowYaml = source;
+        return flowStore.onEdit({
             source,
             currentIsFlow,
             editorViewType: editorViewType.value,
@@ -807,7 +808,6 @@
                 editorViewTypes.SOURCE_TOPOLOGY,
             ].includes(viewType.value),
         }).then((value) => {
-
             if (validationDomElement.value && editorDomElement.value?.$el?.offsetWidth) {
                 validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
             }
@@ -824,7 +824,7 @@
         clearTimeout(timer.value);
         timer.value = setTimeout(
             () =>
-                store.dispatch("flow/validateTask", {
+                flowStore.validateTask({
                     task: event,
                     section: SECTIONS.TRIGGERS,
                 }),
@@ -857,7 +857,7 @@
         clearTimeout(timer.value);
         timer.value = setTimeout(
             () =>
-                store.dispatch("flow/validateTask", {
+                flowStore.validateTask({
                     task: event,
                     section: SECTIONS.TASKS,
                 }),
@@ -887,37 +887,37 @@
     };
 
     const checkRequiredMetadata = () => {
-        const md = metadata.value ?? store.getters["flow/flowYamlMetadata"];;
+        const md = metadata.value ?? flowStore.flowYamlMetadata;
 
         return md.id.length > 0 && md.namespace.length > 0;
     };
 
     const onUpdateMetadata = (event, shouldSave) => {
         if(shouldSave) {
-            store.commit("flow/setMetadata", {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)});
-            store.dispatch("flow/onSaveMetadata");
-            store.dispatch("flow/validateFlow", {flow: flowYaml.value});
+            flowStore.metadata = {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)};
+            flowStore.onSaveMetadata();
+            flowStore.validateFlow({flow: flowYaml.value});
         } else {
-            store.commit("flow/setMetadata", event.concurrency?.limit === 0 ?  {concurrency: null} : event);
+            flowStore.metadata = event.concurrency?.limit === 0 ?  {concurrency: null} : event;
         }
     };
 
     const onSaveMetadata = () => {
-        store.dispatch("flow/onSaveMetadata");
+        flowStore.onSaveMetadata();
         isEditMetadataOpen.value = false;
     };
 
     const handleReorder = (yaml) => {
-        store.commit("flow/setFlowYaml", yaml);
-        store.commit("flow/setHaveChange", true)
-        save()
+        flowStore.flowYaml = yaml;
+        flowStore.haveChange = true;
+        save();
     };
 
     const editorUpdate = (source) => {
         const currentIsFlow = isFlow.value;
 
         updatedFromEditor.value = true;
-        store.commit("flow/setFlowYaml", source);
+        flowStore.flowYaml = source;
 
         clearTimeout(timer.value);
         timer.value = setTimeout(() => onEdit(source, currentIsFlow), 500);
@@ -943,11 +943,11 @@
         }
     };
 
-    const flowParsed = computed(() => store.getters["flow/flowParsed"]);
+    const flowParsed = computed(() => flowStore.flowParsed);
 
     const saveWithoutRevisionGuard = async () => {
         clearTimeout(timer.value);
-        const result = await store.dispatch("flow/saveWithoutRevisionGuard");
+        const result = await flowStore.saveWithoutRevisionGuard();
         if(result === "redirect_to_update"){
             await router.push({
                 name: "flows/update",

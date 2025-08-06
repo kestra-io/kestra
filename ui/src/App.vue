@@ -183,7 +183,7 @@
             $route: {
                 async handler(route) {
                     if(route.name === "home" && this.isOSS) {
-                        await this.$store.dispatch("flow/findFlows", {size: 10, sort: "id:asc"})
+                        await this.flowStore.findFlows({size: 10, sort: "id:asc"})
                         await this.executionsStore.findExecutions({size: 10}).then(response => {
                             this.executions = response?.total ?? 0;
                         })

@@ -130,11 +130,10 @@
         methods: {
             loadRevision() {
                 this.revisionsSelected = this.execution.flowRevision
-                this.$store
-                    .dispatch("flow/loadRevisions", {
-                        namespace: this.execution.namespace,
-                        id: this.execution.flowId
-                    })
+                this.flowStore.loadRevisions({
+                    namespace: this.execution.namespace,
+                    id: this.execution.flowId
+                })
             },
             restartLastRevision() {
                 this.revisionsSelected = this.flowStore.revisions[this.flowStore.revisions.length - 1].revision;

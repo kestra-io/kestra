@@ -28,7 +28,7 @@
         },
 
         created() {
-            this.$store.commit("flow/setIsCreating", true);
+            this.flowStore.isCreating = true;
             if (this.$route.query.reset) {
                 localStorage.setItem("tourDoneOrSkip", undefined);
                 this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, tourStarted: true};
@@ -38,7 +38,7 @@
             this.editorStore.closeAllTabs()
         },
         beforeUnmount() {
-            this.$store.commit("flow/setFlowValidation", undefined);
+            this.flowStore.flowValidation = undefined;
         },
         methods: {
             async setupFlow() {
@@ -61,11 +61,11 @@ tasks:
     message: Hello World! 🚀`;
                 }
 
-                this.$store.commit("flow/setFlowYaml", flowYaml);
-                this.$store.commit("flow/setFlowYamlBeforeAdd", flowYaml);
+                this.flowStore.flowYaml = flowYaml;
+                this.flowStore.flowYamlBeforeAdd = flowYaml;
 
-                this.$store.commit("flow/setFlow", {...YAML_UTILS.parse(this.flowYaml), source: this.flowStore.flowYaml});
-                this.$store.dispatch("flow/initYamlSource", {});
+                this.flowStore.flow = {...YAML_UTILS.parse(this.flowYaml), source: this.flowStore.flowYaml};
+                this.flowStore.initYamlSource();
             }
         },
         computed: {
@@ -81,7 +81,7 @@ tasks:
             }
         },
         beforeRouteLeave(to, from, next) {
-            this.$store.commit("flow/setFlow", null);
+            this.flowStore.flow = undefined;
             next();
         }
     };

@@ -11,7 +11,6 @@
 
 <script setup lang="ts">
     import {ref, watch, computed, inject, nextTick} from "vue";
-    import {useStore} from "vuex";
     import {SECTIONS} from "@kestra-io/ui-libs";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants";
@@ -27,9 +26,6 @@
     import {useFlowStore} from "../../../stores/flow";
 
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
-
-    const store = useStore();
-
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
@@ -87,13 +83,14 @@
         section.value === "triggers" ? SECTIONS.TRIGGERS : SECTIONS.TASKS
     )
 
+    const flowStore = useFlowStore();
     const validateTask = (task?: string) => {
         if(section.value !== PLUGIN_DEFAULTS_SECTION && task){
             clearTimeout(timer.value);
             timer.value = setTimeout(() => {
                 if (lastValidatedValue.value !== task) {
                     lastValidatedValue.value = task;
-                    store.dispatch("flow/validateTask", {
+                    flowStore.validateTask({
                         task,
                         section: validationSection.value
                     });
@@ -105,7 +102,7 @@
     const timer = ref<number>();
     const lastValidatedValue = ref<string>();
 
-    const flowStore = useFlowStore();
+
     const errors = computed(() => flowStore.taskError?.split(/, ?/));
 
     const saveTask = () => {

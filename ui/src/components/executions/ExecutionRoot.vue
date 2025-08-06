@@ -33,6 +33,7 @@
     import ExecutionDependencies from "./ExecutionDependencies.vue";
 
     import {useExecutionsStore} from "../../stores/executions";
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         mixins: [RouteContext],
@@ -62,8 +63,8 @@
             $route() {
                 this.executionsStore.taskRun = undefined;
                 if (this.previousExecutionId !== this.$route.params.id) {
-                    this.$store.commit("flow/setFlow", undefined);
-                    this.$store.commit("flow/setFlowGraph", undefined);
+                    this.flowStore.flow = undefined;
+                    this.flowStore.flowGraph = undefined;
                     this.follow();
                 }
             },
@@ -126,7 +127,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore, useExecutionsStore),
+            ...mapStores(useCoreStore, useExecutionsStore, useFlowStore),
             tabs() {
                 return this.getTabs();
             },
@@ -197,8 +198,8 @@
             this.executionsStore.closeSSE();
             window.removeEventListener("popstate", this.follow)
             this.executionsStore.execution = undefined;
-            this.$store.commit("flow/setFlow", undefined);
-            this.$store.commit("flow/setFlowGraph", undefined);
+            this.flowStore.flow = undefined;
+            this.flowStore.flowGraph = undefined;
         }
     };
 </script>

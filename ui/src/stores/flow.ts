@@ -42,6 +42,14 @@ interface Input {
     defaults?: any;
 }
 
+interface FlowValidations {
+    constraints?: string;
+    outdated?: boolean;
+    infos?: string[];
+    warnings?: string[];
+    deprecationPaths?: string[];
+}
+
 interface Flow {
     id: string;
     namespace: string;
@@ -64,7 +72,7 @@ export const useFlowStore = defineStore("flow", () => {
     const flowGraph = ref<FlowGraph>()
     const invalidGraph = ref<boolean>(false)
     const revisions = ref<any[]>()
-    const flowValidation = ref<{ constraints: string, outdated?: boolean, infos?: string[] }>()
+    const flowValidation = ref<FlowValidations>()
     const taskError = ref<string>()
     const metrics = ref<any[]>()
     const aggregatedMetrics = ref<any>()

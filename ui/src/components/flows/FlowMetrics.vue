@@ -172,43 +172,37 @@
                 };
             },
             loadMetrics() {
-                this.$store.dispatch("flow/loadTasksWithMetrics", {
+                this.flowStore.loadTasksWithMetrics({
                     ...this.$route.params,
                 });
-                this.$store
-                    .dispatch(
-                        this.$route.query.task
-                            ? "flow/loadTaskMetrics"
-                            : "flow/loadFlowMetrics",
-                        this.loadQuery({
-                            ...this.$route.params,
-                            taskId: this.$route.query.task,
-                        }),
-                    )
-                    .then(() => {
-                        if ((this.flowStore.metrics?.length ?? -1) > 0) {
-                            if (
-                                this.$route.query.metric &&
-                                !this.flowStore.metrics?.includes(this.$route.query.metric)
-                            ) {
-                                let query = {...this.$route.query};
-                                delete query.metric;
+                this.flowStore[this.$route.query.task ? "loadTaskMetrics" : "loadFlowMetrics"](
+                    this.loadQuery({
+                        ...this.$route.params,
+                        taskId: this.$route.query.task,
+                    }),
+                ).then(() => {
+                    if ((this.flowStore.metrics?.length ?? -1) > 0) {
+                        if (
+                            this.$route.query.metric &&
+                            !this.flowStore.metrics?.includes(this.$route.query.metric)
+                        ) {
+                            let query = {...this.$route.query};
+                            delete query.metric;
 
-                                this.$router
-                                    .push({query: query})
-                                    .then((_) => this.loadAggregatedMetrics());
-                            } else {
-                                this.loadAggregatedMetrics();
-                            }
+                            this.$router
+                                .push({query: query})
+                                .then(() => this.loadAggregatedMetrics());
+                        } else {
+                            this.loadAggregatedMetrics();
                         }
-                    });
+                    }
+                });
             },
             loadAggregatedMetrics() {
                 this.isLoading = true;
 
                 if (this.display) {
-                    this.$store.dispatch(
-                        `flow/load${this.$route.query?.task ? "Task" : "Flow"}AggregatedMetrics`,
+                    this.flowStore[this.$route.query?.task ? "loadTaskAggregatedMetrics" : "loadFlowAggregatedMetrics"](
                         this.loadQuery({
                             ...this.$route.params,
                             ...this.$route.query,
@@ -220,7 +214,7 @@
                         }),
                     );
                 } else {
-                    this.$store.commit("flow/setAggregatedMetric", undefined);
+                    this.flowStore.aggregatedMetrics = undefined;
                 }
                 this.isLoading = false;
             },

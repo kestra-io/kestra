@@ -1,12 +1,11 @@
 <template>
     <multi-panel-editor-view
-        v-if="flow"
+        v-if="flowStore.flow"
     />
 </template>
 
 <script setup>
-    import {onBeforeUnmount, computed} from "vue"
-    import {useStore} from "vuex";
+    import {onBeforeUnmount} from "vue"
     import MultiPanelEditorView from "./MultiPanelEditorView.vue";
     import {useFlowStore} from "../../stores/flow";
 
@@ -33,11 +32,9 @@
         }
     })
 
-    const store = useStore();
     const flowStore = useFlowStore();
-    const flow = computed(() => flowStore.flow);
 
     onBeforeUnmount(() => {
-        store.commit("flow/setFlowValidation", undefined);
+        flowStore.flowValidation = undefined;
     })
 </script>

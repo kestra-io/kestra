@@ -66,15 +66,15 @@
     );
 
     const validateFlow = debounce(() => {
-        store.dispatch("flow/validateFlow", {flow: flowYaml.value});
+        flowStore.validateFlow({flow: flowYaml.value});
     }, 500);
 
     const timeout = ref();
     const editorStore = useEditorStore();
 
     const editorUpdate = (source: string) => {
-        store.commit("flow/setFlowYaml", source);
-        store.commit("flow/setHaveChange", true);
+        flowStore.flowYaml = source;
+        flowStore.haveChange = true;
         validateFlow();
         editorStore.setTabDirty({
             name: "Flow",
@@ -84,7 +84,7 @@
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {
-            store.dispatch("flow/onEdit", {
+            flowStore.onEdit({
                 source,
                 currentIsFlow: true,
                 topologyVisible: true,

@@ -5,7 +5,7 @@
         v-if="alertState.visible"
         :title="alertState.message"
         type="error"
-        show-icon
+        showIcon
         :closable="false"
         class="mb-2"
     />
@@ -18,16 +18,16 @@
         >
             <el-col :span="8">
                 <InputText
-                    :model-value="pair[0]"
+                    :modelValue="pair[0]"
                     :placeholder="t('key')"
                     @update:model-value="(changed) => handleKeyInput(index, changed)"
-                    :have-error="duplicatedKeys.includes(pair[0])"
+                    :haveError="duplicatedKeys.includes(pair[0])"
                 />
             </el-col>
             <el-col :span="16" class="d-flex">
                 <slot name="value-field" :value="pair[1]" :key="pair[0]">
                     <InputText
-                        :model-value="pair[1]"
+                        :modelValue="pair[1]"
                         :placeholder="t('value')"
                         @update:model-value="(changed) => updateValue(index, changed)"
                         class="w-100 me-2"

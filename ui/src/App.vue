@@ -1,7 +1,7 @@
 <template>
-    <doc-id-display />
+    <DocIdDisplay />
     <el-config-provider>
-        <error-toast v-if="coreStore.message" :no-auto-hide="true" :message="coreStore.message" />
+        <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
         <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
             <router-view />
         </component>

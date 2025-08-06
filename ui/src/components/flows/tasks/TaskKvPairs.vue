@@ -3,7 +3,7 @@
         <template #value-field="{value, key}">
             <TaskString
                 v-bind="$attrs"
-                :model-value="value"
+                :modelValue="value"
                 @update:model-value="(changed: any) => updateValue(key, changed)"
             />
         </template>

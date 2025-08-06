@@ -11,36 +11,36 @@
         </el-checkbox-button>
         <el-time-picker
             v-if="!pebble && schema.format === 'duration'"
-            :model-value="durationValue"
+            :modelValue="durationValue"
             type="time"
-            :default-value="defaultDuration"
+            :defaultValue="defaultDuration"
             :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'duration'}`"
             @update:model-value="onInputDuration"
         />
         <el-date-picker
             v-else-if="!pebble && schema.format === 'date-time'"
-            :model-value="modelValue"
+            :modelValue="modelValue"
             type="date"
             :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'date'}`"
             @update:model-value="onInput($event.toISOString())"
         />
         <InputText
             v-else-if="disabled"
-            :model-value="modelValue"
+            :modelValue="modelValue"
             disabled
             class="w-100 disabled-field"
         />
-        <editor
+        <Editor
             v-else
-            :model-value="editorValue"
+            :modelValue="editorValue"
             :navbar="false"
-            :full-height="false"
-            :should-focus="false"
-            schema-type="flow"
+            :fullHeight="false"
+            :shouldFocus="false"
+            schemaType="flow"
             lang="plaintext-pebble"
             input
             @update:model-value="onInput"
-            :large-suggestions="false"
+            :largeSuggestions="false"
         />
     </div>
 </template>

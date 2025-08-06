@@ -22,11 +22,11 @@
             </el-radio>
         </el-radio-group>
     </el-form-item>
-    <el-form label-position="top" v-if="selectedSchema">
+    <el-form labelPosition="top" v-if="selectedSchema">
         <component
             :is="currentSchemaType"
             v-if="currentSchema"
-            :model-value="modelValue"
+            :modelValue="modelValue"
             :schema="currentSchema"
             :properties="Object.fromEntries(filteredProperties)"
             :definitions="definitions"

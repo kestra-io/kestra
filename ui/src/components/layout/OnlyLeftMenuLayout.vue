@@ -1,7 +1,7 @@
 <template>
-    <left-menu v-if="miscStore.configs" @menu-collapse="onMenuCollapse" />
+    <LeftMenu v-if="miscStore.configs" @menu-collapse="onMenuCollapse" />
     <main>
-        <errors v-if="error" :code="error" />
+        <Errors v-if="error" :code="error" />
         <slot v-else />
     </main>
 </template>

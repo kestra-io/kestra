@@ -4,7 +4,7 @@
             <div class="logo-container">
                 <Logo style="width: 14rem;" />
             </div>
-            <el-steps :space="60" direction="vertical" :active="activeStep" finish-status="success">
+            <el-steps :space="60" direction="vertical" :active="activeStep" finishStatus="success">
                 <el-step :icon="activeStep > 0 ? CheckBold : AccountPlus" :title="t('setup.steps.user')" :class="{'primary-icon': activeStep <= 0}" />
                 <el-step
                     :icon="activeStep > 1 ? CheckBold : Cogs"
@@ -42,7 +42,7 @@
 
             <div class="setup-card-body">
                 <div v-if="activeStep === 0">
-                    <el-form ref="userForm" label-position="top" :rules="userRules" :model="formData" :show-message="false" @submit.prevent="handleUserFormSubmit()">
+                    <el-form ref="userForm" labelPosition="top" :rules="userRules" :model="formData" :showMessage="false" @submit.prevent="handleUserFormSubmit()">
                         <el-form-item :label="t('setup.form.email')" prop="username">
                             <el-input v-model="userFormData.username" :placeholder="t('setup.form.email')" type="email">
                                 <template #suffix v-if="getFieldError('username')">
@@ -73,7 +73,7 @@
                         <el-form-item :label="t('setup.form.password')" prop="password" class="mb-2">
                             <el-input
                                 type="password"
-                                show-password
+                                showPassword
                                 v-model="userFormData.password"
                                 :placeholder="t('setup.form.password')"
                             >
@@ -136,7 +136,7 @@
                 </div>
 
                 <div v-else-if="activeStep === 2">
-                    <el-form ref="surveyForm" label-position="top" :model="surveyData" :show-message="false">
+                    <el-form ref="surveyForm" labelPosition="top" :model="surveyData" :showMessage="false">
                         <el-form-item :label="t('setup.survey.company_size')">
                             <el-radio-group v-model="surveyData.companySize" class="survey-radio-group">
                                 <el-radio

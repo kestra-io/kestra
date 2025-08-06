@@ -2,7 +2,7 @@
     <NamespaceSelect
         data-type="flow"
         :value="modelValue"
-        allow-create
+        allowCreate
         @update:model-value="onInput"
     />
 </template>

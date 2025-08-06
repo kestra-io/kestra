@@ -1,5 +1,5 @@
 <template>
-    <multi-panel-editor-view
+    <MultiPanelEditorView
         v-if="flow"
     />
 </template>

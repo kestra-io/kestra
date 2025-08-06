@@ -9,12 +9,12 @@
         {{ $t('pause') }}
     </component>
 
-    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('pause title', {id: execution.id})" />
         </template>
         <template #footer>
-            <el-button :icon="PauseBox" type="primary" @click="pause()" native-type="submit">
+            <el-button :icon="PauseBox" type="primary" @click="pause()" nativeType="submit">
                 {{ $t('pause') }}
             </el-button>
         </template>

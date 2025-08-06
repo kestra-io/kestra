@@ -1,8 +1,8 @@
 <template>
     <div v-if="playgroundStore.enabled && isTask && taskObject?.id" class="flow-playground">
-        <PlaygroundRunTaskButton :task-id="taskObject?.id" />
+        <PlaygroundRunTaskButton :taskId="taskObject?.id" />
     </div>
-    <el-form label-position="top">
+    <el-form labelPosition="top">
         <el-form-item>
             <template #label>
                 <div class="type-div">
@@ -22,7 +22,7 @@
             v-loading="isLoading"
             v-if="selectedTaskType && schema"
             name="root"
-            :model-value="taskObject"
+            :modelValue="taskObject"
             @update:model-value="onTaskInput"
             :schema="schemaProp"
             :properties="properties"

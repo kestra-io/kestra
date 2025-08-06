@@ -33,7 +33,7 @@
 
         <ValidationErrors
             class="mx-3"
-            tooltip-placement="bottom-start"
+            tooltipPlacement="bottom-start"
             :errors="errors"
         />
 
@@ -47,7 +47,7 @@
         </el-button>
     </div>
     <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
-        <Sections :dashboard="{id: 'default'}" :charts="charts.map(chart => chart.data)" show-default />
+        <Sections :dashboard="{id: 'default'}" :charts="charts.map(chart => chart.data)" showDefault />
     </div>
     <div class="main-editor" v-else>
         <div
@@ -55,15 +55,15 @@
             class="editor-combined"
             style="flex: 1;"
         >
-            <editor
+            <Editor
                 @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
                 v-model="source"
-                schema-type="dashboard"
+                schemaType="dashboard"
                 lang="yaml"
                 @update:model-value="source = $event"
                 @cursor="updatePluginDocumentation"
                 :creating="true"
-                :read-only="false"
+                :readOnly="false"
                 :navbar="false"
             />
         </div>
@@ -76,7 +76,7 @@
             <PluginDocumentation
                 v-if="currentView === views.DOC"
                 class="combined-right-view enhance-readability"
-                :override-intro="intro"
+                :overrideIntro="intro"
                 absolute
             />
             <div
@@ -84,13 +84,13 @@
                 v-else-if="currentView === views.CHART"
             >
                 <div v-if="selectedChart.length" class="w-100">
-                    <Sections :dashboard="{id: 'default'}" :charts="selectedChart" show-default />
+                    <Sections :dashboard="{id: 'default'}" :charts="selectedChart" showDefault />
                 </div>
                 <div v-else-if="chartError" class="text-container">
                     <span>{{ chartError }}</span>
                 </div>
                 <div v-else>
-                    <el-empty :image="EmptyVisualDashboard" :image-size="200">
+                    <el-empty :image="EmptyVisualDashboard" :imageSize="200">
                         <template #description>
                             <h5>
                                 {{ $t("dashboards.chart_preview") }}

@@ -1,10 +1,10 @@
 <template>
-    <dotted-layout
+    <DottedLayout
         :embed="embed"
         :phrase="$t('pluginPage.title2')"
         :alt="$t('pluginPage.alt')"
         :image="headerImage"
-        :image-dark="headerImageDark"
+        :imageDark="headerImageDark"
     >
         <el-row class="my-4 px-3" justify="center">
             <el-col :xs="24" :sm="18" :md="12" :lg="10" :xl="8">
@@ -19,7 +19,7 @@
         <section class="px-3 plugins-container">
             <el-tooltip
                 v-for="(plugin, index) in pluginsList"
-                :show-after="1000"
+                :showAfter="1000"
                 :key="`${plugin.name}-${index}`"
                 effect="light"
             >
@@ -47,9 +47,9 @@
                     </div>
                 </template>
                 <div class="plugin-card" @click="openGroup(plugin)">
-                    <task-icon
+                    <TaskIcon
                         class="size"
-                        :only-icon="true"
+                        :onlyIcon="true"
                         :cls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
                         :icons="icons"
                     />
@@ -57,7 +57,7 @@
                 </div>
             </el-tooltip>
         </section>
-    </dotted-layout>
+    </DottedLayout>
 </template>
 
 <script>

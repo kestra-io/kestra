@@ -11,7 +11,7 @@
             :value="item"
         >
             <span class="options">
-                <task-icon v-if="hasIcons" :cls="item" :only-icon="true" :icons="pluginsStore.icons" />
+                <TaskIcon v-if="hasIcons" :cls="item" :onlyIcon="true" :icons="pluginsStore.icons" />
                 <span>
                     {{ item }}
                 </span>
@@ -19,7 +19,7 @@
         </el-option>
 
         <template #prefix>
-            <task-icon v-if="modelValue && hasIcons" :cls="modelValue" :only-icon="true" :icons="pluginsStore.icons" />
+            <TaskIcon v-if="modelValue && hasIcons" :cls="modelValue" :onlyIcon="true" :icons="pluginsStore.icons" />
         </template>
     </el-select>
 </template>

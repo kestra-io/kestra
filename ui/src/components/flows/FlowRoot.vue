@@ -1,11 +1,11 @@
 <template>
     <template v-if="ready">
         <FlowRootTopBar
-            :route-info="routeInfo"
-            :active-tab-name="activeTabName()"
+            :routeInfo="routeInfo"
+            :activeTabName="activeTabName()"
         />
         <Tabs
-            route-name="flows/update"
+            routeName="flows/update"
             ref="currentTab"
             :tabs="tabs"
             @expand-subflow="updateExpandedSubflows"

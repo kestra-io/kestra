@@ -3,9 +3,9 @@
         effect="light"
         :persistent="false"
         transition=""
-        :hide-after="0"
+        :hideAfter="0"
         :content="$t('force run tooltip')"
-        raw-content
+        rawContent
     >
         <component
             :is="component"
@@ -18,12 +18,12 @@
         </component>
     </el-tooltip>
 
-    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('force run title', {id: execution.id})" />
         </template>
         <template #footer>
-            <el-button :icon="QueueFirstInLastOut" type="primary" @click="forceRun()" native-type="submit">
+            <el-button :icon="QueueFirstInLastOut" type="primary" @click="forceRun()" nativeType="submit">
                 {{ $t('force run') }}
             </el-button>
         </template>

@@ -4,7 +4,7 @@
             <Actions />
         </template>
     </Navbar>
-    <Tabs :tabs :route-name="namespace ? 'namespaces/update' : ''" :namespace />
+    <Tabs :tabs :routeName="namespace ? 'namespaces/update' : ''" :namespace />
 </template>
 
 <script setup lang="ts">

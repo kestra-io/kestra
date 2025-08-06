@@ -22,6 +22,7 @@
     import NoCode from "./NoCode.vue";
     import {CREATE_TASK_FUNCTION_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY} from "./injectionKeys";
     import {useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
 
     export interface NoCodeProps {
         creatingTask?: boolean;
@@ -50,7 +51,8 @@
     });
 
     const store = useStore();
-    const flowYaml = computed<string>(() => store.state.flow.flowYaml);
+    const flowStore = useFlowStore();
+    const flowYaml = computed<string>(() => flowStore.flowYaml ?? "");
 
     const lastValidFlowYaml = computed<string>(
         (oldValue) => {

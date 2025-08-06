@@ -8,6 +8,7 @@
     import {onBeforeUnmount, computed} from "vue"
     import {useStore} from "vuex";
     import MultiPanelEditorView from "./MultiPanelEditorView.vue";
+    import {useFlowStore} from "../../stores/flow";
 
     defineEmits([
         "expand-subflow"
@@ -33,7 +34,8 @@
     })
 
     const store = useStore();
-    const flow = computed(() => store.state.flow.flow);
+    const flowStore = useFlowStore();
+    const flow = computed(() => flowStore.flow);
 
     onBeforeUnmount(() => {
         store.commit("flow/setFlowValidation", undefined);

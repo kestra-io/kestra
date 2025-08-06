@@ -98,6 +98,7 @@
 
     import {saveFlowTemplate} from "../../utils/flowTemplate";
     import {useToast} from "../../utils/toast";
+    import {useFlowStore} from "../../stores/flow";
 
     interface Revision {
         revision: number;
@@ -126,7 +127,8 @@
     ];
     const isModalOpen = ref(false);
 
-    const flow = computed(() => store.state.flow.flow);
+    const flowStore = useFlowStore();
+    const flow = computed(() => flowStore.flow);
 
     function load() {
         const currentRevision = flow.value.revision;

@@ -24,6 +24,7 @@
     } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
+    import {useFlowStore} from "../../../stores/flow";
 
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
@@ -104,7 +105,8 @@
     const timer = ref<number>();
     const lastValidatedValue = ref<string>();
 
-    const errors = computed(() => store.state.flow.taskError);
+    const flowStore = useFlowStore();
+    const errors = computed(() => flowStore.taskError?.split(/, ?/));
 
     const saveTask = () => {
         let result: string = flow.value;

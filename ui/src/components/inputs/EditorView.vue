@@ -481,6 +481,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import * as FLOW_YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
 
     const store = useStore();
     const coreStore = useCoreStore();
@@ -679,8 +680,9 @@
         localStorage.setItem(editorViewTypes.STORAGE_KEY, value);
     };
 
+    const flowStore = useFlowStore();
     const taskErrors = computed(() => {
-        return store.state.flow.taskError?.split(/, ?/);
+        return flowStore.taskError?.split(/, ?/);
     });
 
     watch(

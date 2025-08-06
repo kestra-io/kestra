@@ -438,7 +438,7 @@
     </el-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
     import {useCoreStore} from "../../stores/core";
@@ -480,9 +480,10 @@
     import MetadataEditor from "../flows/MetadataEditor.vue";
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
     import {usePluginsStore} from "../../stores/plugins";
-    import * as FLOW_YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
+    import {useToast} from "../../utils/toast";
+    import {useI18n} from "vue-i18n";
 
     const store = useStore();
     const coreStore = useCoreStore();
@@ -490,9 +491,9 @@
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);
-    const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
-    const t = getCurrentInstance().appContext.config.globalProperties.$t;
-    const tours = getCurrentInstance().appContext.config.globalProperties.$tours;
+    const toast = useToast();
+    const {t} = useI18n();
+    const tours = getCurrentInstance()?.appContext.config.globalProperties.$tours;
     const lowCodeEditorRef = ref(null);
     const tabsScrollRef = ref();
 
@@ -667,7 +668,7 @@
     const toggleExplorer = ref(null);
     const explorerVisible = computed(() => editorStore.explorerVisible);
     const toggleExplorerVisibility = () => {
-        toggleExplorer.value.hide();
+        toggleExplorer.value?.hide();
         editorStore.toggleExplorerVisibility();
     };
     const currentTab = computed(() => editorStore.current);
@@ -775,12 +776,12 @@
     };
 
     const updatePluginDocumentation = (event) => {
-        const elementWrapper = FLOW_YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+        const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
         let element = elementWrapper.value.type !== undefined ? elementWrapper.value : elementWrapper.parents.findLast(p => p.type !== undefined);
         pluginsStore.updateDocumentation(element);
     };
 
-    const fetchGraph = () => {
+    const fetchGraph = async () => {
         if(props.isNamespace) return;
 
         return flowStore.loadGraphFromSource({

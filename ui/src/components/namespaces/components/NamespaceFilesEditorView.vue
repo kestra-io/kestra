@@ -58,16 +58,16 @@
             :style="{left: `${tabContextMenu.x}px`, top: `${tabContextMenu.y}px`}"
             class="tabs-context"
         >
-            <el-menu-item :disabled="tabContextMenu.tab?.persistent" @click="closeTab(tabContextMenu.tab, tabContextMenu.index)">
+            <el-menu-item :disabled="tabContextMenu.tab?.persistent" @click="tabContextMenu.tab && tabContextMenu.index !== null && closeTab(tabContextMenu.tab, tabContextMenu.index)">
                 {{ t("namespace_editor.close.tab") }}
             </el-menu-item>
             <el-menu-item @click="closeAllTabs">
                 {{ t("namespace_editor.close.all") }}
             </el-menu-item>
-            <el-menu-item @click="closeOtherTabs(tabContextMenu.tab)">
+            <el-menu-item @click="tabContextMenu.tab && closeOtherTabs(tabContextMenu.tab)">
                 {{ t("namespace_editor.close.other") }}
             </el-menu-item>
-            <el-menu-item @click="closeTabsToRight(tabContextMenu.index)">
+            <el-menu-item @click="tabContextMenu.index !== null && closeTabsToRight(tabContextMenu.index)">
                 {{ t("namespace_editor.close.right") }}
             </el-menu-item>
         </el-menu>
@@ -281,6 +281,7 @@
     import action from "../../../models/action";
     import {storageKeys, editorViewTypes} from "../../../utils/constants";
 
+
     // editor components
     import Editor from "../../inputs/Editor.vue";
     import EditorButtons from "../../inputs/EditorButtons.vue";
@@ -439,7 +440,7 @@
 
     store.commit("flow/setHaveChange", props.isDirty);
 
-    const editorDomElement = ref(null);
+    const editorDomElement = ref<any>(null);
     const editorWidth = useStorage("editor-size", 50);
     const isLoading = ref(false);
     const flowYaml = computed(() => store.state.flow.flowYaml);
@@ -617,7 +618,7 @@
 
     const flowParsed = computed(() => store.getters["flow/flowParsed"]);
 
-    const saveUsingKeyboard = (e) => {
+    const saveUsingKeyboard = (e: KeyboardEvent) => {
         if (e.ctrlKey && e.key === "s") {
             e.preventDefault();
             return save();
@@ -643,7 +644,7 @@
         }
     };
 
-    const execute = (_) => {
+    const execute = (_: any) => {
         store.commit("flow/executeFlow", true);
     };
 
@@ -674,7 +675,7 @@
         ].includes(viewType.value)
     );
 
-    const isActiveTab = (tab) => {
+    const isActiveTab = (tab: EditorTabProps) => {
         if (!currentTab.value) {
             return false;
         }
@@ -686,32 +687,34 @@
         return tab.name === currentTab.value.name;
     }
 
-    const draggedTabIndex = ref(null);
-    const dragOverTabIndex = ref(null);
+    const draggedTabIndex = ref<number | null>(null);
+    const dragOverTabIndex = ref<number | null>(null);
 
-    const onDragStart = (event, index) => {
+    const onDragStart = (event: DragEvent, index: number) => {
         draggedTabIndex.value = index;
-        event.dataTransfer.effectAllowed = "move";
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move";
+        }
     };
 
-    const onDragOver = (event, index) => {
+    const onDragOver = (event: DragEvent, index: number) => {
         event.preventDefault();
         if (index !== draggedTabIndex.value) {
             dragOverTabIndex.value = index;
         }
     };
 
-    const onDrop = (event, to) => {
+    const onDrop = (event: DragEvent, to: number) => {
         event.preventDefault();
         const from = draggedTabIndex.value;
-        if (from !== to) {
+        if (from !== null && from !== to) {
             editorStore.reorderTabs({from, to});
         }
         draggedTabIndex.value = null;
         dragOverTabIndex.value = null;
     };
 
-    async function loadFileAtPath(path){
+    async function loadFileAtPath(path: string) {
         const content = await store.dispatch("namespace/readFile", {
             path,
             namespace: props.namespace ?? route.params.namespace ?? route.params.id,
@@ -724,10 +727,10 @@
     watch(currentTab, (current, previous) => {
         if(previous?.flow) persistViewType(viewType.value);
 
-        dirtyBeforeLoad.value = current?.dirty;
+        dirtyBeforeLoad.value = current?.dirty ?? false;
 
         if(current?.flow){
-            switchViewType(loadViewType(), false)
+            switchViewType(loadViewType() ?? editorViewTypes.SOURCE, false)
         }else {
             switchViewType(editorViewTypes.SOURCE, false)
             if(current?.path && !current.dirty) {
@@ -744,14 +747,17 @@
         });
     })
 
-    function onTabLoaded(tab, source){
+    function onTabLoaded(tab: any, source: string) {
         clearTimeout(timer.value);
 
         // once the tab is finished loading, restore the dirty state
-        if(tab.path === currentTab.value.path){
-            flowYaml.value = source;
+        if(tab.path === currentTab.value?.path){
+            // flowYaml.value = source; // This is readonly, need to use store commit
+            store.commit("flow/setFlowYaml", source);
             onEdit(source, tab.flow);
-            currentTab.value.dirty = dirtyBeforeLoad.value
+            if (currentTab.value) {
+                currentTab.value.dirty = dirtyBeforeLoad.value;
+            }
         }
     }
 
@@ -759,11 +765,11 @@
         visible: false,
         x: 0,
         y: 0,
-        tab: null as any,
-        index: null,
+        tab: null as null | EditorTabProps,
+        index: null as null | number,
     });
 
-    const onTabContextMenu = (event, tab, index) => {
+    const onTabContextMenu = (event: MouseEvent, tab: EditorTabProps, index: number) => {
         tabContextMenu.value = {
             visible: true,
             x: event.clientX,
@@ -782,12 +788,12 @@
 
     const FLOW_TAB = computed(() => editorStore.tabs?.find(tab => tab.name === "Flow"))
 
-    const closeTab = (tab, index) => {
+    const closeTab = (tab: EditorTabProps, index: number) => {
         editorStore.closeTab({...tab, index});
     };
 
-    const closeTabs = (tabsToClose, openTab) => {
-        tabsToClose.forEach(tab => {
+    const closeTabs = (tabsToClose: EditorTabProps[], openTab: EditorTabProps) => {
+        tabsToClose.forEach((tab: EditorTabProps) => {
             editorStore.closeTab(tab);
         });
         editorStore.openTab(openTab);
@@ -795,22 +801,24 @@
     };
 
     const closeAllTabs = () => {
-        closeTabs(openedTabs.value.filter(tab => tab !== FLOW_TAB.value), FLOW_TAB.value);
+        if (FLOW_TAB.value) {
+            closeTabs(openedTabs.value.filter(tab => tab !== FLOW_TAB.value), FLOW_TAB.value);
+        }
     };
 
-    const closeOtherTabs = (tab) => {
+    const closeOtherTabs = (tab: EditorTabProps) => {
         closeTabs(openedTabs.value.filter(t => t !== FLOW_TAB.value && t !== tab), tab);
     };
 
-    const closeTabsToRight = (index) => {
+    const closeTabsToRight = (index: number) => {
         closeTabs(openedTabs.value.slice(index + 1).filter(tab => tab !== FLOW_TAB.value), openedTabs.value[index]);
     };
 
     const dialog = ref({
         visible: false,
-        type: "file",
-        name: undefined,
-        folder: undefined,
+        type: "file" as "file" | "folder",
+        name: undefined as string | undefined,
+        folder: undefined as string | undefined,
     });
 
     const createFile = () => {
@@ -833,10 +841,16 @@
         editorStore.toggleExplorerVisibility(true);
     };
 
+    interface TreeItem {
+        fileName: string;
+        type: "Directory" | "File";
+        children?: TreeItem[];
+    }
+
     const folders = computed(() => {
-        function extractPaths(basePath = "", array) {
-            const paths = [];
-            array?.forEach((item) => {
+        function extractPaths(basePath = "", array: TreeItem[]): string[] {
+            const paths: string[] = [];
+            array?.forEach((item: TreeItem) => {
                 if (item.type === "Directory") {
                     const folderPath = `${basePath}${item.fileName}`;
                     paths.push(folderPath);
@@ -875,23 +889,26 @@
             editorStore.refreshTree();
             if (dialog.value.type === "file") {
                 editorStore.openTab({
-                    name: dialog.value.name,
+                    name: dialog.value.name!,
                     path,
-                    extension: dialog.value.name.split(".").pop()
+                    extension: dialog.value.name!.split(".").pop()
                 });
             }
         } catch (error) {
             console.error(error);
-            toast().error(t("namespace files.create.error"));
+            toast.error(t("namespace files.create.error"), "Error");
         }
     };
 
-    const handleFileImport = async (event) => {
-        const files = event.target.files;
+    const handleFileImport = async (event: Event) => {
+        const target = event.target as HTMLInputElement;
+        const files = target.files;
+        if (!files) return;
+
         for (const file of files) {
-            const content = await new Promise((resolve) => {
+            const content = await new Promise<ArrayBuffer>((resolve) => {
                 const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
+                reader.onload = (e) => resolve(e.target?.result as ArrayBuffer);
                 reader.readAsArrayBuffer(file);
             });
             const path = file.webkitRelativePath || file.name;
@@ -903,7 +920,7 @@
             });
         }
         editorStore.refreshTree();
-        event.target.value = "";
+        target.value = "";
     };
 </script>
 

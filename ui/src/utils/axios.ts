@@ -6,7 +6,7 @@ import {storageKeys} from "./constants"
 import {useLayoutStore} from "../stores/layout"
 import {useCoreStore} from "../stores/core"
 import * as BasicAuth from "../utils/basicAuth"
-import {useAuthStore} from "../override/stores/auth"
+import {useAuthStore} from "override/stores/auth"
 
 let pendingRoute = false
 let requestsTotal = 0

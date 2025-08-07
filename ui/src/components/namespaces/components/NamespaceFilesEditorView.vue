@@ -123,7 +123,6 @@
                         @tab-loaded="onTabLoaded"
                         :read-only="isReadOnly"
                         :navbar="false"
-                        :original="flowYaml"
                         :diff-side-by-side="false"
                     />
                 </template>

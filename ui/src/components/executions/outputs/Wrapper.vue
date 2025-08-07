@@ -189,6 +189,8 @@
         if (!task) return "";
 
         let path = expandedValue.value;
+        if (!path) return `{{ outputs${formatTask(task)} }}`;
+
         return `{{ outputs${formatPath(path)} }}`;
     });
 

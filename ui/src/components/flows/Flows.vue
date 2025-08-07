@@ -772,6 +772,7 @@
             },
             mappedChart(id, namespace) {
                 let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION));
+                
                 MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id);
 
                 return MAPPED_CHARTS;

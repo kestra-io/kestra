@@ -9,7 +9,7 @@
         :position
         :block-schema-path="blockSchemaPath"
         @update-task="(e) => editorUpdate(e)"
-        @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
+        @reorder="(yaml) => flowStore.flowYaml = yaml"
         @close-task="() => emit('closeTask')"
     />
 </template>
@@ -17,7 +17,6 @@
 <script setup lang="ts">
     import {computed, provide, ref} from "vue";
     import debounce from "lodash/debounce";
-    import {useStore} from "vuex";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import NoCode from "./NoCode.vue";
     import {CREATE_TASK_FUNCTION_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY} from "./injectionKeys";
@@ -50,7 +49,6 @@
         emit("editTask", parentPath, blockSchemaPath, refPath)
     });
 
-    const store = useStore();
     const flowStore = useFlowStore();
     const flowYaml = computed<string>(() => flowStore.flowYaml ?? "");
 

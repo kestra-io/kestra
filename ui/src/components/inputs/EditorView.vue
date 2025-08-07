@@ -346,7 +346,7 @@
 
             <el-form label-position="top">
                 <metadata-editor
-                    :metadata="store.getters['flow/flowYamlMetadata']"
+                    :metadata="flowStore.flowYamlMetadata"
                     @update:model-value="onUpdateMetadata"
                     :editing="!props.isCreating"
                 />

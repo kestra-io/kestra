@@ -1,8 +1,6 @@
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
-import {useBaseNamespacesStore} from "../../composables/useBaseNamespaces";
-
-const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 404};
+import {useBaseNamespacesStore, VALIDATE} from "../../composables/useBaseNamespaces";
 
 export const useNamespacesStore = defineStore("namespaces", () => {
     const ossStore = useBaseNamespacesStore();

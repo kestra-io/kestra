@@ -9,7 +9,7 @@ function base(store: any, namespace: string) {
 const HEADERS = {headers: {"Content-Type": "multipart/form-data"}};
 const slashPrefix = (path: string) => (path.startsWith("/") ? path : `/${path}`);
 const safePath = (path: string) => encodeURIComponent(path).replace(/%2C|%2F/g, "/");
-const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 404};
+export const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 404};
 
 export function useBaseNamespacesStore() {
     const namespace = ref<any>(undefined);

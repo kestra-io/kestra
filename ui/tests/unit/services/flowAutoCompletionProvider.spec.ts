@@ -73,7 +73,7 @@ const mockedStore: MockStore<Record<string, any>> = {
 } as any
 
 const pluginsStore = {
-    load(payload: any){
+    load: vi.fn((payload: any) =>{
         switch (payload.cls) {
                 case "io.kestra.plugin.core.trigger.Schedule":
                     return Promise.resolve(propertiesSchemaWrapper({
@@ -92,7 +92,7 @@ const pluginsStore = {
                 default:
                     return Promise.reject("404")
             }
-    }
+    })
 } as any
 
 const flowStore = {
@@ -217,26 +217,20 @@ describe("FlowAutoCompletionProvider", () => {
     })
 
     it("value autocompletions", async () => {
-        mockedStore.dispatch.mockClear();
-        flowStore.flowsByNamespace.mockClear();
-        flowStore.loadFlow.mockClear();
-        flowStore.loadGraphFromSource.mockClear();
-        namespacesStore.loadNamespacesForDatatype.mockClear();
-
         expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("namespace:") + "namespace:".length))).toEqual(["my.namespace", "another.namespace"]);
         expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("flowId:") + "flowId:".length))).toEqual(["flow-other-namespace", "another-flow-other-namespace"]);
 
-        expect(mockedStore.dispatch.mock.calls.length).toBe(1);
-        expect(flowStore.flowsByNamespace.mock.calls.length).toBe(1);
+        expect(namespacesStore.loadNamespacesForDatatype).toHaveBeenCalledOnce();
+        expect(flowStore.flowsByNamespace).toHaveBeenCalledWith("another.namespace");
         const firstInputIndex = defaultFlow.indexOf("first-input");
+        namespacesStore.loadNamespacesForDatatype.mockClear();
         expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
-        expect(mockedStore.dispatch.mock.calls.length).toBe(1);
-        expect(flowStore.loadFlow.mock.calls.length).toBe(1);
+        expect(namespacesStore.loadNamespacesForDatatype).not.toHaveBeenCalled();
+        expect(flowStore.loadFlow).toHaveBeenCalledOnce();
 
         // Subflow inputs cache kicks in
         expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
-        expect(mockedStore.dispatch.mock.calls.length).toBe(1);
-        expect(flowStore.loadFlow.mock.calls.length).toBe(1);
+        expect(flowStore.loadFlow).toHaveBeenCalledOnce();
 
         // With newline already inserted
         expect(await provider.valueAutoCompletion(defaultFlow.substring(0, firstInputIndex) + "\n        " + defaultFlow.substring(firstInputIndex, defaultFlow.length), parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);

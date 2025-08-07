@@ -96,7 +96,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .where(this.defaultFilter(tenantId))
                     .and(NORMAL_KIND_CONDITION);
 
-               select = this.filter(select, filters, "timestamp", Resource.LOG);
+               select = select.and(this.filter(filters, "timestamp", Resource.LOG));
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
@@ -186,7 +186,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .where(this.defaultFilter(tenantId))
                     .and(NORMAL_KIND_CONDITION);
 
-                select = this.filter(select, filters, "timestamp", Resource.LOG);
+                select = select.and(this.filter(filters, "timestamp", Resource.LOG));
 
                 try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()){
                     stream.map((Record record) -> jdbcRepository.map(record))
@@ -501,7 +501,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 var delete = context
                     .delete(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
-                delete = this.filter(delete, filters, "timestamp", Resource.LOG);
+                delete = delete.and(this.filter(filters, "timestamp", Resource.LOG));
 
                 return delete.execute();
             });

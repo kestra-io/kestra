@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.micronaut.context.annotation.Value;
@@ -240,50 +241,50 @@ public abstract class AbstractJdbcRepository {
         return column.getField() != null ? field(fieldsMapping.get(column.getField())) : null;
     }
 
-    protected <T extends Record> SelectConditionStep<T> filter(
-        SelectConditionStep<T> select,
+    protected Condition filter(
         List<QueryFilter> filters,
         String dateColumn,
         Resource resource
     ) {
+        List<Condition> conditions = new ArrayList<>();
         if (filters != null) {
             QueryFilter.validateQueryFilters(filters, resource);
             for (QueryFilter filter : filters) {
                 QueryFilter.Field field = filter.field();
                 QueryFilter.Op operation = filter.operation();
                 Object value = filter.value();
-                select = getConditionOnField(select, field, value, operation, dateColumn);
+                conditions.add(getConditionOnField(field, value, operation, dateColumn));
             }
         }
-        return select;
+        return conditions.stream()
+            .reduce(DSL.noCondition(), Condition::and);
     }
 
     /**
      *
      * @param dateColumn the JDBC column name of the logical date to filter on with {@link io.kestra.core.models.QueryFilter.Field#START_DATE} and/or {@link QueryFilter.Field#END_DATE}
      */
-    protected <T extends Record> SelectConditionStep<T> getConditionOnField(
-        SelectConditionStep<T> select,
+    protected Condition getConditionOnField(
         QueryFilter.Field field,
         Object value,
         QueryFilter.Op operation,
         @Nullable String dateColumn
     ) {
         if (field.equals(QueryFilter.Field.QUERY)) {
-            return handleQuery(select, value, operation);
+            return handleQuery(value, operation);
         }
         // Handling for Field.STATE
         if (field.equals(QueryFilter.Field.STATE)) {
 
-            return select.and(generateStateCondition(value, operation));
+            return generateStateCondition(value, operation);
         }
         // Handle Field.CHILD_FILTER
         if (field.equals(QueryFilter.Field.CHILD_FILTER)) {
-            return handleChildFilter(select, value);
+            return handleChildFilter(value);
         }
         // Handling for Field.MIN_LEVEL
         if (field.equals(QueryFilter.Field.MIN_LEVEL)) {
-            return handleMinLevelField(select, value, operation);
+            return handleMinLevelField(value, operation);
         }
 
         // Special handling for START_DATE and END_DATE
@@ -294,16 +295,16 @@ public abstract class AbstractJdbcRepository {
             OffsetDateTime dateTime = (value instanceof ZonedDateTime)
                 ? ((ZonedDateTime) value).toOffsetDateTime()
                 : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
-            return applyDateCondition(select, dateTime, operation, dateColumn);
+            return applyDateCondition(dateTime, operation, dateColumn);
         }
 
         if (field == QueryFilter.Field.SCOPE) {
-            return applyScopeCondition(select, value, operation);
+            return applyScopeCondition(value, operation);
         }
 
         if (field.equals(QueryFilter.Field.LABELS)) {
             if (value instanceof Map<?, ?> map){
-                return select.and(findLabelCondition(map, operation));
+                return findLabelCondition(map, operation);
             } else {
                 throw new InvalidQueryFiltersException("Label field value must but instance of Map");
             }
@@ -313,37 +314,22 @@ public abstract class AbstractJdbcRepository {
         Name columnName = DSL.quotedName(field.name().toLowerCase());
 
         // Default handling for other fields
-        switch (operation) {
-            case EQUALS -> select = select.and(DSL.field(columnName).eq(value));
-            case NOT_EQUALS -> select = select.and(DSL.field(columnName).ne(value));
-            case GREATER_THAN -> select = select.and(DSL.field(columnName).greaterThan(value));
-            case LESS_THAN -> select = select.and(DSL.field(columnName).lessThan(value));
-            case IN -> {
-                if (value instanceof Collection<?>) {
-                    select = select.and(DSL.field(columnName).in((Collection<?>) value));
-                } else {
-                    throw new InvalidQueryFiltersException("IN operation requires a collection as value");
-                }
-            }
-            case NOT_IN -> {
-                if (value instanceof Collection<?>) {
-                    select = select.and(DSL.field(columnName).notIn((Collection<?>) value));
-                } else {
-                    throw new InvalidQueryFiltersException("NOT_IN operation requires a collection as value");
-                }
-            }
-            case STARTS_WITH -> select = select.and(DSL.field(columnName).like(value + "%"));
+        return switch (operation) {
+            case EQUALS -> DSL.field(columnName).eq(value);
+            case NOT_EQUALS -> DSL.field(columnName).ne(value);
+            case GREATER_THAN -> DSL.field(columnName).greaterThan(value);
+            case LESS_THAN -> DSL.field(columnName).lessThan(value);
+            case IN -> DSL.field(columnName).in(ListUtils.convertToList(value));
+            case NOT_IN -> DSL.field(columnName).notIn(ListUtils.convertToList(value));
+            case STARTS_WITH -> DSL.field(columnName).like(value + "%");
 
-            case ENDS_WITH -> select = select.and(DSL.field(columnName).like("%" + value));
-            case CONTAINS -> select = select.and(DSL.field(columnName).like("%" + value + "%"));
-            case REGEX -> select = select.and(DSL.field(columnName).likeRegex((String) value));
-            case PREFIX -> select = select.and(
-                    DSL.field(columnName).like(value + ".%")
-                    .or(DSL.field(columnName).eq(value))
-                );
+            case ENDS_WITH -> DSL.field(columnName).like("%" + value);
+            case CONTAINS -> DSL.field(columnName).like("%" + value + "%");
+            case REGEX -> DSL.field(columnName).likeRegex((String) value);
+            case PREFIX -> DSL.field(columnName).like(value + ".%")
+                    .or(DSL.field(columnName).eq(value));
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
-        }
-        return select;
+        };
     }
 
     protected Condition findQueryCondition(String query) {
@@ -378,43 +364,36 @@ public abstract class AbstractJdbcRepository {
             .in(state.stream().map(Enum::name).toList());
     }
 
-    private <T extends Record> SelectConditionStep<T> handleQuery(SelectConditionStep<T> select,
-            Object value,
-            QueryFilter.Op operation) {
+    private Condition handleQuery(Object value, QueryFilter.Op operation) {
         Condition condition = findQueryCondition(value.toString());
 
         return switch (operation) {
-            case EQUALS -> select.and(condition);
-            case NOT_EQUALS -> select.andNot(condition);
+            case EQUALS -> condition;
+            case NOT_EQUALS -> condition.not();
             default -> throw new InvalidQueryFiltersException("Unsupported operation for QUERY field: " + operation);
         };
     }
 
     // Handle CHILD_FILTER field logic
-    private <T extends Record> SelectConditionStep<T> handleChildFilter(SelectConditionStep<T> select, Object value) {
+    private Condition handleChildFilter(Object value) {
         ChildFilter childFilter = (value instanceof String val) ? ChildFilter.valueOf(val) : (ChildFilter) value;
 
         return switch (childFilter) {
-            case CHILD -> select.and(field("trigger_execution_id").isNotNull());
-            case MAIN -> select.and(field("trigger_execution_id").isNull());
+            case CHILD -> field("trigger_execution_id").isNotNull();
+            case MAIN -> field("trigger_execution_id").isNull();
         };
     }
 
-    private <T extends Record> SelectConditionStep<T> handleMinLevelField(
-        SelectConditionStep<T> select,
-        Object value,
-        QueryFilter.Op operation
-    ) {
+    private Condition handleMinLevelField(Object value, QueryFilter.Op operation) {
         Level minLevel = value instanceof Level ? (Level) value : Level.valueOf((String) value);
 
-        switch (operation) {
-            case EQUALS -> select = select.and(minLevelCondition(minLevel));
-            case NOT_EQUALS -> select = select.and(minLevelCondition(minLevel).not());
+        return switch (operation) {
+            case EQUALS -> minLevelCondition(minLevel);
+            case NOT_EQUALS -> minLevelCondition(minLevel).not();
             default -> throw new InvalidQueryFiltersException(
                 "Unsupported operation for MIN_LEVEL: " + operation
             );
-        }
-        return select;
+        };
     }
 
     private Condition minLevelCondition(Level minLevel) {
@@ -425,53 +404,32 @@ public abstract class AbstractJdbcRepository {
         return field("level").in(levels.stream().map(level -> level.name()).toList());
     }
 
-    private <T extends Record> SelectConditionStep<T> applyDateCondition(
-        SelectConditionStep<T> select, OffsetDateTime dateTime, QueryFilter.Op operation, String fieldName
-    ) {
-        switch (operation) {
-            case LESS_THAN -> select = select.and(field(fieldName).lessThan(dateTime));
-            case LESS_THAN_OR_EQUAL_TO -> select = select.and(field(fieldName).lessOrEqual(dateTime));
-            case GREATER_THAN -> select = select.and(field(fieldName).greaterThan(dateTime));
-            case GREATER_THAN_OR_EQUAL_TO -> select = select.and(field(fieldName).greaterOrEqual(dateTime));
-            case EQUALS -> select = select.and(field(fieldName).eq(dateTime));
-            case NOT_EQUALS -> select = select.and(field(fieldName).ne(dateTime));
+    private Condition applyDateCondition(OffsetDateTime dateTime, QueryFilter.Op operation, String fieldName) {
+        return switch (operation) {
+            case LESS_THAN -> field(fieldName).lessThan(dateTime);
+            case LESS_THAN_OR_EQUAL_TO -> field(fieldName).lessOrEqual(dateTime);
+            case GREATER_THAN -> field(fieldName).greaterThan(dateTime);
+            case GREATER_THAN_OR_EQUAL_TO -> field(fieldName).greaterOrEqual(dateTime);
+            case EQUALS -> field(fieldName).eq(dateTime);
+            case NOT_EQUALS -> field(fieldName).ne(dateTime);
             default ->
                 throw new InvalidQueryFiltersException("Unsupported operation for date condition: " + operation);
-        }
-        return select;
+        };
     }
 
-    private <T extends Record> SelectConditionStep<T> applyScopeCondition(
-        SelectConditionStep<T> select, Object value, QueryFilter.Op operation) {
-
-        if (!(value instanceof List<?> scopeValues)) {
-            throw new InvalidQueryFiltersException("Invalid value for SCOPE filtering");
+    private Condition applyScopeCondition(Object value, QueryFilter.Op operation) {
+        List<FlowScope> flowScopes = Enums.fromList(value, FlowScope.class);
+        if (flowScopes.size() > 1){
+            throw new InvalidQueryFiltersException("Only one scope can be use in the same time");
         }
+        FlowScope scope = flowScopes.getFirst();
 
-        List<FlowScope> validScopes = Arrays.stream(FlowScope.values()).toList();
-        if (!validScopes.containsAll(scopeValues)) {
-            throw new InvalidQueryFiltersException("Scope values must be a subset of FlowScope");
-        }
-        if (operation != QueryFilter.Op.EQUALS && operation != QueryFilter.Op.NOT_EQUALS) {
-            throw new InvalidQueryFiltersException("Unsupported operation for SCOPE: " + operation);
-        }
-
-        boolean isEqualsOperation = (operation == QueryFilter.Op.EQUALS);
         String systemNamespace = this.getSystemFlowNamespace();
-
-        if (scopeValues.contains(FlowScope.USER)) {
-            Condition userCondition = isEqualsOperation
-                ? field("namespace").ne(systemNamespace)
-                : field("namespace").eq(systemNamespace);
-            select = select.and(userCondition);
-        } else if (scopeValues.contains(FlowScope.SYSTEM)) {
-            Condition systemCondition = isEqualsOperation
-                ? field("namespace").eq(systemNamespace)
-                : field("namespace").ne(systemNamespace);
-            select = select.and(systemCondition);
-        }
-
-        return select;
+        return switch (operation){
+            case EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").ne(systemNamespace) : field("namespace").eq(systemNamespace);
+            case NOT_EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").eq(systemNamespace) : field("namespace").ne(systemNamespace);
+            default -> throw new InvalidQueryFiltersException("Unsupported operation for SCOPE: " + operation);
+        };
     }
 
 

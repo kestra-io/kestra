@@ -83,6 +83,17 @@ public abstract class AbstractLogRepositoryTest {
         assertThat(logEntries).hasSize(1);
     }
 
+    @ParameterizedTest
+    @MethodSource("filterCombinations")
+    void should_delete_with_filter(QueryFilter filter){
+        logRepository.save(logEntry(Level.INFO, "executionId").build());
+
+        logRepository.deleteByFilters(MAIN_TENANT, List.of(filter));
+
+        assertThat(logRepository.findAllAsync(MAIN_TENANT).collectList().block()).isEmpty();
+    }
+
+
 
     static Stream<QueryFilter> filterCombinations() {
         return Stream.of(

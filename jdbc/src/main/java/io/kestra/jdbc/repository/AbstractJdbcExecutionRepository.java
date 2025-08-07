@@ -303,7 +303,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .where(this.defaultFilter(tenantId, false))
             .and(NORMAL_KIND_CONDITION);
 
-        select = this.filter(select, filters, "start_date", Resource.EXECUTION);
+        select = select.and(this.filter(filters, "start_date", Resource.EXECUTION));
 
         return select;
     }

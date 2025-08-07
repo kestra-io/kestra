@@ -507,13 +507,15 @@
         setDecorations();
     }
 
-    function clearHighlights() {
-        decorations?.clear();
+
+    function clearLinesRangeHighlights() {
+        decorationsLists.lines = [];
+        setDecorations();
     }
 
     defineExpose({
         highlightLinesRange,
-        clearHighlights,
+        clearLinesRangeHighlights,
         addContentWidget,
         removeContentWidget,
     })

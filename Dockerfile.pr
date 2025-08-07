@@ -1,0 +1,7 @@
+FROM  kestra/kestra:develop
+
+USER root
+
+COPY --chown=kestra:kestra docker /
+
+USER kestra

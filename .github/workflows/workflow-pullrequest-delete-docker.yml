@@ -1,0 +1,15 @@
+name: Pull Request - Delete Docker
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  publish:
+    name: Pull Request - Delete Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          package: kestra-pr
+          delete-tags: ${{ github.event.pull_request.number }}

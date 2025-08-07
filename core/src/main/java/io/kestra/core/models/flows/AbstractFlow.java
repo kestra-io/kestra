@@ -38,6 +38,8 @@ public abstract class AbstractFlow implements FlowInterface {
     @Min(value = 1)
     Integer revision;
 
+    String description;
+
     @Valid
     List<Input<?>> inputs;
 

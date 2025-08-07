@@ -36,9 +36,11 @@
 
 <script>
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
     import {State} from "@kestra-io/ui-libs";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         props: {
@@ -64,10 +66,9 @@
                     });
             },
             forceRun() {
-                this.$store
-                    .dispatch("execution/forceRun", {
-                        id: this.execution.id
-                    })
+                this.executionsStore.forceRun({
+                    id: this.execution.id
+                })
                     .then(() => {
                         this.isDrawerOpen = false;
                         this.$toast().success(this.$t("force run done"));
@@ -76,7 +77,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("execution", ["flow"]),
+            ...mapStores(useExecutionsStore),
             enabled() {
                 if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;

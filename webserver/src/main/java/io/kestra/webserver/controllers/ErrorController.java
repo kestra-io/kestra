@@ -161,6 +161,11 @@ public class ErrorController {
     }
 
     @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, ValidationErrorException e) {
+        return jsonError(request, e, HttpStatus.BAD_REQUEST, e.formatedInvalidObjects());
+    }
+
+    @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, HttpStatusException e) {
         return jsonError(request, e, e.getStatus(), e.getStatus().getReason());
     }

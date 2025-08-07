@@ -1,0 +1,9 @@
+id: subflow-parent-no-wait
+namespace: io.kestra.tests
+
+tasks:
+  - id: subflow
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: io.kestra.tests
+    flowId: subflow-child-with-output
+    wait: false

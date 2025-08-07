@@ -141,7 +141,7 @@
                         @execute="execute"
                         :path="currentTab?.path"
                         :diff-overview-bar="false"
-                        :model-value="draftSource === undefined ? flowYaml : draftSource"
+                        :model-value="flowYaml"
                         :schema-type="isCurrentTabFlow? 'flow': undefined"
                         :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
                         :extension="currentTab?.extension"
@@ -152,34 +152,8 @@
                         @tab-loaded="onTabLoaded"
                         :read-only="isReadOnly"
                         :navbar="false"
-                        :original="draftSource === undefined ? undefined : flowYaml"
+                        :original="flowYaml"
                         :diff-side-by-side="false"
-                    >
-                        <template #absolute>
-                            <div class="d-flex flex-column align-items-end gap-2" v-if="isCurrentTabFlow">
-                                <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
-                                    {{ $t("ai.flow.title") }}
-                                </el-button>
-                                <span>
-                                    <KeyShortcuts />
-                                </span>
-                            </div>
-                        </template>
-                    </editor>
-                    <transition name="el-zoom-in-center">
-                        <AiAgent
-                            v-if="aiAgentOpened"
-                            class="position-absolute prompt"
-                            @close="aiAgentOpened = false"
-                            :flow="editorContent"
-                            @generated-yaml="yaml => {draftSource = yaml; aiAgentOpened = false}"
-                        />
-                    </transition>
-                    <AcceptDecline
-                        v-if="draftSource !== undefined"
-                        class="position-absolute prompt"
-                        @accept="acceptDraft"
-                        @decline="declineDraft"
                     />
                 </template>
                 <div v-else class="no-tabs-opened">
@@ -269,7 +243,6 @@
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
                 @reorder="(yaml) => handleReorder(yaml)"
-                @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
             />
         </div>
         <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
@@ -487,7 +460,6 @@
 
     import TypeIcon from "../utils/icons/Type.vue"
     import SwitchView from "./SwitchView.vue";
-    import KeyShortcuts from "./KeyShortcuts.vue";
 
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -507,13 +479,11 @@
     import MetadataEditor from "../flows/MetadataEditor.vue";
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
     import {usePluginsStore} from "../../stores/plugins";
-    import AiAgent from "../ai/AiAgent.vue";
-    import AiIcon from "../ai/AiIcon.vue";
-    import AcceptDecline from "./AcceptDecline.vue";
+    import * as FLOW_YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {useEditorStore} from "../../stores/editor";
 
     const store = useStore();
     const coreStore = useCoreStore();
-    const aiEnabled = computed(() => store.state.misc.configs?.isAiEnabled);
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);
@@ -522,16 +492,6 @@
     const tours = getCurrentInstance().appContext.config.globalProperties.$tours;
     const lowCodeEditorRef = ref(null);
     const tabsScrollRef = ref();
-
-    const toggleAiShortcut = (event) => {
-        if (event.altKey && event.key === "k" && isCurrentTabFlow.value) {
-            event.preventDefault();
-            draftSource.value = undefined;
-            aiAgentOpened.value = !aiAgentOpened.value;
-        }
-    };
-    const aiAgentOpened = ref(false);
-    const draftSource = ref(undefined);
 
     const props = defineProps({
         flowGraph: {
@@ -674,7 +634,7 @@
     const editorWidth = useStorage("editor-size", 50);
     const validationDomElement = ref(null);
     const isLoading = ref(false);
-    const flowYaml = computed(() => store.getters["flow/flowYaml"]);
+    const flowYaml = computed(() => store.state.flow.flowYaml);
     const flowYamlOrigin = computed(() => store.state.flow.flowYamlOrigin);
     const user = computed(() => store.getters["auth/user"]);
     const metadata = computed(() => store.state.flow.metadata);
@@ -691,7 +651,9 @@
     const blueprintsLoaded = ref(false);
     const confirmOutdatedSaveDialog = ref(false);
 
-    const onboarding = computed(() => store.state.editor.onboarding);
+    const editorStore = useEditorStore();
+
+    const onboarding = computed(() => editorStore.onboarding);
     watch(onboarding, (started) => {
         if(!started) return;
 
@@ -700,16 +662,16 @@
     });
 
     const toggleExplorer = ref(null);
-    const explorerVisible = computed(() => store.state.editor.explorerVisible);
+    const explorerVisible = computed(() => editorStore.explorerVisible);
     const toggleExplorerVisibility = () => {
         toggleExplorer.value.hide();
-        store.commit("editor/toggleExplorerVisibility");
+        editorStore.toggleExplorerVisibility();
     };
-    const currentTab = computed(() => store.state.editor.current);
-    const openedTabs = computed(() => store.state.editor.tabs);
+    const currentTab = computed(() => editorStore.current);
+    const openedTabs = computed(() => editorStore.tabs);
 
     const changeCurrentTab = (tab) => {
-        store.dispatch("editor/openTab", tab);
+        editorStore.openTab(tab);
     };
 
     const persistViewType = (value) => {
@@ -718,7 +680,7 @@
     };
 
     const taskErrors = computed(() => {
-        return store.getters["flow/taskError"]?.split(/, ?/);
+        return store.state.flow.taskError?.split(/, ?/);
     });
 
     watch(
@@ -752,9 +714,9 @@
             initViewType()
             await store.dispatch("flow/initYamlSource", {viewType: viewType.value});
         } else {
-            store.commit("editor/closeAllTabs");
+            editorStore.closeAllTabs();
             switchViewType(editorViewTypes.SOURCE, false)
-            store.commit("editor/toggleExplorerVisibility", true);
+            editorStore.toggleExplorerVisibility(true);
         }
 
         // Save on ctrl+s in topology
@@ -777,10 +739,8 @@
         window.addEventListener("resize", onResize);
 
         if (props.isCreating) {
-            store.commit("editor/closeTabs");
+            editorStore.closeTabs();
         }
-
-        window.addEventListener("keydown", toggleAiShortcut);
     });
 
     onBeforeUnmount(() => {
@@ -792,10 +752,9 @@
             stopTour();
         });
 
-        store.commit("editor/closeAllTabs");
+        editorStore.closeAllTabs();
 
         document.removeEventListener("click", hideTabContextMenu);
-        window.removeEventListener("keydown", toggleAiShortcut);
     });
 
     const stopTour = () => {
@@ -812,8 +771,10 @@
         emit(type, event);
     };
 
-    const updatePluginDocumentation = (event, task) => {
-        pluginsStore.updateDocumentation({event,task});
+    const updatePluginDocumentation = (event) => {
+        const elementWrapper = FLOW_YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+        let element = elementWrapper.value.type !== undefined ? elementWrapper.value : elementWrapper.parents.findLast(p => p.type !== undefined);
+        pluginsStore.updateDocumentation(element);
     };
 
     const fetchGraph = () => {
@@ -834,11 +795,7 @@
     };
 
     const onEdit = (source, currentIsFlow = false) => {
-        if (draftSource.value !== undefined) {
-            draftSource.value = source;
-        } else {
-            store.commit("flow/setFlowYaml", source);
-        }
+        store.commit("flow/setFlowYaml", source);
         return store.dispatch("flow/onEdit", {
             source,
             currentIsFlow,
@@ -1144,7 +1101,7 @@
         event.preventDefault();
         const from = draggedTabIndex.value;
         if (from !== to) {
-            store.commit("editor/reorderTabs", {from, to});
+            editorStore.reorderTabs({from, to});
         }
         draggedTabIndex.value = null;
         dragOverTabIndex.value = null;
@@ -1219,17 +1176,17 @@
         document.removeEventListener("click", hideTabContextMenu);
     };
 
-    const FLOW_TAB = computed(() => store.state.editor?.tabs?.find(tab => tab.name === "Flow"))
+    const FLOW_TAB = computed(() => editorStore.tabs?.find(tab => tab.name === "Flow"))
 
     const closeTab = (tab, index) => {
-        store.dispatch("editor/closeTab", {...tab, index});
+        editorStore.closeTab({...tab, index});
     };
 
     const closeTabs = (tabsToClose, openTab) => {
         tabsToClose.forEach(tab => {
-            store.dispatch("editor/closeTab", tab);
+            editorStore.closeTab(tab);
         });
-        store.dispatch("editor/openTab", openTab);
+        editorStore.openTab(openTab);
         hideTabContextMenu();
     };
 
@@ -1258,7 +1215,7 @@
             name: undefined,
             folder: undefined
         };
-        store.commit("editor/toggleExplorerVisibility", true);
+        editorStore.toggleExplorerVisibility(true);
     };
     const createFolder = () => {
         dialog.value = {
@@ -1267,7 +1224,7 @@
             name: undefined,
             folder: undefined
         };
-        store.commit("editor/toggleExplorerVisibility", true);
+        editorStore.toggleExplorerVisibility(true);
     };
     const folders = computed(() => {
         function extractPaths(basePath = "", array) {
@@ -1286,7 +1243,7 @@
             });
             return paths;
         }
-        return extractPaths(undefined, store.state.editor.treeData);
+        return extractPaths(undefined, editorStore.treeData);
     });
     const dialogHandler = async () => {
         try {
@@ -1307,9 +1264,9 @@
                 });
             }
             dialog.value.visible = false;
-            store.commit("editor/refreshTree");
+            editorStore.refreshTree();
             if (dialog.value.type === "file") {
-                store.dispatch("editor/openTab", {
+                editorStore.openTab({
                     name: dialog.value.name,
                     path,
                     extension: dialog.value.name.split(".").pop()
@@ -1336,220 +1293,207 @@
                 path
             });
         }
-        store.commit("editor/refreshTree");
+        editorStore.refreshTree();
         event.target.value = "";
     };
-
-    function acceptDraft() {
-        const accepted = draftSource.value;
-        draftSource.value = undefined;
-        editorUpdate(accepted);
-    }
-
-    function declineDraft() {
-        draftSource.value = undefined;
-        aiAgentOpened.value = true;
-    }
 </script>
 
 <style lang="scss" scoped>
-    @use "element-plus/theme-chalk/src/mixins/mixins" as *;
-    @import "@kestra-io/ui-libs/src/scss/variables";
+@use "element-plus/theme-chalk/src/mixins/mixins" as *;
+@import "@kestra-io/ui-libs/src/scss/variables";
 
-    .main-editor {
-        padding: .5rem 0px;
-        background: var(--ks-background-body);
-        display: flex;
-        height: calc(100% - 49px);
-        min-height: 0;
-        max-height: 100%;
+.main-editor {
+    padding: .5rem 0px;
+    background: var(--ks-background-body);
+    display: flex;
+    height: calc(100% - 49px);
+    min-height: 0;
+    max-height: 100%;
 
-        > * {
-            flex: 1;
-        }
+    >* {
+        flex: 1;
+    }
+
+    html.dark & {
+        background-color: var(--bs-gray-100);
+    }
+}
+
+.editor-combined {
+    width: 50%;
+    min-width: 0;
+}
+
+.vueflow {
+    width: 100%;
+}
+
+html.dark .el-card :deep(.enhance-readability) {
+    background-color: var(--bs-gray-500);
+}
+
+:deep(.combined-right-view),
+.combined-right-view {
+    flex: 1;
+    position: relative;
+    overflow-y: auto;
+    height: 100%;
+
+    &.enhance-readability {
+        padding: 1.5rem;
+        background-color: var(--bs-gray-100);
+    }
+}
+
+.hide-view {
+    width: 0;
+    overflow: hidden;
+}
+
+.plugin-doc {
+    overflow-x: scroll;
+}
+
+.slider {
+    flex: 0 0 3px;
+    border-radius: 0.15rem;
+    margin: 0 4px;
+    background-color: var(--ks-border-primary);
+    border: none;
+    cursor: col-resize;
+    user-select: none;
+    /* disable selection */
+
+    &:hover {
+        background-color: var(--ks-border-active);
+    }
+}
+
+.vueflow {
+    height: 100%;
+}
+
+.topology-display .el-alert {
+    margin-top: 3rem;
+}
+
+.toggle-button {
+    font-size: var(--el-font-size-small);
+}
+
+.tabs {
+    flex: 1;
+    width: 100px;
+    white-space: nowrap;
+
+    .tab-active {
+        background: var(--bs-gray-200) !important;
+        color: black;
+        cursor: default;
 
         html.dark & {
-            background-color: var(--bs-gray-100);
-        }
-    }
-
-    .editor-combined {
-        width: 50%;
-        min-width: 0;
-    }
-
-    .vueflow {
-        width: 100%;
-    }
-
-    html.dark .el-card :deep(.enhance-readability) {
-        background-color: var(--bs-gray-500);
-    }
-
-    :deep(.combined-right-view),
-    .combined-right-view {
-        flex: 1;
-        position: relative;
-        overflow-y: auto;
-        height: 100%;
-
-        &.enhance-readability {
-            padding: 1.5rem;
-            background-color: var(--bs-gray-100);
-        }
-    }
-
-    .hide-view {
-        width: 0;
-        overflow: hidden;
-    }
-
-    .plugin-doc {
-        overflow-x: scroll;
-    }
-
-    .slider {
-        flex: 0 0 3px;
-        border-radius: 0.15rem;
-        margin: 0 4px;
-        background-color: var(--ks-border-primary);
-        border: none;
-        cursor: col-resize;
-        user-select: none; /* disable selection */
-
-        &:hover {
-            background-color: var(--ks-border-active);
-        }
-    }
-
-    .vueflow {
-        height: 100%;
-    }
-
-    .topology-display .el-alert {
-        margin-top: 3rem;
-    }
-
-    .toggle-button {
-        font-size: var(--el-font-size-small);
-    }
-
-    .tabs {
-        flex: 1;
-        width: 100px;
-        white-space: nowrap;
-
-        .tab-active {
-            background: var(--bs-gray-200) !important;
-            color: black;
-            cursor: default;
-
-            html.dark & {
-                color: white;
-            }
-
-            .tab-name {
-                font-weight: 600;
-            }
+            color: white;
         }
 
         .tab-name {
-            font-family: "Public sans", sans-serif;
-            font-size: 12px;
-            font-style: normal;
-            font-weight: 500;
-        }
-    }
-
-    .no-tabs-opened {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        max-width: 800px;
-        width: 100%;
-        padding: 2rem;
-        padding-bottom: 0;
-        margin: 0 auto;
-        height: 100%;
-
-        .img {
-            background: url("../../assets/empty-ns-files.png") no-repeat center;
-            background-size: contain;
-            width: 180px;
-            height: 180px;
-        }
-
-        h2 {
-            line-height: 30px;
-            font-size: 20px;
             font-weight: 600;
         }
+    }
 
-        p {
-            line-height: 22px;
-            font-size: 14px;
-            margin-bottom: 1rem;
+    .tab-name {
+        font-family: "Public sans", sans-serif;
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 500;
+    }
+}
+
+.no-tabs-opened {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    max-width: 800px;
+    width: 100%;
+    padding: 2rem;
+    padding-bottom: 0;
+    margin: 0 auto;
+    height: 100%;
+
+    .img {
+        background: url("../../assets/empty-ns-files.png") no-repeat center;
+        background-size: contain;
+        width: 180px;
+        height: 180px;
+    }
+
+    h2 {
+        line-height: 30px;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    p {
+        line-height: 22px;
+        font-size: 14px;
+        margin-bottom: 1rem;
+        color: var(--ks-content-secondary);
+    }
+
+    .empty-state-actions {
+        margin-bottom: 2.5rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    :deep(.el-divider__text) {
+        font-size: 12px;
+        padding: 0 15px;
+        color: var(--ks-content-secondary);
+        background-color: #f9f9fa;
+
+        html.dark & {
+            background-color: #1C1E27;
+        }
+    }
+
+    .video-container {
+        width: 100%;
+        margin-top: 1rem;
+        border: 1px solid var(--ks-border-primary);
+        border-radius: 0.5rem;
+
+        iframe {
+            width: 100%;
+            min-height: 380px;
+            height: auto;
+        }
+    }
+
+    .hidden {
+        display: none;
+    }
+}
+
+ul.tabs-context {
+    position: fixed;
+    z-index: 9999;
+    border-right: none;
+
+    & li {
+        height: 30px;
+        padding: 16px;
+        font-size: var(--el-font-size-small);
+        color: var(--bs-gray-700);
+
+        &:hover {
             color: var(--ks-content-secondary);
         }
-
-        .empty-state-actions {
-            margin-bottom: 2.5rem;
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            width: 100%;
-        }
-        :deep(.el-divider__text) {
-            font-size: 12px;
-            padding: 0 15px;
-            color: var(--ks-content-secondary);
-            background-color: #f9f9fa;
-            html.dark & {
-                background-color: #1C1E27;
-            }
-        }
-        .video-container {
-            width: 100%;
-            margin-top: 1rem;
-            border: 1px solid var(--ks-border-primary);
-            border-radius: 0.5rem;
-
-            iframe {
-                width: 100%;
-                min-height: 380px;
-                height: auto;
-            }
-        }
-
-        .hidden {
-            display: none;
-        }
     }
-
-    ul.tabs-context {
-        position: fixed;
-        z-index: 9999;
-        border-right: none;
-
-        & li {
-            height: 30px;
-            padding: 16px;
-            font-size: var(--el-font-size-small);
-            color: var(--bs-gray-700);
-
-            &:hover {
-                color: var(--ks-content-secondary);
-            }
-        }
-    }
-
-    .prompt {
-        bottom: 10%;
-        width: calc(100% - 4rem);
-        left: 2rem;
-    }
+}
 </style>
 
 <style lang="scss">

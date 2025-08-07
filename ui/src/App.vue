@@ -11,7 +11,7 @@
 
 <script>
     import ErrorToast from "./components/ErrorToast.vue";
-    import {mapGetters, mapState} from "vuex";
+    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import Utils from "./utils/utils";
     import {shallowRef} from "vue";
@@ -26,6 +26,8 @@
     import {useLayoutStore} from "./stores/layout";
     import {useCoreStore} from "./stores/core";
     import {useDocStore} from "./stores/doc";
+    import {useMiscStore} from "./stores/misc";
+    import {useExecutionsStore} from "./stores/executions";
     import * as BasicAuth from "./utils/basicAuth";
 
     // Main App
@@ -48,10 +50,9 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["overallTotal"]),
-            ...mapGetters("misc", ["configs"]),
-            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore),
+            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore, useExecutionsStore),
             envName() {
-                return this.layoutStore.envName || this.configs?.environment?.name;
+                return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
             },
             isOSS(){
                 return true;
@@ -84,7 +85,7 @@
         },
         methods: {
             displayApp() {
-                Utils.switchTheme(this.$store);
+                Utils.switchTheme(this.miscStore);
 
                 document.getElementById("loader-wrapper").style.display = "none";
                 document.getElementById("app-container").style.display = "block";
@@ -96,17 +97,18 @@
                 document.title = document.title.replace(/( - .+)?$/, envSuffix);
             },
             async loadGeneralResources() {
+                const config = await this.miscStore.loadConfigs();
                 const uid = localStorage.getItem("uid") || (() => {
                     const newUid = Utils.uid();
                     localStorage.setItem("uid", newUid);
                     return newUid;
                 })();
 
-                if (!BasicAuth.isLoggedIn()) {
+                if (!config.isBasicAuthInitialized || !BasicAuth.isLoggedIn()) {
                     return null;
                 }
 
-                const config = await this.$store.dispatch("misc/loadConfigs");
+                this.pluginsStore.fetchIcons()
 
                 await this.docStore.initResourceUrlTemplate(config.version);
 
@@ -182,7 +184,7 @@
                 async handler(route) {
                     if(route.name === "home" && this.isOSS) {
                         await this.$store.dispatch("flow/findFlows", {size: 10, sort: "id:asc"})
-                        await this.$store.dispatch("execution/findExecutions", {size: 10}).then(response => {
+                        await this.executionsStore.findExecutions({size: 10}).then(response => {
                             this.executions = response?.total ?? 0;
                         })
 

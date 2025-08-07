@@ -77,7 +77,7 @@ install-plugins:
         else \
 		${KESTRA_BASEDIR}/bin/kestra plugins install $$CURRENT_PLUGIN \
 		--plugins ${KESTRA_BASEDIR}/plugins \
-		--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots || exit 1; \
+		--repositories=https://central.sonatype.com/repository/maven-snapshots || exit 1; \
 		fi \
     done < $$PLUGIN_LIST
 

@@ -77,6 +77,8 @@
 
 <script>
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
@@ -140,12 +142,11 @@
             restart() {
                 this.isOpen = false
 
-                this.$store
-                    .dispatch(`execution/${this.replayOrRestart}Execution`, {
-                        executionId: this.execution.id,
-                        taskRunId: this.taskRun && this.isReplay ? this.taskRun.id : undefined,
-                        revision: this.sameRevision(this.revisionsSelected) ? undefined : this.revisionsSelected
-                    })
+                this.executionsStore[`${this.replayOrRestart}Execution`]({
+                    executionId: this.execution.id,
+                    taskRunId: this.taskRun && this.isReplay ? this.taskRun.id : undefined,
+                    revision: this.sameRevision(this.revisionsSelected) ? undefined : this.revisionsSelected
+                })
                     .then(response => {
                         if (response.data.id === this.execution.id) {
                             return ExecutionUtils.waitForState(this.$http, this.$store, response.data);
@@ -154,7 +155,7 @@
                         }
                     })
                     .then((execution) => {
-                        this.$store.commit("execution/setExecution", execution)
+                        this.executionsStore.execution = execution;
                         if (execution.id === this.execution.id) {
                             this.$emit("follow")
                         } else {
@@ -179,6 +180,7 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["revisions"]),
+            ...mapStores(useExecutionsStore),
             replayOrRestart() {
                 return this.isReplay ? "replay" : "restart";
             },

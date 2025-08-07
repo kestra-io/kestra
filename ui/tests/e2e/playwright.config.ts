@@ -29,7 +29,7 @@ const config: PlaywrightTestConfig = {
     /* Fail the build on CI if you accidentally left test.only in the source code. */
     forbidOnly: !!process.env.CI,
     /* Retry on CI only */
-    retries: process.env.CI ? 2 : 0,
+    retries: process.env.CI ? 5 : 0,
     /* Opt out of parallel tests on CI. */
     workers: process.env.CI ? 1 : "50%",
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -44,11 +44,14 @@ const config: PlaywrightTestConfig = {
         baseURL: "http://localhost:9011/ui",
 
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-        trace: "on-first-retry",
+        trace: "retain-on-failure",
         /* Capture screenshot after each test failure */
         screenshot: "only-on-failure",
         /* Collect video when retrying the failed test */
-        video: "on-first-retry",
+        video: "retain-on-failure",
+        launchOptions: {
+            slowMo: 100,
+        },
     },
 
     /* Configure projects for major browsers */

@@ -286,18 +286,10 @@ public class FlowableUtils {
 
         // start as many tasks as we have concurrency slots
         return collect.values().stream()
-            .map(resolvedTasks -> filterCreated(resolvedTasks, taskRuns, parentTaskRun))
+            .map(resolvedTasks -> resolveSequentialNexts(execution, resolvedTasks, null, null, parentTaskRun))
             .filter(resolvedTasks -> !resolvedTasks.isEmpty())
             .limit(concurrencySlots)
-            .map(resolvedTasks -> resolvedTasks.getFirst().toNextTaskRun(execution))
-            .toList();
-    }
-
-    private static List<ResolvedTask> filterCreated(List<ResolvedTask> tasks, List<TaskRun> taskRuns, TaskRun parentTaskRun) {
-        return tasks.stream()
-            .filter(resolvedTask -> taskRuns.stream()
-                .noneMatch(taskRun -> FlowableUtils.isTaskRunFor(resolvedTask, taskRun, parentTaskRun))
-            )
+            .map(resolvedTasks -> resolvedTasks.getFirst())
             .toList();
     }
 

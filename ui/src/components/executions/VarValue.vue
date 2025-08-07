@@ -4,7 +4,7 @@
             <Download />
             {{ $t('download') }}
         </a>
-        <FilePreview v-if="value.startsWith('kestra:///')" :value="value" :execution-id="execution.id" />
+        <FilePreview v-if="isFile(value)" :value="value" :execution-id="execution.id" />
         <el-button disabled size="small" type="primary" v-if="humanSize">
             ({{ humanSize }})
         </el-button>
@@ -43,7 +43,7 @@
         },
         methods: {
             isFile(value) {
-                return typeof(value) === "string" && value.startsWith("kestra:///")
+                return typeof(value) === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"))
             },
             isFileValid(value) {
                 // we don't want to display the file if it's not a file or if the size is 0

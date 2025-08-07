@@ -257,6 +257,17 @@ class ExecutionControllerTest {
         assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(requestNullValue, Execution.class));
     }
 
+    @Test
+    void duplicatedLabels() {
+        MultipartBody requestBody = createExecutionInputsFlowBody();
+
+        // duplicated keys are forbidden
+        MutableHttpRequest<MultipartBody> requestNullKey = HttpRequest
+            .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/inputs?labels=key:value1&labels=key:value2", requestBody)
+            .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
+        assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(requestNullKey, Execution.class));
+    }
+
     @SuppressWarnings("DataFlowIssue")
     @Test
     void getExecutionFlowForExecution() {

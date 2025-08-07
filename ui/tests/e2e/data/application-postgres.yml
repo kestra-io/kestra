@@ -1,4 +1,8 @@
 kestra:
+  server:
+    basic-auth:
+      username: user@kestra.io
+      password: DemoDemo1
   repository:
     type: postgres
   storage:

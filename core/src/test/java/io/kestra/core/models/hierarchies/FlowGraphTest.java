@@ -367,8 +367,8 @@ class FlowGraphTest {
         assertThat(flowGraph.getNodes().size()).isEqualTo(5);
         assertThat(flowGraph.getEdges().size()).isEqualTo(4);
 
-        assertThat(edge(flowGraph, "root.root.*", "root.hello.*")).isNotNull();
-        assertThat(edge(flowGraph, "root.hello.*", "root.after-execution.*")).isNotNull();
+        assertThat(edge(flowGraph, "root.root.*", "root.mytask.*")).isNotNull();
+        assertThat(edge(flowGraph, "root.mytask.*", "root.after-execution.*")).isNotNull();
         assertThat(edge(flowGraph, "root.after-execution.*", "root.end.*")).isNotNull();
     }
 

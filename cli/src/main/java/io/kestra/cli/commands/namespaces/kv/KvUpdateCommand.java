@@ -3,11 +3,13 @@ package io.kestra.cli.commands.namespaces.kv;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.cli.AbstractApiCommand;
+import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.netty.DefaultHttpClient;
+import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -42,6 +44,9 @@ public class KvUpdateCommand extends AbstractApiCommand {
     @Option(names = {"-f", "--file-value"}, description = "The file from which to read the value to set. If this is provided, it will take precedence over any specified value.")
     public Path fileValue;
 
+    @Inject
+    private TenantIdSelectorService tenantService;
+
     @Override
     public Integer call() throws Exception {
         super.call();
@@ -56,7 +61,7 @@ public class KvUpdateCommand extends AbstractApiCommand {
 
         Duration ttl = expiration == null ? null : Duration.parse(expiration);
         MutableHttpRequest<String> request = HttpRequest
-            .PUT(apiUri("/namespaces/") + namespace + "/kv/" + key, value)
+            .PUT(apiUri("/namespaces/", tenantService.getTenantId(tenantId)) + namespace + "/kv/" + key, value)
             .contentType(MediaType.APPLICATION_JSON_TYPE);
 
         if (ttl != null) {

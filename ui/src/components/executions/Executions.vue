@@ -33,7 +33,7 @@
         <data-table
             @page-changed="onPageChanged"
             ref="dataTable"
-            :total="total"
+            :total="executionsStore.total"
             :size="pageSize"
             :page="pageNumber"
             :embed="embed"
@@ -64,7 +64,7 @@
             <template #table>
                 <select-table
                     ref="selectTable"
-                    :data="executions"
+                    :data="executionsStore.executions"
                     :default-sort="{prop: 'state.startDate', order: 'descending'}"
                     table-layout="auto"
                     fixed
@@ -78,7 +78,7 @@
                         <bulk-select
                             :select-all="queryBulkAction"
                             :selections="selection"
-                            :total="total"
+                            :total="executionsStore.total"
                             @update:select-all="toggleAllSelection"
                             @unselect="toggleAllUnselected"
                         >
@@ -115,7 +115,7 @@
                                         <el-dropdown-item v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
                                             {{ $t("pause") }}
                                         </el-dropdown-item>
-                                        <el-dropdown-item v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueExecutions()">
+                                        <el-dropdown-item v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
                                             {{ $t("unqueue") }}
                                         </el-dropdown-item>
                                         <el-dropdown-item v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
@@ -260,7 +260,7 @@
                             class-name="shrink"
                         >
                             <template #default="scope">
-                                <code>{{ scope.row.flowRevision }}</code>
+                                <code class="code-text">{{ scope.row.flowRevision }}</code>
                             </template>
                         </el-table-column>
 
@@ -293,7 +293,7 @@
                                 </el-tooltip>
                             </template>
                             <template #default="scope">
-                                <code>
+                                <code class="code-text">
                                     {{ scope.row.taskRunList?.slice(-1)[0].taskId }}
                                     {{
                                         scope.row.taskRunList?.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList?.slice(-1)[0].attempts.length})` : ""
@@ -323,7 +323,7 @@
         </data-table>
     </section>
 
-    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="uuid" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -362,7 +362,46 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="uuid" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroy-on-close :append-to-body="true">
+        <template #header>
+            <h5>{{ $t("confirmation") }}</h5>
+        </template>
+
+        <template #default>
+            <p v-html="$t('unqueue title multiple', {count: queryBulkAction ? executionsStore.total : selection.length})" />
+
+            <el-select
+                :required="true"
+                v-model="selectedStatus"
+                :persistent="false"
+            >
+                <el-option
+                    v-for="item in unQueuestates"
+                    :key="item.code"
+                    :value="item.code"
+                >
+                    <template #default>
+                        <status size="small" :label="false" class="me-1" :status="item.code" />
+                        <span v-html="item.label" />
+                    </template>
+                </el-option>
+            </el-select>
+        </template>
+
+        <template #footer>
+            <el-button @click="unqueueDialogVisible = false">
+                {{ $t('cancel') }}
+            </el-button>
+            <el-button
+                type="primary"
+                @click="unqueueExecutions()"
+            >
+                {{ $t('ok') }}
+            </el-button>
+        </template>
+    </el-dialog>
+
+    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -411,7 +450,9 @@
 </script>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useMiscStore} from "../../stores/misc";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -435,8 +476,10 @@
     import DateAgo from "../layout/DateAgo.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import Utils from "../../utils/utils";
 
     import {filterLabels} from "./utils"
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -569,6 +612,7 @@
                 lastRefreshDate: new Date(),
                 isOpenReplayModal: false,
                 changeStatusDialogVisible: false,
+                unqueueDialogVisible: false,
                 selectedStatus: undefined,
                 loading: false
             };
@@ -581,15 +625,11 @@
             }
             this.displayColumns = localStorage.getItem("columns_executions")?.split(",")
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
-            if (this.isConcurrency) {
-                this.emitStateCount([State.RUNNING, State.PAUSED])
-            }
         },
         computed: {
-            ...mapState("execution", ["executions", "total"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useMiscStore, useExecutionsStore),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -645,6 +685,17 @@
                     };
                 });
             },
+            unQueuestates() {
+                return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
+                    code: value,
+                    label: this.$t("unqueue as", {status: value}),
+                }));
+            },
+            executionsCount() {
+                return [...this.daily].reduce((a, b) => {
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
+                }, 0);
+            },
             selectedNamespace(){
                 return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;
             },
@@ -684,7 +735,7 @@
         },
         methods: {
             filteredLabels(labels) {
-                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
 
                 // Extract only the keys from the route query labels
                 const allowedLabels = this.$route.query.labels ? this.$route.query.labels.map(label => label.split(":")[0]) : [];
@@ -742,29 +793,60 @@
                     queryFilter["filters[flowId][EQUALS]"] = this.flowId;
                 }
 
+                const hasStateFilters = Object.keys(queryFilter).some(key => key.startsWith("filters[state]")) || queryFilter.state;
+                if (!hasStateFilters && this.statuses?.length > 0) {
+                    queryFilter["filters[state][IN]"] = this.statuses.join(",");
+                }
+
                 return _merge(base, queryFilter)
             },
             loadData(callback) {
                 this.lastRefreshDate = new Date();
 
-                this.$store.dispatch("execution/findExecutions", this.loadQuery({
+                this.executionsStore.findExecutions(this.loadQuery({
                     size: parseInt(this.$route.query.size || this.internalPageSize),
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                })).finally(callback);
+                })).then(() => {
+                    if (this.isConcurrency) {
+                        this.emitStateCount();
+                    }
+                }).finally(callback);
             },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
             },
-            genericConfirmAction(toast, queryAction, byIdAction, success) {
+            genericConfirmAction(toast, queryAction, byIdAction, success, showCancelButton = true) {
                 this.$toast().confirm(
-                    this.$t(toast, {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t(toast, {"executionCount": this.queryBulkAction ? this.executionsStore.total : this.selection.length}),
                     () => this.genericConfirmCallback(queryAction, byIdAction, success),
-                    () => {}
+                    () => {},
+                    showCancelButton
                 );
             },
             genericConfirmCallback(queryAction, byIdAction, success, params) {
+                const actionMap = {
+                    "queryResumeExecution": () => this.executionsStore.queryResumeExecution,
+                    "bulkResumeExecution": () => this.executionsStore.bulkResumeExecution,
+                    "queryPauseExecution": () => this.executionsStore.queryPauseExecution,
+                    "bulkPauseExecution": () => this.executionsStore.bulkPauseExecution,
+                    "queryUnqueueExecution": () => this.executionsStore.queryUnqueueExecution,
+                    "bulkUnqueueExecution": () => this.executionsStore.bulkUnqueueExecution,
+                    "queryForceRunExecution": () => this.executionsStore.queryForceRunExecution,
+                    "bulkForceRunExecution": () => this.executionsStore.bulkForceRunExecution,
+                    "queryRestartExecution": () => this.executionsStore.queryRestartExecution,
+                    "bulkRestartExecution": () => this.executionsStore.bulkRestartExecution,
+                    "queryReplayExecution": () => this.executionsStore.queryReplayExecution,
+                    "bulkReplayExecution": () => this.executionsStore.bulkReplayExecution,
+                    "queryChangeExecutionStatus": () => this.executionsStore.queryChangeExecutionStatus,
+                    "bulkChangeExecutionStatus": () => this.executionsStore.bulkChangeExecutionStatus,
+                    "queryDeleteExecution": () => this.executionsStore.queryDeleteExecution,
+                    "bulkDeleteExecution": () => this.executionsStore.bulkDeleteExecution,
+                    "queryKill": () => this.executionsStore.queryKill,
+                    "bulkKill": () => this.executionsStore.bulkKill,
+                };
+
                 if (this.queryBulkAction) {
                     const query = this.loadQuery({
                         sort: this.$route.query.sort || "state.startDate:desc",
@@ -774,8 +856,9 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    return this.$store
-                        .dispatch(queryAction, options)
+                    
+                    const action = actionMap[queryAction]();
+                    return action(options)
                         .then(r => {
                             this.$toast().success(this.$t(success, {executionCount: r.data.count}));
                             this.loadData();
@@ -786,8 +869,9 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    return this.$store
-                        .dispatch(byIdAction, options)
+                    
+                    const action = actionMap[byIdAction]();
+                    return action(options)
                         .then(r => {
                             this.$toast().success(this.$t(success, {executionCount: r.data.count}));
                             this.loadData();
@@ -801,40 +885,43 @@
             resumeExecutions() {
                 this.genericConfirmAction(
                     "bulk resume",
-                    "execution/queryResumeExecution",
-                    "execution/bulkResumeExecution",
-                    "executions resumed"
+                    "queryResumeExecution",
+                    "bulkResumeExecution",
+                    "executions resumed",
+                    false
                 );
             },
             pauseExecutions() {
                 this.genericConfirmAction(
                     "bulk pause",
-                    "execution/queryPauseExecution",
-                    "execution/bulkPauseExecution",
+                    "queryPauseExecution",
+                    "bulkPauseExecution",
                     "executions paused"
                 );
             },
             unqueueExecutions() {
-                this.genericConfirmAction(
-                    "bulk unqueue",
-                    "execution/queryUnqueueExecution",
-                    "execution/bulkUnqueueExecution",
+                this.unqueueDialogVisible = false;
+                this.actionOptions.newStatus = this.selectedStatus;
+
+                this.genericConfirmCallback(
+                    "queryUnqueueExecution",
+                    "bulkUnqueueExecution",
                     "executions unqueue"
                 );
             },
             forceRunExecutions() {
                 this.genericConfirmAction(
                     "bulk force run",
-                    "execution/queryForceRunExecution",
-                    "execution/bulkForceRunExecution",
+                    "queryForceRunExecution",
+                    "bulkForceRunExecution",
                     "executions force run"
                 );
             },
             restartExecutions() {
                 this.genericConfirmAction(
                     "bulk restart",
-                    "execution/queryRestartExecution",
-                    "execution/bulkRestartExecution",
+                    "queryRestartExecution",
+                    "bulkRestartExecution",
                     "executions restarted"
                 );
             },
@@ -842,27 +929,27 @@
                 this.isOpenReplayModal = false;
 
                 this.genericConfirmCallback(
-                    "execution/queryReplayExecution",
-                    "execution/bulkReplayExecution",
+                    "queryReplayExecution",
+                    "bulkReplayExecution",
                     "executions replayed",
                     {latestRevision: latestRevision}
                 );
             },
             changeReplayToast() {
-                return this.$t("bulk replay", {"executionCount": this.queryBulkAction ? this.total : this.selection.length});
+                return this.$t("bulk replay", {"executionCount": this.queryBulkAction ? this.executionsStore.total : this.selection.length});
             },
             changeStatus() {
                 this.changeStatusDialogVisible = false;
                 this.actionOptions.newStatus = this.selectedStatus;
 
                 this.genericConfirmCallback(
-                    "execution/queryChangeExecutionStatus",
-                    "execution/bulkChangeExecutionStatus",
+                    "queryChangeExecutionStatus",
+                    "bulkChangeExecutionStatus",
                     "executions state changed"
                 );
             },
             changeStatusToast() {
-                return this.$t("bulk change state", {"executionCount": this.queryBulkAction ? this.total : this.selection.length});
+                return this.$t("bulk change state", {"executionCount": this.queryBulkAction ? this.executionsStore.total : this.selection.length});
             },
             deleteExecutions() {
                 const includeNonTerminated = ref(false);
@@ -874,7 +961,7 @@
                 const message = () => h("div", null, [
                     h(
                         "p",
-                        {innerHTML: this.$t("bulk delete", {"executionCount": this.queryBulkAction ? this.total : this.selection.length})}
+                        {innerHTML: this.$t("bulk delete", {"executionCount": this.queryBulkAction ? this.executionsStore.total : this.selection.length})}
                     ),
                     h(ElFormItem, {
                         class: "mt-3",
@@ -922,8 +1009,8 @@
                     this.actionOptions.deleteStorage = deleteStorage.value;
 
                     this.genericConfirmCallback(
-                        "execution/queryDeleteExecution",
-                        "execution/bulkDeleteExecution",
+                        "queryDeleteExecution",
+                        "bulkDeleteExecution",
                         "executions deleted"
                     );
                 });
@@ -931,8 +1018,8 @@
             killExecutions() {
                 this.genericConfirmAction(
                     "bulk kill",
-                    "execution/queryKill",
-                    "execution/bulkKill",
+                    "queryKill",
+                    "bulkKill",
                     "executions killed"
                 );
             },
@@ -945,11 +1032,11 @@
                 }
 
                 this.$toast().confirm(
-                    this.$t("bulk set labels", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t("bulk set labels", {"executionCount": this.queryBulkAction ? this.executionsStore.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("execution/querySetLabels", {
+                            return this.executionsStore
+                                .querySetLabels({
                                     params: this.loadQuery({
                                         sort: this.$route.query.sort || "state.startDate:desc",
                                         state: this.$route.query.state ? [this.$route.query.state] : this.statuses
@@ -961,8 +1048,8 @@
                                     this.loadData();
                                 })
                         } else {
-                            return this.$store
-                                .dispatch("execution/bulkSetLabels", {
+                            return this.executionsStore
+                                .bulkSetLabels({
                                     executionsId: this.selection,
                                     executionLabels: filtered.labels
                                 })
@@ -989,15 +1076,12 @@
                     }
                 })
             },
-            emitStateCount(states) {
-                this.$store.dispatch("execution/findExecutions", this.loadQuery({
-                    size: parseInt(this.$route.query.size || this.internalPageSize),
-                    page: parseInt(this.$route.query.page || this.internalPageNumber),
-                    sort: this.$route.query.sort || "state.startDate:desc",
-                    state: states
-                })).then(() => {
-                    this.$emit("state-count", this.total);
-                });
+            emitStateCount() {
+                const runningCount = this.executionsStore.executions.filter(execution => 
+                    execution.state.current === State.RUNNING
+                )?.length;
+                const totalCount = this.executionsStore.total;
+                this.$emit("state-count", {runningCount, totalCount});
             }
         },
         watch: {
@@ -1037,6 +1121,9 @@
         :deep(.el-alert__icon) {
             color: #ffb703;
         }
+    }
+    .code-text {
+        color: var(--ks-content-primary);
     }
 </style>
 

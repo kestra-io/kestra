@@ -1,5 +1,7 @@
 package io.kestra.webserver.filter;
 
+import io.kestra.core.models.Setting;
+import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
@@ -10,10 +12,9 @@ import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_SETTINGS_KEY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -29,8 +30,23 @@ class AuthenticationFilterTest {
     @Inject
     private AuthenticationFilter filter;
 
+    @Inject
+    private SettingRepositoryInterface settingRepository;
+
     @Test
     void testConfigEndpointAlwaysOpen() {
+        var response =  client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        response =  client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/basicAuthValidationErrors").basicAuth("anonymous", "hacker"));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+    }
+
+    @Test
+    void shouldWorkWithoutPersistedConfiguration() {
+        settingRepository.delete(Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build());
         var response =  client.toBlocking()
             .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
@@ -38,8 +54,17 @@ class AuthenticationFilterTest {
 
     @Test
     void testUnauthorized() {
-        assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
+        HttpClientResponseException httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/main/dashboards").header("Authorization", "")));
+        assertThat(httpClientResponseException.getResponse().getHeaders().get("WWW-Authenticate")).isEqualTo("Basic");
+
+        httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
             .exchange(HttpRequest.GET("/api/v1/main/dashboards").basicAuth("anonymous", "hacker")));
+        assertThat(httpClientResponseException.getResponse().getHeaders().get("WWW-Authenticate")).isEqualTo("Basic");
+
+        httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/main/dashboards").header("Authorization", "").header("Referer", "http://localhost/login")));
+        assertThat(httpClientResponseException.getResponse().getHeaders().get("WWW-Authenticate")).isNull();
     }
 
     @Test

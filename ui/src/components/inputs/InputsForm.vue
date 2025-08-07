@@ -153,16 +153,12 @@
                     <input
                         :data-testid="`input-form-${input.id}`"
                         :id="input.id+'-file'"
-                        class="el-input__inner"
+                        class="el-input__inner custom-file-input"
                         type="file"
                         @change="onFileChange(input, $event)"
                         autocomplete="off"
-                        :style="{display: typeof(inputsValues[input.id]) === 'string' && inputsValues[input.id].startsWith('kestra:///') ? 'none': ''}"
                     >
-                    <label
-                        v-if="typeof(inputsValues[input.id]) === 'string' && inputsValues[input.id].startsWith('kestra:///')"
-                        :for="input.id+'-file'"
-                    >Kestra Internal Storage File</label>
+                    <span class="file-placeholder" v-html="getFilePlaceholder(inputsValues[input.id])" />
                 </div>
             </div>
             <div
@@ -270,12 +266,14 @@
 <script>
     import {toRaw} from "vue";
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
     import debounce from "lodash/debounce";
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
     import DurationPicker from "./DurationPicker.vue";
-    import {inputsToFormDate} from "../../utils/submitTask"
+    import {inputsToFormData} from "../../utils/submitTask"
 
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
@@ -287,6 +285,7 @@
     export default {
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapStores(useExecutionsStore),
             inputErrors() {
                 // we only keep errors that don't target an input directly
                 const keepErrors = this.inputsMetaData.filter(it => it.id === undefined);
@@ -415,11 +414,11 @@
                 }
             },
             onChange(input) {
-                // give a second for the user to finish their edit
+                // give 2 seconds for the user to finish their edit
                 // and for the server to return with validated content
                 setTimeout(() => {
                     this.inputsValidated.add(input.id);
-                }, 300);
+                }, 2000);
                 this.$emit("update:modelValue", this.inputsValues);
             },
             onSubmit() {
@@ -435,11 +434,13 @@
                 }
 
                 const files = e.target.files || e.dataTransfer.files;
+
                 if (!files.length) {
                     return;
                 }
-                this.inputsValues[input.id] = e.target.files[0];
-                this.onChange(input);
+
+                this.inputsValues[input.id] = files[0];
+                setTimeout(() => this.onChange(input), 300);
             },
             onYamlChange(input, e) {
                 this.inputsValues[input.id] = e.target.value;
@@ -462,7 +463,7 @@
                     return;
                 }
 
-                const formData = inputsToFormDate(this, this.inputsMetaData, this.inputsValues);
+                const formData = inputsToFormData(this, this.inputsMetaData, this.inputsValues);
 
                 const metadataCallback = (response) => {
                     this.inputsMetaData = response.inputs.reduce((acc,it) => {
@@ -476,13 +477,13 @@
 
                 if (this.flow !== undefined) {
                     const options = {namespace: this.flow.namespace, id: this.flow.id};
-                    const {data} = await this.$store.dispatch("execution/validateExecution", {...options, formData})
+                    const {data} = await this.executionsStore.validateExecution({...options, formData})
 
                     metadataCallback(data);
 
                 } else if (this.execution !== undefined) {
                     const options = {id: this.execution.id};
-                    const {data} = await this.$store.dispatch("execution/validateResume", {...options, formData})
+                    const {data} = await this.executionsStore.validateResume({...options, formData})
 
                     metadataCallback(data);
                 } else {
@@ -575,12 +576,20 @@
                 [items[index], items[targetIndex]] = [items[targetIndex], items[index]];
 
                 this.updateArrayValue(input);
-            }
+            },
+            getFilePlaceholder(value) {
+                if (typeof value === "string" && value.startsWith("nsfile://")) {
+                    return this.$t("defaultsToNamespaceFile", {name: value.substring(10)});
+                }
+                if (value && typeof value.name === "string") {
+                    return value.name;
+                }
+                return this.$t("no_file_choosen");
+            },
         },
         watch: {
             flow () {
                 this.validateInputs();
-
             },
             execution () {
                 this.validateInputs();
@@ -638,6 +647,15 @@
 .el-input-file {
     display: flex;
     align-items: center;
+
+    .el-input__inner {
+        cursor: pointer;
+    }
+
+    .el-input__wrapper {
+        padding: 0.5rem;
+    }
+
 }
 
 .preview {
@@ -743,4 +761,19 @@
             overflow-x: hidden;
         }
     }
+
+.custom-file-input {
+  color: transparent;
+  width: 120px;
+}
+
+.custom-file-input::-webkit-file-upload-text {
+  visibility: hidden;
+}
+
+.file-placeholder {
+  margin-left: 8px;
+  color: var(--ks-content-secondary);
+  font-size: 0.9em;
+}
 </style>

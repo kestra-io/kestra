@@ -10,6 +10,7 @@
     "Finish": "完了",
     "Fold auto": "エディター：複数行の自動折りたたみ",
     "Fold content lines": "複数行文字列を折りたたむ",
+    "Hover description": "エディター: key または value にホバーするとフィールドの説明を表示",
     "Language": "言語",
     "Next step": "次のステップ",
     "Per page": "ページごと",
@@ -90,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "ブックマーク",
+    "bulk action async warning": "少々お待ちください。",
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
     "bulk delete backfills": "{count}個のbackfillを削除",
@@ -124,6 +126,7 @@
     "cannot swap tasks": "taskを入れ替えできません",
     "change execution state confirm": "実行<code>{id}</code>の状態を変更してもよろしいですか？",
     "change execution state done": "実行状態が更新されました",
+    "change queue confirm": "実行<code>{id}</code>のキュー状態を変更してもよろしいですか？<br/>",
     "change state": "状態を変更",
     "change state confirm": "タスク <code>{task}</code> の実行 <code>{id}</code> のタスク実行状態を変更してもよろしいですか？",
     "change state current state": "現在のステータスは:",
@@ -268,8 +271,8 @@
     },
     "days": "日数",
     "debug": "デバッグ",
-    "decline": "辞退",
     "default": "デフォルト",
+    "defaultsToNamespaceFile": "デフォルトはnamespaceファイル: <code>{name}</code>",
     "delete": "削除",
     "delete backfill": "backfillを削除",
     "delete backfills": "backfillを削除",
@@ -401,6 +404,7 @@
       "move_line": "行を移動",
       "reset_fontsize": "フォントサイズをリセット",
       "save_flow": "フローを保存",
+      "toggle_ai_agent": "AIエージェントを切り替える",
       "trigger_autocompletion": "オートコンプリートをトリガー",
       "uncomment": "コメント解除"
     },
@@ -473,6 +477,7 @@
       }
     },
     "eval": {
+      "render": "式をレンダリング",
       "title": "デバッグ式",
       "tooltip": "任意のPebble式をレンダリングし、実行コンテキストを検査します。"
     },
@@ -600,6 +605,7 @@
         },
         "empty": "検索をまだ保存していません。",
         "label": "保存済み検索",
+        "name_already_used": "ラベルはすでに使用されています。",
         "remove": "削除",
         "tooltip": "空の検索条件を保存することはできません。"
       },
@@ -899,6 +905,7 @@
         "finally": "タスクを選択",
         "inputs": "入力フィールドタイプを選択",
         "pluginDefaults": "プラグインを選択",
+        "task": "タスクを選択",
         "tasks": "タスクを選択",
         "triggers": "トリガーを選択"
       },
@@ -907,6 +914,7 @@
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック"
     },
     "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
+    "no_file_choosen": "ファイルが選択されていません",
     "no_logs_data": "データなし",
     "no_logs_data_description": "フローが実行中でないか、フィルターを調整する必要があるかもしれません。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
@@ -1007,6 +1015,18 @@
     "pause confirm": "実行 <code>{id}</code> を一時停止してもよろしいですか？",
     "pause done": "実行がPAUSEDされています",
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
+    "playground": {
+      "confirm_create": "フローを作成中はプレイグラウンドを実行できません。プレイグラウンドの実行を開始すると、flowが作成されます。",
+      "history": "直近10回の実行",
+      "play_icon_info": "ノーコードまたはトポロジービューで再生アイコンをクリックすることもできます。",
+      "run_all_tasks": "すべてのタスクを実行",
+      "run_task": "タスクを実行",
+      "run_task_and_downstream": "タスクとダウンストリームを実行",
+      "run_task_info": "Flow Codeエディタ内の任意のtaskにカーソルを合わせ、「Run task」ボタンをクリックしてtaskをテストします。",
+      "run_this_task": "このtaskを実行",
+      "title": "プレイグラウンド",
+      "toggle": "プレイグラウンド"
+    },
     "pluginDefaults": "プラグインのデフォルト",
     "pluginPage": {
       "alt": "プラグインアイコン",
@@ -1035,6 +1055,7 @@
     "read-more": "続きを読む",
     "readonly property": "読み取り専用プロパティ",
     "refresh": "更新",
+    "reject": "拒否",
     "relative": "相対",
     "relative end date": "相対終了日",
     "relative start date": "相対開始日",
@@ -1067,6 +1088,7 @@
     "revision": "リビジョン",
     "revisions": "リビジョン",
     "row count": "行数",
+    "run task in playground": "プレイグラウンドでタスクを実行",
     "runners": "ランナー",
     "running duration": "実行期間",
     "save": "保存",
@@ -1140,7 +1162,8 @@
             "language": "言語",
             "log_display": "デフォルトLog表示",
             "log_level": "デフォルトLogレベル",
-            "multi_panel_editor": "マルチパネルエディタ"
+            "multi_panel_editor": "マルチパネルエディタ",
+            "playground": "プレイグラウンド"
           },
           "label": "メイン設定"
         },
@@ -1175,8 +1198,10 @@
             "editor_folding_stratgy": "エディタでの自動コード折りたたみ",
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
+            "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
             "environment_color": "環境色",
             "environment_name": "環境名",
+            "environment_name_tooltip": "この環境名はconfigから設定されていますが、変更可能です。",
             "logs_font_size": "ログフォントサイズ",
             "theme": "テーマ"
           },
@@ -1210,13 +1235,13 @@
         "complete": "Kestra UIを開始",
         "config": "設定を検証",
         "survey": "詳細を教えてください",
-        "user": "最初のユーザーを作成する"
+        "user": "アカウントを作成する"
       },
       "subtitles": {
         "complete": "セットアップが正常に完了しました！",
         "config": "こちらはあなたの設定の詳細です",
         "survey": "Kestra Open Source Edition の改善にご協力ください",
-        "user": "最初のユーザーを作成してインスタンスをセットアップする"
+        "user": "アカウントを作成してインスタンスをセットアップする"
       },
       "success": {
         "subtitle": "準備完了です！",
@@ -1241,13 +1266,16 @@
       },
       "titles": {
         "survey": "詳細を教えてください",
-        "user": "最初のユーザーを作成"
+        "user": "アカウントを作成"
       },
+      "troubleshooting": "パスワードをお忘れですか？",
       "validation": {
+        "config_message": "このエラーメッセージを修正するために設定を更新してください。",
         "email_invalid": "無効なメールアドレス",
         "email_required": "メールが必要です",
         "email_temporary_not_allowed": "一時的または使い捨てのメールアドレスは使用できません",
         "firstName_required": "名が必要です",
+        "incorrect_creds": "ユーザー名またはパスワードが無効です。資格情報が正しいことを確認してください。",
         "lastName_required": "姓が必要です",
         "password_invalid": "無効なパスワード"
       }
@@ -1288,14 +1316,20 @@
     "success": "Success",
     "sum": "合計",
     "switch-view": "ビューを切り替え",
+    "system overview": "システム概要",
     "system_namespace": "プラットフォームをシステムフローで管理しましょう。",
     "system_namespace_description": "メンテナンスタスクを自動化し、FAILUREアラートから自動クリーンアップまで対応します。",
     "tags": "タグ",
     "task": "Task",
+    "task failed": "タスクが失敗しました",
     "task id": "Task ID",
     "task id already exists": "Task Idはすでに存在します",
+    "task is running": "タスクがRUNNING中",
     "task logs": "Task Logs",
     "task run id": "タスクランID",
+    "task sent a warning": "タスクがWARNINGを送信しました",
+    "task was skipped": "タスクがスキップされました",
+    "task was successful": "タスクは成功しました",
     "taskDefaults": "taskのデフォルト設定",
     "taskRunners": "タスクランナー",
     "task_id_exists": "タスクIDは既に存在します",
@@ -1331,6 +1365,8 @@
     "topology": "トポロジー",
     "topology-graph": {
       "graph-orientation": "グラフの向き",
+      "invalid": "グラフエラー",
+      "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。",
       "zoom-fit": "フィット",
       "zoom-in": "ズームイン",
       "zoom-out": "ズームアウト",
@@ -1380,9 +1416,11 @@
       "warning": "これは同じtriggerに対する並行実行につながる可能性があり、最後の手段として考慮されるべきです。"
     },
     "unqueue": "キューから削除",
+    "unqueue as": "<code>{status}</code>としてキューから外す",
     "unqueue confirm": "実行 <code>{id}</code> をキューから外してもよろしいですか？",
     "unqueue done": "実行はキューから外されました",
     "unqueue title": "実行 <code>{id}</code> をキューから外します。<br/>ただし、flowの並行性制限には従わないため、許可された制限を超えて実行が行われる可能性があります。",
+    "unqueue title multiple": "<code>{count}</code>件の実行をキューから外してもよろしいですか？<br/><br/>flowの並行性制限を守らないため、許可された制限を超えて実行される可能性があります。",
     "unsaved changed ?": "保存されていない変更があります。このページを離れますか？",
     "up trend": "増加",
     "update": "更新",
@@ -1400,6 +1438,12 @@
     "warning flow with triggers": "このflowにはtriggersが含まれており、trigger expressionsに依存する場合、手動実行は失敗します。",
     "watch": "ウォッチ",
     "watch_video": "ビデオを見る",
+    "webhook": {
+      "curl_command": "Webhook cURL コマンド",
+      "curl_note": "このcURLコマンドを使用して、カスタムJSONペイロードでwebhookを介してflowをtriggerします。",
+      "no_triggers": "このflowには有効なWebhookトリガーがありません",
+      "payload": "Webhookペイロード（JSON）"
+    },
     "webhook link copied": "Webhookリンクがコピーされました。",
     "weeks": "週間",
     "welcome": {

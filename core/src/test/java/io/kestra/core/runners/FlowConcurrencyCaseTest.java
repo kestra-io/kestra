@@ -8,18 +8,28 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Flux;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.time.Duration;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,7 +38,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Singleton
 public class FlowConcurrencyCaseTest {
     @Inject
-    private RunnerUtils runnerUtils;
+    private StorageInterface storageInterface;
+
+    @Inject
+    protected RunnerUtils runnerUtils;
+
+    @Inject
+    private FlowInputOutput flowIO;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -237,4 +253,49 @@ public class FlowConcurrencyCaseTest {
         assertThat(secondExecutionResult.get().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
         assertThat(secondExecutionResult.get().getState().getHistories().get(1).getState()).isEqualTo(State.Type.CANCELLED);
     }
+
+    public void flowConcurrencyWithForEachItem() throws TimeoutException, QueueException, InterruptedException, URISyntaxException, IOException {
+        URI file = storageUpload();
+        Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
+        Execution forEachItem = runnerUtils.runOneUntilRunning(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-for-each-item", null,
+        (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs), Duration.ofSeconds(5));
+        assertThat(forEachItem.getState().getCurrent()).isEqualTo(Type.RUNNING);
+
+        Set<String> executionIds = new HashSet<>();
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, e -> {
+            if ("flow-concurrency-queue".equals(e.getLeft().getFlowId()) && e.getLeft().getState().isRunning()) {
+                executionIds.add(e.getLeft().getId());
+            }
+        });
+
+        // wait a little to be sure there are not too many executions started
+        Thread.sleep(500);
+
+        assertThat(executionIds).hasSize(1);
+        receive.blockLast();
+
+        Execution terminated = runnerUtils.awaitExecution(e -> e.getId().equals(forEachItem.getId()) && e.getState().isTerminated(), () -> {}, Duration.ofSeconds(10));
+        assertThat(terminated.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+    }
+
+    private URI storageUpload() throws URISyntaxException, IOException {
+        File tempFile = File.createTempFile("file", ".txt");
+
+        Files.write(tempFile.toPath(), content());
+
+        return storageInterface.put(
+            MAIN_TENANT,
+            null,
+            new URI("/file/storage/file.txt"),
+            new FileInputStream(tempFile)
+        );
+    }
+
+    private List<String> content() {
+        return IntStream
+            .range(0, 7)
+            .mapToObj(value -> StringUtils.leftPad(value + "", 20))
+            .toList();
+    }
+
 }

@@ -1,13 +1,16 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}" :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
+        <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
+            {{ $t("playground.run_all_tasks") }}
+        </el-button>
+        <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}" :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
             {{ $t("execute") }}
         </el-button>
-        <el-dialog id="execute-flow-dialog" v-if="isOpen" v-model="isOpen" destroy-on-close :show-close="!coreStore.guidedProperties.tourStarted" :before-close="(done) => beforeClose(done)" :append-to-body="true">
+        <el-dialog id="execute-flow-dialog" v-model="isOpen" destroy-on-close :show-close="!coreStore.guidedProperties.tourStarted" :before-close="(done) => beforeClose(done)" :append-to-body="true">
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
-            <flow-run @execution-trigger="closeModal" :redirect="true" />
+            <flow-run @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
         </el-dialog>
         <el-dialog v-if="isSelectFlowOpen" v-model="isSelectFlowOpen" destroy-on-close :before-close="() => reset()" :append-to-body="true">
             <el-form
@@ -18,7 +21,7 @@
                         v-model="localNamespace"
                     >
                         <el-option
-                            v-for="np in namespaces"
+                            v-for="np in executionsStore.namespaces"
                             :key="np"
                             :label="np"
                             :value="np"
@@ -26,7 +29,7 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item
-                    v-if="localNamespace && flowsExecutable.length > 0"
+                    v-if="localNamespace && executionsStore.flowsExecutable.length > 0"
                     :label="$t('flow')"
                 >
                     <el-select
@@ -34,16 +37,16 @@
                         value-key="id"
                     >
                         <el-option
-                            v-for="flow in flowsExecutable"
-                            :key="flow.id"
-                            :label="flow.id"
-                            :value="flow"
+                            v-for="exFlow in executionsStore.flowsExecutable"
+                            :key="exFlow.id"
+                            :label="exFlow.id"
+                            :value="exFlow"
                         />
                     </el-select>
                 </el-form-item>
                 <el-form-item v-if="localFlow" :label="$t('inputs')">
                     <div class="w-100">
-                        <flow-run @execution-trigger="closeModal" :redirect="true" />
+                        <flow-run @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
                     </div>
                 </el-form-item>
             </el-form>
@@ -56,12 +59,15 @@
     import FlowRun from "./FlowRun.vue";
     import {mapState} from "vuex";
     import Flash from "vue-material-design-icons/Flash.vue";
+    import Play from "vue-material-design-icons/Play.vue";
     import {shallowRef} from "vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
     import FlowWarningDialog from "./FlowWarningDialog.vue";
     import {mapStores} from "pinia";
     import {useApiStore} from "../../stores/api";
     import {useCoreStore} from "../../stores/core";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {usePlaygroundStore} from "../../stores/playground";
 
     export default {
         components: {
@@ -96,7 +102,8 @@
                 localFlow: undefined,
                 localNamespace: undefined,
                 icon: {
-                    Flash: shallowRef(Flash)
+                    Flash: shallowRef(Flash),
+                    Play: shallowRef(Play)
                 }
             };
         },
@@ -120,30 +127,34 @@
                     this.$toast().confirm(FlowWarningDialog, () => (this.toggleModal()), true, null);
                 }
                 else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
-                    this.toggleModal()
+                    this.toggleModal(true)
                 }
                 else {
-                    this.$store.dispatch("execution/loadNamespaces");
+                    this.executionsStore.loadNamespaces();
                     this.isSelectFlowOpen = !this.isSelectFlowOpen;
                 }
             },
-            async toggleModal() {
-                if (!this.isOpen && this.flowId && this.namespace) {
+            async toggleModal(newValue) {
+                if (newValue === undefined) {
+                    newValue = !this.isOpen;
+                }
+                if (newValue && this.flowId && this.namespace) {
                     // wait for flow to be set before opening the dialog
                     await this.loadDefinition();
                 }
-                this.isOpen = !this.isOpen;
+                this.isOpen = newValue;
             },
             closeModal() {
                 this.isOpen = false;
             },
             isDisabled() {
-                return this.disabled || this.flow?.deleted;
+                return this.disabled || this.executionsStore.flow?.deleted;
             },
             async loadDefinition() {
-                await this.$store.dispatch("execution/loadFlowForExecution", {
+                await this.executionsStore.loadFlowForExecution({
                     flowId: this.flowId,
-                    namespace: this.namespace
+                    namespace: this.namespace,
+                    store: true
                 });
             },
             reset() {
@@ -161,9 +172,8 @@
         },
         computed: {
             ...mapState("flow", ["executeFlow"]),
-            ...mapState("execution", ["flow", "namespaces", "flowsExecutable"]),
             ...mapState("auth", ["user"]),
-            ...mapStores(useApiStore, useCoreStore),
+            ...mapStores(useApiStore, useCoreStore, useExecutionsStore, usePlaygroundStore),
             computedFlowId() {
                 return this.flowId || this.localFlow?.id;
             },
@@ -210,7 +220,7 @@
                     if (!this.localNamespace) {
                         return;
                     }
-                    this.$store.dispatch("execution/loadFlowsExecutable", {
+                    this.executionsStore.loadFlowsExecutable({
                         namespace: this.localNamespace
                     });
                 },
@@ -221,7 +231,7 @@
                     if (!this.localFlow) {
                         return;
                     }
-                    this.$store.commit("execution/setFlow", this.localFlow);
+                    this.executionsStore.flow = this.localFlow;
                 },
                 immediate: true
             }

@@ -30,6 +30,9 @@
                 <el-collapse-item :title="$t('curl.command')" name="curl">
                     <curl :flow="flow" :execution-labels="executionLabels" :inputs="inputs" />
                 </el-collapse-item>
+                <el-collapse-item v-if="hasWebhookTriggers" :title="$t('webhook.curl_command')" name="webhook-curl">
+                    <WebhookCurl :flow="flow" />
+                </el-collapse-item>
             </el-collapse>
 
             <div class="bottom-buttons" v-if="!embed">
@@ -47,7 +50,7 @@
                             :icon="Flash"
                             class="flow-run-trigger-button"
                             :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}"
-                            @click="onSubmit($refs.form); executeClicked = true;"
+                            @click.prevent="onSubmit($refs.form); executeClicked = true;"
                             type="primary"
                             native-type="submit"
                             :disabled="!flowCanBeExecuted"
@@ -70,20 +73,28 @@
 </script>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
+    import {useMiscStore} from "../../stores/misc";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {usePlaygroundStore} from "../../stores/playground";
     import {executeTask} from "../../utils/submitTask"
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
     import Curl from "./Curl.vue";
+    import WebhookCurl from "./WebhookCurl.vue";
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
     import Inputs from "../../utils/inputs";
     import {TIMEZONE_STORAGE_KEY} from "../settings/BasicSettings.vue";
     import moment from "moment-timezone";
 
     export default {
-        components: {LabelInput, InputsForm, Curl},
+        components: {
+            LabelInput,
+            InputsForm,
+            Curl,
+            WebhookCurl
+        },
         props: {
             redirect: {
                 type: Boolean,
@@ -112,14 +123,27 @@
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
         computed: {
-            ...mapState("execution", ["flow", "execution"]),
-            ...mapGetters("misc", ["configs"]),
-            ...mapStores(useCoreStore),
+            ...mapStores(useCoreStore, useMiscStore, useExecutionsStore, usePlaygroundStore),
+            flow() {
+                return this.executionsStore.flow
+            },
+            execution() {
+                return this.executionsStore.execution
+            },
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             },
             flowCanBeExecuted() {
                 return this.flow && !this.flow.disabled && !this.haveBadLabels;
+            },
+            hasWebhookTriggers() {
+                if (!this.flow?.triggers) {
+                    return false;
+                }
+                return this.flow.triggers.some(trigger => 
+                    trigger.type === "io.kestra.plugin.core.trigger.Webhook" && 
+                    (trigger.disabled === undefined || trigger.disabled === false)
+                );
             }
         },
         methods: {
@@ -139,7 +163,7 @@
             },
             fillInputsFromExecution(){
                 // Add all labels except the one from flow to prevent duplicates
-                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
                 this.executionLabels = this.getExecutionLabels().filter(item => !toIgnore.some(prefix => item.key.startsWith(prefix)));
 
                 if (!this.flow.inputs) {
@@ -161,7 +185,6 @@
                             return false;
                         }
 
-
                         executeTask(this, this.flow, this.inputs, {
                             redirect: this.redirect,
                             newTab: this.newTab,
@@ -173,7 +196,7 @@
                                     .map(label => `${label.key}:${label.value}`)
                             )],
                             scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
-                            nextStep: true
+                            nextStep: true,
                         })
                         this.$emit("executionTrigger");
                     });

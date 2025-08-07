@@ -10,6 +10,7 @@
     "Finish": "Завершить",
     "Fold auto": "Редактор: автоматическое сворачивание многострочных строк",
     "Fold content lines": "Свернуть многострочные строки",
+    "Hover description": "Редактор: Показать описание поля при наведении на key или value",
     "Language": "Язык",
     "Next step": "Следующий шаг",
     "Per page": "на страницу",
@@ -90,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Закладки",
+    "bulk action async warning": "Это может занять несколько минут.",
     "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?",
     "bulk delete": "Вы уверены, что хотите удалить <code>{executionCount}</code> выполнение(я)?",
     "bulk delete backfills": "Удалить {count} заполнение",
@@ -124,6 +126,7 @@
     "cannot swap tasks": "Невозможно поменять местами tasks",
     "change execution state confirm": "Вы уверены, что хотите изменить состояние выполнения <code>{id}</code>?",
     "change execution state done": "Состояние выполнения обновлено",
+    "change queue confirm": "Вы уверены, что хотите изменить состояние очереди для выполнения <code>{id}</code>?<br/>",
     "change state": "Изменить состояние",
     "change state confirm": "Вы уверены, что хотите изменить состояние выполнения задачи <code>{task}</code> в исполнении <code>{id}</code>?",
     "change state current state": "Текущий статус:",
@@ -268,8 +271,8 @@
     },
     "days": "Дни",
     "debug": "Отладка",
-    "decline": "Отклонить",
     "default": "По умолчанию",
+    "defaultsToNamespaceFile": "По умолчанию для файла namespace: <code>{name}</code>",
     "delete": "Удалить",
     "delete backfill": "Удалить backfill",
     "delete backfills": "Удалить заполнения",
@@ -401,6 +404,7 @@
       "move_line": "Переместить строку",
       "reset_fontsize": "Сбросить размер шрифта",
       "save_flow": "Сохранить flow",
+      "toggle_ai_agent": "Переключить AI agent",
       "trigger_autocompletion": "Запустить автозаполнение",
       "uncomment": "Раскомментировать"
     },
@@ -473,6 +477,7 @@
       }
     },
     "eval": {
+      "render": "Отобразить выражение",
       "title": "Отладка выражения",
       "tooltip": "Выполните любое выражение Pebble и проверьте контекст выполнения."
     },
@@ -600,6 +605,7 @@
         },
         "empty": "Вы еще не сохранили ни одного поиска.",
         "label": "Сохранённые поиски",
+        "name_already_used": "Поиск label уже используется.",
         "remove": "Удалить",
         "tooltip": "Вы не можете сохранить пустые критерии поиска."
       },
@@ -899,6 +905,7 @@
         "finally": "Выберите task",
         "inputs": "Выберите тип поля input",
         "pluginDefaults": "Выберите плагин",
+        "task": "Выберите task",
         "tasks": "Выберите task",
         "triggers": "Выберите trigger"
       },
@@ -907,6 +914,7 @@
       "version_oss_placeholder": "Разблокируйте Версионирование Плагинов с Enterprise Edition"
     },
     "no_data": "Похоже, здесь пока ничего нет…<br/>Измените фильтры или попробуйте снова!",
+    "no_file_choosen": "Файл не выбран",
     "no_logs_data": "Нет данных",
     "no_logs_data_description": "Либо никакие flows не выполняются, либо вам нужно изменить фильтры.",
     "no_namespaces": "Ни один namespace не соответствует критериям поиска.",
@@ -1007,6 +1015,18 @@
     "pause confirm": "Вы уверены, что хотите приостановить выполнение <code>{id}</code>?",
     "pause done": "Выполнение приостановлено",
     "pause title": "Приостановить выполнение <code>{id}</code>.<br/>Обратите внимание, что текущие RUNNING задачи все равно будут обрабатываться, и выполнение придется возобновить вручную.",
+    "playground": {
+      "confirm_create": "Вы не можете запустить playground во время создания flow. Запуск playground создаст flow.",
+      "history": "Последние 10 запусков",
+      "play_icon_info": "Вы также можете нажать на значок Play в представлениях No-Code или Topology.",
+      "run_all_tasks": "Запустить все Tasks",
+      "run_task": "Запустить Task",
+      "run_task_and_downstream": "Запустить task и downstream",
+      "run_task_info": "Наведите курсор на любую task в редакторе Flow Code и нажмите кнопку \"Run task\", чтобы протестировать вашу task.",
+      "run_this_task": "Запустить этот task",
+      "title": "Песочница",
+      "toggle": "Песочница"
+    },
     "pluginDefaults": "Настройки плагина по умолчанию",
     "pluginPage": {
       "alt": "Иконка плагинов",
@@ -1035,6 +1055,7 @@
     "read-more": "Узнать больше о",
     "readonly property": "Свойство только для чтения",
     "refresh": "Обновить",
+    "reject": "Отклонить",
     "relative": "Относительный",
     "relative end date": "Относительная дата окончания",
     "relative start date": "Относительная дата начала",
@@ -1067,6 +1088,7 @@
     "revision": "Редакция",
     "revisions": "Редакции",
     "row count": "Количество строк",
+    "run task in playground": "Запустить task в playground",
     "runners": "Запуски",
     "running duration": "Время выполнения",
     "save": "Сохранить",
@@ -1140,7 +1162,8 @@
             "language": "Язык",
             "log_display": "Отображение логов по умолчанию",
             "log_level": "Уровень логов по умолчанию",
-            "multi_panel_editor": "Многооконный редактор"
+            "multi_panel_editor": "Многооконный редактор",
+            "playground": "Песочница"
           },
           "label": "Основная конфигурация"
         },
@@ -1175,8 +1198,10 @@
             "editor_folding_stratgy": "Автоматическое сворачивание кода в редакторе",
             "editor_font_family": "Шрифт редактора",
             "editor_font_size": "Размер шрифта редактора",
+            "editor_hover_description": "Наведите курсор на свойство, чтобы увидеть описание",
             "environment_color": "Цвет окружения",
             "environment_name": "Имя окружения",
+            "environment_name_tooltip": "Имя этой среды установлено из конфигурации, но может быть изменено.",
             "logs_font_size": "Размер шрифта Logs",
             "theme": "Тема"
           },
@@ -1210,13 +1235,13 @@
         "complete": "Запустить Kestra UI",
         "config": "Проверить конфигурацию",
         "survey": "Расскажите нам больше",
-        "user": "Создайте своего первого пользователя"
+        "user": "Создайте ваш аккаунт"
       },
       "subtitles": {
         "complete": "Настройка успешно завершена!",
         "config": "Вот детали вашей конфигурации",
         "survey": "Помогите нам улучшить Kestra Open Source Edition",
-        "user": "Настройте ваш экземпляр, создав первого пользователя"
+        "user": "Настройте свой экземпляр, создав учетную запись"
       },
       "success": {
         "subtitle": "Вы готовы!",
@@ -1241,13 +1266,16 @@
       },
       "titles": {
         "survey": "Расскажите подробнее",
-        "user": "Создать первого пользователя"
+        "user": "Создать аккаунт"
       },
+      "troubleshooting": "Забыли пароль?",
       "validation": {
+        "config_message": "Убедитесь, что обновили вашу конфигурацию, чтобы исправить это сообщение об ошибке.",
         "email_invalid": "Недействительный email",
         "email_required": "Требуется Email",
         "email_temporary_not_allowed": "Временные или одноразовые адреса электронной почты не разрешены",
         "firstName_required": "Имя обязательно",
+        "incorrect_creds": "Неверное имя пользователя или пароль. Убедитесь, что ваши учетные данные верны.",
         "lastName_required": "Требуется фамилия",
         "password_invalid": "Неверный пароль"
       }
@@ -1288,14 +1316,20 @@
     "success": "Успех",
     "sum": "Сумма",
     "switch-view": "Переключить вид",
+    "system overview": "Обзор системы",
     "system_namespace": "Держите вашу платформу под контролем с помощью system flows.",
     "system_namespace_description": "Автоматизируйте задачи обслуживания, от предупреждений о сбоях до автоматической очистки.",
     "tags": "Теги",
     "task": "Задача",
+    "task failed": "Задача FAILED",
     "task id": "ID задачи",
     "task id already exists": "ID задачи уже существует",
+    "task is running": "Задача RUNNING",
     "task logs": "Журналы задач",
     "task run id": "ID выполнения задачи",
+    "task sent a warning": "Задача отправила предупреждение",
+    "task was skipped": "Задача была пропущена",
+    "task was successful": "Задача была успешной",
     "taskDefaults": "Задача по умолчанию",
     "taskRunners": "Запускатели Task",
     "task_id_exists": "Id задачи уже существует",
@@ -1331,6 +1365,8 @@
     "topology": "Топология",
     "topology-graph": {
       "graph-orientation": "Ориентация графика",
+      "invalid": "Ошибка графа",
+      "invalid_description": "Произошла ошибка при загрузке графа. Пожалуйста, проверьте исходный код на наличие ошибок.",
       "zoom-fit": "Подогнать",
       "zoom-in": "Увеличить",
       "zoom-out": "Уменьшить",
@@ -1380,9 +1416,11 @@
       "warning": "Это может привести к параллельным выполнениям для одного и того же trigger и должно рассматриваться как крайняя мера."
     },
     "unqueue": "Из очереди",
+    "unqueue as": "Очередь снята как <code>{status}</code>",
     "unqueue confirm": "Вы уверены, что хотите отменить выполнение <code>{id}</code>?",
     "unqueue done": "Выполнение находится вне очереди",
     "unqueue title": "Извлечь выполнение <code>{id}</code> из очереди.<br/>Обратите внимание, что это не будет учитывать ограничение на параллельность flow, поэтому может выполняться больше процессов, чем разрешено.",
+    "unqueue title multiple": "Вы уверены, что хотите удалить из очереди <code>{count}</code> выполнений?<br/><br/>Обратите внимание, что это не будет учитывать ограничение на параллельность flow, поэтому может выполняться больше выполнений, чем разрешено.",
     "unsaved changed ?": "У вас есть несохраненные изменения, вы хотите покинуть эту страницу?",
     "up trend": "Увеличивается",
     "update": "Обновить",
@@ -1400,6 +1438,12 @@
     "warning flow with triggers": "Этот flow содержит triggers, и ручное выполнение завершится неудачей, если этот flow зависит от trigger выражений.",
     "watch": "Наблюдение",
     "watch_video": "Смотреть видео",
+    "webhook": {
+      "curl_command": "Команда cURL для Webhook",
+      "curl_note": "Используйте эту команду cURL, чтобы trigger flow через webhook с пользовательским JSON payload",
+      "no_triggers": "Этот flow не имеет включенных webhook trigger",
+      "payload": "Payload Webhook (JSON)"
+    },
     "webhook link copied": "Ссылка на Webhook скопирована.",
     "weeks": "Недели",
     "welcome": {

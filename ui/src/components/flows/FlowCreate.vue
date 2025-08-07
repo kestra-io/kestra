@@ -6,7 +6,7 @@
 </template>
 
 <script>
-    import {mapGetters, mapMutations, mapState} from "vuex";
+    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import RouteContext from "../../mixins/routeContext";
@@ -17,6 +17,7 @@
     import {useCoreStore} from "../../stores/core";
 
     import {getRandomFlowID} from "../../../scripts/product/flow";
+    import {useEditorStore} from "../../stores/editor";
 
     export default {
         mixins: [RouteContext],
@@ -33,14 +34,12 @@
                 this.$tours["guidedTour"]?.start();
             }
             this.setupFlow()
-            this.closeAllTabs()
+            this.editorStore.closeAllTabs()
         },
         beforeUnmount() {
             this.$store.commit("flow/setFlowValidation", undefined);
         },
         methods: {
-            ...mapMutations("editor", ["closeAllTabs"]),
-
             async setupFlow() {
                 const blueprintId = this.$route.query.blueprintId;
                 const blueprintSource = this.$route.query.blueprintSource;
@@ -69,10 +68,9 @@ tasks:
             }
         },
         computed: {
-            ...mapState("flow", ["flowGraph", "flowYaml"]),
+            ...mapState("flow", ["flowGraph", "flowYaml", "flow", "flowValidation", "flowYaml"]),
             ...mapState("auth", ["user"]),
-            ...mapGetters("flow", ["flow", "flowValidation", "flowYaml"]),
-            ...mapStores(useBlueprintsStore, useCoreStore),
+            ...mapStores(useBlueprintsStore, useCoreStore, useEditorStore),
             routeInfo() {
                 return {
                     title: this.$t("flows")

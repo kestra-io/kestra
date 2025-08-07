@@ -1,5 +1,11 @@
 <template>
-    <el-button size="small" type="primary" :icon="EyeOutline" @click="getFilePreview">
+    <el-button
+        size="small"
+        type="primary"
+        :icon="EyeOutline"
+        @click="getFilePreview"
+        :disabled="isZipFile"
+    >
         {{ $t("preview") }}
     </el-button>
     <drawer
@@ -96,9 +102,11 @@
     import Editor from "../inputs/Editor.vue";
     import ListPreview from "../ListPreview.vue";
     import PdfPreview from "../PdfPreview.vue";
-    import {mapGetters, mapState} from "vuex";
+    import {mapStores} from "pinia";
     import Markdown from "../layout/Markdown.vue";
     import Drawer from "../Drawer.vue";
+    import {useMiscStore} from "../../stores/misc";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         components: {Markdown, ListPreview, PdfPreview, Editor, Drawer},
@@ -137,8 +145,7 @@
             this.encoding = this.encodingOptions[0].value;
         },
         computed: {
-            ...mapState("execution", ["filePreview"]),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useMiscStore, useExecutionsStore),
             extensionToMonacoLang() {
                 switch (this.preview.extension) {
                 case "json":
@@ -163,15 +170,19 @@
             },
             maxPreviewOptions() {
                 return [10, 25, 100, 500, 1000, 5000, 10000, 25000, 50000].filter(value => value <= this.configPreviewMaxRows())
-            }
+            },
+            isZipFile() {
+                // Checks if the file extension is .zip (case-insensitive)
+                return this.value?.toLowerCase().endsWith(".zip");
+            },
         },
         emits: ["preview"],
         methods: {
             configPreviewInitialRows() {
-                return this.configs?.preview.initial || 100
+                return this.miscStore.configs?.preview.initial || 100
             },
             configPreviewMaxRows() {
-                return this.configs?.preview.max || 5000
+                return this.miscStore.configs?.preview.max || 5000
             },
             getFilePreview() {
                 const data = {
@@ -181,15 +192,13 @@
                 };
                 this.selectedPreview = this.value;
                 if (this.executionId !== undefined) {
-                    this.$store
-                        .dispatch("execution/filePreview", {
-                            executionId: this.executionId,
-                            ...data
-                        })
-                        .then(response => {
-                            this.preview = response;
-                            this.isPreviewOpen = true;
-                        });
+                    this.executionsStore.filePreview({
+                        executionId: this.executionId,
+                        ...data
+                    }).then(response => {
+                        this.preview = response;
+                        this.isPreviewOpen = true;
+                    });
                 } else {
                     this.$emit("preview", {
                         data: data,

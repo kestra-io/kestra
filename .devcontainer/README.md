@@ -27,11 +27,6 @@ In the meantime, you can move onto the next step...
 
 - Create a `.env.development.local` file in the `ui` folder and paste the following:
 
-```bash
-# This lets the frontend know what the backend URL is but you are free to change this to your actual server URL e.g. hosted version of Kestra.
-VITE_APP_API_URL=http://localhost:8080
-```
-
 - Navigate into the `ui` folder and run `npm install` to install the dependencies for the frontend project.
 
 - Now go to the `cli/src/main/resources` folder and create a `application-override.yml` file.

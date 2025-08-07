@@ -100,8 +100,8 @@
                 <namespace-select
                     v-model="kv.namespace"
                     :readonly="kv.update"
-                    data-type="flow"
                     :include-system-namespace="true"
+                    all
                 />
             </el-form-item>
 

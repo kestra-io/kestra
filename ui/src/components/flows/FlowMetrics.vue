@@ -47,7 +47,9 @@
 
 <script lang="ts">
     import {Bar} from "vue-chartjs";
-    import {mapState, mapGetters} from "vuex";
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useMiscStore} from "../../stores/misc";
     import moment from "moment";
     import {defaultConfig, getFormat, tooltip} from "../dashboard/composables/charts.js";
     import {cssVariable} from "@kestra-io/ui-libs";
@@ -69,9 +71,9 @@
                 "aggregatedMetric",
                 "tasksWithMetrics",
             ]),
-            ...mapGetters("misc", ["theme"]),
+            ...mapStores(useMiscStore),
             xGrid() {
-                return this.theme === "light"
+                return this.miscStore.theme === "light"
                     ? {}
                     : {
                         borderColor: "#404559",
@@ -79,7 +81,7 @@
                     };
             },
             yGrid() {
-                return this.theme === "light"
+                return this.miscStore.theme === "light"
                     ? {}
                     : {
                         borderColor: "#404559",
@@ -110,11 +112,11 @@
             },
             options() {
                 const darken =
-                    this.theme === "light"
+                    this.miscStore.theme === "light"
                         ? cssVariable("--bs-gray-700")
                         : cssVariable("--bs-gray-800");
                 const lighten =
-                    this.theme === "light"
+                    this.miscStore.theme === "light"
                         ? cssVariable("--bs-gray-200")
                         : cssVariable("--bs-gray-400");
 
@@ -155,7 +157,7 @@
                             },
                         },
                     },
-                    this.theme,
+                    this.miscStore.theme,
                 );
             },
             display() {

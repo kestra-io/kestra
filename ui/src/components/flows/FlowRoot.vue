@@ -306,8 +306,8 @@
             }
         },
         computed: {
-            ...mapGetters("flow", ["flow", "isAllowedEdit", "readOnlySystemLabel"]),
-            ...mapState("flow", ["expandedSubflows"]),
+            ...mapGetters("flow", ["isAllowedEdit", "readOnlySystemLabel"]),
+            ...mapState("flow", ["flow", "expandedSubflows"]),
             ...mapState("auth", ["user"]),
             ...mapStores(useCoreStore),
             routeInfo() {

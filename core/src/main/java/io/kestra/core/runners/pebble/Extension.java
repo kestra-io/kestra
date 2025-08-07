@@ -2,6 +2,7 @@ package io.kestra.core.runners.pebble;
 
 import io.kestra.core.runners.pebble.expression.NullCoalescingExpression;
 import io.kestra.core.runners.pebble.expression.UndefinedCoalescingExpression;
+import io.kestra.core.runners.pebble.expression.InExpression;
 import io.kestra.core.runners.pebble.filters.*;
 import io.kestra.core.runners.pebble.functions.*;
 import io.kestra.core.runners.pebble.tests.JsonTest;
@@ -76,6 +77,7 @@ public class Extension extends AbstractExtension {
 
         operators.add(new BinaryOperatorImpl("??", 120, NullCoalescingExpression::new, NORMAL, Associativity.LEFT));
         operators.add(new BinaryOperatorImpl("???", 120, UndefinedCoalescingExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("isIn", 120, InExpression::new, NORMAL, Associativity.LEFT));
 
         return operators;
     }
@@ -91,6 +93,7 @@ public class Extension extends AbstractExtension {
         filters.put("dateAdd", new DateAddFilter());
         filters.put("timestamp", new TimestampFilter());
         filters.put("timestampMicro", new TimestampMicroFilter());
+        filters.put("timestampMilli", new TimestampMilliFilter());
         filters.put("timestampNano", new TimestampNanoFilter());
         filters.put("jq", new JqFilter());
         filters.put("escapeChar", new EscapeCharFilter());
@@ -155,6 +158,7 @@ public class Extension extends AbstractExtension {
         functions.put("fetchContext", new FetchContextFunction());
         functions.put("uuid", new UUIDFunction());
         functions.put("id", new IDFunction());
+        functions.put("ksuid", new KSUIDFunction());
         functions.put("fromIon", new FromIonFunction());
         functions.put("fileSize", fileSizeFunction);
         if (this.errorLogsFunction != null) {

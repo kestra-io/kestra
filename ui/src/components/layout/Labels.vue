@@ -64,16 +64,21 @@
 
 <style scoped lang="scss">
 .label {
-    background-color: var(--ks-tag-background-active);
-    font-weight: normal;
+    #{--ks-tag-background}: #E0E3F0;
+    #{--ks-tag-background-active}: #B8BDD4;
 
-    &:hover {
-        background-color: var(--ks-tag-background-hover);
+    html.dark & {
+        #{--ks-tag-background}: #404559;
+        #{--ks-tag-background-active}: #59607B;
     }
+    
+    background-color: var(--ks-tag-background);
+    font-weight: normal;
+    color: var(--ks-content-primary);
 }
 
 .el-check-tag.el-check-tag--primary.is-checked {
-    background-color: var(--el-color-primary);
-    color: var(--ks-button-content-primary);
+    background-color: var(--ks-tag-background-active);
+    color: var(--ks-content-primary);
 }
 </style>

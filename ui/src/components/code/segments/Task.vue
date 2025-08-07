@@ -104,7 +104,7 @@
     const timer = ref<number>();
     const lastValidatedValue = ref<string>();
 
-    const errors = computed(() => store.getters["flow/taskError"]);
+    const errors = computed(() => store.state.flow.taskError);
 
     const saveTask = () => {
         let result: string = flow.value;

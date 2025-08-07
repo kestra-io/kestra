@@ -144,4 +144,12 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     public QueueInterface<SubflowExecutionEnd> subflowExecutionEnd() {
         return new MysqlQueue<>(SubflowExecutionEnd.class, applicationContext);
     }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.EXECUTION_RUNNING_NAMED)
+    @Bean(preDestroy = "close")
+    public QueueInterface<ExecutionRunning> executionRunning() {
+        return new MysqlQueue<>(ExecutionRunning.class, applicationContext);
+    }
 }

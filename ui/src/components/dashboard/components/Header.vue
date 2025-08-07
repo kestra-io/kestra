@@ -13,21 +13,21 @@
                         :to="{name: 'dashboards/update', params: {id: props.dashboard?.id}}"
                     >
                         <el-button :icon="Pencil">
-                            {{ $t("dashboards.edition.label") }}
+                            {{ t("dashboards.edition.label") }}
                         </el-button>
                     </router-link>
                 </li>
                 <li v-if="!props.dashboard?.id">
                     <router-link :to="{name: 'dashboards/create'}">
                         <el-button :icon="ViewDashboardEdit">
-                            {{ $t("dashboards.creation.label") }}
+                            {{ t("dashboards.creation.label") }}
                         </el-button>
                     </router-link>
                 </li>
                 <li>
                     <router-link :to="{name: 'flows/create'}">
                         <el-button :icon="Plus" type="primary">
-                            {{ $t("create_flow") }}
+                            {{ t("create_flow") }}
                         </el-button>
                     </router-link>
                 </li>

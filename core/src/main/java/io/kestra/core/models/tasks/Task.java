@@ -74,6 +74,10 @@ abstract public class Task implements TaskInterface {
     @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private boolean allowWarning = false;
 
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @Valid
+    private Cache taskCache;
+
     public Optional<Task> findById(String id) {
         if (this.getId().equals(id)) {
             return Optional.of(this);

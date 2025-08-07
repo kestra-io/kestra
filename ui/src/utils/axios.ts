@@ -79,17 +79,12 @@ export default (
     const instance: AxiosInstance = axios.create({
         timeout: 15000,
         headers: {"Content-Type": "application/json"},
+        withCredentials: true,
         onDownloadProgress: progressInterceptor,
         onUploadProgress: progressInterceptor
     })
 
-    instance.interceptors.request.use(config => {
-        const basicAuth = BasicAuth.credentials()
-        if (basicAuth && !config.headers.Authorization) {
-            config.headers.Authorization = `Basic ${basicAuth}`
-        }
-        return requestInterceptor(config)
-    })
+    instance.interceptors.request.use(config => requestInterceptor(config))
 
     instance.interceptors.response.use(responseInterceptor, errorResponseInterceptor)
 

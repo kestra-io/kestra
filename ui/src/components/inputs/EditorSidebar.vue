@@ -114,7 +114,7 @@
             draggable
             node-key="id"
             v-loading="items === undefined"
-            :props="{class: 'node', isLeaf: 'leaf'}"
+            :props="{class: 'nodeClass', isLeaf: 'leaf'}"
             class="mt-3"
             @node-click="handleNodeClick"
             @node-drag-start="
@@ -149,7 +149,6 @@
                     <el-row
                         justify="space-between"
                         class="w-100"
-                        :class="{'selected-node': selectedNodes.includes(data.id)}"
                         @click="(event) => handleNodeClick(data, node)"
                     >
                         <el-col class="w-100">
@@ -356,7 +355,7 @@
 </template>
 
 <script>
-    import {mapActions, mapMutations, mapState} from "vuex";
+    import {mapActions, mapState} from "vuex";
 
     import Utils from "../../utils/utils";
 
@@ -369,6 +368,8 @@
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue";
 
     import TypeIcon from "../utils/icons/Type.vue";
+    import {mapStores} from "pinia";
+    import {useEditorStore} from "../../stores/editor";
 
     const DIALOG_DEFAULTS = {
         visible: false,
@@ -421,10 +422,9 @@
             };
         },
         computed: {
+            ...mapStores(useEditorStore),
             ...mapState({
                 flow: (state) => state.flow.flow,
-                explorerVisible: (state) => state.editor.explorerVisible,
-                treeRefresh: (state) => state.editor.treeRefresh,
             }),
             namespaceId() {
                 return this.currentNS ?? this.$route.params.namespace;
@@ -471,14 +471,6 @@
             },
         },
         methods: {
-            ...mapMutations("editor", [
-                "toggleExplorerVisibility",
-                "setTabDirty",
-            ]),
-            ...mapActions("editor", [
-                "openTab",
-                "closeTab",
-            ]),
             ...mapActions("namespace", [
                 "createDirectory",
                 "readDirectory",
@@ -490,7 +482,12 @@
                 "importFileDirectory",
                 "exportFileDirectory",
             ]),
-
+            nodeClass(data) {
+                if (this.selectedNodes.includes(data.id)) {
+                    return "node selected-tree-node";
+                }
+                return "node";
+            },
             flattenTree(items, parentPath = "") {
                 const result = [];
 
@@ -523,7 +520,7 @@
                     this.selectedNodes = [node.data.id];
                     this.lastClickedIndex = currentIndex;
                     if (data.leaf) {
-                        this.openTab({
+                        this.editorStore.openTab({
                             name: data.fileName,
                             path: path,
                             extension: data.fileName.split(".").pop(),
@@ -609,7 +606,7 @@
 
                     this.renderNodes(items);
                     this.items = this.sorted(this.items);
-                    this.$store.commit("editor/setTreeData", this.items);
+                    this.editorStore.treeData = this.items;
                     resolve(this.items);
                 } else if (node.level >= 1) {
                     const payload = {
@@ -661,7 +658,7 @@
                 return this.searchResults;
             },
             chooseSearchResults(item) {
-                this.openTab({
+                this.editorStore.openTab({
                     name: item.split("/").pop(),
                     extension: item.split(".").pop(),
                     path: item,
@@ -916,7 +913,7 @@
                         creation: true,
                     });
 
-                    this.openTab({
+                    this.editorStore.openTab({
                         name: NAME,
                         path,
                         extension: extension,
@@ -1013,7 +1010,7 @@
                             type: node.type,
                         });
                         this.$refs.tree.remove(node.id);
-                        this.closeTab({
+                        this.editorStore.closeTab({
                             name: node.fileName,
                         });
                     } catch (error) {
@@ -1172,7 +1169,7 @@
             flow: {
                 handler(flow) {
                     if (flow) {
-                        this.openTab({
+                        this.editorStore.openTab({
                             name: "Flow",
                             path: "Flow.yaml",
                             persistent: true,
@@ -1183,7 +1180,7 @@
                 immediate: true,
                 deep: true,
             },
-            treeRefresh: {
+            "editorStore.treeRefresh": {
                 async handler() {
                     if (this.$refs.tree) {
                         this.items = undefined;
@@ -1305,6 +1302,7 @@
             }
 
             &:hover{
+                background-color: var(--ks-button-background-primary);
                 border: 1px solid var(--ks-border-active);
             }
         }
@@ -1321,7 +1319,7 @@
             min-width: fit-content;
             border: 1px solid var(--ks-border-active)
         }
-        .el-tree-node:has(.selected-node) > .el-tree-node__content {
+        .el-tree-node.selected-tree-node > .el-tree-node__content {
             background-color: var(--ks-button-background-primary);
             min-width: fit-content;
         }

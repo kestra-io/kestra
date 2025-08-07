@@ -56,6 +56,10 @@ jobs:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
 
+  e2e-tests:
+    name: E2E - Tests
+    uses: ./.github/workflows/e2e.yml
+
   end:
     name: End
     runs-on: ubuntu-latest

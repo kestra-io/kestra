@@ -8,6 +8,7 @@ import {FilterLanguage} from "../filterLanguage.ts";
 import permission from "../../../../../models/permission.ts";
 import action from "../../../../../models/action.ts";
 import {Me} from "../../../../../stores/auth.ts";
+import {useNamespacesStore} from "override/stores/namespaces.ts";
 
 const triggerFilterKeys: Record<string, FilterKeyCompletions> = {
     namespace: new FilterKeyCompletions(
@@ -15,7 +16,8 @@ const triggerFilterKeys: Record<string, FilterKeyCompletions> = {
         async (store) => {
             const user = store.getters["auth/user"] as Me;
             if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
-                return [...new Set(((await store.dispatch("namespace/loadNamespacesForDatatype", {dataType: "flow"})) as string[])
+                const namespacesStore = useNamespacesStore();
+                return [...new Set(((await namespacesStore.loadNamespacesForDatatype({dataType: "flow"})) as string[])
                     .flatMap(namespace => {
                         return namespace.split(".").reduce((current: string[], part: string) => {
                             const previousCombination = current?.[current.length - 1];

@@ -84,7 +84,7 @@
                 class="me-2"
             />
 
-            <switch-view
+            <SwitchView
                 v-if="!isNamespace"
                 :type="viewType"
                 class="to-topology-button"
@@ -134,7 +134,7 @@
         >
             <template v-if="editorViewType === 'YAML'">
                 <template v-if="isCreating || openedTabs.length">
-                    <editor
+                    <Editor
                         class="position-relative"
                         ref="editorDomElement"
                         @save="save"
@@ -292,7 +292,7 @@
             />
         </div>
 
-        <drawer
+        <Drawer
             v-model="isNewErrorOpen"
             title="Add a global error handler"
         >
@@ -313,8 +313,8 @@
                     {{ $t("save") }}
                 </el-button>
             </template>
-        </drawer>
-        <drawer
+        </Drawer>
+        <Drawer
             v-model="isNewTriggerOpen"
             title="Add a trigger"
         >
@@ -335,8 +335,8 @@
                     {{ $t("save") }}
                 </el-button>
             </template>
-        </drawer>
-        <drawer
+        </Drawer>
+        <Drawer
             v-if="isEditMetadataOpen"
             v-model="isEditMetadataOpen"
         >
@@ -362,7 +362,7 @@
                     {{ $t("save") }}
                 </el-button>
             </template>
-        </drawer>
+        </Drawer>
     </div>
     <el-dialog
         v-if="confirmOutdatedSaveDialog"
@@ -439,13 +439,24 @@
 </template>
 
 <script setup>
-    import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
-    import {useStore} from "vuex";
-    import {useCoreStore} from "../../stores/core";
+    import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
+    import {useStore} from "vuex";
     import {useStorage} from "@vueuse/core";
+    import * as FLOW_YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {Utils, YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
 
-    // Icons
+    import {useCoreStore} from "../../stores/core";
+    import {useNamespacesStore} from "override/stores/namespaces";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {useEditorStore} from "../../stores/editor";
+
+    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
+
+    import permission from "../../models/permission";
+    import action from "../../models/action";
+    import {storageKeys, editorViewTypes} from "../../utils/constants";
+
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import MenuOpen from "vue-material-design-icons/MenuOpen.vue";
     import MenuClose from "vue-material-design-icons/MenuClose.vue";
@@ -460,13 +471,6 @@
 
     import TypeIcon from "../utils/icons/Type.vue"
     import SwitchView from "./SwitchView.vue";
-
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import {storageKeys, editorViewTypes} from "../../utils/constants";
-    import {Utils, YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
-
-    // editor components
     import Editor from "./Editor.vue";
     import NoCode from "../code/NoCode.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
@@ -477,13 +481,10 @@
     import ValidationError from "../flows/ValidationError.vue";
     import EditorButtons from "./EditorButtons.vue";
     import MetadataEditor from "../flows/MetadataEditor.vue";
-    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
-    import {usePluginsStore} from "../../stores/plugins";
-    import * as FLOW_YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import {useEditorStore} from "../../stores/editor";
 
     const store = useStore();
     const coreStore = useCoreStore();
+    const namespacesStore = useNamespacesStore();
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);
@@ -1108,7 +1109,7 @@
     };
 
     async function loadFileAtPath(path){
-        const content = await store.dispatch("namespace/readFile", {
+        const content = await namespacesStore.readFile({
             path,
             namespace: props.namespace ?? route.params.namespace ?? route.params.id,
         })
@@ -1252,13 +1253,13 @@
                 : dialog.value.name;
 
             if (dialog.value.type === "file") {
-                await store.dispatch("namespace/createFile", {
+                await namespacesStore.createFile({
                     namespace: props.namespace ?? route.params.namespace,
                     path,
                     content: "",
                 });
             } else {
-                await store.dispatch("namespace/createDirectory", {
+                await namespacesStore.createDirectory({
                     namespace: props.namespace ?? route.params.namespace,
                     path,
                 });
@@ -1287,7 +1288,7 @@
             });
             const path = file.webkitRelativePath || file.name;
 
-            await store.dispatch("namespace/importFileDirectory", {
+            await namespacesStore.importFileDirectory({
                 namespace: props.namespace ?? route.params.namespace,
                 content,
                 path

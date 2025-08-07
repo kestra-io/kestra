@@ -362,6 +362,18 @@
     "dependencies delete flow": "이 flow는 종속성을 가지고 있습니다. 삭제하면 종속성이 실행되지 않습니다.<br /><br /> 영향을 받는 flow 목록은 다음과 같습니다:",
     "dependencies loaded": "종속성이 로드되었습니다",
     "dependencies missing acls": "이 flow에 대한 권한이 없습니다",
+    "dependency": {
+      "controls": {
+        "clear_selection": "선택 해제",
+        "fit_view": "화면에 맞추기",
+        "zoom_in": "확대하기",
+        "zoom_out": "축소"
+      },
+      "search": {
+        "no_results": "{term}에 대한 결과가 없습니다.",
+        "placeholder": "flow 또는 namespace로 검색..."
+      }
+    },
     "dependency task": "Task {taskId}가 다른 task의 종속성입니다",
     "description": "설명",
     "details": "세부 정보",

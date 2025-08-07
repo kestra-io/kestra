@@ -1,5 +1,5 @@
 <template>
-    <editor
+    <Editor
         id="editorWrapper"
         ref="editorRefElement"
         :model-value="draftSource === undefined ? source : draftSource"
@@ -32,8 +32,8 @@
         <template v-if="playgroundStore.enabled" #widget-content>
             <PlaygroundRunTaskButton :task-id="highlightedLines?.taskId" />
         </template>
-    </editor>
-    <transition name="el-zoom-in-center">
+    </Editor>
+    <Transition name="el-zoom-in-center">
         <AiAgent
             v-if="aiAgentOpened"
             class="position-absolute prompt"
@@ -41,7 +41,7 @@
             :flow="flowContent"
             @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
         />
-    </transition>
+    </Transition>
     <AcceptDecline
         v-if="draftSource !== undefined"
         class="position-absolute actions"
@@ -52,27 +52,27 @@
 
 <script lang="ts" setup>
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
-    import {useStore} from "vuex";
-    import Editor from "./Editor.vue";
-
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
-
     import {useRoute, useRouter} from "vue-router";
-
-    const route = useRoute()
-    const router = useRouter()
+    import {useStore} from "vuex";
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
     import {useMiscStore} from "../../stores/misc";
     import {EditorTabProps, useEditorStore} from "../../stores/editor";
+    import {useNamespacesStore} from "override/stores/namespaces";
+    import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
 
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+
+    import Editor from "./Editor.vue";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import AiAgent from "../ai/AiAgent.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import AcceptDecline from "./AcceptDecline.vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
+
+    const route = useRoute();
+    const router = useRouter();
 
     const store = useStore();
     const miscStore = useMiscStore();
@@ -116,7 +116,7 @@
 
         if (!fileNamespace) return;
 
-        const content = await store.dispatch("namespace/readFile", {namespace: fileNamespace, path: props.path})
+        const content = await namespacesStore.readFile({namespace: fileNamespace, path: props.path})
         editorStore.setTabContent({path: props.path, content})
     }
 
@@ -151,6 +151,7 @@
     });
 
     const pluginsStore = usePluginsStore();
+    const namespacesStore = useNamespacesStore();
 
     function editorUpdate(newValue: string){
         if (flowContent.value === newValue) {
@@ -218,10 +219,10 @@
 
     const saveFileContent = async () => {
         clearTimeout(timeout.value);
-        await store.dispatch("namespace/createFile", {
+        await namespacesStore.createFile({
             namespace: namespace.value,
             path: props.path,
-            content: editorRefElement.value?.modelValue,
+            content: editorRefElement.value?.modelValue || "",
         });
         editorStore.setTabDirty({
             path: props.path,

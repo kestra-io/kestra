@@ -8,6 +8,7 @@ import FilterLanguageConfigurator, {languages as filterLanguages} from "./filter
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider";
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider";
 import {usePluginsStore} from "../../../stores/plugins";
+import {useNamespacesStore} from "override/stores/namespaces";
 
 export default async function configure(
     store: Store<Record<string, any>>,
@@ -17,17 +18,18 @@ export default async function configure(
     language: string,
     domain?: string
 ): Promise<void> {
+    const namespacesStore = useNamespacesStore();
     let yamlAutocompletion;
     if (language === "yaml") {
         if (domain === "flow" || domain === "testsuites") {
             // flow completion seems to work fine for testsuites, quickwin
-            yamlAutocompletion = new FlowAutoCompletion(store, pluginsStore);
+            yamlAutocompletion = new FlowAutoCompletion(store, pluginsStore, namespacesStore);
         } else {
             yamlAutocompletion = new YamlAutoCompletion();
         }
         await new YamlLanguageConfigurator(yamlAutocompletion).configure(store, pluginsStore, t, editorInstance);
     } else if(language === "plaintext-pebble") {
-        const autoCompletion = new FlowAutoCompletion(store, pluginsStore, computed(() => store.state.flow.flowYaml));
+        const autoCompletion = new FlowAutoCompletion(store, pluginsStore, namespacesStore, computed(() => store.state.flow.flowYaml));
         await new PebbleLanguageConfigurator(autoCompletion, computed(() => store.state.flow.flowYaml))
             .configure(store, pluginsStore, t, editorInstance);
     } else if (filterLanguages.some(languageRegex => languageRegex.test(language))) {

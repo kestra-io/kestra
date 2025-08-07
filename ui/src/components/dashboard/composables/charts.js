@@ -92,6 +92,20 @@ export function defaultConfig(override, theme) {
     );
 }
 
+export function extractState(value) {
+    if (!value || typeof value !== "string") return value;
+    
+    if (value.includes(",")) {
+        const stateNames = State.arrayAllStates().map(state => state.name);
+        const matchedState = value.split(",")
+            .map(part => part.trim())
+            .find(part => stateNames.includes(part.toUpperCase()));
+        return matchedState || value;
+    }
+    
+    return value;
+}
+
 export function chartClick(moment, router, route, event, parsedData, elements, type = "label") {
     const query = {};
 
@@ -107,7 +121,7 @@ export function chartClick(moment, router, route, event, parsedData, elements, t
                 state = parsedData.labels[element.index];
             }
             if (state) {
-                query.state = state;
+                query.state = extractState(state);
                 query.scope = "USER";
                 query.size = 100;
                 query.page = 1;
@@ -137,7 +151,7 @@ export function chartClick(moment, router, route, event, parsedData, elements, t
     }
 
     if (event.state) {
-        query.state = event.state;
+        query.state = extractState(event.state);
     }
 
     if (route.query.namespace) {

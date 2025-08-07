@@ -36,6 +36,7 @@
     import {Splitpanes, Pane} from "splitpanes"
     import {useCoreStore} from "../../stores/core";
     import {usePlaygroundStore} from "../../stores/playground";
+    import {useEditorStore} from "../../stores/editor";
 
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
     import FlowPlayground from "./FlowPlayground.vue";
@@ -60,7 +61,7 @@
     const flow = computed(() => store.state.flow.flow)
 
     onMounted(() => {
-        store.state.editor.explorerVisible = false
+        useEditorStore().explorerVisible = false
     })
 
     const playgroundStore = usePlaygroundStore()

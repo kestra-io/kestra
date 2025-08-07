@@ -248,17 +248,18 @@
                 options.automaticLayout = true;
 
                 return {
-
-                    tabSize: 2,
-                    fontFamily: localStorage.getItem("editorFontFamily")
-                        ? localStorage.getItem("editorFontFamily")
-                        : "'Source Code Pro', monospace",
-                    fontSize: localStorage.getItem("editorFontSize")
-                        ? parseInt(localStorage.getItem("editorFontSize"))
-                        : 12,
-                    showFoldingControls: "always",
-                    scrollBeyondLastLine: false,
-                    roundedSelection: false,
+                    ...{
+                        tabSize: 2,
+                        fontFamily: localStorage.getItem("editorFontFamily")
+                            ? localStorage.getItem("editorFontFamily")
+                            : "'Source Code Pro', monospace",
+                        fontSize: localStorage.getItem("editorFontSize")
+                            ? parseInt(localStorage.getItem("editorFontSize"))
+                            : 12,
+                        showFoldingControls: "always",
+                        scrollBeyondLastLine: false,
+                        roundedSelection: false,
+                    },
                     ...options,
                 };
             },

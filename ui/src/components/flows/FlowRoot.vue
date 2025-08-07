@@ -113,11 +113,13 @@
                                     .then((response) => {
                                         this.dependenciesCount =
                                             response.data && response.data.nodes
-                                                ? new Set(
-                                                    response.data.nodes.map(
-                                                        (r) => r.uid,
+                                                ? [
+                                                    ...new Set(
+                                                        response.data.nodes.map(
+                                                            (r) => r.uid,
+                                                        ),
                                                     ),
-                                                ).size
+                                                ].length
                                                 : 0;
                                     });
                             }

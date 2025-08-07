@@ -325,7 +325,7 @@
             });
         }
 
-        let queryEntries = filters.flatMap(({key, comparator, value: queryValue}) => {
+        let queryEntries = filters.flatMap(({key: key, comparator: comparator, value: value}) => {
             let queryKey = reversedQueryRemapper?.[key] ?? key;
 
             if (!props.legacyQuery) {
@@ -337,15 +337,15 @@
                         return [];
                     }
 
-                    return [[`filters[${rootKey}][${comparator}][${subKey}]`, queryValue]];
+                    return [[`filters[${rootKey}][${comparator}][${subKey}]`, value]];
                 }
 
                 queryKey = "filters[" + queryKey + "]";
             } else {
-                return [[queryKey, queryValue]];
+                return [[queryKey, value]];
             }
 
-            return [[`${queryKey}[${comparator}]`, queryValue]];
+            return [[`${queryKey}[${comparator}]`, value]];
         });
 
         if (props.queryNamespace !== undefined) {

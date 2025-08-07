@@ -771,7 +771,9 @@
                 persistViewType(editorViewTypes.SOURCE);
             }
         }, 200);
-        window.addEventListener("popstate", stopTour);
+        window.addEventListener("popstate", () => {
+            stopTour();
+        });
         window.addEventListener("resize", onResize);
 
         if (props.isCreating) {
@@ -786,7 +788,9 @@
 
         pluginsStore.editorPlugin = undefined;
         document.removeEventListener("keydown", saveUsingKeyboard);
-        document.removeEventListener("popstate", stopTour);
+        document.removeEventListener("popstate", () => {
+            stopTour();
+        });
 
         store.commit("editor/closeAllTabs");
 
@@ -794,7 +798,7 @@
         window.removeEventListener("keydown", toggleAiShortcut);
     });
 
-    function stopTour() {
+    const stopTour = () => {
         tours["guidedTour"].stop();
         coreStore.guidedProperties = {
             ...coreStore.guidedProperties,

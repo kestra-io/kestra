@@ -222,6 +222,7 @@ public class Trigger extends TriggerContext implements HasUID {
             }
             // If trigger is a schedule and execution ended after the next execution date
             else if (abstractTrigger instanceof Schedule schedule &&
+                this.getNextExecutionDate() != null &&
                 execution.getState().getEndDate().get().isAfter(this.getNextExecutionDate().toInstant())
             ) {
                 RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedule.getRecoverMissedSchedules())

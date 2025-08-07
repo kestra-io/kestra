@@ -106,7 +106,7 @@
         >
             <template v-if="editorViewType === 'YAML'">
                 <template v-if="isCreating || openedTabs.length">
-                    <editor
+                    <Editor
                         class="position-relative"
                         ref="editorDomElement"
                         @save="save"
@@ -281,19 +281,22 @@
     import action from "../../../models/action";
     import {storageKeys, editorViewTypes} from "../../../utils/constants";
 
+    import {useToast} from "../../../utils/toast";
 
     // editor components
     import Editor from "../../inputs/Editor.vue";
     import EditorButtons from "../../inputs/EditorButtons.vue";
     import {useFlowOutdatedErrors} from "../../inputs/flowOutdatedErrors";
+
     import {usePluginsStore} from "../../../stores/plugins";
     import {useCoreStore} from "../../../stores/core";
     import {EditorTabProps, useEditorStore} from "../../../stores/editor";
-    import {useToast} from "../../../utils/toast";
+    import {useNamespacesStore} from "override/stores/namespaces";
 
 
     const store = useStore();
     const coreStore = useCoreStore();
+    const namespacesStore = useNamespacesStore();
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);
@@ -714,10 +717,10 @@
         dragOverTabIndex.value = null;
     };
 
-    async function loadFileAtPath(path: string) {
-        const content = await store.dispatch("namespace/readFile", {
+    async function loadFileAtPath(path: string){
+        const content = await namespacesStore.readFile({
             path,
-            namespace: props.namespace ?? route.params.namespace ?? route.params.id,
+            namespace: props.namespace ?? route.params.namespace.toString() ?? route.params.id.toString() ?? "",
         })
         store.commit("flow/setFlowYaml", content);
     }
@@ -869,19 +872,19 @@
 
     const dialogHandler = async () => {
         try {
-            const path = dialog.value.folder
+            const path = (dialog.value.folder
                 ? `${dialog.value.folder}/${dialog.value.name}`
-                : dialog.value.name;
+                : dialog.value.name) ?? "";
 
             if (dialog.value.type === "file") {
-                await store.dispatch("namespace/createFile", {
-                    namespace: props.namespace ?? route.params.namespace,
+                await namespacesStore.createFile({
+                    namespace: props.namespace ?? route.params.namespace.toString(),
                     path,
                     content: "",
                 });
             } else {
-                await store.dispatch("namespace/createDirectory", {
-                    namespace: props.namespace ?? route.params.namespace,
+                await namespacesStore.createDirectory({
+                    namespace: props.namespace ?? route.params.namespace.toString(),
                     path,
                 });
             }
@@ -906,15 +909,15 @@
         if (!files) return;
 
         for (const file of files) {
-            const content = await new Promise<ArrayBuffer>((resolve) => {
+            const content = (await new Promise<ArrayBuffer>((resolve) => {
                 const reader = new FileReader();
                 reader.onload = (e) => resolve(e.target?.result as ArrayBuffer);
                 reader.readAsArrayBuffer(file);
-            });
+            })).toString() ?? "";
             const path = file.webkitRelativePath || file.name;
 
-            await store.dispatch("namespace/importFileDirectory", {
-                namespace: props.namespace ?? route.params.namespace,
+            await namespacesStore.importFileDirectory({
+                namespace: props.namespace ?? route.params.namespace.toString(),
                 content,
                 path
             });

@@ -4,7 +4,7 @@
         legacy-query
     />
 
-    <select-table
+    <SelectTable
         :data="filteredKvs"
         ref="selectTable"
         :default-sort="{prop: 'id', order: 'ascending'}"
@@ -17,7 +17,7 @@
         class="fill-height"
     >
         <template #select-actions>
-            <bulk-select
+            <BulkSelect
                 :select-all="queryBulkAction"
                 :selections="selection"
                 @update:select-all="toggleAllSelection"
@@ -26,7 +26,7 @@
                 <el-button :icon="Delete" type="default" @click="removeKvs()">
                     {{ $t("delete") }}
                 </el-button>
-            </bulk-select>
+            </BulkSelect>
         </template>
         <el-table-column
             v-if="namespace === undefined"
@@ -37,7 +37,7 @@
         />
         <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('key')">
             <template #default="scope">
-                <id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
+                <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
             </template>
         </el-table-column>
         <el-table-column
@@ -88,16 +88,16 @@
                 />
             </template>
         </el-table-column>
-    </select-table>
+    </SelectTable>
 
-    <drawer
+    <Drawer
         v-if="addKvDrawerVisible"
         v-model="addKvDrawerVisible"
         :title="kvModalTitle"
     >
         <el-form class="ks-horizontal" :model="kv" :rules="rules" ref="form">
             <el-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
-                <namespace-select
+                <NamespaceSelect
                     v-model="kv.namespace"
                     :readonly="kv.update"
                     :include-system-namespace="true"
@@ -144,7 +144,7 @@
                     v-model="kv.value"
                     type="date"
                 />
-                <time-select
+                <TimeSelect
                     v-else-if="kv.type === 'DURATION'"
                     :from-now="false"
                     :time-range="kv.value"
@@ -152,7 +152,7 @@
                     allow-custom
                     @update:model-value="kv.value = $event.timeRange"
                 />
-                <editor
+                <Editor
                     :full-height="false"
                     :input="true"
                     :navbar="false"
@@ -167,7 +167,7 @@
             </el-form-item>
 
             <el-form-item :label="$t('expiration')" prop="ttl">
-                <time-select
+                <TimeSelect
                     :from-now="false"
                     allow-infinite
                     allow-custom
@@ -185,7 +185,7 @@
                 {{ $t('save') }}
             </el-button>
         </template>
-    </drawer>
+    </Drawer>
 </template>
 
 <script setup lang="ts">
@@ -205,15 +205,17 @@
 </script>
 
 <script lang="ts">
-    import Id from "../Id.vue";
-    import Drawer from "../Drawer.vue";
-    import SelectTableActions from "../../mixins/selectTableActions";
-    import {NamespaceIterator} from "../../composables/useNamespaces";
-    import useNamespaces from "../../composables/useNamespaces";
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
     import {groupBy} from "lodash";
-    import {mapState, mapMutations} from "vuex";
+    import {useNamespacesStore} from "override/stores/namespaces";
+    import useNamespaces from "../../composables/useNamespaces";
+    import {NamespaceIterator} from "../../composables/useNamespaces";
+    import SelectTableActions from "../../mixins/selectTableActions";
     import action from "../../models/action";
     import permission from "../../models/permission";
+    import Id from "../Id.vue";
+    import Drawer from "../Drawer.vue";
 
     export default {
         inheritAttrs: false,
@@ -224,7 +226,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("namespace", ["addKvModalVisible"]),
+            ...mapStores(useNamespacesStore),
             searchQuery() {
                 return this.$route.query.q;
             },
@@ -240,10 +242,10 @@
             },
             addKvDrawerVisible: {
                 get() {
-                    return this.addKvModalVisible;
+                    return this.namespacesStore.addKvModalVisible;
                 },
                 set(newValue:boolean) {
-                    this.changeKVModalVisibility(newValue);
+                    this.namespacesStore.addKvModalVisible = newValue;
                 }
             }
         },
@@ -314,7 +316,6 @@
             };
         },
         methods: {
-            ...mapMutations("namespace", ["changeKVModalVisibility"]),
             canUpdate(kv) {
                 return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
             },
@@ -350,7 +351,7 @@
                     const namespaces = (await ((this.namespaceIterator as NamespaceIterator).next())).map(n => n.id);
                     if (namespaces.length !== 0) {
                         const kvsPromises = Promise.all(namespaces.filter(n => this.user.isAllowed(permission.KVSTORE, action.READ, n)).map(async n => {
-                            const kvs = await this.$store.dispatch("namespace/kvsList", {id: n});
+                            const kvs = await this.namespacesStore.kvsList({id: n});
 
                             return kvs.map(kv => {
                                 kv.namespace = n;
@@ -361,7 +362,7 @@
                         kvFetch = (await kvsPromises).flat();
                     }
                 } else {
-                    kvFetch = (await this.$store.dispatch("namespace/kvsList", {id: this.namespace})).map(kv => {
+                    kvFetch = (await this.namespacesStore.kvsList({id: this.namespace})).map(kv => {
                         kv.namespace = this.namespace;
                         return kv;
                     });
@@ -389,7 +390,7 @@
             async updateKvModal(namespace, key) {
                 this.kv.namespace = namespace;
                 this.kv.key = key;
-                const {type, value} = await this.$store.dispatch("namespace/kv", {namespace, key});
+                const {type, value} = await this.namespacesStore.kv({namespace, key});
                 this.kv.type = type;
                 if (type === "JSON") {
                     this.kv.value = JSON.stringify(value);
@@ -403,8 +404,8 @@
             },
             removeKv(namespace, key) {
                 this.$toast().confirm(this.$t("delete confirm", {name: key}), () => {
-                    return this.$store
-                        .dispatch("namespace/deleteKv", {namespace, key: key})
+                    return this.namespacesStore
+                        .deleteKv({namespace, key: key})
                         .then(() => {
                             this.$toast().deleted(key);
                             this.reloadKvs();
@@ -421,8 +422,8 @@
                         (withoutDeletePermissionNamespaces.length === 0 ? "" : `\n${this.$t("kv.delete multiple.warning", {namespaces: withoutDeletePermissionNamespaces.join(", ")})}`),
                     () => {
                         Object.entries(withDeletePermissionGroupedKvs).forEach(([namespace, kvs]) => {
-                            this.$store
-                                .dispatch("namespace/deleteKvs", {namespace, request: {keys: kvs.map(kv => kv.key)}})
+                            this.namespacesStore
+                                .deleteKvs({namespace, request: {keys: kvs.map(kv => kv.key)}})
                                 .then(() => {
                                     this.$toast().deleted(`${kvs.length} KV(s) from ${namespace} namespace`);
                                     this.reloadKvs();
@@ -459,15 +460,12 @@
                         value = this.$moment(value).toISOString(true).split("T")[0]
                     }
 
-                    return this.$store
-                        .dispatch(
-                            "namespace/createKv",
-                            {
-                                ...this.kv,
-                                contentType: ["DATE", "DATETIME"].includes(type) ? "text/plain" : "application/json",
-                                value
-                            }
-                        )
+                    return this.namespacesStore
+                        .createKv({
+                            ...this.kv,
+                            contentType: ["DATE", "DATETIME"].includes(type) ? "text/plain" : "application/json",
+                            value
+                        })
                         .then(() => {
                             this.$toast().saved(this.kv.key);
                             this.addKvDrawerVisible = false;

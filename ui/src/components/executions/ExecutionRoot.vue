@@ -29,8 +29,7 @@
     import Tabs from "../../components/Tabs.vue";
     import ExecutionRootTopBar from "./ExecutionRootTopBar.vue";
     import DemoAuditLogs from "../demo/AuditLogs.vue";
-
-    import ExecutionDependencies from "./ExecutionDependencies.vue";
+    import Dependencies from "../dependencies/Dependencies.vue";
 
     import {useExecutionsStore} from "../../stores/executions";
 
@@ -44,9 +43,10 @@
             return {
                 sse: undefined,
                 previousExecutionId: undefined,
+                dependenciesCount: undefined
             };
         },
-        created() {
+        async created() {
             if(!this.$route.params.tab) {
                 const tab = localStorage.getItem("executeDefaultTab") || undefined;
                 this.$router.replace({name: "executions/update", params: {...this.$route.params, tab}});
@@ -54,6 +54,8 @@
 
             this.follow();
             window.addEventListener("popstate", this.follow)
+
+            this.dependenciesCount = (await this.$store.dispatch("flow/loadDependencies", {namespace: this.$route.params.namespace, id: this.$route.params.flowId})).count;
         },
         mounted() {
             this.previousExecutionId = this.$route.params.id
@@ -108,8 +110,10 @@
                     },
                     {
                         name: "dependencies",
-                        component: ExecutionDependencies,
+                        component: Dependencies,
                         title: this.$t("dependencies"),
+                        count: this.dependenciesCount,
+                        maximized: true,
                         props: {
                             isReadOnly: true,
                         },

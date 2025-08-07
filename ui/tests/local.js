@@ -26,7 +26,7 @@ export default (component, options, callback) => {
     const app =  mount(
         component,
         {
-            ...{
+            
                 global: {
                     plugins: [store, i18n, ElementPlus],
                     config: {
@@ -35,8 +35,7 @@ export default (component, options, callback) => {
                             $moment: extendMoment(moment)
                         }
                     }
-                }
-            },
+                },
             ...options
         }
     )

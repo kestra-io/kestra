@@ -252,18 +252,17 @@
         const settingsEditorFontSize = localStorage.getItem("editorFontSize")
 
         return {
-            ...{
-                tabSize: 2,
-                fontFamily: localStorage.getItem("editorFontFamily")
-                    ? localStorage.getItem("editorFontFamily")
-                    : "'Source Code Pro', monospace",
-                fontSize: settingsEditorFontSize
-                    ? parseInt(settingsEditorFontSize)
-                    : 12,
-                showFoldingControls: "always",
-                scrollBeyondLastLine: false,
-                roundedSelection: false,
-            },
+            
+            tabSize: 2,
+            fontFamily: localStorage.getItem("editorFontFamily")
+                ? localStorage.getItem("editorFontFamily")
+                : "'Source Code Pro', monospace",
+            fontSize: settingsEditorFontSize
+                ? parseInt(settingsEditorFontSize)
+                : 12,
+            showFoldingControls: "always",
+            scrollBeyondLastLine: false,
+            roundedSelection: false,
             ...options,
         } as monaco.editor.IStandaloneEditorConstructionOptions & {
             renderSideBySide?:boolean

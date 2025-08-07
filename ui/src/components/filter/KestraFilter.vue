@@ -325,7 +325,7 @@
             });
         }
 
-        let queryEntries = filters.flatMap(({key: key, comparator: comparator, value: value}) => {
+        let queryEntries = filters.flatMap(({key, comparator, value}) => {
             let queryKey = reversedQueryRemapper?.[key] ?? key;
 
             if (!props.legacyQuery) {
@@ -448,7 +448,7 @@
         mountedEditor.onKeyDown((e) => {
             if (e.keyCode === KeyCode.Enter) {
                 const suggestController = mountedEditor.getContribution("editor.contrib.suggestController") as any;
-                
+
                 if (suggestController && suggestController.widget) {
                     return;
                 }

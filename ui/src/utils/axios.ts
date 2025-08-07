@@ -160,9 +160,7 @@ export default (
 
                     router.push({
                         name: "login",
-                        query: {
-                            ...(isLoginPath ? {} : {from: currentPath})
-                        }
+                        query: (isLoginPath ? {} : {from: currentPath})
                     })
 
                     return Promise.reject(errorResponse)
@@ -224,9 +222,7 @@ export default (
 
                         router.push({
                             name: "login",
-                            query: {
-                                ...(isLoginPath ? {} : {from: currentPath})
-                            }
+                            query: (isLoginPath ? {} : {from: currentPath})
                         })
 
                         return Promise.reject(errorResponse)

@@ -84,7 +84,11 @@ export const usePlaygroundStore = defineStore("playground", () => {
         const defaultInputValues: Record<string, any> = {}
         for (const input of (store.state.flow.flow?.inputs || [])) {
             const {type, defaults} = input;
-            defaultInputValues[input.id] = Inputs.normalize(type, defaults);
+            // for dates, no need to normalize the value
+            // https://github.com/kestra-io/kestra/issues/10576
+            defaultInputValues[input.id] = type === "DATE"
+                ? defaults
+                : Inputs.normalize(type, defaults);
         }
 
         return await executionsStore.triggerExecution({

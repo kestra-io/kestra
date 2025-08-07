@@ -36,6 +36,7 @@
     import {Splitpanes, Pane} from "splitpanes"
     import {useCoreStore} from "../../stores/core";
     import {usePlaygroundStore} from "../../stores/playground";
+    import {useEditorStore} from "../../stores/editor";
 
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
     import FlowPlayground from "./FlowPlayground.vue";
@@ -60,7 +61,7 @@
     const flow = computed(() => store.state.flow.flow)
 
     onMounted(() => {
-        store.state.editor.explorerVisible = false
+        useEditorStore().explorerVisible = false
     })
 
     const playgroundStore = usePlaygroundStore()
@@ -89,7 +90,7 @@
             showKeyShortcuts();
             return;
         }
-        
+
         if(openTabs.value.includes(tabValue)){
             focusTab(tabValue)
             return
@@ -130,6 +131,7 @@
             const [
                 ,
                 parentPath,
+                _blockSchemaPath,
                 refPath,
             ] = args
             const editKey = getEditTabKey({
@@ -271,13 +273,22 @@
         justify-content: space-between;
         border-bottom: 1px solid var(--ks-border-primary);
         background-image: linear-gradient(
-            to right,
-            colorPalette.$base-blue-500 0%,
-            colorPalette.$base-blue-700 30%,
-            transparent 50%,
-            transparent 100%
-        );
-        background-size: 220% 100%;
+                to right,
+                colorPalette.$base-blue-400 0%,
+                colorPalette.$base-blue-500 35%,
+                rgba(colorPalette.$base-blue-500, 0) 55%,
+                rgba(colorPalette.$base-blue-500, 0) 100%
+            );
+        .dark & {
+            background-image: linear-gradient(
+                to right,
+                colorPalette.$base-blue-500 0%,
+                colorPalette.$base-blue-700 35%,
+                rgba(colorPalette.$base-blue-700, .1) 55%,
+                rgba(colorPalette.$base-blue-700, 0) 100%
+            );
+        }
+        background-size: 250% 100%;
         background-position: 100% 0;
         transition: background-position .2s;
     }
@@ -317,7 +328,7 @@
     .playgroundMode {
         #{--el-color-primary}: colorPalette.$base-blue-500;
         color: colorPalette.$base-white;
-        background-position: 0 0;
+        background-position: 10% 0;
     }
 
     .default-theme{

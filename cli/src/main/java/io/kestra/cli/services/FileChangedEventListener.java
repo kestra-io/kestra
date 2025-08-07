@@ -162,7 +162,15 @@ public class FileChangedEventListener {
                                     }
 
                                 } catch (NoSuchFileException e) {
-                                    log.error("File not found: {}", entry, e);
+                                    log.warn("File not found: {}, deleting it", entry, e);
+                                    // the file might have been deleted while reading so if not found we try to delete the flow
+                                    flows.stream()
+                                        .filter(flow -> flow.getPath().equals(filePath.toString()))
+                                        .findFirst()
+                                        .ifPresent(flowWithPath -> {
+                                            flowFilesManager.deleteFlow(flowWithPath.getTenantId(), flowWithPath.getNamespace(), flowWithPath.getId());
+                                            this.flows.removeIf(fwp -> fwp.uidWithoutRevision().equals(flowWithPath.uidWithoutRevision()));
+                                        });
                                 } catch (IOException e) {
                                     log.error("Error reading file: {}", entry, e);
                                 }

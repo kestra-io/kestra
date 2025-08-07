@@ -34,21 +34,23 @@ function getDecorators(executionsSearchData) {
                     store.$http = {
                         get: async (uri, _params) => {
                             if (uri.endsWith("executions/search")) {
-                                console.log("uri", uri);
                                 // query params are available here if we want to make tests with them
                                 // console.log("params", params);
                                 return Promise.resolve({
                                     data: executionsSearchData,
                                 });
                             }
-                            return Promise.resolve({data: []});
+
+                            throw new Error(
+                                "Unhandled fixture Request GET: " + uri,
+                            );
                         },
                         post: async (uri) => {
-                            console.log("post request", uri);
 
                             if (uri.includes("/dashboards/charts/preview")) {
                                 return Promise.resolve({}); // empty chart
                             }
+
                             throw new Error(
                                 "Unhandled fixture Request POST: " + uri,
                             );

@@ -47,6 +47,7 @@
 
     import localUtils from "../../utils/utils";
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
+    import {useEditorStore} from "../../stores/editor";
 
     const {t} = useI18n();
 
@@ -56,6 +57,7 @@
     };
 
     const store = useStore()
+    const editorStore = useEditorStore();
     const router = useRouter()
     const route = useRoute()
     const routeParams = computed(() => route.params)
@@ -70,7 +72,7 @@
     const flowErrors = computed(() => store.getters["flow/flowErrors"]?.map(translateError));
     const flowInfos = computed(() => store.getters["flow/flowInfos"])
     const flowParsed = computed(() => store.state.flow.flow)
-    const tabs = computed<{dirty:boolean}[]>(() => store.state.editor.tabs)
+    const tabs = computed<{dirty:boolean}[]>(() => editorStore.tabs)
     const metadata = computed(() => store.state.flow.metadata);
     const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
     const flowWarnings = computed(() => {

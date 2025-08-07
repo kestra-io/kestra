@@ -14,8 +14,6 @@
 </template>
 
 <script>
-    import {h} from "vue";
-
     import Topology from "./Topology.vue";
     import FlowRevisions from "./FlowRevisions.vue";
     import LogsWrapper from "../logs/LogsWrapper.vue"
@@ -29,12 +27,10 @@
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
     import Overview from "./Overview.vue";
-    import FlowDependencies from "./FlowDependencies.vue";
-    import Empty from "../layout/empty/Empty.vue";
+    import Dependencies from "../dependencies/Dependencies.vue";
     import FlowMetrics from "./FlowMetrics.vue";
     import FlowEditor from "./FlowEditor.vue";
     import FlowTriggers from "./FlowTriggers.vue";
-    import {apiUrl} from "override/utils/route";
     import FlowRootTopBar from "./FlowRootTopBar.vue";
     import FlowConcurrency from "./FlowConcurrency.vue";
     import DemoAuditLogs from "../demo/AuditLogs.vue";
@@ -104,22 +100,11 @@
                                 this.flowStore.loadGraph({
                                     flow: this.flowStore.flow,
                                 });
-                                this.$http
-                                    .get(
-                                        `${apiUrl(this.$store)}/flows/${this.flowStore.flow?.namespace}/${this.flowStore.flow?.id}/dependencies`,
-                                    )
-                                    .then((response) => {
-                                        this.dependenciesCount =
-                                            response.data && response.data.nodes
-                                                ? [
-                                                    ...new Set(
-                                                        response.data.nodes.map(
-                                                            (r) => r.uid,
-                                                        ),
-                                                    ),
-                                                ].length
-                                                : 0;
-                                    });
+
+                                this.dependenciesCount = (await this.flowStore.loadDependencies({
+                                    namespace: this.$route.params.namespace,
+                                    id: this.$route.params.id
+                                })).count;
                             }
                         });
                 }
@@ -271,9 +256,10 @@
                 ) {
                     tabs.push({
                         name: "dependencies",
-                        component: this.routeFlowDependencies,
+                        component: Dependencies,
                         title: this.$t("dependencies"),
                         count: this.dependenciesCount,
+                        maximized: true
                     });
                 }
 
@@ -336,10 +322,6 @@
             ready() {
                 return this.user && this.flowStore.flow;
             },
-            routeFlowDependencies() {
-                const EMPTY = () => h(Empty, {type: "dependencies"});
-                return this.dependenciesCount > 0 ? FlowDependencies : EMPTY;
-            }
         },
         unmounted() {
             this.flowStore.flow = undefined;

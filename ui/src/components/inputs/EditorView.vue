@@ -5,7 +5,7 @@
             v-if="!isCreating"
             ref="toggleExplorer"
             :content="
-                $t(
+                t(
                     `namespace files.toggle.${
                         explorerVisible ? 'hide' : 'show'
                     }`
@@ -59,16 +59,16 @@
             class="tabs-context"
         >
             <el-menu-item :disabled="tabContextMenu.tab.persistent" @click="closeTab(tabContextMenu.tab, tabContextMenu.index)">
-                {{ $t("namespace_editor.close.tab") }}
+                {{ t("namespace_editor.close.tab") }}
             </el-menu-item>
             <el-menu-item @click="closeAllTabs">
-                {{ $t("namespace_editor.close.all") }}
+                {{ t("namespace_editor.close.all") }}
             </el-menu-item>
             <el-menu-item @click="closeOtherTabs(tabContextMenu.tab)">
-                {{ $t("namespace_editor.close.other") }}
+                {{ t("namespace_editor.close.other") }}
             </el-menu-item>
             <el-menu-item @click="closeTabsToRight(tabContextMenu.index)">
-                {{ $t("namespace_editor.close.right") }}
+                {{ t("namespace_editor.close.right") }}
             </el-menu-item>
         </el-menu>
 
@@ -79,12 +79,12 @@
                 @change="(val) => editorViewType = val"
                 active-value="NO_CODE"
                 inactive-value="YAML"
-                :inactive-text="$t('no_code.labels.no_code')"
+                :inactive-text="t('no_code.labels.no_code')"
                 size="small"
                 class="me-2"
             />
 
-            <switch-view
+            <SwitchView
                 v-if="!isNamespace"
                 :type="viewType"
                 class="to-topology-button"
@@ -134,7 +134,7 @@
         >
             <template v-if="editorViewType === 'YAML'">
                 <template v-if="isCreating || openedTabs.length">
-                    <editor
+                    <Editor
                         class="position-relative"
                         ref="editorDomElement"
                         @save="save"
@@ -161,27 +161,27 @@
 
                     <div>
                         <h5 class="mb-0 fw-bold">
-                            {{ $t("namespace_editor.empty.title") }}
+                            {{ t("namespace_editor.empty.title") }}
                         </h5>
                         <p>
-                            {{ $t("namespace_editor.empty.create_message") }}
+                            {{ t("namespace_editor.empty.create_message") }}
                         </p>
                     </div>
 
                     <div class="empty-state-actions mt-1">
                         <el-dropdown>
                             <el-button :icon="Plus" type="primary">
-                                {{ $t("create") }}
+                                {{ t("create") }}
                             </el-button>
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item @click="createFile">
                                         <FilePlus class="me-2" />
-                                        {{ $t("namespace files.create.file") }}
+                                        {{ t("namespace files.create.file") }}
                                     </el-dropdown-item>
                                     <el-dropdown-item @click="createFolder">
                                         <FolderPlus class="me-2" />
-                                        {{ $t("namespace files.create.folder") }}
+                                        {{ t("namespace files.create.folder") }}
                                     </el-dropdown-item>
                                 </el-dropdown-menu>
                             </template>
@@ -206,23 +206,23 @@
                         >
                         <el-dropdown>
                             <el-button :icon="Download" type="primary">
-                                {{ $t("import") }}
+                                {{ t("import") }}
                             </el-button>
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item @click="$refs.filePicker.click()">
                                         <File class="me-2" />
-                                        {{ $t("namespace files.import.files") }}
+                                        {{ t("namespace files.import.files") }}
                                     </el-dropdown-item>
                                     <el-dropdown-item @click="$refs.folderPicker.click()">
                                         <Folder class="me-2" />
-                                        {{ $t("namespace files.import.folder") }}
+                                        {{ t("namespace files.import.folder") }}
                                     </el-dropdown-item>
                                 </el-dropdown-menu>
                             </template>
                         </el-dropdown>
                     </div>
-                    <el-divider>{{ $t("namespace_editor.empty.video_message") }}</el-divider>
+                    <el-divider>{{ t("namespace_editor.empty.video_message") }}</el-divider>
 
                     <div class="video-container">
                         <iframe
@@ -282,7 +282,7 @@
                     :expanded-subflows="props.expandedSubflows"
                 />
                 <el-alert v-else type="warning" :closable="false">
-                    {{ $t("unable to generate graph") }}
+                    {{ t("unable to generate graph") }}
                 </el-alert>
             </div>
 
@@ -292,7 +292,7 @@
             />
         </div>
 
-        <drawer
+        <Drawer
             v-model="isNewErrorOpen"
             title="Add a global error handler"
         >
@@ -310,11 +310,11 @@
                     type="primary"
                     :disabled="Boolean(taskErrors)"
                 >
-                    {{ $t("save") }}
+                    {{ t("save") }}
                 </el-button>
             </template>
-        </drawer>
-        <drawer
+        </Drawer>
+        <Drawer
             v-model="isNewTriggerOpen"
             title="Add a trigger"
         >
@@ -332,11 +332,11 @@
                     type="primary"
                     :disabled="Boolean(taskErrors)"
                 >
-                    {{ $t("save") }}
+                    {{ t("save") }}
                 </el-button>
             </template>
-        </drawer>
-        <drawer
+        </Drawer>
+        <Drawer
             v-if="isEditMetadataOpen"
             v-model="isEditMetadataOpen"
         >
@@ -359,10 +359,10 @@
                     :disabled="!checkRequiredMetadata()"
                     class="edit-flow-save-button"
                 >
-                    {{ $t("save") }}
+                    {{ t("save") }}
                 </el-button>
             </template>
-        </drawer>
+        </Drawer>
     </div>
     <el-dialog
         v-if="confirmOutdatedSaveDialog"
@@ -371,13 +371,13 @@
         :append-to-body="true"
     >
         <template #header>
-            <h5>{{ $t(`${baseOutdatedTranslationKey}.title`) }}</h5>
+            <h5>{{ t(`${baseOutdatedTranslationKey}.title`) }}</h5>
         </template>
-        {{ $t(`${baseOutdatedTranslationKey}.description`) }}
-        {{ $t(`${baseOutdatedTranslationKey}.details`) }}
+        {{ t(`${baseOutdatedTranslationKey}.description`) }}
+        {{ t(`${baseOutdatedTranslationKey}.details`) }}
         <template #footer>
             <el-button @click="confirmOutdatedSaveDialog = false">
-                {{ $t("cancel") }}
+                {{ t("cancel") }}
             </el-button>
             <el-button
                 type="warning"
@@ -386,18 +386,18 @@
                     confirmOutdatedSaveDialog = false;
                 "
             >
-                {{ $t("ok") }}
+                {{ t("ok") }}
             </el-button>
         </template>
     </el-dialog>
     <el-dialog
         v-model="dialog.visible"
-        :title="dialog.type === 'file' ? $t('namespace files.create.file') : $t('namespace files.create.folder')"
+        :title="dialog.type === 'file' ? t('namespace files.create.file') : t('namespace files.create.folder')"
         width="500"
         @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
     >
         <div class="pb-1">
-            <span>{{ $t(`namespace files.dialog.name.${dialog.type}`) }}</span>
+            <span>{{ t(`namespace files.dialog.name.${dialog.type}`) }}</span>
         </div>
         <el-input
             ref="creation_name"
@@ -406,7 +406,7 @@
             class="mb-3"
         />
         <div class="py-1">
-            <span>{{ $t("namespace files.dialog.parent_folder") }}</span>
+            <span>{{ t("namespace files.dialog.parent_folder") }}</span>
         </div>
         <el-select
             v-model="dialog.folder"
@@ -424,14 +424,14 @@
         <template #footer>
             <div>
                 <el-button @click="dialog.visible = false">
-                    {{ $t("cancel") }}
+                    {{ t("cancel") }}
                 </el-button>
                 <el-button
                     type="primary"
                     :disabled="!dialog.name"
                     @click="dialogHandler"
                 >
-                    {{ $t("namespace files.create.label") }}
+                    {{ t("namespace files.create.label") }}
                 </el-button>
             </div>
         </template>
@@ -441,11 +441,24 @@
 <script setup lang="ts">
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
-    import {useCoreStore} from "../../stores/core";
     import {useRoute, useRouter} from "vue-router";
     import {useStorage} from "@vueuse/core";
+    import {useI18n} from "vue-i18n";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {Utils, SECTIONS} from "@kestra-io/ui-libs";
 
-    // Icons
+    import {useCoreStore} from "../../stores/core";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
+    import {useNamespacesStore} from "override/stores/namespaces";
+
+    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
+
+    import permission from "../../models/permission";
+    import action from "../../models/action";
+    import {storageKeys, editorViewTypes} from "../../utils/constants";
+
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import MenuOpen from "vue-material-design-icons/MenuOpen.vue";
     import MenuClose from "vue-material-design-icons/MenuClose.vue";
@@ -460,14 +473,6 @@
 
     import TypeIcon from "../utils/icons/Type.vue"
     import SwitchView from "./SwitchView.vue";
-
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import {storageKeys, editorViewTypes} from "../../utils/constants";
-    import {Utils, SECTIONS} from "@kestra-io/ui-libs";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-
-    // editor components
     import Editor from "./Editor.vue";
     import NoCode from "../code/NoCode.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
@@ -478,16 +483,13 @@
     import ValidationError from "../flows/ValidationError.vue";
     import EditorButtons from "./EditorButtons.vue";
     import MetadataEditor from "../flows/MetadataEditor.vue";
-    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {useEditorStore} from "../../stores/editor";
-    import {useFlowStore} from "../../stores/flow";
     import {useToast} from "../../utils/toast";
-    import {useI18n} from "vue-i18n";
+
 
     const store = useStore();
     const coreStore = useCoreStore();
     const flowStore = useFlowStore();
+    const namespacesStore = useNamespacesStore();
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);
@@ -1007,7 +1009,7 @@
                 });
             })
             .then(() => {
-                toast.deleted(metadata.value.id);
+                toast.deleted(metadata.value?.id);
             });
     };
 
@@ -1111,7 +1113,7 @@
     };
 
     async function loadFileAtPath(path){
-        const content = await store.dispatch("namespace/readFile", {
+        const content = await namespacesStore.readFile({
             path,
             namespace: props.namespace ?? route.params.namespace ?? route.params.id,
         })
@@ -1255,13 +1257,13 @@
                 : dialog.value.name;
 
             if (dialog.value.type === "file") {
-                await store.dispatch("namespace/createFile", {
+                await namespacesStore.createFile({
                     namespace: props.namespace ?? route.params.namespace,
                     path,
                     content: "",
                 });
             } else {
-                await store.dispatch("namespace/createDirectory", {
+                await namespacesStore.createDirectory({
                     namespace: props.namespace ?? route.params.namespace,
                     path,
                 });
@@ -1277,7 +1279,7 @@
             }
         } catch (error) {
             console.error(error);
-            toast().error(t("namespace files.create.error"));
+            toast.error(t("namespace files.create.error"), "error");
         }
     };
     const handleFileImport = async (event) => {
@@ -1290,7 +1292,7 @@
             });
             const path = file.webkitRelativePath || file.name;
 
-            await store.dispatch("namespace/importFileDirectory", {
+            await namespacesStore.importFileDirectory({
                 namespace: props.namespace ?? route.params.namespace,
                 content,
                 path

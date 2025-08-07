@@ -15,6 +15,8 @@ import {Store, useStore} from "vuex";
 import {makeToast} from "../utils/toast";
 import {InputType} from "../utils/inputs";
 import {globalI18n} from "../translations/i18n";
+import {transformResponse} from "../components/dependencies/composables/useDependencies";
+import {useNamespacesStore} from "override/stores/namespaces";
 
 const textYamlHeader = {
     headers: {
@@ -126,6 +128,8 @@ export const useFlowStore = defineStore("flow", () => {
         return saveWithoutRevisionGuard();
     }
 
+    const namespaceStore = useNamespacesStore()
+
     async function save({content, namespace}: { content?: string, namespace?: string }) {
         const editorStore = useEditorStore()
         const hasAnyDirtyTabs = editorStore.tabs.some(t => t.dirty === true);
@@ -158,11 +162,11 @@ export const useFlowStore = defineStore("flow", () => {
         } else {
             if (!currentTab?.dirty) return;
 
-            await store.dispatch("namespace/createFile", {
-                namespace: namespace ?? flow.value?.namespace,
+            await namespaceStore.createFile({
+                namespace: namespace ?? flow.value?.namespace ?? "",
                 path: currentTab.path ?? currentTab.name,
-                content,
-            }, {root: true});
+                content: content ?? "",
+            });
             editorStore.setTabDirty({
                 path: currentTab.path,
                 name: currentTab.name,
@@ -475,11 +479,21 @@ export const useFlowStore = defineStore("flow", () => {
                 return flow;
             })
     }
+
     function createFlow(options: { flow: string }) {
         return store.$http.post(`${apiUrl(store)}/flows`, options.flow, textYamlHeader).then(response => {
             flow.value = response.data;
 
             return response.data;
+        })
+    }
+
+    function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }) {
+        return store.$http.get(`${apiUrl(store)}/flows/${options.namespace}/${options.id}/dependencies?expandAll=true`).then(response => {
+            return {
+                data: transformResponse(response.data, options.subtype),
+                count: response.data.nodes ? [...new Set(response.data.nodes.map((r:{uid:string}) => r.uid))].length : 0
+            };
         })
     }
 
@@ -534,7 +548,8 @@ export const useFlowStore = defineStore("flow", () => {
             .then((message) => {
                 return toast
                     .confirm(message, () => {
-                        return Promise.resolve(deleteFlow(metadata.value));
+                        resolve(deleteFlow(metadata.value));
+                        return Promise.resolve();
                     })
             }).catch(reject)
         )
@@ -892,6 +907,7 @@ export const useFlowStore = defineStore("flow", () => {
         saveFlow,
         updateFlowTask,
         createFlow,
+        loadDependencies,
         deleteFlowAndDependencies,
         deleteFlow,
         loadGraph,

@@ -8,6 +8,7 @@ import RegexProvider from "../../utils/regex";
 import {State} from "@kestra-io/ui-libs";
 import {usePluginsStore} from "../../stores/plugins";
 import {useFlowStore} from "../../stores/flow";
+import {useNamespacesStore} from "override/stores/namespaces";
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []));
@@ -18,18 +19,21 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     flowsInputsCache: Record<string, string[]> = {};
     pluginsStore: ReturnType<typeof usePluginsStore>;
     flowStore: ReturnType<typeof useFlowStore>;
+    namespacesStore: ReturnType<typeof useNamespacesStore>;
     private readonly completionSource: ComputedRef<string | undefined> | undefined;
 
     constructor(
         store: Store<Record<string, any>>,
         flowStore: ReturnType<typeof useFlowStore>,
         pluginsStore: ReturnType<typeof usePluginsStore>,
+        namespacesStore: ReturnType<typeof useNamespacesStore>,
         completionSource?: ComputedRef<string | undefined>
     ) {
         super();
         this.store = store;
-        this.pluginsStore = pluginsStore;
         this.flowStore = flowStore;
+        this.pluginsStore = pluginsStore;
+        this.namespacesStore = namespacesStore;
         this.completionSource = completionSource;
     }
 
@@ -187,9 +191,9 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
 
         switch(yamlElement.key) {
             case "namespace": {
-                const datatypeNamespaces = this.store.state["namespace"].datatypeNamespaces;
+                const datatypeNamespaces = this.namespacesStore.datatypeNamespaces;
                 return datatypeNamespaces === undefined
-                    ? await this.store.dispatch("namespace/loadNamespacesForDatatype", {dataType: "flow"})
+                    ? await this.namespacesStore.loadNamespacesForDatatype({dataType: "flow"})
                     : Promise.resolve(datatypeNamespaces);
             }
             case "flowId": {
@@ -238,7 +242,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([]);
                 }
-                return Array.from(Object.entries<string[]>(await this.store.dispatch("namespace/inheritedSecrets", {id: namespace})).reduce((acc: Set<string>, [_, nsSecrets]: [string, string[]]) => {
+                return Array.from(Object.entries<string[]>(await this.namespacesStore.loadInheritedSecrets({id: namespace})).reduce((acc: Set<string>, [_, nsSecrets]: [string, string[]]) => {
                     nsSecrets.forEach(secret => acc.add(QUOTE + secret + QUOTE));
                     return acc;
                 }, new Set<string>()));
@@ -248,7 +252,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([]);
                 }
-                return (await this.store.dispatch("namespace/kvsList", {id: namespace})).map((kv: {key: string}) => QUOTE + kv.key + QUOTE);
+                return (await this.namespacesStore.kvsList({id: namespace})).map((kv: {key: string}) => QUOTE + kv.key + QUOTE);
             }
             case "tasksWithState": {
                 return State.arrayAllStates().map(({name}) => QUOTE + name + QUOTE);

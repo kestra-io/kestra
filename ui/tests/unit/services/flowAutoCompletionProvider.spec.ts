@@ -130,12 +130,33 @@ const flowStore = {
     })
 } as any
 
-const provider = new FlowAutoCompletion(mockedStore, flowStore, pluginsStore);
+const namespacesStore = {
+    datatypeNamespaces: undefined,
+    loadNamespacesForDatatype: vi.fn(() => ["my.namespace", "another.namespace"]),
+    loadInheritedSecrets: vi.fn((params: {id: string}) => {
+        if (params.id === "my.namespace") {
+            return {"my.namespace": ["myFirstSecret", "mySecondSecret"], "my": ["myInheritedSecret"]};
+        } else if (params.id === "another.namespace") {
+            return {"another.namespace": ["anotherNsFirstSecret", "anotherNsSecondSecret"]};
+        }
+        return {};
+    }),
+    kvsList: vi.fn((params: {id: string}) => {
+        if (params.id === "my.namespace") {
+            return [{key: "myFirstKv"}, {key: "mySecondKv"}];
+        } else if (params.id === "another.namespace") {
+            return [{key: "anotherNsFirstKv"}, {key: "anotherNsSecondKv"}];
+        }
+        return [];
+    })
+} as any
+
+const provider = new FlowAutoCompletion(mockedStore, flowStore, pluginsStore, namespacesStore);
 const parsed = YAML_UTILS.parse(defaultFlow);
 
 describe("FlowAutoCompletionProvider", () => {
     it("root autocompletions", async () => {
-        expect(await new FlowAutoCompletion(mockedStore, flowStore, pluginsStore).rootFieldAutoCompletion()).toEqual([
+        expect(await new FlowAutoCompletion(mockedStore, flowStore, pluginsStore, namespacesStore).rootFieldAutoCompletion()).toEqual([
             "outputs",
             "inputs",
             "vars",
@@ -200,7 +221,7 @@ describe("FlowAutoCompletionProvider", () => {
         flowStore.flowsByNamespace.mockClear();
         flowStore.loadFlow.mockClear();
         flowStore.loadGraphFromSource.mockClear();
-
+        namespacesStore.loadNamespacesForDatatype.mockClear();
 
         expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("namespace:") + "namespace:".length))).toEqual(["my.namespace", "another.namespace"]);
         expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("flowId:") + "flowId:".length))).toEqual(["flow-other-namespace", "another-flow-other-namespace"]);

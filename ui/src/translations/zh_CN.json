@@ -362,6 +362,18 @@
     "dependencies delete flow": "此流程有依赖关系。删除它将阻止其依赖关系的执行。<br /><br /> 受影响的流程列表如下：",
     "dependencies loaded": "依赖项已加载",
     "dependencies missing acls": "此流程没有权限",
+    "dependency": {
+      "controls": {
+        "clear_selection": "清除选择",
+        "fit_view": "适合屏幕",
+        "zoom_in": "放大",
+        "zoom_out": "缩小视图"
+      },
+      "search": {
+        "no_results": "未找到与 {term} 相关的结果",
+        "placeholder": "按flow或namespace搜索..."
+      }
+    },
     "dependency task": "任务 {taskId} 是另一个任务的依赖",
     "description": "描述",
     "details": "详情",

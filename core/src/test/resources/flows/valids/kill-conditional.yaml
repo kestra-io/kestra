@@ -1,0 +1,20 @@
+id: kill-conditional
+namespace: io.kestra.tests
+
+inputs:
+  - id: should_kill
+    type: BOOLEAN
+    defaults: true
+
+tasks:
+  - id: first
+    type: io.kestra.plugin.core.log.Log
+    message: "Before conditional kill"
+
+  - id: conditional-kill
+    type: io.kestra.plugin.core.execution.Kill
+    runIf: "{{ inputs.should_kill == true }}"
+
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: "After kill - should not execute"

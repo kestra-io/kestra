@@ -1,0 +1,7 @@
+id: child-flow
+namespace: io.kestra.tests
+
+tasks:
+  - id: long-running-task
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT5S # Sleep for 5 seconds

@@ -1,0 +1,15 @@
+id: kill-without-propagation
+namespace: io.kestra.tests
+
+tasks:
+  - id: first
+    type: io.kestra.plugin.core.log.Log
+    message: "Before kill"
+
+  - id: kill-task
+    type: io.kestra.plugin.core.execution.Kill
+    propagateKill: false
+
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: "After kill - should not execute"

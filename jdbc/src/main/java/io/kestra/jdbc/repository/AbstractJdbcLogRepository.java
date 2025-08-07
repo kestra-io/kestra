@@ -30,7 +30,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository implements LogRepositoryInterface {
+
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull();
+    public static final String DATE_COLUMN = "timestamp";
     protected io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository;
 
     public AbstractJdbcLogRepository(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository,
@@ -51,7 +53,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
     protected Map<Logs.Fields, String> getFieldsMapping() {
       return Map.of(
-          Logs.Fields.DATE, "timestamp",
+          Logs.Fields.DATE, DATE_COLUMN,
           Logs.Fields.NAMESPACE, "namespace",
           Logs.Fields.FLOW_ID, "flow_id",
           Logs.Fields.TASK_ID, "task_id",
@@ -96,77 +98,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .where(this.defaultFilter(tenantId))
                     .and(NORMAL_KIND_CONDITION);
 
-               select = select.and(this.filter(filters, "timestamp", Resource.LOG));
+               select = select.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
-    }
-
-    private <T extends Record> SelectConditionStep<T> filter(
-        SelectConditionStep<T> select,
-        @Nullable String query,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable String triggerId,
-        @Nullable Level minLevel,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate
-    ) {
-        select = addNamespace(select, namespace);
-
-        if (flowId != null) {
-            select = select.and(field("flow_id").eq(flowId));
-        }
-
-        if (triggerId != null) {
-            select = select.and(field("trigger_id").eq(triggerId));
-        }
-
-        select = addMinLevel(select, minLevel);
-
-        if (query != null) {
-            select = select.and(this.findCondition(query));
-        }
-
-        if (startDate != null) {
-            select = select.and(field("timestamp").greaterOrEqual(startDate.toOffsetDateTime()));
-        }
-
-        if (endDate != null) {
-            select = select.and(field("timestamp").lessOrEqual(endDate.toOffsetDateTime()));
-        }
-
-        return select;
-    }
-
-    private <T extends Record> SelectConditionStep<T> addMinLevel(SelectConditionStep<T> select,
-        Level minLevel) {
-        if (minLevel != null) {
-            select = select.and(minLevel(minLevel));
-        }
-        return select;
-    }
-
-    private static <T extends Record> SelectConditionStep<T> addNamespace(SelectConditionStep<T> select,
-        String namespace) {
-        if (namespace != null) {
-            select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
-        }
-        return select;
-    }
-
-    private static <T extends Record> SelectConditionStep<T> addFlowId(SelectConditionStep<T> select, String flowId) {
-        if (flowId != null) {
-            select = select.and(field("flow_id").eq(flowId));
-        }
-        return select;
-    }
-
-    private static <T extends Record> SelectConditionStep<T> addExecutionId(SelectConditionStep<T> select, String executionId) {
-        if (executionId != null) {
-            select = select.and(field("execution_id").eq(executionId));
-        }
-        return select;
     }
 
     @Override
@@ -186,7 +121,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .where(this.defaultFilter(tenantId))
                     .and(NORMAL_KIND_CONDITION);
 
-                select = select.and(this.filter(filters, "timestamp", Resource.LOG));
+                select = select.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
+                select.orderBy(field(DATE_COLUMN).asc());
 
                 try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()){
                     stream.map((Record record) -> jdbcRepository.map(record))
@@ -465,10 +401,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 var delete = context
                     .delete(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId))
-                    .and(field("timestamp").lessOrEqual(endDate.toOffsetDateTime()));
+                    .and(field(DATE_COLUMN).lessOrEqual(endDate.toOffsetDateTime()));
 
                 if (startDate != null) {
-                    delete = delete.and(field("timestamp").greaterOrEqual(startDate.toOffsetDateTime()));
+                    delete = delete.and(field(DATE_COLUMN).greaterOrEqual(startDate.toOffsetDateTime()));
                 }
 
                 if (namespace != null) {
@@ -501,7 +437,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 var delete = context
                     .delete(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
-                delete = delete.and(this.filter(filters, "timestamp", Resource.LOG));
+                delete = delete.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
 
                 return delete.execute();
             });
@@ -547,7 +483,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 }
 
                 return this.jdbcRepository.fetch(select
-                    .orderBy(field("timestamp").sort(SortOrder.ASC))
+                    .orderBy(field(DATE_COLUMN).sort(SortOrder.ASC))
                 );
             });
     }

@@ -1,7 +1,8 @@
 import {Store} from "vuex";
 import {EntityIterator, FetchResult} from "./entityIterator.ts";
 import {NamespaceIterator} from "./useNamespaces.ts";
-import {Me} from "override/stores/auth";
+import {Me} from ".override/stores/auth";
+import {useNamespacesStore} from "override/stores/namespaces.ts";
 import permissions from "../models/permission";
 import actions from "../models/action";
 import {ref} from "vue";
@@ -41,7 +42,8 @@ export class NamespaceSecretIterator extends EntityIterator<NamespaceSecret>{
     }
 
     private async doFetch(): Promise<NamespaceSecretFetchResult> {
-        const fetch = (await this.store.dispatch("namespace/listSecrets", this.fetchOptions())) as NamespaceSecretFetchResult;
+        const namespacesStore = useNamespacesStore();
+        const fetch = (await namespacesStore.listSecrets(this.fetchOptions())) as NamespaceSecretFetchResult;
         this.areNamespaceSecretsReadOnly = fetch.readOnly ?? true;
 
         return {

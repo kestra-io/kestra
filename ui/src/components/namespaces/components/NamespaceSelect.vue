@@ -25,6 +25,7 @@
 <script>
     import {mapStores} from "pinia";
     import {useMiscStore} from "../../../stores/misc";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import _uniqBy from "lodash/uniqBy";
 
     export default {
@@ -60,7 +61,7 @@
         },
         emits: ["update:modelValue"],
         computed: {
-            ...mapStores(useMiscStore),
+            ...mapStores(useMiscStore, useNamespacesStore),
         },
         data() {
             return {
@@ -108,13 +109,11 @@
                 try {
                     let namespaces;
                     if (this.all) {
-                        namespaces = await this.$store.dispatch("namespace/autocomplete", {
-                            q: value || "",
-                            ids: [],
-                            apiUrl: undefined
+                        namespaces = await this.namespacesStore.loadAutocomplete({
+                            q: value || ""
                         });
                     } else {
-                        namespaces = await this.$store.dispatch("namespace/loadNamespacesForDatatype", {
+                        namespaces = await this.namespacesStore.loadNamespacesForDatatype({
                             dataType: this.dataType
                         });
                     }

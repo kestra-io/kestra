@@ -385,11 +385,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
                 Result<Record> result = this.receiveFetch(ctx, consumerGroup, queueName, forUpdate);
 
-                if (!result.isEmpty()) {
-                    if (inTransaction) {
-                        consumer.accept(ctx, this.map(result));
-                    }
-
+                if (!result.isEmpty() && inTransaction) {
+                    consumer.accept(ctx, this.map(result));
                     this.updateGroupOffsets(
                         ctx,
                         consumerGroup,
@@ -400,9 +397,16 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
                 return result;
             });
-
+            
             if (!inTransaction) {
                 consumer.accept(null, this.map(fetch));
+                dslContextWrapper.transaction(configuration ->
+                    this.updateGroupOffsets(
+                        DSL.using(configuration),
+                        consumerGroup,
+                        queueName,
+                        fetch.map(record -> record.get("offset", Integer.class))
+                    ));
             }
 
             pollSize.set(fetch.size());

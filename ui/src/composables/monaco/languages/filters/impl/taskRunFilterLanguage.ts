@@ -1,16 +1,18 @@
-import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion";
-import {FilterLanguage} from "../filterLanguage";
-import permission from "../../../../../models/permission";
-import action from "../../../../../models/action";
+import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion.ts";
+import {FilterLanguage} from "../filterLanguage.ts";
+import permission from "../../../../../models/permission.ts";
+import action from "../../../../../models/action.ts";
 import {useAuthStore} from "override/stores/auth";
+import {useNamespacesStore} from "override/stores/namespaces.ts";
 
 const taskRunFilterKeys: Record<string, FilterKeyCompletions> = {
     namespace: new FilterKeyCompletions(
         [Comparators.PREFIX, Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.CONTAINS, Comparators.STARTS_WITH, Comparators.ENDS_WITH, Comparators.REGEX],
-        async (store) => {
+        async (_) => {
             const user = useAuthStore().user;
             if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
-                return [...new Set(((await store.dispatch("namespace/loadNamespacesForDatatype", {dataType: "flow"})) as string[])
+                const namespacesStore = useNamespacesStore();
+                return [...new Set(((await namespacesStore.loadNamespacesForDatatype({dataType: "flow"})) as string[])
                     .flatMap(namespace => {
                         return namespace.split(".").reduce((current: string[], part: string) => {
                             const previousCombination = current?.[current.length - 1];

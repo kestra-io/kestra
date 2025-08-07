@@ -362,6 +362,18 @@
     "dependencies delete flow": "Dieser Flow hat Abhängigkeiten. Das Löschen verhindert, dass deren Abhängigkeiten ausgeführt werden.<br /><br /> Hier ist die Liste der betroffenen Flows:",
     "dependencies loaded": "Abhängigkeiten geladen",
     "dependencies missing acls": "Keine Berechtigungen für diesen Flow",
+    "dependency": {
+      "controls": {
+        "clear_selection": "Auswahl aufheben",
+        "fit_view": "An Bildschirm anpassen",
+        "zoom_in": "Hineinzoomen",
+        "zoom_out": "Rauszoomen"
+      },
+      "search": {
+        "no_results": "Keine Ergebnisse gefunden für {term}",
+        "placeholder": "Suche nach flow oder namespace..."
+      }
+    },
     "dependency task": "Task {taskId} ist eine Abhängigkeit eines anderen Tasks",
     "description": "Beschreibung",
     "details": "Details",

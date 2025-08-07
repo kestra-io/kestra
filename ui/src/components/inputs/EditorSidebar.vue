@@ -355,10 +355,11 @@
 </template>
 
 <script>
-    import {mapActions, mapState} from "vuex";
-
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useNamespacesStore} from "override/stores/namespaces";
+    import {useEditorStore} from "../../stores/editor";
     import Utils from "../../utils/utils";
-
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
@@ -366,10 +367,7 @@
     import FolderPlus from "vue-material-design-icons/FolderPlus.vue";
     import PlusBox from "vue-material-design-icons/PlusBox.vue";
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue";
-
     import TypeIcon from "../utils/icons/Type.vue";
-    import {mapStores} from "pinia";
-    import {useEditorStore} from "../../stores/editor";
 
     const DIALOG_DEFAULTS = {
         visible: false,
@@ -426,6 +424,7 @@
             ...mapState({
                 flow: (state) => state.flow.flow,
             }),
+            ...mapStores(useNamespacesStore),
             namespaceId() {
                 return this.currentNS ?? this.$route.params.namespace;
             },
@@ -471,17 +470,6 @@
             },
         },
         methods: {
-            ...mapActions("namespace", [
-                "createDirectory",
-                "readDirectory",
-                "createFile",
-                "searchFiles",
-                "renameFileDirectory",
-                "moveFileDirectory",
-                "deleteFileDirectory",
-                "importFileDirectory",
-                "exportFileDirectory",
-            ]),
             nodeClass(data) {
                 if (this.selectedNodes.includes(data.id)) {
                     return "node selected-tree-node";
@@ -602,7 +590,7 @@
                     const payload = {
                         namespace: this.namespaceId,
                     };
-                    const items = await this.readDirectory(payload);
+                    const items = await this.namespacesStore.readDirectory(payload);
 
                     this.renderNodes(items);
                     this.items = this.sorted(this.items);
@@ -614,7 +602,7 @@
                         path: this.getPath(node),
                     };
 
-                    let children = await this.readDirectory(payload);
+                    let children = await this.namespacesStore.readDirectory(payload);
                     children = this.sorted(
                         children.map((item) => ({
                             ...item,
@@ -648,7 +636,7 @@
             async searchFilesList(value) {
                 if (!value) return;
 
-                const results = await this.searchFiles({
+                const results = await this.namespacesStore.searchFiles({
                     namespace: this.namespaceId,
                     query: value,
                 });
@@ -721,7 +709,7 @@
                 const path = this.getPath(this.renameDialog.node);
                 const start = path.substring(0, path.lastIndexOf("/") + 1);
 
-                this.renameFileDirectory({
+                this.namespacesStore.renameFileDirectory({
                     namespace: this.namespaceId,
                     old: `${start}${this.renameDialog.old}`,
                     new: `${start}${this.renameDialog.name}`,
@@ -734,7 +722,7 @@
             },
             async nodeMoved(draggedNode) {
                 try {
-                    await this.moveFileDirectory({
+                    await this.namespacesStore.moveFileDirectory({
                         namespace: this.namespaceId,
                         old: this.nodeBeforeDrag.path,
                         new: this.getPath(draggedNode.data.id),
@@ -815,7 +803,7 @@
                             // Read file content
                             const content = await this.readFile(file);
 
-                            this.importFileDirectory({
+                            this.namespacesStore.importFileDirectory({
                                 namespace:
                                     this.namespaceId,
                                 content,
@@ -838,7 +826,7 @@
                                 file.name,
                             );
 
-                            this.importFileDirectory({
+                            this.namespacesStore.importFileDirectory({
                                 namespace:
                                     this.namespaceId,
                                 content,
@@ -869,7 +857,7 @@
                 }
             },
             exportFiles() {
-                this.exportFileDirectory({
+                this.namespacesStore.exportFileDirectory({
                     namespace: this.namespaceId,
                 });
             },
@@ -905,7 +893,7 @@
                         );
                         return;
                     }
-                    await this.createFile({
+                    await this.namespacesStore.createFile({
                         namespace: this.namespaceId,
                         path,
                         content,
@@ -1003,7 +991,7 @@
             async removeItems() {
                 for (const node of this.confirmation.nodes) {
                     try {
-                        await this.deleteFileDirectory({
+                        await this.namespacesStore.deleteFileDirectory({
                             namespace: this.currentNS ?? this.$route.params.namespace,
                             path: this.getPath(node),
                             name: node.fileName,
@@ -1037,7 +1025,7 @@
                         this.dialog.folder ? `${this.dialog.folder}/` : ""
                     }${fileName}`;
 
-                    await this.createDirectory({
+                    await this.namespacesStore.createDirectory({
                         namespace: this.namespaceId,
                         path,
                         name: fileName,
@@ -1132,7 +1120,7 @@
                 }
             },
             async exportFile(node, data){
-                const content = await  this.$store.dispatch("namespace/readFile", {
+                const content = await this.namespacesStore.readFile({
                     path: this.getPath(node),
                     namespace: this.namespaceId,
                 })
@@ -1184,7 +1172,7 @@
                 async handler() {
                     if (this.$refs.tree) {
                         this.items = undefined;
-                        const items = await this.readDirectory({
+                        const items = await this.namespacesStore.readDirectory({
                             namespace: this.namespaceId
                         });
                         this.renderNodes(items);

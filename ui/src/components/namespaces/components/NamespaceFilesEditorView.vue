@@ -5,7 +5,7 @@
             v-if="!isCreating"
             ref="toggleExplorer"
             :content="
-                $t(
+                t(
                     `namespace files.toggle.${
                         explorerVisible ? 'hide' : 'show'
                     }`
@@ -58,17 +58,17 @@
             :style="{left: `${tabContextMenu.x}px`, top: `${tabContextMenu.y}px`}"
             class="tabs-context"
         >
-            <el-menu-item :disabled="tabContextMenu.tab.persistent" @click="closeTab(tabContextMenu.tab, tabContextMenu.index)">
-                {{ $t("namespace_editor.close.tab") }}
+            <el-menu-item :disabled="tabContextMenu.tab?.persistent" @click="closeTab(tabContextMenu.tab, tabContextMenu.index)">
+                {{ t("namespace_editor.close.tab") }}
             </el-menu-item>
             <el-menu-item @click="closeAllTabs">
-                {{ $t("namespace_editor.close.all") }}
+                {{ t("namespace_editor.close.all") }}
             </el-menu-item>
             <el-menu-item @click="closeOtherTabs(tabContextMenu.tab)">
-                {{ $t("namespace_editor.close.other") }}
+                {{ t("namespace_editor.close.other") }}
             </el-menu-item>
             <el-menu-item @click="closeTabsToRight(tabContextMenu.index)">
-                {{ $t("namespace_editor.close.right") }}
+                {{ t("namespace_editor.close.right") }}
             </el-menu-item>
         </el-menu>
 
@@ -89,7 +89,7 @@
                     () =>
                         router.push({
                             name: 'flows/create',
-                            query: {copy: true},
+                            query: {copy: 'true'},
                             params: {tenant: routeParams.tenant},
                         })
                 "
@@ -118,7 +118,6 @@
                         :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
                         :extension="currentTab?.extension"
                         @update:model-value="editorUpdate"
-                        @cursor="updatePluginDocumentation"
                         :creating="isCreating"
                         @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
                         @tab-loaded="onTabLoaded"
@@ -128,91 +127,94 @@
                         :diff-side-by-side="false"
                     />
                 </template>
+                <div v-else class="no-tabs-opened">
+                    <div class="img mb-1" />
 
-                <div>
-                    <h5 class="mb-0 fw-bold">
-                        {{ $t("namespace_editor.empty.title") }}
-                    </h5>
-                    <p>
-                        {{ $t("namespace_editor.empty.create_message") }}
-                    </p>
-                </div>
+                    <div>
+                        <h5 class="mb-0 fw-bold">
+                            {{ t("namespace_editor.empty.title") }}
+                        </h5>
+                        <p>
+                            {{ t("namespace_editor.empty.create_message") }}
+                        </p>
+                    </div>
 
-                <div class="empty-state-actions mt-1">
-                    <el-dropdown>
-                        <el-button :icon="Plus" type="primary">
-                            {{ $t("create") }}
-                        </el-button>
-                        <template #dropdown>
-                            <el-dropdown-menu>
-                                <el-dropdown-item @click="createFile">
-                                    <FilePlus class="me-2" />
-                                    {{ $t("namespace files.create.file") }}
-                                </el-dropdown-item>
-                                <el-dropdown-item @click="createFolder">
-                                    <FolderPlus class="me-2" />
-                                    {{ $t("namespace files.create.folder") }}
-                                </el-dropdown-item>
-                            </el-dropdown-menu>
-                        </template>
-                    </el-dropdown>
-                    <input
-                        ref="filePicker"
-                        type="file"
-                        multiple
-                        class="hidden"
-                        @change="handleFileImport"
-                    >
-                    <input
-                        ref="folderPicker"
-                        type="file"
-                        webkitdirectory
-                        mozdirectory
-                        msdirectory
-                        odirectory
-                        directory
-                        class="hidden"
-                        @change="handleFileImport"
-                    >
-                    <el-dropdown>
-                        <el-button :icon="Download" type="primary">
-                            {{ $t("import") }}
-                        </el-button>
-                        <template #dropdown>
-                            <el-dropdown-menu>
-                                <el-dropdown-item @click="$refs.filePicker.click()">
-                                    <File class="me-2" />
-                                    {{ $t("namespace files.import.files") }}
-                                </el-dropdown-item>
-                                <el-dropdown-item @click="$refs.folderPicker.click()">
-                                    <Folder class="me-2" />
-                                    {{ $t("namespace files.import.folder") }}
-                                </el-dropdown-item>
-                            </el-dropdown-menu>
-                        </template>
-                    </el-dropdown>
-                </div>
-                <el-divider>{{ $t("namespace_editor.empty.video_message") }}</el-divider>
+                    <div class="empty-state-actions mt-1">
+                        <el-dropdown>
+                            <el-button :icon="Plus" type="primary">
+                                {{ t("create") }}
+                            </el-button>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item @click="createFile">
+                                        <FilePlus class="me-2" />
+                                        {{ t("namespace files.create.file") }}
+                                    </el-dropdown-item>
+                                    <el-dropdown-item @click="createFolder">
+                                        <FolderPlus class="me-2" />
+                                        {{ t("namespace files.create.folder") }}
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                        <input
+                            ref="$refsFilePicker"
+                            type="file"
+                            multiple
+                            class="hidden"
+                            @change="handleFileImport"
+                        >
+                        <input
+                            ref="$refsFilePicker"
+                            type="file"
+                            webkitdirectory
+                            mozdirectory
+                            msdirectory
+                            odirectory
+                            directory
+                            class="hidden"
+                            @change="handleFileImport"
+                        >
+                        <el-dropdown>
+                            <el-button :icon="Download" type="primary">
+                                {{ t("import") }}
+                            </el-button>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item @click="$refsFilePicker?.click()">
+                                        <File class="me-2" />
+                                        {{ t("namespace files.import.files") }}
+                                    </el-dropdown-item>
+                                    <el-dropdown-item @click="$refsFolderPicker?.click()">
+                                        <Folder class="me-2" />
+                                        {{ t("namespace files.import.folder") }}
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                    </div>
+                    <el-divider>{{ t("namespace_editor.empty.video_message") }}</el-divider>
 
-                <div class="video-container">
-                    <iframe
-                        src="https://www.youtube.com/embed/o-d-GaXUiKQ?si=TTjV8jgRg6-lj_cC"
-                        frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowfullscreen
-                    />
+                    <div class="video-container">
+                        <iframe
+                            src="https://www.youtube.com/embed/o-d-GaXUiKQ?si=TTjV8jgRg6-lj_cC"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen
+                        />
+                    </div>
                 </div>
             </template>
         </div>
     </div>
     <el-dialog
         v-model="dialog.visible"
-        :title="dialog.type === 'file' ? $t('namespace files.create.file') : $t('namespace files.create.folder')"
+        :title="dialog.type === 'file' ? t('namespace files.create.file') : t('namespace files.create.folder')"
         width="500"
         @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
     >
         <div class="pb-1">
-            <span>{{ $t(`namespace files.dialog.name.${dialog.type}`) }}</span>
+            <span>{{ t(`namespace files.dialog.name.${dialog.type}`) }}</span>
         </div>
         <el-input
             ref="creation_name"
@@ -221,7 +223,7 @@
             class="mb-3"
         />
         <div class="py-1">
-            <span>{{ $t("namespace files.dialog.parent_folder") }}</span>
+            <span>{{ t("namespace files.dialog.parent_folder") }}</span>
         </div>
         <el-select
             v-model="dialog.folder"
@@ -239,25 +241,26 @@
         <template #footer>
             <div>
                 <el-button @click="dialog.visible = false">
-                    {{ $t("cancel") }}
+                    {{ t("cancel") }}
                 </el-button>
                 <el-button
                     type="primary"
                     :disabled="!dialog.name"
                     @click="dialogHandler"
                 >
-                    {{ $t("namespace files.create.label") }}
+                    {{ t("namespace files.create.label") }}
                 </el-button>
             </div>
         </template>
     </el-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
     import {useRoute, useRouter} from "vue-router";
     import {useStorage} from "@vueuse/core";
+    import {useI18n} from "vue-i18n";
 
     // Icons
     import MenuOpen from "vue-material-design-icons/MenuOpen.vue";
@@ -272,6 +275,7 @@
     import Folder from "vue-material-design-icons/Folder.vue";
 
     import TypeIcon from "../../utils/icons/Type.vue"
+    import {ElTooltip} from "element-plus"
 
     import permission from "../../../models/permission";
     import action from "../../../models/action";
@@ -283,17 +287,22 @@
     import {useFlowOutdatedErrors} from "../../inputs/flowOutdatedErrors";
     import {usePluginsStore} from "../../../stores/plugins";
     import {useCoreStore} from "../../../stores/core";
-    import {useEditorStore} from "../../../stores/editor";
+    import {EditorTabProps, useEditorStore} from "../../../stores/editor";
+    import {useToast} from "../../../utils/toast";
+
 
     const store = useStore();
     const coreStore = useCoreStore();
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);
-    const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
-    const t = getCurrentInstance().appContext.config.globalProperties.$t;
-    const tours = getCurrentInstance().appContext.config.globalProperties.$tours;
+    const toast = useToast();
+    const {t} = useI18n();
+    const tours = getCurrentInstance()?.appContext.config.globalProperties.$tours;
     const tabsScrollRef = ref();
+
+    const $refsFilePicker = ref<HTMLInputElement | null>(null);
+    const $refsFolderPicker = ref<HTMLInputElement | null>(null);
 
     const props = defineProps({
         flowGraph: {
@@ -376,7 +385,7 @@
 
             const deprecationWarnings =
                 store.state.flow.flowValidation?.deprecationPaths?.map(
-                    (f) => `${f} ${t("is deprecated")}.`
+                    (f:string) => `${f} ${t("is deprecated")}.`
                 ) ?? [];
 
             const otherWarnings = store.state.flow.flowValidation?.warnings ?? [];
@@ -432,7 +441,6 @@
 
     const editorDomElement = ref(null);
     const editorWidth = useStorage("editor-size", 50);
-    const validationDomElement = ref(null);
     const isLoading = ref(false);
     const flowYaml = computed(() => store.state.flow.flowYaml);
     const flowYamlOrigin = computed(() => store.state.flow.flowYamlOrigin);
@@ -441,7 +449,7 @@
     const viewType = ref(initViewType());
     const isHorizontal = ref(isHorizontalDefault());
     const updatedFromEditor = ref(false);
-    const timer = ref(null);
+    const timer = ref<number>();
     const routeParams = router.currentRoute.value.params;
 
     const editorStore = useEditorStore();
@@ -454,20 +462,20 @@
         switchViewType(editorViewTypes.SOURCE_TOPOLOGY);
     });
 
-    const toggleExplorer = ref(null);
+    const toggleExplorer = ref<typeof ElTooltip>();
     const explorerVisible = computed(() => editorStore.explorerVisible);
     const toggleExplorerVisibility = () => {
-        toggleExplorer.value.hide();
+        toggleExplorer.value?.hide();
         editorStore.toggleExplorerVisibility();
     };
     const currentTab = computed(() => editorStore.current);
     const openedTabs = computed(() => editorStore.tabs);
 
-    const changeCurrentTab = (tab) => {
+    const changeCurrentTab = (tab: EditorTabProps) => {
         editorStore.openTab(tab);
     };
 
-    const persistViewType = (value) => {
+    const persistViewType = (value: string) => {
         viewType.value = value;
         localStorage.setItem(editorViewTypes.STORAGE_KEY, value);
     };
@@ -481,15 +489,11 @@
         }
     );
 
-    const onResize = () => {
-        if (validationDomElement.value && editorDomElement.value) {
-            validationDomElement.value.onResize(
-                editorDomElement.value.$el.offsetWidth
-            );
-        }
-    };
-
     const pluginsStore = usePluginsStore();
+
+    const stopTourLocal = () => {
+        stopTour();
+    }
 
     onMounted(async () => {
         if(guidedProperties.value?.tourStarted) {
@@ -522,10 +526,7 @@
                 persistViewType(editorViewTypes.SOURCE);
             }
         }, 200);
-        window.addEventListener("popstate", () => {
-            stopTour();
-        });
-        window.addEventListener("resize", onResize);
+        window.addEventListener("popstate", stopTourLocal);
 
         if (props.isCreating) {
             editorStore.closeTabs();
@@ -533,13 +534,9 @@
     });
 
     onBeforeUnmount(() => {
-        window.removeEventListener("resize", onResize);
-
         pluginsStore.editorPlugin = undefined;
         document.removeEventListener("keydown", saveUsingKeyboard);
-        document.removeEventListener("popstate", () => {
-            stopTour();
-        });
+        document.removeEventListener("popstate", stopTourLocal);
 
         editorStore.closeAllTabs();
 
@@ -556,11 +553,7 @@
 
     const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"]);
 
-    const updatePluginDocumentation = (event, task) => {
-        pluginsStore.updateDocumentation({event,task});
-    };
-
-    const fetchGraph = () => {
+    const fetchGraph = async () => {
         if(props.isNamespace) return;
 
         return store.dispatch("flow/loadGraphFromSource", {
@@ -570,14 +563,14 @@
                     // due to usage of axios instance instead of $http which doesn't convert arrays
                     subflows: props.expandedSubflows.join(","),
                 },
-                validateStatus: (status) => {
+                validateStatus: (status: number) => {
                     return status === 200;
                 },
             },
         });
     };
 
-    const onEdit = (source, currentIsFlow = false) => {
+    const onEdit = (source:string, currentIsFlow = false) => {
         store.commit("flow/setFlowYaml", source);
         return store.dispatch("flow/onEdit", {
             source,
@@ -588,26 +581,21 @@
                 editorViewTypes.SOURCE_TOPOLOGY,
             ].includes(viewType.value),
         }).then((value) => {
-
-            if (validationDomElement.value && editorDomElement.value?.$el?.offsetWidth) {
-                validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
-            }
-
             return value;
         });
     };
 
-    const editorUpdate = (source) => {
+    const editorUpdate = (source: string) => {
         const currentIsFlow = isFlow.value;
 
         updatedFromEditor.value = true;
         store.commit("flow/setFlowYaml", source);
 
         clearTimeout(timer.value);
-        timer.value = setTimeout(() => onEdit(source, currentIsFlow), 500);
+        timer.value = setTimeout(() => onEdit(source, currentIsFlow), 500) as any;
     };
 
-    const switchViewType = (event, shouldPersist = true) => {
+    const switchViewType = (event: string, shouldPersist = true) => {
         if(shouldPersist) persistViewType(event)
         else viewType.value = event
 
@@ -705,12 +693,14 @@
         draggedTabIndex.value = index;
         event.dataTransfer.effectAllowed = "move";
     };
+
     const onDragOver = (event, index) => {
         event.preventDefault();
         if (index !== draggedTabIndex.value) {
             dragOverTabIndex.value = index;
         }
     };
+
     const onDrop = (event, to) => {
         event.preventDefault();
         const from = draggedTabIndex.value;
@@ -769,7 +759,7 @@
         visible: false,
         x: 0,
         y: 0,
-        tab: null,
+        tab: null as any,
         index: null,
     });
 
@@ -822,6 +812,7 @@
         name: undefined,
         folder: undefined,
     });
+
     const createFile = () => {
         dialog.value = {
             visible: true,
@@ -831,6 +822,7 @@
         };
         editorStore.toggleExplorerVisibility(true);
     };
+
     const createFolder = () => {
         dialog.value = {
             visible: true,
@@ -840,6 +832,7 @@
         };
         editorStore.toggleExplorerVisibility(true);
     };
+
     const folders = computed(() => {
         function extractPaths(basePath = "", array) {
             const paths = [];
@@ -859,6 +852,7 @@
         }
         return extractPaths(undefined, editorStore.treeData);
     });
+
     const dialogHandler = async () => {
         try {
             const path = dialog.value.folder
@@ -891,6 +885,7 @@
             toast().error(t("namespace files.create.error"));
         }
     };
+
     const handleFileImport = async (event) => {
         const files = event.target.files;
         for (const file of files) {
@@ -1036,7 +1031,7 @@ html.dark .el-card :deep(.enhance-readability) {
     height: 100%;
 
     .img {
-        background: url("../../assets/empty-ns-files.png") no-repeat center;
+        background: url("../../../assets/empty-ns-files.png") no-repeat center;
         background-size: contain;
         width: 180px;
         height: 180px;

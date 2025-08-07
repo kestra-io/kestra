@@ -24,6 +24,11 @@ export default {
         addKvModalVisible: false
     },
     actions: {
+        async autocomplete({dispatch}, options) {
+            return (await dispatch("search", {
+                q: options.q
+            })).results.map(({id}) => id);
+        },
         search({commit}, options) {
             const shouldCommit = options.commit !== false;
             delete options.commit;

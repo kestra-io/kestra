@@ -5,7 +5,6 @@ declare module "@vue/runtime-core" {
         flow:any
         namespace:any
         auth:any
-        editor:any
     }
 
     interface ComponentCustomProperties {

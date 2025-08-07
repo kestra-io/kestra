@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeMount, ref} from "vue";
+    import {computed, onBeforeMount, ref, watch} from "vue";
 
     import type {Dashboard, Chart} from "./composables/useDashboards";
     import {ALLOWED_CREATION_ROUTES, getDashboard, processFlowYaml} from "./composables/useDashboards";
@@ -104,6 +104,8 @@
         if (props.isFlow && ID === "default") load("default", processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string));
         else if (props.isNamespace && ID === "default") load("default", YAML_NAMESPACE);
     });
+
+    watch(route, async (_) => refreshCharts());
 </script>
 
 <style scoped lang="scss">

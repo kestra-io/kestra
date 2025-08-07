@@ -27,7 +27,7 @@ public interface QueueInterface<T> extends Closeable, Pauseable {
     void delete(String consumerGroup, T message) throws QueueException;
 
     default Runnable receive(Consumer<Either<T, DeserializationException>> consumer) {
-        return receive((String) null, consumer);
+        return receive(null, consumer, false);
     }
 
     default Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer) {

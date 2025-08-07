@@ -59,18 +59,12 @@
             this.previousExecutionId = this.$route.params.id
         },
         watch: {
-            $route(newValue, oldValue) {
+            $route() {
                 this.executionsStore.taskRun = undefined;
-                if (oldValue.name === newValue.name && this.previousExecutionId !== this.$route.params.id) {
-                    this.follow()
-                }
-                // if we change the execution id, we need to close the sse
-                if (this.executionsStore.execution && this.$route.params.id != this.executionsStore.execution.id) {
-                    this.executionsStore.closeSSE();
-                    window.removeEventListener("popstate", this.follow)
-                    this.executionsStore.execution = undefined;
+                if (this.previousExecutionId !== this.$route.params.id) {
                     this.$store.commit("flow/setFlow", undefined);
                     this.$store.commit("flow/setFlowGraph", undefined);
+                    this.follow();
                 }
             },
         },
@@ -80,13 +74,6 @@
                 this.executionsStore.followExecution(this.$route.params, this.$t);
             },
             getTabs() {
-
-            },
-        },
-        computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore, useExecutionsStore),
-            tabs() {
                 return [
                     {
                         name: undefined,
@@ -135,6 +122,13 @@
                         locked: true
                     }
                 ];
+            }
+        },
+        computed: {
+            ...mapState("auth", ["user"]),
+            ...mapStores(useCoreStore, useExecutionsStore),
+            tabs() {
+                return this.getTabs();
             },
             routeInfo() {
                 const ns = this.$route.params.namespace;

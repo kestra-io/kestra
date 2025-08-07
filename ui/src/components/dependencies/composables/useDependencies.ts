@@ -250,6 +250,9 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
         cy = cytoscape({container: container.value, layout, ...options, style, elements: elements.data});
 
+        // Hide nodes immediately after initialization to avoid visual flickering or rearrangement during layout setup
+        cy.ready(() => cy.nodes().style("display", "none"));
+
         // Dynamically size nodes based on connectivity
         setNodeSizes(cy);
 
@@ -275,15 +278,15 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
             selectHandler(cy, node, selectedNodeID, subtype);
         });
 
-        // Preselect the proper node after layout completes
         cy.on("layoutstop", () => {
             loading.value = false;
 
+            // Reveal nodes after layout rendering completes
+            cy.nodes().style("display", "element");
+
+            // Preselect the proper node after layout rendering completes
             const node = isTesting ? cy.nodes()[0] : cy.nodes().filter((n) => n.data("flow") === initialNodeID);
-
-            if (!node) return;
-
-            selectHandler(cy, node, selectedNodeID, subtype);
+            if (node) selectHandler(cy, node, selectedNodeID, subtype);
         });
     });
 

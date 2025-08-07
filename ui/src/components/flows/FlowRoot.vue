@@ -101,11 +101,13 @@
                                     flow: this.flowStore.flow,
                                 });
 
-                                this.dependenciesCount = (await this.flowStore.loadDependencies({
+                                return this.flowStore.loadDependencies({
                                     namespace: this.$route.params.namespace,
                                     id: this.$route.params.id
-                                })).count;
+                                });
                             }
+                        }).then(({count}) => {
+                            this.dependenciesCount = count;
                         });
                 }
             },

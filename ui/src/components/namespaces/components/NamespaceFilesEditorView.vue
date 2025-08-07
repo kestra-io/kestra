@@ -256,13 +256,23 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
-    import {useStore} from "vuex";
+    import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
+    import {useStore} from "vuex";
     import {useStorage} from "@vueuse/core";
     import {useI18n} from "vue-i18n";
+    import {useToast} from "../../../utils/toast";
 
-    // Icons
+    import {useCoreStore} from "../../../stores/core";
+    import {useNamespacesStore} from "override/stores/namespaces";
+    import {usePluginsStore} from "../../../stores/plugins";
+    import {EditorTabProps, useEditorStore} from "../../../stores/editor";
+
+    import {useFlowOutdatedErrors} from "../../inputs/flowOutdatedErrors";
+
+    import permission from "../../../models/permission";
+    import action from "../../../models/action";
+    import {storageKeys, editorViewTypes} from "../../../utils/constants";
     import MenuOpen from "vue-material-design-icons/MenuOpen.vue";
     import MenuClose from "vue-material-design-icons/MenuClose.vue";
     import Close from "vue-material-design-icons/Close.vue";
@@ -277,21 +287,8 @@
     import TypeIcon from "../../utils/icons/Type.vue"
     import {ElTooltip} from "element-plus"
 
-    import permission from "../../../models/permission";
-    import action from "../../../models/action";
-    import {storageKeys, editorViewTypes} from "../../../utils/constants";
-
-    import {useToast} from "../../../utils/toast";
-
-    // editor components
     import Editor from "../../inputs/Editor.vue";
     import EditorButtons from "../../inputs/EditorButtons.vue";
-    import {useFlowOutdatedErrors} from "../../inputs/flowOutdatedErrors";
-
-    import {usePluginsStore} from "../../../stores/plugins";
-    import {useCoreStore} from "../../../stores/core";
-    import {EditorTabProps, useEditorStore} from "../../../stores/editor";
-    import {useNamespacesStore} from "override/stores/namespaces";
 
 
     const store = useStore();
@@ -720,7 +717,7 @@
     async function loadFileAtPath(path: string){
         const content = await namespacesStore.readFile({
             path,
-            namespace: props.namespace ?? route.params.namespace.toString() ?? route.params.id.toString() ?? "",
+            namespace: props.namespace ?? route.params.namespace?.toString() ?? route.params.id?.toString() ?? "",
         })
         store.commit("flow/setFlowYaml", content);
     }
@@ -795,11 +792,13 @@
         editorStore.closeTab({...tab, index});
     };
 
-    const closeTabs = (tabsToClose?: EditorTabProps[], openTab?: EditorTabProps) => {
+    const closeTabs = (tabsToClose: EditorTabProps[], openTab?: EditorTabProps) => {
         tabsToClose?.forEach((tab: EditorTabProps) => {
             editorStore.closeTab(tab);
         });
-        editorStore.openTab(openTab);
+        if(openTab){
+            editorStore.openTab(openTab);
+        }
         hideTabContextMenu();
     };
 
@@ -878,13 +877,13 @@
 
             if (dialog.value.type === "file") {
                 await namespacesStore.createFile({
-                    namespace: props.namespace ?? route.params.namespace.toString(),
+                    namespace: props.namespace ?? route.params.namespace?.toString(),
                     path,
                     content: "",
                 });
             } else {
                 await namespacesStore.createDirectory({
-                    namespace: props.namespace ?? route.params.namespace.toString(),
+                    namespace: props.namespace ?? route.params.namespace?.toString(),
                     path,
                 });
             }
@@ -917,7 +916,7 @@
             const path = file.webkitRelativePath || file.name;
 
             await namespacesStore.importFileDirectory({
-                namespace: props.namespace ?? route.params.namespace.toString(),
+                namespace: props.namespace ?? route.params.namespace?.toString(),
                 content,
                 path
             });

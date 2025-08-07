@@ -491,40 +491,6 @@
         background: var(--ks-background-card);
     }
 
-    .content-container {
-        height: calc(100vh - 0px);
-        overflow-y: auto !important;
-        overflow-x: hidden;
-        word-wrap: break-word;
-        word-break: break-word;
-    }
-
-    :deep(.el-collapse) {
-        .el-collapse-item__wrap {
-            overflow-y: auto !important;
-            max-height: none !important;
-        }
-        
-        .el-collapse-item__content {
-            overflow-y: auto !important;
-            word-wrap: break-word;
-            word-break: break-word;
-        }
-    }
-
-    :deep(.var-value) {
-        overflow-y: auto !important;
-        word-wrap: break-word;
-        word-break: break-word;
-    }
-
-    :deep(pre) {
-        white-space: pre-wrap !important;
-        word-wrap: break-word !important;
-        word-break: break-word !important;
-        overflow-wrap: break-word !important;
-    }
-
     .el-cascader-menu {
         min-width: 300px;
         max-width: 300px;
@@ -573,4 +539,39 @@
         }
     }
 }
+</style>
+<style lang="scss" scoped>
+    .content-container {
+        height: calc(100vh - 0px);
+        overflow-y: auto !important;
+        overflow-x: hidden;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+
+    :deep(.el-collapse) {
+        .el-collapse-item__wrap {
+            overflow-y: auto !important;
+            max-height: none !important;
+        }
+        
+        .el-collapse-item__content {
+            overflow-y: auto !important;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+    }
+
+    :deep(.var-value) {
+        overflow-y: auto !important;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+
+    :deep(pre) {
+        white-space: pre-wrap !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+    }
 </style>

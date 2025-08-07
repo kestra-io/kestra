@@ -58,16 +58,16 @@
             :style="{left: `${tabContextMenu.x}px`, top: `${tabContextMenu.y}px`}"
             class="tabs-context"
         >
-            <el-menu-item :disabled="tabContextMenu.tab?.persistent" @click="tabContextMenu.tab && tabContextMenu.index !== null && closeTab(tabContextMenu.tab, tabContextMenu.index)">
+            <el-menu-item :disabled="tabContextMenu.tab?.persistent" @click="closeTab(tabContextMenu.tab, tabContextMenu.index)">
                 {{ t("namespace_editor.close.tab") }}
             </el-menu-item>
             <el-menu-item @click="closeAllTabs">
                 {{ t("namespace_editor.close.all") }}
             </el-menu-item>
-            <el-menu-item @click="tabContextMenu.tab && closeOtherTabs(tabContextMenu.tab)">
+            <el-menu-item @click="closeOtherTabs(tabContextMenu.tab)">
                 {{ t("namespace_editor.close.other") }}
             </el-menu-item>
-            <el-menu-item @click="tabContextMenu.index !== null && closeTabsToRight(tabContextMenu.index)">
+            <el-menu-item @click="closeTabsToRight(tabContextMenu.index)">
                 {{ t("namespace_editor.close.right") }}
             </el-menu-item>
         </el-menu>
@@ -768,8 +768,8 @@
         visible: false,
         x: 0,
         y: 0,
-        tab: null as null | EditorTabProps,
-        index: null as null | number,
+        tab: undefined as undefined | EditorTabProps,
+        index: undefined as undefined | number,
     });
 
     const onTabContextMenu = (event: MouseEvent, tab: EditorTabProps, index: number) => {
@@ -791,12 +791,12 @@
 
     const FLOW_TAB = computed(() => editorStore.tabs?.find(tab => tab.name === "Flow"))
 
-    const closeTab = (tab: EditorTabProps, index: number) => {
+    const closeTab = (tab?: EditorTabProps, index?: number) => {
         editorStore.closeTab({...tab, index});
     };
 
-    const closeTabs = (tabsToClose: EditorTabProps[], openTab: EditorTabProps) => {
-        tabsToClose.forEach((tab: EditorTabProps) => {
+    const closeTabs = (tabsToClose?: EditorTabProps[], openTab?: EditorTabProps) => {
+        tabsToClose?.forEach((tab: EditorTabProps) => {
             editorStore.closeTab(tab);
         });
         editorStore.openTab(openTab);
@@ -809,11 +809,11 @@
         }
     };
 
-    const closeOtherTabs = (tab: EditorTabProps) => {
+    const closeOtherTabs = (tab?: EditorTabProps) => {
         closeTabs(openedTabs.value.filter(t => t !== FLOW_TAB.value && t !== tab), tab);
     };
 
-    const closeTabsToRight = (index: number) => {
+    const closeTabsToRight = (index: number = -1) => {
         closeTabs(openedTabs.value.slice(index + 1).filter(tab => tab !== FLOW_TAB.value), openedTabs.value[index]);
     };
 

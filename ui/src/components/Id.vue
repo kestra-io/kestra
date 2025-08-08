@@ -14,7 +14,6 @@
 
 <script setup lang="ts">
     import {computed, useAttrs} from "vue";
-    import {defineProps, defineEmits} from "vue";
     import Utils from "../utils/utils";
 
     const props = defineProps({

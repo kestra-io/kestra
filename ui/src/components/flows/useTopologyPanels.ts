@@ -1,10 +1,10 @@
 import {ref, Ref, provide, watch} from "vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-import {useStore} from "vuex"
 
 import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
 import {TopologyClickParams} from "../code/utils/types";
 import {Panel} from "../MultiPanelTabs.vue";
+import {useFlowStore} from "../../stores/flow";
 
 export function useTopologyPanels(
     panels: Ref<Panel[]>,
@@ -12,7 +12,6 @@ export function useTopologyPanels(
     openEditTaskTab: any,
 ) {
     const topologyClick = ref<TopologyClickParams | undefined>(undefined);
-    const store = useStore();
     provide(TOPOLOGY_CLICK_INJECTION_KEY, topologyClick);
 
     function findTopologyIndexes(arr: { tabs: { value: string }[] }[]): {
@@ -29,6 +28,8 @@ export function useTopologyPanels(
         return {panelIndex: panelIndex !== -1 ? panelIndex : 0, tabIndex};
     }
 
+    const flowStore = useFlowStore();
+
     watch(topologyClick, (value: TopologyClickParams | undefined) => {
         if (!value) return;
 
@@ -40,7 +41,7 @@ export function useTopologyPanels(
         const target = findTopologyIndexes(panels.value);
 
         const path = YAML_UTILS.getPathFromSectionAndId({
-            source: store.state.flow.flowYaml,
+            source: flowStore.flowYaml ?? "",
             section: params.section,
             id: params.id,
         })

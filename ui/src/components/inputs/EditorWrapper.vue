@@ -53,12 +53,12 @@
 <script lang="ts" setup>
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {useStore} from "vuex";
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
     import {useMiscStore} from "../../stores/misc";
     import {EditorTabProps, useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
     import {useNamespacesStore} from "override/stores/namespaces";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
 
@@ -74,9 +74,9 @@
     const route = useRoute();
     const router = useRouter();
 
-    const store = useStore();
     const miscStore = useMiscStore();
     const editorStore = useEditorStore();
+    const flowStore = useFlowStore();
 
     const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const cursor = ref();
@@ -104,9 +104,9 @@
     provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
 
     const source = computed<string>(() => {
-        return props.flow
-            ? store.state.flow.flowYaml
-            : editorStore.tabs.find((t: any) => t.path === props.path)?.content;
+        return (props.flow
+            ? flowStore.flowYaml
+            : editorStore.tabs.find((t: any) => t.path === props.path)?.content) ?? "";
     })
 
     async function loadFile() {
@@ -116,7 +116,7 @@
 
         if (!fileNamespace) return;
 
-        const content = await namespacesStore.readFile({namespace: fileNamespace, path: props.path})
+        const content = await namespacesStore.readFile({namespace: fileNamespace.toString(), path: props.path ?? ""})
         editorStore.setTabContent({path: props.path, content})
     }
 
@@ -138,11 +138,10 @@
 
     const editorRefElement = ref<InstanceType<typeof Editor>>();
 
-    const namespace = computed(() => store.state.flow.namespace);
-    const flowStore = computed(() => store.state.flow.flow);
-    const isCreating = computed(() => store.state.flow.isCreating);
+    const namespace = computed(() => flowStore.flow?.namespace);
+    const isCreating = computed(() => flowStore.isCreating);
     const isCurrentTabFlow = computed(() => props.flow)
-    const isReadOnly = computed(() => flowStore.value?.deleted || !store.getters["flow/isAllowedEdit"] || store.getters["flow/readOnlySystemLabel"]);
+    const isReadOnly = computed(() => flowStore.flow?.deleted || !flowStore.isAllowedEdit || flowStore.readOnlySystemLabel);
 
     const timeout = ref<any>(null);
 
@@ -161,7 +160,7 @@
             if (draftSource.value !== undefined) {
                 draftSource.value = newValue;
             } else {
-                store.commit("flow/setFlowYaml", newValue);
+                flowStore.flowYaml = newValue;
             }
         }
         editorStore.setTabContent({
@@ -176,7 +175,7 @@
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {
-            store.dispatch("flow/onEdit", {
+            flowStore.onEdit({
                 source: newValue,
                 currentIsFlow: isCurrentTabFlow.value,
                 editorViewType: "YAML", // this is to be opposed to the no-code editor
@@ -192,12 +191,11 @@
         pluginsStore.updateDocumentation(element);
     };
 
-    const flowParsed = computed(() => store.getters["flow/flowParsed"]);
     const save = async () => {
         clearTimeout(timeout.value);
         const editorRef = editorRefElement.value
         if(!editorRef?.$refs.monacoEditor) return
-        const result = await store.dispatch("flow/save", {content:(editorRef.$refs.monacoEditor as any).value})
+        const result = await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
 
         editorStore.setTabDirty({
             path: props.path,
@@ -208,8 +206,8 @@
             await router.push({
                 name: "flows/update",
                 params: {
-                    id: flowParsed.value.id,
-                    namespace: flowParsed.value.namespace,
+                    id: flowStore.flow?.id,
+                    namespace: flowStore.flow?.namespace,
                     tab: "edit",
                     tenant: route.params?.tenant,
                 },
@@ -242,7 +240,7 @@
     };
 
     const execute = () => {
-        store.commit("flow/executeFlow", true);
+        flowStore.executeFlow = true;
     };
 
     function acceptDraft() {

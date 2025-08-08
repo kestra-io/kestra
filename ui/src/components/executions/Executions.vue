@@ -19,10 +19,10 @@
                     </li>
                     <li>
                         <trigger-flow
-                            v-if="flow"
-                            :disabled="flow.disabled || isReadOnly"
-                            :flow-id="flow.id"
-                            :namespace="flow.namespace"
+                            v-if="flowStore.flow"
+                            :disabled="flowStore.flow.disabled || isReadOnly"
+                            :flow-id="flowStore.flow.id"
+                            :namespace="flowStore.flow.namespace"
                         />
                     </li>
                 </template>
@@ -480,6 +480,7 @@
 
     import {filterLabels} from "./utils"
     import {useExecutionsStore} from "../../stores/executions";
+    import {useFlowStore} from "../../stores/flow.ts";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -628,8 +629,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("flow", ["flow"]),
-            ...mapStores(useMiscStore, useExecutionsStore),
+            ...mapStores(useMiscStore, useExecutionsStore, useFlowStore),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -668,7 +668,7 @@
                 return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
             },
             isAllowedEdit() {
-                return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
+                return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flowStore.flow.namespace);
             },
             hasAnyExecute() {
                 return this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
@@ -856,7 +856,7 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    
+
                     const action = actionMap[queryAction]();
                     return action(options)
                         .then(r => {
@@ -869,7 +869,7 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    
+
                     const action = actionMap[byIdAction]();
                     return action(options)
                         .then(r => {
@@ -1069,15 +1069,15 @@
             editFlow() {
                 this.$router.push({
                     name: "flows/update", params: {
-                        namespace: this.flow.namespace,
-                        id: this.flow.id,
+                        namespace: this.flowStore.flow.namespace,
+                        id: this.flowStore.flow.id,
                         tab: "edit",
                         tenant: this.$route.params.tenant
                     }
                 })
             },
             emitStateCount() {
-                const runningCount = this.executionsStore.executions.filter(execution => 
+                const runningCount = this.executionsStore.executions.filter(execution =>
                     execution.state.current === State.RUNNING
                 )?.length;
                 const totalCount = this.executionsStore.total;

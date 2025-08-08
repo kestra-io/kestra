@@ -8,7 +8,7 @@
         popper-class="user-select border border-0"
     >
         <template #prefix>
-            <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra">
+            <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra" class="user-avatar">
         </template>
         <template #header>
             <el-option :value="{}" class=" list-unstyled">
@@ -129,5 +129,11 @@ html.menu-collapsed {
     .el-select__suffix {
         display: none;
     }
+}
+
+.user-avatar {
+    padding: 4px;
+    border-radius: 4px;
+
 }
 </style>

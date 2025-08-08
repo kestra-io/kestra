@@ -98,6 +98,7 @@
 
     import {saveFlowTemplate} from "../../utils/flowTemplate";
     import {useToast} from "../../utils/toast";
+    import {useFlowStore} from "../../stores/flow";
 
     interface Revision {
         revision: number;
@@ -126,14 +127,19 @@
     ];
     const isModalOpen = ref(false);
 
-    const flow = computed(() => store.state.flow.flow);
+    const flowStore = useFlowStore();
+    const flow = computed(() => flowStore.flow);
 
     function load() {
+        if (!flow.value) {
+            return;
+        }
         const currentRevision = flow.value.revision;
 
         revisions.value = [...Array(currentRevision).keys()].map(((_, i) => {
-            if (currentRevision === revisionNumber(i)) {
-                return flow.value;
+            if (currentRevision === revisionNumber(i) && flow.value?.revision !== undefined && flow.value?.source) {
+                const val = flow.value as Revision
+                return val;
             }
 
             if(revisions.value[i] && revisions.value[i].revision === i + 1) {
@@ -194,8 +200,8 @@
                 $toast: () => toast,
             }, revisionSource, "flow")
                 .then((response:any) => {
-                    store.commit("flow/setFlowYaml", response.source);
-                    store.commit("flow/setFlowYamlOrigin", response.source);
+                    flowStore.flowYaml = response.source;
+                    flowStore.flowYamlBeforeAdd = response.source;
                     load()
                 })
                 .then(() => {
@@ -217,9 +223,9 @@
     }
 
     async function fetchRevision(revision: string) {
-        const revisionFetched = await store.dispatch("flow/loadFlow", {
-            namespace: flow.value.namespace,
-            id: flow.value.id,
+        const revisionFetched = await flowStore.loadFlow({
+            namespace: flow.value?.namespace ?? "",
+            id: flow.value?.id ?? "",
             revision,
             allowDeleted: true,
             store: false

@@ -5,7 +5,7 @@
             legacy-query
         />
 
-        <select-table
+        <SelectTable
             :data="filteredSecrets"
             ref="selectTable"
             :default-sort="{prop: 'key', order: 'ascending'}"
@@ -26,7 +26,7 @@
             />
             <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="keyOnly ? $t('secret.names') : $t('key')">
                 <template #default="scope">
-                    <id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
+                    <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
                 </template>
             </el-table-column>
 
@@ -38,7 +38,7 @@
 
             <el-table-column v-if="!keyOnly && !paneView" prop="tags" :label="$t('tags')">
                 <template #default="scope">
-                    <labels v-if="scope.row.tags !== undefined" :labels="scope.row.tags" read-only />
+                    <Labels v-if="scope.row.tags !== undefined" :labels="scope.row.tags" read-only />
                 </template>
             </el-table-column>
 
@@ -74,9 +74,9 @@
                     <el-button v-if="canDelete(scope.row)" :icon="Delete" link @click="removeSecret(scope.row)" />
                 </template>
             </el-table-column>
-        </select-table>
+        </SelectTable>
 
-        <drawer
+        <Drawer
             v-if="addSecretDrawerVisible"
             v-model="addSecretDrawerVisible"
             :title="secretModalTitle"
@@ -88,7 +88,7 @@
                     prop="namespace"
                     required
                 >
-                    <namespace-select
+                    <NamespaceSelect
                         v-model="secret.namespace"
                         :readonly="secret.update"
                         :include-system-namespace="true"
@@ -144,7 +144,7 @@
                     {{ $t('save') }}
                 </el-button>
             </template>
-        </drawer>
+        </Drawer>
     </div>
 </template>
 
@@ -165,14 +165,15 @@
 </script>
 
 <script lang="ts">
-    import Id from "../Id.vue";
-    import Drawer from "../Drawer.vue";
-    import SelectTableActions from "../../mixins/selectTableActions";
-    import {SecretIterator} from "../../composables/useSecrets";
-    import {useNamespaceSecrets, useAllSecrets} from "../../composables/useSecrets";
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useNamespaceSecrets, useAllSecrets, SecretIterator} from "../../composables/useSecrets";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import action from "../../models/action";
     import permission from "../../models/permission";
+    import SelectTableActions from "../../mixins/selectTableActions";
+    import Id from "../Id.vue";
+    import Drawer from "../Drawer.vue";
 
     export default {
         mixins: [SelectTableActions],
@@ -182,6 +183,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapStores(useNamespacesStore),
             searchQuery() {
                 return this.$route.query.q;
             },
@@ -397,8 +399,8 @@
             },
             removeSecret({key, namespace}) {
                 this.$toast().confirm(this.$t("delete confirm", {name: key}), () => {
-                    return this.$store
-                        .dispatch("namespace/deleteSecrets", {namespace: namespace, key})
+                    return this.namespacesStore
+                        .deleteSecrets({namespace: namespace, key})
                         .then(() => {
                             this.$toast().deleted(key);
                         })
@@ -426,11 +428,8 @@
                         secret.value = this.secret.value;
                     }
 
-                    return this.$store
-                        .dispatch(
-                            this.isSecretValueUpdated() ? "namespace/createSecrets" : "namespace/patchSecret",
-                            {namespace: this.secret.namespace, secret: secret}
-                        )
+                    const action = this.isSecretValueUpdated() ? this.namespacesStore.createSecrets : this.namespacesStore.patchSecret;
+                    return action({namespace: this.secret.namespace, secret: secret})
                         .then(() => {
                             this.secret.update = true;
                             this.$toast().saved(this.secret.key);

@@ -36,6 +36,7 @@
         "chart.js": "^4.5.0",
         "core-js": "^3.45.0",
         "cronstrue": "^3.2.0",
+        "cytoscape": "^3.33.0",
         "dagre": "^0.8.5",
         "el-table-infinite-scroll": "^3.0.7",
         "element-plus": "^2.10.5",

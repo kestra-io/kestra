@@ -1451,7 +1451,7 @@
     "ai": {
       "flow": {
         "title": "AI Agent",
-        "prompt_placeholder": "Enter instructions to create your Kestra flow.",
+        "prompt_placeholder": "Enter instructions to create your Kestra flow. For example, type: Create a flow that runs every Monday at 9 AM.",
         "generating": "Generating Flow YAML for you..."
       }
     },
@@ -1479,6 +1479,18 @@
     "task was skipped": "Task was skipped",
     "task sent a warning": "Task sent a warning",
     "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
-    "no_file_choosen": "No file chosen"
+    "no_file_choosen": "No file chosen",
+    "dependency": {
+      "controls": {
+        "zoom_in": "Zoom in",
+        "zoom_out": "Zoom out",
+        "clear_selection": "Clear selection",
+        "fit_view": "Fit to screen"
+      },
+      "search": {
+        "placeholder": "Search by flow or namespace...",
+        "no_results": "No results found for {term}"
+      }
+    }
   }
 }

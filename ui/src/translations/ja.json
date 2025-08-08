@@ -362,6 +362,18 @@
     "dependencies delete flow": "このflowには依存関係があります。削除すると、依存関係が実行されなくなります。<br /><br /> 影響を受けるflowのリストはこちらです:",
     "dependencies loaded": "依存関係が読み込まれました",
     "dependencies missing acls": "このflowには権限がありません",
+    "dependency": {
+      "controls": {
+        "clear_selection": "選択をクリア",
+        "fit_view": "画面に合わせる",
+        "zoom_in": "ズームイン",
+        "zoom_out": "ズームアウト"
+      },
+      "search": {
+        "no_results": "{term} に対する結果が見つかりませんでした",
+        "placeholder": "flow または namespace で検索..."
+      }
+    },
     "dependency task": "Task {taskId}は他のtaskの依存関係です",
     "description": "説明",
     "details": "詳細",

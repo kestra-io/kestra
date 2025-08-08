@@ -7,7 +7,7 @@
                 striped
                 hover
                 ref="dataTable"
-                :total="total"
+                :total="flowStore.total"
             >
                 <template #navbar>
                     <el-form-item>
@@ -24,7 +24,7 @@
                 </template>
 
                 <template #table>
-                    <template v-for="(item, i) in search" :key="`card-${i}`">
+                    <template v-for="(item, i) in flowStore.search" :key="`card-${i}`">
                         <el-card class="mb-2" shadow="never">
                             <template #header>
                                 <router-link :to="{path: `/flows/edit/${item.model.namespace}/${item.model.id}/source`}">
@@ -39,7 +39,7 @@
                         </el-card>
                     </template>
 
-                    <NoData v-if="search === undefined || search.length === 0" />
+                    <NoData v-if="flowStore.search === undefined || flowStore.search.length === 0" />
                 </template>
             </data-table>
         </div>
@@ -47,7 +47,8 @@
 </template>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useFlowStore} from "../../stores/flow";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
@@ -74,7 +75,7 @@
             };
         },
         computed: {
-            ...mapState("flow", ["search", "total"]),
+            ...mapStores(useFlowStore),
             routeInfo() {
                 return {
                     title: this.$t("source search"),
@@ -102,8 +103,8 @@
             },
             loadData(callback) {
                 if (this.$route.query["q"] !== undefined) {
-                    this.$store
-                        .dispatch("flow/searchFlows", this.loadQuery({
+                    this.flowStore
+                        .searchFlows(this.loadQuery({
                             size: parseInt(this.$route.query.size || 25),
                             page: parseInt(this.$route.query.page || 1),
                             sort: this.$route.query.sort
@@ -113,8 +114,8 @@
                         })
                         .finally(callback)
                 } else {
-                    this.$store.commit("flow/setTotal", 0);
-                    this.$store.commit("flow/setSearch", undefined);
+                    this.flowStore.total = 0;
+                    this.flowStore.search = undefined;
                     callback();
                 }
 

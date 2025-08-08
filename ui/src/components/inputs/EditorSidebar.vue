@@ -355,10 +355,11 @@
 </template>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
+
     import Utils from "../../utils/utils";
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
 
@@ -368,6 +369,7 @@
     import PlusBox from "vue-material-design-icons/PlusBox.vue";
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue";
     import TypeIcon from "../utils/icons/Type.vue";
+
 
     const DIALOG_DEFAULTS = {
         visible: false,
@@ -420,11 +422,7 @@
             };
         },
         computed: {
-            ...mapStores(useEditorStore),
-            ...mapState({
-                flow: (state) => state.flow.flow,
-            }),
-            ...mapStores(useNamespacesStore),
+            ...mapStores(useEditorStore, useFlowStore, useNamespacesStore),
             namespaceId() {
                 return this.currentNS ?? this.$route.params.namespace;
             },
@@ -1154,7 +1152,7 @@
             document.removeEventListener("click", this.clearSelection);
         },
         watch: {
-            flow: {
+            "flowStore.flow": {
                 handler(flow) {
                     if (flow) {
                         this.editorStore.openTab({

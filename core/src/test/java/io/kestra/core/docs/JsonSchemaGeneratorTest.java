@@ -112,7 +112,7 @@ class JsonSchemaGeneratorTest {
 
             var requiredWithDefault = definitions.get("io.kestra.core.docs.JsonSchemaGeneratorTest-RequiredWithDefault");
             assertThat(requiredWithDefault, is(notNullValue()));
-            assertThat((List<String>) requiredWithDefault.get("required"), not(contains("requiredWithDefault")));
+            assertThat((List<String>) requiredWithDefault.get("required"), not(containsInAnyOrder("requiredWithDefault", "anotherRequiredWithDefault")));
 
             var properties = (Map<String, Map<String, Object>>) flow.get("properties");
             var listeners = properties.get("listeners");
@@ -253,7 +253,7 @@ class JsonSchemaGeneratorTest {
     void requiredAreRemovedIfThereIsADefault() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, RequiredWithDefault.class);
         assertThat(generate, is(not(nullValue())));
-        assertThat((List<String>) generate.get("required"), not(containsInAnyOrder("requiredWithDefault")));
+        assertThat((List<String>) generate.get("required"), not(containsInAnyOrder("requiredWithDefault", "anotherRequiredWithDefault")));
         assertThat((List<String>) generate.get("required"), containsInAnyOrder("requiredWithNoDefault"));
     }
 
@@ -465,6 +465,11 @@ class JsonSchemaGeneratorTest {
         @NotNull
         @Builder.Default
         private Property<TaskWithEnum.TestClass> requiredWithDefault = Property.ofValue(TaskWithEnum.TestClass.builder().testProperty("test").build());
+
+        @PluginProperty
+        @NotNull
+        @Builder.Default
+        private Property<TaskWithEnum.TestClass> anotherRequiredWithDefault = Property.ofValue(TaskWithEnum.TestClass.builder().testProperty("test2").build());
 
         @PluginProperty
         @NotNull

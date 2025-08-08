@@ -458,13 +458,11 @@
                 this.checkForChanges();
             },
             exportFlows() {
-                return this.$store
-                    .dispatch("flow/findFlows", {size: 1, page: 1})
+                return this.flowStore.findFlows({size: 1, page: 1})
                     .then((result) => {
                         const flowCount = result.total;
 
-                        return this.$store
-                            .dispatch("flow/exportFlowByQuery", {})
+                        return this.flowStore.exportFlowByQuery({})
                             .then(() => {
                                 this.$toast().success(
                                     this.$t("flows exported", {

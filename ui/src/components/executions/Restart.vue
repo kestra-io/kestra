@@ -76,7 +76,6 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
@@ -84,6 +83,7 @@
     import {State} from "@kestra-io/ui-libs"
     import ExecutionUtils from "../../utils/executionUtils";
     import {useAuthStore} from "override/stores/auth"
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         inheritAttrs: false,
@@ -130,14 +130,13 @@
         methods: {
             loadRevision() {
                 this.revisionsSelected = this.execution.flowRevision
-                this.$store
-                    .dispatch("flow/loadRevisions", {
-                        namespace: this.execution.namespace,
-                        id: this.execution.flowId
-                    })
+                this.flowStore.loadRevisions({
+                    namespace: this.execution.namespace,
+                    id: this.execution.flowId
+                })
             },
             restartLastRevision() {
-                this.revisionsSelected = this.revisions[this.revisions.length - 1].revision;
+                this.revisionsSelected = this.flowStore.revisions[this.flowStore.revisions.length - 1].revision;
                 this.restart();
             },
             restart() {
@@ -179,13 +178,12 @@
             }
         },
         computed: {
-            ...mapState("flow", ["revisions"]),
-            ...mapStores(useExecutionsStore, useAuthStore),
+            ...mapStores(useExecutionsStore, useFlowStore, useAuthStore),
             replayOrRestart() {
                 return this.isReplay ? "replay" : "restart";
             },
             revisionsOptions() {
-                return (this.revisions || [])
+                return (this.flowStore.revisions || [])
                     .map((revision) => {
                         return {
                             value: revision.revision,

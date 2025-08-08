@@ -186,7 +186,7 @@
                                         this.flowGraph  = data;
                                     });
                             } else {
-                                this.$store.dispatch("flow/getGraphFromSourceResponse", {
+                                this.flowStore.getGraphFromSourceResponse({
                                     flow: this.blueprint.source, config: {
                                         validateStatus: (status) => {
                                             return status === 200;

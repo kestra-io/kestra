@@ -1,6 +1,5 @@
 import {computed, ref, watch} from "vue";
 import {defineStore} from "pinia";
-import {useStore} from "vuex";
 import {useUrlSearchParams} from "@vueuse/core"
 import * as VueFlowUtils from "@kestra-io/ui-libs/vue-flow-utils"
 import {Execution, useExecutionsStore} from "./executions";
@@ -9,12 +8,15 @@ import {useRoute, useRouter} from "vue-router";
 import {State} from "@kestra-io/ui-libs";
 import {useToast} from "../utils/toast";
 import {useI18n} from "vue-i18n";
+import {useFlowStore} from "./flow";
 
 interface ExecutionWithGraph extends Execution {
     graph?: VueFlowUtils.FlowGraph;
 }
 
 export const usePlaygroundStore = defineStore("playground", () => {
+
+    const flowStore = useFlowStore();
     const params = useUrlSearchParams("history", {
         removeFalsyValues: true
     })
@@ -32,12 +34,12 @@ export const usePlaygroundStore = defineStore("playground", () => {
     const router = useRouter();
 
     function navigateToEdit(runUntilTaskId?: string, runDownstreamTasks?: boolean) {
-        const flowParsed = store.state.flow.flow;
+        const flowParsed = flowStore.flow;
         router.push({
             name: "flows/update",
             params: {
-                id: flowParsed.id,
-                namespace: flowParsed.namespace,
+                id: flowParsed?.id,
+                namespace: flowParsed?.namespace,
                 tab: "edit",
                 tenant: route.params.tenant,
             },
@@ -60,7 +62,6 @@ export const usePlaygroundStore = defineStore("playground", () => {
         executionsStore.execution = undefined;
     }
 
-    const store = useStore();
     const executionsStore = useExecutionsStore();
 
     const taskIdToTaskRunIdMap: Map<string, string>  = new Map();
@@ -76,13 +77,18 @@ export const usePlaygroundStore = defineStore("playground", () => {
             return await executionsStore.replayExecution({
                 executionId: executions.value[0].id,
                 taskRunId: taskIdToTaskRunIdMap.get(taskId),
-                revision: store.state.flow.flow.revision,
+                revision: flowStore.flow?.revision,
                 breakpoints,
             });
         }
 
+        if(!flowStore.flow) {
+            console.warn("Flow is not defined, cannot trigger execution");
+            return;
+        }
+
         const defaultInputValues: Record<string, any> = {}
-        for (const input of (store.state.flow.flow?.inputs || [])) {
+        for (const input of (flowStore.flow.inputs || [])) {
             const {type, defaults} = input;
             // for dates, no need to normalize the value
             // https://github.com/kestra-io/kestra/issues/10576
@@ -91,9 +97,11 @@ export const usePlaygroundStore = defineStore("playground", () => {
                 : Inputs.normalize(type, defaults);
         }
 
+
+
         return await executionsStore.triggerExecution({
-            id: store.state.flow.flow?.id,
-            namespace: store.state.flow.flow?.namespace,
+            id: flowStore.flow.id,
+            namespace: flowStore.flow.namespace,
             formData: defaultInputValues,
             kind: "PLAYGROUND",
             breakpoints,
@@ -101,7 +109,12 @@ export const usePlaygroundStore = defineStore("playground", () => {
     }
 
     async function getNextTaskIds(taskId?: string) {
-        const graph = await store.dispatch("flow/loadGraph", {flow: store.state.flow.flow});
+        if(!flowStore.flow) {
+            console.warn("Flow is not defined, cannot get next task IDs");
+            return {nextTasksIds: [], graph: undefined};
+        }
+
+        const graph = await flowStore.loadGraph({flow: flowStore.flow});
 
         if (!taskId) {
             return {nextTasksIds: [], graph};
@@ -175,18 +188,18 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         readyToStart.value = false;
 
-        if(store.state.flow.isCreating){
+        if(flowStore.isCreating){
             toast.confirm(
                 t("playground.confirm_create"),
                 async () => {
-                    await store.dispatch("flow/saveAll");
+                    await flowStore.saveAll();
                     navigateToEdit(taskId, runDownstreamTasks);
                 }
             );
             return;
         }
 
-        await store.dispatch("flow/saveAll")
+        await flowStore.saveAll();
         // get the next task id to break on. If current task is provided to breakpoint,
         // the task specified by the user will not be executed.
         const {nextTasksIds, graph} = await getNextTaskIds(runDownstreamTasks ? undefined : taskId) ?? {};

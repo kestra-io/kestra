@@ -32,6 +32,7 @@
 
     import {useExecutionsStore} from "../../stores/executions";
     import {useAuthStore} from "override/stores/auth"
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         mixins: [RouteContext],
@@ -55,7 +56,7 @@
             this.follow();
             window.addEventListener("popstate", this.follow)
 
-            this.dependenciesCount = (await this.$store.dispatch("flow/loadDependencies", {namespace: this.$route.params.namespace, id: this.$route.params.flowId})).count;
+            this.dependenciesCount = (await this.flowStore.loadDependencies({namespace: this.$route.params.namespace, id: this.$route.params.flowId})).count;
         },
         mounted() {
             this.previousExecutionId = this.$route.params.id
@@ -64,8 +65,8 @@
             $route() {
                 this.executionsStore.taskRun = undefined;
                 if (this.previousExecutionId !== this.$route.params.id) {
-                    this.$store.commit("flow/setFlow", undefined);
-                    this.$store.commit("flow/setFlowGraph", undefined);
+                    this.flowStore.flow = undefined;
+                    this.flowStore.flowGraph = undefined;
                     this.follow();
                 }
             },
@@ -129,7 +130,7 @@
             }
         },
         computed: {
-            ...mapStores(useCoreStore, useExecutionsStore, useAuthStore),
+            ...mapStores(useCoreStore, useExecutionsStore, useFlowStore, useAuthStore),
             tabs() {
                 return this.getTabs();
             },
@@ -197,8 +198,8 @@
             this.executionsStore.closeSSE();
             window.removeEventListener("popstate", this.follow)
             this.executionsStore.execution = undefined;
-            this.$store.commit("flow/setFlow", undefined);
-            this.$store.commit("flow/setFlowGraph", undefined);
+            this.flowStore.flow = undefined;
+            this.flowStore.flowGraph = undefined;
         }
     };
 </script>

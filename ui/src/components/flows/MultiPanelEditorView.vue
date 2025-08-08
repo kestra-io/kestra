@@ -31,7 +31,6 @@
 <script setup lang="ts">
     import {computed, onMounted, onUnmounted, Ref, watch} from "vue";
     import {useStorage} from "@vueuse/core";
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import {Splitpanes, Pane} from "splitpanes"
     import {useCoreStore} from "../../stores/core";
@@ -48,6 +47,7 @@
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts";
 
     import {getCreateTabKey, getEditTabKey, setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
+    import {useFlowStore} from "../../stores/flow";
 
     function isTabFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.value)
@@ -55,10 +55,9 @@
             || element.value.startsWith("nocode-")
     }
 
-    const store = useStore()
     const coreStore = useCoreStore()
     const {showKeyShortcuts} = useKeyShortcuts()
-    const flow = computed(() => store.state.flow.flow)
+    const flowStore = useFlowStore()
 
     onMounted(() => {
         useEditorStore().explorerVisible = false
@@ -155,7 +154,7 @@
 
     const {t} = useI18n()
     function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
-        const tab = setupInitialNoCodeTab(value, t, noCodeHandlers, flow.value)
+        const tab = setupInitialNoCodeTab(value, t, noCodeHandlers, flowStore.flowYaml ?? "")
         const element: Tab = tab ?? EDITOR_ELEMENTS.find(e => e.value === value)!
 
         if(isTabFlowRelated(element)){
@@ -184,7 +183,7 @@
     }
 
     const panels: Ref<Panel[]> = useStorage<any>(
-        `flow-${flow.value.namespace}-${flow.value.id}`,
+        `flow-${flowStore.flow?.namespace}-${flowStore.flow?.id}`,
         DEFAULT_ACTIVE_TABS
             .map((t):Panel => getPanelFromValue(t).panel),
         undefined,
@@ -205,7 +204,7 @@
                             .map((p):Panel => {
                                 const tabs = p.tabs.map((tab) =>
                                     setupInitialCodeTab(tab)
-                                    ?? setupInitialNoCodeTabIfExists(store.state.flow.flowYaml, tab, t, noCodeHandlers)
+                                    ?? setupInitialNoCodeTabIfExists(flowStore.flowYaml ?? "", tab, t, noCodeHandlers)
                                     ?? EDITOR_ELEMENTS.find(e => e.value === tab)!
                                 )
                                     // filter out any tab that may have disappeared

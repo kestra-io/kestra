@@ -19,10 +19,10 @@
                     </li>
                     <li>
                         <trigger-flow
-                            v-if="flow"
-                            :disabled="flow.disabled || isReadOnly"
-                            :flow-id="flow.id"
-                            :namespace="flow.namespace"
+                            v-if="flowStore.flow"
+                            :disabled="flowStore.flow.disabled || isReadOnly"
+                            :flow-id="flowStore.flow.id"
+                            :namespace="flowStore.flow.namespace"
                         />
                     </li>
                 </template>
@@ -450,7 +450,6 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useMiscStore} from "../../stores/misc";
     import DataTable from "../layout/DataTable.vue";
@@ -481,6 +480,7 @@
     import {filterLabels} from "./utils"
     import {useExecutionsStore} from "../../stores/executions";
     import {useAuthStore} from "override/stores/auth.ts";
+    import {useFlowStore} from "../../stores/flow.ts";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -628,8 +628,7 @@
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
         },
         computed: {
-            ...mapState("flow", ["flow"]),
-            ...mapStores(useMiscStore, useExecutionsStore, useAuthStore),
+            ...mapStores(useMiscStore, useExecutionsStore, useFlowStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -668,7 +667,7 @@
                 return this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
             },
             isAllowedEdit() {
-                return this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.flowStore.flow.namespace);
             },
             hasAnyExecute() {
                 return this.authStore.user?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
@@ -1069,8 +1068,8 @@
             editFlow() {
                 this.$router.push({
                     name: "flows/update", params: {
-                        namespace: this.flow.namespace,
-                        id: this.flow.id,
+                        namespace: this.flowStore.flow.namespace,
+                        id: this.flowStore.flow.id,
                         tab: "edit",
                         tenant: this.$route.params.tenant
                     }

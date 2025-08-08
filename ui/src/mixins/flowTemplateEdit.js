@@ -1,5 +1,4 @@
 import {canSaveFlowTemplate, saveFlowTemplate} from "../utils/flowTemplate";
-import {mapState} from "vuex";
 
 import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
@@ -16,6 +15,7 @@ import {usePluginsStore} from "../stores/plugins";
 import {useCoreStore} from "../stores/core";
 import {useTemplateStore} from "../stores/template";
 import {useAuthStore} from "override/stores/auth";
+import {useFlowStore} from "../stores/flow";
 
 export default {
     mixins: [RouteContext],
@@ -34,8 +34,7 @@ export default {
         };
     },
     computed: {
-        ...mapState("flow", ["flow"]),
-        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore, useAuthStore),
+        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore, useFlowStore, useAuthStore),
         guidedProperties() {
             return this.coreStore.guidedProperties;
         },
@@ -110,8 +109,8 @@ export default {
                 this.content = YAML_UTILS.stringify(this.templateStore.template);
                 this.previousContent = this.content;
             } else {
-                if (this.flow) {
-                    this.content = this.flow.source;
+                if (this.flowStore.flow) {
+                    this.content = this.flowStore.flow.source;
                     this.previousContent = this.content;
                 } else {
                     this.content = "";
@@ -133,13 +132,13 @@ export default {
             }
 
             return this.$http
-                .get(`${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`, {params: {destinationOnly: true}})
+                .get(`${apiUrl(this.$store)}/flows/${this.flowStore.flow.namespace}/${this.flowStore.flow.id}/dependencies`, {params: {destinationOnly: true}})
                 .then(response => {
                     let warning = "";
 
                     if (response.data && response.data.nodes) {
                         const deps = response.data.nodes
-                            .filter(n => !(n.namespace === this.flow.namespace && n.id  === this.flow.id))
+                            .filter(n => !(n.namespace === this.flowStore.flow.namespace && n.id  === this.flowStore.flow.id))
                             .map(n => "<li>" + n.namespace + ".<code>" + n.id  + "</code></li>")
                             .join("\n");
 

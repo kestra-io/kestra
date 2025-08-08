@@ -5,13 +5,13 @@
         @click="onShow"
         ref="taskEdit"
     >
-        <span v-if="component !== 'el-button' && !isHidden">{{ $t("show task source") }}</span>
+        <span v-if="component !== 'el-button' && !isHidden">{{ t("show task source") }}</span>
         <drawer
             v-if="isModalOpen"
             v-model="isModalOpen"
         >
             <template #header>
-                <code>{{ taskId || task?.id || $t("add task") }}</code>
+                <code>{{ taskId || task?.id || t("add task") }}</code>
             </template>
             <template #footer>
                 <div v-loading="isLoading">
@@ -24,7 +24,7 @@
                         :disabled="errors && !!errors.length"
                         type="primary"
                     >
-                        {{ $t("save task") }}
+                        {{ t("save task") }}
                     </el-button>
                     <el-alert
                         show-icon
@@ -33,7 +33,7 @@
                         v-if="revision && revisions?.length !== revision"
                         type="warning"
                     >
-                        <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
+                        <strong>{{ t("seeing old revision", {revision: revision}) }}</strong>
                     </el-alert>
                 </div>
             </template>
@@ -41,7 +41,7 @@
             <el-tabs v-model="activeTabs">
                 <el-tab-pane v-if="!readOnly" name="form">
                     <template #label>
-                        <span>{{ $t("form") }}</span>
+                        <span>{{ t("form") }}</span>
                     </template>
                     <task-editor
                         ref="editor"
@@ -52,7 +52,7 @@
                 </el-tab-pane>
                 <el-tab-pane name="source">
                     <template #label>
-                        <span>{{ $t("source") }}</span>
+                        <span>{{ t("source") }}</span>
                     </template>
                     <editor
                         :read-only="readOnly"
@@ -69,7 +69,7 @@
                 <el-tab-pane v-if="pluginMarkdown" name="documentation">
                     <template #label>
                         <span>
-                            {{ $t("documentation.documentation") }}
+                            {{ t("documentation.documentation") }}
                         </span>
                     </template>
                     <div class="documentation">
@@ -83,7 +83,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue";
-    import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
     import {SECTIONS} from "@kestra-io/ui-libs";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import CodeTags from "vue-material-design-icons/CodeTags.vue";
@@ -96,6 +96,9 @@
     import ValidationError from "./ValidationError.vue";
     import {usePluginsStore} from "../../stores/plugins";
     import {useAuthStore} from "../../override/stores/auth";
+    import {useFlowStore} from "../../stores/flow";
+
+    const {t} = useI18n()
 
     // Types
     interface Props {
@@ -127,17 +130,14 @@
         flowSource: undefined
     });
 
-    // Emits
     const emit = defineEmits<{
         "update:task": [value: string];
         "close": [];
     }>();
 
-    // Store
-    const store = useStore();
     const pluginsStore = usePluginsStore();
 
-    // Reactive state
+
     const taskYaml = ref("");
     const isModalOpen = ref(false);
     const activeTabs = ref(props.readOnly ? "source" : "form");
@@ -146,8 +146,8 @@
     const timer = ref<ReturnType<typeof setTimeout>>();
     const lastValidatedValue = ref<string | null>(null);
 
-    // Computed properties
-    const errors = computed(() => store.state.flow.taskError?.split(/, ?/));
+    const flowStore = useFlowStore();
+    const errors = computed(() => flowStore.taskError?.split(/, ?/));
     const pluginMarkdown = computed(() => {
         if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse(taskYaml.value)?.type) {
             return pluginsStore?.plugin.markdown;
@@ -167,14 +167,14 @@
     const source = computed(() => {
         return props.revision
             ? revisions.value?.[props.revision - 1]?.source
-            : store.state.flow?.source;
+            : flowStore.flow?.source;
     });
 
     // Methods
     const load = async (taskId: string) => {
         if (props.revision) {
             if (!revisions.value?.[props.revision - 1]) {
-                revisions.value = await store.dispatch("flow/loadRevisions", {
+                revisions.value = await flowStore.loadRevisions({
                     namespace: props.namespace,
                     id: props.flowId,
                     store: false
@@ -206,17 +206,17 @@
         }
     };
 
-    const onInput = (value: string) => {
+    const onInput = (value?: string) => {
         if (timer.value) {
             clearTimeout(timer.value);
         }
-        taskYaml.value = value;
+        taskYaml.value = value ?? "";
 
         timer.value = setTimeout(() => {
-            if (lastValidatedValue.value !== value) {
-                lastValidatedValue.value = value;
-                store.dispatch("flow/validateTask", {
-                    task: value,
+            if (lastValidatedValue.value !== taskYaml.value) {
+                lastValidatedValue.value = taskYaml.value;
+                flowStore.validateTask({
+                    task: taskYaml.value,
                     section: props.section
                 });
             }

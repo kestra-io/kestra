@@ -81,38 +81,55 @@ export function setNodeSizes(cy: cytoscape.Core, baseSize = 20, scale = 2, maxSi
 }
 
 /**
- * Retrieves the execution state color for a given node.
+ * Retrieves the execution state color for a given cytoscape node or a provided state string.
  *
- * - Looks up the node’s `metadata.state` value.
- * - Uses the State service to resolve the corresponding color.
- * - Returns a fallback color if no state is defined.
+ * - If a `state` is provided, it will be used directly.
+ * - If not, it attempts to read the state from the node's `metadata`.
+ * - Falls back to a default color if no state is available.
  *
- * @param node - The cytoscape node element to evaluate.
- * @returns The color associated with the node’s execution state, or a fallback if missing.
+ * @param node - Optional cytoscape node to extract the state from.
+ * @param state - Optional direct state string.
+ * @returns The color associated with the execution state, or a fallback if missing.
  */
-function getStateColor(node: cytoscape.NodeSingular): string {
-    const state = node.data("metadata")?.state;
-    return state ? State.getStateColor(state) : cssVariable("--ks-dependencies-node-background")!;
+function getStateColor(node?: cytoscape.NodeSingular, state?: string): string {
+    const resolved = state ?? node?.data("metadata")?.state;
+    return resolved ? State.getStateColor(resolved) : cssVariable("--ks-dependencies-node-background")!;
 }
 
 /**
- * Applies execution state colors to all nodes in the cytoscape graph.
+ * Applies execution state colors to specified nodes in the cytoscape graph.
  *
  * - Removes all custom classes from nodes and edges.
  * - Sets each node’s background and border color based on its execution state.
  *
  * @param cy - The cytoscape core instance managing the graph.
+ * @param nodes - Optional array of nodes to apply colors to. If not provided, all nodes are used.
  */
-function setExecutionNodeColors(cy: cytoscape.Core): void {
+function setExecutionNodeColors(cy: cytoscape.Core, nodes?: cytoscape.NodeSingular[]): void {
     // Remove all existing custom classes from the graph
     clearClasses(cy, EXECUTION);
 
-    // Apply state-based colors to nodes
-    cy.nodes().forEach((node) => {
+    // Apply state-based colors to provided nodes or all nodes
+    (nodes ?? cy.nodes()).forEach((node) => {
         node.style({
             "background-color": getStateColor(node),
             "border-color": getStateColor(node)
         });
+    });
+}
+
+/**
+ * Applies the given color to specified edges in the cytoscape graph.
+ *
+ * - Removes the `FADED` class and adds the `EXECUTIONS` class to each edge.
+ * - Sets the edge’s line and arrow colors using the provided color.
+ *
+ * @param edges - Array of edges to apply colors to.
+ * @param color - The color to apply to edges.
+ */
+function setExecutionEdgeColors(edges: cytoscape.EdgeCollection, color: string): void {
+    edges.forEach((edge) => {
+        edge.removeClass(FADED).addClass(EXECUTIONS).style({"line-color": color, "target-arrow-color": color});
     });
 }
 
@@ -174,10 +191,7 @@ function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selecte
         node.connectedEdges().union(node.connectedEdges().connectedNodes()).addClass(FADED);
     } else {
         // EXECUTION: Highlight connected edges with execution color
-        node.connectedEdges().removeClass(FADED).addClass(EXECUTIONS).style({
-            "line-color": getStateColor(node),
-            "target-arrow-color": getStateColor(node)
-        });
+        setExecutionEdgeColors(node.connectedEdges(), getStateColor(node));
     }
 
     // Update the Vue ref with the selected node’s ID
@@ -200,9 +214,9 @@ function hoverHandler(cy: cytoscape.Core): void {
 }
 
 /**
- * Initializes and manages a Cytoscape instance within a Vue component.
+ * Initializes and manages a cytoscape instance within a Vue component.
  *
- * @param container - Vue ref pointing to the DOM element that hosts the Cytoscape graph.
+ * @param container - Vue ref pointing to the DOM element that hosts the cytoscape graph.
  * @param subtype - Dependency subtype, either `"FLOW"` or `"EXECUTION"`. Defaults to `"FLOW"`.
  * @param initialNodeID - Optional ID of the node to preselect after layout completes.
  * @param params - Vue Router params, expected to include `id` and `namespace`.
@@ -299,11 +313,12 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
             const matched = cy.nodes().filter((element) => element.data("id") === `${message.tenantId}_${message.namespace}_${message.flowId}`);
 
             if (matched.nonempty()) {
-                matched.forEach((node) => {
+                matched.forEach((node: cytoscape.NodeSingular) => {
                     const state = message.state.current;
 
                     node.data({...node.data(), metadata: {...node.data("metadata"), state}});
-                    node.style({"background-color": State.getStateColor(state), "border-color": State.getStateColor(state)});
+                    setExecutionNodeColors(cy, node.toArray());
+                    setExecutionEdgeColors(node.connectedEdges(), getStateColor(undefined, state));
                 });
             }
         });

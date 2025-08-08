@@ -6,7 +6,6 @@ export const EXECUTION = "EXECUTION" as const;
 
 type Flow = {
     subtype: typeof FLOW;
-    revision?: number;
 };
 
 type Execution = {

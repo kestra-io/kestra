@@ -266,7 +266,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         let dashOffset = 0;
         function animateEdges(): void {
             dashOffset -= 0.25;
-            cy.edges(`.${SELECTED}, .${FADED}`).style("line-dash-offset", dashOffset);
+            cy.edges(`.${FADED}, .${EXECUTIONS}`).style("line-dash-offset", dashOffset);
             requestAnimationFrame(animateEdges);
         }
         animateEdges();

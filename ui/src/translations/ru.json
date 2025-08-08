@@ -362,6 +362,18 @@
     "dependencies delete flow": "Этот flow имеет зависимости. Удаление его предотвратит выполнение их зависимостей.<br /><br /> Вот список затронутых flows:",
     "dependencies loaded": "Зависимости загружены",
     "dependencies missing acls": "Нет разрешений на этот flow",
+    "dependency": {
+      "controls": {
+        "clear_selection": "Очистить выбор",
+        "fit_view": "По размеру экрана",
+        "zoom_in": "Увеличить",
+        "zoom_out": "Уменьшить масштаб"
+      },
+      "search": {
+        "no_results": "Результаты для {term} не найдены",
+        "placeholder": "Поиск по flow или namespace..."
+      }
+    },
     "dependency task": "Задача {taskId} является зависимостью другого задачи",
     "description": "Описание",
     "details": "Детали",

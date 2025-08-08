@@ -59,7 +59,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
 
     function highlightLines(range?: {start: number, end: number}) {
         if(!range) {
-            editorRefElement.value?.clearHighlights();
+            editorRefElement.value?.clearLinesRangeHighlights();
             return;
         }
 
@@ -95,7 +95,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
 
         if(!res || !playgroundStore.enabled || !isCurrentTabFlow.value) {
             highlightedLines.value = undefined;
-            editorRefElement.value?.clearHighlights();
+            editorRefElement.value?.clearLinesRangeHighlights();
             editorRefElement.value?.removeContentWidget(`task-hovered-${highlightedTaskId.value}`);
             highlightedTaskId.value = undefined;
             return;

@@ -22,7 +22,7 @@ public class WorkerCommand extends AbstractServerCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @Option(names = {"-t", "--thread"}, description = "The max number of worker threads, defaults to four times the number of available processors")
+    @Option(names = {"-t", "--thread"}, description = "The max number of worker threads, defaults to eight times the number of available processors")
     private int thread = defaultWorkerThread();
 
     @Option(names = {"-g", "--worker-group"}, description = "The worker group key, must match the regex [a-zA-Z0-9_-]+ (EE only)")

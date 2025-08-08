@@ -1,5 +1,5 @@
 <template>
-    <el-form label-position="top">
+    <el-form labelPosition="top">
         <el-form-item :required="true">
             <template #label>
                 <code>{{ $t("id") }}</code>
@@ -26,25 +26,25 @@
                     </el-button-group>
                 </div>
             </template>
-            <editor
+            <Editor
                 v-if="!preview"
                 v-model="newMetadata.description"
                 :navbar="false"
-                :full-height="false"
+                :fullHeight="false"
                 :input="true"
                 lang="text"
                 @update:model-value="(value) => newMetadata.description = value"
             />
-            <markdown v-else :source="newMetadata.description" />
+            <Markdown v-else :source="newMetadata.description" />
         </el-form-item>
         <el-form-item>
             <template #label>
                 <code>retry</code>
             </template>
-            <editor
-                :model-value="newMetadata.retry"
+            <Editor
+                :modelValue="newMetadata.retry"
                 :navbar="false"
-                :full-height="false"
+                :fullHeight="false"
                 :input="true"
                 lang="yaml"
                 @update:model-value="(value) => newMetadata.retry = value"
@@ -57,13 +57,13 @@
             <div class="d-flex w-100" v-for="(item, index) in newMetadata.labels" :key="index">
                 <div class="flex-fill flex-grow-1 w-100 me-2">
                     <el-input
-                        :model-value="item[0]"
+                        :modelValue="item[0]"
                         @update:model-value="onKey(index, $event)"
                     />
                 </div>
                 <div class="flex-fill flex-grow-1 w-100 me-2">
                     <el-input
-                        :model-value="item[1]"
+                        :modelValue="item[1]"
                         @update:model-value="onValue(index, $event)"
                     />
                 </div>
@@ -83,16 +83,16 @@
             <template #label>
                 <code>{{ $t("inputs") }}</code>
             </template>
-            <metadata-inputs v-model="newMetadata.inputs" :inputs="newMetadata.inputs" />
+            <MetadataInputs v-model="newMetadata.inputs" :inputs="newMetadata.inputs" />
         </el-form-item>
         <el-form-item>
             <template #label>
                 <code>{{ $t("outputs") }}</code>
             </template>
-            <editor
-                :model-value="newMetadata.outputs"
+            <Editor
+                :modelValue="newMetadata.outputs"
                 :navbar="false"
-                :full-height="false"
+                :fullHeight="false"
                 :input="true"
                 lang="yaml"
                 @update:model-value="(value) => newMetadata.outputs = value"
@@ -102,18 +102,18 @@
             <template #label>
                 <code>{{ $t("variables") }}</code>
             </template>
-            <metadata-variables v-model="newMetadata.variables" :variables="newMetadata.variables" />
+            <MetadataVariables v-model="newMetadata.variables" :variables="newMetadata.variables" />
         </el-form-item>
         <el-switch
-            :model-value="showConcurrency"
+            :modelValue="showConcurrency"
             @update:model-value="updateConcurrency"
-            :active-text="$t('enable concurrency')"
+            :activeText="$t('enable concurrency')"
         />
         <el-form-item v-if="concurrencySchema">
             <template #label>
                 <code>{{ $t("concurrency") }}</code>
                 <br>
-                <task-basic
+                <TaskBasic
                     :schema="concurrencySchema"
                     v-model="newMetadata.concurrency"
                     root="concurrency"
@@ -126,7 +126,7 @@
                 <code>{{ $t("disabled") }}</code>
             </template>
             <div>
-                <el-switch active-color="green" v-model="newMetadata.disabled" @update:model-value="(value) => newMetadata.disabled = value" />
+                <el-switch activeColor="green" v-model="newMetadata.disabled" @update:model-value="(value) => newMetadata.disabled = value" />
             </div>
         </el-form-item>
     </el-form>

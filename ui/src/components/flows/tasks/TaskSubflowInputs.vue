@@ -7,7 +7,7 @@
     >
         <el-select
             class="flex-fill flex-grow-1 w-100 me-2"
-            :model-value="inputWithValue[0]"
+            :modelValue="inputWithValue[0]"
             @update:model-value="onSelectedInputChange(inputWithValue[0], $event)"
             filterable
             :persistent="false"
@@ -21,9 +21,9 @@
                 :value="item"
             />
         </el-select>
-        <task-expression
+        <TaskExpression
             class="flex-fill flex-grow-1 w-100 me-2"
-            :model-value="inputWithValue[1]"
+            :modelValue="inputWithValue[1]"
             :task="task"
             @update:model-value="onInputValueChange(inputWithValue[0], $event)"
             :schema="schema"

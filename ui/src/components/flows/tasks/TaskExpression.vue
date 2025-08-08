@@ -1,13 +1,13 @@
 <template>
-    <editor
-        :model-value="localEditorValue"
+    <Editor
+        :modelValue="localEditorValue"
         :navbar="false"
-        :full-height="false"
+        :fullHeight="false"
         :input="true"
         lang="yaml"
         :placeholder="`Your ${root || 'value'} here...`"
         @update:model-value="editorInput"
-        :large-suggestions="false"
+        :largeSuggestions="false"
     />
 </template>
 <script lang="ts" setup>

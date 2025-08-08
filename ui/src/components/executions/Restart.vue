@@ -4,9 +4,9 @@
         v-if="isReplay || enabled"
         :persistent="false"
         transition=""
-        :hide-after="0"
+        :hideAfter="0"
         :content="tooltip"
-        raw-content
+        rawContent
         :placement="tooltipPosition"
     >
         <component
@@ -33,7 +33,7 @@
             </component>
         </span>
     </el-tooltip>
-    <el-dialog v-if="enabled && isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="enabled && isOpen" v-model="isOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>

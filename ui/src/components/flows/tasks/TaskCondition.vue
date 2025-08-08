@@ -1,11 +1,11 @@
 <template>
-    <el-input :model-value="JSON.stringify(values)">
+    <el-input :modelValue="JSON.stringify(values)">
         <template #append>
             <el-button :icon="TextSearch" @click="isOpen = true" />
         </template>
     </el-input>
 
-    <drawer
+    <Drawer
         v-if="isOpen"
         v-model="isOpen"
         :title="root"
@@ -13,11 +13,11 @@
         <template #header>
             <code>{{ root }}</code>
         </template>
-        <el-form label-position="top">
-            <task-editor
+        <el-form labelPosition="top">
+            <TaskEditor
                 ref="editor"
                 :section="SECTIONS.TRIGGERS"
-                :model-value="taskYaml"
+                :modelValue="taskYaml"
                 @update:model-value="onInput"
             />
         </el-form>
@@ -27,7 +27,7 @@
                 {{ $t('save') }}
             </el-button>
         </template>
-    </drawer>
+    </Drawer>
 </template>
 
 <script setup>

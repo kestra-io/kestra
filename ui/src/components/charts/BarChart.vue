@@ -3,12 +3,12 @@
         effect="light"
         placement="left"
         :persistent="false"
-        :hide-after="0"
+        :hideAfter="0"
         transition=""
-        :popper-class="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
+        :popperClass="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
         :disabled="!externalTooltip"
         :content="tooltipContent"
-        raw-content
+        rawContent
     >
         <div>
             <Bar

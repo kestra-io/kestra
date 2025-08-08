@@ -4,7 +4,7 @@
             title="tasks"
             :elements="items"
             :section
-            :block-schema-path="[schemaPath, 'properties', root, 'items'].join('/')"
+            :blockSchemaPath="[schemaPath, 'properties', root, 'items'].join('/')"
             @remove="(yaml) => flowStore.flowYaml = yaml"
             @reorder="(yaml) => flowStore.flowYaml = yaml"
         />

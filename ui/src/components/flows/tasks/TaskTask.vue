@@ -2,8 +2,8 @@
     <div class="w-100">
         <Element
             :section="root"
-            :parent-path-complete="parentPathComplete"
-            :block-schema-path="[schemaPath, 'properties', root.split('.').pop()].join('/')"
+            :parentPathComplete="parentPathComplete"
+            :blockSchemaPath="[schemaPath, 'properties', root.split('.').pop()].join('/')"
             :element="{
                 id: model?.id ?? 'Set a task',
                 type: model?.type,

@@ -1,9 +1,9 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo?.breadcrumb" />
+    <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo?.breadcrumb" />
     <template v-if="!pluginIsSelected">
-        <plugin-home v-if="pluginsStore.plugins" :plugins="pluginsStore.plugins" />
+        <PluginHome v-if="pluginsStore.plugins" :plugins="pluginsStore.plugins" />
     </template>
-    <docs-layout v-else>
+    <DocsLayout v-else>
         <template #menu>
             <Toc @router-change="onRouterChange" v-if="pluginsStore.plugins" :plugins="pluginsStore.plugins.filter(p => !p.subGroup)" />
         </template>
@@ -30,10 +30,10 @@
                     </el-select>
                 </div>
                 <div class="d-flex gap-3 mb-3 align-items-center">
-                    <task-icon
+                    <TaskIcon
                         class="plugin-icon"
                         :cls="pluginType"
-                        only-icon
+                        onlyIcon
                         :icons="pluginsStore.icons"
                     />
                     <h4 class="mb-0">
@@ -50,21 +50,21 @@
                     </el-button>
                 </div>
                 <Suspense v-loading="isLoading">
-                    <schema-to-html
+                    <SchemaToHtml
                         class="plugin-schema"
-                        :dark-mode="miscStore.theme === 'dark'"
+                        :darkMode="miscStore.theme === 'dark'"
                         :schema="pluginsStore.plugin.schema"
-                        :props-initially-expanded="true"
-                        :plugin-type="pluginType"
+                        :propsInitiallyExpanded="true"
+                        :pluginType="pluginType"
                     >
                         <template #markdown="{content}">
-                            <markdown font-size-var="font-size-base" :source="content" />
+                            <Markdown font-size-var="font-size-base" :source="content" />
                         </template>
-                    </schema-to-html>
+                    </SchemaToHtml>
                 </Suspense>
             </div>
         </template>
-    </docs-layout>
+    </DocsLayout>
 </template>
 
 <script setup>

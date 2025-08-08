@@ -1,6 +1,6 @@
 <template>
     <InputText
-        :model-value="modelValue"
+        :modelValue="modelValue"
         :disabled
         :placeholder="disabled ? t('no_code.version_oss_placeholder') : undefined"
         class="w-100"

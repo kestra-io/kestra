@@ -1,6 +1,6 @@
 <template>
     <TaskObject
-        :model-value="modelValue"
+        :modelValue="modelValue"
         :schema
         :definitions
         :properties="computedProperties"

@@ -5,7 +5,7 @@
             @update-task="onTaskUpdate"
         />
 
-        <el-form label-position="top" v-else>
+        <el-form labelPosition="top" v-else>
             <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema, v.fieldKey)" :transparent="v.fieldKey === 'inputs'">
                 <template #tasks>
                     <TaskObjectField

@@ -2,13 +2,13 @@
     <div id="topologyWrapper" v-loading="isLoading" class="vue-flow">
         <LowCodeEditor
             v-if="flowGraph"
-            :flow-graph="flowGraph"
-            :flow-id="flowId"
+            :flowGraph="flowGraph"
+            :flowId="flowId"
             :namespace="namespace"
-            :is-read-only="isReadOnly"
+            :isReadOnly="isReadOnly"
             :source="flowYaml"
-            :is-allowed-edit="isAllowedEdit"
-            :expanded-subflows="expandedSubflows"
+            :isAllowedEdit="isAllowedEdit"
+            :expandedSubflows="expandedSubflows"
             @on-edit="onEdit"
             @loading="loadingState"
             @expand-subflow="onExpandSubflow"

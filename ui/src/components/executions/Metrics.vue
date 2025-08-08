@@ -6,13 +6,13 @@
         {{ $t('metrics') }}
     </el-dropdown-item>
 
-    <drawer
+    <Drawer
         v-if="isOpen"
         v-model="isOpen"
         :title="$t('metrics')"
     >
-        <metrics-table ref="table" :task-run-id="taskRun.id" :execution="execution" />
-    </drawer>
+        <MetricsTable ref="table" :taskRunId="taskRun.id" :execution="execution" />
+    </Drawer>
 </template>
 
 <script setup>

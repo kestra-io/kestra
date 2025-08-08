@@ -3,7 +3,7 @@
         <label for="years">{{ $t('years') }}</label>
         <el-input-number
             size="small"
-            controls-position="right"
+            controlsPosition="right"
             id="years"
             v-model="years"
             :min="0"
@@ -13,7 +13,7 @@
         <label for="months">{{ $t('months') }}</label>
         <el-input-number
             size="small"
-            controls-position="right"
+            controlsPosition="right"
             id="months"
             v-model="months"
             :min="0"
@@ -23,7 +23,7 @@
         <label for="weeks">{{ $t('weeks') }}</label>
         <el-input-number
             size="small"
-            controls-position="right"
+            controlsPosition="right"
             id="weeks"
             v-model="weeks"
             :min="0"
@@ -33,7 +33,7 @@
         <label for="days">{{ $t('days') }}</label>
         <el-input-number
             size="small"
-            controls-position="right"
+            controlsPosition="right"
             id="days"
             v-model="days"
             :min="0"
@@ -43,7 +43,7 @@
         <label for="hours">{{ $t('hours') }}</label>
         <el-input-number
             size="small"
-            controls-position="right"
+            controlsPosition="right"
             id="hours"
             v-model="hours"
             :min="0"
@@ -53,7 +53,7 @@
         <label for="minutes">{{ $t('minutes') }}</label>
         <el-input-number
             size="small"
-            controls-position="right"
+            controlsPosition="right"
             id="minutes"
             v-model="minutes"
             :min="0"
@@ -63,7 +63,7 @@
         <label for="seconds">{{ $t('seconds') }}</label>
         <el-input-number
             size="small"
-            controls-position="right"
+            controlsPosition="right"
             id="seconds"
             v-model="seconds"
             :min="0"

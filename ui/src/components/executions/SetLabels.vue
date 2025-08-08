@@ -3,9 +3,9 @@
         effect="light"
         :persistent="false"
         transition=""
-        :hide-after="0"
+        :hideAfter="0"
         :content="$t('Set labels tooltip')"
-        raw-content
+        rawContent
         :placement="tooltipPosition"
     >
         <component
@@ -17,7 +17,7 @@
             {{ $t("Set labels") }}
         </component>
     </el-tooltip>
-    <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="isOpen" v-model="isOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <h5>{{ $t("Set labels") }}</h5>
         </template>
@@ -35,9 +35,9 @@
 
         <el-form>
             <el-form-item :label="$t('execution labels')">
-                <label-input
+                <LabelInput
                     v-model:labels="executionLabels"
-                    :existing-labels="execution.labels"
+                    :existingLabels="execution.labels"
                 />
             </el-form-item>
         </el-form>

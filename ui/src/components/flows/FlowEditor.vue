@@ -1,5 +1,5 @@
 <template>
-    <multi-panel-editor-view
+    <MultiPanelEditorView
         v-if="flowStore.flow"
     />
 </template>

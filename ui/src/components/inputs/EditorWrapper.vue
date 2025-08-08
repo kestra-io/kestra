@@ -2,15 +2,15 @@
     <Editor
         id="editorWrapper"
         ref="editorRefElement"
-        :model-value="draftSource === undefined ? source : draftSource"
-        :schema-type="isCurrentTabFlow ? 'flow': undefined"
+        :modelValue="draftSource === undefined ? source : draftSource"
+        :schemaType="isCurrentTabFlow ? 'flow': undefined"
         :lang="extension === undefined ? 'yaml' : undefined"
         :extension="extension"
         :navbar="false"
-        :read-only="isReadOnly"
+        :readOnly="isReadOnly"
         :creating="isCreating"
         :path="props.path"
-        :diff-overview-bar="false"
+        :diffOverviewBar="false"
         @update:model-value="editorUpdate"
         @cursor="updatePluginDocumentation"
         @save="isCurrentTabFlow ? save(): saveFileContent()"
@@ -18,7 +18,7 @@
         @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
         @mouse-leave="() => highlightHoveredTask(-1)"
         :original="draftSource === undefined ? undefined : source"
-        :diff-side-by-side="false"
+        :diffSideBySide="false"
     >
         <template #absolute>
             <AITriggerButton
@@ -30,7 +30,7 @@
             <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
         </template>
         <template v-if="playgroundStore.enabled" #widget-content>
-            <PlaygroundRunTaskButton :task-id="highlightedLines?.taskId" />
+            <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
         </template>
     </Editor>
     <Transition name="el-zoom-in-center">

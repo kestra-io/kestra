@@ -21,7 +21,7 @@
                     <component
                         :key="'array-' + index"
                         :is="componentType"
-                        :model-value="element"
+                        :modelValue="element"
                         :task="modelValue"
                         :root="`${root}[${index}]`"
                         :properties="{}"

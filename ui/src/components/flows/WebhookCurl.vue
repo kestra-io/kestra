@@ -3,11 +3,11 @@
         <div v-if="webhookTriggers.length > 0">
             <el-form-item :label="t('webhook.payload')" class="payload">
                 <Editor
-                    :full-height="false"
+                    :fullHeight="false"
                     :input="true"
                     :navbar="false"
                     lang="json"
-                    :show-scroll="true"
+                    :showScroll="true"
                     v-model="webhookPayload"
                 />
             </el-form-item>
@@ -18,12 +18,12 @@
                 </div>
             </div>
 
-            <el-alert type="info" show-icon :closable="false">
+            <el-alert type="info" showIcon :closable="false">
                 {{ t('webhook.curl_note') }}
             </el-alert>
         </div>
         <div v-else>
-            <el-alert type="warning" show-icon :closable="false">
+            <el-alert type="warning" showIcon :closable="false">
                 {{ t('webhook.no_triggers') }}
             </el-alert>
         </div>

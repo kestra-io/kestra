@@ -8,7 +8,7 @@
     >
         {{ $t("preview") }}
     </el-button>
-    <drawer
+    <Drawer
         v-if="selectedPreview === value && preview"
         v-model="isPreviewOpen"
     >
@@ -16,21 +16,21 @@
             {{ $t("preview") }}
         </template>
         <template #default>
-            <el-alert v-if="preview.truncated" show-icon type="warning" :closable="false" class="mb-2">
+            <el-alert v-if="preview.truncated" showIcon type="warning" :closable="false" class="mb-2">
                 {{ $t('file preview truncated') }}
             </el-alert>
-            <list-preview v-if="preview.type === 'LIST'" :value="preview.content" />
+            <ListPreview v-if="preview.type === 'LIST'" :value="preview.content" />
             <img v-else-if="preview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
-            <pdf-preview v-else-if="preview.type === 'PDF'" :source="preview.content" />
-            <markdown v-else-if="preview.type === 'MARKDOWN'" :source="preview.content" />
-            <editor
+            <PdfPreview v-else-if="preview.type === 'PDF'" :source="preview.content" />
+            <Markdown v-else-if="preview.type === 'MARKDOWN'" :source="preview.content" />
+            <Editor
                 v-else
-                :model-value="preview.content"
+                :modelValue="preview.content"
                 :lang="extensionToMonacoLang"
-                read-only
+                readOnly
                 input
-                :word-wrap="wordWrap"
-                :full-height="false"
+                :wordWrap="wordWrap"
+                :fullHeight="false"
                 :navbar="false"
                 class="position-relative"
             >
@@ -40,7 +40,7 @@
                             <el-tooltip
                                 :content="$t('toggle_word_wrap')"
                                 placement="bottom"
-                                :auto-close="2000"
+                                :autoClose="2000"
                             >
                                 <el-button
                                     :icon="Wrap"
@@ -51,7 +51,7 @@
                         </template>
                     </CopyToClipboard>
                 </template>
-            </editor>
+            </Editor>
             <el-form class="ks-horizontal max-size mt-3">
                 <el-form-item :label="$t('row count')">
                     <el-select
@@ -89,7 +89,7 @@
                 </el-form-item>
             </el-form>
         </template>
-    </drawer>
+    </Drawer>
 </template>
 
 <script setup>

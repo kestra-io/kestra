@@ -9,11 +9,11 @@
 
     <el-table
         :data="results"
-        :empty-text="t('dependency.search.no_results', {term: search})"
-        :show-header="false"
+        :emptyText="t('dependency.search.no_results', {term: search})"
+        :showHeader="false"
         class="nodes"
         @row-click="(row: { data: Node }) => emits('select', row.data.id)"
-        :row-class-name="({row}: { row: { data: Node } }) => row.data.id === props.selected ? 'selected' : ''"
+        :rowClassName="({row}: { row: { data: Node } }) => row.data.id === props.selected ? 'selected' : ''"
     >
         <el-table-column>
             <template #default="{row}">

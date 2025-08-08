@@ -2,12 +2,12 @@
     <div>
         <div data-testid="monaco-editor" class="ks-monaco-editor" ref="editorRef" />
         <div ref="datePickerWrapper" v-show="datePickerShown">
-            <el-date-picker
+            <ElDatePicker
                 ref="datePicker"
                 type="datetime"
                 v-model="selectedDate"
                 :teleported="false"
-                :default-value="nowMoment.toDate()"
+                :defaultValue="nowMoment.toDate()"
                 @change="datePickerCallback"
                 @keydown.esc.prevent="editorResolved?.focus()"
                 @keydown.enter.prevent="datePickerCallback"

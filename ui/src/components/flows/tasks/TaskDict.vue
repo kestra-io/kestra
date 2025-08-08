@@ -3,24 +3,24 @@
         v-if="duplicatedKeys?.length"
         :title="t('duplicate-pair', {label: t('key'), key: duplicatedKeys[0]})"
         type="error"
-        show-icon
+        showIcon
         :closable="false"
         class="mb-2"
     />
     <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
         <el-col :span="6">
             <InputText
-                :model-value="item[0]"
+                :modelValue="item[0]"
                 @update:model-value="onKey(index, $event)"
                 margin="m-0"
                 placeholder="Key"
-                :have-error="duplicatedKeys.includes(item[0])"
+                :haveError="duplicatedKeys.includes(item[0])"
             />
         </el-col>
         <el-col :span="16">
             <component
                 :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties) : TaskExpression"
-                :model-value="item[1]"
+                :modelValue="item[1]"
                 @update:model-value="onValueChange(index, $event)"
                 :root="getKey(item[0])"
                 :schema="schema.additionalProperties"

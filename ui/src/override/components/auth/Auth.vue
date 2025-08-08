@@ -132,8 +132,8 @@ html.menu-collapsed {
 }
 
 .user-avatar {
-    padding: 4px;
-    border-radius: 4px;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
 
 }
 </style>

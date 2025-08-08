@@ -24,7 +24,7 @@
                         </div>
 
                         <p class="description">
-                            {{ row.data.metadata.subtype === FLOW ? row.data.namespace : `${row.data.namespace}.${row.data.flow}` }}
+                            {{ row.data.namespace }}
                         </p>
                     </section>
 
@@ -52,7 +52,7 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import {NODE, FLOW, EXECUTION, type Node} from "../utils/types";
+    import {NODE, EXECUTION, type Node} from "../utils/types";
 
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
     const props = defineProps<{

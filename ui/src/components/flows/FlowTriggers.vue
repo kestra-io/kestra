@@ -282,7 +282,7 @@
     import {storageKeys} from "../../utils/constants.js";
     import {mapStores} from "pinia";
     import {useTriggerStore} from "../../stores/trigger";
-    import {useAuthStore} from "../../override/stores/auth";
+    import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";
 
     export default {

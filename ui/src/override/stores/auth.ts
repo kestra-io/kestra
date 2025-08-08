@@ -38,6 +38,9 @@ export const useAuthStore = defineStore("auth", {
     actions: {
         logout(){
             return Promise.resolve(true)
+        },
+        correction(){
+            return Promise.resolve(true)
         }
     },
 })

@@ -309,7 +309,7 @@
     import {storageKeys} from "../../utils/constants";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
-    import {useAuthStore} from "../../override/stores/auth.ts";
+    import {useAuthStore} from "override/stores/auth.ts";
     import {useFlowStore} from "../../stores/flow.ts";
 
     const CHART_DEFINITION = {

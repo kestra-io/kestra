@@ -168,7 +168,7 @@
     import {mapStores} from "pinia";
     import {useNamespaceSecrets, useAllSecrets, SecretIterator} from "../../composables/useSecrets";
     import {useNamespacesStore} from "override/stores/namespaces";
-    import {useAuthStore} from "../../override/stores/auth";
+    import {useAuthStore} from "override/stores/auth";
     import action from "../../models/action";
     import permission from "../../models/permission";
     import SelectTableActions from "../../mixins/selectTableActions";

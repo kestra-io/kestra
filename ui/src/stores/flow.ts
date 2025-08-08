@@ -17,7 +17,7 @@ import {InputType} from "../utils/inputs";
 import {globalI18n} from "../translations/i18n";
 import {transformResponse} from "../components/dependencies/composables/useDependencies";
 import {useNamespacesStore} from "override/stores/namespaces";
-import {useAuthStore} from "../override/stores/auth";
+import {useAuthStore} from "override/stores/auth";
 
 const textYamlHeader = {
     headers: {

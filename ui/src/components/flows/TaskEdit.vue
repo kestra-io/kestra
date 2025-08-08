@@ -95,7 +95,7 @@
     import Markdown from "../layout/Markdown.vue";
     import ValidationError from "./ValidationError.vue";
     import {usePluginsStore} from "../../stores/plugins";
-    import {useAuthStore} from "../../override/stores/auth";
+    import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";
 
     const {t} = useI18n()

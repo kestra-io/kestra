@@ -29,11 +29,8 @@
                     </section>
 
                     <section id="right">
-                        <span v-if="row.data.metadata.subtype === FLOW && row.data.metadata.revision">
-                            {{ t("revision") }}: {{ row.data.metadata.revision }}
-                        </span>
                         <Status
-                            v-else-if="row.data.metadata.subtype === EXECUTION && row.data.metadata.state"
+                            v-if="row.data.metadata.subtype === EXECUTION && row.data.metadata.state"
                             :status="row.data.metadata.state"
                             size="small"
                         />

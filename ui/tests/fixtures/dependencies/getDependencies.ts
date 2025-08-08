@@ -60,7 +60,6 @@ function createNode(subtype: typeof FLOW | typeof EXECUTION): Node {
             subtype === FLOW
                 ? {
                       subtype: FLOW,
-                      revision: getRandomNumber(1, 100),
                   }
                 : {
                       subtype: EXECUTION,
@@ -73,7 +72,7 @@ function createNode(subtype: typeof FLOW | typeof EXECUTION): Node {
  * Generates a synthetic dependency graph as an array of cytoscape compatible elements.
  *
  * The graph starts with `roots` root nodes and grows hierarchically up to the specified
- * `depth`. Each node includes a namespace, revision, and state.
+ * `depth`.
  *
  * @param options - Graph generation options.
  * @param options.roots - Number of root nodes (default 1).

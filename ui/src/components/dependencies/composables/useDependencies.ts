@@ -371,8 +371,8 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
  * @param subtype - The node subtype, either `"FLOW"` or `"EXECUTION"`.
  * @returns An array of cytoscape elements with correctly typed nodes and edges.
  */
-export function transformResponse(response: { nodes: { uid: string; namespace: string; id: string; revision?: string }[]; edges: { source: string; target: string }[] }, subtype: typeof FLOW | typeof EXECUTION): Element[] {
-  const nodes: Node[] = response.nodes.map((node) => ({id: node.uid, type: NODE, flow: node.id, namespace: node.namespace, metadata: subtype === FLOW ? {subtype: FLOW, revision: node.revision ? Number(node.revision) : undefined} : {subtype: EXECUTION}}));
+export function transformResponse(response: { nodes: { uid: string; namespace: string; id: string; }[]; edges: { source: string; target: string }[] }, subtype: typeof FLOW | typeof EXECUTION): Element[] {
+  const nodes: Node[] = response.nodes.map((node) => ({id: node.uid, type: NODE, flow: node.id, namespace: node.namespace, metadata: subtype === FLOW ? {subtype: FLOW} : {subtype: EXECUTION}}));
   const edges: Edge[] = response.edges.map((edge) => ({id: uuid(), type: EDGE, source: edge.source, target: edge.target}));
   return [...nodes.map((node) => ({data: node} as Element)), ...edges.map((edge) => ({data: edge} as Element))];
 }

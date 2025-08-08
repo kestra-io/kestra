@@ -56,7 +56,7 @@
             this.follow();
             window.addEventListener("popstate", this.follow)
 
-            this.dependenciesCount = (await this.$store.dispatch("flow/loadDependencies", {namespace: this.$route.params.namespace, id: this.$route.params.flowId})).count;
+            this.dependenciesCount = (await this.flowStore.loadDependencies({namespace: this.$route.params.namespace, id: this.$route.params.flowId})).count;
         },
         mounted() {
             this.previousExecutionId = this.$route.params.id

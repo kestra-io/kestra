@@ -34,7 +34,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {PropType, onMounted, watch, ref, computed} from "vue";
+    import {PropType, watch, ref, computed} from "vue";
 
     import type {RouteLocation} from "vue-router";
 
@@ -116,16 +116,24 @@
 
     const dashboardID = (route: RouteLocation) => getDashboard(route, "id") as string;
 
-    const handlePageChange = async (options: { page: number; size: number }) => {
+    const handlePageChange = (options: { page: number; size: number }) => {
         if (pageNumber.value === options.page && pageSize.value === options.size) return;
 
         pageNumber.value = options.page;
         pageSize.value = options.size;
 
-        getData(dashboardID(route));
+        return getData(dashboardID(route));
     };
 
-    watch(route, async (changed) => getData(dashboardID(changed)));
+    function refresh() {
+        return getData(dashboardID(route));
+    }
 
-    onMounted(async () => getData(dashboardID(route)));
+    defineExpose({
+        refresh
+    });
+
+    watch(() => route.params.filters, () => {
+        refresh();
+    }, {deep: true, immediate: true});
 </script>

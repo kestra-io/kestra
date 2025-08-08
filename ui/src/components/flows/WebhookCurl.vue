@@ -17,7 +17,7 @@
                     <CopyToClipboard :text="generateWebhookCurlCommand(trigger)" class="copy" />
                 </div>
             </div>
-            
+
             <el-alert type="info" show-icon :closable="false">
                 {{ t('webhook.curl_note') }}
             </el-alert>
@@ -32,11 +32,11 @@
 
 <script setup lang="ts">
     import {computed, onMounted, ref} from "vue";
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
     import Editor from "../inputs/Editor.vue";
     import {apiUrlWithoutTenants} from "../../override/utils/route";
+    import {useFlowStore} from "../../stores/flow";
 
     interface Flow {
         namespace: string;
@@ -55,18 +55,18 @@
         flow: Flow;
     }>();
 
-    const store = useStore();
     const {t} = useI18n();
     const webhookPayload = ref("{\"key1\":\"value1\",\"key2\":\"value2\"}");
 
+    const flowStore = useFlowStore();
     const webhookTriggers = computed(() => {
-        const sourceFlow = store.state.flow.flow || props.flow;
-        
+        const sourceFlow = flowStore.flow || props.flow;
+
         if (!sourceFlow?.triggers) {
             return [];
         }
-        
-        return sourceFlow.triggers.filter((trigger: Trigger) => 
+
+        return sourceFlow.triggers.filter((trigger: Trigger) =>
             trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
             (trigger.disabled === undefined || trigger.disabled === false)
         );
@@ -80,10 +80,10 @@
         if (!trigger.key) {
             return "Webhook key not available";
         }
-        
+
         const command = [`curl -X POST ${generateWebhookUrl(trigger)}`];
         command.push("-H \"Content-Type: application/json\"");
-        
+
         if (webhookPayload.value.trim()) {
             command.push(`-d '${webhookPayload.value}'`);
         }
@@ -98,7 +98,7 @@
     onMounted(async () => {
         if (props.flow?.namespace && props.flow?.id) {
             try {
-                await store.dispatch("flow/loadFlow", {
+                await flowStore.loadFlow({
                     namespace: props.flow.namespace,
                     id: props.flow.id
                 });

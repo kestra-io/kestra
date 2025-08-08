@@ -9,7 +9,7 @@
         :position
         :block-schema-path="blockSchemaPath"
         @update-task="(e) => editorUpdate(e)"
-        @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
+        @reorder="(yaml) => flowStore.flowYaml = yaml"
         @close-task="() => emit('closeTask')"
     />
 </template>
@@ -17,11 +17,11 @@
 <script setup lang="ts">
     import {computed, provide, ref} from "vue";
     import debounce from "lodash/debounce";
-    import {useStore} from "vuex";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import NoCode from "./NoCode.vue";
     import {CREATE_TASK_FUNCTION_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY} from "./injectionKeys";
     import {useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
 
     export interface NoCodeProps {
         creatingTask?: boolean;
@@ -49,8 +49,8 @@
         emit("editTask", parentPath, blockSchemaPath, refPath)
     });
 
-    const store = useStore();
-    const flowYaml = computed<string>(() => store.state.flow.flowYaml);
+    const flowStore = useFlowStore();
+    const flowYaml = computed<string>(() => flowStore.flowYaml ?? "");
 
     const lastValidFlowYaml = computed<string>(
         (oldValue) => {
@@ -64,15 +64,15 @@
     );
 
     const validateFlow = debounce(() => {
-        store.dispatch("flow/validateFlow", {flow: flowYaml.value});
+        flowStore.validateFlow({flow: flowYaml.value});
     }, 500);
 
     const timeout = ref();
     const editorStore = useEditorStore();
 
     const editorUpdate = (source: string) => {
-        store.commit("flow/setFlowYaml", source);
-        store.commit("flow/setHaveChange", true);
+        flowStore.flowYaml = source;
+        flowStore.haveChange = true;
         validateFlow();
         editorStore.setTabDirty({
             name: "Flow",
@@ -82,7 +82,7 @@
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {
-            store.dispatch("flow/onEdit", {
+            flowStore.onEdit({
                 source,
                 currentIsFlow: true,
                 topologyVisible: true,

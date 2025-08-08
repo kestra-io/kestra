@@ -818,7 +818,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private Optional<String> hashTask(RunContext runContext, Task task) {
         try {
             var map = JacksonMapper.toMap(task);
-            var rMap = runContext.render(map);
+            // If there are task provided variables, rendering the task may fail.
+            // The best we can do is to add a fake 'workingDir' as it's an often added variables,
+            // and it should not be part of the task hash.
+            Map<String, Object> variables = Map.of("workingDir", "workingDir");
+            var rMap = runContext.render(map, variables);
             var json = JacksonMapper.ofJson().writeValueAsBytes(rMap);
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.update(json);

@@ -1,10 +1,12 @@
 import {useCoreStore} from "../stores/core";
 import {useEditorStore} from "../stores/editor";
+import {useFlowStore} from "../stores/flow";
 
 export default (app, store, router) => {
     const confirmationMessage = app.config.globalProperties.$t("unsaved changed ?");
     const coreStore = useCoreStore();
     const editorStore = useEditorStore()
+    const flowStore = useFlowStore();
 
     window.addEventListener("beforeunload", (e) => {
         if (coreStore.unsavedChange) {
@@ -40,7 +42,7 @@ export default (app, store, router) => {
                      path: "Flow.yaml",
                      dirty: false,
                 });
-                store.commit("flow/setFlow", store.getters["flow/lastSavedFlow"]);
+                flowStore.flow = flowStore.lastSavedFlow;
                 coreStore.unsavedChange = false;
             } else {
                 return false;

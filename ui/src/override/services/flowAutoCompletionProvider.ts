@@ -1,3 +1,4 @@
+import {ComputedRef} from "vue";
 import type {Store} from "vuex";
 import type {JSONSchema} from "@kestra-io/ui-libs";
 import {YamlElement} from "@kestra-io/ui-libs";
@@ -6,8 +7,8 @@ import {QUOTE, YamlAutoCompletion} from "../../services/autoCompletionProvider";
 import RegexProvider from "../../utils/regex";
 import {State} from "@kestra-io/ui-libs";
 import {usePluginsStore} from "../../stores/plugins";
+import {useFlowStore} from "../../stores/flow";
 import {useNamespacesStore} from "override/stores/namespaces";
-import {ComputedRef} from "vue";
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []));
@@ -17,12 +18,20 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     store: Store<Record<string, any>>;
     flowsInputsCache: Record<string, string[]> = {};
     pluginsStore: ReturnType<typeof usePluginsStore>;
+    flowStore: ReturnType<typeof useFlowStore>;
     namespacesStore: ReturnType<typeof useNamespacesStore>;
     private readonly completionSource: ComputedRef<string | undefined> | undefined;
 
-    constructor(store: Store<Record<string, any>>, pluginsStore: ReturnType<typeof usePluginsStore>, namespacesStore: ReturnType<typeof useNamespacesStore>, completionSource?: ComputedRef<string | undefined>) {
+    constructor(
+        store: Store<Record<string, any>>,
+        flowStore: ReturnType<typeof useFlowStore>,
+        pluginsStore: ReturnType<typeof usePluginsStore>,
+        namespacesStore: ReturnType<typeof useNamespacesStore>,
+        completionSource?: ComputedRef<string | undefined>
+    ) {
         super();
         this.store = store;
+        this.flowStore = flowStore;
         this.pluginsStore = pluginsStore;
         this.namespacesStore = namespacesStore;
         this.completionSource = completionSource;
@@ -153,8 +162,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         const subflowUid = namespace + "." + flowId + (revision === undefined ? "" : `:${revision}`) ;
         if (this.flowsInputsCache?.[subflowUid] === undefined) {
             try {
-                const {inputs} = (await this.store.dispatch(
-                    "flow/loadFlow",
+                const {inputs} = (await this.flowStore.loadFlow(
                     {
                         namespace,
                         id: flowId,
@@ -190,7 +198,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             }
             case "flowId": {
                 if (parentTask !== undefined && parentTask.namespace !== undefined) {
-                    let flowIds: string[] = (await this.store.dispatch("flow/flowsByNamespace", parentTask.namespace))
+                    let flowIds: string[] = (await this.flowStore.flowsByNamespace(parentTask.namespace))
                         .map((flow: {id: string}) => flow.id)
                     if (parsed?.id !== undefined && parsed?.namespace === parentTask.namespace) {
                         flowIds = flowIds.filter(flowId => flowId !== parsed?.id);

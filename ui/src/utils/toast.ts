@@ -5,7 +5,7 @@ import {useI18n} from "vue-i18n"
 import Markdown from "../components/layout/Markdown.vue"
 
 
-const makeToast = (t: (t:string, options?: Record<string, string>) => string) => ({
+export const makeToast = (t: (t:string, options?: Record<string, string>) => string) => ({
     _wrap: function(message:string) {
         if(Array.isArray(message) && message.length > 0){
             return h(

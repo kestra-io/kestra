@@ -24,15 +24,15 @@
         v-model="visible"
         :title="t('filters.save.dialog.heading')"
         :width="540"
-        alignCenter
-        appendToBody
+        align-center
+        append-to-body
         @opened="input?.focus"
     >
         <section class="pb-3">
             <span class="text-secondary">
                 {{ t("filters.save.dialog.hint") }}
             </span>
-            <ElInput
+            <el-input
                 ref="input"
                 v-model="label"
                 :placeholder="t('filters.save.dialog.placeholder')"

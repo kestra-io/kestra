@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfo.title" v-if="!isFullScreen()" />
+    <top-nav-bar :title="routeInfo.title" v-if="!isFullScreen()" />
     <EmptyTemplate>
         <img :src="sourceImg" :alt="$t('errors.' + code + '.title')" class="img">
         <h2>{{ $t("errors." + code + ".title") }}</h2>

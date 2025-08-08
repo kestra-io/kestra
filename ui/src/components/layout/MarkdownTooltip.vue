@@ -1,19 +1,19 @@
 <template>
     <span data-component="FILENAME_PLACEHOLDER" v-if="description">
         <a @click="open()">
-            <HelpCircle
+            <help-circle
                 title=""
                 :id="'tooltip-desc-' + id"
             />
         </a>
 
-        <Drawer
+        <drawer
             v-if="isOpen"
             v-model="isOpen"
             :title="title"
         >
-            <Markdown class="markdown-tooltip" :source="description" />
-        </Drawer>
+            <markdown class="markdown-tooltip" :source="description" />
+        </drawer>
     </span>
 </template>
 

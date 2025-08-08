@@ -3,9 +3,9 @@
         <canvas id="pdf" />
 
         <nav v-if="rendered">
-            <el-tooltip :content="$t('page.previous')" effect="light" :showAfter="1500">
+            <el-tooltip :content="$t('page.previous')" effect="light" :show-after="1500">
                 <el-button @click="onPrevPage">
-                    <ChevronLeft />
+                    <chevron-left />
                 </el-button>
             </el-tooltip>
             <span>
@@ -13,9 +13,9 @@
                 {{ $t("of") }}
                 {{ pdfDoc?.numPages }}
             </span>
-            <el-tooltip :content="$t('page.next')" effect="light" :showAfter="1500">
+            <el-tooltip :content="$t('page.next')" effect="light" :show-after="1500">
                 <el-button @click="onNextPage">
-                    <ChevronRight />
+                    <chevron-right />
                 </el-button>
             </el-tooltip>
         </nav>

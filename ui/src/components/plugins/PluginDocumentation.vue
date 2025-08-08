@@ -22,17 +22,17 @@
                 </el-button>
             </div>
             <Suspense>
-                <SchemaToHtml
+                <schema-to-html
                     class="plugin-schema"
-                    :darkMode="miscStore.theme === 'dark'"
+                    :dark-mode="miscStore.theme === 'dark'"
                     :schema="pluginsStore.editorPlugin.schema"
-                    :pluginType="pluginsStore.editorPlugin.cls"
-                    :forceIncludeProperties="pluginsStore.forceIncludeProperties"
+                    :plugin-type="pluginsStore.editorPlugin.cls"
+                    :force-include-properties="pluginsStore.forceIncludeProperties"
                 >
                     <template #markdown="{content}">
                         <Markdown font-size-var="font-size-base" :source="content" />
                     </template>
-                </SchemaToHtml>
+                </schema-to-html>
             </Suspense>
         </template>
         <Markdown v-else :source="introContent" :class="{'position-absolute': absolute}" />

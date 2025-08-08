@@ -12,7 +12,7 @@
         <template #suffix>
             <div class="shortcut d-flex">
                 <slot name="suffix">
-                    <Magnify />
+                    <magnify />
                 </slot>
             </div>
         </template>

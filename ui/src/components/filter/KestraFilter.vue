@@ -7,13 +7,13 @@
                 ref="monacoEditor"
                 class="border flex-grow-1 position-relative"
                 :language="`${language.domain === undefined ? '' : (language.domain + '-')}${legacyQuery ? 'legacy-' : ''}filter`"
-                :schemaType="language.domain"
+                :schema-type="language.domain"
                 :value="filter"
                 @change="filter = $event"
                 :theme="themeComputed"
                 :options="options"
                 @editor-did-mount="editorDidMount"
-                suggestionsOnFocus
+                suggestions-on-focus
                 :placeholder="placeholder ?? t('filters.label')"
                 data-testid="monaco-filter"
             />
@@ -58,8 +58,8 @@
             <Properties
                 v-if="properties.shown"
                 :columns="properties.columns"
-                :modelValue="properties.displayColumns"
-                :storageKey="properties.storageKey"
+                :model-value="properties.displayColumns"
+                :storage-key="properties.storageKey"
                 @update-properties="(v: Property['displayColumns']) => emits('updateProperties', v)"
                 class="ms-1"
             />

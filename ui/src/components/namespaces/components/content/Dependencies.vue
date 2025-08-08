@@ -6,11 +6,11 @@
 
         <VueFlow
             v-else
-            :defaultMarkerColor="cssVariable('--bs-cyan')"
-            :fitViewOnInit="true"
-            :nodesConnectable="false"
-            :nodesDraggable="false"
-            :elevateNodesOnSelect="false"
+            :default-marker-color="cssVariable('--bs-cyan')"
+            :fit-view-on-init="true"
+            :nodes-connectable="false"
+            :nodes-draggable="false"
+            :elevate-nodes-on-select="false"
         >
             <Background />
 
@@ -24,13 +24,13 @@
                 />
             </template>
 
-            <Controls :showInteractive="false">
+            <Controls :show-interactive="false">
                 <ControlButton>
                     <el-tooltip
                         :content="$t('expand dependencies')"
                         :persistent="false"
                         transition=""
-                        :hideAfter="0"
+                        :hide-after="0"
                         effect="light"
                     >
                         <el-button

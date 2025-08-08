@@ -1,18 +1,18 @@
 <template>
     <el-card>
         <div class="vueflow">
-            <LowCodeEditor
+            <low-code-editor
                 :key="execution.id"
                 v-if="execution && flowGraph"
-                :flowId="execution.flowId"
+                :flow-id="execution.flowId"
                 :namespace="execution.namespace"
-                :flowGraph="flowGraph"
+                :flow-graph="flowGraph"
                 :source="flow?.source"
                 :execution="execution"
-                :expandedSubflows="expandedSubflows"
-                isReadOnly
+                :expanded-subflows="expandedSubflows"
+                is-read-only
                 @follow="$emit('follow', $event)"
-                viewType="topology"
+                view-type="topology"
                 @expand-subflow="onExpandSubflow"
             />
             <el-loading v-else-if="loading" />

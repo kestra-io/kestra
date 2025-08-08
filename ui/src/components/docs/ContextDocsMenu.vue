@@ -9,18 +9,18 @@
                     <span class="text-secondary">
                         {{ sectionName.toUpperCase() }}
                     </span>
-                    <RecursiveToc :parent="{children}">
+                    <recursive-toc :parent="{children}">
                         <template #default="{path, title}">
-                            <ContextDocsLink 
+                            <context-docs-link 
                                 @click="menuOpen = false" 
                                 :href="path.slice(5)" 
-                                useRaw
+                                use-raw
                                 :class="{'active-page': isCurrentPage(path)}"
                             >
                                 {{ title.capitalize() }}
-                            </ContextDocsLink>
+                            </context-docs-link>
                         </template>
-                    </RecursiveToc>
+                    </recursive-toc>
                 </li>
             </template>
             <li v-else>

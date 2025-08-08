@@ -4,9 +4,9 @@
     </a>
     <router-link v-else :to="$attrs.href" custom v-slot="{href:linkHref, navigate}">
         <a v-bind="$attrs" :href="linkHref" @click="navigate">
-            <EnterpriseBadge :enable="isLocked">
+            <enterprise-badge :enable="isLocked">
                 <slot />
-            </EnterpriseBadge>
+            </enterprise-badge>
         </a>
     </router-link>
 </template>

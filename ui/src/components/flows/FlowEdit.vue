@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
+    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
         <template #additional-right v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>
@@ -17,7 +17,7 @@
                 </li>
 
                 <li>
-                    <TriggerFlow v-if="flow && canExecute" :disabled="flow.disabled" :flowId="flow.id" type="default" :namespace="flow.namespace" />
+                    <trigger-flow v-if="flow && canExecute" :disabled="flow.disabled" :flow-id="flow.id" type="default" :namespace="flow.namespace" />
                 </li>
 
                 <li>
@@ -27,9 +27,9 @@
                 </li>
             </ul>
         </template>
-    </TopNavBar>
+    </top-nav-bar>
     <div class="mt-3 edit-flow-div">
-        <editor @save="save" v-model="content" schemaType="flow" lang="yaml" @update:model-value="onChange" @cursor="updatePluginDocumentation" />
+        <editor @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange" @cursor="updatePluginDocumentation" />
     </div>
 </template>
 

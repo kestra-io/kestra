@@ -1,5 +1,5 @@
 <template>
-    <el-form labelPosition="top" class="w-100">
+    <el-form label-position="top" class="w-100">
         <template v-if="sortedProperties">
             <template v-for="[fieldKey, fieldSchema] in requiredProperties" :key="fieldKey">
                 <TaskWrapper :merge>
@@ -42,8 +42,8 @@
         </template>
 
         <template v-else>
-            <TaskDict
-                :modelValue="modelValue"
+            <task-dict
+                :model-value="modelValue"
                 :task="task"
                 @update:model-value="
                     (value) => $emit('update:modelValue', value)

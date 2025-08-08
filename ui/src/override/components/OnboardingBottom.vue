@@ -1,6 +1,6 @@
 <template>
     <div class="onboarding-bottom">
-        <OnboardingCard
+        <onboarding-card
             v-for="card in cards"
             :key="card.title"
             :title="card.title"

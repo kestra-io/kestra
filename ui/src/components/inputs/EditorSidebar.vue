@@ -10,7 +10,7 @@
                 :placeholder="$t('namespace files.filter')"
                 filterable
                 remote
-                :remoteMethod="searchFilesList"
+                :remote-method="searchFilesList"
                 class="filter"
             >
                 <template #prefix>
@@ -29,9 +29,9 @@
                     effect="light"
                     :content="$t('namespace files.create.file')"
                     transition=""
-                    :hideAfter="0"
+                    :hide-after="0"
                     :persistent="false"
-                    popperClass="text-base"
+                    popper-class="text-base"
                 >
                     <el-button class="px-2" @click="toggleDialog(true, 'file')">
                         <FilePlus />
@@ -41,9 +41,9 @@
                     effect="light"
                     :content="$t('namespace files.create.folder')"
                     transition=""
-                    :hideAfter="0"
+                    :hide-after="0"
                     :persistent="false"
-                    popperClass="text-base"
+                    popper-class="text-base"
                 >
                     <el-button
                         class="px-2"
@@ -91,9 +91,9 @@
                     effect="light"
                     :content="$t('namespace files.export')"
                     transition=""
-                    :hideAfter="0"
+                    :hide-after="0"
                     :persistent="false"
-                    popperClass="text-base"
+                    popper-class="text-base"
                 >
                     <el-button class="px-2" @click="exportFiles()">
                         <FolderDownloadOutline />
@@ -107,12 +107,12 @@
             lazy
             :load="loadNodes"
             :data="items"
-            highlightCurrent
-            :allowDrop="
+            highlight-current
+            :allow-drop="
                 (_, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'
             "
             draggable
-            nodeKey="id"
+            node-key="id"
             v-loading="items === undefined"
             :props="{class: 'nodeClass', isLeaf: 'leaf'}"
             class="mt-3"

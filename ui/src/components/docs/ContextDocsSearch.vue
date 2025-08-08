@@ -11,7 +11,7 @@
             :loading="loading"
         >
             <template #prefix>
-                <Magnify class="search-icon" />
+                <magnify class="search-icon" />
             </template>
         </el-input>
         <div v-if="loading" class="loading-indicator">
@@ -19,13 +19,13 @@
         </div>
         <div v-if="showResults" class="search-results">
             <template v-if="searchResults.length > 0">
-                <ContextDocsLink
+                <context-docs-link
                     v-for="(result, index) in searchResults"
                     :key="result.url"
                     class="search-result"
                     :class="{'selected': index === selectedIndex}"
                     :href="result.parsedUrl.replace(/^docs\//, '')"
-                    useRaw
+                    use-raw
                     :data-index="index"
                     @click="resetSearch"
                 >
@@ -35,7 +35,7 @@
                     <p class="result-preview">
                         {{ result.preview }}
                     </p>
-                </ContextDocsLink>
+                </context-docs-link>
             </template>
             <div v-else class="no-results">
                 {{ t("no_results_found") }}

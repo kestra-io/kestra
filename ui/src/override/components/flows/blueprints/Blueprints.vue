@@ -1,33 +1,33 @@
 <template>
-    <DemoBlueprints v-if="props.tab === 'custom'" />
+    <demo-blueprints v-if="props.tab === 'custom'" />
     <template v-else>
-        <TopNavBar v-if="!props.embed" :title="routeInfo.title" />
-        <DottedLayout
+        <top-nav-bar v-if="!props.embed" :title="routeInfo.title" />
+        <dotted-layout
             :embed="props.embed"
             :phrase="$t('blueprints.header.catch phrase.2', {kind: props.kind})"
             :alt="$t('blueprints.header.alt')"
             :image="headerImage"
-            :imageDark="headerImageDark"
+            :image-dark="headerImageDark"
         >
             <section :class="{'main-container': true, 'blueprints-margin': !props.combinedView}" v-bind="$attrs">
-                <BlueprintDetail
+                <blueprint-detail
                     v-if="selectedBlueprintId"
                     :embed="props.embed"
-                    :blueprintId="selectedBlueprintId"
-                    blueprintType="community"
+                    :blueprint-id="selectedBlueprintId"
+                    blueprint-type="community"
                     @back="selectedBlueprintId = undefined"
-                    :combinedView="props.combinedView"
+                    :combined-view="props.combinedView"
                 />
-                <BlueprintsBrowser
+                <blueprints-browser
                     @loaded="emit('loaded', $event)"
                     :class="{'d-none': !!selectedBlueprintId}"
                     :embed="props.embed"
-                    :blueprintKind="props.kind"
-                    blueprintType="community"
+                    :blueprint-kind="props.kind"
+                    blueprint-type="community"
                     @go-to-detail="(blueprintId: string) => selectedBlueprintId = blueprintId"
                 />
             </section>
-        </DottedLayout>
+        </dotted-layout>
     </template>
 </template>
 <script setup lang="ts">

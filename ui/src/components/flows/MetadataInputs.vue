@@ -8,7 +8,7 @@
             @click="selectInput(input, index)"
         >
             <el-col :span="24" class="d-flex">
-                <InputText readonly :modelValue="input.id" class="w-100" />
+                <InputText readonly :model-value="input.id" class="w-100" />
                 <DeleteOutline
                     @click.prevent.stop="deleteInput(index)"
                     class="ms-2 delete"

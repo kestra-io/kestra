@@ -6,7 +6,7 @@
         :content="inverted ? from : full"
         :persistent="false"
         transition=""
-        :hideAfter="0"
+        :hide-after="0"
         effect="light"
     >
         <span :class="className">{{ inverted ? full : from }}</span>

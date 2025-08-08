@@ -3,8 +3,8 @@
     <section class="full-container">
         <Editor
             v-if="dashboard.sourceCode"
-            :initialSource="dashboard.sourceCode"
-            allowSaveUnchanged
+            :initial-source="dashboard.sourceCode"
+            allow-save-unchanged
             @save="save"
         />
     </section>

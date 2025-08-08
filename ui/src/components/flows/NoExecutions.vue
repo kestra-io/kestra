@@ -14,9 +14,9 @@
                     <TriggerFlow
                         type="primary"
                         :disabled="flow.disabled"
-                        :flowId="flow.id"
+                        :flow-id="flow.id"
                         :namespace="flow.namespace"
-                        :flowSource="flow.source"
+                        :flow-source="flow.source"
                     />
                 </div>
                 <el-divider />

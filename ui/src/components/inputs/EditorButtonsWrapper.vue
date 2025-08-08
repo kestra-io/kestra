@@ -4,19 +4,19 @@
 
         <ValidationError
             class="validation"
-            tooltipPlacement="bottom-start"
+            tooltip-placement="bottom-start"
             :errors="flowErrors"
             :warnings="flowWarnings"
             :infos="flowInfos"
         />
 
         <EditorButtons
-            :isCreating="isCreating"
-            :isReadOnly="isReadOnly"
-            :canDelete="true"
-            :isAllowedEdit="isAllowedEdit"
-            :haveChange="store.state.flow.haveChange || tabs.some(t => t.dirty === true)"
-            :flowHaveTasks="Boolean(flowHaveTasks)"
+            :is-creating="isCreating"
+            :is-read-only="isReadOnly"
+            :can-delete="true"
+            :is-allowed-edit="isAllowedEdit"
+            :have-change="store.state.flow.haveChange || tabs.some(t => t.dirty === true)"
+            :flow-have-tasks="Boolean(flowHaveTasks)"
             :errors="flowErrors"
             :warnings="flowWarnings"
             @save="save"
@@ -31,7 +31,7 @@
             "
             @export="exportYaml"
             @delete-flow="deleteFlow"
-            :isNamespace="false"
+            :is-namespace="false"
         />
     </div>
 </template>

@@ -38,7 +38,7 @@
                     v-if="tab.path && !tab.persistent"
                     :content="tab.path"
                     transition=""
-                    :hideAfter="0"
+                    :hide-after="0"
                     :persistent="false"
                 >
                     <span class="tab-name px-2">{{ tab.name }}</span>
@@ -77,14 +77,14 @@
                 v-if="!isNamespace"
                 v-model="editorViewType"
                 @change="(val) => editorViewType = val"
-                activeValue="NO_CODE"
-                inactiveValue="YAML"
-                :inactiveText="$t('no_code.labels.no_code')"
+                active-value="NO_CODE"
+                inactive-value="YAML"
+                :inactive-text="$t('no_code.labels.no_code')"
                 size="small"
                 class="me-2"
             />
 
-            <SwitchView
+            <switch-view
                 v-if="!isNamespace"
                 :type="viewType"
                 class="to-topology-button"
@@ -95,7 +95,7 @@
                 v-if="!isNamespace"
                 ref="validationDomElement"
                 class="validation"
-                tooltipPlacement="bottom-start"
+                tooltip-placement="bottom-start"
                 :errors="flowErrors"
                 :warnings="flowWarnings"
                 :infos="flowInfos"
@@ -103,12 +103,12 @@
 
             <EditorButtons
                 v-if="isCreating || openedTabs.length"
-                :isCreating="props.isCreating"
-                :isReadOnly="props.isReadOnly"
-                :canDelete="canDelete()"
-                :isAllowedEdit="isAllowedEdit"
-                :haveChange="flowYaml !== flowYamlOrigin"
-                :flowHaveTasks="flowHaveTasks"
+                :is-creating="props.isCreating"
+                :is-read-only="props.isReadOnly"
+                :can-delete="canDelete()"
+                :is-allowed-edit="isAllowedEdit"
+                :have-change="flowYaml !== flowYamlOrigin"
+                :flow-have-tasks="flowHaveTasks"
                 :errors="flowErrors"
                 :warnings="flowWarnings"
                 @delete-flow="deleteFlow"
@@ -121,7 +121,7 @@
                             params: {tenant: routeParams.tenant},
                         })
                 "
-                :isNamespace="isNamespace"
+                :is-namespace="isNamespace"
             />
         </div>
     </div>
@@ -134,15 +134,15 @@
         >
             <template v-if="editorViewType === 'YAML'">
                 <template v-if="isCreating || openedTabs.length">
-                    <Editor
+                    <editor
                         class="position-relative"
                         ref="editorDomElement"
                         @save="save"
                         @execute="execute"
                         :path="currentTab?.path"
-                        :diffOverviewBar="false"
-                        :modelValue="flowYaml"
-                        :schemaType="isCurrentTabFlow? 'flow': undefined"
+                        :diff-overview-bar="false"
+                        :model-value="flowYaml"
+                        :schema-type="isCurrentTabFlow? 'flow': undefined"
                         :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
                         :extension="currentTab?.extension"
                         @update:model-value="editorUpdate"
@@ -150,10 +150,10 @@
                         :creating="isCreating"
                         @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
                         @tab-loaded="onTabLoaded"
-                        :readOnly="isReadOnly"
+                        :read-only="isReadOnly"
                         :navbar="false"
                         :original="flowYaml"
-                        :diffSideBySide="false"
+                        :diff-side-by-side="false"
                     />
                 </template>
                 <div v-else class="no-tabs-opened">
@@ -238,7 +238,7 @@
                 v-else-if="isFlow"
                 :flow="flowYaml"
                 :section="route.query.section?.toString()"
-                :taskId="route.query.identifier?.toString()"
+                :task-id="route.query.identifier?.toString()"
                 :position="route.query.position === 'before' ? 'before' : 'after'"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
@@ -251,7 +251,7 @@
                 v-if="viewType === editorViewTypes.SOURCE_BLUEPRINTS"
                 class="combined-right-view enhance-readability"
             >
-                <Blueprints @loaded="blueprintsLoaded = true" embed kind="flow" combinedView />
+                <Blueprints @loaded="blueprintsLoaded = true" embed kind="flow" combined-view />
             </div>
 
             <div
@@ -267,19 +267,19 @@
                     @loading="loadingState"
                     @expand-subflow="onExpandSubflow"
                     @swapped-task="onSwappedTask"
-                    :flowGraph="flowGraph"
-                    :flowId="flowId"
+                    :flow-graph="flowGraph"
+                    :flow-id="flowId"
                     :namespace="namespace"
                     :execution="execution"
-                    :isReadOnly="isReadOnly"
+                    :is-read-only="isReadOnly"
                     :source="flowYaml"
-                    :isAllowedEdit="isAllowedEdit"
-                    :horizontalDefault="viewType === editorViewTypes.SOURCE_TOPOLOGY
+                    :is-allowed-edit="isAllowedEdit"
+                    :horizontal-default="viewType === editorViewTypes.SOURCE_TOPOLOGY
                         ? false
                         : viewType === editorViewTypes.SOURCE_BLUEPRINTS
                             ? true
                             : undefined"
-                    :expandedSubflows="props.expandedSubflows"
+                    :expanded-subflows="props.expandedSubflows"
                 />
                 <el-alert v-else type="warning" :closable="false">
                     {{ $t("unable to generate graph") }}
@@ -292,12 +292,12 @@
             />
         </div>
 
-        <Drawer
+        <drawer
             v-model="isNewErrorOpen"
             title="Add a global error handler"
         >
-            <el-form labelPosition="top">
-                <TaskEditor
+            <el-form label-position="top">
+                <task-editor
                     :section="SECTIONS.TASKS"
                     @update:model-value="onUpdateNewError"
                 />
@@ -313,13 +313,13 @@
                     {{ $t("save") }}
                 </el-button>
             </template>
-        </Drawer>
-        <Drawer
+        </drawer>
+        <drawer
             v-model="isNewTriggerOpen"
             title="Add a trigger"
         >
-            <el-form labelPosition="top">
-                <TaskEditor
+            <el-form label-position="top">
+                <task-editor
                     :section="SECTIONS.TRIGGERS"
                     @update:model-value="onUpdateNewTrigger"
                 />
@@ -335,8 +335,8 @@
                     {{ $t("save") }}
                 </el-button>
             </template>
-        </Drawer>
-        <Drawer
+        </drawer>
+        <drawer
             v-if="isEditMetadataOpen"
             v-model="isEditMetadataOpen"
         >
@@ -344,8 +344,8 @@
                 <code>flow metadata</code>
             </template>
 
-            <el-form labelPosition="top">
-                <MetadataEditor
+            <el-form label-position="top">
+                <metadata-editor
                     :metadata="store.getters['flow/flowYamlMetadata']"
                     @update:model-value="onUpdateMetadata"
                     :editing="!props.isCreating"
@@ -362,13 +362,13 @@
                     {{ $t("save") }}
                 </el-button>
             </template>
-        </Drawer>
+        </drawer>
     </div>
     <el-dialog
         v-if="confirmOutdatedSaveDialog"
         v-model="confirmOutdatedSaveDialog"
-        destroyOnClose
-        :appendToBody="true"
+        destroy-on-close
+        :append-to-body="true"
     >
         <template #header>
             <h5>{{ $t(`${baseOutdatedTranslationKey}.title`) }}</h5>

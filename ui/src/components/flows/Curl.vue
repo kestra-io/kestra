@@ -2,9 +2,9 @@
     <div class="position-relative">
         <pre><code>{{ curlCommand }}</code></pre>
 
-        <CopyToClipboard :text="curlCommand" />
+        <copy-to-clipboard :text="curlCommand" />
 
-        <el-alert class="mt-3" type="info" showIcon :closable="false">
+        <el-alert class="mt-3" type="info" show-icon :closable="false">
             {{ $t('curl.note') }}
         </el-alert>
     </div>

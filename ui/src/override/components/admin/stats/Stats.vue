@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfo.title" />
+    <top-nav-bar :title="routeInfo.title" />
     <section class="container" v-show="ready">
         <Usages class="mb-2" @loaded="ready = true" />
         <EditionComparator class="mt-4" />

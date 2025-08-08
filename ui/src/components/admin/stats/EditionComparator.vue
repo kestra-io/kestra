@@ -1,7 +1,7 @@
 <template>
     <el-row :gutter="32">
         <el-col :span="8" v-for="characteristics in editionCharacteristics" :key="characteristics.name">
-            <EditionCharacteristics
+            <edition-characteristics
                 class="h-100"
                 :name="characteristics.name"
                 :price="characteristics.price"

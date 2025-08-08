@@ -5,16 +5,16 @@
             class="flex-shrink-0"
             v-model="filter"
             @select="goTo"
-            :fetchSuggestions="search"
-            highlightFirstItem
-            popperClass="global-search-popper"
+            :fetch-suggestions="search"
+            highlight-first-item
+            popper-class="global-search-popper"
             :placeholder="$t('jump to...')"
         >
             <template #prefix>
-                <Magnify />
+                <magnify />
             </template>
             <template #suffix>
-                <Keyboard title="Ctrl/Cmd + K" />
+                <keyboard title="Ctrl/Cmd + K" />
                 <span class="d-none d-xl-block">Ctrl/Cmd + K</span>
             </template>
             <template #default="{item}">
@@ -25,7 +25,7 @@
                     <div class="d-flex gap-2 nav-item-title">
                         <component v-if="item.icon?.element" :is="{...item.icon.element}" class="align-middle" /> {{ item.title }}
                     </div>
-                    <ArrowRight class="is-justify-end" />
+                    <arrow-right class="is-justify-end" />
                 </router-link>
             </template>
         </el-autocomplete>

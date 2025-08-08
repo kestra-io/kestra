@@ -5,7 +5,7 @@
             <el-select
                 v-if="!top"
                 size="small"
-                :modelValue="internalSize"
+                :model-value="internalSize"
                 @update:model-value="pageSizeChange"
             >
                 <el-option
@@ -18,12 +18,12 @@
         </div>
         <div v-if="isPaginationDisplayed">
             <el-pagination
-                v-model:currentPage="internalPage"
-                :pageSize="internalSize"
-                v-model:pageSize="internalSize"
+                v-model:current-page="internalPage"
+                :page-size="internalSize"
+                v-model:page-size="internalSize"
                 size="small"
                 layout="prev, pager, next"
-                :pagerCount="5"
+                :pager-count="5"
                 :total="total"
                 @current-change="pageChanged"
                 class="my-0"

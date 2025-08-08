@@ -1,8 +1,8 @@
 <template>
     <el-dropdown
-        splitButton
+        split-button
         @visible-change="playgroundStore.dropdownOpened = $event"
-        :buttonProps="{class: 'el-button--playground'}"
+        :button-props="{class: 'el-button--playground'}"
         @click="playgroundStore.runUntilTask(taskId)"
         :disabled="!playgroundStore.readyToStart"
     >

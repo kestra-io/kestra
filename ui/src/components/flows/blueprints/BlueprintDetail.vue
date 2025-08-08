@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar v-if="!embed && blueprint" :title="blueprint.title" :breadcrumb="breadcrumb" v-loading="!blueprint">
+    <top-nav-bar v-if="!embed && blueprint" :title="blueprint.title" :breadcrumb="breadcrumb" v-loading="!blueprint">
         <template #additional-right>
             <ul v-if="userCanCreateFlow">
                 <router-link :to="toEditor()">
@@ -9,7 +9,7 @@
                 </router-link>
             </ul>
         </template>
-    </TopNavBar>
+    </top-nav-bar>
     <div v-else-if="blueprint" class="header-wrapper">
         <div class="header d-flex">
             <button class="back-button align-self-center">
@@ -31,14 +31,14 @@
     <section v-bind="$attrs" :class="{'container': !embed}" class="blueprint-container" v-loading="!blueprint">
         <el-card v-if="blueprint && kind === 'flow'">
             <div class="embedded-topology" v-if="flowGraph">
-                <LowCodeEditor
+                <low-code-editor
                     v-if="flowGraph"
-                    :flowId="parsedFlow.id"
+                    :flow-id="parsedFlow.id"
                     :namespace="parsedFlow.namespace"
-                    :flowGraph="flowGraph"
+                    :flow-graph="flowGraph"
                     :source="blueprint.source"
-                    :viewType="embed ? 'source-blueprints' : 'blueprints'"
-                    isReadOnly
+                    :view-type="embed ? 'source-blueprints' : 'blueprints'"
+                    is-read-only
                 />
             </div>
         </el-card>
@@ -46,19 +46,19 @@
             <el-col :md="24" :lg="embed ? 24 : 18">
                 <h4>{{ $t("source") }}</h4>
                 <el-card>
-                    <Editor
+                    <editor
                         class="position-relative"
-                        :readOnly="true"
+                        :read-only="true"
                         :input="true"
-                        :fullHeight="false"
-                        :modelValue="blueprint.source"
+                        :full-height="false"
+                        :model-value="blueprint.source"
                         lang="yaml"
                         :navbar="false"
                     >
                         <template #absolute>
-                            <CopyToClipboard :text="blueprint.source" />
+                            <copy-to-clipboard :text="blueprint.source" />
                         </template>
-                    </Editor>
+                    </editor>
                 </el-card>
                 <template v-if="blueprint.description">
                     <h4>{{ $t('about_this_blueprint') }}</h4>
@@ -69,14 +69,14 @@
                             </el-tag>
                         </div>
                     </div>
-                    <Markdown :source="blueprint.description" />
+                    <markdown :source="blueprint.description" />
                 </template>
             </el-col>
             <el-col :md="24" :lg="embed ? 24 : 6" v-if="blueprint?.includedTasks?.length > 0">
                 <h4>{{ $t('plugins.names') }}</h4>
                 <div class="plugins-container">
                     <div v-for="task in [...new Set(blueprint.includedTasks)]" :key="task">
-                        <TaskIcon :cls="task" :icons="pluginsStore.icons" />
+                        <task-icon :cls="task" :icons="pluginsStore.icons" />
                     </div>
                 </div>
             </el-col>

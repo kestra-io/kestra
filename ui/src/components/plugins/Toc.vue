@@ -28,8 +28,8 @@
                                                 :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
                                             >
                                                 <div class="icon">
-                                                    <TaskIcon
-                                                        :onlyIcon="true"
+                                                    <task-icon
+                                                        :only-icon="true"
                                                         :cls="namespace + '.' + cls"
                                                         :icons="pluginsStore.icons"
                                                     />

@@ -15,7 +15,7 @@
             <el-input
                 v-model="searchQuery"
                 :placeholder="$t('search')"
-                :prefixIcon="Magnify"
+                :prefix-icon="Magnify"
                 class="rounded-2 w-100 mb-2"
             />
             <div class="pe-2 scrollable-container">

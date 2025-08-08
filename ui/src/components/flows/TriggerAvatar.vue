@@ -8,15 +8,15 @@
                     :title="`${$t('trigger details')}: ${trigger ? trigger.id : ''}`"
                     :width="500"
                     transition=""
-                    :hideAfter="0"
+                    :hide-after="0"
                 >
                     <template #reference>
                         <el-button @click="copyLink(trigger)" size="small">
-                            <TaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
+                            <task-icon :only-icon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
                         </el-button>
                     </template>
                     <template #default>
-                        <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
+                        <trigger-vars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
                     </template>
                 </el-popover>
             </template>

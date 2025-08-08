@@ -6,7 +6,7 @@
         ref="taskEdit"
     >
         <span v-if="component !== 'el-button' && !isHidden">{{ $t("show task source") }}</span>
-        <Drawer
+        <drawer
             v-if="isModalOpen"
             v-model="isModalOpen"
         >
@@ -27,7 +27,7 @@
                         {{ $t("save task") }}
                     </el-button>
                     <el-alert
-                        showIcon
+                        show-icon
                         :closable="false"
                         class="mb-0 mt-3"
                         v-if="revision && revisions?.length !== revision"
@@ -43,7 +43,7 @@
                     <template #label>
                         <span>{{ $t("form") }}</span>
                     </template>
-                    <TaskEditor
+                    <task-editor
                         ref="editor"
                         v-model="taskYaml"
                         :section="section"
@@ -54,13 +54,13 @@
                     <template #label>
                         <span>{{ $t("source") }}</span>
                     </template>
-                    <Editor
-                        :readOnly="readOnly"
+                    <editor
+                        :read-only="readOnly"
                         ref="editor"
                         @save="saveTask"
                         v-model="taskYaml"
-                        :schemaType="section.toLowerCase()"
-                        :fullHeight="false"
+                        :schema-type="section.toLowerCase()"
+                        :full-height="false"
                         :navbar="false"
                         lang="yaml"
                         @update:model-value="onInput"
@@ -73,11 +73,11 @@
                         </span>
                     </template>
                     <div class="documentation">
-                        <Markdown :source="pluginMarkdown" />
+                        <markdown :source="pluginMarkdown" />
                     </div>
                 </el-tab-pane>
             </el-tabs>
-        </Drawer>
+        </drawer>
     </component>
 </template>
 

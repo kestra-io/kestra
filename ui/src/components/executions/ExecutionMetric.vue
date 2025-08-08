@@ -1,15 +1,15 @@
 <template>
     <MetricsTable
         ref="table"
-        :taskRunId="route.query.metric?.[0] ?? undefined"
-        :showTask="true"
+        :task-run-id="route.query.metric?.[0] ?? undefined"
+        :show-task="true"
         :execution="executionsStore.execution"
     >
         <template #navbar>
             <KestraFilter
                 :language="metricFilterLang"
                 :placeholder="`${t('display metric for specific task')}...`"
-                legacyQuery
+                legacy-query
             />
         </template>
     </MetricsTable>

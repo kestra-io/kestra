@@ -6,7 +6,7 @@
     >
         <span v-if="component !== 'el-button'">{{ $t('worker information') }}</span>
 
-        <el-dialog v-if="visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
+        <el-dialog v-if="visible" v-model="visible" :id="uuid" destroy-on-close :append-to-body="true">
             <template #header>
                 <h5>{{ $t("worker information") }}</h5>
             </template>
@@ -14,7 +14,7 @@
             <template #default>
                 <ol>
                     <li v-for="item in taskRun.attempts" :key="item.id">
-                        <ServiceInfo :serviceId="item.workerId" />
+                        <ServiceInfo :service-id="item.workerId" />
                     </li>
                 </ol>
             </template>

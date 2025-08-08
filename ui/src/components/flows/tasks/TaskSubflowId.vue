@@ -1,11 +1,11 @@
 <template>
     <el-select
-        :modelValue="values"
+        :model-value="values"
         @update:model-value="onInput"
         filterable
         clearable
         :persistent="false"
-        allowCreate
+        allow-create
         :placeholder="task.namespace ? 'Select' : 'Select namespace first'"
         :disabled="!task.namespace"
     >

@@ -1,8 +1,8 @@
 <template>
     <template v-if="ready">
-        <ExecutionRootTopBar :routeInfo="routeInfo" />
-        <Tabs
-            :routeName="$route.params && $route.params.id ? 'executions/update': ''"
+        <execution-root-top-bar :route-info="routeInfo" />
+        <tabs
+            :route-name="$route.params && $route.params.id ? 'executions/update': ''"
             @follow="follow"
             :tabs="tabs"
         />

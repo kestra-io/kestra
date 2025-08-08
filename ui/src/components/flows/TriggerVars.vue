@@ -1,5 +1,5 @@
 <template>
-    <el-table stripe tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
+    <el-table stripe table-layout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
         <el-table-column prop="key" rowspan="3" :label="$t('name')">
             <template #default="scope">
                 <code>{{ scope.row.key }}</code>
@@ -9,10 +9,10 @@
         <el-table-column prop="value" :label="$t('value')">
             <template #default="scope">
                 <template v-if="scope.row.key === 'description'">
-                    <Markdown :source="scope.row.value" />
+                    <markdown :source="scope.row.value" />
                 </template>
                 <template v-else-if="scope.row.key === 'cron'">
-                    <Cron :cronExpression="scope.row.value" />
+                    <cron :cron-expression="scope.row.value" />
                 </template>
                 <template v-else-if="scope.row.key === 'key'">
                     {{ scope.row.value }}
@@ -21,7 +21,7 @@
                     </el-button>
                 </template>
                 <template v-else>
-                    <VarValue :value="scope.row.value" :execution="execution" :restrictUri="true" />
+                    <var-value :value="scope.row.value" :execution="execution" :restrict-uri="true" />
                 </template>
             </template>
         </el-table-column>

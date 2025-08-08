@@ -1,6 +1,6 @@
 <template>
     <div data-component="FILENAME_PLACEHOLDER">
-        <Collapse>
+        <collapse>
             <el-form-item>
                 <el-input
                     v-model="filter"
@@ -8,22 +8,22 @@
                     :placeholder="$t('search')"
                 >
                     <template #suffix>
-                        <Magnify />
+                        <magnify />
                     </template>
                 </el-input>
             </el-form-item>
             <el-form-item>
-                <LogLevelSelector
+                <log-level-selector
                     v-model="level"
                     @update:model-value="onChange"
                 />
             </el-form-item>
             <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
-                <LogLevelNavigator
+                <log-level-navigator
                     v-if="countByLogLevel[logLevel] > 0"
-                    :cursorIdx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
+                    :cursor-idx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
                     :level="logLevel"
-                    :totalCount="countByLogLevel[logLevel]"
+                    :total-count="countByLogLevel[logLevel]"
                     @previous="previousLogForLevel(logLevel)"
                     @next="nextLogForLevel(logLevel)"
                     @close="logCursor = undefined"
@@ -46,51 +46,51 @@
             </el-form-item>
             <el-form-item>
                 <el-button-group class="ks-b-group">
-                    <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
+                    <restart v-if="executionsStore.execution" :execution="executionsStore.execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
                     <el-button @click="downloadContent()">
-                        <Kicon :tooltip="$t('download logs')">
-                            <Download />
-                        </Kicon>
+                        <kicon :tooltip="$t('download logs')">
+                            <download />
+                        </kicon>
                     </el-button>
                     <el-button @click="copyAllLogs()">
-                        <Kicon :tooltip="$t('copy logs')">
-                            <ContentCopy />
-                        </Kicon>
+                        <kicon :tooltip="$t('copy logs')">
+                            <content-copy />
+                        </kicon>
                     </el-button>
                 </el-button-group>
             </el-form-item>
             <el-form-item>
                 <el-button-group class="ks-b-group">
                     <el-button @click="loadLogs()">
-                        <Kicon :tooltip="$t('refresh')">
-                            <Refresh />
-                        </Kicon>
+                        <kicon :tooltip="$t('refresh')">
+                            <refresh />
+                        </kicon>
                     </el-button>
                 </el-button-group>
             </el-form-item>
-        </Collapse>
+        </collapse>
 
-        <TaskRunDetails
+        <task-run-details
             v-if="!raw_view"
             ref="logs"
             :level="level"
-            :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
+            :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
             :filter="filter"
-            :levelToHighlight="cursorLogLevel"
+            :level-to-highlight="cursorLogLevel"
             @log-cursor="logCursor = $event"
-            :logCursor="logCursor"
+            :log-cursor="logCursor"
             @follow="forwardEvent('follow', $event)"
             @opened-taskruns-count="openedTaskrunsCount = $event"
             @log-indices-by-level="Object.entries($event).forEach(([levelName, indices]) => logIndicesByLevel[levelName] = indices)"
-            :targetFlow="executionsStore.flow"
-            :showProgressBar="false"
+            :target-flow="executionsStore.flow"
+            :show-progress-bar="false"
         />
         <el-card v-else class="attempt-wrapper">
             <DynamicScroller
                 ref="logScroller"
                 :items="temporalLogs"
-                :minItemSize="50"
-                keyField="index"
+                :min-item-size="50"
+                key-field="index"
                 class="log-lines temporal"
                 :buffer="200"
                 :prerender="20"
@@ -99,15 +99,15 @@
                     <DynamicScrollerItem
                         :item="item"
                         :active="active"
-                        :sizeDependencies="[item.message]"
+                        :size-dependencies="[item.message]"
                         :data-index="item.index"
                     >
-                        <LogLine
+                        <log-line
                             @click="logCursor = item.index.toString()"
                             class="line"
                             :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === item.level, 'opacity-40': cursorLogLevel && cursorLogLevel !== item.level}"
                             :cursor="item.index.toString() === logCursor"
-                            :excludeMetas="['namespace', 'flowId', 'executionId']"
+                            :exclude-metas="['namespace', 'flowId', 'executionId']"
                             :level="level"
                             :filter="filter"
                             :log="item"

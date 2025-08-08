@@ -1,6 +1,6 @@
 <template>
     <el-select
-        :modelValue="values"
+        :model-value="values"
         @update:model-value="onInput"
         filterable
         clearable

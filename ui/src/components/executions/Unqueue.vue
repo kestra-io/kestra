@@ -9,7 +9,7 @@
         {{ $t('unqueue') }}
     </component>
 
-    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
+    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroy-on-close :append-to-body="true">
         <template #header>
             <span v-html="$t('unqueue')" />
         </template>
@@ -29,7 +29,7 @@
                     :disabled="item.disabled"
                 >
                     <template #default>
-                        <Status size="small" :label="true" class="me-1" :status="item.code" />
+                        <status size="small" :label="true" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </el-option>
@@ -37,7 +37,7 @@
         </template>
 
         <template #footer>
-            <el-button :icon="QueueFirstInLastOut" type="primary" @click="unqueue()" nativeType="submit">
+            <el-button :icon="QueueFirstInLastOut" type="primary" @click="unqueue()" native-type="submit">
                 {{ $t('unqueue') }}
             </el-button>
         </template>

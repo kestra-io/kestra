@@ -6,8 +6,8 @@
                     v-if="currentStep(tour)"
                     :key="tour.currentStep"
                     :step="currentStep(tour)"
-                    :isFirst="tour.isFirst"
-                    :isLast="tour.isLast"
+                    :is-first="tour.isFirst"
+                    :is-last="tour.isLast"
                     :labels="tour.labels"
                     :highlight="tour.highlight"
                     :class="{
@@ -71,7 +71,7 @@
                                             :cls="task"
                                             :icons="pluginsStore.icons"
                                             :variable="ICON_COLOR"
-                                            onlyIcon
+                                            only-icon
                                         />
                                     </div>
                                 </div>

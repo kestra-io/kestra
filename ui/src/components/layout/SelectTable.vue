@@ -8,11 +8,11 @@
             ref="table"
             v-bind="$attrs"
             :data="data"
-            :emptyText="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
+            :empty-text="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
             @selection-change="selectionChanged"
             v-el-table-infinite-scroll="infiniteScrollLoadWithDisableHandling"
-            :infiniteScrollDisabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
-            :infiniteScrollDelay="0"
+            :infinite-scroll-disabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
+            :infinite-scroll-delay="0"
             :height="data.length === 0 && infiniteScrollLoad === undefined ? '100px' : tableHeight"
         >
             <el-table-column type="selection" v-if="selectable" />

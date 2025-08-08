@@ -1,8 +1,8 @@
 <template>
-    <TopNavBar v-if="!embed" :title="routeInfo.title" />
+    <top-nav-bar v-if="!embed" :title="routeInfo.title" />
     <section v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
-            <DataTable @page-changed="onPageChanged" ref="dataTable" :total="logsStore.total" :size="pageSize" :page="pageNumber" :embed="embed">
+            <data-table @page-changed="onPageChanged" ref="dataTable" :total="logsStore.total" :size="pageSize" :page="pageNumber" :embed="embed">
                 <template #navbar v-if="!embed || showFilters">
                     <KestraFilter
                         prefix="logs"
@@ -15,24 +15,24 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <Sections :charts :dashboard="{id: 'default', charts: []}" showDefault />
+                    <Sections :charts :dashboard="{id: 'default', charts: []}" show-default />
                 </template>
 
                 <template #table v-if="logsStore.logs !== undefined && logsStore.logs.length > 0">
                     <div v-loading="isLoading">
                         <div class="logs-wrapper">
-                            <LogLine
+                            <log-line
                                 v-for="(log, i) in logsStore.logs"
                                 :key="`${log.taskRunId}-${i}`"
                                 level="TRACE"
                                 filter=""
-                                :excludeMetas="isFlowEdit ? ['namespace', 'flowId'] : []"
+                                :exclude-metas="isFlowEdit ? ['namespace', 'flowId'] : []"
                                 :log="log"
                             />
                         </div>
                     </div>
                 </template>
-            </DataTable>
+            </data-table>
         </div>
     </section>
 </template>

@@ -1,26 +1,26 @@
 <template>
-    <TopNavBar :title="routeInfo.title">
+    <top-nav-bar :title="routeInfo.title">
         <template #additional-right>
             <el-button @click="saveAllSettings()" type="primary" :disabled="!hasUnsavedChanges">
                 {{ $t("settings.blocks.save.label") }}
             </el-button>
         </template>
-    </TopNavBar>
+    </top-nav-bar>
 
     <Wrapper>
         <Block :heading="$t('settings.blocks.configuration.label')">
             <template #content>
                 <Row>
                     <Column v-if="allowDefaultNamespace" :label="$t('settings.blocks.configuration.fields.default_namespace')">
-                        <NamespaceSelect data-type="flow" :value="pendingSettings.defaultNamespace" @update:model-value="onNamespaceSelect" />
+                        <namespace-select data-type="flow" :value="pendingSettings.defaultNamespace" @update:model-value="onNamespaceSelect" />
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.log_level')">
-                        <LogLevelSelector clearable :value="pendingSettings.defaultLogLevel" @update:model-value="onLevelChange" />
+                        <log-level-selector clearable :value="pendingSettings.defaultLogLevel" @update:model-value="onLevelChange" />
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.log_display')">
-                        <el-select :modelValue="pendingSettings.logDisplay" @update:model-value="onLogDisplayChange">
+                        <el-select :model-value="pendingSettings.logDisplay" @update:model-value="onLogDisplayChange">
                             <el-option
                                 v-for="item in logDisplayOptions"
                                 :key="item.value"
@@ -31,7 +31,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.editor_type')">
-                        <el-select :modelValue="pendingSettings.editorType" @update:model-value="onEditorTypeChange">
+                        <el-select :model-value="pendingSettings.editorType" @update:model-value="onEditorTypeChange">
                             <el-option
                                 v-for="item in [
                                     {
@@ -51,7 +51,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.execute_flow')">
-                        <el-select :modelValue="pendingSettings.executeFlowBehaviour" @update:model-value="onExecuteFlowBehaviourChange">
+                        <el-select :model-value="pendingSettings.executeFlowBehaviour" @update:model-value="onExecuteFlowBehaviourChange">
                             <el-option
                                 v-for="item in Object.values(executeFlowBehaviours)"
                                 :key="item"
@@ -62,7 +62,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.execute_default_tab')">
-                        <el-select :modelValue="pendingSettings.executeDefaultTab" @update:model-value="onExecuteDefaultTabChange">
+                        <el-select :model-value="pendingSettings.executeDefaultTab" @update:model-value="onExecuteDefaultTabChange">
                             <el-option
                                 v-for="item in executeDefaultTabOptions"
                                 :key="item.value"
@@ -73,7 +73,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.flow_default_tab')">
-                        <el-select :modelValue="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
+                        <el-select :model-value="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
                             <el-option
                                 v-for="item in flowDefaultTabOptions"
                                 :key="item.value"
@@ -83,15 +83,15 @@
                         </el-select>
                     </Column>
                     <Column :label="$t('settings.blocks.configuration.fields.playground')">
-                        <el-switch :modelValue="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
+                        <el-switch :model-value="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
                     </Column>
                 </Row>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')">
                         <el-input-number
-                            :modelValue="pendingSettings.autoRefreshInterval"
+                            :model-value="pendingSettings.autoRefreshInterval"
                             @update:model-value="onAutoRefreshInterval"
-                            controlsPosition="right"
+                            controls-position="right"
                             :min="2"
                             :max="120"
                         >
@@ -108,7 +108,7 @@
             <template #content>
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.theme')">
-                        <el-select :modelValue="pendingSettings.theme" @update:model-value="onTheme">
+                        <el-select :model-value="pendingSettings.theme" @update:model-value="onTheme">
                             <el-option
                                 v-for="item in themesOptions"
                                 :key="item.value"
@@ -120,16 +120,16 @@
 
                     <Column :label="$t('settings.blocks.theme.fields.logs_font_size')">
                         <el-input-number
-                            :modelValue="pendingSettings.logsFontSize"
+                            :model-value="pendingSettings.logsFontSize"
                             @update:model-value="onLogsFontSize"
-                            controlsPosition="right"
+                            controls-position="right"
                             :min="1"
                             :max="50"
                         />
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.editor_font_family')">
-                        <el-select :modelValue="pendingSettings.editorFontFamily" @update:model-value="onFontFamily">
+                        <el-select :model-value="pendingSettings.editorFontFamily" @update:model-value="onFontFamily">
                             <el-option
                                 v-for="item in fontFamilyOptions"
                                 :key="item.value"
@@ -141,9 +141,9 @@
 
                     <Column :label="$t('settings.blocks.theme.fields.editor_font_size')">
                         <el-input-number
-                            :modelValue="pendingSettings.editorFontSize"
+                            :model-value="pendingSettings.editorFontSize"
                             @update:model-value="onFontSize"
-                            controlsPosition="right"
+                            controls-position="right"
                             :min="1"
                             :max="50"
                         />
@@ -152,10 +152,10 @@
 
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.editor_folding_stratgy')">
-                        <el-switch :aria-label="$t('Fold auto')" :modelValue="pendingSettings.autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
+                        <el-switch :aria-label="$t('Fold auto')" :model-value="pendingSettings.autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
                     </Column>
                     <Column :label="$t('settings.blocks.theme.fields.editor_hover_description')">
-                        <el-switch :aria-label="$t('Hover description')" :modelValue="pendingSettings.hoverTextEditor" @update:model-value="onHoverTextEditor" />
+                        <el-switch :aria-label="$t('Hover description')" :model-value="pendingSettings.hoverTextEditor" @update:model-value="onHoverTextEditor" />
                     </Column>
                 </Row>
 
@@ -187,7 +187,7 @@
                         <el-color-picker
                             v-model="pendingSettings.envColor"
                             @change="onEnvColorChange"
-                            showAlpha
+                            show-alpha
                         />
                     </Column>
                 </Row>
@@ -198,7 +198,7 @@
             <template #content>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.language')">
-                        <el-select :modelValue="pendingSettings.lang" @update:model-value="onLang">
+                        <el-select :model-value="pendingSettings.lang" @update:model-value="onLang">
                             <el-option
                                 v-for="item in langOptions"
                                 :key="item.value"
@@ -209,7 +209,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.localization.fields.time_zone')">
-                        <el-select :modelValue="pendingSettings.timezone" @update:model-value="onTimezone" filterable>
+                        <el-select :model-value="pendingSettings.timezone" @update:model-value="onTimezone" filterable>
                             <el-option
                                 v-for="item in zonesWithOffset"
                                 :key="item.zone"
@@ -220,7 +220,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.localization.fields.date_format')">
-                        <el-select :modelValue="pendingSettings.dateFormat" @update:model-value="onDateFormat" :key="localeKey">
+                        <el-select :model-value="pendingSettings.dateFormat" @update:model-value="onDateFormat" :key="localeKey">
                             <el-option
                                 v-for="item in dateFormats"
                                 :key="pendingSettings.timezone + item.value"

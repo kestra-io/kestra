@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfo.title">
+    <top-nav-bar :title="routeInfo.title">
         <template #additional-right v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
             <ul>
                 <li>
@@ -28,21 +28,21 @@
                 </li>
             </ul>
         </template>
-    </TopNavBar>
-    <TemplatesDeprecated />
+    </top-nav-bar>
+    <templates-deprecated />
     <section class="container" v-if="ready">
         <div>
-            <DataTable
+            <data-table
                 @page-changed="onPageChanged"
                 ref="dataTable"
                 :total="templateStore.total"
             >
                 <template #navbar>
                     <el-form-item>
-                        <SearchField />
+                        <search-field />
                     </el-form-item>
                     <el-form-item>
-                        <NamespaceSelect
+                        <namespace-select
                             data-type="flow"
                             :value="$route.query.namespace"
                             @update:model-value="onDataTableValue('namespace', $event)"
@@ -51,11 +51,11 @@
                 </template>
 
                 <template #table>
-                    <SelectTable
+                    <select-table
                         ref="selectTable"
                         :data="templateStore.templates"
-                        :defaultSort="{prop: 'id', order: 'ascending'}"
-                        tableLayout="auto"
+                        :default-sort="{prop: 'id', order: 'ascending'}"
+                        table-layout="auto"
                         fixed
                         @row-dblclick="onRowDoubleClick"
                         @sort-change="onSort"
@@ -64,8 +64,8 @@
                         :no-data-text="$t('no_results.templates')"
                     >
                         <template #select-actions>
-                            <BulkSelect
-                                :selectAll="queryBulkAction"
+                            <bulk-select
+                                :select-all="queryBulkAction"
                                 :selections="selection"
                                 :total="templateStore.total"
                                 @update:select-all="toggleAllSelection"
@@ -77,13 +77,13 @@
                                 <el-button v-if="canDelete" @click="deleteTemplates" :icon="TrashCan">
                                     {{ $t('delete') }}
                                 </el-button>
-                            </BulkSelect>
+                            </bulk-select>
                         </template>
                         <template #default>
                             <el-table-column
                                 prop="id"
                                 sortable="custom"
-                                :sortOrders="['ascending', 'descending']"
+                                :sort-orders="['ascending', 'descending']"
                                 :label="$t('id')"
                             >
                                 <template #default="scope">
@@ -92,7 +92,7 @@
                                     >
                                         {{ scope.row.id }}
                                     </router-link>
-                                    &nbsp;<MarkdownTooltip
+                                    &nbsp;<markdown-tooltip
                                         :id="scope.row.namespace + '-' + scope.row.id"
                                         :description="scope.row.description"
                                         :title="scope.row.namespace + '.' + scope.row.id"
@@ -103,26 +103,26 @@
                             <el-table-column
                                 prop="namespace"
                                 sortable="custom"
-                                :sortOrders="['ascending', 'descending']"
+                                :sort-orders="['ascending', 'descending']"
                                 :label="$t('namespace')"
                                 :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)"
                             />
 
-                            <el-table-column columnKey="action" className="row-action">
+                            <el-table-column column-key="action" class-name="row-action">
                                 <template #default="scope">
                                     <router-link
                                         :to="{name: 'templates/update', params : {namespace: scope.row.namespace, id: scope.row.id}}"
                                     >
-                                        <Kicon :tooltip="$t('details')" placement="left">
+                                        <kicon :tooltip="$t('details')" placement="left">
                                             <TextSearch />
-                                        </Kicon>
+                                        </kicon>
                                     </router-link>
                                 </template>
                             </el-table-column>
                         </template>
-                    </SelectTable>
+                    </select-table>
                 </template>
-            </DataTable>
+            </data-table>
         </div>
     </section>
 </template>

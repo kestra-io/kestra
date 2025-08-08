@@ -1,8 +1,8 @@
 <template>
     <el-switch
-        :modelValue="modelValue"
+        :model-value="modelValue"
         @update:model-value="onInput"
-        :activeActionIcon="Check"
+        :active-action-icon="Check"
     />
 </template>
 

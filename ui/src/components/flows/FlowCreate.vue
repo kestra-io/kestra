@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfo.title" />
+    <top-nav-bar :title="routeInfo.title" />
     <section class="full-container">
         <MultiPanelEditorView v-if="flow" />
     </section>

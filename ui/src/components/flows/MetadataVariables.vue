@@ -2,7 +2,7 @@
     <span v-if="required" class="me-1 text-danger">*</span>
     <span class="label">{{ label }}</span>
     <div class="mt-1 mb-2 wrapper">
-        <Drawer v-if="isEditOpen" v-model="isEditOpen">
+        <drawer v-if="isEditOpen" v-model="isEditOpen">
             <template #header>
                 <code>{{ $t("variables") }}</code>
             </template>
@@ -19,13 +19,13 @@
                 </div>
             </template>
 
-            <el-form labelPosition="top">
+            <el-form label-position="top">
                 <el-form-item>
                     <template #label>
                         <code>{{ $t("name") }}</code>
                     </template>
                     <el-input
-                        :modelValue="newVariables[selectedIndex][0]"
+                        :model-value="newVariables[selectedIndex][0]"
                         @update:model-value="
                             updateIndex($event, selectedIndex, 'key')
                         "
@@ -35,10 +35,10 @@
                     <template #label>
                         <code>{{ $t("value") }}</code>
                     </template>
-                    <Editor
-                        :modelValue="newVariables[selectedIndex][1]"
+                    <editor
+                        :model-value="newVariables[selectedIndex][1]"
                         :navbar="false"
-                        :fullHeight="false"
+                        :full-height="false"
                         :input="true"
                         lang="text"
                         @update:model-value="
@@ -47,7 +47,7 @@
                     />
                 </el-form-item>
             </el-form>
-        </Drawer>
+        </drawer>
         <div v-if="variables" class="mb-3">
             <div
                 class="d-flex w-100 mb-2"
@@ -55,7 +55,7 @@
                 :key="index"
             >
                 <div class="flex-fill flex-grow-1 w-100 me-2">
-                    <el-input disabled :modelValue="value[0]" />
+                    <el-input disabled :model-value="value[0]" />
                 </div>
                 <div class="flex-shrink-1">
                     <el-button-group class="d-flex flex-nowrap">

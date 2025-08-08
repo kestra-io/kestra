@@ -1,16 +1,16 @@
 <template>
-    <Editor
+    <editor
         id="editorWrapper"
         ref="editorRefElement"
-        :modelValue="draftSource === undefined ? source : draftSource"
-        :schemaType="isCurrentTabFlow ? 'flow': undefined"
+        :model-value="draftSource === undefined ? source : draftSource"
+        :schema-type="isCurrentTabFlow ? 'flow': undefined"
         :lang="extension === undefined ? 'yaml' : undefined"
         :extension="extension"
         :navbar="false"
-        :readOnly="isReadOnly"
+        :read-only="isReadOnly"
         :creating="isCreating"
         :path="props.path"
-        :diffOverviewBar="false"
+        :diff-overview-bar="false"
         @update:model-value="editorUpdate"
         @cursor="updatePluginDocumentation"
         @save="isCurrentTabFlow ? save(): saveFileContent()"
@@ -18,7 +18,7 @@
         @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
         @mouse-leave="() => highlightHoveredTask(-1)"
         :original="draftSource === undefined ? undefined : source"
-        :diffSideBySide="false"
+        :diff-side-by-side="false"
     >
         <template #absolute>
             <AITriggerButton
@@ -30,9 +30,9 @@
             <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
         </template>
         <template v-if="playgroundStore.enabled" #widget-content>
-            <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
+            <PlaygroundRunTaskButton :task-id="highlightedLines?.taskId" />
         </template>
-    </Editor>
+    </editor>
     <transition name="el-zoom-in-center">
         <AiAgent
             v-if="aiAgentOpened"

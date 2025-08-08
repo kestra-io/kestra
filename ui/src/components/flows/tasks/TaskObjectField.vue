@@ -13,8 +13,8 @@
                 <div class="inline-start">
                     <TaskLabelWithBoolean
                         :type="simpleType"
-                        :isBoolean="isBoolean"
-                        :componentProps="componentProps"
+                        :is-boolean="isBoolean"
+                        :component-props="componentProps"
                     />
                     <span v-if="props.fieldKey" class="label">
                         {{ props.fieldKey }}
@@ -27,7 +27,7 @@
                 </div>
                 <el-tag
                     v-if="!isAnyOf"
-                    disableTransitions
+                    disable-transitions
                     size="small"
                     class="type-tag"
                 >
@@ -36,11 +36,11 @@
                 <el-tooltip
                     v-if="!isAnyOf && hasTooltip"
                     :persistent="false"
-                    :hideAfter="0"
+                    :hide-after="0"
                     effect="light"
                     placement="left-start"
-                    :showArrow="false"
-                    popperClass="singleton-tooltip"
+                    :show-arrow="false"
+                    popper-class="singleton-tooltip"
                 >
                     <template #content>
                         <Markdown
@@ -48,7 +48,7 @@
                             :source="helpText"
                         />
                     </template>
-                    <Help />
+                    <help />
                 </el-tooltip>
             </div>
         </template>

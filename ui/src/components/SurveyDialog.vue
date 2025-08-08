@@ -3,11 +3,11 @@
         v-model="isVisible"
         :title="t('setup.titles.survey')"
         width="550px"
-        :showClose="true"
-        :closeOnClickModal="false"
-        :closeOnPressEscape="true"
+        :show-close="true"
+        :close-on-click-modal="false"
+        :close-on-press-escape="true"
         @close="handleClose"
-        customClass="hello-survey-dialog"
+        custom-class="hello-survey-dialog"
     >
         <div class="survey-content">
             <h3>{{ t('setup.subtitles.survey') }}</h3>

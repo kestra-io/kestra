@@ -2,7 +2,7 @@
     <Splitpanes class="default-theme" v-bind="$attrs" @resize="onResize">
         <Pane
             v-for="(panel, panelIndex) in panels"
-            minSize="10"
+            min-size="10"
             :key="panelIndex"
             :size="panel.size"
             @dragover.prevent="(e:DragEvent) => panelDragOver(e, panelIndex)"
@@ -129,8 +129,8 @@
                     <component
                         :key="panel.activeTab.value"
                         :is="panel.activeTab.component"
-                        :panelIndex="panelIndex"
-                        :tabIndex="panel.tabs.findIndex(t => t.value === panel.activeTab.value)"
+                        :panel-index="panelIndex"
+                        :tab-index="panel.tabs.findIndex(t => t.value === panel.activeTab.value)"
                     />
                 </KeepAlive>
                 <div

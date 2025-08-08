@@ -1,6 +1,6 @@
 import globals from "globals";
 import pluginJs from "@eslint/js";
-import tsESlint from "typescript-eslint";
+import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
 
 const components = (folder) => `src/components/${folder}/**/*.vue`;
@@ -9,11 +9,11 @@ const components = (folder) => `src/components/${folder}/**/*.vue`;
 export default [
     {
         files: ["**/*.{js,mjs,cjs,ts,vue}"],
-        ignores: ["node_modules", "node", "playwright-report", "coverage", "dist", "test-results", "build"],
+        ignores: ["node_modules", "node"],
     },
     {languageOptions: {globals: globals.browser}},
     pluginJs.configs.recommended,
-    ...tsESlint.configs.recommended,
+    ...tseslint.configs.recommended,
     {
         files: [
             "**/*.spec.js",
@@ -28,7 +28,7 @@ export default [
     ...pluginVue.configs["flat/strongly-recommended"],
     {
         files: ["**/*.vue", "**/*.tsx", "**/*.jsx"],
-        languageOptions: {parserOptions: {parser: tsESlint.parser}},
+        languageOptions: {parserOptions: {parser: tseslint.parser}},
         rules: {
             "vue/this-in-template": "error",
             "vue/html-indent": [

@@ -59,9 +59,9 @@
                 <SecretsTable
                     v-show="hasData === true"
                     :filterable="false"
-                    keyOnly
+                    key-only
                     :namespace="miscStore.configs?.systemNamespace ?? 'system'"
-                    :addSecretModalVisible="addSecretModalVisible"
+                    :add-secret-modal-visible="addSecretModalVisible"
                     @update:add-secret-modal-visible="addSecretModalVisible = $event"
                     @has-data="hasData = $event"
                 />
@@ -70,7 +70,7 @@
         <SecretsTable
             v-else
             filterable
-            :addSecretModalVisible="addSecretModalVisible"
+            :add-secret-modal-visible="addSecretModalVisible"
             :namespace="props.namespace"
             @update:add-secret-modal-visible="addSecretModalVisible = $event"
         />

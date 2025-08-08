@@ -1,8 +1,8 @@
 <template>
-    <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
+    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
     <section class="container" v-if="ready">
         <div>
-            <DataTable
+            <data-table
                 @page-changed="onPageChanged"
                 striped
                 hover
@@ -11,10 +11,10 @@
             >
                 <template #navbar>
                     <el-form-item>
-                        <SearchField />
+                        <search-field />
                     </el-form-item>
                     <el-form-item>
-                        <NamespaceSelect
+                        <namespace-select
                             data-type="flow"
                             v-if="$route.name !== 'flows/update'"
                             :value="$route.query.namespace"
@@ -41,7 +41,7 @@
 
                     <NoData v-if="search === undefined || search.length === 0" />
                 </template>
-            </DataTable>
+            </data-table>
         </div>
     </section>
 </template>

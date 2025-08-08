@@ -3,8 +3,8 @@
         v-if="followedExecution"
         ref="taskRunScroller"
         :items="currentTaskRuns"
-        :minItemSize="50"
-        keyField="id"
+        :min-item-size="50"
+        key-field="id"
         class="log-wrapper"
     >
         <template #default="{item: currentTaskRun, index: currentTaskRunIndex, active: isTaskRunActive}">
@@ -16,13 +16,13 @@
             >
                 <el-card class="attempt-wrapper">
                     <TaskRunLine
-                        :currentTaskRun="currentTaskRun"
-                        :followedExecution="followedExecution"
+                        :current-task-run="currentTaskRun"
+                        :followed-execution="followedExecution"
                         :flow="flow"
-                        :forcedAttemptNumber="forcedAttemptNumber"
-                        :taskRunId="taskRunId"
-                        :selectedAttemptNumberByTaskRunId="selectedAttemptNumberByTaskRunId"
-                        :shownAttemptsUid="shownAttemptsUid"
+                        :forced-attempt-number="forcedAttemptNumber"
+                        :task-run-id="taskRunId"
+                        :selected-attempt-number-by-task-run-id="selectedAttemptNumberByTaskRunId"
+                        :shown-attempts-uid="shownAttemptsUid"
                         :logs="filteredLogs"
                         @toggle-show-attempt="toggleShowAttempt"
                         @swap-displayed-attempt="swapDisplayedAttempt"
@@ -32,17 +32,17 @@
                             <div id="buttons" />
                         </template>
                     </TaskRunLine>
-                    <ForEachStatus
+                    <for-each-status
                         v-if="shouldDisplayProgressBar(currentTaskRun)"
-                        :executionId="currentTaskRun.executionId"
-                        :subflowsStatus="forEachItemExecutableByRootTaskId[currentTaskRun.taskId].outputs.iterations"
+                        :execution-id="currentTaskRun.executionId"
+                        :subflows-status="forEachItemExecutableByRootTaskId[currentTaskRun.taskId].outputs.iterations"
                         :max="forEachItemExecutableByRootTaskId[currentTaskRun.taskId].outputs.numberOfBatches"
                     />
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"
                         :items="logsWithIndexByAttemptUid[attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])] ?? []"
-                        :minItemSize="1"
-                        keyField="index"
+                        :min-item-size="1"
+                        key-field="index"
                         class="log-lines"
                         :class="{'single-line': currentTaskRuns.length === 1}"
                         :ref="el => logsScrollerRef(el, currentTaskRunIndex, attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
@@ -52,7 +52,7 @@
                             <DynamicScrollerItem
                                 :item="item"
                                 :active="active"
-                                :sizeDependencies="[item.message, item.image]"
+                                :size-dependencies="[item.message, item.image]"
                                 :data-index="index"
                             >
                                 <Teleport v-if="item.logFile" to="#buttons">
@@ -61,37 +61,37 @@
                                             <Download />
                                             {{ $t('download') }}
                                         </a>
-                                        <FilePreview :value="item.logFile" :executionId="followedExecution.id" />
+                                        <FilePreview :value="item.logFile" :execution-id="followedExecution.id" />
                                         <el-button disabled size="small" type="primary" v-if="logFileSizeByPath[item.logFile]">
                                             ({{ logFileSizeByPath[item.logFile] }})
                                         </el-button>
                                     </el-button-group>
                                 </Teleport>
-                                <LogLine
+                                <log-line
                                     class="line"
                                     :cursor="logCursor === `${currentTaskRunIndex}/${index}`"
                                     :class="{['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === item.level, 'opacity-40': levelToHighlight && levelToHighlight !== item.level}"
                                     :key="index"
                                     :level="level"
                                     :log="item"
-                                    :excludeMetas="excludeMetas"
+                                    :exclude-metas="excludeMetas"
                                     v-else-if="filter === '' || item.message?.toLowerCase().includes(filter)"
                                 />
                                 <TaskRunDetails
                                     v-if="!taskRunId && isSubflow(currentTaskRun) && shouldDisplaySubflow(index, currentTaskRun) && currentTaskRun.outputs?.executionId"
                                     :ref="el => subflowTaskRunDetailsRef(el, currentTaskRunIndex + '/' + index)"
-                                    :logCursor="logCursor?.split('/')?.slice(2).join('/')"
+                                    :log-cursor="logCursor?.split('/')?.slice(2).join('/')"
                                     @log-cursor="emitLogCursor(currentTaskRunIndex + '/' + index + '/' + $event)"
                                     @log-indices-by-level="childLogIndicesByLevel(currentTaskRunIndex, index, $event)"
-                                    :levelToHighlight="levelToHighlight"
+                                    :level-to-highlight="levelToHighlight"
                                     :level="level"
-                                    :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
+                                    :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
                                     :filter="filter"
-                                    :allowAutoExpandSubflows="false"
-                                    :targetExecutionId="currentTaskRun.outputs.executionId"
+                                    :allow-auto-expand-subflows="false"
+                                    :target-execution-id="currentTaskRun.outputs.executionId"
                                     :class="$el.classList.contains('even') ? '' : 'even'"
-                                    :showProgressBar="showProgressBar"
-                                    :showLogs="showLogs"
+                                    :show-progress-bar="showProgressBar"
+                                    :show-logs="showLogs"
                                 />
                             </DynamicScrollerItem>
                         </template>

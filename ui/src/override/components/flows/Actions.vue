@@ -13,12 +13,12 @@
         :label="t('edit flow')"
         @click="editFlow"
     />
-    <TriggerFlow
+    <trigger-flow
         v-if="flow && !deleted && tab !== 'apps' && canExecute"
         type="primary"
-        :flowId="flow?.id"
+        :flow-id="flow?.id"
         :namespace="flow?.namespace"
-        :flowSource="flow?.source"
+        :flow-source="flow?.source"
     />
 </template>
 

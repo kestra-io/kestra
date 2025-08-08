@@ -1,17 +1,17 @@
 <template>
     <el-select
         class="fit-text"
-        :modelValue="value"
+        :model-value="value"
         @update:model-value="$emit('update:modelValue', $event)"
         :disabled="readonly"
         clearable
         :placeholder="$t('Select namespace')"
         :persistent="false"
         remote
-        :remoteMethod="onInput"
+        :remote-method="onInput"
         filterable
-        :allowCreate="allowCreate"
-        defaultFirstOption
+        :allow-create="allowCreate"
+        default-first-option
     >
         <el-option
             v-for="item in groupedNamespaces"

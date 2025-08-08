@@ -13,10 +13,10 @@
             </el-icon>
         </div>
         <div class="task-icon d-none d-md-inline-block me-1">
-            <TaskIcon
+            <task-icon
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
-                onlyIcon
+                only-icon
                 :icons="pluginsStore.icons"
             />
         </div>
@@ -25,7 +25,7 @@
             class="task-id flex-grow-1"
             :id="`attempt-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${currentTaskRun.id}`"
         >
-            <el-tooltip :persistent="false" transition="" :hideAfter="0" effect="light">
+            <el-tooltip :persistent="false" transition="" :hide-after="0" effect="light">
                 <template #content>
                     {{ $t("from") }} :
                     {{ $filters.date(selectedAttempt(currentTaskRun).state.startDate) }}
@@ -33,7 +33,7 @@
                     {{ $t("to") }} :
                     {{ $filters.date(selectedAttempt(currentTaskRun).state.endDate) }}
                     <br>
-                    <Clock />
+                    <clock />
                     <strong>{{ $t("duration") }}:</strong>
                     {{ $filters.humanizeDuration(selectedAttempt(currentTaskRun).state.duration) }}
                 </template>
@@ -48,12 +48,12 @@
 
         <div class="task-duration d-none d-md-inline-block">
             <small class="me-1">
-                <Duration :histories="currentTaskRun.state.histories" />
+                <duration :histories="currentTaskRun.state.histories" />
             </small>
         </div>
 
         <div class="task-status">
-            <Status size="small" :status="currentTaskRun.state.current" />
+            <status size="small" :status="currentTaskRun.state.current" />
         </div>
 
         <slot name="buttons" />
@@ -64,49 +64,49 @@
             </el-button>
             <template #dropdown>
                 <el-dropdown-menu>
-                    <SubFlowLink
+                    <sub-flow-link
                         v-if="isSubflow(currentTaskRun)"
                         component="el-dropdown-item"
-                        tabExecution="logs"
-                        :executionId="currentTaskRun.outputs.executionId"
+                        tab-execution="logs"
+                        :execution-id="currentTaskRun.outputs.executionId"
                     />
 
-                    <Metrics :taskRun="currentTaskRun" :execution="followedExecution" />
+                    <metrics :task-run="currentTaskRun" :execution="followedExecution" />
 
-                    <Outputs
+                    <outputs
                         :outputs="currentTaskRun.outputs"
                         :execution="followedExecution"
                     />
 
-                    <Restart
+                    <restart
                         component="el-dropdown-item"
                         :key="`restart-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${selectedAttempt(currentTaskRun).state.startDate}`"
-                        isReplay
-                        tooltipPosition="left"
+                        is-replay
+                        tooltip-position="left"
                         :execution="followedExecution"
-                        :taskRun="currentTaskRun"
-                        :attemptIndex="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
+                        :task-run="currentTaskRun"
+                        :attempt-index="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
                         @follow="$emit('follow', $event)"
                     />
 
-                    <ChangeStatus
+                    <change-status
                         component="el-dropdown-item"
                         :key="`change-status-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${selectedAttempt(currentTaskRun).state.startDate}`"
                         :execution="followedExecution"
-                        :taskRun="currentTaskRun"
-                        :attemptIndex="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
+                        :task-run="currentTaskRun"
+                        :attempt-index="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
                         @follow="$emit('follow', $event)"
                     />
-                    <TaskEdit
+                    <task-edit
                         v-if="canReadFlow"
-                        :readOnly="true"
+                        :read-only="true"
                         component="el-dropdown-item"
-                        :taskId="currentTaskRun.taskId"
+                        :task-id="currentTaskRun.taskId"
                         :section="SECTIONS.TASKS"
-                        :flowId="followedExecution.flowId"
+                        :flow-id="followedExecution.flowId"
                         :namespace="followedExecution.namespace"
                         :revision="followedExecution.flowRevision"
-                        :flowSource="flow?.source"
+                        :flow-source="flow?.source"
                     />
                     <el-dropdown-item
                         :icon="Download"
@@ -129,7 +129,7 @@
                     <WorkerInfo
                         component="el-dropdown-item"
                         v-if="hasWorkerId(currentTaskRun) !== null"
-                        :taskRun="currentTaskRun"
+                        :task-run="currentTaskRun"
                         @follow="$emit('follow', $event)"
                     />
                 </el-dropdown-menu>
@@ -139,7 +139,7 @@
     <div class="attempt-header">
         <el-select
             class="d-none d-md-inline-block attempt-select"
-            :modelValue="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
+            :model-value="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
             @change="$emit('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
             :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
         >
@@ -152,12 +152,12 @@
         </el-select>
 
         <div class="task-status">
-            <Status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
+            <status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
         </div>
 
         <div class="task-duration d-none d-md-inline-block">
             <small class="me-1">
-                <Duration :histories="selectedAttempt(currentTaskRun).state.histories" />
+                <duration :histories="selectedAttempt(currentTaskRun).state.histories" />
             </small>
         </div>
     </div>

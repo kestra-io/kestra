@@ -2,18 +2,18 @@
     <div class="d-flex flex-column fill-height">
         <KestraFilter
             :placeholder="$t('search')"
-            legacyQuery
+            legacy-query
         />
 
-        <SelectTable
+        <select-table
             :data="filteredSecrets"
             ref="selectTable"
-            :defaultSort="{prop: 'key', order: 'ascending'}"
-            tableLayout="auto"
+            :default-sort="{prop: 'key', order: 'ascending'}"
+            table-layout="auto"
             fixed
             :selectable="false"
             @sort-change="handleSort"
-            :infiniteScrollLoad="namespace === undefined ? fetchSecrets : undefined"
+            :infinite-scroll-load="namespace === undefined ? fetchSecrets : undefined"
             :no-data-text="$t('no_results.secrets')"
             class="fill-height"
         >
@@ -21,12 +21,12 @@
                 v-if="namespace === undefined || namespaceColumn"
                 prop="namespace"
                 sortable="custom"
-                :sortOrders="['ascending', 'descending']"
+                :sort-orders="['ascending', 'descending']"
                 :label="$t('namespace')"
             />
-            <el-table-column prop="key" sortable="custom" :sortOrders="['ascending', 'descending']" :label="keyOnly ? $t('secret.names') : $t('key')">
+            <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="keyOnly ? $t('secret.names') : $t('key')">
                 <template #default="scope">
-                    <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
+                    <id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
                 </template>
             </el-table-column>
 
@@ -38,13 +38,13 @@
 
             <el-table-column v-if="!keyOnly && !paneView" prop="tags" :label="$t('tags')">
                 <template #default="scope">
-                    <Labels v-if="scope.row.tags !== undefined" :labels="scope.row.tags" readOnly />
+                    <labels v-if="scope.row.tags !== undefined" :labels="scope.row.tags" read-only />
                 </template>
             </el-table-column>
 
-            <el-table-column columnKey="locked" className="row-action">
+            <el-table-column column-key="locked" class-name="row-action">
                 <template #default="scope">
-                    <el-tooltip v-if="scope.row.namespace !== undefined && areNamespaceSecretsReadOnly?.[scope.row.namespace]" transition="" :hideAfter="0" :persistent="false" effect="light">
+                    <el-tooltip v-if="scope.row.namespace !== undefined && areNamespaceSecretsReadOnly?.[scope.row.namespace]" transition="" :hide-after="0" :persistent="false" effect="light">
                         <template #content>
                             <span v-html="$t('secret.isReadOnly')" />
                         </template>
@@ -55,7 +55,7 @@
                 </template>
             </el-table-column>
 
-            <el-table-column columnKey="copy" className="row-action">
+            <el-table-column column-key="copy" class-name="row-action">
                 <template #default="scope">
                     <el-tooltip :content="$t('copy_to_clipboard')">
                         <el-button :icon="ContentCopy" link @click="Utils.copy(`\{\{ secret('${scope.row.key}') \}\}`)" />
@@ -63,20 +63,20 @@
                 </template>
             </el-table-column>
 
-            <el-table-column v-if="!keyOnly && !paneView" columnKey="update" className="row-action">
+            <el-table-column v-if="!keyOnly && !paneView" column-key="update" class-name="row-action">
                 <template #default="scope">
                     <el-button v-if="canUpdate(scope.row)" :icon="FileDocumentEdit" link @click="updateSecretModal(scope.row)" />
                 </template>
             </el-table-column>
 
-            <el-table-column v-if="!keyOnly && !paneView" columnKey="delete" className="row-action">
+            <el-table-column v-if="!keyOnly && !paneView" column-key="delete" class-name="row-action">
                 <template #default="scope">
                     <el-button v-if="canDelete(scope.row)" :icon="Delete" link @click="removeSecret(scope.row)" />
                 </template>
             </el-table-column>
-        </SelectTable>
+        </select-table>
 
-        <Drawer
+        <drawer
             v-if="addSecretDrawerVisible"
             v-model="addSecretDrawerVisible"
             :title="secretModalTitle"
@@ -88,10 +88,10 @@
                     prop="namespace"
                     required
                 >
-                    <NamespaceSelect
+                    <namespace-select
                         v-model="secret.namespace"
                         :readonly="secret.update"
-                        :includeSystemNamespace="true"
+                        :include-system-namespace="true"
                         all
                     />
                 </el-form-item>
@@ -108,10 +108,10 @@
                     <el-col class="px-2" :span="4">
                         <el-switch
                             size="large"
-                            inlinePrompt
+                            inline-prompt
                             v-model="secret.updateValue"
-                            :activeIcon="PencilOutline"
-                            :inactiveIcon="PencilOff"
+                            :active-icon="PencilOutline"
+                            :inactive-icon="PencilOff"
                         />
                     </el-col>
                 </el-form-item>
@@ -144,7 +144,7 @@
                     {{ $t('save') }}
                 </el-button>
             </template>
-        </Drawer>
+        </drawer>
     </div>
 </template>
 

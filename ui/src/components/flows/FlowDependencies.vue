@@ -1,11 +1,11 @@
 <template>
     <el-card shadow="never" v-loading="isLoading">
         <VueFlow
-            :defaultMarkerColor="cssVariable('--bs-cyan')"
-            :fitViewOnInit="true"
-            :nodesConnectable="false"
-            :nodesDraggable="false"
-            :elevateNodesOnSelect="false"
+            :default-marker-color="cssVariable('--bs-cyan')"
+            :fit-view-on-init="true"
+            :nodes-connectable="false"
+            :nodes-draggable="false"
+            :elevate-nodes-on-select="false"
         >
             <Background />
             <template #node-flow="props">
@@ -22,12 +22,12 @@
                 <el-switch
                     v-model="expandAll"
                     :disabled="expandAll"
-                    :activeText="t('expand all')"
+                    :active-text="t('expand all')"
                     @change="load(route.params)"
                 />
             </Panel>
 
-            <Controls :showInteractive="false" />
+            <Controls :show-interactive="false" />
         </VueFlow>
     </el-card>
 </template>

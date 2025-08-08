@@ -1,11 +1,11 @@
 <template>
     <el-select
         placement="right-end"
-        :popperOffset="20"
-        :showArrow="false"
-        :suffixIcon="ChevronRight"
+        :popper-offset="20"
+        :show-arrow="false"
+        :suffix-icon="ChevronRight"
         :placeholder="t('kestra')"
-        popperClass="user-select border border-0"
+        popper-class="user-select border border-0"
     >
         <template #prefix>
             <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra">

@@ -1,5 +1,5 @@
 <template>
-    <DataTable
+    <data-table
         @page-changed="onPageChanged"
         ref="dataTable"
         :total="metricsTotal"
@@ -11,8 +11,8 @@
         <template #table>
             <el-table
                 :data="metrics"
-                :defaultSort="{prop: 'name', order: 'ascending'}"
-                tableLayout="auto"
+                :default-sort="{prop: 'name', order: 'ascending'}"
+                table-layout="auto"
                 fixed
                 @sort-change="onSort"
             >
@@ -25,10 +25,10 @@
                 <el-table-column prop="name" sortable :label="$t('name')">
                     <template #default="scope">
                         <template v-if="scope.row.type === 'timer'">
-                            <Kicon><Timer /></Kicon>
+                            <kicon><timer /></kicon>
                         </template>
                         <template v-else>
-                            <Kicon><Counter /></Kicon>
+                            <kicon><counter /></kicon>
                         </template>
                         &nbsp;<code>{{ scope.row.name }}</code>
                     </template>
@@ -54,7 +54,7 @@
                             class="me-1"
                             type="info"
                             size="small"
-                            disableTransitions
+                            disable-transitions
                         >
                             {{ key }}: <strong>{{ value }}</strong>
                         </el-tag>
@@ -62,7 +62,7 @@
                 </el-table-column>
             </el-table>
         </template>
-    </DataTable>
+    </data-table>
 </template>
 
 <script>

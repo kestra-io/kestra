@@ -1,8 +1,8 @@
 <template>
-    <TopNavBar :title="routeInfo.title" />
+    <top-nav-bar :title="routeInfo.title" />
     <section data-component="FILENAME_PLACEHOLDER" class="container" v-if="ready">
         <div>
-            <DataTable
+            <data-table
                 @page-changed="onPageChanged"
                 ref="dataTable"
                 :total="total"
@@ -18,28 +18,28 @@
                     />
                 </template>
                 <template #table>
-                    <SelectTable
+                    <select-table
                         :data="triggersMerged"
                         ref="selectTable"
-                        :defaultSort="{prop: 'flowId', order: 'ascending'}"
-                        tableLayout="auto"
+                        :default-sort="{prop: 'flowId', order: 'ascending'}"
+                        table-layout="auto"
                         fixed
                         @sort-change="onSort"
                         @selection-change="onSelectionChange"
                         expandable
-                        :rowClassName="getClasses"
+                        :row-class-name="getClasses"
                         :no-data-text="$t('no_results.triggers')"
                     >
                         <template #expand>
                             <el-table-column type="expand">
                                 <template #default="props">
-                                    <LogsWrapper class="m-3" :filters="props.row" v-if="hasLogsContent(props.row)" :withCharts="false" embed />
+                                    <LogsWrapper class="m-3" :filters="props.row" v-if="hasLogsContent(props.row)" :with-charts="false" embed />
                                 </template>
                             </el-table-column>
                         </template>
                         <template #select-actions>
-                            <BulkSelect
-                                :selectAll="queryBulkAction"
+                            <bulk-select
+                                :select-all="queryBulkAction"
                                 :selections="selection"
                                 :total="total"
                                 @update:select-all="toggleAllSelection"
@@ -63,13 +63,13 @@
                                 <el-button @click="deleteBackfills()">
                                     {{ $t("delete backfills") }}
                                 </el-button>
-                            </BulkSelect>
+                            </bulk-select>
                         </template>
                         <el-table-column
                             v-if="visibleColumns.triggerId"
                             prop="triggerId"
                             sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
+                            :sort-orders="['ascending', 'descending']"
                             :label="$t('id')"
                         >
                             <template #default="scope">
@@ -82,7 +82,7 @@
                             v-if="visibleColumns.flowId"
                             prop="flowId"
                             sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
+                            :sort-orders="['ascending', 'descending']"
                             :label="$t('flow')"
                         >
                             <template #default="scope">
@@ -91,7 +91,7 @@
                                 >
                                     {{ $filters.invisibleSpace(scope.row.flowId) }}
                                 </router-link>
-                                <MarkdownTooltip
+                                <markdown-tooltip
                                     :id="scope.row.namespace + '-' + scope.row.flowId"
                                     :description="scope.row.description"
                                     :title="scope.row.namespace + '.' + scope.row.flowId"
@@ -102,7 +102,7 @@
                             v-if="visibleColumns.namespace"
                             prop="namespace"
                             sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
+                            :sort-orders="['ascending', 'descending']"
                             :label="$t('namespace')"
                         >
                             <template #default="scope">
@@ -116,13 +116,13 @@
                                     v-if="scope.row.executionId"
                                     :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}"
                                 >
-                                    <Id :value="scope.row.executionId" :shrink="true" />
+                                    <id :value="scope.row.executionId" :shrink="true" />
                                 </router-link>
                             </template>
                         </el-table-column>
                         <el-table-column v-if="visibleColumns.workerId" prop="workerId" :label="$t('workerId')">
                             <template #default="scope">
-                                <Id
+                                <id
                                     :value="scope.row.workerId"
                                     :shrink="true"
                                 />
@@ -130,64 +130,64 @@
                         </el-table-column>
                         <el-table-column v-if="visibleColumns.date" :label="$t('date')">
                             <template #default="scope">
-                                <DateAgo :inverted="true" :date="scope.row.date" />
+                                <date-ago :inverted="true" :date="scope.row.date" />
                             </template>
                         </el-table-column>
                         <el-table-column v-if="visibleColumns.updatedDate" :label="$t('updated date')">
                             <template #default="scope">
-                                <DateAgo :inverted="true" :date="scope.row.updatedDate" />
+                                <date-ago :inverted="true" :date="scope.row.updatedDate" />
                             </template>
                         </el-table-column>
                         <el-table-column
                             v-if="visibleColumns.nextExecutionDate"
                             prop="nextExecutionDate"
                             sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
+                            :sort-orders="['ascending', 'descending']"
                             :label="$t('next execution date')"
                         >
                             <template #default="scope">
-                                <DateAgo :inverted="true" :date="scope.row.nextExecutionDate" />
+                                <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
                         </el-table-column>
                         <el-table-column :label="$t('details')">
                             <template #default="scope">
                                 <TriggerAvatar
                                     :flow="{flowId: scope.row.flowId, namespace: scope.row.namespace, triggers: [scope.row]}"
-                                    :triggerId="scope.row.id"
+                                    :trigger-id="scope.row.id"
                                 />
                             </template>
                         </el-table-column>
                         <el-table-column v-if="visibleColumns.evaluateRunningDate" :label="$t('evaluation lock date')">
                             <template #default="scope">
-                                <DateAgo :inverted="true" :date="scope.row.evaluateRunningDate" />
+                                <date-ago :inverted="true" :date="scope.row.evaluateRunningDate" />
                             </template>
                         </el-table-column>
                         <el-table-column
                             v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
-                            columnKey="action"
-                            className="row-action"
+                            column-key="action"
+                            class-name="row-action"
                         >
                             <template #default="scope">
                                 <el-button v-if="scope.row.executionId || scope.row.evaluateRunningDate">
-                                    <Kicon
+                                    <kicon
                                         :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
                                         placement="left"
                                         @click="triggerToUnlock = scope.row"
                                     >
-                                        <LockOff />
-                                    </Kicon>
+                                        <lock-off />
+                                    </kicon>
                                 </el-button>
                             </template>
                         </el-table-column>
-                        <el-table-column :label="$t('backfill')" columnKey="backfill">
+                        <el-table-column :label="$t('backfill')" column-key="backfill">
                             <template #default="scope">
                                 <div class="backfillContainer items-center gap-2">
                                     <span v-if="scope.row.backfill" class="statusIcon">
                                         <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
-                                            <PlayBox font />
+                                            <play-box font />
                                         </el-tooltip>
                                         <el-tooltip v-else :content="$t('backfill paused')">
-                                            <PauseBox />
+                                            <pause-box />
                                         </el-tooltip>
                                     </span>
 
@@ -206,7 +206,7 @@
                         </el-table-column>
 
 
-                        <el-table-column :label="$t('actions')" columnKey="disable" className="row-action">
+                        <el-table-column :label="$t('actions')" column-key="disable" class-name="row-action">
                             <template #default="scope">
                                 <el-tooltip
                                     v-if="!scope.row.missingSource"
@@ -215,11 +215,11 @@
                                     effect="light"
                                 >
                                     <el-switch
-                                        :activeText="$t('enabled')"
-                                        :inactiveText="$t('disabled')"
-                                        :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
+                                        :active-text="$t('enabled')"
+                                        :inactive-text="$t('disabled')"
+                                        :model-value="!(scope.row.disabled || scope.row.codeDisabled)"
                                         @change="setDisabled(scope.row, $event)"
-                                        inlinePrompt
+                                        inline-prompt
                                         class="switch-text"
                                         :disabled="scope.row.codeDisabled"
                                     />
@@ -229,11 +229,11 @@
                                 </el-tooltip>
                             </template>
                         </el-table-column>
-                    </SelectTable>
+                    </select-table>
                 </template>
-            </DataTable>
+            </data-table>
 
-            <el-dialog v-model="triggerToUnlock" destroyOnClose :appendToBody="true">
+            <el-dialog v-model="triggerToUnlock" destroy-on-close :append-to-body="true">
                 <template #header>
                     <span v-html="$t('unlock trigger.confirmation')" />
                 </template>

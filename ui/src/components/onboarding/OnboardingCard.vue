@@ -19,7 +19,7 @@
                         {{ title }}
                     </h5>
                     <div class="cat_description">
-                        <Markdown :source="$t(`welcome.${category}.text`)" />
+                        <markdown :source="$t(`welcome.${category}.text`)" />
                     </div>
                 </div>
             </div>

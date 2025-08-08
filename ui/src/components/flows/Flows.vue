@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar v-if="topbar" :title="routeInfo.title">
+    <top-nav-bar v-if="topbar" :title="routeInfo.title">
         <template #additional-right>
             <ul>
                 <li>
@@ -36,18 +36,18 @@
                 </li>
             </ul>
         </template>
-    </TopNavBar>
+    </top-nav-bar>
     <section
         data-component="FILENAME_PLACEHOLDER"
         :class="{container: topbar}"
         v-if="ready"
     >
         <div>
-            <DataTable
+            <data-table
                 @page-changed="onPageChanged"
                 ref="dataTable"
                 :total="total"
-                :hideTopPagination="!!namespace"
+                :hide-top-pagination="!!namespace"
             >
                 <template #navbar>
                     <KestraFilter
@@ -68,23 +68,23 @@
                 </template>
 
                 <template #table>
-                    <SelectTable
+                    <select-table
                         ref="selectTable"
                         :data="flows"
-                        :defaultSort="{prop: 'id', order: 'ascending'}"
-                        tableLayout="auto"
+                        :default-sort="{prop: 'id', order: 'ascending'}"
+                        table-layout="auto"
                         fixed
                         @row-dblclick="onRowDoubleClick"
                         @sort-change="onSort"
-                        :rowClassName="rowClasses"
+                        :row-class-name="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
                         :no-data-text="$t('no_results.flows')"
                         class="flows-table"
                     >
                         <template #select-actions>
-                            <BulkSelect
-                                :selectAll="queryBulkAction"
+                            <bulk-select
+                                :select-all="queryBulkAction"
                                 :selections="selection"
                                 :total="total"
                                 @update:select-all="toggleAllSelection"
@@ -118,13 +118,13 @@
                                 >
                                     {{ $t("disable") }}
                                 </el-button>
-                            </BulkSelect>
+                            </bulk-select>
                         </template>
                         <template #default>
                             <el-table-column
                                 prop="id"
                                 sortable="custom"
-                                :sortOrders="['ascending', 'descending']"
+                                :sort-orders="['ascending', 'descending']"
                                 :label="$t('id')"
                             >
                                 <template #default="scope">
@@ -146,7 +146,7 @@
                                                 )
                                             }}
                                         </router-link>
-                                        <MarkdownTooltip
+                                        <markdown-tooltip
                                             :id="
                                                 scope.row.namespace +
                                                     '-' +
@@ -168,7 +168,7 @@
                                 :label="$t('labels')"
                             >
                                 <template #default="scope">
-                                    <Labels :labels="scope.row.labels" />
+                                    <labels :labels="scope.row.labels" />
                                 </template>
                             </el-table-column>
 
@@ -176,7 +176,7 @@
                                 prop="namespace"
                                 v-if="displayColumn('namespace')"
                                 sortable="custom"
-                                :sortOrders="['ascending', 'descending']"
+                                :sort-orders="['ascending', 'descending']"
                                 :label="$t('namespace')"
                                 :formatter="
                                     (_, __, cellValue) =>
@@ -193,7 +193,7 @@
                                 :label="$t('last execution date')"
                             >
                                 <template #default="scope">
-                                    <DateAgo
+                                    <date-ago
                                         v-if="lastExecutionByFlowReady"
                                         :inverted="true"
                                         :date="
@@ -219,7 +219,7 @@
                                     >
                                         <Status :status="getLastExecution(scope.row)?.status" size="small" />
                                         <div class="height: 100px;">
-                                            <Bar :chart="mappedChart(scope.row.id, scope.row.namespace)" showDefault short />
+                                            <Bar :chart="mappedChart(scope.row.id, scope.row.namespace)" show-default short />
                                         </div>
                                     </div>
                                 </template>
@@ -228,16 +228,16 @@
                             <el-table-column
                                 v-if="displayColumn('triggers')"
                                 :label="$t('triggers')"
-                                className="row-action"
+                                class-name="row-action"
                             >
                                 <template #default="scope">
-                                    <TriggerAvatar :flow="scope.row" />
+                                    <trigger-avatar :flow="scope.row" />
                                 </template>
                             </el-table-column>
 
                             <el-table-column
-                                columnKey="action"
-                                className="row-action"
+                                column-key="action"
+                                class-name="row-action"
                                 :label="$t('actions')"
                             >
                                 <template #default="scope">
@@ -250,19 +250,19 @@
                                             },
                                         }"
                                     >
-                                        <Kicon
+                                        <kicon
                                             :tooltip="$t('details')"
                                             placement="left"
                                         >
                                             <TextSearch />
-                                        </Kicon>
+                                        </kicon>
                                     </router-link>
                                 </template>
                             </el-table-column>
                         </template>
-                    </SelectTable>
+                    </select-table>
                 </template>
-            </DataTable>
+            </data-table>
         </div>
     </section>
 </template>

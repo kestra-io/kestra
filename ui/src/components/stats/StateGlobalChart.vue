@@ -3,13 +3,13 @@
         <div class="state-global-charts" :class="{big: big}">
             <template v-if="hasData">
                 <!-- TODO: Replace the usage of StateChart with one of the new chart components -->
-                <StateChart
+                <state-chart
                     v-if="ready"
                     :data="data"
                     :big="big"
                     :global="true"
                     :namespace="namespace"
-                    :flowId="flowId"
+                    :flow-id="flowId"
                 />
             </template>
             <template v-else>

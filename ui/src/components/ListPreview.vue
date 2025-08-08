@@ -3,13 +3,13 @@
         <el-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
             <template #default="scope">
                 <template v-if="isComplex(scope.row[column])">
-                    <Editor
-                        :fullHeight="false"
+                    <editor
+                        :full-height="false"
                         :input="true"
                         :navbar="false"
-                        :modelValue="JSON.stringify(scope.row[column])"
+                        :model-value="JSON.stringify(scope.row[column])"
                         lang="json"
-                        readOnly
+                        read-only
                     />
                 </template>
                 <template v-else>

@@ -1,11 +1,11 @@
 <template>
-    <TopNavBar v-if="topbar" :title="routeInfo.title">
+    <top-nav-bar v-if="topbar" :title="routeInfo.title">
         <template #additional-right v-if="displayButtons">
             <ul>
                 <template v-if="$route.name === 'executions/list'">
                     <li>
                         <template v-if="hasAnyExecute">
-                            <TriggerFlow />
+                            <trigger-flow />
                         </template>
                     </li>
                 </template>
@@ -18,19 +18,19 @@
                         </template>
                     </li>
                     <li>
-                        <TriggerFlow
+                        <trigger-flow
                             v-if="flow"
                             :disabled="flow.disabled || isReadOnly"
-                            :flowId="flow.id"
+                            :flow-id="flow.id"
                             :namespace="flow.namespace"
                         />
                     </li>
                 </template>
             </ul>
         </template>
-    </TopNavBar>
+    </top-nav-bar>
     <section data-component="FILENAME_PLACEHOLDER" :class="{'container padding-bottom': topbar}" v-if="ready">
-        <DataTable
+        <data-table
             @page-changed="onPageChanged"
             ref="dataTable"
             :total="executionsStore.total"
@@ -46,7 +46,7 @@
                         refresh: {shown: true, callback: refresh},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
                     }"
-                    :propertiesWidth="182"
+                    :properties-width="182"
                     :properties="{
                         shown: true,
                         columns: optionalColumns,
@@ -58,15 +58,15 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections :dashboard="{id: 'default'}" :charts showDefault />
+                <Sections :dashboard="{id: 'default'}" :charts show-default />
             </template>
 
             <template #table>
-                <SelectTable
+                <select-table
                     ref="selectTable"
                     :data="executionsStore.executions"
-                    :defaultSort="{prop: 'state.startDate', order: 'descending'}"
-                    tableLayout="auto"
+                    :default-sort="{prop: 'state.startDate', order: 'descending'}"
+                    table-layout="auto"
                     fixed
                     @row-dblclick="row => onRowDoubleClick(executionParams(row))"
                     @sort-change="onSort"
@@ -75,8 +75,8 @@
                     :no-data-text="$t('no_results.executions')"
                 >
                     <template #select-actions>
-                        <BulkSelect
-                            :selectAll="queryBulkAction"
+                        <bulk-select
+                            :select-all="queryBulkAction"
                             :selections="selection"
                             :total="executionsStore.total"
                             @update:select-all="toggleAllSelection"
@@ -124,13 +124,13 @@
                                     </el-dropdown-menu>
                                 </template>
                             </el-dropdown>
-                        </BulkSelect>
+                        </bulk-select>
                         <el-dialog
                             v-if="isOpenLabelsModal"
                             v-model="isOpenLabelsModal"
-                            destroyOnClose
-                            :appendToBody="true"
-                            alignCenter
+                            destroy-on-close
+                            :append-to-body="true"
+                            align-center
                         >
                             <template #header>
                                 <h5>{{ $t("Set labels") }}</h5>
@@ -146,12 +146,12 @@
                             </template>
 
                             <el-form>
-                                <ElFormItem :label="$t('execution labels')">
-                                    <LabelInput
+                                <el-form-item :label="$t('execution labels')">
+                                    <label-input
                                         :key="executionLabels"
                                         v-model:labels="executionLabels"
                                     />
-                                </ElFormItem>
+                                </el-form-item>
                             </el-form>
                         </el-dialog>
                     </template>
@@ -159,11 +159,11 @@
                         <el-table-column
                             prop="id"
                             sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
+                            :sort-orders="['ascending', 'descending']"
                             :label="$t('id')"
                         >
                             <template #default="scope">
-                                <Id
+                                <id
                                     :value="scope.row.id"
                                     :shrink="true"
                                     @click="onRowDoubleClick(executionParams(scope.row))"
@@ -175,11 +175,11 @@
                             prop="state.startDate"
                             v-if="displayColumn('state.startDate')"
                             sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
+                            :sort-orders="['ascending', 'descending']"
                             :label="$t('start date')"
                         >
                             <template #default="scope">
-                                <DateAgo :inverted="true" :date="scope.row.state.startDate" />
+                                <date-ago :inverted="true" :date="scope.row.state.startDate" />
                             </template>
                         </el-table-column>
 
@@ -187,11 +187,11 @@
                             prop="state.endDate"
                             v-if="displayColumn('state.endDate')"
                             sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
+                            :sort-orders="['ascending', 'descending']"
                             :label="$t('end date')"
                         >
                             <template #default="scope">
-                                <DateAgo :inverted="true" :date="scope.row.state.endDate" />
+                                <date-ago :inverted="true" :date="scope.row.state.endDate" />
                             </template>
                         </el-table-column>
 
@@ -199,7 +199,7 @@
                             prop="state.duration"
                             v-if="displayColumn('state.duration')"
                             sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
+                            :sort-orders="['ascending', 'descending']"
                             :label="$t('duration')"
                         >
                             <template #default="scope">
@@ -214,7 +214,7 @@
                             v-if="$route.name !== 'flows/update' && displayColumn('namespace')"
                             prop="namespace"
                             sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
+                            :sort-orders="['ascending', 'descending']"
                             :label="$t('namespace')"
                             :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)"
                         />
@@ -223,7 +223,7 @@
                             v-if="$route.name !== 'flows/update' && displayColumn('flowId')"
                             prop="flowId"
                             sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
+                            :sort-orders="['ascending', 'descending']"
                             :label="$t('flow')"
                         >
                             <template #default="scope">
@@ -237,7 +237,7 @@
 
                         <el-table-column v-if="displayColumn('labels')" :label="$t('labels')">
                             <template #default="scope">
-                                <Labels :labels="filteredLabels(scope.row.labels)" />
+                                <labels :labels="filteredLabels(scope.row.labels)" />
                             </template>
                         </el-table-column>
 
@@ -245,11 +245,11 @@
                             prop="state.current"
                             v-if="displayColumn('state.current')"
                             sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
+                            :sort-orders="['ascending', 'descending']"
                             :label="$t('state')"
                         >
                             <template #default="scope">
-                                <Status :status="scope.row.state.current" size="small" />
+                                <status :status="scope.row.state.current" size="small" />
                             </template>
                         </el-table-column>
 
@@ -257,7 +257,7 @@
                             prop="flowRevision"
                             v-if="displayColumn('flowRevision')"
                             :label="$t('revision')"
-                            className="shrink"
+                            class-name="shrink"
                         >
                             <template #default="scope">
                                 <code class="code-text">{{ scope.row.flowRevision }}</code>
@@ -303,27 +303,27 @@
                         </el-table-column>
 
                         <el-table-column
-                            columnKey="action"
-                            className="row-action"
+                            column-key="action"
+                            class-name="row-action"
                             :label="$t('actions')"
                         >
                             <template #default="scope">
                                 <router-link
                                     :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}, query: {revision: scope.row.flowRevision}}"
                                 >
-                                    <Kicon :tooltip="$t('details')" placement="left">
+                                    <kicon :tooltip="$t('details')" placement="left">
                                         <TextSearch />
-                                    </Kicon>
+                                    </kicon>
                                 </router-link>
                             </template>
                         </el-table-column>
                     </template>
-                </SelectTable>
+                </select-table>
             </template>
-        </DataTable>
+        </data-table>
     </section>
 
-    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
+    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -342,7 +342,7 @@
                     :value="item.code"
                 >
                     <template #default>
-                        <Status size="small" :label="false" class="me-1" :status="item.code" />
+                        <status size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </el-option>
@@ -362,7 +362,7 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroyOnClose :appendToBody="true">
+    <el-dialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroy-on-close :append-to-body="true">
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -381,7 +381,7 @@
                     :value="item.code"
                 >
                     <template #default>
-                        <Status size="small" :label="false" class="me-1" :status="item.code" />
+                        <status size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </el-option>
@@ -401,7 +401,7 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
+    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>

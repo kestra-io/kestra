@@ -9,8 +9,8 @@
             :disabled
             :type="disabled ? '' : 'textarea'"
             :autosize="{minRows: 1}"
-            :inputStyle="haveError ? {boxShadow: '0 0 6px #ab0009'} : {}"
-            :suffixIcon="disabled ? Lock : undefined"
+            :input-style="haveError ? {boxShadow: '0 0 6px #ab0009'} : {}"
+            :suffix-icon="disabled ? Lock : undefined"
         />
     </div>
 </template>

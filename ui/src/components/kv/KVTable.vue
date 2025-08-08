@@ -1,24 +1,24 @@
 <template>
     <KestraFilter
         :placeholder="$t('search')"
-        legacyQuery
+        legacy-query
     />
 
-    <SelectTable
+    <select-table
         :data="filteredKvs"
         ref="selectTable"
-        :defaultSort="{prop: 'id', order: 'ascending'}"
-        tableLayout="auto"
+        :default-sort="{prop: 'id', order: 'ascending'}"
+        table-layout="auto"
         fixed
         @selection-change="handleSelectionChange"
         @sort-change="handleSort"
-        :infiniteScrollLoad="namespace === undefined ? fetchKvs : undefined"
+        :infinite-scroll-load="namespace === undefined ? fetchKvs : undefined"
         :no-data-text="$t('no_results.kv_pairs')"
         class="fill-height"
     >
         <template #select-actions>
-            <BulkSelect
-                :selectAll="queryBulkAction"
+            <bulk-select
+                :select-all="queryBulkAction"
                 :selections="selection"
                 @update:select-all="toggleAllSelection"
                 @unselect="toggleAllUnselected"
@@ -26,40 +26,40 @@
                 <el-button :icon="Delete" type="default" @click="removeKvs()">
                     {{ $t("delete") }}
                 </el-button>
-            </BulkSelect>
+            </bulk-select>
         </template>
         <el-table-column
             v-if="namespace === undefined"
             prop="namespace"
             sortable="custom"
-            :sortOrders="['ascending', 'descending']"
+            :sort-orders="['ascending', 'descending']"
             :label="$t('namespace')"
         />
-        <el-table-column prop="key" sortable="custom" :sortOrders="['ascending', 'descending']" :label="$t('key')">
+        <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('key')">
             <template #default="scope">
-                <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
+                <id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
             </template>
         </el-table-column>
         <el-table-column
             prop="description"
             sortable="custom"
-            :sortOrders="['ascending', 'descending']"
+            :sort-orders="['ascending', 'descending']"
             :label="$t('description')"
         />
         <el-table-column
             prop="updateDate"
             sortable="custom"
-            :sortOrders="['ascending', 'descending']"
+            :sort-orders="['ascending', 'descending']"
             :label="$t('last modified')"
         />
         <el-table-column
             prop="expirationDate"
             sortable="custom"
-            :sortOrders="['ascending', 'descending']"
+            :sort-orders="['ascending', 'descending']"
             :label="$t('expiration date')"
         />
 
-        <el-table-column columnKey="copy" className="row-action">
+        <el-table-column column-key="copy" class-name="row-action">
             <template #default="scope">
                 <el-tooltip v-if="scope.row.key !== undefined" :content="$t('copy_to_clipboard')">
                     <el-button :icon="ContentCopy" link @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)" />
@@ -67,7 +67,7 @@
             </template>
         </el-table-column>
 
-        <el-table-column columnKey="update" className="row-action">
+        <el-table-column column-key="update" class-name="row-action">
             <template #default="scope">
                 <el-button
                     v-if="canUpdate(scope.row)"
@@ -78,7 +78,7 @@
             </template>
         </el-table-column>
 
-        <el-table-column columnKey="delete" className="row-action">
+        <el-table-column column-key="delete" class-name="row-action">
             <template #default="scope">
                 <el-button
                     v-if="canDelete(scope.row)"
@@ -88,19 +88,19 @@
                 />
             </template>
         </el-table-column>
-    </SelectTable>
+    </select-table>
 
-    <Drawer
+    <drawer
         v-if="addKvDrawerVisible"
         v-model="addKvDrawerVisible"
         :title="kvModalTitle"
     >
         <el-form class="ks-horizontal" :model="kv" :rules="rules" ref="form">
             <el-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
-                <NamespaceSelect
+                <namespace-select
                     v-model="kv.namespace"
                     :readonly="kv.update"
-                    :includeSystemNamespace="true"
+                    :include-system-namespace="true"
                     all
                 />
             </el-form-item>
@@ -129,10 +129,10 @@
                 <el-input v-else-if="kv.type === 'NUMBER'" type="number" v-model="kv.value" />
                 <el-switch
                     v-else-if="kv.type === 'BOOLEAN'"
-                    :activeText="$t('true')"
+                    :active-text="$t('true')"
                     v-model="kv.value"
                     class="switch-text"
-                    :activeActionIcon="Check"
+                    :active-action-icon="Check"
                 />
                 <el-date-picker
                     v-else-if="kv.type === 'DATETIME'"
@@ -144,16 +144,16 @@
                     v-model="kv.value"
                     type="date"
                 />
-                <TimeSelect
+                <time-select
                     v-else-if="kv.type === 'DURATION'"
-                    :fromNow="false"
-                    :timeRange="kv.value"
+                    :from-now="false"
+                    :time-range="kv.value"
                     clearable
-                    allowCustom
+                    allow-custom
                     @update:model-value="kv.value = $event.timeRange"
                 />
-                <Editor
-                    :fullHeight="false"
+                <editor
+                    :full-height="false"
                     :input="true"
                     :navbar="false"
                     v-else-if="kv.type === 'JSON'"
@@ -167,14 +167,14 @@
             </el-form-item>
 
             <el-form-item :label="$t('expiration')" prop="ttl">
-                <TimeSelect
-                    :fromNow="false"
-                    allowInfinite
-                    allowCustom
+                <time-select
+                    :from-now="false"
+                    allow-infinite
+                    allow-custom
                     :placeholder="kv.ttl ? $t('datepicker.custom') : $t('datepicker.never')"
-                    :timeRange="kv.ttl"
+                    :time-range="kv.ttl"
                     clearable
-                    includeNever
+                    include-never
                     @update:model-value="onTtlChange"
                 />
             </el-form-item>
@@ -185,7 +185,7 @@
                 {{ $t('save') }}
             </el-button>
         </template>
-    </Drawer>
+    </drawer>
 </template>
 
 <script setup lang="ts">

@@ -1,6 +1,6 @@
 <template>
     <el-input-number
-        :modelValue="val"
+        :model-value="val"
         @update:model-value="onInput"
         :state="isValid"
         :min="schema.minimum"

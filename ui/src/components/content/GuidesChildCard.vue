@@ -1,5 +1,5 @@
 <template>
-    <ChildCard :pageUrl="pageUrl" />
+    <ChildCard :page-url="pageUrl" />
 </template>
 
 <script>

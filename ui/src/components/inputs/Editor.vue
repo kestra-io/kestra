@@ -9,7 +9,7 @@
                             :content="t('Fold content lines')"
                             :persistent="false"
                             transition=""
-                            :hideAfter="0"
+                            :hide-after="0"
                         >
                             <el-button
                                 :icon="icon.UnfoldLessHorizontal"
@@ -22,7 +22,7 @@
                             :content="t('Unfold content lines')"
                             :persistent="false"
                             transition=""
-                            :hideAfter="0"
+                            :hide-after="0"
                         >
                             <el-button
                                 :icon="icon.UnfoldMoreHorizontal"
@@ -47,14 +47,14 @@
                     :theme="themeComputed"
                     :value="modelValue"
                     :options="options"
-                    :diffEditor="original !== undefined"
+                    :diff-editor="original !== undefined"
                     :original="original"
                     :language="lang"
                     :extension="extension"
-                    :schemaType="schemaType"
+                    :schema-type="schemaType"
                     :input="input"
                     :creating="creating"
-                    :largeSuggestions="largeSuggestions"
+                    :large-suggestions="largeSuggestions"
                     @mouse-move="emit('mouse-move', $event)"
                     @mouse-leave="emit('mouse-leave', $event)"
                     @change="onInput"

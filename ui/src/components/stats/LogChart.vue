@@ -4,9 +4,9 @@
             effect="light"
             placement="bottom"
             :persistent="false"
-            :hideAfter="0"
+            :hide-after="0"
             transition=""
-            :popperClass="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
+            :popper-class="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
         >
             <template #content>
                 <span v-html="tooltipContent" />

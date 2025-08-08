@@ -6,7 +6,7 @@
             refresh: {shown: true, callback: load},
             settings: {shown: false},
         }"
-        legacyQuery
+        legacy-query
     />
 
     <div v-bind="$attrs" v-loading="isLoading">
@@ -15,9 +15,9 @@
                 effect="light"
                 placement="bottom"
                 :persistent="false"
-                :hideAfter="0"
+                :hide-after="0"
                 transition=""
-                :popperClass="
+                :popper-class="
                     tooltipContent === '' ? 'd-none' : 'tooltip-stats'
                 "
                 v-if="aggregatedMetric"

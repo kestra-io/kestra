@@ -2,7 +2,7 @@
     <el-select
         v-model="scope"
         @update:model-value="onInput"
-        collapseTags
+        collapse-tags
         multiple
         :placeholder="$t('scope_filter.all', {label})"
     >

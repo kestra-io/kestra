@@ -9,18 +9,18 @@
         <el-tooltip
             effect="light"
             v-if="errors"
-            popperClass="p-0 bg-transparent"
+            popper-class="p-0 bg-transparent"
             :placement="tooltipPlacement"
-            :showArrow="false"
-            rawContent
+            :show-arrow="false"
+            raw-content
             transition=""
             :persistent="true"
-            :hideAfter="0"
+            :hide-after="0"
         >
             <template #content>
                 <el-container class="validation-tooltip">
                     <el-header>
-                        <AlertCircle class="align-middle text-danger" />
+                        <alert-circle class="align-middle text-danger" />
                         <span class="align-middle">
                             {{ t("error detected") }}
                         </span>
@@ -29,7 +29,7 @@
                 </el-container>
             </template>
             <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="error square">
-                <AlertCircle class="text-danger" />
+                <alert-circle class="text-danger" />
             </el-button>
         </el-tooltip>
 
@@ -37,18 +37,18 @@
         <el-tooltip
             effect="light"
             v-if="warnings"
-            popperClass="p-0 bg-transparent"
+            popper-class="p-0 bg-transparent"
             :placement="tooltipPlacement"
-            :showArrow="false"
-            rawContent
+            :show-arrow="false"
+            raw-content
             transition=""
             :persistent="true"
-            :hideAfter="0"
+            :hide-after="0"
         >
             <template #content>
                 <el-container class="validation-tooltip">
                     <el-header>
-                        <Alert class="align-middle text-warning" />
+                        <alert class="align-middle text-warning" />
                         <span class="align-middle">
                             {{ t("warning detected") }}
                         </span>
@@ -65,7 +65,7 @@
                 </el-container>
             </template>
             <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="warning square">
-                <Alert class="text-warning" />
+                <alert class="text-warning" />
             </el-button>
         </el-tooltip>
 
@@ -73,18 +73,18 @@
         <el-tooltip
             effect="light"
             v-if="infos && !warnings"
-            popperClass="p-0 bg-transparent"
+            popper-class="p-0 bg-transparent"
             :placement="tooltipPlacement"
-            :showArrow="false"
-            rawContent
+            :show-arrow="false"
+            raw-content
             transition=""
             :persistent="true"
-            :hideAfter="0"
+            :hide-after="0"
         >
             <template #content>
                 <el-container class="validation-tooltip">
                     <el-header>
-                        <Alert class="align-middle text-info" />
+                        <alert class="align-middle text-info" />
                         <span class="align-middle">
                             {{ t("informative notice") }}
                         </span>
@@ -93,7 +93,7 @@
                 </el-container>
             </template>
             <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="info">
-                <Alert class="text-info" />
+                <alert class="text-info" />
                 <span class="text-info label">{{ t("informative notice") }}</span>
             </el-button>
         </el-tooltip>

@@ -1,5 +1,5 @@
 <template>
-    <el-form labelPosition="top">
+    <el-form label-position="top">
         <el-form-item
             :key="index"
             :required="isRequired(key)"
@@ -19,27 +19,27 @@
                             .join(" ")
                     }}
                 </span>
-                <el-tag disableTransitions size="small" class="ms-2 type-tag">
+                <el-tag disable-transitions size="small" class="ms-2 type-tag">
                     {{ getTaskComponent(schema, key, properties).ksTaskName }}
                 </el-tag>
                 <el-tooltip
                     v-if="hasTooltip(schema)"
                     :persistent="false"
-                    :hideAfter="0"
+                    :hide-after="0"
                     effect="light"
                 >
                     <template #content>
-                        <Markdown
+                        <markdown
                             class="markdown-tooltip"
                             :source="helpText(schema)"
                         />
                     </template>
-                    <Help class="ms-2" />
+                    <help class="ms-2" />
                 </el-tooltip>
             </template>
             <component
                 :is="getTaskComponent(schema, key, properties)"
-                :modelValue="getPropertiesValue(key)"
+                :model-value="getPropertiesValue(key)"
                 @update:model-value="onObjectInput(key, $event)"
                 :root="getKey(key)"
                 :schema="schema"

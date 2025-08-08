@@ -7,13 +7,13 @@
             :rules="requiredRules(input)"
             :prop="input.id"
             :error="inputError(input.id)"
-            :inlineMessage="true"
+            :inline-message="true"
         >
             <template #label>
-                <Markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
+                <markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
             </template>
-            <Editor
-                :fullHeight="false"
+            <editor
+                :full-height="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
@@ -23,14 +23,14 @@
                 @confirm="onSubmit"
             />
             <el-select
-                :fullHeight="false"
+                :full-height="false"
                 :input="true"
                 :navbar="false"
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
                 :data-testid="`input-form-${input.id}`"
                 v-model="selectedTriggerLocal[input.id]"
                 @update:model-value="onChange(input)"
-                :allowCreate="input.allowCustomValue"
+                :allow-create="input.allowCustomValue"
                 filterable
                 clearable
             >
@@ -40,7 +40,7 @@
                     :label="item"
                     :value="item"
                 >
-                    <Markdown :source="item" />
+                    <markdown :source="item" />
                 </el-option>
             </el-select>
             <el-radio-group
@@ -58,7 +58,7 @@
                 />
             </el-radio-group>
             <el-select
-                :fullHeight="false"
+                :full-height="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'MULTISELECT'"
@@ -68,7 +68,7 @@
                 multiple
                 filterable
                 clearable
-                :allowCreate="input.allowCustomValue"
+                :allow-create="input.allowCustomValue"
             >
                 <el-option
                     v-for="item in (input.values ?? input.options)"
@@ -76,7 +76,7 @@
                     :label="item"
                     :value="item"
                 >
-                    <Markdown :source="item" />
+                    <markdown :source="item" />
                 </el-option>
             </el-select>
             <el-input
@@ -85,7 +85,7 @@
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
-                showPassword
+                show-password
             />
             <span v-if="input.type === 'INT'">
                 <el-input-number
@@ -216,33 +216,33 @@
                     </div>
                 </div>
             </div>
-            <Editor
-                :fullHeight="false"
+            <editor
+                :full-height="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'JSON'"
-                :showScroll="inputsValues[input.id]?.length > 530 ? true : false"
+                :show-scroll="inputsValues[input.id]?.length > 530 ? true : false"
                 :data-testid="`input-form-${input.id}`"
                 lang="json"
                 v-model="inputsValues[input.id]"
             />
-            <Editor
-                :fullHeight="false"
+            <editor
+                :full-height="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'YAML'"
                 :data-testid="`input-form-${input.id}`"
                 lang="yaml"
-                :modelValue="inputsValues[input.id]"
+                :model-value="inputsValues[input.id]"
                 @change="onYamlChange(input, $event)"
             />
-            <DurationPicker
+            <duration-picker
                 v-if="input.type === 'DURATION'"
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             />
-            <Markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
+            <markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
             <template v-if="executeClicked">
                 <template v-for="err in input.errors ?? []" :key="err">
                     <el-text type="warning">
@@ -256,7 +256,7 @@
         </div>
     </template>
 
-    <el-alert type="info" :showIcon="true" :closable="false" class="mb-3" v-else>
+    <el-alert type="info" :show-icon="true" :closable="false" class="mb-3" v-else>
         {{ $t("no inputs") }}
     </el-alert>
 </template>

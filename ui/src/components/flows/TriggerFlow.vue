@@ -6,15 +6,15 @@
         <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}" :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
             {{ $t("execute") }}
         </el-button>
-        <el-dialog id="execute-flow-dialog" v-model="isOpen" destroyOnClose :showClose="!coreStore.guidedProperties.tourStarted" :beforeClose="(done) => beforeClose(done)" :appendToBody="true">
+        <el-dialog id="execute-flow-dialog" v-model="isOpen" destroy-on-close :show-close="!coreStore.guidedProperties.tourStarted" :before-close="(done) => beforeClose(done)" :append-to-body="true">
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
+            <flow-run @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
         </el-dialog>
-        <el-dialog v-if="isSelectFlowOpen" v-model="isSelectFlowOpen" destroyOnClose :beforeClose="() => reset()" :appendToBody="true">
+        <el-dialog v-if="isSelectFlowOpen" v-model="isSelectFlowOpen" destroy-on-close :before-close="() => reset()" :append-to-body="true">
             <el-form
-                labelPosition="top"
+                label-position="top"
             >
                 <el-form-item :label="$t('namespace')">
                     <el-select
@@ -34,7 +34,7 @@
                 >
                     <el-select
                         v-model="localFlow"
-                        valueKey="id"
+                        value-key="id"
                     >
                         <el-option
                             v-for="exFlow in executionsStore.flowsExecutable"
@@ -46,7 +46,7 @@
                 </el-form-item>
                 <el-form-item v-if="localFlow" :label="$t('inputs')">
                     <div class="w-100">
-                        <FlowRun @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
+                        <flow-run @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
                     </div>
                 </el-form-item>
             </el-form>

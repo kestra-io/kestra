@@ -1,13 +1,13 @@
 <template>
     <NoCode
         :flow="lastValidFlowYaml"
-        :parentPath="parentPath"
-        :refPath="refPath"
-        :creatingTask="creatingTask"
-        :editingTask="editingTask"
-        :fieldName="fieldName"
+        :parent-path="parentPath"
+        :ref-path="refPath"
+        :creating-task="creatingTask"
+        :editing-task="editingTask"
+        :field-name="fieldName"
         :position
-        :blockSchemaPath="blockSchemaPath"
+        :block-schema-path="blockSchemaPath"
         @update-task="(e) => editorUpdate(e)"
         @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
         @close-task="() => emit('closeTask')"

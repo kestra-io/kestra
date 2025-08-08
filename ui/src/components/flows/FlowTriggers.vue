@@ -2,24 +2,24 @@
     <KestraFilter
         v-if="triggersWithType.length"
         prefix="flow_triggers"
-        readOnly
+        read-only
         :buttons="{
             refresh: {shown: true, callback: loadData},
             settings: {shown: false}
         }"
-        legacyQuery
+        legacy-query
     />
 
     <el-table
         v-if="triggersWithType.length"
         v-bind="$attrs"
         :data="triggersWithType"
-        tableLayout="auto"
-        defaultExpandAll
+        table-layout="auto"
+        default-expand-all
     >
         <el-table-column type="expand">
             <template #default="props">
-                <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purgeFilters :withCharts="false" embed />
+                <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purge-filters :with-charts="false" embed />
             </template>
         </el-table-column>
         <el-table-column prop="id" :label="$t('id')">
@@ -34,7 +34,7 @@
 
         <el-table-column prop="workerId" :label="$t('workerId')">
             <template #default="scope">
-                <Id
+                <id
                     :value="scope.row.workerId"
                     :shrink="true"
                 />
@@ -43,11 +43,11 @@
 
         <el-table-column prop="nextExecutionDate" :label="$t('next execution date')">
             <template #default="scope">
-                <DateAgo :inverted="true" :date="scope.row.nextExecutionDate" />
+                <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
             </template>
         </el-table-column>
 
-        <el-table-column columnKey="backfill" v-if="userCan(action.UPDATE) || userCan(action.CREATE)">
+        <el-table-column column-key="backfill" v-if="userCan(action.UPDATE) || userCan(action.CREATE)">
             <template #header>
                 {{ $t("backfill") }}
             </template>
@@ -69,29 +69,29 @@
                                 :percentage="backfillProgression(scope.row.backfill)"
                                 :status="scope.row.backfill.paused ? 'warning' : ''"
                                 :stroke-width="12"
-                                :showText="!scope.row.backfill.paused"
+                                :show-text="!scope.row.backfill.paused"
                                 :striped="!scope.row.backfill.paused"
-                                stripedFlow
+                                striped-flow
                             />
                         </div>
                         <template v-if="!scope.row.backfill.paused">
                             <el-button size="small" @click="pauseBackfill(scope.row)">
-                                <Kicon :tooltip="$t('pause backfill')">
+                                <kicon :tooltip="$t('pause backfill')">
                                     <Pause />
-                                </Kicon>
+                                </kicon>
                             </el-button>
                         </template>
                         <template v-else-if="userCan(action.UPDATE)">
                             <el-button size="small" @click="unpauseBackfill(scope.row)">
-                                <Kicon :tooltip="$t('continue backfill')">
+                                <kicon :tooltip="$t('continue backfill')">
                                     <Play />
-                                </Kicon>
+                                </kicon>
                             </el-button>
 
                             <el-button size="small" @click="deleteBackfill(scope.row)">
-                                <Kicon :tooltip="$t('delete backfill')">
+                                <kicon :tooltip="$t('delete backfill')">
                                     <Delete />
-                                </Kicon>
+                                </kicon>
                             </el-button>
                         </template>
                     </div>
@@ -99,52 +99,52 @@
             </template>
         </el-table-column>
 
-        <el-table-column columnKey="disable" className="row-action" v-if="userCan(action.UPDATE)">
+        <el-table-column column-key="disable" class-name="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <el-switch
                     v-if="canBeDisabled(scope.row)"
                     size="small"
-                    :activeText="$t('enabled')"
-                    :modelValue="!scope.row.disabled"
+                    :active-text="$t('enabled')"
+                    :model-value="!scope.row.disabled"
                     @change="setDisabled(scope.row, $event)"
                     class="switch-text"
-                    :activeActionIcon="Check"
+                    :active-action-icon="Check"
                 />
             </template>
         </el-table-column>
 
-        <el-table-column columnKey="restart" className="row-action" v-if="userCan(action.UPDATE)">
+        <el-table-column column-key="restart" class-name="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <el-button size="small" v-if="scope.row.evaluateRunningDate" @click="restart(scope.row)">
-                    <Kicon :tooltip="$t('restart trigger.button')">
+                    <kicon :tooltip="$t('restart trigger.button')">
                         <Restart />
-                    </Kicon>
+                    </kicon>
                 </el-button>
             </template>
         </el-table-column>
 
-        <el-table-column columnKey="unlock" className="row-action" v-if="userCan(action.UPDATE)">
+        <el-table-column column-key="unlock" class-name="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <el-button size="small" v-if="scope.row.executionId" @click="unlock(scope.row)">
-                    <Kicon :tooltip="$t('unlock trigger.button')">
-                        <LockOff />
-                    </Kicon>
+                    <kicon :tooltip="$t('unlock trigger.button')">
+                        <lock-off />
+                    </kicon>
                 </el-button>
             </template>
         </el-table-column>
 
         <el-table-column>
             <template #default="scope">
-                <TriggerAvatar :flow="flow" :triggerId="scope.row.id" />
+                <trigger-avatar :flow="flow" :trigger-id="scope.row.id" />
             </template>
         </el-table-column>
 
-        <el-table-column columnKey="action" className="row-action">
+        <el-table-column column-key="action" class-name="row-action">
             <template #default="scope">
                 <el-button size="small" @click="triggerId = scope.row.id; isOpen = true">
-                    <Kicon :tooltip="$t('details')" placement="left">
+                    <kicon :tooltip="$t('details')" placement="left">
                         <TextSearch />
-                    </Kicon>
+                    </kicon>
                 </el-button>
             </template>
         </el-table-column>
@@ -176,11 +176,11 @@
         </template>
     </Empty>
 
-    <el-dialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
+    <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true">
         <template #header>
             <span v-html="$t('backfill executions')" />
         </template>
-        <el-form :model="backfill" labelPosition="top">
+        <el-form :model="backfill" label-position="top">
             <div class="pickers">
                 <div class="small-picker">
                     <el-form-item label="Start">
@@ -188,7 +188,7 @@
                             v-model="backfill.start"
                             type="datetime"
                             placeholder="Start"
-                            :disabledDate="time => new Date() < time || backfill.end ? time > backfill.end : false"
+                            :disabled-date="time => new Date() < time || backfill.end ? time > backfill.end : false"
                         />
                     </el-form-item>
                 </div>
@@ -198,16 +198,16 @@
                             v-model="backfill.end"
                             type="datetime"
                             placeholder="End"
-                            :disabledDate="time => new Date() < time || backfill?.start > time"
+                            :disabled-date="time => new Date() < time || backfill?.start > time"
                         />
                     </el-form-item>
                 </div>
             </div>
         </el-form>
-        <FlowRun
+        <flow-run
             @update-inputs="backfill.inputs = $event"
             @update-labels="backfill.labels = $event"
-            :selectedTrigger="selectedTrigger"
+            :selected-trigger="selectedTrigger"
             :redirect="false"
             :embed="true"
         />
@@ -237,7 +237,7 @@
         </template>
     </el-dialog>
 
-    <Drawer
+    <drawer
         v-if="isOpen"
         v-model="isOpen"
     >
@@ -245,9 +245,9 @@
             <code>{{ triggerId }}</code>
         </template>
 
-        <Markdown v-if="triggerDefinition && triggerDefinition.description" :source="triggerDefinition.description" />
-        <Vars :data="modalData" />
-    </Drawer>
+        <markdown v-if="triggerDefinition && triggerDefinition.description" :source="triggerDefinition.description" />
+        <vars :data="modalData" />
+    </drawer>
 </template>
 
 <script setup>

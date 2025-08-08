@@ -6,9 +6,9 @@
         >
             <template #icon>
                 <Creation
-                    :parentPathComplete="parentPathComplete"
-                    :refPath="elements?.length ? elements.length - 1 : undefined"
-                    :blockSchemaPath
+                    :parent-path-complete="parentPathComplete"
+                    :ref-path="elements?.length ? elements.length - 1 : undefined"
+                    :block-schema-path
                 />
             </template>
 
@@ -16,11 +16,11 @@
                 v-for="(element, elementIndex) in filteredElements"
                 :key="elementIndex"
                 :section="section"
-                :parentPathComplete="parentPathComplete"
+                :parent-path-complete="parentPathComplete"
                 :element
-                :elementIndex="elementIndex"
+                :element-index="elementIndex"
                 :moved="elementIndex == movedIndex"
-                :blockSchemaPath
+                :block-schema-path
                 @remove-element="removeElement(elementIndex)"
                 @move-element="
                     (direction: 'up' | 'down') =>

@@ -1,5 +1,5 @@
 <template>
-    <EditorSidebar :currentNS="namespace" style="width: 100%;height: 100%;" />
+    <EditorSidebar :current-n-s="namespace" style="width: 100%;height: 100%;" />
 </template>
 
 <script lang="ts" setup>

@@ -84,7 +84,7 @@
                 :key="type"
                 :type="type.toLowerCase()"
                 :title="`${type} Alert`"
-                showIcon
+                show-icon
             />
         </div>
 
@@ -189,14 +189,14 @@
             </el-select>
         </div>
 
-        <Tabs :tabs="tabs" :embedActiveTab="activeTab" @changed="tabChanged" />
+        <Tabs :tabs="tabs" :embed-active-tab="activeTab" @changed="tabChanged" />
         <div>
             <div class="sub-title my-2 text-sm text-gray-600">
                 list suggestions when activated
             </div>
             <el-autocomplete
                 v-model="state1"
-                :fetchSuggestions="querySearch"
+                :fetch-suggestions="querySearch"
                 clearable
                 class="inline-input w-50"
                 placeholder="Please Input"

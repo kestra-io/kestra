@@ -317,6 +317,9 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
                     const state = message.state.current;
 
                     node.data({...node.data(), metadata: {...node.data("metadata"), state}});
+
+                    nextTick(() => {}) // Needed to ensure that table nodes are updated after the DOM is ready                    
+
                     setExecutionNodeColors(cy, node.toArray());
                     setExecutionEdgeColors(node.connectedEdges(), getStateColor(undefined, state));
                 });

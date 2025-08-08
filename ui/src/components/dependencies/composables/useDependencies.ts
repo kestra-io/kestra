@@ -304,6 +304,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
                     node.data({...node.data(), metadata: {...node.data("metadata"), state}});
                     node.style({"background-color": State.getStateColor(state), "border-color": State.getStateColor(state)});
+                    node.connectedEdges().removeClass(FADED).addClass(EXECUTIONS).style({"line-color": getStateColor(node), "target-arrow-color": getStateColor(node)});
                 });
             }
         });

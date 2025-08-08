@@ -55,30 +55,6 @@ const mockedStore: MockStore<Record<string, any>> = {
     dispatch: vi.fn((type, payload) => {
         if (type === "namespace/loadNamespacesForDatatype" && payload.dataType === "flow") {
             return Promise.resolve(["my.namespace", "another.namespace"])
-        } else if (type === "flow/flowsByNamespace") {
-            if (payload === "another.namespace") {
-                return Promise.resolve([{id: "flow-other-namespace"}, {id: "another-flow-other-namespace"}])
-            } else {
-                return Promise.reject("404")
-            }
-        } else if (type === "flow/loadFlow") {
-            if (
-                payload.namespace === "another.namespace" &&
-                payload.id === "flow-other-namespace" &&
-                payload.revision === 2 &&
-                payload.source === false &&
-                payload.store === false &&
-                payload.deleted === true
-            ) {
-                return Promise.resolve({
-                    inputs: [
-                        {id: "first-input"},
-                        {id: "second-input"}
-                    ]
-                })
-            } else {
-                return Promise.reject("404")
-            }
         } else if (type === "namespace/inheritedSecrets") {
             if (payload.id === "my.namespace") {
                 return Promise.resolve({"my.namespace": ["myFirstSecret", "mySecondSecret"], "my": ["myInheritedSecret"]});
@@ -97,7 +73,7 @@ const mockedStore: MockStore<Record<string, any>> = {
 } as any
 
 const pluginsStore = {
-    load(payload: any){
+    load: vi.fn((payload: any) =>{
         switch (payload.cls) {
                 case "io.kestra.plugin.core.trigger.Schedule":
                     return Promise.resolve(propertiesSchemaWrapper({
@@ -116,7 +92,42 @@ const pluginsStore = {
                 default:
                     return Promise.reject("404")
             }
-    }
+    })
+} as any
+
+const flowStore = {
+    loadFlow: vi.fn(({namespace, id, revision}) => {
+        if (namespace === "another.namespace" && id === "flow-other-namespace" && revision === 2) {
+            return Promise.resolve({
+                inputs: [
+                    {id: "first-input"},
+                    {id: "second-input"}
+                ]
+            })
+        }
+        return Promise.reject("404")
+    }),
+    loadGraphFromSource: vi.fn(() => Promise.resolve({
+        nodes: [
+            {id: "task1", type: "io.kestra.plugin.core.output.OutputValues"},
+            {id: "task2", type: "io.kestra.plugin.core.kv.Get"},
+            {id: "subflow", type: "io.kestra.plugin.core.flow.Subflow"},
+            {id: "schedule", type: "io.kestra.plugin.core.trigger.Schedule"}
+        ],
+        edges: [
+            {source: "task1", target: "task2"},
+            {source: "task2", target: "subflow"},
+            {source: "subflow", target: "schedule"}
+        ]
+    })),
+    flowsByNamespace: vi.fn((namespace: string) => {
+        if (namespace === "my.namespace") {
+            return Promise.resolve([{id: "my-flow", namespace: "my.namespace"}])
+        } else if (namespace === "another.namespace") {
+            return Promise.resolve([{id: "flow-other-namespace", namespace: "another.namespace"}, {id: "another-flow-other-namespace", namespace: "another.namespace"}])
+        }
+        return Promise.reject("404")
+    })
 } as any
 
 const namespacesStore = {
@@ -140,12 +151,12 @@ const namespacesStore = {
     })
 } as any
 
-const provider = new FlowAutoCompletion(mockedStore, pluginsStore, namespacesStore);
+const provider = new FlowAutoCompletion(mockedStore, flowStore, pluginsStore, namespacesStore);
 const parsed = YAML_UTILS.parse(defaultFlow);
 
 describe("FlowAutoCompletionProvider", () => {
     it("root autocompletions", async () => {
-        expect(await new FlowAutoCompletion(mockedStore, pluginsStore, namespacesStore).rootFieldAutoCompletion()).toEqual([
+        expect(await new FlowAutoCompletion(mockedStore, flowStore, pluginsStore, namespacesStore).rootFieldAutoCompletion()).toEqual([
             "outputs",
             "inputs",
             "vars",
@@ -206,19 +217,20 @@ describe("FlowAutoCompletionProvider", () => {
     })
 
     it("value autocompletions", async () => {
-        mockedStore.dispatch.mockClear();
-        namespacesStore.loadNamespacesForDatatype.mockClear();
-
         expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("namespace:") + "namespace:".length))).toEqual(["my.namespace", "another.namespace"]);
         expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("flowId:") + "flowId:".length))).toEqual(["flow-other-namespace", "another-flow-other-namespace"]);
 
-        expect(mockedStore.dispatch.mock.calls.length).toBe(1);
+        expect(namespacesStore.loadNamespacesForDatatype).toHaveBeenCalledOnce();
+        expect(flowStore.flowsByNamespace).toHaveBeenCalledWith("another.namespace");
         const firstInputIndex = defaultFlow.indexOf("first-input");
+        namespacesStore.loadNamespacesForDatatype.mockClear();
         expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
-        expect(mockedStore.dispatch.mock.calls.length).toBe(2);
+        expect(namespacesStore.loadNamespacesForDatatype).not.toHaveBeenCalled();
+        expect(flowStore.loadFlow).toHaveBeenCalledOnce();
+
         // Subflow inputs cache kicks in
         expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
-        expect(mockedStore.dispatch.mock.calls.length).toBe(2);
+        expect(flowStore.loadFlow).toHaveBeenCalledOnce();
 
         // With newline already inserted
         expect(await provider.valueAutoCompletion(defaultFlow.substring(0, firstInputIndex) + "\n        " + defaultFlow.substring(firstInputIndex, defaultFlow.length), parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);

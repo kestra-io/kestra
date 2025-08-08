@@ -22,6 +22,7 @@ import java.util.Map;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -119,6 +120,20 @@ public abstract class StorageTestSuite {
         });
     }
     //endregion
+
+    @Test
+    void getInstanceResource() throws Exception {
+        String prefix = IdUtils.create();
+
+        putInstanceFile("/" + prefix + "/storage/get.yml");
+        putInstanceFile("/" + prefix + "/storage/level2/2.yml");
+
+        URI item = new URI("/" + prefix + "/storage/get.yml");
+        InputStream get = storageInterface.getInstanceResource(prefix, item);
+        assertThat(CharStreams.toString(new InputStreamReader(get))).isEqualTo(CONTENT_STRING);
+        assertTrue(storageInterface.existsInstanceResource(prefix, item));
+    }
+
 
     @Test
     void filesByPrefix() throws IOException {
@@ -267,6 +282,27 @@ public abstract class StorageTestSuite {
     }
     //endregion
 
+    @Test
+    void listInstanceResouces() throws Exception {
+        String prefix = IdUtils.create();
+
+        List<String> path = Arrays.asList(
+            "/" + prefix + "/storage/root.yml",
+            "/" + prefix + "/storage/level1/1.yml",
+            "/" + prefix + "/storage/level1/level2/1.yml",
+            "/" + prefix + "/storage/another/1.yml"
+        );
+        path.forEach(throwConsumer(s -> putInstanceFile(s, Map.of("someMetadata", "someValue"))));
+
+        List<FileAttributes> list = storageInterface.listInstanceResource(prefix, null);
+        assertThat(list.stream().map(FileAttributes::getFileName).toList()).contains(prefix);
+
+        list = storageInterface.listInstanceResource(prefix, new URI("/" + prefix + "/storage"));
+        assertThat(list.stream().map(FileAttributes::getFileName).toList()).containsExactlyInAnyOrder("root.yml", "level1", "another");
+        assertThat(list.stream().filter(f -> f.getFileName().equals("root.yml")).findFirst().get().getMetadata()).containsEntry("someMetadata", "someValue");
+    }
+
+
     //region test EXISTS
     @Test
     void exists() throws Exception {
@@ -328,6 +364,15 @@ public abstract class StorageTestSuite {
 
         putFile(tenantId, "/" + prefix + "/storage/get.yml");
         assertTrue(storageInterface.exists(tenantId, prefix, new URI("kestra:///" + prefix + "/storage/get.yml")));
+    }
+
+    @Test
+    void existsInstanceResource() throws Exception {
+        String prefix = IdUtils.create();
+
+        putInstanceFile("/" + prefix + "/storage/put.yml");
+        assertThat(storageInterface.existsInstanceResource(prefix, new URI("/" + prefix + "/storage/put.yml"))).isTrue();
+        assertThat(storageInterface.existsInstanceResource(prefix, new URI("/" + prefix + "/storage/notfound.yml"))).isFalse();
     }
     //endregion
 
@@ -498,25 +543,10 @@ public abstract class StorageTestSuite {
         path.forEach(throwConsumer(s -> this.putFile(tenantId, s)));
 
         FileAttributes attr = storageInterface.getAttributes(tenantId, prefix, new URI("/" + prefix + "/storage/root.yml"));
-        assertThat(attr.getFileName()).isEqualTo("root.yml");
-        assertThat(attr.getType()).isEqualTo(FileAttributes.FileType.File);
-        assertThat(attr.getSize()).isEqualTo((long) CONTENT_STRING.length());
-        Instant lastModifiedInstant = Instant.ofEpochMilli(attr.getLastModifiedTime());
-        assertThat(lastModifiedInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1)))).isTrue();
-        assertThat(lastModifiedInstant.isBefore(Instant.now())).isTrue();
-        Instant creationInstant = Instant.ofEpochMilli(attr.getCreationTime());
-        assertThat(creationInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1)))).isTrue();
-        assertThat(creationInstant.isBefore(Instant.now())).isTrue();
+        compareFileAttribute(attr);
 
         attr = storageInterface.getAttributes(tenantId, prefix, new URI("/" + prefix + "/storage/level1"));
-        assertThat(attr.getFileName()).isEqualTo("level1");
-        assertThat(attr.getType()).isEqualTo(FileAttributes.FileType.Directory);
-        lastModifiedInstant = Instant.ofEpochMilli(attr.getLastModifiedTime());
-        assertThat(lastModifiedInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1)))).isTrue();
-        assertThat(lastModifiedInstant.isBefore(Instant.now())).isTrue();
-        creationInstant = Instant.ofEpochMilli(attr.getCreationTime());
-        assertThat(creationInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1)))).isTrue();
-        assertThat(creationInstant.isBefore(Instant.now())).isTrue();
+        compareDirectory(attr);
     }
 
     @Test
@@ -579,6 +609,42 @@ public abstract class StorageTestSuite {
         putFile(tenantId, "/" + prefix + "/storage/get.yml");
         FileAttributes attr = storageInterface.getAttributes(tenantId, prefix, new URI("kestra:///" + prefix + "/storage/get.yml"));
         assertThat(attr.getFileName()).isEqualTo("get.yml");
+    }
+
+    @Test
+    void getInstanceAttributes() throws Exception {
+        String prefix = IdUtils.create();
+
+        List<String> path = Arrays.asList(
+            "/" + prefix + "/storage/root.yml",
+            "/" + prefix + "/storage/level1/1.yml"
+        );
+        path.forEach(throwConsumer(this::putInstanceFile));
+
+        FileAttributes attr = storageInterface.getInstanceAttributes(prefix, new URI("/" + prefix + "/storage/root.yml"));
+        compareFileAttribute(attr);
+
+        attr = storageInterface.getInstanceAttributes(prefix, new URI("/" + prefix + "/storage/level1"));
+        compareDirectory(attr);
+    }
+
+    private static void compareDirectory(FileAttributes attr) {
+        assertThat(attr.getFileName()).isEqualTo("level1");
+        assertThat(attr.getType()).isEqualTo(FileAttributes.FileType.Directory);
+        Instant lastModifiedInstant = Instant.ofEpochMilli(attr.getLastModifiedTime());
+        assertThat(lastModifiedInstant).isCloseTo(Instant.now(), within(Duration.ofSeconds(10)));
+        Instant creationInstant = Instant.ofEpochMilli(attr.getCreationTime());
+        assertThat(creationInstant).isCloseTo(Instant.now(), within(Duration.ofSeconds(10)));
+    }
+
+    private static void compareFileAttribute(FileAttributes attr) {
+        assertThat(attr.getFileName()).isEqualTo("root.yml");
+        assertThat(attr.getType()).isEqualTo(FileAttributes.FileType.File);
+        assertThat(attr.getSize()).isEqualTo((long) CONTENT_STRING.length());
+        Instant lastModifiedInstant = Instant.ofEpochMilli(attr.getLastModifiedTime());
+        assertThat(lastModifiedInstant).isCloseTo(Instant.now(), within(Duration.ofSeconds(10)));
+        Instant creationInstant = Instant.ofEpochMilli(attr.getCreationTime());
+        assertThat(creationInstant).isCloseTo(Instant.now(), within(Duration.ofSeconds(10)));
     }
     //endregion
 
@@ -647,6 +713,17 @@ public abstract class StorageTestSuite {
     private void put(String tenantId, String prefix) throws Exception {
         URI put = putFile(tenantId, "/" + prefix + "/storage/put.yml");
         InputStream get = storageInterface.get(tenantId, prefix, new URI("/" + prefix + "/storage/put.yml"));
+
+        assertThat(put.toString()).isEqualTo(new URI("kestra:///" + prefix + "/storage/put.yml").toString());
+        assertThat(CharStreams.toString(new InputStreamReader(get))).isEqualTo(CONTENT_STRING);
+    }
+
+    @Test
+    void putInstanceResource() throws Exception {
+        String prefix = IdUtils.create();
+
+        URI put = putInstanceFile("/" + prefix + "/storage/put.yml");
+        InputStream get = storageInterface.getInstanceResource(prefix, new URI("/" + prefix + "/storage/put.yml"));
 
         assertThat(put.toString()).isEqualTo(new URI("kestra:///" + prefix + "/storage/put.yml").toString());
         assertThat(CharStreams.toString(new InputStreamReader(get))).isEqualTo(CONTENT_STRING);
@@ -726,6 +803,28 @@ public abstract class StorageTestSuite {
         assertTrue(storageInterface.delete(tenantId, prefix, new URI("kestra:///" + prefix + "/storage/get.yml")));
         assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/get.yml"))).isFalse();
     }
+
+    @Test
+    void deleteInstanceResource() throws Exception {
+        String prefix = IdUtils.create();
+
+        List<String> paths = Arrays.asList(
+            "/" + prefix + "/storage/root.yml",
+            "/" + prefix + "/storage/level1/1.yml",
+            "/" + prefix + "/storage/level1/level2/1.yml"
+        );
+        paths.forEach(throwConsumer(this::putInstanceFile));
+
+        assertThat(storageInterface.existsInstanceResource(prefix, new URI("/" + prefix + "/storage/root.yml"))).isTrue();
+        assertThat(storageInterface.existsInstanceResource(prefix, new URI("/" + prefix + "/storage/level1/1.yml"))).isTrue();
+        assertThat(storageInterface.existsInstanceResource(prefix, new URI("/" + prefix + "/storage/level1/level2/1.yml"))).isTrue();
+
+        boolean deleted = storageInterface.deleteInstanceResource(prefix, new URI("/" + prefix + "/storage/level1"));
+        assertThat(deleted).isTrue();
+        assertThat(storageInterface.existsInstanceResource(prefix, new URI("/" + prefix + "/storage/root.yml"))).isTrue();
+        assertThat(storageInterface.existsInstanceResource(prefix, new URI("/" + prefix + "/storage/level1/1.yml"))).isFalse();
+        assertThat(storageInterface.existsInstanceResource(prefix, new URI("/" + prefix + "/storage/level1/level2/1.yml"))).isFalse();
+    }
     //endregion
 
     //region test CREATEDIRECTORY
@@ -783,6 +882,17 @@ public abstract class StorageTestSuite {
         assertThat(list, contains(
             hasProperty("fileName", is("first"))
         ));
+    }
+
+    @Test
+    void createInstanceDirectory() throws Exception {
+        String prefix = IdUtils.create();
+
+        storageInterface.createInstanceDirectory(prefix, new URI("/" + prefix + "/storage/level1"));
+        FileAttributes attr = storageInterface.getInstanceAttributes(prefix, new URI("/" + prefix + "/storage/level1"));
+        assertThat(attr.getFileName()).isEqualTo("level1");
+        assertThat(attr.getType()).isEqualTo(FileAttributes.FileType.Directory);
+        assertThat(attr.getLastModifiedTime()).isNotNull();
     }
     //endregion
 
@@ -984,6 +1094,25 @@ public abstract class StorageTestSuite {
     private URI putFile(String tenantId, String path, Map<String, String> metadata) throws Exception {
         return storageInterface.put(
             tenantId,
+            null,
+            new URI(path),
+            new StorageObject(
+                metadata,
+                new ByteArrayInputStream(CONTENT_STRING.getBytes())
+            )
+        );
+    }
+
+    private URI putInstanceFile(String path) throws Exception {
+        return storageInterface.putInstanceResource(
+            null,
+            new URI(path),
+            new ByteArrayInputStream(CONTENT_STRING.getBytes())
+        );
+    }
+
+    private URI putInstanceFile(String path, Map<String, String> metadata) throws Exception {
+        return storageInterface.putInstanceResource(
             null,
             new URI(path),
             new StorageObject(

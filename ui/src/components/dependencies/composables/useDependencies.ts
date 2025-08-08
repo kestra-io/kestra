@@ -23,9 +23,10 @@ import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/depen
 import {edgeColors, style} from "../utils/style";
 const SELECTED = "selected", FADED = "faded",  HOVERED = "hovered", EXECUTIONS = "executions";
 
-const options: Omit<cytoscape.CytoscapeOptions, "container" | "elements"> & { elements?: Element[] } = {
-  minZoom: 0.1,
-  maxZoom: 2,
+const options: Omit<cytoscape.CytoscapeOptions, "container" | "elements"> & {elements?: Element[]} = {
+    minZoom: 0.1,
+    maxZoom: 2,
+    wheelSensitivity: 0.025,
 };
 
 /**

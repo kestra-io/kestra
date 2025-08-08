@@ -1,7 +1,7 @@
 <template>
     <Header v-if="header" :dashboard />
 
-    <section id="filter">
+    <section id="filter" :class="{filterPadding: padding}">
         <KestraFilter
             :prefix="`dashboard__${dashboard.id}`"
             :language
@@ -14,11 +14,11 @@
         />
     </section>
 
-    <Sections :key :dashboard :charts :show-default="dashboard.id === 'default'" padding />
+    <Sections :key :dashboard :charts :show-default="dashboard.id === 'default'" :padding="padding" />
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeMount, ref} from "vue";
+    import {computed, onBeforeMount, ref, watch} from "vue";
 
     import type {Dashboard, Chart} from "./composables/useDashboards";
     import {ALLOWED_CREATION_ROUTES, getDashboard, processFlowYaml} from "./composables/useDashboards";
@@ -37,7 +37,7 @@
         return FILTER_LANGUAGE_MAIN;
     });
 
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import YAML_MAIN from "./assets/default_main_definition.yaml?raw";
     import YAML_FLOW from "./assets/default_flow_definition.yaml?raw";
@@ -60,6 +60,8 @@
         isNamespace: {type: Boolean, default: false},
     });
 
+    const padding = computed(() => !props.isFlow && !props.isNamespace);
+
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const charts = ref<Chart[]>([]);
 
@@ -70,7 +72,7 @@
         charts.value = [];
 
         for (const chart of allCharts) {
-            charts.value.push({...chart, content: YAML_UTILS.stringify(chart)});
+            charts.value.push({...chart, content: stringify(chart)});
         }
 
         refreshCharts()
@@ -92,22 +94,24 @@
             });
         }
 
-        dashboard.value = id === "default" ? {id, ...YAML_UTILS.parse(defaultYAML)} : await dashboardStore.load(id);
+        dashboard.value = id === "default" ? {id, ...parse(defaultYAML)} : await dashboardStore.load(id);
         loadCharts(dashboard.value.charts);
     };
 
     onBeforeMount(() => {
         const ID = getDashboard(route, "id");
 
-        if (props.isFlow && ID === "default") load("default", processFlowYaml(YAML_FLOW, route.params.namespace, route.params.id));
+        if (props.isFlow && ID === "default") load("default", processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string));
         else if (props.isNamespace && ID === "default") load("default", YAML_NAMESPACE);
     });
+
+    watch(route, async (_) => refreshCharts());
 </script>
 
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
 
-section#filter {
+.filterPadding {
     margin: 2rem 0.25rem 0;
     padding: 0 2rem;
 }

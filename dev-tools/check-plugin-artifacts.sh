@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 #===============================================================================
 # SCRIPT: check-plugin-artifacts.sh
 #
@@ -29,7 +29,7 @@ PLUGIN_FILE="$BASEDIR/../.plugins"
 
 # Maven Central URL
 MAVEN_CENTRAL="https://repo1.maven.org/maven2"
-SONATYPE_SNAPSHOT="https://s01.oss.sonatype.org/content/repositories/snapshots"
+SONATYPE_SNAPSHOT="https://central.sonatype.com/repository/maven-snapshots"
 
 ###############################################################
 # Functions
@@ -142,7 +142,7 @@ do
   if [[ "$VERSION" == *"-SNAPSHOT" ]]; then
     ARTIFACT_URL="${GROUP_PATH}/${ARTIFACT_ID}/${VERSION}/maven-metadata.xml"
     ARTIFACT_URL="${SONATYPE_SNAPSHOT}/${ARTIFACT_URL}"
-  else  
+  else
     ARTIFACT_URL="${GROUP_PATH}/${ARTIFACT_ID}/${VERSION}/${ARTIFACT_ID}-${VERSION}.jar"
     ARTIFACT_URL="${MAVEN_CENTRAL}/${ARTIFACT_URL}"
   fi

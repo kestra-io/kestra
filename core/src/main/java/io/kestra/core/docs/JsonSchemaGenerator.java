@@ -122,12 +122,13 @@ public class JsonSchemaGenerator {
             if (jsonNode instanceof ObjectNode clazzSchema && clazzSchema.get("required") instanceof ArrayNode requiredPropsNode && clazzSchema.get("properties") instanceof ObjectNode properties) {
                 List<String> requiredFieldValues = StreamSupport.stream(requiredPropsNode.spliterator(), false)
                     .map(JsonNode::asText)
-                    .toList();
+                    .collect(Collectors.toList());
 
                 properties.fields().forEachRemaining(e -> {
                     int indexInRequiredArray = requiredFieldValues.indexOf(e.getKey());
                     if (indexInRequiredArray != -1 && e.getValue() instanceof ObjectNode valueNode && valueNode.has("default")) {
                         requiredPropsNode.remove(indexInRequiredArray);
+                        requiredFieldValues.remove(indexInRequiredArray);
                     }
                 });
 

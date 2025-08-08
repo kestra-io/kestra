@@ -10,6 +10,7 @@
     "Finish": "Beenden",
     "Fold auto": "Editor: Automatisches Falten von Mehrzeilen",
     "Fold content lines": "Mehrzeilige Zeichenfolgen falten",
+    "Hover description": "Editor: Beschreibung des Feldes anzeigen, wenn auf Key oder Value gehalten wird",
     "Language": "Sprache",
     "Next step": "Nächster Schritt",
     "Per page": "pro Seite",
@@ -90,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Lesezeichen",
+    "bulk action async warning": "Dies kann einige Augenblicke dauern.",
     "bulk change state": "Sind Sie sicher, dass Sie den Zustand von <code>{executionCount}</code> Ausführung(en) ändern möchten?",
     "bulk delete": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) löschen möchten?",
     "bulk delete backfills": "{count} Backfill löschen",
@@ -124,6 +126,7 @@
     "cannot swap tasks": "Tasks können nicht getauscht werden",
     "change execution state confirm": "Sind Sie sicher, dass Sie den Zustand der Ausführung <code>{id}</code> ändern möchten?",
     "change execution state done": "Ausführungszustand aktualisiert",
+    "change queue confirm": "Möchten Sie den Zustand der Warteschlange für die Ausführung <code>{id}</code> wirklich ändern?<br/>",
     "change state": "Zustand ändern",
     "change state confirm": "Sind Sie sicher, dass Sie den Task-Laufzustand für den <code>{task}</code>-Task in der Ausführung <code>{id}</code> ändern möchten?",
     "change state current state": "Aktueller Zustand ist:",
@@ -268,8 +271,8 @@
     },
     "days": "Tage",
     "debug": "Debuggen",
-    "decline": "Ablehnen",
     "default": "Standard",
+    "defaultsToNamespaceFile": "Standardmäßig auf namespace-Datei: <code>{name}</code> eingestellt",
     "delete": "Löschen",
     "delete backfill": "Backfill löschen",
     "delete backfills": "Backfills löschen",
@@ -359,6 +362,18 @@
     "dependencies delete flow": "Dieser Flow hat Abhängigkeiten. Das Löschen verhindert, dass deren Abhängigkeiten ausgeführt werden.<br /><br /> Hier ist die Liste der betroffenen Flows:",
     "dependencies loaded": "Abhängigkeiten geladen",
     "dependencies missing acls": "Keine Berechtigungen für diesen Flow",
+    "dependency": {
+      "controls": {
+        "clear_selection": "Auswahl aufheben",
+        "fit_view": "An Bildschirm anpassen",
+        "zoom_in": "Hineinzoomen",
+        "zoom_out": "Rauszoomen"
+      },
+      "search": {
+        "no_results": "Keine Ergebnisse gefunden für {term}",
+        "placeholder": "Suche nach flow oder namespace..."
+      }
+    },
     "dependency task": "Task {taskId} ist eine Abhängigkeit eines anderen Tasks",
     "description": "Beschreibung",
     "details": "Details",
@@ -401,6 +416,7 @@
       "move_line": "Zeile verschieben",
       "reset_fontsize": "Schriftgröße zurücksetzen",
       "save_flow": "Flow speichern",
+      "toggle_ai_agent": "AI-Agent umschalten",
       "trigger_autocompletion": "Autovervollständigung auslösen",
       "uncomment": "Entkommentieren"
     },
@@ -473,6 +489,7 @@
       }
     },
     "eval": {
+      "render": "Ausdruck rendern",
       "title": "Debug-Ausdruck",
       "tooltip": "Beliebigen Pebble-Ausdruck rendern und den Ausführungskontext inspizieren."
     },
@@ -600,6 +617,7 @@
         },
         "empty": "Sie haben noch keine Suche gespeichert.",
         "label": "Gespeicherte Suchen",
+        "name_already_used": "Suchbegriff {label} bereits verwendet.",
         "remove": "Entfernen",
         "tooltip": "Sie können keine leeren Suchkriterien speichern."
       },
@@ -899,6 +917,7 @@
         "finally": "Wählen Sie eine Task aus",
         "inputs": "Wählen Sie einen Input-Feldtyp aus",
         "pluginDefaults": "Wählen Sie ein Plugin aus",
+        "task": "Wählen Sie eine Task aus",
         "tasks": "Wählen Sie eine Task aus",
         "triggers": "Wählen Sie einen Trigger aus"
       },
@@ -907,6 +926,7 @@
       "version_oss_placeholder": "Entsperren Sie die Plugin-Versionierung mit der Enterprise Edition"
     },
     "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!<br/>Passen Sie Ihre Filter an oder versuchen Sie es erneut!",
+    "no_file_choosen": "Keine Datei ausgewählt",
     "no_logs_data": "Keine Daten",
     "no_logs_data_description": "Entweder laufen keine Flows, oder Sie müssen Ihre Filter anpassen.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
@@ -1007,6 +1027,18 @@
     "pause confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> pausieren möchten?",
     "pause done": "Die Ausführung ist PAUSED.",
     "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss.",
+    "playground": {
+      "confirm_create": "Sie können den Playground nicht ausführen, während Sie einen flow erstellen. Das Starten eines Playground-Laufs wird den flow erstellen.",
+      "history": "Letzte 10 Ausführungen",
+      "play_icon_info": "Sie können auch das Play-Symbol in den No-Code- oder Topologie-Ansichten anklicken.",
+      "run_all_tasks": "Alle Tasks ausführen",
+      "run_task": "Task ausführen",
+      "run_task_and_downstream": "Task & Downstream ausführen",
+      "run_task_info": "Bewegen Sie den Mauszeiger über eine beliebige Task im Flow-Code-Editor und klicken Sie auf die Schaltfläche \"Run task\", um Ihre Task zu testen.",
+      "run_this_task": "Führe diese Task aus",
+      "title": "Spielwiese",
+      "toggle": "Spielplatz"
+    },
     "pluginDefaults": "Plugin-Standardeinstellungen",
     "pluginPage": {
       "alt": "Plugins-Symbol",
@@ -1035,6 +1067,7 @@
     "read-more": "Mehr erfahren über",
     "readonly property": "Schreibgeschützte Eigenschaft",
     "refresh": "Aktualisieren",
+    "reject": "Ablehnen",
     "relative": "Relativ",
     "relative end date": "Relatives Enddatum",
     "relative start date": "Relatives Startdatum",
@@ -1067,6 +1100,7 @@
     "revision": "Revision",
     "revisions": "Revisionen",
     "row count": "Zeilenanzahl",
+    "run task in playground": "Task im Playground ausführen",
     "runners": "Läufer",
     "running duration": "Laufzeitdauer",
     "save": "Speichern",
@@ -1140,7 +1174,8 @@
             "language": "Sprache",
             "log_display": "Standard-Log-Anzeige",
             "log_level": "Standard-Log-Ebene",
-            "multi_panel_editor": "Multi-Panel-Editor"
+            "multi_panel_editor": "Multi-Panel-Editor",
+            "playground": "Spielplatz"
           },
           "label": "Hauptkonfiguration"
         },
@@ -1175,8 +1210,10 @@
             "editor_folding_stratgy": "Automatisch Code im Editor zusammenklappen",
             "editor_font_family": "Editor-Schriftfamilie",
             "editor_font_size": "Editor-Schriftgröße",
+            "editor_hover_description": "Fahren Sie mit der Maus über die Eigenschaft, um die Beschreibung zu sehen",
             "environment_color": "Umgebungsfarbe",
             "environment_name": "Umgebungsname",
+            "environment_name_tooltip": "Dieser Umgebungsname wird aus der Konfiguration festgelegt, kann jedoch geändert werden.",
             "logs_font_size": "Logs Schriftgröße",
             "theme": "Modus"
           },
@@ -1210,13 +1247,13 @@
         "complete": "Kestra UI starten",
         "config": "Konfiguration validieren",
         "survey": "Erzählen Sie uns mehr",
-        "user": "Erstellen Sie Ihren ersten Benutzer"
+        "user": "Erstellen Sie Ihr Konto"
       },
       "subtitles": {
         "complete": "Einrichtung erfolgreich abgeschlossen!",
         "config": "Hier sind die Details Ihrer Konfiguration",
         "survey": "Helfen Sie uns, die Kestra Open Source Edition zu verbessern",
-        "user": "Richten Sie Ihre Instanz ein, indem Sie Ihren ersten Benutzer erstellen"
+        "user": "Richten Sie Ihre Instanz ein, indem Sie ein Konto erstellen"
       },
       "success": {
         "subtitle": "Alles bereit!",
@@ -1241,13 +1278,16 @@
       },
       "titles": {
         "survey": "Erzählen Sie uns mehr",
-        "user": "Ersten Benutzer erstellen"
+        "user": "Konto erstellen"
       },
+      "troubleshooting": "Passwort vergessen?",
       "validation": {
+        "config_message": "Stellen Sie sicher, dass Sie Ihre Konfiguration aktualisieren, um diese Fehlermeldung zu beheben.",
         "email_invalid": "Ungültige E-Mail-Adresse",
         "email_required": "E-Mail ist erforderlich",
         "email_temporary_not_allowed": "Temporäre oder Einweg-E-Mail-Adressen sind nicht erlaubt",
         "firstName_required": "Vorname erforderlich",
+        "incorrect_creds": "Ungültiger Benutzername oder Passwort. Stellen Sie sicher, dass Ihre Anmeldedaten korrekt sind.",
         "lastName_required": "Nachname erforderlich",
         "password_invalid": "Ungültiges Passwort"
       }
@@ -1288,14 +1328,20 @@
     "success": "Erfolg",
     "sum": "Summe",
     "switch-view": "Ansicht wechseln",
+    "system overview": "Systemübersicht",
     "system_namespace": "Behalten Sie Ihre Plattform mit Systemflows im Blick.",
     "system_namespace_description": "Automatisieren Sie Wartungsaufgaben, von Fehlerwarnungen bis hin zu automatisierten Bereinigungen.",
     "tags": "Tags",
     "task": "Task",
+    "task failed": "Task fehlgeschlagen",
     "task id": "Task-ID",
     "task id already exists": "Task-Id existiert bereits",
+    "task is running": "Task läuft",
     "task logs": "Task Logs",
     "task run id": "TaskRun-ID",
+    "task sent a warning": "Task hat eine Warnung gesendet",
+    "task was skipped": "Task wurde übersprungen",
+    "task was successful": "Task war erfolgreich",
     "taskDefaults": "Task-Standards",
     "taskRunners": "Task Runners",
     "task_id_exists": "Task-ID existiert bereits",
@@ -1331,6 +1377,8 @@
     "topology": "Topologie",
     "topology-graph": {
       "graph-orientation": "Graph-Ausrichtung",
+      "invalid": "Graph-Fehler",
+      "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte überprüfen Sie den Quellcode auf Fehler.",
       "zoom-fit": "Anpassen",
       "zoom-in": "Vergrößern",
       "zoom-out": "Verkleinern",
@@ -1380,9 +1428,11 @@
       "warning": "Dies könnte zu gleichzeitigen Ausführungen für denselben Trigger führen und sollte als letzte Option betrachtet werden."
     },
     "unqueue": "Aus Warteschlange entfernen",
+    "unqueue as": "Aus der Warteschlange entfernen als <code>{status}</code>",
     "unqueue confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> aus der Warteschlange entfernen möchten?",
     "unqueue done": "Ausführung ist nicht in der Warteschlange",
     "unqueue title": "Ausführung <code>{id}</code> aus der Warteschlange entfernen.<br/>Bitte beachten Sie, dass dies das Nebenläufigkeitslimit des Flows nicht berücksichtigt, sodass mehr Ausführungen laufen könnten als das erlaubte Limit.",
+    "unqueue title multiple": "Sind Sie sicher, dass Sie <code>{count}</code> Ausführungen aus der Warteschlange entfernen möchten?<br/><br/>Beachten Sie, dass dies das Nebenläufigkeitslimit des flow nicht beachtet, sodass mehr Ausführungen laufen könnten als das erlaubte Limit.",
     "unsaved changed ?": "Sie haben ungespeicherte Änderungen, möchten Sie diese Seite verlassen?",
     "up trend": "Steigend",
     "update": "Aktualisieren",
@@ -1400,6 +1450,12 @@
     "warning flow with triggers": "Dieser Flow enthält Trigger und eine manuelle Ausführung wird fehlschlagen, wenn dieser Flow von Trigger-Ausdrücken abhängt.",
     "watch": "Beobachten",
     "watch_video": "Video ansehen",
+    "webhook": {
+      "curl_command": "Webhook-cURL-Befehl",
+      "curl_note": "Verwenden Sie diesen cURL-Befehl, um den flow über Webhook mit benutzerdefiniertem JSON-Payload zu triggern.",
+      "no_triggers": "Dieser flow hat keine aktivierten Webhook-Triggers.",
+      "payload": "Webhook-Payload (JSON)"
+    },
     "webhook link copied": "Webhook-Link kopiert.",
     "weeks": "Wochen",
     "welcome": {

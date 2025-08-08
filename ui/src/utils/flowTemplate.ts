@@ -1,12 +1,12 @@
 import action from "../models/action";
 import permission from "../models/permission";
 
-export function canSaveFlowTemplate(isEdit, user, item, dataType) {
+export function canSaveFlowTemplate(isEdit: boolean, user: any, item: any, dataType: string) {
     if (item === undefined) {
         return  true;
     }
 
-    const typedPermission = permission[dataType.toUpperCase()]
+    const typedPermission = permission[dataType.toUpperCase() as keyof typeof permission]
 
     return (
         isEdit && user &&
@@ -17,10 +17,13 @@ export function canSaveFlowTemplate(isEdit, user, item, dataType) {
     );
 }
 
-export function saveFlowTemplate(self, file, dataType) {
+export function saveFlowTemplate(self: {
+    $store: any,
+    $toast: () => any,
+}, file: string, dataType: string) {
     return self.$store
         .dispatch(`${dataType}/save${dataType.capitalize()}`, {[dataType]: file})
-        .then((response) => {
+        .then((response: { id: string }) => {
             self.$toast().saved(response.id);
 
             return response

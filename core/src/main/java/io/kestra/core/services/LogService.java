@@ -82,8 +82,8 @@ public class LogService {
         logger.atLevel(level).log(finalMsg, finalArgs);
     }
 
-    public int purge(String tenantId, String namespace, String flowId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
-        return logRepository.deleteByQuery(tenantId, namespace, flowId, logLevels, startDate, endDate);
+    public int purge(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
+        return logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate);
     }
 
     /**

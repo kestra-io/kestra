@@ -1,23 +1,7 @@
 name: Build Artifacts
 
 on:
-  workflow_call:
-    inputs:
-      plugin-version:
-        description: "Kestra version"
-        default: 'LATEST'
-        required: true
-        type: string
-    outputs:
-      docker-tag:
-        value: ${{ jobs.build.outputs.docker-tag }}
-        description: "The Docker image Tag for Kestra"
-      docker-artifact-name:
-        value: ${{ jobs.build.outputs.docker-artifact-name }}
-        description: "The GitHub artifact containing the Kestra docker image name."
-      plugins:
-        value: ${{ jobs.build.outputs.plugins }}
-        description: "The Kestra plugins list used for the build."
+  workflow_call: {}
 
 jobs:
   build:
@@ -82,55 +66,6 @@ jobs:
         run: |
           cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
 
-      # Docker Tag
-      - name: Setup - Docker vars
-        id: vars
-        shell: bash
-        run: |
-          TAG=${GITHUB_REF#refs/*/}
-          if [[ $TAG = "master" ]]
-          then
-            TAG="latest";
-          elif [[ $TAG = "develop" ]]
-          then
-            TAG="develop";
-          elif [[ $TAG = v* ]]
-          then
-            TAG="${TAG}";
-          else
-            TAG="build-${{ github.run_id }}";
-          fi
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "artifact=docker-kestra-${TAG}" >> $GITHUB_OUTPUT
-
-      # Docker setup
-      - name: Docker - Setup QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Docker - Fix Qemu
-        shell: bash
-        run: |
-          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes -c yes
-
-      - name: Docker - Setup Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # Docker Build
-      - name: Docker - Build & export image
-        uses: docker/build-push-action@v6
-        if: "!startsWith(github.ref, 'refs/tags/v')"
-        with:
-          context: .
-          push: false
-          file: Dockerfile
-          tags: |
-            kestra/kestra:${{ steps.vars.outputs.tag }}
-          build-args: |
-            KESTRA_PLUGINS=${{ steps.plugins.outputs.plugins }}
-            APT_PACKAGES=${{ env.DOCKER_APT_PACKAGES }}
-            PYTHON_LIBRARIES=${{ env.DOCKER_PYTHON_LIBRARIES }}
-          outputs: type=docker,dest=/tmp/${{ steps.vars.outputs.artifact }}.tar
-
       # Upload artifacts
       - name: Artifacts - Upload JAR
         uses: actions/upload-artifact@v4
@@ -143,10 +78,3 @@ jobs:
         with:
           name: exe
           path: build/executable/
-
-      - name: Artifacts - Upload Docker
-        uses: actions/upload-artifact@v4
-        if: "!startsWith(github.ref, 'refs/tags/v')"
-        with:
-          name: ${{ steps.vars.outputs.artifact }}
-          path: /tmp/${{ steps.vars.outputs.artifact }}.tar

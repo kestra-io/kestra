@@ -8,21 +8,31 @@ import FilterLanguageConfigurator, {languages as filterLanguages} from "./filter
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider";
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider";
 import {usePluginsStore} from "../../../stores/plugins";
+import {useFlowStore} from "../../../stores/flow";
+import {useNamespacesStore} from "override/stores/namespaces";
 
 export default async function configure(
     store: Store<Record<string, any>>,
+    flowStore: ReturnType<typeof useFlowStore>,
     pluginsStore: ReturnType<typeof usePluginsStore>,
     t: ReturnType<typeof useI18n>["t"],
     editorInstance: editor.ICodeEditor | undefined,
     language: string,
     domain?: string
 ): Promise<void> {
+    const namespacesStore = useNamespacesStore();
+    let yamlAutocompletion;
     if (language === "yaml") {
-        const yamlAutoCompletion = domain === "flow" ? new FlowAutoCompletion(store, pluginsStore) : new YamlAutoCompletion();
-        await new YamlLanguageConfigurator(yamlAutoCompletion).configure(store, pluginsStore, t, editorInstance);
+        if (domain === "flow" || domain === "testsuites") {
+            // flow completion seems to work fine for testsuites, quickwin
+            yamlAutocompletion = new FlowAutoCompletion(store, flowStore, pluginsStore, namespacesStore);
+        } else {
+            yamlAutocompletion = new YamlAutoCompletion();
+        }
+        await new YamlLanguageConfigurator(yamlAutocompletion).configure(store, pluginsStore, t, editorInstance);
     } else if(language === "plaintext-pebble") {
-        const autoCompletion = new FlowAutoCompletion(store, pluginsStore);
-        await new PebbleLanguageConfigurator(autoCompletion, computed(() => store.getters["flow/flowYaml"]))
+        const autoCompletion = new FlowAutoCompletion(store, flowStore, pluginsStore, namespacesStore, computed(() => flowStore.flowYaml));
+        await new PebbleLanguageConfigurator(autoCompletion, computed(() => flowStore.flowYaml))
             .configure(store, pluginsStore, t, editorInstance);
     } else if (filterLanguages.some(languageRegex => languageRegex.test(language))) {
         await new FilterLanguageConfigurator(language, domain)

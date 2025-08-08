@@ -54,6 +54,16 @@
                 color: var(--ks-content-link);
             }
 
+            [id$="-body"] span {
+                font-size: 1rem !important;
+            }
+
+            [id$="-body"] .type-box,
+            [id$="-body"] .type-box *,
+            [id$="-body"] span.type-box {
+                font-size: 0.75rem !important;
+            }
+
             .property {
                 background-color: var(--ks-dropdown-background);
 

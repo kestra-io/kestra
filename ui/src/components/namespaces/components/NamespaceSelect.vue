@@ -2,13 +2,16 @@
     <el-select
         class="fit-text"
         :model-value="value"
-        @update:model-value="onInput"
+        @update:model-value="$emit('update:modelValue', $event)"
         :disabled="readonly"
         clearable
         :placeholder="$t('Select namespace')"
         :persistent="false"
+        remote
+        :remote-method="onInput"
         filterable
         :allow-create="allowCreate"
+        default-first-option
     >
         <el-option
             v-for="item in groupedNamespaces"
@@ -23,15 +26,14 @@
     import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useMiscStore} from "../../../stores/misc";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import _uniqBy from "lodash/uniqBy";
-    import permission from "../../../models/permission";
-    import action from "../../../models/action";
 
     export default {
         props: {
             dataType: {
                 type: String,
-                required: true,
+                default: undefined,
             },
             value: {
                 type: String,
@@ -59,21 +61,9 @@
             }
         },
         emits: ["update:modelValue"],
-        created() {
-            if (
-                this.user &&
-                this.user.hasAnyActionOnAnyNamespace(
-                    permission.NAMESPACE,
-                    action.READ,
-                )
-            ) {
-                this.load();
-            }
-        },
         computed: {
-            ...mapState("namespace", ["datatypeNamespaces"]),
             ...mapState("auth", ["user"]),
-            ...mapStores(useMiscStore),
+            ...mapStores(useMiscStore, useNamespacesStore),
         },
         data() {
             return {
@@ -84,8 +74,7 @@
         methods: {
             onInput(value) {
                 this.$emit("update:modelValue", value);
-                this.localNamespaceInput = value;
-                this.load();
+                this.load(value);
             },
             groupNamespaces(namespaces) {
                 let res = [];
@@ -118,37 +107,27 @@
                     (ns) => namespaces.includes(ns.code) || this.isFilter,
                 );
             },
-            load() {
-                this.$store
-                    .dispatch("namespace/loadNamespacesForDatatype", {
-                        dataType: this.dataType
-                    })
-                    .then(() => {
-                        this.groupedNamespaces = this.groupNamespaces(
-                            this.datatypeNamespaces
-                        ).filter(
-                            (namespace) =>
-                                this.includeSystemNamespace ||
-                                namespace.code !==
-                                (this.miscStore.configs?.systemNamespace || "system")
-                        );
-                    });
-                if (this.all) {
-                    // Then include datatype namespaces + all from namespaces tables
-                    this.$store.dispatch("namespace/autocomplete" + (this.value ? "?q=" + this.value : "")).then(namespaces => {
-                        const concatNamespaces = this.groupedNamespaces.concat(this.groupNamespaces(
-                            namespaces
-                        ).filter(
-                            (namespace) =>
-                                this.includeSystemNamespace ||
-                                namespace.code !==
-                                (this.miscStore.configs?.systemNamespace || "system")
-                        ));
-                        // Remove duplicates after merge
-                        this.groupedNamespaces = _uniqBy(concatNamespaces, "code").filter(
-                            (ns) => namespaces.includes(ns.code) || this.isFilter,
-                        ).sort((a,b) => a.code > b.code)
-                    })
+            async load(value) {
+                try {
+                    let namespaces;
+                    if (this.all) {
+                        namespaces = await this.namespacesStore.loadAutocomplete({
+                            q: value || ""
+                        });
+                    } else {
+                        namespaces = await this.namespacesStore.loadNamespacesForDatatype({
+                            dataType: this.dataType
+                        });
+                    }
+
+                    this.groupedNamespaces = this.groupNamespaces(namespaces)
+                        .filter(namespace => 
+                            this.includeSystemNamespace || 
+                            namespace.code !== (this.miscStore.configs?.systemNamespace || "system")
+                        )
+                        .sort((a, b) => a.code.localeCompare(b.code));
+                } catch (error) {
+                    console.error("Error loading namespaces:", error);
                 }
             }
         },

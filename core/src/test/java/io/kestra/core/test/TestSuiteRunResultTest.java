@@ -5,6 +5,7 @@ import io.kestra.core.test.flow.UnitTestResult;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,7 +17,7 @@ class TestSuiteRunResultTest {
 
     @Test
     void success() {
-        var res = TestSuiteRunResult.of("id", "testSuiteId", "namespace", "flowId",
+        var res = TestSuiteRunResult.of("id", "testSuiteId", "namespace", "flowId", Instant.now(), Instant.now(),
             List.of(
                 UnitTestResult.of("id", "type", "executionId", URI.create("url"),
                     List.of(
@@ -38,7 +39,7 @@ class TestSuiteRunResultTest {
 
     @Test
     void one_assertion_failed() {
-        var res = TestSuiteRunResult.of("id", "testSuiteId", "namespace", "flowId",
+        var res = TestSuiteRunResult.of("id", "testSuiteId", "namespace", "flowId", Instant.now(), Instant.now(),
             List.of(
                 UnitTestResult.of("id", "type", "executionId", URI.create("url"),
                     List.of(
@@ -56,7 +57,7 @@ class TestSuiteRunResultTest {
 
     @Test
     void one_testcase_failed() {
-        var res = TestSuiteRunResult.of("id", "testSuiteId", "namespace", "flowId",
+        var res = TestSuiteRunResult.of("id", "testSuiteId", "namespace", "flowId", Instant.now(), Instant.now(),
             List.of(
                 UnitTestResult.of("id", "type", "executionId", URI.create("url"),
                     List.of(
@@ -80,7 +81,7 @@ class TestSuiteRunResultTest {
     @Test
     void one_testcase_skipped() {
         var skippedTestcaseId = "skipped_testcase_id";
-        var res = TestSuiteRunResult.of("id", "testSuiteId", "namespace", "flowId",
+        var res = TestSuiteRunResult.of("id", "testSuiteId", "namespace", "flowId", Instant.now(), Instant.now(),
             List.of(
                 UnitTestResult.of("id", "type", "executionId", URI.create("url"),
                     List.of(
@@ -103,7 +104,7 @@ class TestSuiteRunResultTest {
 
     @Test
     void all_testcases_skipped() {
-        var res = TestSuiteRunResult.of("id", "testSuiteId", "namespace", "flowId",
+        var res = TestSuiteRunResult.of("id", "testSuiteId", "namespace", "flowId", Instant.now(), Instant.now(),
             List.of(
                 UnitTestResult.ofDisabled("id", "type", null),
                 UnitTestResult.ofDisabled("id", "type", null)
@@ -114,7 +115,7 @@ class TestSuiteRunResultTest {
 
     @Test
     void testcase_skipped() {
-        var res = TestSuiteRunResult.of("id", "testSuiteId", "namespace", "flowId",
+        var res = TestSuiteRunResult.of("id", "testSuiteId", "namespace", "flowId", Instant.now(), Instant.now(),
             List.of(
                 UnitTestResult.ofDisabled("id", "type", null)
             )

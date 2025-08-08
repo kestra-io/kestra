@@ -143,6 +143,12 @@ public class MiscController {
     }
 
 
+    @Get("/basicAuthValidationErrors")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
+    public List<String> getBasicAuthConfigErrors() {
+        return basicAuthService.validationErrors();
+    }
 
     @Getter
     @NoArgsConstructor

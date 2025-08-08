@@ -105,6 +105,7 @@
                     "level",
                     "index",
                     "attemptNumber",
+                    "executionKind"
                 ];
                 excludes.push.apply(excludes, this.excludeMetas);
                 for (const key in this.log) {

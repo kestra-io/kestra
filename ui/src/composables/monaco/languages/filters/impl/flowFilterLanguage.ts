@@ -1,8 +1,9 @@
-import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion.ts";
+import {Comparators, Completion, FilterKeyCompletions} from "../filterCompletion.ts";
 import {FilterLanguage} from "../filterLanguage.ts";
 import {Me} from "../../../../../stores/auth.ts";
 import permission from "../../../../../models/permission.ts";
 import action from "../../../../../models/action.ts";
+import {useNamespacesStore} from "override/stores/namespaces.ts";
 
 const flowFilterKeys: Record<string, FilterKeyCompletions> = {
     namespace: new FilterKeyCompletions(
@@ -10,7 +11,8 @@ const flowFilterKeys: Record<string, FilterKeyCompletions> = {
         async (store) => {
             const user = store.getters["auth/user"] as Me;
             if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
-                return [...new Set(((await store.dispatch("namespace/loadNamespacesForDatatype", {dataType: "flow"})) as string[])
+                const namespacesStore = useNamespacesStore();
+                return [...new Set(((await namespacesStore.loadNamespacesForDatatype({dataType: "flow"})) as string[])
                     .flatMap(namespace => {
                         return namespace.split(".").reduce((current: string[], part: string) => {
                             const previousCombination = current?.[current.length - 1];
@@ -33,24 +35,6 @@ const flowFilterKeys: Record<string, FilterKeyCompletions> = {
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
         undefined,
         true
-    ),
-    timeRange: new FilterKeyCompletions(
-        [Comparators.EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.RELATIVE_DATE,
-        false,
-        ["timeRange", "startDate", "endDate"]
-    ),
-    startDate: new FilterKeyCompletions(
-        [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.GREATER_THAN, Comparators.LESS_THAN_OR_EQUAL_TO, Comparators.LESS_THAN, Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async () => PICK_DATE_VALUE,
-        false,
-        ["timeRange"]
-    ),
-    endDate: new FilterKeyCompletions(
-        [Comparators.LESS_THAN_OR_EQUAL_TO, Comparators.LESS_THAN, Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.GREATER_THAN, Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async () => PICK_DATE_VALUE,
-        false,
-        ["timeRange"]
     ),
 };
 

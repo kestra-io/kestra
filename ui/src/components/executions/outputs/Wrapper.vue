@@ -1,7 +1,7 @@
 <template>
     <div class="outputs">
         <div
-            class="d-flex flex-column left"
+            class="d-flex flex-column overflow-x-auto left"
             :style="{width: leftWidth + '%'}"
         >
             <el-cascader-panel
@@ -9,7 +9,7 @@
                 v-model="selected"
                 :options="outputs"
                 :border="false"
-                class="flex-grow-1 overflow-x-auto cascader"
+                class="flex-grow-1 cascader"
                 @expand-change="() => scrollRight()"
             >
                 <template #default="{data}">
@@ -52,10 +52,10 @@
             </el-cascader-panel>
         </div>
         <div class="slider" @mousedown="startDragging" />
-        <div class="right wrapper" :style="{width: 100 - leftWidth + '%'}">
+        <div class="right wrapper" :style="{width: 100 - leftWidth + '%', 'z-index': 999}">
             <div
                 v-if="multipleSelected || selectedValue"
-                class="w-100 overflow-auto p-3"
+                class="w-100 overflow-auto p-3 content-container"
             >
                 <div class="d-flex justify-content-between pe-none fs-5 values">
                     <code class="d-block">
@@ -80,6 +80,7 @@
                                 :input="true"
                                 :navbar="false"
                                 :model-value="computedDebugValue"
+                                @update:model-value="editorValue = $event"
                                 @confirm="onDebugExpression($event)"
                                 class="w-100"
                             />
@@ -88,8 +89,9 @@
                                 type="primary"
                                 @click="
                                     onDebugExpression(
-                                        debugEditor.editor.getValue(),
+                                        editorValue.length > 0 ? editorValue : computedDebugValue,
                                     )
+
                                 "
                                 class="mt-3"
                             >
@@ -134,7 +136,7 @@
 
                 <VarValue
                     v-if="displayVarValue()"
-                    :value="selectedValue.uri ? selectedValue.uri : selectedValue"
+                    :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
                     :execution="execution"
                 />
                 <SubFlowLink
@@ -153,6 +155,8 @@
     import {useStore} from "vuex";
     const store = useStore();
 
+    import {useExecutionsStore} from "../../../stores/executions";
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
@@ -161,8 +165,9 @@
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
 
     import Editor from "../../inputs/Editor.vue";
+    const editorValue = ref("");
     const debugCollapse = ref("");
-    const debugEditor = ref(null);
+    const debugEditor = ref<InstanceType<typeof Editor>>();
     const debugExpression = ref("");
     const computedDebugValue = computed(() => {
         const formatTask = (task) => {
@@ -196,7 +201,7 @@
         const filter = selected.value?.length
             ? selected.value[0]
             : (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.label;
-        const taskRunList = [...execution.value.taskRunList];
+        const taskRunList = [...execution.value?.taskRunList ?? []];
         return taskRunList.find((e) => e.taskId === filter);
     };
     const onDebugExpression = (expression: string) => {
@@ -251,7 +256,9 @@
         () => (cascader.value as any)?.menus?.length > 1,
     );
 
-    const execution = computed(() => store.state.execution.execution);
+    const executionsStore = useExecutionsStore();
+
+    const execution = computed(() => executionsStore.execution);
 
     function isValidURL(url) {
         try {
@@ -365,7 +372,7 @@
         return result;
     };
     const outputs = computed(() => {
-        const tasks = store.state.execution?.execution?.taskRunList?.map((task) => {
+        const tasks = executionsStore?.execution?.taskRunList?.map((task) => {
             return {
                 label: task.taskId,
                 value: task.taskId,
@@ -402,9 +409,9 @@
 
         const mapped = {};
 
-        getTaskIcons(store.state.execution?.flow?.tasks || [], mapped);
-        getTaskIcons(store.state.execution?.flow?.errors || [], mapped);
-        getTaskIcons(store.state.execution?.flow?.finally || [], mapped);
+        getTaskIcons(executionsStore?.flow?.tasks || [], mapped);
+        getTaskIcons(executionsStore?.flow?.errors || [], mapped);
+        getTaskIcons(executionsStore?.flow?.finally || [], mapped);
 
         return mapped;
     });
@@ -414,7 +421,7 @@
             ? value
             : `${value.substring(0, 16)}...`;
     const isFile = (value) =>
-        typeof value === "string" && value.startsWith("kestra:///");
+        typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
     const displayVarValue = () =>
         isFile(selectedValue.value) ||
         selectedValue.value !== debugExpression.value;
@@ -456,11 +463,16 @@
     display: flex;
     width: 100%;
     height: 100vh;
+    overflow: hidden;
 
     .el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child,
     .values {
         pointer-events: none;
         margin: 0.75rem 0 1.25rem 0;
+    }
+
+    .el-cascader-panel {
+        height: 100%;
     }
 
     .debug {
@@ -527,4 +539,39 @@
         }
     }
 }
+</style>
+<style lang="scss" scoped>
+    .content-container {
+        height: calc(100vh - 0px);
+        overflow-y: auto !important;
+        overflow-x: hidden;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+
+    :deep(.el-collapse) {
+        .el-collapse-item__wrap {
+            overflow-y: auto !important;
+            max-height: none !important;
+        }
+        
+        .el-collapse-item__content {
+            overflow-y: auto !important;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+    }
+
+    :deep(.var-value) {
+        overflow-y: auto !important;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+
+    :deep(pre) {
+        white-space: pre-wrap !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+    }
 </style>

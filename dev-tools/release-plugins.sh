@@ -180,6 +180,13 @@ do
     git checkout "$GIT_BRANCH";
   fi
 
+  # Check if tag already exists on remote
+  TAG_EXISTS=$(git ls-remote --tags origin "refs/tags/v${RELEASE_VERSION}" | wc -l)
+  if [[ "$TAG_EXISTS" -ne 0 ]]; then
+    echo "Tag ${RELEASE_VERSION} already exists for $PLUGIN. Skipping..."
+    continue
+  fi
+    
   if [[ "$DRY_RUN" == false ]]; then
     CURRENT_BRANCH=$(git branch --show-current);
 
@@ -217,8 +224,11 @@ do
     git checkout "$PUSH_RELEASE_BRANCH" && git pull;
     sed -i "s/^kestraVersion=.*/kestraVersion=${PLUGIN_KESTRA_VERSION}/" ./gradle.properties
     git add ./gradle.properties
-    git commit -m"chore(deps): update kestraVersion to ${PLUGIN_KESTRA_VERSION}."
-    git push
+    # Check if there are staged changes
+    if ! git diff --cached --quiet; then
+      git commit -m"chore(deps): update kestraVersion to ${PLUGIN_KESTRA_VERSION}."
+      git push
+    fi
     sleep 5; # add a short delay to not spam Maven Central
   else
     echo "Skip gradle release [DRY_RUN=true]";

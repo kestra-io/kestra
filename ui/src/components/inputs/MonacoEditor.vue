@@ -53,7 +53,7 @@
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import configureLanguage from "../../composables/monaco/languages/languagesConfigurator";
 
-    import {EDITOR_HIGHLIGHT_INJECTION_KEY} from "../code/injectionKeys";
+    import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
 
     import YamlWorker from "./yaml.worker.js?worker";
     import Utils from "../../utils/utils";
@@ -67,11 +67,12 @@
     import ICodeEditor = editor.ICodeEditor;
     import debounce from "lodash/debounce";
     import {usePluginsStore} from "../../stores/plugins.ts";
+    import {useFlowStore} from "../../stores/flow.ts";
     import EditorType = editor.EditorType;
 
     const store = useStore();
     const currentInstance = getCurrentInstance()!;
-    const t: ReturnType<typeof useI18n>["t"] = currentInstance.appContext?.config?.globalProperties?.$t;
+    const {t} = useI18n();
 
     export type ThemeBase = editor.BuiltinTheme | "light" | "dark";
 
@@ -100,10 +101,11 @@
     });
 
     import {useRoute} from "vue-router";
+    import {useEditorStore} from "../../stores/editor.ts";
     const route = useRoute();
 
     const highlightLine = () => {
-        if(!route.query.highlight) return;
+        if(!route?.query.highlight) return;
 
         const editor = getModifiedEditor();
 
@@ -129,6 +131,8 @@
     }
 
     const highlight = inject(EDITOR_HIGHLIGHT_INJECTION_KEY, ref());
+    const isInFlowEditor = inject(EDITOR_WRAPPER_INJECTION_KEY, false);
+
     watch(highlight, (line) => {
         if (!line) return;
 
@@ -170,7 +174,7 @@
         }
     };
 
-    type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean };
+    export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean };
     const props = withDefaults(defineProps<{
         path?: string,
         original?: string,
@@ -244,7 +248,7 @@
     const suggestWidgetObserver = ref<MutationObserver>()
     const suggestWidget = ref<HTMLElement>()
 
-    const emit = defineEmits(["editorDidMount", "change"])
+
 
     defineExpose({
         focus,
@@ -255,6 +259,13 @@
     const editorResolved = computed(() => {
         return props.diffEditor ? localDiffEditor.value : localEditor.value;
     })
+
+    const emit = defineEmits<{
+        (e:"editorDidMount", editor?: typeof editorResolved.value): void,
+        (e:"change", value: string, event?: editor.IModelContentChangedEvent): void,
+        (e: "mouseMove", event: monaco.editor.IEditorMouseEvent): void;
+        (e: "mouseLeave", event: monaco.editor.IPartialEditorMouseEvent): void;
+    }>()
 
     const editorRef = ref<HTMLDivElement | null>(null);
 
@@ -420,7 +431,7 @@
         codeEditor.removeContentWidget(datePickerWidget);
     }
 
-    watch(suggestWidget, (newVal) => {
+    watch(suggestWidget, async (newVal) => {
         const asCodeEditor = editorResolved.value?.getEditorType() === EditorType.ICodeEditor ? editorResolved.value as editor.ICodeEditor : undefined;
 
         if (newVal !== undefined) {
@@ -472,7 +483,7 @@
                                 };
                             }
 
-                            asCodeEditor.addContentWidget(datePickerWidget);
+                            await asCodeEditor.addContentWidget(datePickerWidget);
                             datePicker.value!.handleOpen();
                             setTimeout(() => {
                                 datePicker.value!.focus();
@@ -493,6 +504,7 @@
     const disposeCompletions = ref<() => void>();
 
     const pluginsStore = usePluginsStore();
+    const flowStore = useFlowStore();
 
     const prefix = computed(() => props.schemaType ? `${props.schemaType}-` : "");
     onMounted(async function () {
@@ -502,6 +514,7 @@
         if (props.language !== undefined) {
             await configureLanguage(
                 store,
+                flowStore,
                 pluginsStore,
                 t,
                 props.diffEditor ? undefined : editorResolved.value as ICodeEditor,
@@ -637,9 +650,14 @@
         const $el = editorRef.value
         if ($el !== null) {
             const modifiedEditorWidgets = $el.querySelector(".editor.modified .overflowingContentWidgets");
-            suggestWidgetResizeObserver.value.observe(modifiedEditorWidgets ?? $el.querySelector(".overflowingContentWidgets"), {childList: true})
+            const el = modifiedEditorWidgets ?? $el.querySelector(".overflowingContentWidgets")
+            if(el){
+                suggestWidgetResizeObserver.value.observe(el, {childList: true})
+            }
         }
     }
+
+    const editorStore = useEditorStore();
 
     async function initMonaco() {
         let options: EditorOptions = {
@@ -650,6 +668,11 @@
                 showClasses: false,
                 showWords: false
             },
+            ...(isInFlowEditor ? {
+                padding: {
+                    top: 16
+                }
+            } : {}),
             ...props.options
         };
 
@@ -734,6 +757,14 @@
                         localEditor.value!.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {});
                     }
                 }, 300))
+
+                localEditor.value.onMouseMove((e) => {
+                    emit("mouseMove", e);
+                });
+
+                localEditor.value.onMouseLeave((e) => {
+                    emit("mouseLeave", e);
+                });
             }
 
             if (!props.input) {
@@ -748,9 +779,9 @@
             if (props.value !== value) {
                 emit("change", value, event);
 
-                if (!props.input && current.value && current.value.name) {
-                    store.commit("editor/setTabDirty", {
-                        ...current.value,
+                if (!props.input && editorStore.current?.name) {
+                    editorStore.setTabDirty({
+                        ...editorStore.current,
                         dirty: true,
                     });
                 }
@@ -764,10 +795,6 @@
 
         highlightLine();
     }
-
-    const current = computed(() => {
-        return store.state.editor.current;
-    });
 
     async function changeTab(pathOrName: string, valueSupplier: () => Promise<string>, useModelCache = true) {
         let model;

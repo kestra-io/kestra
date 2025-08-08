@@ -77,10 +77,13 @@
 
 <script>
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
     import ExecutionUtils from "../../utils/executionUtils";
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         inheritAttrs: false,
@@ -127,25 +130,23 @@
         methods: {
             loadRevision() {
                 this.revisionsSelected = this.execution.flowRevision
-                this.$store
-                    .dispatch("flow/loadRevisions", {
-                        namespace: this.execution.namespace,
-                        id: this.execution.flowId
-                    })
+                this.flowStore.loadRevisions({
+                    namespace: this.execution.namespace,
+                    id: this.execution.flowId
+                })
             },
             restartLastRevision() {
-                this.revisionsSelected = this.revisions[this.revisions.length - 1].revision;
+                this.revisionsSelected = this.flowStore.revisions[this.flowStore.revisions.length - 1].revision;
                 this.restart();
             },
             restart() {
                 this.isOpen = false
 
-                this.$store
-                    .dispatch(`execution/${this.replayOrRestart}Execution`, {
-                        executionId: this.execution.id,
-                        taskRunId: this.taskRun && this.isReplay ? this.taskRun.id : undefined,
-                        revision: this.sameRevision(this.revisionsSelected) ? undefined : this.revisionsSelected
-                    })
+                this.executionsStore[`${this.replayOrRestart}Execution`]({
+                    executionId: this.execution.id,
+                    taskRunId: this.taskRun && this.isReplay ? this.taskRun.id : undefined,
+                    revision: this.sameRevision(this.revisionsSelected) ? undefined : this.revisionsSelected
+                })
                     .then(response => {
                         if (response.data.id === this.execution.id) {
                             return ExecutionUtils.waitForState(this.$http, this.$store, response.data);
@@ -154,7 +155,7 @@
                         }
                     })
                     .then((execution) => {
-                        this.$store.commit("execution/setExecution", execution)
+                        this.executionsStore.execution = execution;
                         if (execution.id === this.execution.id) {
                             this.$emit("follow")
                         } else {
@@ -178,12 +179,12 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("flow", ["revisions"]),
+            ...mapStores(useExecutionsStore, useFlowStore),
             replayOrRestart() {
                 return this.isReplay ? "replay" : "restart";
             },
             revisionsOptions() {
-                return (this.revisions || [])
+                return (this.flowStore.revisions || [])
                     .map((revision) => {
                         return {
                             value: revision.revision,

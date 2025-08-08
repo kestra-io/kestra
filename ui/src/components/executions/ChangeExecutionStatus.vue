@@ -71,6 +71,8 @@
 
 <script>
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
@@ -98,8 +100,8 @@
             changeStatus() {
                 this.visible = false;
 
-                this.$store
-                    .dispatch("execution/changeExecutionStatus", {
+                this.executionsStore
+                    .changeExecutionStatus({
                         executionId: this.execution.id,
                         state: this.selectedStatus
                     })
@@ -111,7 +113,7 @@
                         }
                     })
                     .then((execution) => {
-                        this.$store.commit("execution/setExecution", execution)
+                        this.executionsStore.execution = execution;
                         if (execution.id === this.execution.id) {
                             this.$emit("follow")
                         } else {
@@ -133,6 +135,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapStores(useExecutionsStore),
             uuid() {
                 return "changestatus-" + this.execution.id;
             },

@@ -9,11 +9,14 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import jakarta.inject.Inject;
@@ -49,7 +52,6 @@ import java.util.stream.StreamSupport;
 @Singleton
 @Slf4j
 public class FlowService {
-
     @Inject
     Optional<FlowRepositoryInterface> flowRepository;
 
@@ -61,6 +63,9 @@ public class FlowService {
 
     @Inject
     ModelValidator modelValidator;
+
+    @Inject
+    Optional<FlowTopologyRepositoryInterface> flowTopologyRepository;
 
     /**
      * Validates and creates the given flow.
@@ -231,6 +236,7 @@ public class FlowService {
         }
 
         List<String> warnings = new ArrayList<>(checkValidSubflows(flow, tenantId));
+
         List<io.kestra.plugin.core.trigger.Flow> flowTriggers = ListUtils.emptyOnNull(flow.getTriggers()).stream()
             .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
             .map(io.kestra.plugin.core.trigger.Flow.class::cast)
@@ -238,6 +244,21 @@ public class FlowService {
         flowTriggers.forEach(flowTrigger -> {
             if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null) {
                 warnings.add("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId() + "'.");
+            }
+        });
+
+        // add warning for runnable properties (timeout, workerGroup, taskCache) when used not in a runnable
+        flow.allTasksWithChilds().forEach(task -> {
+            if (!(task instanceof RunnableTask<?>)) {
+                if (task.getTimeout() != null) {
+                    warnings.add("The task '" + task.getId() + "' cannot use the 'timeout' property as it's only relevant for runnable tasks.");
+                }
+                if (task.getTaskCache() != null) {
+                    warnings.add("The task '" + task.getId() + "' cannot use the 'taskCache' property as it's only relevant for runnable tasks.");
+                }
+                if (task.getWorkerGroup() != null) {
+                    warnings.add("The task '" + task.getId() + "' cannot use the 'workerGroup' property as it's only relevant for runnable tasks.");
+                }
             }
         });
 
@@ -521,7 +542,37 @@ public class FlowService {
         return flow;
     }
 
+    public Stream<FlowTopology> findDependencies(final String tenant, final String namespace, final String id, boolean destinationOnly, boolean expandAll) {
+        if (flowTopologyRepository.isEmpty()) {
+            throw noRepositoryException();
+        }
+
+        List<FlowTopology> flowTopologies = flowTopologyRepository.get().findByFlow(tenant, namespace, id, destinationOnly);
+        return expandAll ? recursiveFlowTopology(tenant, namespace, id, destinationOnly) : flowTopologies.stream();
+    }
+
+    private Stream<FlowTopology> recursiveFlowTopology(String tenantId, String namespace, String flowId, boolean destinationOnly) {
+        if (flowTopologyRepository.isEmpty()) {
+            throw noRepositoryException();
+        }
+
+        List<FlowTopology> flowTopologies = flowTopologyRepository.get().findByFlow(tenantId, namespace, flowId, destinationOnly);
+        List<FlowTopology> subTopologies = flowTopologies.stream()
+            // filter on destination is not the current node to avoid an infinite loop
+            .filter(topology -> !(topology.getDestination().getTenantId().equals(tenantId) && topology.getDestination().getNamespace().equals(namespace) && topology.getDestination().getId().equals(flowId)))
+            .toList();
+
+        if (subTopologies.isEmpty()) {
+            return flowTopologies.stream();
+        } else {
+            return Stream.concat(flowTopologies.stream(), subTopologies.stream()
+                .map(topology -> topology.getDestination())
+                // recursively fetch child nodes
+                .flatMap(destination -> recursiveFlowTopology(destination.getTenantId(), destination.getNamespace(), destination.getId(), destinationOnly)));
+        }
+    }
+
     private IllegalStateException noRepositoryException() {
-        return new IllegalStateException("No flow repository found. Make sure the `kestra.repository.type` property is set.");
+        return new IllegalStateException("No repository found. Make sure the `kestra.repository.type` property is set.");
     }
 }

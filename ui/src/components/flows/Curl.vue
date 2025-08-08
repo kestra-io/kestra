@@ -93,7 +93,7 @@
                     command.push("-F");
 
                     if (input.type === "FILE") {
-                        command.push(`'files=@${inputValue};filename=${input.id}'`);
+                        command.push(`'${input.id}=@${inputValue};filename=${inputValue}'`);
                     } else {
                         command.push(`'${input.id}=${inputValue}'`);
                     }

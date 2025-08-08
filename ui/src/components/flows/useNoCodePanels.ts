@@ -1,5 +1,4 @@
 import {h, markRaw, Ref, Suspense} from "vue"
-import {useStore} from "vuex";
 import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -7,6 +6,7 @@ import type {Panel, Tab} from "../MultiPanelTabs.vue";
 import NoCodeWrapper from "../code/NoCodeWrapper.vue"
 
 import type {NoCodeProps} from "../code/NoCodeWrapper.vue";
+import {useFlowStore} from "../../stores/flow";
 
 
 
@@ -170,7 +170,7 @@ export function setupInitialNoCodeTab(tab: string, t: (key: string) => string, h
 
 export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
     const {t} = useI18n()
-    const store = useStore()
+    const flowStore = useFlowStore()
 
     function openAddTaskTab(
         opener: {
@@ -192,7 +192,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             refPath,
             position,
             fieldName,
-        }, t, handlers, store.state.flow.flowYaml, dirty)
+        }, t, handlers, flowStore.flowYaml, dirty)
 
         panels.value[opener.panelIndex]?.tabs.splice(opener.tabIndex + 1, 0, tab)
 
@@ -216,7 +216,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             parentPath,
             blockSchemaPath,
             refPath,
-        }, t, handlers, store.state.flow.flowYaml, dirty)
+        }, t, handlers, flowStore.flowYaml ?? "", dirty)
 
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {

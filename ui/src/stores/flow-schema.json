@@ -2,7 +2,27 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$ref": "#/definitions/io.kestra.core.models.flows.Flow",
   "definitions": {
-    "io.kestra.plugin.core.debug.Echo": {
+    "io.kestra.preload.tasks": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/io.kestra.plugin.core.log.Log"
+          }
+        ]
+      }
+    },
+    "io.kestra.preload.triggers": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/io.kestra.plugin.core.log.Log"
+          }
+        ]
+      }
+    },
+    "io.kestra.plugin.core.log.Log": {
       "type": "object",
       "properties": {
         "allowFailure": {
@@ -31,13 +51,10 @@
           "$group": "core",
           "markdownDescription": "Default value is : `false`"
         },
-        "format": {
-          "type": "string",
-          "$dynamic": true
-        },
         "id": {
           "type": "string",
           "minLength": 1,
+          "maxLength": 256,
           "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]*"
         },
         "level": {
@@ -49,6 +66,7 @@
             "DEBUG",
             "TRACE"
           ],
+          "title": "The level on which the message should be logged. Note that this is different from the core `logLevel` property which sets the minimum log level to be persisted in the backend database. The `level` property is used to determine the log level of the message emitted by the Log task, while `logLevel` is used to filter which logs should be stored in the backend. Both properties can be used together to control the log level of the message emitted by the task and the logs that are persisted in the backend. If not specified, the `level` defaults to `INFO`.",
           "default": "INFO",
           "$dynamic": true,
           "markdownDescription": "Default value is : `INFO`"
@@ -71,6 +89,22 @@
           "$dynamic": false,
           "$group": "core",
           "markdownDescription": "Default value is : `false`"
+        },
+        "message": {
+          "title": "One or more message(s) to be sent to the backend as logs.",
+          "$dynamic": true,
+          "markdownDescription": "It can be a string or an array of strings.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
         },
         "retry": {
           "anyOf": [
@@ -116,6 +150,17 @@
           "$group": "core",
           "markdownDescription": "Default value is : `\"true\"`"
         },
+        "taskCache": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.tasks.Cache"
+            },
+            {
+              "$dynamic": false,
+              "$group": "core"
+            }
+          ]
+        },
         "timeout": {
           "type": "string",
           "format": "duration",
@@ -123,7 +168,7 @@
           "$group": "core"
         },
         "type": {
-          "const": "io.kestra.plugin.core.debug.Echo"
+          "const": "io.kestra.plugin.core.log.Log"
         },
         "version": {
           "type": "string",
@@ -146,24 +191,17 @@
       },
       "required": [
         "id",
+        "message",
         "type"
       ],
-      "title": "Log a message in the task logs (Deprecated).",
-      "$deprecated": "true",
-      "markdownDescription": "This task is deprecated, please use the `io.kestra.plugin.core.log.Log` task instead.##### Examples\n> \n```yaml\nid: echo_flow\nnamespace: company.team\n\ntasks:\n  - id: echo\n    type: io.kestra.plugin.core.debug.Echo\n    level: WARN\n    format: \"{{ task.id }} > {{ taskrun.startDate }}\"\n\n```"
+      "title": "Log a message to the console.",
+      "markdownDescription": "##### Examples\n> \n```yaml\nlevel: DEBUG\nmessage: \"{{ task.id }} > {{ taskrun.startDate }}\"\n```\n\n> Log one or more messages to the console.\n```yaml\nid: hello_world\nnamespace: company.team\n\ntasks:\n  - id: greeting\n    type: io.kestra.plugin.core.log.Log\n    message:\n      - Kestra team wishes you a great day 👋\n      - If you need some help, reach out via Slack\n```"
     },
     "io.kestra.core.models.flows.Flow": {
       "type": "object",
       "properties": {
         "afterExecution": {
-          "type": "array",
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/io.kestra.plugin.core.debug.Echo"
-              }
-            ]
-          }
+          "$ref": "#/definitions/io.kestra.preload.tasks"
         },
         "concurrency": {
           "$ref": "#/definitions/io.kestra.core.models.flows.Concurrency"
@@ -182,20 +220,10 @@
           "markdownDescription": "Default value is : `false`"
         },
         "errors": {
-          "type": "array",
-          "items": {
-
-          }
+          "$ref": "#/definitions/io.kestra.preload.tasks"
         },
         "finally": {
-          "type": "array",
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/io.kestra.plugin.core.debug.Echo"
-              }
-            ]
-          }
+          "$ref": "#/definitions/io.kestra.preload.tasks"
         },
         "id": {
           "type": "string",
@@ -383,23 +411,14 @@
           }
         },
         "tasks": {
-          "minItems": 1,
-          "type": "array",
-          "items": {
-            "anyOf": [{
-              "$ref": "#/definitions/io.kestra.plugin.core.debug.Echo"
-            }]
-          }
+          "$ref": "#/definitions/io.kestra.preload.tasks"
         },
         "tenantId": {
           "type": "string",
           "pattern": "^[a-z0-9][a-z0-9_-]*"
         },
         "triggers": {
-          "type": "array",
-          "items": {
-
-          }
+          "$ref": "#/definitions/io.kestra.preload.triggers"
         },
         "variables": {
           "type": "object"

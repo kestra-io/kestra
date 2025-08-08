@@ -28,8 +28,9 @@
     import Circle from "vue-material-design-icons/Circle.vue";
 </script>
 <script>
-
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
@@ -45,8 +46,8 @@
             kill(isOnKillCascade) {
                 this.$toast()
                     .confirm(this.$t("killed confirm", {id: this.execution.id}), () => {
-                        return this.$store
-                            .dispatch("execution/kill", {
+                        return this.executionsStore
+                            .kill({
                                 id: this.execution.id,
                                 isOnKillCascade: isOnKillCascade
                             })
@@ -58,6 +59,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapStores(useExecutionsStore),
             enabled() {
                 if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace))) {
                     return false;

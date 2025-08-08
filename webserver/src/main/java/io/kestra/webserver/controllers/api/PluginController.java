@@ -47,8 +47,8 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
         tags = {"Plugins"},
-        summary = "Get all json schemas for a type",
-        description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
+        summary = "Get the JSON schema for a type",
+        description = "The schema will be a [JSON Schema Draft 7](http://json-schema.org/draft-07/schema)"
     )
     public HttpResponse<Map<String, Object>> getSchemasFromType(
         @Parameter(description = "The schema needed") @PathVariable SchemaType type,
@@ -56,6 +56,21 @@ public class PluginController {
     ) {
         return HttpResponse.ok()
             .body(jsonSchemaCache.getSchemaForType(type, arrayOf))
+            .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    @Get(uri = "properties/{type}")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = {"Plugins"},
+        summary = "Get the properties part of the JSON schema for a type",
+        description = "The schema will be a [JSON Schema Draft 7](http://json-schema.org/draft-07/schema)"
+    )
+    public HttpResponse<Map<String, Object>> getPropertiesFromType(
+        @Parameter(description = "The schema needed") @PathVariable SchemaType type
+    ) {
+        return HttpResponse.ok()
+            .body(jsonSchemaCache.getPropertiesForType(type))
             .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
@@ -75,8 +90,8 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
         tags = {"Plugins"},
-        summary = "Get json schemas for an input type",
-        description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
+        summary = "Get the JSON schema for an input type",
+        description = "The schema will be a [JSON Schema Draft 7](http://json-schema.org/draft-07/schema)"
     )
     public MutableHttpResponse<DocumentationWithSchema> getSchemaFromInputType(
         @Parameter(description = "The schema needed") @PathVariable Type type

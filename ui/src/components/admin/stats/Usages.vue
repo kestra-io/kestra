@@ -1,108 +1,36 @@
 <template>
-    <el-card class="p-3 pt-2 pb-2" :header="$t('your usage')" v-if="usages">
-        <el-row class="mt-1 mb-1 align-items-center">
-            <AspectRatio />
-            <el-text size="small">
-                {{ $t("namespaces") }}
-            </el-text>
-            <el-divider class="m-auto" />
-            <el-text size="small">
-                {{ namespaces }}
-            </el-text>
-            <router-link :to="{name: namespaceRoute}">
-                <el-button class="wh-15" :icon="TextSearchVariant" link />
-            </router-link>
-        </el-row>
-        <el-row class="mt-1 mb-1 align-items-center">
-            <FileTreeOutline />
-            <el-text size="small">
-                {{ $t("flows") }}
-            </el-text>
-            <el-divider class="m-auto" />
-            <el-text size="small">
-                {{ flows }}
-            </el-text>
-            <router-link :to="{name: 'flows/list'}">
-                <el-button class="wh-15" :icon="TextSearchVariant" link />
-            </router-link>
-        </el-row>
-        <el-row class="mt-1 mb-1 align-items-center">
-            <ListBoxOutline />
-            <el-text size="small">
-                {{ $t("tasks") }}
-            </el-text>
-            <el-divider class="m-auto" />
-            <el-text size="small">
-                {{ tasks }}
-            </el-text>
-            <router-link :to="{name: 'flows/list'}">
-                <el-button class="wh-15" :icon="TextSearchVariant" link />
-            </router-link>
-        </el-row>
-        <el-row class="mt-1 mb-1 align-items-center">
-            <LightningBolt />
-            <el-text size="small">
-                {{ $t("triggers") }}
-            </el-text>
-            <el-divider class="m-auto" />
-            <el-text size="small">
-                {{ triggers }}
-            </el-text>
-            <router-link :to="{name: 'admin/triggers'}">
-                <el-button class="wh-15" :icon="TextSearchVariant" link />
-            </router-link>
-        </el-row>
-        <el-row class="mt-1 mb-1 align-items-center">
-            <TimelineClock />
-            <el-text size="small">
-                {{ $t("executions") }}
-            </el-text>
-            <el-divider class="m-auto" />
-            <el-text size="small">
-                {{ executionsOverTwoDays }} ({{ $t("last 48 hours") }})
-            </el-text>
-            <router-link :to="{name: 'executions/list'}">
-                <el-button class="wh-15" :icon="TextSearchVariant" link />
-            </router-link>
-        </el-row>
-        <el-row v-if="taskrunsOverTwoDays" class="mt-1 mb-1 align-items-center">
-            <ChartTimeline />
-            <el-text size="small">
-                {{ $t("taskruns") }}
-            </el-text>
-            <el-divider class="m-auto" />
-            <el-text size="small">
-                {{ taskrunsOverTwoDays }} ({{ $t("last 48 hours") }})
-            </el-text>
-            <router-link :to="{name: 'taskruns/list'}">
-                <el-button class="wh-15" :icon="TextSearchVariant" link />
-            </router-link>
-        </el-row>
-        <el-row class="mt-1 mb-1 align-items-center">
-            <TableClock />
-            <el-text size="small">
-                {{ $t("executions duration (in minutes)") }}
-            </el-text>
-            <el-divider class="m-auto" />
-            <el-text size="small">
-                {{ executionsDurationOverTwoDays }} ({{ $t("last 48 hours") }})
-            </el-text>
-            <router-link :to="{name: 'executions/list'}">
-                <el-button class="wh-15" :icon="TextSearchVariant" link />
-            </router-link>
-        </el-row>
-        <slot name="additional-usages" />
-    </el-card>
+    <div v-if="usages" class="usage-card">
+        <div class="usage-card-header">
+            <span>{{ $t('your usage') }}</span>
+            <slot name="button" />
+        </div>
+        <div class="usage-card-body">
+            <div v-for="item in filteredUsageItems" :key="item.key" class="usage-row">
+                <component :is="item.icon" class="usage-icon" />
+                <el-text size="small" class="usage-label">
+                    {{ $t(item.labelKey) }}
+                </el-text>
+                <div class="usage-divider" />
+                <el-text size="small" class="usage-value">
+                    {{ item.value }}
+                </el-text>
+                <router-link :to="{name: item.route}">
+                    <el-button class="wh-15" :icon="TextSearchVariant" link />
+                </router-link>
+            </div>
+            <slot name="additional-usages" />
+        </div>
+    </div>
 </template>
 <script setup>
     import TextSearchVariant from "vue-material-design-icons/TextSearchVariant.vue";
-    import AspectRatio from "vue-material-design-icons/AspectRatio.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
-    import ListBoxOutline from "vue-material-design-icons/ListBoxOutline.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-    import TimelineClock from "vue-material-design-icons/TimelineClock.vue";
+    import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
     import ChartTimeline from "vue-material-design-icons/ChartTimeline.vue";
-    import TableClock from "vue-material-design-icons/TableClock.vue";
+    import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
+    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
 </script>
 <script>
     import {mapStores} from "pinia";
@@ -150,6 +78,67 @@
         },
         computed: {
             ...mapStores(useMiscStore),
+            usageItems() {
+                return [
+                    {
+                        key: "namespaces",
+                        icon: DotsSquare,
+                        labelKey: "namespaces",
+                        value: this.namespaces,
+                        route: this.namespaceRoute
+                    },
+                    {
+                        key: "flows",
+                        icon: FileTreeOutline,
+                        labelKey: "flows",
+                        value: this.flows,
+                        route: "flows/list"
+                    },
+                    {
+                        key: "tasks",
+                        icon: TimelineTextOutline,
+                        labelKey: "tasks",
+                        value: this.tasks,
+                        route: "flows/list"
+                    },
+                    {
+                        key: "triggers",
+                        icon: LightningBolt,
+                        labelKey: "triggers",
+                        value: this.triggers,
+                        route: "admin/triggers"
+                    },
+                    {
+                        key: "executions",
+                        icon: TimelineClockOutline,
+                        labelKey: "executions",
+                        value: `${this.executionsOverTwoDays} (${this.$t("last 48 hours")})`,
+                        route: "executions/list"
+                    },
+                    {
+                        key: "taskruns",
+                        icon: ChartTimeline,
+                        labelKey: "taskruns",
+                        value: `${this.taskrunsOverTwoDays} (${this.$t("last 48 hours")})`,
+                        route: "taskruns/list"
+                    },
+                    {
+                        key: "executionsDuration",
+                        icon: CalendarMonth,
+                        labelKey: "executions duration (in minutes)",
+                        value: `${this.executionsDurationOverTwoDays} (${this.$t("last 48 hours")})`,
+                        route: "executions/list"
+                    }
+                ];
+            },
+            filteredUsageItems() {
+                return this.usageItems.filter(item => {
+                    if (item.key === "taskruns") {
+                        return !!this.taskrunsOverTwoDays;
+                    }
+                    return true;
+                });
+            },
             namespaces() {
                 return this.usages.flows?.namespacesCount ?? 0;
             },
@@ -160,7 +149,7 @@
                 try {
                     this.$router.resolve({name: "namespaces/list"})
                     return "namespaces/list";
-                } catch  {
+                } catch {
                     return "flows/list"
                 }
             },
@@ -197,27 +186,84 @@
         }
     };
 </script>
-<style scoped>
-    .el-card {
-        &:deep(.el-card__header) {
-            border-bottom: 0;
-        }
+<style lang="scss" scoped>
+.usage-card {
+    background-color: transparent;
+    // min-height: 432px;
+    padding: 1.25rem;
+    border: 1px solid var(--ks-border-primary);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px var(--ks-card-shadow);
 
-        .el-row, :slotted(.el-row) {
-            gap: 0.5rem;
-            height: 2rem;
+    .usage-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
 
-            & .el-text--small, :slotted(&) .el-text--small {
-                line-height: 1;
-            }
-
-            & .el-divider, :slotted(&) .el-divider {
-                flex: 1;
-            }
-
-            & .el-button, :slotted(&) .el-button {
-                color: var(--ks-content-primary);
-            }
+        span {
+            font-size: 18.4px;
+            font-weight: 600;
         }
     }
+
+    .usage-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem
+    }
+
+    .usage-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        height: 2rem;
+
+        .usage-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+
+            :deep(.material-design-icon__svg) {
+                font-size: 24px;
+                color: var(--ks-content-secondary);
+                vertical-align: middle;
+            }
+        }
+
+        .usage-label {
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: var(--ks-content-primary);
+        }
+
+        .usage-divider {
+            flex: 1;
+            height: 1px;
+            border-top: 1px dashed var(--ks-border-primary);
+        }
+
+        .usage-value {
+            line-height: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .el-button {
+            color: var(--ks-content-primary);
+            display: flex;
+            align-items: center;
+        }
+    }
+}
+
+:deep(.text-search-variant-icon) {
+    color: var(--ks-content-tertiary) !important;
+}
 </style>

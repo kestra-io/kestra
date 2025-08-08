@@ -66,8 +66,14 @@ public class App implements Callable<Integer> {
         ApplicationContext applicationContext = App.applicationContext(cls, args);
 
         // Call Picocli command
-        int exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
-
+        int exitCode = 0;
+        try {
+             exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
+        } catch (CommandLine.InitializationException e){
+            System.err.println("Could not initialize picoli ComandLine, err: " + e.getMessage());
+            e.printStackTrace();
+            exitCode = 1;
+        }
         applicationContext.close();
 
         // exit code

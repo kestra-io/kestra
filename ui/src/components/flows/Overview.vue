@@ -2,22 +2,24 @@
     <Dashboard
         v-if="loaded && total && flow"
         :header="false"
-        :is-flow="true"
+        is-flow
     />
     <NoExecutions v-else-if="loaded && flow && !total" />
 </template>
 
 <script setup lang="ts">
     import {computed, onMounted, ref} from "vue";
-    import {useStore} from "vuex";
+    import {useExecutionsStore} from "../../stores/executions";
 
     defineOptions({inheritAttrs: false});
 
     import Dashboard from "../dashboard/Dashboard.vue";
     import NoExecutions from "../flows/NoExecutions.vue";
+    import {useFlowStore} from "../../stores/flow";
 
-    const store = useStore();
-    const flow = computed(() => store.getters["flow/flow"]);
+    const flowStore = useFlowStore();
+    const flow = computed(() => flowStore.flow);
+    const executionsStore = useExecutionsStore();
 
     const total = ref(0);
     const loaded = ref(false);
@@ -26,8 +28,8 @@
 
     onMounted(() => {
         if (flow.value?.id) {
-            store
-                .dispatch("execution/findExecutions", {namespace: flow.value.namespace, flowId: flow.value.id})
+            executionsStore
+                .findExecutions({namespace: flow.value.namespace, flowId: flow.value.id})
                 .then((r) => {
                     total.value = r.total ?? 0;
                     loaded.value = true;

@@ -82,6 +82,9 @@
                             />
                         </el-select>
                     </Column>
+                    <Column :label="$t('settings.blocks.configuration.fields.playground')">
+                        <el-switch :model-value="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
+                    </Column>
                 </Row>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')">
@@ -148,20 +151,35 @@
                 </Row>
 
                 <Row>
-                    <Column :overrides="{sm: 24, md: 24, lg: 24, xl: 24}" :label="$t('settings.blocks.theme.fields.editor_folding_stratgy')">
+                    <Column :label="$t('settings.blocks.theme.fields.editor_folding_stratgy')">
                         <el-switch :aria-label="$t('Fold auto')" :model-value="pendingSettings.autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
+                    </Column>
+                    <Column :label="$t('settings.blocks.theme.fields.editor_hover_description')">
+                        <el-switch :aria-label="$t('Hover description')" :model-value="pendingSettings.hoverTextEditor" @update:model-value="onHoverTextEditor" />
                     </Column>
                 </Row>
 
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.environment_name')">
+                        <el-tooltip
+                            v-if="isEnvNameFromConfig"
+                            :content="$t('settings.blocks.theme.fields.environment_name_tooltip')"
+                            placement="bottom"
+                        >
+                            <el-input
+                                v-model="pendingSettings.envName"
+                                @change="onEnvNameChange"
+                                :placeholder="$t('name')"
+                                clearable
+                            />
+                        </el-tooltip>
+
                         <el-input
+                            v-else
                             v-model="pendingSettings.envName"
                             @change="onEnvNameChange"
                             :placeholder="$t('name')"
                             clearable
-                            show-word-limit
-                            maxlength="30"
                         />
                     </Column>
 
@@ -224,7 +242,7 @@
                         </el-button>
                     </Column>
                     <Column>
-                        <el-button v-if="canReadTemplates" :icon="Download" @click="exportTemplates()" :hidden="!configs?.isTemplateEnabled" class="w-100">
+                        <el-button v-if="canReadTemplates" :icon="Download" @click="exportTemplates()" :hidden="!miscStore?.configs?.isTemplateEnabled" class="w-100">
                             {{ $t("settings.blocks.export.fields.templates") }}
                         </el-button>
                     </Column>
@@ -249,6 +267,7 @@
     import {mapStores} from "pinia";
     import {useLayoutStore} from "../../stores/layout";
     import {useMiscStore} from "../../stores/misc";
+    import {useTemplateStore} from "../../stores/template";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {logDisplayTypes, storageKeys} from "../../utils/constants";
@@ -300,6 +319,7 @@
                     executeDefaultTab: undefined,
                     autoRefreshInterval: undefined,
                     flowDefaultTab: undefined,
+                    editorPlayground: undefined,
                     logsFontSize: undefined
                 },
                 settingsKeyMapping: {
@@ -330,6 +350,7 @@
             this.pendingSettings.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
             this.pendingSettings.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.pendingSettings.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
+            this.pendingSettings.hoverTextEditor = localStorage.getItem("hoverTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
             this.pendingSettings.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
             this.pendingSettings.editorFontSize = parseInt(localStorage.getItem("editorFontSize")) || 12;
@@ -337,6 +358,7 @@
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
             this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview";
+            this.pendingSettings.editorPlayground = localStorage.getItem("editorPlayground") === "true";
             this.pendingSettings.envName = this.layoutStore.envName || this.miscStore.configs?.environment?.name;
             this.pendingSettings.envColor = this.layoutStore.envColor || this.miscStore.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
@@ -431,14 +453,16 @@
                 this.pendingSettings.autofoldTextEditor = value;
                 this.checkForChanges();
             },
+            onHoverTextEditor(value) {
+                this.pendingSettings.hoverTextEditor = value;
+                this.checkForChanges();
+            },
             exportFlows() {
-                return this.$store
-                    .dispatch("flow/findFlows", {size: 1, page: 1})
+                return this.flowStore.findFlows({size: 1, page: 1})
                     .then((result) => {
                         const flowCount = result.total;
-                        
-                        return this.$store
-                            .dispatch("flow/exportFlowByQuery", {})
+
+                        return this.flowStore.exportFlowByQuery({})
                             .then(() => {
                                 this.$toast().success(
                                     this.$t("flows exported", {
@@ -449,8 +473,8 @@
                     });
             },
             exportTemplates() {
-                return this.$store
-                    .dispatch("template/exportTemplateByQuery", {})
+                return this.templateStore
+                    .exportTemplateByQuery({})
                     .then(_ => {
                         this.$toast().success(this.$t("templates exported"));
                     })
@@ -489,6 +513,10 @@
             },
             onFlowDefaultTabChange(value){
                 this.pendingSettings.flowDefaultTab = value;
+                this.checkForChanges();
+            },
+            onEditorPlaygroundChange(value) {
+                this.pendingSettings.editorPlayground = value;
                 this.checkForChanges();
             },
             onLogsFontSize(value) {
@@ -579,7 +607,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(useLayoutStore, useMiscStore),
+            ...mapStores(useLayoutStore, useMiscStore, useTemplateStore),
             mappedTheme() {
                 return this.miscStore.theme;
             },
@@ -739,6 +767,9 @@
                         label: this.$t("auditlogs")
                     },
                 ]
+            },
+            isEnvNameFromConfig() {
+                return !this.layoutStore.envName && !!this.miscStore.configs?.environment?.name;
             }
         },
         watch: {

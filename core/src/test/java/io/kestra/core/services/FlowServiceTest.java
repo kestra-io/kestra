@@ -372,4 +372,44 @@ class FlowServiceTest {
 
         assertThat(exceptions.size()).isZero();
     }
+
+    @Test
+    void shouldReturnValidationForRunnablePropsOnFlowable() {
+        // Given
+        String source = """
+            id: dolphin_164914
+            namespace: company.team
+
+            tasks:
+              - id: for
+                type: io.kestra.plugin.core.flow.ForEach
+                values: [1, 2, 3]
+                workerGroup:
+                  key: toto
+                timeout: PT10S
+                taskCache:
+                  enabled: true
+                tasks:
+                - id: hello
+                  type: io.kestra.plugin.core.log.Log
+                  message: Hello World! 🚀
+                  workerGroup:
+                    key: toto
+                  timeout: PT10S
+                  taskCache:
+                    enabled: true
+            """;
+
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", source);
+
+        // Then
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().getWarnings()).hasSize(3);
+        assertThat(results.getFirst().getWarnings()).containsExactlyInAnyOrder(
+            "The task 'for' cannot use the 'timeout' property as it's only relevant for runnable tasks.",
+            "The task 'for' cannot use the 'taskCache' property as it's only relevant for runnable tasks.",
+            "The task 'for' cannot use the 'workerGroup' property as it's only relevant for runnable tasks."
+        );
+    }
 }

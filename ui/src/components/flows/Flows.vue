@@ -46,7 +46,7 @@
             <data-table
                 @page-changed="onPageChanged"
                 ref="dataTable"
-                :total="total"
+                :total="flowStore.total"
                 :hide-top-pagination="!!namespace"
             >
                 <template #navbar>
@@ -55,14 +55,7 @@
                         :language="FlowFilterLanguage"
                         :buttons="{
                             refresh: {shown: false},
-                            settings: {
-                                shown: true,
-                                charts: {
-                                    shown: true,
-                                    value: showChart,
-                                    callback: onShowChartChange,
-                                },
-                            },
+                            settings: {shown: false}
                         }"
                         :properties="{
                             shown: true,
@@ -74,14 +67,10 @@
                     />
                 </template>
 
-                <template v-if="showStatChart()" #top>
-                    <Sections :dashboard="{id: 'default'}" :charts show-default />
-                </template>
-
                 <template #table>
                     <select-table
                         ref="selectTable"
-                        :data="flows"
+                        :data="flowStore.flows"
                         :default-sort="{prop: 'id', order: 'ascending'}"
                         table-layout="auto"
                         fixed
@@ -97,7 +86,7 @@
                             <bulk-select
                                 :select-all="queryBulkAction"
                                 :selections="selection"
-                                :total="total"
+                                :total="flowStore.total"
                                 @update:select-all="toggleAllSelection"
                                 @unselect="toggleAllUnselected"
                             >
@@ -224,18 +213,15 @@
                                 :label="$t('last execution status')"
                             >
                                 <template #default="scope">
-                                    <status
-                                        v-if="
-                                            lastExecutionByFlowReady &&
-                                                getLastExecution(scope.row)
-                                                    ?.status
-                                        "
-                                        :status="
-                                            getLastExecution(scope.row)
-                                                ?.status
-                                        "
-                                        size="small"
-                                    />
+                                    <div
+                                        v-if="lastExecutionByFlowReady && getLastExecution(scope.row)?.status"
+                                        class="d-flex justify-content-between align-items-center"
+                                    >
+                                        <Status :status="getLastExecution(scope.row)?.status" size="small" />
+                                        <div class="height: 100px;">
+                                            <Bar :chart="mappedChart(scope.row.id, scope.row.namespace)" show-default short />
+                                        </div>
+                                    </div>
                                 </template>
                             </el-table-column>
 
@@ -285,7 +271,6 @@
     import {ref} from "vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import Plus from "vue-material-design-icons/Plus.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import Download from "vue-material-design-icons/Download.vue";
@@ -295,14 +280,16 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
     import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
-    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
-    import Sections from "../dashboard/sections/Sections.vue";
+
+    import Bar from "../dashboard/sections/Bar.vue";
 
     const file = ref(null);
 </script>
 
 <script>
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -320,6 +307,42 @@
     import Kicon from "../Kicon.vue";
     import Labels from "../layout/Labels.vue";
     import {storageKeys} from "../../utils/constants";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import {useFlowStore} from "../../stores/flow.ts";
+
+    const CHART_DEFINITION = {
+        id: "executions_per_namespace_bars",
+        type: "io.kestra.plugin.core.dashboard.chart.Bar",
+        chartOptions: {
+            displayName: "Executions (per namespace)",
+            legend: {enabled: false},
+            column: "total",
+            width: 12,
+        },
+        data: {
+            type: "io.kestra.plugin.core.dashboard.data.Executions",
+            columns: {
+                date: {field: "START_DATE", displayName: "Date"},
+                state: {field: "STATE"},
+                total: {displayName: "Executions", agg: "COUNT"},
+            },
+            where: [
+                {
+                    field: "NAMESPACE",
+                    type: "EQUAL_TO",
+                    value: "${namespace}",
+                },
+                {
+                    field: "FLOW_ID",
+                    type: "EQUAL_TO",
+                    value: "${flow_id}",
+                }
+            ]
+        },
+    };
+
+    CHART_DEFINITION.content = YAML_UTILS.stringify(CHART_DEFINITION);
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -389,27 +412,19 @@
                 permission: permission,
                 action: action,
                 file: undefined,
-                showChart: ["true", null].includes(
-                    localStorage.getItem(storageKeys.SHOW_FLOWS_CHART),
-                ),
                 loading: false,
                 lastExecutionByFlowReady: false,
-                latestExecutions: []
+                latestExecutions: [],
+                dblClickRouteName: "flows/update"
             };
         },
         computed: {
-            ...mapState("flow", ["flows", "total"]),
             ...mapState("auth", ["user"]),
+            ...mapStores(useExecutionsStore, useFlowStore),
             routeInfo() {
                 return {
                     title: this.$t("flows"),
                 };
-            },
-            endDate() {
-                return new Date();
-            },
-            startDate() {
-                return this.$moment(this.endDate).add(-30, "days").toDate();
             },
             canCheck() {
                 return this.canRead || this.canDelete || this.canUpdate;
@@ -465,7 +480,6 @@
             );
             const query = {...to.query};
             let queryHasChanged = false;
-
             const queryKeys = Object.keys(query);
             if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
                 query["filters[namespace][PREFIX]"] = defaultNamespace;
@@ -515,31 +529,22 @@
             updateDisplayColumns(newColumns) {
                 this.displayColumns = newColumns;
             },
-            showStatChart() {
-                return this.showChart;
-            },
-            onShowChartChange(value) {
-                this.showChart = value;
-                localStorage.setItem(storageKeys.SHOW_FLOWS_CHART, value);
-            },
             exportFlows() {
                 this.$toast().confirm(
                     this.$t("flow export", {
                         flowCount: this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length,
                     }),
                     () => {
                         const flowCount = this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length;
 
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch(
-                                    "flow/exportFlowByQuery",
-                                    this.loadQuery(),
-                                )
+                            return this.flowStore.exportFlowByQuery(
+                                this.loadQuery(),
+                            )
                                 .then(() => {
                                     this.$toast().success(
                                         this.$t("flows exported", {
@@ -548,10 +553,9 @@
                                     );
                                 });
                         } else {
-                            return this.$store
-                                .dispatch("flow/exportFlowByIds", {
-                                    ids: this.selection,
-                                })
+                            return this.flowStore.exportFlowByIds({
+                                ids: this.selection,
+                            })
                                 .then(() => {
                                     this.$toast().success(
                                         this.$t("flows exported", {
@@ -568,16 +572,14 @@
                 this.$toast().confirm(
                     this.$t("flow disable", {
                         flowCount: this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length,
                     }),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch(
-                                    "flow/disableFlowByQuery",
-                                    this.loadQuery(),
-                                )
+                            return this.flowStore.disableFlowByQuery(
+                                this.loadQuery(),
+                            )
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows disabled", {
@@ -587,10 +589,9 @@
                                     this.loadData(() => {});
                                 });
                         } else {
-                            return this.$store
-                                .dispatch("flow/disableFlowByIds", {
-                                    ids: this.selection,
-                                })
+                            return this.flowStore.disableFlowByIds({
+                                ids: this.selection,
+                            })
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows disabled", {
@@ -614,16 +615,14 @@
                 this.$toast().confirm(
                     this.$t("flow enable", {
                         flowCount: this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length,
                     }),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch(
-                                    "flow/enableFlowByQuery",
-                                    this.loadQuery(),
-                                )
+                            return this.flowStore.enableFlowByQuery(
+                                this.loadQuery(),
+                            )
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows enabled", {
@@ -633,10 +632,9 @@
                                     this.loadData(() => {});
                                 });
                         } else {
-                            return this.$store
-                                .dispatch("flow/enableFlowByIds", {
-                                    ids: this.selection,
-                                })
+                            return this.flowStore.enableFlowByIds({
+                                ids: this.selection,
+                            })
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows enabled", {
@@ -654,16 +652,14 @@
                 this.$toast().confirm(
                     this.$t("flow delete", {
                         flowCount: this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length,
                     }),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch(
-                                    "flow/deleteFlowByQuery",
-                                    this.loadQuery(),
-                                )
+                            return this.flowStore.deleteFlowByQuery(
+                                this.loadQuery(),
+                            )
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows deleted", {
@@ -673,10 +669,9 @@
                                     this.loadData(() => {});
                                 });
                         } else {
-                            return this.$store
-                                .dispatch("flow/deleteFlowByIds", {
-                                    ids: this.selection,
-                                })
+                            return this.flowStore.deleteFlowByIds({
+                                ids: this.selection,
+                            })
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows deleted", {
@@ -693,7 +688,7 @@
             importFlows() {
                 const formData = new FormData();
                 formData.append("fileUpload", this.$refs.file.files[0]);
-                this.$store.dispatch("flow/importFlows", formData)
+                this.flowStore.importFlows(formData)
                     .then((res) => {
                         if (res.data.length > 0) {
                             this.$toast().warning(
@@ -714,10 +709,10 @@
                     e => e.flowId === row.id && e.namespace === row.namespace
                 ) ?? null;
             },
-            loadQuery(base, ignoreDateFilters = true) {
+            loadQuery(base) {
                 let queryFilter = this.queryWithFilter(
                     undefined,
-                    ignoreDateFilters ? ["startDate", "endDate", "timeRange"] : []
+                    []
                 );
 
                 if (this.namespace) {
@@ -729,9 +724,8 @@
             loadData(callback) {
                 const q = this.$route.query;
 
-                this.$store
-                    .dispatch(
-                        "flow/findFlows",
+                this.flowStore
+                    .findFlows(
                         this.loadQuery({
                             size: parseInt(this.namespace ? this.internalPageSize : q.size ?? 25),
                             page: parseInt(this.namespace ? this.internalPageNumber : q.page ?? 1),
@@ -743,8 +737,7 @@
                             permission.EXECUTION,
                             action.READ,
                         )) {
-                            this.$store.dispatch(
-                                "execution/loadLatestExecutions",
+                            this.executionsStore.loadLatestExecutions(
                                 {
                                     flowFilters: data.results.map(flow => {
                                         return {
@@ -764,7 +757,14 @@
             rowClasses(row) {
                 return row && row.row && row.row.disabled ? "disabled" : "";
             },
-        },
+            mappedChart(id, namespace) {
+                let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION));
+
+                MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id);
+
+                return MAPPED_CHARTS;
+            }
+        }
     };
 </script>
 

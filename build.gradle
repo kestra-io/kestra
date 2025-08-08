@@ -16,7 +16,7 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "8.3.8"
+    id "com.gradleup.shadow" version "8.3.9"
     id "application"
 
     // test
@@ -32,9 +32,9 @@ plugins {
 
     // release
     id 'net.researchgate.release' version '3.1.0'
-    id "com.gorylenko.gradle-git-properties" version "2.5.0"
+    id "com.gorylenko.gradle-git-properties" version "2.5.2"
     id 'signing'
-    id "com.vanniktech.maven.publish" version "0.33.0"
+    id "com.vanniktech.maven.publish" version "0.34.0"
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.1.3" apply false
@@ -148,6 +148,7 @@ allprojects {
             implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names'
             implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
             implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310'
+            implementation group: 'com.fasterxml.uuid', name: 'java-uuid-generator'
 
             // kestra
             implementation group: 'com.devskiller.friendly-id', name: 'friendly-id'
@@ -224,14 +225,14 @@ subprojects {
         }
 
         testlogger {
-            theme 'mocha-parallel'
-            showExceptions true
-            showFullStackTraces true
-            showCauses true
-            slowThreshold 2000
-            showStandardStreams true
-            showPassedStandardStreams false
-            showSkippedStandardStreams true
+            theme = 'mocha-parallel'
+            showExceptions = true
+            showFullStackTraces = true
+            showCauses = true
+            slowThreshold = 2000
+            showStandardStreams = true
+            showPassedStandardStreams = false
+            showSkippedStandardStreams = true
         }
     }
 }
@@ -409,7 +410,7 @@ jar {
 shadowJar {
     archiveClassifier.set(null)
     mergeServiceFiles()
-    zip64 true
+    zip64 = true
 }
 
 distZip.dependsOn shadowJar
@@ -426,8 +427,8 @@ def executableDir = layout.buildDirectory.dir("executable")
 def executable = layout.buildDirectory.file("executable/${project.name}-${project.version}").get().asFile
 
 tasks.register('writeExecutableJar') {
-    group "build"
-    description "Write an executable jar from shadow jar"
+    group = "build"
+    description = "Write an executable jar from shadow jar"
     dependsOn = [shadowJar]
 
     final shadowJarFile =  tasks.shadowJar.outputs.files.singleFile
@@ -453,8 +454,8 @@ tasks.register('writeExecutableJar') {
 }
 
 tasks.register('executableJar', Zip) {
-    group "build"
-    description "Zip the executable jar"
+    group = "build"
+    description = "Zip the executable jar"
     dependsOn = [writeExecutableJar]
 
     archiveFileName = "${project.name}-${project.version}.zip"

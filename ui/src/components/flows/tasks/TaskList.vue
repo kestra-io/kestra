@@ -5,17 +5,17 @@
             :elements="items"
             :section
             :block-schema-path="[schemaPath, 'properties', root, 'items'].join('/')"
-            @remove="(yaml) => store.commit('flow/setFlowYaml', yaml)"
-            @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
+            @remove="(yaml) => flowStore.flowYaml = yaml"
+            @reorder="(yaml) => flowStore.flowYaml = yaml"
         />
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed, inject, ref} from "vue";
-    import {useStore} from "vuex";
     import Collapse from "../../code/components/collapse/Collapse.vue";
     import {SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
+    import {useFlowStore} from "../../../stores/flow";
 
     const schemaPath = inject(SCHEMA_PATH_INJECTION_KEY, ref())
 
@@ -23,7 +23,7 @@
         inheritAttrs: false
     });
 
-    const store = useStore();
+    const flowStore = useFlowStore();
 
     interface Task {
         id:string,

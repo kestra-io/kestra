@@ -1,8 +1,7 @@
 import {onMounted, onBeforeUnmount, nextTick, watch, ref} from "vue";
 
-import {useStore} from "vuex";
-
 import {useCoreStore} from "../../../stores/core";
+import {useFlowStore} from "../../../stores/flow";
 import {useExecutionsStore} from "../../../stores/executions";
 
 import {useI18n} from "vue-i18n";
@@ -211,9 +210,8 @@ function hoverHandler(cy: cytoscape.Core): void {
  *          selection helpers, and control handlers.
  */
 export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION = FLOW, initialNodeID: string, params: RouteParams, isTesting = false) {
-    const store = useStore();
-
     const coreStore = useCoreStore();
+    const flowStore = useFlowStore();
     const executionsStore = useExecutionsStore();
 
     const {t} = useI18n({useScope: "global"});
@@ -244,7 +242,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         if (!container.value) return;
 
         if(isTesting) elements = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
-        else elements = await store.dispatch("flow/loadDependencies", {id: subtype === FLOW ? params.id: params.flowId, namespace: params.namespace, subtype});
+        else elements = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype});
 
         if(subtype === EXECUTION) nextTick(() => openSSE());
 

@@ -57,7 +57,7 @@ jobs:
         run: |
           echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
-          ./gradlew check javadoc --parallel
+          ./gradlew check javadoc
 
       # report test
       - name: Test - Publish Test Results

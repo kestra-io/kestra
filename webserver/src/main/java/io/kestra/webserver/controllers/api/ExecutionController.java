@@ -206,7 +206,7 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
-    @Operation(tags = {"Executions"}, summary = "Search for executions")
+    @Operation(tags = {"Executions"}, summary = "Search for executions FIXME test racevedo")
     public PagedResults<Execution> searchExecutions(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,

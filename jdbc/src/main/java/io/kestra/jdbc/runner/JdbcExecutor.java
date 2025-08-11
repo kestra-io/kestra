@@ -546,7 +546,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         }
 
                         // create an SLA monitor if needed
-                        if (execution.getState().getCurrent() == State.Type.CREATED && !ListUtils.isEmpty(flow.getSla())) {
+                        if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().failedThenRestarted()) && !ListUtils.isEmpty(flow.getSla())) {
                             List<SLAMonitor> monitors = flow.getSla().stream()
                                 .filter(ExecutionMonitoringSLA.class::isInstance)
                                 .map(ExecutionMonitoringSLA.class::cast)

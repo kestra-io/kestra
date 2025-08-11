@@ -30,21 +30,22 @@
 <script lang="ts" setup>
     import {computed, ref} from "vue";
     import {useI18n} from "vue-i18n";
-    import {useStore} from "vuex";
     import {Utils} from "@kestra-io/ui-libs";
     import LowCodeEditor from "./LowCodeEditor.vue";
+    import {useFlowStore} from "../../stores/flow";
 
-    const store = useStore();
+    const flowStore = useFlowStore();
+
     const {t} = useI18n();
 
-    const flowYaml = computed(() => store.state.flow.flowYaml);
-    const flowGraph = computed(() => store.state.flow.flowGraph);
-    const invalidGraph = computed(() => store.state.flow.invalidGraph);
-    const flowId = computed(() => store.state.flow.id);
-    const namespace = computed(() => store.state.flow.namespace);
-    const expandedSubflows = computed<string[]>(() => store.state.flow.expandedSubflows);
-    const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"]);
-    const isReadOnly = computed(() => store.getters["flow/isReadOnly"]);
+    const flowYaml = computed(() => flowStore.flowYaml);
+    const flowGraph = computed(() => flowStore.flowGraph);
+    const invalidGraph = computed(() => flowStore.invalidGraph);
+    const flowId = computed(() => flowStore.flow?.id);
+    const namespace = computed(() => flowStore.flow?.namespace);
+    const expandedSubflows = computed<string[]>(() => flowStore.expandedSubflows);
+    const isAllowedEdit = computed(() => flowStore.isAllowedEdit);
+    const isReadOnly = computed(() => flowStore.isReadOnly);
 
     const isLoading = ref(false);
 
@@ -53,7 +54,7 @@
     }
 
     const onExpandSubflow = (expandedSubflows: string[]) => {
-        store.commit("flow/setExpandedSubflows", expandedSubflows);
+        flowStore.expandedSubflows = expandedSubflows;
     };
 
     const onSwappedTask = (swappedTasks: [string, string]) => {
@@ -85,8 +86,8 @@
     };
 
     const onEdit = (source:string, currentIsFlow = false) => {
-        store.commit("flow/setFlowYaml", source)
-        return store.dispatch("flow/onEdit", {
+        flowStore.flowYaml = source
+        return flowStore.onEdit({
             source,
             currentIsFlow,
             editorViewType: "YAML",

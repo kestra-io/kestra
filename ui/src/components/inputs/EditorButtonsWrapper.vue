@@ -15,7 +15,7 @@
             :is-read-only="isReadOnly"
             :can-delete="true"
             :is-allowed-edit="isAllowedEdit"
-            :have-change="store.state.flow.haveChange || tabs.some(t => t.dirty === true)"
+            :have-change="flowStore.haveChange || tabs.some(t => t.dirty === true)"
             :flow-have-tasks="Boolean(flowHaveTasks)"
             :errors="flowErrors"
             :warnings="flowWarnings"
@@ -38,7 +38,6 @@
 
 <script setup lang="ts">
     import {computed, getCurrentInstance} from "vue";
-    import {useStore} from "vuex"
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import EditorButtons from "./EditorButtons.vue";
@@ -48,15 +47,20 @@
     import localUtils from "../../utils/utils";
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
     import {useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
 
     const {t} = useI18n();
 
     const exportYaml = () => {
-        const blob = new Blob([store.state.flow.flowYaml], {type: "text/yaml"});
+        const src = flowStore.flowYaml
+        if(!src) {
+            return;
+        }
+        const blob = new Blob([src], {type: "text/yaml"});
         localUtils.downloadUrl(window.URL.createObjectURL(blob), "flow.yaml");
     };
 
-    const store = useStore()
+    const flowStore = useFlowStore();
     const editorStore = useEditorStore();
     const router = useRouter()
     const route = useRoute()
@@ -65,29 +69,28 @@
     const {translateError, translateErrorWithKey} = useFlowOutdatedErrors();
 
     const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "true");
-    const isCreating = computed(() => store.state.flow.isCreating === true)
-    const isReadOnly = computed(() => store.getters["flow/isReadOnly"])
-    const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"])
-    const flowHaveTasks = computed(() => store.getters["flow/flowHaveTasks"])
-    const flowErrors = computed(() => store.getters["flow/flowErrors"]?.map(translateError));
-    const flowInfos = computed(() => store.getters["flow/flowInfos"])
-    const flowParsed = computed(() => store.state.flow.flow)
-    const tabs = computed<{dirty:boolean}[]>(() => editorStore.tabs)
-    const metadata = computed(() => store.state.flow.metadata);
+    const isCreating = computed(() => flowStore.isCreating === true)
+    const isReadOnly = computed(() => flowStore.isReadOnly)
+    const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
+    const flowHaveTasks = computed(() => flowStore.flowHaveTasks)
+    const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
+    const flowInfos = computed(() => flowStore.flowInfos)
+    const tabs = computed<{dirty?:boolean}[]>(() => editorStore.tabs)
+    const metadata = computed(() => flowStore.metadata);
     const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
     const flowWarnings = computed(() => {
 
         const outdatedWarning =
-            store.state.flow.flowValidation?.outdated && !store.state.flow.isCreating
-                ? [translateErrorWithKey(store.getters["flow/baseOutdatedTranslationKey"])]
+            flowStore.flowValidation?.outdated && !flowStore.isCreating
+                ? [translateErrorWithKey(flowStore.flowValidation?.constraints ?? "")]
                 : [];
 
         const deprecationWarnings =
-            store.state.flow.flowValidation?.deprecationPaths?.map(
+            flowStore.flowValidation?.deprecationPaths?.map(
                 (f: string) => `${f} ${t("is deprecated")}.`
             ) ?? [];
 
-        const otherWarnings = store.state.flow.flowValidation?.warnings ?? [];
+        const otherWarnings = flowStore.flowValidation?.warnings ?? [];
 
         const warnings = [
             ...outdatedWarning,
@@ -100,14 +103,14 @@
 
     async function save(){
         const creating = isCreating.value
-        await store.dispatch("flow/saveAll")
+        await flowStore.saveAll()
 
         if(creating){
             await router.push({
                 name: "flows/update",
                 params: {
-                    id: flowParsed.value.id,
-                    namespace: flowParsed.value.namespace,
+                    id: flowStore.flow?.id,
+                    namespace: flowStore.flow?.namespace,
                     tab: "edit",
                     tenant: routeParams.value.tenant,
                 },
@@ -116,7 +119,7 @@
     }
 
     const deleteFlow = () => {
-        store.dispatch("flow/deleteFlowAndDependencies")
+        flowStore.deleteFlowAndDependencies()
             .then(() => {
                 return router.push({
                     name: "flows/list",
@@ -126,7 +129,7 @@
                 });
             })
             .then(() => {
-                toast.deleted(metadata.value.id);
+                toast.deleted(metadata.value?.id);
             });
     };
 </script>

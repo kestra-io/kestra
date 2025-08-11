@@ -1,0 +1,76 @@
+name: Pull Request - Publish Docker
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  build-artifacts:
+    name: Build Artifacts
+    uses: ./.github/workflows/workflow-build-artifacts.yml
+
+  publish:
+    name: Publish Docker
+    runs-on: ubuntu-latest
+    needs: build-artifacts
+    env:
+      GITHUB_IMAGE_PATH: "ghcr.io/kestra-io/kestra-pr"
+    steps:
+      - name: Checkout - Current ref
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Docker setup
+      - name: Docker - Setup QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Docker - Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Docker Login
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build Docker Image
+      - name: Artifacts - Download executable
+        uses: actions/download-artifact@v5
+        with:
+          name: exe
+          path: build/executable
+
+      - name: Docker - Copy exe to image
+        shell: bash
+        run: |
+          cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
+
+      - name: Docker - Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.pr
+          push: true
+          tags: ${{ env.GITHUB_IMAGE_PATH }}:${{ github.event.pull_request.number }}
+          platforms: linux/amd64,linux/arm64
+
+      # Add comment on pull request
+      - name: Add comment to PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `**🐋 Docker image**: \`${{ env.GITHUB_IMAGE_PATH }}:${{ github.event.pull_request.number }}\`\n` +
+                `\n` +
+                `\`\`\`bash\n` +
+                `docker run --pull=always --rm -it -p 8080:8080 --user=root -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp ${{ env.GITHUB_IMAGE_PATH }}:${{ github.event.pull_request.number }} server local\n` +
+                `\`\`\``
+            })

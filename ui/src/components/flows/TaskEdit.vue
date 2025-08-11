@@ -95,6 +95,7 @@
     import Markdown from "../layout/Markdown.vue";
     import ValidationError from "./ValidationError.vue";
     import {usePluginsStore} from "../../stores/plugins";
+    import {useFlowStore} from "../../stores/flow";
 
     // Types
     interface Props {
@@ -126,17 +127,16 @@
         flowSource: undefined
     });
 
-    // Emits
     const emit = defineEmits<{
         "update:task": [value: string];
         "close": [];
     }>();
 
-    // Store
+
     const store = useStore();
     const pluginsStore = usePluginsStore();
 
-    // Reactive state
+
     const taskYaml = ref("");
     const isModalOpen = ref(false);
     const activeTabs = ref(props.readOnly ? "source" : "form");
@@ -145,8 +145,8 @@
     const timer = ref<ReturnType<typeof setTimeout>>();
     const lastValidatedValue = ref<string | null>(null);
 
-    // Computed properties
-    const errors = computed(() => store.state.flow.taskError?.split(/, ?/));
+    const flowStore = useFlowStore();
+    const errors = computed(() => flowStore.taskError?.split(/, ?/));
     const pluginMarkdown = computed(() => {
         if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse(taskYaml.value)?.type) {
             return pluginsStore?.plugin.markdown;
@@ -164,14 +164,14 @@
     const source = computed(() => {
         return props.revision
             ? revisions.value?.[props.revision - 1]?.source
-            : store.state.flow?.source;
+            : flowStore.flow?.source;
     });
 
     // Methods
     const load = async (taskId: string) => {
         if (props.revision) {
             if (!revisions.value?.[props.revision - 1]) {
-                revisions.value = await store.dispatch("flow/loadRevisions", {
+                revisions.value = await flowStore.loadRevisions({
                     namespace: props.namespace,
                     id: props.flowId,
                     store: false
@@ -212,7 +212,7 @@
         timer.value = setTimeout(() => {
             if (lastValidatedValue.value !== value) {
                 lastValidatedValue.value = value;
-                store.dispatch("flow/validateTask", {
+                flowStore.validateTask({
                     task: value,
                     section: props.section
                 });

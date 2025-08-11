@@ -1,7 +1,7 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
     <section class="full-container">
-        <MultiPanelEditorView v-if="flow" />
+        <MultiPanelEditorView v-if="flowStore.flow" />
     </section>
 </template>
 
@@ -18,6 +18,7 @@
 
     import {getRandomFlowID} from "../../../scripts/product/flow";
     import {useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         mixins: [RouteContext],
@@ -27,7 +28,7 @@
         },
 
         created() {
-            this.$store.commit("flow/setIsCreating", true);
+            this.flowStore.isCreating = true;
             if (this.$route.query.reset) {
                 localStorage.setItem("tourDoneOrSkip", undefined);
                 this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, tourStarted: true};
@@ -37,15 +38,15 @@
             this.editorStore.closeAllTabs()
         },
         beforeUnmount() {
-            this.$store.commit("flow/setFlowValidation", undefined);
+            this.flowStore.flowValidation = undefined;
         },
         methods: {
             async setupFlow() {
                 const blueprintId = this.$route.query.blueprintId;
                 const blueprintSource = this.$route.query.blueprintSource;
                 let flowYaml = ""
-                if (this.$route.query.copy && this.flow){
-                    flowYaml = this.flow.source;
+                if (this.$route.query.copy && this.flowStore.flow){
+                    flowYaml = this.flowStore.flow.source;
                 } else if (blueprintId && blueprintSource) {
                     flowYaml = await this.blueprintsStore.getBlueprintSource({type: blueprintSource, kind: "flow", id: blueprintId});
                 } else {
@@ -60,17 +61,16 @@ tasks:
     message: Hello World! 🚀`;
                 }
 
-                this.$store.commit("flow/setFlowYaml", flowYaml);
-                this.$store.commit("flow/setFlowYamlBeforeAdd", flowYaml);
+                this.flowStore.flowYaml = flowYaml;
+                this.flowStore.flowYamlBeforeAdd = flowYaml;
 
-                this.$store.commit("flow/setFlow", {...YAML_UTILS.parse(this.flowYaml), source: this.flowYaml});
-                this.$store.dispatch("flow/initYamlSource", {});
+                this.flowStore.flow = {...YAML_UTILS.parse(this.flowYaml), source: this.flowStore.flowYaml};
+                this.flowStore.initYamlSource();
             }
         },
         computed: {
-            ...mapState("flow", ["flowGraph", "flowYaml", "flow", "flowValidation", "flowYaml"]),
             ...mapState("auth", ["user"]),
-            ...mapStores(useBlueprintsStore, useCoreStore, useEditorStore),
+            ...mapStores(useBlueprintsStore, useCoreStore, useEditorStore, useFlowStore),
             routeInfo() {
                 return {
                     title: this.$t("flows")
@@ -81,7 +81,7 @@ tasks:
             }
         },
         beforeRouteLeave(to, from, next) {
-            this.$store.commit("flow/setFlow", null);
+            this.flowStore.flow = undefined;
             next();
         }
     };

@@ -5,7 +5,7 @@
             v-if="!isCreating"
             ref="toggleExplorer"
             :content="
-                $t(
+                t(
                     `namespace files.toggle.${
                         explorerVisible ? 'hide' : 'show'
                     }`
@@ -59,16 +59,16 @@
             class="tabs-context"
         >
             <el-menu-item :disabled="tabContextMenu.tab.persistent" @click="closeTab(tabContextMenu.tab, tabContextMenu.index)">
-                {{ $t("namespace_editor.close.tab") }}
+                {{ t("namespace_editor.close.tab") }}
             </el-menu-item>
             <el-menu-item @click="closeAllTabs">
-                {{ $t("namespace_editor.close.all") }}
+                {{ t("namespace_editor.close.all") }}
             </el-menu-item>
             <el-menu-item @click="closeOtherTabs(tabContextMenu.tab)">
-                {{ $t("namespace_editor.close.other") }}
+                {{ t("namespace_editor.close.other") }}
             </el-menu-item>
             <el-menu-item @click="closeTabsToRight(tabContextMenu.index)">
-                {{ $t("namespace_editor.close.right") }}
+                {{ t("namespace_editor.close.right") }}
             </el-menu-item>
         </el-menu>
 
@@ -79,7 +79,7 @@
                 @change="(val) => editorViewType = val"
                 active-value="NO_CODE"
                 inactive-value="YAML"
-                :inactive-text="$t('no_code.labels.no_code')"
+                :inactive-text="t('no_code.labels.no_code')"
                 size="small"
                 class="me-2"
             />
@@ -161,27 +161,27 @@
 
                     <div>
                         <h5 class="mb-0 fw-bold">
-                            {{ $t("namespace_editor.empty.title") }}
+                            {{ t("namespace_editor.empty.title") }}
                         </h5>
                         <p>
-                            {{ $t("namespace_editor.empty.create_message") }}
+                            {{ t("namespace_editor.empty.create_message") }}
                         </p>
                     </div>
 
                     <div class="empty-state-actions mt-1">
                         <el-dropdown>
                             <el-button :icon="Plus" type="primary">
-                                {{ $t("create") }}
+                                {{ t("create") }}
                             </el-button>
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item @click="createFile">
                                         <FilePlus class="me-2" />
-                                        {{ $t("namespace files.create.file") }}
+                                        {{ t("namespace files.create.file") }}
                                     </el-dropdown-item>
                                     <el-dropdown-item @click="createFolder">
                                         <FolderPlus class="me-2" />
-                                        {{ $t("namespace files.create.folder") }}
+                                        {{ t("namespace files.create.folder") }}
                                     </el-dropdown-item>
                                 </el-dropdown-menu>
                             </template>
@@ -206,23 +206,23 @@
                         >
                         <el-dropdown>
                             <el-button :icon="Download" type="primary">
-                                {{ $t("import") }}
+                                {{ t("import") }}
                             </el-button>
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item @click="$refs.filePicker.click()">
                                         <File class="me-2" />
-                                        {{ $t("namespace files.import.files") }}
+                                        {{ t("namespace files.import.files") }}
                                     </el-dropdown-item>
                                     <el-dropdown-item @click="$refs.folderPicker.click()">
                                         <Folder class="me-2" />
-                                        {{ $t("namespace files.import.folder") }}
+                                        {{ t("namespace files.import.folder") }}
                                     </el-dropdown-item>
                                 </el-dropdown-menu>
                             </template>
                         </el-dropdown>
                     </div>
-                    <el-divider>{{ $t("namespace_editor.empty.video_message") }}</el-divider>
+                    <el-divider>{{ t("namespace_editor.empty.video_message") }}</el-divider>
 
                     <div class="video-container">
                         <iframe
@@ -282,7 +282,7 @@
                     :expanded-subflows="props.expandedSubflows"
                 />
                 <el-alert v-else type="warning" :closable="false">
-                    {{ $t("unable to generate graph") }}
+                    {{ t("unable to generate graph") }}
                 </el-alert>
             </div>
 
@@ -310,7 +310,7 @@
                     type="primary"
                     :disabled="Boolean(taskErrors)"
                 >
-                    {{ $t("save") }}
+                    {{ t("save") }}
                 </el-button>
             </template>
         </Drawer>
@@ -332,7 +332,7 @@
                     type="primary"
                     :disabled="Boolean(taskErrors)"
                 >
-                    {{ $t("save") }}
+                    {{ t("save") }}
                 </el-button>
             </template>
         </Drawer>
@@ -346,7 +346,7 @@
 
             <el-form label-position="top">
                 <metadata-editor
-                    :metadata="store.getters['flow/flowYamlMetadata']"
+                    :metadata="flowStore.flowYamlMetadata"
                     @update:model-value="onUpdateMetadata"
                     :editing="!props.isCreating"
                 />
@@ -359,7 +359,7 @@
                     :disabled="!checkRequiredMetadata()"
                     class="edit-flow-save-button"
                 >
-                    {{ $t("save") }}
+                    {{ t("save") }}
                 </el-button>
             </template>
         </Drawer>
@@ -371,13 +371,13 @@
         :append-to-body="true"
     >
         <template #header>
-            <h5>{{ $t(`${baseOutdatedTranslationKey}.title`) }}</h5>
+            <h5>{{ t(`${baseOutdatedTranslationKey}.title`) }}</h5>
         </template>
-        {{ $t(`${baseOutdatedTranslationKey}.description`) }}
-        {{ $t(`${baseOutdatedTranslationKey}.details`) }}
+        {{ t(`${baseOutdatedTranslationKey}.description`) }}
+        {{ t(`${baseOutdatedTranslationKey}.details`) }}
         <template #footer>
             <el-button @click="confirmOutdatedSaveDialog = false">
-                {{ $t("cancel") }}
+                {{ t("cancel") }}
             </el-button>
             <el-button
                 type="warning"
@@ -386,18 +386,18 @@
                     confirmOutdatedSaveDialog = false;
                 "
             >
-                {{ $t("ok") }}
+                {{ t("ok") }}
             </el-button>
         </template>
     </el-dialog>
     <el-dialog
         v-model="dialog.visible"
-        :title="dialog.type === 'file' ? $t('namespace files.create.file') : $t('namespace files.create.folder')"
+        :title="dialog.type === 'file' ? t('namespace files.create.file') : t('namespace files.create.folder')"
         width="500"
         @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
     >
         <div class="pb-1">
-            <span>{{ $t(`namespace files.dialog.name.${dialog.type}`) }}</span>
+            <span>{{ t(`namespace files.dialog.name.${dialog.type}`) }}</span>
         </div>
         <el-input
             ref="creation_name"
@@ -406,7 +406,7 @@
             class="mb-3"
         />
         <div class="py-1">
-            <span>{{ $t("namespace files.dialog.parent_folder") }}</span>
+            <span>{{ t("namespace files.dialog.parent_folder") }}</span>
         </div>
         <el-select
             v-model="dialog.folder"
@@ -424,32 +424,34 @@
         <template #footer>
             <div>
                 <el-button @click="dialog.visible = false">
-                    {{ $t("cancel") }}
+                    {{ t("cancel") }}
                 </el-button>
                 <el-button
                     type="primary"
                     :disabled="!dialog.name"
                     @click="dialogHandler"
                 >
-                    {{ $t("namespace files.create.label") }}
+                    {{ t("namespace files.create.label") }}
                 </el-button>
             </div>
         </template>
     </el-dialog>
 </template>
 
-<script setup>
-    import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
-    import {useRoute, useRouter} from "vue-router";
+<script setup lang="ts">
+    import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
+    import {useRoute, useRouter} from "vue-router";
     import {useStorage} from "@vueuse/core";
-    import * as FLOW_YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import {Utils, YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
+    import {useI18n} from "vue-i18n";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {Utils, SECTIONS} from "@kestra-io/ui-libs";
 
     import {useCoreStore} from "../../stores/core";
-    import {useNamespacesStore} from "override/stores/namespaces";
     import {usePluginsStore} from "../../stores/plugins";
     import {useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
+    import {useNamespacesStore} from "override/stores/namespaces";
 
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
 
@@ -481,16 +483,19 @@
     import ValidationError from "../flows/ValidationError.vue";
     import EditorButtons from "./EditorButtons.vue";
     import MetadataEditor from "../flows/MetadataEditor.vue";
+    import {useToast} from "../../utils/toast";
+
 
     const store = useStore();
     const coreStore = useCoreStore();
+    const flowStore = useFlowStore();
     const namespacesStore = useNamespacesStore();
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);
-    const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
-    const t = getCurrentInstance().appContext.config.globalProperties.$t;
-    const tours = getCurrentInstance().appContext.config.globalProperties.$tours;
+    const toast = useToast();
+    const {t} = useI18n();
+    const tours = getCurrentInstance()?.appContext.config.globalProperties.$tours;
     const lowCodeEditorRef = ref(null);
     const tabsScrollRef = ref();
 
@@ -557,7 +562,7 @@
         },
     });
 
-    store.commit("flow/setIsCreating", props.isCreating);
+    flowStore.isCreating = props.isCreating;
     const guidedProperties = ref(coreStore.guidedProperties);
 
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
@@ -565,21 +570,21 @@
 
     const {translateError, translateErrorWithKey} = useFlowOutdatedErrors()
 
-    const baseOutdatedTranslationKey = computed(() => store.getters["flow/baseOutdatedTranslationKey"]);
-    const flowErrors = computed(() => store.getters["flow/flowErrors"]?.map(translateError));
+    const baseOutdatedTranslationKey = computed(() => flowStore.baseOutdatedTranslationKey);
+    const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
     const flowWarnings = computed(() => {
         if (isFlow.value) {
             const outdatedWarning =
-                store.state.flow.flowValidation?.outdated && !store.state.flow.isCreating
-                    ? [translateErrorWithKey(store.getters["flow/baseOutdatedTranslationKey"])]
+                flowStore.flowValidation?.outdated && !flowStore.isCreating
+                    ? [translateErrorWithKey(flowStore.flowValidation?.constraints ?? "")]
                     : [];
 
             const deprecationWarnings =
-                store.state.flow.flowValidation?.deprecationPaths?.map(
+                flowStore.flowValidation?.deprecationPaths?.map(
                     (f) => `${f} ${t("is deprecated")}.`
                 ) ?? [];
 
-            const otherWarnings = store.state.flow.flowValidation?.warnings ?? [];
+            const otherWarnings = flowStore.flowValidation?.warnings ?? [];
 
             const warnings = [
                 ...outdatedWarning,
@@ -592,8 +597,8 @@
 
         return undefined;
     });
-    const flowInfos = computed(() => store.getters["flow/flowInfos"]);
-    const flowHaveTasks = computed(() => Boolean(store.getters["flow/flowHaveTasks"]));
+    const flowInfos = computed(() => flowStore.flowInfos);
+    const flowHaveTasks = computed(() => Boolean(flowStore.flowHaveTasks));
 
     const editorViewType = useStorage(storageKeys.EDITOR_VIEW_TYPE, "YAML");
 
@@ -629,16 +634,16 @@
             : localStorage.getItem("topology-orientation") === "1";
     };
 
-    store.commit("flow/setHaveChange", props.isDirty);
+    flowStore.haveChange = props.isDirty;
 
     const editorDomElement = ref(null);
     const editorWidth = useStorage("editor-size", 50);
     const validationDomElement = ref(null);
     const isLoading = ref(false);
-    const flowYaml = computed(() => store.state.flow.flowYaml);
-    const flowYamlOrigin = computed(() => store.state.flow.flowYamlOrigin);
+    const flowYaml = computed(() => flowStore.flowYaml);
+    const flowYamlOrigin = computed(() => flowStore.flowYamlOrigin);
     const user = computed(() => store.getters["auth/user"]);
-    const metadata = computed(() => store.state.flow.metadata);
+    const metadata = computed(() => flowStore.metadata);
     const newTrigger = ref(null);
     const isNewTriggerOpen = ref(false);
     const newError = ref(null);
@@ -665,7 +670,7 @@
     const toggleExplorer = ref(null);
     const explorerVisible = computed(() => editorStore.explorerVisible);
     const toggleExplorerVisibility = () => {
-        toggleExplorer.value.hide();
+        toggleExplorer.value?.hide();
         editorStore.toggleExplorerVisibility();
     };
     const currentTab = computed(() => editorStore.current);
@@ -681,7 +686,7 @@
     };
 
     const taskErrors = computed(() => {
-        return store.state.flow.taskError?.split(/, ?/);
+        return flowStore.taskError?.split(/, ?/);
     });
 
     watch(
@@ -713,7 +718,7 @@
 
         if(!props.isNamespace) {
             initViewType()
-            await store.dispatch("flow/initYamlSource", {viewType: viewType.value});
+            await flowStore.initYamlSource({viewType: viewType.value});
         } else {
             editorStore.closeAllTabs();
             switchViewType(editorViewTypes.SOURCE, false)
@@ -766,22 +771,22 @@
         };
     };
 
-    const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"]);
+    const isAllowedEdit = computed(() => flowStore.isAllowedEdit);
 
     const forwardEvent = (type, event) => {
         emit(type, event);
     };
 
     const updatePluginDocumentation = (event) => {
-        const elementWrapper = FLOW_YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+        const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
         let element = elementWrapper.value.type !== undefined ? elementWrapper.value : elementWrapper.parents.findLast(p => p.type !== undefined);
         pluginsStore.updateDocumentation(element);
     };
 
-    const fetchGraph = () => {
+    const fetchGraph = async () => {
         if(props.isNamespace) return;
 
-        return store.dispatch("flow/loadGraphFromSource", {
+        return flowStore.loadGraphFromSource({
             flow: flowYaml.value,
             config: {
                 params: {
@@ -796,8 +801,8 @@
     };
 
     const onEdit = (source, currentIsFlow = false) => {
-        store.commit("flow/setFlowYaml", source);
-        return store.dispatch("flow/onEdit", {
+        flowStore.flowYaml = source;
+        return flowStore.onEdit({
             source,
             currentIsFlow,
             editorViewType: editorViewType.value,
@@ -806,7 +811,6 @@
                 editorViewTypes.SOURCE_TOPOLOGY,
             ].includes(viewType.value),
         }).then((value) => {
-
             if (validationDomElement.value && editorDomElement.value?.$el?.offsetWidth) {
                 validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
             }
@@ -823,7 +827,7 @@
         clearTimeout(timer.value);
         timer.value = setTimeout(
             () =>
-                store.dispatch("flow/validateTask", {
+                flowStore.validateTask({
                     task: event,
                     section: SECTIONS.TRIGGERS,
                 }),
@@ -849,14 +853,14 @@
         onEdit(YAML_UTILS.insertSection("triggers", source, newTrigger.value), true);
         newTrigger.value = null;
         isNewTriggerOpen.value = false;
-        store.commit("flow/setHaveChange", true)
+        flowStore.haveChange = true;
     };
 
     const onUpdateNewError = (event) => {
         clearTimeout(timer.value);
         timer.value = setTimeout(
             () =>
-                store.dispatch("flow/validateTask", {
+                flowStore.validateTask({
                     task: event,
                     section: SECTIONS.TASKS,
                 }),
@@ -886,37 +890,37 @@
     };
 
     const checkRequiredMetadata = () => {
-        const md = metadata.value ?? store.getters["flow/flowYamlMetadata"];;
+        const md = metadata.value ?? flowStore.flowYamlMetadata;
 
         return md.id.length > 0 && md.namespace.length > 0;
     };
 
     const onUpdateMetadata = (event, shouldSave) => {
         if(shouldSave) {
-            store.commit("flow/setMetadata", {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)});
-            store.dispatch("flow/onSaveMetadata");
-            store.dispatch("flow/validateFlow", {flow: flowYaml.value});
+            flowStore.metadata = {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)};
+            flowStore.onSaveMetadata();
+            flowStore.validateFlow({flow: flowYaml.value});
         } else {
-            store.commit("flow/setMetadata", event.concurrency?.limit === 0 ?  {concurrency: null} : event);
+            flowStore.metadata = event.concurrency?.limit === 0 ?  {concurrency: null} : event;
         }
     };
 
     const onSaveMetadata = () => {
-        store.dispatch("flow/onSaveMetadata");
+        flowStore.onSaveMetadata();
         isEditMetadataOpen.value = false;
     };
 
     const handleReorder = (yaml) => {
-        store.commit("flow/setFlowYaml", yaml);
-        store.commit("flow/setHaveChange", true)
-        save()
+        flowStore.flowYaml = yaml;
+        flowStore.haveChange = true;
+        save();
     };
 
     const editorUpdate = (source) => {
         const currentIsFlow = isFlow.value;
 
         updatedFromEditor.value = true;
-        store.commit("flow/setFlowYaml", source);
+        flowStore.flowYaml = source;
 
         clearTimeout(timer.value);
         timer.value = setTimeout(() => onEdit(source, currentIsFlow), 500);
@@ -942,11 +946,11 @@
         }
     };
 
-    const flowParsed = computed(() => store.getters["flow/flowParsed"]);
+    const flowParsed = computed(() => flowStore.flowParsed);
 
     const saveWithoutRevisionGuard = async () => {
         clearTimeout(timer.value);
-        const result = await store.dispatch("flow/saveWithoutRevisionGuard");
+        const result = await flowStore.saveWithoutRevisionGuard();
         if(result === "redirect_to_update"){
             await router.push({
                 name: "flows/update",
@@ -969,7 +973,7 @@
 
     const save = async () => {
         clearTimeout(timer.value);
-        const result = await store.dispatch("flow/save", {
+        const result = await flowStore.save({
             content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
             namespace: props.namespace ?? route.params.namespace,
         })
@@ -987,7 +991,7 @@
     };
 
     const execute = (_) => {
-        store.commit("flow/executeFlow", true);
+        flowStore.executeFlow = true;
     };
 
     const canDelete = () => {
@@ -995,7 +999,7 @@
     };
 
     const deleteFlow = () => {
-        store.dispatch("flow/deleteFlowAndDependencies")
+        flowStore.deleteFlowAndDependencies()
             .then(() => {
                 return router.push({
                     name: "flows/list",
@@ -1005,7 +1009,7 @@
                 });
             })
             .then(() => {
-                toast.deleted(metadata.value.id);
+                toast.deleted(metadata.value?.id);
             });
     };
 
@@ -1113,7 +1117,7 @@
             path,
             namespace: props.namespace ?? route.params.namespace ?? route.params.id,
         })
-        store.commit("flow/setFlowYaml", content);
+        flowStore.flowYaml = content;
     }
 
     const dirtyBeforeLoad = ref(false);
@@ -1275,7 +1279,7 @@
             }
         } catch (error) {
             console.error(error);
-            toast().error(t("namespace files.create.error"));
+            toast.error(t("namespace files.create.error"), "error");
         }
     };
     const handleFileImport = async (event) => {

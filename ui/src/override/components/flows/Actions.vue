@@ -28,6 +28,7 @@
     import {useRoute, useRouter} from "vue-router";
     import {useStore} from "vuex";
     import {useCoreStore} from "../../../stores/core";
+    import {useFlowStore} from "../../../stores/flow";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue";
@@ -40,10 +41,11 @@
 
     const store = useStore();
     const coreStore = useCoreStore();
+    const flowStore = useFlowStore();
     const router = useRouter();
     const route = useRoute();
 
-    const flow = computed(() => store.state.flow.flow);
+    const flow = computed(() => flowStore.flow);
     const user = computed(() => store.state.auth.user);
     const deleted = computed(() => flow.value?.deleted || false);
     const tab = computed(() => route.params?.tab as string);
@@ -60,8 +62,8 @@
         router.push({
             name: "flows/update",
             params: {
-                namespace: flow.value.namespace,
-                id: flow.value.id,
+                namespace: flow.value?.namespace,
+                id: flow.value?.id,
                 tab: "edit",
                 tenant: route.params.tenant,
             },
@@ -69,8 +71,8 @@
     };
 
     const restoreFlow = () => {
-        store.dispatch("flow/createFlow", {
-            flow: YAML_UTILS.deleteMetadata(flow.value.source, "deleted"),
+        flowStore.createFlow({
+            flow: YAML_UTILS.deleteMetadata(flow.value?.source, "deleted"),
         }).then(() => {
             coreStore.unsavedChange = false;
             router.go(0);

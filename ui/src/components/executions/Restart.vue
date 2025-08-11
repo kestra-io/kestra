@@ -83,6 +83,7 @@
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
     import ExecutionUtils from "../../utils/executionUtils";
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         inheritAttrs: false,
@@ -129,14 +130,13 @@
         methods: {
             loadRevision() {
                 this.revisionsSelected = this.execution.flowRevision
-                this.$store
-                    .dispatch("flow/loadRevisions", {
-                        namespace: this.execution.namespace,
-                        id: this.execution.flowId
-                    })
+                this.flowStore.loadRevisions({
+                    namespace: this.execution.namespace,
+                    id: this.execution.flowId
+                })
             },
             restartLastRevision() {
-                this.revisionsSelected = this.revisions[this.revisions.length - 1].revision;
+                this.revisionsSelected = this.flowStore.revisions[this.flowStore.revisions.length - 1].revision;
                 this.restart();
             },
             restart() {
@@ -179,13 +179,12 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("flow", ["revisions"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useFlowStore),
             replayOrRestart() {
                 return this.isReplay ? "replay" : "restart";
             },
             revisionsOptions() {
-                return (this.revisions || [])
+                return (this.flowStore.revisions || [])
                     .map((revision) => {
                         return {
                             value: revision.revision,

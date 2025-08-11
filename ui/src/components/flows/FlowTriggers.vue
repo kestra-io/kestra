@@ -135,7 +135,7 @@
 
         <el-table-column>
             <template #default="scope">
-                <trigger-avatar :flow="flow" :trigger-id="scope.row.id" />
+                <trigger-avatar :flow="flowStore.flow" :trigger-id="scope.row.id" />
             </template>
         </el-table-column>
 
@@ -266,15 +266,15 @@
 
     import KestraFilter from "../filter/KestraFilter.vue";
     import Empty from "../layout/empty/Empty.vue";
-</script>
-
-<script>
     import Markdown from "../layout/Markdown.vue";
-    import {mapState} from "vuex";
     import Kicon from "../Kicon.vue"
     import DateAgo from "../layout/DateAgo.vue";
     import Vars from "../executions/Vars.vue";
     import Drawer from "../Drawer.vue";
+</script>
+
+<script>
+    import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import moment from "moment";
@@ -283,9 +283,10 @@
     import {storageKeys} from "../../utils/constants.js";
     import {mapStores} from "pinia";
     import {useTriggerStore} from "../../stores/trigger";
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper},
+        inheritAttrs: false,
         props:{
             embed: {
                 type: Boolean,
@@ -319,8 +320,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("flow", ["flow"]),
-            ...mapStores(useTriggerStore),
+            ...mapStores(useTriggerStore, useFlowStore),
             query() {
                 return Array.isArray(this.$route.query.q) ? this.$route.query.q[0] : this.$route.query.q;
             },
@@ -337,12 +337,12 @@
                     );
             },
             triggerDefinition() {
-                return this.flow.triggers.find(trigger => trigger.id === this.triggerId);
+                return this.flowStore.flow.triggers.find(trigger => trigger.id === this.triggerId);
             },
             triggersWithType() {
-                if(!this.flow.triggers) return [];
+                if(!this.flowStore.flow.triggers) return [];
 
-                let flowTriggers = this.flow.triggers.map(trigger => {
+                let flowTriggers = this.flowStore.flow.triggers.map(trigger => {
                     return {...trigger, sourceDisabled: trigger.disabled ?? false}
                 })
                 if (flowTriggers) {
@@ -365,8 +365,8 @@
                 if (this.backfill.end && this.backfill.start > this.backfill.end) {
                     return true
                 }
-                if (this.flow.inputs) {
-                    const requiredInputs = this.flow.inputs.map(input => input.required !== false ? input.id : null).filter(i => i !== null)
+                if (this.flowStore.flow.inputs) {
+                    const requiredInputs = this.flowStore.flow.inputs.map(input => input.required !== false ? input.id : null).filter(i => i !== null)
 
                     if (requiredInputs.length > 0) {
                         if (!this.backfill.inputs) {
@@ -396,13 +396,13 @@
         },
         methods: {
             userCan(action) {
-                return this.user.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flow.namespace);
+                return this.user.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flowStore.flow.namespace);
             },
             loadData() {
                 if(!this.triggersWithType.length) return;
 
                 this.triggerStore
-                    .find({namespace: this.flow.namespace, flowId: this.flow.id, size: this.triggersWithType.length, q: this.query})
+                    .find({namespace: this.flowStore.flow.namespace, flowId: this.flowStore.flow.id, size: this.triggersWithType.length, q: this.query})
                     .then(triggers => this.triggers = triggers.results);
             },
             setBackfillModal(trigger, bool) {
@@ -533,8 +533,8 @@
                     name: "flows/update",
                     params: {
                         tenant: this.$route.params.tenant,
-                        namespace: this.flow.namespace,
-                        id: this.flow.id,
+                        namespace: this.flowStore.flow.namespace,
+                        id: this.flowStore.flow.id,
                         tab: "edit"
                     }
                 };

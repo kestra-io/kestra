@@ -37,11 +37,11 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useStore} from "vuex"
     import OverviewBottom from "../onboarding/execution/OverviewBottom.vue"
     import TriggerFlow from "../flows/TriggerFlow.vue"
     import noexecutionimg from "../../assets/onboarding/noexecution.png"
     import noexecutionimgDark from "../../assets/onboarding/noexecutionDark.png"
+    import {useFlowStore} from "../../stores/flow"
 
     interface Props {
         topbar?: boolean
@@ -51,9 +51,9 @@
         topbar: true,
     })
 
-    const store = useStore()
 
-    const flow = computed(() => store.state.flow.flow)
+    const flowStore = useFlowStore();
+    const flow = computed(() => flowStore.flow)
     const logo = computed(() => noexecutionimg)
     const logoDark = computed(() => noexecutionimgDark)
 </script>
@@ -92,7 +92,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        
+
         h5, h6, p {
             margin: 0;
         }
@@ -106,15 +106,15 @@
             .logo {
                 max-width: 100%;
                 height: auto;
-                
+
                 html.dark & {
                     display: none;
                 }
             }
-            
+
             .logo-dark {
                 display: none;
-                
+
                 html.dark & {
                     display: inline-block;
                 }

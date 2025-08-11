@@ -562,7 +562,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                         // handle concurrency limit, we need to use a different queue to be sure that execution running
                         // are processed sequentially so inside a queue with no parallelism
-                        if (execution.getState().getCurrent() == State.Type.CREATED && flow.getConcurrency() != null) {
+                        if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().failedThenRestarted()) && flow.getConcurrency() != null) {
                             ExecutionRunning executionRunning = ExecutionRunning.builder()
                                 .tenantId(executor.getFlow().getTenantId())
                                 .namespace(executor.getFlow().getNamespace())
@@ -1121,8 +1121,16 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         executor.getFlow().getId(),
                         throwConsumer(queued -> {
                             var newExecution = queued.withState(State.Type.RUNNING);
-                            metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+                            ExecutionRunning executionRunning = ExecutionRunning.builder()
+                                .tenantId(newExecution.getTenantId())
+                                .namespace(newExecution.getNamespace())
+                                .flowId(newExecution.getFlowId())
+                                .execution(newExecution)
+                                .concurrencyState(ExecutionRunning.ConcurrencyState.RUNNING)
+                                .build();
+                            executionRunningStorage.save(executionRunning);
                             executionQueue.emit(newExecution);
+                            metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
                         })
                     );
                 }

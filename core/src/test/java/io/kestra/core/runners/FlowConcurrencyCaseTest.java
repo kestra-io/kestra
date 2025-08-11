@@ -8,6 +8,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
@@ -52,6 +53,9 @@ public class FlowConcurrencyCaseTest {
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
+
+    @Inject
+    private ExecutionService executionService;
 
     public void flowConcurrencyCancel() throws TimeoutException, QueueException, InterruptedException {
         Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));
@@ -276,6 +280,66 @@ public class FlowConcurrencyCaseTest {
 
         Execution terminated = runnerUtils.awaitExecution(e -> e.getId().equals(forEachItem.getId()) && e.getState().isTerminated(), () -> {}, Duration.ofSeconds(10));
         assertThat(terminated.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+    }
+
+    public void flowConcurrencyQueueRestarted() throws Exception {
+        Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-queue-fail", null, null, Duration.ofSeconds(30));
+        Flow flow = flowRepository
+            .findById(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-queue-fail", Optional.empty())
+            .orElseThrow();
+        Execution execution2 = Execution.newExecution(flow, null, null, Optional.empty());
+        executionQueue.emit(execution2);
+
+        assertThat(execution1.getState().isRunning()).isTrue();
+        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CREATED);
+
+        var executionResult1  = new AtomicReference<Execution>();
+        var executionResult2  = new AtomicReference<Execution>();
+
+        CountDownLatch latch1 = new CountDownLatch(2);
+        AtomicReference<Execution> failedExecution = new AtomicReference<>();
+        CountDownLatch latch2 = new CountDownLatch(1);
+        CountDownLatch latch3 = new CountDownLatch(1);
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, e -> {
+            if (e.getLeft().getId().equals(execution1.getId())) {
+                executionResult1.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == Type.FAILED) {
+                    failedExecution.set(e.getLeft());
+                    latch1.countDown();
+                }
+            }
+
+            if (e.getLeft().getId().equals(execution2.getId())) {
+                executionResult2.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.RUNNING) {
+                    latch2.countDown();
+                }
+                if (e.getLeft().getState().getCurrent() == Type.FAILED) {
+                    latch3.countDown();
+                }
+            }
+        });
+
+        assertTrue(latch2.await(1, TimeUnit.MINUTES));
+        assertThat(failedExecution.get()).isNotNull();
+        // here the first fail and the second is now running.
+        // we restart the first one, it should be queued then fail again.
+        Execution restarted = executionService.restart(failedExecution.get(), null);
+        executionQueue.emit(restarted);
+
+        assertTrue(latch3.await(1, TimeUnit.MINUTES));
+        assertTrue(latch1.await(1, TimeUnit.MINUTES));
+        receive.blockLast();
+
+        assertThat(executionResult1.get().getState().getCurrent()).isEqualTo(Type.FAILED);
+        // it should have been queued after restarted
+        assertThat(executionResult1.get().getState().getHistories().stream().anyMatch(history -> history.getState() == Type.RESTARTED)).isTrue();
+        assertThat(executionResult1.get().getState().getHistories().stream().anyMatch(history -> history.getState() == Type.QUEUED)).isTrue();
+        assertThat(executionResult2.get().getState().getCurrent()).isEqualTo(Type.FAILED);
+        assertThat(executionResult2.get().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
+        assertThat(executionResult2.get().getState().getHistories().get(1).getState()).isEqualTo(State.Type.QUEUED);
+        assertThat(executionResult2.get().getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
     }
 
     private URI storageUpload() throws URISyntaxException, IOException {

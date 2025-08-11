@@ -63,7 +63,6 @@
         "rapidoc": "^9.3.8",
         "semver": "^7.7.2",
         "shiki": "^3.9.2",
-        "splitpanes": "^3.2.0",
         "throttle-debounce": "^5.0.2",
         "vue": "^3.5.18",
         "vue-axios": "^3.5.2",

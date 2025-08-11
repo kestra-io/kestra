@@ -64,28 +64,30 @@
     import EmptyVisualPlayground from "../../assets/empty_visuals/playground.svg"
     import {useExecutionsStore} from "../../stores/executions";
     import Kill from "../executions/Kill.vue";
-
+    
     const {t} = useI18n();
 
-    const tabs = computed(() => ([{
-                                      name: "logs",
-                                      title: t("logs"),
-                                      component: markRaw(Logs),
-                                  },{
-                                      name: "gantt",
-                                      title: t("gantt"),
-                                      component: markRaw(Gantt),
-                                  },
-                                  {
-                                      name: "outputs",
-                                      title: t("outputs"),
-                                      component: markRaw(ExecutionOutput),
-                                  },
-                                  {
-                                      name: "metrics",
-                                      title: t("metrics"),
-                                      component: markRaw(ExecutionMetric),
-                                  }
+    const tabs = computed(() => ([
+        {
+            name: "logs",
+            title: t("logs"),
+            component: markRaw(Logs),
+        },
+        {
+            name: "gantt",
+            title: t("gantt"),
+            component: markRaw(Gantt),
+        },
+        {
+            name: "outputs",
+            title: t("outputs"),
+            component: markRaw(ExecutionOutput),
+        },
+        {
+            name: "metrics",
+            title: t("metrics"),
+            component: markRaw(ExecutionMetric),
+        }
     ]));
 
     const playgroundStore = usePlaygroundStore();

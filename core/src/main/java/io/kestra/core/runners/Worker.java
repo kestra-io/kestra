@@ -85,7 +85,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @Inject
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)
-    private QueueInterface<WorkerJob> workerJobQueue;
+    private WorkerJobQueueInterface workerJobQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
@@ -274,12 +274,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
             }
         }));
 
-        this.receiveCancellations.addFirst(this.workerJobQueue.receive(
+        this.receiveCancellations.addFirst(this.workerJobQueue.subscribe(
+            this.id,
             this.workerGroup,
-            Worker.class,
             either -> {
                 pendingJobCount.incrementAndGet();
-
                 executorService.execute(() -> {
                     pendingJobCount.decrementAndGet();
                     runningJobCount.incrementAndGet();

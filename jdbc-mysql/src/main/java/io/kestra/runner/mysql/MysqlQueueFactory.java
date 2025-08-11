@@ -9,11 +9,11 @@ import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.WorkerJobQueueInterface;
 import io.kestra.core.runners.*;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Prototype;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -45,7 +45,7 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     @Singleton
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)
     @Bean(preDestroy = "close")
-    public QueueInterface<WorkerJob> workerJob() {
+    public WorkerJobQueueInterface workerJob() {
         return new MysqlWorkerJobQueue(applicationContext);
     }
 

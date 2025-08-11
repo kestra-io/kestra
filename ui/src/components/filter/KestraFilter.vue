@@ -72,7 +72,7 @@
     import {computed, getCurrentInstance, ref, Ref, watch} from "vue";
     import Utils, {useTheme} from "../../utils/utils";
     import {Buttons, Property, Shown} from "./utils/types";
-    import {editor, KeyCode} from "monaco-editor/esm/vs/editor/editor.api";
+    import * as monaco from "monaco-editor";
     import Items from "./segments/Items.vue";
     import {cssVariable} from "@kestra-io/ui-libs";
     import {LocationQuery, useRoute, useRouter} from "vue-router";
@@ -370,7 +370,7 @@
     };
 
     const theme = useTheme();
-    const themeComputed: Ref<Omit<Partial<editor.IStandaloneThemeData>, "base"> & { base: ThemeBase }> = ref({
+    const themeComputed: Ref<Omit<Partial<monaco.editor.IStandaloneThemeData>, "base"> & { base: ThemeBase }> = ref({
         base: Utils.getTheme()!,
         colors: {
             "editor.background": cssVariable("--ks-background-input")!
@@ -392,7 +392,7 @@
 
     }, {immediate: true});
 
-    const options: editor.IStandaloneEditorConstructionOptions = {
+    const options: monaco.editor.IStandaloneEditorConstructionOptions = {
         lineNumbers: "off",
         folding: false,
         renderLineHighlight: "none",
@@ -436,7 +436,27 @@
 
     const monacoEditor = ref<typeof MonacoEditor>();
 
-    const editorDidMount = (mountedEditor: editor.IStandaloneCodeEditor) => {
+    const updateQuery = () => {
+        const newQuery = {
+            ...Object.fromEntries(queryParamsToKeep.value.map(key => {
+                return [
+                    key, 
+                    route.query[key]
+                ]
+            })),
+            ...filterQueryString.value
+        };
+        if (_isEqual(route.query, newQuery)) {
+            props.buttons.refresh?.callback?.();
+            return; // Skip if the query hasn't changed
+        }
+        skipRouteWatcherOnce.value = true;
+        router.push({ 
+            query: newQuery 
+        });
+    };
+
+    const editorDidMount = (mountedEditor: monaco.editor.IStandaloneCodeEditor) => {
         mountedEditor.onDidContentSizeChange((e) => {
             if (monacoEditor.value === undefined) {
                 return;
@@ -445,22 +465,34 @@
                 e.contentHeight + "px";
         });
 
-        mountedEditor.onKeyDown((e) => {
-            if (e.keyCode === KeyCode.Enter) {
-                const suggestController = mountedEditor.getContribution("editor.contrib.suggestController") as any;
-                
-                if (suggestController && suggestController.widget) {
-                    return;
+        mountedEditor.addCommand(monaco.KeyCode.Enter, () => {
+            const model = mountedEditor.getModel();
+            if (!model) return;
+            const currentValue = model.getValue();
+            if (currentValue.trim().length > 0) {
+                const position = mountedEditor.getPosition();
+                const endPosition = model.getPositionAt(currentValue.length);
+                if (
+                    position &&
+                    position.lineNumber === endPosition.lineNumber &&
+                    position.column === endPosition.column &&
+                    !currentValue.endsWith(" ")
+                ) {
+                    mountedEditor.executeEdits("", [
+                        {
+                            range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+                            text: " ",
+                            forceMoveMarkers: true
+                        }
+                    ]);
                 }
-                e.preventDefault();
-                e.stopPropagation();
+                updateQuery();
             }
-        });
+        },"!suggestWidgetVisible");
 
         mountedEditor.onDidChangeModelContent(e => {
-            if (e.changes.length === 1 && e.changes[0].text === " ") {
-                const model = mountedEditor.getModel();
-                if (model && model.getValue().charAt(e.changes[0].rangeOffset - 1) === ",") {
+            if (e.changes.length === 1 && (e.changes[0].text === " " || e.changes[0].text === "\n")) {
+                if (mountedEditor.getModel()?.getValue().charAt(e.changes[0].rangeOffset - 1) === ",") {
                     mountedEditor.executeEdits("", [
                         {
                             range: {
@@ -474,39 +506,10 @@
                     ]);
                 }
             }
-
-            // Remove any newlines (e.g., with paste)
-            if (e.changes.some(change => change.text.includes("\n"))) {
-                const model = mountedEditor.getModel();
-                if (model) {
-                    const currentValue = model.getValue();
-                    if (currentValue.includes("\n")) {
-                        const newValue = currentValue.replace(/\n/g, " ");
-                        model.setValue(newValue);
-                    }
-                }
-            }
         });
     };
 
-    watchDebounced(filterQueryString, () => {
-        const newQuery = {
-            ...Object.fromEntries(queryParamsToKeep.value.map(key => {
-                return [
-                    key,
-                    route.query[key]
-                ];
-            })),
-            ...filterQueryString.value
-        };
-        if (_isEqual(route.query, newQuery)) {
-            return; // Skip if the query hasn't changed
-        }
-        skipRouteWatcherOnce.value = true;
-        router.push({
-            query: newQuery
-        });
-    }, {immediate: true, debounce: 1000});
+    watchDebounced(filterQueryString,updateQuery, {immediate: true, debounce: 1000});
 </script>
 
 <style lang="scss" scoped>

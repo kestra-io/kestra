@@ -1451,7 +1451,7 @@
     "ai": {
       "flow": {
         "title": "AI Agent",
-        "prompt_placeholder": "Enter instructions to create your Kestra flow. For example, type: Create a flow that runs every Monday at 9 AM.",
+        "prompt_placeholder": "Enter instructions to create your Kestra flow. Example prompt: Create a flow that runs every Monday at 9 AM.",
         "generating": "Generating Flow YAML for you..."
       }
     },

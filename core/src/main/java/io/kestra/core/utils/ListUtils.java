@@ -60,7 +60,7 @@ public class ListUtils {
         if (object instanceof List<?> list) {
             return list;
         } else {
-            throw new IllegalArgumentException("%s in not an instance of List".formatted(object));
+            throw new IllegalArgumentException("%s in not an instance of List".formatted(object.getClass()));
         }
     }
 

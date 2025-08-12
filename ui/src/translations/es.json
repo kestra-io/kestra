@@ -50,7 +50,7 @@
     "ai": {
       "flow": {
         "generating": "Generando YAML de Flow para ti...",
-        "prompt_placeholder": "Ingrese instrucciones para crear su flow de Kestra.",
+        "prompt_placeholder": "Ingrese instrucciones para crear su flow de Kestra. Ejemplo de solicitud: Crear un flow que se ejecute todos los lunes a las 9 AM.",
         "title": "Agente de IA"
       }
     },

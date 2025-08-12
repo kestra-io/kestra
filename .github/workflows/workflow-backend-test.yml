@@ -73,12 +73,12 @@ jobs:
           fail-on-error: 'false'
           token: ${{ secrets.GITHUB_AUTH_TOKEN }}
 
-      - name: display url
-        run: 'echo $GITHUB_OUTPUT'
+      - name: display out
+        run: 'cat $GITHUB_OUTPUT'
       - name: display test results
         run: 'echo "summary is: ${{ steps.publish_test_results.outputs.summary }}"'
       - name: display all
-        run: 'echo "all is: ${{ steps.publish_test_results.outputs }}"'
+        run: 'echo "all is: ${{ toJson(steps.publish_test_results.outputs) }}"'
 #      # Sonar
 #      - name: Test - Analyze with Sonar
 #        if: env.SONAR_TOKEN != ''

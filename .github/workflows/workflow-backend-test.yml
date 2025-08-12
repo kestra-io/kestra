@@ -58,7 +58,7 @@ jobs:
         run: |
           echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
-          ./gradlew :processor:check :processor:javadoc --rerun-tasks --no-build-cache
+          ./gradlew :core:check :processor:check :core:javadoc :processor:javadoc --rerun-tasks --no-build-cache
 
       # report test
       - name: Test - Publish Test Results

@@ -594,9 +594,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @SuppressWarnings("unchecked")
-    private <R extends Record, E> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect) {
+    private <R extends Record> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect) {
         var select = this.fullTextSelect(tenantId, context, additionalFieldsToSelect != null ? additionalFieldsToSelect : List.of());
-        select = this.filter(select, filters, null, Resource.FLOW);
+        select = select.and(this.filter(filters, null, Resource.FLOW));
         return (SelectConditionStep<R>) select;
     }
 

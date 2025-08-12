@@ -50,7 +50,7 @@
     "ai": {
       "flow": {
         "generating": "正在为您生成Flow YAML...",
-        "prompt_placeholder": "输入说明以创建您的 Kestra flow。",
+        "prompt_placeholder": "输入指令以创建您的Kestra flow。示例提示：创建一个每周一上午9点运行的flow。",
         "title": "AI代理"
       }
     },

@@ -76,7 +76,6 @@
     const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
     const flowInfos = computed(() => flowStore.flowInfos)
     const tabs = computed<{dirty?:boolean}[]>(() => editorStore.tabs)
-    const metadata = computed(() => flowStore.metadata);
     const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
     const flowWarnings = computed(() => {
 
@@ -119,8 +118,11 @@
     }
 
     const deleteFlow = () => {
+        const flowId = flowStore.flowYamlMetadata?.id;
+
         flowStore.deleteFlowAndDependencies()
             .then(() => {
+                toast.deleted(flowId);
                 return router.push({
                     name: "flows/list",
                     params: {
@@ -128,8 +130,8 @@
                     },
                 });
             })
-            .then(() => {
-                toast.deleted(metadata.value?.id);
+            .catch(() => {
+                toast.error(`Failed to delete flow ${flowId}`);
             });
     };
 </script>

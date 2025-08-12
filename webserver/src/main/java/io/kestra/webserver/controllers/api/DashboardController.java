@@ -204,8 +204,12 @@ public class DashboardController {
 
         ZonedDateTime endDate = timeLineSearch.getEndDate();
         ZonedDateTime startDate = timeLineSearch.getStartDate();
-        if (startDate == null || endDate == null) {
+        if (endDate == null) {
             endDate = ZonedDateTime.now();
+        }
+
+        if (startDate == null) {
+            // If no start date is provided, we use the default duration of the dashboard's time
             startDate = endDate.minus(dashboard.getTimeWindow().getDefaultDuration());
         }
 

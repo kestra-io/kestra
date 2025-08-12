@@ -160,6 +160,7 @@ public abstract class AbstractFlowRepositoryTest {
             QueryFilter.builder().field(Field.TIME_RANGE).value("test").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.TRIGGER_ID).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value("test").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.WORKER_ID).value("test").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.EXISTING_ONLY).value("test").operation(Op.EQUALS).build(),

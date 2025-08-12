@@ -50,7 +50,7 @@
     "ai": {
       "flow": {
         "generating": "Erzeuge Flow YAML für Sie...",
-        "prompt_placeholder": "Geben Sie Anweisungen ein, um Ihren Kestra flow zu erstellen.",
+        "prompt_placeholder": "Geben Sie Anweisungen ein, um Ihren Kestra flow zu erstellen. Beispielaufforderung: Erstellen Sie einen flow, der jeden Montag um 9 Uhr ausgeführt wird.",
         "title": "KI-Agent"
       }
     },

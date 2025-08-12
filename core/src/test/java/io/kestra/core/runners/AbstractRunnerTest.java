@@ -424,6 +424,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/flow-concurrency-queue-fail.yml"})
+    void concurrencyQueueRestarted() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyQueueRestarted();
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/executable-fail.yml")
     void badExecutable(Execution execution) {
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);

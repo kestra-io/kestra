@@ -34,6 +34,7 @@ import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.models.flows.FlowScope.USER;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatReflectiveOperationException;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -42,11 +43,15 @@ public abstract class AbstractLogRepositoryTest {
     protected LogRepositoryInterface logRepository;
 
     protected static LogEntry.LogEntryBuilder logEntry(Level level) {
+        return logEntry(level, IdUtils.create());
+    }
+
+    protected static LogEntry.LogEntryBuilder logEntry(Level level, String executionId) {
         return LogEntry.builder()
             .flowId("flowId")
             .namespace("io.kestra.unittest")
             .taskId("taskId")
-            .executionId("executionId")
+            .executionId(executionId)
             .taskRunId(IdUtils.create())
             .attemptNumber(0)
             .timestamp(Instant.now())
@@ -60,12 +65,35 @@ public abstract class AbstractLogRepositoryTest {
     @ParameterizedTest
     @MethodSource("filterCombinations")
     void should_find_all(QueryFilter filter){
-        logRepository.save(logEntry(Level.INFO).build());
+        logRepository.save(logEntry(Level.INFO, "executionId").build());
 
         ArrayListTotal<LogEntry> entries = logRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter));
 
         assertThat(entries).hasSize(1);
     }
+
+    @ParameterizedTest
+    @MethodSource("filterCombinations")
+    void should_find_async(QueryFilter filter){
+        logRepository.save(logEntry(Level.INFO, "executionId").build());
+
+        Flux<LogEntry> find = logRepository.findAsync(MAIN_TENANT, List.of(filter));
+
+        List<LogEntry> logEntries = find.collectList().block();
+        assertThat(logEntries).hasSize(1);
+    }
+
+    @ParameterizedTest
+    @MethodSource("filterCombinations")
+    void should_delete_with_filter(QueryFilter filter){
+        logRepository.save(logEntry(Level.INFO, "executionId").build());
+
+        logRepository.deleteByFilters(MAIN_TENANT, List.of(filter));
+
+        assertThat(logRepository.findAllAsync(MAIN_TENANT).collectList().block()).isEmpty();
+    }
+
+
 
     static Stream<QueryFilter> filterCombinations() {
         return Stream.of(
@@ -105,6 +133,13 @@ public abstract class AbstractLogRepositoryTest {
             QueryFilter.builder().field(Field.TRIGGER_ID).value("Id").operation(Op.ENDS_WITH).build(),
             QueryFilter.builder().field(Field.TRIGGER_ID).value(List.of("triggerId")).operation(Op.IN).build(),
             QueryFilter.builder().field(Field.TRIGGER_ID).value(List.of("anotherId")).operation(Op.NOT_IN).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value("executionId").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value("anotherId").operation(Op.NOT_EQUALS).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value("xecution").operation(Op.CONTAINS).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value("execution").operation(Op.STARTS_WITH).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value("Id").operation(Op.ENDS_WITH).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("executionId")).operation(Op.IN).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("anotherId")).operation(Op.NOT_IN).build(),
             QueryFilter.builder().field(Field.MIN_LEVEL).value(Level.DEBUG).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.MIN_LEVEL).value(Level.ERROR).operation(Op.NOT_EQUALS).build()
         );
@@ -282,36 +317,6 @@ public abstract class AbstractLogRepositoryTest {
 
         find = logRepository.findByExecutionId(MAIN_TENANT, log1.getExecutionId(), null, Pageable.from(1, 50));
         assertThat(find.size()).isZero();
-    }
-
-    @Test
-    void findAsync() {
-        logRepository.save(logEntry(Level.INFO).build());
-        logRepository.save(logEntry(Level.ERROR).build());
-        logRepository.save(logEntry(Level.WARN).build());
-        logRepository.save(logEntry(Level.INFO).executionKind(ExecutionKind.TEST).build()); // should not be visible here
-
-        ZonedDateTime startDate = ZonedDateTime.now().minusSeconds(1);
-
-        Flux<LogEntry> find = logRepository.findAsync(MAIN_TENANT, "io.kestra.unittest", null, null, Level.INFO, startDate);
-        List<LogEntry> logEntries = find.collectList().block();
-        assertThat(logEntries).hasSize(3);
-
-        find = logRepository.findAsync(MAIN_TENANT, null, null, null, Level.ERROR, startDate);
-        logEntries = find.collectList().block();
-        assertThat(logEntries).hasSize(1);
-
-        find = logRepository.findAsync(MAIN_TENANT, "io.kestra.unittest", "flowId", null, Level.ERROR, startDate);
-        logEntries = find.collectList().block();
-        assertThat(logEntries).hasSize(1);
-
-        find = logRepository.findAsync(MAIN_TENANT, "io.kestra.unused", "flowId", "executionId", Level.INFO, startDate);
-        logEntries = find.collectList().block();
-        assertThat(logEntries).hasSize(0);
-
-        find = logRepository.findAsync(MAIN_TENANT, null, null, null, Level.INFO, startDate.plusSeconds(2));
-        logEntries = find.collectList().block();
-        assertThat(logEntries).hasSize(0);
     }
 
     @Test

@@ -58,7 +58,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections :dashboard="{id: 'default'}" :charts show-default />
+                <Sections ref="dashboardComponent" :dashboard="{id: 'default'}" :charts show-default />
             </template>
 
             <template #table>
@@ -771,6 +771,7 @@
             },
             refresh() {
                 this.recomputeInterval = !this.recomputeInterval;
+                this.$refs.dashboardComponent.refreshCharts();
                 this.load();
             },
             selectionMapper(execution) {

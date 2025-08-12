@@ -50,7 +50,7 @@
     "ai": {
       "flow": {
         "generating": "フローのYAMLを生成しています...",
-        "prompt_placeholder": "Kestra flowを作成するための指示を入力してください。",
+        "prompt_placeholder": "指示を入力してKestra flowを作成してください。例: 毎週月曜日の午前9時に実行されるflowを作成してください。",
         "title": "AIエージェント"
       }
     },

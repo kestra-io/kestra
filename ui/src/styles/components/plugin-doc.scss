@@ -29,7 +29,18 @@
 
         :deep(.code-block) {
             background-color: var(--ks-background-card);
-            border: 1px solid var(--ks-border-primary)
+            border: 1px solid var(--ks-border-primary);
+            padding: 0.75rem;
+
+            .line {
+                font-size: 0.75rem;
+            }
+
+            .language, .copy {
+                position: absolute;
+                top: 0.75rem;
+                right: 0.75rem;
+            }
         }
 
         :deep(.language) {
@@ -54,7 +65,7 @@
                 color: var(--ks-content-link);
             }
 
-            [id$="-body"] span {
+            [id$="-body"]:not(#examples-body) span {
                 font-size: 1rem !important;
             }
 

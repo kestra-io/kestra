@@ -68,7 +68,7 @@ export function trackSetupEvent(
 
     const eventData: SetupEventData = {
         type: eventName,
-        instance_id: miscStore.configs.uuid,
+        instance_id: miscStore.configs?.uuid,
         user_id: uid,
         ...userInfo,
         ...additionalData

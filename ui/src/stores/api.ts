@@ -2,6 +2,7 @@ import axios from "axios";
 import posthog from "posthog-js";
 import cloneDeep from "lodash/cloneDeep";
 import {defineStore} from "pinia";
+import {useMiscStore} from "../stores/misc";
 
 export const API_URL = "https://api.kestra.io";
 
@@ -73,7 +74,8 @@ export const useApiStore = defineStore("api", {
         },
 
         async events(data: EventData) {
-            const configs = (this as any).misc?.configs;
+            const miscStore = useMiscStore();
+            const configs = miscStore.configs;
             const uid = localStorage.getItem("uid");
 
             if (configs === undefined || uid === null || configs["isAnonymousUsageEnabled"] === false) {

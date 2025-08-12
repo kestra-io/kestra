@@ -61,6 +61,7 @@ jobs:
 
       # report test
       - name: Test - Publish Test Results
+        id: publish_test_results
         uses: dorny/test-reporter@59db6464e472529faab90e0bcd9b7f14938682cd
         if: always()
         with:
@@ -71,6 +72,9 @@ jobs:
           list-tests: 'failed'
           fail-on-error: 'false'
           token: ${{ secrets.GITHUB_AUTH_TOKEN }}
+
+      - name: display test results
+        run: 'echo "summary is: ${{ steps.publish_test_results.outputs.summary }}"'
 
       # Sonar
       - name: Test - Analyze with Sonar

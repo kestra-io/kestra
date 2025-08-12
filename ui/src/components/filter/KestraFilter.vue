@@ -465,30 +465,38 @@
                 e.contentHeight + "px";
         });
 
-        mountedEditor.addCommand(monaco.KeyCode.Enter, () => {
-            const model = mountedEditor.getModel();
-            if (!model) return;
-            const currentValue = model.getValue();
-            if (currentValue.trim().length > 0) {
-                const position = mountedEditor.getPosition();
-                const endPosition = model.getPositionAt(currentValue.length);
-                if (
-                    position &&
-                    position.lineNumber === endPosition.lineNumber &&
-                    position.column === endPosition.column &&
-                    !currentValue.endsWith(" ")
-                ) {
-                    mountedEditor.executeEdits("", [
-                        {
-                            range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-                            text: " ",
-                            forceMoveMarkers: true
-                        }
-                    ]);
+        mountedEditor.addAction({
+            id: "accept_kestra_filter",
+            label: "Accept Kestra Filter",
+            keybindingContext: "!suggestWidgetVisible",
+            keybindings: [monaco.KeyCode.Enter],
+            run: () => {
+                const model = mountedEditor.getModel();
+                if (!model) return;
+                const currentValue = model.getValue();
+                if (currentValue.trim().length > 0) {
+                    const position = mountedEditor.getPosition();
+                    const endPosition = model.getPositionAt(currentValue.length);
+                    if (
+                        position &&
+                        position.lineNumber === endPosition.lineNumber &&
+                        position.column === endPosition.column &&
+                        !currentValue.endsWith(" ")
+                    ) {
+                        mountedEditor.executeEdits("", [
+                            {
+                                range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+                                text: " ",
+                                forceMoveMarkers: true
+                            }
+                        ]);
+
+                        mountedEditor.trigger("enterPressed", "editor.action.triggerSuggest", {});
+                    }
                 }
                 updateQuery();
             }
-        },"!suggestWidgetVisible");
+        });
 
         mountedEditor.onDidChangeModelContent(e => {
             if (e.changes.length === 1 && (e.changes[0].text === " " || e.changes[0].text === "\n")) {
@@ -509,7 +517,7 @@
         });
     };
 
-    watchDebounced(filterQueryString,updateQuery, {immediate: true, debounce: 1000});
+    watchDebounced(filterQueryString, updateQuery, {immediate: true, debounce: 1000});
 </script>
 
 <style lang="scss" scoped>
@@ -523,7 +531,7 @@
         border-bottom-right-radius: var(--el-border-radius-base);
         min-width: 0;
 
-        .mtk25, .mtk28{
+        .mtk25, .mtk28 {
             background-color: var(--ks-badge-background);
             padding: 2px 6px;
             border-radius: var(--el-border-radius-base);

@@ -58,12 +58,12 @@ jobs:
         run: |
           echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
-          ./gradlew :core:check :processor:check :core:javadoc :processor:javadoc --rerun-tasks --no-build-cache
+          ./gradlew check javadoc
 
       # report test
       - name: Test - Publish Test Results
         id: publish_test_results
-        uses: dorny/test-reporter@a016b587f67eee330255e4c24e7ebc37840aa106
+        uses: dorny/test-reporter@v2
         if: always()
         with:
           name: Java Tests Report
@@ -72,7 +72,7 @@ jobs:
           list-suites: 'failed'
           list-tests: 'failed'
           fail-on-error: 'false'
-          use-actions-summary: 'false'
+#          use-actions-summary: 'false'
           token: ${{ secrets.GITHUB_AUTH_TOKEN }}
 
       - name: Comment PR with test result

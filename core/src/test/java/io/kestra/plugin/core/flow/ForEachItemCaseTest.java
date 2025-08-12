@@ -372,6 +372,51 @@ public class ForEachItemCaseTest {
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 
+    public void forEachItemWithAfterExecution() throws TimeoutException, InterruptedException, URISyntaxException, IOException, QueueException {
+        CountDownLatch countDownLatch = new CountDownLatch(26);
+        AtomicReference<Execution> triggered = new AtomicReference<>();
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Execution execution = either.getLeft();
+            if (execution.getFlowId().equals("for-each-item-subflow-after-execution") && execution.getState().getCurrent().isTerminated()) {
+                triggered.set(execution);
+                countDownLatch.countDown();
+            }
+        });
+
+        URI file = storageUpload();
+        Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-after-execution", null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
+            Duration.ofSeconds(30));
+
+        // we should have triggered 26 subflows
+        assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isTrue();
+        receive.blockLast();
+
+        // assert on the main flow execution
+        assertThat(execution.getTaskRunList()).hasSize(5);
+        assertThat(execution.getTaskRunList().get(2).getAttempts()).hasSize(1);
+        assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
+        assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
+        assertThat(outputs.get("iterations")).isNotNull();
+        Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
+        assertThat(iterations.get("CREATED")).isZero();
+        assertThat(iterations.get("RUNNING")).isZero();
+        assertThat(iterations.get("SUCCESS")).isEqualTo(26);
+
+        // assert on the last subflow execution
+        assertThat(triggered.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(triggered.get().getFlowId()).isEqualTo("for-each-item-subflow-after-execution");
+        assertThat((String) triggered.get().getInputs().get("items")).matches("kestra:///io/kestra/tests/for-each-item-after-execution/executions/.*/tasks/each-split/.*\\.txt");
+        assertThat(triggered.get().getTaskRunList()).hasSize(2);
+        Optional<Label> correlationId = triggered.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
+        assertThat(correlationId.isPresent()).isTrue();
+        assertThat(correlationId.get().value()).isEqualTo(execution.getId());
+    }
+
     private URI storageUpload() throws URISyntaxException, IOException {
         File tempFile = File.createTempFile("file", ".txt");
 

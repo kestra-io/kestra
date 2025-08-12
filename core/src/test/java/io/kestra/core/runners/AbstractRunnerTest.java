@@ -388,6 +388,13 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/for-each-item-subflow-after-execution.yaml",
+        "flows/valids/for-each-item-after-execution.yaml"})
+    protected void forEachItemWithAfterExecution() throws Exception {
+        forEachItemCaseTest.forEachItemWithAfterExecution();
+    }
+
+    @Test
     @LoadFlows({"flows/valids/flow-concurrency-cancel.yml"})
     void concurrencyCancel() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyCancel();
@@ -427,6 +434,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({"flows/valids/flow-concurrency-queue-fail.yml"})
     void concurrencyQueueRestarted() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueueRestarted();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-concurrency-queue-after-execution.yml"})
+    void concurrencyQueueAfterExecution() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyQueueAfterExecution();
     }
 
     @Test

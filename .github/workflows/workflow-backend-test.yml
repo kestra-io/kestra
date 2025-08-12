@@ -74,7 +74,7 @@ jobs:
           token: ${{ secrets.GITHUB_AUTH_TOKEN }}
 
       - name: display url
-        run: 'echo "url is: ${{ steps.publish_test_results.outputs.summary }}"'
+        run: 'echo $GITHUB_OUTPUT'
       - name: display test results
         run: 'echo "summary is: ${{ steps.publish_test_results.outputs.summary }}"'
       - name: display all

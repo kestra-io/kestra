@@ -71,6 +71,7 @@ jobs:
           list-suites: 'failed'
           list-tests: 'failed'
           fail-on-error: 'false'
+          use-actions-summary: 'false'
           token: ${{ secrets.GITHUB_AUTH_TOKEN }}
 
       - name: display out

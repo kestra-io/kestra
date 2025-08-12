@@ -73,17 +73,20 @@ jobs:
           fail-on-error: 'false'
           token: ${{ secrets.GITHUB_AUTH_TOKEN }}
 
+      - name: display url
+        run: 'echo "url is: ${{ steps.publish_test_results.outputs.summary }}"'
       - name: display test results
         run: 'echo "summary is: ${{ steps.publish_test_results.outputs.summary }}"'
-
-      # Sonar
-      - name: Test - Analyze with Sonar
-        if: env.SONAR_TOKEN != ''
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        shell: bash
-        run: ./gradlew sonar --info
+      - name: display all
+        run: 'echo "all is: ${{ steps.publish_test_results.outputs }}"'
+#      # Sonar
+#      - name: Test - Analyze with Sonar
+#        if: env.SONAR_TOKEN != ''
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#        shell: bash
+#        run: ./gradlew sonar --info
 
       # GCP
       - name: GCP - Auth with unit test account

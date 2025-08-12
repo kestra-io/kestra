@@ -62,7 +62,7 @@ jobs:
       # report test
       - name: Test - Publish Test Results
         id: publish_test_results
-        uses: dorny/test-reporter@59db6464e472529faab90e0bcd9b7f14938682cd
+        uses: dorny/test-reporter@a016b587f67eee330255e4c24e7ebc37840aa106
         if: always()
         with:
           name: Java Tests Report

@@ -38,14 +38,14 @@ class ServicesFilesTest {
     void testReadServiceFileWithCommentsAndWhitespace() throws IOException {
         String content = """
         # comment
-        com.example.ServiceA
+        com.example.ServiceAfsdfds
 
         com.example.ServiceB   # inline comment
         """;
         ByteArrayInputStream in = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
         Set<String> read = ServicesFiles.readServiceFile(in);
 
-        Assertions.assertEquals(Set.of("com.example.ServiceA", "com.example.ServiceB"), read);
+        Assertions.assertEquals(Set.of("com.example.ServicesdffqfqfqfqfqfA", "com.example.ServiceB"), read);
     }
     @Test
     void testReadServiceFileWithDuplicates() throws IOException {

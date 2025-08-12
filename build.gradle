@@ -215,8 +215,6 @@ subprojects {
             systemProperty 'user.language', 'en'
             systemProperty 'user.country', 'US'
 
-            failFast = true
-
             environment 'SECRET_MY_SECRET', "{\"secretKey\":\"secretValue\"}".bytes.encodeBase64().toString()
             environment 'SECRET_NEW_LINE', "cGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2\nZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZl\neXJsb25n"
             environment 'SECRET_WEBHOOK_KEY', "secretKey".bytes.encodeBase64().toString()

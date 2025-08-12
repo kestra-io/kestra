@@ -370,7 +370,7 @@
         "zoom_out": "Уменьшить масштаб"
       },
       "search": {
-        "no_results": "Результаты для {term} не найдены",
+        "no_results": "Результаты не найдены для {term}",
         "placeholder": "Поиск по flow или namespace..."
       }
     },

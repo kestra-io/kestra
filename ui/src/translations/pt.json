@@ -367,7 +367,7 @@
         "clear_selection": "Limpar seleção",
         "fit_view": "Ajustar à tela",
         "zoom_in": "Aumentar",
-        "zoom_out": "Reduzir zoom"
+        "zoom_out": "Diminuir zoom"
       },
       "search": {
         "no_results": "Nenhum resultado encontrado para {term}",

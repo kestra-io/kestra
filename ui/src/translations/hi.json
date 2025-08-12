@@ -366,7 +366,7 @@
       "controls": {
         "clear_selection": "चयन साफ़ करें",
         "fit_view": "स्क्रीन के अनुसार फिट करें",
-        "zoom_in": "ज़ूम इन करें",
+        "zoom_in": "ज़ूम इन",
         "zoom_out": "ज़ूम आउट"
       },
       "search": {

@@ -371,7 +371,7 @@
       },
       "search": {
         "no_results": "{term} に対する結果が見つかりませんでした",
-        "placeholder": "flow または namespace で検索..."
+        "placeholder": "flowまたはnamespaceで検索..."
       }
     },
     "dependency task": "Task {taskId}は他のtaskの依存関係です",

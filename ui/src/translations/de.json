@@ -367,10 +367,10 @@
         "clear_selection": "Auswahl aufheben",
         "fit_view": "An Bildschirm anpassen",
         "zoom_in": "Hineinzoomen",
-        "zoom_out": "Rauszoomen"
+        "zoom_out": "Herauszoomen"
       },
       "search": {
-        "no_results": "Keine Ergebnisse gefunden für {term}",
+        "no_results": "Keine Ergebnisse für {term} gefunden",
         "placeholder": "Suche nach flow oder namespace..."
       }
     },

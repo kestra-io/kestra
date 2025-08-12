@@ -367,11 +367,11 @@
         "clear_selection": "清除选择",
         "fit_view": "适合屏幕",
         "zoom_in": "放大",
-        "zoom_out": "缩小视图"
+        "zoom_out": "缩小"
       },
       "search": {
         "no_results": "未找到与 {term} 相关的结果",
-        "placeholder": "按flow或namespace搜索..."
+        "placeholder": "按 flow 或 namespace 搜索..."
       }
     },
     "dependency task": "任务 {taskId} 是另一个任务的依赖",

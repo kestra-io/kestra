@@ -370,7 +370,7 @@
         "zoom_out": "축소"
       },
       "search": {
-        "no_results": "{term}에 대한 결과가 없습니다.",
+        "no_results": "{term}에 대한 결과가 없습니다",
         "placeholder": "flow 또는 namespace로 검색..."
       }
     },

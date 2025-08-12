@@ -1,5 +1,5 @@
 import {canSaveFlowTemplate, saveFlowTemplate} from "../utils/flowTemplate";
-import {mapGetters, mapState} from "vuex";
+import {mapState} from "vuex";
 
 import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
@@ -14,6 +14,8 @@ import {mapStores} from "pinia";
 import {useApiStore} from "../stores/api";
 import {usePluginsStore} from "../stores/plugins";
 import {useCoreStore} from "../stores/core";
+import {useTemplateStore} from "../stores/template";
+import {useFlowStore} from "../stores/flow";
 
 export default {
     mixins: [RouteContext],
@@ -33,9 +35,7 @@ export default {
     },
     computed: {
         ...mapState("auth", ["user"]),
-        ...mapGetters("flow", ["flow"]),
-        ...mapGetters("template", ["template"]),
-        ...mapStores(useApiStore, usePluginsStore, useCoreStore),
+        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore, useFlowStore),
         guidedProperties() {
             return this.coreStore.guidedProperties;
         },
@@ -108,11 +108,11 @@ export default {
             }
 
             if (this.dataType === "template") {
-                this.content = YAML_UTILS.stringify(this.template);
+                this.content = YAML_UTILS.stringify(this.templateStore.template);
                 this.previousContent = this.content;
             } else {
-                if (this.flow) {
-                    this.content = this.flow.source;
+                if (this.flowStore.flow) {
+                    this.content = this.flowStore.flow.source;
                     this.previousContent = this.content;
                 } else {
                     this.content = "";
@@ -134,13 +134,13 @@ export default {
             }
 
             return this.$http
-                .get(`${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`, {params: {destinationOnly: true}})
+                .get(`${apiUrl(this.$store)}/flows/${this.flowStore.flow.namespace}/${this.flowStore.flow.id}/dependencies`, {params: {destinationOnly: true}})
                 .then(response => {
                     let warning = "";
 
                     if (response.data && response.data.nodes) {
                         const deps = response.data.nodes
-                            .filter(n => !(n.namespace === this.flow.namespace && n.id  === this.flow.id))
+                            .filter(n => !(n.namespace === this.flowStore.flow.namespace && n.id  === this.flowStore.flow.id))
                             .map(n => "<li>" + n.namespace + ".<code>" + n.id  + "</code></li>")
                             .join("\n");
 
@@ -167,8 +167,12 @@ export default {
                     .then(message => {
                         this.$toast()
                             .confirm(message, () => {
-                                return this.$store
-                                    .dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item)
+                                // TODO: When flow store is migrated to Pinia, this will be simplified:
+                                const deletePromise = this.dataType === "template"
+                                    ? this.templateStore.deleteTemplate(item)
+                                    : this.$store.dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item);
+
+                                return deletePromise
                                     .then(() => {
                                         this.content = ""
                                         this.previousContent = ""
@@ -244,8 +248,12 @@ export default {
                     return;
                 }
                 this.previousContent = YAML_UTILS.stringify(this.item);
-                this.$store
-                    .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content})
+                // TODO: When flow store is migrated to Pinia, this will be simplified:
+                const createPromise = this.dataType === "template"
+                    ? this.templateStore.createTemplate({template: this.content})
+                    : this.$store.dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content});
+
+                createPromise
                     .then((data) => {
                         this.previousContent = data.source ? data.source : YAML_UTILS.stringify(data);
                         this.content = data.source ? data.source : YAML_UTILS.stringify(data);

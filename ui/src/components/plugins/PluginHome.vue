@@ -6,18 +6,21 @@
         :image="headerImage"
         :image-dark="headerImageDark"
     >
-        <el-row class="my-4 px-3">
-            <KestraFilter
-                :placeholder="$t('pluginPage.search',
-                                 {count: countPlugin})"
-                legacy-query
-            />
+        <el-row class="my-4 px-3" justify="center">
+            <el-col :xs="24" :sm="18" :md="12" :lg="10" :xl="8">
+                <el-input
+                    v-model="searchText"
+                    :placeholder="$t('pluginPage.search', {count: countPlugin})"
+                    clearable
+                    @input="updateSearch"
+                />
+            </el-col>
         </el-row>
         <section class="px-3 plugins-container">
             <el-tooltip
                 v-for="(plugin, index) in pluginsList"
                 :show-after="1000"
-                :key="plugin.name + '-' + index"
+                :key="`${plugin.name}-${index}`"
                 effect="light"
             >
                 <template #content>
@@ -62,11 +65,11 @@
     import DottedLayout from "../layout/DottedLayout.vue";
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";
-    import KestraFilter from "../filter/KestraFilter.vue";
     import {mapStores} from "pinia";
     import {usePluginsStore} from "../../stores/plugins";
 
     export default {
+        name: "PluginHome",
         props: {
             plugins: {
                 type: Array,
@@ -79,27 +82,20 @@
         },
         components: {
             DottedLayout,
-            TaskIcon,
-            KestraFilter
+            TaskIcon
         },
         data() {
             return {
                 icons: [],
                 headerImage,
-                headerImageDark
+                headerImageDark,
+                searchText: ""
             }
-        },
-        created() {
-            this.pluginsStore.groupIcons().then(
-                res => {
-                    this.icons = res
-                }
-            )
         },
         computed: {
             ...mapStores(usePluginsStore),
             searchInput() {
-                return this.$route.query?.q?.toLowerCase() ?? "";
+                return this.searchText.toLowerCase();
             },
             countPlugin() {
                 return new Set(this.plugins.flatMap(plugin => this.allElements(plugin))).size;
@@ -116,14 +112,31 @@
                         || this.allElements(plugin).some(e => e.toLowerCase().includes(this.searchInput))
                     ).filter(plugin => this.isVisible(plugin))
                     .sort((a, b) => {
-                        const nameA = a.manifest["X-Kestra-Title"].toLowerCase(),
-                              nameB = b.manifest["X-Kestra-Title"].toLowerCase();
+                        const nameA = a.manifest["X-Kestra-Title"].toLowerCase();
+                        const nameB = b.manifest["X-Kestra-Title"].toLowerCase();
 
                         return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
                     })
             }
         },
+        created() {
+            this.loadPluginIcons();
+            this.searchText = this.$route.query?.q || "";
+        },
         methods: {
+            async loadPluginIcons() {
+                try {
+                    this.icons = await this.pluginsStore.groupIcons();
+                } catch (error) {
+                    console.error("Failed to load plugin icons:", error);
+                    this.icons = [];
+                }
+            },
+            updateSearch(value) {
+                this.$router.push({
+                    query: {...this.$route.query, q: value || undefined}
+                });
+            },
             openGroup(plugin) {
                 const defaultElement = Object.entries(plugin)
                     .filter(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements))
@@ -150,23 +163,13 @@
                     ]);
             },
             allElements(plugin) {
-                return this.allElementsByTypeEntries(plugin).flatMap(([_, elements]) => elements);
+                return this.allElementsByTypeEntries(plugin).flatMap(([, elements]) => elements);
             }
         }
     }
 </script>
 
 <style scoped lang="scss">
-    .search {
-        display: flex;
-        width: 22rem;
-        padding: 0.25rem 2rem;
-        justify-content: center;
-        align-items: center;
-        gap: 0.25rem;
-        background-color: transparent;
-    }
-
     .plugins-container {
         display: grid;
         gap: 16px;

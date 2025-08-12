@@ -2,7 +2,7 @@ name: Auto-Translate UI keys and create PR
 
 on:
   schedule:
-    - cron: "0 9-21 * * *"  # Every hour from 9 AM to 9 PM
+    - cron: "0 9-21/3 * * *"  # Every 3 hours from 9 AM to 9 PM
   workflow_dispatch:
     inputs:
       retranslate_modified_keys:

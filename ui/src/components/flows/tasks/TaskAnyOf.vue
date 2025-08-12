@@ -40,6 +40,7 @@
     import Task from "./Task";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import getTaskComponent from "./getTaskComponent";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     /**
      * merge allOf schemas if they exist
@@ -93,11 +94,12 @@
         },
         inheritAttrs: false,
         mixins: [Task],
-        emits: ["update:modelValue"],
+        emits: ["update:modelValue", "update:selectedSchema"],
         data() {
             return {
                 isOpen: false,
                 selectedSchema: undefined,
+                delayedSelectedSchema: undefined,
                 finishedMounting: false,
             };
         },
@@ -106,7 +108,10 @@
                 item.value === this.modelValue?.type ||
                 (typeof this.modelValue === "string" && item.value === "string") ||
                 (typeof this.modelValue === "number" && item.value === "integer") ||
-                (Array.isArray(this.modelValue) && item.value === "array"),
+                (Array.isArray(this.modelValue) && item.value === "array") ||
+                // this last line needs to stay after the array one.
+                // If not, arrays will be detected as objects
+                (typeof this.modelValue === "object" && item.value === "object"),
             );
 
             this.selectedSchema = schema?.value;
@@ -146,10 +151,41 @@
                 }
                 this.onAnyOfInput(this.modelValue || {type: val});
             },
+            selectedSchema(val) {
+                this.$emit("update:selectedSchema", val);
+                this.$nextTick(() => {
+                    this.delayedSelectedSchema = val;
+                });
+            },
         },
 
         methods: {
             onSelectType(value) {
+                // When switching form string to object/array,
+                // We try to parse the string as YAML
+                // If the value is not yaml it has no point on being kept.
+                if(typeof this.modelValue === "string" && (value === "object" || value === "array")) {
+                    let parsedValue = {}
+                    try{
+                        parsedValue = YAML_UTILS.parse(this.modelValue) ?? {};
+                        if(value === "array" && !Array.isArray(parsedValue)) {
+                            parsedValue = [parsedValue];
+                        }
+                    } catch {
+                        // eat an error
+                    }
+
+                    this.$emit("update:modelValue", parsedValue);
+                }
+
+                if(value === "string") {
+                    if(Array.isArray(this.modelValue) && this.modelValue.length === 1) {
+                        this.$emit("update:modelValue", this.modelValue[0]);
+                    }else{
+                        this.$emit("update:modelValue", YAML_UTILS.stringify(this.modelValue));
+                    }
+                }
+
                 this.selectedSchema = value;
                 // Set up default values
                 if (
@@ -168,6 +204,7 @@
                     }
                     this.onInput(defaultValues)
                 }
+                this.delayedSelectedSchema = value;
             },
             onAnyOfInput(value) {
                 if(this.constantType?.length && typeof value === "object") {
@@ -215,7 +252,7 @@
                 }) : [];
             },
             currentSchema() {
-                const rawSchema = this.definitions[this.selectedSchema] ?? this.schemaByType[this.selectedSchema]
+                const rawSchema = this.definitions[this.delayedSelectedSchema] ?? this.schemaByType[this.delayedSelectedSchema]
                 return consolidateAllOfSchemas(rawSchema, this.definitions);
             },
             schemaByType() {
@@ -225,10 +262,10 @@
                 }, {});
             },
             currentSchemaType() {
-                return this.selectedSchema ? getTaskComponent(this.currentSchema) : undefined;
+                return this.delayedSelectedSchema ? getTaskComponent(this.currentSchema) : undefined;
             },
             isSelectingPlugins() {
-                return this.schemaOptions.some((schema) => schema.label.startsWith("io.kestra")) || this.schemas.length > 3;
+                return this.schemas.length > 4;
             },
             schemaOptions() {
                 if (!this.schemas?.length || !this.definitions) {

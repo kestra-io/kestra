@@ -7,30 +7,32 @@
             :tabs="tabs"
         />
     </template>
-    <div v-else class="full-space" v-loading="!ready" />
+    <div v-else class="full-space" v-loading="true">
+        {{ executionsStore.execution?.id }}
+    </div>
 </template>
 
 <script>
+    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+
     import Gantt from "./Gantt.vue";
     import Overview from "./Overview.vue";
     import Logs from "./Logs.vue";
     import Topology from "./Topology.vue";
     import ExecutionOutput from "./outputs/Wrapper.vue";
+    import ExecutionMetric from "./ExecutionMetric.vue";
     import RouteContext from "../../mixins/routeContext";
-    import {mapState} from "vuex";
-    import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../../components/Tabs.vue";
     import ExecutionRootTopBar from "./ExecutionRootTopBar.vue";
     import DemoAuditLogs from "../demo/AuditLogs.vue";
+    import Dependencies from "../dependencies/Dependencies.vue";
 
-    import ExecutionMetric from "./ExecutionMetric.vue";
-    import ExecutionDependencies from "./ExecutionDependencies.vue";
-
-    import throttle from "lodash/throttle";
     import {useExecutionsStore} from "../../stores/executions";
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         mixins: [RouteContext],
@@ -42,28 +44,10 @@
             return {
                 sse: undefined,
                 previousExecutionId: undefined,
-                throttledExecutionUpdate: throttle(function (executionEvent) {
-                    let execution = JSON.parse(executionEvent.data);
-                    const flow = this.executionsStore.flow
-
-                    if ((!flow ||
-                        execution.flowId !== flow.id ||
-                        execution.namespace !== flow.namespace ||
-                        execution.flowRevision !== flow.revision)
-                    ) {
-                        this.executionsStore.loadFlowForExecutionByExecutionId(
-                            {
-                                id: execution.id,
-                                revision: this.$route.query.revision
-                            }
-                        );
-                    }
-
-                    this.executionsStore.execution = execution;
-                }, 500)
+                dependenciesCount: undefined
             };
         },
-        created() {
+        async created() {
             if(!this.$route.params.tab) {
                 const tab = localStorage.getItem("executeDefaultTab") || undefined;
                 this.$router.replace({name: "executions/update", params: {...this.$route.params, tab}});
@@ -71,111 +55,66 @@
 
             this.follow();
             window.addEventListener("popstate", this.follow)
+
+            this.dependenciesCount = (await this.flowStore.loadDependencies({namespace: this.$route.params.namespace, id: this.$route.params.flowId})).count;
         },
         mounted() {
             this.previousExecutionId = this.$route.params.id
         },
         watch: {
-            $route(newValue, oldValue) {
+            $route() {
                 this.executionsStore.taskRun = undefined;
-                if (oldValue.name === newValue.name && this.previousExecutionId !== this.$route.params.id) {
-                    this.follow()
-                }
-                // if we change the execution id, we need to close the sse
-                if (this.executionsStore.execution && this.$route.params.id != this.executionsStore.execution.id) {
-                    this.closeSSE();
-                    window.removeEventListener("popstate", this.follow)
-                    this.executionsStore.execution = undefined;
-                    this.$store.commit("flow/setFlow", undefined);
-                    this.$store.commit("flow/setFlowGraph", undefined);
+                if (this.previousExecutionId !== this.$route.params.id) {
+                    this.flowStore.flow = undefined;
+                    this.flowStore.flowGraph = undefined;
+                    this.follow();
                 }
             },
         },
         methods: {
             follow() {
-                this.closeSSE();
                 this.previousExecutionId = this.$route.params.id;
-                this.executionsStore.followExecution(this.$route.params)
-                    .then(sse => {
-                        this.sse = sse;
-                        this.sse.onmessage = (executionEvent) => {
-                            const isEnd = executionEvent && executionEvent.lastEventId === "end";
-                            if (isEnd) {
-                                this.closeSSE();
-                            }
-                            // we are receiving a first "fake" event to force initializing the connection: ignoring it
-                            if (executionEvent.lastEventId !== "start") {
-                                this.throttledExecutionUpdate(executionEvent);
-                            }
-                            if (isEnd) {
-                                this.throttledExecutionUpdate.flush();
-                            }
-                        }
-                        // sse.onerror doesnt return the details of the error
-                        // but as our emitter can only throw an error on 404
-                        // we can safely assume that the error is a 404
-                        // if execution is not defined
-                        this.sse.onerror = () => {
-                            if (!this.executionsStore.execution) {
-                                this.coreStore.message = {
-                                    variant: "error",
-                                    title: this.$t("error"),
-                                    message: this.$t("errors.404.flow or execution"),
-                                };
-                            } else {
-                                this.coreStore.message = {
-                                    variant: "error",
-                                    title: this.$t("error"),
-                                    message: this.$t("something_went_wrong.loading_execution"),
-                                };
-                            }
-                        }
-                    });
-            },
-            closeSSE() {
-                if (this.sse) {
-                    this.sse.close();
-                    this.sse = undefined;
-                }
+                this.executionsStore.followExecution(this.$route.params, this.$t);
             },
             getTabs() {
-                const title = title => this.$t(title);
                 return [
                     {
                         name: undefined,
                         component: Overview,
-                        title: title("overview"),
+                        title: this.$t("overview"),
                     },
                     {
                         name: "gantt",
                         component: Gantt,
-                        title: title("gantt")
+                        title: this.$t("gantt")
                     },
                     {
                         name: "logs",
                         component: Logs,
-                        title: title("logs")
+                        title: this.$t("logs")
                     },
                     {
                         name: "topology",
                         component: Topology,
-                        title: title("topology")
+                        title: this.$t("topology")
                     },
                     {
                         name: "outputs",
                         component: ExecutionOutput,
-                        title: title("outputs"),
+                        title: this.$t("outputs"),
                         maximized: true
                     },
                     {
                         name: "metrics",
                         component: ExecutionMetric,
-                        title: title("metrics")
+                        title: this.$t("metrics")
                     },
                     {
                         name: "dependencies",
-                        component: ExecutionDependencies,
-                        title: title("dependencies"),
+                        component: Dependencies,
+                        title: this.$t("dependencies"),
+                        count: this.dependenciesCount,
+                        maximized: true,
                         props: {
                             isReadOnly: true,
                         },
@@ -183,16 +122,16 @@
                     {
                         name: "auditlogs",
                         component: DemoAuditLogs,
-                        title: title("auditlogs"),
+                        title: this.$t("auditlogs"),
                         maximized: true,
                         locked: true
                     }
                 ];
-            },
+            }
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore, useExecutionsStore),
+            ...mapStores(useCoreStore, useExecutionsStore, useFlowStore),
             tabs() {
                 return this.getTabs();
             },
@@ -260,11 +199,11 @@
             }
         },
         beforeUnmount() {
-            this.closeSSE();
+            this.executionsStore.closeSSE();
             window.removeEventListener("popstate", this.follow)
             this.executionsStore.execution = undefined;
-            this.$store.commit("flow/setFlow", undefined);
-            this.$store.commit("flow/setFlowGraph", undefined);
+            this.flowStore.flow = undefined;
+            this.flowStore.flowGraph = undefined;
         }
     };
 </script>

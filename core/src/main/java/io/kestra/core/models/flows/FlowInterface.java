@@ -31,6 +31,8 @@ public interface FlowInterface extends FlowId, DeletedInterface, TenantInterface
 
     Pattern YAML_REVISION_MATCHER = Pattern.compile("(?m)^revision: \\d+\n?");
 
+    String getDescription();
+
     boolean isDisabled();
 
     boolean isDeleted();

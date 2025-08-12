@@ -1,7 +1,7 @@
 import _cloneDeep from "lodash/cloneDeep"
 import {useExecutionsStore} from "../stores/executions"
 
-export const inputsToFormDate = (submitor, inputsList, values) => {
+export const inputsToFormData = (submitor, inputsList, values) => {
     let inputValuesCloned = _cloneDeep(values)
 
     for (const input of inputsList || []) {
@@ -41,7 +41,7 @@ export const inputsToFormDate = (submitor, inputsList, values) => {
 }
 
 export const executeTask = (submitor, flow, values, options) => {
-    const formData = inputsToFormDate(submitor, flow.inputs, values);
+    const formData = inputsToFormData(submitor, flow.inputs, values);
     const executionsStore = useExecutionsStore();
 
     executionsStore

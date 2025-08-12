@@ -15,7 +15,7 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <Sections :charts :dashboard="{id: 'default', charts: []}" show-default />
+                    <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" show-default />
                 </template>
 
                 <template #table v-if="logsStore.logs !== undefined && logsStore.logs.length > 0">
@@ -188,16 +188,17 @@
             },
             refresh() {
                 this.lastRefreshDate = new Date();
+                this.$refs.dashboard.refreshCharts();
                 this.load();
             },
             loadQuery(base) {
                 let queryFilter = this.filters ?? this.queryWithFilter();
 
                 if (this.isFlowEdit) {
-                    queryFilter["namespace"] = this.namespace;
-                    queryFilter["flowId"] = this.flowId;
+                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
+                    queryFilter["filters[flowId][EQUALS]"] = this.flowId;
                 } else if (this.isNamespaceEdit) {
-                    queryFilter["namespace"] = this.namespace;
+                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
                 }
 
                 if (!queryFilter["startDate"] || !queryFilter["endDate"]) {

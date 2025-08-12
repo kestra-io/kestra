@@ -50,7 +50,7 @@
     "ai": {
       "flow": {
         "generating": "Flow YAML을 생성 중입니다...",
-        "prompt_placeholder": "Kestra flow를 생성하기 위한 지침을 입력하세요.",
+        "prompt_placeholder": "Kestra flow를 생성하기 위한 지침을 입력하세요. 예시 프롬프트: 매주 월요일 오전 9시에 실행되는 flow를 생성하세요.",
         "title": "AI 에이전트"
       }
     },
@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "북마크",
+    "bulk action async warning": "잠시 시간이 걸릴 수 있습니다.",
     "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
     "bulk delete": "<code>{executionCount}</code> 개의 실행을 삭제하시겠습니까?",
     "bulk delete backfills": "{count} backfill 삭제",
@@ -271,6 +272,7 @@
     "days": "일",
     "debug": "디버그",
     "default": "기본값",
+    "defaultsToNamespaceFile": "기본값은 namespace 파일: <code>{name}</code>",
     "delete": "삭제",
     "delete backfill": "backfill 삭제",
     "delete backfills": "backfill 삭제",
@@ -360,6 +362,18 @@
     "dependencies delete flow": "이 flow는 종속성을 가지고 있습니다. 삭제하면 종속성이 실행되지 않습니다.<br /><br /> 영향을 받는 flow 목록은 다음과 같습니다:",
     "dependencies loaded": "종속성이 로드되었습니다",
     "dependencies missing acls": "이 flow에 대한 권한이 없습니다",
+    "dependency": {
+      "controls": {
+        "clear_selection": "선택 해제",
+        "fit_view": "화면에 맞추기",
+        "zoom_in": "확대하기",
+        "zoom_out": "축소"
+      },
+      "search": {
+        "no_results": "{term}에 대한 결과가 없습니다.",
+        "placeholder": "flow 또는 namespace로 검색..."
+      }
+    },
     "dependency task": "Task {taskId}가 다른 task의 종속성입니다",
     "description": "설명",
     "details": "세부 정보",
@@ -475,6 +489,7 @@
       }
     },
     "eval": {
+      "render": "식 렌더링",
       "title": "디버그 표현식",
       "tooltip": "모든 Pebble 표현식을 렌더링하고 실행 컨텍스트를 검사합니다."
     },
@@ -902,6 +917,7 @@
         "finally": "작업 선택",
         "inputs": "입력 필드 유형 선택",
         "pluginDefaults": "플러그인 선택",
+        "task": "작업 선택",
         "tasks": "작업 선택",
         "triggers": "트리거 선택"
       },
@@ -910,6 +926,7 @@
       "version_oss_placeholder": "엔터프라이즈 에디션으로 플러그인 버전 관리 활성화"
     },
     "no_data": "여기에는 아직 아무것도 없는 것 같아요…<br/>필터를 조정하거나 다시 시도해 보세요!",
+    "no_file_choosen": "파일이 선택되지 않음",
     "no_logs_data": "데이터 없음",
     "no_logs_data_description": "흐름이 실행 중이지 않거나 필터를 조정해야 할 수 있습니다.",
     "no_namespaces": "검색 기준에 맞는 namespace가 없습니다.",
@@ -1010,6 +1027,18 @@
     "pause confirm": "실행 <code>{id}</code>을(를) 일시 중지하시겠습니까?",
     "pause done": "실행이 PAUSED 상태입니다.",
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
+    "playground": {
+      "confirm_create": "flow를 생성하는 동안에는 playground를 실행할 수 없습니다. playground 실행을 시작하면 flow가 생성됩니다.",
+      "history": "최근 10회 실행",
+      "play_icon_info": "또한 No-Code 또는 Topology 보기에서 Play 아이콘을 클릭할 수 있습니다.",
+      "run_all_tasks": "모든 Task 실행",
+      "run_task": "작업 실행",
+      "run_task_and_downstream": "Task 및 다운스트림 실행",
+      "run_task_info": "Flow Code 편집기에서 어떤 task 위에 마우스를 올리고 \"Run task\" 버튼을 클릭하여 task를 테스트하세요.",
+      "run_this_task": "이 task 실행",
+      "title": "플레이그라운드",
+      "toggle": "플레이그라운드"
+    },
     "pluginDefaults": "플러그인 기본값",
     "pluginPage": {
       "alt": "플러그인 아이콘",
@@ -1071,6 +1100,7 @@
     "revision": "수정본",
     "revisions": "수정본들",
     "row count": "행 수",
+    "run task in playground": "플레이그라운드에서 task 실행",
     "runners": "러너",
     "running duration": "실행 중 지속 시간",
     "save": "저장",
@@ -1144,7 +1174,8 @@
             "language": "언어",
             "log_display": "기본 Log 표시",
             "log_level": "기본 Log 레벨",
-            "multi_panel_editor": "멀티 패널 편집기"
+            "multi_panel_editor": "멀티 패널 편집기",
+            "playground": "플레이그라운드"
           },
           "label": "기본 구성"
         },
@@ -1182,6 +1213,7 @@
             "editor_hover_description": "속성을 가리키면 설명이 표시됩니다.",
             "environment_color": "환경 색상",
             "environment_name": "환경 이름",
+            "environment_name_tooltip": "이 환경 이름은 config에서 설정되었지만 변경할 수 있습니다.",
             "logs_font_size": "로그 글꼴 크기",
             "theme": "테마"
           },
@@ -1250,10 +1282,12 @@
       },
       "troubleshooting": "비밀번호를 잊으셨습니까?",
       "validation": {
+        "config_message": "구성 설정을 업데이트하여 이 오류 메시지를 수정하십시오.",
         "email_invalid": "유효하지 않은 이메일",
         "email_required": "이메일이 필요합니다",
         "email_temporary_not_allowed": "임시 또는 일회용 이메일 주소는 허용되지 않습니다",
         "firstName_required": "이름이 필요합니다",
+        "incorrect_creds": "잘못된 사용자 이름 또는 비밀번호입니다. 자격 증명이 올바른지 확인하세요.",
         "lastName_required": "성을 입력해야 합니다",
         "password_invalid": "잘못된 비밀번호"
       }
@@ -1294,14 +1328,20 @@
     "success": "성공",
     "sum": "합계",
     "switch-view": "보기 전환",
+    "system overview": "시스템 개요",
     "system_namespace": "플랫폼을 시스템 flows로 점검하세요.",
     "system_namespace_description": "유지 관리 작업을 자동화하세요, 실패 경고부터 자동 정리까지.",
     "tags": "태그들",
     "task": "Task",
+    "task failed": "작업 실패",
     "task id": "Task ID",
     "task id already exists": "Task Id가 이미 존재합니다",
+    "task is running": "Task가 RUNNING 중입니다.",
     "task logs": "Task Logs",
     "task run id": "TaskRun ID",
+    "task sent a warning": "Task에서 경고를 보냈습니다.",
+    "task was skipped": "Task가 건너뛰어졌습니다",
+    "task was successful": "Task가 성공했습니다",
     "taskDefaults": "Task 기본값",
     "taskRunners": "작업 실행기",
     "task_id_exists": "Task ID가 이미 존재합니다.",
@@ -1337,6 +1377,8 @@
     "topology": "토폴로지",
     "topology-graph": {
       "graph-orientation": "그래프 방향",
+      "invalid": "그래프 오류",
+      "invalid_description": "그래프를 로드하는 중 오류가 발생했습니다. 소스 코드에서 오류를 확인하세요.",
       "zoom-fit": "맞춤",
       "zoom-in": "확대",
       "zoom-out": "축소",
@@ -1408,6 +1450,12 @@
     "warning flow with triggers": "이 flow는 triggers를 포함하고 있으며, 이 flow가 trigger expressions에 의존하는 경우 수동 실행이 실패합니다. 해당 Flow는 Trigger를 포함하고 있으며,  Trigger Expression을 의존하는 경우 수동 실행이 실패할 수 있습니다. ",
     "watch": "시청",
     "watch_video": "비디오 보기",
+    "webhook": {
+      "curl_command": "Webhook cURL 명령어",
+      "curl_note": "이 cURL 명령어를 사용하여 사용자 정의 JSON 페이로드로 웹훅을 통해 flow를 trigger하십시오.",
+      "no_triggers": "이 flow에는 활성화된 webhook trigger가 없습니다.",
+      "payload": "Webhook Payload (JSON)"
+    },
     "webhook link copied": "웹훅 링크가 복사되었습니다.",
     "weeks": "주",
     "welcome": {

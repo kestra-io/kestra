@@ -9,6 +9,7 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
@@ -109,7 +110,8 @@ class RunContextLoggerTest {
         logger.info("test myawesomepassmyawesomepass myawesomepass myawesomepassmyawesomepass");
         logger.warn("test {}", URI.create("http://it-s.secret"));
 
-        matchingLog = TestsUtils.awaitLogs(logs, 3);
+        // the 3 logs will create 4 log entries as exceptions stacktraces are logged separately at the TRACE level
+        matchingLog = TestsUtils.awaitLogs(logs, 4);
         receive.blockLast();
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.DEBUG)).findFirst().orElseThrow().getMessage()).isEqualTo("test john@****** test");
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.TRACE)).findFirst().orElseThrow().getMessage()).contains("exception from doe.com");

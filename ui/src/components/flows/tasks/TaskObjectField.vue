@@ -21,7 +21,7 @@
                     </span>
 
                     <ClearButton
-                        v-if="isAnyOf && !isRequired && modelValue && Object.keys(modelValue).length > 0"
+                        v-if="isAnyOf && !isRequired && hasSelectedASchema"
                         @click="$emit('update:modelValue', undefined); taskComponent?.resetSelectType?.();"
                     />
                 </div>
@@ -64,11 +64,11 @@
 </template>
 
 <script setup lang="ts">
+    import {computed, ref} from "vue";
+    import {templateRef} from "@vueuse/core";
     import Help from "vue-material-design-icons/Information.vue";
     import Markdown from "../../layout/Markdown.vue";
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
-    import {computed} from "vue";
-    import {templateRef} from "@vueuse/core";
     import ClearButton from "./ClearButton.vue";
     import getTaskComponent from "./getTaskComponent";
 
@@ -93,11 +93,16 @@
         return !props.disabled && props.required?.includes(props.fieldKey);// && props.schema.$required;
     })
 
+    const hasSelectedASchema = ref(false)
+
     const componentProps = computed(() => {
         return {
             modelValue: props.modelValue,
             "onUpdate:modelValue": (value: Record<string, any> | string | number | boolean | Array<any>) => {
                 emit("update:modelValue", value);
+            },
+            "onUpdate:selectedSchema": (value: any) => {
+                hasSelectedASchema.value = value !== undefined;
             },
             task: props.task,
             root: props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey,

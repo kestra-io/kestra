@@ -15,15 +15,19 @@ export function setupTenantRouter(router: Router, app: App): void {
         if (typeof to === "string") {
             return to;
         }
-        
+
         const toWithParams = to as RouteLocationNamedRaw;
         return {
-            ...toWithParams, 
+            ...toWithParams,
             params: {tenant: this.$route?.params?.tenant || "main", ...toWithParams.params}
         };
     };
 
     router.beforeEach((to, from, next) => {
+        // on login, prevent redirection to tenant
+        if (typeof to.name === "string" && ["login", "setup"].includes(to.name)) {
+            return next();
+        }
         if (to.path !== "/" && !to.params.tenant) {
             // Use current tenant from route context, fallback to "main"
             const currentTenant = from.params?.tenant || "main";

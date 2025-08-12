@@ -56,6 +56,7 @@
 
                     <div class="flex-grow-1">
                         <component
+                            ref="chartsComponents"
                             :is="TYPES[chart.type as keyof typeof TYPES]"
                             :chart
                             :filters
@@ -89,6 +90,18 @@
     import Download from "vue-material-design-icons/Download.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
 
+    const chartsComponents = ref<{refresh(): void}[]>();
+
+    function refreshCharts() {
+        chartsComponents.value!.forEach((component) => {
+            component.refresh();
+        });
+    }
+
+    defineExpose({
+        refreshCharts
+    });
+
     const props = defineProps<{
         dashboard: Dashboard;
         charts?: Chart[];
@@ -106,7 +119,7 @@
         const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
         // Default to the last 7 days if no time range is set
-        if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
+        if (route.name !== "flows/list" && !Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
             router.push({query: {...route.query, "filters[timeRange][EQUALS]": "PT168H"}});
         }
 

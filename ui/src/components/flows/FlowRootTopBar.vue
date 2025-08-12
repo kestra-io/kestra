@@ -26,6 +26,7 @@
     import NavBar from "../layout/TopNavBar.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {useFlowStore} from "../../stores/flow";
 
     defineProps<{
         routeInfo: {
@@ -36,11 +37,12 @@
     }>();
 
     const store = useStore();
-    const flow = computed(() => store.state.flow.flow);
+    const flowStore = useFlowStore();
+    const flow = computed(() => flowStore.flow);
     const user = computed(() => store.state.auth.user);
 
     const isDeleted = computed(() => flow.value?.deleted || false);
-    const isAllowedToEdit = computed(() => 
+    const isAllowedToEdit = computed(() =>
         user.value?.isAllowed(permission.FLOW, action.UPDATE, flow.value?.namespace)
     );
 </script>

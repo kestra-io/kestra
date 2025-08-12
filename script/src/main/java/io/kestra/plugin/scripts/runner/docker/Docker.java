@@ -765,7 +765,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         }
 
         if (this.getCpu() != null && this.getCpu().getCpus() != null) {
-            hostConfig.withCpuQuota(runContext.render(this.getCpu().getCpus()).as(Long.class).orElseThrow() * 10000L);
+            Double cpuValue = runContext.render(this.getCpu().getCpus()).as(Double.class).orElseThrow();
+            hostConfig.withNanoCPUs((long)(cpuValue * 1_000_000_000L));
         }
 
         if (this.getMemory() != null) {

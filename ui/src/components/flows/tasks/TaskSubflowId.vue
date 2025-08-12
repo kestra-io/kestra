@@ -18,8 +18,9 @@
     </el-select>
 </template>
 <script>
+    import {mapStores} from "pinia";
+    import {useFlowStore} from "../../../stores/flow";
     import Task from "./Task";
-    import {mapState} from "vuex";
 
     export default {
         mixins: [Task],
@@ -32,19 +33,19 @@
             namespace: {
                 immediate: true,
                 async handler() {
-                    this.flowIds = (await this.$store.dispatch("flow/flowsByNamespace", this.namespace))
+                    this.flowIds = (await this.flowStore.flowsByNamespace(this.namespace))
                         .map(flow => flow.id);
 
-                    if (this.namespace === this.flow.namespace) {
-                        this.flowIds = this.flowIds.filter(id => id !== this.flow.id)
+                    if (this.namespace === this.flowStore.flow.namespace) {
+                        this.flowIds = this.flowIds.filter(id => id !== this.flowStore.flow.id)
                     }
                 }
             }
         },
         computed: {
-            ...mapState("flow", ["flow"]),
+            ...mapStores(useFlowStore),
             namespace() {
-                return this.task?.namespace ?? this.flow?.namespace;
+                return this.task?.namespace ?? this.flowStore.flow?.namespace;
             },
         }
     };

@@ -7,20 +7,23 @@
     />
 </template>
 <script>
+    import {mapStores} from "pinia";
     import Task from "./Task";
     import NamespaceSelect from "../../namespaces/components/NamespaceSelect.vue";
-    import {mapState} from "vuex";
+
+    import {useFlowStore} from "../../../stores/flow";
     export default {
         components: {NamespaceSelect},
         mixins: [Task],
         created() {
-            const flowNamespace = this.flow?.namespace;
+            const flowNamespace = this.flowStore.flow?.namespace;
             if (!this.modelValue && flowNamespace) {
                 this.onInput(flowNamespace)
             }
         },
         computed: {
-            ...mapState("flow", ["flow"])
+            ...mapStores(useFlowStore),
+
         }
     };
 </script>

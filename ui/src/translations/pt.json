@@ -50,7 +50,7 @@
     "ai": {
       "flow": {
         "generating": "Gerando Flow YAML para você...",
-        "prompt_placeholder": "Insira instruções para criar seu flow do Kestra.",
+        "prompt_placeholder": "Insira instruções para criar seu flow Kestra. Exemplo de prompt: Crie um flow que execute toda segunda-feira às 9h.",
         "title": "Agente de IA"
       }
     },
@@ -91,6 +91,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Favoritos",
+    "bulk action async warning": "Isso pode levar alguns instantes.",
     "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
     "bulk delete": "Tem certeza de que deseja deletar <code>{executionCount}</code> execução(ões)?",
     "bulk delete backfills": "Excluir {count} backfill",
@@ -271,6 +272,7 @@
     "days": "Dias",
     "debug": "Depurar",
     "default": "Padrão",
+    "defaultsToNamespaceFile": "Padrões para arquivo de namespace: <code>{name}</code>",
     "delete": "Deletar",
     "delete backfill": "Deletar o backfill",
     "delete backfills": "Deletar backfills",
@@ -360,6 +362,18 @@
     "dependencies delete flow": "Este flow tem dependências. Deletá-lo impedirá que suas dependências sejam executadas.<br /><br /> Aqui está a lista de flows afetados:",
     "dependencies loaded": "Dependências carregadas",
     "dependencies missing acls": "Sem permissões neste flow",
+    "dependency": {
+      "controls": {
+        "clear_selection": "Limpar seleção",
+        "fit_view": "Ajustar à tela",
+        "zoom_in": "Aumentar",
+        "zoom_out": "Reduzir zoom"
+      },
+      "search": {
+        "no_results": "Nenhum resultado encontrado para {term}",
+        "placeholder": "Pesquisar por flow ou namespace..."
+      }
+    },
     "dependency task": "Task {taskId} é uma dependência de outra task",
     "description": "Descrição",
     "details": "Detalhes",
@@ -475,6 +489,7 @@
       }
     },
     "eval": {
+      "render": "Expressão de Renderização",
       "title": "Expressão de Depuração",
       "tooltip": "Renderizar qualquer expressão Pebble e inspecionar o contexto da Execução."
     },
@@ -902,6 +917,7 @@
         "finally": "Selecione uma task",
         "inputs": "Selecione um tipo de campo de input",
         "pluginDefaults": "Selecione um plugin",
+        "task": "Selecione uma task",
         "tasks": "Selecione uma task",
         "triggers": "Selecione um trigger"
       },
@@ -910,6 +926,7 @@
       "version_oss_placeholder": "Desbloqueie a Versionamento de Plugin com a Enterprise Edition"
     },
     "no_data": "Parece que não há nada aqui... ainda!<br/>Ajuste seus filtros ou tente novamente!",
+    "no_file_choosen": "Nenhum arquivo selecionado",
     "no_logs_data": "Sem Dados",
     "no_logs_data_description": "Nenhum flow está em execução, ou você pode precisar ajustar seus filtros.",
     "no_namespaces": "Nenhum namespace corresponde aos critérios de busca.",
@@ -1010,6 +1027,18 @@
     "pause confirm": "Tem certeza de que deseja pausar a execução <code>{id}</code>?",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
+    "playground": {
+      "confirm_create": "Você não pode executar o playground enquanto cria um flow. Iniciar uma execução do playground criará o flow.",
+      "history": "Últimas 10 execuções",
+      "play_icon_info": "Você também pode clicar no ícone de Play nas visualizações No-Code ou Topology.",
+      "run_all_tasks": "Executar Todas as Tasks",
+      "run_task": "Executar Task",
+      "run_task_and_downstream": "Executar task & downstream",
+      "run_task_info": "Passe o cursor sobre qualquer task no editor de Flow Code e clique no botão \"Run task\" para testar sua task.",
+      "run_this_task": "Execute esta task",
+      "title": "Playground",
+      "toggle": "Playground"
+    },
     "pluginDefaults": "Padrões do plugin",
     "pluginPage": {
       "alt": "Ícone de Plugins",
@@ -1071,6 +1100,7 @@
     "revision": "Revisão",
     "revisions": "Revisões",
     "row count": "Contagem de linhas",
+    "run task in playground": "Executar task no playground",
     "runners": "Corredores",
     "running duration": "Duração em execução",
     "save": "Salvar",
@@ -1144,7 +1174,8 @@
             "language": "Idioma",
             "log_display": "Exibição de Log Padrão",
             "log_level": "Nível de Log Padrão",
-            "multi_panel_editor": "Editor de Painel Múltiplo"
+            "multi_panel_editor": "Editor de Painel Múltiplo",
+            "playground": "Playground"
           },
           "label": "Configuração Principal"
         },
@@ -1182,6 +1213,7 @@
             "editor_hover_description": "Passe o cursor sobre a propriedade para ver a descrição",
             "environment_color": "Cor do Ambiente",
             "environment_name": "Nome do Ambiente",
+            "environment_name_tooltip": "Este nome de ambiente é definido a partir da configuração, mas pode ser alterado.",
             "logs_font_size": "Tamanho da Fonte dos Logs",
             "theme": "Tema"
           },
@@ -1250,10 +1282,12 @@
       },
       "troubleshooting": "Esqueceu a Senha?",
       "validation": {
+        "config_message": "Certifique-se de atualizar sua configuração para corrigir esta mensagem de erro",
         "email_invalid": "E-mail inválido",
         "email_required": "O e-mail é obrigatório",
         "email_temporary_not_allowed": "Endereços de e-mail temporários ou descartáveis não são permitidos",
         "firstName_required": "Nome é obrigatório",
+        "incorrect_creds": "Nome de usuário ou senha inválidos. Certifique-se de que suas credenciais estão corretas.",
         "lastName_required": "Sobrenome obrigatório",
         "password_invalid": "Senha inválida"
       }
@@ -1294,14 +1328,20 @@
     "success": "Sucesso",
     "sum": "Soma",
     "switch-view": "Alternar visualização",
+    "system overview": "Visão Geral do Sistema",
     "system_namespace": "Mantenha sua plataforma sob controle com system flows.",
     "system_namespace_description": "Automatize tarefas de manutenção, desde alertas de falha até limpezas automatizadas.",
     "tags": "Tags",
     "task": "Task",
+    "task failed": "Tarefa falhou",
     "task id": "Task ID",
     "task id already exists": "Task Id já existe",
+    "task is running": "A task está RUNNING",
     "task logs": "Task logs",
     "task run id": "ID do TaskRun",
+    "task sent a warning": "A tarefa enviou um WARNING",
+    "task was skipped": "A tarefa foi ignorada",
+    "task was successful": "A tarefa foi bem-sucedida",
     "taskDefaults": "Padrões da Task",
     "taskRunners": "Executores de Task",
     "task_id_exists": "Id da Task já existe",
@@ -1337,6 +1377,8 @@
     "topology": "Topologia",
     "topology-graph": {
       "graph-orientation": "Orientação do gráfico",
+      "invalid": "Erro no gráfico",
+      "invalid_description": "Ocorreu um erro ao carregar o gráfico. Por favor, verifique o código-fonte para erros.",
       "zoom-fit": "Ajustar",
       "zoom-in": "Aumentar zoom",
       "zoom-out": "Diminuir zoom",
@@ -1408,6 +1450,12 @@
     "warning flow with triggers": "Este flow contém triggers e uma execução manual falhará se este flow depender de expressões de trigger.",
     "watch": "Assistir",
     "watch_video": "Assistir Vídeo",
+    "webhook": {
+      "curl_command": "Comando cURL do Webhook",
+      "curl_note": "Use este comando cURL para acionar o flow via webhook com carga útil JSON personalizada",
+      "no_triggers": "Este flow não possui triggers de webhook habilitados",
+      "payload": "Payload do Webhook (JSON)"
+    },
     "webhook link copied": "Link do Webhook copiado.",
     "weeks": "Semanas",
     "welcome": {

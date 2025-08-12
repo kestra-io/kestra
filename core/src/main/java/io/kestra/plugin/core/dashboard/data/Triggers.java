@@ -19,7 +19,6 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
-//@TriggersDataFilterValidation
 @Schema(
     title = "Display Execution data in a dashboard chart.",
     description = "Execution data can be displayed in charts broken out by Namespace and filtered by State, for example."

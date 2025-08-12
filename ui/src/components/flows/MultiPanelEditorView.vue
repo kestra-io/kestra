@@ -1,6 +1,6 @@
 <template>
     <div class="multi-panel-editor-wrapper">
-        <div class="tabs-wrapper">
+        <div class="tabs-wrapper" :class="{playgroundMode}">
             <div class="tabs">
                 <button
                     v-for="element of EDITOR_ELEMENTS"
@@ -15,20 +15,30 @@
             <EditorButtonsWrapper />
         </div>
         <div class="editor-wrapper">
-            <MultiPanelTabs v-model="panels" class="editor-panels" @remove-tab="onRemoveTab" />
+            <Splitpanes class="default-theme editor-panels" horizontal>
+                <Pane>
+                    <MultiPanelTabs v-model="panels" @remove-tab="onRemoveTab" />
+                </Pane>
+                <Pane v-if="playgroundMode">
+                    <FlowPlayground />
+                </Pane>
+            </Splitpanes>
         </div>
         <KeyShortcuts />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, Ref, watch} from "vue";
+    import {computed, onMounted, onUnmounted, Ref, watch} from "vue";
     import {useStorage} from "@vueuse/core";
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
+    import {Splitpanes, Pane} from "splitpanes"
     import {useCoreStore} from "../../stores/core";
+    import {usePlaygroundStore} from "../../stores/playground";
+    import {useEditorStore} from "../../stores/editor";
 
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
+    import FlowPlayground from "./FlowPlayground.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import KeyShortcuts from "../inputs/KeyShortcuts.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
@@ -37,6 +47,7 @@
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts";
 
     import {getCreateTabKey, getEditTabKey, setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
+    import {useFlowStore} from "../../stores/flow";
 
     function isTabFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.value)
@@ -44,13 +55,21 @@
             || element.value.startsWith("nocode-")
     }
 
-    const store = useStore()
     const coreStore = useCoreStore()
     const {showKeyShortcuts} = useKeyShortcuts()
-    const flow = computed(() => store.state.flow.flow)
+    const flowStore = useFlowStore()
 
     onMounted(() => {
-        store.state.editor.explorerVisible = false
+        useEditorStore().explorerVisible = false
+    })
+
+    const playgroundStore = usePlaygroundStore()
+
+    const playgroundMode = computed(() => playgroundStore.enabled)
+
+    onUnmounted(() => {
+        playgroundStore.enabled = false
+        playgroundStore.clearExecutions()
     })
 
     /**
@@ -70,7 +89,7 @@
             showKeyShortcuts();
             return;
         }
-        
+
         if(openTabs.value.includes(tabValue)){
             focusTab(tabValue)
             return
@@ -111,6 +130,7 @@
             const [
                 ,
                 parentPath,
+                _blockSchemaPath,
                 refPath,
             ] = args
             const editKey = getEditTabKey({
@@ -134,7 +154,7 @@
 
     const {t} = useI18n()
     function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
-        const tab = setupInitialNoCodeTab(value, t, noCodeHandlers, flow.value)
+        const tab = setupInitialNoCodeTab(value, t, noCodeHandlers, flowStore.flowYaml ?? "")
         const element: Tab = tab ?? EDITOR_ELEMENTS.find(e => e.value === value)!
 
         if(isTabFlowRelated(element)){
@@ -163,7 +183,7 @@
     }
 
     const panels: Ref<Panel[]> = useStorage<any>(
-        `flow-${flow.value.namespace}-${flow.value.id}`,
+        `flow-${flowStore.flow?.namespace}-${flowStore.flow?.id}`,
         DEFAULT_ACTIVE_TABS
             .map((t):Panel => getPanelFromValue(t).panel),
         undefined,
@@ -184,7 +204,7 @@
                             .map((p):Panel => {
                                 const tabs = p.tabs.map((tab) =>
                                     setupInitialCodeTab(tab)
-                                    ?? setupInitialNoCodeTabIfExists(store.state.flow.flowYaml, tab, t, noCodeHandlers)
+                                    ?? setupInitialNoCodeTabIfExists(flowStore.flowYaml ?? "", tab, t, noCodeHandlers)
                                     ?? EDITOR_ELEMENTS.find(e => e.value === tab)!
                                 )
                                     // filter out any tab that may have disappeared
@@ -231,7 +251,7 @@
 </script>
 
 <style lang="scss" scoped>
-
+    @use "@kestra-io/ui-libs/src/scss/color-palette.scss" as colorPalette;
     .multi-panel-editor-wrapper{
         display: grid;
         grid-template-rows: auto 1fr;
@@ -251,6 +271,25 @@
         align-items: center;
         justify-content: space-between;
         border-bottom: 1px solid var(--ks-border-primary);
+        background-image: linear-gradient(
+                to right,
+                colorPalette.$base-blue-400 0%,
+                colorPalette.$base-blue-500 35%,
+                rgba(colorPalette.$base-blue-500, 0) 55%,
+                rgba(colorPalette.$base-blue-500, 0) 100%
+            );
+        .dark & {
+            background-image: linear-gradient(
+                to right,
+                colorPalette.$base-blue-500 0%,
+                colorPalette.$base-blue-700 35%,
+                rgba(colorPalette.$base-blue-700, .1) 55%,
+                rgba(colorPalette.$base-blue-700, 0) 100%
+            );
+        }
+        background-size: 250% 100%;
+        background-position: 100% 0;
+        transition: background-position .2s;
     }
     .tabs{
         padding: .5rem 1rem;
@@ -283,5 +322,25 @@
     .tabs-icon {
         margin-right: .25rem;
         vertical-align: bottom;
+    }
+
+    .playgroundMode {
+        #{--el-color-primary}: colorPalette.$base-blue-500;
+        color: colorPalette.$base-white;
+        background-position: 10% 0;
+    }
+
+    .default-theme{
+        .splitpanes__pane {
+            background-color: var(--ks-background-panel);
+        }
+
+        :deep(.splitpanes__splitter){
+            border-top-color: var(--ks-border-primary);
+            background-color: var(--ks-background-panel);
+            &:before, &:after{
+                background-color: var(--ks-content-secondary);
+            }
+        }
     }
 </style>

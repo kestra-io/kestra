@@ -74,12 +74,24 @@ jobs:
           use-actions-summary: 'false'
           token: ${{ secrets.GITHUB_AUTH_TOKEN }}
 
-      - name: display out
-        run: 'cat $GITHUB_OUTPUT'
-      - name: display test results
-        run: 'echo "summary is: ${{ steps.publish_test_results.outputs.summary }}"'
-      - name: display all
-        run: 'echo "all is: ${{ toJson(steps.publish_test_results.outputs) }}"'
+      - name: Comment PR with test result
+        uses: actions/github-script@v7
+        if: always()
+        env:
+          JSON_REPORT_URL: ${{ steps.publish_test_results.outputs.url }}
+        with:
+          script: |
+            const jsonReportUrl = process.env.JSON_REPORT_URL;
+            const result = await github.request(jsonReportUrl)
+            console.log(result)
+            // note: an issue is the same as a PR in this API
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '👋 Thanks for reporting!'
+            })
+
 #      # Sonar
 #      - name: Test - Analyze with Sonar
 #        if: env.SONAR_TOKEN != ''

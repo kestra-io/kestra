@@ -37,9 +37,9 @@ public abstract class StorageTestSuite {
     @Test
     void getPath(){
         String path = storageInterface.getPath(null);
-        AssertionsForClassTypes.assertThat(path).isEqualTo("/");
+        AssertionsForClassTypes.assertThat(path).isEqualTo("");
 
-        path = storageInterface.getPath(URI.create("folder1/folder2"));
+        path = storageInterface.getPath(URI.create("/folder1/folder2"));
         AssertionsForClassTypes.assertThat(path).isEqualTo("folder1/folder2");
 
         path = storageInterface.getPath(MAIN_TENANT, null);

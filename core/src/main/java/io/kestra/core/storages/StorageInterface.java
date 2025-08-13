@@ -342,8 +342,9 @@ public interface StorageInterface extends AutoCloseable, Plugin {
         }
 
         parentTraversalGuard(uri);
-
-        return uri.getPath();
+        String path = uri.getPath();
+        path = path.replaceFirst("^/", "");
+        return path;
     }
 
     /**

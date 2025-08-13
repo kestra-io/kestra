@@ -65,7 +65,7 @@ dependencies {
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
-        api 'software.amazon.awssdk.crt:aws-crt:0.38.8'
+        api 'software.amazon.awssdk.crt:aws-crt:0.38.9'
 
         // we need at least 0.14, it could be removed when Micronaut contains a recent only version in their BOM
         api "io.micrometer:micrometer-core:1.15.2"

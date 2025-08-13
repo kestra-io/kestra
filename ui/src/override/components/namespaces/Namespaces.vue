@@ -71,7 +71,7 @@
     import {useStore} from "vuex";
     import useNamespaces, {Namespace} from "../../../composables/useNamespaces.ts";
     import {useI18n} from "vue-i18n";
-    import {useMiscStore} from "../../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     import Navbar from "../../../components/layout/TopNavBar.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";

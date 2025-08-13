@@ -6,7 +6,7 @@
 <script lang="ts" setup>
     import PluginDocumentation from "./PluginDocumentation.vue"
     import {usePluginsStore} from "../../stores/plugins";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     const pluginsStore = usePluginsStore()
     const miscStore = useMiscStore();

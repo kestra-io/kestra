@@ -26,7 +26,7 @@
     import {useLayoutStore} from "./stores/layout";
     import {useCoreStore} from "./stores/core";
     import {useDocStore} from "./stores/doc";
-    import {useMiscStore} from "./stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "./stores/executions";
     import * as BasicAuth from "./utils/basicAuth";
     import {useFlowStore} from "./stores/flow";

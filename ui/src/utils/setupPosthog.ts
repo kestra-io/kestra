@@ -1,5 +1,5 @@
 import {useApiStore} from "../stores/api"
-import {useMiscStore} from "../stores/misc"
+import {useMiscStore} from "override/stores/misc"
 
 export interface SetupEventData {
     type: string

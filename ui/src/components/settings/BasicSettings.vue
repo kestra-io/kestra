@@ -266,7 +266,7 @@
     import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useLayoutStore} from "../../stores/layout";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import {useTemplateStore} from "../../stores/template";
     import permission from "../../models/permission";
     import action from "../../models/action";

@@ -7,6 +7,7 @@ on:
 jobs:
   publish:
     name: Pull Request - Delete Docker
+    if: github.repository == github.event.pull_request.head.repo.full_name # prevent running on forks
     runs-on: ubuntu-latest
     steps:
       - uses: dataaxiom/ghcr-cleanup-action@v1

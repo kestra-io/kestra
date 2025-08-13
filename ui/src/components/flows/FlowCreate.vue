@@ -15,6 +15,7 @@
     import {storageKeys} from "../../utils/constants";
     import {useBlueprintsStore} from "../../stores/blueprints";
     import {useCoreStore} from "../../stores/core";
+    import {editorViewTypes} from "../../utils/constants";
 
     import {getRandomFlowID} from "../../../scripts/product/flow";
     import {useEditorStore} from "../../stores/editor";
@@ -65,7 +66,7 @@ tasks:
                 this.flowStore.flowYamlBeforeAdd = flowYaml;
 
                 this.flowStore.flow = {...YAML_UTILS.parse(this.flowYaml), source: this.flowStore.flowYaml};
-                this.flowStore.initYamlSource();
+                this.flowStore.initYamlSource({viewTypes: editorViewTypes.SOURCE_DOC});
             }
         },
         computed: {

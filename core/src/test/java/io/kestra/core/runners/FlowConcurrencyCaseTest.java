@@ -342,6 +342,55 @@ public class FlowConcurrencyCaseTest {
         assertThat(executionResult2.get().getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
     }
 
+    public void flowConcurrencyQueueAfterExecution() throws TimeoutException, QueueException, InterruptedException {
+        Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-queue-after-execution", null, null, Duration.ofSeconds(30));
+        Flow flow = flowRepository
+            .findById(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-queue-after-execution", Optional.empty())
+            .orElseThrow();
+        Execution execution2 = Execution.newExecution(flow, null, null, Optional.empty());
+        executionQueue.emit(execution2);
+
+        assertThat(execution1.getState().isRunning()).isTrue();
+        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CREATED);
+
+        var executionResult1  = new AtomicReference<Execution>();
+        var executionResult2  = new AtomicReference<Execution>();
+
+        CountDownLatch latch1 = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
+        CountDownLatch latch3 = new CountDownLatch(1);
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, e -> {
+            if (e.getLeft().getId().equals(execution1.getId())) {
+                executionResult1.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
+                    latch1.countDown();
+                }
+            }
+
+            if (e.getLeft().getId().equals(execution2.getId())) {
+                executionResult2.set(e.getLeft());
+                if (e.getLeft().getState().getCurrent() == State.Type.RUNNING) {
+                    latch2.countDown();
+                }
+                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
+                    latch3.countDown();
+                }
+            }
+        });
+
+        assertTrue(latch1.await(1, TimeUnit.MINUTES));
+        assertTrue(latch2.await(1, TimeUnit.MINUTES));
+        assertTrue(latch3.await(1, TimeUnit.MINUTES));
+        receive.blockLast();
+
+        assertThat(executionResult1.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionResult2.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionResult2.get().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
+        assertThat(executionResult2.get().getState().getHistories().get(1).getState()).isEqualTo(State.Type.QUEUED);
+        assertThat(executionResult2.get().getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
+    }
+
     private URI storageUpload() throws URISyntaxException, IOException {
         File tempFile = File.createTempFile("file", ".txt");
 

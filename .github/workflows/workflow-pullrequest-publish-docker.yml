@@ -18,7 +18,7 @@ jobs:
       GITHUB_IMAGE_PATH: "ghcr.io/kestra-io/kestra-pr"
     steps:
       - name: Checkout - Current ref
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 

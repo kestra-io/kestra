@@ -146,7 +146,6 @@
                     currentLevel[label] = {
                         id: label,
                         label,
-                        disabled: item.disabled,
                         description: isLeaf ? item.description : undefined,
                         children: [],
                     };
@@ -159,7 +158,6 @@
                 const result: Node = {
                     id: node.id,
                     label: node.label,
-                    disabled: node.disabled,
                     description: node.description,
                     children: node.children ? build(node.children) : undefined,
                 };

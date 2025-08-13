@@ -50,7 +50,6 @@
     "delete": "Delete",
     "deleted": "Successfully deleted",
     "deleted confirm": "<em>{name}</em> is successfully deleted!",
-    "Select namespace": "Namespace",
     "Add flow": "Add flow",
     "add": "Add",
     "add_new_item": "Add new item",

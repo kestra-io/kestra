@@ -15,7 +15,7 @@
             :infinite-scroll-delay="0"
             :height="data.length === 0 && infiniteScrollLoad === undefined ? '100px' : tableHeight"
         >
-            <el-table-column type="selection" v-if="selectable" />
+            <el-table-column type="selection" v-if="selectable && showSelection" />
             <slot name="default" />
         </el-table>
     </div>
@@ -133,26 +133,12 @@
             }
         },
         props: {
-            selectable: {
-                type: Boolean,
-                default: true
-            },
-            expandable: {
-                type: Boolean,
-                default: false
-            },
-            data: {
-                type: Array,
-                default: () => []
-            },
-            noDataText: {
-                type: String,
-                default: undefined
-            },
-            infiniteScrollLoad: {
-                type: Function,
-                default: undefined
-            }
+            showSelection: {type: Boolean, default: true},
+            selectable: {type: Boolean, default: true},
+            expandable: {type: Boolean, default: false},
+            data: {type: Array, default: () => []},
+            noDataText: {type: String, default: undefined},
+            infiniteScrollLoad: {type: Function, default: undefined}
         },
         emits: [
             "selection-change"

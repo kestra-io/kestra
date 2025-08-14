@@ -15,6 +15,7 @@
         :infinite-scroll-load="namespace === undefined ? fetchKvs : undefined"
         :no-data-text="$t('no_results.kv_pairs')"
         class="fill-height"
+        :show-selection="!paneView"
     >
         <template #select-actions>
             <BulkSelect
@@ -29,7 +30,7 @@
             </BulkSelect>
         </template>
         <el-table-column
-            v-if="namespace === undefined"
+            v-if="namespace === undefined && !paneView"
             prop="namespace"
             sortable="custom"
             :sort-orders="['ascending', 'descending']"
@@ -41,6 +42,7 @@
             </template>
         </el-table-column>
         <el-table-column
+            v-if="!paneView"
             prop="description"
             sortable="custom"
             :sort-orders="['ascending', 'descending']"
@@ -53,6 +55,7 @@
             :label="$t('last modified')"
         />
         <el-table-column
+            v-if="!paneView"
             prop="expirationDate"
             sortable="custom"
             :sort-orders="['ascending', 'descending']"
@@ -67,7 +70,7 @@
             </template>
         </el-table-column>
 
-        <el-table-column column-key="update" class-name="row-action">
+        <el-table-column v-if="!paneView" column-key="update" class-name="row-action">
             <template #default="scope">
                 <el-button
                     v-if="canUpdate(scope.row)"
@@ -78,7 +81,7 @@
             </template>
         </el-table-column>
 
-        <el-table-column column-key="delete" class-name="row-action">
+        <el-table-column v-if="!paneView" column-key="delete" class-name="row-action">
             <template #default="scope">
                 <el-button
                     v-if="canDelete(scope.row)"
@@ -258,7 +261,11 @@
             namespace: {
                 type: String,
                 default: undefined
-            }
+            },
+            paneView: {
+                type: Boolean,
+                default: false
+            },
         },
         watch: {
             addKvDrawerVisible(newValue) {

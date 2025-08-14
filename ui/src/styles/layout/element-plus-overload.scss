@@ -7,6 +7,14 @@
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 
 // button
+
+.el-button--wrap {
+    white-space: normal;
+    height: auto;
+    line-height: 1.2;
+    padding: 4px 12px;
+}
+
 .el-button {
     &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info):not(.el-button--playground), &--default {
         --el-button-hover-text-color: var(--ks-content-primary);

@@ -11,7 +11,6 @@
 
 <script>
     import ErrorToast from "./components/ErrorToast.vue";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import Utils from "./utils/utils";
     import {shallowRef} from "vue";
@@ -26,7 +25,7 @@
     import {useLayoutStore} from "./stores/layout";
     import {useCoreStore} from "./stores/core";
     import {useDocStore} from "./stores/doc";
-    import {useMiscStore} from "./stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "./stores/executions";
     import * as BasicAuth from "./utils/basicAuth";
     import {useFlowStore} from "./stores/flow";
@@ -49,7 +48,6 @@
             };
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore, useExecutionsStore, useFlowStore),
             envName() {
                 return this.layoutStore.envName || this.miscStore.configs?.environment?.name;

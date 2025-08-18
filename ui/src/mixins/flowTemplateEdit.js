@@ -1,5 +1,4 @@
 import {canSaveFlowTemplate, saveFlowTemplate} from "../utils/flowTemplate";
-import {mapState} from "vuex";
 
 import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
@@ -15,6 +14,7 @@ import {useApiStore} from "../stores/api";
 import {usePluginsStore} from "../stores/plugins";
 import {useCoreStore} from "../stores/core";
 import {useTemplateStore} from "../stores/template";
+import {useAuthStore} from "override/stores/auth";
 import {useFlowStore} from "../stores/flow";
 
 export default {
@@ -34,8 +34,7 @@ export default {
         };
     },
     computed: {
-        ...mapState("auth", ["user"]),
-        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore, useFlowStore),
+        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore, useFlowStore, useAuthStore),
         guidedProperties() {
             return this.coreStore.guidedProperties;
         },
@@ -46,13 +45,13 @@ export default {
             );
         },
         canSave() {
-            return canSaveFlowTemplate(true, this.user, this.item, this.dataType);
+            return canSaveFlowTemplate(true, this.authStore.user, this.item, this.dataType);
         },
         canCreate() {
-            return this.dataType === "flow" && this.user.isAllowed(permission.FLOW, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user.isAllowed(permission.FLOW, action.CREATE, this.item.namespace)
         },
         canExecute() {
-            return this.dataType === "flow" && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
         },
         routeInfo() {
             let route = {
@@ -90,8 +89,7 @@ export default {
             return (
                 this.item &&
                 this.isEdit &&
-                this.user &&
-                this.user.isAllowed(
+                this.authStore.user?.isAllowed(
                     permission[this.dataType.toUpperCase()],
                     action.DELETE,
                     this.item.namespace

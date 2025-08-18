@@ -17,6 +17,7 @@ import {InputType} from "../utils/inputs";
 import {globalI18n} from "../translations/i18n";
 import {transformResponse} from "../components/dependencies/composables/useDependencies";
 import {useNamespacesStore} from "override/stores/namespaces";
+import {useAuthStore} from "override/stores/auth";
 
 const textYamlHeader = {
     headers: {
@@ -763,17 +764,19 @@ function deleteFlowAndDependencies() {
         flow.value = {...flowVar}
     }
 
+    const authStore = useAuthStore()
+
 
     const isFlow = computed(() => {
         const currentTab = useEditorStore().current;
         return currentTab?.flow !== undefined || isCreating.value;
     })
     const isAllowedEdit = computed((): boolean => {
-        if (!flow.value || !store.getters["auth/user"]) {
+        if (!flow.value || !authStore.user) {
             return false;
         }
 
-        return store.getters["auth/user"].isAllowed(
+        return authStore.user.isAllowed(
             permission.FLOW,
             action.UPDATE,
             flow.value?.namespace,

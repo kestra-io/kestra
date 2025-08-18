@@ -75,7 +75,7 @@
 <script>
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
     import {executeTask} from "../../utils/submitTask"

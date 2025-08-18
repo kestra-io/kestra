@@ -202,10 +202,11 @@
 
     import Utils from "../../utils/utils";
     import KestraFilter from "../filter/KestraFilter.vue";
+    import Id from "../Id.vue";
+    import Drawer from "../Drawer.vue";
 </script>
 
 <script lang="ts">
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {groupBy} from "lodash";
     import {useNamespacesStore} from "override/stores/namespaces";
@@ -214,19 +215,13 @@
     import SelectTableActions from "../../mixins/selectTableActions";
     import action from "../../models/action";
     import permission from "../../models/permission";
-    import Id from "../Id.vue";
-    import Drawer from "../Drawer.vue";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         inheritAttrs: false,
         mixins: [SelectTableActions],
-        components: {
-            Id,
-            Drawer
-        },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useNamespacesStore),
+            ...mapStores(useNamespacesStore, useAuthStore),
             searchQuery() {
                 return this.$route.query.q;
             },
@@ -316,13 +311,13 @@
             };
         },
         methods: {
-            canUpdate(kv) {
-                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
+            canUpdate(kv: {namespace: string}) {
+                return kv.namespace !== undefined && this.authStore.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
             },
-            canDelete(kv) {
-                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
+            canDelete(kv: {namespace: string}) {
+                return kv.namespace !== undefined && this.authStore.user?.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
             },
-            jsonValidator(rule, value, callback) {
+            jsonValidator(_rule: any, value: string, callback: (error?: Error) => void) {
                 try {
                     const parsed = JSON.parse(value);
                     if (typeof parsed !== "object" || parsed === null) {
@@ -334,7 +329,7 @@
                     callback(new Error(this.$t("Invalid input: Expected a JSON formatted string")));
                 }
             },
-            durationValidator(rule, value, callback) {
+            durationValidator(_rule: any, value: string, callback: (error?: Error) => void) {
                 if (value !== undefined && !value.match(/^P(?=[^T]|T.)(?:\d*D)?(?:T(?=.)(?:\d*H)?(?:\d*M)?(?:\d*S)?)?$/)) {
                     callback(new Error(this.$t("datepicker.error")));
                 } else {
@@ -414,7 +409,7 @@
             },
             removeKvs() {
                 const groupedByNamespace = groupBy(this.selection, "namespace");
-                const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => this.user.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
+                const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => this.authStore.user.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
                 const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs);
                 const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n));
                 this.$toast().confirm(

@@ -42,6 +42,8 @@ while [ "$(curl -s -L -o /dev/null -w %{http_code} $KESTRA_BASE_URL)" != "200" ]
   ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
   if [ $ELAPSED_TIME -ge $TIMEOUT_DURATION ]; then
     echo "Timeout reached: Exiting after 5 minutes."
+    echo "printing 'docker logs kestra-e2e-backend'"
+    docker logs kestra-e2e-backend
     exit 1
   fi
   sleep 2

@@ -336,6 +336,9 @@
             ready() {
                 return this.user && this.flowStore.flow;
             },
+            user() {
+                return this.authStore.user;
+            }
         },
         unmounted() {
             this.flowStore.flow = undefined;

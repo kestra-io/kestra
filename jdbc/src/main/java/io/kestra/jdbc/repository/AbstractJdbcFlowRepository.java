@@ -535,7 +535,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         return (SelectConditionStep<R>) context
             .select(fields)
-//            .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(fromLastRevision(false))
             .join(jdbcRepository.getTable().as("ft"))
             .on(

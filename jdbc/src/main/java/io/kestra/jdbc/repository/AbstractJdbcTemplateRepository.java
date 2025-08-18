@@ -111,7 +111,6 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
                     .select(
                         field("value")
                     )
-//                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
@@ -138,7 +137,6 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
                     .select(
                         field("value")
                     )
-//                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 

@@ -298,7 +298,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .select(
                 field("value")
             )
-//            .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId, false))
             .and(NORMAL_KIND_CONDITION);
@@ -327,7 +326,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .select(
                 field("value")
             )
-            .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId, deleted));
 
@@ -357,7 +355,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 

@@ -55,6 +55,18 @@ public interface StorageInterface extends AutoCloseable, Plugin {
     InputStream get(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     /**
+     * Retrieves an input stream of a instance resource for the given storage URI.
+     * An instance resource is a resource stored outside any tenant storage, accessible for the whole instance
+     *
+     * @param namespace the namespace of the object (may be null)
+     * @param uri       the URI of the object to retrieve
+     * @return an InputStream to read the object's contents
+     * @throws IOException if the object cannot be read
+     */
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    InputStream getInstanceResource(@Nullable String namespace, URI uri) throws IOException;
+
+    /**
      * Retrieves a storage object along with its metadata.
      *
      * @param tenantId  the tenant identifier
@@ -92,6 +104,18 @@ public interface StorageInterface extends AutoCloseable, Plugin {
     List<FileAttributes> list(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     /**
+     * Lists the attributes of all instance files and instance directories under the given URI.
+     * An instance resource is a resource stored outside any tenant storage, accessible for the whole instance
+     *
+     * @param namespace the namespace (may be null)
+     * @param uri       the URI to list
+     * @return a list of file attributes
+     * @throws IOException if the listing fails
+     */
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    List<FileAttributes> listInstanceResource(@Nullable String namespace, URI uri) throws IOException;
+
+    /**
      * Checks whether the given URI exists in the internal storage.
      *
      * @param tenantId  the tenant identifier
@@ -109,6 +133,23 @@ public interface StorageInterface extends AutoCloseable, Plugin {
     }
 
     /**
+     * Checks whether the given URI exists in the instance internal storage.
+     * An instance resource is a resource stored outside any tenant storage, accessible for the whole instance
+     *
+     * @param namespace the namespace (may be null)
+     * @param uri       the URI to check
+     * @return true if the URI exists, false otherwise
+     */
+    @SuppressWarnings("try")
+    default boolean existsInstanceResource(@Nullable String namespace, URI uri) {
+        try (InputStream ignored = getInstanceResource(namespace, uri)) {
+            return true;
+        } catch (IOException ieo) {
+            return false;
+        }
+    }
+
+    /**
      * Retrieves the metadata attributes for the given URI.
      *
      * @param tenantId  the tenant identifier
@@ -119,6 +160,18 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      */
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     FileAttributes getAttributes(String tenantId, @Nullable String namespace, URI uri) throws IOException;
+
+    /**
+     * Retrieves the metadata attributes for the given URI.
+     * n instance resource is a resource stored outside any tenant storage, accessible for the whole instance
+     *
+     * @param namespace the namespace (may be null)
+     * @param uri       the URI of the object
+     * @return the file attributes
+     * @throws IOException if the attributes cannot be retrieved
+     */
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    FileAttributes getInstanceAttributes(@Nullable String namespace, URI uri) throws IOException;
 
     /**
      * Stores data at the given URI.
@@ -149,33 +202,85 @@ public interface StorageInterface extends AutoCloseable, Plugin {
     URI put(String tenantId, @Nullable String namespace, URI uri, StorageObject storageObject) throws IOException;
 
     /**
+     * Stores instance data at the given URI.
+     * An instance resource is a resource stored outside any tenant storage, accessible for the whole instance
+     *
+     * @param namespace the namespace (may be null)
+     * @param uri       the target URI
+     * @param data      the input stream containing the data to store
+     * @return the URI of the stored object
+     * @throws IOException if storing fails
+     */
+    @Retryable(includes = {IOException.class})
+    default URI putInstanceResource(@Nullable String namespace, URI uri, InputStream data) throws IOException {
+        return this.putInstanceResource(namespace, uri, new StorageObject(null, data));
+    }
+
+    /**
+     * Stores a instance storage object at the given URI.
+     * An instance resource is a resource stored outside any tenant storage, accessible for the whole instance
+     *
+     * @param namespace     the namespace (may be null)
+     * @param uri           the target URI
+     * @param storageObject the storage object to store
+     * @return the URI of the stored object
+     * @throws IOException if storing fails
+     */
+    @Retryable(includes = {IOException.class})
+    URI putInstanceResource(@Nullable String namespace, URI uri, StorageObject storageObject) throws IOException;
+
+    /**
      * Deletes the object at the given URI.
      *
-     * @param tenantId  the tenant identifier (may be null for global deletion)
+     * @param tenantId  the tenant identifier
      * @param namespace the namespace (may be null)
      * @param uri       the URI of the object to delete
      * @return true if deletion was successful
      * @throws IOException if deletion fails
      */
     @Retryable(includes = {IOException.class})
-    boolean delete(@Nullable String tenantId, @Nullable String namespace, URI uri) throws IOException;
+    boolean delete(String tenantId, @Nullable String namespace, URI uri) throws IOException;
+
+    /**
+     * Deletes the instance object at the given URI.
+     * An instance resource is a resource stored outside any tenant storage, accessible for the whole instance
+     *
+     * @param namespace the namespace (may be null)
+     * @param uri       the URI of the object to delete
+     * @return true if deletion was successful
+     * @throws IOException if deletion fails
+     */
+    @Retryable(includes = {IOException.class})
+    boolean deleteInstanceResource(@Nullable String namespace, URI uri) throws IOException;
 
     /**
      * Creates a new directory at the given URI.
      *
-     * @param tenantId  the tenant identifier (optional)
+     * @param tenantId  the tenant identifier
      * @param namespace the namespace (optional)
      * @param uri       the URI of the directory to create
      * @return the URI of the created directory
      * @throws IOException if creation fails
      */
     @Retryable(includes = {IOException.class})
-    URI createDirectory(@Nullable String tenantId, @Nullable String namespace, URI uri) throws IOException;
+    URI createDirectory(String tenantId, @Nullable String namespace, URI uri) throws IOException;
+
+    /**
+     * Creates a new instance directory at the given URI.
+     * An instance resource is a resource stored outside any tenant storage, accessible for the whole instance
+     *
+     * @param namespace the namespace
+     * @param uri       the URI of the directory to create
+     * @return the URI of the created directory
+     * @throws IOException if creation fails
+     */
+    @Retryable(includes = {IOException.class})
+    URI createInstanceDirectory(String namespace, URI uri) throws IOException;
 
     /**
      * Moves an object from one URI to another.
      *
-     * @param tenantId  the tenant identifier (optional)
+     * @param tenantId  the tenant identifier
      * @param namespace the namespace (optional)
      * @param from      the source URI
      * @param to        the destination URI
@@ -183,7 +288,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @throws IOException if moving fails
      */
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
-    URI move(@Nullable String tenantId, @Nullable String namespace, URI from, URI to) throws IOException;
+    URI move(String tenantId, @Nullable String namespace, URI from, URI to) throws IOException;
 
     /**
      * Deletes all objects that match the given URI prefix.
@@ -226,23 +331,32 @@ public interface StorageInterface extends AutoCloseable, Plugin {
     }
 
     /**
-     * Builds the internal storage path based on tenant ID and URI.
+     * Builds the internal storage path based on the URI.
      *
-     * @param tenantId the tenant identifier (maybe null)
      * @param uri      the URI of the object
      * @return a normalized internal path
      */
-    default String getPath(@Nullable String tenantId, URI uri) {
+    default String getPath(URI uri) {
         if (uri == null) {
             uri = URI.create("/");
         }
 
         parentTraversalGuard(uri);
-
         String path = uri.getPath();
-        if (tenantId != null) {
-            path = tenantId + (path.startsWith("/") ? path :  "/" + path);
-        }
+        path = path.replaceFirst("^/", "");
+        return path;
+    }
+
+    /**
+     * Builds the internal storage path based on tenant ID and URI.
+     *
+     * @param tenantId the tenant identifier
+     * @param uri      the URI of the object
+     * @return a normalized internal path
+     */
+    default String getPath(String tenantId, URI uri) {
+        String path = getPath(uri);
+        path = tenantId + (path.startsWith("/") ? path :  "/" + path);
 
         return path;
     }

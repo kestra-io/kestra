@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, provide, ref} from "vue";
+    import {computed, provide, ref, watch} from "vue";
     import debounce from "lodash/debounce";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import NoCode from "./NoCode.vue";
@@ -89,4 +89,13 @@
             });
         }, 1000);
     };
+
+    watch(
+        () => flowStore.flowYaml,
+        (newVal, oldVal) => {
+            if (newVal !== oldVal) {
+                editorUpdate(newVal);
+            }
+        }
+    );
 </script>

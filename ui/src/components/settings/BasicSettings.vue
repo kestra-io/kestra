@@ -12,7 +12,7 @@
             <template #content>
                 <Row>
                     <Column v-if="allowDefaultNamespace" :label="$t('settings.blocks.configuration.fields.default_namespace')">
-                        <namespace-select data-type="flow" :value="pendingSettings.defaultNamespace" @update:model-value="onNamespaceSelect" />
+                        <namespace-select :value="pendingSettings.defaultNamespace" @update:model-value="onNamespaceSelect" />
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.log_level')">
@@ -265,7 +265,7 @@
     import Utils from "../../utils/utils";
     import {mapStores} from "pinia";
     import {useLayoutStore} from "../../stores/layout";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import {useTemplateStore} from "../../stores/template";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -341,7 +341,7 @@
             };
         },
         created() {
-            this.pendingSettings.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
+            this.pendingSettings.defaultNamespace = localStorage.getItem("defaultNamespace") || "company.team";
             this.pendingSettings.editorType = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.pendingSettings.lang = Utils.getLang();

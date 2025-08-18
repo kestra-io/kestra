@@ -237,9 +237,9 @@ public class ExecutorService {
             try {
                 state = flowableParent.resolveState(runContext, execution, parentTaskRun);
             } catch (Exception e) {
-                // This will lead to the next task being still executed but at least Kestra will not crash.
+                // This will lead to the next task being still executed, but at least Kestra will not crash.
                 // This is the best we can do, Flowable task should not fail, so it's a kind of panic mode.
-                runContext.logger().error("Unable to resolve state from the Flowable task: " + e.getMessage(), e);
+                runContext.logger().error("Unable to resolve state from the Flowable task: {}", e.getMessage(), e);
                 state = Optional.of(State.Type.FAILED);
             }
             Optional<WorkerTaskResult> endedTask = childWorkerTaskTypeToWorkerTask(
@@ -588,6 +588,23 @@ public class ExecutorService {
             if (taskRun.getState().isRetrying() && taskRun.getParentTaskRunId() != null) {
                 list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId()))
                     .collect(Collectors.toCollection(ArrayList::new));
+            }
+
+            // If the task is a flowable and its terminated, check that all children are terminated.
+            // This may not be the case for parallel flowable tasks like Parallel, Dag, ForEach...
+            // After a fail task, some child flowable may not be correctly terminated.
+            if (task instanceof FlowableTask<?> && taskRun.getState().isTerminated()) {
+                List<TaskRun> updated = executor.getExecution().findChildren(taskRun).stream()
+                    .filter(child -> !child.getState().isTerminated())
+                    .map(throwFunction(child -> child.withState(taskRun.getState().getCurrent())))
+                    .toList();
+                if (!updated.isEmpty()) {
+                    Execution execution = executor.getExecution();
+                    for (TaskRun child : updated) {
+                        execution = execution.withTaskRun(child);
+                    }
+                    executor = executor.withExecution(execution, "handledTerminatedFlowableTasks");
+                }
             }
         }
 

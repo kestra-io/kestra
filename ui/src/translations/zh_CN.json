@@ -16,7 +16,6 @@
     "Per page": "每页",
     "Previous step": "上一步",
     "Reset guided tour": "重置引导游览",
-    "Select namespace": "选择命名空间",
     "Set default page": "设置默认页面",
     "Set labels": "设置标签",
     "Set labels done": "标签设置成功",
@@ -50,7 +49,7 @@
     "ai": {
       "flow": {
         "generating": "正在为您生成Flow YAML...",
-        "prompt_placeholder": "输入说明以创建您的 Kestra flow。",
+        "prompt_placeholder": "输入指令以创建您的Kestra flow。示例提示：创建一个每周一上午9点运行的flow。",
         "title": "AI代理"
       }
     },

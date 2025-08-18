@@ -71,7 +71,7 @@
     import {useStore} from "vuex";
     import useNamespaces, {Namespace} from "../../../composables/useNamespaces.ts";
     import {useI18n} from "vue-i18n";
-    import {useMiscStore} from "../../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     import Navbar from "../../../components/layout/TopNavBar.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
@@ -146,7 +146,6 @@
                     currentLevel[label] = {
                         id: label,
                         label,
-                        disabled: item.disabled,
                         description: isLeaf ? item.description : undefined,
                         children: [],
                     };
@@ -159,7 +158,6 @@
                 const result: Node = {
                     id: node.id,
                     label: node.label,
-                    disabled: node.disabled,
                     description: node.description,
                     children: node.children ? build(node.children) : undefined,
                 };

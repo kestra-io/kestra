@@ -546,7 +546,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         }
 
                         // create an SLA monitor if needed
-                        if (execution.getState().getCurrent() == State.Type.CREATED && !ListUtils.isEmpty(flow.getSla())) {
+                        if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().failedThenRestarted()) && !ListUtils.isEmpty(flow.getSla())) {
                             List<SLAMonitor> monitors = flow.getSla().stream()
                                 .filter(ExecutionMonitoringSLA.class::isInstance)
                                 .map(ExecutionMonitoringSLA.class::cast)
@@ -562,7 +562,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                         // handle concurrency limit, we need to use a different queue to be sure that execution running
                         // are processed sequentially so inside a queue with no parallelism
-                        if (execution.getState().getCurrent() == State.Type.CREATED && flow.getConcurrency() != null) {
+                        if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().failedThenRestarted()) && flow.getConcurrency() != null) {
                             ExecutionRunning executionRunning = ExecutionRunning.builder()
                                 .tenantId(executor.getFlow().getTenantId())
                                 .namespace(executor.getFlow().getNamespace())
@@ -1065,7 +1065,11 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 executorService.log(log, false, executor);
             }
 
-            // the terminated state can only come from the execution queue, in this case we always have a flow in the executor
+            // the terminated state can come from the execution queue, in this case we always have a flow in the executor
+            // or from a worker task in an afterExecution block, in this case we need to load the flow
+            if (executor.getFlow() == null && executor.getExecution().getState().isTerminated()) {
+                executor = executor.withFlow(findFlow(executor.getExecution()));
+            }
             boolean isTerminated = executor.getFlow() != null && executionService.isTerminated(executor.getFlow(), executor.getExecution());
 
             // purge the executionQueue
@@ -1121,8 +1125,16 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         executor.getFlow().getId(),
                         throwConsumer(queued -> {
                             var newExecution = queued.withState(State.Type.RUNNING);
-                            metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+                            ExecutionRunning executionRunning = ExecutionRunning.builder()
+                                .tenantId(newExecution.getTenantId())
+                                .namespace(newExecution.getNamespace())
+                                .flowId(newExecution.getFlowId())
+                                .execution(newExecution)
+                                .concurrencyState(ExecutionRunning.ConcurrencyState.RUNNING)
+                                .build();
+                            executionRunningStorage.save(executionRunning);
                             executionQueue.emit(newExecution);
+                            metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
                         })
                     );
                 }
@@ -1207,13 +1219,13 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 try {
                     // Handle paused tasks
                     if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW) && !pair.getLeft().getState().isTerminated()) {
-                        FlowInterface flow = flowMetaStore.findByExecution(pair.getLeft()).orElseThrow();
                         if (executionDelay.getTaskRunId() == null) {
                             // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
                             Execution markAsExecution = pair.getKey().withState(executionDelay.getState());
                             executor = executor.withExecution(markAsExecution, "pausedRestart");
                         } else {
                             // if there is a taskRun it means we restart a paused task
+                            FlowInterface flow = flowMetaStore.findByExecution(pair.getLeft()).orElseThrow();
                             Execution markAsExecution = executionService.markAs(
                                 pair.getKey(),
                                 flow,

@@ -67,6 +67,19 @@
                     }
                 },
             },
+            "flowStore.flow": {
+                deep: true,
+                handler: function (flow) {
+                    if (flow && flow.id) {
+                        // https://github.com/kestra-io/kestra/issues/10484
+                        setTimeout(() => {
+                            this.flowStore
+                                .loadDependencies({namespace: flow.namespace, id: flow.id})
+                                .then(({count}) => this.dependenciesCount = count);
+                        }, 1000);
+                    }
+                },
+            }
         },
         created() {
             if(!this.$route.params.tab) {

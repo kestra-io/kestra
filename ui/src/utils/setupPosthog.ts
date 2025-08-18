@@ -1,5 +1,5 @@
 import {useApiStore} from "../stores/api"
-import {useMiscStore} from "../stores/misc"
+import {useMiscStore} from "override/stores/misc"
 
 export interface SetupEventData {
     type: string
@@ -68,7 +68,7 @@ export function trackSetupEvent(
 
     const eventData: SetupEventData = {
         type: eventName,
-        instance_id: miscStore.configs.uuid,
+        instance_id: miscStore.configs?.uuid,
         user_id: uid,
         ...userInfo,
         ...additionalData

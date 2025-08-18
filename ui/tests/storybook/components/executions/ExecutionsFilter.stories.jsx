@@ -1,8 +1,8 @@
 import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import Executions from "../../../../src/components/executions/Executions.vue";
-import {useMiscStore} from "../../../../src/stores/misc";
-import {useAuthStore} from "../../../../src/override/stores/auth";
+import {useMiscStore} from "override/stores/misc";
+import {useAuthStore} from "override/stores/auth";
 import fixtureS from "./Executions-s.fixture.json";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";

@@ -1,7 +1,7 @@
 import {defineStore} from "pinia";
 import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
-import {useApiStore} from "./api";
-import * as BasicAuth from "../utils/basicAuth"
+import {useApiStore} from "../../stores/api";
+import * as BasicAuth from "../../utils/basicAuth"
 
 interface MiscState {
     configs: any | undefined;

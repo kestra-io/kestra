@@ -100,6 +100,7 @@
     import {mapStores} from "pinia";
     import {usePluginsStore} from "../../../stores/plugins";
     import {useBlueprintsStore} from "../../../stores/blueprints";
+    import {useFlowStore} from "../../../stores/flow";
 
     export default {
         components: {Markdown, CopyToClipboard},
@@ -204,7 +205,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(usePluginsStore, useBlueprintsStore),
+            ...mapStores(usePluginsStore, useBlueprintsStore, useFlowStore),
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },

@@ -57,7 +57,8 @@ jobs:
     name: Publish Docker
     needs: build-artifacts
     uses: ./.github/workflows/docker.yml
-    if: startsWith(github.ref, 'refs/heads/develop') || github.event.inputs.publish-docker == 'true'
+    # FIXME
+    if: startsWith(github.ref, 'refs/heads/refactor/simplify-release-docker-ci') || github.event.inputs.publish-docker == 'true'
     with:
       force-download-artifact: 'true'
       plugin-version: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}

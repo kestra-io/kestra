@@ -78,7 +78,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
                     .select(
                         field("value")
                     )
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
+//                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
@@ -99,7 +99,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
                     .select(
                         field("value")
                     )
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
+//                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 

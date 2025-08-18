@@ -15,14 +15,14 @@
             <EditorButtonsWrapper />
         </div>
         <div class="editor-wrapper">
-            <Splitpanes class="default-theme editor-panels" horizontal>
-                <Pane>
+            <el-splitter class="default-theme editor-panels" layout="vertical">
+                <el-splitter-panel>
                     <MultiPanelTabs v-model="panels" @remove-tab="onRemoveTab" />
-                </Pane>
-                <Pane v-if="playgroundMode">
+                </el-splitter-panel>
+                <el-splitter-panel v-if="playgroundMode">
                     <FlowPlayground />
-                </Pane>
-            </Splitpanes>
+                </el-splitter-panel>
+            </el-splitter>
         </div>
         <KeyShortcuts />
     </div>
@@ -32,7 +32,6 @@
     import {computed, onMounted, onUnmounted, Ref, watch} from "vue";
     import {useStorage} from "@vueuse/core";
     import {useI18n} from "vue-i18n";
-    import {Splitpanes, Pane} from "splitpanes"
     import {useCoreStore} from "../../stores/core";
     import {usePlaygroundStore} from "../../stores/playground";
     import {useEditorStore} from "../../stores/editor";
@@ -56,8 +55,8 @@
     }
 
     const coreStore = useCoreStore()
-    const {showKeyShortcuts} = useKeyShortcuts()
     const flowStore = useFlowStore()
+    const {showKeyShortcuts} = useKeyShortcuts()
 
     onMounted(() => {
         useEditorStore().explorerVisible = false
@@ -101,8 +100,6 @@
             panels.value.push(panel)
         }
     }
-
-
 
     const noCodeHandlers: Parameters<typeof setupInitialNoCodeTab>[2] = {
         onCreateTask(opener, parentPath, blockSchemaPath, refPath, position){
@@ -331,11 +328,11 @@
     }
 
     .default-theme{
-        .splitpanes__pane {
+        :deep(.el-splitter-panel) {
             background-color: var(--ks-background-panel);
         }
 
-        :deep(.splitpanes__splitter){
+        :deep(.el-splitter__splitter){
             border-top-color: var(--ks-border-primary);
             background-color: var(--ks-background-panel);
             &:before, &:after{

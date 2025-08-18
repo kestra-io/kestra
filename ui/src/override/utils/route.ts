@@ -1,4 +1,5 @@
 import type {Store} from "vuex"
+import {RouteLocationNormalizedLoaded} from "vue-router";
 
 declare global {
     interface Window {
@@ -18,4 +19,5 @@ export const apiUrl = (_: Store<any>): string => {
     return `${baseUrl}${basePath()}`;
 }
 
+export const apiUrlWithTenant = (store: Store<any>, _: RouteLocationNormalizedLoaded): string => apiUrl(store);
 export const apiUrlWithoutTenants = (): string => `${baseUrl}/api/v1`

@@ -135,27 +135,32 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      # Docker Build and push
-      - name: Push to Docker Hub
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }}
-          platforms: linux/amd64,linux/arm64
-          build-args: |
-            KESTRA_PLUGINS=${{ steps.vars.outputs.plugins }}
-            APT_PACKAGES=${{ matrix.image.packages }}
-            PYTHON_LIBRARIES=${{ matrix.image.python-libs }}
-
-      - name: Install regctl
-        if: github.event.inputs.retag-latest == 'true'
-        uses: regclient/actions/regctl-installer@main
-
-      - name: Retag to latest
-        if: github.event.inputs.retag-latest == 'true'
+      - name: log tag to be pushed instead of actually pushin it(racevedo)
+        # FIXME do not merge this, this is a dev safety net
         run: |
-          regctl image copy ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }} ${{ format('kestra/kestra:latest{0}', matrix.image.name) }}
+          echo "tag to be published${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }}"
+#
+#      # Docker Build and push
+#      - name: Push to Docker Hub
+#        uses: docker/build-push-action@v6
+#        with:
+#          context: .
+#          push: true
+#          tags: ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }}
+#          platforms: linux/amd64,linux/arm64
+#          build-args: |
+#            KESTRA_PLUGINS=${{ steps.vars.outputs.plugins }}
+#            APT_PACKAGES=${{ matrix.image.packages }}
+#            PYTHON_LIBRARIES=${{ matrix.image.python-libs }}
+#
+#      - name: Install regctl
+#        if: github.event.inputs.retag-latest == 'true'
+#        uses: regclient/actions/regctl-installer@main
+#
+#      - name: Retag to latest
+#        if: github.event.inputs.retag-latest == 'true'
+#        run: |
+#          regctl image copy ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }} ${{ format('kestra/kestra:latest{0}', matrix.image.name) }}
 
   end:
     runs-on: ubuntu-latest

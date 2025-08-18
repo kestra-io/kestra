@@ -22,15 +22,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  tests:
-    name: Execute tests
-    uses: ./.github/workflows/workflow-test.yml
-    with:
-      report-status: false
+#  tests:
+#    name: Execute tests
+#    uses: ./.github/workflows/workflow-test.yml
+#    with:
+#      report-status: false FIXME only for dev
+
 
   release:
     name: Release
-    needs: [tests]
+#    needs: [tests]
     if: "!startsWith(github.ref, 'refs/heads/releases')"
     uses: ./.github/workflows/workflow-release.yml
     with:

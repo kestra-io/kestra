@@ -17,6 +17,8 @@ import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.validations.ManualConstraintViolation;
@@ -75,16 +77,19 @@ public class FlowInputOutput {
     private final StorageInterface storageInterface;
     private final Optional<String> secretKey;
     private final RunContextFactory runContextFactory;
+    private final VariableRenderer variableRenderer;
 
     @Inject
     public FlowInputOutput(
         StorageInterface storageInterface,
         RunContextFactory runContextFactory,
+        VariableRenderer variableRenderer,
         @Nullable @Value("${kestra.encryption.secret-key}") String secretKey
     ) {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
         this.secretKey = Optional.ofNullable(secretKey);
+        this.variableRenderer = variableRenderer;
     }
 
     /**
@@ -249,11 +254,7 @@ public class FlowInputOutput {
         }
 
         final Map<String, ResolvableInput> resolvableInputMap = Collections.unmodifiableMap(inputs.stream()
-            .map(input -> {
-                // get value or default
-                Object value = Optional.ofNullable((Object) data.get(input.getId())).orElseGet(input::getDefaults);
-                return ResolvableInput.of(input, value);
-            })
+            .map(input -> ResolvableInput.of(input,data.get(input.getId())))
             .collect(Collectors.toMap(it -> it.get().input().getId(), Function.identity(), (o1, o2) -> o1, LinkedHashMap::new)));
 
         resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap));
@@ -312,8 +313,16 @@ public class FlowInputOutput {
             });
             resolvable.setInput(input);
 
+            
+            Object value = resolvable.get().value();
+            
+            // resolve default if needed
+            if (value == null && input.getDefaults() != null) {
+                value = resolveDefaultValue(input, runContext);
+                resolvable.isDefault(true);
+            }
+            
             // validate and parse input value
-            final Object value = resolvable.get().value();
             if (value == null) {
                 if (input.getRequired()) {
                     resolvable.resolveWithError(input.toConstraintViolationException("missing required input", null));
@@ -341,7 +350,33 @@ public class FlowInputOutput {
 
         return resolvable.get();
     }
-
+    
+    public static Object resolveDefaultValue(Input<?> input, PropertyContext renderer) throws IllegalVariableEvaluationException {
+        return switch (input.getType()) {
+            case STRING, ENUM, SELECT, SECRET, EMAIL -> resolveDefaultPropertyAs(input, renderer, String.class);
+            case INT -> resolveDefaultPropertyAs(input, renderer, Integer.class);
+            case FLOAT -> resolveDefaultPropertyAs(input, renderer, Float.class);
+            case BOOLEAN, BOOL -> resolveDefaultPropertyAs(input, renderer, Boolean.class);
+            case DATETIME -> resolveDefaultPropertyAs(input, renderer, Instant.class);
+            case DATE -> resolveDefaultPropertyAs(input, renderer, LocalDate.class);
+            case TIME -> resolveDefaultPropertyAs(input, renderer, LocalTime.class);
+            case DURATION -> resolveDefaultPropertyAs(input, renderer, Duration.class);
+            case FILE, URI -> resolveDefaultPropertyAs(input, renderer, URI.class);
+            case JSON, YAML -> resolveDefaultPropertyAs(input, renderer, Object.class);
+            case ARRAY -> resolveDefaultPropertyAsList(input, renderer, Object.class);
+            case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
+        };
+    }
+    
+    @SuppressWarnings("unchecked")
+    private static <T> Object resolveDefaultPropertyAs(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
+        return Property.as((Property<T>) input.getDefaults(), renderer, clazz);
+    }
+    @SuppressWarnings("unchecked")
+    private static <T> Object resolveDefaultPropertyAsList(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
+        return Property.asList((Property<List<T>>) input.getDefaults(), renderer, clazz);
+    }
+    
     private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies) {
         Map<String, Object> flattenInputs = MapUtils.flattenToNestedMap(dependencies.entrySet()
             .stream()
@@ -511,22 +546,26 @@ public class FlowInputOutput {
             return input;
         }
 
+        public void isDefault(boolean isDefault) {
+            this.input = new InputAndValue(this.input.input(), this.input.value(), this.input.enabled(), isDefault, this.input.exception());  
+        }
+        
         public void setInput(final Input<?> input) {
-            this.input = new InputAndValue(input, this.input.value(), this.input.enabled(), this.input.exception());
+            this.input = new InputAndValue(input, this.input.value(), this.input.enabled(), this.input.isDefault(), this.input.exception());
         }
 
         public void resolveWithEnabled(boolean enabled) {
-            this.input = new InputAndValue(this.input.input(), input.value(), enabled, this.input.exception());
+            this.input = new InputAndValue(this.input.input(), input.value(), enabled, this.input.isDefault(), this.input.exception());
             markAsResolved();
         }
 
         public void resolveWithValue(@Nullable Object value) {
-            this.input = new InputAndValue(this.input.input(), value,  this.input.enabled(),  this.input.exception());
+            this.input = new InputAndValue(this.input.input(), value,  this.input.enabled(), this.input.isDefault(), this.input.exception());
             markAsResolved();
         }
 
         public void resolveWithError(@Nullable ConstraintViolationException exception) {
-            this.input = new InputAndValue(this.input.input(),  this.input.value(),  this.input.enabled(), exception);
+            this.input = new InputAndValue(this.input.input(),  this.input.value(), this.input.enabled(), this.input.isDefault(), exception);
             markAsResolved();
         }
 

@@ -28,6 +28,25 @@ on:
         options:
           - "true"
           - "false"
+  workflow_call:
+    inputs:
+      plugin-version:
+        description: "Kestra version"
+        default: 'LATEST'
+        required: false
+        type: string
+      force-download-artifact:
+        description: 'Force download artifact'
+        required: false
+        type: string
+        default: "true"
+    secrets:
+      DOCKERHUB_USERNAME:
+        description: "The Dockerhub username."
+        required: true
+      DOCKERHUB_PASSWORD:
+        description: "The Dockerhub password."
+        required: true
 
 env:
   PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}

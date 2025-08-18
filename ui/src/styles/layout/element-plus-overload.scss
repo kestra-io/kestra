@@ -9,10 +9,17 @@
 // button
 
 .el-button--wrap {
-    white-space: normal;
-    height: auto;
-    line-height: 1.2;
-    padding: 4px 12px;
+  display: inline-block;  
+  max-width: 200px;        
+  overflow: hidden;       
+}
+
+.el-button--wrap span {
+  display: inline-block;   
+  white-space: nowrap;     
+  overflow: hidden;       
+  text-overflow: ellipsis;
+  max-width: 100%;         
 }
 
 .el-button {

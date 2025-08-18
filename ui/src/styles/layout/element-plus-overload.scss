@@ -10,8 +10,9 @@
 
 .el-button--wrap {
   display: inline-block;  
-  max-width: 200px;        
-  overflow: hidden;       
+  max-width: 100%;        
+  overflow: hidden;
+  padding: 2px 4px;       
 }
 
 .el-button--wrap span {

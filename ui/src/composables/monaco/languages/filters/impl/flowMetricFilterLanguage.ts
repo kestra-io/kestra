@@ -1,17 +1,18 @@
 import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion.ts";
 import {FilterLanguage} from "../filterLanguage.ts";
+import {useFlowStore} from "../../../../../stores/flow.ts";
 
 const flowMetricFilterKeys: Record<string, FilterKeyCompletions> = {
     task: new FilterKeyCompletions(
         [Comparators.EQUALS],
-        async (store) => (store.state["flow"].tasksWithMetrics as string[]).map((value) => new Completion(
+        async () => (useFlowStore().tasksWithMetrics as string[]).map((value) => new Completion(
             value,
             value
         ))
     ),
     metric: new FilterKeyCompletions(
         [Comparators.EQUALS],
-        async (store) => (store.state["flow"].metrics as string[]).map((value) => new Completion(
+        async () => (useFlowStore().metrics as string[]).map((value) => new Completion(
             value,
             value
         ))

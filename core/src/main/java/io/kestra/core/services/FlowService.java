@@ -547,29 +547,26 @@ public class FlowService {
             throw noRepositoryException();
         }
 
-        List<FlowTopology> flowTopologies = flowTopologyRepository.get().findByFlow(tenant, namespace, id, destinationOnly);
-        return expandAll ? recursiveFlowTopology(tenant, namespace, id, destinationOnly) : flowTopologies.stream();
+        return expandAll ? recursiveFlowTopology(new ArrayList<>(), tenant, namespace, id, destinationOnly) : flowTopologyRepository.get().findByFlow(tenant, namespace, id, destinationOnly).stream();
     }
 
-    private Stream<FlowTopology> recursiveFlowTopology(String tenantId, String namespace, String flowId, boolean destinationOnly) {
+    private Stream<FlowTopology> recursiveFlowTopology(List<FlowId> flowIds, String tenantId, String namespace, String id, boolean destinationOnly) {
         if (flowTopologyRepository.isEmpty()) {
             throw noRepositoryException();
         }
 
-        List<FlowTopology> flowTopologies = flowTopologyRepository.get().findByFlow(tenantId, namespace, flowId, destinationOnly);
-        List<FlowTopology> subTopologies = flowTopologies.stream()
-            // filter on destination is not the current node to avoid an infinite loop
-            .filter(topology -> !(topology.getDestination().getTenantId().equals(tenantId) && topology.getDestination().getNamespace().equals(namespace) && topology.getDestination().getId().equals(flowId)))
-            .toList();
+        List<FlowTopology> flowTopologies = flowTopologyRepository.get().findByFlow(tenantId, namespace, id, destinationOnly);
 
-        if (subTopologies.isEmpty()) {
+        FlowId flowId = FlowId.of(tenantId, namespace, id, null);
+        if (flowIds.contains(flowId)) {
             return flowTopologies.stream();
-        } else {
-            return Stream.concat(flowTopologies.stream(), subTopologies.stream()
-                .map(topology -> topology.getDestination())
-                // recursively fetch child nodes
-                .flatMap(destination -> recursiveFlowTopology(destination.getTenantId(), destination.getNamespace(), destination.getId(), destinationOnly)));
         }
+        flowIds.add(flowId);
+
+        return flowTopologies.stream()
+            .flatMap(topology -> Stream.of(topology.getDestination(), topology.getSource()))
+            // recursively fetch child nodes
+            .flatMap(node -> recursiveFlowTopology(flowIds, node.getTenantId(), node.getNamespace(), node.getId(), destinationOnly));
     }
 
     private IllegalStateException noRepositoryException() {

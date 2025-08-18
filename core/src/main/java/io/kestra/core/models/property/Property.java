@@ -68,6 +68,19 @@ public class Property<T> {
     String getExpression() {
         return expression;
     }
+    
+    /**
+     * Returns a new {@link Property} with no cached rendered value,
+     * so that the next render will evaluate its original Pebble expression.
+     * <p>
+     * The returned property will still cache its rendered result.
+     * To re-evaluate on a subsequent render, call {@code skipCache()} again.
+     *
+     * @return a new {@link Property} without a pre-rendered value
+     */
+    public Property<T> skipCache() {
+        return Property.ofExpression(expression);
+    }
 
     /**
      * Build a new Property object with a value already set.<br>

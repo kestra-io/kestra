@@ -58,7 +58,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections :dashboard="{id: 'default'}" :charts show-default />
+                <Sections ref="dashboardComponent" :dashboard="{id: 'default'}" :charts show-default />
             </template>
 
             <template #table>
@@ -452,7 +452,7 @@
 <script>
     import {mapState} from "vuex";
     import {mapStores} from "pinia";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc.ts";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -771,6 +771,7 @@
             },
             refresh() {
                 this.recomputeInterval = !this.recomputeInterval;
+                this.$refs.dashboardComponent.refreshCharts();
                 this.load();
             },
             selectionMapper(execution) {

@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-    import {PropType, onMounted, watch, ref} from "vue";
+    import {PropType, watch, ref} from "vue";
 
     import type {RouteLocation} from "vue-router";
 
@@ -34,9 +34,17 @@
         else data.value = props.chart.content ?? props.chart.source?.content;
     };
 
-    const dashboardID = (route: RouteLocation) => getDashboard(route, "id") || "default"
+    const dashboardID = (route: RouteLocation) => getDashboard(route, "id")!;
 
-    watch(route, async (changed) => await getData(dashboardID(changed)));
+    function refresh() {
+        return getData(dashboardID(route));
+    }
 
-    onMounted(async () => await getData(dashboardID(route)));
+    defineExpose({
+        refresh
+    });
+
+    watch(() => route.params.filters, () => {
+        refresh();
+    }, {deep: true, immediate: true});
 </script>

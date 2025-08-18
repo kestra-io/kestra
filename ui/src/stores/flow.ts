@@ -497,63 +497,62 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    function deleteFlowAndDependencies(){
-        const metadata = flowYamlMetadata.value;
+function deleteFlowAndDependencies() {
+    const metadata = flowYamlMetadata.value;
 
-        return new Promise((resolve, reject) => store.$http
-            .get(
-                `${apiUrl(store)}/flows/${metadata.namespace}/${metadata.id
-                }/dependencies`,
-                {params: {destinationOnly: true}}
-            )
-            .then((response) => {
-                let warning = "";
-
-                if (response.data && response.data.nodes) {
-                    const deps = response.data.nodes
-                        .filter(
-                            (n: any) =>
-                                !(
-                                    n.namespace === metadata.namespace &&
-                                    n.id === metadata.id
-                                )
-                        )
-                        .map(
-                            (n: any) =>
-                                "<li>" +
-                                n.namespace +
-                                ".<code>" +
-                                n.id +
-                                "</code></li>"
-                        )
-                        .join("\n");
-
-                    if (deps.length) {
-                        warning =
-                            "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
-                            "<div class=\"el-alert__content\">\n" +
-                            "<p class=\"el-alert__description\">\n" +
-                            t("dependencies delete flow") +
-                            "<ul>\n" +
-                            deps +
-                            "</ul>\n" +
-                            "</p>\n" +
-                            "</div>\n" +
-                            "</div>";
-                    }
-                }
-
-                return t("delete confirm", {name: metadata.id}) + warning;
-            })
-            .then((message) => {
-                return toast
-                    .confirm(message, () => {
-                        resolve(deleteFlow(metadata.value));
-                        return Promise.resolve();
-                    })
-            }).catch(reject)
+    return store.$http
+        .get(
+            `${apiUrl(store)}/flows/${metadata.namespace}/${metadata.id}/dependencies`,
+            {params: {destinationOnly: true}}
         )
-    }
+        .then((response) => {
+            let warning = "";
+            if (response.data && response.data.nodes) {
+                const deps = response.data.nodes
+                    .filter(
+                        (n: any) =>
+                            !(
+                                n.namespace === metadata.namespace &&
+                                n.id === metadata.id
+                            )
+                    )
+                    .map(
+                        (n: any) =>
+                            "<li>" +
+                            n.namespace +
+                            ".<code>" +
+                            n.id +
+                            "</code></li>"
+                    )
+                    .join("\n");
+
+                if (deps.length) {
+                    warning =
+                        "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
+                        "<div class=\"el-alert__content\">\n" +
+                        "<p class=\"el-alert__description\">\n" +
+                        t("dependencies delete flow") +
+                        "<ul>\n" +
+                        deps +
+                        "</ul>\n" +
+                        "</p>\n" +
+                        "</div>\n" +
+                        "</div>";
+                }
+            }
+            return t("delete confirm", {name: metadata.id}) + warning;
+        })
+        .then((message) => {
+            return new Promise((resolve, reject) => {
+                toast.confirm(message, () => {
+                    return deleteFlow({namespace: metadata.namespace, id: metadata.id}).then(resolve).catch(reject);
+                }, "warning");
+            });
+        })
+        .catch(error => {
+            return Promise.reject(error);
+        });
+}
 
     function deleteFlow(options: { namespace: string, id: string }) {
         return store.$http.delete(`${apiUrl(store)}/flows/${options.namespace}/${options.id}`).then(() => {

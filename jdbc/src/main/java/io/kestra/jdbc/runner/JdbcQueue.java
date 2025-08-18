@@ -7,16 +7,13 @@ import com.google.common.collect.Iterables;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.queues.QueueService;
+import io.kestra.core.queues.*;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTableConfigs;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
@@ -151,6 +148,11 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                     .execute();
             });
         } catch (DataException e) { // The exception is from the data itself, not the database/network/driver so instead of fail fast, we throw a recoverable QueueException
+            // Postgres refuses to store JSONB with the '\0000' codepoint as it has no textual representation.
+            // We try to detect that and fail with a specific exception so the Worker can recover from it.
+            if (e.getMessage() != null && e.getMessage().contains("ERROR: unsupported Unicode escape sequence")) {
+                throw new UnsupportedMessageException(e.getMessage(), e);
+            }
             throw new QueueException("Unable to emit a message to the queue", e);
         }
 
@@ -397,7 +399,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
                 return result;
             });
-            
+
             if (!inTransaction) {
                 consumer.accept(null, this.map(fetch));
                 dslContextWrapper.transaction(configuration ->

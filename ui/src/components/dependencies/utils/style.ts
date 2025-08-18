@@ -22,7 +22,7 @@ const VARIABLES = {
         },
     },
     edge: {
-        default: "--ks-dependencies-edge",
+        default: "--ks-dependencies-node-border",
         faded: "--ks-dependencies-edge-selected-level2",
         hovered: "--ks-dependencies-edge-hover",
     },

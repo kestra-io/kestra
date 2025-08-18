@@ -84,50 +84,46 @@ abstract public class JdbcQueueTest {
 
     @Test
     void withType() throws InterruptedException, QueueException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, Indexer.class, either -> {
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, Indexer.class, throwConsumer(either -> {
+            FlowInterface flow = either.getLeft();
+            if (flow.getNamespace().equals("io.kestra.f1")) {
+                // second one
+                flowQueue.emit(builder("io.kestra.f2"));
+            }
+
             countDownLatch.countDown();
-        });
+        }));
 
         // first one
         flowQueue.emit(builder("io.kestra.f1"));
+
         assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
-        assertThat(receive.blockLast().getNamespace()).isEqualTo("io.kestra.f1");
+        receive.blockLast();
 
-        CountDownLatch countDownLatch2 = new CountDownLatch(1);
-        receive = TestsUtils.receive(flowQueue, Indexer.class, either -> {
-            countDownLatch2.countDown();
-        });
-
-        // second one only
-        flowQueue.emit(builder("io.kestra.f2"));
-        assertTrue(countDownLatch2.await(5, TimeUnit.SECONDS));
-        assertThat(receive.blockLast().getNamespace()).isEqualTo("io.kestra.f2");
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
     }
 
     // FIXME
     @Test
     void withGroupAndType() throws InterruptedException, QueueException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, "consumer_group", Indexer.class, either -> {
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, "consumer_group", Indexer.class, throwConsumer(either -> {
+            FlowInterface flow = either.getLeft();
+            if (flow.getNamespace().equals("io.kestra.f1")) {
+                flowQueue.emit("consumer_group", builder("io.kestra.f2"));
+            }
+
             countDownLatch.countDown();
-        });
+        }));
 
         // first one
         flowQueue.emit("consumer_group", builder("io.kestra.f1"));
+
         assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
-        assertThat(receive.blockLast().getNamespace()).isEqualTo("io.kestra.f1");
+        receive.blockLast();
 
-        CountDownLatch countDownLatch2 = new CountDownLatch(1);
-        receive = TestsUtils.receive(flowQueue, "consumer_group", Indexer.class, either -> {
-            countDownLatch2.countDown();
-        });
-
-        // second one only
-        flowQueue.emit("consumer_group", builder("io.kestra.f2"));
-        assertTrue(countDownLatch2.await(5, TimeUnit.SECONDS));
-
-        assertThat(receive.blockLast().getNamespace()).isEqualTo("io.kestra.f2");
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
     }
 
     private static FlowWithSource builder(String namespace) {

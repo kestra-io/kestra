@@ -16,7 +16,6 @@
     "Per page": "na stronę",
     "Previous step": "Poprzedni krok",
     "Reset guided tour": "Restartuj przewodnik",
-    "Select namespace": "Namespace",
     "Set default page": "Ustaw domyślną stronę",
     "Set labels": "Ustaw etykiety",
     "Set labels done": "Pomyślnie ustawiono etykiety wykonania",
@@ -50,7 +49,7 @@
     "ai": {
       "flow": {
         "generating": "Generowanie YAML dla flow...",
-        "prompt_placeholder": "Wprowadź instrukcje, aby utworzyć swój flow w Kestra.",
+        "prompt_placeholder": "Wprowadź instrukcje, aby utworzyć swój flow w Kestra. Przykładowa podpowiedź: Utwórz flow, który uruchamia się w każdy poniedziałek o 9:00.",
         "title": "Agent AI"
       }
     },

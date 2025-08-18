@@ -206,7 +206,7 @@
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import MailChecker from "mailchecker"
-    import {useMiscStore} from "../../stores/misc"
+    import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {initPostHogForSetup, trackSetupEvent} from "../../utils/setupPosthog"
 

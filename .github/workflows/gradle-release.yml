@@ -33,13 +33,13 @@ jobs:
             exit 1;
           fi
       # Checkout
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           path: kestra
 
       # Checkout GitHub Actions
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: kestra-io/actions
           path: actions

@@ -428,7 +428,7 @@
                         secret.value = this.secret.value;
                     }
 
-                    const action = this.isSecretValueUpdated() ? this.namespacesStore.createSecrets : this.namespacesStore.patchSecret;
+                    const action = this.isSecretValueUpdated() ? this.namespacesStore?.createSecrets : this.namespacesStore?.patchSecret;
                     return action({namespace: this.secret.namespace, secret: secret})
                         .then(() => {
                             this.secret.update = true;

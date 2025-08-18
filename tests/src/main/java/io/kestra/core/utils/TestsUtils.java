@@ -155,6 +155,7 @@ abstract public class TestsUtils {
         Trigger triggerContext = Trigger.builder()
             .triggerId(trigger.getId())
             .flowId(flow.getId())
+            .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .date(ZonedDateTime.now())
             .build();

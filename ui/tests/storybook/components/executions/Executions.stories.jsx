@@ -1,7 +1,7 @@
 import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import Executions from "../../../../src/components/executions/Executions.vue";
-import {useMiscStore} from "../../../../src/stores/misc";
+import {useMiscStore} from "override/stores/misc";
 import fixture from "./Executions.fixture.json"
 import fixtureS from "./Executions-s.fixture.json"
 

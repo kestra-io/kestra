@@ -49,7 +49,7 @@ on:
         required: true
 
 env:
-  PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
+  PLUGIN_VERSION: ${{ inputs.plugin-version != null && inputs.plugin-version || 'LATEST' }}
 jobs:
   plugins:
     name: List Plugins
@@ -72,7 +72,7 @@ jobs:
   # ********************************************************************************************************************
   build-artifacts:
     name: Build Artifacts
-    if: ${{ github.event.inputs.force-download-artifact == 'true' }}
+    if: ${{ inputs.force-download-artifact == 'true' }}
     uses: ./.github/workflows/workflow-build-artifacts.yml
 
   docker:
@@ -115,7 +115,7 @@ jobs:
       # Download executable from GitHub Release
       - name: Artifacts - Download release (workflow_dispatch)
         id: download-github-release
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.force-download-artifact == 'false'
+        if: github.event_name == 'workflow_dispatch' && inputs.force-download-artifact == 'false'
         uses: robinraju/release-downloader@v1.12
         with:
           tag: ${{steps.vars.outputs.tag}}
@@ -173,11 +173,11 @@ jobs:
 #            PYTHON_LIBRARIES=${{ matrix.image.python-libs }}
 #
 #      - name: Install regctl
-#        if: github.event.inputs.retag-latest == 'true'
+#        if: inputs.retag-latest == 'true'
 #        uses: regclient/actions/regctl-installer@main
 #
 #      - name: Retag to latest
-#        if: github.event.inputs.retag-latest == 'true'
+#        if: inputs.retag-latest == 'true'
 #        run: |
 #          regctl image copy ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }} ${{ format('kestra/kestra:latest{0}', matrix.image.name) }}
 

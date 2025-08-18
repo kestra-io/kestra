@@ -100,6 +100,7 @@
     import {usePluginsStore} from "../../../stores/plugins";
     import {useBlueprintsStore} from "../../../stores/blueprints";
     import {useAuthStore} from "override/stores/auth"
+    import {useFlowStore} from "../../../stores/flow";
 
     export default {
         components: {Markdown, CopyToClipboard},
@@ -203,7 +204,7 @@
                 });
         },
         computed: {
-            ...mapStores(usePluginsStore, useBlueprintsStore, useAuthStore),
+            ...mapStores(usePluginsStore, useBlueprintsStore, useFlowStore, useAuthStore),
             userCanCreateFlow() {
                 return this.authStore.user?.hasAnyAction(permission.FLOW, action.CREATE);
             },

@@ -1,150 +1,152 @@
 <template>
     <div class="outputs">
-        <div
-            class="d-flex flex-column overflow-x-auto left"
-            :style="{width: leftWidth + '%'}"
-        >
-            <el-cascader-panel
-                ref="cascader"
-                v-model="selected"
-                :options="outputs"
-                :border="false"
-                class="flex-grow-1 cascader"
-                @expand-change="() => scrollRight()"
-            >
-                <template #default="{data}">
-                    <div
-                        v-if="data.heading"
-                        @click="expandedValue = data.path"
-                        class="pe-none d-flex fs-5"
+        <el-splitter>
+            <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'">
+                <div class="d-flex flex-column overflow-x-auto left">
+                    <el-cascader-panel
+                        ref="cascader"
+                        v-model="selected"
+                        :options="outputs"
+                        :border="false"
+                        class="flex-grow-1 cascader"
+                        @expand-change="() => scrollRight()"
                     >
-                        <component :is="data.component" class="me-2" />
-                        <span>{{ data.label }}</span>
-                    </div>
-
-                    <div
-                        v-else
-                        @click="expandedValue = data.path"
-                        class="w-100 d-flex justify-content-between"
-                    >
-                        <div class="pe-5 d-flex task">
-                            <TaskIcon
-                                v-if="data.icon"
-                                :icons="pluginsStore.icons"
-                                :cls="icons[data.taskId]"
-                                only-icon
-                            />
-                            <span :class="{'ms-3': data.icon}">{{
-                                data.label
-                            }}</span>
-                        </div>
-                        <code>
-                            <span
-                                :class="{
-                                    regular: processedValue(data).regular,
-                                }"
+                        <template #default="{data}">
+                            <div
+                                v-if="data.heading"
+                                @click="expandedValue = data.path"
+                                class="pe-none d-flex fs-5"
                             >
-                                {{ processedValue(data).label }}
-                            </span>
-                        </code>
-                    </div>
-                </template>
-            </el-cascader-panel>
-        </div>
-        <div class="slider" @mousedown="startDragging" />
-        <div class="right wrapper" :style="{width: 100 - leftWidth + '%', 'z-index': 999}">
-            <div
-                v-if="multipleSelected || selectedValue"
-                class="w-100 overflow-auto p-3 content-container"
-            >
-                <div class="d-flex justify-content-between pe-none fs-5 values">
-                    <code class="d-block">
-                        {{ selectedNode()?.label ?? "Value" }}
-                    </code>
-                </div>
+                                <component :is="data.component" class="me-2" />
+                                <span>{{ data.label }}</span>
+                            </div>
 
-                <el-collapse
-                    v-model="debugCollapse"
-                    class="mb-3 debug bordered"
-                >
-                    <el-collapse-item name="debug">
-                        <template #title>
-                            <span>{{ t("eval.title") }}</span>
+                            <div
+                                v-else
+                                @click="expandedValue = data.path"
+                                class="w-100 d-flex justify-content-between"
+                            >
+                                <div class="pe-5 d-flex task">
+                                    <TaskIcon
+                                        v-if="data.icon"
+                                        :icons="pluginsStore.icons"
+                                        :cls="icons[data.taskId]"
+                                        only-icon
+                                    />
+                                    <span :class="{'ms-3': data.icon}">{{
+                                        data.label
+                                    }}</span>
+                                </div>
+                                <code>
+                                    <span
+                                        :class="{
+                                            regular: processedValue(data).regular,
+                                        }"
+                                    >
+                                        {{ processedValue(data).label }}
+                                    </span>
+                                </code>
+                            </div>
                         </template>
-
-                        <div class="d-flex flex-column p-3 debug">
-                            <editor
-                                ref="debugEditor"
-                                :full-height="false"
-                                :custom-height="20"
-                                :input="true"
-                                :navbar="false"
-                                :model-value="computedDebugValue"
-                                @update:model-value="editorValue = $event"
-                                @confirm="onDebugExpression($event)"
-                                class="w-100"
-                            />
-
-                            <el-button
-                                type="primary"
-                                @click="
-                                    onDebugExpression(
-                                        editorValue.length > 0 ? editorValue : computedDebugValue,
-                                    )
-
-                                "
-                                class="mt-3"
-                            >
-                                {{ t("eval.title") }}
-                            </el-button>
-
-                            <editor
-                                v-if="debugExpression"
-                                :read-only="true"
-                                :input="true"
-                                :full-height="false"
-                                :custom-height="20"
-                                :navbar="false"
-                                :model-value="debugExpression"
-                                :lang="isJSON ? 'json' : ''"
-                                class="mt-3"
-                            />
+                    </el-cascader-panel>
+                </div>
+            </el-splitter-panel>
+            <el-splitter-panel>
+                <div class="right wrapper" :style="{'z-index': 999}">
+                    <div
+                        v-if="multipleSelected || selectedValue"
+                        class="w-100 overflow-auto p-3 content-container"
+                    >
+                        <div class="d-flex justify-content-between pe-none fs-5 values">
+                            <code class="d-block">
+                                {{ selectedNode()?.label ?? "Value" }}
+                            </code>
                         </div>
-                    </el-collapse-item>
-                </el-collapse>
 
-                <el-alert
-                    v-if="debugError"
-                    type="error"
-                    :closable="false"
-                    class="overflow-auto"
-                >
-                    <p>
-                        <strong>{{ debugError }}</strong>
-                    </p>
-                    <div class="my-2">
-                        <CopyToClipboard
-                            :text="`${debugError}\n\n${debugStackTrace}`"
-                            label="Copy Error"
-                            class="d-inline-block me-2"
+                        <el-collapse
+                            v-model="debugCollapse"
+                            class="mb-3 debug bordered"
+                        >
+                            <el-collapse-item name="debug">
+                                <template #title>
+                                    <span>{{ t("eval.title") }}</span>
+                                </template>
+
+                                <div class="d-flex flex-column p-3 debug">
+                                    <editor
+                                        ref="debugEditor"
+                                        :full-height="false"
+                                        :custom-height="20"
+                                        :input="true"
+                                        :navbar="false"
+                                        :model-value="computedDebugValue"
+                                        @update:model-value="editorValue = $event"
+                                        @confirm="onDebugExpression($event)"
+                                        class="w-100"
+                                    />
+
+                                    <el-button
+                                        type="primary"
+                                        @click="
+                                            onDebugExpression(
+                                                editorValue.length > 0 ? editorValue : computedDebugValue,
+                                            )
+
+                                        "
+                                        class="mt-3"
+                                    >
+                                        {{ t("eval.title") }}
+                                    </el-button>
+
+                                    <editor
+                                        v-if="debugExpression"
+                                        :read-only="true"
+                                        :input="true"
+                                        :full-height="false"
+                                        :custom-height="20"
+                                        :navbar="false"
+                                        :model-value="debugExpression"
+                                        :lang="isJSON ? 'json' : ''"
+                                        class="mt-3"
+                                    />
+                                </div>
+                            </el-collapse-item>
+                        </el-collapse>
+
+                        <el-alert
+                            v-if="debugError"
+                            type="error"
+                            :closable="false"
+                            class="overflow-auto"
+                        >
+                            <p>
+                                <strong>{{ debugError }}</strong>
+                            </p>
+                            <div class="my-2">
+                                <CopyToClipboard
+                                    :text="`${debugError}\n\n${debugStackTrace}`"
+                                    label="Copy Error"
+                                    class="d-inline-block me-2"
+                                />
+                            </div>
+                            <pre class="mb-0" style="overflow: scroll">{{
+                                debugStackTrace
+                            }}</pre>
+                        </el-alert>
+
+                        <VarValue
+                            v-if="displayVarValue()"
+                            :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
+                            :execution="execution"
+                        />
+                        <SubFlowLink
+                            v-if="selectedNode().label === 'executionId'"
+                            :execution-id="selectedNode().value"
                         />
                     </div>
-                    <pre class="mb-0" style="overflow: scroll">{{
-                        debugStackTrace
-                    }}</pre>
-                </el-alert>
-
-                <VarValue
-                    v-if="displayVarValue()"
-                    :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
-                    :execution="execution"
-                />
-                <SubFlowLink
-                    v-if="selectedNode().label === 'executionId'"
-                    :execution-id="selectedNode().value"
-                />
-            </div>
-        </div>
+                </div>
+            </el-splitter-panel>
+        </el-splitter>
     </div>
 </template>
 
@@ -426,49 +428,33 @@
         isFile(selectedValue.value) ||
         selectedValue.value !== debugExpression.value;
 
-    const leftWidth = ref(70);
-    const startDragging = (event: MouseEvent) => {
-        const startX = event.clientX;
-        const startWidth = leftWidth.value;
-
-        const onMouseMove = (moveEvent: MouseEvent) => {
-            const delta = ((moveEvent.clientX - startX) / window.innerWidth) * 100;
-            leftWidth.value = Math.max(30, Math.min(70, startWidth + delta));
-        };
-
-        const onMouseUp = () => {
-            document.removeEventListener("mousemove", onMouseMove);
-            document.removeEventListener("mouseup", onMouseUp);
-        };
-
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
-    };
+    const leftWidth = ref("70%");
 </script>
 
 <style lang="scss">
-.slider {
-    width: 3px;
-    cursor: ew-resize;
-    position: relative;
-    background-color: var(--ks-border-primary);
-    user-select: none;
-
-    &:hover {
-        background-color: var(--ks-border-active);
-    }
-}
-
 .outputs {
     display: flex;
     width: 100%;
     height: 100vh;
     overflow: hidden;
 
+    .el-splitter-bar {
+        width: 3px !important;
+        background-color: var(--ks-border-primary);
+
+        &:hover {
+            background-color: var(--ks-border-active);
+        }
+    }
+
     .el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child,
     .values {
         pointer-events: none;
         margin: 0.75rem 0 1.25rem 0;
+    }
+
+    .el-cascader-menu__list {
+        min-height: 100vh;
     }
 
     .el-cascader-panel {

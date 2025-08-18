@@ -432,7 +432,7 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/flow-concurrency-queue-fail.yml"})
-    void concurrencyQueueRestarted() throws Exception {
+    protected void concurrencyQueueRestarted() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueueRestarted();
     }
 

@@ -23,52 +23,55 @@
         </template>
     </el-dropdown>
 </template>
-<script setup>
-    import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
+<script setup lang="ts">
+    import {computed} from "vue";
+    import {useI18n} from "vue-i18n";
+    import {useStore} from "vuex";
+
     import Circle from "vue-material-design-icons/Circle.vue";
-</script>
-<script>
-    import {mapState} from "vuex";
-    import {mapStores} from "pinia";
+    import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
+
+    import {State} from "@kestra-io/ui-libs";
+
     import {useExecutionsStore} from "../../stores/executions";
-    import permission from "../../models/permission";
+    import {useToast} from "../../utils/toast";
     import action from "../../models/action";
-    import {State} from "@kestra-io/ui-libs"
+    import permission from "../../models/permission";
 
-    export default {
-        props: {
-            execution: {
-                type: Object,
-                required: true
-            },
-        },
-        methods: {
-            kill(isOnKillCascade) {
-                this.$toast()
-                    .confirm(this.$t("killed confirm", {id: this.execution.id}), () => {
-                        return this.executionsStore
-                            .kill({
-                                id: this.execution.id,
-                                isOnKillCascade: isOnKillCascade
-                            })
-                            .then(() => {
-                                this.$toast().success(this.$t("killed done"));
-                            })
-                    });
-            }
-        },
-        computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
-            enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace))) {
-                    return false;
-                }
-
-                return State.isKillable(this.execution.state.current);
-            }
+    const props = defineProps({
+        execution: {
+            type: Object,
+            required: true
         }
-    };
+    });
+
+    const {t} = useI18n();
+    const store = useStore();
+    const executionsStore = useExecutionsStore();
+    const toast = useToast();
+
+    const user = computed(() => store.state.auth.user);
+
+    const enabled = computed(() => {
+        if (!(user.value && user.value.isAllowed(permission.EXECUTION, action.DELETE, props.execution.namespace))) {
+            return false;
+        }
+
+        return State.isKillable(props.execution.state.current);
+    });
+
+    function kill(isOnKillCascade: boolean) {
+        toast.confirm(t("killed confirm", {id: props.execution.id}), () => {
+            return executionsStore
+                .kill({
+                    id: props.execution.id,
+                    isOnKillCascade: isOnKillCascade
+                })
+                .then(() => {
+                    toast.success(t("killed done"));
+                });
+        });
+    }
 </script>
 
 <style lang="scss" scoped>

@@ -1,0 +1,28 @@
+id: parallel-fail-with-flowable
+namespace: io.kestra.tests
+
+inputs:
+  - id: user
+    type: STRING
+    defaults: Rick Astley
+
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: if-1
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ inputs.user == 'Rick Astley'}}"
+        then:
+          - id: sleep
+            type: io.kestra.plugin.core.flow.Sleep
+            duration: PT1S
+
+      - id: if-2
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ inputs.user == 'Rick Astley'}}"
+        then:
+          - id: fail_missing_variable
+            type: io.kestra.plugin.core.log.Log
+            message: "{{ vars.nonexistent_variable }}"

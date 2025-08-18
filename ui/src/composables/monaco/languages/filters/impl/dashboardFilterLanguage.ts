@@ -12,7 +12,7 @@ const dashboardFilterKeys: Record<string, FilterKeyCompletions> = {
             const user = store.getters["auth/user"] as Me;
             if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
                 const namespacesStore = useNamespacesStore();
-                return [...new Set(((await namespacesStore.loadNamespacesForDatatype({dataType: "flow"})) as string[])
+                return [...new Set(((await namespacesStore.loadAutocomplete()) as string[])
                     .flatMap(namespace => {
                         return namespace.split(".").reduce((current: string[], part: string) => {
                             const previousCombination = current?.[current.length - 1];

@@ -48,8 +48,8 @@
             v-on="activeTab['v-on'] ?? {}"
             ref="tabContent"
             :is="activeTab.component"
+            :namespace="namespaceToForward"
             @go-to-detail="blueprintId => selectedBlueprintId = blueprintId"
-            :namespace
             :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
         />
     </section>
@@ -204,6 +204,11 @@
                     Object.entries(this.$attrs)
                         .filter(([key]) => key !== "class")
                 );
+            },
+            namespaceToForward(){
+                return this.activeTab.props?.namespace ?? this.namespace;
+                // in the special case of Namespace creation on Namespaces page, the tabs are loaded before the namespace creation
+                // in this case this.props.namespace will be used
             }
         }
     };

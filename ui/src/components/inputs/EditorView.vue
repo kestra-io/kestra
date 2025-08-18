@@ -152,7 +152,7 @@
                         @tab-loaded="onTabLoaded"
                         :read-only="isReadOnly"
                         :navbar="false"
-                        :original="flowYaml"
+                        :original="isNamespace ? undefined : flowYaml"
                         :diff-side-by-side="false"
                     />
                 </template>

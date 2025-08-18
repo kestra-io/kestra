@@ -64,7 +64,7 @@
     import EmptyVisualPlayground from "../../assets/empty_visuals/playground.svg"
     import {useExecutionsStore} from "../../stores/executions";
     import Kill from "../executions/Kill.vue";
-    
+
     const {t} = useI18n();
 
     const tabs = computed(() => ([
@@ -133,7 +133,7 @@
             font-size: .8rem;
             font-weight: normal;
             line-height: 1.2rem;
-            padding: 0 8px 4px;
+            padding: .25rem .5rem;
             position: sticky;
             background-color: var(--ks-background-panel);
             top: 0;

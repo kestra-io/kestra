@@ -85,7 +85,7 @@
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
     import {useDocStore} from "../../stores/doc";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     // @ts-expect-error no clean way to have focus on inputs

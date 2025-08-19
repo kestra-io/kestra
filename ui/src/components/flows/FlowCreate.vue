@@ -6,7 +6,6 @@
 </template>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import RouteContext from "../../mixins/routeContext";
@@ -70,7 +69,6 @@ tasks:
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useBlueprintsStore, useCoreStore, useEditorStore, useFlowStore),
             routeInfo() {
                 return {

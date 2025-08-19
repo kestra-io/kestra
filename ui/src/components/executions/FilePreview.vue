@@ -105,7 +105,7 @@
     import {mapStores} from "pinia";
     import Markdown from "../layout/Markdown.vue";
     import Drawer from "../Drawer.vue";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
 
     export default {

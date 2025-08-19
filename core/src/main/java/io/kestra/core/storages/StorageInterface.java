@@ -331,6 +331,23 @@ public interface StorageInterface extends AutoCloseable, Plugin {
     }
 
     /**
+     * Builds the internal storage path based on the URI.
+     *
+     * @param uri      the URI of the object
+     * @return a normalized internal path
+     */
+    default String getPath(URI uri) {
+        if (uri == null) {
+            uri = URI.create("/");
+        }
+
+        parentTraversalGuard(uri);
+        String path = uri.getPath();
+        path = path.replaceFirst("^/", "");
+        return path;
+    }
+
+    /**
      * Builds the internal storage path based on tenant ID and URI.
      *
      * @param tenantId the tenant identifier
@@ -338,13 +355,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return a normalized internal path
      */
     default String getPath(String tenantId, URI uri) {
-        if (uri == null) {
-            uri = URI.create("/");
-        }
-
-        parentTraversalGuard(uri);
-
-        String path = uri.getPath();
+        String path = getPath(uri);
         path = tenantId + (path.startsWith("/") ? path :  "/" + path);
 
         return path;

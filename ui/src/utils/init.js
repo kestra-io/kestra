@@ -68,6 +68,12 @@ export default async (app, routes, stores, translations, additionalTranslations 
         LinearScale
     );
 
+    // router
+    let router = createRouter({
+        history: createWebHistory(window.KESTRA_UI_PATH),
+        routes
+    });
+
     // store
     let store = createStore(stores);
     app.use(store);
@@ -91,15 +97,10 @@ export default async (app, routes, stores, translations, additionalTranslations 
             patch: (url, data, config) => {
                 return store.$http.patch(url, data, config);
             }
-        }
+        };
+        piniaStoreLocal.$router = router;
     });
     app.use(piniaStore);
-
-    // router
-    let router = createRouter({
-        history: createWebHistory(window.KESTRA_UI_PATH),
-        routes
-    });
 
     /**
      * Manage docId initialization for Contextual docs

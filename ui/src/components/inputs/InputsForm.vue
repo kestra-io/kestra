@@ -265,7 +265,6 @@
 </script>
 <script>
     import {toRaw} from "vue";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import debounce from "lodash/debounce";
@@ -284,7 +283,6 @@
 
     export default {
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useExecutionsStore),
             inputErrors() {
                 // we only keep errors that don't target an input directly

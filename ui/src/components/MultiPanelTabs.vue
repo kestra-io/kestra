@@ -267,7 +267,7 @@
         !draggingPanel.value
     );
 
-    function onResize(sizes: number[], _index: number) {
+    function onResize(_index: number, sizes: number[]) {
         // Element Plus resize event provides sizes array and index of the resized panel
         for (let i = 0; i < panels.value.length && i < sizes.length; i++) {
             panels.value[i].size = sizes[i];

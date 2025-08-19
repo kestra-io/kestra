@@ -23,7 +23,17 @@
                 sortable="custom"
                 :sort-orders="['ascending', 'descending']"
                 :label="$t('namespace')"
-            />
+            >
+                <template #default="scope">
+                    <el-tag
+                        type="info"
+                        class="namespace-tag"
+                    >
+                        <DotsSquare />
+                        {{ scope.row.namespace }}
+                    </el-tag>
+                </template>
+            </el-table-column>
             <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="keyOnly ? $t('secret.names') : $t('key')">
                 <template #default="scope">
                     <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
@@ -155,6 +165,7 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
+    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
 
     import Utils from "../../utils/utils";
@@ -467,3 +478,17 @@
         },
     };
 </script>
+<style lang="scss" scoped>
+.namespace-tag {
+    background-color: var(--ks-log-background-debug) !important;
+    color: var(--ks-log-content-debug);
+    border: 1px solid var(--ks-log-border-debug);
+    padding: 0 6px;
+
+    :deep(.el-tag__content) {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+}
+</style>

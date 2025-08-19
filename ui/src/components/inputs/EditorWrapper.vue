@@ -38,7 +38,7 @@
             v-if="aiAgentOpened"
             class="position-absolute prompt"
             @close="aiAgentOpened = false"
-            :flow="flowContent"
+            :flow="editorContent"
             @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
         />
     </Transition>
@@ -145,7 +145,7 @@
 
     const timeout = ref<any>(null);
 
-    const flowContent = computed(() => {
+    const editorContent = computed(() => {
         return draftSource.value ?? source.value;
     });
 
@@ -153,7 +153,7 @@
     const namespacesStore = useNamespacesStore();
 
     function editorUpdate(newValue: string){
-        if (flowContent.value === newValue) {
+        if (editorContent.value === newValue) {
             return;
         }
         if (isCurrentTabFlow.value) {
@@ -220,7 +220,7 @@
         await namespacesStore.createFile({
             namespace: namespace.value,
             path: props.path,
-            content: editorRefElement.value?.modelValue || "",
+            content: editorContent.value || "",
         });
         editorStore.setTabDirty({
             path: props.path,

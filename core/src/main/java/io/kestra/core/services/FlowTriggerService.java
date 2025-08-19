@@ -55,7 +55,7 @@ public class FlowTriggerService {
             // prevent recursive flow triggers
             .filter(flow -> flowService.removeUnwanted(flow, execution))
             // filter out Test Executions
-            .filter(flow -> execution.getKind() != ExecutionKind.TEST)
+            .filter(flow -> execution.getKind() == null)
             // ensure flow & triggers are enabled
             .filter(flow -> !flow.isDisabled() && !(flow instanceof FlowWithException))
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())

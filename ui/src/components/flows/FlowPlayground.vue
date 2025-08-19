@@ -23,6 +23,26 @@
                             v-if="executionsStore.execution"
                             :execution="executionsStore.execution"
                         />
+                        <el-button
+                            :icon="CloseIcon"
+                            link
+                            class="tab-icon"
+                            @click="playgroundStore.enabled = false"
+                            :title="t('close')"
+                        />
+                        <el-dropdown trigger="click" placement="bottom-end">
+                            <el-button :icon="DotsVertical" link class="tab-icon" />
+                            <template #dropdown>
+                                <el-dropdown-menu class="m-2">
+                                    <el-dropdown-item @click="playgroundStore.clearExecutions()">
+                                        <span class="small-text">{{ t('clear') }} {{ t('history').toLowerCase() }}</span>
+                                    </el-dropdown-item>
+                                    <el-dropdown-item :icon="CloseIcon" @click="playgroundStore.enabled = false">
+                                        <span class="small-text">{{ t('close panel') }}</span>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
                     </div>
                 </div>
                 <div v-if="activeTab?.component && playgroundStore.latestExecution" class="tab-content">
@@ -55,6 +75,7 @@
     import ChartTimelineIcon from "vue-material-design-icons/ChartTimeline.vue";
     import HistoryIcon from "vue-material-design-icons/History.vue";
     import CloseIcon from "vue-material-design-icons/Close.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import Gantt from "../executions/Gantt.vue";
     import Logs from "../executions/Logs.vue";
     import ExecutionOutput from "../executions/outputs/Wrapper.vue";
@@ -149,10 +170,14 @@
         flex: 1;
     }
 
-    .extra-options{
+.extra-options{
         display: flex;
         gap: 8px;
         margin-right: 4rem;
+        align-items: center;
+        .tab-icon{
+            color: var(--ks-content-inactive);
+        }
     }
 
     .toggle-history{

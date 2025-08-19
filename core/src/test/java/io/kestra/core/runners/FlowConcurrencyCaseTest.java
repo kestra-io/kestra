@@ -14,6 +14,7 @@ import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Flux;
 
@@ -295,6 +296,7 @@ public class FlowConcurrencyCaseTest {
 
         var executionResult1  = new AtomicReference<Execution>();
         var executionResult2  = new AtomicReference<Execution>();
+        AtomicBoolean isExecution1Queued = new AtomicBoolean();
 
         CountDownLatch latch1 = new CountDownLatch(2);
         AtomicReference<Execution> failedExecution = new AtomicReference<>();
@@ -307,6 +309,9 @@ public class FlowConcurrencyCaseTest {
                 if (e.getLeft().getState().getCurrent() == Type.FAILED) {
                     failedExecution.set(e.getLeft());
                     latch1.countDown();
+                }
+                if (e.getLeft().getState().getCurrent() == Type.QUEUED){
+                    isExecution1Queued.set(true);
                 }
             }
 
@@ -335,7 +340,7 @@ public class FlowConcurrencyCaseTest {
         assertThat(executionResult1.get().getState().getCurrent()).isEqualTo(Type.FAILED);
         // it should have been queued after restarted
         assertThat(executionResult1.get().getState().getHistories().stream().anyMatch(history -> history.getState() == Type.RESTARTED)).isTrue();
-        assertThat(executionResult1.get().getState().getHistories().stream().anyMatch(history -> history.getState() == Type.QUEUED)).isTrue();
+        assertTrue(isExecution1Queued.get());
         assertThat(executionResult2.get().getState().getCurrent()).isEqualTo(Type.FAILED);
         assertThat(executionResult2.get().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
         assertThat(executionResult2.get().getState().getHistories().get(1).getState()).isEqualTo(State.Type.QUEUED);

@@ -338,24 +338,50 @@
     const transform = (o, isFirstPass, path = "") => {
         const result = Object.keys(o).map((key) => {
             const value = o[key];
-            const isObject = typeof value === "object" && value !== null;
+            const isObj = typeof value === "object" && value !== null;
 
             const currentPath = `${path}["${key}"]`;
 
-            // If the value is an array with exactly one element, use that element as the value
-            if (Array.isArray(value) && value.length === 1) {
+            // Properly handle arrays by expanding each index as a child node
+            if (Array.isArray(value)) {
+                const children = value.map((elem, idx) => {
+                    const elemIsObj = typeof elem === "object" && elem !== null;
+                    const elemPath = `${currentPath}[${idx}]`;
+
+                    return {
+                        label: `[${idx}]`,
+                        // For objects/arrays, keep value as an index label to avoid coercing to string in the list;
+                        // the actual data is navigable via children. For primitives, show the primitive value.
+                        value: elemIsObj || Array.isArray(elem) ? `[${idx}]` : elem,
+                        children: elemIsObj || Array.isArray(elem) ? transform(elem, false, elemPath) : [],
+                        path: elemPath,
+                    };
+                });
+
                 return {
                     label: key,
-                    value: value[0],
-                    children: [],
+                    // Keep parent value as the key label to avoid showing [object Object] for arrays
+                    value: key,
+                    children,
                     path: currentPath,
                 };
             }
 
+            // Objects: recurse to build children
+            if (isObj) {
+                return {
+                    label: key,
+                    value: key,
+                    children: transform(value, false, currentPath),
+                    path: currentPath,
+                };
+            }
+
+            // Primitives: leaf node with direct value
             return {
                 label: key,
-                value: isObject && !Array.isArray(value) ? key : value,
-                children: isObject ? transform(value, false, currentPath) : [],
+                value: value,
+                children: [],
                 path: currentPath,
             };
         });

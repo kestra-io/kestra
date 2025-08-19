@@ -47,6 +47,7 @@
 
     import {getCreateTabKey, getEditTabKey, setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
     import {useFlowStore} from "../../stores/flow";
+    import {trackTabOpen} from "../../utils/tabTracking";
 
     function isTabFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.value)
@@ -94,6 +95,9 @@
             return
         }
         const {prepend, panel} = getPanelFromValue(tabValue)
+        
+        trackTabOpen(panel.activeTab);
+        
         if(prepend){
             panels.value.unshift(panel)
         }else{
@@ -224,6 +228,16 @@
     const {openAddTaskTab, openEditTaskTab, closeTaskTab} = useNoCodePanels(panels, noCodeHandlers)
 
     const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)))
+
+    // Track initial tabs opened while editing or creating flow.
+    let hasTrackedInitialTabs = false;
+    watch(panels, (newPanels) => {
+        if (!hasTrackedInitialTabs && newPanels && newPanels.length > 0) {
+            hasTrackedInitialTabs = true;
+            const allTabs = newPanels.flatMap(panel => panel.tabs);
+            allTabs.forEach(tab => trackTabOpen(tab));
+        }
+    }, {immediate: true});
 
     const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useCodePanels(panels)
 

@@ -212,12 +212,15 @@ export const usePluginsStore = defineStore("plugins", {
             const apiStore = useApiStore();
 
             const apiPromise = apiStore.pluginIcons().then(response => {
-                this.icons = this.icons ?? {};
+                // to avoid unnecessary dom updates and calculations in the reactivity rendering of Vue,
+                // we do all our updates to a temporary object, then commit the changes all at once
+                const tempIcons = toRaw(this.icons) ?? {};
                 for (const [key, plugin] of Object.entries(response.data)) {
-                    if (this.icons && this.icons[key] === undefined) {
-                        this.icons[key] = plugin as string;
+                    if (tempIcons && tempIcons[key] === undefined) {
+                        tempIcons[key] = plugin as string;
                     }
                 }
+                this.icons = tempIcons;
             });
 
             const iconsPromise =

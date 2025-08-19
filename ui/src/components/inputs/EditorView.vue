@@ -440,7 +440,6 @@
 
 <script setup lang="ts">
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
-    import {useStore} from "vuex";
     import {useRoute, useRouter} from "vue-router";
     import {useStorage} from "@vueuse/core";
     import {useI18n} from "vue-i18n";
@@ -450,6 +449,7 @@
     import {useCoreStore} from "../../stores/core";
     import {usePluginsStore} from "../../stores/plugins";
     import {useEditorStore} from "../../stores/editor";
+    import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";
     import {useNamespacesStore} from "override/stores/namespaces";
 
@@ -486,7 +486,6 @@
     import {useToast} from "../../utils/toast";
 
 
-    const store = useStore();
     const coreStore = useCoreStore();
     const flowStore = useFlowStore();
     const namespacesStore = useNamespacesStore();
@@ -642,7 +641,6 @@
     const isLoading = ref(false);
     const flowYaml = computed(() => flowStore.flowYaml);
     const flowYamlOrigin = computed(() => flowStore.flowYamlOrigin);
-    const user = computed(() => store.getters["auth/user"]);
     const metadata = computed(() => flowStore.metadata);
     const newTrigger = ref(null);
     const isNewTriggerOpen = ref(false);
@@ -994,8 +992,10 @@
         flowStore.executeFlow = true;
     };
 
+    const authStore = useAuthStore();
+
     const canDelete = () => {
-        return user.value?.isAllowed(permission.FLOW, action.DELETE, props.namespace);
+        return authStore.user?.isAllowed(permission.FLOW, action.DELETE, props.namespace);
     };
 
     const deleteFlow = () => {

@@ -137,7 +137,6 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useTemplateStore} from "../../stores/template";
     import permission from "../../models/permission";
@@ -155,6 +154,7 @@
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip.vue";
     import Upload from "vue-material-design-icons/Upload.vue";
     import SelectTableActions from "../../mixins/selectTableActions";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -176,18 +176,17 @@
             };
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useTemplateStore),
+            ...mapStores(useTemplateStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$t("templates")
                 };
             },
             canRead() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.READ);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.READ);
             },
             canDelete() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.DELETE);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.DELETE);
             },
         },
         methods: {

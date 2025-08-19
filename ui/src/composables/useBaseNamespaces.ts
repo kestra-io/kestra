@@ -1,5 +1,5 @@
 import {ref} from "vue";
-import {apiUrl} from "override/utils/route";
+import {apiUrl, apiUrlWithTenant} from "override/utils/route";
 import Utils from "../utils/utils";
 
 function base(store: any, namespace: string) {
@@ -17,12 +17,40 @@ export function useBaseNamespacesStore() {
     const secrets = ref<any[] | undefined>(undefined);
     const inheritedSecrets = ref<any>(undefined);
     const kvs = ref<any[] | undefined>(undefined);
-    const datatypeNamespaces = ref<any[] | undefined>(undefined);
     const addKvModalVisible = ref(false);
+    const autocomplete = ref<any>(undefined);
+    const total = ref(0);
+    const existing = ref(true);
 
-    async function loadNamespacesForDatatype(this: any, options: {dataType: string}) {
-        const response = await this.$http.get(`${apiUrl(this.vuexStore)}/${options.dataType}s/distinct-namespaces`);
-        datatypeNamespaces.value = response.data;
+    async function loadAutocomplete(this: any, options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
+        const response = await this.$http.post(`${apiUrlWithTenant(this.vuexStore, this.$router.currentRoute)}/namespaces/autocomplete`, options ?? {});
+        autocomplete.value = response.data;
+        return response.data;
+    }
+
+    async function search(this: any, options: any) {
+        const shouldCommit = options.commit !== false;
+        delete options.commit;
+        const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/search`, {params: options, ...VALIDATE});
+        if (response.status === 200 && shouldCommit) {
+            namespaces.value = response.data.results;
+            total.value = response.data.total;
+        }
+        return response.data;
+    }
+
+    async function load(this: any, id: string) {
+        const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${id}`, VALIDATE);
+
+        if(response.status === 200) {
+            namespace.value = response.data;
+            existing.value = true;
+        }
+
+        if(response.status === 404) {
+            existing.value = false;
+        }
+
         return response.data;
     }
 
@@ -69,7 +97,7 @@ export function useBaseNamespacesStore() {
         return kvsList.call(this, {id: payload.namespace});
     }
 
-    async function loadInheritedSecrets(this: any, {id, commit: shouldCommit, ...params}: {id: string; commit?: boolean; [key: string]: any}) {
+    async function loadInheritedSecrets(this: any, {id, commit: shouldCommit, ...params}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<Record<string, string[]>> {
         const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${id}/inherited-secrets`, {
             ...VALIDATE,
             params
@@ -77,10 +105,13 @@ export function useBaseNamespacesStore() {
         if (shouldCommit !== false) {
             inheritedSecrets.value = response.data;
         }
+        if (response.status === 404) {
+            return {[id]: []}
+        }
         return response.data;
     }
 
-    async function listSecrets(this: any, {id, commit: shouldCommit, ...params}: {id: string; commit?: boolean; [key: string]: any}) {
+    async function listSecrets(this: any, {id, commit: shouldCommit, ...params}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: string}[], readOnly?: boolean}> {
         const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${id}/secrets`, {
             ...VALIDATE,
             params
@@ -94,16 +125,23 @@ export function useBaseNamespacesStore() {
         return response.data;
     }
 
-    async function createSecrets(this: any, payload: {namespace: string; secret: any}) {
-        return this.$http.post(`${apiUrl(this.vuexStore)}/namespaces/${payload.namespace}/secrets`, payload.secret);
+    async function usableSecrets(this: ReturnType<typeof useBaseNamespacesStore>, id: string): Promise<string[]> {
+        return [
+            ...Object.values((await this.loadInheritedSecrets({id, commit: false})) ?? {}).flat(),
+            ...(await this.listSecrets({id, commit: false})).results.map(({key}) => key)
+        ];
     }
 
-    async function patchSecret(this: any, payload: {namespace: string; secret: any}) {
-        return this.$http.patch(`${apiUrl(this.vuexStore)}/namespaces/${payload.namespace}/secrets/${payload.secret.key}`, payload.secret);
+    async function createSecrets(this: any, _: {namespace: string; secret: any}) {
+        // NOOP IN OSS
     }
 
-    async function deleteSecrets(this: any, payload: {namespace: string; key: string}) {
-        return this.$http.delete(`${apiUrl(this.vuexStore)}/namespaces/${payload.namespace}/secrets/${payload.key}`);
+    async function patchSecret(this: any, _: {namespace: string; secret: any}) {
+        // NOOP IN OSS
+    }
+
+    async function deleteSecrets(this: any, _: {namespace: string; key: string}) {
+        // NOOP IN OSS
     }
 
     async function createDirectory(this: any, payload: {namespace: string; path: string}) {
@@ -184,15 +222,18 @@ export function useBaseNamespacesStore() {
     }
 
     return {
+        autocomplete,
+        loadAutocomplete,
+        search,
+        total,
+        load,
+        existing,
         namespace,
         namespaces,
         secrets,
         inheritedSecrets,
         kvs,
-        datatypeNamespaces,
         addKvModalVisible,
-
-        loadNamespacesForDatatype,
         kvsList,
         kv,
         createKv,
@@ -200,6 +241,7 @@ export function useBaseNamespacesStore() {
         deleteKvs,
         loadInheritedSecrets,
         listSecrets,
+        usableSecrets,
         createSecrets,
         patchSecret,
         deleteSecrets,

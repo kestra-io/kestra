@@ -11,7 +11,6 @@
 
 <script>
     import ErrorToast from "./components/ErrorToast.vue";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import Utils from "./utils/utils";
     import {shallowRef} from "vue";
@@ -49,7 +48,6 @@
             };
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore, useExecutionsStore, useFlowStore),
             envName() {
                 return this.layoutStore.envName || this.miscStore.configs?.environment?.name;

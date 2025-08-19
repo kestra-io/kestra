@@ -274,7 +274,6 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import moment from "moment";
@@ -283,6 +282,7 @@
     import {storageKeys} from "../../utils/constants.js";
     import {mapStores} from "pinia";
     import {useTriggerStore} from "../../stores/trigger";
+    import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";
 
     export default {
@@ -319,8 +319,7 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useTriggerStore, useFlowStore),
+            ...mapStores(useTriggerStore, useFlowStore, useAuthStore),
             query() {
                 return Array.isArray(this.$route.query.q) ? this.$route.query.q[0] : this.$route.query.q;
             },
@@ -396,7 +395,7 @@
         },
         methods: {
             userCan(action) {
-                return this.user.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flowStore.flow.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flowStore.flow.namespace);
             },
             loadData() {
                 if(!this.triggersWithType.length) return;

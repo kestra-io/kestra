@@ -191,10 +191,10 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
 
         switch(yamlElement.key) {
             case "namespace": {
-                const datatypeNamespaces = this.namespacesStore.datatypeNamespaces;
-                return datatypeNamespaces === undefined
-                    ? await this.namespacesStore.loadNamespacesForDatatype({dataType: "flow"})
-                    : Promise.resolve(datatypeNamespaces);
+                const availableNamespaces = this.namespacesStore.autocomplete;
+                return availableNamespaces === undefined
+                    ? await this.namespacesStore.loadAutocomplete()
+                    : Promise.resolve(availableNamespaces);
             }
             case "flowId": {
                 if (parentTask !== undefined && parentTask.namespace !== undefined) {
@@ -242,10 +242,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([]);
                 }
-                return Array.from(Object.entries<string[]>(await this.namespacesStore.loadInheritedSecrets({id: namespace})).reduce((acc: Set<string>, [_, nsSecrets]: [string, string[]]) => {
-                    nsSecrets.forEach(secret => acc.add(QUOTE + secret + QUOTE));
-                    return acc;
-                }, new Set<string>()));
+                return Array.from(new Set<string>((await this.namespacesStore.usableSecrets(namespace)).map(secret => QUOTE + secret + QUOTE)));
             }
             case "kv": {
                 const namespace = this.extractArgValue(namespaceArg);

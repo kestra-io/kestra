@@ -3,9 +3,8 @@ import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import type {Panel, Tab} from "../MultiPanelTabs.vue";
-import NoCodeWrapper from "../code/NoCodeWrapper.vue"
+import NoCodeWrapper, {NoCodeProps} from "../code/NoCode.vue"
 
-import type {NoCodeProps} from "../code/NoCodeWrapper.vue";
 import {useFlowStore} from "../../stores/flow";
 
 

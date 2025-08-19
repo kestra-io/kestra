@@ -46,14 +46,14 @@
     import Creation from "./buttons/Creation.vue";
     import Element from "./Element.vue";
     import {
-        CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
+        CREATING_TASK_INJECTION_KEY, FULL_SOURCE_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY
     } from "../../injectionKeys";
     import {SECTIONS_MAP} from "../../../../utils/constants";
 
     const emits = defineEmits(["remove", "reorder"]);
 
-    const flow = inject(FLOW_INJECTION_KEY, ref(""));
+    const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""));
 
     const props = defineProps<CollapseItem>();
     const filteredElements = computed(() => props.elements?.filter(Boolean) ?? []);

@@ -7,7 +7,7 @@ export const SCHEMA_PATH_INJECTION_KEY = Symbol("schema-path-injection-key") as 
 /**
  * Complete flow YAML string for the no-code
  */
-export const FLOW_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
+export const FULL_SOURCE_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
 /**
  * When creating a subtask, this is the parent task path
  */
@@ -51,6 +51,10 @@ export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-
  * Call this when closing a task, when the user clicks on the close button
  */
 export const CLOSE_TASK_FUNCTION_INJECTION_KEY = Symbol("close-function-injection-key") as InjectionKey<() => void>
+/**
+ * We call this function when a task is changed, as soon as the first click or type is done
+ */
+export const UPDATE_TASK_FUNCTION_INJECTION_KEY = Symbol("update-function-injection-key") as InjectionKey<(yaml: string) => void>
 /**
  * Set this to override the contents of the no-code editor with a component of your choice
  * This is used to display the metadata edition inputs

@@ -169,6 +169,14 @@
         return /^nocode-\d{4}/.test(key) ? key.slice(0, 6) + key.slice(11) : key
     }
 
+    function serializePanel(v:Panel[]){
+        return v.map(p => ({
+            tabs: p.tabs.map(t => t.value),
+            activeTab: cleanupNoCodeTabKey(p.activeTab?.value),
+            size: p.size,
+        }))
+    }
+
     const panels: Ref<Panel[]> = useStorage<any>(
         `flow-${flowStore.flow?.namespace}-${flowStore.flow?.id}`,
         DEFAULT_ACTIVE_TABS
@@ -177,11 +185,7 @@
         {
             serializer: {
                 write(v: Panel[]){
-                    return JSON.stringify(v.map(p => ({
-                        tabs: p.tabs.map(t => t.value),
-                        activeTab: cleanupNoCodeTabKey(p.activeTab?.value),
-                        size: p.size,
-                    })))
+                    return JSON.stringify(serializePanel(v))
                 },
                 read(v?: string) {
                     if(v){

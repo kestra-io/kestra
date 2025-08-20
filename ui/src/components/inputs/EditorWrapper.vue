@@ -23,7 +23,6 @@
         <template #absolute>
             <AITriggerButton
                 :show="isCurrentTabFlow"
-                :enabled="aiEnabled"
                 :opened="aiAgentOpened"
                 @click="draftSource = undefined; aiAgentOpened = true"
             />
@@ -38,6 +37,7 @@
             v-if="aiAgentOpened"
             class="position-absolute prompt"
             @close="aiAgentOpened = false"
+            :configured="aiEnabled"
             :flow="editorContent"
             @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
         />

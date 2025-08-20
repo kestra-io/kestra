@@ -9,19 +9,27 @@
             </div>
         </template>
         <el-input
+            autosize
             ref="promptInput"
+            v-if="configured"
             type="textarea"
             :placeholder="t('ai.flow.prompt_placeholder')"
             v-model="prompt"
             @keydown.exact.ctrl.enter="$event.preventDefault(); prompt += '\n'"
             @keydown.exact.enter.prevent="submitPrompt"
         />
+        <template v-else>
+            <el-text class="keep-whitespace">
+                {{ t('ai.flow.enable_instructions') }}
+            </el-text>
+            <div class="mt-2" v-html="highlightedAiConfiguration" />
+        </template>
         <template #footer>
             <div class="d-flex justify-content-between">
                 <el-text class="text-tertiary" size="small">
                     (⌘) Ctrl + Alt (⌥) + Shift + K {{ t("to toggle") }}
                 </el-text>
-                <div class="d-flex flex-column align-items-end gap-3">
+                <div v-if="configured" class="d-flex flex-column align-items-end gap-3">
                     <el-text v-if="error !== undefined" type="danger" size="default" class="me-auto">
                         {{ error }}
                     </el-text>
@@ -50,6 +58,7 @@
     import KeyboardReturn from "vue-material-design-icons/KeyboardReturn.vue";
     import AiIcon from "./AiIcon.vue";
     import {useAiStore} from "../../stores/ai";
+    import Utils from "../../utils/utils.ts";
 
     const t = getCurrentInstance()!.appContext.config.globalProperties.$t;
     const aiStore = useAiStore();
@@ -72,7 +81,8 @@
     });
 
     const props = defineProps<{
-        flow: string
+        flow: string,
+        configured: boolean
     }>();
 
     const error = ref<string | undefined>(undefined);
@@ -94,6 +104,30 @@
 
         waitingForReply.value = false;
     }
+
+    const highlightedAiConfiguration = ref<string | undefined>();
+
+    onMounted(async () => {
+        if (!props.configured) {
+            const {
+                createHighlighterCore,
+                langs,
+                githubDark,
+                githubLight,
+                onigurumaEngine
+            } = await import("../../utils/markdownDeps");
+            const highlighter = await createHighlighterCore({
+                langs: [langs.yaml],
+                themes: [githubDark, githubLight],
+                engine: onigurumaEngine
+            })
+            highlightedAiConfiguration.value = highlighter.codeToHtml(`kestra:
+  ai:
+    type: "gemini"
+    gemini:
+      api-key: "geminiApiKey"`, {lang: "yaml", theme: Utils.getTheme() === "dark" ? "github-dark" : "github-light"})
+        }
+    });
 </script>
 
 <style scoped lang="scss">

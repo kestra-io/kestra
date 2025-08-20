@@ -1453,9 +1453,10 @@
     },
     "ai": {
       "flow": {
-        "title": "AI Agent",
+        "title": "AI Copilot",
         "prompt_placeholder": "Enter instructions to create your Kestra flow. Example prompt: Create a flow that runs every Monday at 9 AM.",
-        "generating": "Generating Flow YAML for you..."
+        "generating": "Generating Flow YAML for you...",
+        "enable_instructions": "AI Copilot is not configured.\n\nTo get started, add the following configuration:"
       }
     },
     "playground": {

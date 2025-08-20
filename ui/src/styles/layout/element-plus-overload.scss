@@ -7,22 +7,6 @@
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 
 // button
-
-.el-button--wrap {
-  display: inline-block;  
-  max-width: 100%;        
-  overflow: hidden;
-  padding: 2px 4px;       
-}
-
-.el-button--wrap span {
-  display: inline-block;   
-  white-space: nowrap;     
-  overflow: hidden;       
-  text-overflow: ellipsis;
-  max-width: 100%;         
-}
-
 .el-button {
     &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info):not(.el-button--playground), &--default {
         --el-button-hover-text-color: var(--ks-content-primary);

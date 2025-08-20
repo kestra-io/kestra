@@ -535,19 +535,13 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
 
             // We only resolve subflow outputs for an execution result when the execution is terminated.
             if (taskRun.getState().isTerminated() && flow.getOutputs() != null && waitForExecution()) {
-                final Map<String, Object> outputs = flow.getOutputs()
-                    .stream()
-                    .collect(Collectors.toMap(
-                        io.kestra.core.models.flows.Output::getId,
-                        io.kestra.core.models.flows.Output::getValue)
-                    );
                 final ForEachItem.Output.OutputBuilder builder = Output
                     .builder()
                     .iterations((Map<State.Type, Integer>) taskRun.getOutputs().get(ExecutableUtils.TASK_VARIABLE_ITERATIONS))
                     .numberOfBatches((Integer) taskRun.getOutputs().get(ExecutableUtils.TASK_VARIABLE_NUMBER_OF_BATCHES));
 
                 try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-                    FileSerde.write(bos, runContext.render(outputs));
+                    FileSerde.write(bos, FlowInputOutput.renderFlowOutputs(flow.getOutputs(), runContext));
                     URI uri = runContext.storage().putFile(
                         new ByteArrayInputStream(bos.toByteArray()),
                         URI.create((String) taskRun.getOutputs().get("uri"))

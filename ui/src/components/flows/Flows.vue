@@ -309,6 +309,7 @@
     import {storageKeys} from "../../utils/constants";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import {useAuthStore} from "override/stores/auth.ts";
     import {useFlowStore} from "../../stores/flow.ts";
 
     const CHART_DEFINITION = {
@@ -420,7 +421,10 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore, useFlowStore),
+            ...mapStores(useExecutionsStore, useFlowStore, useAuthStore),
+            user() {
+                return this.authStore.user;
+            },
             routeInfo() {
                 return {
                     title: this.$t("flows"),
@@ -431,8 +435,7 @@
             },
             canCreate() {
                 return (
-                    this.user &&
-                    this.user.hasAnyActionOnAnyNamespace(
+                    this.user?.hasAnyActionOnAnyNamespace(
                         permission.FLOW,
                         action.CREATE,
                     )
@@ -440,8 +443,7 @@
             },
             canRead() {
                 return (
-                    this.user &&
-                    this.user.isAllowed(
+                    this.user?.isAllowed(
                         permission.FLOW,
                         action.READ,
                         this.$route.query.namespace,
@@ -450,8 +452,7 @@
             },
             canDelete() {
                 return (
-                    this.user &&
-                    this.user.isAllowed(
+                    this.user?.isAllowed(
                         permission.FLOW,
                         action.DELETE,
                         this.$route.query.namespace,
@@ -460,8 +461,7 @@
             },
             canUpdate() {
                 return (
-                    this.user &&
-                    this.user.isAllowed(
+                    this.user?.isAllowed(
                         permission.FLOW,
                         action.UPDATE,
                         this.$route.query.namespace,

@@ -1,5 +1,7 @@
 package io.kestra.core.runners;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.DependsOn;
@@ -21,7 +23,6 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -200,7 +201,7 @@ class FlowInputOutputTest {
     }
 
     @Test
-    void shouldNotUploadFileInputAfterValidation() throws IOException {
+    void shouldNotUploadFileInputAfterValidation() {
         // Given
         FileInput input = FileInput
             .builder()
@@ -215,7 +216,7 @@ class FlowInputOutputTest {
 
         // Then
         Assertions.assertNull(values.getFirst().exception());
-        Assertions.assertFalse(storageInterface.exists(null, null, URI.create(values.getFirst().value().toString())));
+        Assertions.assertFalse(storageInterface.exists(MAIN_TENANT, null, URI.create(values.getFirst().value().toString())));
     }
 
     @Test

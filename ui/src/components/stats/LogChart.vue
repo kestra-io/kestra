@@ -19,7 +19,7 @@
 <script>
     import {computed, defineComponent, ref, getCurrentInstance} from "vue";
     import {Bar} from "vue-chartjs";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc.js";
     import Utils from "../../utils/utils";
     import {
         defaultConfig,

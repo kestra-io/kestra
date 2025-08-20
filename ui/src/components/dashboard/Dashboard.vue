@@ -14,11 +14,11 @@
         />
     </section>
 
-    <Sections :key :dashboard :charts :show-default="dashboard.id === 'default'" :padding="padding" />
+    <Sections ref="dashboardComponent" :dashboard :charts :show-default="dashboard.id === 'default'" :padding="padding" />
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeMount, ref, watch} from "vue";
+    import {computed, onBeforeMount, ref, useTemplateRef} from "vue";
 
     import type {Dashboard, Chart} from "./composables/useDashboards";
     import {ALLOWED_CREATION_ROUTES, getDashboard, processFlowYaml} from "./composables/useDashboards";
@@ -43,8 +43,6 @@
     import YAML_FLOW from "./assets/default_flow_definition.yaml?raw";
     import YAML_NAMESPACE from "./assets/default_namespace_definition.yaml?raw";
 
-    import UTILS from "../../utils/utils.js";
-
     import {useRoute, useRouter} from "vue-router";
     const route = useRoute();
     const router = useRouter();
@@ -65,21 +63,18 @@
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const charts = ref<Chart[]>([]);
 
-    // We use a key to force re-rendering of the Sections component
-    let key = ref(UTILS.uid());
-
     const loadCharts = async (allCharts: Chart[] = []) => {
         charts.value = [];
 
         for (const chart of allCharts) {
             charts.value.push({...chart, content: stringify(chart)});
         }
-
-        refreshCharts()
     };
 
+    const dashboardComponent = useTemplateRef("dashboardComponent");
+
     const refreshCharts = () => {
-        key.value = UTILS.uid();
+        dashboardComponent.value!.refreshCharts();
     };
 
     const load = async (id = "default", defaultYAML = YAML_MAIN) => {
@@ -104,8 +99,6 @@
         if (props.isFlow && ID === "default") load("default", processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string));
         else if (props.isNamespace && ID === "default") load("default", YAML_NAMESPACE);
     });
-
-    watch(route, async (_) => refreshCharts());
 </script>
 
 <style scoped lang="scss">

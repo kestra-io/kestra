@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -10,7 +11,6 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInte
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.ListUtils;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,14 +24,15 @@ import java.util.stream.Stream;
 
 @Singleton
 public class FlowTriggerService {
-    @Inject
-    private ConditionService conditionService;
+    private final ConditionService conditionService;
+    private final RunContextFactory runContextFactory;
+    private final FlowService flowService;
 
-    @Inject
-    private RunContextFactory runContextFactory;
-
-    @Inject
-    private FlowService flowService;
+    public FlowTriggerService(ConditionService conditionService, RunContextFactory runContextFactory, FlowService flowService) {
+        this.conditionService = conditionService;
+        this.runContextFactory = runContextFactory;
+        this.flowService = flowService;
+    }
 
     // used in EE only
     public Stream<FlowWithFlowTrigger> withFlowTriggersOnly(Stream<FlowWithSource> allFlows) {
@@ -53,6 +54,8 @@ public class FlowTriggerService {
         List<FlowWithFlowTrigger> validTriggersBeforeMultipleConditionEval = allFlows.stream()
             // prevent recursive flow triggers
             .filter(flow -> flowService.removeUnwanted(flow, execution))
+            // filter out Test Executions
+            .filter(flow -> execution.getKind() == null)
             // ensure flow & triggers are enabled
             .filter(flow -> !flow.isDisabled() && !(flow instanceof FlowWithException))
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())

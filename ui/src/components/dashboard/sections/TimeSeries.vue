@@ -12,13 +12,13 @@
 </template>
 
 <script lang="ts" setup>
-    import {PropType, computed} from "vue";
+    import {PropType, computed, watch} from "vue";
 
     import NoData from "../../layout/NoData.vue";
 
     import {Bar} from "vue-chartjs";
 
-    import type {Chart} from "../composables/useDashboards";
+    import {Chart, getDashboard} from "../composables/useDashboards";
     import {useChartGenerator} from "../composables/useDashboards";
 
     
@@ -264,7 +264,19 @@
                 : yDatasetData,
         };
     });
-    const {data: generated} = useChartGenerator(props);
+    const {data: generated, generate} = useChartGenerator(props);
+
+    function refresh() {
+        return generate(getDashboard(route, "id")!);
+    }
+
+    defineExpose({
+        refresh
+    });
+
+    watch(() => route.params.filters, () => {
+        refresh();
+    }, {deep: true});
 </script>
 
 <style lang="scss" scoped>

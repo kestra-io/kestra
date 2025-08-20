@@ -68,7 +68,7 @@ jobs:
             python-libraries: kestra
     steps:
       - name: Checkout - Current ref
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Docker setup
       - name: Docker - Setup QEMU

@@ -56,6 +56,7 @@
 
                     <div class="flex-grow-1">
                         <component
+                            ref="chartsComponents"
                             :is="TYPES[chart.type as keyof typeof TYPES]"
                             :chart
                             :filters
@@ -88,6 +89,18 @@
 
     import Download from "vue-material-design-icons/Download.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
+
+    const chartsComponents = ref<{refresh(): void}[]>();
+
+    function refreshCharts() {
+        chartsComponents.value!.forEach((component) => {
+            component.refresh();
+        });
+    }
+
+    defineExpose({
+        refreshCharts
+    });
 
     const props = defineProps<{
         dashboard: Dashboard;

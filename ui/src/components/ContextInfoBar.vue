@@ -71,7 +71,7 @@
     import {useI18n} from "vue-i18n";
     import Utils from "../utils/utils";
     import {useApiStore} from "../stores/api";
-    import {useMiscStore} from "../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     const {t} = useI18n({useScope: "global"});
 

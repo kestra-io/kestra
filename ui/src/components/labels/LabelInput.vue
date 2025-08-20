@@ -35,7 +35,7 @@
 
 <script>
     import {mapStores} from "pinia";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     export default {
         props: {

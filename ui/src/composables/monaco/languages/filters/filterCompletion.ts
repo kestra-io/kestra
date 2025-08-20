@@ -56,15 +56,17 @@ export const PICK_DATE_VALUE = "PICK_DATE";
 
 export type ValueCompletions = Value[] | typeof PICK_DATE_VALUE;
 
+export type Fetcher = (store: Store<Record<string, any>>, hardcodedValues: ReturnType<typeof useValues>["VALUES"]) => Promise<ValueCompletions>;
+
 export class FilterKeyCompletions {
     private readonly _comparators: Comparators[];
-    private readonly _valuesFetcher: (store: Store<Record<string, any>>, hardcodedValues: ReturnType<typeof useValues>["VALUES"]) => Promise<ValueCompletions>;
+    private readonly _valuesFetcher: Fetcher;
     private readonly _allowMultipleValues: boolean;
     private readonly _forbiddenConcurrentKeys: string[];
 
     constructor(
         comparators: Comparators[],
-        valuesFetcher: (store: Store<Record<string, any>>, hardcodedValues: ReturnType<typeof useValues>["VALUES"]) => Promise<ValueCompletions> = async () => [],
+        valuesFetcher: Fetcher = async () => [],
         allowMultipleValues?: boolean,
         forbiddenConcurrentKeys: string[] = []
     ) {
@@ -78,7 +80,7 @@ export class FilterKeyCompletions {
         return this._comparators;
     }
 
-    get valuesFetcher(): (store: Store<Record<string, any>>, hardcodedValues: ReturnType<typeof useValues>["VALUES"]) => Promise<ValueCompletions> {
+    get valuesFetcher(): Fetcher {
         return this._valuesFetcher;
     }
 

@@ -35,13 +35,15 @@ docker compose -f "docker-compose-postgres.yml" up -d
 # Wait for Kestra UI
 echo "Waiting for Kestra UI at $KESTRA_BASE_URL"
 START_TIME=$(date +%s)
-TIMEOUT_DURATION=$((5 * 60))
+TIMEOUT_DURATION=$((2 * 60))
 while [ "$(curl -s -L -o /dev/null -w %{http_code} $KESTRA_BASE_URL)" != "200" ]; do
   echo -e "$(date)\tKestra server HTTP state: $(curl -k -L -s -o /dev/null -w %{http_code} $KESTRA_BASE_URL) (waiting for 200)"
   CURRENT_TIME=$(date +%s)
   ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
   if [ $ELAPSED_TIME -ge $TIMEOUT_DURATION ]; then
     echo "Timeout reached: Exiting after 5 minutes."
+    echo "printing 'docker logs kestra-e2e-backend'"
+    docker logs kestra-e2e-backend
     exit 1
   fi
   sleep 2

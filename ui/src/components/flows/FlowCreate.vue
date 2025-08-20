@@ -1,20 +1,20 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
     <section class="full-container">
-        <MultiPanelEditorView v-if="flowStore.flow" />
+        <MultiPanelFlowEditorView v-if="flowStore.flow" />
     </section>
 </template>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import MultiPanelEditorView from "./MultiPanelEditorView.vue";
+    import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
     import {storageKeys} from "../../utils/constants";
     import {useBlueprintsStore} from "../../stores/blueprints";
     import {useCoreStore} from "../../stores/core";
+    import {editorViewTypes} from "../../utils/constants";
 
     import {getRandomFlowID} from "../../../scripts/product/flow";
     import {useEditorStore} from "../../stores/editor";
@@ -23,7 +23,7 @@
     export default {
         mixins: [RouteContext],
         components: {
-            MultiPanelEditorView,
+            MultiPanelFlowEditorView,
             TopNavBar
         },
 
@@ -65,11 +65,10 @@ tasks:
                 this.flowStore.flowYamlBeforeAdd = flowYaml;
 
                 this.flowStore.flow = {...YAML_UTILS.parse(this.flowYaml), source: this.flowStore.flowYaml};
-                this.flowStore.initYamlSource();
+                this.flowStore.initYamlSource({viewTypes: editorViewTypes.SOURCE_DOC});
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useBlueprintsStore, useCoreStore, useEditorStore, useFlowStore),
             routeInfo() {
                 return {

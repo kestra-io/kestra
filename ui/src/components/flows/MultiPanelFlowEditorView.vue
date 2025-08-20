@@ -1,28 +1,17 @@
 <template>
     <div class="multi-panel-editor-wrapper">
-        <div class="tabs-wrapper" :class="{playgroundMode}">
-            <div class="tabs">
-                <button
-                    v-for="element of EDITOR_ELEMENTS"
-                    :key="element.value"
-                    :class="{active: openTabs.includes(element.value)}"
-                    @click="setTabValue(element.value)"
-                >
-                    <component class="tabs-icon" :is="element.button.icon" />
-                    {{ element.button.label }}
-                </button>
-            </div>
+        <MultiPanelEditorTabs :class="{playgroundMode}" :tabs="EDITOR_ELEMENTS" @update:tabs="setTabValue" :open-tabs="openTabs">
             <EditorButtonsWrapper />
-        </div>
+        </MultiPanelEditorTabs>
         <div class="editor-wrapper">
-            <Splitpanes class="default-theme editor-panels" horizontal>
-                <Pane>
+            <el-splitter class="default-theme editor-panels" layout="vertical">
+                <el-splitter-panel>
                     <MultiPanelTabs v-model="panels" @remove-tab="onRemoveTab" />
-                </Pane>
-                <Pane v-if="playgroundMode">
+                </el-splitter-panel>
+                <el-splitter-panel v-if="playgroundMode">
                     <FlowPlayground />
-                </Pane>
-            </Splitpanes>
+                </el-splitter-panel>
+            </el-splitter>
         </div>
         <KeyShortcuts />
     </div>
@@ -32,12 +21,12 @@
     import {computed, onMounted, onUnmounted, Ref, watch} from "vue";
     import {useStorage} from "@vueuse/core";
     import {useI18n} from "vue-i18n";
-    import {Splitpanes, Pane} from "splitpanes"
     import {useCoreStore} from "../../stores/core";
     import {usePlaygroundStore} from "../../stores/playground";
     import {useEditorStore} from "../../stores/editor";
 
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
+    import MultiPanelEditorTabs from "../MultiPanelEditorTabs.vue";
     import FlowPlayground from "./FlowPlayground.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import KeyShortcuts from "../inputs/KeyShortcuts.vue";
@@ -48,6 +37,7 @@
 
     import {getCreateTabKey, getEditTabKey, setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
     import {useFlowStore} from "../../stores/flow";
+    import {trackTabOpen} from "../../utils/tabTracking";
 
     function isTabFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.value)
@@ -56,8 +46,8 @@
     }
 
     const coreStore = useCoreStore()
-    const {showKeyShortcuts} = useKeyShortcuts()
     const flowStore = useFlowStore()
+    const {showKeyShortcuts} = useKeyShortcuts()
 
     onMounted(() => {
         useEditorStore().explorerVisible = false
@@ -95,14 +85,15 @@
             return
         }
         const {prepend, panel} = getPanelFromValue(tabValue)
+        
+        trackTabOpen(panel.activeTab);
+        
         if(prepend){
             panels.value.unshift(panel)
         }else{
             panels.value.push(panel)
         }
     }
-
-
 
     const noCodeHandlers: Parameters<typeof setupInitialNoCodeTab>[2] = {
         onCreateTask(opener, parentPath, blockSchemaPath, refPath, position){
@@ -228,6 +219,16 @@
 
     const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)))
 
+    // Track initial tabs opened while editing or creating flow.
+    let hasTrackedInitialTabs = false;
+    watch(panels, (newPanels) => {
+        if (!hasTrackedInitialTabs && newPanels && newPanels.length > 0) {
+            hasTrackedInitialTabs = true;
+            const allTabs = newPanels.flatMap(panel => panel.tabs);
+            allTabs.forEach(tab => trackTabOpen(tab));
+        }
+    }, {immediate: true});
+
     const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useCodePanels(panels)
 
     function onRemoveTab(tab: string){
@@ -266,64 +267,6 @@
         position: absolute;
     }
 
-    .tabs-wrapper{
-        display:flex;
-        align-items: center;
-        justify-content: space-between;
-        border-bottom: 1px solid var(--ks-border-primary);
-        background-image: linear-gradient(
-                to right,
-                colorPalette.$base-blue-400 0%,
-                colorPalette.$base-blue-500 35%,
-                rgba(colorPalette.$base-blue-500, 0) 55%,
-                rgba(colorPalette.$base-blue-500, 0) 100%
-            );
-        .dark & {
-            background-image: linear-gradient(
-                to right,
-                colorPalette.$base-blue-500 0%,
-                colorPalette.$base-blue-700 35%,
-                rgba(colorPalette.$base-blue-700, .1) 55%,
-                rgba(colorPalette.$base-blue-700, 0) 100%
-            );
-        }
-        background-size: 250% 100%;
-        background-position: 100% 0;
-        transition: background-position .2s;
-    }
-    .tabs{
-        padding: .5rem 1rem;
-
-        > button{
-            background: none;
-            border: none;
-            padding: .5rem;
-            font-size: .8rem;
-            color: var(--ks-color-text-primary);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity .2s;
-            gap: .25rem;
-            opacity: .5;
-
-            &:hover{
-                color: var(--ks-color-text-secondary);
-                opacity: 1;
-            }
-
-            &.active{
-                color: var(--ks-color-text-primary);
-                opacity: 1;
-            }
-        }
-    }
-
-    .tabs-icon {
-        margin-right: .25rem;
-        vertical-align: bottom;
-    }
-
     .playgroundMode {
         #{--el-color-primary}: colorPalette.$base-blue-500;
         color: colorPalette.$base-white;
@@ -331,11 +274,11 @@
     }
 
     .default-theme{
-        .splitpanes__pane {
+        :deep(.el-splitter-panel) {
             background-color: var(--ks-background-panel);
         }
 
-        :deep(.splitpanes__splitter){
+        :deep(.el-splitter__splitter){
             border-top-color: var(--ks-border-primary);
             background-color: var(--ks-background-panel);
             &:before, &:after{

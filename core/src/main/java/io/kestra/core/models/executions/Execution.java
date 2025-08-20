@@ -1040,6 +1040,16 @@ public class Execution implements DeletedInterface, TenantInterface {
         return result;
     }
 
+    /**
+     * Find all children of this {@link TaskRun}.
+     */
+    public List<TaskRun> findChildren(TaskRun parentTaskRun) {
+        return taskRunList.stream()
+            .filter(taskRun -> parentTaskRun.getId().equals(taskRun.getParentTaskRunId()))
+            .toList();
+    }
+
+
     public List<String> findParentsValues(TaskRun taskRun, boolean withCurrent) {
         return (withCurrent ?
             Stream.concat(findParents(taskRun).stream(), Stream.of(taskRun)) :

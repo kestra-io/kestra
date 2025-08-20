@@ -181,7 +181,6 @@
     import WorkerInfo from "./WorkerInfo.vue";
     import {State} from "@kestra-io/ui-libs"
     import FlowUtils from "../../utils/flowUtils";
-    import {mapState} from "vuex";
     import _groupBy from "lodash/groupBy";
     import {TaskIcon, SECTIONS} from "@kestra-io/ui-libs";
     import Duration from "../layout/Duration.vue";
@@ -192,6 +191,7 @@
     import {useCoreStore} from "../../stores/core";
     import {useExecutionsStore} from "../../stores/executions";
     import {mapStores} from "pinia";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {
@@ -249,8 +249,7 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(usePluginsStore, useCoreStore, useExecutionsStore),
+            ...mapStores(usePluginsStore, useCoreStore, useExecutionsStore, useAuthStore),
             SECTIONS() {
                 return SECTIONS
             },
@@ -268,7 +267,7 @@
                 return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));
             },
             canReadFlow() {
-                return this.user.isAllowed(permission.FLOW, action.READ, this.$route.params.namespace)
+                return this.authStore.user?.isAllowed(permission.FLOW, action.READ, this.$route.params.namespace)
             },
             Copy() {
                 return Copy;

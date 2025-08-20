@@ -17,12 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Checkout
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       # Checkout GitHub Actions
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: kestra-io/actions
           path: actions
@@ -66,12 +66,12 @@ jobs:
       actions: read
     steps:
       # Checkout
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       # Checkout GitHub Actions
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: kestra-io/actions
           path: actions
@@ -111,12 +111,12 @@ jobs:
       actions: read
     steps:
       # Checkout
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       # Checkout GitHub Actions
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: kestra-io/actions
           path: actions

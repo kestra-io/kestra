@@ -6,7 +6,7 @@
             />
 
             <el-form v-else label-position="top">
-                <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema, v.fieldKey)" :transparent="v.fieldKey === 'inputs'">
+                <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema)" :transparent="v.fieldKey === 'inputs'">
                     <template #tasks>
                         <TaskObjectField
                             v-bind="v"
@@ -17,7 +17,7 @@
 
                 <hr class="my-4">
 
-                <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :merge="shouldMerge(v.schema, v.fieldKey)" :transparent="SECTIONS_IDS.includes(v.fieldKey)">
+                <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :merge="shouldMerge(v.schema)" :transparent="SECTIONS_IDS.includes(v.fieldKey)">
                     <template #tasks>
                         <TaskObjectField
                             v-bind="v"
@@ -74,7 +74,7 @@
 
     const props = defineProps<NoCodeProps>();
 
-    function shouldMerge(schema: any, _key: string): boolean {
+    function shouldMerge(schema: any): boolean {
         const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf;
         return !complexObject
     }
@@ -181,9 +181,11 @@
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => {
         emit("closeTask")
     })
+
     provide(UPDATE_TASK_FUNCTION_INJECTION_KEY, (yaml) => {
         editorUpdate(yaml)
     })
+
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {
         emit("createTask", parentPath, blockSchemaPath, refPath, "after")
     });

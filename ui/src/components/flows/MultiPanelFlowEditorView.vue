@@ -198,7 +198,7 @@
     // openTabs -> noCodeHandlers -> panels -> openTabs
     watch(panels, (ps) => {
         openTabs.value = ps.flatMap(p => p.tabs.map(t => t.value))
-    }, {deep: true})
+    }, {deep: true, immediate: true})
 
     const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useCodePanels(panels)
 

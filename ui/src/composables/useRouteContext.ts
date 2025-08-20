@@ -6,19 +6,19 @@ export default function useRouteContext(routeInfoTitle: Ref<string>, embed: bool
 
     function handleTitle(){
         if(!embed) {
-                let baseTitle;
+            let baseTitle;
 
-                if (document.title.lastIndexOf("|") > 0) {
-                    baseTitle = document.title.substring(document.title.lastIndexOf("|") + 1);
-                } else {
-                    baseTitle = document.title;
-                }
-
-                document.title = routeInfoTitle.value + " | " + baseTitle;
+            if (document.title.lastIndexOf("|") > 0) {
+                baseTitle = document.title.substring(document.title.lastIndexOf("|") + 1);
+            } else {
+                baseTitle = document.title;
             }
+
+            document.title = routeInfoTitle.value + " | " + baseTitle;
+        }
     }
 
     watch(() => route, () => {
         handleTitle()
-    })
+    }, {immediate: true})
 }

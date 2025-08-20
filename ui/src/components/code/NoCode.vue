@@ -61,16 +61,8 @@
     import {useFlowStore} from "../../stores/flow";
     import {usePluginsStore} from "../../stores/plugins";
     import {useKeyboardSave} from "./utils/useKeyboardSave";
+    import {NoCodeProps} from "../flows/noCodeTypes";
 
-    export interface NoCodeProps {
-        creatingTask?: boolean;
-        editingTask?: boolean;
-        parentPath?: string;
-        refPath?: number;
-        position?: "before" | "after";
-        blockSchemaPath?: string;
-        fieldName?: string | undefined;
-    }
 
     const props = defineProps<NoCodeProps>();
 

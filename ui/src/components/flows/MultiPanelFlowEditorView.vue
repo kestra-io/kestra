@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, onUnmounted, ref, watch} from "vue";
+    import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue";
     import {useStorage} from "@vueuse/core";
     import {useI18n} from "vue-i18n";
     import {useCoreStore} from "../../stores/core";
@@ -30,6 +30,7 @@
     import FlowPlayground from "./FlowPlayground.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import KeyShortcuts from "../inputs/KeyShortcuts.vue";
+    import NoCode from "../code/NoCode.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
     import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
     import {useTopologyPanels} from "./useTopologyPanels";
@@ -43,6 +44,8 @@
             // when the flow file is dirty all the nocode tabs get splashed
             || element.value.startsWith("nocode-")
     }
+
+    const RawNoCode = markRaw(NoCode)
 
     const coreStore = useCoreStore()
     const flowStore = useFlowStore()
@@ -97,7 +100,7 @@
 
 
     function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
-        const tab = setupInitialNoCodeTab(value, t, noCodeHandlers, flowStore.flowYaml ?? "")
+        const tab = setupInitialNoCodeTab(RawNoCode, value, t, noCodeHandlers, flowStore.flowYaml ?? "")
         return staticGetPanelFromValue(value, tab, dirtyFlow)
     }
 
@@ -167,7 +170,7 @@
                             .map((p): Panel => {
                                 const tabs: Tab[] = p.tabs.map((tab) =>
                                     setupInitialCodeTab(tab)
-                                    ?? setupInitialNoCodeTabIfExists(flowStore.flowYaml ?? "", tab, t, noCodeHandlers)
+                                    ?? setupInitialNoCodeTabIfExists(RawNoCode, flowStore.flowYaml ?? "", tab, t, noCodeHandlers)
                                     ?? EDITOR_ELEMENTS.find(e => e.value === tab)!
                                 )
                                     // filter out any tab that may have disappeared
@@ -199,7 +202,7 @@
 
     const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useCodePanels(panels)
 
-    const actions = useNoCodePanels(panels, openTabs, focusTab)
+    const actions = useNoCodePanels(RawNoCode, panels, openTabs, focusTab)
 
     tempActions.openAddTaskTab = actions.openAddTaskTab
     tempActions.openEditTaskTab = actions.openEditTaskTab

@@ -78,6 +78,7 @@ jobs:
   docker:
     name: Publish Docker
     needs: [ plugins, build-artifacts ]
+    if: always()
     runs-on: ubuntu-latest
     strategy:
       matrix:

@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, onUnmounted, Ref, watch} from "vue";
+    import {computed, onMounted, onUnmounted, ref, watch} from "vue";
     import {useStorage} from "@vueuse/core";
     import {useI18n} from "vue-i18n";
     import {useCoreStore} from "../../stores/core";
@@ -35,7 +35,7 @@
     import {useTopologyPanels} from "./useTopologyPanels";
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts";
 
-    import {getCreateTabKey, getEditTabKey, setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
+    import {setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodeHandlers, useNoCodePanels} from "./useNoCodePanels";
     import {useFlowStore} from "../../stores/flow";
 
     function isTabFlowRelated(element: Tab){
@@ -72,6 +72,8 @@
         }
     }
 
+    const openTabs = ref<string[]>([])
+
     function setTabValue(tabValue: string){
         // Show dialog instead of creating panel
         if(tabValue === "keyshortcuts"){
@@ -91,57 +93,15 @@
         }
     }
 
-    const noCodeHandlers: Parameters<typeof setupInitialNoCodeTab>[2] = {
-        onCreateTask(opener, parentPath, blockSchemaPath, refPath, position){
-            const createTabId = getCreateTabKey({
-                parentPath,
-                refPath,
-                position,
-            }, 0).slice(12)
-
-            const tAdd = openTabs.value.find(t => t.endsWith(createTabId))
-
-            // if the tab is already open and has no data, to avoid conflicting data
-            // focus it and don't open a new one
-            if(tAdd && tAdd.startsWith("nocode-")){
-                focusTab(tAdd)
-                return false
-            }
-
-            openAddTaskTab(opener, parentPath, blockSchemaPath, refPath, position, isFlowDirty.value)
-            return false
-        },
-        onEditTask(...args){
-            // if the tab is already open, focus it
-            // and don't open a new one)
-            const [
-                ,
-                parentPath,
-                _blockSchemaPath,
-                refPath,
-            ] = args
-            const editKey = getEditTabKey({
-                parentPath,
-                refPath
-            }, 0).slice(12)
-
-            const tEdit = openTabs.value.find(t => t.endsWith(editKey))
-            if(tEdit && tEdit.startsWith("nocode-")){
-                focusTab(tEdit)
-                return false
-            }
-            openEditTaskTab(...args, isFlowDirty.value)
-            return false
-        },
-        onCloseTask(...args){
-            closeTaskTab(...args)
-            return false
-        },
-    }
-
     const {t} = useI18n()
+
+
     function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
         const tab = setupInitialNoCodeTab(value, t, noCodeHandlers, flowStore.flowYaml ?? "")
+        return staticGetPanelFromValue(value, tab, dirtyFlow)
+    }
+
+    function staticGetPanelFromValue(value: string, tab?: Tab, dirtyFlow = false): {prepend: boolean, panel: Panel}{
         const element: Tab = tab ?? EDITOR_ELEMENTS.find(e => e.value === value)!
 
         if(isTabFlowRelated(element)){
@@ -177,10 +137,22 @@
         }))
     }
 
-    const panels: Ref<Panel[]> = useStorage<any>(
+    /**
+     * these actions are placeholders
+     * that will be replaced later on
+     */
+    const tempActions = {
+        openAddTaskTab(){},
+        openEditTaskTab(){},
+        closeTaskTab(){}
+    } as ReturnType<typeof useNoCodePanels>
+
+    const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, tempActions)
+
+    const panels = useStorage<Panel[]>(
         `flow-${flowStore.flow?.namespace}-${flowStore.flow?.id}`,
         DEFAULT_ACTIVE_TABS
-            .map((t):Panel => getPanelFromValue(t).panel),
+            .map((t) => staticGetPanelFromValue(t).panel),
         undefined,
         {
             serializer: {
@@ -188,44 +160,56 @@
                     return JSON.stringify(serializePanel(v))
                 },
                 read(v?: string) {
-                    if(v){
-                        const panels: {tabs: string[], activeTab: string, size: number}[] = isTourRunning.value ? DEFAULT_TOUR_TABS : JSON.parse(v)
+                    if (v) {
+                        const panels: { tabs: string[], activeTab: string, size: number }[] = isTourRunning.value ? DEFAULT_TOUR_TABS : JSON.parse(v);
                         return panels
                             .filter((p) => p.tabs.length)
-                            .map((p):Panel => {
-                                const tabs = p.tabs.map((tab) =>
+                            .map((p): Panel => {
+                                const tabs: Tab[] = p.tabs.map((tab) =>
                                     setupInitialCodeTab(tab)
                                     ?? setupInitialNoCodeTabIfExists(flowStore.flowYaml ?? "", tab, t, noCodeHandlers)
                                     ?? EDITOR_ELEMENTS.find(e => e.value === tab)!
                                 )
                                     // filter out any tab that may have disappeared
-                                    .filter(Boolean)
-                                const activeTab = tabs.find(t => cleanupNoCodeTabKey(t.value) === p.activeTab) ?? tabs[0]
+                                    .filter(t => t !== undefined);
+                                const activeTab = tabs.find(t => cleanupNoCodeTabKey(t.value) === p.activeTab) ?? tabs[0];
                                 return {
                                     activeTab,
                                     tabs,
                                     size: p.size
-                                }
-                            })
-                    }else{
-                        return null
+                                };
+                            });
+                    } else {
+                        return [];
                     }
                 }
             },
         },
     )
 
-    const {openAddTaskTab, openEditTaskTab, closeTaskTab} = useNoCodePanels(panels, noCodeHandlers)
-
-    const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)))
+    // we maintain openTabs using watcher to avoid circular references
+    // The obvious choice would have been to have a computed,
+    // but this would have required panels to be defined before openTabs.
+    // We need openTabs for noCodeHandlers and the latter for panels
+    // deserialization/initialization
+    // openTabs -> noCodeHandlers -> panels -> openTabs
+    watch(panels, (ps) => {
+        openTabs.value = ps.flatMap(p => p.tabs.map(t => t.value))
+    }, {deep: true})
 
     const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useCodePanels(panels)
+
+    const actions = useNoCodePanels(panels, openTabs, focusTab)
+
+    tempActions.openAddTaskTab = actions.openAddTaskTab
+    tempActions.openEditTaskTab = actions.openEditTaskTab
+    tempActions.closeTaskTab = actions.closeTaskTab
 
     function onRemoveTab(tab: string){
         onRemoveCodeTab(tab)
     }
 
-    useTopologyPanels(panels, openAddTaskTab, openEditTaskTab)
+    useTopologyPanels(panels, actions.openAddTaskTab, actions.openEditTaskTab)
 
     watch(isFlowDirty, (dirty) => {
         for(const panel of panels.value){

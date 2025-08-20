@@ -1,4 +1,4 @@
-import {h, markRaw, Ref, Suspense} from "vue"
+import {computed, h, markRaw, Ref, Suspense} from "vue"
 import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -6,6 +6,7 @@ import type {Panel, Tab} from "../MultiPanelTabs.vue";
 import NoCodeWrapper, {NoCodeProps} from "../code/NoCode.vue"
 
 import {useFlowStore} from "../../stores/flow";
+import {useEditorStore} from "../../stores/editor";
 
 
 
@@ -167,7 +168,61 @@ export function setupInitialNoCodeTab(tab: string, t: (key: string) => string, h
     return getTabFromNoCodeTab(parseTabId(tab), t, handlers, flowYaml)
 }
 
-export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
+export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: string) => void, actions: ReturnType<typeof useNoCodePanels>) {
+    const editorStore = useEditorStore()
+    const isFlowDirty = computed(() => editorStore.tabs.some((t:any) => t.flow && t.dirty))
+    const noCodeHandlers: Handlers = {
+        onCreateTask(opener, parentPath, blockSchemaPath, refPath, position){
+            const createTabId = getCreateTabKey({
+                parentPath,
+                refPath,
+                position,
+            }, 0).slice(12)
+
+            const tAdd = openTabs.value.find(t => t.endsWith(createTabId))
+
+            // if the tab is already open and has no data, to avoid conflicting data
+            // focus it and don't open a new one
+            if(tAdd && tAdd.startsWith("nocode-")){
+                focusTab(tAdd)
+                return false
+            }
+
+            actions.openAddTaskTab(opener, parentPath, blockSchemaPath, refPath, position, isFlowDirty.value)
+            return false
+        },
+        onEditTask(...args){
+            // if the tab is already open, focus it
+            // and don't open a new one)
+            const [
+                ,
+                parentPath,
+                _blockSchemaPath,
+                refPath,
+            ] = args
+            const editKey = getEditTabKey({
+                parentPath,
+                refPath
+            }, 0).slice(12)
+
+            const tEdit = openTabs.value.find(t => t.endsWith(editKey))
+            if(tEdit && tEdit.startsWith("nocode-")){
+                focusTab(tEdit)
+                return false
+            }
+            actions.openEditTaskTab(...args, isFlowDirty.value)
+            return false
+        },
+        onCloseTask(...args){
+            actions.closeTaskTab(...args)
+            return false
+        },
+    }
+
+    return noCodeHandlers
+}
+
+export function useNoCodePanels(panels: Ref<Panel[]>, openTabs: Ref<string[]>, focusTab: (tab: string) => void) {
     const {t} = useI18n()
     const flowStore = useFlowStore()
 
@@ -238,9 +293,13 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         }
     }
 
-    return {
+    const actions = {
         openAddTaskTab,
         openEditTaskTab,
         closeTaskTab,
     }
+
+    const handlers = useNoCodeHandlers(openTabs, focusTab, actions)
+
+    return actions
 }

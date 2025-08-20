@@ -1,6 +1,6 @@
 <template>
     <div @click="handleClick" class="d-flex my-2 p-2 rounded element" :class="{'moved': moved}">
-        <div v-if="props.parentPathComplete !== 'inputs'" class="me-2 icon">
+        <div v-if="!['inputs', 'layout'].includes(props.parentPathComplete)" class="me-2 icon">
             <TaskIcon :cls="element.type" :icons only-icon />
         </div>
 
@@ -48,8 +48,9 @@
         section: string;
         parentPathComplete: string;
         element: {
-            id: string;
-            type: string;
+            id?: string;
+            type?: string;
+            on?: string;
         };
         blockSchemaPath: string;
         elementIndex?: number;
@@ -71,6 +72,7 @@
     const identifier = computed(() => {
         return props.element.id
             ?? props.element.type
+            ?? props.element.on
             ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`;
     });
 

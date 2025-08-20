@@ -7,6 +7,8 @@ import io.kestra.core.models.collectors.FlowUsage;
 import io.kestra.core.reporter.AbstractReportable;
 import io.kestra.core.reporter.Schedules;
 import io.kestra.core.reporter.Types;
+import io.kestra.core.reporter.model.Count;
+import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.micronaut.core.annotation.Introspected;
@@ -24,14 +26,17 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
     
     private final FlowRepositoryInterface flowRepository;
     private final ExecutionRepositoryInterface executionRepository;
+    private final DashboardRepositoryInterface dashboardRepository;
     private final boolean enabled;
     
     @Inject
     public FeatureUsageReport(FlowRepositoryInterface flowRepository,
-                              ExecutionRepositoryInterface executionRepository) {
+                              ExecutionRepositoryInterface executionRepository,
+                              DashboardRepositoryInterface dashboardRepository) {
         super(Types.USAGE, Schedules.hourly(), true);
         this.flowRepository = flowRepository;
         this.executionRepository = executionRepository;
+        this.dashboardRepository = dashboardRepository;
         
         ServerType serverType = KestraContext.getContext().getServerType();
         this.enabled = ServerType.EXECUTOR.equals(serverType) || ServerType.STANDALONE.equals(serverType);
@@ -43,6 +48,7 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
             .builder()
             .flows(FlowUsage.of(flowRepository))
             .executions(ExecutionUsage.of(executionRepository, interval.from(), interval.to()))
+            .dashboards(new Count(dashboardRepository.count()))
             .build();
     }
     
@@ -69,5 +75,6 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
     public static class UsageEvent implements Event {
         private ExecutionUsage executions;
         private FlowUsage flows;
+        private Count dashboards;
     }
 }

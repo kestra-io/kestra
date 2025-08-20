@@ -14,8 +14,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
-import org.jooq.Record;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
@@ -74,7 +74,18 @@ public abstract class AbstractJdbcRepository<T> {
             .of(io.kestra.jdbc.repository.AbstractJdbcRepository.field("value"), MAPPER.writeValueAsString(entity))
         );
     }
-
+    
+    public int count(Condition condition) {
+        return getDslContextWrapper()
+            .transactionResult(configuration -> DSL
+                .using(configuration)
+                .selectCount()
+                .from(getTable())
+                .where(condition)
+                .execute()
+            );
+    }
+    
     public void persist(T entity) {
         this.persist(entity, null);
     }

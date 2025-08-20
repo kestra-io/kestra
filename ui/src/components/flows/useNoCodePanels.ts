@@ -193,17 +193,16 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             fieldName,
         }, t, handlers, flowStore.flowYaml, dirty)
 
-        panels.value[opener.panelIndex]?.tabs.splice(opener.tabIndex + 1, 0, tab)
-
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
             return
         }
 
+        openerPanel.tabs.splice(opener.tabIndex + 1, 0, tab)
         openerPanel.activeTab = tab
     }
 
-    function openEditTaskTab(
+     function openEditTaskTab(
         opener: { panelIndex: number, tabIndex: number },
         parentPath: string,
         blockSchemaPath: string,

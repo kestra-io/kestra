@@ -35,7 +35,7 @@
                             <template #dropdown>
                                 <el-dropdown-menu class="m-2">
                                     <el-dropdown-item @click="playgroundStore.clearExecutions()">
-                                        <span class="small-text">{{ t('clear') }} {{ t('history').toLowerCase() }}</span>
+                                        <span class="small-text">{{ t('playground.clear_history') }}</span>
                                     </el-dropdown-item>
                                     <el-dropdown-item :icon="CloseIcon" @click="playgroundStore.enabled = false">
                                         <span class="small-text">{{ t('close panel') }}</span>

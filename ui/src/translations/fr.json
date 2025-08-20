@@ -457,6 +457,10 @@
       "triggers": {
         "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> dans notre documentation.",
         "title": "Votre flow n'a pas de triggers."
+      },
+      "versionPlugin": {
+        "content": "Ici, vous pouvez gérer tous les plugins installés sur votre instance Kestra. Les plugins nouvellement installés peuvent ne pas être immédiatement disponibles dans tous les services Kestra, selon la configuration de votre instance.",
+        "title": "Vous n'avez pas encore de plugin versionné !"
       }
     },
     "empty search": "Les résultats de recherche sont vides",

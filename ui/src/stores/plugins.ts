@@ -19,7 +19,7 @@ interface PluginComponent {
     markdown?: string;
 }
 
-interface Plugin {
+export interface Plugin {
     tasks: PluginComponent[];
     triggers: PluginComponent[];
     conditions: PluginComponent[];

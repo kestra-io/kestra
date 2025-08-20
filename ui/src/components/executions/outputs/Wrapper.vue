@@ -93,7 +93,7 @@
                                             )
 
                                         "
-                                        class="mt-3 el-button--wrap"
+                                        class="mt-3"
                                     >
                                         {{ t("eval.title") }}
                                     </el-button>

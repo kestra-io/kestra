@@ -696,6 +696,11 @@
                     original: originalModel,
                     modified: modifiedModel
                 });
+                const modifiedEditor = localDiffEditor.value.getModifiedEditor();
+                modifiedEditor.addCommand(monaco.KeyCode.Backspace, () => {
+                    modifiedEditor.trigger("keyboard", "deleteLeft", null);
+                    modifiedEditor.trigger("keyboard", "editor.action.triggerSuggest", {});
+                });
             }
         } else {
             monaco.editor.addKeybindingRule({
@@ -728,7 +733,10 @@
 
             if (editorRef.value) {
                 localEditor.value = monaco.editor.create(editorRef.value, options);
-
+                localEditor.value.addCommand(monaco.KeyCode.Backspace, () => {
+                    localEditor.value!.trigger("keyboard", "deleteLeft", null);
+                    localEditor.value!.trigger("keyboard", "editor.action.triggerSuggest", {});
+                });
                 if (props.suggestionsOnFocus) {
                     localEditor.value.onMouseDown(() => {
                         localEditor.value!.trigger("click", "editor.action.triggerSuggest", {});

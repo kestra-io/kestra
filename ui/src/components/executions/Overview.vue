@@ -440,14 +440,15 @@
                     {key: this.$t("scheduleDate"), value: this.execution?.scheduleDate, date: true},
                 ];
 
-                if (this.execution.parentId) {
+                if (this.execution?.trigger?.type === "io.kestra.plugin.core.flow.Subflow" 
+                    && this.execution?.trigger?.variables?.executionId) {
                     ret.push({
                         key: this.$t("parent execution"),
-                        value: this.execution.parentId,
+                        value: this.execution.trigger.variables.executionId,
                         link: {
-                            flowId: this.execution.flowId,
-                            id: this.execution.parentId,
-                            namespace: this.execution.namespace
+                            flowId: this.execution.trigger.variables.flowId,
+                            id: this.execution.trigger.variables.executionId,
+                            namespace: this.execution.trigger.variables.namespace
                         }
                     });
                 }

@@ -278,7 +278,7 @@
                         pointRadius: 0,
                         borderWidth: 0.75,
                         label: label,
-                        borderColor: cssVariable("--ks-border-running")
+                        borderColor: props.short ? cssVariable("--ks-background-running") : cssVariable("--ks-border-running")
                     },
                     ...yDatasetData,
                 ]

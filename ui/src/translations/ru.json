@@ -48,6 +48,10 @@
     "aggregation": "Агрегация",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "Примечание: В настоящее время поддерживается только Gemini в качестве AI-провайдера.\n\nПерезапустите ваш Kestra instance после сохранения конфигурации.",
+          "header": "<b>AI Copilot еще не настроен.</b>\n\nЧтобы включить AI Copilot, добавьте следующий фрагмент в файл конфигурации вашего экземпляра Kestra (например, <code>application.yml</code>), заменив <code>geminiApiKey</code> на ваш фактический ключ:"
+        },
         "generating": "Генерация YAML для flow...",
         "prompt_placeholder": "Введите инструкции для создания вашего Kestra flow. Пример запроса: Создайте flow, который запускается каждый понедельник в 9 утра.",
         "title": "AI Агент"

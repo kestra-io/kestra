@@ -48,6 +48,10 @@
     "aggregation": "집계",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "참고: 현재 AI 제공자로는 Gemini만 지원됩니다.\n\n구성을 저장한 후 Kestra 인스턴스를 재시작하세요.",
+          "header": "<b>AI Copilot이 아직 구성되지 않았습니다.</b>\n\nAI Copilot을 활성화하려면 다음 스니펫을 Kestra 인스턴스 구성 파일(예: <code>application.yml</code>)에 추가하고 <code>geminiApiKey</code>를 실제 key로 교체하십시오:"
+        },
         "generating": "Flow YAML을 생성 중입니다...",
         "prompt_placeholder": "Kestra flow를 생성하기 위한 지침을 입력하세요. 예시 프롬프트: 매주 월요일 오전 9시에 실행되는 flow를 생성하세요.",
         "title": "AI 에이전트"

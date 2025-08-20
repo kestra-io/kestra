@@ -2,6 +2,7 @@
     <Editor
         id="editorWrapper"
         ref="editorRefElement"
+        class="flex-1"
         :model-value="draftSource === undefined ? source : draftSource"
         :schema-type="isCurrentTabFlow ? 'flow': undefined"
         :lang="extension === undefined ? 'yaml' : undefined"
@@ -23,7 +24,6 @@
         <template #absolute>
             <AITriggerButton
                 :show="isCurrentTabFlow"
-                :enabled="aiEnabled"
                 :opened="aiAgentOpened"
                 @click="draftSource = undefined; aiAgentOpened = true"
             />
@@ -44,7 +44,6 @@
     </Transition>
     <AcceptDecline
         v-if="draftSource !== undefined"
-        class="position-absolute actions"
         @accept="acceptDraft"
         @reject="declineDraft"
     />
@@ -56,7 +55,6 @@
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
-    import {useMiscStore} from "override/stores/misc";
     import {EditorTabProps, useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {useNamespacesStore} from "override/stores/namespaces";
@@ -74,15 +72,13 @@
     const route = useRoute();
     const router = useRouter();
 
-    const miscStore = useMiscStore();
     const editorStore = useEditorStore();
     const flowStore = useFlowStore();
 
-    const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const cursor = ref();
 
     const toggleAiShortcut = (event: KeyboardEvent) => {
-        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value && aiEnabled.value) {
+        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value) {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();

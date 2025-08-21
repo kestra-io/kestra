@@ -106,6 +106,16 @@ jobs:
             echo "tag=${TAG}" >> $GITHUB_OUTPUT
           fi
 
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            if [[ $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              # this will remove the patch version number
+              MINOR_SEMVER=${TAG%.*}
+              echo "minor_semver=${MINOR_SEMVER}" >> $GITHUB_OUTPUT
+            else
+              echo "Tag '$TAG' is not a valid semver (vMAJOR.MINOR.PATCH), skipping minor_semver"
+            fi
+          fi
+
           if [[ "${{ env.PLUGIN_VERSION }}" == *"-SNAPSHOT" ]]; then
             echo "plugins=--repositories=https://central.sonatype.com/repository/maven-snapshots/ ${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT;
           else
@@ -156,8 +166,13 @@ jobs:
             PYTHON_LIBRARIES=${{ matrix.image.python-libs }}
 
       - name: Install regctl
-        if: startsWith(github.ref, 'refs/tags/v') && inputs.retag-latest == 'true'
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: regclient/actions/regctl-installer@main
+
+      - name: Retag to minor semver version
+        if: startsWith(github.ref, 'refs/tags/v') && steps.vars.outputs.minor_semver != ''
+        run: |
+          regctl image copy ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }} ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.minor_semver, matrix.image.name) }}
 
       - name: Retag to latest
         if: startsWith(github.ref, 'refs/tags/v') && inputs.retag-latest == 'true'

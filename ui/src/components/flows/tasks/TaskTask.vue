@@ -8,6 +8,7 @@
                 id: model?.id ?? 'Set a task',
                 type: model?.type,
             }"
+            type-field-schema="type"
             @remove-element="removeElement()"
         />
     </div>

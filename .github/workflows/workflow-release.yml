@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       plugin-version:
-        description: "Kestra version"
+        description: "plugins version"
         default: 'LATEST'
         required: false
         type: string
@@ -16,7 +16,7 @@ on:
   workflow_call:
     inputs:
       plugin-version:
-        description: "Kestra version"
+        description: "plugins version"
         default: 'LATEST'
         required: false
         type: string

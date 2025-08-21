@@ -64,8 +64,8 @@ jobs:
       - name: Get Plugins List
         uses: ./.github/actions/plugins-list
         id: plugins
-        with:
-          plugin-version: ${{ env.PLUGIN_VERSION }}
+        with: # remap LATEST-SNAPSHOT to LATEST
+          plugin-version: ${{ env.PLUGIN_VERSION == 'LATEST-SNAPSHOT' && 'LATEST' || env.PLUGIN_VERSION }}
 
   # ********************************************************************************************************************
   # Build

@@ -25,13 +25,16 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, onBeforeMount} from "vue";
+    import {computed, inject, onBeforeMount, ref} from "vue";
     import {useI18n} from "vue-i18n";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
-        PARENT_PATH_INJECTION_KEY
+        PARENT_PATH_INJECTION_KEY,
+        ROOT_SCHEMA_INJECTION_KEY,
+        SCHEMA_DEFINITIONS_INJECTION_KEY,
+        TASK_TYPE_FIELD_INJECTION_KEY
     } from "../code/injectionKeys";
     import {getValueAtJsonPath} from "../../utils/utils";
 
@@ -39,6 +42,9 @@
 
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+    const rootSchema = inject(ROOT_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
+    const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
+    const typeField = inject(TASK_TYPE_FIELD_INJECTION_KEY, computed(() => "type"));
 
     const blockType = parentPath.split(".").pop() ?? "";
 
@@ -46,7 +52,7 @@
         if (blockSchemaPath.length === 0) {
             console.error("Definition key is required for PluginSelect component");
         }
-        return getValueAtJsonPath(pluginsStore.flowSchema, blockSchemaPath);
+        return getValueAtJsonPath(rootSchema.value, blockSchemaPath);
     })
 
     onBeforeMount(() => {
@@ -84,16 +90,18 @@
             return removeRefPrefix(item.$ref);
         }) || [];
 
+        const type = typeField.value;
+
         return allRefs.reduce((acc: string[], item: string) => {
-            const def = pluginsStore.flowDefinitions?.[item]
-            
+            const def = rootDefinitions.value?.[item]
+
             if (!def || def.$deprecated) {
                 return acc;
             }
 
             const consolidatedType = def.allOf
-                ? def.allOf.find((d: any) => d.properties?.type)?.properties.type
-                : def.properties?.type;
+                ? def.allOf.find((d: any) => d.properties?.[type])?.properties[type]
+                : def.properties?.[type];
 
             if (consolidatedType?.const) {
                 acc.push(consolidatedType?.const);

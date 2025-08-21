@@ -47,11 +47,14 @@
         EDIT_TASK_FUNCTION_INJECTION_KEY,
         EDITING_TASK_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY,
+        FULL_SCHEMA_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY,
         PANEL_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
         POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY,
+        ROOT_SCHEMA_INJECTION_KEY,
+        SCHEMA_DEFINITIONS_INJECTION_KEY,
         SCHEMA_PATH_INJECTION_KEY,
         UPDATE_TASK_FUNCTION_INJECTION_KEY,
     } from "./injectionKeys";
@@ -163,10 +166,13 @@
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, props.blockSchemaPath ?? "");
     provide(FIELDNAME_INJECTION_KEY, props.fieldName);
     provide(SCHEMA_PATH_INJECTION_KEY, computed(() => pluginsStore.schemaType?.flow.$ref ?? ""));
+    provide(FULL_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowSchema ?? {}));
+    provide(ROOT_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowRootSchema ?? {}));
+    provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => pluginsStore.flowDefinitions ?? {}));
 
     const emit = defineEmits<{
-        (e: "createTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;
-        (e: "editTask", parentPath: string, blockSchemaPath: string, refPath?: number): boolean | void;
+        (e: "createTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined,  position: "after" | "before", typeField: string): boolean | void;
+        (e: "editTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined, typeField: string): boolean | void;
         (e: "closeTask"): boolean | void;
     }>();
 
@@ -178,12 +184,12 @@
         editorUpdate(yaml)
     })
 
-    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {
-        emit("createTask", parentPath, blockSchemaPath, refPath, "after")
+    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath, typeField = "type") => {
+        emit("createTask", parentPath, blockSchemaPath, refPath, "after", typeField)
     });
 
-    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, ( parentPath, blockSchemaPath, refPath) => {
-        emit("editTask", parentPath, blockSchemaPath, refPath)
+    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, ( parentPath, blockSchemaPath, refPath, typeField = "type") => {
+        emit("editTask", parentPath, blockSchemaPath, refPath, typeField)
     });
 
 

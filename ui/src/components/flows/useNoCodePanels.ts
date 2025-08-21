@@ -24,12 +24,14 @@ interface Handlers {
         blockSchemaPath: string,
         refPath?: number,
         position?: "before" | "after",
+        typeField?: string
     ) => boolean,
     onEditTask: (
         opener: Opener,
         parentPath: string,
         blockSchemaPath: string,
         refPath?: number,
+        typeField?: string
     ) => boolean
     onCloseTask: (opener: Opener) => boolean
 }
@@ -125,8 +127,8 @@ function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: strin
                     ...restOfTab,
                     creatingTask: tab.action === "create",
                     editingTask: tab.action === "edit",
-                    onCreateTask: onCreateTask?.bind({}, props) as any,
-                    onEditTask: onEditTask?.bind({}, props) as any,
+                    onCreateTask: onCreateTask?.bind({}, props),
+                    onEditTask: onEditTask?.bind({}, props),
                     onCloseTask: onCloseTask?.bind({}, props),
                 })]
             )
@@ -134,17 +136,21 @@ function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: strin
     }
 }
 
-export function setupInitialNoCodeTabIfExists(Comp: any, flow: string, tab: string, t: (key: string) => string, handlers: Handlers) {
+export function setupInitialNoCodeTabIfExists(Comp: any, tab: string, t: (key: string) => string, handlers: Handlers, flowYaml: string) {
+    if (tab === NOCODE_PREFIX) {
+        return getTabFromNoCodeTab(Comp, parseTabId(tab), t, handlers, flowYaml)
+    }
+
     if (tab.startsWith(`${NOCODE_PREFIX}-`)){
         const {parentPath, refPath, action} = parseTabId(tab)
         const path = (refPath === undefined ? parentPath : `${parentPath}[${refPath}]`) ?? ""
-        if(action === "edit" && !YAML_UTILS.extractBlockWithPath({source: flow, path})) {
+        if(action === "edit" && !YAML_UTILS.extractBlockWithPath({source: flowYaml, path})) {
             // if the task is not found, we don't create the tab
             return undefined
         }
     }
 
-    return setupInitialNoCodeTab(Comp,tab, t, handlers, flow)
+    return setupInitialNoCodeTab(Comp, tab, t, handlers, flowYaml)
 }
 
 function parseTabId(tabId: string) {
@@ -172,11 +178,12 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
     const editorStore = useEditorStore()
     const isFlowDirty = computed(() => editorStore.tabs.some((t:any) => t.flow && t.dirty))
     const noCodeHandlers: Handlers = {
-        onCreateTask(opener, parentPath, blockSchemaPath, refPath, position){
+        onCreateTask(opener, parentPath, blockSchemaPath, refPath, position, typeField){
             const createTabId = getCreateTabKey({
                 parentPath,
                 refPath,
                 position,
+                typeField,
             }, 0).slice(12)
 
             const tAdd = openTabs.value.find(t => t.endsWith(createTabId))
@@ -188,7 +195,7 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
                 return false
             }
 
-            actions.openAddTaskTab(opener, parentPath, blockSchemaPath, refPath, position, isFlowDirty.value)
+            actions.openAddTaskTab(opener, parentPath, blockSchemaPath, refPath, position, isFlowDirty.value, undefined, typeField)
             return false
         },
         onEditTask(...args){
@@ -199,10 +206,12 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
                 parentPath,
                 _blockSchemaPath,
                 refPath,
+                typeField,
             ] = args
             const editKey = getEditTabKey({
                 parentPath,
-                refPath
+                refPath,
+                typeField,
             }, 0).slice(12)
 
             const tEdit = openTabs.value.find(t => t.endsWith(editKey))
@@ -236,17 +245,18 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         refPath?: number,
         position: "before" | "after" = "after",
         dirty: boolean = false,
-        fieldName?: string | undefined
+        fieldName?: string | undefined,
+        typeField?: string | undefined,
     ) {
         // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab(component, {
-
             action: "create",
             parentPath,
             blockSchemaPath,
             refPath,
             position,
             fieldName,
+            typeField,
         }, t, handlers, flowStore.flowYaml, dirty)
 
         const openerPanel = panels.value[opener.panelIndex]
@@ -263,6 +273,7 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         parentPath: string,
         blockSchemaPath: string,
         refPath?: number,
+        typeField?: string,
         dirty: boolean = false
     ) {
         const tab = getTabFromNoCodeTab(component, {
@@ -270,6 +281,7 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
             parentPath,
             blockSchemaPath,
             refPath,
+            typeField,
         }, t, handlers, flowStore.flowYaml ?? "", dirty)
 
         const openerPanel = panels.value[opener.panelIndex]

@@ -2,7 +2,7 @@
     <div v-if="playgroundStore.enabled && isTask && taskObject?.id" class="flow-playground">
         <PlaygroundRunTaskButton :task-id="taskObject?.id" />
     </div>
-    <el-form label-position="top">
+    <el-form v-if="typeField === 'type'" label-position="top">
         <el-form-item>
             <template #label>
                 <div class="type-div">
@@ -16,17 +16,16 @@
             />
         </el-form-item>
     </el-form>
-
     <div @click="isPlugin && pluginsStore.updateDocumentation(taskObject as Parameters<typeof pluginsStore.updateDocumentation>[0])">
         <TaskObject
             v-loading="isLoading"
-            v-if="selectedTaskType && schema"
+            v-if="(selectedTaskType || typeField !== 'type') && schemaProp"
             name="root"
             :model-value="taskObject"
             @update:model-value="onTaskInput"
             :schema="schemaProp"
             :properties="properties"
-            :definitions="schema.definitions"
+            :definitions="fullSchema.definitions"
         />
     </div>
 </template>
@@ -35,6 +34,7 @@
     import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    // @ts-expect-error TaskObject can't be typed for now because of time constraints
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {NoCodeElement, Schemas} from "../code/utils/types";
@@ -42,6 +42,8 @@
         SCHEMA_PATH_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
+        TASK_TYPE_FIELD_INJECTION_KEY,
+        FULL_SCHEMA_INJECTION_KEY,
     } from "../code/injectionKeys";
     import {removeNullAndUndefined} from "../code/utils/cleanUp";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
@@ -85,6 +87,8 @@
         return parentPath !== "inputs"
     });
 
+    const typeField = inject(TASK_TYPE_FIELD_INJECTION_KEY, computed(() => "type"));
+
     watch(modelValue, (v) => {
         if (!v) {
             taskObject.value = {};
@@ -94,9 +98,15 @@
         }
     }, {immediate: true});
 
-    const schema = computed(() => {
-        return plugin.value?.schema;
-    });
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<{
+        definitions: Record<string, any>,
+        $ref: string,
+    }>({
+        definitions: {},
+        $ref: "",
+    }));
+
+    const schema = computed(() => plugin.value?.schema);
 
     const properties = computed(() => {
         const updatedProperties = schemaProp.value?.properties;
@@ -122,7 +132,9 @@
     });
 
     const schemaProp = computed(() => {
-        const prop = schema.value?.properties;
+        const prop = typeField.value === "type"
+            ? schema.value?.properties
+            : getValueAtJsonPath(fullSchema.value, `${fullSchema.value.$ref}${blockSchemaPath}`)
         if(!prop){
             return undefined;
         }
@@ -142,7 +154,7 @@
         }else{
             taskObject.value = parsed;
         }
-        selectedTaskType.value = taskObject.value?.type;
+        selectedTaskType.value = taskObject.value?.[typeField.value];
     }
 
     // when tab is opened, load the documentation
@@ -154,12 +166,12 @@
 
     // useful to map inputs to their real schema
     const typeMap = computed<Record<string, string>>(() => {
-        const field = getValueAtJsonPath(pluginsStore.flowSchema, blockSchemaPath)
+        const field = getValueAtJsonPath(fullSchema.value, `${fullSchema.value.$ref}${blockSchemaPath}`)
 
         if (field?.anyOf) {
             const f = field.anyOf.reduce((acc: Record<string, string>, item: any) => {
                 if (item.$ref) {
-                    const i = getValueAtJsonPath(pluginsStore.flowSchema, item.$ref);
+                    const i = getValueAtJsonPath(fullSchema.value, item.$ref);
                     if(i) item = i;
                 }
                 if (item.allOf) {
@@ -185,7 +197,7 @@
         return {}
     });
 
-    watch([selectedTaskType, () => pluginsStore.flowSchema], ([task]) => {
+    watch([selectedTaskType, fullSchema], ([task]) => {
         if (task) {
             load();
             if(isPlugin.value){

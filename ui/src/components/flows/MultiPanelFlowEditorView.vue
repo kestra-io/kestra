@@ -170,7 +170,7 @@
                             .map((p): Panel => {
                                 const tabs: Tab[] = p.tabs.map((tab) =>
                                     setupInitialCodeTab(tab)
-                                    ?? setupInitialNoCodeTabIfExists(RawNoCode, flowStore.flowYaml ?? "", tab, t, noCodeHandlers)
+                                    ?? setupInitialNoCodeTabIfExists(RawNoCode, tab, t, noCodeHandlers, flowStore.flowYaml ?? "")
                                     ?? EDITOR_ELEMENTS.find(e => e.value === tab)!
                                 )
                                     // filter out any tab that may have disappeared

@@ -82,7 +82,7 @@ public abstract class AbstractJdbcRepository<T> {
                 .selectCount()
                 .from(getTable())
                 .where(condition)
-                .execute()
+                .fetchOne(0, Integer.class)
             );
     }
     

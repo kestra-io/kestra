@@ -4,9 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       plugin-version:
-          description: "Kestra version"
-          default: 'LATEST'
-          required: true
+          description: "plugins version"
+          required: false
           type: string
   push:
     branches:

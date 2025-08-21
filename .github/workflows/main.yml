@@ -34,7 +34,7 @@ jobs:
     if: "!startsWith(github.ref, 'refs/heads/releases')"
     uses: ./.github/workflows/workflow-release.yml
     with:
-        plugin-version: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || (github.ref == 'refs/heads/refactor-simplify-release-docker-ci' && 'LATEST-SNAPSHOT' || 'LATEST') }}
+        plugin-version: ${{ github.event.inputs.plugin-version != '' && github.event.inputs.plugin-version || (github.ref == 'refs/heads/refactor-simplify-release-docker-ci' && 'LATEST-SNAPSHOT' || 'LATEST') }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}

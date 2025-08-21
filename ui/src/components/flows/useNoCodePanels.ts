@@ -193,7 +193,7 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
 
             // if the tab is already open and has no data, to avoid conflicting data
             // focus it and don't open a new one
-            if(tAdd && tAdd.startsWith("nocode-")){
+            if(tAdd && tAdd.startsWith(`${NOCODE_PREFIX}-`)){
                 focusTab(tAdd)
                 return false
             }
@@ -219,7 +219,7 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
 
             const tEdit = openTabs.value.find(t => t.endsWith(editKey))
 
-            if(tEdit && tEdit.startsWith("nocode-")){
+            if(tEdit && tEdit.startsWith(`${NOCODE_PREFIX}-`)){
                 focusTab(tEdit)
                 return false
             }

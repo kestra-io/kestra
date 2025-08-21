@@ -19,7 +19,7 @@ dependencies {
     def jsonschemaVersion = "4.37.0"
     def kafkaVersion = "4.0.0"
     def opensearchVersion = "3.2.0"
-    def opensearchRestVersion = "3.1.0"
+    def opensearchRestVersion = "3.2.0"
     def flyingSaucerVersion = "9.13.2"
     def jacksonVersion = "2.19.2"
     def jugVersion = "5.1.0"
@@ -30,9 +30,9 @@ dependencies {
     api platform("io.micronaut.platform:micronaut-platform:4.8.2")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.65.0')
+    api platform('com.google.cloud:libraries-bom:26.66.0')
     api platform("com.azure:azure-sdk-bom:1.2.37")
-    api platform('software.amazon.awssdk:bom:2.32.21')
+    api platform('software.amazon.awssdk:bom:2.32.26')
 
 
     constraints {
@@ -91,7 +91,7 @@ dependencies {
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-connector-basic', version: mavenResolverVersion
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-file', version: mavenResolverVersion
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-http', version: mavenResolverVersion
-        api 'com.github.oshi:oshi-core:6.8.2'
+        api 'com.github.oshi:oshi-core:6.8.3'
         api 'io.pebbletemplates:pebble:3.2.4'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.7.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion
@@ -106,8 +106,8 @@ dependencies {
         api 'com.h2database:h2:2.3.232'
         api 'com.mysql:mysql-connector-j:9.4.0'
         api 'org.postgresql:postgresql:42.7.7'
-        api 'com.github.docker-java:docker-java:3.5.3'
-        api 'com.github.docker-java:docker-java-transport-httpclient5:3.5.3'
+        api 'com.github.docker-java:docker-java:3.6.0'
+        api 'com.github.docker-java:docker-java-transport-httpclient5:3.6.0'
         api (group: 'org.opensearch.client', name: 'opensearch-java', version: "$opensearchVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-client', version: "$opensearchRestVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchRestVersion") // used by the elasticsearch plugin

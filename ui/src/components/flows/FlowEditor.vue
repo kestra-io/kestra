@@ -1,13 +1,13 @@
 <template>
-    <multi-panel-editor-view
+    <MultiPanelFlowEditorView
         v-if="flowStore.flow"
     />
 </template>
 
 <script setup>
     import {onBeforeUnmount} from "vue"
-    import MultiPanelEditorView from "./MultiPanelEditorView.vue";
     import {useFlowStore} from "../../stores/flow";
+    import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
 
     defineEmits([
         "expand-subflow"

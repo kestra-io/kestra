@@ -1329,6 +1329,10 @@
       "triggers": {
         "title": "Your flow doesn't have any Triggers.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."
+      },
+      "versionPlugin": {
+        "title": "You have no versioned plugin yet!",
+        "content": "Here you can manage all the plugins installed on your Kestra instance. Newly installed plugins may not be immediately available in all Kestra services, depending on the configuration of your instance."
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",

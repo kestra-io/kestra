@@ -38,10 +38,6 @@ public abstract class AbstractTaskRunnerTest {
     @Test
     protected void run() throws Exception {
         var runContext = runContext(this.runContextFactory);
-        simpleRun(runContext);
-    }
-
-    private void simpleRun(RunContext runContext) throws Exception {
         var commands = initScriptCommands(runContext);
         Mockito.when(commands.getCommands()).thenReturn(
             Property.ofValue(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")))
@@ -173,8 +169,27 @@ public abstract class AbstractTaskRunnerTest {
     @Test
     protected void canWorkMultipleTimeInSameWdir() throws Exception {
         var runContext = runContext(this.runContextFactory);
-        simpleRun(runContext);
-        simpleRun(runContext);
+
+        var commands = initScriptCommands(runContext);
+        Mockito.when(commands.getEnableOutputDirectory()).thenReturn(false);
+        Mockito.when(commands.outputDirectoryEnabled()).thenReturn(false);
+
+        Mockito.when(commands.getCommands()).thenReturn(
+            Property.ofValue(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World' > file.txt")))
+        );
+
+        var taskRunner = taskRunner();
+        var result = taskRunner.run(runContext, commands, Collections.emptyList());
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
+
+        Mockito.when(commands.getCommands()).thenReturn(
+            Property.ofValue(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("cat file.txt")))
+        );
+
+        result = taskRunner.run(runContext, commands, Collections.emptyList());
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
     }
 
     protected RunContext runContext(RunContextFactory runContextFactory) {

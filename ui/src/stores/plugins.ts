@@ -1,4 +1,5 @@
-import {defineStore} from "pinia";
+import {defineStore} from "pinia"
+import {trackPluginDocumentationView} from "../utils/tabTracking";;
 import {apiUrlWithoutTenants} from "override/utils/route";
 import semver from "semver";
 import {useApiStore} from "./api";
@@ -18,7 +19,7 @@ interface PluginComponent {
     markdown?: string;
 }
 
-interface Plugin {
+export interface Plugin {
     tasks: PluginComponent[];
     triggers: PluginComponent[];
     conditions: PluginComponent[];
@@ -319,6 +320,8 @@ export const usePluginsStore = defineStore("plugins", {
                     version,
                     ...plugin,
                 };
+
+                trackPluginDocumentationView(type);
 
                 this.forceIncludeProperties = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version");
             });

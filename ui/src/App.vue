@@ -116,15 +116,13 @@
                     uid: uid,
                 });
 
-                this.apiStore.loadConfig()
-                    .then(apiConfig => {
-                        this.initStats(apiConfig, config, uid);
-                    })
+                const apiConfig = await this.apiStore.loadConfig();
+                this.initStats(apiConfig, config, uid);
 
                 return config;
             },
             initStats(apiConfig, config, uid) {
-                if (!this.configs || this.configs["isAnonymousUsageEnabled"] === false) {
+                if (this.miscStore.configs["isAnonymousUsageEnabled"] === false) {
                     return;
                 }
 
@@ -147,7 +145,6 @@
                         posthog.alias(apiConfig.id);
                     }
                 }
-
 
                 let surveyVisible = false;
                 window.addEventListener("PHSurveyShown", () => {

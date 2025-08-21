@@ -8,18 +8,18 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.property.Property;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.executions.Variables;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.ExecutableUtils;
-import io.kestra.core.runners.FlowMetaStoreInterface;
-import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.ExecutableUtils;
+import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
@@ -30,20 +30,22 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
-import lombok.experimental.SuperBuilder;
-
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import lombok.experimental.SuperBuilder;
+import org.slf4j.event.Level;
 
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -218,20 +220,26 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
                 .<Boolean>pluginConfiguration(PLUGIN_FLOW_OUTPUTS_ENABLED)
                 .orElse(true);
 
-            final Map<String, Object> subflowOutputs = Optional
-                .ofNullable(flow.getOutputs())
-                .map(outputs -> outputs
-                    .stream()
-                    .collect(Collectors.toMap(
-                        io.kestra.core.models.flows.Output::getId,
-                        io.kestra.core.models.flows.Output::getValue)
+            List<io.kestra.core.models.flows.Output> subflowOutputs = flow.getOutputs();
+            
+            // region [deprecated] Subflow outputs feature
+            if (subflowOutputs == null && isOutputsAllowed && this.getOutputs() != null) {
+                subflowOutputs = this.getOutputs().entrySet().stream()
+                    .<io.kestra.core.models.flows.Output>map(entry -> io.kestra.core.models.flows.Output
+                        .builder()
+                        .id(entry.getKey())
+                        .value(entry.getValue())
+                        .required(true)
+                        .build()
                     )
-                )
-                .orElseGet(() -> isOutputsAllowed ? this.getOutputs() : null);
+                    .toList();
+            }
+            //endregion
 
-            if (subflowOutputs != null) {
+            if (subflowOutputs != null && !subflowOutputs.isEmpty()) {
                 try {
-                    Map<String, Object> outputs = runContext.render(subflowOutputs);
+                    Map<String, Object> outputs = FlowInputOutput.renderFlowOutputs(subflowOutputs, runContext);
+                    
                     FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class); // this is hacking
                     if (flow.getOutputs() != null && flowInputOutput != null) {
                         outputs = flowInputOutput.typedOutputs(flow, execution, outputs);

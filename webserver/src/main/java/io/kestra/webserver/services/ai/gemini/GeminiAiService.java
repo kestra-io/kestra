@@ -32,6 +32,7 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -142,7 +143,7 @@ public class GeminiAiService implements AiServiceInterface {
 
                 String[] identifiedTypes = mostRelevantTypes.split(" ?, ?");
 
-                JsonNode minifiedSchema = JacksonMapper.ofJson().convertValue(jsonSchemaGenerator.schemas(Flow.class, false, Arrays.asList(identifiedTypes)), JsonNode.class);
+                JsonNode minifiedSchema = JacksonMapper.ofJson().convertValue(jsonSchemaGenerator.schemas(Flow.class, false, Arrays.asList(identifiedTypes), true), JsonNode.class);
                 minifySchema(minifiedSchema);
                 try {
                     callbackContext.state().put(
@@ -202,18 +203,21 @@ public class GeminiAiService implements AiServiceInterface {
                     - For state-detection concepts, include KV tasks to fetch and store state to track changes between executions.
                     - Triggers initiate a Flow execution based on events or interval, while tasks perform actions within a Flow. Always distinguish between them and include both as needed.
                     - Include AT LEAST ONE trigger if execution should start based on an event or interval.
+                    - Triggers expose some variables that can be accessed through `{{trigger.outputName}}`. The only variables available are those defined in the trigger's outputs.
                     - Unless specified by the user, never assume a local port to serve any content, always use a remote URL (like a public HTTP server) to fetch content.
                     - Unless specified by the user, do not use any authenticated API, always use public APIs or those that don't require authentication.
                     - To avoid escaping quotes, use double quotes first and if you need quotes inside, use single ones. Only escape them if you have 3+ level quotes, for example: `message: "Hello {{inputs.userJson | jq('.name')}}"`.
                     - A property key is unique within each type.
                     - When fetching data from the JDBC plugin, always use fetchType: STORE.
                     - Manipulating date in expressions can be done through `dateAdd` (`{{now()|dateAdd(-1,'DAYS')}}`) and `date` filters (`{{"July 24, 2001"|date("yyyy-MM-dd",existingFormat="MMMM dd, yyyy")}}`)
+                    - Current date is %s.
                     - Always preserve root-level `id` and `namespace` if provided.
+                    - Don't add any Schedule trigger unless a regular occurrence is asked.
                     - If the user uses vague references (“it,” “that”), infer context from the current Flow YAML.
                     - Except for error scenarios, output only the raw YAML, with no explanation or additional text.
                     
                     IMPORTANT: If the user prompt cannot be fulfilled with the schema, instead of generating a Flow, reply: "%s".
-                    Do not invent properties or types. Strictly follow the provided schema.""".formatted(NON_FLOW_REQUEST_ERROR)
+                    Do not invent properties or types. Strictly follow the provided schema.""".formatted(Instant.now(), NON_FLOW_REQUEST_ERROR)
             )
             .build();
     }

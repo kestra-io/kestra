@@ -2,6 +2,7 @@
     <NamespaceSelect
         data-type="flow"
         :value="modelValue"
+        :read-only="!isCreating"
         allow-create
         @update:model-value="onInput"
     />
@@ -23,7 +24,9 @@
         },
         computed: {
             ...mapStores(useFlowStore),
-
+            isCreating() {
+                return this.flowStore.isCreating;
+            }
         }
     };
 </script>

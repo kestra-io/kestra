@@ -9,6 +9,7 @@ import {useEditorStore} from "../../stores/editor";
 import {NoCodeProps} from "./noCodeTypes";
 
 
+import {trackTabOpen, trackTabClose} from "../../utils/tabTracking";
 
 const NOCODE_PREFIX = "nocode"
 
@@ -259,6 +260,8 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
             typeField,
         }, t, handlers, flowStore.flowYaml, dirty)
 
+        trackTabOpen(tab);
+
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
             return
@@ -284,6 +287,8 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
             typeField,
         }, t, handlers, flowStore.flowYaml ?? "", dirty)
 
+        trackTabOpen(tab);
+
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
             return
@@ -299,6 +304,7 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         }
         const tab = openerPanel.tabs[opener.tabIndex]
         if (tab?.value.startsWith(NOCODE_PREFIX)) {
+            trackTabClose(tab);
             openerPanel.tabs.splice(opener.tabIndex, 1)
             if (openerPanel.activeTab === tab) {
                 openerPanel.activeTab = openerPanel.tabs[opener.tabIndex - 1] ?? openerPanel.tabs[opener.tabIndex + 1]

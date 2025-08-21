@@ -2439,6 +2439,8 @@ public class ExecutionController {
             Object value,
             @Parameter(description = "Specifies whether the input is enabled")
             boolean enabled,
+            @Parameter(description = "Specifies whether the input value is the default")
+            boolean isDefault,
             @Parameter(description = "The validation errors")
             List<ApiInputError> errors
         ) {
@@ -2460,6 +2462,7 @@ public class ExecutionController {
                     it.input(),
                     it.value(),
                     it.enabled(),
+                    it.isDefault(),
                     Optional.ofNullable(it.exception()).map(exception ->
                         exception.getConstraintViolations()
                             .stream()

@@ -182,6 +182,7 @@
     import Close from "vue-material-design-icons/Close.vue";
     import Keyboard from "vue-material-design-icons/Keyboard.vue";
     import {useEditorStore} from "../stores/editor";
+    import {trackTabOpen, trackTabClose} from "../utils/tabTracking";
 
     const {t} = useI18n();
     const {showKeyShortcuts} = useKeyShortcuts();
@@ -247,6 +248,8 @@
     const editorStore = useEditorStore()
 
     const handleTabClick = (panel: Panel, tab: Tab) => {
+        trackTabOpen(tab);
+        
         panel.activeTab = tab
 
         if(tab.value.startsWith(CODE_PREFIX)){
@@ -494,10 +497,17 @@
     }
 
     function closeAllTabs(panelIndex: number){
+        const panel = panels.value[panelIndex];
+        panel.tabs.forEach(tab => {
+            trackTabClose(tab);
+        });
+        
         panels.value[panelIndex].tabs = [];
     }
 
     function destroyTab(panelIndex:number, tab: Tab){
+        trackTabClose(tab);
+        
         const panel = panels.value[panelIndex];
         const tabIndex = panel.tabs.findIndex((t) => t.value === tab.value);
         panel.tabs.splice(tabIndex, 1);

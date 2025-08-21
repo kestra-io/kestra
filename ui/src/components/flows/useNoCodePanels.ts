@@ -44,13 +44,14 @@ export function getEditTabKey(tab: NoCodeProps, index: number) {
         creatingTask: _,
         position: __,
         editingTask: ___,
-        blockSchemaPath: ____,
         ...relevantTabProps
     } = tab
-    return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify({
-                    action: "edit",
-                    ...relevantTabProps
-                })}`
+
+    const keyParts = {
+        action: "edit",
+        ...relevantTabProps
+    }
+    return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify(keyParts, Object.keys(keyParts).sort())}`
 }
 
 export function getCreateTabKey(tab: NoCodeProps, index: number) {

@@ -1,52 +1,54 @@
 <template>
-    <Editor
-        id="editorWrapper"
-        ref="editorRefElement"
-        class="flex-1"
-        :model-value="draftSource === undefined ? source : draftSource"
-        :schema-type="isCurrentTabFlow ? 'flow': undefined"
-        :lang="extension === undefined ? 'yaml' : undefined"
-        :extension="extension"
-        :navbar="false"
-        :read-only="isReadOnly"
-        :creating="isCreating"
-        :path="props.path"
-        :diff-overview-bar="false"
-        @update:model-value="editorUpdate"
-        @cursor="updatePluginDocumentation"
-        @save="isCurrentTabFlow ? save(): saveFileContent()"
-        @execute="execute"
-        @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
-        @mouse-leave="() => highlightHoveredTask(-1)"
-        :original="draftSource === undefined ? undefined : source"
-        :diff-side-by-side="false"
-    >
-        <template #absolute>
-            <AITriggerButton
-                :show="isCurrentTabFlow"
-                :opened="aiAgentOpened"
-                @click="draftSource = undefined; aiAgentOpened = true"
+    <div class="h-100 d-flex flex-column">
+        <Editor
+            id="editorWrapper"
+            ref="editorRefElement"
+            class="flex-1"
+            :model-value="draftSource === undefined ? source : draftSource"
+            :schema-type="isCurrentTabFlow ? 'flow': undefined"
+            :lang="extension === undefined ? 'yaml' : undefined"
+            :extension="extension"
+            :navbar="false"
+            :read-only="isReadOnly"
+            :creating="isCreating"
+            :path="props.path"
+            :diff-overview-bar="false"
+            @update:model-value="editorUpdate"
+            @cursor="updatePluginDocumentation"
+            @save="isCurrentTabFlow ? save(): saveFileContent()"
+            @execute="execute"
+            @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
+            @mouse-leave="() => highlightHoveredTask(-1)"
+            :original="draftSource === undefined ? undefined : source"
+            :diff-side-by-side="false"
+        >
+            <template #absolute>
+                <AITriggerButton
+                    :show="isCurrentTabFlow"
+                    :opened="aiAgentOpened"
+                    @click="draftSource = undefined; aiAgentOpened = true"
+                />
+                <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
+            </template>
+            <template v-if="playgroundStore.enabled" #widget-content>
+                <PlaygroundRunTaskButton :task-id="highlightedLines?.taskId" />
+            </template>
+        </Editor>
+        <Transition name="el-zoom-in-center">
+            <AiAgent
+                v-if="aiAgentOpened"
+                class="position-absolute prompt"
+                @close="aiAgentOpened = false"
+                :flow="editorContent"
+                @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
             />
-            <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
-        </template>
-        <template v-if="playgroundStore.enabled" #widget-content>
-            <PlaygroundRunTaskButton :task-id="highlightedLines?.taskId" />
-        </template>
-    </Editor>
-    <Transition name="el-zoom-in-center">
-        <AiAgent
-            v-if="aiAgentOpened"
-            class="position-absolute prompt"
-            @close="aiAgentOpened = false"
-            :flow="editorContent"
-            @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
+        </Transition>
+        <AcceptDecline
+            v-if="draftSource !== undefined"
+            @accept="acceptDraft"
+            @reject="declineDraft"
         />
-    </Transition>
-    <AcceptDecline
-        v-if="draftSource !== undefined"
-        @accept="acceptDraft"
-        @reject="declineDraft"
-    />
+    </div>
 </template>
 
 <script lang="ts" setup>
@@ -258,16 +260,12 @@
 </script>
 
 <style scoped lang="scss">
-.prompt {
-    bottom: 10%;
-    width: calc(100% - 5rem);
-    left: 3rem;
-    max-width: 700px;
-    background-color: var(--ks-background-panel);
-    box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
-}
-
-.actions {
-    bottom: 10%;
-}
+    .prompt {
+        bottom: 10%;
+        width: calc(100% - 5rem);
+        left: 3rem;
+        max-width: 700px;
+        background-color: var(--ks-background-panel);
+        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+    }
 </style>

@@ -42,8 +42,9 @@ export function getEditTabKey(tab: NoCodeProps, index: number) {
     // remove irrelevant properties from the tab object
     const {
         creatingTask: _,
-        editingTask: ___,
         position: __,
+        editingTask: ___,
+        blockSchemaPath: ____,
         ...relevantTabProps
     } = tab
     return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify({
@@ -205,7 +206,7 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
             const [
                 ,
                 parentPath,
-                _blockSchemaPath,
+                ,
                 refPath,
                 typeField,
             ] = args
@@ -216,6 +217,7 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
             }, 0).slice(12)
 
             const tEdit = openTabs.value.find(t => t.endsWith(editKey))
+
             if(tEdit && tEdit.startsWith("nocode-")){
                 focusTab(tEdit)
                 return false

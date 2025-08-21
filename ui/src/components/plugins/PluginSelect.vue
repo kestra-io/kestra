@@ -31,10 +31,9 @@
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
+        FULL_SCHEMA_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
-        ROOT_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
-        TASK_TYPE_FIELD_INJECTION_KEY
     } from "../code/injectionKeys";
     import {getValueAtJsonPath} from "../../utils/utils";
 
@@ -42,9 +41,8 @@
 
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
-    const rootSchema = inject(ROOT_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
     const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
-    const typeField = inject(TASK_TYPE_FIELD_INJECTION_KEY, computed(() => "type"));
 
     const blockType = parentPath.split(".").pop() ?? "";
 
@@ -52,7 +50,7 @@
         if (blockSchemaPath.length === 0) {
             console.error("Definition key is required for PluginSelect component");
         }
-        return getValueAtJsonPath(rootSchema.value, blockSchemaPath);
+        return getValueAtJsonPath(fullSchema.value, blockSchemaPath);
     })
 
     onBeforeMount(() => {
@@ -60,6 +58,17 @@
             pluginsStore.listWithSubgroup({includeDeprecated: false});
         }
     })
+
+    const allRefs = computed(() => fieldDefinition.value?.anyOf?.map((item: any) => {
+        if (item.allOf) {
+            // if the item is an allOf, we need to find the first item that has a $ref
+            const refItem = item.allOf.find((d: any) => d.$ref);
+            if (refItem?.$ref) {
+                return removeRefPrefix(refItem.$ref);
+            }
+        }
+        return removeRefPrefix(item.$ref);
+    }) || []);
 
     const taskModels = computed(() => {
         if (blockType === "pluginDefaults") {
@@ -79,20 +88,8 @@
 
             return Array.from(models);
         }
-        const allRefs = fieldDefinition.value?.anyOf?.map((item: any) => {
-            if (item.allOf) {
-                // if the item is an allOf, we need to find the first item that has a $ref
-                const refItem = item.allOf.find((d: any) => d.$ref);
-                if (refItem?.$ref) {
-                    return removeRefPrefix(refItem.$ref);
-                }
-            }
-            return removeRefPrefix(item.$ref);
-        }) || [];
 
-        const type = typeField.value;
-
-        return allRefs.reduce((acc: string[], item: string) => {
+        return allRefs.value.reduce((acc: string[], item: string) => {
             const def = rootDefinitions.value?.[item]
 
             if (!def || def.$deprecated) {
@@ -100,8 +97,8 @@
             }
 
             const consolidatedType = def.allOf
-                ? def.allOf.find((d: any) => d.properties?.[type])?.properties[type]
-                : def.properties?.[type];
+                ? def.allOf.find((d: any) => d.properties?.type)?.properties.type
+                : def.properties?.type;
 
             if (consolidatedType?.const) {
                 acc.push(consolidatedType?.const);

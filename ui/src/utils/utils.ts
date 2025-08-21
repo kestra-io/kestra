@@ -229,9 +229,9 @@ export default class Utils {
             removeClasses();
             htmlClass.add(theme);
         }
-        
+
         miscStore.theme = theme;
-        
+
         localStorage.setItem("theme", theme);
     }
 

@@ -48,12 +48,11 @@
     import Creation from "./buttons/Creation.vue";
     import Element from "./Element.vue";
     import {
-        CREATING_TASK_INJECTION_KEY, FULL_SOURCE_INJECTION_KEY,
+        CREATING_TASK_INJECTION_KEY, FULL_SCHEMA_INJECTION_KEY, FULL_SOURCE_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY,
-        ROOT_SCHEMA_INJECTION_KEY,
-        SCHEMA_DEFINITIONS_INJECTION_KEY
     } from "../../injectionKeys";
     import {SECTIONS_MAP} from "../../../../utils/constants";
+    import {getValueAtJsonPath} from "../../../../utils/utils";
 
     const emits = defineEmits(["remove", "reorder"]);
 
@@ -126,27 +125,12 @@
         );
     };
 
-    const rootSchema = inject(ROOT_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
-    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
-
-    function getValueAtPath(path: string) {
-        const pathParts = path.split("/").filter(p => p.length);
-        return pathParts.reduce((acc, part) => acc?.[part], rootSchema.value);
-    }
-
-    function resolveRefIfNecessary(obj: any){
-        if(obj?.$ref){
-            const refPath = obj.$ref.replace(/^#\/definitions\//, "");
-            return definitions.value[refPath];
-        }
-        return obj;
-    }
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
 
     // resolve parentPathComplete field schema from pluginsStore
     const typeFieldSchema = computed(() => {
-        const blockSchema = getValueAtPath(props.blockSchemaPath);
-        const blockSchemaResolved = resolveRefIfNecessary(blockSchema)?.properties
-        return blockSchemaResolved?.type ? "type" : blockSchemaResolved?.on ? "on" : "type";
+        const blockSchema = getValueAtJsonPath(fullSchema.value, props.blockSchemaPath)?.properties;
+        return blockSchema?.type ? "type" : blockSchema?.on ? "on" : "type";
     });
 </script>
 

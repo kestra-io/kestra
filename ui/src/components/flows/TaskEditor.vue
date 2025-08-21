@@ -134,7 +134,7 @@
     const schemaProp = computed(() => {
         const prop = typeField.value === "type"
             ? schema.value?.properties
-            : getValueAtJsonPath(fullSchema.value, `${fullSchema.value.$ref}${blockSchemaPath}`)
+            : getValueAtJsonPath(fullSchema.value, blockSchemaPath)
         if(!prop){
             return undefined;
         }
@@ -166,7 +166,7 @@
 
     // useful to map inputs to their real schema
     const typeMap = computed<Record<string, string>>(() => {
-        const field = getValueAtJsonPath(fullSchema.value, `${fullSchema.value.$ref}${blockSchemaPath}`)
+        const field = getValueAtJsonPath(fullSchema.value, blockSchemaPath)
 
         if (field?.anyOf) {
             const f = field.anyOf.reduce((acc: Record<string, string>, item: any) => {

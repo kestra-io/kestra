@@ -163,9 +163,9 @@
     provide(POSITION_INJECTION_KEY, props.position ?? "after");
     provide(CREATING_TASK_INJECTION_KEY, props.creatingTask);
     provide(EDITING_TASK_INJECTION_KEY, props.editingTask);
-    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, props.blockSchemaPath ?? "");
     provide(FIELDNAME_INJECTION_KEY, props.fieldName);
     provide(SCHEMA_PATH_INJECTION_KEY, computed(() => pluginsStore.schemaType?.flow.$ref ?? ""));
+    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, props.blockSchemaPath ?? pluginsStore.schemaType?.flow.$ref ?? "");
     provide(FULL_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowSchema ?? {}));
     provide(ROOT_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowRootSchema ?? {}));
     provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => pluginsStore.flowDefinitions ?? {}));

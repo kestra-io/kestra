@@ -21,20 +21,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-#  tests:
-#    name: Execute tests
-#    uses: ./.github/workflows/workflow-test.yml
-#    with:
-#      report-status: false FIXME only for dev
-
+  tests:
+    name: Execute tests
+    uses: ./.github/workflows/workflow-test.yml
+    with:
+      report-status: false
 
   release:
     name: Release
-#    needs: [tests]
+    needs: [tests]
     if: "!startsWith(github.ref, 'refs/heads/releases')"
     uses: ./.github/workflows/workflow-release.yml
     with:
-        plugin-version: ${{ github.event.inputs.plugin-version != '' && github.event.inputs.plugin-version || (github.ref == 'refs/heads/refactor-simplify-release-docker-ci' && 'LATEST-SNAPSHOT' || 'LATEST') }}
+        plugin-version: ${{ github.event.inputs.plugin-version != '' && github.event.inputs.plugin-version || (github.ref == 'refs/heads/develop' && 'LATEST-SNAPSHOT' || 'LATEST') }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}

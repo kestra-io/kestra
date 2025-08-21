@@ -19,11 +19,12 @@
         parentPathComplete: string;
         blockSchemaPath: string;
         refPath?: number;
+        typeFieldSchema: "on" | "type";
     }>()
 
     const createTask = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {});
 
     const handleClick = () => {
-        createTask(props.parentPathComplete, props.blockSchemaPath, props.refPath);
+        createTask(props.parentPathComplete, props.blockSchemaPath, props.refPath, props.typeFieldSchema);
     };
 </script>

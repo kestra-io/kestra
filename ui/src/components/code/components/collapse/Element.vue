@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, ref} from "vue";
+    import {computed, inject} from "vue";
     import {useI18n} from "vue-i18n";
     import PlayIcon from "vue-material-design-icons/Play.vue";
     import {usePluginsStore} from "../../../../stores/plugins";
@@ -36,8 +36,6 @@
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
     import {
         EDIT_TASK_FUNCTION_INJECTION_KEY,
-        ROOT_SCHEMA_INJECTION_KEY,
-        SCHEMA_DEFINITIONS_INJECTION_KEY
     } from "../../injectionKeys";
 
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
@@ -56,6 +54,7 @@
         };
         blockSchemaPath: string;
         elementIndex?: number;
+        typeFieldSchema: "on" | "type";
         moved?: boolean;
     }>();
 
@@ -65,32 +64,10 @@
     const isTask = computed(() => ["tasks", "task"].includes(props.parentPathComplete.split(".").pop() ?? "not-found"));
 
     const editTask = inject(EDIT_TASK_FUNCTION_INJECTION_KEY, () => {});
-    const rootSchema = inject(ROOT_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
-    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
-
-    function getValueAtPath(path: string) {
-        const pathParts = path.split("/").filter(p => p.length);
-        return pathParts.reduce((acc, part) => acc?.[part], rootSchema.value);
-    }
-
-    function resolveRefIfNecessary(obj: any){
-        if(obj?.$ref){
-            const refPath = obj.$ref.replace(/^#\/definitions\//, "");
-            return definitions.value[refPath];
-        }
-        return obj;
-    }
-
-    // resolve parentPathComplete field schema from pluginsStore
-    const typeFieldSchema = computed(() => {
-        const blockSchema = getValueAtPath(props.blockSchemaPath);
-        const blockSchemaResolved = resolveRefIfNecessary(blockSchema)?.properties
-        return blockSchemaResolved?.type ? "type" : blockSchemaResolved?.on ? "on" : "type";
-    });
 
     const identifier = computed(() => {
         return props.element.id
-            ?? props.element[typeFieldSchema.value]
+            ?? props.element[props.typeFieldSchema]
             ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`;
     });
 
@@ -99,7 +76,7 @@
             props.parentPathComplete,
             props.blockSchemaPath,
             props.elementIndex,
-            typeFieldSchema.value
+            props.typeFieldSchema
         );
     };
 </script>

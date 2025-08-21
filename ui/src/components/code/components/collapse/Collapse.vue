@@ -9,6 +9,7 @@
                     :parent-path-complete="parentPathComplete"
                     :ref-path="elements?.length ? elements.length - 1 : undefined"
                     :block-schema-path
+                    :type-field-schema
                 />
             </template>
 
@@ -21,6 +22,7 @@
                 :element-index="elementIndex"
                 :moved="elementIndex == movedIndex"
                 :block-schema-path
+                :type-field-schema
                 @remove-element="removeElement(elementIndex)"
                 @move-element="
                     (direction: 'up' | 'down') =>
@@ -47,7 +49,9 @@
     import Element from "./Element.vue";
     import {
         CREATING_TASK_INJECTION_KEY, FULL_SOURCE_INJECTION_KEY,
-        PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY
+        PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY,
+        ROOT_SCHEMA_INJECTION_KEY,
+        SCHEMA_DEFINITIONS_INJECTION_KEY
     } from "../../injectionKeys";
     import {SECTIONS_MAP} from "../../../../utils/constants";
 
@@ -121,6 +125,29 @@
             }),
         );
     };
+
+    const rootSchema = inject(ROOT_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
+    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
+
+    function getValueAtPath(path: string) {
+        const pathParts = path.split("/").filter(p => p.length);
+        return pathParts.reduce((acc, part) => acc?.[part], rootSchema.value);
+    }
+
+    function resolveRefIfNecessary(obj: any){
+        if(obj?.$ref){
+            const refPath = obj.$ref.replace(/^#\/definitions\//, "");
+            return definitions.value[refPath];
+        }
+        return obj;
+    }
+
+    // resolve parentPathComplete field schema from pluginsStore
+    const typeFieldSchema = computed(() => {
+        const blockSchema = getValueAtPath(props.blockSchemaPath);
+        const blockSchemaResolved = resolveRefIfNecessary(blockSchema)?.properties
+        return blockSchemaResolved?.type ? "type" : blockSchemaResolved?.on ? "on" : "type";
+    });
 </script>
 
 <style scoped lang="scss">

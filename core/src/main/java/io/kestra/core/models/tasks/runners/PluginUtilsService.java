@@ -67,9 +67,11 @@ abstract public class PluginUtilsService {
                     File tempFile;
 
                     if (isDir) {
-                        tempFile = Files.createTempDirectory(tempDirectory, s + "_").toFile();
+                        String safeDirName = s.replace(" ", "_");
+                        tempFile = Files.createTempDirectory(tempDirectory, safeDirName + "_").toFile();
                     } else {
-                        String prefix = StringUtils.leftPad(s + "_", 3, "_");
+                        String safePrefix = s.replace(" ", "_");
+                        String prefix = StringUtils.leftPad(safePrefix + "_", 3, "_");
                         tempFile = File.createTempFile(prefix, null, tempDirectory.toFile());
                     }
 

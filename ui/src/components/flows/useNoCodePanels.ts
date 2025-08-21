@@ -7,8 +7,7 @@ import NoCodeWrapper from "../code/NoCodeWrapper.vue"
 
 import type {NoCodeProps} from "../code/NoCodeWrapper.vue";
 import {useFlowStore} from "../../stores/flow";
-
-
+import {trackTabOpen, trackTabClose} from "../../utils/tabTracking";
 
 const NOCODE_PREFIX = "nocode"
 
@@ -194,6 +193,8 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             fieldName,
         }, t, handlers, flowStore.flowYaml, dirty)
 
+        trackTabOpen(tab);
+
         panels.value[opener.panelIndex]?.tabs.splice(opener.tabIndex + 1, 0, tab)
 
         const openerPanel = panels.value[opener.panelIndex]
@@ -218,6 +219,8 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             refPath,
         }, t, handlers, flowStore.flowYaml ?? "", dirty)
 
+        trackTabOpen(tab);
+
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
             return
@@ -233,6 +236,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         }
         const tab = openerPanel.tabs[opener.tabIndex]
         if (tab?.value.startsWith(NOCODE_PREFIX)) {
+            trackTabClose(tab);
             openerPanel.tabs.splice(opener.tabIndex, 1)
             if (openerPanel.activeTab === tab) {
                 openerPanel.activeTab = openerPanel.tabs[opener.tabIndex - 1] ?? openerPanel.tabs[opener.tabIndex + 1]

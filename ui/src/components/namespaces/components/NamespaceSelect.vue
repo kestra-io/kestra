@@ -12,6 +12,7 @@
         remote-show-suffix
         :remote-method="onSearch"
         :placeholder="t('namespaces')"
+        :suffix-icon="readOnly ? Lock : undefined"
     >
         <template #tag>
             <el-tag
@@ -39,6 +40,7 @@
     import {useI18n} from "vue-i18n"
     import {useNamespacesStore} from "override/stores/namespaces"
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue"
+    import Lock from "vue-material-design-icons/Lock.vue";
     import {storageKeys} from "../../../utils/constants";
 
     const {t} = useI18n();

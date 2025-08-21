@@ -31,7 +31,7 @@ on:
   workflow_call:
     inputs:
       plugin-version:
-        description: "Kestra version"
+        description: "Plugin version"
         default: 'LATEST'
         required: false
         type: string

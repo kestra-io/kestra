@@ -44,6 +44,7 @@
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         TASK_TYPE_FIELD_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
+        SCHEMA_DEFINITIONS_INJECTION_KEY,
     } from "../code/injectionKeys";
     import {removeNullAndUndefined} from "../code/utils/cleanUp";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
@@ -73,9 +74,13 @@
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
 
-    provide(SCHEMA_PATH_INJECTION_KEY, computed(() => `#/definitions/${selectedTaskType.value}`))
+    const schemaPath = inject(SCHEMA_PATH_INJECTION_KEY, ref(""));
+    provide(SCHEMA_PATH_INJECTION_KEY, computed(() =>
+        selectedTaskType.value && definitions.value[selectedTaskType.value] ?
+            `#/definitions/${selectedTaskType.value}` : schemaPath.value
+    ))
 
-    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
 
     const isTask = computed(() => ["task", "tasks"].includes(parentPath.split(".").pop() ?? ""));
 
@@ -134,7 +139,7 @@
     const schemaProp = computed(() => {
         const prop = typeField.value === "type"
             ? schema.value?.properties
-            : getValueAtJsonPath(fullSchema.value, blockSchemaPath)
+            : getValueAtJsonPath(fullSchema.value, blockSchemaPath.value)
         if(!prop){
             return undefined;
         }
@@ -164,12 +169,12 @@
         }
     });
 
+    const fieldDefinition = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value));
+
     // useful to map inputs to their real schema
     const typeMap = computed<Record<string, string>>(() => {
-        const field = getValueAtJsonPath(fullSchema.value, blockSchemaPath)
-
-        if (field?.anyOf) {
-            const f = field.anyOf.reduce((acc: Record<string, string>, item: any) => {
+        if (fieldDefinition.value?.anyOf) {
+            const f = fieldDefinition.value.anyOf.reduce((acc: Record<string, string>, item: any) => {
                 if (item.$ref) {
                     const i = getValueAtJsonPath(fullSchema.value, item.$ref);
                     if(i) item = i;
@@ -197,6 +202,23 @@
         return {}
     });
 
+    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
+    const resolvedType = computed(() => typeMap.value[selectedTaskType.value ?? ""] ?? selectedTaskType.value ?? "");
+
+    function load() {
+        // try to resolve the type from local schema
+        if (definitions.value?.[resolvedType.value]) {
+            const defs = definitions.value ?? {}
+            plugin.value = {
+                schema: {
+                    properties: defs[resolvedType.value],
+                    definitions: defs,
+                }
+            };
+            return;
+        }
+    }
+
     watch([selectedTaskType, fullSchema], ([task]) => {
         if (task) {
             load();
@@ -206,20 +228,7 @@
         }
     }, {immediate: true});
 
-    function load() {
-        const resolvedType = typeMap.value[selectedTaskType.value ?? ""] ?? selectedTaskType.value ?? "";
-        // try to resolve the type from local schema
-        if (pluginsStore.flowDefinitions?.[resolvedType]) {
-            const defs = pluginsStore.flowDefinitions ?? {}
-            plugin.value = {
-                schema: {
-                    properties: defs[resolvedType],
-                    definitions: defs,
-                }
-            };
-            return;
-        }
-    }
+
 
     function onTaskInput(val: PartialCodeElement | undefined) {
         taskObject.value = val;

@@ -36,7 +36,7 @@
     );
 
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
-    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
     const updateTask = inject(UPDATE_TASK_FUNCTION_INJECTION_KEY, () => {})
 
     const closeTaskAddition = inject(
@@ -141,7 +141,7 @@
             const currentRefPath = (refPath !== undefined && refPath !== null) ? refPath + (position === "after" ? 1 : 0) : 0;
             editTask(
                 fieldName ? `${parentPath}[${currentRefPath}].${fieldName}` : parentPath,
-                blockSchemaPath,
+                blockSchemaPath.value,
                 fieldName ? undefined : currentRefPath,
             );
             hasMovedToEdit.value = true;

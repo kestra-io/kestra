@@ -2,7 +2,7 @@ import type {ComputedRef, InjectionKey, Ref} from "vue"
 import {TopologyClickParams} from "./utils/types"
 import {Panel} from "../MultiPanelTabs.vue"
 
-export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<string>
+export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<ComputedRef<string>>
 export const SCHEMA_PATH_INJECTION_KEY = Symbol("schema-path-injection-key") as InjectionKey<ComputedRef<string>>
 /**
  * Complete flow YAML string for the no-code

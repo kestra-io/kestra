@@ -31,7 +31,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue";
+    import {computed, inject, onActivated, ref, toRaw, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     // @ts-expect-error TaskObject can't be typed for now because of time constraints
@@ -39,7 +39,6 @@
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {NoCodeElement, Schemas} from "../code/utils/types";
     import {
-        SCHEMA_PATH_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         TASK_TYPE_FIELD_INJECTION_KEY,
@@ -74,11 +73,6 @@
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
 
-    const schemaPath = inject(SCHEMA_PATH_INJECTION_KEY, ref(""));
-    provide(SCHEMA_PATH_INJECTION_KEY, computed(() =>
-        selectedTaskType.value && definitions.value[selectedTaskType.value] ?
-            `#/definitions/${selectedTaskType.value}` : schemaPath.value
-    ))
 
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
 

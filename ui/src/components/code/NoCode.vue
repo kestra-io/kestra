@@ -55,7 +55,6 @@
         REF_PATH_INJECTION_KEY,
         ROOT_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
-        SCHEMA_PATH_INJECTION_KEY,
         UPDATE_TASK_FUNCTION_INJECTION_KEY,
     } from "./injectionKeys";
     import {useFlowFields, SECTIONS_IDS} from "./utils/useFlowFields";
@@ -164,8 +163,7 @@
     provide(CREATING_TASK_INJECTION_KEY, props.creatingTask);
     provide(EDITING_TASK_INJECTION_KEY, props.editingTask);
     provide(FIELDNAME_INJECTION_KEY, props.fieldName);
-    provide(SCHEMA_PATH_INJECTION_KEY, computed(() => pluginsStore.schemaType?.flow.$ref ?? ""));
-    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => props.blockSchemaPath ?? pluginsStore.schemaType?.flow.$ref ?? ""));
+    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => props.blockSchemaPath ?? pluginsStore.flowSchema?.$ref ?? ""));
     provide(FULL_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowSchema ?? {}));
     provide(ROOT_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowRootSchema ?? {}));
     provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => pluginsStore.flowDefinitions ?? {}));

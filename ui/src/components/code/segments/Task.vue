@@ -21,6 +21,7 @@
         PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY,
+        TASK_TYPE_FIELD_INJECTION_KEY,
     } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
@@ -36,6 +37,7 @@
     );
 
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
+    const typeField = inject(TASK_TYPE_FIELD_INJECTION_KEY, ref("type"));
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
     const updateTask = inject(UPDATE_TASK_FUNCTION_INJECTION_KEY, () => {})
 
@@ -143,6 +145,7 @@
                 fieldName ? `${parentPath}[${currentRefPath}].${fieldName}` : parentPath,
                 blockSchemaPath.value,
                 fieldName ? undefined : currentRefPath,
+                typeField.value
             );
             hasMovedToEdit.value = true;
             nextTick(() => {

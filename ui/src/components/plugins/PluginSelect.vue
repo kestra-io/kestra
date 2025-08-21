@@ -39,7 +39,7 @@
 
     const pluginsStore = usePluginsStore();
 
-    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
     const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
@@ -47,10 +47,10 @@
     const blockType = parentPath.split(".").pop() ?? "";
 
     const fieldDefinition = computed(() => {
-        if (blockSchemaPath.length === 0) {
+        if (blockSchemaPath.value.length === 0) {
             console.error("Definition key is required for PluginSelect component");
         }
-        return getValueAtJsonPath(fullSchema.value, blockSchemaPath);
+        return getValueAtJsonPath(fullSchema.value, blockSchemaPath.value);
     })
 
     onBeforeMount(() => {

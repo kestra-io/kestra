@@ -249,7 +249,7 @@
 
     const handleTabClick = (panel: Panel, tab: Tab) => {
         trackTabOpen(tab);
-        
+
         panel.activeTab = tab
 
         if(tab.value.startsWith(CODE_PREFIX)){
@@ -270,7 +270,7 @@
         !draggingPanel.value
     );
 
-    function onResize(sizes: number[], _index: number) {
+    function onResize(_index: number, sizes: number[]) {
         // Element Plus resize event provides sizes array and index of the resized panel
         for (let i = 0; i < panels.value.length && i < sizes.length; i++) {
             panels.value[i].size = sizes[i];
@@ -501,13 +501,13 @@
         panel.tabs.forEach(tab => {
             trackTabClose(tab);
         });
-        
+
         panels.value[panelIndex].tabs = [];
     }
 
     function destroyTab(panelIndex:number, tab: Tab){
         trackTabClose(tab);
-        
+
         const panel = panels.value[panelIndex];
         const tabIndex = panel.tabs.findIndex((t) => t.value === tab.value);
         panel.tabs.splice(tabIndex, 1);

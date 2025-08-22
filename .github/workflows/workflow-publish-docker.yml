@@ -23,7 +23,7 @@ on:
       force-download-artifact:
         description: 'Force download artifact'
         required: false
-        type: string
+        type: choice
         default: "true"
         options:
           - "true"

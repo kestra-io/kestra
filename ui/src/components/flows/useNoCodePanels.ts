@@ -54,10 +54,11 @@ export function getEditTabKey(tab: NoCodeProps, index: number) {
 
 export function getCreateTabKey(tab: NoCodeProps, index: number) {
     const indexWithLeftPadding = String(index).padStart(4, "0")
-    return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify({
+    const keyParts = {
         action: "create",
         ...tab,
-    })}`
+    }
+    return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify(keyParts, Object.keys(keyParts).sort())}`
 }
 
 interface NoCodeTabWithAction extends NoCodeProps {
@@ -183,6 +184,7 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
             const createTabId = getCreateTabKey({
                 parentPath,
                 refPath,
+                blockSchemaPath,
                 position,
             }, 0).slice(12)
 
@@ -204,11 +206,12 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
             const [
                 ,
                 parentPath,
-                ,
+                blockSchemaPath,
                 refPath
             ] = args
             const editKey = getEditTabKey({
                 parentPath,
+                blockSchemaPath,
                 refPath,
             }, 0).slice(12)
 

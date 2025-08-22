@@ -329,14 +329,11 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         protected void append(ILoggingEvent e) {
             e = this.transform(e);
 
-            logEntries(e, logEntry)
-                .forEach(l -> {
-                    try {
-                        logQueue.emitAsync(l);
-                    } catch (QueueException ex) {
-                        log.warn("Unable to emit logQueue", ex);
-                    }
-                });
+            try {
+                logQueue.emitAsync(logEntries(e, logEntry));
+            } catch (QueueException ex) {
+                log.warn("Unable to emit logQueue", ex);
+            }
         }
     }
 

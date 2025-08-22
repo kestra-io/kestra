@@ -1,7 +1,7 @@
 import Editor from "../../../../../src/components/code/segments/Editor.vue";
 import InitialSchema from "../../../../../src/stores/flow-schema.json";
 import {
-    CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
+    CREATING_TASK_INJECTION_KEY, FULL_SOURCE_INJECTION_KEY,
     POSITION_INJECTION_KEY,
      REF_PATH_INJECTION_KEY,
     PARENT_PATH_INJECTION_KEY,
@@ -98,7 +98,7 @@ const Template = (args) => ({
     setup() {
         const store = useStore()
 
-        provide(FLOW_INJECTION_KEY, ref(args.flow));
+        provide(FULL_SOURCE_INJECTION_KEY, ref(args.flow));
         provide(PARENT_PATH_INJECTION_KEY, "tasks");
         provide(REF_PATH_INJECTION_KEY, 0);
         provide(POSITION_INJECTION_KEY, args.position);

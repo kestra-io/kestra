@@ -2,7 +2,7 @@
     <div v-if="playgroundStore.enabled && isTask && taskObject?.id" class="flow-playground">
         <PlaygroundRunTaskButton :task-id="taskObject?.id" />
     </div>
-    <el-form v-if="typeField === 'type'" label-position="top">
+    <el-form v-if="isType" label-position="top">
         <el-form-item>
             <template #label>
                 <div class="type-div">
@@ -19,7 +19,7 @@
     <div @click="isPlugin && pluginsStore.updateDocumentation(taskObject as Parameters<typeof pluginsStore.updateDocumentation>[0])">
         <TaskObject
             v-loading="isLoading"
-            v-if="(selectedTaskType || typeField !== 'type') && schemaProp"
+            v-if="(selectedTaskType || !isType) && schemaProp"
             name="root"
             :model-value="taskObject"
             @update:model-value="onTaskInput"
@@ -88,6 +88,10 @@
 
     const typeField = inject(TASK_TYPE_FIELD_INJECTION_KEY, computed(() => "type"));
 
+    const isType = computed(() => {
+        return typeField.value === "type";
+    });
+
     watch(modelValue, (v) => {
         if (!v) {
             taskObject.value = {};
@@ -131,7 +135,7 @@
     });
 
     const schemaProp = computed(() => {
-        const prop = typeField.value === "type"
+        const prop = isType.value
             ? schema.value?.properties
             : getValueAtJsonPath(fullSchema.value, blockSchemaPath.value)
         if(!prop){
@@ -153,7 +157,7 @@
         }else{
             taskObject.value = parsed;
         }
-        selectedTaskType.value = taskObject.value?.[typeField.value];
+        selectedTaskType.value = taskObject.value?.type;
     }
 
     // when tab is opened, load the documentation

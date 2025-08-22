@@ -12,6 +12,7 @@
             </template>
             <PluginSelect
                 v-model="selectedTaskType"
+                :block-schema-path
                 @update:model-value="onTaskTypeSelect"
             />
         </el-form-item>
@@ -104,7 +105,7 @@
         return true
     });
 
-    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => selectedTaskType.value ? `#/definitions/${selectedTaskType.value}` : blockSchemaPath.value));
+    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => selectedTaskType.value ? `#/definitions/${resolvedType.value}` : blockSchemaPath.value));
 
     watch(modelValue, (v) => {
         if (!v) {

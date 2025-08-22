@@ -30,7 +30,6 @@
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {
-        BLOCK_SCHEMA_PATH_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
@@ -39,7 +38,6 @@
 
     const pluginsStore = usePluginsStore();
 
-    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
     const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
@@ -47,10 +45,10 @@
     const blockType = parentPath.split(".").pop() ?? "";
 
     const fieldDefinition = computed(() => {
-        if (blockSchemaPath.value.length === 0) {
+        if (props.blockSchemaPath.length === 0) {
             console.error("Definition key is required for PluginSelect component");
         }
-        return getValueAtJsonPath(fullSchema.value, blockSchemaPath.value);
+        return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath);
     })
 
     onBeforeMount(() => {
@@ -117,6 +115,10 @@
         type: String,
         default: "",
     });
+
+    const props = defineProps<{
+        blockSchemaPath: string,
+    }>()
 </script>
 
 <style lang="scss" scoped>

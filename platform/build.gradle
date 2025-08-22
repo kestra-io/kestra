@@ -27,7 +27,7 @@ dependencies {
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
-    api platform("io.micronaut.platform:micronaut-platform:4.8.2")
+    api platform("io.micronaut.platform:micronaut-platform:4.9.2")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.66.0')

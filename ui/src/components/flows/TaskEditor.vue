@@ -31,7 +31,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, inject, onActivated, ref, toRaw, watch} from "vue";
+    import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     // @ts-expect-error TaskObject can't be typed for now because of time constraints
@@ -47,7 +47,7 @@
     import {removeNullAndUndefined} from "../code/utils/cleanUp";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {usePlaygroundStore} from "../../stores/playground";
-    import {getValueAtJsonPath} from "../../utils/utils";
+    import {getValueAtJsonPath, resolve$ref} from "../../utils/utils";
     import PlaygroundRunTaskButton from "../inputs/PlaygroundRunTaskButton.vue";
 
     const {t} = useI18n();
@@ -93,10 +93,15 @@
             return firstAnyOf?.properties?.type !== undefined;
         }
         if(Array.isArray(firstAnyOf.allOf)){
-            return firstAnyOf.allOf.some((item: any) => item.properties?.type !== undefined);
+            return firstAnyOf.allOf.some((item: any) => {
+                return resolve$ref(fullSchema.value, item)
+                    .properties?.type !== undefined;
+            });
         }
         return true
     });
+
+    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => selectedTaskType.value ? `#/definitions/${selectedTaskType.value}` : blockSchemaPath.value));
 
     watch(modelValue, (v) => {
         if (!v) {

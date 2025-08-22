@@ -87,6 +87,9 @@
 
     const schemaAtBlockPath = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value))
     const isTaskDefinitionBasedOnType = computed(() => {
+        if(isPluginDefaults.value){
+            return true
+        }
         const firstAnyOf = Array.isArray(schemaAtBlockPath.value?.anyOf) ? schemaAtBlockPath.value?.anyOf[0] : undefined;
         if (!firstAnyOf) return false;
         if(firstAnyOf.properties){

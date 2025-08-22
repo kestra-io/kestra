@@ -75,8 +75,7 @@
         editTask(
             props.parentPathComplete,
             props.blockSchemaPath,
-            props.elementIndex,
-            props.typeFieldSchema
+            props.elementIndex
         );
     };
 </script>

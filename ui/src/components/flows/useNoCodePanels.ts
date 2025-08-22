@@ -25,14 +25,12 @@ interface Handlers {
         blockSchemaPath: string,
         refPath?: number,
         position?: "before" | "after",
-        typeField?: string
     ) => boolean,
     onEditTask: (
         opener: Opener,
         parentPath: string,
         blockSchemaPath: string,
         refPath?: number,
-        typeField?: string
     ) => boolean
     onCloseTask: (opener: Opener) => boolean
 }
@@ -181,12 +179,11 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
     const editorStore = useEditorStore()
     const isFlowDirty = computed(() => editorStore.tabs.some((t:any) => t.flow && t.dirty))
     const noCodeHandlers: Handlers = {
-        onCreateTask(opener, parentPath, blockSchemaPath, refPath, position, typeField){
+        onCreateTask(opener, parentPath, blockSchemaPath, refPath, position){
             const createTabId = getCreateTabKey({
                 parentPath,
                 refPath,
                 position,
-                typeField,
             }, 0).slice(12)
 
             const tAdd = openTabs.value.find(t => t.endsWith(createTabId))
@@ -198,7 +195,7 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
                 return false
             }
 
-            actions.openAddTaskTab(opener, parentPath, blockSchemaPath, refPath, position, isFlowDirty.value, undefined, typeField)
+            actions.openAddTaskTab(opener, parentPath, blockSchemaPath, refPath, position, isFlowDirty.value, undefined)
             return false
         },
         onEditTask(...args){
@@ -208,13 +205,11 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
                 ,
                 parentPath,
                 ,
-                refPath,
-                typeField,
+                refPath
             ] = args
             const editKey = getEditTabKey({
                 parentPath,
                 refPath,
-                typeField,
             }, 0).slice(12)
 
             const tEdit = openTabs.value.find(t => t.endsWith(editKey))
@@ -250,7 +245,6 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         position: "before" | "after" = "after",
         dirty: boolean = false,
         fieldName?: string | undefined,
-        typeField?: string | undefined,
     ) {
         // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab(component, {
@@ -260,7 +254,6 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
             refPath,
             position,
             fieldName,
-            typeField,
         }, t, handlers, flowStore.flowYaml, dirty)
 
         trackTabOpen(tab);
@@ -279,7 +272,6 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         parentPath: string,
         blockSchemaPath: string,
         refPath?: number,
-        typeField?: string,
         dirty: boolean = false
     ) {
         const tab = getTabFromNoCodeTab(component, {
@@ -287,7 +279,6 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
             parentPath,
             blockSchemaPath,
             refPath,
-            typeField,
         }, t, handlers, flowStore.flowYaml ?? "", dirty)
 
         trackTabOpen(tab);

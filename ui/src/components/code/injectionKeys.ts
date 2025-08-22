@@ -40,12 +40,12 @@ export const EDITING_TASK_INJECTION_KEY = Symbol("editing-injection-key") as Inj
  * Call this when starting to create a new task, when the user clicks on the add button
  * to start the addition process
  */
-export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath: number | undefined, typeField?: string) => void>
+export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath: number | undefined) => void>
 /**
  * Call this when starting to edit a task, when the user clicks on the task line
  * to start the edition process
  */
-export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath: number | undefined, typeField?: string) => void>
+export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath: number | undefined) => void>
 /**
  * Call this when closing a task, when the user clicks on the close button
  */
@@ -89,5 +89,3 @@ export const FULL_SCHEMA_INJECTION_KEY = Symbol("full-schema-injection-key") as 
         }>>
 
 export const SCHEMA_DEFINITIONS_INJECTION_KEY = Symbol("schema-definitions-injection-key") as InjectionKey<ComputedRef<Record<string, any>>>
-
-export const TASK_TYPE_FIELD_INJECTION_KEY = Symbol("task-type-field-injection-key") as InjectionKey<Ref<string>>

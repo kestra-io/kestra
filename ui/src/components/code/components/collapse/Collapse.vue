@@ -9,7 +9,6 @@
                     :parent-path-complete="parentPathComplete"
                     :ref-path="elements?.length ? elements.length - 1 : undefined"
                     :block-schema-path
-                    :type-field-schema
                 />
             </template>
 

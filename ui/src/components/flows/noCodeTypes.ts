@@ -6,5 +6,4 @@ export interface NoCodeProps {
     position?: "before" | "after";
     blockSchemaPath?: string;
     fieldName?: string | undefined;
-    typeField?: string | undefined;
 }

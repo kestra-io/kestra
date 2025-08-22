@@ -2,7 +2,7 @@
     <div v-if="playgroundStore.enabled && isTask && taskObject?.id" class="flow-playground">
         <PlaygroundRunTaskButton :task-id="taskObject?.id" />
     </div>
-    <el-form v-if="isType" label-position="top">
+    <el-form v-if="isTaskDefinitionBasedOnType" label-position="top">
         <el-form-item>
             <template #label>
                 <div class="type-div">
@@ -19,7 +19,7 @@
     <div @click="isPlugin && pluginsStore.updateDocumentation(taskObject as Parameters<typeof pluginsStore.updateDocumentation>[0])">
         <TaskObject
             v-loading="isLoading"
-            v-if="(selectedTaskType || !isType) && schemaProp"
+            v-if="(selectedTaskType || !isTaskDefinitionBasedOnType) && schemaProp"
             name="root"
             :model-value="taskObject"
             @update:model-value="onTaskInput"
@@ -41,7 +41,6 @@
     import {
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
-        TASK_TYPE_FIELD_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
     } from "../code/injectionKeys";
@@ -86,10 +85,17 @@
         return parentPath !== "inputs"
     });
 
-    const typeField = inject(TASK_TYPE_FIELD_INJECTION_KEY, computed(() => "type"));
-
-    const isType = computed(() => {
-        return typeField.value === "type";
+    const schemaAtBlockPath = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value))
+    const isTaskDefinitionBasedOnType = computed(() => {
+        const firstAnyOf = Array.isArray(schemaAtBlockPath.value?.anyOf) ? schemaAtBlockPath.value?.anyOf[0] : undefined;
+        if (!firstAnyOf) return false;
+        if(firstAnyOf.properties){
+            return firstAnyOf?.properties?.type !== undefined;
+        }
+        if(Array.isArray(firstAnyOf.allOf)){
+            return firstAnyOf.allOf.some((item: any) => item.properties?.type !== undefined);
+        }
+        return true
     });
 
     watch(modelValue, (v) => {
@@ -131,13 +137,15 @@
                 $required: true
             };
         }
+
         return updatedProperties
     });
 
     const schemaProp = computed(() => {
-        const prop = isType.value
+        const prop = isTaskDefinitionBasedOnType.value
             ? schema.value?.properties
-            : getValueAtJsonPath(fullSchema.value, blockSchemaPath.value)
+            : schemaAtBlockPath.value
+
         if(!prop){
             return undefined;
         }

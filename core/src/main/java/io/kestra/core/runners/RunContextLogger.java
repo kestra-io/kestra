@@ -29,7 +29,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class RunContextLogger implements Supplier<org.slf4j.Logger> {
-    private static final int MAX_MESSAGE_LENGTH = 1024 * 10;
+    private static final int MAX_MESSAGE_LENGTH = 1024 * 15;
     public static final String ORIGINAL_TIMESTAMP_KEY = "originalTimestamp";
 
     private final String loggerName;
@@ -80,7 +80,6 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         }
 
         List<LogEntry> result = new ArrayList<>();
-        long i = 0;
         for (String s : split) {
             result.add(LogEntry.builder()
                 .namespace(logEntry.getNamespace())
@@ -98,7 +97,6 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                 .thread(event.getThreadName())
                 .build()
             );
-            i++;
         }
 
         return result;

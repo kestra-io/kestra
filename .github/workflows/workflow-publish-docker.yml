@@ -12,7 +12,7 @@ on:
           - "true"
           - "false"
       release-tag:
-        description: 'Kestra Release Tag'
+        description: 'Kestra Release Tag (by default, deduced with the ref)'
         required: false
         type: string
       plugin-version:

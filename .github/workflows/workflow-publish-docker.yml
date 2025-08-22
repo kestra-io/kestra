@@ -6,7 +6,7 @@ on:
       retag-latest:
         description: 'Retag latest Docker images'
         required: true
-        type: string
+        type: choice
         default: "false"
         options:
           - "true"

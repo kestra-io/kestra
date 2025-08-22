@@ -57,10 +57,10 @@ jobs:
     name: Publish Docker
     needs: build-artifacts
     uses: ./.github/workflows/workflow-publish-docker.yml
-    if: github.ref == 'refs/heads/develop' || github.event.inputs.publish-docker == 'true'
+    if: github.ref == 'refs/heads/develop' || inputs.publish-docker == 'true'
     with:
       force-download-artifact: 'false'
-      plugin-version: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
+      plugin-version: ${{ inputs.plugin-version != null && inputs.plugin-version || 'LATEST' }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}

@@ -33,7 +33,7 @@ jobs:
     if: "!startsWith(github.ref, 'refs/heads/releases')"
     uses: ./.github/workflows/workflow-release.yml
     with:
-        plugin-version: ${{ github.event.inputs.plugin-version != '' && github.event.inputs.plugin-version || (github.ref == 'refs/heads/develop' && 'LATEST-SNAPSHOT' || 'LATEST') }}
+        plugin-version: ${{ inputs.plugin-version != '' && inputs.plugin-version || (github.ref == 'refs/heads/develop' && 'LATEST-SNAPSHOT' || 'LATEST') }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}

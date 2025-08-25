@@ -579,7 +579,6 @@
     "warning detected": "Warning(s) detected",
     "informative notice": "Note(s)",
     "cannot swap tasks": "Can't swap the tasks",
-    "preview": "Preview",
     "open": "Open",
     "dependency task": "Task {taskId} is a dependency of another task",
     "administration": "Administration",
@@ -1498,6 +1497,12 @@
         "placeholder": "Search by flow or namespace...",
         "no_results": "No results found for {term}"
       }
+    },
+    "preview": {
+      "label": "Preview",
+      "force-editor": "Enforce editor view",
+      "auto-view": "Auto view",
+      "view": "View"
     }
   }
 }

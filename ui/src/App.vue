@@ -11,7 +11,6 @@
 
 <script>
     import ErrorToast from "./components/ErrorToast.vue";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import Utils from "./utils/utils";
     import {shallowRef} from "vue";
@@ -26,9 +25,10 @@
     import {useLayoutStore} from "./stores/layout";
     import {useCoreStore} from "./stores/core";
     import {useDocStore} from "./stores/doc";
-    import {useMiscStore} from "./stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "./stores/executions";
     import * as BasicAuth from "./utils/basicAuth";
+    import {useFlowStore} from "./stores/flow";
 
     // Main App
     export default {
@@ -48,9 +48,7 @@
             };
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapState("flow", ["overallTotal"]),
-            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore, useExecutionsStore),
+            ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore, useExecutionsStore, useFlowStore),
             envName() {
                 return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
             },
@@ -118,15 +116,13 @@
                     uid: uid,
                 });
 
-                this.apiStore.loadConfig()
-                    .then(apiConfig => {
-                        this.initStats(apiConfig, config, uid);
-                    })
+                const apiConfig = await this.apiStore.loadConfig();
+                this.initStats(apiConfig, config, uid);
 
                 return config;
             },
             initStats(apiConfig, config, uid) {
-                if (!this.configs || this.configs["isAnonymousUsageEnabled"] === false) {
+                if (this.miscStore.configs["isAnonymousUsageEnabled"] === false) {
                     return;
                 }
 
@@ -149,7 +145,6 @@
                         posthog.alias(apiConfig.id);
                     }
                 }
-
 
                 let surveyVisible = false;
                 window.addEventListener("PHSurveyShown", () => {
@@ -183,12 +178,12 @@
             $route: {
                 async handler(route) {
                     if(route.name === "home" && this.isOSS) {
-                        await this.$store.dispatch("flow/findFlows", {size: 10, sort: "id:asc"})
+                        await this.flowStore.findFlows({size: 10, sort: "id:asc"})
                         await this.executionsStore.findExecutions({size: 10}).then(response => {
                             this.executions = response?.total ?? 0;
                         })
 
-                        if (!this.executions && !this.overallTotal) {
+                        if (!this.executions && !this.flowStore.overallTotal) {
                             this.$router.push({name: "welcome", params: {tenant: this.$route.params.tenant}});
                         }
                     }

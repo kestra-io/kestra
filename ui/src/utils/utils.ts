@@ -1,7 +1,7 @@
 import {computed} from "vue";
 import moment from "moment";
 import humanizeDuration from "humanize-duration";
-import {useMiscStore} from "../stores/misc";
+import {useMiscStore} from "override/stores/misc";
 
 const humanizeDurationLanguages = {
     "en" : {

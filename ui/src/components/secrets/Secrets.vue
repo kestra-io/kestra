@@ -71,6 +71,7 @@
             v-else
             filterable
             :add-secret-modal-visible="addSecretModalVisible"
+            :namespace="props.namespace"
             @update:add-secret-modal-visible="addSecretModalVisible = $event"
         />
     </section>
@@ -83,12 +84,19 @@
     import {useI18n} from "vue-i18n";
     import {computed, ref} from "vue";
     import useRouteContext from "../../mixins/useRouteContext.js";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc.js";
     import sourceImg from "../../assets/demo/secrets.png";
     import DemoButtons from "../demo/DemoButtons.vue";
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
 
     const miscStore = useMiscStore();
+
+    const props = defineProps({
+        namespace: {
+            type: String,
+            default: undefined
+        }
+    });
 
     const addSecretModalVisible = ref(false);
     const hasData = ref(undefined);

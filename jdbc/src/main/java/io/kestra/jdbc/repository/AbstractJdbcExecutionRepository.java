@@ -298,12 +298,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .select(
                 field("value")
             )
-            .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId, false))
             .and(NORMAL_KIND_CONDITION);
 
-        select = this.filter(select, filters, "start_date", Resource.EXECUTION);
+        select = select.and(this.filter(filters, "start_date", Resource.EXECUTION));
 
         return select;
     }
@@ -327,7 +326,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .select(
                 field("value")
             )
-            .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId, deleted));
 
@@ -357,7 +355,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
@@ -869,8 +866,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     @Override
     public List<Execution> lastExecutions(
-        @Nullable String tenantId,
-        List<FlowFilter> flows
+        String tenantId,
+        @Nullable List<FlowFilter> flows
     ) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -892,14 +889,19 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .and(NORMAL_KIND_CONDITION)
                     .and(field("end_date").isNotNull())
                     .and(DSL.or(
-                        flows
-                            .stream()
-                            .map(flow -> DSL.and(
-                                field("namespace").eq(flow.getNamespace()),
-                                field("flow_id").eq(flow.getId())
-                            ))
-                            .toList()
-                    ));
+                        ListUtils.emptyOnNull(flows).isEmpty() ?
+                            DSL.trueCondition()
+                        :
+                            DSL.or(
+                                flows.stream()
+                                    .map(flow -> DSL.and(
+                                        field("namespace").eq(flow.getNamespace()),
+                                        field("flow_id").eq(flow.getId())
+                                    ))
+                                    .toList()
+                            )
+                        )
+                    );
 
                 Table<Record2<Object, Integer>> cte = subquery.asTable("cte");
 

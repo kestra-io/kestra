@@ -163,7 +163,7 @@
                             </template>
                         </el-table-column>
                         <el-table-column
-                            v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                            v-if="authStore.user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                             column-key="action"
                             class-name="row-action"
                         >
@@ -193,7 +193,7 @@
 
                                     <el-button
                                         :icon="CalendarCollapseHorizontalOutline"
-                                        v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                                        v-if="authStore.user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                                         @click="restart(scope.row)"
                                         size="small"
                                         type="primary"
@@ -270,13 +270,13 @@
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import Id from "../Id.vue";
-    import {mapState} from "vuex";
     import SelectTableActions from "../../mixins/selectTableActions";
     import _merge from "lodash/merge";
     import LogsWrapper from "../logs/LogsWrapper.vue";
     import KestraFilter from "../filter/KestraFilter.vue"
     import {mapStores} from "pinia";
     import {useTriggerStore} from "../../stores/trigger";
+    import {useAuthStore} from "override/stores/auth";
 
 
     export default {
@@ -339,6 +339,12 @@
                     }
                 });
             },
+            triggerLoadDataAfterBulkEditAction() {
+                this.loadData();
+                setTimeout(() => this.loadData(), 200);
+                setTimeout(() => this.loadData(), 1000);
+                setTimeout(() => this.loadData(), 5000);
+            },
             async unlock() {
                 const namespace = this.triggerToUnlock.namespace;
                 const flowId = this.triggerToUnlock.flowId;
@@ -391,10 +397,10 @@
                 this.triggerStore.update({...trigger, disabled: !value})
                     .then(updatedTrigger => {
                         this.triggers = this.triggers.map(t => {
-                            const triggerContextMatches = t.triggerContext && 
+                            const triggerContextMatches = t.triggerContext &&
                                 t.triggerContext.flowId === updatedTrigger.flowId &&
                                 t.triggerContext.triggerId === updatedTrigger.triggerId;
-                        
+
                             if (triggerContextMatches) {
                                 return {triggerContext: updatedTrigger, abstractTrigger: t.abstractTrigger};
                             }
@@ -404,7 +410,7 @@
             },
             genericConfirmAction(toast, queryAction, byIdAction, success, data) {
                 this.$toast().confirm(
-                    this.$t(toast, {"count": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t(toast, {"count": this.queryBulkAction ? this.total : this.selection.length}) + ". " + this.$t("bulk action async warning"),
                     () => this.genericConfirmCallback(queryAction, byIdAction, success, data),
                     () => {
                     }
@@ -432,7 +438,7 @@
                         .then(data => {
                             this.$toast().success(this.$t(success, {count: data.count}));
                             this.toggleAllUnselected();
-                            this.loadData();
+                            this.triggerLoadDataAfterBulkEditAction();
                         })
                 } else {
                     const selection = this.selection;
@@ -442,7 +448,7 @@
                         .then(data => {
                             this.$toast().success(this.$t(success, {count: data.count}));
                             this.toggleAllUnselected();
-                            this.loadData();
+                            this.triggerLoadDataAfterBulkEditAction();
                         }).catch(e => {
                             this.$toast().error(e?.invalids.map(exec => {
                                 return {message: this.$t(exec.message, {triggers: exec.invalidValue})}
@@ -498,8 +504,7 @@
             },
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useTriggerStore),
+            ...mapStores(useTriggerStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$t("triggers")

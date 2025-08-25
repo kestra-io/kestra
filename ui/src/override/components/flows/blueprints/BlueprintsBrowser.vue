@@ -123,7 +123,6 @@
 
 <script>
     import {shallowRef} from "vue";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
@@ -140,6 +139,7 @@
     import {useBlueprintsStore} from "../../../../stores/blueprints";
     import {useCoreStore} from "../../../../stores/core";
     import {useDocStore} from "../../../../stores/doc";
+    import {useAuthStore} from "override/stores/auth";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
@@ -281,10 +281,9 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(usePluginsStore, useBlueprintsStore, useCoreStore, useDocStore),
+            ...mapStores(usePluginsStore, useBlueprintsStore, useCoreStore, useDocStore, useAuthStore),
             userCanCreateFlow() {
-                return this.user.hasAnyAction(permission.FLOW, action.CREATE);
+                return this.authStore.user.hasAnyAction(permission.FLOW, action.CREATE);
             },
         },
         watch: {

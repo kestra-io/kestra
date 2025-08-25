@@ -1,7 +1,8 @@
 import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import Executions from "../../../../src/components/executions/Executions.vue";
-import {useMiscStore} from "../../../../src/stores/misc";
+import {useMiscStore} from "override/stores/misc";
+import {useAuthStore} from "override/stores/auth";
 import fixtureS from "./Executions-s.fixture.json";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
@@ -19,36 +20,39 @@ function getDecorators(executionsSearchData) {
             return {
                 setup() {
                     const store = useStore();
+                    const authStore = useAuthStore()
                     const miscStore = useMiscStore();
-                    store.commit("auth/setUser", {
+                    authStore.user = {
                         id: "123",
                         firstName: "John",
                         lastName: "Doe",
                         email: "john.doe@example.com",
                         isAllowed: () => true,
                         hasAnyActionOnAnyNamespace: () => true,
-                    });
+                    }
                     miscStore.configs = {
                         hiddenLabelsPrefixes: ["system_"],
                     };
                     store.$http = {
                         get: async (uri, _params) => {
                             if (uri.endsWith("executions/search")) {
-                                console.log("uri", uri);
                                 // query params are available here if we want to make tests with them
                                 // console.log("params", params);
                                 return Promise.resolve({
                                     data: executionsSearchData,
                                 });
                             }
-                            return Promise.resolve({data: []});
+
+                            throw new Error(
+                                "Unhandled fixture Request GET: " + uri,
+                            );
                         },
                         post: async (uri) => {
-                            console.log("post request", uri);
 
                             if (uri.includes("/dashboards/charts/preview")) {
                                 return Promise.resolve({}); // empty chart
                             }
+
                             throw new Error(
                                 "Unhandled fixture Request POST: " + uri,
                             );

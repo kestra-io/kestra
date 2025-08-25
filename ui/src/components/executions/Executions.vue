@@ -19,10 +19,10 @@
                     </li>
                     <li>
                         <trigger-flow
-                            v-if="flow"
-                            :disabled="flow.disabled || isReadOnly"
-                            :flow-id="flow.id"
-                            :namespace="flow.namespace"
+                            v-if="flowStore.flow"
+                            :disabled="flowStore.flow.disabled || isReadOnly"
+                            :flow-id="flowStore.flow.id"
+                            :namespace="flowStore.flow.namespace"
                         />
                     </li>
                 </template>
@@ -58,7 +58,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections :dashboard="{id: 'default'}" :charts show-default />
+                <Sections ref="dashboardComponent" :dashboard="{id: 'default'}" :charts show-default />
             </template>
 
             <template #table>
@@ -260,7 +260,7 @@
                             class-name="shrink"
                         >
                             <template #default="scope">
-                                <code>{{ scope.row.flowRevision }}</code>
+                                <code class="code-text">{{ scope.row.flowRevision }}</code>
                             </template>
                         </el-table-column>
 
@@ -293,7 +293,7 @@
                                 </el-tooltip>
                             </template>
                             <template #default="scope">
-                                <code>
+                                <code class="code-text">
                                     {{ scope.row.taskRunList?.slice(-1)[0].taskId }}
                                     {{
                                         scope.row.taskRunList?.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList?.slice(-1)[0].attempts.length})` : ""
@@ -450,9 +450,8 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc.ts";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -480,6 +479,8 @@
 
     import {filterLabels} from "./utils"
     import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth.ts";
+    import {useFlowStore} from "../../stores/flow.ts";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -625,14 +626,9 @@
             }
             this.displayColumns = localStorage.getItem("columns_executions")?.split(",")
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
-            if (this.isConcurrency) {
-                this.emitStateCount([State.RUNNING, State.PAUSED])
-            }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapState("flow", ["flow"]),
-            ...mapStores(useMiscStore, useExecutionsStore),
+            ...mapStores(useMiscStore, useExecutionsStore, useFlowStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -662,19 +658,19 @@
                 return this.canDelete || this.canUpdate;
             },
             canCreate() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
             },
             canUpdate() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
             },
             canDelete() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
             },
             isAllowedEdit() {
-                return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.flowStore.flow.namespace);
             },
             hasAnyExecute() {
-                return this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
+                return this.authStore.user?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
             },
             isDisplayedTop() {
                 if(this.visibleCharts) return true;
@@ -774,6 +770,7 @@
             },
             refresh() {
                 this.recomputeInterval = !this.recomputeInterval;
+                this.$refs.dashboardComponent.refreshCharts();
                 this.load();
             },
             selectionMapper(execution) {
@@ -796,6 +793,11 @@
                     queryFilter["filters[flowId][EQUALS]"] = this.flowId;
                 }
 
+                const hasStateFilters = Object.keys(queryFilter).some(key => key.startsWith("filters[state]")) || queryFilter.state;
+                if (!hasStateFilters && this.statuses?.length > 0) {
+                    queryFilter["filters[state][IN]"] = this.statuses.join(",");
+                }
+
                 return _merge(base, queryFilter)
             },
             loadData(callback) {
@@ -806,7 +808,11 @@
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                })).finally(callback);
+                })).then(() => {
+                    if (this.isConcurrency) {
+                        this.emitStateCount();
+                    }
+                }).finally(callback);
             },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
@@ -850,7 +856,7 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    
+
                     const action = actionMap[queryAction]();
                     return action(options)
                         .then(r => {
@@ -863,7 +869,7 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    
+
                     const action = actionMap[byIdAction]();
                     return action(options)
                         .then(r => {
@@ -1063,22 +1069,19 @@
             editFlow() {
                 this.$router.push({
                     name: "flows/update", params: {
-                        namespace: this.flow.namespace,
-                        id: this.flow.id,
+                        namespace: this.flowStore.flow.namespace,
+                        id: this.flowStore.flow.id,
                         tab: "edit",
                         tenant: this.$route.params.tenant
                     }
                 })
             },
-            emitStateCount(states) {
-                this.executionsStore.findExecutions(this.loadQuery({
-                    size: parseInt(this.$route.query.size || this.internalPageSize),
-                    page: parseInt(this.$route.query.page || this.internalPageNumber),
-                    sort: this.$route.query.sort || "state.startDate:desc",
-                    state: states
-                })).then(() => {
-                    this.$emit("state-count", this.executionsStore.total);
-                });
+            emitStateCount() {
+                const runningCount = this.executionsStore.executions.filter(execution =>
+                    execution.state.current === State.RUNNING
+                )?.length;
+                const totalCount = this.executionsStore.total;
+                this.$emit("state-count", {runningCount, totalCount});
             }
         },
         watch: {
@@ -1118,6 +1121,9 @@
         :deep(.el-alert__icon) {
             color: #ffb703;
         }
+    }
+    .code-text {
+        color: var(--ks-content-primary);
     }
 </style>
 

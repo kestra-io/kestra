@@ -1,7 +1,7 @@
 import {shallowRef} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {useI18n} from "vue-i18n";
-import {useMiscStore} from "../../stores/misc";
+import {useMiscStore} from "override/stores/misc";
 
 import {getDashboard} from "../../components/dashboard/composables/useDashboards";
 

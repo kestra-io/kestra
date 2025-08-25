@@ -8,7 +8,6 @@ import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.statistics.LogStatistics;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
@@ -25,19 +24,15 @@ import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository implements LogRepositoryInterface {
+
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull();
+    public static final String DATE_COLUMN = "timestamp";
     protected io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository;
 
     public AbstractJdbcLogRepository(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository,
@@ -58,7 +53,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
     protected Map<Logs.Fields, String> getFieldsMapping() {
       return Map.of(
-          Logs.Fields.DATE, "timestamp",
+          Logs.Fields.DATE, DATE_COLUMN,
           Logs.Fields.NAMESPACE, "namespace",
           Logs.Fields.FLOW_ID, "flow_id",
           Logs.Fields.TASK_ID, "task_id",
@@ -98,76 +93,20 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId))
                     .and(NORMAL_KIND_CONDITION);
 
-               select = this.filter(select, filters, "timestamp", Resource.LOG);
+               select = select.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
     }
 
-    private <T extends Record> SelectConditionStep<T> filter(
-        SelectConditionStep<T> select,
-        @Nullable String query,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable String triggerId,
-        @Nullable Level minLevel,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate
-    ) {
-        select = addNamespace(select, namespace);
-
-        if (flowId != null) {
-            select = select.and(field("flow_id").eq(flowId));
-        }
-
-        if (triggerId != null) {
-            select = select.and(field("trigger_id").eq(triggerId));
-        }
-
-        select = addMinLevel(select, minLevel);
-
-        if (query != null) {
-            select = select.and(this.findCondition(query));
-        }
-
-        if (startDate != null) {
-            select = select.and(field("timestamp").greaterOrEqual(startDate.toOffsetDateTime()));
-        }
-
-        if (endDate != null) {
-            select = select.and(field("timestamp").lessOrEqual(endDate.toOffsetDateTime()));
-        }
-
-        return select;
-    }
-
-    private <T extends Record> SelectConditionStep<T> addMinLevel(SelectConditionStep<T> select,
-        Level minLevel) {
-        if (minLevel != null) {
-            select = select.and(minLevel(minLevel));
-        }
-        return select;
-    }
-
-    private static <T extends Record> SelectConditionStep<T> addNamespace(SelectConditionStep<T> select,
-        String namespace) {
-        if (namespace != null) {
-            select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
-        }
-        return select;
-    }
-
     @Override
     public Flux<LogEntry> findAsync(
         @Nullable String tenantId,
-        @Nullable String namespace,
-        @Nullable Level minLevel,
-        ZonedDateTime startDate
+        List<QueryFilter> filters
     ){
         return Flux.create(emitter -> this.jdbcRepository
             .getDslContextWrapper()
@@ -176,17 +115,14 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId))
                     .and(NORMAL_KIND_CONDITION);
-                addNamespace(select, namespace);
-                addMinLevel(select, minLevel);
-                select = select.and(field("timestamp").greaterThan(startDate.toOffsetDateTime()));
 
-                Select<Record1<Object>> query = this.jdbcRepository.buildQuery(context, select, "timestamp");
+                select = select.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
+                select.orderBy(field(DATE_COLUMN).asc());
 
-                try (Stream<Record1<Object>> stream = query.fetchSize(FETCH_SIZE).stream()){
+                try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()){
                     stream.map((Record record) -> jdbcRepository.map(record))
                         .forEach(emitter::next);
                 } finally {
@@ -204,7 +140,6 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
@@ -215,62 +150,6 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     emitter.complete();
                 }
             }), FluxSink.OverflowStrategy.BUFFER);
-    }
-
-
-
-    private List<LogStatistics> fillDate(List<LogStatistics> result, ZonedDateTime startDate, ZonedDateTime endDate) {
-        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
-
-        if (groupByType.equals(DateUtils.GroupType.MONTH)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.MONTHS, "YYYY-MM");
-        } else if (groupByType.equals(DateUtils.GroupType.WEEK)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.WEEKS, "YYYY-ww");
-        } else if (groupByType.equals(DateUtils.GroupType.DAY)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.DAYS, "YYYY-MM-DD");
-        } else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.HOURS, "YYYY-MM-DD HH");
-        } else {
-            return fillDate(result, startDate, endDate, ChronoUnit.MINUTES, "YYYY-MM-DD HH:mm");
-        }
-    }
-
-    private List<LogStatistics> fillDate(
-        List<LogStatistics> result,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        ChronoUnit unit,
-        String format
-    ) {
-        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
-        List<LogStatistics> filledResult = new ArrayList<>();
-        ZonedDateTime currentDate = startDate;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
-        while (currentDate.isBefore(endDate)) {
-            String finalCurrentDate = currentDate.format(formatter);
-
-            LogStatistics current = result.stream()
-                .filter(metric -> formatter.format(metric.getTimestamp()).equals(finalCurrentDate))
-                .collect(Collectors.groupingBy(LogStatistics::getTimestamp))
-                .values()
-                .stream()
-                .map(logStatistics -> {
-                    Map<Level, Long> collect = logStatistics
-                        .stream()
-                        .map(LogStatistics::getCounts)
-                        .flatMap(levelLongMap -> levelLongMap.entrySet().stream())
-                        .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.summingLong(Map.Entry::getValue)));
-
-                    return logStatistics.getFirst().toBuilder().counts(collect).build();
-                })
-                .findFirst()
-                .orElse(LogStatistics.builder().timestamp(currentDate.toInstant()).groupBy(groupByType.val()).build());
-
-            filledResult.add(current);
-            currentDate = currentDate.plus(1, unit);
-        }
-
-        return filledResult;
     }
 
     @Override
@@ -519,10 +398,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 var delete = context
                     .delete(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId))
-                    .and(field("timestamp").lessOrEqual(endDate.toOffsetDateTime()));
+                    .and(field(DATE_COLUMN).lessOrEqual(endDate.toOffsetDateTime()));
 
                 if (startDate != null) {
-                    delete = delete.and(field("timestamp").greaterOrEqual(startDate.toOffsetDateTime()));
+                    delete = delete.and(field(DATE_COLUMN).greaterOrEqual(startDate.toOffsetDateTime()));
                 }
 
                 if (namespace != null) {
@@ -545,6 +424,22 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
             });
     }
 
+    @Override
+    public void deleteByFilters(String tenantId, List<QueryFilter> filters){
+        this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                var delete = context
+                    .delete(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId));
+                delete = delete.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
+
+                return delete.execute();
+            });
+    }
+
     private ArrayListTotal<LogEntry> query(String tenantId, Condition condition, Level minLevel, Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -553,7 +448,6 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
@@ -585,7 +479,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 }
 
                 return this.jdbcRepository.fetch(select
-                    .orderBy(field("timestamp").sort(SortOrder.ASC))
+                    .orderBy(field(DATE_COLUMN).sort(SortOrder.ASC))
                 );
             });
     }
@@ -632,17 +526,6 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 return null;
             }
         });
-    }
-
-    private Field<?> aggregate(String aggregation) {
-        return switch (aggregation) {
-            case "avg" -> DSL.avg(field("attempt_number", Double.class)).as("metric_value");
-            case "sum" -> DSL.sum(field("attempt_number", Double.class)).as("metric_value");
-            case "min" -> DSL.min(field("attempt_number", Double.class)).as("metric_value");
-            case "max" -> DSL.max(field("attempt_number", Double.class)).as("metric_value");
-            case "count" -> DSL.count().as("metric_value");
-            default -> throw new IllegalArgumentException("Invalid aggregation: " + aggregation);
-        };
     }
 
     @Override

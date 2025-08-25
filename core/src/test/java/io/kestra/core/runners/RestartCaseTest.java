@@ -273,7 +273,7 @@ public class RestartCaseTest {
 
         // wait
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
-            execution -> execution.getState().getCurrent() == State.Type.SUCCESS && execution.getId().equals(firstExecution.getId()),
+            execution -> executionService.isTerminated(flow, execution) && execution.getState().isSuccess() && execution.getId().equals(firstExecution.getId()),
             throwRunnable(() -> {
                 Execution restartedExec = executionService.restart(firstExecution, null);
                 assertThat(restartedExec).isNotNull();

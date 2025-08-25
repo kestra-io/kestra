@@ -5,7 +5,7 @@
             v-if="!isCreating"
             ref="toggleExplorer"
             :content="
-                $t(
+                t(
                     `namespace files.toggle.${
                         explorerVisible ? 'hide' : 'show'
                     }`
@@ -59,16 +59,16 @@
             class="tabs-context"
         >
             <el-menu-item :disabled="tabContextMenu.tab.persistent" @click="closeTab(tabContextMenu.tab, tabContextMenu.index)">
-                {{ $t("namespace_editor.close.tab") }}
+                {{ t("namespace_editor.close.tab") }}
             </el-menu-item>
             <el-menu-item @click="closeAllTabs">
-                {{ $t("namespace_editor.close.all") }}
+                {{ t("namespace_editor.close.all") }}
             </el-menu-item>
             <el-menu-item @click="closeOtherTabs(tabContextMenu.tab)">
-                {{ $t("namespace_editor.close.other") }}
+                {{ t("namespace_editor.close.other") }}
             </el-menu-item>
             <el-menu-item @click="closeTabsToRight(tabContextMenu.index)">
-                {{ $t("namespace_editor.close.right") }}
+                {{ t("namespace_editor.close.right") }}
             </el-menu-item>
         </el-menu>
 
@@ -79,12 +79,12 @@
                 @change="(val) => editorViewType = val"
                 active-value="NO_CODE"
                 inactive-value="YAML"
-                :inactive-text="$t('no_code.labels.no_code')"
+                :inactive-text="t('no_code.labels.no_code')"
                 size="small"
                 class="me-2"
             />
 
-            <switch-view
+            <SwitchView
                 v-if="!isNamespace"
                 :type="viewType"
                 class="to-topology-button"
@@ -134,14 +134,14 @@
         >
             <template v-if="editorViewType === 'YAML'">
                 <template v-if="isCreating || openedTabs.length">
-                    <editor
+                    <Editor
                         class="position-relative"
                         ref="editorDomElement"
                         @save="save"
                         @execute="execute"
                         :path="currentTab?.path"
                         :diff-overview-bar="false"
-                        :model-value="draftSource === undefined ? flowYaml : draftSource"
+                        :model-value="flowYaml"
                         :schema-type="isCurrentTabFlow? 'flow': undefined"
                         :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
                         :extension="currentTab?.extension"
@@ -152,31 +152,8 @@
                         @tab-loaded="onTabLoaded"
                         :read-only="isReadOnly"
                         :navbar="false"
-                        :original="draftSource === undefined ? undefined : flowYaml"
+                        :original="isNamespace ? undefined : flowYaml"
                         :diff-side-by-side="false"
-                    >
-                        <template #absolute>
-                            <div class="d-flex flex-column align-items-end gap-2 mt-2" v-if="isCurrentTabFlow">
-                                <el-button v-if="aiEnabled && !aiAgentOpened" class="rounded-pill" :icon="AiIcon" @click="draftSource = undefined; aiAgentOpened = true">
-                                    {{ $t("ai.flow.title") }}
-                                </el-button>
-                            </div>
-                        </template>
-                    </editor>
-                    <transition name="el-zoom-in-center">
-                        <AiAgent
-                            v-if="aiAgentOpened"
-                            class="position-absolute prompt"
-                            @close="aiAgentOpened = false"
-                            :flow="editorContent"
-                            @generated-yaml="yaml => {draftSource = yaml; aiAgentOpened = false}"
-                        />
-                    </transition>
-                    <AcceptDecline
-                        v-if="draftSource !== undefined"
-                        class="position-absolute actions"
-                        @accept="acceptDraft"
-                        @reject="declineDraft"
                     />
                 </template>
                 <div v-else class="no-tabs-opened">
@@ -184,27 +161,27 @@
 
                     <div>
                         <h5 class="mb-0 fw-bold">
-                            {{ $t("namespace_editor.empty.title") }}
+                            {{ t("namespace_editor.empty.title") }}
                         </h5>
                         <p>
-                            {{ $t("namespace_editor.empty.create_message") }}
+                            {{ t("namespace_editor.empty.create_message") }}
                         </p>
                     </div>
 
                     <div class="empty-state-actions mt-1">
                         <el-dropdown>
                             <el-button :icon="Plus" type="primary">
-                                {{ $t("create") }}
+                                {{ t("create") }}
                             </el-button>
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item @click="createFile">
                                         <FilePlus class="me-2" />
-                                        {{ $t("namespace files.create.file") }}
+                                        {{ t("namespace files.create.file") }}
                                     </el-dropdown-item>
                                     <el-dropdown-item @click="createFolder">
                                         <FolderPlus class="me-2" />
-                                        {{ $t("namespace files.create.folder") }}
+                                        {{ t("namespace files.create.folder") }}
                                     </el-dropdown-item>
                                 </el-dropdown-menu>
                             </template>
@@ -229,23 +206,23 @@
                         >
                         <el-dropdown>
                             <el-button :icon="Download" type="primary">
-                                {{ $t("import") }}
+                                {{ t("import") }}
                             </el-button>
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item @click="$refs.filePicker.click()">
                                         <File class="me-2" />
-                                        {{ $t("namespace files.import.files") }}
+                                        {{ t("namespace files.import.files") }}
                                     </el-dropdown-item>
                                     <el-dropdown-item @click="$refs.folderPicker.click()">
                                         <Folder class="me-2" />
-                                        {{ $t("namespace files.import.folder") }}
+                                        {{ t("namespace files.import.folder") }}
                                     </el-dropdown-item>
                                 </el-dropdown-menu>
                             </template>
                         </el-dropdown>
                     </div>
-                    <el-divider>{{ $t("namespace_editor.empty.video_message") }}</el-divider>
+                    <el-divider>{{ t("namespace_editor.empty.video_message") }}</el-divider>
 
                     <div class="video-container">
                         <iframe
@@ -305,7 +282,7 @@
                     :expanded-subflows="props.expandedSubflows"
                 />
                 <el-alert v-else type="warning" :closable="false">
-                    {{ $t("unable to generate graph") }}
+                    {{ t("unable to generate graph") }}
                 </el-alert>
             </div>
 
@@ -315,7 +292,7 @@
             />
         </div>
 
-        <drawer
+        <Drawer
             v-model="isNewErrorOpen"
             title="Add a global error handler"
         >
@@ -333,11 +310,11 @@
                     type="primary"
                     :disabled="Boolean(taskErrors)"
                 >
-                    {{ $t("save") }}
+                    {{ t("save") }}
                 </el-button>
             </template>
-        </drawer>
-        <drawer
+        </Drawer>
+        <Drawer
             v-model="isNewTriggerOpen"
             title="Add a trigger"
         >
@@ -355,11 +332,11 @@
                     type="primary"
                     :disabled="Boolean(taskErrors)"
                 >
-                    {{ $t("save") }}
+                    {{ t("save") }}
                 </el-button>
             </template>
-        </drawer>
-        <drawer
+        </Drawer>
+        <Drawer
             v-if="isEditMetadataOpen"
             v-model="isEditMetadataOpen"
         >
@@ -369,7 +346,7 @@
 
             <el-form label-position="top">
                 <metadata-editor
-                    :metadata="store.getters['flow/flowYamlMetadata']"
+                    :metadata="flowStore.flowYamlMetadata"
                     @update:model-value="onUpdateMetadata"
                     :editing="!props.isCreating"
                 />
@@ -382,10 +359,10 @@
                     :disabled="!checkRequiredMetadata()"
                     class="edit-flow-save-button"
                 >
-                    {{ $t("save") }}
+                    {{ t("save") }}
                 </el-button>
             </template>
-        </drawer>
+        </Drawer>
     </div>
     <el-dialog
         v-if="confirmOutdatedSaveDialog"
@@ -394,13 +371,13 @@
         :append-to-body="true"
     >
         <template #header>
-            <h5>{{ $t(`${baseOutdatedTranslationKey}.title`) }}</h5>
+            <h5>{{ t(`${baseOutdatedTranslationKey}.title`) }}</h5>
         </template>
-        {{ $t(`${baseOutdatedTranslationKey}.description`) }}
-        {{ $t(`${baseOutdatedTranslationKey}.details`) }}
+        {{ t(`${baseOutdatedTranslationKey}.description`) }}
+        {{ t(`${baseOutdatedTranslationKey}.details`) }}
         <template #footer>
             <el-button @click="confirmOutdatedSaveDialog = false">
-                {{ $t("cancel") }}
+                {{ t("cancel") }}
             </el-button>
             <el-button
                 type="warning"
@@ -409,18 +386,18 @@
                     confirmOutdatedSaveDialog = false;
                 "
             >
-                {{ $t("ok") }}
+                {{ t("ok") }}
             </el-button>
         </template>
     </el-dialog>
     <el-dialog
         v-model="dialog.visible"
-        :title="dialog.type === 'file' ? $t('namespace files.create.file') : $t('namespace files.create.folder')"
+        :title="dialog.type === 'file' ? t('namespace files.create.file') : t('namespace files.create.folder')"
         width="500"
         @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
     >
         <div class="pb-1">
-            <span>{{ $t(`namespace files.dialog.name.${dialog.type}`) }}</span>
+            <span>{{ t(`namespace files.dialog.name.${dialog.type}`) }}</span>
         </div>
         <el-input
             ref="creation_name"
@@ -429,7 +406,7 @@
             class="mb-3"
         />
         <div class="py-1">
-            <span>{{ $t("namespace files.dialog.parent_folder") }}</span>
+            <span>{{ t("namespace files.dialog.parent_folder") }}</span>
         </div>
         <el-select
             v-model="dialog.folder"
@@ -447,29 +424,41 @@
         <template #footer>
             <div>
                 <el-button @click="dialog.visible = false">
-                    {{ $t("cancel") }}
+                    {{ t("cancel") }}
                 </el-button>
                 <el-button
                     type="primary"
                     :disabled="!dialog.name"
                     @click="dialogHandler"
                 >
-                    {{ $t("namespace files.create.label") }}
+                    {{ t("namespace files.create.label") }}
                 </el-button>
             </div>
         </template>
     </el-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
-    import {useStore} from "vuex";
-    import {useCoreStore} from "../../stores/core";
-    import {useMiscStore} from "../../stores/misc";
     import {useRoute, useRouter} from "vue-router";
     import {useStorage} from "@vueuse/core";
+    import {useI18n} from "vue-i18n";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {Utils, SECTIONS} from "@kestra-io/ui-libs";
 
-    // Icons
+    import {useCoreStore} from "../../stores/core";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {useEditorStore} from "../../stores/editor";
+    import {useAuthStore} from "override/stores/auth";
+    import {useFlowStore} from "../../stores/flow";
+    import {useNamespacesStore} from "override/stores/namespaces";
+
+    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
+
+    import permission from "../../models/permission";
+    import action from "../../models/action";
+    import {storageKeys, editorViewTypes} from "../../utils/constants";
+
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import MenuOpen from "vue-material-design-icons/MenuOpen.vue";
     import MenuClose from "vue-material-design-icons/MenuClose.vue";
@@ -484,13 +473,6 @@
 
     import TypeIcon from "../utils/icons/Type.vue"
     import SwitchView from "./SwitchView.vue";
-
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import {storageKeys, editorViewTypes} from "../../utils/constants";
-    import {Utils, YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
-
-    // editor components
     import Editor from "./Editor.vue";
     import NoCode from "../code/NoCode.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
@@ -501,37 +483,20 @@
     import ValidationError from "../flows/ValidationError.vue";
     import EditorButtons from "./EditorButtons.vue";
     import MetadataEditor from "../flows/MetadataEditor.vue";
-    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
-    import {usePluginsStore} from "../../stores/plugins";
-    import * as FLOW_YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import AiAgent from "../ai/AiAgent.vue";
-    import AiIcon from "../ai/AiIcon.vue";
-    import AcceptDecline from "./AcceptDecline.vue";
+    import {useToast} from "../../utils/toast";
 
-    const store = useStore();
+
     const coreStore = useCoreStore();
-    const miscStore = useMiscStore();
-    const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
+    const flowStore = useFlowStore();
+    const namespacesStore = useNamespacesStore();
     const router = useRouter();
     const route = useRoute();
     const emit = defineEmits(["follow", "expand-subflow"]);
-    const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
-    const t = getCurrentInstance().appContext.config.globalProperties.$t;
-    const tours = getCurrentInstance().appContext.config.globalProperties.$tours;
+    const toast = useToast();
+    const {t} = useI18n();
+    const tours = getCurrentInstance()?.appContext.config.globalProperties.$tours;
     const lowCodeEditorRef = ref(null);
     const tabsScrollRef = ref();
-
-    const toggleAiShortcut = (event) => {
-        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value && aiEnabled.value) {
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-            draftSource.value = undefined;
-            aiAgentOpened.value = !aiAgentOpened.value;
-        }
-    };
-    const aiAgentOpened = ref(false);
-    const draftSource = ref(undefined);
 
     const props = defineProps({
         flowGraph: {
@@ -596,7 +561,7 @@
         },
     });
 
-    store.commit("flow/setIsCreating", props.isCreating);
+    flowStore.isCreating = props.isCreating;
     const guidedProperties = ref(coreStore.guidedProperties);
 
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
@@ -604,21 +569,21 @@
 
     const {translateError, translateErrorWithKey} = useFlowOutdatedErrors()
 
-    const baseOutdatedTranslationKey = computed(() => store.getters["flow/baseOutdatedTranslationKey"]);
-    const flowErrors = computed(() => store.getters["flow/flowErrors"]?.map(translateError));
+    const baseOutdatedTranslationKey = computed(() => flowStore.baseOutdatedTranslationKey);
+    const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
     const flowWarnings = computed(() => {
         if (isFlow.value) {
             const outdatedWarning =
-                store.state.flow.flowValidation?.outdated && !store.state.flow.isCreating
-                    ? [translateErrorWithKey(store.getters["flow/baseOutdatedTranslationKey"])]
+                flowStore.flowValidation?.outdated && !flowStore.isCreating
+                    ? [translateErrorWithKey(flowStore.flowValidation?.constraints ?? "")]
                     : [];
 
             const deprecationWarnings =
-                store.state.flow.flowValidation?.deprecationPaths?.map(
+                flowStore.flowValidation?.deprecationPaths?.map(
                     (f) => `${f} ${t("is deprecated")}.`
                 ) ?? [];
 
-            const otherWarnings = store.state.flow.flowValidation?.warnings ?? [];
+            const otherWarnings = flowStore.flowValidation?.warnings ?? [];
 
             const warnings = [
                 ...outdatedWarning,
@@ -631,8 +596,8 @@
 
         return undefined;
     });
-    const flowInfos = computed(() => store.getters["flow/flowInfos"]);
-    const flowHaveTasks = computed(() => Boolean(store.getters["flow/flowHaveTasks"]));
+    const flowInfos = computed(() => flowStore.flowInfos);
+    const flowHaveTasks = computed(() => Boolean(flowStore.flowHaveTasks));
 
     const editorViewType = useStorage(storageKeys.EDITOR_VIEW_TYPE, "YAML");
 
@@ -668,16 +633,15 @@
             : localStorage.getItem("topology-orientation") === "1";
     };
 
-    store.commit("flow/setHaveChange", props.isDirty);
+    flowStore.haveChange = props.isDirty;
 
     const editorDomElement = ref(null);
     const editorWidth = useStorage("editor-size", 50);
     const validationDomElement = ref(null);
     const isLoading = ref(false);
-    const flowYaml = computed(() => store.state.flow.flowYaml);
-    const flowYamlOrigin = computed(() => store.state.flow.flowYamlOrigin);
-    const user = computed(() => store.getters["auth/user"]);
-    const metadata = computed(() => store.state.flow.metadata);
+    const flowYaml = computed(() => flowStore.flowYaml);
+    const flowYamlOrigin = computed(() => flowStore.flowYamlOrigin);
+    const metadata = computed(() => flowStore.metadata);
     const newTrigger = ref(null);
     const isNewTriggerOpen = ref(false);
     const newError = ref(null);
@@ -691,7 +655,9 @@
     const blueprintsLoaded = ref(false);
     const confirmOutdatedSaveDialog = ref(false);
 
-    const onboarding = computed(() => store.state.editor.onboarding);
+    const editorStore = useEditorStore();
+
+    const onboarding = computed(() => editorStore.onboarding);
     watch(onboarding, (started) => {
         if(!started) return;
 
@@ -700,16 +666,16 @@
     });
 
     const toggleExplorer = ref(null);
-    const explorerVisible = computed(() => store.state.editor.explorerVisible);
+    const explorerVisible = computed(() => editorStore.explorerVisible);
     const toggleExplorerVisibility = () => {
-        toggleExplorer.value.hide();
-        store.commit("editor/toggleExplorerVisibility");
+        toggleExplorer.value?.hide();
+        editorStore.toggleExplorerVisibility();
     };
-    const currentTab = computed(() => store.state.editor.current);
-    const openedTabs = computed(() => store.state.editor.tabs);
+    const currentTab = computed(() => editorStore.current);
+    const openedTabs = computed(() => editorStore.tabs);
 
     const changeCurrentTab = (tab) => {
-        store.dispatch("editor/openTab", tab);
+        editorStore.openTab(tab);
     };
 
     const persistViewType = (value) => {
@@ -718,7 +684,7 @@
     };
 
     const taskErrors = computed(() => {
-        return store.state.flow.taskError?.split(/, ?/);
+        return flowStore.taskError?.split(/, ?/);
     });
 
     watch(
@@ -750,11 +716,11 @@
 
         if(!props.isNamespace) {
             initViewType()
-            await store.dispatch("flow/initYamlSource", {viewType: viewType.value});
+            await flowStore.initYamlSource({viewType: viewType.value});
         } else {
-            store.commit("editor/closeAllTabs");
+            editorStore.closeAllTabs();
             switchViewType(editorViewTypes.SOURCE, false)
-            store.commit("editor/toggleExplorerVisibility", true);
+            editorStore.toggleExplorerVisibility(true);
         }
 
         // Save on ctrl+s in topology
@@ -777,10 +743,8 @@
         window.addEventListener("resize", onResize);
 
         if (props.isCreating) {
-            store.commit("editor/closeTabs");
+            editorStore.closeTabs();
         }
-
-        window.addEventListener("keydown", toggleAiShortcut);
     });
 
     onBeforeUnmount(() => {
@@ -792,10 +756,9 @@
             stopTour();
         });
 
-        store.commit("editor/closeAllTabs");
+        editorStore.closeAllTabs();
 
         document.removeEventListener("click", hideTabContextMenu);
-        window.removeEventListener("keydown", toggleAiShortcut);
     });
 
     const stopTour = () => {
@@ -806,22 +769,22 @@
         };
     };
 
-    const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"]);
+    const isAllowedEdit = computed(() => flowStore.isAllowedEdit);
 
     const forwardEvent = (type, event) => {
         emit(type, event);
     };
 
     const updatePluginDocumentation = (event) => {
-        const elementWrapper = FLOW_YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
+        const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
         let element = elementWrapper.value.type !== undefined ? elementWrapper.value : elementWrapper.parents.findLast(p => p.type !== undefined);
         pluginsStore.updateDocumentation(element);
     };
 
-    const fetchGraph = () => {
+    const fetchGraph = async () => {
         if(props.isNamespace) return;
 
-        return store.dispatch("flow/loadGraphFromSource", {
+        return flowStore.loadGraphFromSource({
             flow: flowYaml.value,
             config: {
                 params: {
@@ -836,12 +799,8 @@
     };
 
     const onEdit = (source, currentIsFlow = false) => {
-        if (draftSource.value !== undefined) {
-            draftSource.value = source;
-        } else {
-            store.commit("flow/setFlowYaml", source);
-        }
-        return store.dispatch("flow/onEdit", {
+        flowStore.flowYaml = source;
+        return flowStore.onEdit({
             source,
             currentIsFlow,
             editorViewType: editorViewType.value,
@@ -850,7 +809,6 @@
                 editorViewTypes.SOURCE_TOPOLOGY,
             ].includes(viewType.value),
         }).then((value) => {
-
             if (validationDomElement.value && editorDomElement.value?.$el?.offsetWidth) {
                 validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
             }
@@ -867,7 +825,7 @@
         clearTimeout(timer.value);
         timer.value = setTimeout(
             () =>
-                store.dispatch("flow/validateTask", {
+                flowStore.validateTask({
                     task: event,
                     section: SECTIONS.TRIGGERS,
                 }),
@@ -893,14 +851,14 @@
         onEdit(YAML_UTILS.insertSection("triggers", source, newTrigger.value), true);
         newTrigger.value = null;
         isNewTriggerOpen.value = false;
-        store.commit("flow/setHaveChange", true)
+        flowStore.haveChange = true;
     };
 
     const onUpdateNewError = (event) => {
         clearTimeout(timer.value);
         timer.value = setTimeout(
             () =>
-                store.dispatch("flow/validateTask", {
+                flowStore.validateTask({
                     task: event,
                     section: SECTIONS.TASKS,
                 }),
@@ -930,37 +888,37 @@
     };
 
     const checkRequiredMetadata = () => {
-        const md = metadata.value ?? store.getters["flow/flowYamlMetadata"];;
+        const md = metadata.value ?? flowStore.flowYamlMetadata;
 
         return md.id.length > 0 && md.namespace.length > 0;
     };
 
     const onUpdateMetadata = (event, shouldSave) => {
         if(shouldSave) {
-            store.commit("flow/setMetadata", {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)});
-            store.dispatch("flow/onSaveMetadata");
-            store.dispatch("flow/validateFlow", {flow: flowYaml.value});
+            flowStore.metadata = {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)};
+            flowStore.onSaveMetadata();
+            flowStore.validateFlow({flow: flowYaml.value});
         } else {
-            store.commit("flow/setMetadata", event.concurrency?.limit === 0 ?  {concurrency: null} : event);
+            flowStore.metadata = event.concurrency?.limit === 0 ?  {concurrency: null} : event;
         }
     };
 
     const onSaveMetadata = () => {
-        store.dispatch("flow/onSaveMetadata");
+        flowStore.onSaveMetadata();
         isEditMetadataOpen.value = false;
     };
 
     const handleReorder = (yaml) => {
-        store.commit("flow/setFlowYaml", yaml);
-        store.commit("flow/setHaveChange", true)
-        save()
+        flowStore.flowYaml = yaml;
+        flowStore.haveChange = true;
+        save();
     };
 
     const editorUpdate = (source) => {
         const currentIsFlow = isFlow.value;
 
         updatedFromEditor.value = true;
-        store.commit("flow/setFlowYaml", source);
+        flowStore.flowYaml = source;
 
         clearTimeout(timer.value);
         timer.value = setTimeout(() => onEdit(source, currentIsFlow), 500);
@@ -986,11 +944,11 @@
         }
     };
 
-    const flowParsed = computed(() => store.getters["flow/flowParsed"]);
+    const flowParsed = computed(() => flowStore.flowParsed);
 
     const saveWithoutRevisionGuard = async () => {
         clearTimeout(timer.value);
-        const result = await store.dispatch("flow/saveWithoutRevisionGuard");
+        const result = await flowStore.saveWithoutRevisionGuard();
         if(result === "redirect_to_update"){
             await router.push({
                 name: "flows/update",
@@ -1013,7 +971,7 @@
 
     const save = async () => {
         clearTimeout(timer.value);
-        const result = await store.dispatch("flow/save", {
+        const result = await flowStore.save({
             content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
             namespace: props.namespace ?? route.params.namespace,
         })
@@ -1031,15 +989,17 @@
     };
 
     const execute = (_) => {
-        store.commit("flow/executeFlow", true);
+        flowStore.executeFlow = true;
     };
 
+    const authStore = useAuthStore();
+
     const canDelete = () => {
-        return user.value?.isAllowed(permission.FLOW, action.DELETE, props.namespace);
+        return authStore.user?.isAllowed(permission.FLOW, action.DELETE, props.namespace);
     };
 
     const deleteFlow = () => {
-        store.dispatch("flow/deleteFlowAndDependencies")
+        flowStore.deleteFlowAndDependencies()
             .then(() => {
                 return router.push({
                     name: "flows/list",
@@ -1049,7 +1009,7 @@
                 });
             })
             .then(() => {
-                toast.deleted(metadata.value.id);
+                toast.deleted(metadata.value?.id);
             });
     };
 
@@ -1146,18 +1106,18 @@
         event.preventDefault();
         const from = draggedTabIndex.value;
         if (from !== to) {
-            store.commit("editor/reorderTabs", {from, to});
+            editorStore.reorderTabs({from, to});
         }
         draggedTabIndex.value = null;
         dragOverTabIndex.value = null;
     };
 
     async function loadFileAtPath(path){
-        const content = await store.dispatch("namespace/readFile", {
+        const content = await namespacesStore.readFile({
             path,
             namespace: props.namespace ?? route.params.namespace ?? route.params.id,
         })
-        store.commit("flow/setFlowYaml", content);
+        flowStore.flowYaml = content;
     }
 
     const dirtyBeforeLoad = ref(false);
@@ -1221,17 +1181,17 @@
         document.removeEventListener("click", hideTabContextMenu);
     };
 
-    const FLOW_TAB = computed(() => store.state.editor?.tabs?.find(tab => tab.name === "Flow"))
+    const FLOW_TAB = computed(() => editorStore.tabs?.find(tab => tab.name === "Flow"))
 
     const closeTab = (tab, index) => {
-        store.dispatch("editor/closeTab", {...tab, index});
+        editorStore.closeTab({...tab, index});
     };
 
     const closeTabs = (tabsToClose, openTab) => {
         tabsToClose.forEach(tab => {
-            store.dispatch("editor/closeTab", tab);
+            editorStore.closeTab(tab);
         });
-        store.dispatch("editor/openTab", openTab);
+        editorStore.openTab(openTab);
         hideTabContextMenu();
     };
 
@@ -1260,7 +1220,7 @@
             name: undefined,
             folder: undefined
         };
-        store.commit("editor/toggleExplorerVisibility", true);
+        editorStore.toggleExplorerVisibility(true);
     };
     const createFolder = () => {
         dialog.value = {
@@ -1269,7 +1229,7 @@
             name: undefined,
             folder: undefined
         };
-        store.commit("editor/toggleExplorerVisibility", true);
+        editorStore.toggleExplorerVisibility(true);
     };
     const folders = computed(() => {
         function extractPaths(basePath = "", array) {
@@ -1288,7 +1248,7 @@
             });
             return paths;
         }
-        return extractPaths(undefined, store.state.editor.treeData);
+        return extractPaths(undefined, editorStore.treeData);
     });
     const dialogHandler = async () => {
         try {
@@ -1297,21 +1257,21 @@
                 : dialog.value.name;
 
             if (dialog.value.type === "file") {
-                await store.dispatch("namespace/createFile", {
+                await namespacesStore.createFile({
                     namespace: props.namespace ?? route.params.namespace,
                     path,
                     content: "",
                 });
             } else {
-                await store.dispatch("namespace/createDirectory", {
+                await namespacesStore.createDirectory({
                     namespace: props.namespace ?? route.params.namespace,
                     path,
                 });
             }
             dialog.value.visible = false;
-            store.commit("editor/refreshTree");
+            editorStore.refreshTree();
             if (dialog.value.type === "file") {
-                store.dispatch("editor/openTab", {
+                editorStore.openTab({
                     name: dialog.value.name,
                     path,
                     extension: dialog.value.name.split(".").pop()
@@ -1319,7 +1279,7 @@
             }
         } catch (error) {
             console.error(error);
-            toast().error(t("namespace files.create.error"));
+            toast.error(t("namespace files.create.error"), "error");
         }
     };
     const handleFileImport = async (event) => {
@@ -1332,243 +1292,213 @@
             });
             const path = file.webkitRelativePath || file.name;
 
-            await store.dispatch("namespace/importFileDirectory", {
+            await namespacesStore.importFileDirectory({
                 namespace: props.namespace ?? route.params.namespace,
                 content,
                 path
             });
         }
-        store.commit("editor/refreshTree");
+        editorStore.refreshTree();
         event.target.value = "";
     };
-
-    function acceptDraft() {
-        const accepted = draftSource.value;
-        draftSource.value = undefined;
-        editorUpdate(accepted);
-    }
-
-    function declineDraft() {
-        draftSource.value = undefined;
-        aiAgentOpened.value = true;
-    }
 </script>
 
 <style lang="scss" scoped>
-    @use "element-plus/theme-chalk/src/mixins/mixins" as *;
-    @import "@kestra-io/ui-libs/src/scss/variables";
+@use "element-plus/theme-chalk/src/mixins/mixins" as *;
+@import "@kestra-io/ui-libs/src/scss/variables";
 
-    .main-editor {
-        padding: .5rem 0px;
-        background: var(--ks-background-body);
-        display: flex;
-        height: calc(100% - 49px);
-        min-height: 0;
-        max-height: 100%;
+.main-editor {
+    padding: .5rem 0px;
+    background: var(--ks-background-body);
+    display: flex;
+    height: calc(100% - 49px);
+    min-height: 0;
+    max-height: 100%;
 
-        > * {
-            flex: 1;
-        }
+    >* {
+        flex: 1;
+    }
+
+    html.dark & {
+        background-color: var(--bs-gray-100);
+    }
+}
+
+.editor-combined {
+    width: 50%;
+    min-width: 0;
+}
+
+.vueflow {
+    width: 100%;
+}
+
+html.dark .el-card :deep(.enhance-readability) {
+    background-color: var(--bs-gray-500);
+}
+
+:deep(.combined-right-view),
+.combined-right-view {
+    flex: 1;
+    position: relative;
+    overflow-y: auto;
+    height: 100%;
+
+    &.enhance-readability {
+        padding: 1.5rem;
+        background-color: var(--bs-gray-100);
+    }
+}
+
+.hide-view {
+    width: 0;
+    overflow: hidden;
+}
+
+.plugin-doc {
+    overflow-x: scroll;
+}
+
+.slider {
+    flex: 0 0 3px;
+    border-radius: 0.15rem;
+    margin: 0 4px;
+    background-color: var(--ks-border-primary);
+    border: none;
+    cursor: col-resize;
+    user-select: none;
+    /* disable selection */
+
+    &:hover {
+        background-color: var(--ks-border-active);
+    }
+}
+
+.vueflow {
+    height: 100%;
+}
+
+.topology-display .el-alert {
+    margin-top: 3rem;
+}
+
+.toggle-button {
+    font-size: var(--el-font-size-small);
+}
+
+.tabs {
+    flex: 1;
+    width: 100px;
+    white-space: nowrap;
+
+    .tab-active {
+        background: var(--bs-gray-200) !important;
+        color: black;
+        cursor: default;
 
         html.dark & {
-            background-color: var(--bs-gray-100);
-        }
-    }
-
-    .editor-combined {
-        width: 50%;
-        min-width: 0;
-    }
-
-    .vueflow {
-        width: 100%;
-    }
-
-    html.dark .el-card :deep(.enhance-readability) {
-        background-color: var(--bs-gray-500);
-    }
-
-    :deep(.combined-right-view),
-    .combined-right-view {
-        flex: 1;
-        position: relative;
-        overflow-y: auto;
-        height: 100%;
-
-        &.enhance-readability {
-            padding: 1.5rem;
-            background-color: var(--bs-gray-100);
-        }
-    }
-
-    .hide-view {
-        width: 0;
-        overflow: hidden;
-    }
-
-    .plugin-doc {
-        overflow-x: scroll;
-    }
-
-    .slider {
-        flex: 0 0 3px;
-        border-radius: 0.15rem;
-        margin: 0 4px;
-        background-color: var(--ks-border-primary);
-        border: none;
-        cursor: col-resize;
-        user-select: none; /* disable selection */
-
-        &:hover {
-            background-color: var(--ks-border-active);
-        }
-    }
-
-    .vueflow {
-        height: 100%;
-    }
-
-    .topology-display .el-alert {
-        margin-top: 3rem;
-    }
-
-    .toggle-button {
-        font-size: var(--el-font-size-small);
-    }
-
-    .tabs {
-        flex: 1;
-        width: 100px;
-        white-space: nowrap;
-
-        .tab-active {
-            background: var(--bs-gray-200) !important;
-            color: black;
-            cursor: default;
-
-            html.dark & {
-                color: white;
-            }
-
-            .tab-name {
-                font-weight: 600;
-            }
+            color: white;
         }
 
         .tab-name {
-            font-family: "Public sans", sans-serif;
-            font-size: 12px;
-            font-style: normal;
-            font-weight: 500;
-        }
-    }
-
-    .no-tabs-opened {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        max-width: 800px;
-        width: 100%;
-        padding: 2rem;
-        padding-bottom: 0;
-        margin: 0 auto;
-        height: 100%;
-
-        .img {
-            background: url("../../assets/empty-ns-files.png") no-repeat center;
-            background-size: contain;
-            width: 180px;
-            height: 180px;
-        }
-
-        h2 {
-            line-height: 30px;
-            font-size: 20px;
             font-weight: 600;
         }
+    }
 
-        p {
-            line-height: 22px;
-            font-size: 14px;
-            margin-bottom: 1rem;
-            color: var(--ks-content-secondary);
+    .tab-name {
+        font-family: "Public sans", sans-serif;
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 500;
+    }
+}
+
+.no-tabs-opened {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    max-width: 800px;
+    width: 100%;
+    padding: 2rem;
+    padding-bottom: 0;
+    margin: 0 auto;
+    height: 100%;
+
+    .img {
+        background: url("../../assets/empty-ns-files.png") no-repeat center;
+        background-size: contain;
+        width: 180px;
+        height: 180px;
+    }
+
+    h2 {
+        line-height: 30px;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    p {
+        line-height: 22px;
+        font-size: 14px;
+        margin-bottom: 1rem;
+        color: var(--ks-content-secondary);
+    }
+
+    .empty-state-actions {
+        margin-bottom: 2.5rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    :deep(.el-divider__text) {
+        font-size: 12px;
+        padding: 0 15px;
+        color: var(--ks-content-secondary);
+        background-color: #f9f9fa;
+
+        html.dark & {
+            background-color: #1C1E27;
         }
+    }
 
-        .empty-state-actions {
-            margin-bottom: 2.5rem;
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
+    .video-container {
+        width: 100%;
+        margin-top: 1rem;
+        border: 1px solid var(--ks-border-primary);
+        border-radius: 0.5rem;
+
+        iframe {
             width: 100%;
-        }
-        :deep(.el-divider__text) {
-            font-size: 12px;
-            padding: 0 15px;
-            color: var(--ks-content-secondary);
-            background-color: #f9f9fa;
-            html.dark & {
-                background-color: #1C1E27;
-            }
-        }
-        .video-container {
-            width: 100%;
-            margin-top: 1rem;
-            border: 1px solid var(--ks-border-primary);
-            border-radius: 0.5rem;
-
-            iframe {
-                width: 100%;
-                min-height: 380px;
-                height: auto;
-            }
-        }
-
-        .hidden {
-            display: none;
+            min-height: 380px;
+            height: auto;
         }
     }
 
-    ul.tabs-context {
-        position: fixed;
-        z-index: 9999;
-        border-right: none;
-
-        & li {
-            height: 30px;
-            padding: 16px;
-            font-size: var(--el-font-size-small);
-            color: var(--bs-gray-700);
-
-            &:hover {
-                color: var(--ks-content-secondary);
-            }
-        }
+    .hidden {
+        display: none;
     }
+}
 
-    .prompt {
-        bottom: 10%;
-        width: calc(100% - 5rem);
-        left: 3rem;
-        max-width: 700px;
-        background-color: var(--ks-background-panel);
-        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
-    }
+ul.tabs-context {
+    position: fixed;
+    z-index: 9999;
+    border-right: none;
 
-    .rounded-pill {
-        background-color: #262A35;
-        color: #ffffff;
-        box-shadow: 0px 4px 4px 0px #00000040;
+    & li {
+        height: 30px;
+        padding: 16px;
+        font-size: var(--el-font-size-small);
+        color: var(--bs-gray-700);
 
         &:hover {
-            background-color: #262A35;
+            color: var(--ks-content-secondary);
         }
     }
-
-    .actions{
-        bottom: 10%;
-    }
+}
 </style>
 
 <style lang="scss">

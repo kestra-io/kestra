@@ -13,7 +13,6 @@
 </template>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
 
     import Gantt from "./Gantt.vue";
@@ -29,10 +28,11 @@
     import Tabs from "../../components/Tabs.vue";
     import ExecutionRootTopBar from "./ExecutionRootTopBar.vue";
     import DemoAuditLogs from "../demo/AuditLogs.vue";
-
-    import ExecutionDependencies from "./ExecutionDependencies.vue";
+    import Dependencies from "../dependencies/Dependencies.vue";
 
     import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth"
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         mixins: [RouteContext],
@@ -44,9 +44,10 @@
             return {
                 sse: undefined,
                 previousExecutionId: undefined,
+                dependenciesCount: undefined
             };
         },
-        created() {
+        async created() {
             if(!this.$route.params.tab) {
                 const tab = localStorage.getItem("executeDefaultTab") || undefined;
                 this.$router.replace({name: "executions/update", params: {...this.$route.params, tab}});
@@ -54,23 +55,19 @@
 
             this.follow();
             window.addEventListener("popstate", this.follow)
+
+            this.dependenciesCount = (await this.flowStore.loadDependencies({namespace: this.$route.params.namespace, id: this.$route.params.flowId})).count;
         },
         mounted() {
             this.previousExecutionId = this.$route.params.id
         },
         watch: {
-            $route(newValue, oldValue) {
+            $route() {
                 this.executionsStore.taskRun = undefined;
-                if (oldValue.name === newValue.name && this.previousExecutionId !== this.$route.params.id) {
-                    this.follow()
-                }
-                // if we change the execution id, we need to close the sse
-                if (this.executionsStore.execution && this.$route.params.id != this.executionsStore.execution.id) {
-                    this.executionsStore.closeSSE();
-                    window.removeEventListener("popstate", this.follow)
-                    this.executionsStore.execution = undefined;
-                    this.$store.commit("flow/setFlow", undefined);
-                    this.$store.commit("flow/setFlowGraph", undefined);
+                if (this.previousExecutionId !== this.$route.params.id) {
+                    this.flowStore.flow = undefined;
+                    this.flowStore.flowGraph = undefined;
+                    this.follow();
                 }
             },
         },
@@ -80,13 +77,6 @@
                 this.executionsStore.followExecution(this.$route.params, this.$t);
             },
             getTabs() {
-
-            },
-        },
-        computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore, useExecutionsStore),
-            tabs() {
                 return [
                     {
                         name: undefined,
@@ -121,8 +111,10 @@
                     },
                     {
                         name: "dependencies",
-                        component: ExecutionDependencies,
+                        component: Dependencies,
                         title: this.$t("dependencies"),
+                        count: this.dependenciesCount,
+                        maximized: true,
                         props: {
                             isReadOnly: true,
                         },
@@ -135,6 +127,12 @@
                         locked: true
                     }
                 ];
+            }
+        },
+        computed: {
+            ...mapStores(useCoreStore, useExecutionsStore, useFlowStore, useAuthStore),
+            tabs() {
+                return this.getTabs();
             },
             routeInfo() {
                 const ns = this.$route.params.namespace;
@@ -159,10 +157,10 @@
                         {
                             label: `${ns}.${flowId}`,
                             link: {
-                                name: "namespaces/update",
+                                name: "flows/update",
                                 params: {
-                                    id: ns,
-                                    tab: "executions"
+                                    namespace: ns,
+                                    id: flowId
                                 }
                             }
                         },
@@ -181,19 +179,16 @@
                 };
             },
             isAllowedTrigger() {
-                return this.user
-                    && this.executionsStore.execution
-                    && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.executionsStore.execution.namespace);
+                return this.executionsStore.execution
+                    && this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.executionsStore.execution.namespace);
             },
             isAllowedEdit() {
-                return this.user
-                    && this.executionsStore.execution
-                    && this.user.isAllowed(permission.FLOW, action.UPDATE, this.executionsStore.execution.namespace);
+                return this.executionsStore.execution
+                    && this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.executionsStore.execution.namespace);
             },
             canDelete() {
-                return this.user
-                    && this.executionsStore.execution
-                    && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.executionsStore.execution.namespace);
+                return this.executionsStore.execution
+                    && this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.executionsStore.execution.namespace);
             },
             ready() {
                 return this.executionsStore.execution !== undefined;
@@ -203,8 +198,8 @@
             this.executionsStore.closeSSE();
             window.removeEventListener("popstate", this.follow)
             this.executionsStore.execution = undefined;
-            this.$store.commit("flow/setFlow", undefined);
-            this.$store.commit("flow/setFlowGraph", undefined);
+            this.flowStore.flow = undefined;
+            this.flowStore.flowGraph = undefined;
         }
     };
 </script>

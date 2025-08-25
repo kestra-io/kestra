@@ -8,6 +8,7 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -29,10 +30,7 @@ import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.Either;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.*;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.util.CollectionUtils;
@@ -91,7 +89,9 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private volatile Boolean isReady = false;
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> scheduledFuture;
     private final ScheduledExecutorService executionMonitorExecutor = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> executionMonitorFuture;
 
     @Getter
     protected SchedulerTriggerStateInterface triggerState;
@@ -152,7 +152,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.flowListeners.run();
         this.flowListeners.listen(this::initializedTriggers);
 
-        ScheduledFuture<?> evaluationLoop = scheduleExecutor.scheduleAtFixedRate(
+        scheduledFuture = scheduleExecutor.scheduleAtFixedRate(
             this::handle,
             0,
             1,
@@ -162,10 +162,10 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         // look at exception on the evaluation loop thread
         Thread.ofVirtual().name("scheduler-evaluation-loop-watch").start(
             () -> {
-                Await.until(evaluationLoop::isDone);
+                Await.until(scheduledFuture::isDone);
 
                 try {
-                    evaluationLoop.get();
+                    scheduledFuture.get();
                 } catch (CancellationException ignored) {
 
                 } catch (ExecutionException | InterruptedException e) {
@@ -177,7 +177,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         );
 
         // Periodically report metrics and logs of running executions
-        ScheduledFuture<?> monitoringLoop = executionMonitorExecutor.scheduleWithFixedDelay(
+        executionMonitorFuture = executionMonitorExecutor.scheduleWithFixedDelay(
             this::executionMonitor,
             30,
             10,
@@ -187,10 +187,10 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         // look at exception on the monitoring loop thread
         Thread.ofVirtual().name("scheduler-monitoring-loop-watch").start(
             () -> {
-                Await.until(monitoringLoop::isDone);
+                Await.until(executionMonitorFuture::isDone);
 
                 try {
-                    monitoringLoop.get();
+                    executionMonitorFuture.get();
                 } catch (CancellationException ignored) {
 
                 } catch (ExecutionException | InterruptedException e) {
@@ -318,7 +318,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         }
 
         synchronized (this) { // we need a sync block as we read then update so we should not do it in multiple threads concurrently
-            List<Trigger> triggers = triggerState.findAllForAllTenants();
+            Map<String, Trigger> triggers = triggerState.findAllForAllTenants().stream().collect(Collectors.toMap(HasUID::uid, Function.identity()));
 
             flows
                 .stream()
@@ -328,7 +328,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                 .flatMap(flow -> flow.getTriggers().stream().filter(trigger -> trigger instanceof WorkerTriggerInterface).map(trigger -> new FlowAndTrigger(flow, trigger)))
                 .distinct()
                 .forEach(flowAndTrigger -> {
-                    Optional<Trigger> trigger = triggers.stream().filter(t -> t.uid().equals(Trigger.uid(flowAndTrigger.flow(), flowAndTrigger.trigger()))).findFirst(); // must have one or none
+                    String triggerUid = Trigger.uid(flowAndTrigger.flow(), flowAndTrigger.trigger());
+                    Optional<Trigger> trigger = Optional.ofNullable(triggers.get(triggerUid));
                     if (trigger.isEmpty()) {
                         RunContext runContext = runContextFactory.of(flowAndTrigger.flow(), flowAndTrigger.trigger());
                         ConditionContext conditionContext = conditionService.conditionContext(runContext, flowAndTrigger.flow(), null);
@@ -467,9 +468,12 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
     private List<FlowWithTriggers> computeSchedulable(List<FlowWithSource> flows, List<Trigger> triggerContextsToEvaluate, ScheduleContextInterface scheduleContext) {
         List<String> flowToKeep = triggerContextsToEvaluate.stream().map(Trigger::getFlowId).toList();
+        List<String> flowIds = flows.stream().map(FlowId::uidWithoutRevision).toList();
+        Map<String, Trigger> triggerById = triggerContextsToEvaluate.stream().collect(Collectors.toMap(HasUID::uid, Function.identity()));
 
+        // delete trigger which flow has been deleted
         triggerContextsToEvaluate.stream()
-            .filter(trigger -> !flows.stream().map(FlowId::uidWithoutRevision).toList().contains(FlowId.uid(trigger)))
+            .filter(trigger -> !flowIds.contains(FlowId.uid(trigger)))
             .forEach(trigger -> {
                 try {
                     this.triggerState.delete(trigger);
@@ -491,12 +495,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                 .map(abstractTrigger -> {
                     RunContext runContext = runContextFactory.of(flow, abstractTrigger);
                     ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
-                    Trigger triggerContext = null;
-                    Trigger lastTrigger = triggerContextsToEvaluate
-                        .stream()
-                        .filter(triggerContextToFind -> triggerContextToFind.uid().equals(Trigger.uid(flow, abstractTrigger)))
-                        .findFirst()
-                        .orElse(null);
+                    Trigger triggerContext;
+                    Trigger lastTrigger = triggerById.get(Trigger.uid(flow, abstractTrigger));
                     // If a trigger is not found in triggers to evaluate, then we ignore it
                     if (lastTrigger == null) {
                         return null;
@@ -1006,8 +1006,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
             setState(ServiceState.TERMINATING);
             this.receiveCancellations.forEach(Runnable::run);
-            this.scheduleExecutor.shutdown();
-            this.executionMonitorExecutor.shutdown();
+            ExecutorsUtils.closeScheduledThreadPool(this.scheduleExecutor, Duration.ofSeconds(5), List.of(scheduledFuture));
+            ExecutorsUtils.closeScheduledThreadPool(executionMonitorExecutor, Duration.ofSeconds(5), List.of(executionMonitorFuture));
             try {
                 if (onClose != null) {
                     onClose.run();

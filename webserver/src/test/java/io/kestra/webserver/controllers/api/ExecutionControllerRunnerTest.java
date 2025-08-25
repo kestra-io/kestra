@@ -82,6 +82,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 @Slf4j
 @KestraTest(startRunner = true)
 @Property(name = LocalPath.ALLOWED_PATHS_CONFIG, value = "/tmp")
@@ -176,6 +177,27 @@ class ExecutionControllerRunnerTest {
             HttpResponse.class
         ));
         assertThat(notFound.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
+    void flowLabelsGetsOverriddenByExecutionLabelsOnSameKey() {
+        final String executionLabel = "existing:fromExecution";
+        Execution result = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/io.kestra.tests/minimal?labels=" + executionLabel + "&wait=true", null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        Execution execution = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + result.getId()),
+            Execution.class);
+
+        assertThat(execution.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution.getId()),
+            new Label("existing", "fromExecution")
+        );
     }
 
     @Test
@@ -893,6 +915,28 @@ class ExecutionControllerRunnerTest {
         assertThat((String) outputs.get("data")).startsWith("kestra://");
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    @LoadFlows({"flows/valids/pause_on_resume.yaml"})
+    void resumeExecutionPausedWithWrongInputs() throws TimeoutException, QueueException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause_on_resume");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        MultipartBody multipartBody = MultipartBody.builder()
+            .addPart("wrong", "input")
+            .build();
+
+        // resume the execution
+        HttpClientResponseException exception =  assertThrows (HttpClientResponseException.class, () ->
+            client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", multipartBody)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        ));
+        assertThat(exception.getStatus().getCode()).isEqualTo(422);
+        assertThat(exception.getMessage()).isEqualTo("Invalid entity: asked: Invalid input for `asked`, missing required input, but received `null`");
+    }
+
     @Test
     @LoadFlows({"flows/valids/pause.yaml"})
     void resumeExecutionByIds() throws TimeoutException, InterruptedException, QueueException {
@@ -1304,14 +1348,18 @@ class ExecutionControllerRunnerTest {
     @Test
     @LoadFlows({"flows/valids/minimal.yaml"})
     void setLabelsOnTerminatedExecution() throws QueueException, TimeoutException {
-        // update label on a terminated execution
+        // update labels on a terminated execution
         Execution result = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         Execution response = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/labels", List.of(new Label("key", "value"))),
+            HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/labels", List.of(new Label("existing", "updated"), new Label("newKey", "value"))),
             Execution.class
         );
-        assertThat(response.getLabels()).contains(new Label("key", "value"));
+        assertThat(response.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, response.getId()),
+            new Label("existing", "updated"),
+            new Label("newKey", "value")
+        );
 
         // update label on a not found execution
         var exception = assertThrows(
@@ -1375,6 +1423,116 @@ class ExecutionControllerRunnerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
+    void updateExistingLabelsBySetLabelsOnTerminatedExecutionsByIds() throws TimeoutException, QueueException {
+        final String statusLabelKey = "status";
+        Execution resultWithLabel = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal", null, null, null, Label.from(Map.of(statusLabelKey, "initial")));
+        Execution resultWithDifferentLabel = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal", null, null, null, Label.from(Map.of("foo", "bar")));
+        Execution resultWithNoLabel = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/executions/labels/by-ids",
+                new ExecutionController.SetLabelsByIdsRequest(
+                    List.of(resultWithLabel.getId(), resultWithNoLabel.getId(), resultWithDifferentLabel.getId()),
+                    List.of(new Label(statusLabelKey, "done"))
+                )
+            ),
+            BulkResponse.class
+        );
+
+        assertThat(response.getCount()).isEqualTo(3);
+
+        // check that the existing have been correctly updated
+        Execution execution1 = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + resultWithLabel.getId()),
+            Execution.class);
+        assertThat(execution1.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution1.getId()),
+            new Label("existing", "label"),
+            new Label(statusLabelKey, "done")
+        );
+
+        // check that the existing have been correctly added
+        Execution execution2 = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + resultWithNoLabel.getId()),
+            Execution.class);
+        assertThat(execution2.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution2.getId()),
+            new Label("existing", "label"),
+            new Label(statusLabelKey, "done")
+        );
+
+        // check that the existing have been correctly added and the existing label kept as it was
+        Execution execution3 = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + resultWithDifferentLabel.getId()),
+            Execution.class);
+        assertThat(execution3.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution3.getId()),
+            new Label("existing", "label"),
+            new Label(statusLabelKey, "done"),
+            new Label("foo", "bar")
+        );
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
+    void updateExistingLabelsBySetLabelsOnTerminatedExecutionsByQuery() throws TimeoutException, QueueException {
+        final String statusLabelKey = "status";
+        Execution resultWithLabel = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal", null, null, null, Label.from(Map.of(statusLabelKey, "initial")));
+        Execution resultWithDifferentLabel = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal", null, null, null, Label.from(Map.of("foo", "bar")));
+        Execution resultWithNoLabel = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/executions/labels/by-query?namespace=" + resultWithLabel.getNamespace(),
+                List.of(new Label(statusLabelKey, "done"))
+            ),
+            BulkResponse.class
+        );
+
+        assertThat(response.getCount()).isEqualTo(3);
+
+        var exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST(
+                "/api/v1/main/executions/labels/by-query?namespace=" + resultWithLabel.getNamespace(),
+                List.of(new Label(null, null)))
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+
+        // check that the existing have been correctly updated
+        Execution execution1 = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + resultWithLabel.getId()),
+            Execution.class);
+        assertThat(execution1.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution1.getId()),
+            new Label("existing", "label"),
+            new Label(statusLabelKey, "done")
+        );
+
+        // check that the existing have been correctly added
+        Execution execution2 = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + resultWithNoLabel.getId()),
+            Execution.class);
+        assertThat(execution2.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution2.getId()),
+            new Label("existing", "label"),
+            new Label(statusLabelKey, "done")
+        );
+
+        // check that the existing have been correctly added and the existing label kept as it was
+        Execution execution3 = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + resultWithDifferentLabel.getId()),
+            Execution.class);
+        assertThat(execution3.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution3.getId()),
+            new Label("existing", "label"),
+            new Label(statusLabelKey, "done"),
+            new Label("foo", "bar")
+        );
     }
 
     @Test
@@ -1837,8 +1995,11 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/subflow-parent.yaml", "flows/valids/subflow-child.yaml", "flows/valids/subflow-grand-child.yaml"})
-    void triggerExecutionAndFollowDependencies() {
+    void triggerExecutionAndFollowDependencies() throws InterruptedException {
         Execution result = triggerExecutionExecution(TESTS_FLOW_NS, "subflow-parent", null, true);
+
+        // without this slight delay, the event stream may miss some 'end' events
+        Thread.sleep(500);
 
         List<Event<ExecutionStatusEvent>> results = sseClient
             .eventStream("/api/v1/main/executions/" + result.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
@@ -1846,7 +2007,7 @@ class ExecutionControllerRunnerTest {
             .block();
 
         assertThat(results).isNotNull();
-        assertThat(results.size()).isGreaterThan(1);
+        assertThat(results.size()).isGreaterThanOrEqualTo(5);
         assertThat(results.getFirst().getId()).isEqualTo("start");
         assertThat(results.getLast().getId()).isEqualTo("end-all");
         // check that we have 3 end events and 3 result in SUCCESS
@@ -1947,7 +2108,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/logs.yaml"})
-    void killByIdShouldFailed() throws InterruptedException {
+    void killByIdShouldFailed() {
         Execution execution = client.toBlocking().retrieve(
             POST(
                 "/api/v1/main/executions/" + TESTS_FLOW_NS + "/logs",
@@ -1956,7 +2117,7 @@ class ExecutionControllerRunnerTest {
             Execution.class
         );
 
-        Thread.sleep(250);
+        awaitExecution(execution.getId());
 
         // EXECUTION TERMINATED STATE
         HttpClientResponseException e = assertThrows(

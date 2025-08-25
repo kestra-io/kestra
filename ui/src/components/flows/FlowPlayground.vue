@@ -33,9 +33,8 @@
                 </div>
                 <div v-else class="empty-state">
                     <img :src="EmptyVisualPlayground">
-                    <p>
-                        {{ t("playground.empty") }}
-                    </p>
+                    <p>{{ t("playground.run_task_info") }}</p>
+                    <p>{{ t("playground.play_icon_info") }}</p>
                 </div>
             </div>
             <div class="run-history" :class="{'history-visible': historyVisible}">
@@ -51,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, markRaw, watch, onUnmounted} from "vue";
+    import {computed, ref, markRaw, watch, onUnmounted, onMounted} from "vue";
     import {useI18n} from "vue-i18n";
     import ChartTimelineIcon from "vue-material-design-icons/ChartTimeline.vue";
     import HistoryIcon from "vue-material-design-icons/History.vue";
@@ -68,25 +67,27 @@
 
     const {t} = useI18n();
 
-    const tabs = computed(() => ([{
-                                      name: "logs",
-                                      title: t("logs"),
-                                      component: markRaw(Logs),
-                                  },{
-                                      name: "gantt",
-                                      title: t("gantt"),
-                                      component: markRaw(Gantt),
-                                  },
-                                  {
-                                      name: "outputs",
-                                      title: t("outputs"),
-                                      component: markRaw(ExecutionOutput),
-                                  },
-                                  {
-                                      name: "metrics",
-                                      title: t("metrics"),
-                                      component: markRaw(ExecutionMetric),
-                                  }
+    const tabs = computed(() => ([
+        {
+            name: "logs",
+            title: t("logs"),
+            component: markRaw(Logs),
+        },
+        {
+            name: "gantt",
+            title: t("gantt"),
+            component: markRaw(Gantt),
+        },
+        {
+            name: "outputs",
+            title: t("outputs"),
+            component: markRaw(ExecutionOutput),
+        },
+        {
+            name: "metrics",
+            title: t("metrics"),
+            component: markRaw(ExecutionMetric),
+        }
     ]));
 
     const playgroundStore = usePlaygroundStore();
@@ -99,6 +100,10 @@
     });
 
     const activeTab = ref(tabs.value[0]);
+
+    onMounted(() => {
+        playgroundStore.runFromQuery();
+    });
 
     onUnmounted(() => {
         executionsStore.closeSSE();
@@ -128,7 +133,7 @@
             font-size: .8rem;
             font-weight: normal;
             line-height: 1.2rem;
-            padding: 0 8px 4px;
+            padding: .25rem .5rem;
             position: sticky;
             background-color: var(--ks-background-panel);
             top: 0;
@@ -216,7 +221,7 @@
             border: none;
             border-radius: 4px;
             &.activeTab {
-                color: var(--ks-content-primary);
+                color: $base-white;
                 background-color: $base-blue-500;
             }
         }

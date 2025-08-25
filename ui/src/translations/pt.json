@@ -16,7 +16,6 @@
     "Per page": "por página",
     "Previous step": "Passo anterior",
     "Reset guided tour": "Reiniciar Tour Guiado",
-    "Select namespace": "Namespace",
     "Set default page": "Definir página padrão",
     "Set labels": "Definir labels",
     "Set labels done": "Labels da execução definidos com sucesso",
@@ -49,8 +48,12 @@
     "aggregation": "Agregação",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "Nota: Neste momento, apenas o Gemini é suportado como provedor de IA.\n\nReinicie sua instância do Kestra após salvar a configuração.",
+          "header": "<b>AI Copilot ainda não foi configurado.</b>\n\nPara habilitar o AI Copilot, adicione o seguinte trecho ao arquivo de configuração da sua instância Kestra (por exemplo, <code>application.yml</code>), substituindo <code>geminiApiKey</code> pelo seu key real:"
+        },
         "generating": "Gerando Flow YAML para você...",
-        "prompt_placeholder": "Insira instruções para criar seu flow do Kestra.",
+        "prompt_placeholder": "Insira instruções para criar seu flow Kestra. Exemplo de prompt: Crie um flow que execute toda segunda-feira às 9h.",
         "title": "Agente de IA"
       }
     },
@@ -91,6 +94,7 @@
       "title": "Blueprints"
     },
     "bookmark": "Favoritos",
+    "bulk action async warning": "Isso pode levar alguns instantes.",
     "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
     "bulk delete": "Tem certeza de que deseja deletar <code>{executionCount}</code> execução(ões)?",
     "bulk delete backfills": "Excluir {count} backfill",
@@ -271,6 +275,7 @@
     "days": "Dias",
     "debug": "Depurar",
     "default": "Padrão",
+    "defaultsToNamespaceFile": "Padrões para arquivo de namespace: <code>{name}</code>",
     "delete": "Deletar",
     "delete backfill": "Deletar o backfill",
     "delete backfills": "Deletar backfills",
@@ -360,6 +365,18 @@
     "dependencies delete flow": "Este flow tem dependências. Deletá-lo impedirá que suas dependências sejam executadas.<br /><br /> Aqui está a lista de flows afetados:",
     "dependencies loaded": "Dependências carregadas",
     "dependencies missing acls": "Sem permissões neste flow",
+    "dependency": {
+      "controls": {
+        "clear_selection": "Limpar seleção",
+        "fit_view": "Ajustar à tela",
+        "zoom_in": "Aumentar",
+        "zoom_out": "Reduzir zoom"
+      },
+      "search": {
+        "no_results": "Nenhum resultado encontrado para {term}",
+        "placeholder": "Pesquisar por flow ou namespace..."
+      }
+    },
     "dependency task": "Task {taskId} é uma dependência de outra task",
     "description": "Descrição",
     "details": "Detalhes",
@@ -444,6 +461,10 @@
       "triggers": {
         "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> em nossa documentação.",
         "title": "Seu flow não possui nenhum trigger."
+      },
+      "versionPlugin": {
+        "content": "Aqui você pode gerenciar todos os plugins instalados na sua instância do Kestra. Plugins recém-instalados podem não estar imediatamente disponíveis em todos os serviços do Kestra, dependendo da configuração da sua instância.",
+        "title": "Você ainda não tem um plugin versionado!"
       }
     },
     "empty search": "Resultados da pesquisa estão vazios",
@@ -912,6 +933,7 @@
       "version_oss_placeholder": "Desbloqueie a Versionamento de Plugin com a Enterprise Edition"
     },
     "no_data": "Parece que não há nada aqui... ainda!<br/>Ajuste seus filtros ou tente novamente!",
+    "no_file_choosen": "Nenhum arquivo selecionado",
     "no_logs_data": "Sem Dados",
     "no_logs_data_description": "Nenhum flow está em execução, ou você pode precisar ajustar seus filtros.",
     "no_namespaces": "Nenhum namespace corresponde aos critérios de busca.",
@@ -1013,10 +1035,14 @@
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
     "playground": {
-      "empty": "Clique no botão \"Run task\" para testar seu fluxo de trabalho com uma execução simulada.",
+      "confirm_create": "Você não pode executar o playground enquanto cria um flow. Iniciar uma execução do playground criará o flow.",
       "history": "Últimas 10 execuções",
+      "play_icon_info": "Você também pode clicar no ícone de Play nas visualizações No-Code ou Topology.",
       "run_all_tasks": "Executar Todas as Tasks",
       "run_task": "Executar Task",
+      "run_task_and_downstream": "Executar task & downstream",
+      "run_task_info": "Passe o cursor sobre qualquer task no editor de Flow Code e clique no botão \"Run task\" para testar sua task.",
+      "run_this_task": "Execute esta task",
       "title": "Playground",
       "toggle": "Playground"
     },
@@ -1194,6 +1220,7 @@
             "editor_hover_description": "Passe o cursor sobre a propriedade para ver a descrição",
             "environment_color": "Cor do Ambiente",
             "environment_name": "Nome do Ambiente",
+            "environment_name_tooltip": "Este nome de ambiente é definido a partir da configuração, mas pode ser alterado.",
             "logs_font_size": "Tamanho da Fonte dos Logs",
             "theme": "Tema"
           },
@@ -1313,10 +1340,15 @@
     "system_namespace_description": "Automatize tarefas de manutenção, desde alertas de falha até limpezas automatizadas.",
     "tags": "Tags",
     "task": "Task",
+    "task failed": "Tarefa falhou",
     "task id": "Task ID",
     "task id already exists": "Task Id já existe",
+    "task is running": "A task está RUNNING",
     "task logs": "Task logs",
     "task run id": "ID do TaskRun",
+    "task sent a warning": "A tarefa enviou um WARNING",
+    "task was skipped": "A tarefa foi ignorada",
+    "task was successful": "A tarefa foi bem-sucedida",
     "taskDefaults": "Padrões da Task",
     "taskRunners": "Executores de Task",
     "task_id_exists": "Id da Task já existe",
@@ -1352,6 +1384,8 @@
     "topology": "Topologia",
     "topology-graph": {
       "graph-orientation": "Orientação do gráfico",
+      "invalid": "Erro no gráfico",
+      "invalid_description": "Ocorreu um erro ao carregar o gráfico. Por favor, verifique o código-fonte para erros.",
       "zoom-fit": "Ajustar",
       "zoom-in": "Aumentar zoom",
       "zoom-out": "Diminuir zoom",
@@ -1423,6 +1457,12 @@
     "warning flow with triggers": "Este flow contém triggers e uma execução manual falhará se este flow depender de expressões de trigger.",
     "watch": "Assistir",
     "watch_video": "Assistir Vídeo",
+    "webhook": {
+      "curl_command": "Comando cURL do Webhook",
+      "curl_note": "Use este comando cURL para acionar o flow via webhook com carga útil JSON personalizada",
+      "no_triggers": "Este flow não possui triggers de webhook habilitados",
+      "payload": "Payload do Webhook (JSON)"
+    },
     "webhook link copied": "Link do Webhook copiado.",
     "weeks": "Semanas",
     "welcome": {

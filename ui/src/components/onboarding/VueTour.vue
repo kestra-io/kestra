@@ -134,7 +134,6 @@
     import {computed, getCurrentInstance, onMounted, ref, watch} from "vue";
 
     import {useRouter} from "vue-router";
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
     import Wrapper from "./components/buttons/Wrapper.vue";
@@ -158,17 +157,17 @@
     import ArrowTop from "../../assets/onboarding/icons/arrow-top.svg";
     import ArrowRight from "../../assets/onboarding/icons/arrow-right.svg";
 
-    import {editorViewTypes} from "../../utils/constants";
     import {useApiStore} from "../../stores/api";
     import {usePluginsStore} from "../../stores/plugins";
     import {useCoreStore} from "../../stores/core";
+    import {useEditorStore} from "../../stores/editor";
 
     const router = useRouter();
-    const store = useStore();
-    const coreStore = useCoreStore();
 
+    const coreStore = useCoreStore();
     const apiStore = useApiStore();
     const pluginsStore = usePluginsStore();
+    const editorStore = useEditorStore()
 
     const {t} = useI18n({useScope: "global"});
 
@@ -318,7 +317,7 @@
                 };
             },
             before: () => {
-                store.commit("editor/updateOnboarding");
+                editorStore.updateOnboarding()
 
                 coreStore.guidedProperties = {
                     ...coreStore.guidedProperties,
@@ -347,7 +346,7 @@
             highlightElement: "#topologyWrapper",
             params: {...STEP_OPTIONS, placement: "left"},
             before: () => {
-                store.commit("editor/changeView", editorViewTypes.SOURCE_TOPOLOGY);
+                // editorStore.changeView(editorViewTypes.SOURCE_TOPOLOGY)
             }
         },
         {

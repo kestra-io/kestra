@@ -1,5 +1,11 @@
 <template>
-    <el-button size="small" type="primary" :icon="EyeOutline" @click="getFilePreview">
+    <el-button
+        size="small"
+        type="primary"
+        :icon="EyeOutline"
+        @click="getFilePreview"
+        :disabled="isZipFile"
+    >
         {{ $t("preview") }}
     </el-button>
     <drawer
@@ -99,7 +105,7 @@
     import {mapStores} from "pinia";
     import Markdown from "../layout/Markdown.vue";
     import Drawer from "../Drawer.vue";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
 
     export default {
@@ -164,7 +170,11 @@
             },
             maxPreviewOptions() {
                 return [10, 25, 100, 500, 1000, 5000, 10000, 25000, 50000].filter(value => value <= this.configPreviewMaxRows())
-            }
+            },
+            isZipFile() {
+                // Checks if the file extension is .zip (case-insensitive)
+                return this.value?.toLowerCase().endsWith(".zip");
+            },
         },
         emits: ["preview"],
         methods: {

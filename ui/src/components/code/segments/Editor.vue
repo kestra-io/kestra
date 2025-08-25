@@ -30,10 +30,10 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, computed, inject, ref, provide} from "vue";
+    import {onMounted, computed, inject, ref, provide, onActivated} from "vue";
     import {useI18n} from "vue-i18n";
-    import {useStore} from "vuex";
     import {usePluginsStore} from "../../../stores/plugins";
+    import {useFlowStore} from "../../../stores/flow";
 
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
@@ -52,7 +52,6 @@
     provide(SCHEMA_PATH_INJECTION_KEY, computed(() => pluginsStore.schemaType?.flow.$ref ?? ""));
 
     const {t} = useI18n();
-    const store = useStore();
 
     const emits = defineEmits([
         "save",
@@ -73,6 +72,10 @@
         return !complexObject
     }
 
+    onActivated(() => {
+        pluginsStore.updateDocumentation();
+    });
+
     function onTaskUpdateField(key: string, val: any) {
         const realValue = val === null || val === undefined ? undefined :
             // allow array to be created with null values (specifically for metadata)
@@ -91,8 +94,9 @@
 
     document.addEventListener("keydown", saveEvent);
 
+    const flowStore = useFlowStore();
     const creatingFlow = computed(() => {
-        return store.state.flow.isCreating;
+        return flowStore.isCreating;
     });
 
     const creatingTask = inject(CREATING_TASK_INJECTION_KEY);
@@ -160,10 +164,7 @@
         task: parsedFlow.value,
     })
 
-
     const fieldsFromSchemaTop = computed(() => MAIN_KEYS.map(key => getFieldFromKey(key, "main")))
-
-
 
     const fieldsFromSchemaRest = computed(() => {
         return Object.keys(pluginsStore.flowRootProperties ?? {})

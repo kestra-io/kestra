@@ -204,8 +204,12 @@ public class DashboardController {
 
         ZonedDateTime endDate = timeLineSearch.getEndDate();
         ZonedDateTime startDate = timeLineSearch.getStartDate();
-        if (startDate == null || endDate == null) {
+        if (endDate == null) {
             endDate = ZonedDateTime.now();
+        }
+
+        if (startDate == null) {
+            // If no start date is provided, we use the default duration of the dashboard's time
             startDate = endDate.minus(dashboard.getTimeWindow().getDefaultDuration());
         }
 
@@ -263,6 +267,9 @@ public class DashboardController {
             throw new IllegalArgumentException("`endDate` must be after `startDate`.");
         }
         Pageable pageable = null;
+        if (globalFilter != null && globalFilter.getPageSize() != null && globalFilter.getPageNumber() != null) {
+            pageable = PageableUtils.from(globalFilter.getPageNumber(), globalFilter.getPageSize());
+        }
 
         return new FetchChartDataQuery(chart, filters, startDate, endDate, tenantId, pageable);
     }

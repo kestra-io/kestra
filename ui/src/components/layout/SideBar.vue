@@ -16,12 +16,9 @@
                 <chevron-left v-else />
             </el-button>
             <div class="logo">
-                <router-link v-if="showLink" :to="{name: 'home'}">
+                <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
                     <span class="img" />
-                </router-link>
-                <div v-else class="logo-img">
-                    <span class="img" />
-                </div>
+                </component>
             </div>
             <Environment />
         </template>
@@ -93,7 +90,7 @@
     function disabledCurrentRoute(items) {
         return items
             .map(r => {
-                if (r.href?.name === $route.name) {
+                if (r.href?.path === $route.path) {
                     r.disabled = true;
                 }
 
@@ -212,7 +209,7 @@
             height: 112px;
             position: relative;
 
-            a, .logo-img {
+            > * {
                 transition: 0.2s all;
                 position: absolute;
                 left: 37px;
@@ -279,7 +276,6 @@
             &.vsm--link_open, &.vsm--link_open:hover {
                 background-color: var(--ks-background-left-menu);
                 color: var(--ks-content-primary);
-
             }
 
             &_disabled {
@@ -380,7 +376,7 @@
 
         &.vsm_collapsed {
             .logo {
-                a {
+                > * {
                     left: 10px;
 
                     span.img {

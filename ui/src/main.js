@@ -9,7 +9,7 @@ import en from "./translations/en.json";
 import stores from "./stores/store";
 import {setupTenantRouter} from "./composables/useTenant";
 import * as BasicAuth from "./utils/basicAuth";
-import {useMiscStore} from "./stores/misc";
+import {useMiscStore} from "override/stores/misc";
 
 
 const app = createApp(App)

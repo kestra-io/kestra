@@ -37,13 +37,14 @@
                     </div>
 
                     <div class="d-flex flex-column p-3 debug">
-                        <editor
+                        <Editor
                             ref="debugEditor"
                             :full-height="false"
                             :custom-height="20"
                             :input="true"
                             :navbar="false"
                             :model-value="computedDebugValue"
+                            @update:model-value="editorValue = $event"
                             @confirm="onDebugExpression($event)"
                             class="w-100"
                         />
@@ -53,7 +54,7 @@
                             :icon="Refresh"
                             @click="
                                 onDebugExpression(
-                                    debugEditor.editor.getValue(),
+                                    editorValue.length > 0 ? editorValue : computedDebugValue,
                                 )
                             "
                             class="mt-3"
@@ -61,7 +62,7 @@
                             {{ $t("eval.render") }}
                         </el-button>
 
-                        <editor
+                        <Editor
                             v-if="debugExpression"
                             :read-only="true"
                             :input="true"
@@ -98,7 +99,7 @@
 
                 <VarValue
                     v-if="selectedValue && displayVarValue()"
-                    :value="selectedValue.uri ? selectedValue.uri : selectedValue"
+                    :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
                     :execution="execution"
                 />
             </div>
@@ -129,8 +130,9 @@
     }>();
 
     const cascader = ref<any>(null);
-    const debugEditor = ref<any>(null);
+    const debugEditor = ref<InstanceType<typeof Editor>>();
     const selected = ref<string[]>([]);
+    const editorValue = ref("");
     const debugExpression = ref("");
     const debugError = ref("");
     const debugStackTrace = ref("");
@@ -322,24 +324,24 @@
     overflow-x: auto;
 }
 
-.el-cascader-panel {
+:deep(.el-cascader-panel) {
     min-height: 197px;
     border: 1px solid var(--ks-border-primary);
     border-radius: 0;
     overflow-x: auto !important;
     overflow-y: hidden !important;
 
-    :deep(.el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child) {
+    .el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child {
         pointer-events: auto !important;
         margin: 0 !important;
     }
 
-    :deep(.el-cascader-node) {
+    .el-cascader-node {
         pointer-events: auto !important;
         cursor: pointer !important;
     }
 
-    :deep(.el-cascader-panel__wrap) {
+    .el-cascader-panel__wrap {
         overflow-x: auto !important;
         display: flex !important;
         min-width: max-content !important;
@@ -358,7 +360,7 @@
             height: 100%;
         }
 
-        & .el-cascader-node {
+        .el-cascader-node {
             height: 36px;
             line-height: 36px;
             font-size: var(--el-font-size-small);

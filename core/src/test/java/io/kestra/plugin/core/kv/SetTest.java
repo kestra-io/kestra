@@ -1,10 +1,10 @@
 package io.kestra.plugin.core.kv;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.kv.KVType;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVStoreException;
@@ -31,7 +31,7 @@ class SetTest {
     StorageInterface storageInterface;
 
     @Inject
-    RunContextFactory runContextFactory;
+    TestRunContextFactory runContextFactory;
 
     @Test
     void shouldSetKVGivenNoNamespace() throws Exception {
@@ -65,8 +65,7 @@ class SetTest {
     @Test
     void shouldSetKVGivenSameNamespace() throws Exception {
         // Given
-        RunContext runContext = this.runContextFactory.of(Map.of(
-            "flow", Map.of("namespace", "io.kestra.test"),
+        RunContext runContext = this.runContextFactory.of("io.kestra.test", Map.of(
             "inputs", Map.of(
                 "key", TEST_KEY,
                 "value", "test-value"
@@ -93,8 +92,7 @@ class SetTest {
     @Test
     void shouldSetKVGivenChildNamespace() throws Exception {
         // Given
-        RunContext runContext = this.runContextFactory.of(Map.of(
-            "flow", Map.of("namespace", "io.kestra.test"),
+        RunContext runContext = this.runContextFactory.of("io.kestra.test", Map.of(
             "inputs", Map.of(
                 "key", TEST_KEY,
                 "value", "test-value"
@@ -120,8 +118,7 @@ class SetTest {
     @Test
     void shouldFailGivenNonExistingNamespace() {
         // Given
-        RunContext runContext = this.runContextFactory.of(Map.of(
-            "flow", Map.of("namespace", "io.kestra.test"),
+        RunContext runContext = this.runContextFactory.of("io.kestra.test", Map.of(
             "inputs", Map.of(
                 "key", TEST_KEY,
                 "value", "test-value"
@@ -206,14 +203,20 @@ class SetTest {
 
         kv = createAndPerformSetTask("[{\"some\":\"value\"},{\"another\":\"value\"}]", KVType.JSON);
         assertThat(kv.getValue(TEST_KEY).orElseThrow().value()).isEqualTo(List.of(Map.of("some", "value"), Map.of("another", "value")));
+
+        kv = createAndPerformSetTask("{{ 200 }}", KVType.STRING);
+        assertThat(kv.getValue(TEST_KEY).orElseThrow().value()).isEqualTo("200");
+
+        kv = createAndPerformSetTask("{{ 200.1 }}", KVType.STRING);
+        assertThat(kv.getValue(TEST_KEY).orElseThrow().value()).isEqualTo("200.1");
     }
 
     private KVStore createAndPerformSetTask(String value, KVType type) throws Exception {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>(TEST_KEY))
-            .value(new Property<>(value))
+            .key(Property.ofValue(TEST_KEY))
+            .value(value.contains("{{") ? Property.ofExpression(value) : Property.ofValue(value))
             .kvType(Property.ofValue(type))
             .build();
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, set, null);

@@ -29,7 +29,6 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
@@ -39,6 +38,7 @@
     import {inputsToFormData} from "../../utils/submitTask";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {InputsForm},
@@ -102,15 +102,15 @@
             loadDefinition() {
                 this.executionsStore.loadFlowForExecution({
                     flowId: this.execution.flowId,
-                    namespace: this.execution.namespace
+                    namespace: this.execution.namespace,
+                    store: true
                 });
             },
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useAuthStore),
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 

@@ -144,7 +144,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     })
 
     const readyToStartPure = computed(()=>{
-        const executionReady = !latestExecution.value  || !nonFinalStates.includes(executionState.value);
+        const executionReady = !latestExecution.value || !nonFinalStates.includes(executionState.value);
         const flowValid = !(flowStore.haveChange && flowStore.flowErrors);
         return executionReady && flowValid;
     })

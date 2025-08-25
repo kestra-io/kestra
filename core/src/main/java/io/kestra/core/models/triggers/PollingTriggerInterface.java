@@ -3,8 +3,13 @@ package io.kestra.core.models.triggers;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -30,7 +35,8 @@ public interface PollingTriggerInterface extends WorkerTriggerInterface {
      * Schedulable triggers must override this method.
      */
     default ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws Exception {
-        return ZonedDateTime.now().plus(this.getInterval());
+        RunContext runContext = conditionContext.getRunContext();
+        return computeNextEvaluationDate(runContext);
     }
 
     /**
@@ -38,6 +44,29 @@ public interface PollingTriggerInterface extends WorkerTriggerInterface {
      * Schedulable triggers must override this method as it's used to init them when there is no evaluation date.
      */
     default ZonedDateTime nextEvaluationDate() {
-        return ZonedDateTime.now().plus(this.getInterval());
+        return computeNextEvaluationDate(null);
+    }
+
+    /**
+     * computes the next evaluation date using the configured interval.
+     * Falls back to 60 seconds if the interval causes date overflow.
+     */
+    private ZonedDateTime computeNextEvaluationDate(@Nullable RunContext runContext) {
+        Duration interval = this.getInterval();
+        Logger logger = resolveLogger(runContext);
+
+        try {
+            return ZonedDateTime.now().plus(interval);
+        } catch (DateTimeException | ArithmeticException e) {
+            logger.warn("Trigger interval '{}' for type '{}' causes date overflow: {}. Using 60 seconds fallback.", interval, this.getClass().getName(), e.getMessage());
+            return ZonedDateTime.now().plus(Duration.ofSeconds(60));
+        }
+    }
+
+    private Logger resolveLogger(@Nullable RunContext runContext) {
+        if (runContext != null) {
+            return runContext.logger();
+        }
+        return LoggerFactory.getLogger(this.getClass());
     }
 }

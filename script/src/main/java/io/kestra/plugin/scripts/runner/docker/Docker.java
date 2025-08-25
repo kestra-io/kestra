@@ -47,6 +47,9 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -141,6 +144,28 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
                      \s
                       data = dict(message="Hello from Kestra!")
                       Kestra.outputs(data)""",
+            full = true
+        ),
+        @Example(
+            title = "Handle large files with volume mounting to avoid task hanging.",
+            code = """
+                id: handle_large_files
+                namespace: company.team
+
+                tasks:
+                  - id: process_large_files
+                    type: io.kestra.plugin.scripts.shell.Commands
+                    taskRunner:
+                      type: io.kestra.plugin.scripts.runner.docker.Docker
+                      fileHandlingStrategy: MOUNT  # Use MOUNT instead of VOLUME for large files
+                      downloadTimeout: PT30M       # Increase timeout for large file operations
+                      volumes:
+                        - /host/data:/container/data  # Mount host directory for large files
+                    containerImage: alpine:latest
+                    commands:
+                      - echo "Processing large files..."
+                      - cp /container/data/large_file.zip ./output/
+                      - echo "Files processed successfully\"""",
             full = true
         ),
     }
@@ -312,6 +337,14 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         description = "By default, we kill the container immediately when a task is killed. Optionally, you can configure a grace period so the container is stopped with a grace period instead."
     )
     private Duration killGracePeriod = Duration.ZERO;
+
+    @Builder.Default
+    @NotNull
+    @Schema(
+        title = "Timeout for downloading output files from the container.",
+        description = "Maximum time to wait when downloading output files from the container after task completion. This prevents tasks from hanging indefinitely when dealing with large files or slow Docker operations. Set to 0 to disable timeout."
+    )
+    private Duration downloadTimeout = Duration.ofMinutes(10);
 
     /**
      * Convenient default instance to be used as task default value for a 'taskRunner' property.
@@ -534,7 +567,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
                 if (exitCode != 0) {
                     if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)  && filesVolumeName != null) {
-                        downloadOutputFiles(exec.getId(), dockerClient, runContext, taskCommands);
+                        downloadOutputFilesWithTimeout(exec.getId(), dockerClient, runContext, taskCommands);
                     }
 
                     throw new TaskException(exitCode, defaultLogConsumer);
@@ -543,7 +576,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 }
 
                 if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)  && filesVolumeName != null) {
-                    downloadOutputFiles(exec.getId(), dockerClient, runContext, taskCommands);
+                    downloadOutputFilesWithTimeout(exec.getId(), dockerClient, runContext, taskCommands);
                 }
 
                 return TaskRunnerResult.<DockerTaskRunnerDetailResult>builder()
@@ -594,25 +627,118 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     }
 
     private void downloadOutputFiles(String execId, DockerClient dockerClient, RunContext runContext, TaskCommands taskCommands) throws IOException {
-        CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = dockerClient.copyArchiveFromContainerCmd(execId, windowsToUnixPath(taskCommands.getWorkingDirectory().toString()));
+        Logger logger = runContext.logger();
+        String workingDirPath = windowsToUnixPath(taskCommands.getWorkingDirectory().toString());
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Starting to download output files from container {} at path {}", execId, workingDirPath);
+        }
+
+        CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = dockerClient.copyArchiveFromContainerCmd(execId, workingDirPath);
+
         try (InputStream is = copyArchiveFromContainerCmd.exec();
              TarArchiveInputStream tar = new TarArchiveInputStream(is)) {
+
             TarArchiveEntry entry;
+            int fileCount = 0;
+            long totalBytes = 0;
+
             while ((entry = tar.getNextEntry()) != null) {
-                // each entry contains the working directory as the first part, we need to remove it
-                Path extractTo = runContext.workingDir().resolve(Path.of(entry.getName().substring(runContext.workingDir().id().length() + 1)));
-                if (entry.isDirectory()) {
-                    if (!Files.exists(extractTo)) {
-                        Files.createDirectories(extractTo);
+                try {
+                    // each entry contains the working directory as the first part, we need to remove it
+                    String entryName = entry.getName();
+                    String workingDirId = runContext.workingDir().id();
+
+                    // Skip entries that don't match our working directory structure
+                    if (entryName.length() <= workingDirId.length() + 1) {
+                        continue;
                     }
-                } else {
-                    Files.copy(tar, extractTo, StandardCopyOption.REPLACE_EXISTING);
-                    try {
-                        Files.setPosixFilePermissions(extractTo, UnixModeToPosixFilePermissions.toPosixPermissions(entry.getMode()));
-                    } catch (UnsupportedOperationException | IOException e) {
-                        // File system does not support POSIX permissions (e.g., Windows)
+
+                    Path extractTo = runContext.workingDir().resolve(Path.of(entryName.substring(workingDirId.length() + 1)));
+
+                    if (entry.isDirectory()) {
+                        if (!Files.exists(extractTo)) {
+                            Files.createDirectories(extractTo);
+                            if (logger.isTraceEnabled()) {
+                                logger.trace("Created directory: {}", extractTo);
+                            }
+                        }
+                    } else {
+                        // Ensure parent directories exist
+                        Path parentDir = extractTo.getParent();
+                        if (parentDir != null && !Files.exists(parentDir)) {
+                            Files.createDirectories(parentDir);
+                        }
+
+                        Files.copy(tar, extractTo, StandardCopyOption.REPLACE_EXISTING);
+                        totalBytes += entry.getSize();
+                        fileCount++;
+
+                        try {
+                            Files.setPosixFilePermissions(extractTo, UnixModeToPosixFilePermissions.toPosixPermissions(entry.getMode()));
+                        } catch (UnsupportedOperationException | IOException e) {
+                            // File system does not support POSIX permissions (e.g., Windows)
+                        }
+
+                        if (logger.isTraceEnabled()) {
+                            logger.trace("Extracted file: {} ({} bytes)", extractTo, entry.getSize());
+                        }
                     }
+                } catch (Exception e) {
+                    logger.warn("Failed to extract entry '{}': {}", entry.getName(), e.getMessage());
+                    // Continue with next entry instead of failing completely
                 }
+            }
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("Successfully downloaded {} files ({} bytes total) from container {}", fileCount, totalBytes, execId);
+            }
+
+        } catch (Exception e) {
+            logger.error("Failed to download output files from container {}: {}", execId, e.getMessage(), e);
+            throw new IOException("Failed to download output files from container: " + e.getMessage(), e);
+        }
+    }
+
+    private void downloadOutputFilesWithTimeout(String execId, DockerClient dockerClient, RunContext runContext, TaskCommands taskCommands) throws IOException {
+        Logger logger = runContext.logger();
+        Duration timeout = this.downloadTimeout;
+
+        if (timeout.isZero() || timeout.isNegative()) {
+            // No timeout configured, use the original method
+            downloadOutputFiles(execId, dockerClient, runContext, taskCommands);
+            return;
+        }
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Starting download of output files with timeout of {}", timeout);
+        }
+
+        try {
+            CompletableFuture<Void> downloadFuture = CompletableFuture.runAsync(() -> {
+                try {
+                    downloadOutputFiles(execId, dockerClient, runContext, taskCommands);
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to download output files", e);
+                }
+            });
+
+            downloadFuture.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+
+        } catch (TimeoutException e) {
+            logger.error("Timeout occurred while downloading output files from container {} after {}", execId, timeout);
+            throw new IOException("Timeout occurred while downloading output files after " + timeout + ". " +
+                "This may happen with large files or slow Docker operations. " +
+                "Consider increasing the downloadTimeout property or using fileHandlingStrategy: MOUNT instead of VOLUME.", e);
+        } catch (Exception e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof IOException) {
+                throw (IOException) cause;
+            } else if (cause instanceof RuntimeException && cause.getCause() instanceof IOException) {
+                throw (IOException) cause.getCause();
+            } else {
+                logger.error("Unexpected error while downloading output files from container {}: {}", execId, e.getMessage(), e);
+                throw new IOException("Unexpected error while downloading output files: " + e.getMessage(), e);
             }
         }
     }

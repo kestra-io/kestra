@@ -7,6 +7,7 @@ import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,6 +31,46 @@ class DockerTest extends AbstractTaskRunnerTest {
         var taskCommands = new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of(
             "/bin/sh", "-c",
             "echo Hello World!"
+        )));
+        var result = docker.run(runContext, taskCommands, Collections.emptyList());
+
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
+        Assertions.assertThat(result.getLogConsumer().getStdOutCount()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldConfigureDownloadTimeout() throws Exception {
+        var runContext = runContext(this.runContextFactory);
+
+        var docker = Docker.builder()
+            .image("alpine:latest")
+            .downloadTimeout(Duration.ofMinutes(5))
+            .build();
+
+        var taskCommands = new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of(
+            "/bin/sh", "-c",
+            "echo 'Testing timeout configuration' && echo 'success' > /tmp/output.txt"
+        )));
+        var result = docker.run(runContext, taskCommands, Collections.emptyList());
+
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
+        Assertions.assertThat(result.getLogConsumer().getStdOutCount()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldUseFileHandlingStrategyMount() throws Exception {
+        var runContext = runContext(this.runContextFactory);
+
+        var docker = Docker.builder()
+            .image("alpine:latest")
+            .fileHandlingStrategy(Property.ofValue(Docker.FileHandlingStrategy.MOUNT))
+            .build();
+
+        var taskCommands = new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of(
+            "/bin/sh", "-c",
+            "echo 'Using MOUNT strategy for file handling' && echo 'success' > output.txt"
         )));
         var result = docker.run(runContext, taskCommands, Collections.emptyList());
 

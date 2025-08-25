@@ -1,5 +1,6 @@
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
+import {trackBlueprintSelection} from "../utils/tabTracking";
 
 interface Blueprint {
     [key: string]: any;
@@ -35,6 +36,11 @@ export const useBlueprintsStore = defineStore("blueprints", {
                 `${apiUrl(this.vuexStore)}/blueprints/${options.type}${kind}/${options.id}`
             );
             this.blueprint = response.data;
+            
+            if (response.data?.id) {
+                trackBlueprintSelection(response.data.id);
+            }
+            
             return response.data;
         },
 

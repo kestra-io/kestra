@@ -143,8 +143,10 @@ export const usePlaygroundStore = defineStore("playground", () => {
         return latestExecution.value?.state.current;
     })
 
-    const readyToStartPure = computed(() => {
-        return !latestExecution.value || !nonFinalStates.includes(executionState.value)
+    const readyToStartPure = computed(()=>{
+        const executionReady = !latestExecution.value || !nonFinalStates.includes(executionState.value);
+        const flowValid = !(flowStore.haveChange && flowStore.flowErrors);
+        return executionReady && flowValid;
     })
 
     const readyToStart = ref(readyToStartPure.value);
@@ -185,7 +187,9 @@ export const usePlaygroundStore = defineStore("playground", () => {
             console.warn("Playground is not ready to start, latest execution is still in progress");
             return
         }
-
+        if (flowStore.haveChange && flowStore.flowErrors) {
+            return;
+        }
         readyToStart.value = false;
 
         if(flowStore.isCreating){

@@ -1,22 +1,37 @@
-name: Publish - Docker
+name: Create Docker images on Release
 
 on:
   workflow_dispatch:
     inputs:
-      plugin-version:
-        description: "Kestra version"
-        default: 'LATEST'
+      retag-latest:
+        description: 'Retag latest Docker images'
+        required: true
+        type: choice
+        default: "false"
+        options:
+          - "true"
+          - "false"
+      release-tag:
+        description: 'Kestra Release Tag (by default, deduced with the ref)'
         required: false
         type: string
+      plugin-version:
+        description: 'Plugin version'
+        required: false
+        type: string
+        default: "LATEST"
       force-download-artifact:
         description: 'Force download artifact'
         required: false
-        type: string
+        type: choice
         default: "true"
+        options:
+          - "true"
+          - "false"
   workflow_call:
     inputs:
       plugin-version:
-        description: "Kestra version"
+        description: "Plugin version"
         default: 'LATEST'
         required: false
         type: string
@@ -33,45 +48,93 @@ on:
         description: "The Dockerhub password."
         required: true
 
+env:
+  PLUGIN_VERSION: ${{ inputs.plugin-version != null && inputs.plugin-version || 'LATEST' }}
 jobs:
+  plugins:
+    name: List Plugins
+    runs-on: ubuntu-latest
+    outputs:
+      plugins: ${{ steps.plugins.outputs.plugins }}
+    steps:
+      # Checkout
+      - uses: actions/checkout@v5
+
+      # Get Plugins List
+      - name: Get Plugins List
+        uses: ./.github/actions/plugins-list
+        id: plugins
+        with: # remap LATEST-SNAPSHOT to LATEST
+          plugin-version: ${{ env.PLUGIN_VERSION == 'LATEST-SNAPSHOT' && 'LATEST' || env.PLUGIN_VERSION }}
+
   # ********************************************************************************************************************
   # Build
   # ********************************************************************************************************************
   build-artifacts:
     name: Build Artifacts
-    if: ${{ github.event.inputs.force-download-artifact == 'true' }}
+    if: ${{ inputs.force-download-artifact == 'true' }}
     uses: ./.github/workflows/workflow-build-artifacts.yml
-  # ********************************************************************************************************************
-  # Docker
-  # ********************************************************************************************************************
-  publish:
-    name: Publish - Docker
+
+  docker:
+    name: Publish Docker
+    needs: [ plugins, build-artifacts ]
+    if: always()
     runs-on: ubuntu-latest
-    needs: build-artifacts
-    if: |
-      always() &&
-      (needs.build-artifacts.result == 'success' ||
-        github.event.inputs.force-download-artifact != 'true')
-    env:
-      PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
     strategy:
       matrix:
         image:
-          - tag: -no-plugins
+          - name: "-no-plugins"
+            plugins: ""
             packages: jattach
-            plugins: false
-            python-libraries: ""
-
-          - tag: ""
-            plugins: true
-            packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip jattach
-            python-libraries: kestra
+            python-libs: ""
+          - name: ""
+            plugins: ${{needs.plugins.outputs.plugins}}
+            packages: python3 python-is-python3 python3-pip curl jattach
+            python-libs: kestra
     steps:
-      - name: Checkout - Current ref
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
+
+      # Vars
+      - name: Set image name
+        id: vars
+        run: |
+          if [[ "${{ inputs.release-tag }}" == "" ]]; then
+            TAG=${GITHUB_REF#refs/*/}
+            echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          else
+            TAG="${{ inputs.release-tag }}"
+            echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          fi
+
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            if [[ $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              # this will remove the patch version number
+              MINOR_SEMVER=${TAG%.*}
+              echo "minor_semver=${MINOR_SEMVER}" >> $GITHUB_OUTPUT
+            else
+              echo "Tag '$TAG' is not a valid semver (vMAJOR.MINOR.PATCH), skipping minor_semver"
+            fi
+          fi
+
+          if [[ "${{ env.PLUGIN_VERSION }}" == *"-SNAPSHOT" ]]; then
+            echo "plugins=--repositories=https://central.sonatype.com/repository/maven-snapshots/ ${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT;
+          else
+            echo "plugins=${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT
+          fi
+
+      # Download executable from artifact
+      - name: Artifacts - Download executable
+        uses: actions/download-artifact@v5
+        with:
+          name: exe
+          path: build/executable
+
+      - name: Copy exe to image
+        run: |
+          cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
 
       # Docker setup
-      - name: Docker - Setup QEMU
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
       - name: Docker - Fix Qemu
@@ -79,66 +142,59 @@ jobs:
         run: |
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes -c yes
 
-      - name: Docker - Setup Docker Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       # Docker Login
-      - name: Docker - Login to DockerHub
+      - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-
-#     # Get Plugins List
-      - name: Plugins - Get List
-        uses: ./.github/actions/plugins-list
-        id: plugins-list
-        if: ${{ matrix.image.plugins}}
-        with:
-          plugin-version: ${{ env.PLUGIN_VERSION }}
-
-      # Vars
-      - name: Docker - Set variables
-        shell: bash
-        id: vars
-        run: |
-          TAG=${GITHUB_REF#refs/*/}
-          PLUGINS="${{ matrix.image.plugins == true && steps.plugins-list.outputs.plugins || '' }}"
-          if [[ $TAG == v* ]]; then
-            TAG="${TAG}";
-            echo "plugins=${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT
-          elif [[ $TAG = "develop" ]]; then
-            TAG="develop";
-            echo "plugins=--repositories=https://central.sonatype.com/repository/maven-snapshots/ $PLUGINS" >> $GITHUB_OUTPUT
-          else
-            TAG="build-${{ github.run_id }}";
-            echo "plugins=--repositories=https://central.sonatype.com/repository/maven-snapshots/ $PLUGINS" >> $GITHUB_OUTPUT
-          fi
-
-          echo "tag=${TAG}${{ matrix.image.tag }}" >> $GITHUB_OUTPUT
-
-      # Build Docker Image
-      - name: Artifacts - Download executable
-        uses: actions/download-artifact@v5
-        with:
-          name: exe
-          path: build/executable
-
-      - name: Docker - Copy exe to image
-        shell: bash
-        run: |
-          cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
-
       # Docker Build and push
-      - name: Docker - Build image
+      - name: Push to Docker Hub
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: kestra/kestra:${{ steps.vars.outputs.tag }}
+          tags: ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }}
           platforms: linux/amd64,linux/arm64
           build-args: |
             KESTRA_PLUGINS=${{ steps.vars.outputs.plugins }}
             APT_PACKAGES=${{ matrix.image.packages }}
-            PYTHON_LIBRARIES=${{ matrix.image.python-libraries }}
+            PYTHON_LIBRARIES=${{ matrix.image.python-libs }}
+
+      - name: Install regctl
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: regclient/actions/regctl-installer@main
+
+      - name: Retag to minor semver version
+        if: startsWith(github.ref, 'refs/tags/v') && steps.vars.outputs.minor_semver != ''
+        run: |
+          regctl image copy ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }} ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.minor_semver, matrix.image.name) }}
+
+      - name: Retag to latest
+        if: startsWith(github.ref, 'refs/tags/v') && inputs.retag-latest == 'true'
+        run: |
+          regctl image copy ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }} ${{ format('kestra/kestra:latest{0}', matrix.image.name) }}
+
+  end:
+    runs-on: ubuntu-latest
+    needs:
+      - docker
+    if: always()
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+
+      # Slack
+      - name: Slack notification
+        uses: Gamesight/slack-workflow-status@master
+        if: ${{ always() && env.SLACK_WEBHOOK_URL != 0 }}
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          name: GitHub Actions
+          icon_emoji: ':github-actions:'
+          channel: 'C02DQ1A7JLR' # _int_git channel

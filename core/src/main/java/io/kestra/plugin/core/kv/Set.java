@@ -103,8 +103,10 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
 
         KVStore kvStore = runContext.namespaceKv(renderedNamespace);
 
-        if (kvType != null && renderedValue instanceof String renderedValueStr) {
-                renderedValue = switch (runContext.render(kvType).as(KVType.class).orElseThrow()) {
+        if (kvType != null){
+            KVType renderedKvType = runContext.render(kvType).as(KVType.class).orElseThrow();
+            if (renderedValue instanceof String renderedValueStr) {
+                renderedValue = switch (renderedKvType) {
                     case NUMBER -> JacksonMapper.ofJson().readValue(renderedValueStr, Number.class);
                     case BOOLEAN -> Boolean.parseBoolean((String) renderedValue);
                     case DATETIME, DATE -> Instant.parse(renderedValueStr);
@@ -112,7 +114,10 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
                     case JSON -> JacksonMapper.toObject(renderedValueStr);
                     default -> renderedValue;
                 };
+            } else if (renderedValue instanceof Number valueNumber && renderedKvType == KVType.STRING) {
+                renderedValue = valueNumber.toString();
             }
+        }
 
         kvStore.put(renderedKey, new KVValueAndMetadata(
             new KVMetadata(

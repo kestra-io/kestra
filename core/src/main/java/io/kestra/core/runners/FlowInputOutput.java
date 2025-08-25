@@ -486,7 +486,7 @@ public class FlowInputOutput {
                 case URI -> {
                     Matcher matcher = URI_PATTERN.matcher(current.toString());
                     if (matcher.matches()) {
-                        yield current;
+                        yield current.toString();
                     } else {
                         throw new IllegalArgumentException("Expected `URI` but received `" + current + "`");
                     }

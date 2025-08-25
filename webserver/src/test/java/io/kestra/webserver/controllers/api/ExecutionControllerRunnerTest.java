@@ -482,6 +482,7 @@ class ExecutionControllerRunnerTest {
 
                 assertThat(replay).isNotNull();
                 assertThat(replay.getParentId()).isEqualTo(parentExecution.getId());
+                assertThat(replay.getState().getCurrent()).isEqualTo(Type.CREATED);
             }),
             Duration.ofSeconds(15));
 
@@ -522,17 +523,17 @@ class ExecutionControllerRunnerTest {
                     .addPart("condition", "success")
                     .build();
 
-                Execution createdChidExec = client.toBlocking().retrieve(
+                Execution replay = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/main/executions/" + parentExecution.getId() + "/replay-with-inputs?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(), multipartBody)
                         .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
                     Execution.class
                 );
 
-                assertThat(createdChidExec).isNotNull();
-                assertThat(createdChidExec.getParentId()).isEqualTo(parentExecution.getId());
-                assertThat(createdChidExec.getTaskRunList().size()).isEqualTo(2);
-                assertThat(createdChidExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+                assertThat(replay).isNotNull();
+                assertThat(replay.getParentId()).isEqualTo(parentExecution.getId());
+                assertThat(replay.getTaskRunList().size()).isEqualTo(2);
+                assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
             }),
             Duration.ofSeconds(15));
 

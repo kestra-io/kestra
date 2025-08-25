@@ -41,7 +41,7 @@ import jakarta.validation.constraints.Size;
 
         You can access the request body and headers sent by another application using the following template variables:
         - `{{ trigger.body }}`
-        - `{{ trigger.headers }}`.
+        - `{{ trigger.headers }}`
 
         The webhook response will be one of the following HTTP status codes:
         - 404 if the namespace, flow or webhook key is not found.
@@ -72,7 +72,7 @@ import jakarta.validation.constraints.Size;
         ),
         @Example(
             title = """
-                Add a trigger matching specific webhook event condition. The flow will be executed only if the condition is met.`.
+                Add a trigger matching specific webhook event condition. The flow will be executed only if the condition is met.
                 """,
             code = """
                 id: condition_based_webhook_flow

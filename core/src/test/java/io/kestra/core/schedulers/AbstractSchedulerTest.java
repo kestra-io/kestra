@@ -90,13 +90,13 @@ abstract public class AbstractSchedulerTest {
                     .type(Type.STRING)
                     .id("testInputs")
                     .required(false)
-                    .defaults("test")
+                    .defaults(Property.ofValue("test"))
                     .build(),
                 StringInput.builder()
                     .type(Type.STRING)
                     .id("def")
                     .required(false)
-                    .defaults("awesome")
+                    .defaults(Property.ofValue("awesome"))
                     .build()
             ))
             .revision(1)
@@ -110,7 +110,7 @@ abstract public class AbstractSchedulerTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format(new Property<>("{{ inputs.testInputs }}"))
+                .format(Property.ofExpression("{{ inputs.testInputs }}"))
                 .build()));
 
         if (list != null) {

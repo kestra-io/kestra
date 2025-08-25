@@ -79,3 +79,10 @@ jobs:
               "github_repository": "${{ github.repository }}",
               "github_actor": "${{ github.actor }}"
             }
+
+      - name: Merge Release Notes
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        uses: ./actions/.github/actions/github-release-note-merge
+        env:
+            GITHUB_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
+            RELEASE_TAG: ${{ github.ref_name }}

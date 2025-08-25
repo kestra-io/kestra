@@ -20,7 +20,7 @@ async function getHighlighter(
 
 export async function render(markdown: string, options: {onlyLink?: boolean, permalink?: boolean, html?: boolean} = {}) {
     const {createHighlighterCore, githubDark, githubLight, markdownIt, mark, meta, mila, anchor, container, fromHighlighter, linkTag, langs, onigurumaEngine} = await import( "./markdownDeps")
-    const highlighter = await getHighlighter(createHighlighterCore as any, langs, onigurumaEngine, githubDark, githubLight);
+    const highlighter = await getHighlighter(createHighlighterCore as any, Object.values(langs), onigurumaEngine, githubDark, githubLight);
 
     if(githubDark["colors"] && githubLight["colors"]) {
         githubDark["colors"]["editor.background"] = "var(--bs-gray-500)";

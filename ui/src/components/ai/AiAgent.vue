@@ -9,19 +9,28 @@
             </div>
         </template>
         <el-input
+            autosize
             ref="promptInput"
+            v-if="configured"
             type="textarea"
             :placeholder="t('ai.flow.prompt_placeholder')"
             v-model="prompt"
             @keydown.exact.ctrl.enter="$event.preventDefault(); prompt += '\n'"
             @keydown.exact.enter.prevent="submitPrompt"
         />
+        <template v-else>
+            <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
+            <el-text class="keep-whitespace" v-html="t('ai.flow.enable_instructions.header')" />
+            <div class="mt-2" v-html="highlightedAiConfiguration" />
+            <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
+            <el-text class="keep-whitespace" v-html="t('ai.flow.enable_instructions.footer')" />
+        </template>
         <template #footer>
             <div class="d-flex justify-content-between">
                 <el-text class="text-tertiary" size="small">
                     (⌘) Ctrl + Alt (⌥) + Shift + K {{ t("to toggle") }}
                 </el-text>
-                <div class="d-flex flex-column align-items-end gap-3">
+                <div v-if="configured" class="d-flex flex-column align-items-end gap-3">
                     <el-text v-if="error !== undefined" type="danger" size="default" class="me-auto">
                         {{ error }}
                     </el-text>
@@ -45,11 +54,13 @@
 </template>
 
 <script setup lang="ts">
-    import {getCurrentInstance, onMounted, ref, watch} from "vue";
+    import {computed, getCurrentInstance, onMounted, ref, watch} from "vue";
     import Close from "vue-material-design-icons/Close.vue";
     import KeyboardReturn from "vue-material-design-icons/KeyboardReturn.vue";
     import AiIcon from "./AiIcon.vue";
     import {useAiStore} from "../../stores/ai";
+    import Utils from "../../utils/utils.ts";
+    import {useMiscStore} from "override/stores/misc.ts";
 
     const t = getCurrentInstance()!.appContext.config.globalProperties.$t;
     const aiStore = useAiStore();
@@ -72,7 +83,7 @@
     });
 
     const props = defineProps<{
-        flow: string
+        flow: string,
     }>();
 
     const error = ref<string | undefined>(undefined);
@@ -94,6 +105,33 @@
 
         waitingForReply.value = false;
     }
+
+    const highlightedAiConfiguration = ref<string | undefined>();
+
+    const miscStore = useMiscStore();
+    const configured = computed(() => miscStore.configs?.isAiEnabled);
+
+    onMounted(async () => {
+        if (!configured.value) {
+            const {
+                createHighlighterCore,
+                langs,
+                githubDark,
+                githubLight,
+                onigurumaEngine
+            } = await import("../../utils/markdownDeps");
+            const highlighter = await createHighlighterCore({
+                langs: [langs.yaml],
+                themes: [githubDark, githubLight],
+                engine: onigurumaEngine
+            })
+            highlightedAiConfiguration.value = highlighter.codeToHtml(`kestra:
+  ai:
+    type: "gemini"
+    gemini:
+      api-key: "geminiApiKey"`, {lang: "yaml", theme: Utils.getTheme() === "dark" ? "github-dark" : "github-light"})
+        }
+    });
 </script>
 
 <style scoped lang="scss">

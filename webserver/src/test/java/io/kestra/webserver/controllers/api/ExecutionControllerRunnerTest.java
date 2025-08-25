@@ -915,6 +915,28 @@ class ExecutionControllerRunnerTest {
         assertThat((String) outputs.get("data")).startsWith("kestra://");
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    @LoadFlows({"flows/valids/pause_on_resume.yaml"})
+    void resumeExecutionPausedWithWrongInputs() throws TimeoutException, QueueException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause_on_resume");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        MultipartBody multipartBody = MultipartBody.builder()
+            .addPart("wrong", "input")
+            .build();
+
+        // resume the execution
+        HttpClientResponseException exception =  assertThrows (HttpClientResponseException.class, () ->
+            client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", multipartBody)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        ));
+        assertThat(exception.getStatus().getCode()).isEqualTo(422);
+        assertThat(exception.getMessage()).isEqualTo("Invalid entity: asked: Invalid input for `asked`, missing required input, but received `null`");
+    }
+
     @Test
     @LoadFlows({"flows/valids/pause.yaml"})
     void resumeExecutionByIds() throws TimeoutException, InterruptedException, QueueException {

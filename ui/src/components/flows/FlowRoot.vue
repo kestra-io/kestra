@@ -19,7 +19,6 @@
     import LogsWrapper from "../logs/LogsWrapper.vue"
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
     import {useFlowStore} from "../../stores/flow";
@@ -34,6 +33,7 @@
     import FlowRootTopBar from "./FlowRootTopBar.vue";
     import FlowConcurrency from "./FlowConcurrency.vue";
     import DemoAuditLogs from "../demo/AuditLogs.vue";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         mixins: [RouteContext],
@@ -67,6 +67,19 @@
                     }
                 },
             },
+            "flowStore.flow": {
+                deep: true,
+                handler: function (flow) {
+                    if (flow && flow.id) {
+                        // https://github.com/kestra-io/kestra/issues/10484
+                        setTimeout(() => {
+                            this.flowStore
+                                .loadDependencies({namespace: flow.namespace, id: flow.id})
+                                .then(({count}) => this.dependenciesCount = count);
+                        }, 1000);
+                    }
+                },
+            }
         },
         created() {
             if(!this.$route.params.tab) {
@@ -292,8 +305,7 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore, useFlowStore),
+            ...mapStores(useCoreStore, useFlowStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$route.params.id,
@@ -324,6 +336,9 @@
             ready() {
                 return this.user && this.flowStore.flow;
             },
+            user() {
+                return this.authStore.user;
+            }
         },
         unmounted() {
             this.flowStore.flow = undefined;

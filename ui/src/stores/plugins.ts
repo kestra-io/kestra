@@ -1,4 +1,5 @@
-import {defineStore} from "pinia";
+import {defineStore} from "pinia"
+import {trackPluginDocumentationView} from "../utils/tabTracking";;
 import {apiUrlWithoutTenants} from "override/utils/route";
 import semver from "semver";
 import {useApiStore} from "./api";
@@ -18,7 +19,7 @@ interface PluginComponent {
     markdown?: string;
 }
 
-interface Plugin {
+export interface Plugin {
     tasks: PluginComponent[];
     triggers: PluginComponent[];
     conditions: PluginComponent[];
@@ -212,12 +213,15 @@ export const usePluginsStore = defineStore("plugins", {
             const apiStore = useApiStore();
 
             const apiPromise = apiStore.pluginIcons().then(response => {
-                this.icons = this.icons ?? {};
+                // to avoid unnecessary dom updates and calculations in the reactivity rendering of Vue,
+                // we do all our updates to a temporary object, then commit the changes all at once
+                const tempIcons = toRaw(this.icons) ?? {};
                 for (const [key, plugin] of Object.entries(response.data)) {
-                    if (this.icons && this.icons[key] === undefined) {
-                        this.icons[key] = plugin as string;
+                    if (tempIcons && tempIcons[key] === undefined) {
+                        tempIcons[key] = plugin as string;
                     }
                 }
+                this.icons = tempIcons;
             });
 
             const iconsPromise =
@@ -316,6 +320,8 @@ export const usePluginsStore = defineStore("plugins", {
                     version,
                     ...plugin,
                 };
+
+                trackPluginDocumentationView(type);
 
                 this.forceIncludeProperties = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version");
             });

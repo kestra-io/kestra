@@ -76,13 +76,13 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
     import ExecutionUtils from "../../utils/executionUtils";
+    import {useAuthStore} from "override/stores/auth"
     import {useFlowStore} from "../../stores/flow";
 
     export default {
@@ -178,8 +178,7 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore, useFlowStore),
+            ...mapStores(useExecutionsStore, useFlowStore, useAuthStore),
             replayOrRestart() {
                 return this.isReplay ? "replay" : "restart";
             },
@@ -194,11 +193,11 @@
                     .reverse();
             },
             enabled() {
-                if (this.isReplay && !(this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace))) {
+                if (this.isReplay && !(this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace))) {
                     return false;
                 }
 
-                if (!this.isReplay && !(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!this.isReplay && !(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 

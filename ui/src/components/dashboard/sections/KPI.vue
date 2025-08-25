@@ -10,12 +10,13 @@
 </template>
 
 <script setup lang="ts">
-    import {PropType} from "vue";
+    import {PropType, watch} from "vue";
 
-    import type {Chart} from "../composables/useDashboards";
+    import {Chart, getDashboard} from "../composables/useDashboards";
     import {getChartTitle, getPropertyValue, useChartGenerator} from "../composables/useDashboards";
 
     import NoData from "../../layout/NoData.vue";
+    import {useRoute} from "vue-router";
 
     const props = defineProps({
         chart: {type: Object as PropType<Chart>, required: true},
@@ -23,7 +24,21 @@
         showDefault: {type: Boolean, default: false},
     });
 
-    const {percentageShown, EMPTY_TEXT, data} = useChartGenerator(props);
+    const route = useRoute();
+
+    const {percentageShown, EMPTY_TEXT, data, generate} = useChartGenerator(props);
+
+    function refresh() {
+        return generate(getDashboard(route, "id")!);
+    }
+
+    defineExpose({
+        refresh
+    });
+
+    watch(() => route.params.filters, () => {
+        refresh();
+    }, {deep: true});
 </script>
 
 <style scoped lang="scss">

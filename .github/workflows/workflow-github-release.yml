@@ -20,14 +20,14 @@ jobs:
     steps:
       # Check out
       - name: Checkout - Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
 
       # Checkout GitHub Actions
       - name: Checkout - Actions
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: kestra-io/actions
           sparse-checkout-cone-mode: true

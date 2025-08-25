@@ -85,7 +85,7 @@
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
     import {useDocStore} from "../../stores/doc";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     // @ts-expect-error no clean way to have focus on inputs
@@ -372,14 +372,27 @@
         });
 
         if (props.input) {
-            editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyH, () => {});
-            editor.addCommand(KeyCode.F1, () => {});
+            editor.addAction({
+                id: "prevent-ctrl-h",
+                label: "Prevent CTRL + H",
+                keybindings: [KeyMod.CtrlCmd | KeyCode.KeyH],
+                run: () => {}
+            });
+
+            editor.addAction({
+                id: "prevent-f1",
+                label: "Prevent F1",
+                keybindings: [KeyCode.F1],
+                run: () => {}
+            });
 
             if (!props.readOnly) {
-                editor.addCommand(
-                    KeyMod.CtrlCmd | KeyCode.KeyF,
-                    () => {},
-                );
+                editor.addAction({
+                    id: "prevent-ctrl-f",
+                    label: "Prevent CTRL + F",
+                    keybindings: [KeyMod.CtrlCmd | KeyCode.KeyF],
+                    run: () => {}
+                });
             }
         }
 

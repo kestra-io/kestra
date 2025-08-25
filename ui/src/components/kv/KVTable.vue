@@ -15,6 +15,7 @@
         :infinite-scroll-load="namespace === undefined ? fetchKvs : undefined"
         :no-data-text="$t('no_results.kv_pairs')"
         class="fill-height"
+        :show-selection="!paneView"
     >
         <template #select-actions>
             <BulkSelect
@@ -29,7 +30,7 @@
             </BulkSelect>
         </template>
         <el-table-column
-            v-if="namespace === undefined"
+            v-if="namespace === undefined && !paneView"
             prop="namespace"
             sortable="custom"
             :sort-orders="['ascending', 'descending']"
@@ -41,6 +42,7 @@
             </template>
         </el-table-column>
         <el-table-column
+            v-if="!paneView"
             prop="description"
             sortable="custom"
             :sort-orders="['ascending', 'descending']"
@@ -53,6 +55,7 @@
             :label="$t('last modified')"
         />
         <el-table-column
+            v-if="!paneView"
             prop="expirationDate"
             sortable="custom"
             :sort-orders="['ascending', 'descending']"
@@ -67,7 +70,7 @@
             </template>
         </el-table-column>
 
-        <el-table-column column-key="update" class-name="row-action">
+        <el-table-column v-if="!paneView" column-key="update" class-name="row-action">
             <template #default="scope">
                 <el-button
                     v-if="canUpdate(scope.row)"
@@ -78,7 +81,7 @@
             </template>
         </el-table-column>
 
-        <el-table-column column-key="delete" class-name="row-action">
+        <el-table-column v-if="!paneView" column-key="delete" class-name="row-action">
             <template #default="scope">
                 <el-button
                     v-if="canDelete(scope.row)"
@@ -202,10 +205,11 @@
 
     import Utils from "../../utils/utils";
     import KestraFilter from "../filter/KestraFilter.vue";
+    import Id from "../Id.vue";
+    import Drawer from "../Drawer.vue";
 </script>
 
 <script lang="ts">
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {groupBy} from "lodash";
     import {useNamespacesStore} from "override/stores/namespaces";
@@ -214,19 +218,13 @@
     import SelectTableActions from "../../mixins/selectTableActions";
     import action from "../../models/action";
     import permission from "../../models/permission";
-    import Id from "../Id.vue";
-    import Drawer from "../Drawer.vue";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         inheritAttrs: false,
         mixins: [SelectTableActions],
-        components: {
-            Id,
-            Drawer
-        },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useNamespacesStore),
+            ...mapStores(useNamespacesStore, useAuthStore),
             searchQuery() {
                 return this.$route.query.q;
             },
@@ -258,7 +256,11 @@
             namespace: {
                 type: String,
                 default: undefined
-            }
+            },
+            paneView: {
+                type: Boolean,
+                default: false
+            },
         },
         watch: {
             addKvDrawerVisible(newValue) {
@@ -316,13 +318,13 @@
             };
         },
         methods: {
-            canUpdate(kv) {
-                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
+            canUpdate(kv: {namespace: string}) {
+                return kv.namespace !== undefined && this.authStore.user?.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
             },
-            canDelete(kv) {
-                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
+            canDelete(kv: {namespace: string}) {
+                return kv.namespace !== undefined && this.authStore.user?.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
             },
-            jsonValidator(rule, value, callback) {
+            jsonValidator(_rule: any, value: string, callback: (error?: Error) => void) {
                 try {
                     const parsed = JSON.parse(value);
                     if (typeof parsed !== "object" || parsed === null) {
@@ -334,7 +336,7 @@
                     callback(new Error(this.$t("Invalid input: Expected a JSON formatted string")));
                 }
             },
-            durationValidator(rule, value, callback) {
+            durationValidator(_rule: any, value: string, callback: (error?: Error) => void) {
                 if (value !== undefined && !value.match(/^P(?=[^T]|T.)(?:\d*D)?(?:T(?=.)(?:\d*H)?(?:\d*M)?(?:\d*S)?)?$/)) {
                     callback(new Error(this.$t("datepicker.error")));
                 } else {
@@ -350,7 +352,7 @@
 
                     const namespaces = (await ((this.namespaceIterator as NamespaceIterator).next())).map(n => n.id);
                     if (namespaces.length !== 0) {
-                        const kvsPromises = Promise.all(namespaces.filter(n => this.user.isAllowed(permission.KVSTORE, action.READ, n)).map(async n => {
+                        const kvsPromises = Promise.all(namespaces.filter(n => this.authStore.user?.isAllowed(permission.KVSTORE, action.READ, n)).map(async n => {
                             const kvs = await this.namespacesStore.kvsList({id: n});
 
                             return kvs.map(kv => {
@@ -414,7 +416,7 @@
             },
             removeKvs() {
                 const groupedByNamespace = groupBy(this.selection, "namespace");
-                const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => this.user.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
+                const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => this.authStore.user.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
                 const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs);
                 const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n));
                 this.$toast().confirm(

@@ -1383,16 +1383,14 @@ public class ExecutionController {
         Pause.Resumed resumed = createResumed();
 
         return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs, resumed)
-            .<HttpResponse<?>>handle((resumeExecution, sink) -> {
+            .handle((resumeExecution, sink) -> {
                 try {
                     this.executionQueue.emit(resumeExecution);
                     sink.next(HttpResponse.noContent());
                 } catch (QueueException e) {
                     sink.error(e);
                 }
-            })
-            // need to consume the inputs in case of error
-            .doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast());
+            });
     }
 
     protected Pause.Resumed createResumed() {
@@ -2441,6 +2439,8 @@ public class ExecutionController {
             Object value,
             @Parameter(description = "Specifies whether the input is enabled")
             boolean enabled,
+            @Parameter(description = "Specifies whether the input value is the default")
+            boolean isDefault,
             @Parameter(description = "The validation errors")
             List<ApiInputError> errors
         ) {
@@ -2462,6 +2462,7 @@ public class ExecutionController {
                     it.input(),
                     it.value(),
                     it.enabled(),
+                    it.isDefault(),
                     Optional.ofNullable(it.exception()).map(exception ->
                         exception.getConstraintViolations()
                             .stream()

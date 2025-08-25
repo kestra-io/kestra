@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.utils.IdUtils;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.util.Optional;
@@ -57,6 +58,7 @@ public interface FlowId {
 
     @Getter
     @AllArgsConstructor
+    @EqualsAndHashCode
     class Default implements FlowId {
         private final String tenantId;
         private final String namespace;

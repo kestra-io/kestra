@@ -67,25 +67,27 @@
 
     const {t} = useI18n();
 
-    const tabs = computed(() => ([{
-                                      name: "logs",
-                                      title: t("logs"),
-                                      component: markRaw(Logs),
-                                  },{
-                                      name: "gantt",
-                                      title: t("gantt"),
-                                      component: markRaw(Gantt),
-                                  },
-                                  {
-                                      name: "outputs",
-                                      title: t("outputs"),
-                                      component: markRaw(ExecutionOutput),
-                                  },
-                                  {
-                                      name: "metrics",
-                                      title: t("metrics"),
-                                      component: markRaw(ExecutionMetric),
-                                  }
+    const tabs = computed(() => ([
+        {
+            name: "logs",
+            title: t("logs"),
+            component: markRaw(Logs),
+        },
+        {
+            name: "gantt",
+            title: t("gantt"),
+            component: markRaw(Gantt),
+        },
+        {
+            name: "outputs",
+            title: t("outputs"),
+            component: markRaw(ExecutionOutput),
+        },
+        {
+            name: "metrics",
+            title: t("metrics"),
+            component: markRaw(ExecutionMetric),
+        }
     ]));
 
     const playgroundStore = usePlaygroundStore();
@@ -131,7 +133,7 @@
             font-size: .8rem;
             font-weight: normal;
             line-height: 1.2rem;
-            padding: 0 8px 4px;
+            padding: .25rem .5rem;
             position: sticky;
             background-color: var(--ks-background-panel);
             top: 0;

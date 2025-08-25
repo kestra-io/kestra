@@ -620,6 +620,28 @@ subprojects {subProject ->
                 }
             }
         }
+
+        if (subProject.name != 'platform' && subProject.name != 'cli') {
+            // only if a test source set actually exists (avoids empty artifacts)
+            def hasTests = subProject.extensions.findByName('sourceSets')?.findByName('test') != null
+
+            if (hasTests) {
+                // wire the artifact onto every Maven publication of this subproject
+                publishing {
+                    publications {
+                        withType(MavenPublication).configureEach { pub ->
+                            // keep the normal java component + sources/javadoc already configured
+                            pub.artifact(subProject.tasks.named('testsJar').get())
+                        }
+                    }
+                }
+
+                // make sure publish tasks build the tests jar first
+                tasks.matching { it.name.startsWith('publish') }.configureEach {
+                    dependsOn subProject.tasks.named('testsJar')
+                }
+            }
+        }
     }
 }
 

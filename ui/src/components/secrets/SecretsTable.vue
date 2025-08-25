@@ -23,7 +23,17 @@
                 sortable="custom"
                 :sort-orders="['ascending', 'descending']"
                 :label="$t('namespace')"
-            />
+            >
+                <template #default="scope">
+                    <el-tag
+                        type="info"
+                        class="namespace-tag"
+                    >
+                        <DotsSquare />
+                        {{ scope.row.namespace }}
+                    </el-tag>
+                </template>
+            </el-table-column>
             <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="keyOnly ? $t('secret.names') : $t('key')">
                 <template #default="scope">
                     <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
@@ -155,6 +165,7 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
+    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
 
     import Utils from "../../utils/utils";
@@ -165,10 +176,10 @@
 </script>
 
 <script lang="ts">
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useNamespaceSecrets, useAllSecrets, SecretIterator} from "../../composables/useSecrets";
     import {useNamespacesStore} from "override/stores/namespaces";
+    import {useAuthStore} from "override/stores/auth";
     import action from "../../models/action";
     import permission from "../../models/permission";
     import SelectTableActions from "../../mixins/selectTableActions";
@@ -182,8 +193,7 @@
             Drawer
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useNamespacesStore),
+            ...mapStores(useNamespacesStore, useAuthStore),
             searchQuery() {
                 return this.$route.query.q;
             },
@@ -302,14 +312,14 @@
         },
         methods: {
             canUpdate(secret) {
-                return secret.namespace !== undefined && this.user.isAllowed(permission.SECRET, action.UPDATE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
+                return secret.namespace !== undefined && this.authStore.user.isAllowed(permission.SECRET, action.UPDATE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
             },
             canDelete(secret) {
-                return secret.namespace !== undefined && this.user.isAllowed(permission.SECRET, action.DELETE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
+                return secret.namespace !== undefined && this.authStore.user.isAllowed(permission.SECRET, action.DELETE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
             },
             async fetchSecrets() {
                 if (this.secretsIterator === undefined) {
-                    this.secretsIterator = this.namespace === undefined ? useAllSecrets(this.$store, 20) : useNamespaceSecrets(this.$store, this.namespace, 20, {
+                    this.secretsIterator = this.namespace === undefined ? useAllSecrets(this.$store, this.authStore.user, 20) : useNamespaceSecrets(this.$store, this.namespace, 20, {
                         sort: this.$route.query.sort || "key:asc",
                         ...(this.searchQuery === undefined ? {} : {filters: {
                             q: {
@@ -428,7 +438,7 @@
                         secret.value = this.secret.value;
                     }
 
-                    const action = this.isSecretValueUpdated() ? this.namespacesStore.createSecrets : this.namespacesStore.patchSecret;
+                    const action = this.isSecretValueUpdated() ? this.namespacesStore?.createSecrets : this.namespacesStore?.patchSecret;
                     return action({namespace: this.secret.namespace, secret: secret})
                         .then(() => {
                             this.secret.update = true;
@@ -468,3 +478,17 @@
         },
     };
 </script>
+<style lang="scss" scoped>
+.namespace-tag {
+    background-color: var(--ks-log-background-debug) !important;
+    color: var(--ks-log-content-debug);
+    border: 1px solid var(--ks-log-border-debug);
+    padding: 0 6px;
+
+    :deep(.el-tag__content) {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+}
+</style>

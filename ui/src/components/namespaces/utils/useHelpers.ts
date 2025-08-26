@@ -12,7 +12,6 @@ import EditorView from "../../../components/inputs/EditorView.vue";
 export interface Tab {
     locked?: boolean;
     maximized?: boolean;
-    count?: number;
 
     name: string;
     title: string;

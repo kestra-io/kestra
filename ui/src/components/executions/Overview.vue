@@ -86,9 +86,12 @@
                 <template #default="scope">
                     <router-link
                         v-if="scope.row.link"
-                        :to="{name: 'executions/update', params: scope.row.link}"
+                        :to="{
+                            name: 'executions/update',
+                            params: scope.row.link
+                        }"
                     >
-                        {{ scope.row.value }}
+                        <code class="parent-execution">{{ scope.row.value }}</code>
                     </router-link>
                     <span v-else-if="scope.row.date">
                         <date-ago :date="scope.row.value" />
@@ -105,8 +108,18 @@
                     <span v-else>
                         <span v-if="scope.row.key === $t('revision')">
                             <router-link
-                                :to="{name: 'flows/update', params: {id: $route.params.flowId, namespace: $route.params.namespace, tab: 'revisions'}, query: {revisionRight: scope.row.value}}"
-                            >{{ scope.row.value }}</router-link>
+                                :to="{
+                                    name: 'flows/update',
+                                    params: {
+                                        id: $route.params.flowId,
+                                        namespace: $route.params.namespace,
+                                        tab: 'revisions'
+                                    },
+                                    query: {revisionRight: scope.row.value}
+                                }"
+                            >
+                                {{ scope.row.value }}
+                            </router-link>
                         </span>
                         <span v-else>{{ scope.row.value }}</span>
                     </span>
@@ -440,8 +453,7 @@
                     {key: this.$t("scheduleDate"), value: this.execution?.scheduleDate, date: true},
                 ];
 
-                if (this.execution?.trigger?.type === "io.kestra.plugin.core.flow.Subflow" 
-                    && this.execution?.trigger?.variables?.executionId) {
+                if (this.execution?.trigger?.type === "io.kestra.plugin.core.flow.Subflow" && this.execution?.trigger?.variables?.executionId) {
                     ret.push({
                         key: this.$t("parent execution"),
                         value: this.execution.trigger.variables.executionId,
@@ -488,7 +500,6 @@
 
 <style lang="scss">
 .execution-overview {
-
     .wrapper {
         background: var(--ks-background-card);
     }
@@ -627,5 +638,9 @@
         padding: .5rem;
         border-top: 1px solid var(--ks-log-background-error);
     }
+}
+
+code.parent-execution {
+    color: var(--ks-content-link);
 }
 </style>

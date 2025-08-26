@@ -447,8 +447,18 @@
         "title": "이 Flow에 대한 제한이 설정되지 않았습니다."
       },
       "dependencies": {
-        "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
-        "title": "이 Flow에 대한 종속성이 설정되지 않았습니다."
+        "EXECUTION": {
+          "content": "<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">실행 종속성</a>에 대한 자세한 내용은 문서를 참조하세요.",
+          "title": "현재 종속성이 없습니다."
+        },
+        "FLOW": {
+          "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
+          "title": "현재 종속성이 없습니다."
+        },
+        "NAMESPACE": {
+          "content": "<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
+          "title": "현재 종속성이 없습니다."
+        }
       },
       "plugins": {
         "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",

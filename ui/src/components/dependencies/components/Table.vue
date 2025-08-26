@@ -20,7 +20,10 @@
                 <section id="row">
                     <section id="left">
                         <div id="link">
-                            <Link :node="row.data" :subtype="row.data.metadata.subtype" />
+                            <Link
+                                :node="row.data"
+                                :subtype="row.data.metadata.subtype"
+                            />
                         </div>
 
                         <p class="description">
@@ -68,13 +71,15 @@
         row.scrollIntoView({behavior: "smooth", block: "center"});
     };
 
-    watch(() => props.selected, async (ID) => {
-        if (!ID) return;
+    watch(
+        () => props.selected,
+        async (ID) => {
+            if (!ID) return;
 
-        await nextTick();
+            await nextTick();
 
-        focusSelectedRow();
-    },
+            focusSelectedRow();
+        },
     );
 
     const search = ref("");
@@ -88,7 +93,10 @@
         return NODES.filter(({data}) => {
             const {flow, namespace} = data;
 
-            return (flow?.toLowerCase().includes(f) || namespace?.toLowerCase().includes(f));
+            return (
+                flow?.toLowerCase().includes(f) ||
+                namespace?.toLowerCase().includes(f)
+            );
         });
     });
 </script>

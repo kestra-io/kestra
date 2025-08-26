@@ -21,7 +21,7 @@ import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, type Node, type Edge, type Eleme
 import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies";
 
 import {edgeColors, style} from "../utils/style";
-const SELECTED = "selected", FADED = "faded",  HOVERED = "hovered", EXECUTIONS = "executions";
+const SELECTED = "selected", FADED = "faded", HOVERED = "hovered", EXECUTIONS = "executions";
 
 const options: Omit<cytoscape.CytoscapeOptions, "container" | "elements"> & {elements?: Element[]} = {
     minZoom: 0.1,
@@ -114,7 +114,7 @@ function setExecutionNodeColors(cy: cytoscape.Core, nodes?: cytoscape.NodeSingul
     (nodes ?? cy.nodes()).forEach((node) => {
         node.style({
             "background-color": getStateColor(node),
-            "border-color": getStateColor(node)
+            "border-color": getStateColor(node),
         });
     });
 }
@@ -130,7 +130,10 @@ function setExecutionNodeColors(cy: cytoscape.Core, nodes?: cytoscape.NodeSingul
  */
 function setExecutionEdgeColors(edges: cytoscape.EdgeCollection, color: string): void {
     edges.forEach((edge) => {
-        edge.removeClass(FADED).addClass(EXECUTIONS).style({"line-color": color, "target-arrow-color": color});
+        edge.removeClass(FADED).addClass(EXECUTIONS).style({
+            "line-color": color,
+            "target-arrow-color": color
+        });
     });
 }
 
@@ -149,8 +152,8 @@ function setExecutionEdgeColors(edges: cytoscape.EdgeCollection, color: string):
  *                  Defaults to [`selected`, `faded`, `hovered`, `executions`].
  */
 export function clearClasses(cy: cytoscape.Core, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
-  cy.elements().removeClass(classes.join(" "));
-  if (subtype === EXECUTION) cy.edges().style(edgeColors());
+    cy.elements().removeClass(classes.join(" "));
+    if (subtype === EXECUTION) cy.edges().style(edgeColors());
 }
 
 /**
@@ -255,29 +258,23 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         }
     };
 
-const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number }>({
-  data: [],
-  count: 0,
-});    onMounted(async () => {
+    const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number; }>({data: [], count: 0});
+    onMounted(async () => {
         if (!container.value) return;
 
-        if(isTesting) elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
+        if (isTesting) elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
         else {
             if (subtype === NAMESPACE) {
                 const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});
                 const nodes = data.nodes ?? [];
                 elements.value = {data: transformResponse(data, NAMESPACE), count: new Set(nodes.map((r: { uid: string }) => r.uid)).size};
             } else {
-                const result = await flowStore.loadDependencies({
-                id: (subtype === FLOW ? params.id : params.flowId) as string,
-                namespace: params.namespace as string,
-                subtype,
-                });
+                const result = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype});
                 elements.value = {data: result.data ?? [], count: result.count};
             }
         }
 
-        if(subtype === EXECUTION) nextTick(() => openSSE());
+        if (subtype === EXECUTION) nextTick(() => openSSE());
 
         cy = cytoscape({container: container.value, layout, ...options, style, elements: elements.value.data});
 
@@ -288,7 +285,7 @@ const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number }>({
         setNodeSizes(cy);
 
         // Apply execution state colors to each node
-        if(subtype === EXECUTION) setExecutionNodeColors(cy);
+        if (subtype === EXECUTION) setExecutionNodeColors(cy);
 
         // Setup hover handlers for nodes and edges
         hoverHandler(cy);
@@ -314,10 +311,9 @@ const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number }>({
 
             // Reveal nodes after layout rendering completes
             cy.nodes().style("display", "element");
-            
-            const node = isTesting ? cy.nodes()[0] : cy.nodes().filter((n) => n.data("flow") === initialNodeID);
 
-            if(subtype === NAMESPACE) fit(cy); // If the subtype is NAMESPACE, fit the entire graph in the viewport
+            const node = isTesting ? cy.nodes()[0] : cy.nodes().filter((n) => n.data("flow") === initialNodeID);
+            if (subtype === NAMESPACE) fit(cy); // If the subtype is NAMESPACE, fit the entire graph in the viewport
             else if (node) selectHandler(cy, node, selectedNodeID, subtype); // Else, preselect the proper node after layout rendering completes
         });
     });
@@ -325,27 +321,29 @@ const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number }>({
     const sse = ref();
     const messages = ref<Record<string, any>[]>([]);
 
-    watch(messages, (newMessages) => {
-        if (newMessages.length <= 0) return;
+    watch(
+        messages,
+        (newMessages) => {
+            if (newMessages.length <= 0) return;
 
-        newMessages.forEach((message: Record<string, any>) => {
-            const matched = cy.nodes().filter((element) => element.data("id") === `${message.tenantId}_${message.namespace}_${message.flowId}`);
+            newMessages.forEach((message: Record<string, any>) => {
+                const matched = cy.nodes().filter((element) => element.data("id") === `${message.tenantId}_${message.namespace}_${message.flowId}`);
 
-            if (matched.nonempty()) {
-                matched.forEach((node: cytoscape.NodeSingular) => {
-                    const state = message.state.current;
+                if (matched.nonempty()) {
+                    matched.forEach((node: cytoscape.NodeSingular) => {
+                        const state = message.state.current;
 
-                    node.data({...node.data(), metadata: {...node.data("metadata"), state}});
+                        node.data({...node.data(), metadata: {...node.data("metadata"), state}});
 
-                    nextTick(() => {}) // Needed to ensure that table nodes are updated after the DOM is ready                    
+                        nextTick(() => {}); // Needed to ensure that table nodes are updated after the DOM is ready
 
-                    setExecutionNodeColors(cy, node.toArray());
-                    setExecutionEdgeColors(node.connectedEdges(), getStateColor(undefined, state));
-                });
-            }
-        });
-    },
-    {deep: true},
+                        setExecutionNodeColors(cy, node.toArray());
+                        setExecutionEdgeColors(node.connectedEdges(), getStateColor(undefined, state));
+                    });
+                }
+            });
+        },
+        {deep: true},
     );
 
     const openSSE = () => {
@@ -395,8 +393,8 @@ const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number }>({
                 selectedNodeID.value = undefined;
                 fit(cy);
             },
-            fit: () => fit(cy)
-        }
+            fit: () => fit(cy),
+        },
     };
 }
 
@@ -408,8 +406,9 @@ const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number }>({
  * @param subtype - The node subtype, either `FLOW`, `EXECUTION`, or `NAMESPACE`.
  * @returns An array of cytoscape elements with correctly typed nodes and edges.
  */
-export function transformResponse(response: { nodes: { uid: string; namespace: string; id: string; }[]; edges: { source: string; target: string }[] }, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE): Element[] {
-  const nodes: Node[] = response.nodes.map((node) => ({id: node.uid, type: NODE, flow: node.id, namespace: node.namespace, metadata: {subtype}}));
-  const edges: Edge[] = response.edges.map((edge) => ({id: uuid(), type: EDGE, source: edge.source, target: edge.target}));
-  return [...nodes.map((node) => ({data: node} as Element)), ...edges.map((edge) => ({data: edge} as Element))];
+export function transformResponse(response: {nodes: { uid: string; namespace: string; id: string }[]; edges: { source: string; target: string }[]; }, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE): Element[] {
+    const nodes: Node[] = response.nodes.map((node) => ({id: node.uid, type: NODE, flow: node.id, namespace: node.namespace, metadata: {subtype}}));
+    const edges: Edge[] = response.edges.map((edge) => ({id: uuid(), type: EDGE, source: edge.source, target: edge.target}));
+
+    return [...nodes.map((node) => ({data: node}) as Element), ...edges.map((edge) => ({data: edge}) as Element)];
 }

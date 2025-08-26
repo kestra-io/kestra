@@ -71,7 +71,12 @@ export const style: cytoscape.StylesheetJson = [
     },
     {
         selector: "node.faded",
-        style: {...nodeBase, ...nodeColors("faded"), "background-opacity": 0.75, "border-opacity": 0.75},
+        style: {
+            ...nodeBase,
+            ...nodeColors("faded"),
+            "background-opacity": 0.75,
+            "border-opacity": 0.75,
+        },
     },
     {
         selector: "node.selected",

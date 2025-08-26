@@ -2,6 +2,7 @@ import {ref} from "vue";
 import {apiUrl, apiUrlWithTenant} from "override/utils/route";
 import Utils from "../utils/utils";
 
+import cytoscape from "cytoscape";
 import {transformResponse} from "../components/dependencies/composables/useDependencies";
 import {NAMESPACE} from "../components/dependencies/utils/types";
 
@@ -57,10 +58,10 @@ export function useBaseNamespacesStore() {
         return response.data;
     }
 
-    async function loadDependencies(this: any, {namespace}: { namespace: string }) {
+    async function loadDependencies(this: any, {namespace}: { namespace: string }): Promise<{ data: cytoscape.ElementDefinition[]; count: number }> {
         const {status, data} = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${namespace}/dependencies`);
 
-        if (status !== 200) return {data: {nodes: [], edges: []}, count: 0};
+        if (status !== 200) return {data: [], count: 0};
 
         const nodes = data.nodes ?? [];
         const count = new Set(nodes.map((r: { uid: string }) => r.uid)).size;

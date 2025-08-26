@@ -173,18 +173,15 @@ public class PluginDefaultService {
         try {
             return this.injectAllDefaults(flow, false);
         } catch (Exception e) {
-            RunContextLogger
-                .logEntries(
-                    Execution.loggingEventFromException(e),
-                    LogEntry.of(execution)
-                )
-                .forEach(logEntry -> {
-                    try {
-                        logQueue.emitAsync(logEntry);
-                    } catch (QueueException e1) {
-                        // silently do nothing
-                    }
-                });
+            try {
+                logQueue.emitAsync(RunContextLogger
+                    .logEntries(
+                        Execution.loggingEventFromException(e),
+                        LogEntry.of(execution)
+                    ));
+            } catch (QueueException e1) {
+                // silently do nothing
+            }
             return readWithoutDefaultsOrThrow(flow);
         }
     }

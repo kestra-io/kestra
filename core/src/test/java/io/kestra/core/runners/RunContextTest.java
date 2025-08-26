@@ -140,7 +140,7 @@ class RunContextTest {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
 
-        char[] chars = new char[1024 * 11];
+        char[] chars = new char[1024 * 16];
         Arrays.fill(chars, 'a');
 
         Map<String, Object> inputs = new HashMap<>(InputsTest.inputs);

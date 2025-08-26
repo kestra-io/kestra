@@ -1035,6 +1035,7 @@
     "pause done": "निष्पादन PAUSED है",
     "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
     "playground": {
+      "clear_history": "इतिहास साफ़ करें",
       "confirm_create": "आप एक flow बनाते समय playground नहीं चला सकते। एक playground रन शुरू करने से flow बन जाएगा।",
       "history": "पिछले 10 रन",
       "play_icon_info": "आप No-Code या Topology दृश्य में Play आइकन पर भी क्लिक कर सकते हैं।",
@@ -1044,7 +1045,8 @@
       "run_task_info": "Flow Code संपादक में किसी भी task पर होवर करें और अपने task का परीक्षण करने के लिए \"Run task\" बटन पर क्लिक करें।",
       "run_this_task": "इस task को चलाएं",
       "title": "प्लेग्राउंड",
-      "toggle": "प्लेग्राउंड"
+      "toggle": "प्लेग्राउंड",
+      "tooltip_persistence": "यदि आप Playground को बंद करके फिर से चालू करते हैं, तो जानकारी तब तक बनी रहती है जब तक आप पृष्ठ पर रहते हैं।"
     },
     "pluginDefaults": "प्लगइन डिफॉल्ट्स",
     "pluginPage": {

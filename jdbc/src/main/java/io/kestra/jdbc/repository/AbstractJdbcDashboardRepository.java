@@ -37,7 +37,16 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     private final ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher;
 
     List<QueryBuilderInterface<?>> queryBuilders;
-
+    
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public long count() {
+        return jdbcRepository.count(this.defaultFilter());
+    }
+    
+    
     @Override
     public Optional<Dashboard> get(String tenantId, String id) {
         return jdbcRepository

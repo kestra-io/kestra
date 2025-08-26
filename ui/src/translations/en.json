@@ -579,7 +579,6 @@
     "warning detected": "Warning(s) detected",
     "informative notice": "Note(s)",
     "cannot swap tasks": "Can't swap the tasks",
-    "preview": "Preview",
     "open": "Open",
     "dependency task": "Task {taskId} is a dependency of another task",
     "administration": "Administration",
@@ -1453,9 +1452,13 @@
     },
     "ai": {
       "flow": {
-        "title": "AI Agent",
+        "title": "AI Copilot",
         "prompt_placeholder": "Enter instructions to create your Kestra flow. Example prompt: Create a flow that runs every Monday at 9 AM.",
-        "generating": "Generating Flow YAML for you..."
+        "generating": "Generating Flow YAML for you...",
+        "enable_instructions": {
+            "header":"<b>AI Copilot hasn't been configured yet.</b>\n\nTo enable AI Copilot, add the following snippet to your Kestra instance configuration file (e.g. <code>application.yml</code>), replacing <code>geminiApiKey</code> with your actual key:",
+            "footer": "Note: At this time, only Gemini is supported as the AI provider.\n\nRestart your Kestra instance after saving the configuration."
+        }
       }
     },
     "playground": {
@@ -1468,7 +1471,9 @@
       "run_task_and_downstream": "Run task & downstream",
       "run_all_tasks": "Run All Tasks",
       "history": "Last 10 runs",
-      "confirm_create": "You cannot run the playground while creating a flow. Launching a playground run will create the flow."
+      "clear_history": "Clear history",
+      "confirm_create": "You cannot run the playground while creating a flow. Launching a playground run will create the flow.",
+      "tooltip_persistence": "If you turn Playground off and back on, the information remains as long as you stay on the page."
     },
     "submit": "Submit",
     "to toggle": "to toggle",
@@ -1494,6 +1499,12 @@
         "placeholder": "Search by flow or namespace...",
         "no_results": "No results found for {term}"
       }
+    },
+    "preview": {
+      "label": "Preview",
+      "force-editor": "Enforce editor view",
+      "auto-view": "Auto view",
+      "view": "View"
     }
   }
 }

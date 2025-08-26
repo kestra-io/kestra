@@ -8,8 +8,6 @@
 
 // button
 .el-button {
-    // overflow: hidden;
-    // white-space: nowrap;
 
     &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info):not(.el-button--playground), &--default {
         --el-button-hover-text-color: var(--ks-content-primary);
@@ -21,6 +19,7 @@
 
     &.el-button--primary {
         --el-button-text-color: var(--ks-button-content-primary);
+        --el-button-hover-text-color: var(--ks-button-content-primary);
         --el-button-bg-color: var(--ks-button-background-primary);
         --el-button-border-color: var(--ks-button-background-primary);
         --el-button-hover-bg-color: var(--ks-button-background-primary-hover);
@@ -294,6 +293,7 @@
 
     .el-input__inner::file-selector-button {
         background: var(--ks-button-background-primary);
+        color: var(--ks-button-content-primary);
         border: 0;
         margin: 2px 10px 0 4px;
         border-radius: var(--el-border-radius-base);

@@ -14,10 +14,11 @@ const createBaseUrl = (): string => {
 
 export const baseUrl = createBaseUrl().replace(/\/$/, "")
 export const basePath = () => "/api/v1/main"
+export const basePathWithoutTenant = () => "/api/v1"
 
 export const apiUrl = (_: Store<any>): string => {
     return `${baseUrl}${basePath()}`;
 }
 
 export const apiUrlWithTenant = (store: Store<any>, _: RouteLocationNormalizedLoaded): string => apiUrl(store);
-export const apiUrlWithoutTenants = (): string => `${baseUrl}/api/v1`
+export const apiUrlWithoutTenants = (): string => `${baseUrl}${basePathWithoutTenant()}`;

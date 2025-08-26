@@ -1066,7 +1066,7 @@
     "prev_execution": "Vorherige Ausführung",
     "preview": {
       "auto-view": "Automatische Ansicht",
-      "force-editor": "Editoransicht erzwingen",
+      "force-editor": "Erzwinge Editoransicht",
       "label": "Vorschau",
       "view": "Anzeigen"
     },

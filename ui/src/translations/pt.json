@@ -1067,7 +1067,7 @@
     "preview": {
       "auto-view": "Visualização automática",
       "force-editor": "Forçar visualização do editor",
-      "label": "Visualizar",
+      "label": "Pré-visualização",
       "view": "Visualizar"
     },
     "properties": {

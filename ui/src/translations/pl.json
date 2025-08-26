@@ -1035,6 +1035,7 @@
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
     "playground": {
+      "clear_history": "Wyczyść historię",
       "confirm_create": "Nie można uruchomić playground podczas tworzenia flow. Uruchomienie playground run utworzy flow.",
       "history": "Ostatnie 10 uruchomień",
       "play_icon_info": "Możesz również kliknąć ikonę Play w widokach No-Code lub Topology.",
@@ -1044,7 +1045,8 @@
       "run_task_info": "Najedź kursorem na dowolne zadanie w edytorze Flow Code i kliknij przycisk \"Run task\", aby przetestować swoje zadanie.",
       "run_this_task": "Uruchom ten task",
       "title": "Plac zabaw",
-      "toggle": "Plac zabaw"
+      "toggle": "Plac zabaw",
+      "tooltip_persistence": "Jeśli wyłączysz i ponownie włączysz Playground, informacje pozostaną, dopóki pozostaniesz na stronie."
     },
     "pluginDefaults": "Domyślne ustawienia pluginu",
     "pluginPage": {

@@ -1035,6 +1035,7 @@
     "pause done": "実行がPAUSEDされています",
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
     "playground": {
+      "clear_history": "履歴をクリア",
       "confirm_create": "フローを作成中はプレイグラウンドを実行できません。プレイグラウンドの実行を開始すると、flowが作成されます。",
       "history": "直近10回の実行",
       "play_icon_info": "ノーコードまたはトポロジービューで再生アイコンをクリックすることもできます。",
@@ -1044,7 +1045,8 @@
       "run_task_info": "Flow Codeエディタ内の任意のtaskにカーソルを合わせ、「Run task」ボタンをクリックしてtaskをテストします。",
       "run_this_task": "このtaskを実行",
       "title": "プレイグラウンド",
-      "toggle": "プレイグラウンド"
+      "toggle": "プレイグラウンド",
+      "tooltip_persistence": "Playgroundをオフにしてから再度オンにすると、ページに留まっている限り情報は保持されます。"
     },
     "pluginDefaults": "プラグインのデフォルト",
     "pluginPage": {

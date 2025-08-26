@@ -113,15 +113,8 @@
                                 this.flowStore.loadGraph({
                                     flow: this.flowStore.flow,
                                 });
-
-                                return this.flowStore.loadDependencies({
-                                    namespace: this.$route.params.namespace,
-                                    id: this.$route.params.id
-                                });
                             }
-                        }).then(({count}) => {
-                            this.dependenciesCount = count;
-                        });
+                        })
                 }
             },
             flowKey() {

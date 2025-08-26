@@ -1035,6 +1035,7 @@
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
     "playground": {
+      "clear_history": "Limpar histórico",
       "confirm_create": "Você não pode executar o playground enquanto cria um flow. Iniciar uma execução do playground criará o flow.",
       "history": "Últimas 10 execuções",
       "play_icon_info": "Você também pode clicar no ícone de Play nas visualizações No-Code ou Topology.",
@@ -1044,7 +1045,8 @@
       "run_task_info": "Passe o cursor sobre qualquer task no editor de Flow Code e clique no botão \"Run task\" para testar sua task.",
       "run_this_task": "Execute esta task",
       "title": "Playground",
-      "toggle": "Playground"
+      "toggle": "Playground",
+      "tooltip_persistence": "Se você desligar e ligar o Playground novamente, as informações permanecem enquanto você estiver na página."
     },
     "pluginDefaults": "Padrões do plugin",
     "pluginPage": {

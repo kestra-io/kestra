@@ -358,7 +358,7 @@
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
             this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview";
-            this.pendingSettings.editorPlayground = localStorage.getItem("editorPlayground") === "true";
+            this.pendingSettings.editorPlayground = localStorage.getItem("editorPlayground") === "false" ? false : true;
             this.pendingSettings.envName = this.layoutStore.envName || this.miscStore.configs?.environment?.name;
             this.pendingSettings.envColor = this.layoutStore.envColor || this.miscStore.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;

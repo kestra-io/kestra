@@ -1035,6 +1035,7 @@
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
     "playground": {
+      "clear_history": "清除历史记录",
       "confirm_create": "在创建flow时无法运行playground。启动playground运行将创建flow。",
       "history": "最近10次运行",
       "play_icon_info": "您还可以在无代码或拓扑视图中点击播放图标。",
@@ -1044,7 +1045,8 @@
       "run_task_info": "将鼠标悬停在Flow Code编辑器中的任何task上，然后点击“Run task”按钮以测试您的task。",
       "run_this_task": "运行此task",
       "title": "游乐场",
-      "toggle": "游乐场"
+      "toggle": "游乐场",
+      "tooltip_persistence": "如果您关闭并重新打开Playground，只要您停留在页面上，信息将保持不变。"
     },
     "pluginDefaults": "插件默认值",
     "pluginPage": {

@@ -1064,7 +1064,12 @@
     "port": "Port",
     "prefill inputs": "Preencher automaticamente",
     "prev_execution": "Execução anterior",
-    "preview": "Pré-visualização",
+    "preview": {
+      "auto-view": "Visualização automática",
+      "force-editor": "Forçar visualização do editor",
+      "label": "Visualizar",
+      "view": "Visualizar"
+    },
     "properties": {
       "hidden": "Oculto na Tabela",
       "hint": "Escolher Colunas Visíveis",

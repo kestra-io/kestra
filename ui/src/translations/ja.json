@@ -1064,7 +1064,12 @@
     "port": "ポート",
     "prefill inputs": "自動入力",
     "prev_execution": "前回の実行",
-    "preview": "プレビュー",
+    "preview": {
+      "auto-view": "自動ビュー",
+      "force-editor": "エディタービューを強制する",
+      "label": "プレビュー",
+      "view": "表示"
+    },
     "properties": {
       "hidden": "テーブルに隠す",
       "hint": "表示する列を選択",

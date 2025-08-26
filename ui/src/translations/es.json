@@ -1064,7 +1064,12 @@
     "port": "Puerto",
     "prefill inputs": "Prefill",
     "prev_execution": "Ejecución anterior",
-    "preview": "Vista previa",
+    "preview": {
+      "auto-view": "Vista automática",
+      "force-editor": "Forzar vista del editor",
+      "label": "Vista previa",
+      "view": "Ver"
+    },
     "properties": {
       "hidden": "Oculto en la Tabla",
       "hint": "Elegir Columnas Visibles",

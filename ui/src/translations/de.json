@@ -1064,7 +1064,12 @@
     "port": "Port",
     "prefill inputs": "Vorausfüllen",
     "prev_execution": "Vorherige Ausführung",
-    "preview": "Vorschau",
+    "preview": {
+      "auto-view": "Automatische Ansicht",
+      "force-editor": "Editoransicht erzwingen",
+      "label": "Vorschau",
+      "view": "Anzeigen"
+    },
     "properties": {
       "hidden": "In Tabelle versteckt",
       "hint": "Sichtbare Spalten auswählen",

@@ -1064,7 +1064,12 @@
     "port": "पोर्ट",
     "prefill inputs": "पूर्व-भरण",
     "prev_execution": "पिछला निष्पादन",
-    "preview": "पूर्वावलोकन",
+    "preview": {
+      "auto-view": "स्वचालित दृश्य",
+      "force-editor": "संपादक दृश्य लागू करें",
+      "label": "पूर्वावलोकन",
+      "view": "देखें"
+    },
     "properties": {
       "hidden": "टेबल में छिपा हुआ",
       "hint": "दृश्य स्तंभ चुनें",

@@ -1064,7 +1064,12 @@
     "port": "Porta",
     "prefill inputs": "Precompila",
     "prev_execution": "Esecuzione precedente",
-    "preview": "Anteprima",
+    "preview": {
+      "auto-view": "Visualizzazione automatica",
+      "force-editor": "Forza vista editor",
+      "label": "Anteprima",
+      "view": "Visualizza"
+    },
     "properties": {
       "hidden": "Nascosto nella Tabella",
       "hint": "Scegli colonne visibili",

@@ -1064,7 +1064,12 @@
     "port": "포트",
     "prefill inputs": "미리 채우기",
     "prev_execution": "이전 실행",
-    "preview": "미리보기",
+    "preview": {
+      "auto-view": "자동 보기",
+      "force-editor": "편집기 보기 강제 적용",
+      "label": "미리보기",
+      "view": "보기"
+    },
     "properties": {
       "hidden": "테이블에 숨김",
       "hint": "열 표시 선택",

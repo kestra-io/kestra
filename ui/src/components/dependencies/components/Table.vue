@@ -60,13 +60,13 @@
         selected: Node["id"] | undefined;
     }>();
 
-    const focusSelectedRow = ()=>{
+    const focusSelectedRow = () => {
         const row = document.querySelector<HTMLElement>(".el-table__row.selected");
 
         if (!row) return;
 
         row.scrollIntoView({behavior: "smooth", block: "center"});
-    }
+    };
 
     watch(() => props.selected, async (ID) => {
         if (!ID) return;
@@ -74,7 +74,8 @@
         await nextTick();
 
         focusSelectedRow();
-    });
+    },
+    );
 
     const search = ref("");
     const results = computed(() => {
@@ -96,7 +97,7 @@
 section#input {
     position: sticky;
     top: 0;
-    z-index: 10; // keeps it above table rows
+    z-index: 10; // Keeps it above table rows
     padding: 0.5rem;
     background-color: var(--ks-background-input);
 

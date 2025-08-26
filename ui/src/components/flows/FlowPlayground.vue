@@ -1,9 +1,37 @@
 <template>
     <section class="playground">
-        <h2>
-            <ChartTimelineIcon class="tab-icon" />
-            {{ t("playground.title") }}
-        </h2>
+        <div class="playground-header">
+            <div class="title-section">
+                <ChartTimelineIcon class="tab-icon" />
+                {{ t("playground.title") }}
+            </div>
+            <div class="extra-options">
+                <Kill
+                    v-if="executionsStore.execution"
+                    :execution="executionsStore.execution"
+                />
+                <el-dropdown trigger="click" placement="bottom-end">
+                    <el-button :icon="DotsVertical" link class="tab-icon" />
+                    <template #dropdown>
+                        <el-dropdown-menu class="m-2">
+                            <el-dropdown-item :icon="Backspace" @click="playgroundStore.clearExecutions()">
+                                <span class="small-text">{{ t('playground.clear_history') }}</span>
+                            </el-dropdown-item>
+                            <el-dropdown-item :icon="CloseIcon" @click="playgroundStore.enabled = false">
+                                <span class="small-text">{{ t('close') }} {{ t('playground.toggle').toLowerCase() }}</span>
+                            </el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
+                <el-button
+                    :icon="CloseIcon"
+                    link
+                    class="tab-icon"
+                    @click="playgroundStore.enabled = false"
+                    :title="t('close')"
+                />
+            </div>
+        </div>
         <div class="content">
             <div class="current-run">
                 <div class="current-run-header">
@@ -17,12 +45,6 @@
                         >
                             {{ tab.title }}
                         </button>
-                    </div>
-                    <div class="extra-options">
-                        <Kill
-                            v-if="executionsStore.execution"
-                            :execution="executionsStore.execution"
-                        />
                     </div>
                 </div>
                 <div v-if="activeTab?.component && playgroundStore.latestExecution" class="tab-content">
@@ -54,7 +76,9 @@
     import {useI18n} from "vue-i18n";
     import ChartTimelineIcon from "vue-material-design-icons/ChartTimeline.vue";
     import HistoryIcon from "vue-material-design-icons/History.vue";
+    import Backspace from "vue-material-design-icons/Backspace.vue";
     import CloseIcon from "vue-material-design-icons/Close.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import Gantt from "../executions/Gantt.vue";
     import Logs from "../executions/Logs.vue";
     import ExecutionOutput from "../executions/outputs/Wrapper.vue";
@@ -120,6 +144,10 @@
         margin-right: 4px;
     }
 
+    .small-text {
+        font-size: .8rem;
+    }
+
     .playground {
         height: 100%;
         display: flex;
@@ -128,16 +156,29 @@
         color: var(--ks-color-text-secondary);
         background-color: var(--ks-background-panel);
         overflow-y: auto;
-        h2{
-            border-bottom: 1px solid var(--ks-border-primary);
-            font-size: .8rem;
-            font-weight: normal;
-            line-height: 1.2rem;
-            padding: .25rem .5rem;
-            position: sticky;
-            background-color: var(--ks-background-panel);
-            top: 0;
-            z-index: 100;
+    }
+
+    .playground-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--ks-border-primary);
+        padding: 8px;
+        position: sticky;
+        background-color: var(--ks-background-panel);
+        top: 0;
+        z-index: 100;
+        gap: 1rem;
+    }
+
+    .title-section {
+        display: flex;
+        align-items: center;
+        font-size: .8rem;
+        font-weight: normal;
+        line-height: 1.2rem;
+        .tab-icon {
+            margin-right: 4px;
         }
     }
 
@@ -151,15 +192,18 @@
         flex: 1;
     }
 
-    .extra-options{
+.extra-options{
         display: flex;
         gap: 8px;
-        margin-right: 4rem;
+        align-items: center;
+        .tab-icon{
+            color: var(--ks-content-inactive);
+        }
     }
 
     .toggle-history{
         position: absolute;
-        top: 36px;
+        top: 56px;
         right: 12px;
         background-color: var(--ks-background-card);
         border: none;

@@ -6,6 +6,7 @@ import concurrency_limit from "./assets/visuals/concurrency_limit.png";
 import dependencies from "./assets/visuals/dependencies.png";
 import plugins from "./assets/visuals/plugins.png";
 import triggers from "./assets/visuals/triggers.png";
+import versionPlugin from "./assets/visuals/versionPlugin.png";
 
 export const images: Record<string, string> = {
     announcements,
@@ -16,4 +17,5 @@ export const images: Record<string, string> = {
     dependencies,
     plugins,
     triggers,
+    versionPlugin,
 };

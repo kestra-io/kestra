@@ -1,6 +1,7 @@
 package io.kestra.cli.services;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.Await;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -71,7 +72,9 @@ class FileChangedEventListenerTest {
                 type: io.kestra.plugin.core.log.Log
                 message: Hello World! 🚀
             """;
-        Files.write(Path.of(FILE_WATCH + "/myflow.yaml"), flow.getBytes());
+
+        GenericFlow genericFlow = GenericFlow.fromYaml(MAIN_TENANT, flow);
+        Files.write(Path.of(FILE_WATCH + "/" + genericFlow.uidWithoutRevision() + ".yaml"), flow.getBytes());
         Await.until(
             () -> flowRepository.findById(MAIN_TENANT, "io.kestra.tests.watch", "myflow").isPresent(),
             Duration.ofMillis(100),
@@ -83,7 +86,7 @@ class FileChangedEventListenerTest {
         assertThat(myflow.getTasks().getFirst().getType()).isEqualTo("io.kestra.plugin.core.log.Log");
 
         // delete the flow
-        Files.delete(Path.of(FILE_WATCH + "/myflow.yaml"));
+        Files.delete(Path.of(FILE_WATCH + "/" + genericFlow.uidWithoutRevision() + ".yaml"));
         Await.until(
             () -> flowRepository.findById(MAIN_TENANT, "io.kestra.tests.watch", "myflow").isEmpty(),
             Duration.ofMillis(100),
@@ -110,7 +113,8 @@ class FileChangedEventListenerTest {
                 values:
                   message: Hello World!
             """;
-        Files.write(Path.of(FILE_WATCH + "/plugin-default.yaml"), pluginDefault.getBytes());
+        GenericFlow genericFlow = GenericFlow.fromYaml(MAIN_TENANT, pluginDefault);
+        Files.write(Path.of(FILE_WATCH + "/" + genericFlow.uidWithoutRevision() + ".yaml"), pluginDefault.getBytes());
         Await.until(
             () -> flowRepository.findById(MAIN_TENANT, "io.kestra.tests.watch", "pluginDefault").isPresent(),
             Duration.ofMillis(100),
@@ -122,7 +126,7 @@ class FileChangedEventListenerTest {
         assertThat(pluginDefaultFlow.getTasks().getFirst().getType()).isEqualTo("io.kestra.plugin.core.log.Log");
 
         // delete both files
-        Files.delete(Path.of(FILE_WATCH + "/plugin-default.yaml"));
+        Files.delete(Path.of(FILE_WATCH + "/" + genericFlow.uidWithoutRevision() + ".yaml"));
         Await.until(
             () -> flowRepository.findById(MAIN_TENANT, "io.kestra.tests.watch", "pluginDefault").isEmpty(),
             Duration.ofMillis(100),

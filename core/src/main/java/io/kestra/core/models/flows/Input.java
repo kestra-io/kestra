@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.models.flows.input.*;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
@@ -15,6 +17,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import java.util.function.Function;
 
 @SuppressWarnings("deprecation")
 @SuperBuilder
@@ -78,7 +82,7 @@ public abstract class Input<T> implements Data {
     @Schema(
         title = "The default value to use if no value is specified."
     )
-    T defaults;
+    Property<T> defaults;
 
     @Schema(
         title = "The display name of the input."

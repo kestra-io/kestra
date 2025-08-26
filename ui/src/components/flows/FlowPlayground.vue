@@ -10,18 +10,11 @@
                     v-if="executionsStore.execution"
                     :execution="executionsStore.execution"
                 />
-                <el-button
-                    :icon="CloseIcon"
-                    link
-                    class="tab-icon"
-                    @click="playgroundStore.enabled = false"
-                    :title="t('close')"
-                />
                 <el-dropdown trigger="click" placement="bottom-end">
                     <el-button :icon="DotsVertical" link class="tab-icon" />
                     <template #dropdown>
                         <el-dropdown-menu class="m-2">
-                            <el-dropdown-item @click="playgroundStore.clearExecutions()">
+                            <el-dropdown-item :icon="Backspace" @click="playgroundStore.clearExecutions()">
                                 <span class="small-text">{{ t('playground.clear_history') }}</span>
                             </el-dropdown-item>
                             <el-dropdown-item :icon="CloseIcon" @click="playgroundStore.enabled = false">
@@ -30,6 +23,13 @@
                         </el-dropdown-menu>
                     </template>
                 </el-dropdown>
+                <el-button
+                    :icon="CloseIcon"
+                    link
+                    class="tab-icon"
+                    @click="playgroundStore.enabled = false"
+                    :title="t('close')"
+                />
             </div>
         </div>
         <div class="content">
@@ -76,6 +76,7 @@
     import {useI18n} from "vue-i18n";
     import ChartTimelineIcon from "vue-material-design-icons/ChartTimeline.vue";
     import HistoryIcon from "vue-material-design-icons/History.vue";
+    import Backspace from "vue-material-design-icons/Backspace.vue";
     import CloseIcon from "vue-material-design-icons/Close.vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import Gantt from "../executions/Gantt.vue";

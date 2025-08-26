@@ -1474,7 +1474,7 @@
       "history": "Last 10 runs",
       "clear_history": "Clear history",
       "confirm_create": "You cannot run the playground while creating a flow. Launching a playground run will create the flow.",
-      "tooltip_persistence": "If you turn Playground off and back on, the information remains as long as you stay on the page"
+      "tooltip_persistence": "If you turn Playground off and back on, the information remains as long as you stay on the page."
     },
     "submit": "Submit",
     "to toggle": "to toggle",

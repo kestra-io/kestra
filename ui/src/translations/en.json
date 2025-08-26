@@ -1318,8 +1318,18 @@
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
       },
       "dependencies": {
-        "title": "No dependencies are set for this Flow.",
-        "content": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
+        "FLOW": {
+          "title": "There are currently no dependencies.",
+          "content": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
+        },
+        "EXECUTION": {
+          "title": "There are currently no dependencies.",
+          "content": "Read more about <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Execution Dependencies</a> in our documentation."
+        },
+        "NAMESPACE": {
+          "title": "There are currently no dependencies.",
+          "content": "Read more about <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> in our documentation."
+        }
       },
       "plugins": {
         "title": "No plugin defaults are set for this for this Namespace.",

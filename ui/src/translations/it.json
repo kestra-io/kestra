@@ -447,8 +447,18 @@
         "title": "Nessun limite è impostato per questo Flow."
       },
       "dependencies": {
-        "content": "Per saperne di più sulle <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dipendenze dei Flow</a> nella nostra documentazione.",
-        "title": "Nessuna dipendenza è impostata per questo Flow."
+        "EXECUTION": {
+          "content": "Per saperne di più sulle <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Dipendenze di Esecuzione</a> nella nostra documentazione.",
+          "title": "Attualmente non ci sono dipendenze."
+        },
+        "FLOW": {
+          "content": "Leggi di più su <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> nella nostra documentazione.",
+          "title": "Attualmente non ci sono dipendenze."
+        },
+        "NAMESPACE": {
+          "content": "Per saperne di più sulle <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a>, consulta la nostra documentazione.",
+          "title": "Attualmente non ci sono dipendenze."
+        }
       },
       "plugins": {
         "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">limiti di Concurrency</a></strong> nella nostra documentazione.",

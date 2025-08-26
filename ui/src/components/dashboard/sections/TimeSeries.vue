@@ -1,35 +1,39 @@
 <template>
     <div :id="containerID" />
-    <Bar
+    <el-tooltip
         v-if="generated !== undefined"
-        :data="parsedData"
-        :options
-        :plugins="chartOptions?.legend?.enabled ? [customBarLegend] : []"
-        class="chart"
-        :class="chartOptions?.legend?.enabled ? 'with-legend' : ''"
-    />
-    <NoData v-else />
+        effect="light"
+        placement="top"
+        :persistent="false"
+        :hide-after="0"
+        :popper-class="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
+        :content="tooltipContent"
+        raw-content
+    >
+        <div>
+            <Bar
+                :data="parsedData"
+                :options
+                :plugins="chartOptions?.legend?.enabled ? [customBarLegend] : []"
+                :class="props.short ? 'short-chart' : 'chart'"
+                class="chart"
+            />
+        </div>
+    </el-tooltip>
+    <NoData v-else-if="!props.short" />
 </template>
 
 <script lang="ts" setup>
-    import {PropType, computed, watch} from "vue";
-
-    import NoData from "../../layout/NoData.vue";
-
-    import {Bar} from "vue-chartjs";
-
-    import {Chart, getDashboard} from "../composables/useDashboards";
-    import {useChartGenerator} from "../composables/useDashboards";
-
-    
-    import {customBarLegend} from "../composables/useLegend";
-    import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts.js";
-
-    import moment from "moment";
-
+    import {computed, ref, watch, PropType} from "vue";
     import {useRoute, useRouter} from "vue-router";
+    import moment from "moment";
+    import {Bar} from "vue-chartjs";
+    import NoData from "../../layout/NoData.vue";
+    import {Chart, getDashboard, useChartGenerator} from "../composables/useDashboards";
+    import {customBarLegend} from "../composables/useLegend";
+    import {defaultConfig, getConsistentHEXColor, chartClick, tooltip} from "../composables/charts.js";
     import {cssVariable, Utils} from "@kestra-io/ui-libs";
-    import KestraUtils, {useTheme} from "../../../utils/utils"
+    import KestraUtils, {useTheme} from "../../../utils/utils";
 
     const route = useRoute();
     const router = useRouter();
@@ -39,30 +43,42 @@
         chart: {type: Object as PropType<Chart>, required: true},
         filters: {type: Array as PropType<string[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
+        short: {type: Boolean, default: false},
     });
 
 
     const containerID = `${props.chart.id}__${Math.random()}`;
+    const tooltipContent = ref("");
 
     const {data, chartOptions} = props.chart;
 
-    const aggregator = Object.entries(data.columns)
-        .filter(([_, v]) => v.agg)
-        .sort((a, b) => a[1].graphStyle.localeCompare(b[1].graphStyle));
-    const yBShown = aggregator.length === 2;
+    const aggregator = computed(() => {
+        return Object.entries(data.columns)
+            .filter(([_, v]) => v.agg)
+            .sort((a, b) => {
+                const aStyle = a[1].graphStyle || "";
+                const bStyle = b[1].graphStyle || "";
+                return aStyle.localeCompare(bStyle);
+            });
+    });
+
+    const yBShown = computed(() => aggregator.value.length === 2);
 
     const theme = useTheme();
 
     const DEFAULTS = {
         display: true,
         stacked: true,
-        ticks: {maxTicksLimit: 8, stepSize:1},
+        ticks: {maxTicksLimit: 8},
         grid: {display: false},
     };
     const options = computed(() => {
         return defaultConfig({
             skipNull: true,
-            barThickness: 12,
+            barThickness: props.short ? 8 : 12,
+            maxBarThickness: props.short ? 8 : 12,
+            categoryPercentage: props.short ? 1.0 : 0.8,
+            barPercentage: props.short ? 1.0 : 0.9,
             borderSkipped: false,
             borderColor: "transparent",
             borderWidth: 2,
@@ -76,7 +92,7 @@
                     }
                     : {}),
                 tooltip: {
-                    enabled: true,
+                    enabled: props.short ? false : true,
                     filter: (value) => value.raw,
                     callbacks: {
                         label: (value) => {
@@ -84,41 +100,46 @@
                             return `${value.dataset.tooltip}`;
                         },
                     },
+                    external: (props.short) ? function (context) {
+                        tooltipContent.value = tooltip(context.tooltip);
+                    } : undefined,
                 },
             },
             scales: {
                 x: {
                     title: {
-                        display: true,
+                        display: props.short ? false : true,
                         text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
                     },
                     position: "bottom",
-                    ...DEFAULTS
+                    ...DEFAULTS,
+                    display: props.short ? false : true,
                 },
                 y: {
                     title: {
-                        display: true,
-                        text: aggregator[0][1].displayName ?? aggregator[0][0],
+                        display: props.short ? false : true,
+                        text: aggregator.value[0]?.[1]?.displayName ?? aggregator.value[0]?.[0],
                     },
                     position: "left",
                     ...DEFAULTS,
+                    display: props.short ? false : true,
                     ticks: {
                         ...DEFAULTS.ticks,
-                        callback: value => isDuration(aggregator[0][1].field) ? Utils.humanDuration(value) : value
+                        callback: (value: any) => isDuration(aggregator.value[0]?.[1]?.field) ? Utils.humanDuration(value) : value
                     }
                 },
-                ...(yBShown && {
+                ...(yBShown.value && {
                     yB: {
                         title: {
-                            display: true,
-                            text: aggregator[1][1].displayName ?? aggregator[1][0],
+                            display: props.short ? false : true,
+                            text: aggregator.value[1]?.[1]?.displayName ?? aggregator.value[1]?.[0],
                         },
                         position: "right",
                         ...DEFAULTS,
-                        display: true,
+                        display: props.short ? false : true,
                         ticks: {
                             ...DEFAULTS.ticks,
-                            callback: value => isDuration(aggregator[1][1].field) ? Utils.humanDuration(value) : value
+                            callback: (value: any) => isDuration(aggregator.value[1]?.[1]?.field) ? Utils.humanDuration(value) : value
                         }
                     },
                 }),
@@ -151,7 +172,7 @@
             return Array.from(new Set(values)).sort();
         })();
 
-        const aggregatorKeys = aggregator.map(([key]) => key);
+        const aggregatorKeys = aggregator.value.map(([key]) => key);
 
         const reducer = (array, field, yAxisID) => {
             if (!array.length) return;
@@ -164,8 +185,8 @@
                 .filter(key => !aggregatorKeys.includes(key))
                 .filter(key => key !== column);
 
-            return array.reduce((acc, {...params}) => {
-                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.map(agg => agg[0] + " = " + (isDuration(agg[1].field) ? Utils.humanDuration(params[agg[0]]) : params[agg[0]])).join(", ")}`;
+            return array.reduce((acc: any, {...params}) => {
+                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.value.map(agg => agg[0] + " = " + (isDuration(agg[1].field) ? Utils.humanDuration(params[agg[0]]) : params[agg[0]])).join(", ")}`;
 
                 if (!acc[stack]) {
                     acc[stack] = {
@@ -213,13 +234,13 @@
             });
         };
 
-        const yDataset = reducer(rawData, aggregator[0][0], "y");
+        const yDataset = reducer(rawData, aggregator.value[0][0], "y");
 
         // Sorts the dataset array by the descending sum of 'data' values.
         // If two datasets have the same sum, it sorts them alphabetically by 'label'.
-        const yDatasetData = Object.values(getData(aggregator[0][0], yDataset)).sort((a, b) => {
-            const sumA = a.data.reduce((sum, val) => sum + val, 0);
-            const sumB = b.data.reduce((sum, val) => sum + val, 0);
+        const yDatasetData = Object.values(getData(aggregator.value[0][0], yDataset)).sort((a: any, b: any) => {
+            const sumA = a.data.reduce((sum: number, val: number) => sum + val, 0);
+            const sumB = b.data.reduce((sum: number, val: number) => sum + val, 0);
 
             if (sumB !== sumA) {
                 return sumB - sumA; // Descending by sum
@@ -228,10 +249,10 @@
             return a.label.localeCompare(b.label); // Ascending alphabetically by label
         });
 
-        const label = aggregator?.[1]?.[1]?.displayName ?? aggregator?.[1]?.[1]?.field;
+        const label = aggregator.value?.[1]?.[1]?.displayName ?? aggregator.value?.[1]?.[1]?.field;
 
         let duration: number[] = [];
-        if(yBShown){
+        if(yBShown.value){
             const helper = Array.from(new Set(rawData.map((v) => parseValue(v.date)))).sort();
 
             // Step 1: Group durations by formatted date
@@ -247,7 +268,7 @@
 
         return {
             labels: xAxis,
-            datasets: yBShown
+            datasets: yBShown.value
                 ? [
                     {
                         yAxisID: "yB",
@@ -257,7 +278,7 @@
                         pointRadius: 0,
                         borderWidth: 0.75,
                         label: label,
-                        borderColor: cssVariable("--ks-border-running")
+                        borderColor: props.short ? cssVariable("--ks-background-running") : cssVariable("--ks-border-running")
                     },
                     ...yDatasetData,
                 ]
@@ -285,6 +306,15 @@
 
     &:not(.with-legend) {
         #{--chart-height}: 231px;
+    }
+
+    min-height: var(--chart-height);
+    max-height: var(--chart-height);
+}
+
+.short-chart {
+    &:not(.with-legend) {
+        #{--chart-height}: 40px;
     }
 
     min-height: var(--chart-height);

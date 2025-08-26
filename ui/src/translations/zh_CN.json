@@ -16,7 +16,6 @@
     "Per page": "每页",
     "Previous step": "上一步",
     "Reset guided tour": "重置引导游览",
-    "Select namespace": "选择命名空间",
     "Set default page": "设置默认页面",
     "Set labels": "设置标签",
     "Set labels done": "标签设置成功",
@@ -49,6 +48,10 @@
     "aggregation": "聚合",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "注意：目前，仅支持 Gemini 作为 AI 提供商。\n\n保存配置后，重启您的 Kestra 实例。",
+          "header": "<b>AI Copilot 尚未配置。</b>\n\n要启用 AI Copilot，请将以下代码片段添加到您的 Kestra 实例配置文件（例如 <code>application.yml</code>），并将 <code>geminiApiKey</code> 替换为您的实际 key："
+        },
         "generating": "正在为您生成Flow YAML...",
         "prompt_placeholder": "输入指令以创建您的Kestra flow。示例提示：创建一个每周一上午9点运行的flow。",
         "title": "AI代理"
@@ -458,6 +461,10 @@
       "triggers": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>的信息。",
         "title": "您的 flow 没有任何 Triggers。"
+      },
+      "versionPlugin": {
+        "content": "在这里，您可以管理安装在您的 Kestra 实例上的所有插件。新安装的插件可能不会立即在所有 Kestra 服务中可用，这取决于您的实例配置。",
+        "title": "您还没有版本化的插件！"
       }
     },
     "empty search": "搜索结果为空",

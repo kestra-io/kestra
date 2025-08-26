@@ -43,7 +43,7 @@ public abstract class AbstractJdbcRepository {
     private String systemFlowNamespace;
 
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
-
+    
     protected Condition defaultFilter() {
         return field("deleted", Boolean.class).eq(false);
     }

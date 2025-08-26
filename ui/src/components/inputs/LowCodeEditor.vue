@@ -31,36 +31,97 @@
             @expand-subflow="expandSubflow"
             @run-task="playgroundStore.runUntilTask($event.task.id)"
         />
+
+        <Drawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
+            <template #header>
+                <code>{{ selectedTask.id }}</code>
+            </template>
+            <div v-if="isShowLogsOpen">
+                <Collapse>
+                    <el-form-item>
+                        <search-field
+                            :router="false"
+                            @search="onSearch"
+                            class="me-2"
+                        />
+                    </el-form-item>
+                    <el-form-item>
+                        <log-level-selector
+                            :value="logLevel"
+                            @update:model-value="onLevelChange"
+                        />
+                    </el-form-item>
+                </Collapse>
+                <TaskRunDetails
+                    v-for="taskRun in selectedTask.taskRuns"
+                    :key="taskRun.id"
+                    :target-execution-id="selectedTask.execution?.id"
+                    :task-run-id="taskRun.id"
+                    :filter="logFilter"
+                    :exclude-metas="[
+                        'namespace',
+                        'flowId',
+                        'taskId',
+                        'executionId',
+                    ]"
+                    :level="logLevel"
+                    @follow="emit('follow', $event)"
+                />
+            </div>
+            <div v-if="isShowDescriptionOpen">
+                <Markdown
+                    :source="selectedTask.description"
+                />
+            </div>
+            <div v-if="isShowConditionOpen">
+                <Editor
+                    :read-only="true"
+                    :input="true"
+                    :full-height="false"
+                    :navbar="false"
+                    :model-value="selectedTask.runIf"
+                    lang="yaml"
+                    class="mt-3"
+                />
+            </div>
+        </Drawer>
     </div>
 </template>
 
 <script lang="ts" setup>
     // Core
     import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
+    import type {Ref} from "vue";
 
     import {useI18n} from "vue-i18n";
     import {useStorage} from "@vueuse/core";
     import {useRouter} from "vue-router";
     import {useVueFlow} from "@vue-flow/core";
 
-    // Topology
-    import {Topology} from "@kestra-io/ui-libs";
+    import SearchField from "../layout/SearchField.vue";
+    import LogLevelSelector from "../logs/LogLevelSelector.vue";
+    import TaskRunDetails from "../logs/TaskRunDetails.vue";
+    import Collapse from "../layout/Collapse.vue";
+    import Drawer from "../Drawer.vue";
+    import Markdown from "../layout/Markdown.vue";
+    import Editor from "./Editor.vue";
 
-    // Utils
+    import {Topology} from "@kestra-io/ui-libs";
     import {SECTIONS} from "@kestra-io/ui-libs";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-
-    const router = useRouter();
-
-    const vueflowId = ref(Math.random().toString());
-    const {fitView} = useVueFlow(vueflowId.value);
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
     import {useCoreStore} from "../../stores/core";
     import {usePluginsStore} from "../../stores/plugins";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
-    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
+
+    const router = useRouter();
+
+    const vueflowId = ref(Math.random().toString());
+    const {fitView} = useVueFlow(vueflowId.value);
+
+    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref(null)) as Ref<any>;
 
     const executionsStore = useExecutionsStore();
     const playgroundStore = usePlaygroundStore();
@@ -114,6 +175,8 @@
     const taskEditData = ref();
     const taskEditDomElement = ref();
     const isShowLogsOpen = ref(false);
+    const logFilter = ref("");
+    const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO");
     const isDrawerOpen = ref(false);
     const isShowDescriptionOpen = ref(false);
     const isShowConditionOpen = ref(false);
@@ -277,6 +340,14 @@
         selectedTask.value = event;
         isShowLogsOpen.value = true;
         isDrawerOpen.value = true;
+    };
+
+    const onSearch = (search: string) => {
+        logFilter.value = search;
+    };
+
+    const onLevelChange = (level: string) => {
+        logLevel.value = level;
     };
 
     const showDescription = (event: string) => {

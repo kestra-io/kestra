@@ -16,7 +16,6 @@
     "Per page": "प्रति पृष्ठ",
     "Previous step": "पिछला चरण",
     "Reset guided tour": "पुनः Guided Tour प्रारंभ करें",
-    "Select namespace": "Namespace",
     "Set default page": "पूर्व-निर्धारित पृष्ठ सेट करें",
     "Set labels": "लेबल्स सेट करें",
     "Set labels done": "निष्पादन के लेबल्स सफलतापूर्वक सेट किए गए",
@@ -49,6 +48,10 @@
     "aggregation": "एकत्रीकरण",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "ध्यान दें: इस समय, केवल Gemini को AI प्रदाता के रूप में समर्थन दिया जाता है।\n\nकॉन्फ़िगरेशन सहेजने के बाद अपने Kestra instance को पुनः प्रारंभ करें।",
+          "header": "<b>AI Copilot अभी तक कॉन्फ़िगर नहीं किया गया है।</b>\n\nAI Copilot को सक्षम करने के लिए, अपने Kestra instance configuration फ़ाइल (जैसे <code>application.yml</code>) में निम्नलिखित स्निपेट जोड़ें, और <code>geminiApiKey</code> को अपने वास्तविक key से बदलें:"
+        },
         "generating": "आपके लिए Flow YAML उत्पन्न किया जा रहा है...",
         "prompt_placeholder": "अपने Kestra flow बनाने के लिए निर्देश दर्ज करें। उदाहरण प्रॉम्प्ट: एक flow बनाएं जो हर सोमवार को सुबह 9 बजे चलता है।",
         "title": "एआई एजेंट"
@@ -458,6 +461,10 @@
       "triggers": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> के बारे में और पढ़ें।",
         "title": "आपके flow में कोई Triggers नहीं हैं।"
+      },
+      "versionPlugin": {
+        "content": "यहां आप अपने Kestra instance पर इंस्टॉल किए गए सभी प्लगइन्स का प्रबंधन कर सकते हैं। नए इंस्टॉल किए गए प्लगइन्स आपके instance की कॉन्फ़िगरेशन के आधार पर सभी Kestra सेवाओं में तुरंत उपलब्ध नहीं हो सकते हैं।",
+        "title": "आपके पास अभी तक कोई संस्करणित प्लगइन नहीं है!"
       }
     },
     "empty search": "खोज परिणाम खाली हैं",

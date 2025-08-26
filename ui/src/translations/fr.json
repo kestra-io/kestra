@@ -16,7 +16,6 @@
     "Per page": "par page",
     "Previous step": "Étape précédente",
     "Reset guided tour": "Recommencer la visite guidée",
-    "Select namespace": "Espace de nom",
     "Set default page": "Définir la page par défaut",
     "Set labels": "Ajouter des labels",
     "Set labels done": "Labels ajoutés avec succès à l'exécution",
@@ -49,6 +48,10 @@
     "aggregation": "Agrégation",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "Remarque : Actuellement, seul Gemini est pris en charge comme fournisseur d'IA.\n\nRedémarrez votre instance Kestra après avoir enregistré la configuration.",
+          "header": "<b>AI Copilot n'a pas encore été configuré.</b>\n\nPour activer AI Copilot, ajoutez l'extrait suivant à votre fichier de configuration de l'instance Kestra (par exemple, <code>application.yml</code>), en remplaçant <code>geminiApiKey</code> par votre clé réelle :"
+        },
         "generating": "Génération du YAML de flow pour vous...",
         "prompt_placeholder": "Entrez des instructions pour créer votre flow Kestra. Exemple d'invite : Créez un flow qui s'exécute tous les lundis à 9h.",
         "title": "Agent IA"
@@ -458,6 +461,10 @@
       "triggers": {
         "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> dans notre documentation.",
         "title": "Votre flow n'a pas de triggers."
+      },
+      "versionPlugin": {
+        "content": "Ici, vous pouvez gérer tous les plugins installés sur votre instance Kestra. Les plugins nouvellement installés peuvent ne pas être immédiatement disponibles dans tous les services Kestra, selon la configuration de votre instance.",
+        "title": "Vous n'avez pas encore de plugin versionné !"
       }
     },
     "empty search": "Les résultats de recherche sont vides",

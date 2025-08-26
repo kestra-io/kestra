@@ -11,7 +11,6 @@
 
 <script>
     import ErrorToast from "./components/ErrorToast.vue";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import Utils from "./utils/utils";
     import {shallowRef} from "vue";
@@ -49,7 +48,6 @@
             };
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore, useExecutionsStore, useFlowStore),
             envName() {
                 return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
@@ -118,15 +116,13 @@
                     uid: uid,
                 });
 
-                this.apiStore.loadConfig()
-                    .then(apiConfig => {
-                        this.initStats(apiConfig, config, uid);
-                    })
+                const apiConfig = await this.apiStore.loadConfig();
+                this.initStats(apiConfig, config, uid);
 
                 return config;
             },
             initStats(apiConfig, config, uid) {
-                if (!this.configs || this.configs["isAnonymousUsageEnabled"] === false) {
+                if (this.miscStore.configs["isAnonymousUsageEnabled"] === false) {
                     return;
                 }
 
@@ -149,7 +145,6 @@
                         posthog.alias(apiConfig.id);
                     }
                 }
-
 
                 let surveyVisible = false;
                 window.addEventListener("PHSurveyShown", () => {

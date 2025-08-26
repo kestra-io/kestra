@@ -41,7 +41,6 @@
 <script>
     import {h, ref} from "vue"
     import {ElCheckbox, ElMessageBox} from "element-plus"
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
 
     import TriggerFlow from "../flows/TriggerFlow.vue";
@@ -51,6 +50,7 @@
     import {State} from "@kestra-io/ui-libs"
     import {apiUrl} from "override/utils/route";
     import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {
@@ -64,8 +64,7 @@
             }
         },
         computed: {
-            ...mapStores(useExecutionsStore),
-            ...mapState("auth", ["user"]),
+            ...mapStores(useExecutionsStore, useAuthStore),
             execution() {
                 return this.executionsStore.execution;
             },
@@ -73,13 +72,13 @@
                 return apiUrl(this.$store);
             },
             canDelete() {
-                return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace);
+                return this.execution && this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace);
             },
             isAllowedEdit() {
-                return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
+                return this.execution && this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
             },
             isAllowedTrigger() {
-                return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
+                return this.execution && this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
             },
             isATestExecution() {
                 return this.execution && this.execution.labels && this.execution.labels.some(label => label.key === "system.test" && label.value === "true");

@@ -450,7 +450,6 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useMiscStore} from "override/stores/misc.ts";
     import DataTable from "../layout/DataTable.vue";
@@ -480,6 +479,7 @@
 
     import {filterLabels} from "./utils"
     import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth.ts";
     import {useFlowStore} from "../../stores/flow.ts";
 
     export default {
@@ -628,8 +628,7 @@
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useMiscStore, useExecutionsStore, useFlowStore),
+            ...mapStores(useMiscStore, useExecutionsStore, useFlowStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -659,19 +658,19 @@
                 return this.canDelete || this.canUpdate;
             },
             canCreate() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
             },
             canUpdate() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
             },
             canDelete() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
             },
             isAllowedEdit() {
-                return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flowStore.flow.namespace);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.flowStore.flow.namespace);
             },
             hasAnyExecute() {
-                return this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
+                return this.authStore.user?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
             },
             isDisplayedTop() {
                 if(this.visibleCharts) return true;

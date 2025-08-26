@@ -179,9 +179,9 @@
                 }
 
                 if(value === "string") {
-                    if(Array.isArray(this.modelValue) && this.modelValue.length === 1) {
+                    if (Array.isArray(this.modelValue) && this.modelValue.length === 1) {
                         this.$emit("update:modelValue", this.modelValue[0]);
-                    }else{
+                    } else if (typeof this.modelValue !== "string"){
                         this.$emit("update:modelValue", YAML_UTILS.stringify(this.modelValue));
                     }
                 }

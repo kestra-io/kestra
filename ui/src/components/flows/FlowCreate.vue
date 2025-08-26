@@ -1,17 +1,16 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
     <section class="full-container">
-        <MultiPanelEditorView v-if="flowStore.flow" />
+        <MultiPanelFlowEditorView v-if="flowStore.flow" />
     </section>
 </template>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import MultiPanelEditorView from "./MultiPanelEditorView.vue";
+    import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
     import {storageKeys} from "../../utils/constants";
     import {useBlueprintsStore} from "../../stores/blueprints";
     import {useCoreStore} from "../../stores/core";
@@ -24,7 +23,7 @@
     export default {
         mixins: [RouteContext],
         components: {
-            MultiPanelEditorView,
+            MultiPanelFlowEditorView,
             TopNavBar
         },
 
@@ -70,7 +69,6 @@ tasks:
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useBlueprintsStore, useCoreStore, useEditorStore, useFlowStore),
             routeInfo() {
                 return {

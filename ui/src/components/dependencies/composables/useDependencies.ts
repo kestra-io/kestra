@@ -3,6 +3,7 @@ import {onMounted, onBeforeUnmount, nextTick, watch, ref} from "vue";
 import {useCoreStore} from "../../../stores/core";
 import {useFlowStore} from "../../../stores/flow";
 import {useExecutionsStore} from "../../../stores/executions";
+import {useNamespacesStore} from "override/stores/namespaces";
 
 import {useI18n} from "vue-i18n";
 
@@ -16,7 +17,7 @@ import cytoscape from "cytoscape";
 
 import {State, cssVariable} from "@kestra-io/ui-libs";
 
-import {NODE, EDGE, FLOW, EXECUTION, type Node, type Edge, type Element} from "../utils/types";
+import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, type Node, type Edge, type Element} from "../utils/types";
 import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies";
 
 import {edgeColors, style} from "../utils/style";
@@ -135,19 +136,19 @@ function setExecutionEdgeColors(edges: cytoscape.EdgeCollection, color: string):
 
 /**
  * Removes the specified CSS classes from all elements (nodes and edges) in the cytoscape instance.
- * 
- * If the subtype is "EXECUTION", it also reapplies the default edge styling.
+ *
+ * If the subtype is `EXECUTION`, it also reapplies the default edge styling.
  *
  * This function is typically used to clear selection, hover, and execution-related classes
  * before applying new styles or resetting the graph state.
  *
  * @param cy - The cytoscape core instance containing the graph elements.
- * @param subtype - The dependency subtype, either "FLOW" or "EXECUTION".
- *                  Edge styles are only reset when subtype is "EXECUTION".
+ * @param subtype - The dependency subtype, either `FLOW`, `EXECUTION` or `NAMESPACE`.
+ *                  Edge styles are only reset when subtype is `EXECUTION`.
  * @param classes - An array of class names to remove from all elements.
- *                  Defaults to ["selected", "faded", "hovered", "executions"].
+ *                  Defaults to [`selected`, `faded`, `hovered`, `executions`].
  */
-export function clearClasses(cy: cytoscape.Core, subtype: typeof FLOW | typeof EXECUTION, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
+export function clearClasses(cy: cytoscape.Core, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
   cy.elements().removeClass(classes.join(" "));
   if (subtype === EXECUTION) cy.edges().style(edgeColors());
 }
@@ -165,29 +166,30 @@ export function fit(cy: cytoscape.Core, padding: number = 50): void {
 /**
  * Handles selecting a node in the cytoscape graph.
  *
- * - Removes all existing "selected", "faded", "hovered" and "executions" states from nodes and edges.
+ * - Removes all existing `selected`, `faded`, `hovered` and `executions` states from nodes and edges.
  * - Marks the chosen node as selected.
  * - Applies a faded style to connected elements based on the subtype:
  *   - FLOW: Fades both connected edges and neighbor nodes.
  *   - EXECUTION: Highlights connected edges with execution color, fades neighbor nodes.
+ *   - NAMESPACE: Fades both connected edges and neighbor nodes.
  * - Updates the provided Vue ref with the selected node’s ID.
  * - Smoothly centers and zooms the viewport on the selected node.
  *
  * @param cy - The cytoscape core instance managing the graph.
  * @param node - The node element to select.
  * @param selected - Vue ref storing the currently selected node ID.
- * @param subtype - Determines how connected elements are highlighted ("FLOW" or "EXECUTION").
+ * @param subtype - Determines how connected elements are highlighted (`FLOW`, `EXECUTION` or `NAMESPACE`).
  * @param id - Optional explicit ID to assign to the ref (defaults to the node’s own ID).
  */
-function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, subtype: typeof FLOW | typeof EXECUTION, id?: Node["id"]): void {
+function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE, id?: Node["id"]): void {
     // Remove all "selected", "faded", "hovered" and "executions" classes from every element
     clearClasses(cy, subtype);
 
     // Mark the chosen node as selected
     node.addClass(SELECTED);
 
-    if (subtype === FLOW) {
-        // FLOW: Fade both connected edges and neighbor nodes
+    if (subtype === FLOW || subtype === NAMESPACE) {
+        // FLOW or NAMESPACE: Fade both connected edges and neighbor nodes
         node.connectedEdges().union(node.connectedEdges().connectedNodes()).addClass(FADED);
     } else {
         // EXECUTION: Highlight connected edges with execution color
@@ -217,17 +219,18 @@ function hoverHandler(cy: cytoscape.Core): void {
  * Initializes and manages a cytoscape instance within a Vue component.
  *
  * @param container - Vue ref pointing to the DOM element that hosts the cytoscape graph.
- * @param subtype - Dependency subtype, either `"FLOW"` or `"EXECUTION"`. Defaults to `"FLOW"`.
+ * @param subtype - Dependency subtype, either `FLOW`, `EXECUTION` or `NAMESPACE`. Defaults to `FLOW`.
  * @param initialNodeID - Optional ID of the node to preselect after layout completes.
  * @param params - Vue Router params, expected to include `id` and `namespace`.
  * @param isTesting - When true, bypasses API data fetching and uses mock/test data.
  * @returns An object with element getters, loading state, selected node ID,
  *          selection helpers, and control handlers.
  */
-export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION = FLOW, initialNodeID: string, params: RouteParams, isTesting = false) {
+export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE = FLOW, initialNodeID: string, params: RouteParams, isTesting = false) {
     const coreStore = useCoreStore();
     const flowStore = useFlowStore();
     const executionsStore = useExecutionsStore();
+    const namespacesStore = useNamespacesStore();
 
     const {t} = useI18n({useScope: "global"});
 
@@ -257,7 +260,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         if (!container.value) return;
 
         if(isTesting) elements = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
-        else elements = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype});
+        else elements = await (subtype === NAMESPACE ? namespacesStore : flowStore).loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: (subtype === NAMESPACE ? params.id : params.namespace) as string, subtype});
 
         if(subtype === EXECUTION) nextTick(() => openSSE());
 
@@ -386,11 +389,11 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
  * Cytoscape-compatible elements with the given subtype.
  *
  * @param response - The API response object containing `nodes` and `edges` arrays.
- * @param subtype - The node subtype, either `"FLOW"` or `"EXECUTION"`.
+ * @param subtype - The node subtype, either `FLOW`, `EXECUTION`, or `NAMESPACE`.
  * @returns An array of cytoscape elements with correctly typed nodes and edges.
  */
-export function transformResponse(response: { nodes: { uid: string; namespace: string; id: string; }[]; edges: { source: string; target: string }[] }, subtype: typeof FLOW | typeof EXECUTION): Element[] {
-  const nodes: Node[] = response.nodes.map((node) => ({id: node.uid, type: NODE, flow: node.id, namespace: node.namespace, metadata: subtype === FLOW ? {subtype: FLOW} : {subtype: EXECUTION}}));
+export function transformResponse(response: { nodes: { uid: string; namespace: string; id: string; }[]; edges: { source: string; target: string }[] }, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE): Element[] {
+  const nodes: Node[] = response.nodes.map((node) => ({id: node.uid, type: NODE, flow: node.id, namespace: node.namespace, metadata: {subtype}}));
   const edges: Edge[] = response.edges.map((edge) => ({id: uuid(), type: EDGE, source: edge.source, target: edge.target}));
   return [...nodes.map((node) => ({data: node} as Element)), ...edges.map((edge) => ({data: edge} as Element))];
 }

@@ -9,45 +9,48 @@
         </template>
         <template #content>
             <div class="plugin-doc">
-                <div class="versions" v-if="pluginsStore.versions?.length > 0">
-                    <el-select
-                        v-model="version"
-                        placeholder="Version"
-                        size="small"
-                        :disabled="pluginsStore.versions?.length === 1"
-                        @change="selectVersion(version)"
-                    >
-                        <template #label="{value}">
-                            <span>Version: </span>
-                            <span style="font-weight: bold">{{ value }}</span>
-                        </template>
-                        <el-option
-                            v-for="item in pluginsStore.versions"
-                            :key="item"
-                            :label="item"
-                            :value="item"
+                <div class="d-flex align-items-center justify-content-between gap-3">
+                    <div class="d-flex gap-3 mb-3 align-items-center">
+                        <task-icon
+                            class="plugin-icon"
+                            :cls="pluginType"
+                            only-icon
+                            :icons="pluginsStore.icons"
                         />
-                    </el-select>
-                </div>
-                <div class="d-flex gap-3 mb-3 align-items-center">
-                    <task-icon
-                        class="plugin-icon"
-                        :cls="pluginType"
-                        only-icon
-                        :icons="pluginsStore.icons"
-                    />
-                    <h4 class="mb-0">
-                        {{ pluginName }}
-                    </h4>
-                    <el-button
-                        v-if="releaseNotesUrl"
-                        size="small"
-                        class="release-notes-btn"
-                        :icon="GitHub"
-                        @click="openReleaseNotes"
-                    >
-                        {{ $t('plugins.release') }}
-                    </el-button>
+                        <h4 class="mb-0">
+                            {{ pluginName }}
+                        </h4>
+                        <el-button
+                            v-if="releaseNotesUrl"
+                            size="small"
+                            class="release-notes-btn"
+                            :icon="GitHub"
+                            @click="openReleaseNotes"
+                        >
+                            {{ $t('plugins.release') }}
+                        </el-button>
+                    </div>
+
+                    <div class="mb-3 versions" v-if="pluginsStore.versions?.length > 0">
+                        <el-select
+                            v-model="version"
+                            placeholder="Version"
+                            size="small"
+                            :disabled="pluginsStore.versions?.length === 1"
+                            @change="selectVersion(version)"
+                        >
+                            <template #label="{value}">
+                                <span>Version: </span>
+                                <span style="font-weight: bold">{{ value }}</span>
+                            </template>
+                            <el-option
+                                v-for="item in pluginsStore.versions"
+                                :key="item"
+                                :label="item"
+                                :value="item"
+                            />
+                        </el-select>
+                    </div>
                 </div>
                 <Suspense v-loading="isLoading">
                     <schema-to-html
@@ -194,8 +197,6 @@
 
     .versions {
         min-width: 200px;
-        display: inline-grid;
-        float: right;
     }
 
     :deep(.main-container) {

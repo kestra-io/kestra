@@ -1064,7 +1064,12 @@
     "port": "Port",
     "prefill inputs": "Pré-remplir",
     "prev_execution": "Exécution précédente",
-    "preview": "Aperçu",
+    "preview": {
+      "auto-view": "Vue automatique",
+      "force-editor": "Imposer la vue de l'éditeur",
+      "label": "Aperçu",
+      "view": "Voir"
+    },
     "properties": {
       "hidden": "Caché dans le tableau",
       "hint": "Choisir les colonnes visibles",

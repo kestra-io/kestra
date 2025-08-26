@@ -1064,7 +1064,12 @@
     "port": "端口",
     "prefill inputs": "预填",
     "prev_execution": "先前执行",
-    "preview": "预览",
+    "preview": {
+      "auto-view": "自动视图",
+      "force-editor": "强制编辑器视图",
+      "label": "预览",
+      "view": "查看"
+    },
     "properties": {
       "hidden": "隐藏在表格中",
       "hint": "选择可见列",

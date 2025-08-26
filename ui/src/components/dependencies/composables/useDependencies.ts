@@ -255,16 +255,31 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         }
     };
 
-    let elements: { data: cytoscape.ElementDefinition[]; count: number }  = {data: [], count: 0};
-    onMounted(async () => {
+const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number }>({
+  data: [],
+  count: 0,
+});    onMounted(async () => {
         if (!container.value) return;
 
-        if(isTesting) elements = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
-        else elements = await (subtype === NAMESPACE ? namespacesStore : flowStore).loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: (subtype === NAMESPACE ? params.id : params.namespace) as string, subtype});
+        if(isTesting) elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
+        else {
+            if (subtype === NAMESPACE) {
+                const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});
+                const nodes = data.nodes ?? [];
+                elements.value = {data: transformResponse(data, NAMESPACE), count: new Set(nodes.map((r: { uid: string }) => r.uid)).size};
+            } else {
+                const result = await flowStore.loadDependencies({
+                id: (subtype === FLOW ? params.id : params.flowId) as string,
+                namespace: params.namespace as string,
+                subtype,
+                });
+                elements.value = {data: result.data ?? [], count: result.count};
+            }
+        }
 
         if(subtype === EXECUTION) nextTick(() => openSSE());
 
-        cy = cytoscape({container: container.value, layout, ...options, style, elements: elements.data});
+        cy = cytoscape({container: container.value, layout, ...options, style, elements: elements.value.data});
 
         // Hide nodes immediately after initialization to avoid visual flickering or rearrangement during layout setup
         cy.ready(() => cy.nodes().style("display", "none"));
@@ -299,10 +314,11 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
             // Reveal nodes after layout rendering completes
             cy.nodes().style("display", "element");
-
-            // Preselect the proper node after layout rendering completes
+            
             const node = isTesting ? cy.nodes()[0] : cy.nodes().filter((n) => n.data("flow") === initialNodeID);
-            if (node) selectHandler(cy, node, selectedNodeID, subtype);
+
+            if(subtype === NAMESPACE) fit(cy); // If the subtype is NAMESPACE, fit the entire graph in the viewport
+            else if (node) selectHandler(cy, node, selectedNodeID, subtype); // Else, preselect the proper node after layout rendering completes
         });
     });
 
@@ -367,7 +383,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
     });
 
     return {
-        getElements: () => elements.data,
+        getElements: () => elements.value.data,
         loading,
         selectedNodeID,
         selectNode,

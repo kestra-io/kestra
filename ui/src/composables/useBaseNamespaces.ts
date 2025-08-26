@@ -2,10 +2,6 @@ import {ref} from "vue";
 import {apiUrl, apiUrlWithTenant} from "override/utils/route";
 import Utils from "../utils/utils";
 
-import cytoscape from "cytoscape";
-import {transformResponse} from "../components/dependencies/composables/useDependencies";
-import {NAMESPACE} from "../components/dependencies/utils/types";
-
 function base(store: any, namespace: string) {
     return `${apiUrl(store.vuexStore)}/namespaces/${namespace}`;
 }
@@ -58,15 +54,8 @@ export function useBaseNamespacesStore() {
         return response.data;
     }
 
-    async function loadDependencies(this: any, {namespace}: { namespace: string }): Promise<{ data: cytoscape.ElementDefinition[]; count: number }> {
-        const {status, data} = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${namespace}/dependencies`);
-
-        if (status !== 200) return {data: [], count: 0};
-
-        const nodes = data.nodes ?? [];
-        const count = new Set(nodes.map((r: { uid: string }) => r.uid)).size;
-
-        return {data: transformResponse(data, NAMESPACE), count};
+    async function loadDependencies(this: any, options: {namespace: string}) {
+        return await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${options.namespace}/dependencies`);
     }
 
     async function kvsList(this: any, item: {id: string}) {

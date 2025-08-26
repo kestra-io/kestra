@@ -6,12 +6,13 @@ import BlueprintsBrowser from "../../../override/components/flows/blueprints/Blu
 import Dashboard from "../../../components/dashboard/Dashboard.vue";
 import Flows from "../../../components/flows/Flows.vue";
 import Executions from "../../../components/executions/Executions.vue";
-import Dependencies from "../../../components/namespaces/components/content/Dependencies.vue";
+import Dependencies from "../../../components/dependencies/Dependencies.vue";
 import EditorView from "../../../components/inputs/EditorView.vue";
 
 export interface Tab {
     locked?: boolean;
     maximized?: boolean;
+    count?: number;
 
     name: string;
     title: string;
@@ -104,7 +105,8 @@ export function useHelpers() {
             name: "dependencies",
             title: t("dependencies"),
             component: Dependencies,
-            props: {namespace: namespace.value, type: "dependencies"},
+            count: 0, // TODO: Implement dynamic count based on actual dependencies
+            maximized: true,
         },
         {
             maximized: true,

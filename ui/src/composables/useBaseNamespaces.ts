@@ -2,6 +2,9 @@ import {ref} from "vue";
 import {apiUrl, apiUrlWithTenant} from "override/utils/route";
 import Utils from "../utils/utils";
 
+import {transformResponse} from "../components/dependencies/composables/useDependencies";
+import {NAMESPACE} from "../components/dependencies/utils/types";
+
 function base(store: any, namespace: string) {
     return `${apiUrl(store.vuexStore)}/namespaces/${namespace}`;
 }
@@ -52,6 +55,17 @@ export function useBaseNamespacesStore() {
         }
 
         return response.data;
+    }
+
+    async function loadDependencies(this: any, {namespace}: { namespace: string }) {
+        const {status, data} = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${namespace}/dependencies`);
+
+        if (status !== 200) return {data: {nodes: [], edges: []}, count: 0};
+
+        const nodes = data.nodes ?? [];
+        const count = new Set(nodes.map((r: { uid: string }) => r.uid)).size;
+
+        return {data: transformResponse(data, NAMESPACE), count};
     }
 
     async function kvsList(this: any, item: {id: string}) {
@@ -227,6 +241,7 @@ export function useBaseNamespacesStore() {
         search,
         total,
         load,
+        loadDependencies,
         existing,
         namespace,
         namespaces,

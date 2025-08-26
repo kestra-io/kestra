@@ -57,10 +57,17 @@
                             >
                                 <Teleport v-if="item.logFile" to="#buttons">
                                     <el-button-group class="line">
-                                        <a class="el-button el-button--small el-button--primary" :href="fileUrl(item.logFile)" target="_blank">
-                                            <Download />
+                                        <el-button
+                                            type="primary"
+                                            tag="a"
+                                            :href="fileUrl(item.logFile)"
+                                            target="_blank"
+                                            size="small"
+                                            :icon="Download"
+                                            rel="noopener noreferrer"
+                                        >
                                             {{ $t('download') }}
-                                        </a>
+                                        </el-button>
                                         <FilePreview :value="item.logFile" :execution-id="followedExecution.id" />
                                         <el-button disabled size="small" type="primary" v-if="logFileSizeByPath[item.logFile]">
                                             ({{ logFileSizeByPath[item.logFile] }})
@@ -102,6 +109,10 @@
     </DynamicScroller>
 </template>
 
+<script setup>
+    import Download from "vue-material-design-icons/Download.vue";
+</script>
+
 <script>
     import LogLine from "./LogLine.vue";
     import {State} from "@kestra-io/ui-libs"
@@ -110,7 +121,6 @@
     import moment from "moment";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {logDisplayTypes} from "../../utils/constants";
-    import Download from "vue-material-design-icons/Download.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
@@ -133,7 +143,6 @@
             LogLine,
             DynamicScroller,
             DynamicScrollerItem,
-            Download,
         },
         emits: ["opened-taskruns-count", "follow", "reset-expand-collapse-all-switch", "log-cursor", "log-indices-by-level"],
         props: {

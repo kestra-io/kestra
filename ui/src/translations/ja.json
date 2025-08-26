@@ -48,6 +48,10 @@
     "aggregation": "集計",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "注意: 現時点では、AIプロバイダーとしてGeminiのみがサポートされています。\n\n設定を保存した後、Kestraインスタンスを再起動してください。",
+          "header": "<b>AI Copilotはまだ設定されていません。</b>\n\nAI Copilotを有効にするには、次のスニペットをKestraインスタンスの設定ファイル（例：<code>application.yml</code>）に追加し、<code>geminiApiKey</code>を実際のキーに置き換えてください。"
+        },
         "generating": "フローのYAMLを生成しています...",
         "prompt_placeholder": "指示を入力してKestra flowを作成してください。例: 毎週月曜日の午前9時に実行されるflowを作成してください。",
         "title": "AIエージェント"
@@ -457,6 +461,10 @@
       "triggers": {
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "あなたのflowにはTriggerがありません。"
+      },
+      "versionPlugin": {
+        "content": "ここでは、Kestraインスタンスにインストールされているすべてのプラグインを管理できます。新しくインストールされたプラグインは、インスタンスの設定によっては、すべてのKestraサービスで直ちに利用可能にならない場合があります。",
+        "title": "まだバージョン管理されたプラグインがありません！"
       }
     },
     "empty search": "検索結果がありません",
@@ -1027,6 +1035,7 @@
     "pause done": "実行がPAUSEDされています",
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
     "playground": {
+      "clear_history": "履歴をクリア",
       "confirm_create": "フローを作成中はプレイグラウンドを実行できません。プレイグラウンドの実行を開始すると、flowが作成されます。",
       "history": "直近10回の実行",
       "play_icon_info": "ノーコードまたはトポロジービューで再生アイコンをクリックすることもできます。",
@@ -1036,7 +1045,8 @@
       "run_task_info": "Flow Codeエディタ内の任意のtaskにカーソルを合わせ、「Run task」ボタンをクリックしてtaskをテストします。",
       "run_this_task": "このtaskを実行",
       "title": "プレイグラウンド",
-      "toggle": "プレイグラウンド"
+      "toggle": "プレイグラウンド",
+      "tooltip_persistence": "Playgroundをオフにしてから再度オンにすると、ページに留まっている限り情報は保持されます。"
     },
     "pluginDefaults": "プラグインのデフォルト",
     "pluginPage": {

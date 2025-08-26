@@ -48,6 +48,10 @@
     "aggregation": "Agregacja",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "Uwaga: Obecnie jako dostawca AI obsługiwany jest tylko Gemini.\n\nUruchom ponownie instancję Kestra po zapisaniu konfiguracji.",
+          "header": "<b>AI Copilot nie został jeszcze skonfigurowany.</b>\n\nAby włączyć AI Copilot, dodaj poniższy fragment do pliku konfiguracyjnego instancji Kestra (np. <code>application.yml</code>), zastępując <code>geminiApiKey</code> swoim rzeczywistym kluczem:"
+        },
         "generating": "Generowanie YAML dla flow...",
         "prompt_placeholder": "Wprowadź instrukcje, aby utworzyć swój flow w Kestra. Przykładowa podpowiedź: Utwórz flow, który uruchamia się w każdy poniedziałek o 9:00.",
         "title": "Agent AI"
@@ -457,6 +461,10 @@
       "triggers": {
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> w naszej dokumentacji.",
         "title": "Twój flow nie ma żadnych Triggerów."
+      },
+      "versionPlugin": {
+        "content": "Tutaj możesz zarządzać wszystkimi pluginami zainstalowanymi na Twojej instancji Kestra. Nowo zainstalowane pluginy mogą nie być od razu dostępne we wszystkich usługach Kestra, w zależności od konfiguracji Twojej instancji.",
+        "title": "Nie masz jeszcze wersjonowanego pluginu!"
       }
     },
     "empty search": "Wyniki wyszukiwania są puste",
@@ -1027,6 +1035,7 @@
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
     "playground": {
+      "clear_history": "Wyczyść historię",
       "confirm_create": "Nie można uruchomić playground podczas tworzenia flow. Uruchomienie playground run utworzy flow.",
       "history": "Ostatnie 10 uruchomień",
       "play_icon_info": "Możesz również kliknąć ikonę Play w widokach No-Code lub Topology.",
@@ -1036,7 +1045,8 @@
       "run_task_info": "Najedź kursorem na dowolne zadanie w edytorze Flow Code i kliknij przycisk \"Run task\", aby przetestować swoje zadanie.",
       "run_this_task": "Uruchom ten task",
       "title": "Plac zabaw",
-      "toggle": "Plac zabaw"
+      "toggle": "Plac zabaw",
+      "tooltip_persistence": "Jeśli wyłączysz i ponownie włączysz Playground, informacje pozostaną, dopóki pozostaniesz na stronie."
     },
     "pluginDefaults": "Domyślne ustawienia pluginu",
     "pluginPage": {

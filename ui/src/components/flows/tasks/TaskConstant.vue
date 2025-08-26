@@ -1,5 +1,5 @@
 <template>
-    <pre>{{ model }}</pre>
+    <pre class="ks-constant">{{ model }}</pre>
 </template>
 
 <script setup lang="ts">
@@ -26,5 +26,14 @@
     watch(constValue, (val) => {
         model.value = val
     }, {immediate: true});
-
 </script>
+
+<style scoped>
+.ks-constant {
+    display: block;
+    width: 100%;
+    padding: 0 9px;
+    border: 1px solid var(--ks-border-primary);
+    border-radius: 4px;
+}
+</style>

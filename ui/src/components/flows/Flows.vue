@@ -218,10 +218,19 @@
                                         class="d-flex justify-content-between align-items-center"
                                     >
                                         <Status :status="getLastExecution(scope.row)?.status" size="small" />
-                                        <div class="height: 100px;">
-                                            <Bar :chart="mappedChart(scope.row.id, scope.row.namespace)" show-default short />
-                                        </div>
                                     </div>
+                                </template>
+                            </el-table-column>
+
+                            <el-table-column
+                                prop="state"
+                                v-if="displayColumn('state') &&
+                                    user.hasAny(permission.EXECUTION)"
+                                :label="$t('execution statistics')"
+                                class-name="row-graph"
+                            >
+                                <template #default="scope">
+                                    <TimeSeries :chart="mappedChart(scope.row.id, scope.row.namespace)" show-default short />
                                 </template>
                             </el-table-column>
 
@@ -280,8 +289,7 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
     import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
-
-    import Bar from "../dashboard/sections/Bar.vue";
+    import TimeSeries from "../dashboard/sections/TimeSeries.vue";
 
     const file = ref(null);
 </script>
@@ -313,12 +321,14 @@
     import {useFlowStore} from "../../stores/flow.ts";
 
     const CHART_DEFINITION = {
-        id: "executions_per_namespace_bars",
-        type: "io.kestra.plugin.core.dashboard.chart.Bar",
+        id: "total_executions_timeseries",
+        type: "io.kestra.plugin.core.dashboard.chart.TimeSeries",
         chartOptions: {
-            displayName: "Executions (per namespace)",
+            displayName: "Total Executions",
+            description: "Executions duration and count per date",
             legend: {enabled: false},
-            column: "total",
+            column: "date",
+            colorByColumn: "state",
             width: 12,
         },
         data: {
@@ -327,6 +337,7 @@
                 date: {field: "START_DATE", displayName: "Date"},
                 state: {field: "STATE"},
                 total: {displayName: "Executions", agg: "COUNT"},
+                duration: {field: "DURATION", displayName: "Duration", agg: "SUM"},
             },
             where: [
                 {

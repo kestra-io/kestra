@@ -47,14 +47,14 @@
     import Add from "../../code/components/Add.vue";
     import getTaskComponent from "./getTaskComponent";
     import TaskWrapper from "./TaskWrapper.vue";
-    import {SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
+    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
 
     defineOptions({inheritAttrs: false});
 
-    const schemaPath = inject(SCHEMA_PATH_INJECTION_KEY, ref())
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref())
 
-    provide(SCHEMA_PATH_INJECTION_KEY, computed(() => {
-        return [schemaPath.value, "properties", props.root, "items"].join("/");
+    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => {
+        return [blockSchemaPath.value, "properties", props.root, "items"].join("/");
     }));
 
     const emits = defineEmits(["update:modelValue"]);
@@ -95,7 +95,9 @@
     );
 
     const handleInput = (value: string, index: number) => {
-        emits("update:modelValue", [...items.value].splice(index, 1, value));
+        const newVal = [...items.value]
+        newVal.splice(index, 1, value);
+        emits("update:modelValue", newVal);
     };
 
     const newEmptyValue = computed(() => {

@@ -157,10 +157,10 @@
                         {
                             label: `${ns}.${flowId}`,
                             link: {
-                                name: "namespaces/update",
+                                name: "flows/update",
                                 params: {
-                                    id: ns,
-                                    tab: "executions"
+                                    namespace: ns,
+                                    id: flowId
                                 }
                             }
                         },

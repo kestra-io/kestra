@@ -3,11 +3,12 @@
         <Element
             :section="root"
             :parent-path-complete="parentPathComplete"
-            :block-schema-path="[schemaPath, 'properties', root.split('.').pop()].join('/')"
+            :block-schema-path="[blockSchemaPath, 'properties', root.split('.').pop()].join('/')"
             :element="{
                 id: model?.id ?? 'Set a task',
                 type: model?.type,
             }"
+            type-field-schema="type"
             @remove-element="removeElement()"
         />
     </div>
@@ -19,7 +20,7 @@
         PARENT_PATH_INJECTION_KEY,
         REF_PATH_INJECTION_KEY,
         CREATING_TASK_INJECTION_KEY,
-        SCHEMA_PATH_INJECTION_KEY
+        BLOCK_SCHEMA_PATH_INJECTION_KEY
     } from "../../code/injectionKeys";
     import Element from "../../code/components/collapse/Element.vue";
 
@@ -38,7 +39,7 @@
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
     const creatingTask = inject(CREATING_TASK_INJECTION_KEY, false);
-    const schemaPath = inject(SCHEMA_PATH_INJECTION_KEY, ref())
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref())
 
     const parentPathComplete = computed(() => {
         return `${[

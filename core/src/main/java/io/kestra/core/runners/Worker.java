@@ -507,14 +507,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
             Execution execution = workerTrigger.getTrigger().isFailOnTriggerError() ? TriggerService.generateExecution(workerTrigger.getTrigger(), workerTrigger.getConditionContext(), workerTrigger.getTriggerContext(), (Output) null)
                 .withState(FAILED) : null;
             if (execution != null) {
-                RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution))
-                    .forEach(log -> {
-                        try {
-                            logQueue.emitAsync(log);
-                        } catch (QueueException ex) {
-                            // fail silently
-                        }
-                    });
+                try {
+                    logQueue.emitAsync(RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution)));
+                } catch (QueueException ex) {
+                    // fail silently
+                }
             }
             this.workerTriggerResultQueue.emit(
                 WorkerTriggerResult.builder()

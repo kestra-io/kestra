@@ -2,7 +2,7 @@
     <div v-if="playgroundStore.enabled && isTask && taskObject?.id" class="flow-playground">
         <PlaygroundRunTaskButton :task-id="taskObject?.id" />
     </div>
-    <el-form label-position="top">
+    <el-form v-if="isTaskDefinitionBasedOnType" label-position="top">
         <el-form-item>
             <template #label>
                 <div class="type-div">
@@ -12,21 +12,21 @@
             </template>
             <PluginSelect
                 v-model="selectedTaskType"
+                :block-schema-path
                 @update:model-value="onTaskTypeSelect"
             />
         </el-form-item>
     </el-form>
-
     <div @click="isPlugin && pluginsStore.updateDocumentation(taskObject as Parameters<typeof pluginsStore.updateDocumentation>[0])">
         <TaskObject
             v-loading="isLoading"
-            v-if="selectedTaskType && schema"
+            v-if="(selectedTaskType || !isTaskDefinitionBasedOnType) && schemaProp"
             name="root"
             :model-value="taskObject"
             @update:model-value="onTaskInput"
             :schema="schemaProp"
             :properties="properties"
-            :definitions="schema.definitions"
+            :definitions="fullSchema.definitions"
         />
     </div>
 </template>
@@ -35,18 +35,20 @@
     import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    // @ts-expect-error TaskObject can't be typed for now because of time constraints
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {NoCodeElement, Schemas} from "../code/utils/types";
     import {
-        SCHEMA_PATH_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
+        FULL_SCHEMA_INJECTION_KEY,
+        SCHEMA_DEFINITIONS_INJECTION_KEY,
     } from "../code/injectionKeys";
     import {removeNullAndUndefined} from "../code/utils/cleanUp";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {usePlaygroundStore} from "../../stores/playground";
-    import {getValueAtJsonPath} from "../../utils/utils";
+    import {getValueAtJsonPath, resolve$ref} from "../../utils/utils";
     import PlaygroundRunTaskButton from "../inputs/PlaygroundRunTaskButton.vue";
 
     const {t} = useI18n();
@@ -71,9 +73,8 @@
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
 
-    provide(SCHEMA_PATH_INJECTION_KEY, computed(() => `#/definitions/${selectedTaskType.value}`))
 
-    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
 
     const isTask = computed(() => ["task", "tasks"].includes(parentPath.split(".").pop() ?? ""));
 
@@ -85,6 +86,27 @@
         return parentPath !== "inputs"
     });
 
+    const schemaAtBlockPath = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value))
+    const isTaskDefinitionBasedOnType = computed(() => {
+        if(isPluginDefaults.value){
+            return true
+        }
+        const firstAnyOf = Array.isArray(schemaAtBlockPath.value?.anyOf) ? schemaAtBlockPath.value?.anyOf[0] : undefined;
+        if (!firstAnyOf) return false;
+        if(firstAnyOf.properties){
+            return firstAnyOf?.properties?.type !== undefined;
+        }
+        if(Array.isArray(firstAnyOf.allOf)){
+            return firstAnyOf.allOf.some((item: any) => {
+                return resolve$ref(fullSchema.value, item)
+                    .properties?.type !== undefined;
+            });
+        }
+        return true
+    });
+
+    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => selectedTaskType.value ? `#/definitions/${resolvedType.value}` : blockSchemaPath.value));
+
     watch(modelValue, (v) => {
         if (!v) {
             taskObject.value = {};
@@ -94,9 +116,15 @@
         }
     }, {immediate: true});
 
-    const schema = computed(() => {
-        return plugin.value?.schema;
-    });
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<{
+        definitions: Record<string, any>,
+        $ref: string,
+    }>({
+        definitions: {},
+        $ref: "",
+    }));
+
+    const schema = computed(() => plugin.value?.schema);
 
     const properties = computed(() => {
         const updatedProperties = schemaProp.value?.properties;
@@ -118,11 +146,15 @@
                 $required: true
             };
         }
+
         return updatedProperties
     });
 
     const schemaProp = computed(() => {
-        const prop = schema.value?.properties;
+        const prop = isTaskDefinitionBasedOnType.value
+            ? schema.value?.properties
+            : schemaAtBlockPath.value
+
         if(!prop){
             return undefined;
         }
@@ -152,14 +184,14 @@
         }
     });
 
+    const fieldDefinition = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value));
+
     // useful to map inputs to their real schema
     const typeMap = computed<Record<string, string>>(() => {
-        const field = getValueAtJsonPath(pluginsStore.flowSchema, blockSchemaPath)
-
-        if (field?.anyOf) {
-            const f = field.anyOf.reduce((acc: Record<string, string>, item: any) => {
+        if (fieldDefinition.value?.anyOf) {
+            const f = fieldDefinition.value.anyOf.reduce((acc: Record<string, string>, item: any) => {
                 if (item.$ref) {
-                    const i = getValueAtJsonPath(pluginsStore.flowSchema, item.$ref);
+                    const i = getValueAtJsonPath(fullSchema.value, item.$ref);
                     if(i) item = i;
                 }
                 if (item.allOf) {
@@ -185,7 +217,24 @@
         return {}
     });
 
-    watch([selectedTaskType, () => pluginsStore.flowSchema], ([task]) => {
+    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
+    const resolvedType = computed(() => typeMap.value[selectedTaskType.value ?? ""] ?? selectedTaskType.value ?? "");
+
+    function load() {
+        // try to resolve the type from local schema
+        if (definitions.value?.[resolvedType.value]) {
+            const defs = definitions.value ?? {}
+            plugin.value = {
+                schema: {
+                    properties: defs[resolvedType.value],
+                    definitions: defs,
+                }
+            };
+            return;
+        }
+    }
+
+    watch([selectedTaskType, fullSchema], ([task]) => {
         if (task) {
             load();
             if(isPlugin.value){
@@ -194,20 +243,7 @@
         }
     }, {immediate: true});
 
-    function load() {
-        const resolvedType = typeMap.value[selectedTaskType.value ?? ""] ?? selectedTaskType.value ?? "";
-        // try to resolve the type from local schema
-        if (pluginsStore.flowDefinitions?.[resolvedType]) {
-            const defs = pluginsStore.flowDefinitions ?? {}
-            plugin.value = {
-                schema: {
-                    properties: defs[resolvedType],
-                    definitions: defs,
-                }
-            };
-            return;
-        }
-    }
+
 
     function onTaskInput(val: PartialCodeElement | undefined) {
         taskObject.value = val;

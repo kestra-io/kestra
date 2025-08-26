@@ -212,7 +212,7 @@ kestra:
         retention: 30d
   anonymous-usage-report:
     enabled: true
-    uri: https://api.kestra.io/v1/reports/usages
+    uri: https://api.kestra.io/v1/server-events/
     initial-delay: 5m
     fixed-delay: 1h
 

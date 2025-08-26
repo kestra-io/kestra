@@ -9,9 +9,9 @@
 <script setup lang="ts">
     import {computed} from "vue";
     
-    import {FLOW, EXECUTION, type Node} from "../utils/types";
+    import {FLOW, EXECUTION, NAMESPACE, type Node} from "../utils/types";
 
-    const props = defineProps<{ node: Node, subtype: typeof FLOW | typeof EXECUTION}>();
+    const props = defineProps<{ node: Node, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE}>();
 
     const to = computed(() => {
         const base = {namespace: props.node.namespace};

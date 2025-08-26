@@ -105,7 +105,6 @@ export function useHelpers() {
             name: "dependencies",
             title: t("dependencies"),
             component: Dependencies,
-            count: 0, // TODO: Implement dynamic count based on actual dependencies
             maximized: true,
         },
         {

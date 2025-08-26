@@ -1380,13 +1380,11 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     private Executor handleFailedExecutionFromExecutor(Executor executor, Exception e) {
         Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
 
-        failedExecutionWithLog.getLogs().forEach(log -> {
-            try {
-                logQueue.emitAsync(log);
-            } catch (QueueException ex) {
-                // fail silently
-            }
-        });
+        try {
+            logQueue.emitAsync(failedExecutionWithLog.getLogs());
+        } catch (QueueException ex) {
+            // fail silently
+        }
 
         return executor.withExecution(failedExecutionWithLog.getExecution(), "exception");
     }

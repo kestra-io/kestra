@@ -34,7 +34,7 @@
         "bootstrap": "^5.3.7",
         "buffer": "^6.0.3",
         "chart.js": "^4.5.0",
-        "core-js": "^3.45.0",
+        "core-js": "^3.45.1",
         "cronstrue": "^3.2.0",
         "cytoscape": "^3.33.0",
         "dagre": "^0.8.5",

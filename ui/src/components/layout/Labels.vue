@@ -26,8 +26,18 @@
     }
 
     const props = withDefaults(
-        defineProps<{ labels: Label[]; readOnly?: boolean }>(),
-        {labels: () => [], readOnly: false},
+        defineProps<{ 
+            labels: Label[]; 
+            readOnly?: boolean;
+            namespace?: string;
+            flowId?: string;
+        }>(),
+        {
+            labels: () => [], 
+            readOnly: false,
+            namespace: undefined,
+            flowId: undefined,
+        },
     );
 
     import {decodeSearchParams} from "../../components/filter/utils/helpers";
@@ -55,9 +65,16 @@
             delete replacementQuery[getKey(label.key)];
             router.replace({query: replacementQuery});
         } else {
-            router.replace({
-                query: {...route.query, [getKey(label.key)]: label.value},
-            });
+            const newQuery = {...route.query, [getKey(label.key)]: label.value};
+            
+            if (props.namespace && !newQuery["filters[namespace][EQUALS]"]) {
+                newQuery["filters[namespace][EQUALS]"] = props.namespace;
+            }
+            if (props.flowId && !newQuery["filters[flowId][EQUALS]"]) {
+                newQuery["filters[flowId][EQUALS]"] = props.flowId;
+            }
+            
+            router.replace({query: newQuery});
         }
     };
 </script>

@@ -242,7 +242,11 @@
 
                         <el-table-column v-if="displayColumn('labels')" :label="$t('labels')">
                             <template #default="scope">
-                                <labels :labels="filteredLabels(scope.row.labels)" />
+                                <labels 
+                                    :labels="filteredLabels(scope.row.labels)" 
+                                    :namespace="namespace"
+                                    :flow-id="flowId"
+                                />
                             </template>
                         </el-table-column>
 

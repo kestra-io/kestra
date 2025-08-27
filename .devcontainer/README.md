@@ -24,6 +24,10 @@ In the meantime, you can move onto the next step...
 ---
 
 ### Development:
+- (Optional) By default, your dev server will target `localhost:8080`. If your backend is running elsewhere, you can create `.env.development.local` under `ui` folder with this content:
+```
+VITE_APP_API_URL={myApiUrl}
+```
 
 - Navigate into the `ui` folder and run `npm install` to install the dependencies for the frontend project.
 

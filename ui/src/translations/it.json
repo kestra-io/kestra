@@ -217,6 +217,7 @@
       "edition": {
         "chart": "Modifica questo grafico",
         "confirmation": "Le modifiche nel dashboard <code>{title}</code> sono state salvate.",
+        "id readonly": "La proprietà `id` non può essere modificata — è ora impostata sui suoi valori iniziali. Se desideri cambiarla, puoi creare una nuova dashboard e rimuovere quella vecchia.",
         "label": "Modifica Dashboard"
       },
       "empty": "Non ci sono risultati da mostrare.",

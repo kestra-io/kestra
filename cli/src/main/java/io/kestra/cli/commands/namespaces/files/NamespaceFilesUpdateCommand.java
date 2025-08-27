@@ -39,8 +39,6 @@ public class NamespaceFilesUpdateCommand extends AbstractApiCommand {
     @Inject
     private TenantIdSelectorService tenantService;
 
-    private static final String KESTRA_IGNORE_FILE = ".kestraignore";
-
     @Override
     public Integer call() throws Exception {
         super.call();

@@ -96,8 +96,8 @@
         if (currentIsFlow && source) {
             await flowStore.loadGraphFromSource({
                 flow: source,
-            }).catch(() => {
-                // Eat errors
+            }).catch((error) => {
+                console.error("Error loading graph:", error);
             })
         }
         

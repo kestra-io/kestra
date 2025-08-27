@@ -184,9 +184,31 @@
 
 
     function updatePluginDocumentation(event: any) {
-        const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
-        let element = (elementWrapper?.value?.type !== undefined ? elementWrapper.value : elementWrapper?.parents?.findLast(p => p.type !== undefined)) as Parameters<typeof pluginsStore.updateDocumentation>[0];
-        pluginsStore.updateDocumentation(element);
+        const source = event.model.getValue();
+        const cursorOffset = event.model.getOffsetAt(event.position);
+        
+        const isPlugin = (type: string) => pluginsStore.allTypes.includes(type);
+        const isInRange = (range: [number, number, number]) => 
+            cursorOffset >= range[0] && cursorOffset <= range[2];
+        const getRangeSize = (range: [number, number, number]) => range[2] - range[0];
+
+        const getElementFromRange = (typeElement: any) => {
+            const wrapper = YAML_UTILS.localizeElementAtIndex(source, typeElement.range[0]);
+            return wrapper?.value?.type && isPlugin(wrapper.value.type)
+                ? wrapper.value 
+                : {type: typeElement.type};
+        };
+
+        const selectedElement = YAML_UTILS.extractFieldFromMaps(source, "type", () => true, isPlugin)
+            .filter(el => el.range && isInRange(el.range))
+            .reduce((closest, current) => 
+                        !closest || getRangeSize(current.range) < getRangeSize(closest.range)
+                            ? current
+                            : closest
+                    , null as any);
+
+        const result = selectedElement ? getElementFromRange(selectedElement) : undefined;
+        pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
     };
 
     const save = async () => {

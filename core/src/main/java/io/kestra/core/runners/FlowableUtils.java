@@ -49,6 +49,19 @@ public class FlowableUtils {
         return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, parentTaskRun);
     }
 
+    public static List<NextTaskRun> resolveSequentialNexts(
+        Execution execution,
+        List<ResolvedTask> tasks,
+        List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
+        TaskRun parentTaskRun,
+        State.Type terminalState
+    ) {
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun, terminalState);
+
+        return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, parentTaskRun);
+    }
+
     private static List<NextTaskRun> innerResolveSequentialNexts(
         Execution execution,
         List<ResolvedTask> currentTasks,
@@ -149,7 +162,31 @@ public class FlowableUtils {
         boolean allowFailure,
         boolean allowWarning
     ) {
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun);
+        return resolveState(
+            execution,
+            tasks,
+            errors,
+            _finally,
+            parentTaskRun,
+            runContext,
+            allowFailure,
+            allowWarning,
+            State.Type.SUCCESS
+        );
+    }
+
+    public static Optional<State.Type> resolveState(
+        Execution execution,
+        List<ResolvedTask> tasks,
+        List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
+        TaskRun parentTaskRun,
+        RunContext runContext,
+        boolean allowFailure,
+        boolean allowWarning,
+        State.Type terminalState
+    ) {
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun, terminalState);
 
         if (currentTasks == null) {
             runContext.logger().warn(
@@ -161,17 +198,17 @@ public class FlowableUtils {
 
             return Optional.of(allowFailure ? allowWarning ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED);
         } else if (currentTasks.stream().allMatch(t -> t.getTask().getDisabled()) && !currentTasks.isEmpty()) {
-            // if all child tasks are disabled, we end in SUCCESS
-            return Optional.of(State.Type.SUCCESS);
+            // if all child tasks are disabled, we end in the terminal state
+            return Optional.of(terminalState);
         } else if (!currentTasks.isEmpty()) {
-            // handle nominal case, tasks or errors flow are ready to be analysed
+            // handle nominal case, tasks or errors flow are ready to be analyzed
             if (execution.isTerminated(currentTasks, parentTaskRun)) {
-                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning));
+                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
             }
         } else {
             // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
-            if (execution.hasFailed(tasks, parentTaskRun)) {
-                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning));
+            if (execution.hasFailed(tasks, parentTaskRun) || terminalState == State.Type.FAILED) {
+                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
             }
         }
 

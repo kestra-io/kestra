@@ -1,7 +1,7 @@
 <template>
     <div @click="handleClick" class="d-flex my-2 p-2 rounded element" :class="{'moved': moved}">
-        <div v-if="props.parentPathComplete !== 'inputs'" class="me-2 icon">
-            <TaskIcon :cls="element.type" :icons only-icon />
+        <div v-if="!['inputs', 'layout'].includes(props.parentPathComplete)" class="me-2 icon">
+            <TaskIcon :cls="element.type" :icons="pluginsStore.icons" only-icon />
         </div>
 
         <div class="flex-grow-1 label">
@@ -35,7 +35,7 @@
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
     import {
-        EDIT_TASK_FUNCTION_INJECTION_KEY
+        EDIT_TASK_FUNCTION_INJECTION_KEY,
     } from "../../injectionKeys";
 
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
@@ -48,29 +48,26 @@
         section: string;
         parentPathComplete: string;
         element: {
-            id: string;
-            type: string;
+            id?: string;
+            type?: string;
+            on?: string;
         };
         blockSchemaPath: string;
         elementIndex?: number;
+        typeFieldSchema: "on" | "type";
         moved?: boolean;
     }>();
 
     const pluginsStore = usePluginsStore();
     const playgroundStore = usePlaygroundStore();
 
-    const isTask = computed(() => ["tasks", "task"].includes(props.parentPathComplete?.split(".").pop() ?? "not-found"));
+    const isTask = computed(() => ["tasks", "task"].includes(props.parentPathComplete.split(".").pop() ?? "not-found"));
 
-    const icons = computed(() => pluginsStore.icons);
-
-    const editTask = inject(
-        EDIT_TASK_FUNCTION_INJECTION_KEY,
-        () => {},
-    );
+    const editTask = inject(EDIT_TASK_FUNCTION_INJECTION_KEY, () => {});
 
     const identifier = computed(() => {
         return props.element.id
-            ?? props.element.type
+            ?? props.element[props.typeFieldSchema]
             ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`;
     });
 
@@ -78,7 +75,7 @@
         editTask(
             props.parentPathComplete,
             props.blockSchemaPath,
-            props.elementIndex,
+            props.elementIndex
         );
     };
 </script>

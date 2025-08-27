@@ -41,7 +41,7 @@ export default defineConfig({
     server: {
         proxy: {
             "^/api": {
-                target: "http://kestra:8080", // Make sure to change your /etc/hosts file, to contain this line: 127.0.0.1 kestra
+                target: "http://localhost:8080",
                 ws: true,
                 changeOrigin: true
             }

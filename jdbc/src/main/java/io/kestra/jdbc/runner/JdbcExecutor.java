@@ -1223,7 +1223,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     .increment();
 
                 try {
-                    // Handle paused tasks
+                    // Handle paused tasks and scheduledAt
                     if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW) && !pair.getLeft().getState().isTerminated()) {
                         if (executionDelay.getTaskRunId() == null) {
                             // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
@@ -1242,7 +1242,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             executor = executor.withExecution(markAsExecution, "pausedRestart");
                         }
                     }
-                    // Handle failed tasks
+                    // Handle failed task retries
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
                         Execution newAttempt = executionService.retryTask(
                             pair.getKey(),
@@ -1250,11 +1250,12 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         );
                         executor = executor.withExecution(newAttempt, "retryFailedTask");
                     }
-                    // Handle failed flow
+                    // Handle failed flow retries
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)) {
                         Execution newExecution = executionService.replay(executor.getExecution(), null, null);
                         executor = executor.withExecution(newExecution, "retryFailedFlow");
                     }
+                    // Handle WaitFor
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
                         Execution execution  = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
                         executor = executor.withExecution(execution, "continueLoop");

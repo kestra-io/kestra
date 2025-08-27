@@ -220,7 +220,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
     @Override
     public AbstractGraph tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
-        if (this.tasks == null || this.tasks.isEmpty()) {
+        if (ListUtils.isEmpty(tasks) && ListUtils.isEmpty(errors) && ListUtils.isEmpty(_finally)) {
             return new GraphTask(this, taskRun, parentValues, RelationType.SEQUENTIAL);
         }
 
@@ -228,7 +228,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
         GraphUtils.sequential(
             subGraph,
-            this.getOnPause() != null ? ListUtils.concat(List.of(this.getOnPause()), this.tasks) : this.tasks,
+            this.getOnPause() != null ? ListUtils.concat(List.of(this.getOnPause()), this.tasks) : ListUtils.emptyOnNull(this.tasks),
             this.errors,
             this._finally,
             taskRun,
@@ -250,7 +250,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        List<Task> childTasks = new ArrayList<>(this.getTasks());
+        List<Task> childTasks = new ArrayList<>(ListUtils.emptyOnNull(this.getTasks()));
         if (onPause != null) {
             childTasks.addFirst(onPause);
         }
@@ -263,13 +263,22 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
             return Collections.emptyList();
         }
 
+        // get back the original state of the Pause task
+        State.Type terminalState = findTerminalState(parentTaskRun);
         return FlowableUtils.resolveSequentialNexts(
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
-            parentTaskRun
+            parentTaskRun,
+            terminalState
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    private static State.Type findTerminalState(TaskRun parentTaskRun) {
+        Map<String, Object> resumed = (Map<String, Object>) parentTaskRun.getOutputs().get("resumed");
+        return resumed.isEmpty() || !resumed.containsKey("to") ? State.Type.SUCCESS : State.Type.valueOf((String) resumed.get("to"));
     }
 
     private boolean needPause(TaskRun parentTaskRun) {
@@ -284,27 +293,19 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
             return Optional.of(State.Type.PAUSED);
         }
 
-        Behavior behavior  = runContext.render(this.behavior).as(Behavior.class).orElse(Behavior.RESUME);
-        return switch (behavior) {
-            case Behavior.RESUME -> {
-                // yield SUCCESS or the final flowable task state
-                if (ListUtils.isEmpty(this.tasks)) {
-                    yield Optional.of(State.Type.SUCCESS);
-                } else {
-                    yield FlowableTask.super.resolveState(runContext, execution, parentTaskRun);
-                }
-            }
-            case Behavior.WARN -> {
-                // yield WARNING or the final flowable task state, if the flowable ends in SUCCESS, yield WARNING
-                if (ListUtils.isEmpty(this.tasks)) {
-                    yield Optional.of(State.Type.WARNING);
-                } else {
-                    Optional<State.Type> finalState = FlowableTask.super.resolveState(runContext, execution, parentTaskRun);
-                    yield finalState.map(state -> state == State.Type.SUCCESS ? State.Type.WARNING : state);
-                }
-            }
-            case Behavior.CANCEL ,Behavior.FAIL -> throw new IllegalArgumentException("The " + behavior + " cannot be handled at this stage, this is certainly a bug!");
-        };
+        // get back the original state of the Pause task
+        State.Type terminalState = findTerminalState(parentTaskRun);
+        return FlowableUtils.resolveState(
+            execution,
+            this.childTasks(runContext, parentTaskRun),
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
+            parentTaskRun,
+            runContext,
+            isAllowFailure(),
+            isAllowWarning(),
+            terminalState
+        );
     }
 
     public Map<String, Object> generateOutputs(Map<String, Object> inputs, Resumed resumed) {
@@ -325,13 +326,21 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
         private Resumed resumed;
     }
 
-    public record Resumed(@Nullable String by, LocalDateTime on) {
+    public record Resumed(@Nullable String by, LocalDateTime on, State.Type to) {
         public static Resumed now() {
-            return new Resumed(null, LocalDateTime.now());
+            return new Resumed(null, LocalDateTime.now(), State.Type.SUCCESS);
+        }
+
+        public static Resumed now(State.Type to) {
+            return new Resumed(null, LocalDateTime.now(), to);
         }
 
         public static Resumed now(String by) {
-            return new Resumed(by, LocalDateTime.now());
+            return new Resumed(by, LocalDateTime.now(), State.Type.SUCCESS);
+        }
+
+        public static Resumed now(String by, State.Type to) {
+            return new Resumed(by, LocalDateTime.now(), to);
         }
     }
 

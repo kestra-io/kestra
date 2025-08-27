@@ -1,12 +1,14 @@
-import {h, markRaw, Ref, Suspense} from "vue"
+import {computed, h, markRaw, Ref, Suspense} from "vue"
 import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import type {Panel, Tab} from "../MultiPanelTabs.vue";
-import NoCodeWrapper from "../code/NoCodeWrapper.vue"
 
-import type {NoCodeProps} from "../code/NoCodeWrapper.vue";
 import {useFlowStore} from "../../stores/flow";
+import {useEditorStore} from "../../stores/editor";
+import {NoCodeProps} from "./noCodeTypes";
+
+
 import {trackTabOpen, trackTabClose} from "../../utils/tabTracking";
 
 const NOCODE_PREFIX = "nocode"
@@ -38,22 +40,25 @@ export function getEditTabKey(tab: NoCodeProps, index: number) {
     // remove irrelevant properties from the tab object
     const {
         creatingTask: _,
-        editingTask: ___,
         position: __,
+        editingTask: ___,
         ...relevantTabProps
     } = tab
-    return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify({
-                    action: "edit",
-                    ...relevantTabProps
-                })}`
+
+    const keyParts = {
+        action: "edit",
+        ...relevantTabProps
+    }
+    return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify(keyParts, Object.keys(keyParts).sort())}`
 }
 
 export function getCreateTabKey(tab: NoCodeProps, index: number) {
     const indexWithLeftPadding = String(index).padStart(4, "0")
-    return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify({
+    const keyParts = {
         action: "create",
         ...tab,
-    })}`
+    }
+    return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify(keyParts, Object.keys(keyParts).sort())}`
 }
 
 interface NoCodeTabWithAction extends NoCodeProps {
@@ -62,7 +67,7 @@ interface NoCodeTabWithAction extends NoCodeProps {
 
 let keepAliveCacheBuster = 0
 
-export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) => string, handlers: Handlers, flow: string, dirty: boolean = false): Tab {
+function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: string) => string, handlers: Handlers, flow: string, dirty: boolean = false): Tab {
     function getTabValues(tab: NoCodeTabWithAction) {
         // FIXME optimize by avoiding to stringify then parse again the yaml object.
         // maybe we could have a function in the YAML_UTILS that returns the parsed value.
@@ -120,12 +125,12 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
             name: "NoCodeTab",
             props: ["panelIndex", "tabIndex"],
             setup: (props: Opener) => () => h(Suspense, {},
-                [h(NoCodeWrapper, {
+                [h(Comp, {
                     ...restOfTab,
                     creatingTask: tab.action === "create",
                     editingTask: tab.action === "edit",
-                    onCreateTask: onCreateTask?.bind({}, props) as any,
-                    onEditTask: onEditTask?.bind({}, props) as any,
+                    onCreateTask: onCreateTask?.bind({}, props),
+                    onEditTask: onEditTask?.bind({}, props),
                     onCloseTask: onCloseTask?.bind({}, props),
                 })]
             )
@@ -133,17 +138,21 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
     }
 }
 
-export function setupInitialNoCodeTabIfExists(flow: string, tab: string, t: (key: string) => string, handlers: Handlers) {
+export function setupInitialNoCodeTabIfExists(Comp: any, tab: string, t: (key: string) => string, handlers: Handlers, flowYaml: string) {
+    if (tab === NOCODE_PREFIX) {
+        return getTabFromNoCodeTab(Comp, parseTabId(tab), t, handlers, flowYaml)
+    }
+
     if (tab.startsWith(`${NOCODE_PREFIX}-`)){
         const {parentPath, refPath, action} = parseTabId(tab)
         const path = (refPath === undefined ? parentPath : `${parentPath}[${refPath}]`) ?? ""
-        if(action === "edit" && !YAML_UTILS.extractBlockWithPath({source: flow, path})) {
+        if(action === "edit" && !YAML_UTILS.extractBlockWithPath({source: flowYaml, path})) {
             // if the task is not found, we don't create the tab
             return undefined
         }
     }
 
-    return setupInitialNoCodeTab(tab, t, handlers, flow)
+    return setupInitialNoCodeTab(Comp, tab, t, handlers, flowYaml)
 }
 
 function parseTabId(tabId: string) {
@@ -159,15 +168,72 @@ function parseTabId(tabId: string) {
     }
 }
 
-export function setupInitialNoCodeTab(tab: string, t: (key: string) => string, handlers: Handlers, flowYaml: string) {
+export function setupInitialNoCodeTab(Comp: any, tab: string, t: (key: string) => string, handlers: Handlers, flowYaml: string) {
     if (!tab.startsWith(NOCODE_PREFIX)) {
         return undefined
     }
 
-    return getTabFromNoCodeTab(parseTabId(tab), t, handlers, flowYaml)
+    return getTabFromNoCodeTab(Comp, parseTabId(tab), t, handlers, flowYaml)
 }
 
-export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
+export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: string) => void, actions: ReturnType<typeof useNoCodePanels>) {
+    const editorStore = useEditorStore()
+    const isFlowDirty = computed(() => editorStore.tabs.some((t:any) => t.flow && t.dirty))
+    const noCodeHandlers: Handlers = {
+        onCreateTask(opener, parentPath, blockSchemaPath, refPath, position){
+            const createTabId = getCreateTabKey({
+                parentPath,
+                refPath,
+                blockSchemaPath,
+                position,
+            }, 0).slice(12)
+
+            const tAdd = openTabs.value.find(t => t.endsWith(createTabId))
+
+            // if the tab is already open and has no data, to avoid conflicting data
+            // focus it and don't open a new one
+            if(tAdd && tAdd.startsWith(`${NOCODE_PREFIX}-`)){
+                focusTab(tAdd)
+                return false
+            }
+
+            actions.openAddTaskTab(opener, parentPath, blockSchemaPath, refPath, position, isFlowDirty.value, undefined)
+            return false
+        },
+        onEditTask(...args){
+            // if the tab is already open, focus it
+            // and don't open a new one)
+            const [
+                ,
+                parentPath,
+                blockSchemaPath,
+                refPath
+            ] = args
+            const editKey = getEditTabKey({
+                parentPath,
+                blockSchemaPath,
+                refPath,
+            }, 0).slice(12)
+
+            const tEdit = openTabs.value.find(t => t.endsWith(editKey))
+
+            if(tEdit && tEdit.startsWith(`${NOCODE_PREFIX}-`)){
+                focusTab(tEdit)
+                return false
+            }
+            actions.openEditTaskTab(...args, isFlowDirty.value)
+            return false
+        },
+        onCloseTask(...args){
+            actions.closeTaskTab(...args)
+            return false
+        },
+    }
+
+    return noCodeHandlers
+}
+
+export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: Ref<string[]>, focusTab: (tab: string) => void) {
     const {t} = useI18n()
     const flowStore = useFlowStore()
 
@@ -181,10 +247,10 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         refPath?: number,
         position: "before" | "after" = "after",
         dirty: boolean = false,
-        fieldName?: string | undefined
+        fieldName?: string | undefined,
     ) {
         // create a new tab with the next createIndex
-        const tab = getTabFromNoCodeTab({
+        const tab = getTabFromNoCodeTab(component, {
             action: "create",
             parentPath,
             blockSchemaPath,
@@ -195,24 +261,23 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
 
         trackTabOpen(tab);
 
-        panels.value[opener.panelIndex]?.tabs.splice(opener.tabIndex + 1, 0, tab)
-
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
             return
         }
 
+        openerPanel.tabs.splice(opener.tabIndex + 1, 0, tab)
         openerPanel.activeTab = tab
     }
 
-    function openEditTaskTab(
+     function openEditTaskTab(
         opener: { panelIndex: number, tabIndex: number },
         parentPath: string,
         blockSchemaPath: string,
         refPath?: number,
         dirty: boolean = false
     ) {
-        const tab = getTabFromNoCodeTab({
+        const tab = getTabFromNoCodeTab(component, {
             action: "edit",
             parentPath,
             blockSchemaPath,
@@ -244,9 +309,13 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         }
     }
 
-    return {
+    const actions = {
         openAddTaskTab,
         openEditTaskTab,
         closeTaskTab,
     }
+
+    const handlers = useNoCodeHandlers(openTabs, focusTab, actions)
+
+    return actions
 }

@@ -21,6 +21,7 @@
                 :element-index="elementIndex"
                 :moved="elementIndex == movedIndex"
                 :block-schema-path
+                :type-field-schema
                 @remove-element="removeElement(elementIndex)"
                 @move-element="
                     (direction: 'up' | 'down') =>
@@ -46,14 +47,15 @@
     import Creation from "./buttons/Creation.vue";
     import Element from "./Element.vue";
     import {
-        CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
-        PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY
+        CREATING_TASK_INJECTION_KEY, FULL_SCHEMA_INJECTION_KEY, FULL_SOURCE_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY,
     } from "../../injectionKeys";
     import {SECTIONS_MAP} from "../../../../utils/constants";
+    import {getValueAtJsonPath} from "../../../../utils/utils";
 
     const emits = defineEmits(["remove", "reorder"]);
 
-    const flow = inject(FLOW_INJECTION_KEY, ref(""));
+    const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""));
 
     const props = defineProps<CollapseItem>();
     const filteredElements = computed(() => props.elements?.filter(Boolean) ?? []);
@@ -121,6 +123,14 @@
             }),
         );
     };
+
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
+
+    // resolve parentPathComplete field schema from pluginsStore
+    const typeFieldSchema = computed(() => {
+        const blockSchema = getValueAtJsonPath(fullSchema.value, props.blockSchemaPath)?.properties;
+        return blockSchema?.type ? "type" : blockSchema?.on ? "on" : "type";
+    });
 </script>
 
 <style scoped lang="scss">

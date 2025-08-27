@@ -2,17 +2,20 @@
     <TopNavBar :title="header.title" :breadcrumb="header.breadcrumb" />
     <section class="full-container">
         <Editor
-            v-if="dashboard.sourceCode"
-            :initial-source="dashboard.sourceCode"
+            v-if="sourceCode"
+            v-model="sourceCode"
             @save="save"
         />
     </section>
 </template>
 
 <script setup lang="ts">
-    import {onMounted, computed, ref} from "vue";
+    import {onMounted, computed, ref, watch} from "vue";
 
     import {useRoute} from "vue-router";
+
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+
     const route = useRoute();
 
     import {useCoreStore} from "../../../stores/core";
@@ -20,6 +23,8 @@
 
     import {useDashboardStore} from "../../../stores/dashboard";
     const dashboardStore = useDashboardStore();
+
+    const sourceCode = ref("");
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -45,8 +50,25 @@
     onMounted(() => {
         dashboardStore.load(route.params.dashboard as string).then((response) => {
             dashboard.value = response;
+            sourceCode.value = response.sourceCode;
         });
     });
+
+    watch(sourceCode, (newValue) => {
+        if (YAML_UTILS.parse(newValue).id !== dashboard.value.id) {
+            const coreStore = useCoreStore();
+            coreStore.message = {
+                variant: "error",
+                title: t("readonly property"),
+                message: t("dashboards.edition.id readonly"),
+            };
+            sourceCode.value = YAML_UTILS.replaceBlockWithPath({
+                source: sourceCode.value,
+                path: "id",
+                newContent: dashboard.value.id
+            });
+        }
+    })
 
     const header = computed(() => ({
         title: dashboard.value?.title || route.params.dashboard,

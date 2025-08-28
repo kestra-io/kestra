@@ -54,6 +54,10 @@ export function useBaseNamespacesStore() {
         return response.data;
     }
 
+    async function loadDependencies(this: any, options: {namespace: string}) {
+        return await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${options.namespace}/dependencies`);
+    }
+
     async function kvsList(this: any, item: {id: string}) {
         const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${item.id}/kv`, VALIDATE);
         kvs.value = response.data;
@@ -227,6 +231,7 @@ export function useBaseNamespacesStore() {
         search,
         total,
         load,
+        loadDependencies,
         existing,
         namespace,
         namespaces,

@@ -3,6 +3,7 @@ import {onMounted, onBeforeUnmount, nextTick, watch, ref} from "vue";
 import {useCoreStore} from "../../../stores/core";
 import {useFlowStore} from "../../../stores/flow";
 import {useExecutionsStore} from "../../../stores/executions";
+import {useNamespacesStore} from "override/stores/namespaces";
 
 import {useI18n} from "vue-i18n";
 
@@ -16,11 +17,11 @@ import cytoscape from "cytoscape";
 
 import {State, cssVariable} from "@kestra-io/ui-libs";
 
-import {NODE, EDGE, FLOW, EXECUTION, type Node, type Edge, type Element} from "../utils/types";
+import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, type Node, type Edge, type Element} from "../utils/types";
 import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies";
 
 import {edgeColors, style} from "../utils/style";
-const SELECTED = "selected", FADED = "faded",  HOVERED = "hovered", EXECUTIONS = "executions";
+const SELECTED = "selected", FADED = "faded", HOVERED = "hovered", EXECUTIONS = "executions";
 
 const options: Omit<cytoscape.CytoscapeOptions, "container" | "elements"> & {elements?: Element[]} = {
     minZoom: 0.1,
@@ -113,7 +114,7 @@ function setExecutionNodeColors(cy: cytoscape.Core, nodes?: cytoscape.NodeSingul
     (nodes ?? cy.nodes()).forEach((node) => {
         node.style({
             "background-color": getStateColor(node),
-            "border-color": getStateColor(node)
+            "border-color": getStateColor(node),
         });
     });
 }
@@ -129,27 +130,30 @@ function setExecutionNodeColors(cy: cytoscape.Core, nodes?: cytoscape.NodeSingul
  */
 function setExecutionEdgeColors(edges: cytoscape.EdgeCollection, color: string): void {
     edges.forEach((edge) => {
-        edge.removeClass(FADED).addClass(EXECUTIONS).style({"line-color": color, "target-arrow-color": color});
+        edge.removeClass(FADED).addClass(EXECUTIONS).style({
+            "line-color": color,
+            "target-arrow-color": color
+        });
     });
 }
 
 /**
  * Removes the specified CSS classes from all elements (nodes and edges) in the cytoscape instance.
- * 
- * If the subtype is "EXECUTION", it also reapplies the default edge styling.
+ *
+ * If the subtype is `EXECUTION`, it also reapplies the default edge styling.
  *
  * This function is typically used to clear selection, hover, and execution-related classes
  * before applying new styles or resetting the graph state.
  *
  * @param cy - The cytoscape core instance containing the graph elements.
- * @param subtype - The dependency subtype, either "FLOW" or "EXECUTION".
- *                  Edge styles are only reset when subtype is "EXECUTION".
+ * @param subtype - The dependency subtype, either `FLOW`, `EXECUTION` or `NAMESPACE`.
+ *                  Edge styles are only reset when subtype is `EXECUTION`.
  * @param classes - An array of class names to remove from all elements.
- *                  Defaults to ["selected", "faded", "hovered", "executions"].
+ *                  Defaults to [`selected`, `faded`, `hovered`, `executions`].
  */
-export function clearClasses(cy: cytoscape.Core, subtype: typeof FLOW | typeof EXECUTION, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
-  cy.elements().removeClass(classes.join(" "));
-  if (subtype === EXECUTION) cy.edges().style(edgeColors());
+export function clearClasses(cy: cytoscape.Core, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
+    cy.elements().removeClass(classes.join(" "));
+    if (subtype === EXECUTION) cy.edges().style(edgeColors());
 }
 
 /**
@@ -165,29 +169,30 @@ export function fit(cy: cytoscape.Core, padding: number = 50): void {
 /**
  * Handles selecting a node in the cytoscape graph.
  *
- * - Removes all existing "selected", "faded", "hovered" and "executions" states from nodes and edges.
+ * - Removes all existing `selected`, `faded`, `hovered` and `executions` states from nodes and edges.
  * - Marks the chosen node as selected.
  * - Applies a faded style to connected elements based on the subtype:
  *   - FLOW: Fades both connected edges and neighbor nodes.
  *   - EXECUTION: Highlights connected edges with execution color, fades neighbor nodes.
+ *   - NAMESPACE: Fades both connected edges and neighbor nodes.
  * - Updates the provided Vue ref with the selected node’s ID.
  * - Smoothly centers and zooms the viewport on the selected node.
  *
  * @param cy - The cytoscape core instance managing the graph.
  * @param node - The node element to select.
  * @param selected - Vue ref storing the currently selected node ID.
- * @param subtype - Determines how connected elements are highlighted ("FLOW" or "EXECUTION").
+ * @param subtype - Determines how connected elements are highlighted (`FLOW`, `EXECUTION` or `NAMESPACE`).
  * @param id - Optional explicit ID to assign to the ref (defaults to the node’s own ID).
  */
-function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, subtype: typeof FLOW | typeof EXECUTION, id?: Node["id"]): void {
+function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE, id?: Node["id"]): void {
     // Remove all "selected", "faded", "hovered" and "executions" classes from every element
     clearClasses(cy, subtype);
 
     // Mark the chosen node as selected
     node.addClass(SELECTED);
 
-    if (subtype === FLOW) {
-        // FLOW: Fade both connected edges and neighbor nodes
+    if (subtype === FLOW || subtype === NAMESPACE) {
+        // FLOW or NAMESPACE: Fade both connected edges and neighbor nodes
         node.connectedEdges().union(node.connectedEdges().connectedNodes()).addClass(FADED);
     } else {
         // EXECUTION: Highlight connected edges with execution color
@@ -217,17 +222,18 @@ function hoverHandler(cy: cytoscape.Core): void {
  * Initializes and manages a cytoscape instance within a Vue component.
  *
  * @param container - Vue ref pointing to the DOM element that hosts the cytoscape graph.
- * @param subtype - Dependency subtype, either `"FLOW"` or `"EXECUTION"`. Defaults to `"FLOW"`.
+ * @param subtype - Dependency subtype, either `FLOW`, `EXECUTION` or `NAMESPACE`. Defaults to `FLOW`.
  * @param initialNodeID - Optional ID of the node to preselect after layout completes.
  * @param params - Vue Router params, expected to include `id` and `namespace`.
  * @param isTesting - When true, bypasses API data fetching and uses mock/test data.
  * @returns An object with element getters, loading state, selected node ID,
  *          selection helpers, and control handlers.
  */
-export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION = FLOW, initialNodeID: string, params: RouteParams, isTesting = false) {
+export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE = FLOW, initialNodeID: string, params: RouteParams, isTesting = false) {
     const coreStore = useCoreStore();
     const flowStore = useFlowStore();
     const executionsStore = useExecutionsStore();
+    const namespacesStore = useNamespacesStore();
 
     const {t} = useI18n({useScope: "global"});
 
@@ -252,16 +258,25 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         }
     };
 
-    let elements: { data: cytoscape.ElementDefinition[]; count: number }  = {data: [], count: 0};
+    const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number; }>({data: [], count: 0});
     onMounted(async () => {
         if (!container.value) return;
 
-        if(isTesting) elements = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
-        else elements = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype});
+        if (isTesting) elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
+        else {
+            if (subtype === NAMESPACE) {
+                const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});
+                const nodes = data.nodes ?? [];
+                elements.value = {data: transformResponse(data, NAMESPACE), count: new Set(nodes.map((r: { uid: string }) => r.uid)).size};
+            } else {
+                const result = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype});
+                elements.value = {data: result.data ?? [], count: result.count};
+            }
+        }
 
-        if(subtype === EXECUTION) nextTick(() => openSSE());
+        if (subtype === EXECUTION) nextTick(() => openSSE());
 
-        cy = cytoscape({container: container.value, layout, ...options, style, elements: elements.data});
+        cy = cytoscape({container: container.value, layout, ...options, style, elements: elements.value.data});
 
         // Hide nodes immediately after initialization to avoid visual flickering or rearrangement during layout setup
         cy.ready(() => cy.nodes().style("display", "none"));
@@ -270,7 +285,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         setNodeSizes(cy);
 
         // Apply execution state colors to each node
-        if(subtype === EXECUTION) setExecutionNodeColors(cy);
+        if (subtype === EXECUTION) setExecutionNodeColors(cy);
 
         // Setup hover handlers for nodes and edges
         hoverHandler(cy);
@@ -297,36 +312,38 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
             // Reveal nodes after layout rendering completes
             cy.nodes().style("display", "element");
 
-            // Preselect the proper node after layout rendering completes
             const node = isTesting ? cy.nodes()[0] : cy.nodes().filter((n) => n.data("flow") === initialNodeID);
-            if (node) selectHandler(cy, node, selectedNodeID, subtype);
+            if (subtype === NAMESPACE) fit(cy); // If the subtype is NAMESPACE, fit the entire graph in the viewport
+            else if (node) selectHandler(cy, node, selectedNodeID, subtype); // Else, preselect the proper node after layout rendering completes
         });
     });
 
     const sse = ref();
     const messages = ref<Record<string, any>[]>([]);
 
-    watch(messages, (newMessages) => {
-        if (newMessages.length <= 0) return;
+    watch(
+        messages,
+        (newMessages) => {
+            if (newMessages.length <= 0) return;
 
-        newMessages.forEach((message: Record<string, any>) => {
-            const matched = cy.nodes().filter((element) => element.data("id") === `${message.tenantId}_${message.namespace}_${message.flowId}`);
+            newMessages.forEach((message: Record<string, any>) => {
+                const matched = cy.nodes().filter((element) => element.data("id") === `${message.tenantId}_${message.namespace}_${message.flowId}`);
 
-            if (matched.nonempty()) {
-                matched.forEach((node: cytoscape.NodeSingular) => {
-                    const state = message.state.current;
+                if (matched.nonempty()) {
+                    matched.forEach((node: cytoscape.NodeSingular) => {
+                        const state = message.state.current;
 
-                    node.data({...node.data(), metadata: {...node.data("metadata"), state}});
+                        node.data({...node.data(), metadata: {...node.data("metadata"), state}});
 
-                    nextTick(() => {}) // Needed to ensure that table nodes are updated after the DOM is ready                    
+                        nextTick(() => {}); // Needed to ensure that table nodes are updated after the DOM is ready
 
-                    setExecutionNodeColors(cy, node.toArray());
-                    setExecutionEdgeColors(node.connectedEdges(), getStateColor(undefined, state));
-                });
-            }
-        });
-    },
-    {deep: true},
+                        setExecutionNodeColors(cy, node.toArray());
+                        setExecutionEdgeColors(node.connectedEdges(), getStateColor(undefined, state));
+                    });
+                }
+            });
+        },
+        {deep: true},
     );
 
     const openSSE = () => {
@@ -364,7 +381,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
     });
 
     return {
-        getElements: () => elements.data,
+        getElements: () => elements.value.data,
         loading,
         selectedNodeID,
         selectNode,
@@ -376,8 +393,8 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
                 selectedNodeID.value = undefined;
                 fit(cy);
             },
-            fit: () => fit(cy)
-        }
+            fit: () => fit(cy),
+        },
     };
 }
 
@@ -386,11 +403,12 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
  * Cytoscape-compatible elements with the given subtype.
  *
  * @param response - The API response object containing `nodes` and `edges` arrays.
- * @param subtype - The node subtype, either `"FLOW"` or `"EXECUTION"`.
+ * @param subtype - The node subtype, either `FLOW`, `EXECUTION`, or `NAMESPACE`.
  * @returns An array of cytoscape elements with correctly typed nodes and edges.
  */
-export function transformResponse(response: { nodes: { uid: string; namespace: string; id: string; }[]; edges: { source: string; target: string }[] }, subtype: typeof FLOW | typeof EXECUTION): Element[] {
-  const nodes: Node[] = response.nodes.map((node) => ({id: node.uid, type: NODE, flow: node.id, namespace: node.namespace, metadata: subtype === FLOW ? {subtype: FLOW} : {subtype: EXECUTION}}));
-  const edges: Edge[] = response.edges.map((edge) => ({id: uuid(), type: EDGE, source: edge.source, target: edge.target}));
-  return [...nodes.map((node) => ({data: node} as Element)), ...edges.map((edge) => ({data: edge} as Element))];
+export function transformResponse(response: {nodes: { uid: string; namespace: string; id: string }[]; edges: { source: string; target: string }[]; }, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE): Element[] {
+    const nodes: Node[] = response.nodes.map((node) => ({id: node.uid, type: NODE, flow: node.id, namespace: node.namespace, metadata: {subtype}}));
+    const edges: Edge[] = response.edges.map((edge) => ({id: uuid(), type: EDGE, source: edge.source, target: edge.target}));
+
+    return [...nodes.map((node) => ({data: node}) as Element), ...edges.map((edge) => ({data: edge}) as Element)];
 }

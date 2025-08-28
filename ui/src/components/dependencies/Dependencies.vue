@@ -1,27 +1,47 @@
 <template>
-    <Empty v-if="!loading && !getElements().length" type="dependencies" />
+    <Empty v-if="!loading && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
     <el-splitter v-else class="dependencies">
         <el-splitter-panel id="graph" v-bind="PANEL">
             <div v-loading="loading" ref="container" />
 
             <div class="controls">
-                <el-button size="small" :title="t('dependency.controls.zoom_in')" @click="handlers.zoomIn">
+                <el-button
+                    size="small"
+                    :title="t('dependency.controls.zoom_in')"
+                    @click="handlers.zoomIn"
+                >
                     <Plus />
                 </el-button>
-                <el-button size="small" :title="t('dependency.controls.zoom_out')" @click="handlers.zoomOut">
+                <el-button
+                    size="small"
+                    :title="t('dependency.controls.zoom_out')"
+                    @click="handlers.zoomOut"
+                >
                     <Minus />
                 </el-button>
-                <el-button size="small" :title="t('dependency.controls.clear_selection')" @click="handlers.clearSelection">
+                <el-button
+                    size="small"
+                    :title="t('dependency.controls.clear_selection')"
+                    @click="handlers.clearSelection"
+                >
                     <SelectionRemove />
                 </el-button>
-                <el-button size="small" :title="t('dependency.controls.fit_view')" @click="handlers.fit">
+                <el-button
+                    size="small"
+                    :title="t('dependency.controls.fit_view')"
+                    @click="handlers.fit"
+                >
                     <FitToScreenOutline />
                 </el-button>
             </div>
         </el-splitter-panel>
 
         <el-splitter-panel id="table">
-            <Table :elements="getElements()" @select="selectNode" :selected="selectedNodeID" />
+            <Table
+                :elements="getElements()"
+                @select="selectNode"
+                :selected="selectedNodeID"
+            />
         </el-splitter-panel>
     </el-splitter>
 </template>
@@ -33,7 +53,7 @@
     import Empty from "../layout/empty/Empty.vue";
 
     import {useDependencies} from "./composables/useDependencies";
-    import {FLOW, EXECUTION} from "./utils/types";
+    import {FLOW, EXECUTION, NAMESPACE} from "./utils/types";
 
     const PANEL = {size: "70%", min: "30%", max: "80%"};
 
@@ -48,11 +68,10 @@
     import SelectionRemove from "vue-material-design-icons/SelectionRemove.vue";
     import FitToScreenOutline from "vue-material-design-icons/FitToScreenOutline.vue";
 
-    const SUBTYPE = route.name === "flows/update" ? FLOW : EXECUTION;
+    const SUBTYPE = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : EXECUTION;
 
     const container = ref(null);
-    const initialNodeID: string = SUBTYPE === FLOW ? String(route.params.id) : String(route.params.flowId);
-
+    const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE ? String(route.params.id) : String(route.params.flowId);
     const TESTING = false; // When true, bypasses API data fetching and uses mock/test data.
 
     const {getElements, loading, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE, initialNodeID, route.params, TESTING);

@@ -726,6 +726,7 @@
         "warning": "Nie masz uprawnień do tych namespace, więc zostaną pominięte: <code>{namespaces}</code>"
       },
       "duplicate": "Ten key już istnieje",
+      "inherited": "Odziedziczone pary KV",
       "name": "KV Store",
       "type": "Typ",
       "update": "Zaktualizuj value dla key '{key}'"

@@ -726,6 +726,7 @@
         "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>"
       },
       "duplicate": "このキーは既に存在します",
+      "inherited": "継承されたKVペア",
       "name": "KV Store",
       "type": "タイプ",
       "update": "キー'{key}'の値を更新"

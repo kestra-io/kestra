@@ -726,6 +726,7 @@
         "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>"
       },
       "duplicate": "यह key पहले से मौजूद है",
+      "inherited": "विरासत में मिले KV जोड़े",
       "name": "KV Store",
       "type": "प्रकार",
       "update": "key '{key}' के लिए value अपडेट करें"

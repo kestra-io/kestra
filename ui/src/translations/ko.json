@@ -726,6 +726,7 @@
         "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>"
       },
       "duplicate": "이 키는 이미 존재합니다",
+      "inherited": "상속된 KV 쌍",
       "name": "KV Store",
       "type": "유형",
       "update": "키 '{key}'의 값을 업데이트하세요"

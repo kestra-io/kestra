@@ -726,6 +726,7 @@
         "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>"
       },
       "duplicate": "Этот key уже существует",
+      "inherited": "Наследуемые KV пары",
       "name": "KV Store",
       "type": "Тип",
       "update": "Обновить значение для key '{key}'"

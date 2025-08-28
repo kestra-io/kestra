@@ -49,8 +49,8 @@ import org.apache.commons.lang3.StringUtils;
                     type: io.kestra.plugin.core.kv.PurgeKV
                     description: it will remove the KV from the storage and from Kestra
                     expiredOnly: false # true by default
-                    namespaces: # by default, it should purge all KV from all namespaces; otherwise only keys from an array of namespaces;
-                    namespacePattern: * # by default, it should purge all KV from all namespaces; otherwise lob-Pattern e.g. AI_*
+                    namespaces: # by default, it should purge all KV from all namespaces; otherwise only keys from an array of namespaces; can't be used with namespacePattern
+                    namespacePattern: * # by default, it should purge all KV from all namespaces; otherwise lob-Pattern e.g. AI_*; can't be used with namespaces
                     includeChildNamespaces: true # default true
                     keyPattern: * # by default all, optionally specify Glob-Pattern e.g. AI_*
                 """
@@ -60,28 +60,28 @@ import org.apache.commons.lang3.StringUtils;
 public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
 
     @Schema(
-        title = "The key for which to get the value."
+        title = "Key pattern. Delete only key matching the blob pattern"
     )
     private Property<String> keyPattern;
 
     @Schema(
-        title = "The namespace on which to get the value."
+        title = "List of namespaces to delete key from"
     )
     private Property<List<String>> namespaces;
 
     @Schema(
-        title = "The namespace on which to get the value."
+        title = "Blob pattern fo the namespaces to delete key from"
     )
     private Property<String> namespacePattern;
 
     @Schema(
-        title = "Whether to fail if there is no value for the given key."
+        title = "Delete only expired keys. Default true"
     )
     @Builder.Default
     private Property<Boolean> expiredOnly = Property.ofValue(true);
 
     @Schema(
-        title = "Whether to fail if there is no value for the given key."
+        title = "Delete keys from child namespaces"
     )
     @Builder.Default
     private Property<Boolean> includeChildNamespaces = Property.ofValue(true);

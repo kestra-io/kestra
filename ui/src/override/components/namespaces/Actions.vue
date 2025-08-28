@@ -6,6 +6,12 @@
     />
 
     <Action
+        :label="t('kv.inherited')"
+        :icon="FamilyTree"
+        @click="namespacesStore.inheritedKVModalVisible = true"
+    />
+
+    <Action
         v-if="tab === 'kv'"
         :label="t('kv.add')"
         @click="namespacesStore.addKvModalVisible = true"
@@ -18,6 +24,8 @@
     import {useI18n} from "vue-i18n";
     import {useNamespacesStore} from "override/stores/namespaces";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
+
+    import FamilyTree from "vue-material-design-icons/FamilyTree.vue";
 
     const route = useRoute();
     const {t} = useI18n({useScope: "global"});

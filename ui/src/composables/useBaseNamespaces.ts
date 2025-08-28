@@ -17,6 +17,8 @@ export function useBaseNamespacesStore() {
     const secrets = ref<any[] | undefined>(undefined);
     const inheritedSecrets = ref<any>(undefined);
     const kvs = ref<any[] | undefined>(undefined);
+    const inheritedKVs = ref<any>(undefined);
+    const inheritedKVModalVisible = ref(false);
     const addKvModalVisible = ref(false);
     const autocomplete = ref<any>(undefined);
     const total = ref(0);
@@ -72,6 +74,11 @@ export function useBaseNamespacesStore() {
             return `"${data}"`;
         }
         return data;
+    }
+
+    async function loadInheritedKVs(this: any, id: string) {
+        const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${id}/kv/inheritance`, {...VALIDATE});
+        inheritedKVs.value = response.data;
     }
 
     async function createKv(this: any, payload: {namespace: string; key: string; value: any; contentType: string; description: string; ttl: string}) {
@@ -238,9 +245,12 @@ export function useBaseNamespacesStore() {
         secrets,
         inheritedSecrets,
         kvs,
+        inheritedKVModalVisible,
         addKvModalVisible,
         kvsList,
         kv,
+        loadInheritedKVs,
+        inheritedKVs,
         createKv,
         deleteKv,
         deleteKvs,

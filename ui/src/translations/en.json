@@ -986,7 +986,8 @@
       "delete multiple": {
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
         "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>"
-      }
+      },
+      "inherited": "Inherited KV pairs"
     },
     "expiration": "Expiration",
     "failed to render pdf": "Failed to render the PDF preview",

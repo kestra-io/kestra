@@ -34,7 +34,6 @@ dependencies {
     api platform("com.azure:azure-sdk-bom:1.2.37")
     api platform('software.amazon.awssdk:bom:2.32.26')
 
-
     constraints {
         // need to force this dep as mysql-connector brings a version incompatible with the Google Cloud libs
         api("com.google.protobuf:protobuf-java:$protobufVersion")
@@ -58,6 +57,7 @@ dependencies {
         api("com.fasterxml.jackson.datatype:jackson-datatype-guava:$jacksonVersion")
         api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
         api("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion")
+        api("com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:$jacksonVersion")
         api("com.fasterxml.uuid:java-uuid-generator:$jugVersion")
         // issue with the Docker lib having a too old version for the k8s extension
         api("org.apache.commons:commons-compress:1.28.0")

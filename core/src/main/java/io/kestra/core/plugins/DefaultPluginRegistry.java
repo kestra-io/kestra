@@ -103,11 +103,13 @@ public class DefaultPluginRegistry implements PluginRegistry {
      */
     @Override
     public void registerIfAbsent(final Path pluginPath) {
+        long start = System.currentTimeMillis();
         if (isPluginPathValid(pluginPath) && !isPluginPathScanned(pluginPath)) {
             List<RegisteredPlugin> scanned = scanner.scan(pluginPath);
             scanned.forEach(this::register);
             scannedPluginPaths.add(pluginPath);
         }
+        log.debug("Registered if absent plugins from path {} in {} ms", pluginPath, System.currentTimeMillis() - start);
     }
 
     private boolean isPluginPathScanned(final Path pluginPath) {
@@ -119,10 +121,12 @@ public class DefaultPluginRegistry implements PluginRegistry {
      */
     @Override
     public void register(final Path pluginPath) {
+        long start = System.currentTimeMillis();
         if (isPluginPathValid(pluginPath)) {
             List<RegisteredPlugin> scanned = scanner.scan(pluginPath);
             scanned.forEach(this::register);
         }
+        log.debug("Registered plugins from path {} in {} ms", pluginPath, System.currentTimeMillis() - start);
     }
 
     /**

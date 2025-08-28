@@ -20,9 +20,11 @@ import io.kestra.core.queues.QueueInterface;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Supplier;
@@ -144,6 +146,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     public void usedSecret(String secret) {
         if (secret != null && !secret.isEmpty()) {
             this.useSecrets.add(secret);
+            this.useSecrets.add(Base64.getEncoder().encodeToString(secret.getBytes(StandardCharsets.UTF_8)));
         }
     }
 

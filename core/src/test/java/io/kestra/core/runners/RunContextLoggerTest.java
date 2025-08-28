@@ -16,6 +16,8 @@ import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -108,7 +110,7 @@ class RunContextLoggerTest {
         Logger logger = runContextLogger.logger();
         // exception are not handle and secret will not be replaced
         logger.debug("test {} test", "john@doe.com", new Exception("exception from doe.com"));
-        logger.info("test myawesomepassmyawesomepass myawesomepass myawesomepassmyawesomepass");
+        logger.info("test {} myawesomepassmyawesomepass myawesomepass myawesomepassmyawesomepass", Base64.getEncoder().encodeToString("myawesomepass".getBytes(StandardCharsets.UTF_8)));
         logger.warn("test {}", URI.create("http://it-s.secret"));
 
         // the 3 logs will create 4 log entries as exceptions stacktraces are logged separately at the TRACE level
@@ -116,7 +118,7 @@ class RunContextLoggerTest {
         receive.blockLast();
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.DEBUG)).findFirst().orElseThrow().getMessage()).isEqualTo("test john@****** test");
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.TRACE)).findFirst().orElseThrow().getMessage()).contains("exception from doe.com");
-        assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElseThrow().getMessage()).isEqualTo("test ************ ****** ************");
+        assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElseThrow().getMessage()).isEqualTo("test ****** ************ ****** ************");
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.WARN)).findFirst().orElseThrow().getMessage()).isEqualTo("test ******");
     }
 }

@@ -13,6 +13,7 @@ import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -445,6 +446,106 @@ class ExecutionControllerRunnerTest {
             .stream()
             .map(TaskRun::getState)
             .forEach(state -> assertThat(state.getCurrent()).isEqualTo(State.Type.SUCCESS));
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/condition_with_input.yaml"})
+    void restartExecutionWithNewInputs() throws Exception {
+        final String flowId = "condition_with_input";
+
+        // Run execution until it ends
+        Execution parentExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("condition", "fail")));
+
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(Type.FAILED);
+
+        Optional<Flow> flow = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, flowId);
+
+        assertThat(flow.isPresent()).isTrue();
+
+        // Run child execution starting from a specific task and wait until it finishes
+        Execution finishedChildExecution = runnerUtils.awaitChildExecution(
+            flow.get(),
+            parentExecution, throwRunnable(() -> {
+                Thread.sleep(100);
+
+                MultipartBody multipartBody = MultipartBody.builder()
+                    .addPart("condition", "success")
+                    .build();
+
+                Execution replay = client.toBlocking().retrieve(
+                    HttpRequest
+                        .POST("/api/v1/main/executions/" + parentExecution.getId() + "/replay-with-inputs", multipartBody)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                    Execution.class
+                );
+
+                assertThat(replay).isNotNull();
+                assertThat(replay.getParentId()).isEqualTo(parentExecution.getId());
+                assertThat(replay.getState().getCurrent()).isEqualTo(Type.CREATED);
+            }),
+            Duration.ofSeconds(15));
+
+        assertThat(finishedChildExecution).isNotNull();
+        assertThat(finishedChildExecution.getParentId()).isEqualTo(parentExecution.getId());
+        assertThat(finishedChildExecution.getTaskRunList().size()).isEqualTo(2);
+
+        finishedChildExecution
+            .getTaskRunList()
+            .stream()
+            .map(TaskRun::getState)
+            .forEach(state -> assertThat(state.getCurrent()).isIn(State.Type.SUCCESS, State.Type.SKIPPED));
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/condition_with_input.yaml"})
+    void restartExecutionFromTaskIdWithInputs() throws Exception {
+        final String flowId = "condition_with_input";
+        final String referenceTaskId = "fail";
+
+        // Run execution until it ends
+        Execution parentExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("condition", "fail")));
+
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(Type.FAILED);
+
+        Optional<Flow> flow = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, flowId);
+
+        assertThat(flow.isPresent()).isTrue();
+
+        // Run child execution starting from a specific task and wait until it finishes
+        Execution finishedChildExecution = runnerUtils.awaitChildExecution(
+            flow.get(),
+            parentExecution, throwRunnable(() -> {
+                Thread.sleep(100);
+
+                MultipartBody multipartBody = MultipartBody.builder()
+                    .addPart("condition", "success")
+                    .build();
+
+                Execution replay = client.toBlocking().retrieve(
+                    HttpRequest
+                        .POST("/api/v1/main/executions/" + parentExecution.getId() + "/replay-with-inputs?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(), multipartBody)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                    Execution.class
+                );
+
+                assertThat(replay).isNotNull();
+                assertThat(replay.getParentId()).isEqualTo(parentExecution.getId());
+                assertThat(replay.getTaskRunList().size()).isEqualTo(2);
+                assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+            }),
+            Duration.ofSeconds(15));
+
+        assertThat(finishedChildExecution).isNotNull();
+        assertThat(finishedChildExecution.getParentId()).isEqualTo(parentExecution.getId());
+        assertThat(finishedChildExecution.getTaskRunList().size()).isEqualTo(2);
+
+        finishedChildExecution
+            .getTaskRunList()
+            .stream()
+            .map(TaskRun::getState)
+            .forEach(state -> assertThat(state.getCurrent()).isIn(State.Type.SUCCESS, State.Type.SKIPPED));
     }
 
     @Test

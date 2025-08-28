@@ -28,8 +28,12 @@ export interface Plugin {
     taskRunners: PluginComponent[];
     charts: PluginComponent[];
     dataFilters: PluginComponent[];
+    dataFiltersKPI: PluginComponent[];
     aliases: PluginComponent[];
     logExporters: PluginComponent[];
+    apps: PluginComponent[];
+    appBlocks: PluginComponent[];
+    additionalPlugins: PluginComponent[];
 }
 
 interface State {
@@ -139,6 +143,20 @@ export const usePluginsStore = defineStore("plugins", {
             }
             return obj;
         },
+
+        async filteredPlugins(excludedElements: string[]) {
+            if (this.plugins === undefined) {
+                this.plugins = await this.listWithSubgroup({includeDeprecated: false});
+            }
+
+            return this.plugins.map(p => ({
+                ...p,
+                ...Object.fromEntries(excludedElements.map(e => [e, undefined]))
+            })).filter(p => Object.entries(p)
+                    .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+                    .some(([, value]: [string, PluginComponent[]]) => value.length !== 0))
+        },
+
         async list() {
             const response = await this.$http.get<Plugin[]>(`${apiUrlWithoutTenants()}/plugins`);
             this.plugins = response.data;

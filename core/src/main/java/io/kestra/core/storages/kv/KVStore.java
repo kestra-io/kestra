@@ -81,6 +81,22 @@ public interface KVStore {
     List<KVEntry> list() throws IOException;
 
     /**
+     * Lists all the K/V store entries, expired or not.
+     *
+     * @return  The list of all {@link KVEntry}.
+     * @throws IOException if an error occurred while executing the operation on the K/V store.
+     */
+    List<KVEntry> listAll() throws IOException;
+
+    /**
+     * Lists all the K/V store expired entries.
+     *
+     * @return  The list of expired {@link KVEntry}.
+     * @throws IOException if an error occurred while executing the operation on the K/V store.
+     */
+    List<KVEntry> listExpired() throws IOException;
+
+    /**
      * Finds the K/V store entry for the given key.
      *
      * @return  The {@link KVEntry} or {@link Optional#empty()} if entry exists or the entry expired.

@@ -726,6 +726,7 @@
         "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
       },
       "duplicate": "Cette clé existe déjà",
+      "inherited": "Paires KV héritées",
       "name": "Stockage de clés/valeurs",
       "type": "Type",
       "update": "Mettre à jour la valeur pour la clé '{key}'"

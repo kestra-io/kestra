@@ -207,16 +207,15 @@ export const usePluginsStore = defineStore("plugins", {
             return response.data;
         },
 
-        loadVersions(options: {cls: string; commit?: boolean}) {
-            const promise = this.$http.get(
+        async loadVersions(options: {cls: string; commit?: boolean}): Promise<{type: string, versions: string[]}> {
+            const response = await this.$http.get(
                 `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions`
             );
-            return promise.then(response => {
-                if (options.commit !== false) {
-                    this.versions = response.data.versions;
-                }
-                return response.data;
-            });
+            if (options.commit !== false) {
+                this.versions = response.data.versions;
+            }
+
+            return response.data;
         },
 
         fetchIcons() {

@@ -162,14 +162,17 @@
                             :sort-orders="['ascending', 'descending']"
                             :label="$t('id')"
                         >
-                            <template #default="scope">
-                                <id
-                                    :value="scope.row.id"
-                                    :shrink="true"
-                                    @click="onRowDoubleClick(executionParams(scope.row))"
-                                />
+                            <template #default="scope"> 
+                                <a
+                                    :href="`/executions/${scope.row.id}`"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    {{ scope.row.id }}
+                                </a>
                             </template>
                         </el-table-column>
+
 
                         <el-table-column
                             prop="state.startDate"
@@ -463,7 +466,6 @@
     import Labels from "../layout/Labels.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
     import {State} from "@kestra-io/ui-libs"
-    import Id from "../Id.vue";
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -490,7 +492,6 @@
             DataTable,
             Kicon,
             Labels,
-            Id,
             TriggerFlow,
             TopNavBar,
             LabelInput,

@@ -1,7 +1,7 @@
 <template>
     <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo?.breadcrumb" />
     <template v-if="!pluginIsSelected">
-        <plugin-home v-if="pluginsStore.plugins" :plugins="pluginsStore.plugins" />
+        <plugin-home v-if="filteredPlugins" :plugins="filteredPlugins" />
     </template>
     <docs-layout v-else>
         <template #menu>
@@ -120,12 +120,13 @@
             return {
                 isLoading: false,
                 version: undefined,
-                pluginType: undefined
+                pluginType: undefined,
+                filteredPlugins: undefined
             };
         },
         created() {
             this.loadToc();
-            this.loadPlugin()
+            this.loadPlugin();
         },
         watch: {
             $route: {
@@ -139,6 +140,15 @@
                     }
                 },
                 immediate: true
+            },
+            async "pluginsStore.plugins"() {
+                this.filteredPlugins = await this.pluginsStore.filteredPlugins([
+                    "apps",
+                    "appBlocks",
+                    "charts",
+                    "dataFilters",
+                    "dataFiltersKPI"
+                ])
             }
         },
         methods: {

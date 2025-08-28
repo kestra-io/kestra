@@ -103,6 +103,9 @@ class DashboardControllerTest {
         );
         assertThat(get).isNotNull();
         assertThat(get.getId()).isEqualTo(dashboard.getId());
+        assertThat(get.getSourceCode()).startsWith("""
+            id: full
+            title: Some Dashboard""");
 
         // List dashboards
         List<Dashboard> dashboards = client.toBlocking().retrieve(

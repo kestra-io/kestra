@@ -1,4 +1,4 @@
-id: pause
+id: pause-test
 namespace: sanitychecks.core
 
 tasks:

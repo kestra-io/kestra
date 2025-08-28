@@ -1,4 +1,4 @@
-id: pause
+id: pause-test
 namespace: io.kestra.tests
 
 tasks:

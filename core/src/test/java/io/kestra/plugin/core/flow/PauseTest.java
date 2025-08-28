@@ -53,7 +53,7 @@ public class PauseTest {
     Suite suite;
 
     @Test
-    @LoadFlows({"flows/valids/pause.yaml"})
+    @LoadFlows({"flows/valids/pause-test.yaml"})
     void run() throws Exception {
         suite.run(runnerUtils);
     }
@@ -161,7 +161,7 @@ public class PauseTest {
         protected QueueInterface<Execution> executionQueue;
 
         public void run(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause", null, null, Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
             Flow flow = flowRepository.findByExecution(execution);
 

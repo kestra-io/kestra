@@ -61,7 +61,7 @@ class SanityCheckTest {
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/pause.yaml")
+    @ExecuteFlow("sanity-checks/pause-test.yaml")
     void qaPause(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

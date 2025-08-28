@@ -93,7 +93,7 @@ public class DashboardController {
         @Parameter(description = "The dashboard id") @PathVariable String id
     ) throws ConstraintViolationException {
         return dashboardRepository.get(tenantService.resolveTenant(), id).map(d -> {
-            if (!DASHBOARD_ID_PATTERN.matcher(d.getSourceCode()).matches()) {
+            if (!DASHBOARD_ID_PATTERN.matcher(d.getSourceCode()).find()) {
                 return d.toBuilder().sourceCode("id: " + d.getId() + "\n" + d.getSourceCode()).build();
             }
             return d;

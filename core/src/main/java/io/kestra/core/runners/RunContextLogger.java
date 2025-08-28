@@ -142,7 +142,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     }
 
     public void usedSecret(String secret) {
-        if (secret != null) {
+        if (secret != null && !secret.isEmpty()) {
             this.useSecrets.add(secret);
         }
     }

@@ -102,6 +102,7 @@ class RunContextLoggerTest {
         runContextLogger.usedSecret("doe.com");
         runContextLogger.usedSecret("myawesomepass");
         runContextLogger.usedSecret("http://it-s.secret");
+        runContextLogger.usedSecret("");
         runContextLogger.usedSecret(null);
 
         Logger logger = runContextLogger.logger();

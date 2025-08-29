@@ -104,4 +104,11 @@ class SanityCheckTest {
         assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
+
+    @Test
+    @ExecuteFlow("sanity-checks/purge_kv.yaml")
+    void qaPurgeKv(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(6);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
 }

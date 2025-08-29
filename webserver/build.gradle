@@ -22,8 +22,9 @@ dependencies {
     implementation "io.micronaut.cache:micronaut-cache-core"
     implementation "io.micronaut.cache:micronaut-cache-caffeine"
 
-    implementation 'com.google.adk:google-adk:0.2.0'
-
+    implementation("com.posthog.java:posthog:1.2.0")
+    implementation("dev.langchain4j:langchain4j:1.4.0")
+    implementation("dev.langchain4j:langchain4j-google-ai-gemini:1.4.0")
     implementation("de.siegmar:fastcsv")
 
     // test

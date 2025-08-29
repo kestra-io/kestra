@@ -40,6 +40,7 @@
                 class="position-absolute prompt"
                 @close="aiAgentOpened = false"
                 :flow="editorContent"
+                :conversation-id="conversationId"
                 @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
             />
         </Transition>
@@ -70,6 +71,7 @@
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
+    import Utils from "../../utils/utils.ts";
 
     const route = useRoute();
     const router = useRouter();
@@ -264,9 +266,12 @@
         flowStore.executeFlow = true;
     };
 
+    const conversationId = ref<string>(Utils.uid());
+
     function acceptDraft() {
         const accepted = draftSource.value;
         draftSource.value = undefined;
+        conversationId.value = Utils.uid();
         editorUpdate(accepted!);
     }
 

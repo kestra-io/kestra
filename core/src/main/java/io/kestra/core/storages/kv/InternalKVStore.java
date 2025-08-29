@@ -10,6 +10,7 @@ import jakarta.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
@@ -112,7 +113,14 @@ public class InternalKVStore implements KVStore {
     @Override
     public boolean delete(String key) throws IOException {
         KVStore.validateKey(key);
-        return this.storage.delete(this.tenant, this.namespace, this.storageUri(key));
+        URI uri = this.storageUri(key);
+        boolean deleted = this.storage.delete(this.tenant, this.namespace, uri);
+        URI metedataURI = URI.create(uri.getPath() + ".metadata");
+        if (this.storage.exists(this.tenant, this.namespace, metedataURI)){
+            this.storage.delete(this.tenant, this.namespace, metedataURI);
+        }
+        return deleted;
+
     }
 
     /**

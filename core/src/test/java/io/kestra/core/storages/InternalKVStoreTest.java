@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InternalKVStoreTest {
     private static final Instant date = Instant.now().truncatedTo(ChronoUnit.MILLIS);
@@ -108,6 +109,37 @@ class InternalKVStoreTest {
         expirationDate = Instant.parse(withMetadata.metadata().get("expirationDate"));
         assertThat(expirationDate.isAfter(before.plus(Duration.ofMinutes(9))) && expirationDate.isBefore(before.plus(Duration.ofMinutes(11)))).isTrue();
         assertThat(valueFile).isEqualTo("\"some-value\"");
+    }
+
+    @Test
+    void should_delete_with_metadata() throws IOException {
+        final InternalKVStore kv = kv();
+
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata("description", Duration.ofMinutes(5)), complexValue));
+        URI uri = kv.storageUri(TEST_KV_KEY);
+        URI metadataURI = URI.create(uri.getPath() + ".metadata");
+        assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), uri)).isTrue();
+        assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), metadataURI)).isTrue();
+
+        boolean deleted = kv.delete(TEST_KV_KEY);
+        assertTrue(deleted);
+        assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), uri)).isFalse();
+        assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), metadataURI)).isFalse();
+    }
+
+    @Test
+    void should_delete_without_metadata() throws IOException {
+        final InternalKVStore kv = kv();
+
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(null, complexValue));
+        URI uri = kv.storageUri(TEST_KV_KEY);
+        URI metadataURI = URI.create(uri.getPath() + ".metadata");
+        assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), uri)).isTrue();
+        assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), metadataURI)).isFalse();
+
+        boolean deleted = kv.delete(TEST_KV_KEY);
+        assertTrue(deleted);
+        assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), uri)).isFalse();
     }
 
     @Test

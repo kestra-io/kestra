@@ -1,9 +1,7 @@
 package io.kestra.core.storages.kv;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageContext;
-import jakarta.annotation.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -87,14 +85,6 @@ public interface KVStore {
      * @throws IOException if an error occurred while executing the operation on the K/V store.
      */
     List<KVEntry> listAll() throws IOException;
-
-    /**
-     * Lists all the K/V store expired entries.
-     *
-     * @return  The list of expired {@link KVEntry}.
-     * @throws IOException if an error occurred while executing the operation on the K/V store.
-     */
-    List<KVEntry> listExpired() throws IOException;
 
     /**
      * Finds the K/V store entry for the given key.

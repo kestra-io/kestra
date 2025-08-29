@@ -82,32 +82,6 @@ class InternalKVStoreTest {
     }
 
     @Test
-    void listExpired() throws IOException {
-        Instant now = Instant.now();
-        InternalKVStore kv = kv();
-
-        assertThat(kv.list().size()).isZero();
-
-        String description = "myDescription";
-        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(description, Duration.ofMinutes(5)), complexValue));
-        kv.put("key-without-expiration", new KVValueAndMetadata(new KVMetadata(null, null), complexValue));
-        kv.put("expired-key-1", new KVValueAndMetadata(new KVMetadata(null, Duration.ofMillis(1)), complexValue));
-        kv.put("expired-key-2", new KVValueAndMetadata(new KVMetadata(null, Duration.ofMillis(1)), complexValue));
-
-        List<KVEntry> list = kv.listExpired();
-        assertThat(list.size()).isEqualTo(2);
-
-        list.forEach(kvEntry -> {
-            assertThat(kvEntry.creationDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
-            assertThat(kvEntry.updateDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
-            assertThat(kvEntry.expirationDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
-        });
-
-        List<String> keys = list.stream().map(KVEntry::key).toList();
-        assertThat(keys).containsExactlyInAnyOrder("expired-key-1", "expired-key-2");
-    }
-
-    @Test
     void listAll() throws IOException {
         Instant now = Instant.now();
         InternalKVStore kv = kv();

@@ -138,18 +138,6 @@ public class InternalKVStore implements KVStore {
             .toList();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<KVEntry> listExpired() throws IOException {
-        List<FileAttributes> list = listAllFromStorage();
-        return list.stream()
-            .map(throwFunction(KVEntry::from))
-            .filter(kvEntry -> Optional.ofNullable(kvEntry.expirationDate()).map(expirationDate -> Instant.now().isAfter(expirationDate)).orElse(false))
-            .toList();
-    }
-
     private List<FileAttributes> listAllFromStorage() throws IOException {
         try {
             return this.storage.list(this.tenant, this.namespace, this.storageUri(null));

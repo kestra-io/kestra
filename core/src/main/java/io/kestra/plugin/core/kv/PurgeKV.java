@@ -17,6 +17,7 @@ import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -97,10 +98,14 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
         for (String ns : kvNamespaces) {
             KVStore kvStore = runContext.namespaceKv(ns);
             List<KVEntry> kvEntries = new ArrayList<>();
+            List<KVEntry> allKvEntries = kvStore.listAll();
             if (expired){
-                kvEntries.addAll(kvStore.listExpired());
+                Instant now = Instant.now();
+                kvEntries.addAll(allKvEntries.stream()
+                    .filter(kv -> kv.expirationDate().isBefore(now))
+                    .toList());
             } else {
-                kvEntries.addAll(kvStore.listAll());
+                kvEntries.addAll(allKvEntries);
             }
             List<String> keys = kvEntries.stream()
                 .map(KVEntry::key)

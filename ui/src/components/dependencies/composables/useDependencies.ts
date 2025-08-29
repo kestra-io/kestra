@@ -324,24 +324,20 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
     watch(
         messages,
         (newMessages) => {
-            if (newMessages.length <= 0) return;
+            if (!newMessages?.length) return;
 
-            newMessages.forEach((message: Record<string, any>) => {
-                const matched = cy.nodes().filter((element) => element.data("id") === `${message.tenantId}_${message.namespace}_${message.flowId}`);
+            const message = newMessages[newMessages.length - 1]; // Only process the newest event message
 
-                if (matched.nonempty()) {
-                    matched.forEach((node: cytoscape.NodeSingular) => {
-                        const state = message.state.current;
+            const matched = cy.getElementById(`${message.tenantId}_${message.namespace}_${message.flowId}`);
 
-                        node.data({...node.data(), metadata: {...node.data("metadata"), state}});
+            if (matched.nonempty()) {
+                const state = message.state.current;
 
-                        nextTick(() => {}); // Needed to ensure that table nodes are updated after the DOM is ready
+                matched.data({...matched.data(), metadata: {...matched.data("metadata"), state}});
 
-                        setExecutionNodeColors(cy, node.toArray());
-                        setExecutionEdgeColors(node.connectedEdges(), getStateColor(undefined, state));
-                    });
-                }
-            });
+                setExecutionNodeColors(cy, [matched]);
+                setExecutionEdgeColors(matched.connectedEdges(), getStateColor(undefined, state));
+            }
         },
         {deep: true},
     );

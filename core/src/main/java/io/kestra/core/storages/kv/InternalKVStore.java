@@ -115,7 +115,7 @@ public class InternalKVStore implements KVStore {
         KVStore.validateKey(key);
         URI uri = this.storageUri(key);
         boolean deleted = this.storage.delete(this.tenant, this.namespace, uri);
-        URI metedataURI = URI.create(uri.getPath() + ".metadata");
+        URI metadataURI = URI.create(uri.getPath() + ".metadata");
         if (this.storage.exists(this.tenant, this.namespace, metedataURI)){
             this.storage.delete(this.tenant, this.namespace, metedataURI);
         }

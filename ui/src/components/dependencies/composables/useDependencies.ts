@@ -344,7 +344,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
             if (matched.nonempty()) {
                 const state = message.state.current;
 
-                matched.data({...matched.data(), metadata: {...matched.data("metadata"), state}});
+                matched.data({...matched.data(), metadata: {...matched.data("metadata"), id: message.executionId, state}});
 
                 setExecutionNodeColors(cy, [matched]);
                 setExecutionEdgeColors(matched.connectedEdges(), getStateColor(undefined, state));

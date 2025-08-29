@@ -11,6 +11,7 @@ type Flow = {
 
 type Execution = {
     subtype: typeof EXECUTION;
+    id?: string;
     state?: string;
 };
 

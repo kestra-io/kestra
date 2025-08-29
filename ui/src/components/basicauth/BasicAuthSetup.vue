@@ -346,7 +346,7 @@
     ])
 
     const EMAIL_REGEX = /^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$/
-    const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d).{8,}$/
+    const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)\S{8,}$/
 
     const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
         if (!value) {

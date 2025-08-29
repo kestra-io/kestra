@@ -13,7 +13,7 @@ import type {RouteParams} from "vue-router";
 
 import {v4 as uuid} from "uuid";
 
-import {throttle} from "lodash";
+import throttle from "lodash/throttle";
 
 import cytoscape from "cytoscape";
 

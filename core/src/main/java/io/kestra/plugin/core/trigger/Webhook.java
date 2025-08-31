@@ -31,24 +31,24 @@ import jakarta.validation.constraints.Size;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Trigger a flow from a webhook.",
+    title = "Execute a flow from an API call triggered by a webhook.",
     description = """
         Webhook trigger allows you to create a unique URL that you can use to trigger a Kestra flow execution based on events in another application such as GitHub or Amazon EventBridge. In order to use that URL, you have to add a secret key that will secure your webhook URL.
 
         The URL will then follow the following format: `https://{your_hostname}/api/v1/executions/webhook/{namespace}/{flowId}/{key}`. Replace the templated values according to your workflow setup.
 
-        The webhook URL accepts `GET`, `POST` and `PUT` requests.
+        The webhook URL accepts `GET`, `POST`, and `PUT` requests.
 
         You can access the request body and headers sent by another application using the following template variables:
         - `{{ trigger.body }}`
-        - `{{ trigger.headers }}`.
+        - `{{ trigger.headers }}`
 
         The webhook response will be one of the following HTTP status codes:
         - 404 if the namespace, flow or webhook key is not found.
         - 200 if the webhook triggers an execution.
         - 204 if the webhook cannot trigger an execution due to a lack of matching event conditions sent by other application.
 
-        A webhook trigger can have conditions but it doesn't support conditions of type `MultipleCondition`."""
+        A webhook trigger can have conditions, but it doesn't support conditions of type `MultipleCondition`."""
 )
 @Plugin(
     examples = {
@@ -62,7 +62,7 @@ import jakarta.validation.constraints.Size;
                   - id: log_hello_world
                     type: io.kestra.plugin.core.log.Log
                     message: Hello World! 🚀
-                
+
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
@@ -72,7 +72,7 @@ import jakarta.validation.constraints.Size;
         ),
         @Example(
             title = """
-                Add a trigger matching specific webhook event condition. The flow will be executed only if the condition is met.`.
+                Add a trigger matching specific webhook event condition. The flow will be executed only if the condition is met.
                 """,
             code = """
                 id: condition_based_webhook_flow
@@ -82,7 +82,7 @@ import jakarta.validation.constraints.Size;
                   - id: log_hello_world
                     type: io.kestra.plugin.core.log.Log
                     message: Hello World! 🚀
-                
+
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
@@ -98,6 +98,9 @@ import jakarta.validation.constraints.Size;
 )
 @WebhookValidation
 public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Output> {
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
+        .setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS);
+
     @Size(max = 256)
     @NotNull
     @Schema(
@@ -111,10 +114,12 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
     @PluginProperty(dynamic = true)
     private String key;
 
+    @PluginProperty
+    @Builder.Default
+    private Boolean wait = false;
+
     public Optional<Execution> evaluate(HttpRequest<String> request, io.kestra.core.models.flows.Flow flow) {
         String body = request.getBody().orElse(null);
-
-        ObjectMapper mapper = JacksonMapper.ofJson().setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS);
 
         Execution.ExecutionBuilder builder = Execution.builder()
             .id(IdUtils.create())
@@ -126,8 +131,8 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
             .trigger(ExecutionTrigger.of(
                 this,
                 Output.builder()
-                    .body(tryMap(mapper, body)
-                        .or(() -> tryArray(mapper, body))
+                    .body(tryMap(body)
+                        .or(() -> tryArray(body))
                         .orElse(body)
                     )
                     .headers(request.getHeaders().asMap())
@@ -138,17 +143,17 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
         return Optional.of(builder.build());
     }
 
-    private Optional<Object> tryMap(ObjectMapper mapper, String body) {
+    private Optional<Object> tryMap(String body) {
         try {
-            return Optional.of(mapper.readValue(body, new TypeReference<Map<String, Object>>() {}));
+            return Optional.of(MAPPER.readValue(body, new TypeReference<Map<String, Object>>() {}));
         } catch (Exception ignored) {
             return Optional.empty();
         }
     }
 
-    private Optional<Object> tryArray(ObjectMapper mapper, String body) {
+    private Optional<Object> tryArray(String body) {
         try {
-            return Optional.of(mapper.readValue(body, new TypeReference<List<Object>>() {}));
+            return Optional.of(MAPPER.readValue(body, new TypeReference<List<Object>>() {}));
         } catch (Exception ignored) {
             return Optional.empty();
         }

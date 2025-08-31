@@ -4,18 +4,16 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerJobQueueInterface;
-import io.kestra.core.queues.WorkerTriggerResultQueueInterface;
 import io.kestra.core.runners.*;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Prototype;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -47,8 +45,8 @@ public class H2QueueFactory implements QueueFactoryInterface {
     @Singleton
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)
     @Bean(preDestroy = "close")
-    public QueueInterface<WorkerJob> workerJob() {
-        return new H2Queue<>(WorkerJob.class, applicationContext);
+    public WorkerJobQueueInterface workerJob() {
+        return new H2WorkerJobQueue(applicationContext);
     }
 
     @Override
@@ -64,7 +62,7 @@ public class H2QueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
     @Bean(preDestroy = "close")
     public QueueInterface<WorkerTriggerResult> workerTriggerResult() {
-        return new H2Queue<>(WorkerTriggerResult.class, applicationContext);
+        return new H2WorkerTriggerResultQueue(applicationContext);
     }
 
     @Override
@@ -87,8 +85,8 @@ public class H2QueueFactory implements QueueFactoryInterface {
     @Singleton
     @Named(QueueFactoryInterface.FLOW_NAMED)
     @Bean(preDestroy = "close")
-    public QueueInterface<FlowWithSource> flow() {
-        return new H2Queue<>(FlowWithSource.class, applicationContext);
+    public QueueInterface<FlowInterface> flow() {
+        return new H2Queue<>(FlowInterface.class, applicationContext);
     }
 
     @Override
@@ -132,20 +130,6 @@ public class H2QueueFactory implements QueueFactoryInterface {
     }
 
     @Override
-    @Prototype // must be prototype so we can create two Worker in the same application context for testing purpose.
-    @Bean(preDestroy = "close")
-    public WorkerJobQueueInterface workerJobQueue() {
-        return new H2WorkerJobQueue(applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Bean(preDestroy = "close")
-    public WorkerTriggerResultQueueInterface workerTriggerResultQueue() {
-        return new H2WorkerTriggerResultQueue(applicationContext);
-    }
-
-    @Override
     @Singleton
     @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)
     @Bean(preDestroy = "close")
@@ -159,5 +143,13 @@ public class H2QueueFactory implements QueueFactoryInterface {
     @Bean(preDestroy = "close")
     public QueueInterface<SubflowExecutionEnd> subflowExecutionEnd() {
         return new H2Queue<>(SubflowExecutionEnd.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.EXECUTION_RUNNING_NAMED)
+    @Bean(preDestroy = "close")
+    public QueueInterface<ExecutionRunning> executionRunning() {
+        return new H2Queue<>(ExecutionRunning.class, applicationContext);
     }
 }

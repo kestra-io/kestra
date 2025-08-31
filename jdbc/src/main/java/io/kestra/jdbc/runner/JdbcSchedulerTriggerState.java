@@ -100,6 +100,11 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
     }
 
     @Override
+    public List<Trigger> findByNextExecutionDateReadyButLockedTriggers(ZonedDateTime now) {
+        return this.triggerRepository.findByNextExecutionDateReadyButLockedTriggers(now);
+    }
+
+    @Override
     public List<Trigger> findByNextExecutionDateReadyForGivenFlows(List<FlowWithSource> flows, ZonedDateTime now, ScheduleContextInterface scheduleContext) {
         throw new NotImplementedException();
     }

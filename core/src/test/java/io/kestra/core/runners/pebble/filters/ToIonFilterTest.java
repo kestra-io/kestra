@@ -13,9 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @KestraTest
@@ -48,35 +46,35 @@ class ToIonFilterTest {
         );
 
         String render = variableRenderer.render("{{ vars.second.string | toIon }}", vars);
-        assertThat(render, is("\"string\""));
+        assertThat(render).isEqualTo("\"string\"");
 
         render = variableRenderer.render("{{ vars.second.int | toIon }}", vars);
-        assertThat(render, is("1"));
+        assertThat(render).isEqualTo("1");
 
         render = variableRenderer.render("{{ vars.second.float | toIon }}", vars);
-        assertThat(render, is("1.1230000257492065e0"));
+        assertThat(render).isEqualTo("1.1230000257492065e0");
 
         render = variableRenderer.render("{{ vars.second.list | toIon }}", vars);
-        assertThat(render, is("[\"string\",1,1.1230000257492065e0]"));
+        assertThat(render).isEqualTo("[\"string\",1,1.1230000257492065e0]");
 
         render = variableRenderer.render("{{ vars.second.bool | toIon }}", vars);
-        assertThat(render, is("true"));
+        assertThat(render).isEqualTo("true");
 
         render = variableRenderer.render("{{ vars.second.date | toIon }}", vars);
-        assertThat(render, startsWith("ZonedDateTime::\"" + date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)));
+        assertThat(render).startsWith("ZonedDateTime::\"" + date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
         render = variableRenderer.render("{{ vars.second.map | toIon }}", vars);
-        assertThat(render, containsString("int:1"));
-        assertThat(render, containsString("float:1.1230000257492065e0"));
-        assertThat(render, containsString("string:\"string\""));
-        assertThat(render, startsWith("{"));
-        assertThat(render, endsWith("}"));
+        assertThat(render).contains("int:1");
+        assertThat(render).contains("float:1.1230000257492065e0");
+        assertThat(render).contains("string:\"string\"");
+        assertThat(render).startsWith("{");
+        assertThat(render).endsWith("}");
 
         render = variableRenderer.render("{{ {\"empty_object\":{}} | toIon }}", Map.of());
-        assertThat(render, is("{empty_object:{}}"));
+        assertThat(render).isEqualTo("{empty_object:{}}");
 
         render = variableRenderer.render("{{ null | toIon }}", Map.of());
-        assertThat(render, is("null"));
+        assertThat(render).isEqualTo("null");
     }
 
     @Test

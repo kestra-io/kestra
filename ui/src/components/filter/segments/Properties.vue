@@ -186,24 +186,6 @@
 .scrollable-container {
     max-height: 300px;
     overflow-y: scroll;
-
-    &::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: var(--el-scrollbar-bg-color);
-        border-radius: 3px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: var(--el-color-primary);
-        border-radius: 3px;
-
-        &:hover {
-            background: var(--el-color-primary-light-3);
-        }
-    }
 }
 
 .container-header {
@@ -215,7 +197,7 @@
 }
 
 .group-title {
-    color: var(--el-text-color-secondary);
+    color: var(--ks-content-tertiary);
     font-size: var(--el-font-size-extra-small);
 }
 

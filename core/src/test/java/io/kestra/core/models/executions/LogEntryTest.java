@@ -1,7 +1,6 @@
 package io.kestra.core.models.executions;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -23,16 +22,16 @@ public class LogEntryTest {
             .message("message")
             .build();
         Map<String, Object> logMap = logEntry.toLogMap();
-        assertThat(logMap.get("tenantId"), is("tenantId"));
-        assertThat(logMap.get("namespace"), is("namespace"));
-        assertThat(logMap.get("flowId"), is("flowId"));
-        assertThat(logMap.get("taskId"), is("taskId"));
-        assertThat(logMap.get("executionId"), is("executionId"));
-        assertThat(logMap.get("taskRunId"), is("taskRunId"));
-        assertThat(logMap.get("attemptNumber"), is(1));
-        assertThat(logMap.get("triggerId"), is("triggerId"));
-        assertThat(logMap.get("thread"), is("thread"));
-        assertThat(logMap.get("message"), is("message"));
+        assertThat(logMap.get("tenantId")).isEqualTo("tenantId");
+        assertThat(logMap.get("namespace")).isEqualTo("namespace");
+        assertThat(logMap.get("flowId")).isEqualTo("flowId");
+        assertThat(logMap.get("taskId")).isEqualTo("taskId");
+        assertThat(logMap.get("executionId")).isEqualTo("executionId");
+        assertThat(logMap.get("taskRunId")).isEqualTo("taskRunId");
+        assertThat(logMap.get("attemptNumber")).isEqualTo(1);
+        assertThat(logMap.get("triggerId")).isEqualTo("triggerId");
+        assertThat(logMap.get("thread")).isEqualTo("thread");
+        assertThat(logMap.get("message")).isEqualTo("message");
     }
 
 }

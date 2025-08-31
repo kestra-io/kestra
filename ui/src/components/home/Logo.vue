@@ -7,15 +7,12 @@
     </div>
 </template>
 
-<script>
-    export default {
-        props: {
-            link: {
-                type: Boolean,
-                default: false
-            }
-        }
-    }
+<script setup lang="ts">
+    withDefaults(defineProps<{
+        link?: boolean
+    }>(), {
+        link: false
+    });
 </script>
 
 <style scoped lang="scss">

@@ -30,7 +30,7 @@ class ServiceInstanceTest {
         Instant now = Instant.now();
         ServiceInstance instance = new ServiceInstance(
             IdUtils.create(),
-            Service.ServiceType.WORKER,
+            ServiceType.WORKER,
             Service.ServiceState.RUNNING,
             null,
             now.minus(Duration.ofSeconds(5)),
@@ -51,7 +51,7 @@ class ServiceInstanceTest {
         Instant now = Instant.now();
         ServiceInstance instance = new ServiceInstance(
             IdUtils.create(),
-            Service.ServiceType.WORKER,
+            ServiceType.WORKER,
             Service.ServiceState.RUNNING,
             null,
             now.minus(Duration.ofSeconds(20)),
@@ -72,7 +72,7 @@ class ServiceInstanceTest {
         Instant now = Instant.now();
         ServiceInstance instance = new ServiceInstance(
             IdUtils.create(),
-            Service.ServiceType.WORKER,
+            ServiceType.WORKER,
             Service.ServiceState.RUNNING,
             null,
             now,
@@ -111,7 +111,7 @@ class ServiceInstanceTest {
         Instant now = Instant.now();
         return new ServiceInstance(
             IdUtils.create(),
-            Service.ServiceType.WORKER,
+            ServiceType.WORKER,
             Service.ServiceState.RUNNING,
             null,
             now,

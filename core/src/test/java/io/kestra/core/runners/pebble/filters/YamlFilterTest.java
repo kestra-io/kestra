@@ -13,8 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class YamlFilterTest {
@@ -46,27 +45,27 @@ class YamlFilterTest {
         );
 
         String render = variableRenderer.render("{{ vars.second.string | yaml }}", vars);
-        assertThat(render, is("string\n"));
+        assertThat(render).isEqualTo("string\n");
 
         render = variableRenderer.render("{{ vars.second.int | yaml }}", vars);
-        assertThat(render, is("1\n"));
+        assertThat(render).isEqualTo("1\n");
 
         render = variableRenderer.render("{{ vars.second.float | yaml }}", vars);
-        assertThat(render, is("1.123\n"));
+        assertThat(render).isEqualTo("1.123\n");
 
         render = variableRenderer.render("{{ vars.second.list | yaml }}", vars);
-        assertThat(render, is(" - string\n - 1\n - 1.123\n"));
+        assertThat(render).isEqualTo(" - string\n - 1\n - 1.123\n");
 
         render = variableRenderer.render("{{ vars.second.bool | yaml }}", vars);
-        assertThat(render, is("true\n"));
+        assertThat(render).isEqualTo("true\n");
 
         render = variableRenderer.render("{{ vars.second.date | yaml }}", vars);
-        assertThat(render, is( date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + "\n"));
+        assertThat(render).isEqualTo(date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + "\n");
 
         render = variableRenderer.render("{{ vars.second.map | yaml }}", vars);
-        assertThat(render, containsString("int: 1\n"));
-        assertThat(render, containsString("int: 1\n"));
-        assertThat(render, containsString("float: 1.123\n"));
-        assertThat(render, containsString("string: string\n"));
+        assertThat(render).contains("int: 1\n");
+        assertThat(render).contains("int: 1\n");
+        assertThat(render).contains("float: 1.123\n");
+        assertThat(render).contains("string: string\n");
     }
 }

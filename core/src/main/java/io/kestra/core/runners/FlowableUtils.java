@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FlowableUtils {
-    @Deprecated(forRemoval = true)
     public static List<NextTaskRun> resolveSequentialNexts(
         Execution execution,
         List<ResolvedTask> tasks
@@ -46,6 +45,19 @@ public class FlowableUtils {
         TaskRun parentTaskRun
     ) {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun);
+
+        return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, parentTaskRun);
+    }
+
+    public static List<NextTaskRun> resolveSequentialNexts(
+        Execution execution,
+        List<ResolvedTask> tasks,
+        List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
+        TaskRun parentTaskRun,
+        State.Type terminalState
+    ) {
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun, terminalState);
 
         return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, parentTaskRun);
     }
@@ -150,7 +162,31 @@ public class FlowableUtils {
         boolean allowFailure,
         boolean allowWarning
     ) {
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun);
+        return resolveState(
+            execution,
+            tasks,
+            errors,
+            _finally,
+            parentTaskRun,
+            runContext,
+            allowFailure,
+            allowWarning,
+            State.Type.SUCCESS
+        );
+    }
+
+    public static Optional<State.Type> resolveState(
+        Execution execution,
+        List<ResolvedTask> tasks,
+        List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
+        TaskRun parentTaskRun,
+        RunContext runContext,
+        boolean allowFailure,
+        boolean allowWarning,
+        State.Type terminalState
+    ) {
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun, terminalState);
 
         if (currentTasks == null) {
             runContext.logger().warn(
@@ -162,17 +198,17 @@ public class FlowableUtils {
 
             return Optional.of(allowFailure ? allowWarning ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED);
         } else if (currentTasks.stream().allMatch(t -> t.getTask().getDisabled()) && !currentTasks.isEmpty()) {
-            // if all child tasks are disabled, we end in SUCCESS
-            return Optional.of(State.Type.SUCCESS);
+            // if all child tasks are disabled, we end in the terminal state
+            return Optional.of(terminalState);
         } else if (!currentTasks.isEmpty()) {
-            // handle nominal case, tasks or errors flow are ready to be analysed
+            // handle nominal case, tasks or errors flow are ready to be analyzed
             if (execution.isTerminated(currentTasks, parentTaskRun)) {
-                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning));
+                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
             }
         } else {
             // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
-            if (execution.hasFailed(tasks, parentTaskRun)) {
-                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning));
+            if (execution.hasFailed(tasks, parentTaskRun) || terminalState == State.Type.FAILED) {
+                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
             }
         }
 
@@ -219,7 +255,7 @@ public class FlowableUtils {
 
     /**
      * resolveConcurrentNexts will resolve concurrent values
-     * For both concurrent vales and subtasks, see resolveParallelNexts()
+     * For both concurrent values and subtasks, see resolveParallelNexts()
      */
     public static List<NextTaskRun> resolveConcurrentNexts(
         Execution execution,
@@ -266,39 +302,31 @@ public class FlowableUtils {
             return Collections.emptyList();
         }
 
-        long concurrencySlots = concurrency == 0 ? Integer.MAX_VALUE : concurrency - nonTerminatedCount;
-
-        // first one
-        if (taskRuns.isEmpty()) {
-            Map<String, List<ResolvedTask>> collect = allTasks
-                .stream()
-                .collect(Collectors.groupingBy(ResolvedTask::getValue, LinkedHashMap::new, Collectors.toList()));
-
-            return collect.values().stream()
-                .limit(concurrencySlots)
-                .map(resolvedTasks -> resolvedTasks.getFirst().toNextTaskRun(execution))
-                .toList()
-                .reversed();
-        }
-
-        // start as many tasks as we have concurrency slots
         Map<String, List<ResolvedTask>> collect = allTasks
             .stream()
             .collect(Collectors.groupingBy(ResolvedTask::getValue, LinkedHashMap::new, Collectors.toList()));
 
+        long resolvedConcurrency = concurrency == 0 ? Integer.MAX_VALUE : concurrency;
+        // if concurrencyLimit > values.size() we limit concurrency to values.size()
+        if (resolvedConcurrency > collect.size()) {
+            resolvedConcurrency = collect.size();
+        }
+        long concurrencySlots = resolvedConcurrency - nonTerminatedCount;
+
+        // first one
+        if (taskRuns.isEmpty()) {
+            return collect.values().stream()
+                .limit(concurrencySlots)
+                .map(resolvedTasks -> resolvedTasks.getFirst().toNextTaskRun(execution))
+                .toList();
+        }
+
+        // start as many tasks as we have concurrency slots
         return collect.values().stream()
-            .map(resolvedTasks -> filterCreated(resolvedTasks, taskRuns, parentTaskRun))
+            .map(resolvedTasks -> resolveSequentialNexts(execution, resolvedTasks, null, null, parentTaskRun))
             .filter(resolvedTasks -> !resolvedTasks.isEmpty())
             .limit(concurrencySlots)
-            .map(resolvedTasks -> resolvedTasks.getFirst().toNextTaskRun(execution))
-            .toList();
-    }
-
-    private static List<ResolvedTask> filterCreated(List<ResolvedTask> tasks, List<TaskRun> taskRuns, TaskRun parentTaskRun) {
-        return tasks.stream()
-            .filter(resolvedTask -> taskRuns.stream()
-                .noneMatch(taskRun -> FlowableUtils.isTaskRunFor(resolvedTask, taskRun, parentTaskRun))
-            )
+            .map(resolvedTasks -> resolvedTasks.getFirst())
             .toList();
     }
 

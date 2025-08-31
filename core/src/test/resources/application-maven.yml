@@ -1,0 +1,10 @@
+kestra:
+  plugins:
+    repositories:
+      central:
+        url: https://repo.maven.apache.org/maven2/
+      secured:
+        url: https://registry.test.org/maven
+        basicAuth:
+          username: "username"
+          password: "password"

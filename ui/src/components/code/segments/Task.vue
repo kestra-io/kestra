@@ -1,180 +1,157 @@
 <template>
     <TaskEditor
-        v-if="!lastBreadcumb.shown"
         v-model="yaml"
-        :section
-        @update:model-value="validateTask"
-    />
-
-    <component
-        v-else
-        :is="lastBreadcumb.component.type"
-        v-bind="lastBreadcumb.component.props"
-        :model-value="lastBreadcumb.component.props.modelValue"
-        @update:model-value="validateTask"
+        @update:model-value="validateTask(); saveTask();"
     />
 
     <template v-if="yaml">
-        <!-- TODO: Improve the validation for single tasks -->
         <ValidationError v-if="false" :errors link />
-
-        <Save
-            @click="saveTask"
-            :what="route.query.section?.toString()"
-            class="w-100 mt-3"
-        />
     </template>
 </template>
 
 <script setup lang="ts">
-    import {onBeforeMount, ref, watch, computed} from "vue";
-
-    const emits = defineEmits(["updateTask", "updateDocumentation"]);
-    const props = defineProps({
-        identifier: {type: String, required: true},
-        flow: {type: String, required: true},
-        creation: {type: Boolean, default: false},
-    });
-
-    import {useRouter, useRoute} from "vue-router";
-    const router = useRouter();
-    const route = useRoute();
-
-    import {SECTIONS} from ".././../../utils/constants";
-    const section = ref(SECTIONS.TASKS);
-
+    import {ref, watch, computed, inject, nextTick} from "vue";
+    import {SECTIONS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants";
+    import {
+        CLOSE_TASK_FUNCTION_INJECTION_KEY,
+        UPDATE_TASK_FUNCTION_INJECTION_KEY,
+        FULL_SOURCE_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
+        REF_PATH_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY,
+        FIELDNAME_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY,
+    } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
-    import YamlUtils from "../../../utils/yamlUtils";
-
-    import {useStore} from "vuex";
-    const store = useStore();
-
-    const breadcrumbs = computed(() => store.state.code.breadcrumbs);
-    const lastBreadcumb = computed(() => {
-        const index =
-            breadcrumbs.value.length === 3 ? 2 : breadcrumbs.value.length - 1;
-
-        return {
-            shown: index >= 2,
-            component: breadcrumbs.value?.[index]?.component,
-        };
-    });
-
-    const yaml = ref(
-        YamlUtils.extractTask(props.flow, props.identifier)?.toString() || "",
-    );
-
-    onBeforeMount(() => {
-        const type = YamlUtils.parse(yaml.value)?.type ?? null;
-        emits("updateDocumentation", type);
-    });
-
-    watch(
-        () => route.query.section,
-        (value) => {
-            section.value = SECTIONS[value === "triggers" ? "TRIGGERS" : "TASKS"];
-        },
-        {immediate: true},
-    );
-
-    watch(
-        () => props.identifier,
-        (value) => {
-            if (value === "new") {
-                yaml.value = "";
-            } else {
-                yaml.value =
-                    YamlUtils.extractTask(props.flow, value)?.toString() || "";
-            }
-        },
-        {immediate: true},
-    );
-
     import ValidationError from "../../../components/flows/ValidationError.vue";
+    import {useFlowStore} from "../../../stores/flow";
 
-    const CURRENT = ref(null);
-    const validateTask = (task) => {
-        let temp = YamlUtils.parse(yaml.value);
+    const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""));
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+    const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
+    const position = inject(POSITION_INJECTION_KEY, "after");
+    const creatingTask = inject(
+        CREATING_TASK_INJECTION_KEY,
+        false,
+    );
 
-        if (lastBreadcumb.value.shown) {
-            const field = breadcrumbs.value.at(-1).label;
-            temp = {...temp, [field]: task};
-        }
+    const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
+    const updateTask = inject(UPDATE_TASK_FUNCTION_INJECTION_KEY, () => {})
 
-        temp = YamlUtils.stringify(temp);
+    const closeTaskAddition = inject(
+        CLOSE_TASK_FUNCTION_INJECTION_KEY,
+        () => {},
+    );
+    const editTask = inject(
+        EDIT_TASK_FUNCTION_INJECTION_KEY,
+        () => {},
+    );
 
-        store
-            .dispatch("flow/validateTask", {task: temp, section: section.value})
-            .then(() => (yaml.value = temp));
+    interface TaskModel {
+        newBlock: string,
+        parentPath: string,
+        refPath?: number
+        position?: "before" | "after",
+    }
 
-        CURRENT.value = temp;
-    };
+    const yaml = ref("");
 
-    const errors = computed(() => store.getters["flow/taskError"]);
+    function getPath(parentPath: string, refPath: number | undefined): string {
+        return refPath !== undefined && refPath !== null ? `${parentPath}[${refPath}]` : parentPath;
+    }
 
-    import Save from "../components/Save.vue";
-    const saveTask = () => {
-        if (lastBreadcumb.value.shown) {
-            store.commit("code/removeBreadcrumb", {last: true});
-            return;
-        }
-
-        const source = props.flow;
-
-        const task = YamlUtils.extractTask(
-            yaml.value,
-            YamlUtils.parse(yaml.value).id,
-        );
-
-        const currentSection = route.query.section;
-        const isCreation =
-            props.creation &&
-            (!props.identifier || props.identifier === "new");
-
-        let result;
-
-        if (isCreation) {
-            if (currentSection === "tasks") {
-                const existing = YamlUtils.checkTaskAlreadyExist(
-                    source,
-                    CURRENT.value,
-                );
-
-                if (existing) {
-                    store.dispatch("core/showMessage", {
-                        variant: "error",
-                        title: "Task with same ID already exist",
-                        message: `Task in ${route.query.section} block  with ID: ${existing} already exist in the flow.`,
-                    });
-                    return;
-                }
-
-                result = YamlUtils.insertTask(
-                    source,
-                    route.query.target ?? YamlUtils.getLastTask(source),
-                    task,
-                    route.query.position ?? "after",
-                );
-            } else if (currentSection === "triggers") {
-                result = YamlUtils.insertTrigger(source, CURRENT.value);
-            } else if (currentSection === "error handlers") {
-                result = YamlUtils.insertError(source, CURRENT.value);
-            } else if (currentSection === "finally") {
-                result = YamlUtils.insertFinally(source, CURRENT.value);
-            }
-        } else {
-            result = YamlUtils.replaceTaskInDocument(
+    watch(flow, (source) => {
+        if(!creatingTask){
+            const path = getPath(parentPath, refPath);
+            const taskYaml = YAML_UTILS.extractBlockWithPath({
                 source,
-                props.identifier,
-                task,
+                path,
+            }) ?? ""
+
+            if(taskYaml === yaml.value){
+                return;
+            }
+            yaml.value = taskYaml;
+        }
+    }, {
+        immediate: true,
+    });
+
+    const section = computed(() => /^(\w+)(\[\d+\])?/.exec(parentPath)?.[1]);
+
+    const validationSection = computed(() =>
+        section.value === "triggers" ? SECTIONS.TRIGGERS : SECTIONS.TASKS
+    )
+
+    const flowStore = useFlowStore();
+    const validateTask = (task?: string) => {
+        if(section.value !== PLUGIN_DEFAULTS_SECTION && task){
+            clearTimeout(timer.value);
+            timer.value = setTimeout(() => {
+                if (lastValidatedValue.value !== task) {
+                    lastValidatedValue.value = task;
+                    flowStore.validateTask({
+                        task,
+                        section: validationSection.value
+                    });
+                }
+            }, 500) as any;
+        }
+    };
+
+    const timer = ref<number>();
+    const lastValidatedValue = ref<string>();
+
+
+    const errors = computed(() => flowStore.taskError?.split(/, ?/));
+
+    const saveTask = () => {
+        let result: string = flow.value;
+
+        if (!creatingTask) {
+            if(yaml.value){
+                const path = getPath(parentPath, refPath);
+                result = YAML_UTILS.replaceBlockWithPath({
+                    source: result,
+                    path,
+                    newContent: yaml.value,
+                });
+            }
+        } else if(!hasMovedToEdit.value ){
+            const currentSection = section.value as keyof typeof SECTIONS_MAP;
+
+            if(!currentSection) {
+                return;
+            }
+
+            const task = {
+                newBlock: yaml.value,
+                parentPath,
+                refPath,
+                position,
+            } satisfies TaskModel;
+
+            result = YAML_UTILS.insertBlockWithPath({
+                source: result,
+                ...task,
+            });
+
+
+            const currentRefPath = (refPath !== undefined && refPath !== null) ? refPath + (position === "after" ? 1 : 0) : 0;
+            editTask(
+                fieldName ? `${parentPath}[${currentRefPath}].${fieldName}` : parentPath,
+                blockSchemaPath.value,
+                fieldName ? undefined : currentRefPath
             );
+            hasMovedToEdit.value = true;
+            nextTick(() => {
+                closeTaskAddition();
+            });
         }
 
-        emits("updateTask", result);
-        store.commit("code/removeBreadcrumb", {last: true});
-
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {section, identifier, type, ...rest} = route.query;
-        router.replace({query: {...rest}});
+        updateTask(result);
     };
+
+    const hasMovedToEdit = ref(false);
 </script>

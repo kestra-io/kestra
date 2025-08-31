@@ -1,6 +1,7 @@
 package io.kestra.jdbc.repository;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import org.jooq.*;
 import org.jooq.Record;
@@ -13,7 +14,7 @@ import java.util.Map;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
 
 public abstract class JdbcFlowRepositoryService {
-    public static Table<Record> lastRevision(AbstractJdbcRepository<Flow> jdbcRepository, boolean asterisk) {
+    public static Table<Record> lastRevision(AbstractJdbcRepository<? extends FlowInterface> jdbcRepository, boolean asterisk) {
         List<SelectFieldOrAsterisk> fields = new ArrayList<>();
         if (asterisk) {
             // There is an issue in jOOQ with MySQL due to some limitations on MySQL.

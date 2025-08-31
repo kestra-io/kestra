@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -15,14 +14,14 @@ public class AliasTest {
     @Test
     @ExecuteFlow("flows/valids/alias-task.yaml")
     void taskAlias(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList().size(), is(2));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList().size()).isEqualTo(2);
     }
 
     @Test
     @ExecuteFlow("flows/valids/alias-trigger.yaml")
     void triggerAlias(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList().size(), is(1));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
     }
 }

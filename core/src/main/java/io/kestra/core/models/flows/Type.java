@@ -14,6 +14,7 @@ public enum Type {
     INT(IntInput.class.getName()),
     FLOAT(FloatInput.class.getName()),
     BOOLEAN(BooleanInput.class.getName()),
+    BOOL(BoolInput.class.getName()),
     DATETIME(DateTimeInput.class.getName()),
     DATE(DateInput.class.getName()),
     TIME(TimeInput.class.getName()),

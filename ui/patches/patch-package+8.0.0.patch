@@ -1,0 +1,28 @@
+diff --git a/node_modules/patch-package/dist/makePatch.js b/node_modules/patch-package/dist/makePatch.js
+index d8d0925..b1fc429 100644
+--- a/node_modules/patch-package/dist/makePatch.js
++++ b/node_modules/patch-package/dist/makePatch.js
+@@ -115,12 +115,12 @@ function makePatch({ packagePathSpecifier, appPath, packageManager, includePaths
+                 fs_extra_1.copySync(rcPath, path_1.join(tmpRepo.name, rcFile), { dereference: true });
+             }
+         });
+-        if (packageManager === "yarn") {
++        if (packageManager === "npm") {
+             console_1.default.info(chalk_1.default.grey("•"), `Installing ${packageDetails.name}@${packageVersion} with yarn`);
+             try {
+                 // try first without ignoring scripts in case they are required
+                 // this works in 99.99% of cases
+-                spawnSafe_1.spawnSafeSync(`yarn`, ["install", "--ignore-engines"], {
++                spawnSafe_1.spawnSafeSync(`npm`, ["install", "--ignore-engines"], {
+                     cwd: tmpRepoNpmRoot,
+                     logStdErrOnError: false,
+                 });
+@@ -128,7 +128,7 @@ function makePatch({ packagePathSpecifier, appPath, packageManager, includePaths
+             catch (e) {
+                 // try again while ignoring scripts in case the script depends on
+                 // an implicit context which we haven't reproduced
+-                spawnSafe_1.spawnSafeSync(`yarn`, ["install", "--ignore-engines", "--ignore-scripts"], {
++                spawnSafe_1.spawnSafeSync(`npm`, ["install", "--ignore-engines", "--ignore-scripts"], {
+                     cwd: tmpRepoNpmRoot,
+                 });
+             }

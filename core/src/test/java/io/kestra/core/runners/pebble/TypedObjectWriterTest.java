@@ -6,16 +6,15 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TypedObjectWriterTest {
+
     @Test
-    void invalidAddition() throws IOException {
+    void writeInt() throws IOException {
         try (TypedObjectWriter writer = new TypedObjectWriter()){
             writer.writeSpecialized(1);
-            IllegalArgumentException illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> writer.writeSpecialized('a'));
-            assertThat(illegalArgumentException.getMessage(), is("Tried to add java.lang.Character to java.lang.Integer"));
+            assertThat(writer.output()).isEqualTo(1);
         }
     }
 
@@ -25,7 +24,15 @@ public class TypedObjectWriterTest {
             writer.writeSpecialized(1);
             writer.writeSpecialized(2);
             writer.writeSpecialized(3);
-            assertThat(writer.output(), is(6));
+            assertThat(writer.output()).isEqualTo("123");
+        }
+    }
+
+    @Test
+    void writeLong() throws IOException {
+        try (TypedObjectWriter writer = new TypedObjectWriter()){
+            writer.writeSpecialized(1L);
+            assertThat(writer.output()).isEqualTo(1L);
         }
     }
 
@@ -35,7 +42,15 @@ public class TypedObjectWriterTest {
             writer.writeSpecialized(1L);
             writer.writeSpecialized(2L);
             writer.writeSpecialized(3L);
-            assertThat(writer.output(), is(6L));
+            assertThat(writer.output()).isEqualTo("123");
+        }
+    }
+
+    @Test
+    void writeDouble() throws IOException {
+        try (TypedObjectWriter writer = new TypedObjectWriter()){
+            writer.writeSpecialized(1.0);
+            assertThat(writer.output()).isEqualTo(1.0);
         }
     }
 
@@ -45,7 +60,15 @@ public class TypedObjectWriterTest {
             writer.writeSpecialized(1.0);
             writer.writeSpecialized(2.0);
             writer.writeSpecialized(3.0);
-            assertThat(writer.output(), is(6.0));
+            assertThat(writer.output()).isEqualTo("1.02.03.0");
+        }
+    }
+
+    @Test
+    void writeFloat() throws IOException {
+        try (TypedObjectWriter writer = new TypedObjectWriter()){
+            writer.writeSpecialized(1.0f);
+            assertThat(writer.output()).isEqualTo(1.0f);
         }
     }
 
@@ -55,7 +78,15 @@ public class TypedObjectWriterTest {
             writer.writeSpecialized(1.0f);
             writer.writeSpecialized(2.0f);
             writer.writeSpecialized(3.0f);
-            assertThat(writer.output(), is(6.0f));
+            assertThat(writer.output()).isEqualTo("1.02.03.0");
+        }
+    }
+
+    @Test
+    void writeShort() throws IOException {
+        try (TypedObjectWriter writer = new TypedObjectWriter()){
+            writer.writeSpecialized((short) 1);
+            assertThat(writer.output()).isEqualTo((short) 1);
         }
     }
 
@@ -65,7 +96,7 @@ public class TypedObjectWriterTest {
             writer.writeSpecialized((short) 1);
             writer.writeSpecialized((short) 2);
             writer.writeSpecialized((short) 3);
-            assertThat(writer.output(), is(6));
+            assertThat(writer.output()).isEqualTo("123");
         }
     }
 
@@ -78,7 +109,7 @@ public class TypedObjectWriterTest {
             writer.writeSpecialized(bByte);
             byte cByte = "c".getBytes()[0];
             writer.writeSpecialized(cByte);
-            assertThat(writer.output(), is((aByte + bByte) + cByte));
+            assertThat(writer.output()).isEqualTo("979899");
         }
     }
 
@@ -88,7 +119,7 @@ public class TypedObjectWriterTest {
             writer.writeSpecialized('a');
             writer.writeSpecialized('b');
             writer.writeSpecialized('c');
-            assertThat(writer.output(), is("abc"));
+            assertThat(writer.output()).isEqualTo("abc");
         }
     }
 
@@ -98,7 +129,7 @@ public class TypedObjectWriterTest {
             writer.writeSpecialized("a");
             writer.writeSpecialized("b");
             writer.writeSpecialized("c");
-            assertThat(writer.output(), is("abc"));
+            assertThat(writer.output()).isEqualTo("abc");
         }
     }
 
@@ -107,7 +138,7 @@ public class TypedObjectWriterTest {
         try (TypedObjectWriter writer = new TypedObjectWriter()){
             writer.write(Map.of("a", "b"));
             IllegalArgumentException illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> writer.write(Map.of("c", "d")));
-            assertThat(illegalArgumentException.getMessage(), is("Tried to add java.util.ImmutableCollections$Map1 to java.util.ImmutableCollections$Map1"));
+            assertThat(illegalArgumentException.getMessage()).isEqualTo("Cannot concat java.util.ImmutableCollections$Map1 with java.util.ImmutableCollections$Map1");
         }
     }
 }

@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
@@ -32,11 +33,12 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 abstract public class TestsUtils {
     private static final ObjectMapper mapper = JacksonMapper.ofYaml();
@@ -50,12 +52,12 @@ abstract public class TestsUtils {
         return mapper.readValue(read, cls);
     }
 
-    public static void loads(LocalFlowRepositoryLoader repositoryLoader) throws IOException, URISyntaxException {
-        TestsUtils.loads(repositoryLoader, Objects.requireNonNull(TestsUtils.class.getClassLoader().getResource("flows/valids")));
+    public static void loads(String tenantId, LocalFlowRepositoryLoader repositoryLoader) throws IOException, URISyntaxException {
+        TestsUtils.loads(tenantId, repositoryLoader, Objects.requireNonNull(TestsUtils.class.getClassLoader().getResource("flows/valids")));
     }
 
-    public static void loads(LocalFlowRepositoryLoader repositoryLoader, URL url) throws IOException, URISyntaxException {
-        repositoryLoader.load(url);
+    public static void loads(String tenantId, LocalFlowRepositoryLoader repositoryLoader, URL url) throws IOException, URISyntaxException {
+        repositoryLoader.load(tenantId, url);
     }
 
     public static List<LogEntry> filterLogs(List<LogEntry> logs, TaskRun taskRun) {
@@ -95,7 +97,7 @@ abstract public class TestsUtils {
 
                 int matchingLogsCount = matchingLogs.get().size();
                 return countMatcher.test(matchingLogsCount);
-            }, Duration.ofMillis(10), Duration.ofMillis(500));
+            }, Duration.ofMillis(10), Duration.ofMillis(1000));
         } catch (TimeoutException e) {}
 
         return matchingLogs.get();
@@ -109,22 +111,18 @@ abstract public class TestsUtils {
         return Flow.builder()
             .namespace(caller.getClassName().toLowerCase())
             .id(caller.getMethodName().toLowerCase())
+            .tenantId(MAIN_TENANT)
             .revision(1)
             .build();
     }
 
-    public static Execution mockExecution(Flow flow, Map<String, Object> inputs) {
-        return TestsUtils.mockExecution(Thread.currentThread().getStackTrace()[2], flow, inputs, null);
+    public static Execution mockExecution(FlowInterface flow, Map<String, Object> inputs) {
+        return TestsUtils.mockExecution(flow, inputs, null);
     }
 
-    public static Execution mockExecution(Flow flow, Map<String, Object> inputs, Map<String, Object> outputs) {
-        return TestsUtils.mockExecution(Thread.currentThread().getStackTrace()[2], flow, inputs, outputs);
-    }
-
-    private static Execution mockExecution(StackTraceElement caller,
-                                           Flow flow,
-                                           Map<String, Object> inputs,
-                                           Map<String, Object> outputs) {
+    public static Execution mockExecution(FlowInterface flow,
+                                          Map<String, Object> inputs,
+                                          Map<String, Object> outputs) {
         return Execution.builder()
             .id(IdUtils.create())
             .tenantId(flow.getTenantId())
@@ -137,15 +135,12 @@ abstract public class TestsUtils {
             .withState(State.Type.RUNNING);
     }
 
-    public static TaskRun mockTaskRun(Flow flow, Execution execution, Task task) {
-        return TestsUtils.mockTaskRun(Thread.currentThread().getStackTrace()[2], execution, task);
-    }
-
-    private static TaskRun mockTaskRun(StackTraceElement caller, Execution execution, Task task) {
+    public static TaskRun mockTaskRun(Execution execution, Task task) {
         return TaskRun.builder()
             .id(IdUtils.create())
             .executionId(execution.getId())
             .namespace(execution.getNamespace())
+            .tenantId(execution.getTenantId())
             .flowId(execution.getFlowId())
             .taskId(task.getId())
             .state(new State())
@@ -160,6 +155,7 @@ abstract public class TestsUtils {
         Trigger triggerContext = Trigger.builder()
             .triggerId(trigger.getId())
             .flowId(flow.getId())
+            .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .date(ZonedDateTime.now())
             .build();
@@ -177,8 +173,8 @@ abstract public class TestsUtils {
         StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
 
         Flow flow = TestsUtils.mockFlow(caller);
-        Execution execution = TestsUtils.mockExecution(caller, flow, inputs, null);
-        TaskRun taskRun = TestsUtils.mockTaskRun(caller, execution, task);
+        Execution execution = TestsUtils.mockExecution(flow, inputs, null);
+        TaskRun taskRun = TestsUtils.mockTaskRun(execution, task);
 
         return runContextFactory.of(flow, task, execution, taskRun);
     }
@@ -219,33 +215,20 @@ abstract public class TestsUtils {
         };
         Runnable receiveCancellation = queueType == null ? queue.receive(consumerGroup, eitherConsumer, false) : queue.receive(consumerGroup, queueType, eitherConsumer, false);
 
-        AtomicBoolean isCancelled = new AtomicBoolean(false);
-        Flux<T> flux = Flux.<T>create(sink -> {
-            DeserializationException exception = exceptionRef.get();
-            if (exception == null) {
-                elements.forEach(sink::next);
-                sink.complete();
-            } else {
-                sink.error(exception);
-            }
-        }).doFinally(signalType -> {
-            isCancelled.set(true);
-            receiveCancellation.run();
-        });
-
-        new Thread(() -> {
-            try {
-                Await.until(isCancelled::get, null, Optional.ofNullable(timeout).orElse(Duration.ofMinutes(1)));
-            } catch (TimeoutException e) {
-                // If the receive hasn't been stopped after the given timeout (which means no subscription was done), we stop it
-                receiveCancellation.run();
-            }
-        }).start();
-
-        return flux;
+        return Flux.<T>create(sink -> {
+                DeserializationException exception = exceptionRef.get();
+                if (exception == null) {
+                    elements.forEach(sink::next);
+                    sink.complete();
+                } else {
+                    sink.error(exception);
+                }
+            })
+            .timeout(Optional.ofNullable(timeout).orElse(Duration.ofMinutes(1)))
+            .doFinally(signalType -> receiveCancellation.run());
     }
 
     public static <T> Property<List<T>> propertyFromList(List<T> list) throws JsonProcessingException {
-        return new Property<>(JacksonMapper.ofJson().writeValueAsString(list));
+        return Property.ofExpression(JacksonMapper.ofJson().writeValueAsString(list));
     }
 }

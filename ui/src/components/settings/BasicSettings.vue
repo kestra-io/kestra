@@ -1,8 +1,8 @@
 <template>
     <top-nav-bar :title="routeInfo.title">
         <template #additional-right>
-            <el-button @click="saveAllSettings()" type="primary">
-                {{ $t("settings.blocks.save.fields.name") }}
+            <el-button @click="saveAllSettings()" type="primary" :disabled="!hasUnsavedChanges">
+                {{ $t("settings.blocks.save.label") }}
             </el-button>
         </template>
     </top-nav-bar>
@@ -12,7 +12,7 @@
             <template #content>
                 <Row>
                     <Column v-if="allowDefaultNamespace" :label="$t('settings.blocks.configuration.fields.default_namespace')">
-                        <namespace-select data-type="flow" :value="pendingSettings.defaultNamespace" @update:model-value="onNamespaceSelect" />
+                        <namespace-select :value="pendingSettings.defaultNamespace" @update:model-value="onNamespaceSelect" />
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.log_level')">
@@ -71,6 +71,35 @@
                             />
                         </el-select>
                     </Column>
+
+                    <Column :label="$t('settings.blocks.configuration.fields.flow_default_tab')">
+                        <el-select :model-value="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
+                            <el-option
+                                v-for="item in flowDefaultTabOptions"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value"
+                            />
+                        </el-select>
+                    </Column>
+                    <Column :label="$t('settings.blocks.configuration.fields.playground')">
+                        <el-switch :model-value="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
+                    </Column>
+                </Row>
+                <Row>
+                    <Column :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')">
+                        <el-input-number
+                            :model-value="pendingSettings.autoRefreshInterval"
+                            @update:model-value="onAutoRefreshInterval"
+                            controls-position="right"
+                            :min="2"
+                            :max="120"
+                        >
+                            <template #suffix>
+                                <small class="dimmed">{{ $t('seconds').toLowerCase() }}</small>
+                            </template>
+                        </el-input-number>
+                    </Column>
                 </Row>
             </template>
         </Block>
@@ -82,20 +111,6 @@
                         <el-select :model-value="pendingSettings.theme" @update:model-value="onTheme">
                             <el-option
                                 v-for="item in themesOptions"
-                                :key="item.value"
-                                :label="item.text"
-                                :value="item.value"
-                            />
-                        </el-select>
-                    </Column>
-
-                    <Column :label="$t('settings.blocks.theme.fields.chart_color_scheme.label')">
-                        <el-select :model-value="pendingSettings.chartColor" @update:model-value="onChartColor">
-                            <el-option
-                                v-for="item in [
-                                    {value: 'classic', text: $t('settings.blocks.theme.fields.chart_color_scheme.classic')},
-                                    {value: 'kestra', text: $t('settings.blocks.theme.fields.chart_color_scheme.kestra')}
-                                ]"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
@@ -136,20 +151,35 @@
                 </Row>
 
                 <Row>
-                    <Column :overrides="{sm: 24, md: 24, lg: 24, xl: 24}" :label="$t('settings.blocks.theme.fields.editor_folding_stratgy')">
+                    <Column :label="$t('settings.blocks.theme.fields.editor_folding_stratgy')">
                         <el-switch :aria-label="$t('Fold auto')" :model-value="pendingSettings.autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
+                    </Column>
+                    <Column :label="$t('settings.blocks.theme.fields.editor_hover_description')">
+                        <el-switch :aria-label="$t('Hover description')" :model-value="pendingSettings.hoverTextEditor" @update:model-value="onHoverTextEditor" />
                     </Column>
                 </Row>
 
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.environment_name')">
+                        <el-tooltip
+                            v-if="isEnvNameFromConfig"
+                            :content="$t('settings.blocks.theme.fields.environment_name_tooltip')"
+                            placement="bottom"
+                        >
+                            <el-input
+                                v-model="pendingSettings.envName"
+                                @change="onEnvNameChange"
+                                :placeholder="$t('name')"
+                                clearable
+                            />
+                        </el-tooltip>
+
                         <el-input
+                            v-else
                             v-model="pendingSettings.envName"
                             @change="onEnvNameChange"
                             :placeholder="$t('name')"
                             clearable
-                            show-word-limit
-                            maxlength="30"
                         />
                     </Column>
 
@@ -212,7 +242,7 @@
                         </el-button>
                     </Column>
                     <Column>
-                        <el-button v-if="canReadTemplates" :icon="Download" @click="exportTemplates()" :hidden="!configs?.isTemplateEnabled" class="w-100">
+                        <el-button v-if="canReadTemplates" :icon="Download" @click="exportTemplates()" :hidden="!miscStore?.configs?.isTemplateEnabled" class="w-100">
                             {{ $t("settings.blocks.export.fields.templates") }}
                         </el-button>
                     </Column>
@@ -230,10 +260,13 @@
 <script>
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import NamespaceSelect from "../../components/namespace/NamespaceSelect.vue";
+    import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
     import Utils from "../../utils/utils";
-    import {mapGetters, mapState, useStore} from "vuex";
+    import {mapStores} from "pinia";
+    import {useLayoutStore} from "../../stores/layout";
+    import {useMiscStore} from "override/stores/misc";
+    import {useTemplateStore} from "../../stores/template";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {logDisplayTypes, storageKeys} from "../../utils/constants";
@@ -242,6 +275,7 @@
     import Block from "./components/block/Block.vue"
     import Row from "./components/block/Row.vue"
     import Column from "./components/block/Column.vue"
+    import {useAuthStore} from "override/stores/auth"
 
     export const DATE_FORMAT_STORAGE_KEY = "dateFormat";
     export const TIMEZONE_STORAGE_KEY = "timezone";
@@ -265,13 +299,14 @@
         },
         data() {
             return {
+                hasUnsavedChanges: false,
+                originalSettings: {},
                 pendingSettings: {
                     defaultNamespace: undefined,
                     defaultLogLevel: undefined,
                     editorType: undefined,
                     lang: undefined,
                     theme: undefined,
-                    chartColor: undefined,
                     dateFormat: undefined,
                     timezone: undefined,
                     autofoldTextEditor: undefined,
@@ -282,10 +317,12 @@
                     envName: undefined,
                     envColor: undefined,
                     executeDefaultTab: undefined,
+                    autoRefreshInterval: undefined,
+                    flowDefaultTab: undefined,
+                    editorPlayground: undefined,
                     logsFontSize: undefined
                 },
                 settingsKeyMapping: {
-                    chartColor: "scheme",
                     dateFormat: DATE_FORMAT_STORAGE_KEY,
                     timezone: TIMEZONE_STORAGE_KEY,
                     executeFlowBehaviour: storageKeys.EXECUTE_FLOW_BEHAVIOUR,
@@ -304,103 +341,187 @@
             };
         },
         created() {
-            const store = useStore();
-
-            this.pendingSettings.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
+            this.pendingSettings.defaultNamespace = localStorage.getItem("defaultNamespace") || "company.team";
             this.pendingSettings.editorType = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.pendingSettings.lang = Utils.getLang();
-
             this.pendingSettings.theme = Utils.getTheme();
-
-            let scheme = localStorage.getItem("scheme") || "classic";
-            if(scheme === "default") scheme = "classic";
-            this.pendingSettings.chartColor =  scheme
 
             this.pendingSettings.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
             this.pendingSettings.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.pendingSettings.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
+            this.pendingSettings.hoverTextEditor = localStorage.getItem("hoverTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
             this.pendingSettings.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
             this.pendingSettings.editorFontSize = parseInt(localStorage.getItem("editorFontSize")) || 12;
             this.pendingSettings.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
-            this.pendingSettings.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
-            this.pendingSettings.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
+            this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview";
+            this.pendingSettings.editorPlayground = localStorage.getItem("editorPlayground") === "false" ? false : true;
+            this.pendingSettings.envName = this.layoutStore.envName || this.miscStore.configs?.environment?.name;
+            this.pendingSettings.envColor = this.layoutStore.envColor || this.miscStore.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
+            this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10;
+            this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
         },
         methods: {
+            checkForChanges() {
+                this.hasUnsavedChanges = JSON.stringify(this.pendingSettings) !== JSON.stringify(this.originalSettings);
+            },
+            async confirmNavigation() {
+                if (!this.hasUnsavedChanges) return true;
+
+                try {
+                    await this.$confirm(
+                        this.$t("settings.blocks.save.unsaved_warning"),
+                        this.$t("settings.blocks.save.unsaved_title"),
+                        {
+                            confirmButtonText: this.$t("settings.blocks.save.label"),
+                            cancelButtonText: this.$t("settings.blocks.save.discard"),
+                            type: "warning",
+                            showClose: false,
+                            closeOnClickModal: false,
+                            closeOnPressEscape: false
+                        }
+                    );
+                    await this.saveAllSettings();
+                    return true;
+                } catch {
+                    this.pendingSettings = JSON.parse(JSON.stringify(this.originalSettings));
+                    this.hasUnsavedChanges = false;
+                    return true;
+                }
+            },
+            handleBeforeUnload(e) {
+                if (this.hasUnsavedChanges) {
+                    e.preventDefault();
+                    e.returnValue = "";
+                }
+            },
+            async handleNavigationClick(e) {
+                const link = e.target.closest("a");
+                if (!link) return;
+
+                if (!window.location.pathname.includes("/settings")) return;
+
+                if (this.hasUnsavedChanges) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const shouldNavigate = await this.confirmNavigation();
+                    if (shouldNavigate) {
+                        const href = link.getAttribute("href");
+                        if (link.getAttribute("data-vue-router") === "true") {
+                            this.$router.push(href);
+                        } else {
+                            window.location.href = href;
+                        }
+                    }
+                }
+            },
             onNamespaceSelect(value) {
                 this.pendingSettings.defaultNamespace = value;
+                this.checkForChanges();
             },
             onEditorTypeChange(value) {
                 this.pendingSettings.editorType = value;
                 localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, value);
+                this.checkForChanges();
             },
             onLevelChange(value) {
                 this.pendingSettings.defaultLogLevel = value;
+                this.checkForChanges();
             },
             onLang(value) {
                 this.pendingSettings.lang = value;
+                this.checkForChanges();
             },
             onTheme(value) {
                 this.pendingSettings.theme = value;
-            },
-            updateThemeBasedOnSystem() {
-                if (this.theme === "syncWithSystem") {
-                    Utils.switchTheme(this.$store, "syncWithSystem");
-                }
+                this.checkForChanges();
             },
             onDateFormat(value) {
                 this.pendingSettings.dateFormat = value;
+                this.checkForChanges();
             },
             onTimezone(value) {
                 this.pendingSettings.timezone = value;
-            },
-            onChartColor(value) {
-                this.pendingSettings.chartColor = value;
+                this.checkForChanges();
             },
             onAutofoldTextEditor(value) {
                 this.pendingSettings.autofoldTextEditor = value;
+                this.checkForChanges();
+            },
+            onHoverTextEditor(value) {
+                this.pendingSettings.hoverTextEditor = value;
+                this.checkForChanges();
             },
             exportFlows() {
-                return this.$store
-                    .dispatch("flow/exportFlowByQuery", {})
-                    .then(_ => {
-                        this.$toast().success(this.$t("flows exported"));
-                    })
+                return this.flowStore.findFlows({size: 1, page: 1})
+                    .then((result) => {
+                        const flowCount = result.total;
+
+                        return this.flowStore.exportFlowByQuery({})
+                            .then(() => {
+                                this.$toast().success(
+                                    this.$t("flows exported", {
+                                        count: flowCount,
+                                    })
+                                );
+                            });
+                    });
             },
             exportTemplates() {
-                return this.$store
-                    .dispatch("template/exportTemplateByQuery", {})
+                return this.templateStore
+                    .exportTemplateByQuery({})
                     .then(_ => {
                         this.$toast().success(this.$t("templates exported"));
                     })
             },
             onLogDisplayChange(value) {
                 this.pendingSettings.logDisplay = value;
+                this.checkForChanges();
             },
             onFontSize(value) {
                 this.pendingSettings.editorFontSize = value;
+                this.checkForChanges();
             },
             onFontFamily(value) {
                 this.pendingSettings.editorFontFamily = value;
+                this.checkForChanges();
             },
             onEnvNameChange(value) {
                 this.pendingSettings.envName = value;
+                this.checkForChanges();
             },
             onEnvColorChange(value) {
                 this.pendingSettings.envColor = value;
+                this.checkForChanges();
             },
             onExecuteFlowBehaviourChange(value) {
                 this.pendingSettings.executeFlowBehaviour = value;
+                this.checkForChanges();
             },
             onExecuteDefaultTabChange(value){
                 this.pendingSettings.executeDefaultTab = value;
+                this.checkForChanges();
+            },
+            onAutoRefreshInterval(value) {
+                this.pendingSettings.autoRefreshInterval = value;
+                this.checkForChanges();
+            },
+            onFlowDefaultTabChange(value){
+                this.pendingSettings.flowDefaultTab = value;
+                this.checkForChanges();
+            },
+            onEditorPlaygroundChange(value) {
+                this.pendingSettings.editorPlayground = value;
+                this.checkForChanges();
             },
             onLogsFontSize(value) {
                 this.pendingSettings.logsFontSize = value;
+                this.checkForChanges();
             },
             async saveAllSettings() {
                 let refreshWhenSaved = false
@@ -415,20 +536,14 @@
                             localStorage.removeItem(key)
                         break
                     case "envName":
-                        if (this.pendingSettings[key] !== this.configs?.environment?.name) {
-                            this.$store.commit("layout/setEnvName", this.pendingSettings[key])
+                        if (this.pendingSettings[key] !== this.miscStore.configs?.environment?.name) {
+                            this.layoutStore.setEnvName(this.pendingSettings[key]);
                         }
                         break
                     case "envColor":
-                        if (this.pendingSettings[key] !== this.configs?.environment?.color) {
-                            this.$store.commit("layout/setEnvColor", this.pendingSettings[key])
+                        if (this.pendingSettings[key] !== this.miscStore.configs?.environment?.color) {
+                            this.layoutStore.setEnvColor(this.pendingSettings[key]);
                         }
-                        break
-                    case "autofoldTextEditor":
-                        localStorage.setItem(key, this.pendingSettings[key])
-                        break
-                    case "logsFontSize":
-                        localStorage.setItem(key, this.pendingSettings[key])
                         break
                     case "theme":
                         Utils.switchTheme(this.$store, this.pendingSettings[key]);
@@ -451,7 +566,6 @@
                         // before refreshing. If we don't, some values will be saved
                         // but the page will refresh before all is saved.
                         refreshWhenSaved = true
-
                         break;
                     }
                     default:
@@ -460,24 +574,42 @@
                                 localStorage.setItem(storedKey, this.pendingSettings[key])
                         }
                         else {
-                            if(this.pendingSettings[key])
+                            if(this.pendingSettings[key] !== undefined)
                                 localStorage.setItem(key, this.pendingSettings[key])
                         }
                     }
                 }
+
+                this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
+                this.hasUnsavedChanges = false;
+
                 if(refreshWhenSaved){
                     document.location.assign(document.location.href)
                 }
                 this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
-            }
+            },
+            updateThemeBasedOnSystem() {
+                if (this.theme === "syncWithSystem") {
+                    Utils.switchTheme(this.$store, "syncWithSystem");
+                }
+            },
         },
         mounted() {
             const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
             mediaQuery.addEventListener("change", this.updateThemeBasedOnSystem);
+
+            window.addEventListener("beforeunload", this.handleBeforeUnload);
+            document.addEventListener("click", this.handleNavigationClick, true); // Use capture phase
+        },
+        beforeUnmount() {
+            window.removeEventListener("beforeunload", this.handleBeforeUnload);
+            document.removeEventListener("click", this.handleNavigationClick, true);
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useLayoutStore, useMiscStore, useTemplateStore, useAuthStore),
+            mappedTheme() {
+                return this.miscStore.theme;
+            },
             routeInfo() {
                 return {
                     title: this.$t("settings.label")
@@ -518,10 +650,10 @@
                 ]
             },
             canReadFlows() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.READ);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.READ);
             },
             canReadTemplates() {
-                return this.user && this.user.isAllowed(permission.TEMPLATE, action.READ);
+                return this.authStore.user?.isAllowed(permission.TEMPLATE, action.READ);
             },
             logDisplayOptions() {
                 return  [
@@ -586,14 +718,77 @@
                         label: this.$t("metrics")
                     }
                 ]
+            },
+            flowDefaultTabOptions() {
+                return [
+                    {
+                        value : "overview",
+                        label: this.$t("overview")
+                    },
+                    {
+                        value : "topology",
+                        label: this.$t("topology")
+                    },
+                    {
+                        value : "executions",
+                        label: this.$t("executions")
+                    },
+                    {
+                        value : "edit",
+                        label: this.$t("edit")
+                    },
+                    {
+                        value : "revisions",
+                        label: this.$t("revisions")
+                    },
+                    {
+                        value : "triggers",
+                        label: this.$t("triggers")
+                    },
+                    {
+                        value : "logs",
+                        label: this.$t("logs")
+                    },
+                    {
+                        value : "metrics",
+                        label: this.$t("metrics")
+                    },
+                    {
+                        value : "dependencies",
+                        label: this.$t("dependencies")
+                    },
+                    {
+                        value : "concurrency",
+                        label: this.$t("concurrency")
+                    },
+                    {
+                        value : "auditlogs",
+                        label: this.$t("auditlogs")
+                    },
+                ]
+            },
+            isEnvNameFromConfig() {
+                return !this.layoutStore.envName && !!this.miscStore.configs?.environment?.name;
             }
-        }
+        },
+        watch: {
+            mappedTheme: {
+                handler() {
+                    this.pendingSettings.theme = Utils.getTheme();
+                },
+                immediate: true,
+            },
+        },
     };
 </script>
-<style>
-
+<style lang="scss">
     .settings-wrapper .el-input-number {
         max-width: 20vw;
+
+        & .el-input__suffix {
+            color: var(--ks-content-secondary);
+        }
+
     }
 
     .el-input__count {

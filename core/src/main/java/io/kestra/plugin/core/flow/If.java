@@ -11,6 +11,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
@@ -69,11 +70,14 @@ import java.util.stream.Stream;
     aliases = "io.kestra.core.tasks.flows.If"
 )
 public class If extends Task implements FlowableTask<If.Output> {
-    @PluginProperty(dynamic = true)
     @Schema(
         title = "The `If` condition which can be any expression that evaluates to a boolean value.",
         description = "Boolean coercion allows 0, -0, null and '' to evaluate to false, all other values will evaluate to true."
     )
+    // Note: we can't use Property<String> here because of the cache of the property evaluation which causes issue when using If in a ForEach with concurrencyLimit > 1!
+    // See https://github.com/kestra-io/kestra/issues/8697
+    // At some point, if we need it, we should allow bypassing (or clearing) the property evaluation cache
+    @PluginProperty(dynamic = true)
     private String condition;
 
     @Valid

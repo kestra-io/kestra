@@ -66,6 +66,7 @@ public class WorkerTaskCallable extends AbstractWorkerCallable {
                     .onFailure(event -> metricRegistry
                         .counter(
                             MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT,
+                            MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT_DESCRIPTION,
                             metricRegistry.tags(
                                 this.workerTask,
                                 MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(event.getAttemptCount())

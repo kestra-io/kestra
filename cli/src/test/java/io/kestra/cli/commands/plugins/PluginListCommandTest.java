@@ -16,12 +16,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.StringContains.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class PluginListCommandTest {
 
-    private static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.18.0-SNAPSHOT.jar";
+    private static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.24.0-SNAPSHOT.jar";
 
     @Test
     void shouldListPluginsInstalledLocally() throws IOException, URISyntaxException {
@@ -41,7 +40,7 @@ class PluginListCommandTest {
             String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString()};
             PicocliRunner.call(PluginListCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("io.kestra.plugin.templates.Example"));
+            assertThat(out.toString()).contains("io.kestra.plugin.templates.Example");
         }
     }
 }

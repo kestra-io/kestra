@@ -4,6 +4,12 @@ jackson:
     writeDurationsAsTimestamps: false
   serialization-inclusion: non_null
 
+micronaut:
+  metrics:
+    export:
+      otlp:
+        enabled: false
+
 kestra:
   encryption:
     secret-key: I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK
@@ -28,6 +34,15 @@ kestra:
       bool: true
       nested:
         int: 2
+
+  server:
+    liveness:
+      enabled: false
+    service:
+      purge:
+        initial-delay: 1h
+        fixed-delay: 1d
+        retention: 30d
 
   anonymous-usage-report:
     enabled: false
@@ -54,6 +69,9 @@ kestra:
           prop0: value0
 
     defaults:
+      - type: io.kestra.plugin.core.log
+        values:
+          message: This is a default message
       - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
         values:
           doubleValue: 19

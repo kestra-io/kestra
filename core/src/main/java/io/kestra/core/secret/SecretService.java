@@ -1,12 +1,13 @@
 package io.kestra.core.secret;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -43,5 +44,9 @@ public class SecretService {
             throw new SecretNotFoundException("Cannot find secret for key '" + key + "'.");
         }
         return secret;
+    }
+
+    public Map<String, Set<String>> inheritedSecrets(String tenantId, String namespace) throws IOException {
+        return Map.of(namespace, decodedSecrets.keySet());
     }
 }

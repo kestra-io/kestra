@@ -15,8 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
@@ -51,7 +50,7 @@ class BasicAuthEndpointsFilterTest {
     void withPasswordOk() {
        test(true, (client, httpRequest) -> {
            HttpResponse<String> response = client.toBlocking().exchange(httpRequest.basicAuth("foo", "bar"));
-           assertThat(response.getStatus(), is(HttpStatus.OK));
+           assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
        });
     }
 
@@ -62,7 +61,7 @@ class BasicAuthEndpointsFilterTest {
                 client.toBlocking().exchange(httpRequest.basicAuth("foo", "bar2"));
             });
 
-            assertThat(e.getStatus(), is(HttpStatus.UNAUTHORIZED));
+            assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
         });
 
         test(true, (client, httpRequest) -> {
@@ -70,7 +69,7 @@ class BasicAuthEndpointsFilterTest {
                 client.toBlocking().exchange(httpRequest);
             });
 
-            assertThat(e.getStatus(), is(HttpStatus.UNAUTHORIZED));
+            assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
         });
     }
 
@@ -78,7 +77,7 @@ class BasicAuthEndpointsFilterTest {
     void withoutPasswordOk() {
         test(false, (client, httpRequest) -> {
             HttpResponse<String> response = client.toBlocking().exchange(httpRequest);
-            assertThat(response.getStatus(), is(HttpStatus.OK));
+            assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         });
     }
 }

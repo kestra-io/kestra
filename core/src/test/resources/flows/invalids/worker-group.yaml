@@ -1,9 +1,0 @@
-id: worker-group
-namespace: io.kestra.tests
-
-tasks:
-  - id: worker-group
-    type: io.kestra.plugin.core.debug.Return
-    format: "{{taskrun.startDate}}"
-    workerGroup:
-      key: toto

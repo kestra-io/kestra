@@ -29,8 +29,10 @@ jobs:
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         name: Checkout - Current ref
+        with:
+          fetch-depth: 0
 
       # Setup build
       - uses: kestra-io/actions/.github/actions/setup-build@main
@@ -59,7 +61,7 @@ jobs:
 
       # report test
       - name: Test - Publish Test Results
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         if: always()
         with:
           name: Java Tests Report
@@ -68,6 +70,7 @@ jobs:
           list-suites: 'failed'
           list-tests: 'failed'
           fail-on-error: 'false'
+          token: ${{ secrets.GITHUB_AUTH_TOKEN }}
 
       # Sonar
       - name: Test - Analyze with Sonar

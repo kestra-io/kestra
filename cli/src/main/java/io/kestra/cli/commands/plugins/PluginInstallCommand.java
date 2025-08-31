@@ -1,10 +1,14 @@
 package io.kestra.cli.commands.plugins;
 
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.LocalPluginManager;
 import io.kestra.core.plugins.MavenPluginDownloader;
 import io.kestra.core.plugins.PluginArtifact;
+import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginManager;
+import io.micronaut.http.client.HttpClient;
+import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.uri.UriBuilder;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.utils.IdUtils;
@@ -15,6 +19,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
@@ -31,7 +36,10 @@ public class PluginInstallCommand extends AbstractCommand {
     @Option(names = {"--locally"}, description = "Specifies if plugins must be installed locally. If set to false the installation depends on your Kestra configuration.")
     boolean locally = true;
 
-    @Parameters(index = "0..*", description = "Plugins to install. Represented as Maven artifact coordinates.")
+    @Option(names = {"--all"}, description = "Install all available plugins")
+    boolean all = false;
+
+    @Parameters(index = "0..*", description = "Plugins to install. Represented as Maven artifact coordinates (i.e., <groupId>:<artifactId>:(<version>|LATEST)")
     List<String> dependencies = new ArrayList<>();
 
     @Option(names = {"--repositories"}, description = "URL to additional Maven repositories")
@@ -42,6 +50,9 @@ public class PluginInstallCommand extends AbstractCommand {
 
     @Inject
     Provider<MavenPluginDownloader> mavenPluginRepositoryProvider;
+
+    @Inject
+    Provider<PluginCatalogService> pluginCatalogService;
 
     @Override
     public Integer call() throws Exception {
@@ -74,6 +85,16 @@ public class PluginInstallCommand extends AbstractCommand {
                 }).toList();
         }
 
+        if (all) {
+            PluginCatalogService service = pluginCatalogService.get();
+            dependencies = service.get().stream().map(Objects::toString).toList();
+        }
+
+        if (dependencies.isEmpty()) {
+            stdErr("Error: No plugin to install.");
+            return CommandLine.ExitCode.OK;
+        }
+
         final List<PluginArtifact> pluginArtifacts;
         try {
            pluginArtifacts = dependencies.stream().map(PluginArtifact::fromCoordinates).toList();
@@ -83,12 +104,21 @@ public class PluginInstallCommand extends AbstractCommand {
         }
 
         try (final PluginManager pluginManager = getPluginManager()) {
-            List<PluginArtifact> installed = pluginManager.install(
-                pluginArtifacts,
-                repositoryConfigs,
-                false,
-                pluginsPath
-            );
+
+            List<PluginArtifact> installed;
+            if (all) {
+                installed = new ArrayList<>(pluginArtifacts.size());
+                for (PluginArtifact pluginArtifact : pluginArtifacts) {
+                    try {
+                        installed.add(pluginManager.install(pluginArtifact, repositoryConfigs, false, pluginsPath));
+                    } catch (KestraRuntimeException e) {
+                        String cause = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+                        stdErr("Failed to install plugin {0}. Cause: {1}", pluginArtifact, cause);
+                    }
+                }
+            } else {
+                installed = pluginManager.install(pluginArtifacts, repositoryConfigs, false, pluginsPath);
+            }
 
             List<URI> uris = installed.stream().map(PluginArtifact::uri).toList();
             stdOut("Successfully installed plugins {0} into {1}", dependencies, uris);

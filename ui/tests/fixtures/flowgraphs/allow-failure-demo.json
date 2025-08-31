@@ -1,0 +1,150 @@
+{
+    "nodes": [
+        {
+            "uid": "root.root-7c2PAMw6iAYKLlTs3NgAEo",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+        },
+        {
+            "uid": "root.end-2ecn1da4JRgQ58RmR57kix",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+        },
+        {
+            "uid": "root.allow_failure.root-3vCjH2f8MKMiVCkEHtZmpG",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+        },
+        {
+            "uid": "root.allow_failure.end-4o3fsEolpoFu3xkrLw733R",
+            "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+        },
+        {
+            "uid": "root.allow_failure",
+            "type": "io.kestra.core.models.hierarchies.GraphTask",
+            "task": {
+                "id": "allow_failure",
+                "type": "io.kestra.plugin.core.flow.AllowFailure",
+                "tasks": [
+                    {
+                        "id": "fail_silently",
+                        "type": "io.kestra.plugin.scripts.shell.Commands",
+                        "taskRunner": {
+                            "type": "io.kestra.plugin.core.runner.Process"
+                        },
+                        "commands": [
+                            "exit 1"
+                        ]
+                    }
+                ]
+            },
+            "relationType": "SEQUENTIAL"
+        },
+        {
+            "uid": "root.allow_failure.fail_silently",
+            "type": "io.kestra.core.models.hierarchies.GraphTask",
+            "task": {
+                "id": "fail_silently",
+                "type": "io.kestra.plugin.scripts.shell.Commands",
+                "taskRunner": {
+                    "type": "io.kestra.plugin.core.runner.Process"
+                },
+                "commands": [
+                    "exit 1"
+                ]
+            },
+            "relationType": "SEQUENTIAL"
+        },
+        {
+            "uid": "root.print_to_console",
+            "type": "io.kestra.core.models.hierarchies.GraphTask",
+            "task": {
+                "id": "print_to_console",
+                "type": "io.kestra.plugin.scripts.shell.Commands",
+                "taskRunner": {
+                    "type": "io.kestra.plugin.core.runner.Process"
+                },
+                "commands": [
+                    "echo \"this will run since previous failure was allowed ✅\""
+                ]
+            },
+            "relationType": "SEQUENTIAL"
+        }
+    ],
+    "edges": [
+        {
+            "source": "root.print_to_console",
+            "target": "root.end-2ecn1da4JRgQ58RmR57kix",
+            "relation": {}
+        },
+        {
+            "source": "root.root-7c2PAMw6iAYKLlTs3NgAEo",
+            "target": "root.allow_failure.root-3vCjH2f8MKMiVCkEHtZmpG",
+            "relation": {}
+        },
+        {
+            "source": "root.allow_failure.end-4o3fsEolpoFu3xkrLw733R",
+            "target": "root.print_to_console",
+            "relation": {
+                "relationType": "SEQUENTIAL"
+            }
+        },
+        {
+            "source": "root.allow_failure.fail_silently",
+            "target": "root.allow_failure.end-4o3fsEolpoFu3xkrLw733R",
+            "relation": {}
+        },
+        {
+            "source": "root.allow_failure.root-3vCjH2f8MKMiVCkEHtZmpG",
+            "target": "root.allow_failure",
+            "relation": {}
+        },
+        {
+            "source": "root.allow_failure",
+            "target": "root.allow_failure.fail_silently",
+            "relation": {
+                "relationType": "SEQUENTIAL"
+            }
+        }
+    ],
+    "clusters": [
+        {
+            "cluster": {
+                "uid": "cluster_root.allow_failure",
+                "type": "io.kestra.core.models.hierarchies.GraphCluster",
+                "relationType": "SEQUENTIAL",
+                "taskNode": {
+                    "uid": "root.allow_failure",
+                    "type": "io.kestra.core.models.hierarchies.GraphTask",
+                    "task": {
+                        "id": "allow_failure",
+                        "type": "io.kestra.plugin.core.flow.AllowFailure",
+                        "tasks": [
+                            {
+                                "id": "fail_silently",
+                                "type": "io.kestra.plugin.scripts.shell.Commands",
+                                "taskRunner": {
+                                    "type": "io.kestra.plugin.core.runner.Process"
+                                },
+                                "commands": [
+                                    "exit 1"
+                                ]
+                            }
+                        ]
+                    },
+                    "relationType": "SEQUENTIAL"
+                },
+                "finally": {
+                    "uid": "allow_failure.finally-3OW0HTfTWnwkSwrg1cBvxj",
+                    "type": "io.kestra.core.models.hierarchies.GraphClusterFinally"
+                }
+            },
+            "nodes": [
+                "root.allow_failure.root-3vCjH2f8MKMiVCkEHtZmpG",
+                "root.allow_failure.end-4o3fsEolpoFu3xkrLw733R",
+                "root.allow_failure",
+                "root.allow_failure.fail_silently"
+            ],
+            "parents": [],
+            "start": "root.allow_failure.root-3vCjH2f8MKMiVCkEHtZmpG",
+            "end": "root.allow_failure.end-4o3fsEolpoFu3xkrLw733R"
+        }
+    ]
+}

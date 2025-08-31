@@ -1,5 +1,5 @@
 id: write
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 tasks:
   - id: write

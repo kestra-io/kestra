@@ -7,8 +7,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class YamlFunctionTest {
@@ -45,35 +44,35 @@ class YamlFunctionTest {
 
         String render;
         render = variableRenderer.render("{{ yaml(yaml).string }}", runContext);
-        assertThat(render, is("string"));
+        assertThat(render).isEqualTo("string");
 
         render = variableRenderer.render("{{ yaml(yaml).int }}", runContext);
-        assertThat(render, is("123"));
+        assertThat(render).isEqualTo("123");
 
         render = variableRenderer.render("{{ yaml(yaml).bool }}", runContext);
-        assertThat(render, is("true"));
+        assertThat(render).isEqualTo("true");
 
         render = variableRenderer.render("{{ yaml(yaml).float }}", runContext);
-        assertThat(render, is("1.23"));
+        assertThat(render).isEqualTo("1.23");
 
         render = variableRenderer.render("{{ yaml(yaml).instant }}", runContext);
-        assertThat(render, is("1918-02-24T00:00:00Z"));
+        assertThat(render).isEqualTo("1918-02-24T00:00:00Z");
 
         render = variableRenderer.render("{{ yaml(yaml).date }}", runContext);
-        assertThat(render, is("1991-08-20"));
+        assertThat(render).isEqualTo("1991-08-20");
 
         render = variableRenderer.render("{{ yaml(yaml).time }}", runContext);
-        assertThat(render, is("23:59:59"));
+        assertThat(render).isEqualTo("23:59:59");
 
         // Kestra internally does not handle null values in objects
         // render = variableRenderer.render("{{ yaml(yaml).null ?? '' }}", runContext);
         // assertThat(render, is(""));
 
         render = variableRenderer.render("{{ yaml(yaml).object.child.key }}", runContext);
-        assertThat(render, is("value"));
+        assertThat(render).isEqualTo("value");
 
         render = variableRenderer.render("{{ yaml(yaml).array[0] }}", runContext);
-        assertThat(render, is("string"));
+        assertThat(render).isEqualTo("string");
 
         // as of 2024-03-15 Jackson YAML does not support anchors
         // https://github.com/FasterXML/jackson-dataformats-text/issues/98

@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.kv;
 
+import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -8,9 +9,12 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import java.io.IOException;
+import java.util.Objects;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,12 +29,12 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Gets value linked to a key."
+    title = "Retrieve a value of a KV pair by a key."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Get value for `my_variable` key in `dev` namespace and fail if it's not present.",
+            title = "Get value for `my_variable` key in `dev` namespace and fail if it's not present. Note that you can accomplish the same using the `kv()` Pebble function, e.g. `{{kv('my_variable')}}`.",
             full = true,
             code = """
                 id: kv_store_get
@@ -40,7 +44,7 @@ import java.util.Optional;
                   - id: kv_get
                     type: io.kestra.plugin.core.kv.Get
                     key: my_variable
-                    namespace: dev # the current namespace of the flow will be used by default
+                    namespace: company # the current namespace is used by default
                     errorOnMissing: true
                 """
         )
@@ -58,33 +62,53 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         title = "The namespace on which to get the value."
     )
     @Builder.Default
-    private Property<String> namespace = new Property<>("{{ flow.namespace }}");
+    private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
 
     @NotNull
     @Schema(
         title = "Whether to fail if there is no value for the given key."
     )
     @Builder.Default
-    private Property<Boolean> errorOnMissing = Property.of(false);
+    private Property<Boolean> errorOnMissing = Property.ofValue(false);
 
 
     @Override
     public Output run(RunContext runContext) throws Exception {
         String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
-
-        FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
-        flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
-
+        String flowNamespace = runContext.flowInfo().namespace();
         String renderedKey = runContext.render(this.key).as(String.class).orElse(null);
 
-        Optional<KVValue> maybeValue = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
-        if (Boolean.TRUE.equals(runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow()) && maybeValue.isEmpty()) {
+        Optional<KVValue> value;
+        if (Objects.equals(renderedNamespace, flowNamespace)) {
+            value = getValueWithInheritance(runContext, flowNamespace, renderedKey);
+        } else {
+            FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
+            flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
+            value =  runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
+        }
+
+        if (Boolean.TRUE.equals(runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow()) && value.isEmpty()) {
             throw new NoSuchElementException("No value found for key '" + renderedKey + "' in namespace '" + renderedNamespace + "' and `errorOnMissing` is set to true");
         }
 
         return Output.builder()
-            .value(maybeValue.map(KVValue::value).orElse(null))
+            .value(value.map(KVValue::value).orElse(null))
             .build();
+    }
+
+    private Optional<KVValue> getValueWithInheritance(RunContext runContext, String flowNamespace, String renderedKey)
+            throws IOException, ResourceExpiredException {
+        Optional<KVValue> value = Optional.empty();
+        KVStoreService kvStoreService = ((DefaultRunContext) runContext).getApplicationContext().getBean(KVStoreService.class);
+        String inheritedNamespace = flowNamespace;
+        while (value.isEmpty()) {
+            value = kvStoreService.get(runContext.flowInfo().tenantId(), inheritedNamespace, flowNamespace).getValue(renderedKey);
+            if (!inheritedNamespace.contains(".")){
+                return value;
+            }
+            inheritedNamespace = inheritedNamespace.substring(0, inheritedNamespace.lastIndexOf('.'));
+        }
+        return value;
     }
 
     @Builder

@@ -91,7 +91,7 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
         title = "The folder where the downloaded files will be stored"
     )
     @Builder.Default
-    private Property<String> destination = Property.of("");
+    private Property<String> destination = Property.ofValue("");
 
 
     @Override

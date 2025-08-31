@@ -8,38 +8,44 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.property.Property;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.Variables;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.ExecutableUtils;
-import io.kestra.core.runners.FlowExecutorInterface;
-import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.ExecutableUtils;
+import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+import io.kestra.core.services.VariablesService;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
-import lombok.experimental.SuperBuilder;
-
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import lombok.experimental.SuperBuilder;
+import org.slf4j.event.Level;
 
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -47,8 +53,8 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Create a subflow execution. Subflows offer a modular way to reuse workflow logic by calling other flows just like calling a function in a programming language.",
-    description = "Restarting a parent flow will restart any subflows that has previously been executed."
+    title = "Create a subflow execution.",
+    description = "Subflows offer a modular way to reuse workflow logic by calling other flows just like calling a function in a programming language. Restarting a parent flow will restart any subflows that has previously been executed."
 )
 @Plugin(
     examples = {
@@ -135,8 +141,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         title = "Whether the subflow should inherit labels from this execution that triggered it.",
         description = "By default, labels are not passed to the subflow execution. If you set this option to `true`, the child flow execution will inherit all labels from the parent execution."
     )
-    @PluginProperty
-    private final Boolean inheritLabels = false;
+    private final Property<Boolean> inheritLabels = Property.ofValue(false);
 
     /**
      * @deprecated Output value should now be defined part of the Flow definition.
@@ -168,7 +173,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
     @Override
     public List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
-                                                             FlowExecutorInterface flowExecutorInterface,
+                                                             FlowMetaStoreInterface flowExecutorInterface,
                                                              io.kestra.core.models.flows.Flow currentFlow,
                                                              Execution currentExecution,
                                                              TaskRun currentTaskRun) throws InternalException {
@@ -186,7 +191,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             currentTaskRun,
             inputs,
             labels,
-            inheritLabels,
+            runContext.render(inheritLabels).as(Boolean.class).orElseThrow(),
             scheduleDate
         )
             .<List<SubflowExecution<?>>>map(subflowExecution -> List.of(subflowExecution))
@@ -197,7 +202,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     public Optional<SubflowExecutionResult> createSubflowExecutionResult(
         RunContext runContext,
         TaskRun taskRun,
-        io.kestra.core.models.flows.Flow flow,
+        FlowInterface flow,
         Execution execution
     ) {
         // we only create a worker task result when the execution is terminated
@@ -205,54 +210,73 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             return Optional.empty();
         }
 
-        boolean isOutputsAllowed = runContext
-            .<Boolean>pluginConfiguration(PLUGIN_FLOW_OUTPUTS_ENABLED)
-            .orElse(true);
-
         final Output.OutputBuilder builder = Output.builder()
             .executionId(execution.getId())
             .state(execution.getState().getCurrent());
 
-        final Map<String, Object> subflowOutputs = Optional
-            .ofNullable(flow.getOutputs())
-            .map(outputs -> outputs
-                .stream()
-                .collect(Collectors.toMap(
-                    io.kestra.core.models.flows.Output::getId,
-                    io.kestra.core.models.flows.Output::getValue)
-                )
-            )
-            .orElseGet(() -> isOutputsAllowed ? this.getOutputs() : null);
+        VariablesService variablesService = ((DefaultRunContext) runContext).getApplicationContext().getBean(VariablesService.class);
+        if (this.wait) { // we only compute outputs if we wait for the subflow
+            boolean isOutputsAllowed = runContext
+                .<Boolean>pluginConfiguration(PLUGIN_FLOW_OUTPUTS_ENABLED)
+                .orElse(true);
 
-        if (subflowOutputs != null) {
-            try {
-                Map<String, Object> outputs = runContext.render(subflowOutputs);
-                FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class); // this is hacking
-                if (flow.getOutputs() != null && flowInputOutput != null) {
-                    outputs = flowInputOutput.typedOutputs(flow, execution, outputs);
+            List<io.kestra.core.models.flows.Output> subflowOutputs = flow.getOutputs();
+            
+            // region [deprecated] Subflow outputs feature
+            if (subflowOutputs == null && isOutputsAllowed && this.getOutputs() != null) {
+                subflowOutputs = this.getOutputs().entrySet().stream()
+                    .<io.kestra.core.models.flows.Output>map(entry -> io.kestra.core.models.flows.Output
+                        .builder()
+                        .id(entry.getKey())
+                        .value(entry.getValue())
+                        .required(true)
+                        .build()
+                    )
+                    .toList();
+            }
+            //endregion
+
+            if (subflowOutputs != null && !subflowOutputs.isEmpty()) {
+                try {
+                    Map<String, Object> outputs = FlowInputOutput.renderFlowOutputs(subflowOutputs, runContext);
+                    
+                    FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class); // this is hacking
+                    if (flow.getOutputs() != null && flowInputOutput != null) {
+                        outputs = flowInputOutput.typedOutputs(flow, execution, outputs);
+                    }
+                    builder.outputs(outputs);
+                } catch (Exception e) {
+                    runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
+                    var state = State.Type.fail(this);
+                    Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
+                    taskRun = taskRun
+                        .withState(state)
+                        .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
+                        .withOutputs(variables);
+
+                    return Optional.of(SubflowExecutionResult.builder()
+                        .executionId(execution.getId())
+                        .state(State.Type.FAILED)
+                        .parentTaskRun(taskRun)
+                        .build());
                 }
-                builder.outputs(outputs);
-            } catch (Exception e) {
-                runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
-                var state = this.isAllowFailure() ? this.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED;
-                taskRun = taskRun
-                    .withState(state)
-                    .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
-                    .withOutputs(builder.build().toMap());
-
-                return Optional.of(SubflowExecutionResult.builder()
-                    .executionId(execution.getId())
-                    .state(State.Type.FAILED)
-                    .parentTaskRun(taskRun)
-                    .build());
             }
         }
 
-        taskRun = taskRun.withOutputs(builder.build().toMap());
+        Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
+        taskRun = taskRun.withOutputs(variables);
 
         State.Type finalState = ExecutableUtils.guessState(execution, this.transmitFailed, this.isAllowFailure(), this.isAllowWarning());
         if (taskRun.getState().getCurrent() != finalState) {
             taskRun = taskRun.withState(finalState);
+        }
+
+        if (finalState.isFailed()) {
+            String log = String.format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in FAILED state", execution.getId(), execution.getFlowId(), execution.getNamespace());
+            runContext.logger().error(log);
+        } else if (finalState == State.Type.WARNING) {
+            String log = String.format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in WARNING state", execution.getId(),  execution.getFlowId(), execution.getNamespace());
+            runContext.logger().warn(log);
         }
 
         return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, execution));

@@ -9,7 +9,7 @@
                 </li>
 
                 <li>
-                    <router-link v-if="flow && canCreate" :to="{name: 'flows/create', query: {copy: true}}">
+                    <router-link v-if="flowStore.flow && canCreate" :to="{name: 'flows/create', query: {copy: true}}">
                         <el-button :icon="icon.ContentCopy" size="large">
                             {{ $t('copy') }}
                         </el-button>
@@ -17,7 +17,7 @@
                 </li>
 
                 <li>
-                    <trigger-flow v-if="flow && canExecute" :disabled="flow.disabled" :flow-id="flow.id" type="default" :namespace="flow.namespace" />
+                    <trigger-flow v-if="flowStore.flow && canExecute" :disabled="flowStore.flow.disabled" :flow-id="flowStore.flow.id" type="default" :namespace="flowStore.flow.namespace" />
                 </li>
 
                 <li>
@@ -34,14 +34,16 @@
 </template>
 
 <script>
-    import flowTemplateEdit from "../../mixins/flowTemplateEdit";
-    import {mapGetters, mapState} from "vuex";
-    import TriggerFlow from "./TriggerFlow.vue"
+    import {shallowRef} from "vue";
+    import {mapStores} from "pinia";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
-    import {shallowRef} from "vue";
+    import {useCoreStore} from "../../stores/core";
+    import flowTemplateEdit from "../../mixins/flowTemplateEdit";
+    import TriggerFlow from "./TriggerFlow.vue"
     import TopNavBar from "../layout/TopNavBar.vue"
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         components: {
@@ -61,14 +63,12 @@
             };
         },
         computed: {
-            ...mapGetters("flow", ["flow"]),
-            ...mapGetters("core", ["guidedProperties"]),
-            ...mapState("flow", ["total"])
+            ...mapStores(useCoreStore, useFlowStore),
         },
         methods: {
             stopTour() {
                 this.$tours["guidedTour"]?.stop();
-                this.$store.commit("core/setGuidedProperties", {tourStarted: false});
+                this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, tourStarted: false};
             },
         },
         created() {
@@ -78,7 +78,7 @@
             setTimeout(() => {
                 if (!this.guidedProperties.tourStarted
                     && localStorage.getItem("tourDoneOrSkip") !== "true"
-                    && this.total === 0) {
+                    && this.flowStore.total === 0) {
                     this.$tours["guidedTour"]?.start();
                 }
             }, 200)

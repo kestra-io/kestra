@@ -93,7 +93,7 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
         defaultValue = "false"
     )
     @Builder.Default
-    private Property<Boolean> deleteParentFolder = Property.of(false);
+    private Property<Boolean> deleteParentFolder = Property.ofValue(false);
 
     @SuppressWarnings("unchecked")
     @Override

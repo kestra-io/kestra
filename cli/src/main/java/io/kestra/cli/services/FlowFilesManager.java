@@ -1,11 +1,11 @@
 package io.kestra.cli.services;
 
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 
 public interface FlowFilesManager {
 
-    FlowWithSource createOrUpdateFlow(Flow flow, String content);
+    FlowWithSource createOrUpdateFlow(GenericFlow flow);
 
     void deleteFlow(FlowWithSource toDelete);
 

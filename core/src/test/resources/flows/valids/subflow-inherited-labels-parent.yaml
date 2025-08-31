@@ -1,0 +1,18 @@
+id: subflow-inherited-labels-parent
+namespace: io.kestra.tests
+
+labels:
+  parentFlowLabel1: value1
+  parentFlowLabel2: value2
+
+tasks:
+  - id: launch
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: io.kestra.tests
+    flowId: subflow-inherited-labels-child
+    wait: true
+    transmitFailed: true
+    inheritLabels: true
+    labels:
+      launchTaskLabel: launchFoo
+      parentFlowLabel1: launchBar

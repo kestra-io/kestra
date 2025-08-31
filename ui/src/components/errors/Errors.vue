@@ -18,6 +18,8 @@
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import EmptyTemplate from "../../components/layout/EmptyTemplate.vue";
+    import {mapStores} from "pinia";
+    import {useCoreStore} from "../../stores/core";
     import sourceImg from "../../assets/errors/kestra-error.png";
 
     export default {
@@ -30,6 +32,7 @@
             }
         },
         computed: {
+            ...mapStores(useCoreStore),
             routeInfo() {
                 return {
                     title: this.$t("errors." + this.code + ".title"),
@@ -46,7 +49,7 @@
         },
         watch: {
             $route() {
-                this.$store.commit("core/setError", undefined);
+                this.coreStore.error = undefined;
             }
         },
 

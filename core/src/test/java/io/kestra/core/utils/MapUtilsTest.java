@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MapUtilsTest {
     @SuppressWarnings("unchecked")
@@ -38,12 +38,46 @@ class MapUtilsTest {
 
         Map<String, Object> merge = MapUtils.merge(a, b);
 
-        assertThat(((Map<String, Object>) merge.get("map")).size(), is(4));
-        assertThat(((Map<String, Object>) merge.get("map")).get("map_c"), is("e"));
-        assertThat(merge.get("string"), is("b"));
-        assertThat(merge.get("int"), is(1));
-        assertThat(merge.get("float"), is(1F));
-        assertThat((List<?>) merge.get("lists"), hasSize(2));
+        assertThat(((Map<String, Object>) merge.get("map")).size()).isEqualTo(4);
+        assertThat(((Map<String, Object>) merge.get("map")).get("map_c")).isEqualTo("e");
+        assertThat(merge.get("string")).isEqualTo("b");
+        assertThat(merge.get("int")).isEqualTo(1);
+        assertThat(merge.get("float")).isEqualTo(1F);
+        assertThat((List<?>) merge.get("lists")).hasSize(2);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void deepMerge() {
+        Map<String, Object> a = Map.of(
+            "map", Map.of(
+                "map_a", "a",
+                "map_b", "b",
+                "map_c", "c"
+            ),
+            "string", "a",
+            "int", 1,
+            "lists", Collections.singletonList(1)
+        );
+
+        Map<String, Object> b = Map.of(
+            "map", Map.of(
+                "map_c", "e",
+                "map_d", "d"
+            ),
+            "string", "b",
+            "float", 1F,
+            "lists", Collections.singletonList(2)
+        );
+
+        Map<String, Object> merge = MapUtils.deepMerge(a, b);
+
+        assertThat(((Map<String, Object>) merge.get("map")).size()).isEqualTo(4);
+        assertThat(((Map<String, Object>) merge.get("map")).get("map_c")).isEqualTo("e");
+        assertThat(merge.get("string")).isEqualTo("b");
+        assertThat(merge.get("int")).isEqualTo(1);
+        assertThat(merge.get("float")).isEqualTo(1F);
+        assertThat((List<?>) merge.get("lists")).hasSize(2);
     }
 
     @SuppressWarnings("unchecked")
@@ -68,9 +102,36 @@ class MapUtilsTest {
 
         Map<String, Object> merge = MapUtils.merge(a, b);
 
-        assertThat(((Map<String, Object>) merge.get("map")).size(), is(3));
-        assertThat(((Map<String, Object>) merge.get("map")).get("map_c"), is("e"));
-        assertThat(((Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) merge.get("map")).get("map_a")).get("sub")).get("null"), nullValue());
+        assertThat(((Map<String, Object>) merge.get("map")).size()).isEqualTo(3);
+        assertThat(((Map<String, Object>) merge.get("map")).get("map_c")).isEqualTo("e");
+        assertThat(((Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) merge.get("map")).get("map_a")).get("sub")).get("null")).isNull();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void deepMergeWithNull() {
+        var mapWithNull = new HashMap<String, String>();
+        mapWithNull.put("null", null);
+
+        Map<String, Object> a = Map.of(
+            "map", Map.of(
+                "map_a", Map.of("sub", mapWithNull),
+                "map_c", "c"
+            )
+        );
+
+        Map<String, Object> b = Map.of(
+            "map", Map.of(
+                "map_c", "e",
+                "map_d", "d"
+            )
+        );
+
+        Map<String, Object> merge = MapUtils.deepMerge(a, b);
+
+        assertThat(((Map<String, Object>) merge.get("map")).size()).isEqualTo(3);
+        assertThat(((Map<String, Object>) merge.get("map")).get("map_c")).isEqualTo("e");
+        assertThat(((Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) merge.get("map")).get("map_a")).get("sub")).get("null")).isNull();
     }
 
     @Test
@@ -96,19 +157,19 @@ class MapUtilsTest {
     @Test
     void emptyOnNull() {
         var map = MapUtils.emptyOnNull(null);
-        assertThat(map, notNullValue());
-        assertThat(map, anEmptyMap());
+        assertThat(map).isNotNull();
+        assertThat(map).isEmpty();
 
         map = MapUtils.emptyOnNull(Map.of("key", "value"));
-        assertThat(map, notNullValue());
-        assertThat(map.size(), is(1));
+        assertThat(map).isNotNull();
+        assertThat(map.size()).isEqualTo(1);
     }
 
     @Test
     void isEmpty() {
-        assertThat(MapUtils.isEmpty(null), is(true));
-        assertThat(MapUtils.isEmpty(Collections.emptyMap()), is(true));
-        assertThat(MapUtils.isEmpty(Map.of("key", "value")), is(false));
+        assertThat(MapUtils.isEmpty(null)).isTrue();
+        assertThat(MapUtils.isEmpty(Collections.emptyMap())).isTrue();
+        assertThat(MapUtils.isEmpty(Map.of("key", "value"))).isFalse();
     }
 
 
@@ -125,12 +186,32 @@ class MapUtilsTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenNestingMapGivenFlattenMapWithConflicts() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            MapUtils.flattenToNestedMap(Map.of(
-                "k1.k2", "v1",
-                "k1.k2.k3", "v2"
-            ));
-        });
+    void shouldReturnMapAndIgnoreConflicts() {
+        Map<String, Object> results = MapUtils.flattenToNestedMap(Map.of(
+            "k1.k2", "v1",
+            "k1.k2.k3", "v2"
+        ));
+
+        assertThat(results).hasSize(1);
+        // due to ordering change on each JVM restart, the result map would be different as different entries will be skipped
+    }
+
+    @Test
+    void shouldFlattenANestedMap() {
+        Map<String, Object> results = MapUtils.nestedToFlattenMap(Map.of("k1",Map.of("k2", Map.of("k3", "v1")), "k4", "v2"));
+
+        assertThat(results).hasSize(2);
+        assertThat(results).containsAllEntriesOf(Map.of(
+            "k1.k2.k3", "v1",
+            "k4", "v2"
+        ));
+    }
+
+    @Test
+    void shouldThrowIfNestedMapContainsMultipleEntries() {
+        var exception = assertThrows(IllegalArgumentException.class,
+            () -> MapUtils.nestedToFlattenMap(Map.of("k1",  Map.of("k2", Map.of("k3", "v1"), "k4", "v2")))
+        );
+        assertThat(exception.getMessage()).isEqualTo("You cannot flatten a map with an entry that is a map of more than one element, conflicting key: k1");
     }
 }

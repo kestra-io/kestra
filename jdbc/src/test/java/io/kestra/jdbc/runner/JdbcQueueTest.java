@@ -1,5 +1,6 @@
 package io.kestra.jdbc.runner;
 
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.QueueException;
@@ -23,14 +24,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
 abstract public class JdbcQueueTest {
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
-    protected QueueInterface<FlowWithSource> flowQueue;
+    protected QueueInterface<FlowInterface> flowQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
@@ -43,8 +44,8 @@ abstract public class JdbcQueueTest {
     void noGroup() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        Flux<FlowWithSource> receive = TestsUtils.receive(flowQueue, throwConsumer(either -> {
-            FlowWithSource flow = either.getLeft();
+        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, throwConsumer(either -> {
+            FlowInterface flow = either.getLeft();
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit(builder("io.kestra.f2"));
             }
@@ -54,18 +55,18 @@ abstract public class JdbcQueueTest {
 
         flowQueue.emit(builder("io.kestra.f1"));
 
-        countDownLatch.await(5, TimeUnit.SECONDS);
+        assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
         receive.blockLast();
 
-        assertThat(countDownLatch.getCount(), is(0L));
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
     }
 
     @Test
     void withGroup() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        Flux<FlowWithSource> receive = TestsUtils.receive(flowQueue, "consumer_group", throwConsumer(either -> {
-            FlowWithSource flow = either.getLeft();
+        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, "consumer_group", throwConsumer(either -> {
+            FlowInterface flow = either.getLeft();
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit("consumer_group", builder("io.kestra.f2"));
             }
@@ -75,69 +76,61 @@ abstract public class JdbcQueueTest {
 
         flowQueue.emit("consumer_group", builder("io.kestra.f1"));
 
-        countDownLatch.await(5, TimeUnit.SECONDS);
+        assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
         receive.blockLast();
 
-        assertThat(countDownLatch.getCount(), is(0L));
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
     }
 
     @Test
     void withType() throws InterruptedException, QueueException {
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, Indexer.class, throwConsumer(either -> {
+            FlowInterface flow = either.getLeft();
+            if (flow.getNamespace().equals("io.kestra.f1")) {
+                // second one
+                flowQueue.emit(builder("io.kestra.f2"));
+            }
+
+            countDownLatch.countDown();
+        }));
+
         // first one
         flowQueue.emit(builder("io.kestra.f1"));
 
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        Flux<FlowWithSource> receive = TestsUtils.receive(flowQueue, Indexer.class, either -> {
-            countDownLatch.countDown();
-        });
+        assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
+        receive.blockLast();
 
-        countDownLatch.await(5, TimeUnit.SECONDS);
-
-        assertThat(receive.blockLast().getNamespace(), is("io.kestra.f1"));
-
-        // second one only
-        flowQueue.emit(builder("io.kestra.f2"));
-
-        CountDownLatch countDownLatch2 = new CountDownLatch(1);
-        receive = TestsUtils.receive(flowQueue, Indexer.class, either -> {
-            countDownLatch2.countDown();
-        });
-        countDownLatch2.await(5, TimeUnit.SECONDS);
-
-        assertThat(receive.blockLast().getNamespace(), is("io.kestra.f2"));
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
     }
 
+    // FIXME
     @Test
     void withGroupAndType() throws InterruptedException, QueueException {
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, "consumer_group", Indexer.class, throwConsumer(either -> {
+            FlowInterface flow = either.getLeft();
+            if (flow.getNamespace().equals("io.kestra.f1")) {
+                flowQueue.emit("consumer_group", builder("io.kestra.f2"));
+            }
+
+            countDownLatch.countDown();
+        }));
+
         // first one
         flowQueue.emit("consumer_group", builder("io.kestra.f1"));
 
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        Flux<FlowWithSource> receive = TestsUtils.receive(flowQueue, "consumer_group", Indexer.class, either -> {
-            countDownLatch.countDown();
-        });
+        assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
+        receive.blockLast();
 
-        countDownLatch.await(5, TimeUnit.SECONDS);
-
-        assertThat(receive.blockLast().getNamespace(), is("io.kestra.f1"));
-
-        // second one only
-        flowQueue.emit("consumer_group", builder("io.kestra.f2"));
-
-        CountDownLatch countDownLatch2 = new CountDownLatch(1);
-        receive = TestsUtils.receive(flowQueue, "consumer_group", Indexer.class, either -> {
-            countDownLatch2.countDown();
-        });
-        countDownLatch2.await(5, TimeUnit.SECONDS);
-
-        assertThat(receive.blockLast().getNamespace(), is("io.kestra.f2"));
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
     }
 
     private static FlowWithSource builder(String namespace) {
         return FlowWithSource.builder()
             .id(IdUtils.create())
             .namespace(namespace == null ? "kestra.test" : namespace)
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()))
             .build();
     }
 

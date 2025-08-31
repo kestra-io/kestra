@@ -1,5 +1,5 @@
 id: log
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 tasks:
   - id: hello

@@ -10,9 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public class ConstantRetryValidationTest {
@@ -22,26 +20,26 @@ public class ConstantRetryValidationTest {
     @Test
     void shouldValidateValidRetry() throws Exception {
         var retry = Constant.builder()
-            .maxAttempt(3)
+            .maxAttempts(3)
             .maxDuration(Duration.ofSeconds(10))
             .interval(Duration.ofSeconds(1))
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
-        assertThat(valid.isEmpty(), is(true));
+        assertThat(valid.isEmpty()).isTrue();
     }
 
     @Test
     void shouldNotValidateInvalidRetry() throws Exception {
         var retry = Constant.builder()
-            .maxAttempt(3)
+            .maxAttempts(3)
             .maxDuration(Duration.ofSeconds(1))
             .interval(Duration.ofSeconds(10))
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
-        assertThat(valid.isEmpty(), is(false));
-        assertThat(valid.get().getConstraintViolations(), hasSize(1));
-        assertThat(valid.get().getMessage(), is(": 'interval' must be less than 'maxDuration' but is PT10S\n"));
+        assertThat(valid.isEmpty()).isFalse();
+        assertThat(valid.get().getConstraintViolations()).hasSize(1);
+        assertThat(valid.get().getMessage()).isEqualTo(": 'interval' must be less than 'maxDuration' but is PT10S\n");
     }
 }

@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.AbstractGraph;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
@@ -90,19 +91,17 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
     private List<Task> tasks;
 
     @NotNull
-    @PluginProperty(dynamic = true)
     @Schema(
         title = "The condition expression that should evaluate to `true` or `false`.",
         description = "Boolean coercion allows 0, -0, null and '' to evaluate to false; all other values will evaluate to true."
     )
-    private String condition;
+    private Property<String> condition;
 
     @Schema(
         title = "If set to `true`, the task run will end in a failed state once the `maxIterations` or `maxDuration` are reached."
     )
     @Builder.Default
-    @PluginProperty
-    private Boolean failOnMaxReached = false;
+    private Property<Boolean> failOnMaxReached = Property.ofValue(false);
 
     @Schema(
         title = "Check the frequency configuration."
@@ -147,7 +146,6 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-
         return FlowableUtils.resolveWaitForNext(
             execution,
             this.childTasks(runContext, parentTaskRun),
@@ -159,16 +157,16 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
 
     public Instant nextExecutionDate(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (!this.reachedMaximums(runContext, execution, parentTaskRun, false)) {
-            String continueLoop = runContext.render(this.condition);
+            String continueLoop = runContext.render(this.condition).as(String.class).orElse(null);
             if (!TruthUtils.isTruthy(continueLoop)) {
-                return Instant.now().plus(this.checkFrequency.interval);
+                return Instant.now().plus(runContext.render(this.getCheckFrequency().getInterval()).as(Duration.class).orElseThrow());
             }
         }
 
         return null;
     }
 
-    private boolean reachedMaximums(RunContext runContext, Execution execution, TaskRun parentTaskRun, Boolean printLog) {
+    private boolean reachedMaximums(RunContext runContext, Execution execution, TaskRun parentTaskRun, Boolean printLog) throws IllegalVariableEvaluationException {
         Logger logger = runContext.logger();
 
         if (!this.childTaskRunExecuted(execution, parentTaskRun)) {
@@ -178,14 +176,18 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
         Integer iterationCount = Optional.ofNullable(parentTaskRun.getOutputs())
             .map(outputs -> (Integer) outputs.get("iterationCount"))
             .orElse(0);
-        if (this.checkFrequency.maxIterations != null && iterationCount != null && iterationCount > this.checkFrequency.maxIterations) {
+
+        Optional<Integer> maxIterations = runContext.render(this.getCheckFrequency().getMaxIterations()).as(Integer.class);
+        if (maxIterations.isPresent() && iterationCount > maxIterations.get()) {
             if (printLog) {logger.warn("Max iterations reached");}
             return true;
         }
 
         Instant creationDate = parentTaskRun.getState().getHistories().getFirst().getDate();
-        if (this.checkFrequency.maxDuration != null &&
-            creationDate != null && creationDate.plus(this.checkFrequency.maxDuration).isBefore(Instant.now())) {
+        Optional<Duration> maxDuration = runContext.render(this.getCheckFrequency().getMaxDuration()).as(Duration.class);
+        if (maxDuration.isPresent()
+            && creationDate != null
+            && creationDate.plus(maxDuration.get()).isBefore(Instant.now())) {
             if (printLog) {logger.warn("Max duration reached");}
 
             return true;
@@ -201,7 +203,10 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
             return Optional.empty();
         }
 
-        if (childTaskExecuted && this.reachedMaximums(runContext, execution, parentTaskRun, true) && this.failOnMaxReached) {
+        if (childTaskExecuted
+            && this.reachedMaximums(runContext, execution, parentTaskRun, true)
+            && Boolean.TRUE.equals(runContext.render(this.failOnMaxReached).as(Boolean.class).orElseThrow())
+        ) {
             return Optional.of(State.Type.FAILED);
         }
 
@@ -266,24 +271,22 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
     @NoArgsConstructor
     public static class CheckFrequency {
         @Schema(
-            title = "Maximum count of iterations."
+            title = "Maximum count of iterations.",
+            description = "If not set, defines an unlimited number of iterations."
         )
-        @Builder.Default
-        @PluginProperty
-        private Integer maxIterations = 100;
+        private Property<Integer> maxIterations;
 
         @Schema(
-            title = "Maximum duration of the task."
+            title = "Maximum duration of the task.",
+            description = "If not set, defines an unlimited maximum duration of iterations."
         )
-        @Builder.Default
-        @PluginProperty
-        private Duration maxDuration = Duration.ofHours(1);
+        private Property<Duration> maxDuration;
 
         @Schema(
             title = "Interval between each iteration."
         )
+        @NotNull
         @Builder.Default
-        @PluginProperty
-        private Duration interval = Duration.ofSeconds(1);
+        private Property<Duration> interval = Property.ofValue(Duration.ofMinutes(1));
     }
 }

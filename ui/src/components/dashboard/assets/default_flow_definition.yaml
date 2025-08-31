@@ -1,0 +1,236 @@
+title: Overview
+description: Default Flow Overview
+
+timeWindow:
+  default: P30D
+  max: P365D
+
+charts:
+  - id: kpi_success_ratio
+    type: io.kestra.plugin.core.dashboard.chart.KPI
+    chartOptions:
+      displayName: Success Ratio
+      numberType: PERCENTAGE
+      width: 3
+    data:
+      type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI
+      columns:
+        field: ID
+        agg: COUNT
+      numerator:
+        - type: IN
+          field: STATE
+          values:
+            - SUCCESS
+
+  - id: kpi_failed_ratio
+    type: io.kestra.plugin.core.dashboard.chart.KPI
+    chartOptions:
+      displayName: Failed Ratio
+      numberType: PERCENTAGE
+      width: 3
+    data:
+      type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI
+      columns:
+        field: ID
+        agg: COUNT
+      numerator:
+        - type: IN
+          field: STATE
+          values:
+            - FAILED
+
+  - id: kpi_in_progress_ratio
+    type: io.kestra.plugin.core.dashboard.chart.KPI
+    chartOptions:
+      displayName: Running Ratio
+      numberType: PERCENTAGE
+      width: 3
+    data:
+      type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI
+      columns:
+        field: ID
+        agg: COUNT
+      numerator:
+        - type: IN
+          field: STATE
+          values:
+            - RUNNING
+            - PAUSED
+            - KILLING
+            - RETRYING
+            - RESTARTED
+
+  - id: kpi_pending_ratio
+    type: io.kestra.plugin.core.dashboard.chart.KPI
+    chartOptions:
+      displayName: Pending Ratio
+      numberType: PERCENTAGE
+      width: 3
+    data:
+      type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI
+      columns:
+        field: ID
+        agg: COUNT
+      numerator:
+        - type: IN
+          field: STATE
+          values:
+            - CREATED
+            - QUEUED
+
+  - id: description
+    type: io.kestra.plugin.core.dashboard.chart.Markdown
+    chartOptions:
+      displayName: Description
+      width: 6
+    source:
+      type: FlowDescription
+      namespace: --NAMESPACE--
+      flowId: --FLOW--
+
+  - id: total_executions_pie
+    type: io.kestra.plugin.core.dashboard.chart.Pie
+    chartOptions:
+      displayName: Total Executions
+      graphStyle: DONUT
+      tooltip: ALL
+      width: 6
+    data:
+      type: io.kestra.plugin.core.dashboard.data.Executions
+      columns:
+        id:
+          field: ID
+          displayName: Execution Id
+          agg: COUNT
+        state:
+          field: STATE
+          displayName: State
+
+  - id: total_executions_timeseries
+    type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+    chartOptions:
+      displayName: Total Executions
+      description: Executions duration and count per date
+      legend:
+        enabled: true
+      column: date
+      colorByColumn: state
+      width: 12
+    data:
+      type: io.kestra.plugin.core.dashboard.data.Executions
+      columns:
+        date:
+          field: START_DATE
+          displayName: Date
+        state:
+          field: STATE
+        total:
+          displayName: Executions
+          agg: COUNT
+          graphStyle: BARS
+        duration:
+          field: DURATION
+          displayName: Duration
+          agg: SUM
+          graphStyle: LINES
+
+  - id: executions_in_progress
+    type: io.kestra.plugin.core.dashboard.chart.Table
+    chartOptions:
+      displayName: Executions In Progress
+      pagination:
+        enabled: true
+      width: 6
+    data:
+      type: io.kestra.plugin.core.dashboard.data.Executions
+      columns:
+        id:
+          field: ID
+          displayName: Execution ID
+        namespace:
+          field: NAMESPACE
+          displayName: Namespace
+        flow:
+          field: FLOW_ID
+          displayName: Flow
+        duration:
+          field: DURATION
+          displayName: Duration
+        state:
+          field: STATE
+          displayName: State
+      where:
+        - type: IN
+          field: STATE
+          values:
+            - CREATED
+            - RESTARTED
+            - QUEUED
+            - RUNNING
+            - PAUSED
+            - RETRYING
+            - KILLING
+
+  - id: next_executions
+    type: io.kestra.plugin.core.dashboard.chart.Table
+    chartOptions:
+      displayName: Next Executions
+      pagination:
+        enabled: true
+      width: 6
+    data:
+      type: io.kestra.plugin.core.dashboard.data.Triggers
+      columns:
+        namespace:
+          field: NAMESPACE
+          displayName: Namespace
+        flowId:
+          field: FLOW_ID
+          displayName: Flow
+        nextExec:
+          field: NEXT_EXECUTION_DATE
+          displayName: Next Execution Date
+
+  - id: executions_per_namespace_bars
+    type: io.kestra.plugin.core.dashboard.chart.Bar
+    chartOptions:
+      displayName: Executions (per namespace)
+      description: Executions count per namespace
+      legend:
+        enabled: true
+      column: namespace
+      width: 12
+    data:
+      type: io.kestra.plugin.core.dashboard.data.Executions
+      columns:
+        namespace:
+          field: NAMESPACE
+        state:
+          field: STATE
+        total:
+          displayName: Executions
+          agg: COUNT
+
+  - id: logs_timeseries
+    type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+    chartOptions:
+      displayName: Logs
+      description: Logs count per date grouped by level
+      legend:
+        enabled: true
+      column: date
+      colorByColumn: level
+      width: 12
+    data:
+      type: io.kestra.plugin.core.dashboard.data.Logs
+      columns:
+        date:
+          field: DATE
+          displayName: Execution Date
+        level:
+          field: LEVEL
+        total:
+          displayName: Total Executions
+          agg: COUNT
+          graphStyle: BARS

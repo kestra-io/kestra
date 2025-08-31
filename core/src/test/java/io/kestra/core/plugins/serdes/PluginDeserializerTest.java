@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.plugins.PluginRegistry;
@@ -15,12 +16,14 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @ExtendWith(MockitoExtension.class)
 class PluginDeserializerTest {
 
     @Mock
     private PluginRegistry registry;
-    
+
     @Test
     void shouldSucceededDeserializePluginGivenValidType() throws JsonProcessingException {
         // Given
@@ -38,8 +41,9 @@ class PluginDeserializerTest {
 
         TestPluginHolder deserialized = om.readValue(input, TestPluginHolder.class);
         // Then
-        Assertions.assertEquals(TestPlugin.class.getCanonicalName(), deserialized.plugin().getType());
-        Mockito.verify(registry, Mockito.only()).findClassByIdentifier(identifier);
+        assertThat(TestPlugin.class.getCanonicalName()).isEqualTo(deserialized.plugin().getType());
+        Mockito.verify(registry, Mockito.times(1)).isVersioningSupported();
+        Mockito.verify(registry, Mockito.times(1)).findClassByIdentifier(identifier);
     }
 
     @Test
@@ -57,17 +61,33 @@ class PluginDeserializerTest {
         });
 
         // Then
-        Assertions.assertEquals("io.kestra.core.plugins.serdes.Unknown", exception.getTypeId());
+        assertThat("io.kestra.core.plugins.serdes.Unknown").isEqualTo(exception.getTypeId());
     }
 
     @Test
     void shouldReturnNullPluginIdentifierGivenNullType() {
-        Assertions.assertNull(PluginDeserializer.extractPluginRawIdentifier(new TextNode(null)));
+        assertThat(PluginDeserializer.extractPluginRawIdentifier(new TextNode(null), true)).isNull();
     }
 
     @Test
     void shouldReturnNullPluginIdentifierGivenEmptyType() {
-        Assertions.assertNull(PluginDeserializer.extractPluginRawIdentifier(new TextNode("")));
+        assertThat(PluginDeserializer.extractPluginRawIdentifier(new TextNode(""), true)).isNull();
+    }
+
+    @Test
+    void shouldReturnTypeWithVersionGivenSupportedVersionTrue() {
+        ObjectNode jsonNodes = new ObjectNode(new ObjectMapper().getNodeFactory());
+        jsonNodes.set("type", new TextNode("io.kestra.core.plugins.serdes.Unknown"));
+        jsonNodes.set("version", new TextNode("1.0.0"));
+        assertThat(PluginDeserializer.extractPluginRawIdentifier(jsonNodes, true)).isEqualTo("io.kestra.core.plugins.serdes.Unknown:1.0.0");
+    }
+
+    @Test
+    void shouldReturnTypeWithVersionGivenSupportedVersionFalse() {
+        ObjectNode jsonNodes = new ObjectNode(new ObjectMapper().getNodeFactory());
+        jsonNodes.set("type", new TextNode("io.kestra.core.plugins.serdes.Unknown"));
+        jsonNodes.set("version", new TextNode("1.0.0"));
+        assertThat(PluginDeserializer.extractPluginRawIdentifier(jsonNodes, false)).isEqualTo("io.kestra.core.plugins.serdes.Unknown");
     }
 
     public record TestPluginHolder(Plugin plugin) {

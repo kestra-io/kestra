@@ -5,13 +5,13 @@
         @click="onShow"
         ref="taskEdit"
     >
-        <span v-if="component !== 'el-button' && !isHidden">{{ $t("show task source") }}</span>
+        <span v-if="component !== 'el-button' && !isHidden">{{ t("show task source") }}</span>
         <drawer
             v-if="isModalOpen"
             v-model="isModalOpen"
         >
             <template #header>
-                <code>{{ taskId || task?.id || $t("add task") }}</code>
+                <code>{{ taskId || task?.id || t("add task") }}</code>
             </template>
             <template #footer>
                 <div v-loading="isLoading">
@@ -24,7 +24,7 @@
                         :disabled="errors && !!errors.length"
                         type="primary"
                     >
-                        {{ $t("save task") }}
+                        {{ t("save task") }}
                     </el-button>
                     <el-alert
                         show-icon
@@ -33,7 +33,7 @@
                         v-if="revision && revisions?.length !== revision"
                         type="warning"
                     >
-                        <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
+                        <strong>{{ t("seeing old revision", {revision: revision}) }}</strong>
                     </el-alert>
                 </div>
             </template>
@@ -41,7 +41,7 @@
             <el-tabs v-model="activeTabs">
                 <el-tab-pane v-if="!readOnly" name="form">
                     <template #label>
-                        <span>{{ $t("form") }}</span>
+                        <span>{{ t("form") }}</span>
                     </template>
                     <task-editor
                         ref="editor"
@@ -52,7 +52,7 @@
                 </el-tab-pane>
                 <el-tab-pane name="source">
                     <template #label>
-                        <span>{{ $t("source") }}</span>
+                        <span>{{ t("source") }}</span>
                     </template>
                     <editor
                         :read-only="readOnly"
@@ -66,14 +66,14 @@
                         @update:model-value="onInput"
                     />
                 </el-tab-pane>
-                <el-tab-pane v-if="pluginMardown" name="documentation">
+                <el-tab-pane v-if="pluginMarkdown" name="documentation">
                     <template #label>
                         <span>
-                            {{ $t("documentation.documentation") }}
+                            {{ t("documentation.documentation") }}
                         </span>
                     </template>
                     <div class="documentation">
-                        <markdown :source="pluginMardown" />
+                        <markdown :source="pluginMarkdown" />
                     </div>
                 </el-tab-pane>
             </el-tabs>
@@ -81,188 +81,176 @@
     </component>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {ref, computed, watch} from "vue";
+    import {useI18n} from "vue-i18n";
+    import {SECTIONS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import CodeTags from "vue-material-design-icons/CodeTags.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-</script>
-
-<script>
-    import YamlUtils from "../../utils/yamlUtils";
     import Editor from "../inputs/Editor.vue";
     import TaskEditor from "./TaskEditor.vue";
     import Drawer from "../Drawer.vue";
     import {canSaveFlowTemplate} from "../../utils/flowTemplate";
-    import {mapGetters, mapState} from "vuex";
-    import Utils from "../../utils/utils";
     import Markdown from "../layout/Markdown.vue";
     import ValidationError from "./ValidationError.vue";
-    import {SECTIONS} from "../../utils/constants";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {useAuthStore} from "override/stores/auth";
+    import {useFlowStore} from "../../stores/flow";
 
-    export default {
-        components: {Editor, TaskEditor, Drawer, Markdown, ValidationError},
-        emits: ["update:task", "close"],
-        props: {
-            component: {
-                type: String,
-                default: "el-button"
-            },
-            task: {
-                type: Object,
-                default: undefined
-            },
-            taskId: {
-                type: String,
-                default: undefined
-            },
-            flowId: {
-                type: String,
-                required: true
-            },
-            namespace: {
-                type: String,
-                required: true
-            },
-            revision: {
-                type: Number,
-                default: undefined
-            },
-            section: {
-                type: String,
-                default: SECTIONS.TASKS,
-                validator(value) {
-                    return [SECTIONS.TASKS, SECTIONS.TRIGGERS].includes(value)
-                }
-            },
-            emitOnly: {
-                type: Boolean,
-                default: false
-            },
-            emitTaskOnly: {
-                type: Boolean,
-                default: false
-            },
-            isHidden: {
-                type: Boolean,
-                default: false
-            },
-            readOnly: {
-                type: Boolean,
-                default: false
-            },
-            flowSource: {
-                type: String,
-                default: undefined
-            }
-        },
-        watch: {
-            task: {
-                async handler() {
-                    if (this.task) {
-                        this.taskYaml = YamlUtils.stringify(this.task);
-                        if (this.task.type) {
-                            this.$store.dispatch("plugin/load", {cls: this.task.type})
-                        }
-                    } else {
-                        this.taskYaml = "";
-                    }
-                },
-                immediate: true
-            },
-            taskYaml: {
-                handler() {
-                    const task = YamlUtils.parse(this.taskYaml);
-                    if (task?.type && task.type !== this.type) {
-                        this.$store.dispatch("plugin/load", {cls: task.type})
-                        this.type = task.type
-                    }
-                },
-            },
-            isModalOpen: {
-                handler() {
-                    if (!this.isModalOpen) {
-                        this.$emit("close");
-                        this.activeTabs = this.defaultActiveTab();
-                    }
-                }
-            }
-        },
-        methods: {
-            async load(taskId) {
-                if (this.revision) {
-                    if (this.revisions?.[this.revision - 1] === undefined) {
-                        this.revisions = await this.$store
-                            .dispatch("flow/loadRevisions", {
-                                namespace: this.namespace,
-                                id: this.flowId,
-                                store: false
-                            });
-                    }
-                }
+    const {t} = useI18n()
 
-                return YamlUtils.extractTask(this.source, taskId).toString();
-            },
-            saveTask() {
-                this.$emit("update:task", this.taskYaml);
-                this.taskYaml = "";
-                this.isModalOpen = false;
-            },
-            async onShow() {
-                this.isModalOpen = !this.isModalOpen;
-                if (this.taskId) {
-                    this.taskYaml = await this.load(this.taskId ? this.taskId : this.task.id);
-                } else if (this.task) {
-                    this.taskYaml = YamlUtils.stringify(this.task);
-                }
-                if (this.task?.type) {
-                    this.$store
-                        .dispatch("plugin/load", {cls: this.task.type})
-                }
-            },
-            onInput(value) {
-                clearTimeout(this.timer);
-                this.timer = setTimeout(() => {
-                    this.$store.dispatch("flow/validateTask", {task: value, section: this.section})
-                }, 500);
-            },
-            defaultActiveTab() {
-                return this.readOnly ? "source" : "form";
-            }
-        },
-        data() {
-            return {
-                uuid: Utils.uid(),
-                taskYaml: "",
-                isModalOpen: false,
-                activeTabs: this.defaultActiveTab(),
-                type: null,
-                revisions: undefined
-            };
-        },
-        computed: {
-            ...mapGetters("flow", ["taskError"]),
-            ...mapState("auth", ["user"]),
-            ...mapState("plugin", ["plugin"]),
-            errors() {
-                return this.taskError?.split(/, ?/)
-            },
-            pluginMardown() {
-                if (this.plugin && this.plugin.markdown && YamlUtils.parse(this.taskYaml)?.type) {
-                    return this.plugin.markdown
-                }
-                return null
-            },
-            canSave() {
-                return canSaveFlowTemplate(true, this.user, {namespace: this.namespace}, "flow");
-            },
-            isLoading() {
-                return this.taskYaml === undefined;
-            },
-            source() {
-                return this.revision ? this.revisions?.[this.revision - 1]?.source : this.flow?.source;
+    // Types
+    interface Props {
+        component?: string;
+        task?: Record<string, any>;
+        taskId?: string;
+        flowId: string;
+        namespace: string;
+        revision?: number;
+        section?: string;
+        emitOnly?: boolean;
+        emitTaskOnly?: boolean;
+        isHidden?: boolean;
+        readOnly?: boolean;
+        flowSource?: string;
+    }
+
+    // Props definition
+    const props = withDefaults(defineProps<Props>(), {
+        component: "el-button",
+        task: undefined,
+        taskId: undefined,
+        revision: undefined,
+        section: SECTIONS.TASKS,
+        emitOnly: false,
+        emitTaskOnly: false,
+        isHidden: false,
+        readOnly: false,
+        flowSource: undefined
+    });
+
+    const emit = defineEmits<{
+        "update:task": [value: string];
+        "close": [];
+    }>();
+
+    const pluginsStore = usePluginsStore();
+
+
+    const taskYaml = ref("");
+    const isModalOpen = ref(false);
+    const activeTabs = ref(props.readOnly ? "source" : "form");
+    const type = ref<string>();
+    const revisions = ref<any[]>();
+    const timer = ref<ReturnType<typeof setTimeout>>();
+    const lastValidatedValue = ref<string | null>(null);
+
+    const flowStore = useFlowStore();
+    const errors = computed(() => flowStore.taskError?.split(/, ?/));
+    const pluginMarkdown = computed(() => {
+        if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse(taskYaml.value)?.type) {
+            return pluginsStore?.plugin.markdown;
+        }
+        return null;
+    });
+
+    const authStore = useAuthStore();
+
+    const canSave = computed(() => {
+        const user = authStore.user;
+        return canSaveFlowTemplate(true, user, {namespace: props.namespace}, "flow");
+    });
+
+    const isLoading = computed(() => taskYaml.value === undefined);
+
+    const source = computed(() => {
+        return props.revision
+            ? revisions.value?.[props.revision - 1]?.source
+            : flowStore.flow?.source;
+    });
+
+    // Methods
+    const load = async (taskId: string) => {
+        if (props.revision) {
+            if (!revisions.value?.[props.revision - 1]) {
+                revisions.value = await flowStore.loadRevisions({
+                    namespace: props.namespace,
+                    id: props.flowId,
+                    store: false
+                });
             }
         }
+        return YAML_UTILS.extractBlock({
+            section: props.section,
+            source: source.value,
+            key: taskId,
+        });
     };
+
+    const saveTask = () => {
+        emit("update:task", taskYaml.value);
+        taskYaml.value = "";
+        isModalOpen.value = false;
+    };
+
+    const onShow = async () => {
+        isModalOpen.value = !isModalOpen.value;
+        if (props.taskId) {
+            taskYaml.value = await load(props.taskId ? props.taskId : props.task?.id) ?? "";
+        } else if (props.task) {
+            taskYaml.value = YAML_UTILS.stringify(props.task);
+        }
+        if (props.task?.type) {
+            pluginsStore.load({cls: props.task.type});
+        }
+    };
+
+    const onInput = (value?: string) => {
+        if (timer.value) {
+            clearTimeout(timer.value);
+        }
+        taskYaml.value = value ?? "";
+
+        timer.value = setTimeout(() => {
+            if (lastValidatedValue.value !== taskYaml.value) {
+                lastValidatedValue.value = taskYaml.value;
+                flowStore.validateTask({
+                    task: taskYaml.value,
+                    section: props.section
+                });
+            }
+        }, 500) as any;
+    };
+
+    // Watchers
+    watch(() => props.task, async (newTask) => {
+        if (newTask) {
+            taskYaml.value = YAML_UTILS.stringify(newTask);
+            if (newTask.type) {
+                await pluginsStore.load({cls: newTask.type});
+            }
+        } else {
+            taskYaml.value = "";
+        }
+    }, {immediate: true});
+
+    watch(taskYaml, () => {
+        const task = YAML_UTILS.parse(taskYaml.value);
+        if (task?.type && task.type !== type.value) {
+            pluginsStore.load({cls: task.type});
+            type.value = task.type;
+        }
+    });
+
+    watch(isModalOpen, () => {
+        if (!isModalOpen.value) {
+            emit("close");
+            activeTabs.value = props.readOnly ? "source" : "form";
+        }
+    });
 </script>
+
 <style scoped lang="scss">
     // Required, otherwise the doc titles and properties names are not visible
     .documentation {

@@ -21,6 +21,8 @@ services:
       POSTGRES_PASSWORD: k3str4
     ports:
       - 5432:5432
+    # enable pg_state_statements to have statistics on query executions
+    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all
     restart: on-failure
 
 #  jaeger-all-in-one:

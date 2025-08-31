@@ -1,5 +1,5 @@
 id: for_each
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 tasks:
   - id: for_each

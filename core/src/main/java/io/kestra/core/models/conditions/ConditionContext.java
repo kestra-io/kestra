@@ -1,5 +1,6 @@
 package io.kestra.core.models.conditions;
 
+import io.kestra.core.models.flows.FlowInterface;
 import lombok.*;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -18,7 +19,7 @@ import jakarta.validation.constraints.NotNull;
 @AllArgsConstructor
 public class ConditionContext {
     @NotNull
-    private Flow flow;
+    private FlowInterface flow;
 
     private Execution execution;
 

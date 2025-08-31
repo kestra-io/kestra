@@ -3,13 +3,17 @@
         <img
             v-bind="$attrs"
             :alt="alt"
-            :src="$store.getters['doc/resourceUrl'](src)"
+            :src="docStore.resourceUrl(src)"
             loading="lazy"
         >
     </span>
 </template>
 
 <script setup lang="ts">
+    import {useDocStore} from "../../stores/doc";
+    
+    const docStore = useDocStore();
+    
     defineProps({
         src: {
             type: String,

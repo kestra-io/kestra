@@ -17,9 +17,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public class DownloadFilesTest {
@@ -47,8 +45,8 @@ public class DownloadFilesTest {
 
         DownloadFiles.Output output = downloadFiles.run(runContext);
 
-        assertThat(output.getFiles().size(), is(1));
-        assertThat(output.getFiles().get("/a/b/test1.txt"), notNullValue());
+        assertThat(output.getFiles().size()).isEqualTo(1);
+        assertThat(output.getFiles().get("/a/b/test1.txt")).isNotNull();
 
     }
 }

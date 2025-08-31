@@ -34,6 +34,9 @@ public class GraphCluster extends AbstractGraph {
     }
 
     @JsonIgnore
+    private final GraphClusterAfterExecution afterExecution;
+
+    @JsonIgnore
     private final GraphClusterEnd end;
 
     @Setter
@@ -50,14 +53,17 @@ public class GraphCluster extends AbstractGraph {
         this.relationType = null;
         this.root = new GraphClusterRoot();
         this._finally = new GraphClusterFinally();
+        this.afterExecution = new GraphClusterAfterExecution();
         this.end = new GraphClusterEnd();
         this.taskNode = null;
 
         this.addNode(this.root);
         this.addNode(this._finally);
+        this.addNode(this.afterExecution);
         this.addNode(this.end);
 
-        this.addEdge(this.getFinally(), this.getEnd(), new Relation());
+        this.addEdge(this.getFinally(), this.getAfterExecution(), new Relation());
+        this.addEdge(this.getAfterExecution(), this.getEnd(), new Relation());
     }
 
     public GraphCluster(Task task, TaskRun taskRun, List<String> values, RelationType relationType) {
@@ -74,14 +80,17 @@ public class GraphCluster extends AbstractGraph {
         this.relationType = relationType;
         this.root = new GraphClusterRoot();
         this._finally = new GraphClusterFinally();
+        this.afterExecution = new GraphClusterAfterExecution();
         this.end = new GraphClusterEnd();
         this.taskNode = taskNode;
 
         this.addNode(this.root);
         this.addNode(this._finally);
+        this.addNode(this.afterExecution);
         this.addNode(this.end);
 
-        this.addEdge(this.getFinally(), this.getEnd(), new Relation());
+        this.addEdge(this.getFinally(), this.getAfterExecution(), new Relation());
+        this.addEdge(this.getAfterExecution(), this.getEnd(), new Relation());
     }
 
     public void addNode(AbstractGraph node) {

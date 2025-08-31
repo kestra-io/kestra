@@ -14,9 +14,7 @@ import org.slf4j.event.Level;
 import java.time.Instant;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 @Property(name = "kestra.server-type", value = "WORKER")
@@ -42,7 +40,7 @@ class ErrorLogsFunctionTest {
 
         String render = variableRenderer.render("{{ errorLogs() }}", variables);
 
-        assertThat(render, is("[]"));
+        assertThat(render).isEqualTo("[]");
     }
 
     @Test
@@ -57,8 +55,8 @@ class ErrorLogsFunctionTest {
 
         String render = variableRenderer.render("{{ errorLogs() }}", variables);
 
-        assertThat(render, containsString("first error message"));
-        assertThat(render, containsString("second error message"));
+        assertThat(render).contains("first error message");
+        assertThat(render).contains("second error message");
     }
 
     private LogEntry logEntry(Level level, String message) {

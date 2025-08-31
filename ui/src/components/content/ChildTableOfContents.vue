@@ -1,6 +1,6 @@
 <script lang="ts">
     import {h, defineComponent} from "vue";
-    import {useStore} from "vuex";
+    import {useDocStore} from "../../stores/doc";
     import {RouterLink, useRoute} from "vue-router";
 
     export default defineComponent({
@@ -22,7 +22,7 @@
             },
         },
         async setup(props, ctx) {
-            const store = useStore();
+            const docStore = useDocStore();
             const route = useRoute();
 
             let currentPage;
@@ -34,7 +34,7 @@
 
             currentPage = currentPage?.endsWith("/") ? currentPage.slice(0, -1) : currentPage;
 
-            let childrenWithMetadata = await store.dispatch("doc/children", currentPage) as Record<string, any>;
+            let childrenWithMetadata = await docStore.children(currentPage) as Record<string, any>;
             childrenWithMetadata = Object.fromEntries(Object.entries(childrenWithMetadata).map(([url, metadata]) => [url, {...metadata, path: url}]));
             Object.entries(childrenWithMetadata)
                 .forEach(([url, metadata]) => {

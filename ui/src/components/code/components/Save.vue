@@ -1,14 +1,18 @@
 <template>
-    <el-button type="primary" :icon="ContentSave">
-        {{ t(`no_code.save.${props.what}`) }}
-    </el-button>
+    <div class="d-flex justify-content-end mb-5">
+        <el-button type="primary">
+            {{ t(`no_code.close.${props.what}`) }}
+        </el-button>
+    </div>
 </template>
 
 <script setup lang="ts">
-    import {ContentSave} from "../utils/icons";
-
     const props = defineProps({
-        what: {type: String, required: true, default: "tasks"},
+        what: {
+            type: String,
+            required: false,
+            default: "tasks"
+        },
     });
 
     import {useI18n} from "vue-i18n";

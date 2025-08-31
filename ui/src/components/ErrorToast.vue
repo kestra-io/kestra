@@ -3,6 +3,8 @@
     import {pageFromRoute} from "../utils/eventsRouter";
     import {h} from "vue"
     import ErrorToastContainer from "./ErrorToastContainer.vue";
+    import {mapStores} from "pinia";
+    import {useApiStore} from "../stores/api";
 
     export default {
         name: "ErrorToast",
@@ -23,9 +25,14 @@
             },
         },
         computed: {
+            ...mapStores(useApiStore),
             title () {
                 if (this.message.title) {
                     return this.message.title;
+                }
+
+                if (this.message.response.status === 503) {
+                    return "503 Service Unavailable";
                 }
 
                 if (this.message.content && this.message.content.message && this.message.content.message.indexOf(":") > 0) {
@@ -53,7 +60,7 @@
                 const error =  {
                     type: "ERROR",
                     error: {
-                        message: this.text,
+                        message: this.title,
                         errors: this.items,
                     },
                     page: pageFromRoute(this.$route)
@@ -71,7 +78,7 @@
                     error.error.request.method = this.message.response.config.method;
                 }
 
-                this.$store.dispatch("api/events", error);
+                this.apiStore.events(error);
 
                 this.notifications = ElNotification({
                     title: this.title || "Error",
@@ -91,6 +98,8 @@
 
 <style lang="scss">
     .error-notification {
+        max-height: 90svh;
+
         .el-notification__title {
             max-width: calc(100% - 15ch);
         }
@@ -100,6 +109,11 @@
             right: calc(15px + 2rem);
             transform: translateY(-50%);
             gap: .5rem;
+        }
+
+        .el-notification__content {
+            overflow-y: auto;
+            max-height: 100%;
         }
     }
 </style>

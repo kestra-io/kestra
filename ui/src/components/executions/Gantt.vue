@@ -1,5 +1,9 @@
 <template>
-    <el-card id="gantt" shadow="never" v-if="execution && flow">
+    <ExecutionPending
+        v-if="!isExecutionStarted"
+        :execution="execution"
+    />
+    <el-card id="gantt" shadow="never" v-else-if="execution && executionsStore.flow">
         <template #header>
             <div class="d-flex">
                 <duration class="th text-end" :histories="execution.state.histories" />
@@ -40,14 +44,11 @@
                                     </span>
                                 </el-tooltip>
                                 <div>
-                                    <el-tooltip placement="right" :persistent="false" :hide-after="0" effect="light">
+                                    <el-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" :hide-after="0" effect="light">
                                         <template #content>
                                             <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
                                         </template>
-                                        <Warning
-                                            v-if="item.attempts > 1"
-                                            class="attempt_warn me-3"
-                                        />
+                                        <Warning class="attempt_warn me-3" />
                                     </el-tooltip>
                                 </div>
                                 <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
@@ -79,8 +80,7 @@
                                     :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
                                     level="TRACE"
                                     @follow="forwardEvent('follow', $event)"
-                                    :target-execution="execution"
-                                    :target-flow="flow"
+                                    :target-flow="executionsStore.flow"
                                     :show-logs="taskTypeByTaskRunId[item.id] !== 'io.kestra.plugin.core.flow.ForEachItem' && taskTypeByTaskRunId[item.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
                                     class="mh-100 mx-3"
                                 />
@@ -94,7 +94,6 @@
 </template>
 <script>
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    import {mapState} from "vuex";
     import {State} from "@kestra-io/ui-libs"
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
@@ -104,11 +103,23 @@
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import Warning from "vue-material-design-icons/Alert.vue";
+    import ExecutionPending from "./ExecutionPending.vue";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
 
     const ts = date => new Date(date).getTime();
     const TASKRUN_THRESHOLD = 50;
     export default {
-        components: {DynamicScroller,Warning, DynamicScrollerItem, TaskRunDetails, Duration, ChevronRight, ChevronDown},
+        components: {
+            DynamicScroller,
+            Warning,
+            DynamicScrollerItem,
+            TaskRunDetails,
+            Duration,
+            ChevronRight,
+            ChevronDown,
+            ExecutionPending
+        },
         data() {
             return {
                 colors: State.colorClass(),
@@ -117,7 +128,14 @@
                 duration: undefined,
                 selectedTaskRuns: [],
                 regularPaintingInterval: undefined,
-                taskTypesToExclude: ["io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"]
+                taskTypesToExclude: [
+                    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit",
+                    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs",
+                    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
+                    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit",
+                    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs",
+                    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"
+                ]
             };
         },
         watch: {
@@ -146,7 +164,10 @@
             }
         },
         computed: {
-            ...mapState("execution", ["flow", "execution"]),
+            ...mapStores(useExecutionsStore),
+            execution(){
+                return this.executionsStore.execution
+            },
             taskRunsCount() {
                 return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
             },
@@ -209,7 +230,10 @@
                 }
                 childrenSort(rootTasks)
                 return sortedTasks
-            }
+            },
+            isExecutionStarted() {
+                return this.execution?.state?.current && !["CREATED", "QUEUED"].includes(this.execution.state.current);
+            },
         },
         methods: {
             forwardEvent(type, event) {
@@ -309,7 +333,7 @@
                 this.selectedTaskRuns.push(taskRunId);
             },
             taskType(taskRun) {
-                const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
+                const task = FlowUtils.findTaskById(this.executionsStore.flow, taskRun.taskId);
                 return task?.type;
             }
         },
@@ -355,11 +379,12 @@
                 }
 
                 &::-webkit-scrollbar-track {
-                    background: var(--bs-gray-500);
+                    background: var(--ks-background-body);
                 }
 
                 &::-webkit-scrollbar-thumb {
-                    background: var(--ks-button-background-primary);
+                    background: var(--ks-border-primary);
+                    border-radius: 5px;
                 }
             }
 

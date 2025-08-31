@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class IndentFilterTest {
@@ -19,61 +18,61 @@ class IndentFilterTest {
     @Test
     void indentNull() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ null | indent(2) }}", Map.of());
-        assertThat(render, emptyOrNullString());
+        assertThat(render).isNullOrEmpty();
     }
 
     @Test
     void indentEmpty() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ '' | indent(2) }}", Map.of());
-        assertThat(render, is(""));
+        assertThat(render).isEqualTo("");
     }
 
     @Test
     void indentEmptyLines() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ \"\n\n\" | indent(2) }}", Map.of());
-        assertThat(render, is("\n  \n  "));
+        assertThat(render).isEqualTo("\n  \n  ");
     }
 
     @Test
     void indentString() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ 'string' | indent(2) }}", Map.of());
-        assertThat(render, is("string"));
+        assertThat(render).isEqualTo("string");
     }
 
     @Test
     void indentInteger() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ 1 | indent(2) }}", Map.of());
-        assertThat(render, is("1"));
+        assertThat(render).isEqualTo("1");
     }
 
     @Test
     void indentStringWithCRLF() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ \"first line\r\nsecond line\" | indent(2) }}", Map.of());
-        assertThat(render, is("first line\r\n  second line"));
+        assertThat(render).isEqualTo("first line\r\n  second line");
     }
 
     @Test
     void indentStringWithLF() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ \"first line\nsecond line\" | indent(2) }}", Map.of());
-        assertThat(render, is("first line\n  second line"));
+        assertThat(render).isEqualTo("first line\n  second line");
     }
 
     @Test
     void indentStringWithCR() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ \"first line\rsecond line\" | indent(2) }}", Map.of());
-        assertThat(render, is("first line\r  second line"));
+        assertThat(render).isEqualTo("first line\r  second line");
     }
 
     @Test
     void indentStringWithSystemNewLine() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ \"first line"+System.lineSeparator()+"second line\" | indent(2) }}", Map.of());
-        assertThat(render, is("first line"+System.lineSeparator()+"  second line"));
+        assertThat(render).isEqualTo("first line" + System.lineSeparator() + "  second line");
     }
 
     @Test
     void indentWithTab() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ \"first line\nsecond line\" | indent(2, \"\t\") }}", Map.of());
-        assertThat(render, is("first line\n\t\tsecond line"));
+        assertThat(render).isEqualTo("first line\n\t\tsecond line");
     }
 
 }

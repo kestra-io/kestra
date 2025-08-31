@@ -12,9 +12,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.core.StringContains.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -49,29 +47,29 @@ class DistinctFilterTest {
 
         //Test rendering the list without the distinct filter
         String render = variableRenderer.render("{{ vars.second.list }}", vars);
-        
+
         //Verify that the list contains duplicates
-        assertThat(render, containsString("one"));
-        assertThat(render, containsString("two"));
-        assertThat(render, containsString("three"));
-        assertThat(render, containsString("1"));
-        assertThat(render, containsString("1.123"));
+        assertThat(render).contains("one");
+        assertThat(render).contains("two");
+        assertThat(render).contains("three");
+        assertThat(render).contains("1");
+        assertThat(render).contains("1.123");
 
         //Apply the distinct filter
         String distinctRender = variableRenderer.render("{{ vars.second.list | distinct }}", vars);
-		
+
         //Verify that duplicates are removed from the list
-        assertThat(distinctRender, is("[\"one\",\"two\",\"three\",\"four\",\"five\",1,2,3,1.123,2.123,10.0]"));
-        assertThat(distinctRender, not(containsString("one,one"))); //Ensure duplicates are removed
-        assertThat(distinctRender, startsWith("["));
-        assertThat(distinctRender, endsWith("]"));
+        assertThat(distinctRender).isEqualTo("[\"one\",\"two\",\"three\",\"four\",\"five\",1,2,3,1.123,2.123,10.0]");
+        assertThat(distinctRender).doesNotContain("one,one"); //Ensure duplicates are removed
+        assertThat(distinctRender).startsWith("[");
+        assertThat(distinctRender).endsWith("]");
 
         //Edge case: an empty list
         render = variableRenderer.render("{{ [] | distinct }}", Map.of());
-        assertThat(render, is("[]"));
+        assertThat(render).isEqualTo("[]");
 		
 		render = variableRenderer.render("{{ null | distinct }}", Map.of());
-        assertThat(render, is("null"));
+        assertThat(render).isEqualTo("null");
     }
 
     @Test

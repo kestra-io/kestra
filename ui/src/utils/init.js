@@ -1,7 +1,7 @@
 import {createStore} from "vuex";
 import {createRouter, createWebHistory} from "vue-router";
 import VueGtag from "vue-gtag";
-import {setI18nLanguage, loadLocaleMessages, setupI18n} from "../translations/i18n";
+import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n";
 import moment from "moment-timezone";
 import "moment/dist/locale/de"
 import "moment/dist/locale/es"
@@ -17,22 +17,23 @@ import "moment/dist/locale/zh-cn"
 import {extendMoment} from "moment-range";
 import VueSidebarMenu from "vue-sidebar-menu";
 import {
-    Chart,
-    CategoryScale,
-    LinearScale,
-    BarElement,
+    ArcElement,
     BarController,
-    LineElement,
-    LineController,
-    PointElement,
-    Tooltip,
+    BarElement,
+    CategoryScale,
+    Chart,
+    DoughnutController,
     Filler,
     Legend,
-    ArcElement,
-    DoughnutController,
+    LinearScale,
+    LineController,
+    LineElement,
+    PointElement,
+    Tooltip,
 } from "chart.js";
 import Vue3Tour from "vue3-tour"
 import VueVirtualScroller from "vue-virtual-scroller";
+import {createPinia} from "pinia";
 
 import Toast from "./toast";
 import filters from "./filters";
@@ -40,26 +41,13 @@ import ElementPlus from "element-plus";
 import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
 import "./global"
+import {useDocStore} from "../stores/doc";
 
-import TaskArray from "../components/flows/tasks/TaskArray.vue";
-import TaskBoolean from "../components/flows/tasks/TaskBoolean.vue";
-import TaskComplex from "../components/flows/tasks/TaskComplex.vue";
-import TaskCondition from "../components/flows/tasks/TaskCondition.vue";
-import TaskDict from "../components/flows/tasks/TaskDict.vue";
-import TaskExpression from "../components/flows/tasks/TaskExpression.vue";
-import TaskEnum from "../components/flows/tasks/TaskEnum.vue";
-import TaskNumber from "../components/flows/tasks/TaskNumber.vue";
-import TaskObject from "../components/flows/tasks/TaskObject.vue";
-import TaskString from "../components/flows/tasks/TaskString.vue";
-import TaskTask from "../components/flows/tasks/TaskTask.vue";
-import TaskOneOf from "../components/flows/tasks/TaskOneOf.vue";
-import TaskSubflowNamespace from "../components/flows/tasks/TaskSubflowNamespace.vue";
-import TaskSubflowId from "../components/flows/tasks/TaskSubflowId.vue";
-import TaskSubflowInputs from "../components/flows/tasks/TaskSubflowInputs.vue";
+
 import LeftMenuLink from "../components/LeftMenuLink.vue";
 import RouterMd from "../components/utils/RouterMd.vue";
 import Utils from "./utils";
-import TaskTaskRunner from "../components/flows/tasks/TaskTaskRunner.vue";
+
 
 export default async (app, routes, stores, translations, additionalTranslations = {}) => {
     // charts
@@ -80,16 +68,39 @@ export default async (app, routes, stores, translations, additionalTranslations 
         LinearScale
     );
 
-    // store
-    let store = createStore(stores);
-    app.use(store);
-
-
     // router
     let router = createRouter({
         history: createWebHistory(window.KESTRA_UI_PATH),
         routes
     });
+
+    // store
+    let store = createStore(stores);
+    app.use(store);
+
+    let piniaStore = createPinia();
+    piniaStore.use(({store:piniaStoreLocal}) => {
+        piniaStoreLocal.vuexStore = store;
+        piniaStoreLocal.$http = {
+            get: (url, config) => {
+                return store.$http.get(url, config);
+            },
+            post: (url, data, config) => {
+                return store.$http.post(url, data, config);
+            },
+            put: (url, data, config) => {
+                return store.$http.put(url, data, config);
+            },
+            delete: (url, config) => {
+                return store.$http.delete(url, config);
+            },
+            patch: (url, data, config) => {
+                return store.$http.patch(url, data, config);
+            }
+        };
+        piniaStoreLocal.$router = router;
+    });
+    app.use(piniaStore);
 
     /**
      * Manage docId initialization for Contextual docs
@@ -99,7 +110,9 @@ export default async (app, routes, stores, translations, additionalTranslations 
         // so it has a default
         const pathArray = to.path.split("/");
         const docId = pathArray[pathArray.length-1];
-        store.commit("doc/setDocId", docId);
+        
+        const docStore = useDocStore();
+        docStore.docId = docId;
 
         // propagate showDocId query param
         // to the next page to facilitate docs binding
@@ -149,6 +162,7 @@ export default async (app, routes, stores, translations, additionalTranslations 
         await setI18nLanguage(i18n, locale);
     }
     app.use(i18n);
+    store.$i18n = i18n.global;
 
     // moment
     moment.locale(locale);
@@ -161,6 +175,9 @@ export default async (app, routes, stores, translations, additionalTranslations 
     app.use(Vue3Tour)
     app.use(VueVirtualScroller)
 
+    // Passing toast to VUEX store to be used in modules
+    store.$toast = app.config.globalProperties.$toast;
+
     // filters
     app.config.globalProperties.$filters = filters;
 
@@ -171,24 +188,7 @@ export default async (app, routes, stores, translations, additionalTranslations 
     createUnsavedChanged(app, store, router);
     createEventsRouter(app, store, router);
 
-    // Task have some recursion and need to be register globally
-    app.component("TaskArray", TaskArray)
-    app.component("TaskBoolean", TaskBoolean)
-    app.component("TaskCondition", TaskCondition)
-    app.component("TaskDict", TaskDict)
-    app.component("TaskExpression", TaskExpression)
-    app.component("TaskEnum", TaskEnum)
-    app.component("TaskNumber", TaskNumber)
-    app.component("TaskObject", TaskObject)
-    app.component("TaskComplex", TaskComplex)
-    app.component("TaskString", TaskString)
-    app.component("TaskTask", TaskTask)
-    app.component("TaskOneOf", TaskOneOf)
-    app.component("TaskSubflowNamespace", TaskSubflowNamespace)
-    app.component("TaskSubflowId", TaskSubflowId)
-    app.component("TaskSubflowInputs", TaskSubflowInputs)
-    app.component("TaskTaskRunner", TaskTaskRunner)
-    app.component("LeftMenuLink", LeftMenuLink)
+    app.component("LeftMenuLink", LeftMenuLink);
     app.component("RouterMd", RouterMd);
     const components = {
         ...(import.meta.glob("../../node_modules/@nuxtjs/mdc/dist/runtime/components/prose/*.vue", {eager: true})),
@@ -203,5 +203,5 @@ export default async (app, routes, stores, translations, additionalTranslations 
 
     app.config.globalProperties.append = (path, pathToAppend) => path + (path.endsWith("/") ? "" : "/") + pathToAppend
 
-    return {store, router};
+    return {store, router, piniaStore};
 }

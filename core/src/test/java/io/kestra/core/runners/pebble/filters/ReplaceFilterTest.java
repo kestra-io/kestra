@@ -12,9 +12,8 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
 
 @KestraTest
 class ReplaceFilterTest {
@@ -25,13 +24,13 @@ class ReplaceFilterTest {
     void string() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ 'john doe is john doe' | replace({'john': 'jane'}) }}", Map.of());
 
-        assertThat(render, is("jane doe is jane doe"));
+        assertThat(render).isEqualTo("jane doe is jane doe");
     }
 
     @Test
     void regexp() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ 'aa1bb2cc3dd4ee5' | replace({'(\\d)': '-$1-'}, regexp=true) }}", Map.of());
 
-        assertThat(render, is("aa-1-bb-2-cc-3-dd-4-ee-5-"));
+        assertThat(render).isEqualTo("aa-1-bb-2-cc-3-dd-4-ee-5-");
     }
 }

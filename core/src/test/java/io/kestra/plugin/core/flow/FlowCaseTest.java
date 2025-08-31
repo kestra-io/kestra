@@ -21,8 +21,8 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Singleton
 public class FlowCaseTest {
@@ -62,7 +62,7 @@ public class FlowCaseTest {
         });
 
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "subflow-old-task-name"
         );
@@ -70,13 +70,13 @@ public class FlowCaseTest {
         countDownLatch.await(1, TimeUnit.MINUTES);
         receive.blockLast();
 
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("executionId"), is(triggered.get().getId()));
-        assertThat(triggered.get().getTrigger().getType(), is("io.kestra.core.tasks.flows.Subflow"));
-        assertThat(triggered.get().getTrigger().getVariables().get("executionId"), is(execution.getId()));
-        assertThat(triggered.get().getTrigger().getVariables().get("flowId"), is(execution.getFlowId()));
-        assertThat(triggered.get().getTrigger().getVariables().get("namespace"), is(execution.getNamespace()));
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("executionId")).isEqualTo(triggered.get().getId());
+        assertThat(triggered.get().getTrigger().getType()).isEqualTo("io.kestra.core.tasks.flows.Subflow");
+        assertThat(triggered.get().getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
+        assertThat(triggered.get().getTrigger().getVariables().get("flowId")).isEqualTo(execution.getFlowId());
+        assertThat(triggered.get().getTrigger().getVariables().get("namespace")).isEqualTo(execution.getNamespace());
     }
 
     @SuppressWarnings({"ResultOfMethodCallIgnored", "unchecked"})
@@ -93,7 +93,7 @@ public class FlowCaseTest {
         });
 
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             testInherited ? "task-flow" : "task-flow-inherited-labels",
             null,
@@ -105,48 +105,36 @@ public class FlowCaseTest {
         countDownLatch.await(1, TimeUnit.MINUTES);
         receive.blockLast();
 
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getAttempts().getFirst().getState().getCurrent(), is(fromState));
-        assertThat(execution.getState().getCurrent(), is(fromState));
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getTaskRunList().getFirst().getAttempts()).hasSize(1);
+        assertThat(execution.getTaskRunList().getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(fromState);
+        assertThat(execution.getState().getCurrent()).isEqualTo(fromState);
 
         if (outputs != null) {
-            assertThat(((Map<String, String>) execution.getTaskRunList().getFirst().getOutputs().get("outputs")).get("extracted"), containsString(outputs));
+            assertThat(((Map<String, String>) execution.getTaskRunList().getFirst().getOutputs().get("outputs")).get("extracted")).contains(outputs);
         }
 
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("executionId"), is(triggered.get().getId()));
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("executionId")).isEqualTo(triggered.get().getId());
 
         if (outputs != null) {
-            assertThat(execution.getTaskRunList().getFirst().getOutputs().get("state"), is(triggered.get().getState().getCurrent().name()));
+            assertThat(execution.getTaskRunList().getFirst().getOutputs().get("state")).isEqualTo(triggered.get().getState().getCurrent().name());
         }
 
-        assertThat(triggered.get().getTrigger().getType(), is("io.kestra.plugin.core.flow.Subflow"));
-        assertThat(triggered.get().getTrigger().getVariables().get("executionId"), is(execution.getId()));
-        assertThat(triggered.get().getTrigger().getVariables().get("flowId"), is(execution.getFlowId()));
-        assertThat(triggered.get().getTrigger().getVariables().get("namespace"), is(execution.getNamespace()));
+        assertThat(triggered.get().getTrigger().getType()).isEqualTo("io.kestra.plugin.core.flow.Subflow");
+        assertThat(triggered.get().getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
+        assertThat(triggered.get().getTrigger().getVariables().get("flowId")).isEqualTo(execution.getFlowId());
+        assertThat(triggered.get().getTrigger().getVariables().get("namespace")).isEqualTo(execution.getNamespace());
 
-        assertThat(triggered.get().getTaskRunList(), hasSize(count));
-        assertThat(triggered.get().getState().getCurrent(), is(triggerState));
+        assertThat(triggered.get().getTaskRunList()).hasSize(count);
+        assertThat(triggered.get().getState().getCurrent()).isEqualTo(triggerState);
 
         if (testInherited) {
-            assertThat(triggered.get().getLabels().size(), is(6));
-            assertThat(triggered.get().getLabels(), hasItems(
-                new Label(Label.CORRELATION_ID, execution.getId()),
-                new Label("mainFlowExecutionLabel", "execFoo"),
-                new Label("mainFlowLabel", "flowFoo"),
-                new Label("launchTaskLabel", "launchFoo"),
-                new Label("switchFlowLabel", "switchFoo"),
-                new Label("overriding", "child")
-            ));
+            assertThat(triggered.get().getLabels().size()).isEqualTo(6);
+            assertThat(triggered.get().getLabels()).contains(new Label(Label.CORRELATION_ID, execution.getId()), new Label("mainFlowExecutionLabel", "execFoo"), new Label("mainFlowLabel", "flowFoo"), new Label("launchTaskLabel", "launchFoo"), new Label("switchFlowLabel", "switchFoo"), new Label("overriding", "child"));
         } else {
-            assertThat(triggered.get().getLabels().size(), is(4));
-            assertThat(triggered.get().getLabels(), hasItems(
-                new Label(Label.CORRELATION_ID, execution.getId()),
-                new Label("launchTaskLabel", "launchFoo"),
-                new Label("switchFlowLabel", "switchFoo"),
-                new Label("overriding", "child")
-            ));
-            assertThat(triggered.get().getLabels(), not(hasItems(new Label("inherited", "label"))));
+            assertThat(triggered.get().getLabels().size()).isEqualTo(4);
+            assertThat(triggered.get().getLabels()).contains(new Label(Label.CORRELATION_ID, execution.getId()), new Label("launchTaskLabel", "launchFoo"), new Label("switchFlowLabel", "switchFoo"), new Label("overriding", "child"));
+            assertThat(triggered.get().getLabels()).doesNotContain(new Label("inherited", "label"));
         }
     }
 }

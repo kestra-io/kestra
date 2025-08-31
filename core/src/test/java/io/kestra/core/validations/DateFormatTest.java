@@ -15,8 +15,7 @@ import java.util.stream.Stream;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class DateFormatTest {
@@ -60,7 +59,7 @@ class DateFormatTest {
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(options);
 
-        assertThat(valid.isPresent(), is(present));
-        valid.ifPresent(e -> assertThat(e.getConstraintViolations().size(), is(size)));
+        assertThat(valid.isPresent()).isEqualTo(present);
+        valid.ifPresent(e -> assertThat(e.getConstraintViolations().size()).isEqualTo(size));
     }
 }

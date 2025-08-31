@@ -10,8 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -28,11 +27,11 @@ class NullCoalescingExpressionTest {
 
         String render = variableRenderer.render("{{ inner.bla ?? block.test.child }}", vars);
 
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         render = variableRenderer.render("{{ block.test.child ?? inner.bla }}", vars);
 
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         assertThrows(IllegalVariableEvaluationException.class, () -> {
             variableRenderer.render("{{ missing ?? missing2 }}", vars);
@@ -47,19 +46,19 @@ class NullCoalescingExpressionTest {
         );
 
         String render = variableRenderer.render("{{ block.test.child ?? null }}", vars);
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         render = variableRenderer.render("{{ block[inner].child ?? null }}", vars);
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         render = variableRenderer.render("{{ block[missing].child ?? block[inner].child }}", vars);
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         render = variableRenderer.render("{{ block[missing].child ?? block[missing2].child ?? block[inner].child }}", vars);
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         render = variableRenderer.render("{{ missing ?? block.test.child }}", vars);
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         assertThrows(IllegalVariableEvaluationException.class, () -> {
             variableRenderer.render("{{ missing ?? missing2 }}", vars);
@@ -75,7 +74,7 @@ class NullCoalescingExpressionTest {
 
         String render = variableRenderer.render("{{ block ?? 'UNDEFINED' }}", vars);
 
-        assertThat(render, is("{}"));
+        assertThat(render).isEqualTo("{}");
     }
 
     @Test
@@ -85,10 +84,10 @@ class NullCoalescingExpressionTest {
 
         String render = variableRenderer.render("{{ null ?? 'IS NULL' }}", vars);
 
-        assertThat(render, is("IS NULL"));
+        assertThat(render).isEqualTo("IS NULL");
 
         render = variableRenderer.render("{{ undefined ?? 'IS UNDEFINED' }}", vars);
 
-        assertThat(render, is("IS UNDEFINED"));
+        assertThat(render).isEqualTo("IS UNDEFINED");
     }
 }

@@ -23,4 +23,5 @@ public class KestraRuntimeException extends RuntimeException {
     public KestraRuntimeException(Throwable cause) {
         super(cause);
     }
+
 }

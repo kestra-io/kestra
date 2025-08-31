@@ -13,8 +13,8 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
+
 @KestraTest
 class NumberFilterTest {
     @Inject
@@ -35,6 +35,6 @@ class NumberFilterTest {
     @MethodSource("source")
     void run(String exp, String expected) throws IllegalVariableEvaluationException {
         String render = variableRenderer.render(exp, Map.of());
-        assertThat(render, is(expected));
+        assertThat(render).isEqualTo(expected);
     }
 }

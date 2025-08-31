@@ -12,7 +12,7 @@ tasks:
     batch:
       rows: 4
     namespace: io.kestra.tests
-    flowId: for-each-item-subflow
+    flowId: for-each-item-subflow-sleep
     wait: false
     transmitFailed: true
     inputs:

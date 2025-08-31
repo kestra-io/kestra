@@ -14,9 +14,7 @@ import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 class MetricControllerTest {
@@ -29,21 +27,21 @@ class MetricControllerTest {
     @SuppressWarnings("unchecked")
     @Test
     @LoadFlows({"flows/valids/minimal.yaml"})
-    void findByExecution() {
+    void searchByExecution() {
         Execution result = triggerExecution(TESTS_FLOW_NS, "minimal", null, true);
-        assertThat(result, notNullValue());
+        assertThat(result).isNotNull();
 
         PagedResults<MetricEntry> metrics = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/metrics/" + result.getId()),
+            HttpRequest.GET("/api/v1/main/metrics/" + result.getId()),
             Argument.of(PagedResults.class, MetricEntry.class)
         );
-        assertThat(metrics.getTotal(), is(2L));
+        assertThat(metrics.getTotal()).isEqualTo(2L);
     }
 
     private Execution triggerExecution(String namespace, String flowId, MultipartBody requestBody, Boolean wait) {
         return client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/" + namespace + "/" + flowId + (wait ? "?wait=true" : ""), requestBody)
+                .POST("/api/v1/main/executions/" + namespace + "/" + flowId + (wait ? "?wait=true" : ""), requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );

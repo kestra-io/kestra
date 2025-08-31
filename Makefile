@@ -77,7 +77,7 @@ install-plugins:
         else \
 		${KESTRA_BASEDIR}/bin/kestra plugins install $$CURRENT_PLUGIN \
 		--plugins ${KESTRA_BASEDIR}/plugins \
-		--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots || exit 1; \
+		--repositories=https://central.sonatype.com/repository/maven-snapshots || exit 1; \
 		fi \
     done < $$PLUGIN_LIST
 
@@ -89,7 +89,7 @@ build-docker: build-exec
 		--compress \
 		--rm \
 		-f ./Dockerfile \
-		--build-arg="APT_PACKAGES=python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip" \
+		--build-arg="APT_PACKAGES=python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip jattach" \
 		--build-arg="PYTHON_LIBRARIES=kestra" \
 		-t ${DOCKER_IMAGE}:${VERSION} ${DOCKER_PATH} || exit 1 ;
 
@@ -130,9 +130,6 @@ datasources:
     username: kestra
     password: k3str4
 kestra:
-  server:
-    basic-auth:
-    enabled: false
   encryption:
     secret-key: 3ywuDa/Ec61VHkOX3RlI9gYq7CaD0mv0Pf3DHtAXA6U=
   repository:
@@ -181,8 +178,8 @@ clone-plugins:
 	@echo "Using PLUGIN_GIT_DIR: $(PLUGIN_GIT_DIR)"
 	@mkdir -p "$(PLUGIN_GIT_DIR)"
 	@echo "Fetching repository list from GitHub..."
-	@REPOS=$(gh repo list kestra-io -L 1000  --json  name | jq -r  .[].name | sort | grep "^plugin-") \
-	for repo in $$REPOS; do \
+	@REPOS=$$(gh repo list kestra-io -L 1000 --json name | jq -r .[].name | sort | grep "^plugin-"); \
+		for repo in $$REPOS; do \
 	    if [[ $$repo == plugin-* ]]; then \
 	        if [ -d "$(PLUGIN_GIT_DIR)/$$repo" ]; then \
 	            echo "Skipping: $$repo (Already cloned)"; \
@@ -193,6 +190,22 @@ clone-plugins:
 	    fi; \
 	done
 	@echo "Done!"
+
+# Pull every plugins in main or master branch
+pull-plugins:
+	@echo "🔍 Pulling repositories in '$(PLUGIN_GIT_DIR)'..."
+	@for repo in "$(PLUGIN_GIT_DIR)"/*; do \
+	    if [ -d "$$repo/.git" ]; then \
+	        branch=$$(git -C "$$repo" rev-parse --abbrev-ref HEAD); \
+	        if [[ "$$branch" == "master" || "$$branch" == "main" ]]; then \
+	            echo "🔄 Pulling: $$(basename "$$repo") (branch: $$branch)"; \
+	            git -C "$$repo" pull; \
+	        else \
+	            echo "❌ Skipping: $$(basename "$$repo") (Not on master or main branch, currently on $$branch)"; \
+	        fi; \
+	    fi; \
+	done
+	@echo "✅ Done pulling!"
 
 # Update all plugins jar
 build-plugins:

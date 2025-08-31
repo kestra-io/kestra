@@ -14,9 +14,14 @@
         <div class="header d-flex">
             <button class="back-button align-self-center">
                 <el-icon size="medium" @click="goBack">
-                    <ArrowLeft />
+                    <ChevronLeft />
                 </el-icon>
             </button>
+            <span class="header-title align-self-center">
+                {{ $t('blueprints.title') }}
+            </span>
+        </div>
+        <div>
             <h2 class="blueprint-title align-self-center">
                 {{ blueprint.title }}
             </h2>
@@ -51,13 +56,13 @@
                         :navbar="false"
                     >
                         <template #absolute>
-                            <copy-to-clipboard class="position-absolute" :text="blueprint.source" />
+                            <copy-to-clipboard :text="blueprint.source" />
                         </template>
                     </editor>
                 </el-card>
                 <template v-if="blueprint.description">
                     <h4>{{ $t('about_this_blueprint') }}</h4>
-                    <div v-if="!system" class="tags text-uppercase">
+                    <div class="tags text-uppercase">
                         <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">
                             <el-tag type="info" size="small">
                                 {{ tag }}
@@ -71,7 +76,7 @@
                 <h4>{{ $t('plugins.names') }}</h4>
                 <div class="plugins-container">
                     <div v-for="task in [...new Set(blueprint.includedTasks)]" :key="task">
-                        <task-icon :cls="task" :icons="icons" />
+                        <task-icon :cls="task" :icons="pluginsStore.icons" />
                     </div>
                 </div>
             </el-col>
@@ -79,19 +84,23 @@
     </section>
 </template>
 <script setup>
-    import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import Editor from "../../inputs/Editor.vue";
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
     import TaskIcon from  "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import TopNavBar from "../../layout/TopNavBar.vue";
 </script>
 <script>
-    import YamlUtils from "../../../utils/yamlUtils";
     import Markdown from "../../layout/Markdown.vue";
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
-    import {mapState} from "vuex";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
+    import {mapStores} from "pinia";
+    import {usePluginsStore} from "../../../stores/plugins";
+    import {useBlueprintsStore} from "../../../stores/blueprints";
+    import {useAuthStore} from "override/stores/auth"
+    import {useFlowStore} from "../../../stores/flow";
 
     export default {
         components: {Markdown, CopyToClipboard},
@@ -129,6 +138,10 @@
                 type: String,
                 default: "flow",
             },
+            combinedView: {
+                type: Boolean,
+                default: false
+            },
         },
         methods: {
             goBack() {
@@ -146,33 +159,35 @@
             },
             toEditor() {
                 const query = this.blueprintKind === "flow" ?
-                    {blueprintId: this.blueprintId, blueprintSource: this.blueprintType} :
+                    {blueprintId: this.blueprintId, blueprintSource: this.$route.params.tab} :
                     {blueprintId: this.blueprintId};
                 return {name: `${this.blueprintKind}s/create`, query};
             }
         },
         async created() {
-            this.$store.dispatch("blueprints/getBlueprint", {type: this.blueprintType, kind: this.blueprintKind, id: this.blueprintId})
+            this.blueprintsStore.getBlueprint({
+                type: this.combinedView ? this.blueprintType : this.$route.params.tab,
+                kind: this.blueprintKind,
+                id: this.blueprintId
+            })
                 .then(data => {
                     this.blueprint = data;
                     if (this.kind === "flow") {
                         try {
-                            if (this.blueprintType === "community") {
-                                this.$store.dispatch(
-                                    "blueprints/getBlueprintGraph",
-                                    {
-                                        type: this.blueprintType,
-                                        kind: this.blueprintKind,
-                                        id: this.blueprintId,
-                                        validateStatus: (status) => {
-                                            return status === 200;
-                                        }
-                                    })
+                            if (this.$route.params.tab === "community") {
+                                this.blueprintsStore.getBlueprintGraph({
+                                    type: this.$route.params.tab,
+                                    kind: this.blueprintKind,
+                                    id: this.blueprintId,
+                                    validateStatus: (status) => {
+                                        return status === 200;
+                                    }
+                                })
                                     .then(data => {
                                         this.flowGraph  = data;
                                     });
                             } else {
-                                this.$store.dispatch("flow/getGraphFromSourceResponse", {
+                                this.flowStore.getGraphFromSourceResponse({
                                     flow: this.blueprint.source, config: {
                                         validateStatus: (status) => {
                                             return status === 200;
@@ -189,28 +204,28 @@
                 });
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapState("plugin", ["icons"]),
+            ...mapStores(usePluginsStore, useBlueprintsStore, useFlowStore, useAuthStore),
             userCanCreateFlow() {
-                return this.user.hasAnyAction(permission.FLOW, action.CREATE);
+                return this.authStore.user?.hasAnyAction(permission.FLOW, action.CREATE);
             },
             parsedFlow() {
                 return {
-                    ...YamlUtils.parse(this.blueprint.source),
+                    ...YAML_UTILS.parse(this.blueprint.source),
                     source: this.blueprint.source
                 }
             },
             blueprintKind() {
-                return this.blueprintType === "community" ? this.kind : undefined;
+                return this.kind;
             },
-        }
+        },
     };
 </script>
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .header-wrapper {
-        margin-bottom: calc($spacer * 2);
+        margin-top: calc($spacer * 2);
+        margin-bottom: $spacer;
 
         .el-card & {
             margin-top: 2.5rem;
@@ -224,20 +239,23 @@
             }
 
             .back-button {
-                padding-left: 0;
-                padding-right: calc($spacer * 1.5);
+                height: 32px;
+                margin-left: 0;
+                margin-right: calc($spacer);
                 cursor: pointer;
                 border: none;
-                background: none;
+                background: var(--ks-background-card);
                 display: flex;
                 align-items: center;
-                :deep(.material-design-icon) {
-                    font-size: $h4-font-size;
-                }
+                border-radius: 5px;
+                padding: 4px 10px;
+                border: 1px solid var(--ks-border-primary);
             }
 
             .blueprint-title {
-                font-weight: bold;
+                font-weight: 600;
+                font-size: 20px;
+                line-height: 30px;
                 text-overflow: ellipsis;
                 overflow: hidden;
             }
@@ -255,8 +273,9 @@
 
         h4 {
             margin-top: calc($spacer * 2);
-            margin-bottom: 0;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 18.4px;
+            line-height: 28px;
         }
 
         .embedded-topology {

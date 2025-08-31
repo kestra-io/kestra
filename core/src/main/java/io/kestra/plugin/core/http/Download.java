@@ -7,7 +7,6 @@ import io.kestra.core.http.client.HttpClientResponseException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Metric;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
@@ -20,7 +19,6 @@ import org.slf4j.Logger;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -36,8 +34,8 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Download a file from a HTTP server.",
-    description = "This task connects to a HTTP server and copy a file to Kestra's internal storage."
+    title = "Download a file from an HTTP server.",
+    description = "This task connects to a HTTP server and copies a file to Kestra's internal storage."
 )
 @Plugin(
     examples = {
@@ -62,7 +60,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 public class Download extends AbstractHttp implements RunnableTask<Download.Output> {
     @Schema(title = "Should the task fail when downloading an empty file.")
     @Builder.Default
-    private final Property<Boolean> failOnEmptyResponse = Property.of(true);
+    private final Property<Boolean> failOnEmptyResponse = Property.ofValue(true);
 
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();

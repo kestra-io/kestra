@@ -1,7 +1,8 @@
 <template>
     <div class="wrapper">
         <div class="title">
-            <h2>{{ props.title }}</h2>
+            <slot name="back-button" />
+            <h2>{{ title }}</h2>
         </div>
         <div class="content">
             <slot />
@@ -9,13 +10,8 @@
     </div>
 </template>
 
-<script setup>
-    const props = defineProps({
-        title: {
-            type: String,
-            required: true
-        },
-    });
+<script lang="ts" setup>
+    defineProps<{title:string}>();
 </script>
 
 <style lang="scss" scoped>
@@ -31,8 +27,11 @@
     .title {
         display: flex;
         padding: 1rem;
+        padding-left: 1.6rem;
         padding-right: 3rem;
         border-bottom: 1px solid var(--ks-border-primary);
+        align-items: center;
+        gap: 1rem;
 
         h2 {
             font-size: var(--font-size-lg);
@@ -40,7 +39,9 @@
             text-overflow: ellipsis;
             overflow: hidden;
             margin-bottom: 0;
+            margin-top: 0;
             width: 100%;
+            line-height: 1.2;
         }
     }
 </style>

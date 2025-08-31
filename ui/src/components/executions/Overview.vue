@@ -2,15 +2,20 @@
     <Timeline :histories="execution.state.histories" />
     <div v-if="execution" class="execution-overview">
         <div v-if="isFailed()">
-            <el-alert type="error" :closable="false" class="mb-4 main-error">
+            <el-alert type="error" :closable="false" show-icon class="mb-4 main-error">
                 <template #title>
                     <div @click="isExpanded = !isExpanded">
-                        <alert class="main-icon" />
-                        {{ $t('execution failed header', errorLast ? 0 : 1, {message: errorLast?.message}) }}
-                        <span v-if="errorLast" v-html="$t('execution failed message', {message: errorLast?.message})" />
+                        <Markdown
+                            v-if="errorLast && errorLast.message"
+                            :source="errorMessage"
+                            :html="false"
+                        />
                         <span class="toggle-icon" v-if="errorLogs">
                             <chevron-up v-if="isExpanded" />
                             <chevron-down v-else />
+                        </span>
+                        <span v-if="!errorLogs">
+                            {{ $t('error detected') }}
                         </span>
                     </div>
                 </template>
@@ -21,7 +26,7 @@
                     <div class="text-end" v-if="errorLogsMore">
                         <router-link :to="{name: 'executions/update', params: {tenantId: execution.tenantId, id: execution.id, namespace: execution.namespace, flowId: execution.flowId, tab: 'logs'}, query: {level: 'ERROR'}}">
                             <el-button class="mt-3">
-                                {{ $t('homeDashboard.errorLogs') }}
+                                {{ $t('errorLogs') }}
                             </el-button>
                         </router-link>
                     </div>
@@ -66,12 +71,11 @@
                 <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <change-execution-status :execution="execution" @follow="forwardEvent('follow', $event)" />
-                <resume :execution="execution" />
-                <pause :execution="execution" />
-                <kill :execution="execution" />
+                <pause v-if="execution.state.current !== 'PAUSED'" :execution="execution" />
                 <unqueue :execution="execution" />
                 <force-run :execution="execution" />
-                <status :status="execution.state.current" />
+                <resume :execution="execution" />
+                <kill :execution="execution" />
             </el-col>
         </el-row>
 
@@ -82,9 +86,12 @@
                 <template #default="scope">
                     <router-link
                         v-if="scope.row.link"
-                        :to="{name: 'executions/update', params: scope.row.link}"
+                        :to="{
+                            name: 'executions/update',
+                            params: scope.row.link
+                        }"
                     >
-                        {{ scope.row.value }}
+                        <code class="parent-execution">{{ scope.row.value }}</code>
                     </router-link>
                     <span v-else-if="scope.row.date">
                         <date-ago :date="scope.row.value" />
@@ -92,14 +99,27 @@
                     <span v-else-if="scope.row.duration">
                         <duration :histories="scope.row.value" />
                     </span>
+                    <span v-else-if="scope.row.key === $t('state')">
+                        <status :status="scope.row.value" />
+                    </span>
                     <span v-else-if="scope.row.key === $t('labels')">
                         <labels :labels="scope.row.value" read-only />
                     </span>
                     <span v-else>
                         <span v-if="scope.row.key === $t('revision')">
                             <router-link
-                                :to="{name: 'flows/update', params: {id: $route.params.flowId, namespace: $route.params.namespace, tab: 'revisions'}, query: {revisionRight: scope.row.value}}"
-                            >{{ scope.row.value }}</router-link>
+                                :to="{
+                                    name: 'flows/update',
+                                    params: {
+                                        id: $route.params.flowId,
+                                        namespace: $route.params.namespace,
+                                        tab: 'revisions'
+                                    },
+                                    query: {revisionRight: scope.row.value}
+                                }"
+                            >
+                                {{ scope.row.value }}
+                            </router-link>
                         </span>
                         <span v-else>{{ scope.row.value }}</span>
                     </span>
@@ -117,9 +137,9 @@
                 </el-icon>
                 {{ $t('prev_execution') }}
             </el-button>
-            
-            <el-button 
-                :disabled="!hasNextExecution" 
+
+            <el-button
+                :disabled="!hasNextExecution"
                 @click="navigateToExecution('next')"
             >
                 {{ $t('next_execution') }}
@@ -131,9 +151,12 @@
 
         <div v-if="execution.trigger" class="my-5">
             <h5>{{ $t("trigger") }}</h5>
-            <KestraCascader
+            <TriggerCascader
                 id="triggers"
-                :options="transform({...execution.trigger, ...(execution.trigger.trigger ? execution.trigger.trigger : {})})"
+                :options="transform({
+                    ...execution.trigger,
+                    ...(execution.trigger.trigger ? execution.trigger.trigger : {})
+                })"
                 :execution
                 class="overflow-auto"
             />
@@ -171,7 +194,6 @@
     </div>
 </template>
 <script>
-    import {mapState} from "vuex";
     import Status from "../Status.vue";
     import SetLabels from "./SetLabels.vue";
     import Restart from "./Restart.vue";
@@ -188,14 +210,19 @@
     import {toRaw} from "vue";
     import ChangeExecutionStatus from "./ChangeExecutionStatus.vue";
     import KestraCascader from "../../components/kestra/Cascader.vue"
+    import TriggerCascader from "./TriggerCascader.vue"
     import LogLine from "../../components/logs/LogLine.vue"
     import Alert from "vue-material-design-icons/Alert.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import Markdown from "../../components/layout/Markdown.vue";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
+        inheritAttrs: false,
         components: {
             ChangeExecutionStatus,
             Duration,
@@ -211,12 +238,14 @@
             DateAgo,
             Labels,
             KestraCascader,
+            TriggerCascader,
             LogLine,
             Alert,
             ChevronDown,
             ChevronUp,
             ChevronLeft,
-            ChevronRight
+            ChevronRight,
+            Markdown
         },
         emits: ["follow"],
         methods: {
@@ -269,9 +298,8 @@
                 return this.execution.labels?.find( it => it.key === "system.replay" && (it.value === "true" || it.value === true)) !== undefined;
             },
             load() {
-                this.$store
-                    .dispatch(
-                        "execution/loadExecution",
+                this.executionsStore
+                    .loadExecution(
                         this.$route.params
                     )
                     .then(() => {
@@ -279,8 +307,8 @@
                     })
             },
             fetchErrorLogs() {
-                this.$store
-                    .dispatch("execution/loadLogs", {
+                this.executionsStore
+                    .loadLogs({
                         store: false,
                         executionId: this.execution.id,
                         params: {
@@ -308,8 +336,8 @@
                         pageSize: 100,
                         sort: "state.startDate:desc"
                     };
-                    
-                    const result = await this.$store.dispatch("execution/findExecutions", params);
+
+                    const result = await this.executionsStore.findExecutions(params);
                     if (!result || !result.results || !result.results.length) {
                         return null;
                     }
@@ -393,7 +421,13 @@
             };
         },
         computed: {
-            ...mapState("execution", ["flow", "execution"]),
+            ...mapStores(useExecutionsStore),
+            execution() {
+                return this.executionsStore.execution;
+            },
+            errorMessage() {
+                return `${this.$t("execution_failed")}: ${this.errorLast?.message}`;
+            },
             items() {
                 if (!this.execution) {
                     return []
@@ -402,6 +436,7 @@
                     ? this.execution.taskRunList.length
                     : 0;
                 let ret = [
+                    {key: this.$t("state"), value: this.execution.state.current},
                     {key: this.$t("namespace"), value: this.execution.namespace},
                     {key: this.$t("flow"), value: this.execution.flowId},
                     {
@@ -418,14 +453,14 @@
                     {key: this.$t("scheduleDate"), value: this.execution?.scheduleDate, date: true},
                 ];
 
-                if (this.execution.parentId) {
+                if (this.execution?.trigger?.type === "io.kestra.plugin.core.flow.Subflow" && this.execution?.trigger?.variables?.executionId) {
                     ret.push({
                         key: this.$t("parent execution"),
-                        value: this.execution.parentId,
+                        value: this.execution.trigger.variables.executionId,
                         link: {
-                            flowId: this.execution.flowId,
-                            id: this.execution.parentId,
-                            namespace: this.execution.namespace
+                            flowId: this.execution.trigger.variables.flowId,
+                            id: this.execution.trigger.variables.executionId,
+                            namespace: this.execution.trigger.variables.namespace
                         }
                     });
                 }
@@ -445,13 +480,13 @@
                 return ret;
             },
             inputs() {
-                if (!this.flow) {
+                if (!this.executionsStore.flow) {
                     return []
                 }
 
                 let inputs = toRaw(this.execution.inputs);
                 Object.keys(inputs).forEach(key => {
-                    (this.flow.inputs || []).forEach(input => {
+                    (this.executionsStore.flow.inputs || []).forEach(input => {
                         if (key === input.name && input.type === "SECRET") {
                             inputs[key] = "******";
                         }
@@ -465,21 +500,6 @@
 
 <style lang="scss">
 .execution-overview {
-    .cascader {
-        &::-webkit-scrollbar {
-            height: 5px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--ks-background-card);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-            border-radius: 0px;
-        }
-    }
-
     .wrapper {
         background: var(--ks-background-card);
     }
@@ -543,7 +563,11 @@
 
 .el-alert.main-error {
     background-color: var(--ks-background-error) !important;
-    padding: 0.5rem;
+    padding: 1rem;
+
+    .el-alert__icon.is-big {
+        margin-right: 1rem;
+    }
 
     .el-button{
         color: var(--ks-log-content-error);
@@ -614,5 +638,9 @@
         padding: .5rem;
         border-top: 1px solid var(--ks-log-background-error);
     }
+}
+
+code.parent-execution {
+    color: var(--ks-content-link);
 }
 </style>

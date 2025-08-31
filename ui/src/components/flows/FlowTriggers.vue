@@ -1,10 +1,13 @@
 <template>
     <KestraFilter
+        v-if="triggersWithType.length"
         prefix="flow_triggers"
+        read-only
         :buttons="{
             refresh: {shown: true, callback: loadData},
             settings: {shown: false}
         }"
+        legacy-query
     />
 
     <el-table
@@ -16,7 +19,7 @@
     >
         <el-table-column type="expand">
             <template #default="props">
-                <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purge-filters :charts="false" embed />
+                <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purge-filters :with-charts="false" embed />
             </template>
         </el-table-column>
         <el-table-column prop="id" :label="$t('id')">
@@ -53,7 +56,7 @@
                     :icon="CalendarCollapseHorizontalOutline"
                     v-if="isSchedule(scope.row.type) && !scope.row.backfill && userCan(action.CREATE)"
                     @click="setBackfillModal(scope.row, true)"
-                    :disabled="scope.row.disabled"
+                    :disabled="scope.row.disabled || scope.row.sourceDisabled"
                     size="small"
                     type="primary"
                 >
@@ -132,7 +135,7 @@
 
         <el-table-column>
             <template #default="scope">
-                <trigger-avatar :flow="flow" :trigger-id="scope.row.id" />
+                <trigger-avatar :flow="flowStore.flow" :trigger-id="scope.row.id" />
             </template>
         </el-table-column>
 
@@ -147,12 +150,31 @@
         </el-table-column>
     </el-table>
 
-    <empty-state
+    <div v-if="triggersWithType.length" class="mt-4">
+        <el-button
+            @click="addNewTrigger"
+            :icon="Plus"
+            class="border-0 p-3"
+        >
+            {{ $t('no_code.creation.triggers') }}
+        </el-button>
+    </div>
+
+    <Empty
         v-else
-        :title="$t('triggers-view.title_no_triggers')"
-        :description="$t('triggers-view.desc_no_triggers')"
-        :image="TriggersEmptyImage"
-    />
+        type="triggers"
+    >
+        <template #button>
+            <el-button
+                type="primary"
+                @click="addNewTrigger"
+                :icon="Plus"
+                class="mt-3"
+            >
+                {{ $t('no_code.creation.triggers') }}
+            </el-button>
+        </template>
+    </Empty>
 
     <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true">
         <template #header>
@@ -185,6 +207,7 @@
         <flow-run
             @update-inputs="backfill.inputs = $event"
             @update-labels="backfill.labels = $event"
+            :selected-trigger="selectedTrigger"
             :redirect="false"
             :embed="true"
         />
@@ -236,30 +259,40 @@
     import Check from "vue-material-design-icons/Check.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
+    import Plus from "vue-material-design-icons/Plus.vue";
     import FlowRun from "./FlowRun.vue";
     import Id from "../Id.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
 
     import KestraFilter from "../filter/KestraFilter.vue";
-</script>
-
-<script>
+    import Empty from "../layout/empty/Empty.vue";
     import Markdown from "../layout/Markdown.vue";
-    import {mapGetters, mapState} from "vuex";
     import Kicon from "../Kicon.vue"
     import DateAgo from "../layout/DateAgo.vue";
     import Vars from "../executions/Vars.vue";
     import Drawer from "../Drawer.vue";
+</script>
+
+<script>
     import permission from "../../models/permission";
     import action from "../../models/action";
     import moment from "moment";
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    import EmptyState from "../layout/EmptyState.vue";
-    import TriggersEmptyImage from "../../assets/triggers_empty.svg";
     import _isEqual from "lodash/isEqual";
+    import {storageKeys} from "../../utils/constants.js";
+    import {mapStores} from "pinia";
+    import {useTriggerStore} from "../../stores/trigger";
+    import {useAuthStore} from "override/stores/auth";
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper, EmptyState},
+        inheritAttrs: false,
+        props:{
+            embed: {
+                type: Boolean,
+                default: false
+            }
+        },
         data() {
             return {
                 triggerId: undefined,
@@ -286,8 +319,7 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapGetters("flow", ["flow"]),
+            ...mapStores(useTriggerStore, useFlowStore, useAuthStore),
             query() {
                 return Array.isArray(this.$route.query.q) ? this.$route.query.q[0] : this.$route.query.q;
             },
@@ -304,12 +336,12 @@
                     );
             },
             triggerDefinition() {
-                return this.flow.triggers.find(trigger => trigger.id === this.triggerId);
+                return this.flowStore.flow.triggers.find(trigger => trigger.id === this.triggerId);
             },
             triggersWithType() {
-                if(!this.flow.triggers) return [];
+                if(!this.flowStore.flow.triggers) return [];
 
-                let flowTriggers = this.flow.triggers.map(trigger => {
+                let flowTriggers = this.flowStore.flow.triggers.map(trigger => {
                     return {...trigger, sourceDisabled: trigger.disabled ?? false}
                 })
                 if (flowTriggers) {
@@ -332,8 +364,8 @@
                 if (this.backfill.end && this.backfill.start > this.backfill.end) {
                     return true
                 }
-                if (this.flow.inputs) {
-                    const requiredInputs = this.flow.inputs.map(input => input.required !== false ? input.id : null).filter(i => i !== null)
+                if (this.flowStore.flow.inputs) {
+                    const requiredInputs = this.flowStore.flow.inputs.map(input => input.required !== false ? input.id : null).filter(i => i !== null)
 
                     if (requiredInputs.length > 0) {
                         if (!this.backfill.inputs) {
@@ -354,16 +386,22 @@
                 }
                 return false
             },
+            editorViewType() {
+                return localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE";
+            },
+            triggerStore() {
+                return useTriggerStore();
+            },
         },
         methods: {
             userCan(action) {
-                return this.user.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flow.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flowStore.flow.namespace);
             },
             loadData() {
                 if(!this.triggersWithType.length) return;
 
-                this.$store
-                    .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id, size: this.triggersWithType.length, q: this.query})
+                this.triggerStore
+                    .find({namespace: this.flowStore.flow.namespace, flowId: this.flowStore.flow.id, size: this.triggersWithType.length, q: this.query})
                     .then(triggers => this.triggers = triggers.results);
             },
             setBackfillModal(trigger, bool) {
@@ -371,7 +409,7 @@
                 this.selectedTrigger = trigger
             },
             postBackfill() {
-                this.$store.dispatch("trigger/update", {
+                this.triggerStore.update({
                     ...this.selectedTrigger,
                     backfill: this.cleanBackfill
                 })
@@ -394,7 +432,7 @@
 
             },
             pauseBackfill(trigger) {
-                this.$store.dispatch("trigger/pauseBackfill", trigger)
+                this.triggerStore.pauseBackfill(trigger)
                     .then(newTrigger => {
                         this.$toast().saved(newTrigger.id);
                         this.triggers = this.triggers.map(t => {
@@ -406,7 +444,7 @@
                     })
             },
             unpauseBackfill(trigger) {
-                this.$store.dispatch("trigger/unpauseBackfill", trigger)
+                this.triggerStore.unpauseBackfill(trigger)
                     .then(newTrigger => {
                         this.$toast().saved(newTrigger.id);
                         this.triggers = this.triggers.map(t => {
@@ -418,7 +456,7 @@
                     })
             },
             deleteBackfill(trigger) {
-                this.$store.dispatch("trigger/deleteBackfill", trigger)
+                this.triggerStore.deleteBackfill(trigger)
                     .then(newTrigger => {
                         this.$toast().saved(newTrigger.id);
                         this.triggers = this.triggers.map(t => {
@@ -430,7 +468,7 @@
                     })
             },
             setDisabled(trigger, value) {
-                this.$store.dispatch("trigger/update", {...trigger, disabled: !value})
+                this.triggerStore.update({...trigger, disabled: !value})
                     .then(newTrigger => {
                         this.$toast().saved(newTrigger.id);
                         this.triggers = this.triggers.map(t => {
@@ -442,7 +480,7 @@
                     })
             },
             unlock(trigger) {
-                this.$store.dispatch("trigger/unlock", {
+                this.triggerStore.unlock({
                     namespace: trigger.namespace,
                     flowId: trigger.flowId,
                     triggerId: trigger.triggerId
@@ -457,7 +495,7 @@
                 })
             },
             restart(trigger) {
-                this.$store.dispatch("trigger/restart", {
+                this.triggerStore.restart({
                     namespace: trigger.namespace,
                     flowId: trigger.flowId,
                     triggerId: trigger.triggerId
@@ -486,6 +524,41 @@
             canBeDisabled(trigger) {
                 return this.triggers.map(trigg => trigg.triggerId).includes(trigger.id)
                     && !trigger.sourceDisabled;
+            },
+            addNewTrigger() {
+                localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, "NO_CODE");
+
+                const baseUrl = {
+                    name: "flows/update",
+                    params: {
+                        tenant: this.$route.params.tenant,
+                        namespace: this.flowStore.flow.namespace,
+                        id: this.flowStore.flow.id,
+                        tab: "edit"
+                    }
+                };
+
+                if (this.editorViewType) {
+                    const route = {
+                        ...baseUrl,
+                        query: {
+                            section: "triggers"
+                        }
+                    };
+
+                    this.$nextTick(() => {
+                        this.$router.push(route).then(() => {
+                            this.$router.replace({
+                                ...route,
+                                query: {
+                                    ...route.query,
+                                }
+                            });
+                        });
+                    });
+                } else {
+                    this.$router.push(baseUrl);
+                }
             }
         }
     };

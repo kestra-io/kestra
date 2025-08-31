@@ -3,6 +3,7 @@ package io.kestra.cli.commands.flows.namespaces;
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
 import io.kestra.cli.commands.flows.IncludeHelperExpander;
+import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.serializers.YamlParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -27,11 +28,12 @@ import java.util.List;
 )
 @Slf4j
 public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
-    @Inject
-    public YamlParser yamlParser;
 
     @CommandLine.Option(names = {"--override-namespaces"}, negatable = true, description = "Replace namespace of all flows by the one provided")
     public boolean override = false;
+
+    @Inject
+    private TenantIdSelectorService tenantService;
 
     @SuppressWarnings("deprecation")
     @Override
@@ -62,7 +64,7 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
             }
             try(DefaultHttpClient client = client()) {
                 MutableHttpRequest<String> request = HttpRequest
-                    .POST(apiUri("/flows/") + namespace + "?delete=" + delete, body).contentType(MediaType.APPLICATION_YAML);
+                    .POST(apiUri("/flows/", tenantService.getTenantId(tenantId)) + namespace + "?delete=" + delete, body).contentType(MediaType.APPLICATION_YAML);
 
                 List<UpdateResult> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),

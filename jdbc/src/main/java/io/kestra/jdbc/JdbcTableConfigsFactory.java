@@ -131,6 +131,12 @@ public class JdbcTableConfigsFactory {
         return new InstantiableJdbcTableConfig("generic_queues", null, "generic_queues");
     }
 
+    @Bean
+    @Named("executionrunning")
+    public InstantiableJdbcTableConfig executionRunning() {
+        return new InstantiableJdbcTableConfig("executionrunning", ExecutionRunning.class, "execution_running");
+    }
+
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {
         public InstantiableJdbcTableConfig(String name, @Nullable Class<?> cls, String table) {
             super(name, cls, table);

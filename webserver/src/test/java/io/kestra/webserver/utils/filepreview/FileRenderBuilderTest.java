@@ -10,8 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FileRenderBuilderTest {
     @ParameterizedTest
@@ -20,10 +19,7 @@ public class FileRenderBuilderTest {
         var emptyInput = new ByteArrayInputStream("".getBytes());
         var charset = StandardCharsets.UTF_8;
 
-        assertThat(
-            FileRenderBuilder.of(extension, emptyInput, Optional.of(charset), 1000).getClass(),
-            is(returnedClass)
-        );
+        assertThat(FileRenderBuilder.of(extension, emptyInput, Optional.of(charset), 1000).getClass()).isEqualTo(returnedClass);
     }
 
     private static Stream<Arguments> provideExtensions() {

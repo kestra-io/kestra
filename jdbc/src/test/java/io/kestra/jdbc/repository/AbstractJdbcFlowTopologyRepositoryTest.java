@@ -1,9 +1,9 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.repositories.AbstractFlowTopologyRepositoryTest;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.jdbc.JdbcTestUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,8 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlowTopologyRepositoryTest {
     @Inject
@@ -23,46 +22,33 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlo
 
     @Test
     void saveMultiple() {
-        FlowWithSource flow = Flow.builder()
+        FlowWithSource flow = FlowWithSource.builder()
             .id("flow-a")
             .namespace("io.kestra.tests")
             .revision(1)
-            .build()
-            .withSource(null);
+            .build();
 
         flowTopologyRepository.save(
             flow,
             List.of(
-                createSimpleFlowTopology("flow-a", "flow-b")
+                createSimpleFlowTopology("flow-a", "flow-b", "io.kestra.tests")
             )
         );
 
-        List<FlowTopology> list = flowTopologyRepository.findByFlow(null, "io.kestra.tests", "flow-a", false);
-        assertThat(list.size(), is(1));
+        List<FlowTopology> list = flowTopologyRepository.findByFlow(TenantService.MAIN_TENANT, "io.kestra.tests", "flow-a", false);
+        assertThat(list.size()).isEqualTo(1);
 
         flowTopologyRepository.save(
             flow,
             List.of(
-                createSimpleFlowTopology("flow-a", "flow-c")
+                createSimpleFlowTopology("flow-a", "flow-b", "io.kestra.tests"),
+                createSimpleFlowTopology("flow-a", "flow-c", "io.kestra.tests")
             )
         );
 
-        list = flowTopologyRepository.findByFlow(null, "io.kestra.tests", "flow-a", false);
+        list = flowTopologyRepository.findByNamespace(TenantService.MAIN_TENANT, "io.kestra.tests");
 
-        assertThat(list.size(), is(1));
-        assertThat(list.getFirst().getDestination().getId(), is("flow-c"));
-
-        flowTopologyRepository.save(
-            flow,
-            List.of(
-                createSimpleFlowTopology("flow-a", "flow-b"),
-                createSimpleFlowTopology("flow-a", "flow-c")
-            )
-        );
-
-        list = flowTopologyRepository.findByNamespace(null, "io.kestra.tests");
-
-        assertThat(list.size(), is(2));
+        assertThat(list.size()).isEqualTo(2);
     }
 
 

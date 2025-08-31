@@ -29,8 +29,7 @@ public class FlowDotCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        YamlParser parser = applicationContext.getBean(YamlParser.class);
-        Flow flow = parser.parse(file.toFile(), Flow.class);
+        Flow flow = YamlParser.parse(file.toFile(), Flow.class);
 
         GraphCluster graph = GraphUtils.of(flow, null);
 

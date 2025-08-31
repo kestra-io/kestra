@@ -1,5 +1,6 @@
 package io.kestra.cli;
 
+import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.serializers.YamlParser;
@@ -9,6 +10,7 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
+import jakarta.inject.Inject;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -30,6 +32,15 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
 
     @CommandLine.Parameters(index = "0", description = "the directory containing files to check")
     protected Path directory;
+
+    @Inject
+    private TenantIdSelectorService tenantService;
+
+    /** {@inheritDoc} **/
+    @Override
+    protected boolean loadExternalPlugins() {
+        return local;
+    }
 
     public static void handleException(ConstraintViolationException e, String resource) {
         stdErr("\t@|fg(red) Unable to parse {0} due to the following error(s):|@", resource);
@@ -68,10 +79,9 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
         }
     }
 
-    // bug in micronaut, we can't inject YamlFlowParser & ModelValidator, so we inject from implementation
+    // bug in micronaut, we can't inject ModelValidator, so we inject from implementation
     public Integer call(
         Class<?> cls,
-        YamlParser yamlParser,
         ModelValidator modelValidator,
         Function<Object, String> identity,
         Function<Object, List<String>> warningsFunction,
@@ -88,7 +98,7 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
                     .filter(YamlParser::isValidExtension)
                     .forEach(path -> {
                         try {
-                            Object parse = yamlParser.parse(path.toFile(), cls);
+                            Object parse = YamlParser.parse(path.toFile(), cls);
                             modelValidator.validate(parse);
                             stdOut("@|green \u2713|@ - " + identity.apply(parse));
                             List<String> warnings = warningsFunction.apply(parse);
@@ -107,7 +117,7 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
 
             try(DefaultHttpClient client = client()) {
                 MutableHttpRequest<String> request = HttpRequest
-                    .POST(apiUri("/flows/validate"), body).contentType(MediaType.APPLICATION_YAML);
+                    .POST(apiUri("/flows/validate", tenantService.getTenantId(tenantId)), body).contentType(MediaType.APPLICATION_YAML);
 
                 List<ValidateConstraintViolation> validations = client.toBlocking().retrieve(
                     this.requestOptions(request),

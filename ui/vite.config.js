@@ -10,8 +10,8 @@ export const manualChunks = {
     // bundle dashboard and all its dependencies in a single chunk
     "dashboard": [
         "src/components/dashboard/Dashboard.vue",
-        "src/components/dashboard/components/DashboardCreate.vue",
-        "src/override/components/dashboard/components/DashboardEdit.vue"
+        "src/components/dashboard/components/Create.vue",
+        "src/override/components/dashboard/Edit.vue"
     ],
     // bundle flows and all its dependencies in a second chunk
     "flows": [
@@ -36,7 +36,16 @@ export default defineConfig({
             output: {
                 manualChunks
             }
-        },
+        }
+    },
+    server: {
+        proxy: {
+            "^/api": {
+                target: "http://localhost:8080",
+                ws: true,
+                changeOrigin: true
+            }
+        }
     },
     resolve: {
         alias: {
@@ -45,8 +54,8 @@ export default defineConfig({
             "#build/mdc-image-component.mjs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
             "#mdc-imports": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
             "#mdc-configs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
-            "shiki": path.resolve(__dirname, "node_modules/shiki/dist"),
             "vuex": path.resolve(__dirname, "node_modules/vuex/dist/vuex.esm-bundler.js"),
+            "@storybook/addon-actions": "storybook/actions",
         },
     },
     plugins: [
@@ -85,7 +94,11 @@ export default defineConfig({
             // without allowing interop in typescript
             "dayjs",
             "debug",
-            "@braintree/sanitize-url"
+            "@braintree/sanitize-url",
+            "monaco-yaml/yaml.worker",
+            "vue-axios",
+            "lodash-es",
+            "nprogress"
         ],
         exclude: [
             "* > @kestra-io/ui-libs"

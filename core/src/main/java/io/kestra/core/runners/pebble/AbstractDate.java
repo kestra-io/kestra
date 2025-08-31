@@ -17,9 +17,11 @@ public abstract class AbstractDate {
 
     private static final Map<String, DateTimeFormatter> FORMATTERS = ImmutableMap.<String, DateTimeFormatter>builder()
         .put("iso", DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX"))
+        .put("iso_milli", DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"))
         .put("iso_sec", DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"))
         .put("sql", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))
-        .put("sql_seq", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        .put("sql_milli", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))
+        .put("sql_sec", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
         .put("iso_date_time", DateTimeFormatter.ISO_DATE_TIME)
         .put("iso_date", DateTimeFormatter.ISO_DATE)
         .put("iso_time", DateTimeFormatter.ISO_TIME)
@@ -100,6 +102,19 @@ public abstract class AbstractDate {
         }
 
         if (value instanceof Long longValue) {
+            if(value.toString().length() == 13) {
+                return Instant.ofEpochMilli(longValue).atZone(zoneId);
+            }else if(value.toString().length() == 19 ){
+                if(value.toString().endsWith("000")){
+                    long seconds = longValue/1_000_000_000;
+                    int nanos = (int) (longValue%1_000_000_000);
+                    return Instant.ofEpochSecond(seconds,nanos).atZone(zoneId);
+                }else{
+                    long milliseconds = longValue/1_000_000;
+                    int micros = (int) (longValue%1_000_000);
+                    return  Instant.ofEpochMilli(milliseconds).atZone(zoneId).withNano(micros*1000);
+                }
+            }
             return Instant.ofEpochSecond(longValue).atZone(zoneId);
         }
 

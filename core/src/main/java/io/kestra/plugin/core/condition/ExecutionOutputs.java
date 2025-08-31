@@ -8,6 +8,7 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.property.Property;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -89,9 +90,7 @@ public class ExecutionOutputs extends Condition implements ScheduleCondition {
     private static final String OUTPUTS_VAR = "outputs";
 
     @NotNull
-    @NotEmpty
-    @PluginProperty
-    private String expression;
+    private Property<Boolean> expression;
 
     /** {@inheritDoc} **/
     @SuppressWarnings("unchecked")
@@ -106,9 +105,8 @@ public class ExecutionOutputs extends Condition implements ScheduleCondition {
             conditionContext.getVariables(),
             Map.of(TRIGGER_VAR, Map.of(OUTPUTS_VAR, conditionContext.getExecution().getOutputs()))
         );
-
-        String render = conditionContext.getRunContext().render(expression, variables);
-        return !(render.isBlank() || render.isEmpty() || render.trim().equals("false"));
+        
+        return conditionContext.getRunContext().render(expression).skipCache().as(Boolean.class, variables).orElseThrow();
     }
 
     private boolean hasNoOutputs(final Execution execution) {

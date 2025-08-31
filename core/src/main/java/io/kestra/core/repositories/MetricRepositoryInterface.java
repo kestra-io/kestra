@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.metrics.MetricAggregations;
 import io.kestra.plugin.core.dashboard.data.Metrics;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
+import reactor.core.publisher.Flux;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -27,6 +28,8 @@ public interface MetricRepositoryInterface extends SaveRepositoryInterface<Metri
     MetricAggregations aggregateByFlowId(String tenantId, String namespace, String flowId, @Nullable String taskId, String metric, ZonedDateTime startDate, ZonedDateTime endDate, String aggregation);
 
     Integer purge(Execution execution);
+
+    Flux<MetricEntry> findAllAsync(@Nullable String tenantId);
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return s -> s;

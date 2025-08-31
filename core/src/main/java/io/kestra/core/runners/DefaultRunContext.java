@@ -55,6 +55,7 @@ public class DefaultRunContext extends RunContext {
     private Optional<String> secretKey;
     private WorkingDir workingDir;
     private Validator validator;
+    private LocalPath localPath;
 
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
@@ -152,6 +153,7 @@ public class DefaultRunContext extends RunContext {
             this.kvStoreService = applicationContext.getBean(KVStoreService.class);
             this.secretKey = applicationContext.getProperty("kestra.encryption.secret-key", String.class);
             this.validator = applicationContext.getBean(Validator.class);
+            this.localPath = applicationContext.getBean(LocalPathFactory.class).createLocalPath(this);
         }
     }
 
@@ -171,12 +173,24 @@ public class DefaultRunContext extends RunContext {
             @SuppressWarnings("unchecked")
             Map<String, Object> inputs = (Map<String, Object>) getVariables().get("inputs");
             for (String secretInput : secretInputs) {
-                String secret = (String) inputs.get(secretInput);
+                String secret = findSecret(secretInput, inputs);
                 if (secret != null) {
                     logger.usedSecret(secret);
                 }
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private String findSecret(String secretInput, Map<String, Object> inputs) {
+        if (secretInput.indexOf('.') > 0) {
+            String prefix = secretInput.substring(0, secretInput.indexOf('.'));
+            String suffix = secretInput.substring(secretInput.indexOf('.') + 1);
+            Map<String, Object> subInputs = (Map<String, Object>) inputs.get(prefix);
+            return findSecret(suffix, subInputs);
+        }
+
+        return (String) inputs.get(secretInput);
     }
 
     void setPluginConfiguration(final Map<String, Object> pluginConfiguration) {
@@ -412,7 +426,8 @@ public class DefaultRunContext extends RunContext {
         }
 
         try {
-            metricEntry.register(this.meterRegistry, this.metricPrefix(), this.metricsTags());
+            // FIXME there seems to be a bug as the metric name is never used
+            metricEntry.register(this.meterRegistry, this.metricPrefix(), metricEntry.getDescription(), this.metricsTags());
         } catch (IllegalArgumentException e) {
             // https://github.com/micrometer-metrics/micrometer/issues/877
             // https://github.com/micrometer-metrics/micrometer/issues/2399
@@ -557,6 +572,11 @@ public class DefaultRunContext extends RunContext {
     @Override
     public boolean isInitialized() {
         return isInitialized.get();
+    }
+
+    @Override
+    public LocalPath localPath() {
+        return localPath;
     }
 
     /**

@@ -1,6 +1,6 @@
 <template>
     <el-input-number
-        :model-value="values"
+        :model-value="val"
         @update:model-value="onInput"
         :state="isValid"
         :min="schema.minimum"
@@ -26,6 +26,9 @@
                 }
 
                 return true;
+            },
+            val(){
+                return this.values ? parseInt(this.values.toString(), 10) : undefined;
             }
         }
     };

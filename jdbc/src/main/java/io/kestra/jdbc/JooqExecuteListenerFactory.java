@@ -43,11 +43,11 @@ public class JooqExecuteListenerFactory {
                             tags.add(ctx.sql());
                         }
 
-                        metricRegistry.timer(MetricRegistry.JDBC_QUERY_DURATION, tags.toArray(new String[0]))
+                        metricRegistry.timer(MetricRegistry.METRIC_JDBC_QUERY_DURATION, MetricRegistry.METRIC_JDBC_QUERY_DURATION_DESCRIPTION, tags.toArray(new String[0]))
                             .record(duration);
 
                         if (log.isTraceEnabled()) {
-                            log.trace("[Duration: {}] [Rows: {}] [Query: {}]", duration, ctx.rows() , ctx.query().toString());
+                            log.trace("[Duration: {}] [Rows: {}] [Query: {}]", duration, ctx.rows() , ctx.query());
                         } else if (log.isDebugEnabled()) {
                             log.debug("[Duration: {}] [Rows: {}] [Query: {}]", duration, ctx.rows() , ctx.sql());
                         }

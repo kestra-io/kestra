@@ -1,70 +1,63 @@
 <template>
-    <el-input :model-value="JSON.stringify(values)">
-        <template #append>
-            <el-button :icon="TextSearch" @click="isOpen = true" />
-        </template>
-    </el-input>
-
-    <drawer
-        v-if="isOpen"
-        v-model="isOpen"
-    >
-        <template #header>
-            <code>{{ root }}</code>
-        </template>
-        <el-form label-position="top">
-            <task-editor
-                ref="editor"
-                :model-value="taskYaml"
-                :section="section"
-                @update:model-value="onInput"
-            />
-        </el-form>
-        <template #footer>
-            <el-button :icon="ContentSave" @click="isOpen = false" type="primary">
-                {{ $t('save') }}
-            </el-button>
-        </template>
-    </drawer>
+    <div class="w-100">
+        <Element
+            :section="root"
+            :parent-path-complete="parentPathComplete"
+            :block-schema-path="[blockSchemaPath, 'properties', root.split('.').pop()].join('/')"
+            :element="{
+                id: model?.id ?? 'Set a task',
+                type: model?.type,
+            }"
+            type-field-schema="type"
+            @remove-element="removeElement()"
+        />
+    </div>
 </template>
 
-<script setup>
-    import TextSearch from "vue-material-design-icons/TextSearch.vue";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
+<script setup lang="ts">
+    import {computed, inject, ref} from "vue";
+    import {
+        PARENT_PATH_INJECTION_KEY,
+        REF_PATH_INJECTION_KEY,
+        CREATING_TASK_INJECTION_KEY,
+        BLOCK_SCHEMA_PATH_INJECTION_KEY
+    } from "../../code/injectionKeys";
+    import Element from "../../code/components/collapse/Element.vue";
+
+    const model = defineModel({
+        type: Object,
+        default: () => ({})
+    });
+
+    const props = defineProps({
+        root: {
+            type: String,
+            required: true
+        },
+    });
+
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+    const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
+    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, false);
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref())
+
+    const parentPathComplete = computed(() => {
+        return `${[
+            [
+                parentPath,
+                creatingTask && refPath !== undefined
+                    ? `[${refPath + 1}]`
+                    : refPath !== undefined
+                        ? `[${refPath}]`
+                        : undefined,
+            ].filter(Boolean).join(""),
+            props.root,
+        ].filter(p => p.length).join(".")}`;
+    });
+
+    function removeElement() {
+        model.value = undefined;
+    }
 </script>
 
-<script>
-    import Task from "./Task"
-    import YamlUtils from "../../../utils/yamlUtils";
-    import TaskEditor from "../TaskEditor.vue"
-    import Drawer from "../../Drawer.vue"
-    import {SECTIONS as SECTION} from "../../../utils/constants.js";
-
-    export default {
-        mixins: [Task],
-        components: {TaskEditor, Drawer},
-        emits: ["update:modelValue"],
-        props: {
-            section: {
-                type: String,
-                default: SECTION.TASKS
-            },
-        },
-        data() {
-            return {
-                isOpen: false,
-            };
-        },
-        computed: {
-            taskYaml() {
-                return YamlUtils.stringify(this.modelValue);
-            }
-        },
-        methods: {
-            onInput(value) {
-                this.$emit("update:modelValue", YamlUtils.parse(value));
-            },
-        }
-    };
-</script>
 

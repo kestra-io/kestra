@@ -224,25 +224,16 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.DYNAMIC);
 
-        if (concurrencyLimit == 1) {
-            GraphUtils.sequential(
-                subGraph,
-                this.getTasks(),
-                this.getErrors(),
-                this.getFinally(),
-                taskRun,
-                execution
-            );
-        } else {
-            GraphUtils.parallel(
-                subGraph,
-                this.getTasks(),
-                this.errors,
-                this._finally,
-                taskRun,
-                execution
-            );
-        }
+        // ForEach executes task groups concurrently, not the task inside the group concurrently,
+        // so the topology should display it as a sequential.
+        GraphUtils.sequential(
+            subGraph,
+            this.getTasks(),
+            this.getErrors(),
+            this.getFinally(),
+            taskRun,
+            execution
+        );
 
         return subGraph;
     }

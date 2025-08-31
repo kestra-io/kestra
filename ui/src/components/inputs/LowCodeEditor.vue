@@ -7,11 +7,16 @@
             :is-read-only="isReadOnly"
             :is-allowed-edit="isAllowedEdit"
             :source="source"
-            :toggle-orientation-button="['topology'].includes(viewType)"
-            :flow-graph="props.flowGraph"
+            :toggle-orientation-button="toggleOrientationButton"
+            :flow-graph="playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph"
             :flow-id="flowId"
             :namespace="namespace"
             :expanded-subflows="props.expandedSubflows"
+            :icons="pluginsStore.icons"
+            :execution="executionsStore.execution"
+            :subflows-executions="executionsStore.subflowsExecutions"
+            :playground-enabled="playgroundStore.enabled"
+            :playground-ready-to-start="playgroundStore.readyToStart"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -24,35 +29,15 @@
             @swapped-task="onSwappedTask"
             @message="message"
             @expand-subflow="expandSubflow"
-            :icons="icons"
+            @run-task="playgroundStore.runUntilTask($event.task.id)"
         />
 
-        <!-- Drawer to create/add task -->
-        <task-edit
-            v-if="source"
-            component="div"
-            is-hidden
-            class="node-action"
-            :section="taskEditData?.section"
-            :task="taskObject"
-            :flow-id="flowId"
-            size="small"
-            :namespace="namespace"
-            :revision="execution ? execution.flowRevision : undefined"
-            @update:task="confirmEdit"
-            @close="closeEdit()"
-            :flow-source="source"
-            ref="taskEditDomElement"
-        />
-
-        <!--    Drawer to task informations (logs, description, ..)   -->
-        <!--    Assuming selectedTask is always the id and the required data for the opened drawer    -->
-        <drawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
+        <Drawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
             <template #header>
                 <code>{{ selectedTask.id }}</code>
             </template>
             <div v-if="isShowLogsOpen">
-                <collapse>
+                <Collapse>
                     <el-form-item>
                         <search-field
                             :router="false"
@@ -66,8 +51,8 @@
                             @update:model-value="onLevelChange"
                         />
                     </el-form-item>
-                </collapse>
-                <task-run-details
+                </Collapse>
+                <TaskRunDetails
                     v-for="taskRun in selectedTask.taskRuns"
                     :key="taskRun.id"
                     :target-execution-id="selectedTask.execution?.id"
@@ -80,17 +65,16 @@
                         'executionId',
                     ]"
                     :level="logLevel"
-                    @follow="forwardEvent('follow', $event)"
+                    @follow="emit('follow', $event)"
                 />
             </div>
             <div v-if="isShowDescriptionOpen">
-                <markdown
-                    class="markdown-tooltip"
+                <Markdown
                     :source="selectedTask.description"
                 />
             </div>
             <div v-if="isShowConditionOpen">
-                <editor
+                <Editor
                     :read-only="true"
                     :input="true"
                     :full-height="false"
@@ -100,80 +84,73 @@
                     class="mt-3"
                 />
             </div>
-        </drawer>
+        </Drawer>
     </div>
 </template>
 
-<script setup>
-// Core
-    import {getCurrentInstance, nextTick, onMounted, ref, watch} from "vue";
-    import {useStore} from "vuex";
-    import {useVueFlow} from "@vue-flow/core";
-    import {useRouter} from "vue-router";
+<script lang="ts" setup>
+    // Core
+    import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
+    import type {Ref} from "vue";
 
-    import TaskEdit from "../flows/TaskEdit.vue";
+    import {useI18n} from "vue-i18n";
+    import {useStorage} from "@vueuse/core";
+    import {useRouter} from "vue-router";
+    import {useVueFlow} from "@vue-flow/core";
+
     import SearchField from "../layout/SearchField.vue";
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import Collapse from "../layout/Collapse.vue";
     import Drawer from "../Drawer.vue";
-
-    // Topology
-    import {Topology} from "@kestra-io/ui-libs";
-
-    // Utils
-    import {YamlUtils} from "@kestra-io/ui-libs";
-    import {SECTIONS} from "../../utils/constants";
     import Markdown from "../layout/Markdown.vue";
     import Editor from "./Editor.vue";
+
+    import {Topology} from "@kestra-io/ui-libs";
+    import {SECTIONS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+
+    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
+    import {useCoreStore} from "../../stores/core";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {usePlaygroundStore} from "../../stores/playground";
 
     const router = useRouter();
 
     const vueflowId = ref(Math.random().toString());
-    // Vue flow methods to interact with Graph
-    const {fitView} = useVueFlow({id: vueflowId.value});
+    const {fitView} = useVueFlow(vueflowId.value);
+
+    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref(null)) as Ref<any>;
+
+    const executionsStore = useExecutionsStore();
+    const playgroundStore = usePlaygroundStore();
 
     // props
-    const props = defineProps({
-        flowGraph: {
-            type: Object,
-            required: true,
-        },
-        flowId: {
-            type: String,
-            required: false,
-            default: undefined,
-        },
-        namespace: {
-            type: String,
-            required: false,
-            default: undefined,
-        },
-        execution: {
-            type: Object,
-            default: undefined,
-        },
-        isReadOnly: {
-            type: Boolean,
-            default: false,
-        },
-        source: {
-            type: String,
-            default: undefined,
-        },
-        isAllowedEdit: {
-            type: Boolean,
-            default: false,
-        },
-        viewType: {
-            type: String,
-            default: undefined,
-        },
-        expandedSubflows: {
-            type: Array,
-            default: () => [],
-        },
-    });
+    const props = withDefaults(
+        defineProps<{
+            flowGraph: Record<string, any>;
+            flowId?: string;
+            namespace?: string;
+            execution?: Record<string, any>;
+            isReadOnly?: boolean;
+            source?: string;
+            isAllowedEdit?: boolean;
+            horizontalDefault?: boolean;
+            toggleOrientationButton?: boolean;
+            expandedSubflows?: string[];
+        }>(),
+        {
+            flowId: undefined,
+            namespace: undefined,
+            execution: undefined,
+            isReadOnly: false,
+            source: "",
+            isAllowedEdit: false,
+            horizontalDefault: undefined,
+            toggleOrientationButton: true,
+            expandedSubflows: () => [],
+        })
 
     const emit = defineEmits([
         "follow",
@@ -181,47 +158,44 @@
         "loading",
         "expand-subflow",
         "swapped-task",
-        "openNoCode",
     ]);
 
     // Vue instance variables
-    const store = useStore();
-    const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
-    const t = getCurrentInstance().appContext.config.globalProperties.$t;
+    const coreStore = useCoreStore();
+    const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
+    const {t} = useI18n();
 
-    // Init variables functions
-    const isHorizontalDefault = () => {
-        return props.viewType === "source-topology"
-            ? false
-            : props.viewType?.indexOf("blueprint") !== -1
-                ? true
-                : localStorage.getItem("topology-orientation") === "1";
-    };
+    const pluginsStore = usePluginsStore();
 
     // Components variables
-    const isHorizontal = ref(isHorizontalDefault());
-    const vueFlow = ref(null);
-    const timer = ref(null);
-    const icons = ref(store.getters["plugin/getIcons"]);
-    const taskObject = ref(null);
-    const taskEditData = ref(null);
-    const taskEditDomElement = ref(null);
+    const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault);
+    const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"));
+    const vueFlow = ref<HTMLDivElement>();
+    const timer = ref<ReturnType<typeof setTimeout>>();
+    const taskEditData = ref();
+    const taskEditDomElement = ref();
     const isShowLogsOpen = ref(false);
     const logFilter = ref("");
     const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO");
     const isDrawerOpen = ref(false);
     const isShowDescriptionOpen = ref(false);
     const isShowConditionOpen = ref(false);
-    const selectedTask = ref(null);
+    const selectedTask = ref();
 
     // Init components
     onMounted(() => {
         // Regenerate graph on window resize
         observeWidth();
-        store.dispatch("plugin/icons").then(() => {
-            icons.value = store.getters["plugin/getIcons"];
-        });
+        pluginsStore.fetchIcons()
     });
+
+    watch(() => executionsStore.execution?.id, (id) => {
+        if (id) {
+            executionsStore.loadAugmentedGraph({
+                id,
+            });
+        }
+    }, {immediate: true});
 
     watch(
         () => isDrawerOpen.value,
@@ -234,57 +208,48 @@
         },
     );
 
-    watch(
-        () => props.viewType,
-        () => {
-            isHorizontal.value =
-                props.viewType === "source-topology"
-                    ? false
-                    : props.viewType?.indexOf("blueprint") !== -1
-                        ? true
-                        : localStorage.getItem("topology-orientation") === "1";
-        },
-    );
-
     // Event listeners & Watchers
     const observeWidth = () => {
-        const resizeObserver = new ResizeObserver(function () {
-            clearTimeout(timer.value);
-            timer.value = setTimeout(() => {
-                nextTick(() => {
-                    fitView();
-                });
-            }, 50);
-        });
-        resizeObserver.observe(vueFlow.value);
+        if(vueFlow.value){
+            const resizeObserver = new ResizeObserver(function () {
+                clearTimeout(timer.value);
+                timer.value = setTimeout(() => {
+                    nextTick(() => {
+                        fitView();
+                    });
+                }, 50) as any;
+            });
+            resizeObserver.observe(vueFlow.value);
+        }
     };
 
-    const forwardEvent = (type, event) => {
-        emit(type, event);
-    };
     // Source edit functions
-
-    const onDelete = (event) => {
-        const flowParsed = YamlUtils.parse(props.source);
+    const onDelete = (event: any) => {
+        const flowParsed = YAML_UTILS.parse(props.source);
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
             () => {
-                const section = event.section ? event.section : SECTIONS.TASKS;
+                const section = event.section ? event.section.toLowerCase() : SECTIONS.TASKS.toLowerCase();
                 if (
-                    section === SECTIONS.TASKS &&
+                    section === SECTIONS.TASKS.toLowerCase() &&
                     flowParsed.tasks.length === 1 &&
-                    flowParsed.tasks.map((e) => e.id).includes(event.id)
+                    flowParsed.tasks.map((e: any) => e.id).includes(event.id)
                 ) {
-                    store.dispatch("core/showMessage", {
+                    coreStore.message = {
                         variant: "error",
                         title: t("can not delete"),
                         message: t("can not have less than 1 task"),
-                    });
+                    };
                     return;
                 }
+                const updatedYmlSource = YAML_UTILS.deleteBlock({
+                    source: props.source ?? "",
+                    section,
+                    key: event.id,
+                })
                 emit(
                     "on-edit",
-                    YamlUtils.deleteTask(props.source, event.id, section),
+                    updatedYmlSource,
                     true,
                 );
             },
@@ -292,26 +257,31 @@
         );
     };
 
-    const onCreateNewTask = (details) => {
-        emit("openNoCode", {
-            section: SECTIONS.TASKS.toLowerCase(),
-            identifier: "new",
-            target: details[0],
-            position: details[1],
-        });
+    const onCreateNewTask = (event: [string, "before" | "after"]) => {
+        topologyClick.value = {
+            action: "create",
+            params: {
+                section: SECTIONS.TASKS.toLowerCase() as any,
+                position: event[1],
+                id: event[0],
+            }
+        };
     };
 
-    const onEditTask = (event) => {
-        emit("openNoCode", {
-            section: event.section
-                ? event.section.toLowerCase()
-                : SECTIONS.TASKS.toLowerCase(),
-            identifier: event.task.id,
-            type: event.task.type,
-        });
+    const onEditTask = (event: {
+        task: Record<string, any>;
+        section?: string;
+    }) => {
+        topologyClick.value = {
+            action: "edit",
+            params: {
+                section: (event.section ?? SECTIONS.TASKS).toLowerCase() as any,
+                id: event.task.id,
+            }
+        };
     };
 
-    const onAddFlowableError = (event) => {
+    const onAddFlowableError = (event: any) => {
         taskEditData.value = {
             action: "add_flowable_error",
             taskId: event.task.id,
@@ -319,87 +289,25 @@
         taskEditDomElement.value.$refs.taskEdit.click();
     };
 
-    const confirmEdit = (event) => {
-        const source = props.source;
-        const task = YamlUtils.extractTask(props.source, YamlUtils.parse(event).id);
-        if (
-            task === undefined ||
-            (task && YamlUtils.parse(event).id === taskEditData.value.oldTaskId)
-        ) {
-            switch (taskEditData.value.action) {
-            case "create_task":
-                emit(
-                    "on-edit",
-                    YamlUtils.insertTask(
-                        source,
-                        taskEditData.value.insertionDetails[0],
-                        event,
-                        taskEditData.value.insertionDetails[1],
-                    ),
-                    true,
-                );
-                return;
-            case "edit_task":
-                emit(
-                    "on-edit",
-                    YamlUtils.replaceTaskInDocument(
-                        source,
-                        taskEditData.value.oldTaskId,
-                        event,
-                    ),
-                    true,
-                );
-                return;
-            case "add_flowable_error":
-                emit(
-                    "on-edit",
-                    YamlUtils.insertErrorInFlowable(
-                        props.source,
-                        event,
-                        taskEditData.value.taskId,
-                    ),
-                    true,
-                );
-                return;
-            }
-        } else {
-            store.dispatch("core/showMessage", {
-                variant: "error",
-                title: t("error detected"),
-                message: t("Task Id already exist in the flow", {
-                    taskId: YamlUtils.parse(event).id,
-                }),
-            });
-        }
-        taskEditData.value = null;
-        taskObject.value = null;
-    };
-
-    const closeEdit = () => {
-        taskEditData.value = null;
-        taskObject.value = null;
-    };
-
     const fitViewOrientation = () => {
-        const resizeObserver = new ResizeObserver(() => {
-            clearTimeout(timer.value);
-            nextTick(() => {
-                fitView();
+        if(vueFlow.value){
+            const resizeObserver = new ResizeObserver(() => {
+                clearTimeout(timer.value);
+                nextTick(() => {
+                    fitView();
+                });
             });
-        });
-        resizeObserver.observe(vueFlow.value);
+            resizeObserver.observe(vueFlow.value);
+        }
     };
 
     const toggleOrientation = () => {
-        localStorage.setItem(
-            "topology-orientation",
-            localStorage.getItem("topology-orientation") !== "0" ? "0" : "1",
-        );
-        isHorizontal.value = localStorage.getItem("topology-orientation") === "1";
+        isHorizontal.value = !isHorizontal.value;
+        isHorizontalLS.value = isHorizontal.value;
         fitViewOrientation();
     };
 
-    const openFlow = (data) => {
+    const openFlow = (data: any) => {
         if (data.link.executionId) {
             window.open(
                 router.resolve({
@@ -428,46 +336,46 @@
         }
     };
 
-    const showLogs = (event) => {
+    const showLogs = (event: string) => {
         selectedTask.value = event;
         isShowLogsOpen.value = true;
         isDrawerOpen.value = true;
     };
 
-    const onSearch = (search) => {
+    const onSearch = (search: string) => {
         logFilter.value = search;
     };
 
-    const onLevelChange = (level) => {
+    const onLevelChange = (level: string) => {
         logLevel.value = level;
     };
 
-    const showDescription = (event) => {
+    const showDescription = (event: string) => {
         selectedTask.value = event;
         isShowDescriptionOpen.value = true;
         isDrawerOpen.value = true;
     };
 
-    const showCondition = (event) => {
+    const showCondition = (event: {task: string}) => {
         selectedTask.value = event.task;
         isShowConditionOpen.value = true;
         isDrawerOpen.value = true;
     };
 
-    const onSwappedTask = (event) => {
+    const onSwappedTask = (event: any) => {
         emit("swapped-task", event.swappedTasks);
         emit("on-edit", event.newSource, true);
     };
 
-    const message = (event) => {
-        store.dispatch("core/showMessage", {
+    const message = (event: any) => {
+        coreStore.message = {
             variant: event.variant,
             title: t(event.title),
             message: t(event.message),
-        });
+        };
     };
 
-    const expandSubflow = (event) => {
+    const expandSubflow = (event: any) => {
         emit("expand-subflow", event);
     };
 </script>

@@ -2,8 +2,7 @@ package io.kestra.core.runners.pebble.functions;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
@@ -30,7 +29,7 @@ class FileURIFunctionTest {
             "fileA", "test"
         );
         String render = variableRenderer.render("{{ fileURI(fileA) }}", variables);
-        assertThat(render, is("kestra:///my/namespace/_files/test"));
+        assertThat(render).isEqualTo("kestra:///my/namespace/_files/test");
     }
 
     @Test
@@ -46,7 +45,7 @@ class FileURIFunctionTest {
         );
 
         var exception = assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ fileURI(fileA) }}", variables));
-        assertThat(exception.getMessage(), is("Path must not contain '../'"));
+        assertThat(exception.getMessage()).isEqualTo("Path must not contain '../'");
     }
 
 }

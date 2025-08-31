@@ -1,4 +1,4 @@
-rootProject.name="kestra"
+rootProject.name = "kestra"
 
 include 'platform'
 
@@ -24,3 +24,4 @@ include 'processor'
 include 'script'
 include 'e2e-tests'
 
+include 'jmh-benchmarks'

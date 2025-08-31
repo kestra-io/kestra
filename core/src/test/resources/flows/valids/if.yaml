@@ -3,13 +3,13 @@ namespace: io.kestra.tests
 
 inputs:
   - id: if1
-    type: BOOLEAN
+    type: BOOL
 
   - id: if2
-    type: BOOLEAN
+    type: BOOL
 
   - id: if3
-    type: BOOLEAN
+    type: BOOL
 
 tasks:
   - id: parallel

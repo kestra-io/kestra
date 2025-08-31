@@ -1,6 +1,7 @@
 <template>
     <div
         class="d-flex w-100"
+        :class="className"
         v-for="inputWithValue in Object.entries(inputsWithValue)"
         :key="inputWithValue[0]"
     >
@@ -41,16 +42,22 @@
     import Plus from "vue-material-design-icons/Plus.vue";
     import Minus from "vue-material-design-icons/Minus.vue";
     import TaskExpression from "./TaskExpression.vue";
+    import {mapStores} from "pinia";
+    import {useCoreStore} from "../../../stores/core";
     import axios from "axios";
 
     export default {
         components: {TaskExpression},
         computed: {
+            ...mapStores(useCoreStore),
             Minus() {
                 return Minus
             },
             Plus() {
                 return Plus
+            },
+            className(){
+                return this.class
             }
         },
         mixins: [Task],
@@ -67,8 +74,7 @@
             },
             async fetchInputKeys(namespace, flowId, revision) {
                 try {
-                    return (await this.$store.dispatch(
-                        "flow/loadFlow",
+                    return (await this.flowStore.loadFlow(
                         {
                             namespace: namespace,
                             id: flowId,
@@ -79,11 +85,11 @@
                         }
                     )).inputs?.map(input => input.id) ?? [];
                 } catch(e) {
-                    this.$store.dispatch("core/showMessage", {
+                    this.coreStore.message = {
                         variant: "error",
                         title: this.$t("error"),
                         message: e.message,
-                    })
+                    };
                     return [];
                 }
             },
@@ -142,6 +148,12 @@
                     }
                 }
             }
+        },
+        props:{
+            class: {
+                type: String,
+                default: ""
+            },
         }
     };
 </script>

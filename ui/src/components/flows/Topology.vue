@@ -2,14 +2,13 @@
     <el-card>
         <div class="vueflow">
             <LowCodeEditor
-                v-if="flow && flowGraph"
-                :flow-id="flow.id"
-                :namespace="flow.namespace"
-                :flow-graph="flowGraph"
-                :source="flow.source"
+                v-if="flowStore.flow && flowStore.flowGraph"
+                :flow-id="flowStore.flow.id"
+                :namespace="flowStore.flow.namespace"
+                :flow-graph="flowStore.flowGraph"
+                :source="flowStore.flow.source"
                 :is-read-only="isReadOnly"
                 :expanded-subflows="expandedSubflows"
-                view-type="topology"
                 @expand-subflow="onExpandSubflow($event)"
                 @on-edit="(event) => emit('on-edit', event, true)"
             />
@@ -20,8 +19,9 @@
     </el-card>
 </template>
 <script>
-    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         components: {
@@ -41,16 +41,16 @@
             }
         },
         computed: {
-            ...mapState("flow", ["flow", "flowGraph"]),
+            ...mapStores(useFlowStore),
         },
         beforeUnmount() {
-            this.$store.commit("flow/setFlowValidation", undefined);
+            this.flowStore.flowValidation = undefined;
         },
         methods: {
             onExpandSubflow(event) {
                 this.$emit("expand-subflow", event);
-                this.$store.dispatch("flow/loadGraph", {
-                    flow: this.flow,
+                this.flowStore.loadGraph({
+                    flow: this.flowStore.flow,
                     params: {
                         subflows: event
                     }

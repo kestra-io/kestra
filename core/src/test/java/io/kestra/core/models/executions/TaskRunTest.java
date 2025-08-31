@@ -5,9 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TaskRunTest {
     @Test
@@ -17,9 +15,9 @@ class TaskRunTest {
             .build()
             .onRunningResend();
 
-        assertThat(taskRun.getAttempts().size(), is(1));
-        assertThat(taskRun.getAttempts().getFirst().getState().getHistories().getFirst(), is(taskRun.getState().getHistories().getFirst()));
-        assertThat(taskRun.getAttempts().getFirst().getState().getCurrent(), is(State.Type.KILLED));
+        assertThat(taskRun.getAttempts().size()).isEqualTo(1);
+        assertThat(taskRun.getAttempts().getFirst().getState().getHistories().getFirst()).isEqualTo(taskRun.getState().getHistories().getFirst());
+        assertThat(taskRun.getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
     }
 
     @Test
@@ -33,9 +31,9 @@ class TaskRunTest {
             .build()
             .onRunningResend();
 
-        assertThat(taskRun.getAttempts().size(), is(1));
-        assertThat(taskRun.getAttempts().getFirst().getState().getHistories().getFirst(), is(not(taskRun.getState().getHistories().getFirst())));
-        assertThat(taskRun.getAttempts().getFirst().getState().getCurrent(), is(State.Type.KILLED));
+        assertThat(taskRun.getAttempts().size()).isEqualTo(1);
+        assertThat(taskRun.getAttempts().getFirst().getState().getHistories().getFirst()).isNotEqualTo(taskRun.getState().getHistories().getFirst());
+        assertThat(taskRun.getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
     }
 
     @Test
@@ -49,9 +47,9 @@ class TaskRunTest {
             .build()
             .onRunningResend();
 
-        assertThat(taskRun.getAttempts().size(), is(2));
-        assertThat(taskRun.getAttempts().get(1).getState().getHistories().getFirst(), is(not(taskRun.getState().getHistories().getFirst())));
-        assertThat(taskRun.getAttempts().get(1).getState().getCurrent(), is(State.Type.KILLED));
+        assertThat(taskRun.getAttempts().size()).isEqualTo(2);
+        assertThat(taskRun.getAttempts().get(1).getState().getHistories().getFirst()).isNotEqualTo(taskRun.getState().getHistories().getFirst());
+        assertThat(taskRun.getAttempts().get(1).getState().getCurrent()).isEqualTo(State.Type.KILLED);
     }
 
 }

@@ -17,7 +17,7 @@ import java.io.FileNotFoundException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete a state from the state store."
+    title = "Delete a state from the state store (Deprecated)."
 )
 @Plugin(
     examples = {
@@ -46,7 +46,7 @@ public class Delete extends AbstractState implements RunnableTask<Delete.Output>
         title = "Raise an error if the state is not found."
     )
     @Builder.Default
-    private final Property<Boolean> errorOnMissing = Property.of(false);
+    private final Property<Boolean> errorOnMissing = Property.ofValue(false);
 
     @Override
     public Output run(RunContext runContext) throws Exception {

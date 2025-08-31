@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.models.flows.input.*;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
@@ -11,11 +13,12 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import java.util.function.Function;
 
 @SuppressWarnings("deprecation")
 @SuperBuilder
@@ -26,6 +29,7 @@ import lombok.experimental.SuperBuilder;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ArrayInput.class, name = "ARRAY"),
     @JsonSubTypes.Type(value = BooleanInput.class, name = "BOOLEAN"),
+    @JsonSubTypes.Type(value = BoolInput.class, name = "BOOL"),
     @JsonSubTypes.Type(value = DateInput.class, name = "DATE"),
     @JsonSubTypes.Type(value = DateTimeInput.class, name = "DATETIME"),
     @JsonSubTypes.Type(value = DurationInput.class, name = "DURATION"),
@@ -78,7 +82,7 @@ public abstract class Input<T> implements Data {
     @Schema(
         title = "The default value to use if no value is specified."
     )
-    T defaults;
+    Property<T> defaults;
 
     @Schema(
         title = "The display name of the input."

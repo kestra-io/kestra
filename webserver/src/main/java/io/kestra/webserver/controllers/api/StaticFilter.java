@@ -1,7 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
-import com.google.common.base.Charsets;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -16,13 +16,10 @@ import org.apache.commons.io.IOUtils;
 import org.reactivestreams.Publisher;
 
 import java.io.IOException;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-
-import io.micronaut.core.annotation.Nullable;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 

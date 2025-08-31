@@ -40,6 +40,11 @@ public interface SchedulerTriggerStateInterface {
     List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContext);
 
     /**
+     * Used by the JDBC implementation: find ready but locked triggers
+     */
+    List<Trigger> findByNextExecutionDateReadyButLockedTriggers(ZonedDateTime now);
+
+    /**
      * Used by the Kafka implementation: find triggers in the scheduler assigned flow (as in Kafka partition assignment).
      */
     List<Trigger> findByNextExecutionDateReadyForGivenFlows(List<FlowWithSource> flows, ZonedDateTime now, ScheduleContextInterface scheduleContext);

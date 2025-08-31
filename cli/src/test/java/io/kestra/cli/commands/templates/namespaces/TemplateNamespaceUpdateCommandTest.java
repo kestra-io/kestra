@@ -11,8 +11,7 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.StringContains.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TemplateNamespaceUpdateCommandTest {
     @Test
@@ -37,7 +36,7 @@ class TemplateNamespaceUpdateCommandTest {
             };
             PicocliRunner.call(TemplateNamespaceUpdateCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("3 template(s)"));
+            assertThat(out.toString()).contains("3 template(s)");
         }
     }
 
@@ -64,8 +63,8 @@ class TemplateNamespaceUpdateCommandTest {
             Integer call = PicocliRunner.call(TemplateNamespaceUpdateCommand.class, ctx, args);
 
 //            assertThat(call, is(1));
-            assertThat(out.toString(), containsString("Unable to parse templates"));
-            assertThat(out.toString(), containsString("must not be empty"));
+            assertThat(out.toString()).contains("Unable to parse templates");
+            assertThat(out.toString()).contains("must not be empty");
         }
     }
 
@@ -93,7 +92,7 @@ class TemplateNamespaceUpdateCommandTest {
             };
             PicocliRunner.call(TemplateNamespaceUpdateCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("3 template(s)"));
+            assertThat(out.toString()).contains("3 template(s)");
 
             String[] newArgs = {
                 "--server",
@@ -107,7 +106,7 @@ class TemplateNamespaceUpdateCommandTest {
             };
             PicocliRunner.call(TemplateNamespaceUpdateCommand.class, ctx, newArgs);
 
-            assertThat(out.toString(), containsString("1 template(s)"));
+            assertThat(out.toString()).contains("1 template(s)");
         }
     }
 }

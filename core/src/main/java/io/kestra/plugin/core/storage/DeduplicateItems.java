@@ -59,10 +59,10 @@ import java.util.Map;
 public class DeduplicateItems extends Task implements RunnableTask<DeduplicateItems.Output> {
 
     @Schema(
-        title = "The file to be deduplicated.",
-        description = "Must be a `kestra://` internal storage URI."
+        title = "The file to be deduplicated."
     )
     @NotNull
+    @PluginProperty(internalStorageURI = true)
     private Property<String> from;
 
     @Schema(

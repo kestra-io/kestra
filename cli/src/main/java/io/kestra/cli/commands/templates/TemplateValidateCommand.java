@@ -4,7 +4,6 @@ import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.serializers.YamlParser;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
@@ -16,8 +15,6 @@ import java.util.Collections;
 )
 @TemplateEnabled
 public class TemplateValidateCommand extends AbstractValidateCommand {
-    @Inject
-    private YamlParser yamlParser;
 
     @Inject
     private ModelValidator modelValidator;
@@ -26,7 +23,6 @@ public class TemplateValidateCommand extends AbstractValidateCommand {
     public Integer call() throws Exception {
         return this.call(
             Template.class,
-            yamlParser,
             modelValidator,
             (Object object) -> {
                 Template template = (Template) object;

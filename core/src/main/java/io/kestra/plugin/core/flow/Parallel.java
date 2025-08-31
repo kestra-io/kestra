@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -40,6 +41,9 @@ import jakarta.validation.constraints.NotNull;
     examples = {
         @Example(
             full = true,
+            title = """
+            Run tasks in parallel
+            """,
             code = """
                 id: parallel
                 namespace: company.team
@@ -60,6 +64,42 @@ import jakarta.validation.constraints.NotNull;
                     type: io.kestra.plugin.core.debug.Return
                     format: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
+        ),
+        @Example(
+            full = true,
+            title = """
+            Run two sequences in parallel
+            """,
+            code = """
+                id: parallel_sequences
+                namespace: company.team
+
+                tasks:
+                - id: parallel
+                    type: io.kestra.plugin.core.flow.Parallel
+                    tasks:
+                    - id: sequence1
+                        type: io.kestra.plugin.core.flow.Sequential
+                        tasks:
+                        - id: task1
+                            type: io.kestra.plugin.core.debug.Return
+                            format: "{{ task.id }}"
+
+                        - id: task2
+                            type: io.kestra.plugin.core.debug.Return
+                            format: "{{ task.id }}"
+
+                    - id: sequence2
+                        type: io.kestra.plugin.core.flow.Sequential
+                        tasks:
+                        - id: task3
+                            type: io.kestra.plugin.core.debug.Return
+                            format: "{{ task.id }}"
+
+                        - id: task4
+                            type: io.kestra.plugin.core.debug.Return
+                            format: "{{ task.id }}"
+            """
         )
     },
     aliases = "io.kestra.core.tasks.flows.Parallel"
@@ -71,8 +111,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
         title = "Number of concurrent parallel tasks that can be running at any point in time.",
         description = "If the value is `0`, no limit exist and all tasks will start at the same time."
     )
-    @PluginProperty
-    private final Integer concurrent = 0;
+    private final Property<Integer> concurrent = Property.ofValue(0);
 
     @Valid
     @PluginProperty
@@ -134,7 +173,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
-            this.concurrent
+            runContext.render(this.concurrent).as(Integer.class).orElseThrow()
         );
     }
 }

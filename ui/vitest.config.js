@@ -1,6 +1,8 @@
-import {defineConfig} from "vite"
-import vue from "@vitejs/plugin-vue"
+import {defineConfig} from "vite";
+import vue from "@vitejs/plugin-vue";
 import path from "path";
+
+import viteConfig from "./vite.config.js";
 
 export default defineConfig({
     plugins: [
@@ -8,11 +10,12 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            "override": path.resolve(__dirname, "src/override/"),
+            "override/services/filterLanguagesProvider": path.resolve(__dirname, "tests/storybook/mocks/services/filterLanguagesProvider.mock.ts"),
+            ...viteConfig.resolve.alias,
         },
     },
     test: {
-        environment: "jsdom"
+        projects: [".storybook/vitest.config.js", "./vitest.config.unit.js"],
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

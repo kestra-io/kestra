@@ -14,6 +14,7 @@ import java.util.function.Predicate;
  * Service interface for accessing the files attached to a namespace (a.k.a., Namespace Files).
  */
 public interface Namespace {
+    String NAMESPACE_FILE_SCHEME = "nsfile";
 
     /**
      * Gets the current namespace.
@@ -21,6 +22,13 @@ public interface Namespace {
      * @return the current namespace.
      */
     String namespace();
+
+    /**
+     * Gets the current tenantId.
+     *
+     * @return the current tenantId.
+     */
+    String tenantId();
 
     /**
      * Gets the URIs of all namespace files for the contextual namespace.

@@ -1,50 +1,43 @@
 <template>
-    <el-input :model-value="JSON.stringify(values)">
-        <template #append>
-            <el-button
-                :icon="TextSearch"
-                @click="
-                    $store.commit('code/addBreadcrumbs', {
-                        breadcrumb: {
-                            label: root,
-                            to: {},
-                            component: h('task-object', {
-                                modelValue,
-                                schema: currentSchema,
-                                definitions,
-                                'onUpdate:modelValue': onInput,
-                            }),
-                        },
-                        position:
-                            breadcrumbs.length === 2 ? 2 : breadcrumbs.length,
-                    })
-                "
-            />
-        </template>
-    </el-input>
+    <TaskObject
+        :model-value="modelValue"
+        :schema
+        :definitions
+        :properties="computedProperties"
+        :root="root"
+        :task="task"
+        :required="required"
+        merge
+        @update:model-value="onInput"
+    />
 </template>
 
 <script setup>
-    import {h} from "vue";
-
-    import TextSearch from "vue-material-design-icons/TextSearch.vue";
+    import TaskObject from "./TaskObject.vue";
 </script>
 
 <script>
     import Task from "./Task";
-    import {mapState} from "vuex";
 
     export default {
+        inheritAttrs: false,
         mixins: [Task],
         computed: {
-            ...mapState("code", ["breadcrumbs"]),
-
-            currentSchema() {
-                let ref = this.schema.$ref.substring(8);
-                if (this.definitions[ref]) {
-                    return this.definitions[ref];
+            computedProperties() {
+                if(!this.schema?.allOf && !this.schema?.$ref) {
+                    return this.schema?.properties || {};
                 }
-                return undefined;
+                const schemas = this.schema.allOf ?? [this.schema];
+                return schemas.reduce((acc, item) => {
+                    if (item.$ref) {
+                        const type = item.$ref.split("/").pop();
+                        return {
+                            ...acc,
+                            ...this.definitions[type]?.properties
+                        };
+                    }
+                    return {...acc, ...item.properties};
+                }, {});
             },
         },
     };

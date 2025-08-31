@@ -26,7 +26,7 @@ import java.util.function.Predicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Gets keys matching a given prefix."
+    title = "Fetch all keys matching a given KV pair prefix."
 )
 @Plugin(
     examples = {
@@ -57,7 +57,7 @@ public class GetKeys extends Task implements RunnableTask<GetKeys.Output> {
         title = "The namespace on which to get the value."
     )
     @Builder.Default
-    private Property<String> namespace = new Property<>("{{ flow.namespace }}");
+    private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
 
 
     @Override

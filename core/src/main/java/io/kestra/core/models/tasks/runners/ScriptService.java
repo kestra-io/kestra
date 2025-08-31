@@ -10,7 +10,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +30,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * Helper class for task runners and script tasks.
  */
 public final class ScriptService {
-    private static final Pattern INTERNAL_STORAGE_PATTERN = Pattern.compile("(kestra:\\/\\/[-a-zA-Z0-9%._\\+~#=/]*)");
+    private static final Pattern INTERNAL_STORAGE_PATTERN = Pattern.compile("(kestra:\\/\\/[-\\p{Alnum}._\\+~#=/]*)", Pattern.UNICODE_CHARACTER_CLASS);
 
     // These are the three common additional variables task runners must provide for variable rendering.
     public static final String VAR_WORKING_DIR = "workingDir";

@@ -1,0 +1,19 @@
+id: after-execution
+namespace: io.kestra.tests
+
+outputs:
+  - id: final
+    type: STRING
+    value: "{{ outputs.mytask.value }}"
+
+tasks:
+  - id: mytask
+    type: io.kestra.plugin.core.debug.Return
+    format: this is a task output used as a final flow output
+
+afterExecution:
+  - id: end
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      state: "{{execution.state}}"
+      output: "{{execution.outputs.final}}"

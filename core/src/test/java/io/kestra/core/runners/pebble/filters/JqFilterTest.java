@@ -14,8 +14,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class JqFilterTest {
@@ -25,14 +24,14 @@ class JqFilterTest {
     @Test
     void fromString() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ [1, 2, 3] | jq(\".[0]\") | first }}", Map.of());
-        assertThat(render, is("1"));
+        assertThat(render).isEqualTo("1");
 
         render = variableRenderer.render("{{ my_vars | jq(\".test[0]\") }}", Map.of(
             "my_vars", Map.of(
                 "test", Arrays.asList(1, 2, 3)
             )
         ));
-        assertThat(render, is("[1]"));
+        assertThat(render).isEqualTo("[1]");
     }
 
     @Test
@@ -44,7 +43,7 @@ class JqFilterTest {
         );
 
         String render = variableRenderer.render("{{  render(first) | jq(\".second.third\") }}", vars);
-        assertThat(render, is("[\"awesome\"]"));
+        assertThat(render).isEqualTo("[\"awesome\"]");
     }
 
     @Test
@@ -72,33 +71,33 @@ class JqFilterTest {
         );
 
         String render = variableRenderer.render("{{ vars | jq(\".second.string\") }}", vars);
-        assertThat(render, is("[\"string\"]"));
+        assertThat(render).isEqualTo("[\"string\"]");
 
         render = variableRenderer.render("{{ vars | jq(\".second.string\") | first }}", vars);
-        assertThat(render, is("string"));
+        assertThat(render).isEqualTo("string");
 
         render = variableRenderer.render("{{ vars | jq(\".second.int\") | first }}", vars);
-        assertThat(render, is("1"));
+        assertThat(render).isEqualTo("1");
 
         render = variableRenderer.render("{{ vars | jq(\".second.float\") | first }}", vars);
-        assertThat(render, is("1.123"));
+        assertThat(render).isEqualTo("1.123");
 
         render = variableRenderer.render("{{ vars | jq(\".second.list\") | first }}", vars);
-        assertThat(render, is("[\"string\",1,1.123]"));
+        assertThat(render).isEqualTo("[\"string\",1,1.123]");
 
         render = variableRenderer.render("{{ vars | jq(\".second.bool\") | first }}", vars);
-        assertThat(render, is("true"));
+        assertThat(render).isEqualTo("true");
 
         render = variableRenderer.render("{{ vars | jq(\".second.date\") | first }}", vars);
-        assertThat(render, is(date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)));
+        assertThat(render).isEqualTo(date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
         render = variableRenderer.render("{{ vars | jq(\".second.map\") | first }}", vars);
-        assertThat(render, containsString("\"int\":1"));
-        assertThat(render, containsString("\"int\":1"));
-        assertThat(render, containsString("\"float\":1.123"));
-        assertThat(render, containsString("\"string\":\"string\""));
-        assertThat(render, startsWith("{"));
-        assertThat(render, endsWith("}"));
+        assertThat(render).contains("\"int\":1");
+        assertThat(render).contains("\"int\":1");
+        assertThat(render).contains("\"float\":1.123");
+        assertThat(render).contains("\"string\":\"string\"");
+        assertThat(render).startsWith("{");
+        assertThat(render).endsWith("}");
     }
 
     @Test
@@ -108,7 +107,7 @@ class JqFilterTest {
         );
 
         String render = variableRenderer.render("{{ vars | jq(\".second[]\") }}", vars);
-        assertThat(render, is("[1,2,3]"));
+        assertThat(render).isEqualTo("[1,2,3]");
     }
 
     @Test
@@ -122,11 +121,11 @@ class JqFilterTest {
 
         ImmutableMap<String, Object> vars = ImmutableMap.of("vars", value);
 
-        assertThat(variableRenderer.render("{{ vars | jq(\".string\") | first | className }}", vars), is("java.lang.String"));
-        assertThat(variableRenderer.render("{{ vars | jq(\".int\") | first | className }}", vars), is("java.lang.Integer"));
-        assertThat(variableRenderer.render("{{ vars | jq(\".float\") | first | className }}", vars), is("java.lang.Float"));
-        assertThat(variableRenderer.render("{{ vars | jq(\".bool\") | first | className }}", vars), is("java.lang.Boolean"));
-        assertThat(variableRenderer.render("{{ vars | jq(\".null\") | first | className }}", vars), is(""));
+        assertThat(variableRenderer.render("{{ vars | jq(\".string\") | first | className }}", vars)).isEqualTo("java.lang.String");
+        assertThat(variableRenderer.render("{{ vars | jq(\".int\") | first | className }}", vars)).isEqualTo("java.lang.Integer");
+        assertThat(variableRenderer.render("{{ vars | jq(\".float\") | first | className }}", vars)).isEqualTo("java.lang.Float");
+        assertThat(variableRenderer.render("{{ vars | jq(\".bool\") | first | className }}", vars)).isEqualTo("java.lang.Boolean");
+        assertThat(variableRenderer.render("{{ vars | jq(\".null\") | first | className }}", vars)).isEqualTo("");
     }
 
     @Test
@@ -139,9 +138,9 @@ class JqFilterTest {
         );
 
         String render = variableRenderer.render("{% set object = vars | jq(\".object\") %}{{object[0].key}}", vars);
-        assertThat(render, is("value"));
+        assertThat(render).isEqualTo("value");
 
         render = variableRenderer.render("{% set array = vars | jq(\".array\") %}{{array[0][0]}}", vars);
-        assertThat(render, is("arrayValue"));
+        assertThat(render).isEqualTo("arrayValue");
     }
 }

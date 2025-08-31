@@ -2,61 +2,48 @@
     <dotted-layout
         :embed="embed"
         :phrase="$t('pluginPage.title2')"
-        :alt="$t('blueprints.header.alt')"
+        :alt="$t('pluginPage.alt')"
         :image="headerImage"
         :image-dark="headerImageDark"
     >
-        <el-row class="my-4 px-3">
-            <KestraFilter :placeholder="$t('pluginPage.search', {count: countPlugin})" :search-callback="(input)=> searchInput = input" />
+        <el-row class="my-4 px-3" justify="center">
+            <el-col :xs="24" :sm="18" :md="12" :lg="10" :xl="8">
+                <el-input
+                    v-model="searchText"
+                    :placeholder="$t('pluginPage.search', {count: countPlugin})"
+                    clearable
+                    @input="updateSearch"
+                />
+            </el-col>
         </el-row>
         <section class="px-3 plugins-container">
-            <el-tooltip v-for="(plugin, index) in pluginsList" :show-after="1000" :key="plugin.name + '-' + index" effect="light">
+            <el-tooltip
+                v-for="(plugin, index) in pluginsList"
+                :show-after="1000"
+                :key="`${plugin.name}-${index}`"
+                effect="light"
+            >
                 <template #content>
                     <div class="tasks-tooltips">
-                        <p v-if="plugin?.tasks.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            {{ $t('tasks') }}
-                        </p>
-                        <ul>
-                            <li
-                                v-for="task in plugin.tasks.filter(t => t.toLowerCase().includes(searchInput))"
-                                :key="task"
+                        <template
+                            v-for="([elementType, elements]) in allElementsByTypeEntries(plugin)"
+                            :key="elementType"
+                        >
+                            <p
+                                v-if="elements.filter(t => t.toLowerCase().includes(searchInput)).length > 0"
+                                class="mb-0"
                             >
-                                <span @click="openPlugin(task)">{{ task }}</span>
-                            </li>
-                        </ul>
-                        <p v-if="plugin?.triggers.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            {{ $t('triggers') }}
-                        </p>
-                        <ul>
-                            <li
-                                v-for="trigger in plugin.triggers.filter(t => t.toLowerCase().includes(searchInput))"
-                                :key="trigger"
-                            >
-                                <span @click="openPlugin(trigger)">{{ trigger }}</span>
-                            </li>
-                        </ul>
-                        <p v-if="plugin?.conditions.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            {{ $t('conditions') }}
-                        </p>
-                        <ul>
-                            <li
-                                v-for="condition in plugin.conditions.filter(t => t.toLowerCase().includes(searchInput))"
-                                :key="condition"
-                            >
-                                <span @click="openPlugin(condition)">{{ condition }}</span>
-                            </li>
-                        </ul>
-                        <p v-if="plugin?.taskRunners.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            {{ $t('task_runners') }}
-                        </p>
-                        <ul>
-                            <li
-                                v-for="taskRunner in plugin.taskRunners.filter(t => t.toLowerCase().includes(searchInput))"
-                                :key="taskRunner"
-                            >
-                                <span @click="openPlugin(taskRunner)">{{ taskRunner }}</span>
-                            </li>
-                        </ul>
+                                {{ $t(elementType) }}
+                            </p>
+                            <ul>
+                                <li
+                                    v-for="element in elements.filter(t => t.toLowerCase().includes(searchInput))"
+                                    :key="element"
+                                >
+                                    <span @click="openPlugin(element)">{{ element }}</span>
+                                </li>
+                            </ul>
+                        </template>
                     </div>
                 </template>
                 <div class="plugin-card" @click="openGroup(plugin)">
@@ -74,13 +61,15 @@
 </template>
 
 <script>
-    import {TaskIcon} from "@kestra-io/ui-libs";
+    import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
     import DottedLayout from "../layout/DottedLayout.vue";
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";
-    import KestraFilter from "../filter/KestraFilter.vue";
+    import {mapStores} from "pinia";
+    import {usePluginsStore} from "../../stores/plugins";
 
     export default {
+        name: "PluginHome",
         props: {
             plugins: {
                 type: Array,
@@ -93,43 +82,23 @@
         },
         components: {
             DottedLayout,
-            TaskIcon,
-            KestraFilter
+            TaskIcon
         },
         data() {
             return {
                 icons: [],
-                searchInput: "",
                 headerImage,
-                headerImageDark
+                headerImageDark,
+                searchText: ""
             }
         },
-        created() {
-            this.$store.dispatch("plugin/groupIcons").then(
-                res => {
-                    this.icons = res
-                }
-            )
-        },
         computed: {
+            ...mapStores(usePluginsStore),
+            searchInput() {
+                return this.searchText.toLowerCase();
+            },
             countPlugin() {
-                let allTasks = [];
-                let allTriggers = [];
-                let allConditions = [];
-                let allTaskRunners = [];
-
-                // avoid duplicate across groups and subgroups
-                this.plugins.forEach(plugin => {
-                    allTasks = [...allTasks, ...plugin.tasks];
-                    allTriggers = [...allTriggers, ...plugin.triggers];
-                    allConditions = [...allConditions, ...plugin.conditions];
-                    allTaskRunners = [...allTaskRunners, ...plugin.taskRunners];
-                });
-
-                return (new Set(allTasks)).size +
-                    (new Set(allTriggers)).size +
-                    (new Set(allConditions)).size +
-                    (new Set(allTaskRunners)).size;
+                return new Set(this.plugins.flatMap(plugin => this.allElements(plugin))).size;
             },
             pluginsList() {
                 return this.plugins
@@ -138,30 +107,41 @@
                             t.title === plugin.title && t.group === plugin.group
                         ));
                     })
-                    .filter(plugin => {
-                        return plugin.title.toLowerCase().includes(this.searchInput.toLowerCase()) ||
-                            plugin.tasks.some(task => task.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                            plugin.triggers.some(trigger => trigger.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                            plugin.conditions.some(condition => condition.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                            plugin.taskRunners.some(taskRunner => taskRunner.toLowerCase().includes(this.searchInput.toLowerCase()))
-                    })
-                    .filter(plugin => this.isVisible(plugin))
+                    .filter(plugin =>
+                        plugin.title.toLowerCase().includes(this.searchInput)
+                        || this.allElements(plugin).some(e => e.toLowerCase().includes(this.searchInput))
+                    ).filter(plugin => this.isVisible(plugin))
                     .sort((a, b) => {
-                        const nameA = a.manifest["X-Kestra-Title"].toLowerCase(),
-                              nameB = b.manifest["X-Kestra-Title"].toLowerCase();
+                        const nameA = a.manifest["X-Kestra-Title"].toLowerCase();
+                        const nameB = b.manifest["X-Kestra-Title"].toLowerCase();
 
                         return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
                     })
             }
         },
+        created() {
+            this.loadPluginIcons();
+            this.searchText = this.$route.query?.q || "";
+        },
         methods: {
+            async loadPluginIcons() {
+                try {
+                    this.icons = await this.pluginsStore.groupIcons();
+                } catch (error) {
+                    console.error("Failed to load plugin icons:", error);
+                    this.icons = [];
+                }
+            },
+            updateSearch(value) {
+                this.$router.push({
+                    query: {...this.$route.query, q: value || undefined}
+                });
+            },
             openGroup(plugin) {
-                this.openPlugin(
-                    plugin.tasks?.[0] ??
-                        plugin.triggers?.[0] ??
-                        plugin.conditions?.[0] ??
-                        plugin.taskRunners?.[0]
-                )
+                const defaultElement = Object.entries(plugin)
+                    .filter(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements))
+                    .flatMap(([, elements]) => elements.filter(({deprecated}) => !deprecated).map(({cls}) => cls))?.[0];
+                this.openPlugin(defaultElement);
             },
             openPlugin(cls) {
                 if (!cls) {
@@ -170,27 +150,26 @@
                 this.$router.push({name: "plugins/view", params: {cls: cls}})
             },
             isVisible(plugin) {
-                return [...plugin.tasks, ...plugin.triggers, ...plugin.conditions, ...plugin.taskRunners].length > 0
+                return this.allElements(plugin).length > 0;
             },
             hasIcon(cls) {
                 return this.icons[cls] !== undefined;
+            },
+            allElementsByTypeEntries(plugin) {
+                return Object.entries(plugin).filter(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements))
+                    .map(([elementType, elements]) => [
+                        elementType,
+                        elements.filter(({deprecated}) => !deprecated).map(({cls}) => cls)
+                    ]);
+            },
+            allElements(plugin) {
+                return this.allElementsByTypeEntries(plugin).flatMap(([, elements]) => elements);
             }
-
         }
     }
 </script>
 
 <style scoped lang="scss">
-    .search {
-        display: flex;
-        width: 22rem;
-        padding: 0.25rem 2rem;
-        justify-content: center;
-        align-items: center;
-        gap: 0.25rem;
-        background-color: transparent;
-    }
-
     .plugins-container {
         display: grid;
         gap: 16px;
@@ -210,19 +189,6 @@
         &.enhance-readability {
             padding: 1.5rem;
             background-color: var(--bs-gray-100);
-        }
-
-        &::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        &::-webkit-scrollbar-track {
-            -webkit-border-radius: 10px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            -webkit-border-radius: 10px;
-            background: var(--ks-button-background-primary);
         }
     }
 
@@ -244,7 +210,7 @@
         background-color: var(--ks-button-background-secondary);
         color: var(--ks-content-primary);
 
-        &:hover{
+        &:hover {
             border-color: var(--ks-border-active);
             background-color: var(--ks-button-background-secondary-hover);
         }

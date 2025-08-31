@@ -8,7 +8,7 @@
             @change="updateLabel(label)"
             class="me-1 el-tag label"
         >
-            {{ label.key }}: {{ label.value }}
+            {{ label.key }}:{{ label.value }}
         </el-check-tag>
     </span>
 </template>
@@ -48,7 +48,7 @@
     };
 
     const updateLabel = (label: Label) => {
-        const getKey = (key: string) => `filters[labels][$eq][${key}]`;
+        const getKey = (key: string) => `filters[labels][EQUALS][${key}]`;
 
         if (isChecked(label)) {
             const replacementQuery = {...route.query};
@@ -64,15 +64,21 @@
 
 <style scoped lang="scss">
 .label {
-    font-weight: normal;
+    #{--ks-tag-background}: #E0E3F0;
+    #{--ks-tag-background-active}: #B8BDD4;
 
-    &:hover {
-        background-color: var(--ks-tag-background-hover);
+    html.dark & {
+        #{--ks-tag-background}: #404559;
+        #{--ks-tag-background-active}: #59607B;
     }
+    
+    background-color: var(--ks-tag-background);
+    font-weight: normal;
+    color: var(--ks-content-primary);
 }
 
 .el-check-tag.el-check-tag--primary.is-checked {
-    background-color: var(--el-color-primary);
+    background-color: var(--ks-tag-background-active);
     color: var(--ks-content-primary);
 }
 </style>

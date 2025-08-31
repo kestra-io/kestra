@@ -19,20 +19,21 @@ export default {
             ready: false,
             internalPageSize: 25,
             internalPageNumber: 1,
-            internalSort: undefined,
+            internalSort: undefined
         };
     },
     props: {
         filters: {
             type: Object,
-            default: () => {}
+            default: () => {
+            }
         },
         pageSize: {
             type: Number
         },
         pageNumber: {
             type: Number
-        },
+        }
     },
     watch: {
         $route(newValue, oldValue) {
@@ -51,7 +52,7 @@ export default {
         onSort(sortItem) {
             this.internalSort = this.sortString(sortItem);
 
-            if (!this.embed && this.internalSort) {
+            if (this.internalSort) {
                 const sort = this.internalSort;
                 this.$router.push({
                     query: {...this.$route.query, sort}
@@ -75,18 +76,18 @@ export default {
 
             for (const [key, value] of Object.entries(values)) {
                 if (value === undefined || value === "" || value === null || value.length === 0) {
-                    delete query[key]
+                    delete query[key];
                 } else {
                     query[key] = value;
                 }
             }
 
-            this.internalPageNumber = 1
+            this.internalPageNumber = 1;
 
-            this.$router.push({query: query})
+            this.$router.push({query: query});
         },
         onPageChanged(item) {
-            if(this.internalPageSize === item.size && this.internalPageNumber === item.page) return;
+            if (this.internalPageSize === item.size && this.internalPageNumber === item.page) return;
 
             this.internalPageSize = item.size;
             this.internalPageNumber = item.page;
@@ -103,8 +104,28 @@ export default {
                 this.load(this.onDataLoaded);
             }
         },
-        queryWithFilter() {
-            return _merge(_cloneDeep(this.$route.query), this.filters || {});
+        queryWithFilter(namespace, excludedKeys = []) {
+            let query = this.$route.query;
+
+            if (namespace !== undefined) {
+                query = Object.fromEntries(
+                    Object.entries(query)
+                        .filter(([key]) => key.startsWith(`${namespace}[`))
+                        .map(([key, value]) => [key.substring(namespace.length + 2, key.length - 1), value])
+                );
+            }
+
+            if (excludedKeys.length > 0) {
+                const filterKeyMatcher = new RegExp(`^(?:filters\\[)?(?:${excludedKeys.join(")|(?:")})`);
+                query = Object.fromEntries(
+                    Object.entries(query).filter(([key]) => filterKeyMatcher.exec(key) === null)
+                );
+            }
+
+            return _merge(_cloneDeep(
+                query,
+                this.filters || {}
+            ));
         },
         load(callback) {
             if (this.$refs.dataTable) {
@@ -113,12 +134,12 @@ export default {
 
             this.loadData(callback || this.onDataLoaded);
         },
-        onDataLoaded () {
-            this.ready = true
+        onDataLoaded() {
+            this.ready = true;
             this.loadInit = true;
 
             if (this.saveRestoreUrl) {
-                this.saveRestoreUrl()
+                this.saveRestoreUrl();
             }
 
             if (this.$refs.dataTable) {
@@ -130,4 +151,4 @@ export default {
             this.internalPageNumber = this.pageNumber ?? this.$route.query.page ?? 1;
         }
     }
-}
+};

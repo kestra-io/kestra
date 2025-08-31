@@ -18,6 +18,8 @@ import picocli.CommandLine;
         FlowNamespaceCommand.class,
         FlowDotCommand.class,
         FlowExportCommand.class,
+        FlowUpdateCommand.class,
+        FlowUpdatesCommand.class
     }
 )
 @Slf4j

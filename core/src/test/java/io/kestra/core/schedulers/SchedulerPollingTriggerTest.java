@@ -1,7 +1,12 @@
 package io.kestra.core.schedulers;
 
 import io.kestra.core.models.Label;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.tasks.test.FailingPollingTrigger;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.condition.Expression;
@@ -30,15 +35,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
 public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
     @Inject
-    private ApplicationContext applicationContext;
+    protected ApplicationContext applicationContext;
 
     @Inject
     private SchedulerTriggerStateInterface triggerState;
@@ -80,8 +84,8 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
             queueCount.await(10, TimeUnit.SECONDS);
             receive.blockLast();
 
-            assertThat(queueCount.getCount(), is(0L));
-            assertThat(last.get(), notNullValue());
+            assertThat(queueCount.getCount()).isEqualTo(0L);
+            assertThat(last.get()).isNotNull();
             assertTrue(last.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
         }
     }
@@ -91,11 +95,11 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
         // mock flow listener
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         PollingTrigger pollingTrigger = createPollingTrigger(List.of(State.Type.FAILED)).build();
-        Flow flow = createPollingTriggerFlow(pollingTrigger)
+        FlowWithSource flow = createPollingTriggerFlow(pollingTrigger)
             .toBuilder()
             .tasks(List.of(Fail.builder().id("fail").type(Fail.class.getName()).build()))
             .build();
-        flowRepository.create(flow, flow.generateSource(), flow);
+        flowRepository.create(GenericFlow.of(flow));
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -114,7 +118,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
                     queueCount.countDown();
 
                     if (execution.getLeft().getState().getCurrent() == State.Type.CREATED) {
-                        executionQueue.emit(execution.getLeft().withState(State.Type.FAILED));
+                        terminateExecution(execution.getLeft(), State.Type.FAILED, Trigger.of(flow, pollingTrigger), flow);
                     }
                 }
             }));
@@ -125,8 +129,8 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
             queueCount.await(10, TimeUnit.SECONDS);
             receive.blockLast();
 
-            assertThat(queueCount.getCount(), is(0L));
-            assertThat(last.get(), notNullValue());
+            assertThat(queueCount.getCount()).isEqualTo(0L);
+            assertThat(last.get()).isNotNull();
             assertTrue(last.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
 
             // Assert that the trigger is now disabled.
@@ -145,7 +149,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
                 List.of(
                     Expression.builder()
                         .type(Expression.class.getName())
-                        .expression("{{ trigger.date | date() < now() }}")
+                        .expression(new Property<>("{{ trigger.date | date() < now() }}"))
                         .build()
                 ))
             .build();
@@ -176,14 +180,54 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
             // close the execution queue consumer
             receive.blockLast();
 
-            assertThat(queueCount.getCount(), is(0L));
-            assertThat(last.get(), notNullValue());
-            assertThat(last.get().getFlowRevision(), notNullValue());
-            assertThat(last.get().getState().getCurrent(), is(State.Type.FAILED));
+            assertThat(queueCount.getCount()).isEqualTo(0L);
+            assertThat(last.get()).isNotNull();
+            assertThat(last.get().getFlowRevision()).isNotNull();
+            assertThat(last.get().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         }
     }
 
-    private Flow createPollingTriggerFlow(PollingTrigger pollingTrigger) {
+    @Test
+    void pollingTriggerFailOnTriggerError() throws Exception {
+        // mock flow listener
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        FailingPollingTrigger pollingTrigger = FailingPollingTrigger.builder()
+            .id("failing")
+            .type(FailingPollingTrigger.class.getName())
+            .failOnTriggerError(true)
+            .build();
+        Flow flow = createPollingTriggerFlow(pollingTrigger);
+        doReturn(List.of(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        try (
+            AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
+            Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)
+        ) {
+            AtomicReference<Execution> last = new AtomicReference<>();
+
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
+                if (execution.getLeft().getFlowId().equals(flow.getId())) {
+                    last.set(execution.getLeft());
+                    queueCount.countDown();
+                }
+            });
+
+            worker.run();
+            scheduler.run();
+
+            assertTrue(queueCount.await(10, TimeUnit.SECONDS));
+            receive.blockLast();
+
+            assertThat(last.get()).isNotNull();
+            assertTrue(last.get().getState().isFailed());
+        }
+    }
+
+    private FlowWithSource createPollingTriggerFlow(AbstractTrigger pollingTrigger) {
         return createFlow(Collections.singletonList(pollingTrigger));
     }
 

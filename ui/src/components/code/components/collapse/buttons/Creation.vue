@@ -5,24 +5,25 @@
 </template>
 
 <script setup lang="ts">
+    import {inject} from "vue";
+    import {
+        CREATE_TASK_FUNCTION_INJECTION_KEY,
+    } from "../../../injectionKeys";
     import {Plus} from "../../../utils/icons";
 
-    import {useRouter, useRoute} from "vue-router";
-    const router = useRouter();
-    const route = useRoute();
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps({section: {type: String, required: true}});
+    const props = defineProps<{
+        parentPathComplete: string;
+        blockSchemaPath: string;
+        refPath?: number;
+    }>()
+
+    const createTask = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {});
 
     const handleClick = () => {
-        router.replace({
-            query: {
-                ...route.query,
-                section: props.section.toLowerCase(),
-                identifier: "new",
-            },
-        });
+        createTask(props.parentPathComplete, props.blockSchemaPath, props.refPath);
     };
 </script>

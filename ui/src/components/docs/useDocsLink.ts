@@ -1,6 +1,6 @@
 import path from "path-browserify";
 import {computed, Ref} from "vue";
-import {useStore} from "vuex";
+import {useDocStore} from "../../stores/doc";
 
 /**
  * converts markdown code links path into
@@ -29,16 +29,16 @@ function normalizeRemoteHref(href) {
 }
 
 export function useDocsLink(hrefInput: Ref<string>, currentPath: Ref<string>) {
-    const store = useStore();
+    const docStore = useDocStore();
 
-    const pageMetadata = computed(() => store.getters["doc/pageMetadata"]);
+    const pageMetadata = computed(() => docStore.pageMetadata);
     const isRemote = computed(() => isRemoteLink(hrefInput.value));
     const href = computed(() => {
         if(isRemote.value) {
             return normalizeRemoteHref(hrefInput.value)
         }
         let relativeLink = normalizeDocsPath(hrefInput.value);
-        if (pageMetadata.value.isIndex === false) {
+        if (pageMetadata.value?.isIndex === false) {
             relativeLink = "../" + relativeLink;
         }
         return path.normalize(currentPath.value + "/" + relativeLink);

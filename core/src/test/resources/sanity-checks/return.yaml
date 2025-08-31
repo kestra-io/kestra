@@ -1,5 +1,5 @@
 id: return
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 variables:
   my_var: test

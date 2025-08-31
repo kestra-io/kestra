@@ -16,9 +16,9 @@
                 <chevron-left v-else />
             </el-button>
             <div class="logo">
-                <router-link :to="{name: 'home'}">
+                <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
                     <span class="img" />
-                </router-link>
+                </component>
             </div>
             <Environment />
         </template>
@@ -38,7 +38,6 @@
         computed,
         shallowRef, h
     } from "vue";
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
 
@@ -50,12 +49,17 @@
 
     import Environment from "./Environment.vue";
     import BookmarkLinkList from "./BookmarkLinkList.vue";
+    import {useBookmarksStore} from "../../stores/bookmarks";
 
 
     const props = defineProps({
         generateMenu: {
             type: Function,
             required: true
+        },
+        showLink: {
+            type: Boolean,
+            default: true
         }
     })
 
@@ -63,7 +67,6 @@
 
     const $route = useRoute()
     const {locale, t} = useI18n({useScope: "global"});
-    const store = useStore()
 
     function flattenMenu(menu) {
         return menu.reduce((acc, item) => {
@@ -87,7 +90,7 @@
     function disabledCurrentRoute(items) {
         return items
             .map(r => {
-                if (r.href === $route.path) {
+                if (r.href?.path === $route.path) {
                     r.disabled = true;
                 }
 
@@ -117,9 +120,11 @@
         expandParentIfNeeded();
     })
 
+    const bookmarksStore = useBookmarksStore();
+
     const menu = computed(() => {
         return [
-            ...(store.state.bookmarks.pages?.length ? [{
+            ...(bookmarksStore.pages?.length ? [{
                 title: t("bookmark"),
                 icon: {
                     element: shallowRef(StarOutline),
@@ -128,7 +133,7 @@
                 child: [{
                     // here we use only one component for all bookmarks
                     // so when one edits the bookmark, it will be updated without closing the section
-                    component: () => h(BookmarkLinkList, {pages: store.state.bookmarks.pages}),
+                    component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
                 }]
             }] : []),
             ...disabledCurrentRoute(props.generateMenu())
@@ -204,7 +209,7 @@
             height: 112px;
             position: relative;
 
-            a {
+            > * {
                 transition: 0.2s all;
                 position: absolute;
                 left: 37px;
@@ -248,6 +253,9 @@
         .vsm--child {
             .vsm--item {
                 padding: 0;
+                .vsm--title {
+                    padding-left: 10px;
+                }
             }
         }
 
@@ -272,6 +280,7 @@
 
             &_disabled {
                 pointer-events: auto;
+                opacity: 1;
             }
 
             &:hover, body &_hover {
@@ -356,14 +365,19 @@
             }
         }
 
+        .vsm--scroll-thumb {
+            background: var(--ks-border-primary) !important;
+            border-radius: 8px;
+        }
+
         .vsm--mobile-bg {
             border-radius: 0 var(--bs-border-radius) var(--bs-border-radius) 0;
         }
 
         &.vsm_collapsed {
             .logo {
-                a {
-                    left: 8px;
+                > * {
+                    left: 10px;
 
                     span.img {
                         background-size: 207px 55px;

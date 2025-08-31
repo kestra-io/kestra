@@ -10,15 +10,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.StringContains.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class SingleFlowCommandsTest {
-
+class SingleFlowCommandsTest {
 
     @Test
     void all() {
-        URL flow = SingleFlowCommandsTest.class.getClassLoader().getResource("flows/quattro.yml");
+        URL flow = SingleFlowCommandsTest.class.getClassLoader().getResource("crudFlow/date.yml");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
@@ -26,19 +24,6 @@ public class SingleFlowCommandsTest {
 
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
-
-            String[] deleteArgs = {
-                "--server",
-                embeddedServer.getURL().toString(),
-                "--user",
-                "myuser:pass:word",
-                "io.kestra.outsider",
-                "quattro"
-            };
-            PicocliRunner.call(FlowDeleteCommand.class, ctx, deleteArgs);
-
-            assertThat(out.toString(), containsString("Flow successfully deleted !"));
-            out.reset();
 
             String[] createArgs = {
                 "--server",
@@ -49,23 +34,36 @@ public class SingleFlowCommandsTest {
             };
             PicocliRunner.call(FlowCreateCommand.class, ctx, createArgs);
 
-            assertThat(out.toString(), containsString("Flow successfully created !"));
+            assertThat(out.toString()).contains("Flow successfully created !");
 
+            out.reset();
 
-            out.reset();String[] updateArgs = {
+            String[] updateArgs = {
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
                 "myuser:pass:word",
                 flow.getPath(),
-                "io.kestra.outsider",
-                "quattro"
+                "io.kestra.cli",
+                "date"
             };
             PicocliRunner.call(FlowUpdateCommand.class, ctx, updateArgs);
 
-            assertThat(out.toString(), containsString("Flow successfully updated !"));
+            assertThat(out.toString()).contains("Flow successfully updated !");
+
             out.reset();
+
+            String[] deleteArgs = {
+                "--server",
+                embeddedServer.getURL().toString(),
+                "--user",
+                "myuser:pass:word",
+                "io.kestra.cli",
+                "date"
+            };
+            PicocliRunner.call(FlowDeleteCommand.class, ctx, deleteArgs);
+
+            assertThat(out.toString()).contains("Flow successfully deleted !");
         }
     }
-
 }

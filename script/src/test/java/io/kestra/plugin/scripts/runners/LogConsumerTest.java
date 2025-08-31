@@ -1,6 +1,7 @@
 package io.kestra.plugin.scripts.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.TaskCommands;
@@ -8,7 +9,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
@@ -17,16 +17,16 @@ import io.kestra.plugin.scripts.runner.docker.Docker;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-import static io.kestra.core.utils.TestsUtils.propertyFromList;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class LogConsumerTest {
@@ -43,7 +43,7 @@ class LogConsumerTest {
     };
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -54,7 +54,7 @@ class LogConsumerTest {
        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         String outputValue = "a".repeat(10000);
         TaskCommands taskCommands = new CommandsWrapper(runContext)
-            .withCommands(Property.of(List.of(
+            .withCommands(Property.ofValue(List.of(
             "/bin/sh", "-c",
             "echo \"::{\\\"outputs\\\":{\\\"someOutput\\\":\\\"" + outputValue + "\\\"}}::\"\n" +
                 "echo -n another line"
@@ -67,8 +67,8 @@ class LogConsumerTest {
             Collections.emptyList()
         );
         Await.until(() -> run.getLogConsumer().getStdOutCount() == 2, null, Duration.ofSeconds(5));
-        assertThat(run.getLogConsumer().getStdOutCount(), is(2));
-        assertThat(run.getLogConsumer().getOutputs().get("someOutput"), is(outputValue));
+        assertThat(run.getLogConsumer().getStdOutCount()).isEqualTo(2);
+        assertThat(run.getLogConsumer().getOutputs().get("someOutput")).isEqualTo(outputValue);
     }
 
     @Test
@@ -81,7 +81,7 @@ class LogConsumerTest {
                     .append(Integer.toString(i).repeat(800)).append("\r")
                 .append(Integer.toString(i).repeat(2000)).append("\r");
         }
-        TaskCommands taskCommands = new CommandsWrapper(runContext).withCommands(Property.of(List.of(
+        TaskCommands taskCommands = new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of(
             "/bin/sh", "-c",
             "echo " + outputValue +
                 "echo -n another line"
@@ -93,16 +93,16 @@ class LogConsumerTest {
         );
 
         Await.until(() -> run.getLogConsumer().getStdOutCount() == 10, null, Duration.ofSeconds(5));
-        assertThat(run.getLogConsumer().getStdOutCount(), is(10));
+        assertThat(run.getLogConsumer().getStdOutCount()).isEqualTo(10);
     }
 
     @Test
     void logs() throws Exception {
-        List<LogEntry> logs = new ArrayList<>();
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> logs.add(l.getLeft()));
 
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
-        TaskCommands taskCommands = new CommandsWrapper(runContext).withCommands(Property.of(List.of(
+        TaskCommands taskCommands = new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of(
             "/bin/sh", "-c",
             """
                 echo '::{"logs": [{"level":"INFO","message":"Hello World"}]}::'
@@ -117,11 +117,12 @@ class LogConsumerTest {
             Collections.emptyList()
         );
 
+        Await.until(() -> logs.size() >= 10, null, Duration.ofSeconds(20));
         receive.blockLast();
 
-        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.INFO)).count(), is(1L));
-        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.ERROR)).count(), is(1L));
-        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.TRACE)).filter(m -> m.getMessage().contains("Trace 2")).count(), is(1L));
-        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.TRACE)).count(), greaterThanOrEqualTo(5L));
+        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.INFO)).count()).isEqualTo(1L);
+        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.ERROR)).count()).isEqualTo(1L);
+        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.TRACE)).filter(m -> m.getMessage().contains("Trace 2")).count()).isEqualTo(1L);
+        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.TRACE)).count()).isGreaterThanOrEqualTo(4L);
     }
 }

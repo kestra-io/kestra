@@ -1,10 +1,10 @@
 package io.kestra.plugin.core.storage;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
 
 import java.io.FileInputStream;
@@ -14,14 +14,14 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class DeleteTest {
     @Inject
-    RunContextFactory runContextFactory;
+    TestRunContextFactory runContextFactory;
 
     @Inject
     StorageInterface storageInterface;
@@ -32,7 +32,7 @@ class DeleteTest {
         URL resource = DeleteTest.class.getClassLoader().getResource("application-test.yml");
 
         URI put = storageInterface.put(
-            null,
+            MAIN_TENANT,
             null,
             new URI("/file/storage/get.yml"),
             new FileInputStream(Objects.requireNonNull(resource).getFile())
@@ -40,19 +40,19 @@ class DeleteTest {
 
 
         Delete bash = Delete.builder()
-            .uri(Property.of(put.toString()))
+            .uri(Property.ofValue(put.toString()))
             .build();
 
         Delete.Output run = bash.run(runContext);
-        assertThat(run.getDeleted(), is(true));
+        assertThat(run.getDeleted()).isTrue();
 
         run = bash.run(runContext);
-        assertThat(run.getDeleted(), is(false));
+        assertThat(run.getDeleted()).isFalse();
 
         assertThrows(NoSuchElementException.class, () -> {
             Delete error = Delete.builder()
-                .uri(Property.of(put.toString()))
-                .errorOnMissing(Property.of(true))
+                .uri(Property.ofValue(put.toString()))
+                .errorOnMissing(Property.ofValue(true))
                 .build();
 
             error.run(runContext);

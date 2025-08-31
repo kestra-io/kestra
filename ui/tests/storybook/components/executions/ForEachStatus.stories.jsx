@@ -1,8 +1,22 @@
 import ForEachStatus from "../../../../src/components/executions/ForEachStatus.vue";
+import {vueRouter} from "storybook-vue3-router";
 
 const meta = {
     title: "components/ForEachStatus",
     component: ForEachStatus,
+    decorators: [
+        vueRouter([
+            {
+                path: "/",
+                name: "home",
+                component: {template: "<div>home</div>"}
+            },
+            {
+                path: "/executions",
+                name:"executions/list",
+                component: {template: "<div>executions</div>"}
+            },
+        ])]
 }
 
 export default meta;

@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -20,19 +19,19 @@ class FromJsonFunctionTest {
     @Test
     void fronJsonFunction() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ fromJson('{\"test1\": 1, \"test2\": 2, \"test3\": 3}').test1 }}", Map.of());
-        assertThat(render, is("1"));
+        assertThat(render).isEqualTo("1");
 
         render = variableRenderer.render("{{ fromJson('{\"test1\": [{\"test1\": 666}, 2, 3], \"test2\": 2, \"test3\": 3}').test1[0].test1 }}", Map.of());
-        assertThat(render, is("666"));
+        assertThat(render).isEqualTo("666");
 
         render = variableRenderer.render("{{ fromJson('[1, 2, 3]')[0] }}", Map.of());
-        assertThat(render, is("1"));
+        assertThat(render).isEqualTo("1");
 
         render = variableRenderer.render("{{ fromJson('{\"empty_object\":{}}') }}", Map.of());
-        assertThat(render, is("{\"empty_object\":{}}"));
+        assertThat(render).isEqualTo("{\"empty_object\":{}}");
 
         render = variableRenderer.render("{{ fromJson(null) }}", Map.of());
-        assertThat(render, emptyString());
+        assertThat(render).isEmpty();
     }
 
     @Test
@@ -45,6 +44,6 @@ class FromJsonFunctionTest {
     @Test
     void jsonFunction() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ json('{\"test1\": 1, \"test2\": 2, \"test3\": 3}').test1 }}", Map.of());
-        assertThat(render, is("1"));
+        assertThat(render).isEqualTo("1");
     }
 }

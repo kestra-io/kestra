@@ -41,16 +41,17 @@
             />
         </section>
         <section class="items">
-            <el-tag v-for="(item, index) in current" :key="index" class="m-1">
-                <Label :option="item" />
-            </el-tag>
+            {{ current }}
         </section>
         <template #footer>
             <div class="dialog-footer">
                 <el-button @click="toggle()">
                     {{ t("cancel") }}
                 </el-button>
-                <el-button :disabled="!label" type="primary" @click="save()">
+                <el-button v-if="validationErrorMessage" disabled type="danger">
+                    {{ validationErrorMessage }}
+                </el-button>
+                <el-button v-if="!validationErrorMessage" :disabled="!label" type="primary" @click="save()">
                     {{ t("save") }}
                 </el-button>
             </div>
@@ -59,28 +60,25 @@
 </template>
 
 <script setup lang="ts">
-    import {PropType, getCurrentInstance, ref} from "vue";
+    import {computed, getCurrentInstance, ref} from "vue";
     import {ElInput} from "element-plus";
-
-    import {CurrentItem} from "../utils/types";
-
     import KestraIcon from "../../Kicon.vue";
-    import Label from "../components/Label.vue";
-
     import {Save} from "../utils/icons";
+    import {useI18n} from "vue-i18n";
+    import {useFilters} from "../composables/useFilters";
 
     const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
 
-    import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps({
-        disabled: {type: Boolean, default: true},
-        prefix: {type: String, required: true},
-        current: {type: Object as PropType<CurrentItem[]>, required: true},
+    const props = withDefaults(defineProps<{
+        disabled?: boolean,
+        prefix: string,
+        current: string,
+    }>(),{
+        disabled: true,
     });
 
-    import {useFilters} from "../composables/useFilters";
     const {getSavedItems, setSavedItems} = useFilters(props.prefix);
 
     const visible = ref(false);
@@ -93,6 +91,16 @@
 
     const input = ref<InstanceType<typeof ElInput> | null>(null);
     const label = ref("");
+
+    const validationErrorMessage = computed(() =>{
+        const items = getSavedItems();
+        if(items && items.map(i => i.name).find(name => name === label.value)){
+            return t("filters.save.name_already_used");
+        } else {
+            return null;
+        }
+    });
+
     const save = () => {
         const items = getSavedItems();
 

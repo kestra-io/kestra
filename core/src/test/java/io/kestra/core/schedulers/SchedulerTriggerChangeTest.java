@@ -6,7 +6,9 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
@@ -49,7 +51,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
 
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
-    protected QueueInterface<FlowWithSource> flowQueue;
+    protected QueueInterface<FlowInterface> flowQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -83,7 +85,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
             )
             .build();
 
-        return FlowWithSource.of(flow, flow.generateSource());
+        return FlowWithSource.of(flow, flow.getSource());
     }
 
     @Test
@@ -119,7 +121,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
 
             // emit a flow trigger to be started
             FlowWithSource flow = createFlow(Duration.ofSeconds(10));
-            flowRepository.create(flow, flow.generateSource(), flow);
+            flowRepository.create(GenericFlow.of(flow));
             flowQueue.emit(flow);
 
             Await.until(() -> STARTED_COUNT == 1, Duration.ofMillis(100), Duration.ofSeconds(30));

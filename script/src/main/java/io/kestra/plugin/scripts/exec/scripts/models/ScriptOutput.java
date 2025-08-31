@@ -3,19 +3,17 @@ package io.kestra.plugin.scripts.exec.scripts.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.runners.TaskRunnerDetailResult;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
 import lombok.Getter;
 
 import java.net.URI;
 import java.util.Map;
-import java.util.Optional;
 import jakarta.validation.constraints.NotNull;
+import lombok.experimental.SuperBuilder;
 
-@Builder
+@SuperBuilder
 @Getter
 public class ScriptOutput implements Output {
     @Schema(
@@ -42,13 +40,6 @@ public class ScriptOutput implements Output {
     @JsonIgnore
     private final int stdErrLineCount;
 
-    @JsonIgnore
-    private Boolean warningOnStdErr;
-
     private TaskRunnerDetailResult taskRunner;
 
-    @Override
-    public Optional<State.Type> finalState() {
-        return this.warningOnStdErr != null && this.warningOnStdErr && this.stdErrLineCount > 0 ? Optional.of(State.Type.WARNING) : Output.super.finalState();
-    }
 }

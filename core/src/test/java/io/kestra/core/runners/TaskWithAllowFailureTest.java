@@ -1,8 +1,7 @@
 package io.kestra.core.runners;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -39,36 +38,37 @@ public class TaskWithAllowFailureTest {
     @Test
     @ExecuteFlow("flows/valids/task-allow-failure-runnable.yml")
     void runnableTask(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
-        assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.findTaskRunsByTaskId("fail").getFirst().getAttempts().size(), is(3));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.findTaskRunsByTaskId("fail").getFirst().getAttempts().size()).isEqualTo(3);
     }
 
     @Test
     @LoadFlows({"flows/valids/task-allow-failure-executable-flow.yml",
         "flows/valids/for-each-item-subflow-failed.yaml"})
     void executableTask_Flow() throws QueueException, TimeoutException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-executable-flow");
-        assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
-        assertThat(execution.getTaskRunList(), hasSize(2));
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "task-allow-failure-executable-flow");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        assertThat(execution.getTaskRunList()).hasSize(2);
     }
 
     @Test
-    @LoadFlows({"flows/valids/task-allow-failure-executable-foreachitem.yml"})
+    @LoadFlows({"flows/valids/task-allow-failure-executable-foreachitem.yml",
+        "flows/valids/for-each-item-subflow-failed.yaml"})
     void executableTask_ForEachItem() throws TimeoutException, QueueException, URISyntaxException, IOException {
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-executable-foreachitem", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "task-allow-failure-executable-foreachitem", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
-        assertThat(execution.getTaskRunList(), hasSize(4));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        assertThat(execution.getTaskRunList()).hasSize(4);
     }
 
     @Test
     @ExecuteFlow("flows/valids/task-allow-failure-flowable.yml")
     void flowableTask(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
-        assertThat(execution.getTaskRunList(), hasSize(3));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        assertThat(execution.getTaskRunList()).hasSize(3);
     }
 
     private URI storageUpload() throws URISyntaxException, IOException {
@@ -77,7 +77,7 @@ public class TaskWithAllowFailureTest {
         Files.write(tempFile.toPath(), content());
 
         return storageInterface.put(
-            null,
+            MAIN_TENANT,
             null,
             new URI("/file/storage/file.txt"),
             new FileInputStream(tempFile)

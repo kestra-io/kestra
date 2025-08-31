@@ -13,9 +13,6 @@ import org.slf4j.event.Level;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
 @ToString
@@ -23,7 +20,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Plugin
-public class DynamicPropertyExampleTask extends Task implements RunnableTask<DynamicPropertyExampleTask.Output> {
+public class DynamicPropertyExampleTask extends Task implements RunnableTask<DynamicPropertyExampleTask.Output>, Data.From {
     @NotNull
     private Property<@Min(0) Integer> number;
 
@@ -32,11 +29,11 @@ public class DynamicPropertyExampleTask extends Task implements RunnableTask<Dyn
 
     @NotNull
     @Builder.Default
-    private Property<String> withDefault = Property.of("Default Value");
+    private Property<String> withDefault = Property.ofValue("Default Value");
 
     @NotNull
     @Builder.Default
-    private Property<Level> level = Property.of(Level.INFO);
+    private Property<Level> level = Property.ofValue(Level.INFO);
 
     @NotNull
     private Property<Duration> someDuration;
@@ -48,7 +45,7 @@ public class DynamicPropertyExampleTask extends Task implements RunnableTask<Dyn
     private Property<Map<String, String>> properties;
 
     @NotNull
-    private Data<Message> data;
+    private Object from;
 
 
     @Override
@@ -67,9 +64,10 @@ public class DynamicPropertyExampleTask extends Task implements RunnableTask<Dyn
 
         Map<String, String> map = runContext.render(properties).asMap(String.class, String.class);
 
-        List<Message> outputMessages = Optional.ofNullable(data).map(throwFunction(d -> d.flux(runContext, Message.class, message -> Message.fromMap(message))
+        List<Message> outputMessages = Data.from(from)
+            .readAs(runContext, Message.class, message -> Message.fromMap(message))
             .collectList()
-            .block())).orElse(null);
+            .block();
 
         return Output.builder()
             .value(value)

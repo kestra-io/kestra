@@ -2,7 +2,7 @@ import {useVueFlow} from "@vue-flow/core"
 
 
 export const predecessorsEdge = (vueFlowId, nodeUid) => {
-    const {getEdges} = useVueFlow({id: vueFlowId});
+    const {getEdges} = useVueFlow(vueFlowId);
 
     let nodes = [];
 
@@ -20,7 +20,7 @@ export const predecessorsEdge = (vueFlowId, nodeUid) => {
 }
 
 export const successorsEdge = (vueFlowId, nodeUid) => {
-    const {getEdges} = useVueFlow({id: vueFlowId});
+    const {getEdges} = useVueFlow(vueFlowId);
 
     let nodes = [];
 
@@ -38,7 +38,7 @@ export const successorsEdge = (vueFlowId, nodeUid) => {
 }
 
 export const predecessorsNode = (vueFlowId, nodeUid) => {
-    const {getEdges, findNode} = useVueFlow({id: vueFlowId});
+    const {getEdges, findNode} = useVueFlow(vueFlowId);
 
     let nodes = [findNode(nodeUid)];
 
@@ -56,7 +56,7 @@ export const predecessorsNode = (vueFlowId, nodeUid) => {
 }
 
 export const successorsNode = (vueFlowId, nodeUid) => {
-    const {getEdges, findNode} = useVueFlow({id: vueFlowId});
+    const {getEdges, findNode} = useVueFlow(vueFlowId);
 
     let nodes = [findNode(nodeUid)];
 

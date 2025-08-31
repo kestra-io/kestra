@@ -1,97 +1,42 @@
 <template>
-    <el-form label-position="top">
-        <template v-if="properties(true)">
-            <!-- Required properties -->
-            <el-form-item
-                :key="index"
-                :required="isRequired(key)"
-                v-for="(schema, key, index) in properties(true)"
-            >
-                <template #label>
-                    <span v-if="getKey(key)" class="label">
-                        {{ getKey(key) }}
-                    </span>
-                    <el-tag
-                        disable-transitions
-                        size="small"
-                        class="ms-2 type-tag"
-                    >
-                        {{ getType(schema) }}
-                    </el-tag>
-                    <el-tooltip
-                        v-if="hasTooltip(schema)"
-                        :persistent="false"
-                        :hide-after="0"
-                        effect="light"
-                    >
-                        <template #content>
-                            <markdown
-                                class="markdown-tooltip"
-                                :source="helpText(schema)"
-                            />
-                        </template>
-                        <help class="ms-2" />
-                    </el-tooltip>
-                </template>
-                <component
-                    :is="`task-${getType(schema, key)}`"
-                    :model-value="getPropertiesValue(key)"
-                    :task="modelValue"
-                    @update:model-value="onObjectInput(key, $event)"
-                    :root="getKey(key)"
-                    :schema="schema"
-                    :required="isRequired(key)"
-                    :definitions="definitions"
-                    class="mt-1 mb-2 wrapper"
-                />
-            </el-form-item>
+    <el-form label-position="top" class="w-100">
+        <template v-if="sortedProperties">
+            <template v-for="[fieldKey, fieldSchema] in protectedRequiredProperties" :key="fieldKey">
+                <TaskWrapper :merge>
+                    <template #tasks>
+                        <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                    </template>
+                </TaskWrapper>
+            </template>
 
-            <!-- Non required properties shown collapsed-->
-            <el-collapse class="collapse">
-                <el-collapse-item :title="$t('no_code.sections.optional')">
-                    <el-form-item
-                        :key="index"
-                        :required="isRequired(key)"
-                        v-for="(schema, key, index) in properties(false)"
-                    >
-                        <template #label>
-                            <span v-if="getKey(key)" class="label">
-                                {{ getKey(key) }}
-                            </span>
-                            <el-tag
-                                disable-transitions
-                                size="small"
-                                class="ms-2 type-tag"
-                            >
-                                {{ getType(schema) }}
-                            </el-tag>
-                            <el-tooltip
-                                v-if="hasTooltip(schema)"
-                                :persistent="false"
-                                :hide-after="0"
-                                effect="light"
-                            >
-                                <template #content>
-                                    <markdown
-                                        class="markdown-tooltip"
-                                        :source="helpText(schema)"
-                                    />
-                                </template>
-                                <help class="ms-2" />
-                            </el-tooltip>
-                        </template>
-                        <component
-                            :is="`task-${getType(schema, key)}`"
-                            :model-value="getPropertiesValue(key)"
-                            :task="modelValue"
-                            @update:model-value="onObjectInput(key, $event)"
-                            :root="getKey(key)"
-                            :schema="schema"
-                            :required="isRequired(key)"
-                            :definitions="definitions"
-                            class="mt-1 mb-2 wrapper"
-                        />
-                    </el-form-item>
+            <el-collapse v-model="activeNames" v-if="requiredProperties.length && (optionalProperties?.length || deprecatedProperties?.length || connectionProperties?.length)" class="collapse">
+                <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="$t('no_code.sections.connection')">
+                    <template v-for="[fieldKey, fieldSchema] in connectionProperties" :key="fieldKey">
+                        <TaskWrapper>
+                            <template #tasks>
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                            </template>
+                        </TaskWrapper>
+                    </template>
+                </el-collapse-item>
+                <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="$t('no_code.sections.optional')">
+                    <template v-for="[fieldKey, fieldSchema] in optionalProperties" :key="fieldKey">
+                        <TaskWrapper>
+                            <template #tasks>
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                            </template>
+                        </TaskWrapper>
+                    </template>
+                </el-collapse-item>
+
+                <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="$t('no_code.sections.deprecated')">
+                    <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
+                        <TaskWrapper>
+                            <template #tasks>
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                            </template>
+                        </TaskWrapper>
+                    </template>
                 </el-collapse-item>
             </el-collapse>
         </template>
@@ -112,149 +57,192 @@
     </el-form>
 </template>
 
+<script setup>
+    import TaskDict from "./TaskDict.vue";
+    import TaskWrapper from "./TaskWrapper.vue";
+    import TaskObjectField from "./TaskObjectField.vue";
+
+    defineEmits(["update:modelValue"]);
+</script>
+
 <script>
     import Task from "./Task";
-    import Information from "vue-material-design-icons/InformationOutline.vue";
-    import Help from "vue-material-design-icons/HelpBox.vue";
-    import Kicon from "../../Kicon.vue";
-    import Editor from "../../inputs/Editor.vue";
-    import Markdown from "../../layout/Markdown.vue";
-    import TaskDict from "./TaskDict.vue";
+
+    const FIRST_FIELDS = ["id", "forced", "on", "type"];
+
+    function sortProperties(properties, required) {
+        if(!properties.length) {
+            return [];
+        }
+        return properties.sort((a, b) => {
+            if (FIRST_FIELDS.includes(a[0])) {
+                return -1;
+            } else if (FIRST_FIELDS.includes(b[0])) {
+                return 1;
+            }
+
+            const aRequired = (required || []).includes(
+                a[0],
+            );
+            const bRequired = (required || []).includes(
+                b[0],
+            );
+
+            if (aRequired && !bRequired) {
+                return -1;
+            } else if (!aRequired && bRequired) {
+                return 1;
+            }
+
+            const aDefault = "default" in a[1];
+            const bDefault = "default" in b[1];
+
+            if (aDefault && !bDefault) {
+                return 1;
+            } else if (!aDefault && bDefault) {
+                return -1;
+            }
+
+            return a[0].localeCompare(b[0]);
+        })
+    }
 
     export default {
+        inheritAttrs: false,
         name: "TaskObject",
         mixins: [Task],
-        components: {
-            TaskDict,
-            Information,
-            Help,
-            Kicon,
-            Editor,
-            Markdown,
+        props: {
+            properties: {
+                type: Object,
+                default: () => ({}),
+            },
+            merge: {type: Boolean, default: false},
+            metadataInputs: {type: Boolean, default: false}
         },
-        emits: ["update:modelValue"],
+        data() {
+            return {
+                activeNames: [],
+            };
+        },
+        computed: {
+            filteredProperties() {
+                return this.properties ? Object.entries(this.properties).filter(([key, value]) => {
+                    return !(key === "type") && !Array.isArray(value);
+                }) : [];
+            },
+            sortedProperties() {
+                return sortProperties(this.filteredProperties, this.schema?.required);
+            },
+            requiredProperties() {
+                return this.merge ? this.sortedProperties : this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));
+            },
+            protectedRequiredProperties(){
+                return this.requiredProperties.length ? this.requiredProperties : this.sortedProperties;
+            },
+            optionalProperties() {
+                return this.merge ? [] : this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p) && !v.$deprecated && v.$group !== "connection");
+            },
+            deprecatedProperties() {
+                return this.merge ? [] : this.sortedProperties.filter(([k,v]) => v && v.$deprecated && this.modelValue[k] !== undefined);
+            },
+            connectionProperties() {
+                return this.merge ? [] : this.sortedProperties.filter(([p,v]) => v && v.$group === "connection" && !this.isRequired(p));
+            },
+        },
         methods: {
-            properties(requiredFields) {
-                if (this.schema?.properties) {
-                    const properties = Object.entries(
-                        this.schema.properties,
-                    ).reduce((acc, [key, value]) => {
-                        if (
-                            requiredFields
-                                ? this.isRequired(key)
-                                : !this.isRequired(key)
-                        ) {
-                            acc[key] = value;
-                        }
-                        return acc;
-                    }, {});
-
-                    return this.sortProperties(properties);
-                }
-
-                return undefined;
-            },
-            getPropertiesValue(properties) {
-                return this.modelValue && this.modelValue[properties]
-                    ? this.modelValue[properties]
-                    : undefined;
-            },
-            sortProperties(properties) {
-                if (!properties) {
-                    return properties;
-                }
-
-                return Object.entries(properties)
-                    .sort((a, b) => {
-                        if (a[0] === "id") {
-                            return -1;
-                        } else if (b[0] === "id") {
-                            return 1;
-                        }
-
-                        const aRequired = (this.schema.required || []).includes(
-                            a[0],
-                        );
-                        const bRequired = (this.schema.required || []).includes(
-                            b[0],
-                        );
-
-                        if (aRequired && !bRequired) {
-                            return -1;
-                        } else if (!aRequired && bRequired) {
-                            return 1;
-                        }
-
-                        const aDefault = "default" in a[1];
-                        const bDefault = "default" in b[1];
-
-                        if (aDefault && !bDefault) {
-                            return 1;
-                        } else if (!aDefault && bDefault) {
-                            return -1;
-                        }
-
-                        return a[0].localeCompare(b[0]);
-                    })
-                    .reduce((result, entry) => {
-                        result[entry[0]] = entry[1];
-                        return result;
-                    }, {});
-            },
-            onObjectInput(properties, value) {
+            onObjectInput(propertyName, value) {
                 const currentValue = this.modelValue || {};
-                currentValue[properties] = value;
-                this.$emit("update:modelValue", currentValue);
+                currentValue[propertyName] = value;
+                this.onInput(currentValue);
             },
-            isValidated(key) {
-                return (
-                    this.isRequired(key) &&
-                    !this.getPropertiesValue(key) &&
-                    this.schema.properties[key].default === undefined
-                );
+            isNestedProperty(key) {
+                return key.includes(".") ||
+                    ["interval", "maxInterval", "minInterval", "type"].includes(key);
             },
-            hasTooltip(schema) {
-                return schema.title || schema.description;
-            },
-            helpText(schema) {
-                return (
-                    (schema.title ? "**" + schema.title + "**" : "") +
-                    (schema.title && schema.description ? "\n" : "") +
-                    (schema.description ? schema.description : "")
-                );
+            fieldProps(key, schema) {
+                return {
+                    modelValue: this.modelValue?.[key],
+                    "onUpdate:modelValue": (value) => {
+                        this.onObjectInput(key, value);
+                    },
+                    root: this.root,
+                    fieldKey: key,
+                    task: this.modelValue,
+                    schema: schema,
+                    definitions: this.definitions,
+                    required: this.schema.required,
+                };
             },
         },
+
     };
 </script>
+
+<style lang="scss">
+    .el-form-item__content {
+        .el-form-item {
+            width: 100%;
+        }
+    }
+
+    .el-popper.singleton-tooltip {
+        max-width: 300px !important;
+        background: var(--ks-tooltip-background);
+    }
+</style>
 
 <style lang="scss" scoped>
 @import "../../code/styles/code.scss";
 
-.type-tag {
-    background-color: var(--ks-tag-background);
-    color: var(--ks-tag-content);
-}
-
-.el-form-item.is-required:not(.is-no-asterisk).asterisk-left {
-    > :deep(.el-form-item__label) {
-        display: flex;
-    }
-}
-
-.label {
-    color: var(--ks-content-primary);
-}
-
-.el-tooltip__trigger {
-    > :deep(svg) {
-        fill: var(--ks-content-tertiary);
-    }
-}
-
 .el-form-item {
+    width: 100%;
+    margin-bottom: 0;
     > :deep(.el-form-item__label) {
+        width: 100%;
+        display: flex;
         align-items: center;
-        justify-content: flex-start;
+        padding: 0;
+    }
+}
+
+.inline-wrapper {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+
+    .inline-start {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .label {
+        color: var(--ks-content-primary);
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 600;
+    }
+
+    .type-tag {
+        background-color: var(--ks-tag-background-active);
+        color: var(--ks-tag-content);
+        font-size: 12px;
+        line-height: 20px;
+        padding: 0 8px;
+        padding-bottom: 2px;
+        border-radius: 8px;
+        text-transform: capitalize;
+    }
+
+    .information-icon {
+        color: var(--ks-content-secondary);
+        cursor: pointer;
     }
 }
 </style>

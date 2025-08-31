@@ -1,0 +1,19 @@
+id: after-execution-listener
+namespace: io.kestra.tests
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀
+
+listeners:
+  - tasks:
+      - id: listenerTask
+        type: io.kestra.plugin.core.log.Log
+        message: I'm a listener
+
+afterExecution:
+  - id: end
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      state: "{{execution.state}}"

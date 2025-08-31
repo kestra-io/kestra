@@ -1,7 +1,6 @@
 package io.kestra.jdbc.services;
 
 import io.kestra.core.models.dashboards.AggregationType;
-import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.services.AbstractFilterService;
 import io.kestra.jdbc.repository.AbstractJdbcDashboardRepository;
@@ -13,6 +12,7 @@ import org.jooq.Record;
 import java.util.Map;
 
 import static org.jooq.impl.DSL.*;
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
 
 @Singleton
 @Requires(bean = AbstractJdbcDashboardRepository.class)

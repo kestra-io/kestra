@@ -1,5 +1,5 @@
 id: parallel
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 variables:
   test: test

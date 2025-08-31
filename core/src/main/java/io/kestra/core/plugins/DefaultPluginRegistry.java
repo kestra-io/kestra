@@ -329,6 +329,14 @@ public class DefaultPluginRegistry implements PluginRegistry {
         pluginClassByIdentifier.clear();
     }
 
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public boolean isVersioningSupported() {
+        return false;
+    }
+
     public record PluginBundleIdentifier(@Nullable URL location) {
 
         public static PluginBundleIdentifier CORE = new PluginBundleIdentifier(null);

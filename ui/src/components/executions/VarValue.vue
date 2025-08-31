@@ -1,20 +1,31 @@
 <template>
     <el-button-group v-if="isFileValid(value)">
-        <a class="el-button el-button--small el-button--primary" :href="itemUrl(value)" target="_blank">
-            <Download />
+        <el-button
+            type="primary"
+            tag="a"
+            :href="itemUrl(value)"
+            target="_blank"
+            size="small"
+            :icon="Download"
+            rel="noopener noreferrer"
+        >
             {{ $t('download') }}
-        </a>
-        <FilePreview v-if="value.startsWith('kestra:///')" :value="value" :execution-id="execution.id" />
+        </el-button>
+        <FilePreview v-if="isFile(value)" :value="value" :execution-id="execution.id" />
         <el-button disabled size="small" type="primary" v-if="humanSize">
             ({{ humanSize }})
         </el-button>
     </el-button-group>
-
     <el-button-group v-else-if="isURI(value)">
-        <a class="el-button el-button--small el-button--primary" :href="value" target="_blank">
-            <OpenInNew /> &nbsp;
+        <el-button
+            type="primary"
+            size="small"
+            :href="value"
+            target="_blank"
+            :icon="OpenInNew"
+        >
             {{ $t('open') }}
-        </a>
+        </el-button>
     </el-button-group>
 
     <span v-else-if="value === null">
@@ -43,7 +54,7 @@
         },
         methods: {
             isFile(value) {
-                return typeof(value) === "string" && value.startsWith("kestra:///")
+                return typeof(value) === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"))
             },
             isFileValid(value) {
                 // we don't want to display the file if it's not a file or if the size is 0
@@ -51,7 +62,8 @@
             },
             isURI(value) {
                 try {
-                    new URL(value);
+                    const url = new URL(value);
+                    if (this.restrictUri) { return ["http:", "https:"].includes(url.protocol); }
                     return true;
                 } catch {
                     return false;
@@ -86,6 +98,11 @@
                 type: Object,
                 required: false,
                 default: undefined
+            },
+            restrictUri: {
+                type: Boolean,
+                required: false,
+                default: false
             }
         }
     };

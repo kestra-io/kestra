@@ -1,9 +1,9 @@
 package io.kestra.plugin.core.kv;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
@@ -12,24 +12,20 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class GetKeysTest {
     static final String TEST_KEY_PREFIX_TEST = "test";
 
     @Inject
-    RunContextFactory runContextFactory;
+    TestRunContextFactory runContextFactory;
 
     @Test
     void shouldGetAllKeys() throws Exception {
         // Given
         String namespace = IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(Map.of(
-            "flow", Map.of("namespace", namespace)
-        ));
+        RunContext runContext = this.runContextFactory.of(namespace);
 
         GetKeys getKeys = GetKeys.builder()
             .id(GetKeys.class.getSimpleName())
@@ -45,19 +41,15 @@ class GetKeysTest {
         GetKeys.Output run = getKeys.run(runContext);
 
         // Then
-        assertThat(run.getKeys(), containsInAnyOrder("test-key", "test-second-key", "another-key"));
+        assertThat(run.getKeys()).containsExactlyInAnyOrder("test-key", "test-second-key", "another-key");
     }
 
     @Test
     void shouldGetKeysGivenMatchingPrefix() throws Exception {
         // Given
         String namespace = IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(Map.of(
-            "flow", Map.of("namespace", namespace),
-            "inputs", Map.of(
-                "prefix", TEST_KEY_PREFIX_TEST
-            )
-        ));
+        RunContext runContext = this.runContextFactory.of(namespace,
+            Map.of("inputs", Map.of("prefix", TEST_KEY_PREFIX_TEST)));
 
         GetKeys getKeys = GetKeys.builder()
             .id(GetKeys.class.getSimpleName())
@@ -74,19 +66,15 @@ class GetKeysTest {
         GetKeys.Output run = getKeys.run(runContext);
 
         // Then
-        assertThat(run.getKeys(), containsInAnyOrder(TEST_KEY_PREFIX_TEST + "-key", TEST_KEY_PREFIX_TEST + "-second-key"));
+        assertThat(run.getKeys()).containsExactlyInAnyOrder(TEST_KEY_PREFIX_TEST + "-key", TEST_KEY_PREFIX_TEST + "-second-key");
     }
 
     @Test
     void shouldGetNoKeysGivenEmptyKeyStore() throws Exception {
         // Given
         String namespace = IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(Map.of(
-            "flow", Map.of("namespace", namespace),
-            "inputs", Map.of(
-                "prefix", TEST_KEY_PREFIX_TEST
-            )
-        ));
+        RunContext runContext = this.runContextFactory.of(namespace,
+            Map.of("inputs", Map.of("prefix", TEST_KEY_PREFIX_TEST)));
 
         GetKeys getKeys = GetKeys.builder()
             .id(GetKeys.class.getSimpleName())
@@ -98,6 +86,6 @@ class GetKeysTest {
         GetKeys.Output run = getKeys.run(runContext);
 
         // Then
-        assertThat(run.getKeys(), empty());
+        assertThat(run.getKeys()).isEmpty();
     }
 }

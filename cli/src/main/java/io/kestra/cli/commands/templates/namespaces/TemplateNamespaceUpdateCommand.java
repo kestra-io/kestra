@@ -2,6 +2,7 @@ package io.kestra.cli.commands.templates.namespaces;
 
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
+import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.core.serializers.YamlParser;
@@ -27,8 +28,9 @@ import jakarta.validation.ConstraintViolationException;
 @Slf4j
 @TemplateEnabled
 public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
+
     @Inject
-    public YamlParser yamlParser;
+    private TenantIdSelectorService tenantService;
 
     @Override
     public Integer call() throws Exception {
@@ -38,7 +40,7 @@ public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpda
             List<Template> templates = files
                 .filter(Files::isRegularFile)
                 .filter(YamlParser::isValidExtension)
-                .map(path -> yamlParser.parse(path.toFile(), Template.class))
+                .map(path -> YamlParser.parse(path.toFile(), Template.class))
                 .toList();
 
             if (templates.isEmpty()) {
@@ -47,7 +49,7 @@ public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpda
 
             try (DefaultHttpClient client = client()) {
                 MutableHttpRequest<List<Template>> request = HttpRequest
-                    .POST(apiUri("/templates/") + namespace + "?delete=" + delete, templates);
+                    .POST(apiUri("/templates/", tenantService.getTenantId(tenantId)) + namespace + "?delete=" + delete, templates);
 
                 List<UpdateResult> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),

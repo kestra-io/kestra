@@ -1,4 +1,4 @@
-import {setup} from "@storybook/vue3";
+import {setup} from "@storybook/vue3-vite";
 import {withThemeByClassName} from "@storybook/addon-themes";
 import initApp from "../src/utils/init";
 import stores from "../src/stores/store";
@@ -11,7 +11,7 @@ window.KESTRA_BASE_PATH = "/ui";
 window.KESTRA_UI_PATH = "./";
 
 /**
- * @type {import('@storybook/vue3').Preview}
+ * @type {import('@storybook/vue3-vite').Preview}
  */
 const preview = {
   parameters: {
@@ -36,5 +36,12 @@ const preview = {
 setup((app) => {
   initApp(app, [], stores, en);
 });
+
+
+window.addEventListener("unhandledrejection", (evt) => {
+    if (evt?.reason?.stack?.includes?.("/monaco/esm/vs") || evt?.reason?.stack?.includes?.("/monaco/min/vs")) {
+        evt.stopImmediatePropagation()
+    }
+})
 
 export default preview;

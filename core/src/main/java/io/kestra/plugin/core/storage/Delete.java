@@ -23,7 +23,7 @@ import java.util.NoSuchElementException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete a file from the Kestra's internal storage."
+    title = "Delete a file from Kestra's internal storage."
 )
 @Plugin(
     examples = {
@@ -37,17 +37,17 @@ import java.util.NoSuchElementException;
 )
 public class Delete extends Task implements RunnableTask<Delete.Output> {
     @Schema(
-        title = "The file to be deleted.",
-        description = "Must be a `kestra://` storage URI."
+        title = "The file to be deleted."
     )
     @NotNull
+    @PluginProperty(internalStorageURI = true)
     private Property<String> uri;
 
     @Schema(
         title = "Raise an error if the file is not found."
     )
     @Builder.Default
-    private final Property<Boolean> errorOnMissing = Property.of(false);
+    private final Property<Boolean> errorOnMissing = Property.ofValue(false);
 
     @Override
     public Delete.Output run(RunContext runContext) throws Exception {

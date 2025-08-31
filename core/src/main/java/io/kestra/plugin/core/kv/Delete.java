@@ -9,11 +9,11 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.codehaus.commons.nullanalysis.NotNull;
 
 import java.util.NoSuchElementException;
 
@@ -21,7 +21,7 @@ import java.util.NoSuchElementException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Deletes a KV pair."
+    title = "Delete a KV pair."
 )
 @Plugin(
     examples = {
@@ -53,14 +53,14 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
         title = "The namespace on which to set the value."
     )
     @Builder.Default
-    private Property<String> namespace = new Property<>("{{ flow.namespace }}");
+    private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
 
     @NotNull
     @Schema(
         title = "Whether to fail if there is no value for the given key."
     )
     @Builder.Default
-    private Property<Boolean> errorOnMissing = Property.of(false);
+    private Property<Boolean> errorOnMissing = Property.ofValue(false);
 
     @Override
     public Output run(RunContext runContext) throws Exception {

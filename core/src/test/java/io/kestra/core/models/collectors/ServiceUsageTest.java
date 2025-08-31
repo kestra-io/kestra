@@ -2,6 +2,7 @@ package io.kestra.core.models.collectors;
 
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.IdUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,7 @@ class ServiceUsageTest {
             Instant updatedAt = start.atStartOfDay(ZoneId.systemDefault()).plus(Duration.ofHours(10)).toInstant();
             ServiceInstance instance = new ServiceInstance(
                 IdUtils.create(),
-                Service.ServiceType.WORKER,
+                ServiceType.WORKER,
                 Service.ServiceState.EMPTY,
                 null,
                 createAt,
@@ -50,7 +51,7 @@ class ServiceUsageTest {
 
         // When
         ServiceUsage.DailyServiceStatistics statistics = ServiceUsage.of(
-            Service.ServiceType.WORKER,
+            ServiceType.WORKER,
             Duration.ofMinutes(15),
             instances
         );

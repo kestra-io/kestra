@@ -9,8 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class TaskGlobalDefaultConfigurationTest {
@@ -34,13 +33,10 @@ class TaskGlobalDefaultConfigurationTest {
         try (ApplicationContext ctx = ApplicationContext.run(kestra, Environment.CLI, Environment.TEST)) {
             TaskGlobalDefaultConfiguration taskDefaultGlobalConfiguration = ctx.getBean(TaskGlobalDefaultConfiguration.class);
 
-            assertThat(
-                ((Map<String, String>) taskDefaultGlobalConfiguration.getDefaults()
-                    .getFirst()
-                    .getValues()
-                    .get("env")).keySet(),
-                is(Set.of("AB_VALUE", "ABCVALUE"))
-            );
+            assertThat(((Map<String, String>) taskDefaultGlobalConfiguration.getDefaults()
+                .getFirst()
+                .getValues()
+                .get("env")).keySet()).isEqualTo(Set.of("AB_VALUE", "ABCVALUE"));
         }
     }
 }

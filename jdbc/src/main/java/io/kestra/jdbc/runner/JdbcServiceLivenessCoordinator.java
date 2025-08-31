@@ -3,18 +3,21 @@ package io.kestra.jdbc.runner;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.server.AbstractServiceLivenessCoordinator;
 import io.kestra.core.server.ServerConfig;
-import io.kestra.core.server.Service;
 import io.kestra.core.server.Service.ServiceState;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceRegistry;
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.jdbc.repository.AbstractJdbcServiceInstanceRepository;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Value;
+import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,6 +39,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
 
     private final AtomicReference<JdbcExecutor> executor = new AtomicReference<>();
     private final AbstractJdbcServiceInstanceRepository serviceInstanceRepository;
+    private final Duration purgeRetention;
 
     /**
      * Creates a new {@link JdbcServiceLivenessCoordinator} instance.
@@ -46,9 +50,11 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
     @Inject
     public JdbcServiceLivenessCoordinator(final AbstractJdbcServiceInstanceRepository serviceInstanceRepository,
                                           final ServiceRegistry serviceRegistry,
-                                          final ServerConfig serverConfig) {
+                                          final ServerConfig serverConfig,
+                                          @Value("${kestra.server.service.purge.retention}") final Duration purgeRetention) {
         super(serviceInstanceRepository, serviceRegistry, serverConfig);
         this.serviceInstanceRepository = serviceInstanceRepository;
+        this.purgeRetention = purgeRetention;
     }
 
     /**
@@ -69,7 +75,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
             final List<ServiceInstance> nonRunningWorkers = serviceInstanceRepository
                 .findAllNonRunningInstances(configuration, true)
                 .stream()
-                .filter(instance -> instance.is(Service.ServiceType.WORKER))
+                .filter(instance -> instance.is(ServiceType.WORKER))
                 .toList();
 
             // List of workers for which we don't know the actual state of tasks executions.
@@ -130,7 +136,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
 
             // Eventually restart workers tasks
             List<String> workerIdsHavingTasksToRestart = nonRespondingServices.stream()
-                .filter(instance -> instance.is(Service.ServiceType.WORKER))
+                .filter(instance -> instance.is(ServiceType.WORKER))
                 .filter(instance -> instance.config().workerTaskRestartStrategy().equals(WorkerTaskRestartStrategy.IMMEDIATELY))
                 .map(ServiceInstance::uid)
                 .toList();
@@ -140,6 +146,12 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
                 executor.get().reEmitWorkerJobsForWorkers(configuration, workerIdsHavingTasksToRestart);
             }
         });
+    }
+
+    @Scheduled(initialDelay = "${kestra.server.service.purge.initial-delay}", fixedDelay = "${kestra.server.service.purge.fixed-delay}")
+    public void purgeEmptyInstances() {
+        int purged = serviceInstanceRepository.purgeEmptyInstances(Instant.now().minus(purgeRetention));
+        log.info("Purged {} service instances", purged);
     }
 
 

@@ -17,7 +17,7 @@ import java.util.concurrent.TimeoutException;
 @Singleton
 public final class ServiceRegistry {
 
-    private final ConcurrentHashMap<Service.ServiceType, LocalServiceState> services = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<ServiceType, LocalServiceState> services = new ConcurrentHashMap<>();
 
     /**
      * Registers or update the given {@link LocalServiceState}.
@@ -37,15 +37,15 @@ public final class ServiceRegistry {
         services.remove(service.service().getType());
     }
 
-    public boolean containsService(final Service.ServiceType type) {
+    public boolean containsService(final ServiceType type) {
         return services.containsKey(type);
     }
 
-    public Service getServiceByType(final Service.ServiceType type) {
+    public Service getServiceByType(final ServiceType type) {
         return services.get(type).service();
     }
 
-    public Service waitForServiceAndGet(final Service.ServiceType type) {
+    public Service waitForServiceAndGet(final ServiceType type) {
         Await.until(() -> containsService(type));
         return getServiceByType(type);
     }
@@ -56,7 +56,7 @@ public final class ServiceRegistry {
      * @param type The service type.
      * @return The {@link LocalServiceState} or {@code null}.
      */
-    public LocalServiceState get(final Service.ServiceType type) {
+    public LocalServiceState get(final ServiceType type) {
         return services.get(type);
     }
 
@@ -77,7 +77,7 @@ public final class ServiceRegistry {
      * @param maxWaitDuration The max wait duration.
      * @return {@code true} if the service is in the expected state. Otherwise {@code false}.
      */
-    public boolean waitForServiceInState(final Service.ServiceType type,
+    public boolean waitForServiceInState(final ServiceType type,
                                          final Service.ServiceState state,
                                          final Duration maxWaitDuration) {
         if (!containsService(type)) return false;

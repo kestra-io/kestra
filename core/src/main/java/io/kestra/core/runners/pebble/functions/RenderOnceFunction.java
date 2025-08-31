@@ -24,4 +24,9 @@ public class RenderOnceFunction extends RenderFunction {
 
         return super.execute(argsWithNonRecursive, self, context, lineNumber);
     }
+
+    @Override
+    public String functionName() {
+        return "renderOnce";
+    }
 }

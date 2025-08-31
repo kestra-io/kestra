@@ -1,6 +1,7 @@
 package io.kestra.jdbc.runner;
 
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
@@ -24,7 +25,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
     }
 
     @Override
-    public Optional<MultipleConditionWindow> get(Flow flow, String conditionId) {
+    public Optional<MultipleConditionWindow> get(FlowId flow, String conditionId) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {

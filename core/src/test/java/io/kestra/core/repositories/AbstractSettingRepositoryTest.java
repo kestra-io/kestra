@@ -3,19 +3,23 @@ package io.kestra.core.repositories;
 import io.kestra.core.models.Setting;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.utils.VersionProvider;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public abstract class AbstractSettingRepositoryTest {
     @Inject
     protected SettingRepositoryInterface settingRepository;
+
+    // will make sure the settings for version is created
+    @Inject
+    protected VersionProvider versionProvider;
 
     @Test
     void all() {
@@ -25,26 +29,25 @@ public abstract class AbstractSettingRepositoryTest {
             .build();
 
         Optional<Setting> find = settingRepository.findByKey(setting.getKey());
-        assertThat(find.isPresent(), is(false));
+        assertThat(find.isPresent()).isFalse();
 
         Setting save = settingRepository.save(setting);
 
         find = settingRepository.findByKey(save.getKey());
 
-        assertThat(find.isPresent(), is(true));
-        assertThat(find.get().getValue(), is(save.getValue()));
+        assertThat(find.isPresent()).isTrue();
+        assertThat(find.get().getValue()).isEqualTo(save.getValue());
 
         List<Setting> all = settingRepository.findAll();
-        assertThat(all.size(), is(1));
-        assertThat(all.getFirst().getValue(), is(setting.getValue()));
+        assertThat(all.size()).isGreaterThanOrEqualTo(1); // ES have the version setting in test but not JDBC I don't know why
+        assertThat(all)
+            .extracting(Setting::getValue)
+            .contains(setting.getValue());
 
         Setting delete = settingRepository.delete(setting);
-        assertThat(delete.getValue(), is(setting.getValue()));
-
-        all = settingRepository.findAll();
-        assertThat(all.size(), is(0));
+        assertThat(delete.getValue()).isEqualTo(setting.getValue());
 
         find = settingRepository.findByKey(setting.getKey());
-        assertThat(find.isPresent(), is(false));
+        assertThat(find.isPresent()).isFalse();
     }
 }

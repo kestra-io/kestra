@@ -58,6 +58,11 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
     )
     private Property<String> key;
 
+    @Schema(
+        title = "The description of the KV."
+    )
+    private Property<String> kvDescription;
+
     @NotNull
     @Schema(
         title = "The value to map to the key."
@@ -69,14 +74,14 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
         title = "The namespace in which the KV pair will be stored. By default, Kestra will use the namespace of the flow."
     )
     @Builder.Default
-    private Property<String> namespace = new Property<>("{{ flow.namespace }}");
+    private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
 
     @NotNull
     @Schema(
         title = "Whether to overwrite or fail if a value for the given key already exists."
     )
     @Builder.Default
-    private Property<Boolean> overwrite = Property.of(true);
+    private Property<Boolean> overwrite = Property.ofValue(true);
 
     @Schema(
         title = "Optional Time-To-Live (TTL) duration for the key-value pair. If not set, the KV pair will never be deleted from internal storage."
@@ -98,8 +103,10 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
 
         KVStore kvStore = runContext.namespaceKv(renderedNamespace);
 
-        if (kvType != null && renderedValue instanceof String renderedValueStr) {
-                renderedValue = switch (runContext.render(kvType).as(KVType.class).orElseThrow()) {
+        if (kvType != null){
+            KVType renderedKvType = runContext.render(kvType).as(KVType.class).orElseThrow();
+            if (renderedValue instanceof String renderedValueStr) {
+                renderedValue = switch (renderedKvType) {
                     case NUMBER -> JacksonMapper.ofJson().readValue(renderedValueStr, Number.class);
                     case BOOLEAN -> Boolean.parseBoolean((String) renderedValue);
                     case DATETIME, DATE -> Instant.parse(renderedValueStr);
@@ -107,10 +114,16 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
                     case JSON -> JacksonMapper.toObject(renderedValueStr);
                     default -> renderedValue;
                 };
+            } else if (renderedValue instanceof Number valueNumber && renderedKvType == KVType.STRING) {
+                renderedValue = valueNumber.toString();
             }
+        }
 
         kvStore.put(renderedKey, new KVValueAndMetadata(
-            new KVMetadata(runContext.render(ttl).as(Duration.class).orElse(null)), renderedValue),
+            new KVMetadata(
+                runContext.render(kvDescription).as(String.class).orElse(null),
+                runContext.render(ttl).as(Duration.class).orElse(null)
+            ), renderedValue),
             runContext.render(this.overwrite).as(Boolean.class).orElseThrow()
         );
 

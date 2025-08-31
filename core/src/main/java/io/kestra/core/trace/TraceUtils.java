@@ -36,12 +36,15 @@ public final class TraceUtils {
     public static Attributes attributesFrom(RunContext runContext) {
         var flowInfo = runContext.flowInfo();
         var execution = (Map<String, Object>) runContext.getVariables().get("execution");
-        var executionId = (String) execution.get("id");
+        var executionId = execution != null ? (String) execution.get("id") : null;
 
         var builder = Attributes.builder()
             .put(ATTR_NAMESPACE, flowInfo.namespace())
-            .put(ATTR_FLOW_ID, flowInfo.id())
-            .put(ATTR_EXECUTION_ID, executionId);
+            .put(ATTR_FLOW_ID, flowInfo.id());
+
+        if (executionId != null) {
+            builder.put(ATTR_EXECUTION_ID, executionId);
+        }
 
         if (flowInfo.tenantId() != null) {
             builder.put(ATTR_TENANT_ID, flowInfo.tenantId());

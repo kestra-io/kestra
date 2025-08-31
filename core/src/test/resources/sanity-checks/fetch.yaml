@@ -1,5 +1,5 @@
 id: fetch
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 tasks:
   - id: log_info

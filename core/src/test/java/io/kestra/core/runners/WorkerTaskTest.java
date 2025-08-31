@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.serializers.JacksonMapper;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class WorkerTaskTest {
     protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
@@ -95,8 +93,8 @@ class WorkerTaskTest {
               }
             }""", WorkerJob.class);
 
-        assertThat(workerTask, notNullValue());
-        assertThat(workerTask, instanceOf(WorkerTask.class));
+        assertThat(workerTask).isNotNull();
+        assertThat(workerTask).isInstanceOf(WorkerTask.class);
     }
 
 }

@@ -45,11 +45,25 @@
                 </el-tooltip>
             </el-form-item>
             <el-form-item>
-                <el-button-group class="min-w-auto">
-                    <restart :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
+                <el-button-group class="ks-b-group">
+                    <restart v-if="executionsStore.execution" :execution="executionsStore.execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
                     <el-button @click="downloadContent()">
                         <kicon :tooltip="$t('download logs')">
                             <download />
+                        </kicon>
+                    </el-button>
+                    <el-button @click="copyAllLogs()">
+                        <kicon :tooltip="$t('copy logs')">
+                            <content-copy />
+                        </kicon>
+                    </el-button>
+                </el-button-group>
+            </el-form-item>
+            <el-form-item>
+                <el-button-group class="ks-b-group">
+                    <el-button @click="loadLogs()">
+                        <kicon :tooltip="$t('refresh')">
+                            <refresh />
                         </kicon>
                     </el-button>
                 </el-button-group>
@@ -68,8 +82,7 @@
             @follow="forwardEvent('follow', $event)"
             @opened-taskruns-count="openedTaskrunsCount = $event"
             @log-indices-by-level="Object.entries($event).forEach(([levelName, indices]) => logIndicesByLevel[levelName] = indices)"
-            :target-execution="execution"
-            :target-flow="flow"
+            :target-flow="executionsStore.flow"
             :show-progress-bar="false"
         />
         <el-card v-else class="attempt-wrapper">
@@ -108,9 +121,9 @@
 
 <script>
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    import {mapState} from "vuex";
     import Download from "vue-material-design-icons/Download.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Kicon from "../Kicon.vue";
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
@@ -122,6 +135,9 @@
     import LogLine from "../logs/LogLine.vue";
     import Restart from "./Restart.vue";
     import LogUtils from "../../utils/logs";
+    import Refresh from "vue-material-design-icons/Refresh.vue";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
 
     export default {
         components: {
@@ -132,10 +148,12 @@
             Kicon,
             Download,
             Magnify,
+            ContentCopy,
             Collapse,
             Restart,
             DynamicScroller,
             DynamicScrollerItem,
+            Refresh
         },
         data() {
             return {
@@ -156,10 +174,7 @@
             level: {
                 handler() {
                     if (this.raw_view) {
-                        this.$store.dispatch("execution/loadLogs", {
-                            executionId: this.execution.id,
-                            minLevel: this.level
-                        })
+                        this.loadLogs();
                     }
                 }
             },
@@ -174,11 +189,11 @@
                 return State
             },
             temporalLogs() {
-                if (!this.logs?.length) {
+                if (!this.executionsStore.logs?.length) {
                     return [];
                 }
 
-                const filtered = this.logs.filter(log => {
+                const filtered = this.executionsStore.logs.filter(log => {
                     if (!this.filter) return true;
                     return log.message?.toLowerCase().includes(this.filter.toLowerCase());
                 });
@@ -188,9 +203,12 @@
                     index
                 }));
             },
-            ...mapState("execution", ["execution", "logs", "flow"]),
+            ...mapStores(useExecutionsStore),
+            executionId() {
+                return this.executionsStore.execution.id;
+            },
             downloadName() {
-                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.execution.id}.log`
+                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.executionId}.log`
             },
             logDisplayButtonText() {
                 return this.openedTaskrunsCount === 0 ? this.$t("expand all") : this.$t("collapse all")
@@ -228,14 +246,30 @@
             }
         },
         methods: {
+            loadLogs(){
+                this.executionsStore.loadLogs({
+                    executionId: this.executionId,
+                    minLevel: this.level
+                })
+            },
             downloadContent() {
-                this.$store.dispatch("execution/downloadLogs", {
-                    executionId: this.execution.id,
+                this.executionsStore.downloadLogs({
+                    executionId: this.executionId,
                     params: {
                         minLevel: this.level
                     }
                 }).then((response) => {
                     Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName);
+                });
+            },
+            copyAllLogs() {
+                this.executionsStore.downloadLogs({
+                    executionId: this.executionId,
+                    params: {
+                        minLevel: this.level,
+                    }
+                }).then((response) => {
+                    Utils.copy(response);
                 });
             },
             forwardEvent(type, event) {
@@ -320,23 +354,16 @@
         .line {
             padding: .5rem;
         }
-
-        &::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--bs-gray-500);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-        }
     }
 
     .temporal {
         .line {
             align-items: flex-start;
         }
+    }
+
+    .ks-b-group {
+        min-width: auto!important;
+        max-width: max-content !important;
     }
 </style>

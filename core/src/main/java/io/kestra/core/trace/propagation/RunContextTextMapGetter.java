@@ -3,7 +3,7 @@ package io.kestra.core.trace.propagation;
 import io.kestra.core.runners.RunContext;
 import io.opentelemetry.context.propagation.TextMapGetter;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.List;
 
 public class RunContextTextMapGetter implements TextMapGetter<RunContext> {

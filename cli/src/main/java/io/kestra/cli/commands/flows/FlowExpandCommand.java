@@ -21,9 +21,6 @@ public class FlowExpandCommand extends AbstractCommand {
     private Path file;
 
     @Inject
-    private YamlParser yamlParser;
-
-    @Inject
     private ModelValidator modelValidator;
 
     @Override
@@ -31,7 +28,7 @@ public class FlowExpandCommand extends AbstractCommand {
         super.call();
         stdErr("Warning, this functionality is deprecated and will be removed at some point.");
         String content = IncludeHelperExpander.expand(Files.readString(file), file.getParent());
-        Flow flow = yamlParser.parse(content, Flow.class);
+        Flow flow = YamlParser.parse(content, Flow.class);
         modelValidator.validate(flow);
         stdOut(content);
         return 0;

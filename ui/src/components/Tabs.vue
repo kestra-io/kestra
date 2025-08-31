@@ -21,11 +21,10 @@
             </template>
         </el-tab-pane>
     </el-tabs>
-
-    <section v-if="isEditorActiveTab || activeTab.component" data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab, 'namespace-editor': isNamespaceEditor, 'maximized': activeTab.maximized}">
-        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${explorerWidth}% - 11px);`" :current-n-s="namespace" />
-        <div v-if="isEditorActiveTab && explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
-        <div v-if="isEditorActiveTab" :style="`flex: 1 1 ${100 - (isEditorActiveTab && explorerVisible ? explorerWidth : 0)}%;`">
+    <section v-if="isEditorActiveTab || activeTab.component" data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
+        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${editorStore.explorerWidth}% - 11px);`" :current-n-s="namespace" v-show="editorStore.explorerVisible" />
+        <div v-if="isEditorActiveTab && editorStore.explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
+        <div v-if="isEditorActiveTab" :style="`flex: 1 1 ${100 - (isEditorActiveTab && editorStore.explorerVisible ? editorStore.explorerWidth : 0)}%;`">
             <component
                 v-bind="{...activeTab.props, ...attrsWithoutClass}"
                 v-on="activeTab['v-on'] ?? {}"
@@ -34,25 +33,37 @@
                 embed
             />
         </div>
+        <blueprint-detail
+            v-else-if="selectedBlueprintId"
+            :blueprint-id="selectedBlueprintId"
+            blueprint-type="community"
+            @back="selectedBlueprintId = undefined"
+            combined-view="true"
+            :kind="activeTab.props.blueprintKind"
+            :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
+        />
         <component
             v-else
             v-bind="{...activeTab.props, ...attrsWithoutClass}"
             v-on="activeTab['v-on'] ?? {}"
             ref="tabContent"
             :is="activeTab.component"
+            :namespace="namespaceToForward"
+            @go-to-detail="blueprintId => selectedBlueprintId = blueprintId"
             :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
         />
     </section>
 </template>
 
 <script>
-    import {mapState, mapMutations} from "vuex";
-
     import EditorSidebar from "./inputs/EditorSidebar.vue";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
+    import BlueprintDetail from "./flows/blueprints/BlueprintDetail.vue";
+    import {useEditorStore} from "../stores/editor";
+    import {mapStores} from "pinia";
 
     export default {
-        components: {EditorSidebar, EnterpriseBadge},
+        components: {EditorSidebar, EnterpriseBadge,BlueprintDetail},
         props: {
             tabs: {
                 type: Array,
@@ -93,6 +104,7 @@
         data() {
             return {
                 activeName: undefined,
+                selectedBlueprintId : undefined
             }
         },
         watch: {
@@ -109,7 +121,6 @@
             this.setActiveName();
         },
         methods: {
-            ...mapMutations("editor", ["changeExplorerWidth", "closeExplorer"]),
             dragSidebar(e){
                 const SELF = this;
 
@@ -122,7 +133,7 @@
 
                 document.onmousemove = function onMouseMove(e) {
                     let percent = blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100;
-                    SELF.changeExplorerWidth(percent)
+                    SELF.editorStore.changeExplorerWidth(percent)
                 };
 
                 document.onmouseup = () => {
@@ -150,24 +161,20 @@
                     };
                 }
             },
-        },
-        computed: {
-            ...mapState({
-                explorerVisible: (state) => state.editor.explorerVisible,
-                explorerWidth: (state) => state.editor.explorerWidth,
-            }),
-            containerClass() {
-                const isEnterpriseTab = this.activeTab.locked;
-
-                if (this.activeTab.containerClass) {
-                    return {[this.activeTab.containerClass]: true};
-                }
+            getTabClasses(tab) {
+                const isEnterpriseTab = tab.locked;
 
                 return {
                     "container": !isEnterpriseTab,
                     "mt-4": !isEnterpriseTab,
-                    "px-0": isEnterpriseTab
+                    "px-0": isEnterpriseTab,
                 };
+            },
+        },
+        computed: {
+            ...mapStores(useEditorStore),
+            containerClass() {
+                return this.getTabClasses(this.activeTab);
             },
             activeTab() {
                 return this.tabs
@@ -184,14 +191,11 @@
                 ) {
                     if (TAB === "files") return true;
 
-                    this.closeExplorer();
+                    this.editorStore.closeExplorer();
                     return false;
                 }
 
                 return false;
-            },
-            isNamespaceEditor(){
-                return this.activeTab?.props?.isNamespace === true;
             },
             // Those are passed to the rendered component
             // We need to exclude class as it's already applied to this component root div
@@ -200,12 +204,22 @@
                     Object.entries(this.$attrs)
                         .filter(([key]) => key !== "class")
                 );
+            },
+            namespaceToForward(){
+                return this.activeTab.props?.namespace ?? this.namespace;
+                // in the special case of Namespace creation on Namespaces page, the tabs are loaded before the namespace creation
+                // in this case this.props.namespace will be used
             }
         }
     };
 </script>
 
 <style lang="scss" scoped>
+    section.container.mt-4:has(> section.empty){
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     :deep(.el-tabs) {
         .el-tabs__item.is-disabled {
             &:after {
@@ -238,24 +252,16 @@
         }
     }
 
-    .namespace-editor {
-        margin: 0 !important;
-        padding: 0;
-        flex-grow: 1;
-    }
-
     .maximized {
         margin: 0 !important;
         padding: 0;
         display: flex;
         flex-grow: 1;
-        flex-direction: column;
     }
-</style>
 
-<style lang="scss">
-    .el-tabs__nav-next, .el-tabs__nav-prev{
-        &.is-disabled{
+    :deep(.el-tabs__nav-next),
+    :deep(.el-tabs__nav-prev) {
+        &.is-disabled {
             display: none;
         }
     }

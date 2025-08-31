@@ -13,9 +13,7 @@ import java.util.Arrays;
 import java.util.Map;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.endsWith;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -48,36 +46,36 @@ class ToJsonFilterTest {
         );
 
         String render = variableRenderer.render("{{ vars.second.string | toJson }}", vars);
-        assertThat(render, is("\"string\""));
+        assertThat(render).isEqualTo("\"string\"");
 
         render = variableRenderer.render("{{ vars.second.int | toJson }}", vars);
-        assertThat(render, is("1"));
+        assertThat(render).isEqualTo("1");
 
         render = variableRenderer.render("{{ vars.second.float | toJson }}", vars);
-        assertThat(render, is("1.123"));
+        assertThat(render).isEqualTo("1.123");
 
         render = variableRenderer.render("{{ vars.second.list | toJson }}", vars);
-        assertThat(render, is("[\"string\",1,1.123]"));
+        assertThat(render).isEqualTo("[\"string\",1,1.123]");
 
         render = variableRenderer.render("{{ vars.second.bool | toJson }}", vars);
-        assertThat(render, is("true"));
+        assertThat(render).isEqualTo("true");
 
         render = variableRenderer.render("{{ vars.second.date | toJson }}", vars);
-        assertThat(render, is("\"" + date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + "\""));
+        assertThat(render).isEqualTo("\"" + date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + "\"");
 
         render = variableRenderer.render("{{ vars.second.map | toJson }}", vars);
-        assertThat(render, containsString("\"int\":1"));
-        assertThat(render, containsString("\"int\":1"));
-        assertThat(render, containsString("\"float\":1.123"));
-        assertThat(render, containsString("\"string\":\"string\""));
-        assertThat(render, startsWith("{"));
-        assertThat(render, endsWith("}"));
+        assertThat(render).contains("\"int\":1");
+        assertThat(render).contains("\"int\":1");
+        assertThat(render).contains("\"float\":1.123");
+        assertThat(render).contains("\"string\":\"string\"");
+        assertThat(render).startsWith("{");
+        assertThat(render).endsWith("}");
 
         render = variableRenderer.render("{{ {\"empty_object\":{}} | toJson }}", Map.of());
-        assertThat(render, is("{\"empty_object\":{}}"));
+        assertThat(render).isEqualTo("{\"empty_object\":{}}");
 
         render = variableRenderer.render("{{ null | toJson }}", Map.of());
-        assertThat(render, is("null"));
+        assertThat(render).isEqualTo("null");
     }
 
     @Test
@@ -96,6 +94,6 @@ class ToJsonFilterTest {
         );
 
         String render = variableRenderer.render("{{ vars.second.string | json }}", vars);
-        assertThat(render, is("\"string\""));
+        assertThat(render).isEqualTo("\"string\"");
     }
 }

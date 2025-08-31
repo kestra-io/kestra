@@ -35,7 +35,7 @@
             <data-table
                 @page-changed="onPageChanged"
                 ref="dataTable"
-                :total="total"
+                :total="templateStore.total"
             >
                 <template #navbar>
                     <el-form-item>
@@ -53,7 +53,7 @@
                 <template #table>
                     <select-table
                         ref="selectTable"
-                        :data="templates"
+                        :data="templateStore.templates"
                         :default-sort="{prop: 'id', order: 'ascending'}"
                         table-layout="auto"
                         fixed
@@ -61,12 +61,13 @@
                         @sort-change="onSort"
                         @selection-change="handleSelectionChange"
                         :selectable="canRead || canDelete"
+                        :no-data-text="$t('no_results.templates')"
                     >
                         <template #select-actions>
                             <bulk-select
                                 :select-all="queryBulkAction"
                                 :selections="selection"
-                                :total="total"
+                                :total="templateStore.total"
                                 @update:select-all="toggleAllSelection"
                                 @unselect="toggleAllUnselected"
                             >
@@ -136,10 +137,11 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useTemplateStore} from "../../stores/template";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
@@ -152,6 +154,7 @@
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip.vue";
     import Upload from "vue-material-design-icons/Upload.vue";
     import SelectTableActions from "../../mixins/selectTableActions";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -169,23 +172,21 @@
             return {
                 isDefaultNamespaceAllow: true,
                 permission: permission,
-                action: action
+                action: action,
             };
         },
         computed: {
-            ...mapState("template", ["templates", "total"]),
-            ...mapState("stat", ["dailyGroupByFlow", "daily"]),
-            ...mapState("auth", ["user"]),
+            ...mapStores(useTemplateStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$t("templates")
                 };
             },
             canRead() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.READ);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.READ);
             },
             canDelete() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.DELETE);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.DELETE);
             },
         },
         methods: {
@@ -195,8 +196,8 @@
                 return _merge(base, queryFilter)
             },
             loadData(callback) {
-                this.$store
-                    .dispatch("template/findTemplates", this.loadQuery({
+                this.templateStore
+                    .findTemplates(this.loadQuery({
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
                         sort: this.$route.query.sort || "id:asc",
@@ -213,11 +214,11 @@
             },
             exportTemplates() {
                 this.$toast().confirm(
-                    this.$t("template export", {"templateCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t("template export", {"templateCount": this.queryBulkAction ? this.templateStore.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("template/exportTemplateByQuery", this.loadQuery({
+                            return this.templateStore
+                                .exportTemplateByQuery(this.loadQuery({
                                     namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
                                     q: this.$route.query.q ? [this.$route.query.q] : undefined,
                                 }, false))
@@ -225,8 +226,8 @@
                                     this.$toast().success(this.$t("templates exported"));
                                 })
                         } else {
-                            return this.$store
-                                .dispatch("template/exportTemplateByIds", {ids: this.selection})
+                            return this.templateStore
+                                .exportTemplateByIds({ids: this.selection})
                                 .then(_ => {
                                     this.$toast().success(this.$t("templates exported"));
                                 })
@@ -239,8 +240,8 @@
             importTemplates() {
                 const formData = new FormData();
                 formData.append("fileUpload", this.$refs.file.files[0]);
-                this.$store
-                    .dispatch("template/importTemplates", formData)
+                this.templateStore
+                    .importTemplates(formData)
                     .then(_ => {
                         this.$toast().success(this.$t("templates imported"));
                         this.loadData(() => {
@@ -249,11 +250,11 @@
             },
             deleteTemplates() {
                 this.$toast().confirm(
-                    this.$t("template delete", {"templateCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t("template delete", {"templateCount": this.queryBulkAction ? this.templateStore.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("template/deleteTemplateByQuery", this.loadQuery({
+                            return this.templateStore
+                                .deleteTemplateByQuery(this.loadQuery({
                                     namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
                                     q: this.$route.query.q ? [this.$route.query.q] : undefined,
                                 }, false))
@@ -263,8 +264,8 @@
                                     })
                                 })
                         } else {
-                            return this.$store
-                                .dispatch("template/deleteTemplateByIds", {ids: this.selection})
+                            return this.templateStore
+                                .deleteTemplateByIds({ids: this.selection})
                                 .then(r => {
                                     this.$toast().success(this.$t("templates deleted", {count: r.data.count}));
                                     this.loadData(() => {

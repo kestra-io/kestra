@@ -3,9 +3,9 @@
     <div v-else>
         <slot name="nav" />
         <slot name="content">
-            <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
+            <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" hide-top-pagination divider>
                 <template #navbar>
-                    <el-radio-group v-if="ready && !system" v-model="selectedTag" class="tags-selection">
+                    <el-radio-group v-if="ready && !system && !embed" v-model="selectedTag" class="tags-selection">
                         <el-radio-button
                             :key="0"
                             :value="0"
@@ -33,7 +33,11 @@
                     </nav>
                 </template>
                 <template #top>
-                    <KestraFilter :prefix="`blueprintsBrowser${blueprintType}`" :placeholder="$t('search')" :decode="false" />
+                    <KestraFilter
+                        :prefix="`blueprintsBrowser${blueprintType}`"
+                        :placeholder="$t('search')"
+                        legacy-query
+                    />
                 </template>
                 <template #table>
                     <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
@@ -53,10 +57,30 @@
                         >
                             <div class="left">
                                 <div class="blueprint">
-                                    <div class="ps-0 title">
-                                        {{ blueprint.title }}
+                                    <div
+                                        class="ps-0 title"
+                                        :class="{'embed-title': embed, 'text-truncate': embed}"
+                                    >
+                                        {{ blueprint.title ?? blueprint.id }}
                                     </div>
-                                    <div v-if="!system" class="tags text-uppercase">
+                                    <div v-if="embed" class="tags-w-icons-container">
+                                        <div class="tags-w-icons">
+                                            <div v-for="(tag, index) in blueprint.tags" :key="index">
+                                                <el-tag size="small">
+                                                    {{ tag }}
+                                                </el-tag>
+                                            </div>
+                                            <div class="tasks-container">
+                                                <task-icon
+                                                    :icons="pluginsStore.icons"
+                                                    :cls="task"
+                                                    :key="task"
+                                                    v-for="task in [...new Set(blueprint.includedTasks)]"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-else-if="!system" class="tags text-uppercase">
                                         <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">
                                             <el-tag size="small">
                                                 {{ tag }}
@@ -64,9 +88,9 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="tasks-container">
+                                <div v-if="!embed" class="tasks-container">
                                     <task-icon
-                                        :icons="icons"
+                                        :icons="pluginsStore.icons"
                                         :cls="task"
                                         :key="task"
                                         v-for="task in [...new Set(blueprint.includedTasks)]"
@@ -81,9 +105,8 @@
                                         size="default"
                                         :icon="icon.ContentCopy"
                                         @click.prevent.stop="copy(blueprint.id)"
-                                    >
-                                        {{ $t('copy') }}
-                                    </el-button>
+                                        class="copy-button p-2"
+                                    />
                                 </el-tooltip>
                                 <el-button v-else type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                     {{ $t('use') }}
@@ -99,19 +122,24 @@
 </template>
 
 <script>
-    import DataTable from "../../../../components/layout/DataTable.vue";
-    import {TaskIcon} from "@kestra-io/ui-libs";
-    import DataTableActions from "../../../../mixins/dataTableActions";
     import {shallowRef} from "vue";
+    import {mapStores} from "pinia";
+    import {TaskIcon} from "@kestra-io/ui-libs";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import DataTableActions from "../../../../mixins/dataTableActions";
+    import DataTable from "../../../../components/layout/DataTable.vue";
     import RestoreUrl from "../../../../mixins/restoreUrl";
     import permission from "../../../../models/permission";
     import action from "../../../../models/action";
-    import {mapState} from "vuex";
     import Utils from "../../../../utils/utils";
     import Errors from "../../../../components/errors/Errors.vue";
     import {editorViewTypes} from "../../../../utils/constants";
     import KestraFilter from "../../../../components/filter/KestraFilter.vue";
+    import {usePluginsStore} from "../../../../stores/plugins";
+    import {useBlueprintsStore} from "../../../../stores/blueprints";
+    import {useCoreStore} from "../../../../stores/core";
+    import {useDocStore} from "../../../../stores/doc";
+    import {useAuthStore} from "override/stores/auth";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
@@ -140,7 +168,7 @@
             }
         },
         mounted() {
-            this.$store.commit("doc/setDocId", `blueprints.${this.blueprintType}`);
+            this.docStore.docId = `blueprints.${this.blueprintType}`;
         },
         data() {
             return {
@@ -161,7 +189,7 @@
             },
             async copy(id) {
                 await Utils.copy(
-                    (await this.$store.dispatch("blueprints/getBlueprintSource", {type: this.blueprintType, kind: this.blueprintKind, id: id}))
+                    (await this.blueprintsStore.getBlueprintSource({type: this.blueprintType, kind: this.blueprintKind, id: id}))
                 );
             },
             async blueprintToEditor(blueprintId) {
@@ -187,7 +215,7 @@
                 if (this.$route.query.q || this.q) {
                     query.q = this.$route.query.q || this.q;
                 }
-                return this.$store.dispatch("blueprints/getBlueprintTagsForQuery", {type: this.blueprintType, kind: this.blueprintKind, ...query})
+                return this.blueprintsStore.getBlueprintTagsForQuery({type: this.blueprintType, kind: this.blueprintKind, ...query})
                     .then(data => {
                         // Handle switch tab while fetching data
                         if (this.blueprintType === beforeLoadBlueprintType) {
@@ -216,8 +244,7 @@
                     query.tags = this.$route.query.selectedTag || this.selectedTag;
                 }
 
-                return this.$store
-                    .dispatch("blueprints/getBlueprintsForQuery", {type: this.blueprintType, kind: this.blueprintKind, params: query})
+                return this.blueprintsStore.getBlueprintsForQuery({type: this.blueprintType, kind: this.blueprintKind, params: query})
                     .then(data => {
                         // Handle switch tab while fetching data
                         if (this.blueprintType === beforeLoadBlueprintType) {
@@ -238,7 +265,7 @@
                     if(this.embed) {
                         this.error = true;
                     } else {
-                        this.$store.dispatch("core/showError", 404);
+                        this.coreStore.error = 404;
                     }
                 }).finally(() => {
                     // Handle switch tab while fetching data
@@ -254,10 +281,9 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapState("plugin", ["icons"]),
+            ...mapStores(usePluginsStore, useBlueprintsStore, useCoreStore, useDocStore, useAuthStore),
             userCanCreateFlow() {
-                return this.user.hasAnyAction(permission.FLOW, action.CREATE);
+                return this.authStore.user.hasAnyAction(permission.FLOW, action.CREATE);
             },
         },
         watch: {
@@ -307,16 +333,6 @@
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
     @import "@kestra-io/ui-libs/src/scss/variables";
 
-    .blueprint {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-
-        @media (max-width: 1024px) {
-            margin-bottom: 10px;
-        }
-}
-
     .sub-nav {
         margin: 0 0 $spacer;
 
@@ -362,6 +378,47 @@
             border: 0;
             border-bottom: 1px solid var(--ks-border-primary);
 
+            .blueprint {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+
+                @media (max-width: 1024px) {
+                    margin-bottom: 10px;
+                }
+
+                .tags-w-icons-container {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    width: 100%;
+                    margin-top: 7px;
+
+                    .tags-w-icons {
+                        display: flex;
+                        align-items: center;
+                        gap: .35rem;
+                    }
+                }
+            }
+
+            .el-tag {
+                background-color: var(--ks-tag-background);
+                padding: 13px 10px;
+                color: var(--ks-tag-content);
+                text-transform: capitalize;
+                font-size: $small-font-size;
+                border: 1px solid var(--ks-border-primary);
+
+                html.dark & {
+                    background-color: rgba(64, 69, 89, .7);
+                }
+            }
+
+            &.embed {
+                position: relative;
+            }
+
             .blueprint-link {
                 display: flex;
                 color: inherit;
@@ -371,8 +428,10 @@
 
                 .left {
                     align-items: center;
+                    flex: 1;
+                    min-width: 0;
                     .title {
-                        width: 400px;
+                        width: 500px;
                         font-weight: bold;
                         font-size: $small-font-size;
                         padding-left: 0;
@@ -383,22 +442,20 @@
                         }
                     }
 
+                    .embed-title {
+                        width: 100%;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        font-weight: 400;
+                    }
+
                     .tags {
                         margin: 10px 0;
                         display: flex;
 
-
-                        .el-tag {
-                            background-color: var(--ks-tag-background);
-                            padding: 15px 10px;
-                            color: var(--ks-tag-content);
-                            text-transform: capitalize;
-                            font-size: var(--el-font-size-small);
-                            border: 1px solid var(--ks-border-primary);
-                        }
-
                         .tag-box {
-                            margin-right: .3rem;
+                            margin-right: .5rem;
                         }
                     }
 
@@ -420,6 +477,15 @@
                 .side {
                     &.buttons {
                         white-space: nowrap;
+                        flex-shrink: 0;
+                    }
+
+                    &.copy-button {
+                        position: absolute;
+                        right: 1rem;
+                        transform: translateY(-50%);
+                        top: 50%;
+                        z-index: 10;
                     }
                 }
             }

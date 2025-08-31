@@ -80,7 +80,7 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
         title = "The lowest log level that you want to fetch."
     )
     @Builder.Default
-    private Property<Level> level = Property.of(Level.INFO);
+    private Property<Level> level = Property.ofValue(Level.INFO);
 
     @Override
     public Output run(RunContext runContext) throws Exception {

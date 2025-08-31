@@ -49,13 +49,16 @@
 </script>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
+    import {mapStores} from "pinia";
+    import {useMiscStore} from "override/stores/misc";
+    import {useExecutionsStore} from "../../stores/executions";
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {State} from "@kestra-io/ui-libs"
 
     import {filterLabels} from "./utils"
-    import permission from "../../models/permission.js";
-    import action from "../../models/action.js";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {LabelInput},
@@ -76,26 +79,25 @@
         methods: {
             setLabels() {
                 let filtered = filterLabels(this.executionLabels)
-                
+
                 if(filtered.error) {
                     filtered.labels = filtered.labels.filter(obj => !(obj.key === null && obj.value === null));
                 }
 
                 this.isOpen = false;
-                this.$store.dispatch("execution/setLabels", {
+                this.executionsStore.setLabels({
                     labels: filtered.labels,
                     executionId: this.execution.id
                 }).then(response => {
-                    this.$store.commit("execution/setExecution", response.data)
+                    this.executionsStore.execution = response.data
                     this.$toast().success(this.$t("Set labels done"));
                 })
             },
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useMiscStore, useExecutionsStore, useAuthStore),
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 
@@ -112,7 +114,7 @@
             isOpen() {
                 this.executionLabels = [];
 
-                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
 
                 if (this.execution.labels) {
                     this.executionLabels = this.execution.labels.filter(label => !toIgnore.some(prefix => label.key?.startsWith(prefix)));

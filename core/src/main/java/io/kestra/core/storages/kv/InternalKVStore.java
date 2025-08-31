@@ -10,6 +10,7 @@ import jakarta.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
@@ -112,7 +113,14 @@ public class InternalKVStore implements KVStore {
     @Override
     public boolean delete(String key) throws IOException {
         KVStore.validateKey(key);
-        return this.storage.delete(this.tenant, this.namespace, this.storageUri(key));
+        URI uri = this.storageUri(key);
+        boolean deleted = this.storage.delete(this.tenant, this.namespace, uri);
+        URI metadataURI = URI.create(uri.getPath() + ".metadata");
+        if (this.storage.exists(this.tenant, this.namespace, metadataURI)){
+            this.storage.delete(this.tenant, this.namespace, metadataURI);
+        }
+        return deleted;
+
     }
 
     /**
@@ -120,16 +128,30 @@ public class InternalKVStore implements KVStore {
      */
     @Override
     public List<KVEntry> list() throws IOException {
-        List<FileAttributes> list;
-        try {
-            list = this.storage.list(this.tenant, this.namespace, this.storageUri(null));
-        } catch (FileNotFoundException e) {
-            return Collections.emptyList();
-        }
+        List<FileAttributes> list = listAllFromStorage();
         return list.stream()
             .map(throwFunction(KVEntry::from))
             .filter(kvEntry -> Optional.ofNullable(kvEntry.expirationDate()).map(expirationDate -> Instant.now().isBefore(expirationDate)).orElse(true))
             .toList();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<KVEntry> listAll() throws IOException {
+        List<FileAttributes> list = listAllFromStorage();
+        return list.stream()
+            .map(throwFunction(KVEntry::from))
+            .toList();
+    }
+
+    private List<FileAttributes> listAllFromStorage() throws IOException {
+        try {
+            return this.storage.list(this.tenant, this.namespace, this.storageUri(null));
+        } catch (FileNotFoundException e) {
+            return Collections.emptyList();
+        }
     }
 
     /**

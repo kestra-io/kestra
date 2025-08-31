@@ -1,0 +1,17 @@
+id: after-execution-error
+namespace: io.kestra.tests
+
+tasks:
+  - id: fail
+    type: io.kestra.plugin.core.execution.Fail
+
+errors:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: I'm failing
+
+afterExecution:
+  - id: end
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      state: "{{execution.state}}"

@@ -1,5 +1,7 @@
 package io.kestra.core.models.tasks.runners;
 
+import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
@@ -11,7 +13,6 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -22,15 +23,16 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 public abstract class AbstractTaskRunnerTest {
-    @Inject private RunContextFactory runContextFactory;
+    @Inject protected TestRunContextFactory runContextFactory;
     @Inject private StorageInterface storage;
 
     @Test
@@ -38,13 +40,13 @@ public abstract class AbstractTaskRunnerTest {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
         Mockito.when(commands.getCommands()).thenReturn(
-            Property.of(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")))
+            Property.ofValue(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")))
         );
 
         var taskRunner = taskRunner();
         var result = taskRunner.run(runContext, commands, Collections.emptyList());
-        assertThat(result, notNullValue());
-        assertThat(result.getExitCode(), is(0));
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
     }
 
     @Test
@@ -53,24 +55,24 @@ public abstract class AbstractTaskRunnerTest {
         var commands = initScriptCommands(runContext);
         Mockito.when(commands.getEnableOutputDirectory()).thenReturn(false);
         Mockito.when(commands.outputDirectoryEnabled()).thenReturn(false);
-        Mockito.when(commands.getCommands()).thenReturn(Property.of(
+        Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(
             ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")))
         );
 
         var taskRunner = taskRunner();
-        assertThat(taskRunner.additionalVars(runContext, commands).containsKey(ScriptService.VAR_OUTPUT_DIR), is(false));
-        assertThat(taskRunner.env(runContext, commands).containsKey(ScriptService.ENV_OUTPUT_DIR), is(false));
+        assertThat(taskRunner.additionalVars(runContext, commands).containsKey(ScriptService.VAR_OUTPUT_DIR)).isFalse();
+        assertThat(taskRunner.env(runContext, commands).containsKey(ScriptService.ENV_OUTPUT_DIR)).isFalse();
 
         var result = taskRunner.run(runContext, commands, Collections.emptyList());
-        assertThat(result, notNullValue());
-        assertThat(result.getExitCode(), is(0));
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
     }
 
     @Test
     protected void fail() throws IOException {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
-        Mockito.when(commands.getCommands()).thenReturn(Property.of(
+        Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(
             ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("return 1"))));
 
         var taskRunner = taskRunner();
@@ -79,12 +81,14 @@ public abstract class AbstractTaskRunnerTest {
 
     @Test
     protected void inputAndOutputFiles() throws Exception {
-        RunContext runContext = runContext(this.runContextFactory, Map.of("internalStorageFile", "kestra://some/internalStorage.txt"));
+        RunContext runContext = runContext(this.runContextFactory, Map.of("internalStorageFile", "kestra:///internalStorage.txt"));
 
         var commands = initScriptCommands(runContext);
+        Mockito.when(commands.relativeWorkingDirectoryFilesPaths()).thenCallRealMethod();
+        Mockito.when(commands.relativeWorkingDirectoryFilesPaths(false)).thenCallRealMethod();
 
         // Generate internal storage file
-        FileUtils.writeStringToFile(Path.of("/tmp/unittest/internalStorage.txt").toFile(), "Hello from internal storage", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(Path.of("/tmp/unittest/main/internalStorage.txt").toFile(), "Hello from internal storage", StandardCharsets.UTF_8);
 
         // Generate input files
         FileUtils.writeStringToFile(runContext.workingDir().resolve(Path.of("hello.txt")).toFile(), "Hello World", StandardCharsets.UTF_8);
@@ -96,6 +100,12 @@ public abstract class AbstractTaskRunnerTest {
         TaskRunner<?> taskRunner = taskRunner();
 
         Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
+            @Override
+            public void accept(String line, Boolean isStdErr, Instant instant) {
+                logsWithIsStdErr.put(line, isStdErr);
+                defaultLogConsumer.accept(line, isStdErr);
+            }
+
             @Override
             public void accept(String log, Boolean isStdErr) {
                 logsWithIsStdErr.put(log, isStdErr);
@@ -118,7 +128,7 @@ public abstract class AbstractTaskRunnerTest {
             )),
             taskRunner instanceof RemoteRunnerInterface
         );
-        Mockito.when(commands.getCommands()).thenReturn(Property.of(renderedCommands));
+        Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(renderedCommands));
 
         List<String> filesToDownload = List.of("output.txt");
         TaskRunnerResult<?> run = taskRunner.run(runContext, commands, filesToDownload);
@@ -127,25 +137,25 @@ public abstract class AbstractTaskRunnerTest {
         outputFiles.putAll(FilesService.outputFiles(runContext, filesToDownload));
 
         // Exit code for successful job
-        assertThat(run.getExitCode(), is(0));
+        assertThat(run.getExitCode()).isZero();
 
         Set<Map.Entry<String, Boolean>> logEntries = logsWithIsStdErr.entrySet();
-        assertThat(logEntries.stream().filter(e -> e.getKey().contains("Hello from internal storage")).findFirst().orElseThrow().getValue(), is(false));
-        assertThat(logEntries.stream().filter(e -> e.getKey().contains("Hello World")).findFirst().orElseThrow().getValue(), is(false));
+        assertThat(logEntries.stream().filter(e -> e.getKey().contains("Hello from internal storage")).findFirst().orElseThrow().getValue()).isFalse();
+        assertThat(logEntries.stream().filter(e -> e.getKey().contains("Hello World")).findFirst().orElseThrow().getValue()).isFalse();
 
         // Verify outputFiles
-        assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("output.txt")), StandardCharsets.UTF_8), is("Hello World"));
-        assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("file.txt")), StandardCharsets.UTF_8), is("file from output dir"));
-        assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("nested/file.txt")), StandardCharsets.UTF_8), is("nested file from output dir"));
+        assertThat(IOUtils.toString(storage.get(MAIN_TENANT, "unittest", outputFiles.get("output.txt")), StandardCharsets.UTF_8)).isEqualTo("Hello World");
+        assertThat(IOUtils.toString(storage.get(MAIN_TENANT, "unittest", outputFiles.get("file.txt")), StandardCharsets.UTF_8)).isEqualTo("file from output dir");
+        assertThat(IOUtils.toString(storage.get(MAIN_TENANT, "unittest", outputFiles.get("nested/file.txt")), StandardCharsets.UTF_8)).isEqualTo("nested file from output dir");
 
-        assertThat(defaultLogConsumer.getOutputs().get("logOutput"), is("Hello World"));
+        assertThat(defaultLogConsumer.getOutputs().get("logOutput")).isEqualTo("Hello World");
     }
 
     @Test
     protected void failWithInput() throws IOException {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
-        Mockito.when(commands.getCommands()).thenReturn(Property.of(ScriptService.scriptCommands(
+        Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(ScriptService.scriptCommands(
             List.of("/bin/sh", "-c"),
             Collections.emptyList(),
             List.of("echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'", "return 1")))
@@ -153,7 +163,33 @@ public abstract class AbstractTaskRunnerTest {
 
         var taskRunner = taskRunner();
         TaskException taskException = assertThrows(TaskException.class, () -> taskRunner.run(runContext, commands, Collections.emptyList()));
-        assertThat(taskException.getLogConsumer().getOutputs().get("logOutput"), is("Hello World"));
+        assertThat(taskException.getLogConsumer().getOutputs().get("logOutput")).isEqualTo("Hello World");
+    }
+
+    @Test
+    protected void canWorkMultipleTimeInSameWdir() throws Exception {
+        var runContext = runContext(this.runContextFactory);
+
+        var commands = initScriptCommands(runContext);
+        Mockito.when(commands.getEnableOutputDirectory()).thenReturn(false);
+        Mockito.when(commands.outputDirectoryEnabled()).thenReturn(false);
+
+        Mockito.when(commands.getCommands()).thenReturn(
+            Property.ofValue(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World' > file.txt")))
+        );
+
+        var taskRunner = taskRunner();
+        var result = taskRunner.run(runContext, commands, Collections.emptyList());
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
+
+        Mockito.when(commands.getCommands()).thenReturn(
+            Property.ofValue(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("cat file.txt")))
+        );
+
+        result = taskRunner.run(runContext, commands, Collections.emptyList());
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
     }
 
     protected RunContext runContext(RunContextFactory runContextFactory) {

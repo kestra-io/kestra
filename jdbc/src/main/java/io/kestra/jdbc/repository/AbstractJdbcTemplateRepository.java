@@ -65,6 +65,21 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     }
 
     @Override
+    public List<Template> findAllWithNoAcl(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                SelectConditionStep<Record1<Object>> select = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilterWithNoACL(tenantId));
+
+                return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    @Override
     public List<Template> findAllForAllTenants() {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -96,7 +111,6 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
                     .select(
                         field("value")
                     )
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
@@ -123,7 +137,6 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
                     .select(
                         field("value")
                     )
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 

@@ -4,7 +4,7 @@
             <el-icon
                 v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
                 type="default"
-                @click.stop="() => forwardEvent('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
+                @click.stop="() => $emit('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
             >
                 <ChevronDown
                     v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
@@ -17,7 +17,7 @@
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
                 only-icon
-                :icons="icons"
+                :icons="pluginsStore.icons"
             />
         </div>
 
@@ -86,7 +86,7 @@
                         :execution="followedExecution"
                         :task-run="currentTaskRun"
                         :attempt-index="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
-                        @follow="forwardEvent('follow', $event)"
+                        @follow="$emit('follow', $event)"
                     />
 
                     <change-status
@@ -95,7 +95,7 @@
                         :execution="followedExecution"
                         :task-run="currentTaskRun"
                         :attempt-index="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
-                        @follow="forwardEvent('follow', $event)"
+                        @follow="$emit('follow', $event)"
                     />
                     <task-edit
                         v-if="canReadFlow"
@@ -115,11 +115,23 @@
                         {{ $t("download logs") }}
                     </el-dropdown-item>
                     <el-dropdown-item
+                        :icon="Copy"
+                        @click="copyContent(currentTaskRun.id)"
+                    >
+                        {{ $t("copy logs") }}
+                    </el-dropdown-item>
+                    <el-dropdown-item
                         :icon="Delete"
                         @click="deleteLogs(currentTaskRun.id)"
                     >
                         {{ $t("delete logs") }}
                     </el-dropdown-item>
+                    <WorkerInfo
+                        component="el-dropdown-item"
+                        v-if="hasWorkerId(currentTaskRun) !== null"
+                        :task-run="currentTaskRun"
+                        @follow="$emit('follow', $event)"
+                    />
                 </el-dropdown-menu>
             </template>
         </el-dropdown>
@@ -128,7 +140,7 @@
         <el-select
             class="d-none d-md-inline-block attempt-select"
             :model-value="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
-            @change="forwardEvent('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
+            @change="$emit('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
             :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
         >
             <el-option
@@ -150,46 +162,53 @@
         </div>
     </div>
 </template>
+
 <script>
     import Restart from "./Restart.vue";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import Metrics from "./Metrics.vue";
     import Status from "../Status.vue";
     import ChangeStatus from "./ChangeStatus.vue";
     import TaskEdit from "../flows/TaskEdit.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue";
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
-    import Clock from "vue-material-design-icons/Clock.vue";
     import Outputs from "./Outputs.vue";
+    import Clock from "vue-material-design-icons/Clock.vue";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import Copy from "vue-material-design-icons/ContentCopy.vue";
+    import Delete from "vue-material-design-icons/Delete.vue";
+    import Download from "vue-material-design-icons/Download.vue";
+    import WorkerInfo from "./WorkerInfo.vue";
     import {State} from "@kestra-io/ui-libs"
     import FlowUtils from "../../utils/flowUtils";
-    import {mapState} from "vuex";
-    import {SECTIONS} from "../../utils/constants";
-    import Download from "vue-material-design-icons/Download.vue";
     import _groupBy from "lodash/groupBy";
-    import {TaskIcon} from "@kestra-io/ui-libs";
+    import {TaskIcon, SECTIONS} from "@kestra-io/ui-libs";
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
-    import Delete from "vue-material-design-icons/Delete.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {useCoreStore} from "../../stores/core";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {mapStores} from "pinia";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {
             TaskIcon,
             Outputs,
-            Clock,
-            ChevronDown,
-            DotsVertical,
             SubFlowLink,
             TaskEdit,
             ChangeStatus,
             Status,
             Metrics,
-            ChevronRight,
             Restart,
-            Duration
+            Duration,
+            Clock,
+            ChevronRight,
+            ChevronDown,
+            DotsVertical,
+            WorkerInfo
         },
         props: {
             currentTaskRun: {
@@ -230,14 +249,7 @@
             }
         },
         computed: {
-            Delete() {
-                return Delete
-            },
-            Download() {
-                return Download
-            },
-            ...mapState("plugin", ["icons"]),
-            ...mapState("auth", ["user"]),
+            ...mapStores(usePluginsStore, useCoreStore, useExecutionsStore, useAuthStore),
             SECTIONS() {
                 return SECTIONS
             },
@@ -255,7 +267,16 @@
                 return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));
             },
             canReadFlow() {
-                return this.user.isAllowed(permission.FLOW, action.READ, this.$route.params.namespace)
+                return this.authStore.user?.isAllowed(permission.FLOW, action.READ, this.$route.params.namespace)
+            },
+            Copy() {
+                return Copy;
+            },
+            Delete() {
+                return Delete;
+            },
+            Download() {
+                return Download;
             }
         },
         methods: {
@@ -287,31 +308,46 @@
             },
             downloadContent(currentTaskRunId) {
                 const params = this.params
-                this.$store.dispatch("execution/downloadLogs", {
+                this.executionsStore.downloadLogs({
                     executionId: this.followedExecution.id,
                     params: {...params, taskRunId: currentTaskRunId}
                 }).then((response) => {
                     Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName(currentTaskRunId));
                 });
             },
+            copyContent(currentTaskRunId) {
+                const params = this.params
+                this.executionsStore.downloadLogs({
+                    executionId: this.followedExecution.id,
+                    params: {...params, taskRunId: currentTaskRunId}
+                }).then((response) => {
+                    Utils.copy(response).then(() =>{
+                        this.coreStore.message = {
+                            variant: "success",
+                            title: this.$t("success"),
+                            message: this.$t("copied_logs_to_clipboard"),
+                        };
+                    });
+                })
+            },
             deleteLogs(currentTaskRunId) {
                 const params = this.params
                 this.$toast().confirm(
                     this.$t("delete_log"),
                     () => {
-                        this.$store.dispatch("execution/deleteLogs", {
+                        this.executionsStore.deleteLogs({
                             executionId: this.followedExecution.id,
                             params: {...params, taskRunId: currentTaskRunId}
                         }).then((_) => {
-                            this.forwardEvent("update-logs", this.followedExecution.id)
+                            this.$emit("update-logs", this.followedExecution.id)
                         });
                     },
                     () => {}
                 )
 
             },
-            forwardEvent(type, event) {
-                this.$emit(type, event);
+            hasWorkerId(currentTaskRun) {
+                return currentTaskRun.attempts?.find(attempt => attempt.workerId !== null) !== null;
             },
             attemptUid(taskRunId, attemptNumber) {
                 return `${taskRunId}-${attemptNumber}`
@@ -325,7 +361,8 @@
             shouldDisplayLogs(taskRunId) {
                 return this.logsWithIndexByAttemptUid[this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])]
             }
-        }
+        },
+        emits: ["toggleShowAttempt", "swapDisplayedAttempt", "follow", "update-logs"]
     }
 </script>
 <style scoped lang="scss">

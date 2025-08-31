@@ -2,10 +2,11 @@ package io.kestra.webserver.services;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionService;
+import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.micronaut.http.sse.Event;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -22,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * This service offers a fanout mechanism so a single consumer of the execution queue can dispatch execution
  * messages to multiple consumers.
- * It is designed to be used for 'follow' endpoints that using SSE to follow a flow execution.
+ * It is designed to be used for 'follow' endpoints that use SSE to follow a flow execution.
  * <p>
  * Consumers need first to register themselves via {@link #registerSubscriber(String, String, FluxSink, Flow)},
  * then unregister (ideally in a finally block to avoid any memory leak) via {@link #unregisterSubscriber(String, String)}.
@@ -34,17 +35,17 @@ public class ExecutionStreamingService {
     private final Object subscriberLock = new Object();
 
     private final QueueInterface<Execution> executionQueue;
-    private final ConditionService conditionService;
+    private final ExecutionService executionService;
 
     private Runnable queueConsumer;
 
     @Inject
     public ExecutionStreamingService(
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
-        ConditionService conditionService
+        ExecutionService executionService
     ) {
         this.executionQueue = executionQueue;
-        this.conditionService = conditionService;
+        this.executionService = executionService;
     }
 
     @PostConstruct
@@ -62,7 +63,7 @@ public class ExecutionStreamingService {
             // Get all subscribers for this execution
             Map<String, Pair<FluxSink<Event<Execution>>, Flow>> executionSubscribers = subscribers.get(executionId);
 
-            if (executionSubscribers != null && !executionSubscribers.isEmpty()) {
+            if (!MapUtils.isEmpty(executionSubscribers)) {
                 executionSubscribers.values().forEach(pair -> {
                     var sink = pair.getLeft();
                     var flow = pair.getRight();
@@ -115,8 +116,8 @@ public class ExecutionStreamingService {
      * Utility method to know if following an execution can be stopped.
      */
     public boolean isStopFollow(Flow flow, Execution execution) {
-        return conditionService.isTerminatedWithListeners(flow, execution) &&
-            execution.getState().getCurrent() != State.Type.PAUSED;
+        return executionService.isTerminated(flow, execution) &&
+            ListUtils.emptyOnNull(execution.getTaskRunList()).stream().allMatch(taskRun -> taskRun.getState().isTerminated());
     }
 
     @PreDestroy

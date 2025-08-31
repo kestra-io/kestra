@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.tasks.FileExistComportment;
 import io.kestra.core.utils.IdUtils;
 
 import java.io.IOException;
@@ -92,7 +93,13 @@ public final class TestWorkingDir implements WorkingDir {
 
     @Override
     public Path putFile(Path path, InputStream content) throws IOException {
-        return captureCreateFileAndGet(delegate.putFile(path, content));
+        return putFile(path, content, FileExistComportment.OVERWRITE);
+    }
+
+
+    @Override
+    public Path putFile(Path path, InputStream content, FileExistComportment comportment) throws IOException {
+        return captureCreateFileAndGet(delegate.putFile(path, content, comportment));
     }
 
     @Override

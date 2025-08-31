@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Assert some conditions.",
+    title = "Assert some conditions to control task output data.",
     description = "Used to control outputs data emitted from previous task on this execution."
 )
 @Plugin(
@@ -51,7 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
                 "    required: true\n" +
                 "\n" +
                 "tasks:\n" +
-                "  - id: fail\\n\" +\n" +
+                "  - id: fail\n" +
                 "    type: io.kestra.plugin.core.execution.Assert\n" +
                 "    conditions:\n" +
                 "     - \"{{ inputs.param == 'ok' }}\"\n" +

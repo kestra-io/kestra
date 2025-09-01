@@ -46,7 +46,7 @@ public abstract class AbstractServiceUsageReportTest {
             ServiceInstance instance = new ServiceInstance(
                 IdUtils.create(),
                 ServiceType.EXECUTOR,
-                Service.ServiceState.EMPTY,
+                Service.ServiceState.INACTIVE,
                 null,
                 createAt,
                 updatedAt,

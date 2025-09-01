@@ -37,6 +37,16 @@
                             :status="row.data.metadata.state"
                             size="small"
                         />
+                        <RouterLink
+                            v-if="[FLOW, NAMESPACE].includes(row.data.metadata.subtype)"
+                            :to="{
+                                name: 'flows/update',
+                                params: {namespace: row.data.namespace, id: row.data.flow}}"
+                        >
+                            <el-icon :size="16">
+                                <OpenInNew />
+                            </el-icon>
+                        </RouterLink>
                     </section>
                 </section>
             </template>
@@ -52,10 +62,12 @@
     import Link from "./Link.vue";
     import Status from "../../Status.vue";
 
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import {NODE, EXECUTION, type Node} from "../utils/types";
+    import {NODE, FLOW, EXECUTION, NAMESPACE, type Node} from "../utils/types";
 
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
     const props = defineProps<{

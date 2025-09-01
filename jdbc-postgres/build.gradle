@@ -6,6 +6,7 @@ dependencies {
     implementation project(":core")
     implementation project(":jdbc")
     implementation project(":executor")
+    implementation project(":scheduler")
 
     implementation("io.micronaut.sql:micronaut-jooq")
     runtimeOnly("org.postgresql:postgresql")
@@ -13,6 +14,7 @@ dependencies {
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':jdbc').sourceSets.test.output
+    testImplementation project(':scheduler').sourceSets.test.output
     testImplementation project(':storage-local')
     testImplementation project(':tests')
     testImplementation("io.micronaut.validation:micronaut-validation") // PostgresServiceLivenessCoordinatorTest fail to init without that

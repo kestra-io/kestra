@@ -157,5 +157,6 @@ dependencies {
         api "io.kestra:repository-memory:$version"
         api "io.kestra:runner-memory:$version"
         api "io.kestra:storage-local:$version"
+        api "io.kestra:scheduler:$version"
     }
 }

@@ -6,7 +6,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.*;
-import io.kestra.core.schedulers.SchedulerExecutionWithTrigger;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.search.Search;
@@ -393,19 +392,6 @@ public class MetricRegistry {
             TAG_NAMESPACE_ID, triggerContext.getNamespace()
         };
         return triggerContext.getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, triggerContext.getTenantId());
-    }
-
-    /**
-     * Return tags for current {@link SchedulerExecutionWithTrigger}.
-     *
-     * @param schedulerExecutionWithTrigger the current SchedulerExecutionWithTrigger
-     * @return tags to apply to metrics
-     */
-    public String[] tags(SchedulerExecutionWithTrigger schedulerExecutionWithTrigger, String... tags) {
-        return ArrayUtils.addAll(
-            this.tags(schedulerExecutionWithTrigger.getExecution()),
-            tags
-        );
     }
 
     /**

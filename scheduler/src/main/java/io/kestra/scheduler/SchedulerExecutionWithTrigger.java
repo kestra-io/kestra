@@ -1,4 +1,4 @@
-package io.kestra.core.schedulers;
+package io.kestra.scheduler;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

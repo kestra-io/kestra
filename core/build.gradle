@@ -75,6 +75,7 @@ dependencies {
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
     testImplementation project(':worker')
+    testImplementation project(':scheduler')
     testImplementation project(':executor')
 
     testImplementation "io.micronaut:micronaut-http-client"

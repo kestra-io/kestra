@@ -1,4 +1,4 @@
-package io.kestra.core.schedulers;
+package io.kestra.scheduler;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.Label;

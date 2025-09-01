@@ -1,9 +1,9 @@
-package io.kestra.core.endpoints;
+package io.kestra.scheduler.endpoint;
 
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.schedulers.AbstractScheduler;
+import io.kestra.scheduler.AbstractScheduler;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.management.endpoint.annotation.Endpoint;
 import io.micronaut.management.endpoint.annotation.Read;

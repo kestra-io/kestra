@@ -2,7 +2,7 @@ package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.ServerType;
-import io.kestra.core.schedulers.AbstractScheduler;
+import io.kestra.core.scheduler.AbstractScheduler;
 import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;

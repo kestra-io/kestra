@@ -1,4 +1,4 @@
-package io.kestra.core.schedulers;
+package io.kestra.scheduler;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -26,7 +26,6 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.server.ClusterEvent;
-import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
@@ -64,7 +63,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Singleton
 @SuppressWarnings("this-escape")
-public abstract class AbstractScheduler implements Scheduler, Service {
+public abstract class AbstractScheduler implements Scheduler {
     protected final ApplicationContext applicationContext;
     protected final QueueInterface<Execution> executionQueue;
     protected final QueueInterface<Trigger> triggerQueue;
@@ -824,7 +823,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
     private void log(SchedulerExecutionWithTrigger executionWithTrigger) {
         metricRegistry
-            .counter(MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT, MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT_DESCRIPTION, metricRegistry.tags(executionWithTrigger))
+            .counter(MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT, MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT_DESCRIPTION, metricRegistry.tags(executionWithTrigger.getExecution()))
             .increment();
 
         ZonedDateTime now = now();
@@ -841,7 +840,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             // FIXME : "late" are not excluded and can increase delay value (false positive)
             if (next != null && now.isBefore(next)) {
                 metricRegistry
-                    .timer(MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION_DESCRIPTION, metricRegistry.tags(executionWithTrigger))
+                    .timer(MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION_DESCRIPTION, metricRegistry.tags(executionWithTrigger.getExecution()))
                     .record(Duration.between(
                         executionWithTrigger.getTriggerContext().getDate(), now
                     ));

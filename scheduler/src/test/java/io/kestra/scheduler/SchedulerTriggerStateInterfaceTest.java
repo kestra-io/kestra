@@ -1,6 +1,7 @@
-package io.kestra.core.schedulers;
+package io.kestra.scheduler;
 
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.runners.SchedulerTriggerStateInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;

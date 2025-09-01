@@ -1,4 +1,4 @@
-package io.kestra.core.schedulers;
+package io.kestra.scheduler;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;

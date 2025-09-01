@@ -1,8 +1,7 @@
-package io.kestra.core.schedulers;
+package io.kestra.scheduler;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;

@@ -1,4 +1,4 @@
-package io.kestra.core.schedulers;
+package io.kestra.scheduler;
 
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -113,7 +113,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
                 applicationContext,
                 flowListenersService
             );
-            Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)
+            DefaultWorker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)
         ) {
             // start the worker as it execute polling triggers
             worker.run();

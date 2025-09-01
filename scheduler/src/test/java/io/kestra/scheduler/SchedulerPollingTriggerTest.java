@@ -1,4 +1,4 @@
-package io.kestra.core.schedulers;
+package io.kestra.scheduler;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -6,6 +6,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.SchedulerTriggerStateInterface;
 import io.kestra.core.tasks.test.FailingPollingTrigger;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;

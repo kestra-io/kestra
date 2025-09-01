@@ -18,6 +18,7 @@ include 'jdbc-postgres'
 
 include 'webserver'
 include 'executor'
+include 'scheduler'
 include 'worker'
 
 include 'ui'

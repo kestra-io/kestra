@@ -1,4 +1,4 @@
-package io.kestra.core.schedulers;
+package io.kestra.scheduler;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.Label;
@@ -16,6 +16,7 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.SchedulerTriggerStateInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;

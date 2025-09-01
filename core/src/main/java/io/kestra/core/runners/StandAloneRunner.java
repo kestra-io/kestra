@@ -1,6 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.schedulers.AbstractScheduler;
 import io.kestra.core.server.Service;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -64,7 +63,7 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
         }
 
         if (schedulerEnabled) {
-            AbstractScheduler scheduler = applicationContext.getBean(AbstractScheduler.class);
+            Scheduler scheduler = applicationContext.getBean(Scheduler.class);
             poolExecutor.execute(scheduler);
             servers.add(scheduler);
         }

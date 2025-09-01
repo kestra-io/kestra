@@ -1,4 +1,4 @@
-package io.kestra.core.schedulers;
+package io.kestra.core.runners;
 
 import java.util.function.Consumer;
 

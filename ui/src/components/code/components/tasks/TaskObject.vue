@@ -71,8 +71,7 @@
         inheritAttrs: false,
     });
 
-    type Primitive = string | number | boolean;
-    type Model = Record<string, any> | Primitive | Array<any> | undefined;
+    type Model = Record<string, any> | undefined;
     type Schema = { required?: string[]; [k: string]: any } | undefined;
 
     const props = defineProps<{

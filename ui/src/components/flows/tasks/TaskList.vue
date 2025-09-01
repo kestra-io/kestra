@@ -5,7 +5,7 @@
             :elements="items"
             :section
             :block-schema-path="[blockSchemaPath, 'properties', root, 'items'].join('/')"
-            @remove="removeItems"
+            @remove="removeItem"
             @reorder="(yaml) => flowStore.flowYaml = yaml"
         />
     </div>
@@ -43,7 +43,7 @@
         !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     );
 
-    const removeItems = (yaml: string, index: number) => {
+    function removeItem(yaml: string, index: number){
         flowStore.flowYaml = yaml;
 
         let localItems = [...items.value]

@@ -1,41 +1,42 @@
+
 <template>
     <el-form label-position="top" class="w-100">
         <template v-if="sortedProperties">
             <template v-for="[fieldKey, fieldSchema] in protectedRequiredProperties" :key="fieldKey">
-                <TaskWrapper :merge>
+                <Wrapper :merge>
                     <template #tasks>
                         <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
                     </template>
-                </TaskWrapper>
+                </Wrapper>
             </template>
 
             <el-collapse v-model="activeNames" v-if="requiredProperties.length && (optionalProperties?.length || deprecatedProperties?.length || connectionProperties?.length)" class="collapse">
                 <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="$t('no_code.sections.connection')">
                     <template v-for="[fieldKey, fieldSchema] in connectionProperties" :key="fieldKey">
-                        <TaskWrapper>
+                        <Wrapper>
                             <template #tasks>
                                 <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
                             </template>
-                        </TaskWrapper>
+                        </Wrapper>
                     </template>
                 </el-collapse-item>
                 <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="$t('no_code.sections.optional')">
                     <template v-for="[fieldKey, fieldSchema] in optionalProperties" :key="fieldKey">
-                        <TaskWrapper>
+                        <Wrapper>
                             <template #tasks>
                                 <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
                             </template>
-                        </TaskWrapper>
+                        </Wrapper>
                     </template>
                 </el-collapse-item>
 
                 <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="$t('no_code.sections.deprecated')">
                     <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
-                        <TaskWrapper>
+                        <Wrapper>
                             <template #tasks>
                                 <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
                             </template>
-                        </TaskWrapper>
+                        </Wrapper>
                     </template>
                 </el-collapse-item>
             </el-collapse>
@@ -59,14 +60,15 @@
 
 <script setup>
     import TaskDict from "./TaskDict.vue";
-    import TaskWrapper from "./TaskWrapper.vue";
+    import Wrapper from "./Wrapper.vue";
     import TaskObjectField from "./TaskObjectField.vue";
 
     defineEmits(["update:modelValue"]);
 </script>
 
 <script>
-    import Task from "./Task";
+    import Task from "./MixinTask";
+     
 
     const FIRST_FIELDS = ["id", "forced", "on", "type"];
 
@@ -117,7 +119,9 @@
                 default: () => ({}),
             },
             merge: {type: Boolean, default: false},
-            metadataInputs: {type: Boolean, default: false}
+            metadataInputs: {type: Boolean, default: false},
+            modelValue: {type: [String, Number, Boolean, Object, Array], default: undefined},
+            required: {type: Boolean, default: false}
         },
         data() {
             return {

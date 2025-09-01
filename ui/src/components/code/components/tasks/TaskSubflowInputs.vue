@@ -38,7 +38,7 @@
     </div>
 </template>
 <script>
-    import Task from "./Task";
+    import Task from "./MixinTask";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Minus from "vue-material-design-icons/Minus.vue";
     import TaskExpression from "./TaskExpression.vue";

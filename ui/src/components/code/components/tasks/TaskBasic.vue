@@ -56,7 +56,7 @@
     import Markdown from "../../layout/Markdown.vue";
 </script>
 <script>
-    import Task from "./Task";
+    import Task from "./MixinTask";
 
     export default {
         name: "TaskBasic",

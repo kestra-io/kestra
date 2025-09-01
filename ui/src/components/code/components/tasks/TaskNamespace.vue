@@ -9,7 +9,7 @@
 </template>
 <script>
     import {mapStores} from "pinia";
-    import Task from "./Task";
+    import Task from "./MixinTask";
     import NamespaceSelect from "../../namespaces/components/NamespaceSelect.vue";
 
     import {useFlowStore} from "../../../stores/flow";

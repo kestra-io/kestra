@@ -50,7 +50,7 @@
     import IconCodeBracesBox from "vue-material-design-icons/CodeBracesBox.vue";
 </script>
 <script>
-    import Task from "./Task";
+    import Task from "./MixinTask";
 
     export default {
         inheritAttrs: false,

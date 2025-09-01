@@ -1,11 +1,11 @@
 import {ref} from "vue";
-import TaskDict from "../../../../../src/components/flows/tasks/TaskDict.vue";
+import TaskDict from "../../../../../../src/components/code/components/tasks/TaskDict.vue";
 import {userEvent, waitFor, within, expect} from "storybook/internal/test";
 import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 
 const meta: Meta<typeof TaskDict> = {
-    title: "components/flows/tasks/TaskDict",
+    title: "components/nocode/TaskDict",
     component: TaskDict,
     decorators: [
             vueRouter([

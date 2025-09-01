@@ -84,8 +84,9 @@
             "remove",
             YAML_UTILS.deleteBlockWithPath({
                 source: flow.value,
-                path: `${parentPathComplete.value}[${index}]`,
+                path: `${parentPathComplete.value}[${index}]`
             }),
+            index
         );
     };
 

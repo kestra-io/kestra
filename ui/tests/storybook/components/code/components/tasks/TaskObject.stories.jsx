@@ -33,7 +33,11 @@ export const AppTableBlock = () => ({
         const model = ref({})
         return () => <div style={{display: "flex"}}>
             <div style={{width: "500px"}}>
-                <TaskObject schema={schema} modelValue={model.value} onUpdate:modelValue={(value) => model.value = value} />
+                <TaskObject
+                    schema={schema}
+                    modelValue={model.value}
+                    onUpdate:modelValue={(value) => model.value = value}
+                />
             </div>
             <div style={{width: "500px"}}>
                 <pre>{JSON.stringify(model.value, null, 2)}</pre>

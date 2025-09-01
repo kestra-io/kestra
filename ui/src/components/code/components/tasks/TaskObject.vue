@@ -75,7 +75,6 @@
     type Schema = { required?: string[]; [k: string]: any } | undefined;
 
     const props = defineProps<{
-        properties?: Record<string, any>;
         merge?: boolean;
         metadataInputs?: boolean;
         modelValue?: Model;
@@ -122,8 +121,8 @@
     }
 
     const filteredProperties = computed<Entry[]>(() => {
-        return props.properties
-            ? (Object.entries(props.properties) as Entry[]).filter(([key, value]) => key !== "type" && !Array.isArray(value))
+        return props.schema?.properties
+            ? (Object.entries(props.schema.properties) as Entry[]).filter(([key, value]) => key !== "type" && !Array.isArray(value))
             : [];
     });
 

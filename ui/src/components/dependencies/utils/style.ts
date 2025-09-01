@@ -5,26 +5,26 @@ import {cssVariable} from "@kestra-io/ui-libs";
 const VARIABLES = {
     node: {
         default: {
-            background: "--ks-dependencies-node-background",
-            border: "--ks-dependencies-node-border",
+            background: "--ks-dependencies-node-background-default",
+            border: "--ks-dependencies-node-border-default",
         },
         faded: {
-            background: "--ks-dependencies-node-background-selected-level2",
-            border: "--ks-dependencies-node-border-selected-level2",
+            background: "--ks-dependencies-node-background-faded",
+            border: "--ks-dependencies-node-border-faded",
         },
         selected: {
             background: "--ks-dependencies-node-background-selected",
             border: "--ks-dependencies-node-border-selected",
         },
         hovered: {
-            background: "--ks-dependencies-node-background-hover",
-            border: "--ks-dependencies-node-border-hover",
+            background: "--ks-dependencies-node-background-hovered",
+            border: "--ks-dependencies-node-border-hovered",
         },
     },
     edge: {
-        default: "--ks-dependencies-node-border",
-        faded: "--ks-dependencies-edge-selected-level2",
-        hovered: "--ks-dependencies-edge-hover",
+        default: "--ks-dependencies-edge-default",
+        faded: "--ks-dependencies-edge-faded",
+        hovered: "--ks-dependencies-edge-hovered",
     },
 };
 

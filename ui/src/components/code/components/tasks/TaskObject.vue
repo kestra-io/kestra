@@ -11,7 +11,7 @@
             </template>
 
             <el-collapse v-model="activeNames" v-if="requiredProperties.length && (optionalProperties?.length || deprecatedProperties?.length || connectionProperties?.length)" class="collapse">
-                <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="$t('no_code.sections.connection')">
+                <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="t('no_code.sections.connection')">
                     <template v-for="[fieldKey, fieldSchema] in connectionProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
@@ -20,7 +20,7 @@
                         </Wrapper>
                     </template>
                 </el-collapse-item>
-                <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="$t('no_code.sections.optional')">
+                <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="t('no_code.sections.optional')">
                     <template v-for="[fieldKey, fieldSchema] in optionalProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
@@ -30,7 +30,7 @@
                     </template>
                 </el-collapse-item>
 
-                <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="$t('no_code.sections.deprecated')">
+                <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="t('no_code.sections.deprecated')">
                     <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
@@ -42,7 +42,7 @@
             </el-collapse>
         </template>
 
-        <template v-else>
+        <template v-else-if="typeof modelValue === 'object' && modelValue !== null && !Array.isArray(modelValue)">
             <task-dict
                 :model-value="modelValue"
                 :task="task"
@@ -50,7 +50,7 @@
                     (value) => $emit('update:modelValue', value)
                 "
                 :root="root"
-                :schema="schema"
+                :schema="schema ?? {}"
                 :required="required"
                 :definitions="definitions"
             />
@@ -58,128 +58,124 @@
     </el-form>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {computed, ref} from "vue";
+    import {useI18n} from "vue-i18n";
     import TaskDict from "./TaskDict.vue";
     import Wrapper from "./Wrapper.vue";
     import TaskObjectField from "./TaskObjectField.vue";
+    import {collapseEmptyValues} from "./MixinTask";
 
-    defineEmits(["update:modelValue"]);
-</script>
+    defineOptions({
+        name: "TaskObject",
+        inheritAttrs: false,
+    });
 
-<script>
-    import Task from "./MixinTask";
+    type Primitive = string | number | boolean;
+    type Model = Record<string, any> | Primitive | Array<any> | undefined;
+    type Schema = { required?: string[]; [k: string]: any } | undefined;
 
+    const props = defineProps<{
+        properties?: Record<string, any>;
+        merge?: boolean;
+        metadataInputs?: boolean;
+        modelValue?: Model;
+        required?: boolean;
+        schema?: Schema;
+        definitions?: any;
+        // passed-through by parent in some contexts
+        task?: any;
+        root?: string;
+    }>();
 
-    const FIRST_FIELDS = ["id", "forced", "on", "type"];
+    const emit = defineEmits<{
+        (e: "update:modelValue", value: Model): void;
+    }>();
 
-    function sortProperties(properties, required) {
-        if(!properties.length) {
-            return [];
-        }
-        return properties.sort((a, b) => {
-            if (FIRST_FIELDS.includes(a[0])) {
-                return -1;
-            } else if (FIRST_FIELDS.includes(b[0])) {
-                return 1;
-            }
+    const {t} = useI18n();
 
-            const aRequired = (required || []).includes(
-                a[0],
-            );
-            const bRequired = (required || []).includes(
-                b[0],
-            );
+    const activeNames = ref<string[]>([]);
 
-            if (aRequired && !bRequired) {
-                return -1;
-            } else if (!aRequired && bRequired) {
-                return 1;
-            }
+    const FIRST_FIELDS = ["id", "forced", "on", "type"] as const;
+
+    type Entry = [string, any];
+
+    function sortProperties(properties: Entry[], required?: string[]): Entry[] {
+        if (!properties?.length) return [];
+        return properties.slice().sort((a, b) => {
+            if (FIRST_FIELDS.includes(a[0] as any)) return -1;
+            if (FIRST_FIELDS.includes(b[0] as any)) return 1;
+
+            const aRequired = (required || []).includes(a[0]);
+            const bRequired = (required || []).includes(b[0]);
+
+            if (aRequired && !bRequired) return -1;
+            if (!aRequired && bRequired) return 1;
 
             const aDefault = "default" in a[1];
             const bDefault = "default" in b[1];
 
-            if (aDefault && !bDefault) {
-                return 1;
-            } else if (!aDefault && bDefault) {
-                return -1;
-            }
+            if (aDefault && !bDefault) return 1;
+            if (!aDefault && bDefault) return -1;
 
             return a[0].localeCompare(b[0]);
-        })
+        });
     }
 
-    export default {
-        inheritAttrs: false,
-        name: "TaskObject",
-        mixins: [Task],
-        props: {
-            properties: {
-                type: Object,
-                default: () => ({}),
-            },
-            merge: {type: Boolean, default: false},
-            metadataInputs: {type: Boolean, default: false},
-            modelValue: {type: [String, Number, Boolean, Object, Array], default: undefined},
-            required: {type: Boolean, default: false}
-        },
-        data() {
-            return {
-                activeNames: [],
-            };
-        },
-        computed: {
-            filteredProperties() {
-                return this.properties ? Object.entries(this.properties).filter(([key, value]) => {
-                    return !(key === "type") && !Array.isArray(value);
-                }) : [];
-            },
-            sortedProperties() {
-                return sortProperties(this.filteredProperties, this.schema?.required);
-            },
-            requiredProperties() {
-                return this.merge ? this.sortedProperties : this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));
-            },
-            protectedRequiredProperties(){
-                return this.requiredProperties.length ? this.requiredProperties : this.sortedProperties;
-            },
-            optionalProperties() {
-                return this.merge ? [] : this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p) && !v.$deprecated && v.$group !== "connection");
-            },
-            deprecatedProperties() {
-                return this.merge ? [] : this.sortedProperties.filter(([k,v]) => v && v.$deprecated && this.modelValue[k] !== undefined);
-            },
-            connectionProperties() {
-                return this.merge ? [] : this.sortedProperties.filter(([p,v]) => v && v.$group === "connection" && !this.isRequired(p));
-            },
-        },
-        methods: {
-            onObjectInput(propertyName, value) {
-                const currentValue = this.modelValue || {};
-                currentValue[propertyName] = value;
-                this.onInput(currentValue);
-            },
-            isNestedProperty(key) {
-                return key.includes(".") ||
-                    ["interval", "maxInterval", "minInterval", "type"].includes(key);
-            },
-            fieldProps(key, schema) {
-                return {
-                    modelValue: this.modelValue?.[key],
-                    "onUpdate:modelValue": (value) => {
-                        this.onObjectInput(key, value);
-                    },
-                    root: this.root,
-                    fieldKey: key,
-                    task: this.modelValue,
-                    schema: schema,
-                    definitions: this.definitions,
-                    required: this.schema.required,
-                };
-            },
-        },
+    const filteredProperties = computed<Entry[]>(() => {
+        return props.properties
+            ? (Object.entries(props.properties) as Entry[]).filter(([key, value]) => key !== "type" && !Array.isArray(value))
+            : [];
+    });
 
-    };
+    const sortedProperties = computed<Entry[]>(() => sortProperties(filteredProperties.value, props.schema?.required));
+
+    const isRequired = (key: string) => Boolean(props.schema?.required?.includes(key));
+
+    const requiredProperties = computed<Entry[]>(() => {
+        return props.merge ? sortedProperties.value : sortedProperties.value.filter(([p, v]) => v && isRequired(p));
+    });
+
+    const protectedRequiredProperties = computed<Entry[]>(() => {
+        return requiredProperties.value.length ? requiredProperties.value : sortedProperties.value;
+    });
+
+    const optionalProperties = computed<Entry[]>(() => {
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !v.$deprecated && v.$group !== "connection");
+    });
+
+    const deprecatedProperties = computed<Entry[]>(() => {
+        const obj = (typeof props.modelValue === "object" && props.modelValue !== null) ? (props.modelValue as Record<string, any>) : {};
+        return props.merge ? [] : sortedProperties.value.filter(([k, v]) => v && v.$deprecated && obj[k] !== undefined);
+    });
+
+    const connectionProperties = computed<Entry[]>(() => {
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && v.$group === "connection" && !isRequired(p));
+    });
+
+    function onInput(value: any) {
+        emit("update:modelValue", collapseEmptyValues(value));
+    }
+
+    function onObjectInput(propertyName: string, value: any) {
+        const currentValue = (typeof props.modelValue === "object" && props.modelValue !== null ? {...(props.modelValue as Record<string, any>)} : {});
+        currentValue[propertyName] = value;
+        onInput(currentValue);
+    }
+
+    function fieldProps(key: string, schema: any) {
+        const mv = (typeof props.modelValue === "object" && props.modelValue !== null) ? (props.modelValue as Record<string, any>)[key] : undefined;
+        return {
+            modelValue: mv,
+            "onUpdate:modelValue": (value: any) => onObjectInput(key, value),
+            root: props.root,
+            fieldKey: key,
+            task: props.modelValue,
+            schema: schema,
+            definitions: props.definitions,
+            required: props.schema?.required,
+        } as const;
+    }
 </script>
 
 <style lang="scss">

@@ -1,8 +1,10 @@
-package io.kestra.core.runners;
+package io.kestra.worker;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.WorkerTrigger;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 

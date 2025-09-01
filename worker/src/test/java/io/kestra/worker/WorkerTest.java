@@ -1,4 +1,4 @@
-package io.kestra.core.runners;
+package io.kestra.worker;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
@@ -10,6 +10,7 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Sleep;
@@ -23,7 +24,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -62,7 +62,7 @@ class WorkerTest {
 
     @Test
     void success() throws TimeoutException, QueueException {
-        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
+        DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, null);
         worker.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
@@ -83,13 +83,13 @@ class WorkerTest {
 
     @Test
     void workerGroup() {
-        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, "toto");
+        DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, "toto");
         assertThat(worker.getWorkerGroup()).isNull();
     }
 
     @Test
     void failOnWorkerTaskWithFlowable() throws TimeoutException, QueueException, JsonProcessingException {
-        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
+        DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, null);
         worker.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
@@ -144,7 +144,7 @@ class WorkerTest {
     void killed() throws InterruptedException, TimeoutException, QueueException {
         Flux<LogEntry> receiveLogs = TestsUtils.receive(workerTaskLogQueue);
 
-        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
+        DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, null);
         worker.run();
 
         List<WorkerTaskResult> workerTaskResult = new ArrayList<>();
@@ -197,7 +197,11 @@ class WorkerTest {
 
     @Test
     void shouldCreateInstanceGivenApplicationContext() {
-        Assertions.assertDoesNotThrow(() -> applicationContext.createBean(Worker.class, IdUtils.create(), 8, null));
+        Assertions.assertDoesNotThrow(() -> {
+            try (var worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)) {
+                // do nothing
+            }
+        });
 
     }
 

@@ -1,7 +1,8 @@
-package io.kestra.core.runners;
+package io.kestra.worker;
 
 import io.kestra.core.models.WorkerJobLifecycle;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Exceptions;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;

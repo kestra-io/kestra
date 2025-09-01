@@ -1,6 +1,8 @@
-package io.kestra.core.runners;
+package io.kestra.worker;
 
 import io.kestra.core.models.triggers.WorkerTriggerInterface;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.WorkerTrigger;
 import lombok.Getter;
 
 import java.time.Duration;

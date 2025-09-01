@@ -19,11 +19,11 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
-import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.worker.DefaultWorker;
 import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
@@ -141,15 +141,14 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
             flowQueue.emit(flow);
 
             // wait for the killed
-            executionKilledCount.await(1, TimeUnit.MINUTES);
+            assertThat(executionKilledCount.await(1, TimeUnit.MINUTES), is(true));
             assertThat(((ExecutionKilledTrigger) receiveKilled.blockLast()).getTriggerId(), is("sleep"));
 
             // the trigger is restarted
             Await.until(() -> STARTED_COUNT == 2, Duration.ofMillis(100), Duration.ofSeconds(30));
 
             // the new trigger create an execution
-            boolean sawSuccessExecution = executionQueueCount.await(1, TimeUnit.MINUTES);
-            assertThat(sawSuccessExecution, is(true));
+            assertThat(executionQueueCount.await(1, TimeUnit.MINUTES), is(true));
             assertThat(receiveExecutions.blockLast().getTrigger().getVariables().get("sleep"), is(Duration.ofMillis(1).toString()));
 
             // log the sleep interrupted

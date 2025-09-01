@@ -4,8 +4,9 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
-import io.kestra.core.schedulers.AbstractScheduler;
+import io.kestra.core.scheduler.AbstractScheduler;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -49,7 +50,7 @@ class TriggerTest {
                         this.applicationContext,
                         this.flowListenersService
                 );
-                Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
+                Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null);
         ) {
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
@@ -78,7 +79,7 @@ class TriggerTest {
                 this.applicationContext,
                 this.flowListenersService
             );
-            Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
+            Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)
         ) {
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
@@ -92,7 +93,6 @@ class TriggerTest {
             repositoryLoader.load(Objects.requireNonNull(TriggerTest.class.getClassLoader().getResource("flows/valids/http-listen-encrypted.yaml")));
 
             assertTrue(queueCount.await(1, TimeUnit.MINUTES));
-            worker.shutdown();
             receive.blockLast();
         }
     }

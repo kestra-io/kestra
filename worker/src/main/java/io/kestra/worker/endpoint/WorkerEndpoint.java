@@ -1,4 +1,4 @@
-package io.kestra.core.endpoints;
+package io.kestra.worker.endpoint;
 
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.WorkerTask;
@@ -11,18 +11,18 @@ import lombok.Builder;
 import lombok.Getter;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.Worker;
+import io.kestra.worker.DefaultWorker;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+
 import jakarta.inject.Inject;
 
 @Endpoint(id = "worker", defaultSensitive = false)
 @Requires(property = "kestra.server-type", pattern = "(WORKER|STANDALONE)")
 public class WorkerEndpoint {
     @Inject
-    Worker worker;
+    DefaultWorker worker;
 
     @Read
     public WorkerEndpointResult running() throws Exception {

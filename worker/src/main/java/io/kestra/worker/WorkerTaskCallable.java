@@ -1,4 +1,4 @@
-package io.kestra.core.runners;
+package io.kestra.worker;
 
 import dev.failsafe.Failsafe;
 import dev.failsafe.Timeout;
@@ -8,6 +8,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.RunnableTaskException;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.WorkerTask;
 import lombok.Getter;
 
 import java.time.Duration;

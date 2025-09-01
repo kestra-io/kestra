@@ -7,10 +7,9 @@ include 'core'
 include 'tests'
 
 include 'runner-memory'
+include 'repository-memory'
 
 include 'storage-local'
-
-include 'repository-memory'
 
 include 'jdbc'
 include 'jdbc-h2'
@@ -18,6 +17,8 @@ include 'jdbc-mysql'
 include 'jdbc-postgres'
 
 include 'webserver'
+include 'worker'
+
 include 'ui'
 include 'model'
 include 'processor'

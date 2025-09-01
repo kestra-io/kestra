@@ -19,7 +19,7 @@
 </template>
 <script>
     import {mapStores} from "pinia";
-    import {useFlowStore} from "../../../stores/flow";
+    import {useFlowStore} from "../../../../stores/flow";
     import Task from "./MixinTask";
 
     export default {

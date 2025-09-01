@@ -13,9 +13,9 @@
 
 <script setup lang="ts">
     import {computed, inject, ref} from "vue";
-    import Collapse from "../../code/components/collapse/Collapse.vue";
-    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
-    import {useFlowStore} from "../../../stores/flow";
+    import Collapse from "../collapse/Collapse.vue";
+    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
+    import {useFlowStore} from "../../../../stores/flow";
 
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref())
 
@@ -48,7 +48,7 @@
 </script>
 
 <style scoped lang="scss">
-@import "../../code/styles/code.scss";
+@import "../../styles/code.scss";
 
 .tasks-wrapper {
     width: 100%;

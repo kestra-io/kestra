@@ -12,8 +12,9 @@
 
 <script lang="ts" setup>
     import {computed} from "vue";
-    import {PairField} from "../../code/utils/types";
-    import InputPair from "../../code/components/inputs/InputPair.vue";
+    import {PairField} from "../../utils/types";
+    import InputPair from "../inputs/InputPair.vue";
+    // @ts-expect-error no typings for taskString yet
     import TaskString from "./TaskString.vue";
 
     const emit = defineEmits<{

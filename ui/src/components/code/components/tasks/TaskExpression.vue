@@ -12,7 +12,7 @@
 </template>
 <script lang="ts" setup>
     import {collapseEmptyValues} from "./MixinTask";
-    import Editor from "../../../components/inputs/Editor.vue";
+    import Editor from "../../../../components/inputs/Editor.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {computed, ref} from "vue";
 

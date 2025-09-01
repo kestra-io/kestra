@@ -43,7 +43,7 @@
     import Minus from "vue-material-design-icons/Minus.vue";
     import TaskExpression from "./TaskExpression.vue";
     import {mapStores} from "pinia";
-    import {useCoreStore} from "../../../stores/core";
+    import {useCoreStore} from "../../../../stores/core";
     import axios from "axios";
 
     export default {

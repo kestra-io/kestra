@@ -137,7 +137,7 @@
 </script>
 
 <style scoped lang="scss">
-@import "../../code/styles/code.scss";
+@import "../../styles/code.scss";
 
 .disabled {
     opacity: 0.5;

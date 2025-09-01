@@ -68,7 +68,7 @@
 
 <script>
     import Task from "./MixinTask";
-     
+
 
     const FIRST_FIELDS = ["id", "forced", "on", "type"];
 
@@ -196,7 +196,7 @@
 </style>
 
 <style lang="scss" scoped>
-@import "../../code/styles/code.scss";
+@import "../../styles/code.scss";
 
 .el-form-item {
     width: 100%;

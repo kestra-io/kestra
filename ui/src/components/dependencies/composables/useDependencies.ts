@@ -4,6 +4,7 @@ import {useCoreStore} from "../../../stores/core";
 import {useFlowStore} from "../../../stores/flow";
 import {useExecutionsStore} from "../../../stores/executions";
 import {useNamespacesStore} from "override/stores/namespaces";
+import {useMiscStore} from "override/stores/misc";
 
 import {useI18n} from "vue-i18n";
 
@@ -22,7 +23,7 @@ import {State, cssVariable} from "@kestra-io/ui-libs";
 import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, type Node, type Edge, type Element} from "../utils/types";
 import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies";
 
-import {edgeColors, style} from "../utils/style";
+import {edgeColors, getStyle} from "../utils/style";
 const SELECTED = "selected", FADED = "faded", HOVERED = "hovered", EXECUTIONS = "executions";
 
 const options: Omit<cytoscape.CytoscapeOptions, "container" | "elements"> & {elements?: Element[]} = {
@@ -245,6 +246,14 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
     const flowStore = useFlowStore();
     const executionsStore = useExecutionsStore();
     const namespacesStore = useNamespacesStore();
+    const miscStore = useMiscStore();
+
+    watch(() => miscStore.theme, () => {
+        if (!cy) return;
+
+        // Update the stylesheet so nodes and edges reflect the new theme colors
+        cy.style().fromJson(getStyle()).update();
+    });
 
     const {t} = useI18n({useScope: "global"});
 
@@ -287,7 +296,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
         if (subtype === EXECUTION) nextTick(() => openSSE());
 
-        cy = cytoscape({container: container.value, layout, ...options, style, elements: elements.value.data});
+        cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
 
         // Hide nodes immediately after initialization to avoid visual flickering or rearrangement during layout setup
         cy.ready(() => cy.nodes().style("display", "none"));

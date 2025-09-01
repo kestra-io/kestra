@@ -28,7 +28,7 @@ const VARIABLES = {
     },
 };
 
-const nodeBase: cytoscape.Css.Node = {
+const nodeBase = (): cytoscape.Css.Node => ({
     label: "data(flow)",
     "border-width": 2,
     "border-style": "solid",
@@ -36,7 +36,7 @@ const nodeBase: cytoscape.Css.Node = {
     "font-size": 10,
     "text-valign": "bottom",
     "text-margin-y": 10,
-};
+});
 
 const edgeBase: cytoscape.Css.Edge = {
     "target-arrow-shape": "triangle",
@@ -64,15 +64,15 @@ export function edgeColors(type: keyof typeof VARIABLES.edge = "default"): Parti
     };
 }
 
-export const style: cytoscape.StylesheetJson = [
+export const getStyle = (): cytoscape.StylesheetJson => [
     {
         selector: "node",
-        style: {...nodeBase, ...nodeColors("default")},
+        style: {...nodeBase(), ...nodeColors("default")},
     },
     {
         selector: "node.faded",
         style: {
-            ...nodeBase,
+            ...nodeBase(),
             ...nodeColors("faded"),
             "background-opacity": 0.75,
             "border-opacity": 0.75,
@@ -80,11 +80,11 @@ export const style: cytoscape.StylesheetJson = [
     },
     {
         selector: "node.selected",
-        style: {...nodeBase, ...nodeColors("selected")},
+        style: {...nodeBase(), ...nodeColors("selected")},
     },
     {
         selector: "node.hovered",
-        style: {...nodeBase, ...nodeColors("hovered")},
+        style: {...nodeBase(), ...nodeColors("hovered")},
     },
     {
         selector: "edge",

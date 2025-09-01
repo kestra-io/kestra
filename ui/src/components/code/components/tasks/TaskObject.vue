@@ -76,6 +76,7 @@
 
     const props = defineProps<{
         merge?: boolean;
+        properties?: any;
         metadataInputs?: boolean;
         modelValue?: Model;
         required?: boolean;
@@ -121,8 +122,9 @@
     }
 
     const filteredProperties = computed<Entry[]>(() => {
-        return props.schema?.properties
-            ? (Object.entries(props.schema.properties) as Entry[]).filter(([key, value]) => key !== "type" && !Array.isArray(value))
+        const propertiesProc = (props.properties ?? props.schema?.properties);
+        return propertiesProc
+            ? (Object.entries(propertiesProc) as Entry[]).filter(([key, value]) => key !== "type" && !Array.isArray(value))
             : [];
     });
 

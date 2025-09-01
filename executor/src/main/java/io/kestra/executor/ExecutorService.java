@@ -1,4 +1,4 @@
-package io.kestra.core.runners;
+package io.kestra.executor;
 
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
@@ -14,6 +14,7 @@ import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.test.flow.TaskFixture;
@@ -380,7 +381,7 @@ public class ExecutorService {
 
         if (flow.getOutputs() != null) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-            
+
             try {
                 Map<String, Object> outputs = FlowInputOutput.renderFlowOutputs(flow.getOutputs(), runContext);
                 outputs = flowInputOutput.typedOutputs(flow, executor.getExecution(), outputs);

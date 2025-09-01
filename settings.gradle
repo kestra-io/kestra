@@ -17,6 +17,7 @@ include 'jdbc-mysql'
 include 'jdbc-postgres'
 
 include 'webserver'
+include 'executor'
 include 'worker'
 
 include 'ui'

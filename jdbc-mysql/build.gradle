@@ -5,6 +5,7 @@
 dependencies {
     implementation project(":core")
     implementation project(":jdbc")
+    implementation project(":executor")
 
     implementation("io.micronaut.sql:micronaut-jooq")
     runtimeOnly("com.mysql:mysql-connector-j")

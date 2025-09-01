@@ -1,4 +1,4 @@
-package io.kestra.core.services;
+package io.kestra.executor;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.executions.Execution;

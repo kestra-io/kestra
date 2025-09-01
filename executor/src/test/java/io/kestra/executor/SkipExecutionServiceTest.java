@@ -1,4 +1,4 @@
-package io.kestra.core.services;
+package io.kestra.executor;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;

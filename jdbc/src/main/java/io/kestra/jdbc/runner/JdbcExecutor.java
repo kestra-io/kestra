@@ -19,8 +19,6 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
-import io.kestra.core.runners.ExecutorService;
-import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 import io.kestra.core.server.*;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
@@ -28,6 +26,10 @@ import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.*;
+import io.kestra.executor.ExecutorService;
+import io.kestra.executor.FlowTriggerService;
+import io.kestra.executor.SLAService;
+import io.kestra.executor.SkipExecutionService;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
@@ -68,7 +70,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Singleton
 @JdbcRunnerEnabled
 @Slf4j
-public class JdbcExecutor implements ExecutorInterface, Service {
+public class JdbcExecutor implements ExecutorInterface {
     private static final ObjectMapper MAPPER = JdbcMapper.of();
 
     private final ScheduledExecutorService scheduledDelay = Executors.newSingleThreadScheduledExecutor();

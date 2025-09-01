@@ -1,4 +1,7 @@
-package io.kestra.core.runners;
+package io.kestra.executor;
+
+import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.runners.WorkerTask;
 
 /**
  * State store containing all workers' jobs in RUNNING state.

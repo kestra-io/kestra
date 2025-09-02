@@ -206,9 +206,9 @@
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import MailChecker from "mailchecker"
-    import {useMiscStore} from "../../stores/misc"
+    import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
-    import {initPostHogForSetup, trackSetupEvent} from "../../utils/setupPosthog"
+    import {initPostHogForSetup, trackSetupEvent} from "../../composables/usePosthog"
 
     import Cogs from "vue-material-design-icons/Cogs.vue"
     import AccountPlus from "vue-material-design-icons/AccountPlus.vue"
@@ -312,9 +312,9 @@
     const setupConfigurationLines = computed<ConfigLine[]>(() => {
         if (!setupConfiguration.value) return []
         const configs = miscStore.configs
-        
+
         const basicAuthValue = activeStep.value >= 1 || configs?.isBasicAuthInitialized
-        
+
         return [
             {name: "repository", icon: Database, value: setupConfiguration.value.repositoryType || "NOT SETUP"},
             {name: "queue", icon: CurrentDc, value: setupConfiguration.value.queueType || "NOT SETUP"},
@@ -346,7 +346,7 @@
     ])
 
     const EMAIL_REGEX = /^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$/
-    const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d).{8,}$/
+    const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)\S{8,}$/
 
     const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
         if (!value) {
@@ -420,9 +420,9 @@
                 user_email: userFormData.value.username
             }, userFormData.value)
 
-            
+
             localStorage.setItem("basicAuthUserCreated", "true")
-            
+
             nextStep()
         } catch (error: any) {
             trackSetupEvent("setup_flow:account_creation_failed", {

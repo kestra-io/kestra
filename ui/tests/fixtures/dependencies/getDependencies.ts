@@ -1,16 +1,16 @@
 import {v4 as uuid} from "uuid";
 
-import {NODE, EDGE, FLOW, EXECUTION, type Node, type Edge, type Element} from "../../../src/components/dependencies/utils/types";
+import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, type Node, type Edge, type Element} from "../../../src/components/dependencies/utils/types";
 
 type DependencyOptions = {
     roots?: number;
     depth?: number;
     childrenRange?: [number, number];
     total?: number;
-    subtype?: typeof FLOW | typeof EXECUTION;
+    subtype?: typeof FLOW | typeof EXECUTION | typeof NAMESPACE;
 };
 
-import {getRandomFlowID} from "../../../scripts/product/flow";
+import {getRandomID} from "../../../scripts/id";
 
 const namespaces = ["company", "team", "github", "qa", "system", "dev", "test", "data", "infra", "cloud", "backend", "frontend", "api", "services", "database", "mobile", "security"];
 
@@ -30,7 +30,7 @@ export function getRandomNumber(min: number, max: number): number {
 /**
  * Generates a random hierarchical namespace string with a depth of 1 to 4 levels.
  *
- * @returns A dot-separated namespace string, e.g., "company.team.github".
+ * @returns A dot-separated namespace string, e.g., `company.team.github`.
  */
 function getRandomNamespace(): string {
     const depth = getRandomNumber(1, 4);
@@ -45,27 +45,18 @@ function getRandomNamespace(): string {
 }
 
 /**
- * Creates a random node with either Flow or Execution metadata.
+ * Creates a random node with either Flow, Execution or Namespace metadata.
  *
- * @param subtype - The type of node to create (`FLOW` or `EXECUTION`).
+ * @param subtype - The type of node to create (`FLOW`, `EXECUTION` or `NAMESPACE`).
  * @returns A randomly generated Node object.
  */
-function createNode(subtype: typeof FLOW | typeof EXECUTION): Node {
+function createNode(subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE): Node {
     return {
         id: uuid(),
         type: NODE,
-        flow: getRandomFlowID(),
+        flow: getRandomID(),
         namespace: getRandomNamespace(),
-        metadata:
-            subtype === FLOW
-                ? {
-                      subtype: FLOW,
-                      revision: getRandomNumber(1, 100),
-                  }
-                : {
-                      subtype: EXECUTION,
-                      state: states[getRandomNumber(0, states.length - 1)],
-                  },
+        metadata: subtype === FLOW || subtype === NAMESPACE ? {subtype} : {subtype: EXECUTION, state: states[getRandomNumber(0, states.length - 1)]},
     };
 }
 
@@ -73,14 +64,14 @@ function createNode(subtype: typeof FLOW | typeof EXECUTION): Node {
  * Generates a synthetic dependency graph as an array of cytoscape compatible elements.
  *
  * The graph starts with `roots` root nodes and grows hierarchically up to the specified
- * `depth`. Each node includes a namespace, revision, and state.
+ * `depth`.
  *
  * @param options - Graph generation options.
  * @param options.roots - Number of root nodes (default 1).
  * @param options.depth - Hierarchy depth levels (default 5).
  * @param options.childrenRange - Min and max children per node (default [2, 20]).
  * @param options.total - Maximum total nodes to generate (default 100).
- * @param options.subtype - The type of dependency graph to generate (`FLOW` or `EXECUTION`, default `FLOW`).
+ * @param options.subtype - The type of dependency graph to generate (`FLOW`, `EXECUTION` or `NAMESPACE`, default `FLOW`).
  * @returns An array of cytoscape compatible elements (nodes and edges).
  *
  * @throws Will throw an error if `total` is less than `roots`.

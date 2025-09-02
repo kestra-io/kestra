@@ -11,25 +11,22 @@
 
 <script setup lang="ts">
     import {ref, watch, computed, inject, nextTick} from "vue";
-    import {useStore} from "vuex";
     import {SECTIONS} from "@kestra-io/ui-libs";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants";
     import {
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
-        FLOW_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
+        UPDATE_TASK_FUNCTION_INJECTION_KEY,
+        FULL_SOURCE_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY,
     } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
+    import {useFlowStore} from "../../../stores/flow";
 
-    const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
-
-    const store = useStore();
-
-    const flow = inject(FLOW_INJECTION_KEY, ref(""));
+    const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""));
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
     const position = inject(POSITION_INJECTION_KEY, "after");
@@ -39,7 +36,8 @@
     );
 
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
-    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
+    const updateTask = inject(UPDATE_TASK_FUNCTION_INJECTION_KEY, () => {})
 
     const closeTaskAddition = inject(
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
@@ -86,13 +84,14 @@
         section.value === "triggers" ? SECTIONS.TRIGGERS : SECTIONS.TASKS
     )
 
+    const flowStore = useFlowStore();
     const validateTask = (task?: string) => {
         if(section.value !== PLUGIN_DEFAULTS_SECTION && task){
             clearTimeout(timer.value);
             timer.value = setTimeout(() => {
                 if (lastValidatedValue.value !== task) {
                     lastValidatedValue.value = task;
-                    store.dispatch("flow/validateTask", {
+                    flowStore.validateTask({
                         task,
                         section: validationSection.value
                     });
@@ -104,7 +103,8 @@
     const timer = ref<number>();
     const lastValidatedValue = ref<string>();
 
-    const errors = computed(() => store.state.flow.taskError);
+
+    const errors = computed(() => flowStore.taskError?.split(/, ?/));
 
     const saveTask = () => {
         let result: string = flow.value;
@@ -141,8 +141,8 @@
             const currentRefPath = (refPath !== undefined && refPath !== null) ? refPath + (position === "after" ? 1 : 0) : 0;
             editTask(
                 fieldName ? `${parentPath}[${currentRefPath}].${fieldName}` : parentPath,
-                blockSchemaPath,
-                fieldName ? undefined : currentRefPath,
+                blockSchemaPath.value,
+                fieldName ? undefined : currentRefPath
             );
             hasMovedToEdit.value = true;
             nextTick(() => {
@@ -150,7 +150,7 @@
             });
         }
 
-        emits("updateTask", result);
+        updateTask(result);
     };
 
     const hasMovedToEdit = ref(false);

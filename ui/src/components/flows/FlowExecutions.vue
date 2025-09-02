@@ -1,10 +1,11 @@
 <template>
-    <executions :restore-url="false" filter :topbar="false" :namespace="flow.namespace" :flow-id="flow.id" />
+    <executions :restore-url="false" filter :topbar="false" :namespace="flowStore.flow?.namespace" :flow-id="flowStore.flow?.id" />
 </template>
 
 <script>
+    import {mapStores} from "pinia";
     import Executions from "../executions/Executions.vue";
-    import {mapState} from "vuex";
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         inheritAttrs: false,
@@ -12,7 +13,7 @@
             Executions,
         },
         computed: {
-            ...mapState("flow", ["flow"]),
+            ...mapStores(useFlowStore)
         }
     };
 </script>

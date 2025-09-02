@@ -74,8 +74,7 @@
             },
             async fetchInputKeys(namespace, flowId, revision) {
                 try {
-                    return (await this.$store.dispatch(
-                        "flow/loadFlow",
+                    return (await this.flowStore.loadFlow(
                         {
                             namespace: namespace,
                             id: flowId,

@@ -76,13 +76,14 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
     import ExecutionUtils from "../../utils/executionUtils";
+    import {useAuthStore} from "override/stores/auth"
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         inheritAttrs: false,
@@ -129,14 +130,13 @@
         methods: {
             loadRevision() {
                 this.revisionsSelected = this.execution.flowRevision
-                this.$store
-                    .dispatch("flow/loadRevisions", {
-                        namespace: this.execution.namespace,
-                        id: this.execution.flowId
-                    })
+                this.flowStore.loadRevisions({
+                    namespace: this.execution.namespace,
+                    id: this.execution.flowId
+                })
             },
             restartLastRevision() {
-                this.revisionsSelected = this.revisions[this.revisions.length - 1].revision;
+                this.revisionsSelected = this.flowStore.revisions[this.flowStore.revisions.length - 1].revision;
                 this.restart();
             },
             restart() {
@@ -178,14 +178,12 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapState("flow", ["revisions"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useFlowStore, useAuthStore),
             replayOrRestart() {
                 return this.isReplay ? "replay" : "restart";
             },
             revisionsOptions() {
-                return (this.revisions || [])
+                return (this.flowStore.revisions || [])
                     .map((revision) => {
                         return {
                             value: revision.revision,
@@ -195,11 +193,11 @@
                     .reverse();
             },
             enabled() {
-                if (this.isReplay && !(this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace))) {
+                if (this.isReplay && !(this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace))) {
                     return false;
                 }
 
-                if (!this.isReplay && !(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!this.isReplay && !(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 

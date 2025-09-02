@@ -39,11 +39,11 @@
 <script setup lang="ts">
     import {computed} from "vue";
 
-    import {useStore} from "vuex";
-    const store = useStore();
-
     import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
+    const {t} = useI18n();
+
+    import {useAuthStore} from "override/stores/auth";
+    const authStore = useAuthStore();
 
     import TopNavBar from "../../layout/TopNavBar.vue";
 
@@ -56,11 +56,12 @@
 
     const props = defineProps({dashboard: {type: Object, default: undefined}});
 
-    const user = computed(() => store.state.auth.user);
+    const user = computed(() => authStore.user);
     const isAllowed = computed(() => user.value.isAllowedGlobal(permission.FLOW, action.CREATE));
 
     const route = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
 
     import useRouteContext from "../../../mixins/useRouteContext";
+
     useRouteContext(route);
 </script>

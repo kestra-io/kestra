@@ -55,4 +55,20 @@ public class ListUtils {
 
         return newList;
     }
+
+    public static List<?> convertToList(Object object){
+        if (object instanceof List<?> list) {
+            return list;
+        } else {
+            throw new IllegalArgumentException("%s in not an instance of List".formatted(object.getClass()));
+        }
+    }
+
+    public static List<String> convertToListString(Object object){
+        if (object instanceof List<?> list && (list.isEmpty() || list.getFirst() instanceof String)) {
+            return (List<String>) list;
+        } else {
+            throw new IllegalArgumentException("%s in not an instance of List of String".formatted(object));
+        }
+    }
 }

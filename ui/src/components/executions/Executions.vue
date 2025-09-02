@@ -19,10 +19,10 @@
                     </li>
                     <li>
                         <trigger-flow
-                            v-if="flow"
-                            :disabled="flow.disabled || isReadOnly"
-                            :flow-id="flow.id"
-                            :namespace="flow.namespace"
+                            v-if="flowStore.flow"
+                            :disabled="flowStore.flow.disabled || isReadOnly"
+                            :flow-id="flowStore.flow.id"
+                            :namespace="flowStore.flow.namespace"
                         />
                     </li>
                 </template>
@@ -58,7 +58,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections :dashboard="{id: 'default'}" :charts show-default />
+                <Sections ref="dashboardComponent" :dashboard="{id: 'default'}" :charts show-default />
             </template>
 
             <template #table>
@@ -450,9 +450,8 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc.ts";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -480,6 +479,8 @@
 
     import {filterLabels} from "./utils"
     import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth.ts";
+    import {useFlowStore} from "../../stores/flow.ts";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -627,9 +628,7 @@
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapState("flow", ["flow"]),
-            ...mapStores(useMiscStore, useExecutionsStore),
+            ...mapStores(useMiscStore, useExecutionsStore, useFlowStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -659,19 +658,19 @@
                 return this.canDelete || this.canUpdate;
             },
             canCreate() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
             },
             canUpdate() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
             },
             canDelete() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
             },
             isAllowedEdit() {
-                return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.flowStore.flow.namespace);
             },
             hasAnyExecute() {
-                return this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
+                return this.authStore.user?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
             },
             isDisplayedTop() {
                 if(this.visibleCharts) return true;
@@ -771,6 +770,7 @@
             },
             refresh() {
                 this.recomputeInterval = !this.recomputeInterval;
+                this.$refs.dashboardComponent.refreshCharts();
                 this.load();
             },
             selectionMapper(execution) {
@@ -856,7 +856,7 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    
+
                     const action = actionMap[queryAction]();
                     return action(options)
                         .then(r => {
@@ -869,7 +869,7 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    
+
                     const action = actionMap[byIdAction]();
                     return action(options)
                         .then(r => {
@@ -1069,15 +1069,15 @@
             editFlow() {
                 this.$router.push({
                     name: "flows/update", params: {
-                        namespace: this.flow.namespace,
-                        id: this.flow.id,
+                        namespace: this.flowStore.flow.namespace,
+                        id: this.flowStore.flow.id,
                         tab: "edit",
                         tenant: this.$route.params.tenant
                     }
                 })
             },
             emitStateCount() {
-                const runningCount = this.executionsStore.executions.filter(execution => 
+                const runningCount = this.executionsStore.executions.filter(execution =>
                     execution.state.current === State.RUNNING
                 )?.length;
                 const totalCount = this.executionsStore.total;

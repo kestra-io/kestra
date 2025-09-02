@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
@@ -33,6 +33,7 @@ class PurgeExecutionsTest {
             .id(IdUtils.create())
             .namespace(namespace)
             .flowId(flowId)
+            .tenantId(MAIN_TENANT)
             .state(new State().withState(State.Type.SUCCESS))
             .build();
         executionRepository.save(execution);
@@ -42,7 +43,7 @@ class PurgeExecutionsTest {
             .namespace(Property.ofValue(namespace))
             .endDate(Property.ofValue(ZonedDateTime.now().plusMinutes(1).format(DateTimeFormatter.ISO_ZONED_DATE_TIME)))
             .build();
-        var runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", namespace, "id", flowId)));
+        var runContext = runContextFactory.of(flowId, namespace);
         var output = purge.run(runContext);
 
         assertThat(output.getExecutionsCount()).isEqualTo(1);
@@ -58,6 +59,7 @@ class PurgeExecutionsTest {
             .namespace(namespace)
             .flowId(flowId)
             .id(IdUtils.create())
+            .tenantId(MAIN_TENANT)
             .state(new State().withState(State.Type.SUCCESS))
             .build();
         executionRepository.save(execution);
@@ -68,7 +70,7 @@ class PurgeExecutionsTest {
             .flowId(Property.ofValue(flowId))
             .endDate(Property.ofValue(ZonedDateTime.now().plusMinutes(1).format(DateTimeFormatter.ISO_ZONED_DATE_TIME)))
             .build();
-        var runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", namespace, "id", flowId)));
+        var runContext = runContextFactory.of(flowId, namespace);
         var output = purge.run(runContext);
 
         assertThat(output.getExecutionsCount()).isEqualTo(1);

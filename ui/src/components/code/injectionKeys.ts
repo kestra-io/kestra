@@ -2,12 +2,11 @@ import type {ComputedRef, InjectionKey, Ref} from "vue"
 import {TopologyClickParams} from "./utils/types"
 import {Panel} from "../MultiPanelTabs.vue"
 
-export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<string>
-export const SCHEMA_PATH_INJECTION_KEY = Symbol("schema-path-injection-key") as InjectionKey<ComputedRef<string>>
+export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<ComputedRef<string>>
 /**
  * Complete flow YAML string for the no-code
  */
-export const FLOW_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
+export const FULL_SOURCE_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
 /**
  * When creating a subtask, this is the parent task path
  */
@@ -46,11 +45,15 @@ export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-inje
  * Call this when starting to edit a task, when the user clicks on the task line
  * to start the edition process
  */
-export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath?: number) => void>
+export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath: number | undefined) => void>
 /**
  * Call this when closing a task, when the user clicks on the close button
  */
 export const CLOSE_TASK_FUNCTION_INJECTION_KEY = Symbol("close-function-injection-key") as InjectionKey<() => void>
+/**
+ * We call this function when a task is changed, as soon as the first click or type is done
+ */
+export const UPDATE_TASK_FUNCTION_INJECTION_KEY = Symbol("update-function-injection-key") as InjectionKey<(yaml: string) => void>
 /**
  * Set this to override the contents of the no-code editor with a component of your choice
  * This is used to display the metadata edition inputs
@@ -77,3 +80,12 @@ export const EDITOR_HIGHLIGHT_INJECTION_KEY = Symbol("editor-highlight-injection
 * Indicates if the Monaco editor is being used within EditorWrapper context for flow editing
 */
 export const EDITOR_WRAPPER_INJECTION_KEY = Symbol("editor-wrapper-injection-key") as InjectionKey<boolean>
+
+export const ROOT_SCHEMA_INJECTION_KEY = Symbol("root-schema-injection-key") as InjectionKey<Ref<Record<string, any>>>
+
+export const FULL_SCHEMA_INJECTION_KEY = Symbol("full-schema-injection-key") as InjectionKey<Ref<{
+            definitions: Record<string, any>,
+            $ref: string,
+        }>>
+
+export const SCHEMA_DEFINITIONS_INJECTION_KEY = Symbol("schema-definitions-injection-key") as InjectionKey<ComputedRef<Record<string, any>>>

@@ -19,9 +19,9 @@
     import LogsWrapper from "../logs/LogsWrapper.vue"
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
-    import {mapState, mapGetters} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
+    import {useFlowStore} from "../../stores/flow";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
@@ -33,6 +33,7 @@
     import FlowRootTopBar from "./FlowRootTopBar.vue";
     import FlowConcurrency from "./FlowConcurrency.vue";
     import DemoAuditLogs from "../demo/AuditLogs.vue";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         mixins: [RouteContext],
@@ -66,6 +67,19 @@
                     }
                 },
             },
+            "flowStore.flow": {
+                deep: true,
+                handler: function (flow) {
+                    if (flow && flow.id) {
+                        // https://github.com/kestra-io/kestra/issues/10484
+                        setTimeout(() => {
+                            this.flowStore
+                                .loadDependencies({namespace: flow.namespace, id: flow.id}, true)
+                                .then(({count}) => this.dependenciesCount = count);
+                        }, 1000);
+                    }
+                },
+            }
         },
         created() {
             if(!this.$route.params.tab) {
@@ -77,35 +91,30 @@
             // Specifically, it would be a problem when saving a new flow
             // and moving to edit mode.
             // NOTE: Flow creation component is ./FlowCreate.vue
-            this.$store.commit("flow/setIsCreating", false);
-
-            this.$store.commit("flow/setIsCreating", false);
+            this.flowStore.isCreating = false;
 
             this.load();
         },
         methods: {
             load() {
                 if (
-                    this.flow === undefined ||
+                    this.flowStore.flow === undefined ||
                     this.previousFlow !== this.flowKey()
                 ) {
                     const query = {...this.$route.query, allowDeleted: true};
-                    return this.$store
-                        .dispatch("flow/loadFlow", {
-                            ...this.$route.params,
-                            ...query,
-                        })
-                        .then(async () => {
-                            if (this.flow) {
-                                this.deleted = this.flow.deleted;
+                    return this.flowStore.loadFlow({
+                        ...this.$route.params,
+                        ...query,
+                    })
+                        .then(() => {
+                            if (this.flowStore.flow) {
+                                this.deleted = this.flowStore.flow.deleted;
                                 this.previousFlow = this.flowKey();
-                                this.$store.dispatch("flow/loadGraph", {
-                                    flow: this.flow,
+                                this.flowStore.loadGraph({
+                                    flow: this.flowStore.flow,
                                 });
-
-                                this.dependenciesCount = (await this.$store.dispatch("flow/loadDependencies", {namespace: this.$route.params.namespace, id: this.$route.params.id})).count;
                             }
-                        });
+                        })
                 }
             },
             flowKey() {
@@ -119,7 +128,7 @@
                         title: this.$t("topology"),
                         props: {
                             isReadOnly: true,
-                            expandedSubflows: this.expandedSubflows,
+                            expandedSubflows: this.flowStore.expandedSubflows,
                         },
                     },
                 ];
@@ -139,11 +148,11 @@
 
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.EXECUTION,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -155,11 +164,11 @@
 
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.FLOW,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -169,19 +178,19 @@
                         containerClass: "full-container",
                         maximized: true,
                         props: {
-                            expandedSubflows: this.expandedSubflows,
-                            isReadOnly: this.deleted || !this.isAllowedEdit || this.readOnlySystemLabel,
+                            expandedSubflows: this.flowStore.expandedSubflows,
+                            isReadOnly: this.deleted || !this.flowStore.isAllowedEdit || this.flowStore.readOnlySystemLabel,
                         },
                     });
                 }
 
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.FLOW,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -194,11 +203,11 @@
 
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.FLOW,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -210,11 +219,11 @@
 
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.EXECUTION,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -231,11 +240,11 @@
 
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.EXECUTION,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -246,11 +255,11 @@
                 }
                 if (
                     this.user &&
-                    this.flow &&
+                    this.flowStore.flow &&
                     this.user.isAllowed(
                         permission.FLOW,
                         action.READ,
-                        this.flow.namespace,
+                        this.flowStore.flow.namespace,
                     )
                 ) {
                     tabs.push({
@@ -282,17 +291,14 @@
                 return tabs;
             },
             updateExpandedSubflows(expandedSubflows) {
-                this.$store.commit("flow/setExpandedSubflows", expandedSubflows);
+                this.flowStore.expandedSubflows = expandedSubflows;
             },
             activeTabName() {
                 return this.$refs.currentTab?.activeTab?.name ?? "home";
             }
         },
         computed: {
-            ...mapGetters("flow", ["isAllowedEdit", "readOnlySystemLabel"]),
-            ...mapState("flow", ["flow", "expandedSubflows"]),
-            ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore),
+            ...mapStores(useCoreStore, useFlowStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$route.params.id,
@@ -321,12 +327,15 @@
                 return this.getTabs();
             },
             ready() {
-                return this.user && this.flow;
+                return this.user && this.flowStore.flow;
             },
+            user() {
+                return this.authStore.user;
+            }
         },
         unmounted() {
-            this.$store.commit("flow/setFlow", undefined);
-            this.$store.commit("flow/setFlowGraph", undefined);
+            this.flowStore.flow = undefined;
+            this.flowStore.flowGraph = undefined;
         },
     };
 </script>

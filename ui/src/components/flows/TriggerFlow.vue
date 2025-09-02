@@ -57,7 +57,6 @@
 
 <script>
     import FlowRun from "./FlowRun.vue";
-    import {mapState} from "vuex";
     import Flash from "vue-material-design-icons/Flash.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import {shallowRef} from "vue";
@@ -68,6 +67,7 @@
     import {useCoreStore} from "../../stores/core";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         components: {
@@ -171,9 +171,7 @@
             }
         },
         computed: {
-            ...mapState("flow", ["executeFlow"]),
-            ...mapState("auth", ["user"]),
-            ...mapStores(useApiStore, useCoreStore, useExecutionsStore, usePlaygroundStore),
+            ...mapStores(useApiStore, useCoreStore, useExecutionsStore, usePlaygroundStore, useFlowStore),
             computedFlowId() {
                 return this.flowId || this.localFlow?.id;
             },
@@ -197,10 +195,10 @@
                 },
                 deep: true
             },
-            executeFlow: {
-                handler() {
-                    if (this.executeFlow && !this.isDisabled()) {
-                        this.$store.commit("flow/executeFlow", false);
+            "flowStore.executeFlow": {
+                handler(value) {
+                    if (value && !this.isDisabled()) {
+                        this.flowStore.executeFlow = false;
                         this.onClick();
                     }
                 }

@@ -499,7 +499,7 @@ class FlowControllerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size()).isEqualTo(8);
+        assertThat(namespaces.size()).isEqualTo(9);
     }
 
     @Test
@@ -982,6 +982,38 @@ class FlowControllerTest {
         assertThat(result.getNodes()).extracting(node -> node.getId()).contains("flow-a", "flow-b", "flow-c", "flow-d", "flow-e");
         assertThat(result.getEdges()).extracting(edge -> edge.getSource()).contains("flow-a", "flow-b", "flow-c", "flow-d");
         assertThat(result.getEdges()).extracting(edge -> edge.getTarget()).contains("flow-b", "flow-c", "flow-d", "flow-e");
+    }
+
+    @Test
+    void shouldIncludeUpstreamDependencies() {
+        flowTopologyRepository.save(createSimpleFlowTopology("flow-a", "flow-b"));
+        flowTopologyRepository.save(createSimpleFlowTopology("flow-a", "flow-c"));
+        flowTopologyRepository.save(createSimpleFlowTopology("flow-c", "flow-d"));
+        flowTopologyRepository.save(createSimpleFlowTopology("flow-b", "flow-e"));
+
+        FlowTopologyGraph result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/flow-a/dependencies?expandAll=true"), FlowTopologyGraph.class);
+        assertThat(result.getNodes().size()).isEqualTo(5);
+        assertThat(result.getEdges().size()).isEqualTo(4);
+        assertThat(result.getNodes()).extracting(node -> node.getId()).contains("flow-a", "flow-b", "flow-c", "flow-d", "flow-e");
+        assertThat(result.getEdges()).extracting(edge -> edge.getSource()).contains("flow-c", "flow-a", "flow-b", "flow-a");
+        assertThat(result.getEdges()).extracting(edge -> edge.getTarget()).contains("flow-b", "flow-c", "flow-d", "flow-e");
+
+        // check that each subnode include all upstream dependencies
+        result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/flow-b/dependencies?expandAll=true"), FlowTopologyGraph.class);
+        assertThat(result.getNodes().size()).isEqualTo(5);
+        assertThat(result.getEdges().size()).isEqualTo(4);
+
+        result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/flow-c/dependencies?expandAll=true"), FlowTopologyGraph.class);
+        assertThat(result.getNodes().size()).isEqualTo(5);
+        assertThat(result.getEdges().size()).isEqualTo(4);
+
+        result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/flow-d/dependencies?expandAll=true"), FlowTopologyGraph.class);
+        assertThat(result.getNodes().size()).isEqualTo(5);
+        assertThat(result.getEdges().size()).isEqualTo(4);
+
+        result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/flow-e/dependencies?expandAll=true"), FlowTopologyGraph.class);
+        assertThat(result.getNodes().size()).isEqualTo(5);
+        assertThat(result.getEdges().size()).isEqualTo(4);
     }
 
     private Flow generateFlow(String namespace, String inputName) {

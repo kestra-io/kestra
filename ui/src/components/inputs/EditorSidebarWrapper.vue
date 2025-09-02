@@ -4,9 +4,9 @@
 
 <script lang="ts" setup>
     import {computed} from "vue";
-    import {useStore} from "vuex";
     import EditorSidebar from "./EditorSidebar.vue";
+    import {useFlowStore} from "../../stores/flow";
 
-    const store = useStore();
-    const namespace = computed(() => store.state.flow.namespace);
+    const flowStore = useFlowStore();
+    const namespace = computed(() => flowStore.flow?.namespace);
 </script>

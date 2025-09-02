@@ -1,64 +1,64 @@
 <template>
-    <Editor
-        id="editorWrapper"
-        ref="editorRefElement"
-        :model-value="draftSource === undefined ? source : draftSource"
-        :schema-type="isCurrentTabFlow ? 'flow': undefined"
-        :lang="extension === undefined ? 'yaml' : undefined"
-        :extension="extension"
-        :navbar="false"
-        :read-only="isReadOnly"
-        :creating="isCreating"
-        :path="props.path"
-        :diff-overview-bar="false"
-        @update:model-value="editorUpdate"
-        @cursor="updatePluginDocumentation"
-        @save="isCurrentTabFlow ? save(): saveFileContent()"
-        @execute="execute"
-        @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
-        @mouse-leave="() => highlightHoveredTask(-1)"
-        :original="draftSource === undefined ? undefined : source"
-        :diff-side-by-side="false"
-    >
-        <template #absolute>
-            <AITriggerButton
-                :show="isCurrentTabFlow"
-                :enabled="aiEnabled"
-                :opened="aiAgentOpened"
-                @click="draftSource = undefined; aiAgentOpened = true"
+    <div class="h-100 d-flex flex-column">
+        <Editor
+            id="editorWrapper"
+            ref="editorRefElement"
+            class="flex-1"
+            :model-value="draftSource === undefined ? source : draftSource"
+            :schema-type="isCurrentTabFlow ? 'flow': undefined"
+            :lang="extension === undefined ? 'yaml' : undefined"
+            :extension="extension"
+            :navbar="false"
+            :read-only="isReadOnly"
+            :creating="isCreating"
+            :path="props.path"
+            :diff-overview-bar="false"
+            @update:model-value="editorUpdate"
+            @cursor="updatePluginDocumentation"
+            @save="isCurrentTabFlow ? save(): saveFileContent()"
+            @execute="execute"
+            @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
+            @mouse-leave="() => highlightHoveredTask(-1)"
+            :original="draftSource === undefined ? undefined : source"
+            :diff-side-by-side="false"
+        >
+            <template #absolute>
+                <AITriggerButton
+                    :show="isCurrentTabFlow"
+                    :opened="aiAgentOpened"
+                    @click="draftSource = undefined; aiAgentOpened = true"
+                />
+                <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
+            </template>
+            <template v-if="playgroundStore.enabled" #widget-content>
+                <PlaygroundRunTaskButton :task-id="highlightedLines?.taskId" />
+            </template>
+        </Editor>
+        <Transition name="el-zoom-in-center">
+            <AiAgent
+                v-if="aiAgentOpened"
+                class="position-absolute prompt"
+                @close="aiAgentOpened = false"
+                :flow="editorContent"
+                @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
             />
-            <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
-        </template>
-        <template v-if="playgroundStore.enabled" #widget-content>
-            <PlaygroundRunTaskButton :task-id="highlightedLines?.taskId" />
-        </template>
-    </Editor>
-    <Transition name="el-zoom-in-center">
-        <AiAgent
-            v-if="aiAgentOpened"
-            class="position-absolute prompt"
-            @close="aiAgentOpened = false"
-            :flow="flowContent"
-            @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
+        </Transition>
+        <AcceptDecline
+            v-if="draftSource !== undefined"
+            @accept="acceptDraft"
+            @reject="declineDraft"
         />
-    </Transition>
-    <AcceptDecline
-        v-if="draftSource !== undefined"
-        class="position-absolute actions"
-        @accept="acceptDraft"
-        @reject="declineDraft"
-    />
+    </div>
 </template>
 
 <script lang="ts" setup>
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {useStore} from "vuex";
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
-    import {useMiscStore} from "../../stores/misc";
     import {EditorTabProps, useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
     import {useNamespacesStore} from "override/stores/namespaces";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
 
@@ -74,15 +74,13 @@
     const route = useRoute();
     const router = useRouter();
 
-    const store = useStore();
-    const miscStore = useMiscStore();
     const editorStore = useEditorStore();
+    const flowStore = useFlowStore();
 
-    const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const cursor = ref();
 
     const toggleAiShortcut = (event: KeyboardEvent) => {
-        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value && aiEnabled.value) {
+        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value) {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
@@ -104,9 +102,9 @@
     provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
 
     const source = computed<string>(() => {
-        return props.flow
-            ? store.state.flow.flowYaml
-            : editorStore.tabs.find((t: any) => t.path === props.path)?.content;
+        return (props.flow
+            ? flowStore.flowYaml
+            : editorStore.tabs.find((t: any) => t.path === props.path)?.content) ?? "";
     })
 
     async function loadFile() {
@@ -116,7 +114,7 @@
 
         if (!fileNamespace) return;
 
-        const content = await namespacesStore.readFile({namespace: fileNamespace, path: props.path})
+        const content = await namespacesStore.readFile({namespace: fileNamespace.toString(), path: props.path ?? ""})
         editorStore.setTabContent({path: props.path, content})
     }
 
@@ -138,15 +136,14 @@
 
     const editorRefElement = ref<InstanceType<typeof Editor>>();
 
-    const namespace = computed(() => store.state.flow.namespace);
-    const flowStore = computed(() => store.state.flow.flow);
-    const isCreating = computed(() => store.state.flow.isCreating);
+    const namespace = computed(() => flowStore.flow?.namespace);
+    const isCreating = computed(() => flowStore.isCreating);
     const isCurrentTabFlow = computed(() => props.flow)
-    const isReadOnly = computed(() => flowStore.value?.deleted || !store.getters["flow/isAllowedEdit"] || store.getters["flow/readOnlySystemLabel"]);
+    const isReadOnly = computed(() => flowStore.flow?.deleted || !flowStore.isAllowedEdit || flowStore.readOnlySystemLabel);
 
     const timeout = ref<any>(null);
 
-    const flowContent = computed(() => {
+    const editorContent = computed(() => {
         return draftSource.value ?? source.value;
     });
 
@@ -154,14 +151,14 @@
     const namespacesStore = useNamespacesStore();
 
     function editorUpdate(newValue: string){
-        if (flowContent.value === newValue) {
+        if (editorContent.value === newValue) {
             return;
         }
         if (isCurrentTabFlow.value) {
             if (draftSource.value !== undefined) {
                 draftSource.value = newValue;
             } else {
-                store.commit("flow/setFlowYaml", newValue);
+                flowStore.flowYaml = newValue;
             }
         }
         editorStore.setTabContent({
@@ -176,7 +173,7 @@
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {
-            store.dispatch("flow/onEdit", {
+            flowStore.onEdit({
                 source: newValue,
                 currentIsFlow: isCurrentTabFlow.value,
                 editorViewType: "YAML", // this is to be opposed to the no-code editor
@@ -187,17 +184,38 @@
 
 
     function updatePluginDocumentation(event: any) {
-        const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
-        let element = (elementWrapper?.value?.type !== undefined ? elementWrapper.value : elementWrapper?.parents?.findLast(p => p.type !== undefined)) as Parameters<typeof pluginsStore.updateDocumentation>[0];
-        pluginsStore.updateDocumentation(element);
+        const source = event.model.getValue();
+        const cursorOffset = event.model.getOffsetAt(event.position);
+        
+        const isPlugin = (type: string) => pluginsStore.allTypes.includes(type);
+        const isInRange = (range: [number, number, number]) => 
+            cursorOffset >= range[0] && cursorOffset <= range[2];
+        const getRangeSize = (range: [number, number, number]) => range[2] - range[0];
+
+        const getElementFromRange = (typeElement: any) => {
+            const wrapper = YAML_UTILS.localizeElementAtIndex(source, typeElement.range[0]);
+            return wrapper?.value?.type && isPlugin(wrapper.value.type)
+                ? wrapper.value 
+                : {type: typeElement.type};
+        };
+
+        const selectedElement = YAML_UTILS.extractFieldFromMaps(source, "type", () => true, isPlugin)
+            .filter(el => el.range && isInRange(el.range))
+            .reduce((closest, current) => 
+                        !closest || getRangeSize(current.range) < getRangeSize(closest.range)
+                            ? current
+                            : closest
+                    , null as any);
+
+        const result = selectedElement ? getElementFromRange(selectedElement) : undefined;
+        pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
     };
 
-    const flowParsed = computed(() => store.getters["flow/flowParsed"]);
     const save = async () => {
         clearTimeout(timeout.value);
         const editorRef = editorRefElement.value
         if(!editorRef?.$refs.monacoEditor) return
-        const result = await store.dispatch("flow/save", {content:(editorRef.$refs.monacoEditor as any).value})
+        const result = await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
 
         editorStore.setTabDirty({
             path: props.path,
@@ -208,8 +226,8 @@
             await router.push({
                 name: "flows/update",
                 params: {
-                    id: flowParsed.value.id,
-                    namespace: flowParsed.value.namespace,
+                    id: flowStore.flow?.id,
+                    namespace: flowStore.flow?.namespace,
                     tab: "edit",
                     tenant: route.params?.tenant,
                 },
@@ -222,7 +240,7 @@
         await namespacesStore.createFile({
             namespace: namespace.value,
             path: props.path,
-            content: editorRefElement.value?.modelValue || "",
+            content: editorContent.value || "",
         });
         editorStore.setTabDirty({
             path: props.path,
@@ -242,7 +260,7 @@
     };
 
     const execute = () => {
-        store.commit("flow/executeFlow", true);
+        flowStore.executeFlow = true;
     };
 
     function acceptDraft() {
@@ -264,16 +282,12 @@
 </script>
 
 <style scoped lang="scss">
-.prompt {
-    bottom: 10%;
-    width: calc(100% - 5rem);
-    left: 3rem;
-    max-width: 700px;
-    background-color: var(--ks-background-panel);
-    box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
-}
-
-.actions {
-    bottom: 10%;
-}
+    .prompt {
+        bottom: 10%;
+        width: calc(100% - 5rem);
+        left: 3rem;
+        max-width: 700px;
+        background-color: var(--ks-background-panel);
+        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+    }
 </style>

@@ -257,14 +257,15 @@
 <script setup lang="ts">
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {useStore} from "vuex";
     import {useStorage} from "@vueuse/core";
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../../utils/toast";
 
-    import {useCoreStore} from "../../../stores/core";
+    import {useAuthStore} from "override/stores/auth";
     import {useNamespacesStore} from "override/stores/namespaces";
+    import {useCoreStore} from "../../../stores/core";
     import {usePluginsStore} from "../../../stores/plugins";
+    import {useFlowStore} from "../../../stores/flow";
     import {EditorTabProps, useEditorStore} from "../../../stores/editor";
 
     import {useFlowOutdatedErrors} from "../../inputs/flowOutdatedErrors";
@@ -290,8 +291,9 @@
     import EditorButtons from "../../inputs/EditorButtons.vue";
 
 
-    const store = useStore();
+
     const coreStore = useCoreStore();
+    const flowStore = useFlowStore();
     const namespacesStore = useNamespacesStore();
     const router = useRouter();
     const route = useRoute();
@@ -367,7 +369,7 @@
         },
     });
 
-    store.commit("flow/setIsCreating", props.isCreating);
+    flowStore.isCreating = props.isCreating;
     const guidedProperties = ref(coreStore.guidedProperties);
 
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
@@ -375,20 +377,21 @@
 
     const {translateError, translateErrorWithKey} = useFlowOutdatedErrors()
 
-    const flowErrors = computed(() => store.getters["flow/flowErrors"]?.map(translateError));
+    const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
+
     const flowWarnings = computed(() => {
         if (isFlow.value) {
             const outdatedWarning =
-                store.state.flow.flowValidation?.outdated && !store.state.flow.isCreating
-                    ? [translateErrorWithKey(store.getters["flow/baseOutdatedTranslationKey"])]
+                flowStore.flowValidation?.outdated && !flowStore.isCreating
+                    ? [translateErrorWithKey(flowStore.flowValidation?.constraints ?? "")]
                     : [];
 
             const deprecationWarnings =
-                store.state.flow.flowValidation?.deprecationPaths?.map(
-                    (f:string) => `${f} ${t("is deprecated")}.`
+                flowStore.flowValidation?.deprecationPaths?.map(
+                    (f: string) => `${f} ${t("is deprecated")}.`
                 ) ?? [];
 
-            const otherWarnings = store.state.flow.flowValidation?.warnings ?? [];
+            const otherWarnings = flowStore.flowValidation?.warnings ?? [];
 
             const warnings = [
                 ...outdatedWarning,
@@ -401,8 +404,8 @@
 
         return undefined;
     });
-    const flowHaveTasks = computed(() => Boolean(store.getters["flow/flowHaveTasks"]));
 
+    const flowHaveTasks = computed(() => Boolean(flowStore.flowHaveTasks));
     const editorViewType = useStorage(storageKeys.EDITOR_VIEW_TYPE, "YAML");
 
     watch(editorViewType, (value) => {
@@ -437,15 +440,14 @@
             : localStorage.getItem("topology-orientation") === "1";
     };
 
-    store.commit("flow/setHaveChange", props.isDirty);
+    flowStore.haveChange = props.isDirty;
 
     const editorDomElement = ref<any>(null);
     const editorWidth = useStorage("editor-size", 50);
     const isLoading = ref(false);
-    const flowYaml = computed(() => store.state.flow.flowYaml);
-    const flowYamlOrigin = computed(() => store.state.flow.flowYamlOrigin);
-    const user = computed(() => store.getters["auth/user"]);
-    const metadata = computed(() => store.state.flow.metadata);
+    const flowYaml = computed(() => flowStore.flowYaml);
+    const flowYamlOrigin = computed(() => flowStore.flowYamlOrigin);
+    const metadata = computed(() => flowStore.metadata);
     const viewType = ref(initViewType());
     const isHorizontal = ref(isHorizontalDefault());
     const updatedFromEditor = ref(false);
@@ -505,7 +507,7 @@
 
         if(!props.isNamespace) {
             initViewType()
-            await store.dispatch("flow/initYamlSource", {viewType: viewType.value});
+            await flowStore.initYamlSource({viewType: viewType.value});
         } else {
             editorStore.closeAllTabs();
             switchViewType(editorViewTypes.SOURCE, false)
@@ -551,12 +553,12 @@
         };
     };
 
-    const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"]);
+    const isAllowedEdit = computed(() => flowStore.isAllowedEdit);
 
     const fetchGraph = async () => {
         if(props.isNamespace) return;
 
-        return store.dispatch("flow/loadGraphFromSource", {
+        return flowStore.loadGraphFromSource({
             flow: flowYaml.value,
             config: {
                 params: {
@@ -570,9 +572,9 @@
         });
     };
 
-    const onEdit = (source:string, currentIsFlow = false) => {
-        store.commit("flow/setFlowYaml", source);
-        return store.dispatch("flow/onEdit", {
+    const onEdit = (source: string, currentIsFlow = false) => {
+        flowStore.flowYaml = source;
+        return flowStore.onEdit({
             source,
             currentIsFlow,
             editorViewType: editorViewType.value,
@@ -589,7 +591,7 @@
         const currentIsFlow = isFlow.value;
 
         updatedFromEditor.value = true;
-        store.commit("flow/setFlowYaml", source);
+        flowStore.flowYaml = source;
 
         clearTimeout(timer.value);
         timer.value = setTimeout(() => onEdit(source, currentIsFlow), 500) as any;
@@ -615,7 +617,7 @@
         }
     };
 
-    const flowParsed = computed(() => store.getters["flow/flowParsed"]);
+    const flowParsed = computed(() => flowStore.flowParsed);
 
     const saveUsingKeyboard = (e: KeyboardEvent) => {
         if (e.ctrlKey && e.key === "s") {
@@ -626,9 +628,9 @@
 
     const save = async () => {
         clearTimeout(timer.value);
-        const result = await store.dispatch("flow/save", {
+        const result = await flowStore.save({
             content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
-            namespace: props.namespace ?? route.params.namespace,
+            namespace: props.namespace ?? route.params.namespace.toString(),
         })
         if(result === "redirect_to_update"){
             await router.push({
@@ -643,16 +645,18 @@
         }
     };
 
-    const execute = (_: any) => {
-        store.commit("flow/executeFlow", true);
+    const execute = () => {
+        flowStore.executeFlow = true;
     };
 
+    const authStore = useAuthStore();
+
     const canDelete = () => {
-        return user.value?.isAllowed(permission.FLOW, action.DELETE, props.namespace);
+        return authStore.user?.isAllowed(permission.FLOW, action.DELETE, props.namespace);
     };
 
     const deleteFlow = () => {
-        store.dispatch("flow/deleteFlowAndDependencies")
+        flowStore.deleteFlowAndDependencies()
             .then(() => {
                 return router.push({
                     name: "flows/list",
@@ -662,7 +666,7 @@
                 });
             })
             .then(() => {
-                toast.deleted(metadata.value.id);
+                toast.deleted(metadata.value?.id);
             });
     };
 
@@ -718,7 +722,7 @@
             path,
             namespace: props.namespace ?? route.params.namespace?.toString() ?? route.params.id?.toString() ?? "",
         })
-        store.commit("flow/setFlowYaml", content);
+        flowStore.flowYaml = content;
     }
 
     const dirtyBeforeLoad = ref(false);
@@ -751,8 +755,7 @@
 
         // once the tab is finished loading, restore the dirty state
         if(tab.path === currentTab.value?.path){
-            // flowYaml.value = source; // This is readonly, need to use store commit
-            store.commit("flow/setFlowYaml", source);
+            flowStore.flowYaml = source;
             onEdit(source, tab.flow);
             if (currentTab.value) {
                 currentTab.value.dirty = dirtyBeforeLoad.value;
@@ -897,7 +900,7 @@
             }
         } catch (error) {
             console.error(error);
-            toast.error(t("namespace files.create.error"), "Error");
+            toast.error(t("namespace files.create.error"), "error");
         }
     };
 

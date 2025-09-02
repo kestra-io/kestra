@@ -20,20 +20,20 @@
                 <section id="row">
                     <section id="left">
                         <div id="link">
-                            <Link :node="row.data" :subtype="row.data.metadata.subtype" />
+                            <Link
+                                :node="row.data"
+                                :subtype="row.data.metadata.subtype"
+                            />
                         </div>
 
                         <p class="description">
-                            {{ row.data.metadata.subtype === FLOW ? row.data.namespace : `${row.data.namespace}.${row.data.flow}` }}
+                            {{ row.data.namespace }}
                         </p>
                     </section>
 
                     <section id="right">
-                        <span v-if="row.data.metadata.subtype === FLOW && row.data.metadata.revision">
-                            {{ t("revision") }}: {{ row.data.metadata.revision }}
-                        </span>
                         <Status
-                            v-else-if="row.data.metadata.subtype === EXECUTION && row.data.metadata.state"
+                            v-if="row.data.metadata.subtype === EXECUTION && row.data.metadata.state"
                             :status="row.data.metadata.state"
                             size="small"
                         />
@@ -55,7 +55,7 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import {NODE, FLOW, EXECUTION, type Node} from "../utils/types";
+    import {NODE, EXECUTION, type Node} from "../utils/types";
 
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
     const props = defineProps<{
@@ -63,21 +63,24 @@
         selected: Node["id"] | undefined;
     }>();
 
-    const focusSelectedRow = ()=>{
+    const focusSelectedRow = () => {
         const row = document.querySelector<HTMLElement>(".el-table__row.selected");
 
         if (!row) return;
 
         row.scrollIntoView({behavior: "smooth", block: "center"});
-    }
+    };
 
-    watch(() => props.selected, async (ID) => {
-        if (!ID) return;
+    watch(
+        () => props.selected,
+        async (ID) => {
+            if (!ID) return;
 
-        await nextTick();
+            await nextTick();
 
-        focusSelectedRow();
-    });
+            focusSelectedRow();
+        },
+    );
 
     const search = ref("");
     const results = computed(() => {
@@ -90,7 +93,10 @@
         return NODES.filter(({data}) => {
             const {flow, namespace} = data;
 
-            return (flow?.toLowerCase().includes(f) || namespace?.toLowerCase().includes(f));
+            return (
+                flow?.toLowerCase().includes(f) ||
+                namespace?.toLowerCase().includes(f)
+            );
         });
     });
 </script>
@@ -99,7 +105,7 @@
 section#input {
     position: sticky;
     top: 0;
-    z-index: 10; // keeps it above table rows
+    z-index: 10; // Keeps it above table rows
     padding: 0.5rem;
     background-color: var(--ks-background-input);
 

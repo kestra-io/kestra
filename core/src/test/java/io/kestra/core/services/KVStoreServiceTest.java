@@ -1,7 +1,8 @@
 package io.kestra.core.services;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.*;
 import io.micronaut.test.annotation.MockBean;
@@ -26,25 +27,25 @@ class KVStoreServiceTest {
 
     @Test
     void shouldGetKVStoreForExistingNamespaceGivenFromNull() {
-        Assertions.assertNotNull(storeService.get(null, TEST_EXISTING_NAMESPACE, null));
+        Assertions.assertNotNull(storeService.get(MAIN_TENANT, TEST_EXISTING_NAMESPACE, null));
     }
 
     @Test
     void shouldThrowExceptionWhenAccessingKVStoreForNonExistingNamespace() {
-        KVStoreException exception = Assertions.assertThrows(KVStoreException.class, () -> storeService.get(null, "io.kestra.unittest.unknown", null));
+        KVStoreException exception = Assertions.assertThrows(KVStoreException.class, () -> storeService.get(MAIN_TENANT, "io.kestra.unittest.unknown", null));
         Assertions.assertTrue(exception.getMessage().contains("namespace 'io.kestra.unittest.unknown' does not exist"));
     }
 
     @Test
     void shouldGetKVStoreForAnyNamespaceWhenAccessingFromChildNamespace() {
-        Assertions.assertNotNull(storeService.get(null, "io.kestra", TEST_EXISTING_NAMESPACE));
+        Assertions.assertNotNull(storeService.get(MAIN_TENANT, "io.kestra", TEST_EXISTING_NAMESPACE));
     }
 
     @Test
     void shouldGetKVStoreFromNonExistingNamespaceWithAKV() throws IOException {
-        KVStore kvStore = new InternalKVStore(null, "system", storageInterface);
+        KVStore kvStore = new InternalKVStore(MAIN_TENANT, "system", storageInterface);
         kvStore.put("key", new KVValueAndMetadata(new KVMetadata("myDescription", Duration.ofHours(1)), "value"));
-        Assertions.assertNotNull(storeService.get(null, "system", null));
+        Assertions.assertNotNull(storeService.get(MAIN_TENANT, "system", null));
     }
 
     @MockBean(NamespaceService.class)

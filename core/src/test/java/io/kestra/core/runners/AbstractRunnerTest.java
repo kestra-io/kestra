@@ -214,6 +214,13 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/trigger-flow-listener-with-concurrency-limit.yaml",
+        "flows/valids/trigger-flow-with-concurrency-limit.yaml"})
+    void flowTriggerWithConcurrencyLimit() throws Exception {
+        flowTriggerCaseTest.triggerWithConcurrencyLimit();
+    }
+
+    @Test
     @LoadFlows({"flows/valids/trigger-multiplecondition-listener.yaml",
         "flows/valids/trigger-multiplecondition-flow-a.yaml",
         "flows/valids/trigger-multiplecondition-flow-b.yaml"})
@@ -312,7 +319,7 @@ public abstract class AbstractRunnerTest {
     }
 
     @RetryingTest(5) // flaky on MySQL
-    @LoadFlows({"flows/valids/pause.yaml"})
+    @LoadFlows({"flows/valids/pause-test.yaml"})
     public void pauseRun() throws Exception {
         pauseTest.run(runnerUtils);
     }
@@ -388,6 +395,13 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/for-each-item-subflow-after-execution.yaml",
+        "flows/valids/for-each-item-after-execution.yaml"})
+    protected void forEachItemWithAfterExecution() throws Exception {
+        forEachItemCaseTest.forEachItemWithAfterExecution();
+    }
+
+    @Test
     @LoadFlows({"flows/valids/flow-concurrency-cancel.yml"})
     void concurrencyCancel() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyCancel();
@@ -421,6 +435,18 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({"flows/valids/flow-concurrency-for-each-item.yaml", "flows/valids/flow-concurrency-queue.yml"})
     protected void flowConcurrencyWithForEachItem() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyWithForEachItem();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-concurrency-queue-fail.yml"})
+    protected void concurrencyQueueRestarted() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyQueueRestarted();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-concurrency-queue-after-execution.yml"})
+    void concurrencyQueueAfterExecution() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyQueueAfterExecution();
     }
 
     @Test

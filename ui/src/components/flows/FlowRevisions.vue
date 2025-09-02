@@ -23,7 +23,7 @@
                         <el-button :icon="FileCode" @click="seeRevision(revisionLeftIndex, revisionLeftText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ t('see full revision') }}</span>
                         </el-button>
-                        <el-button :icon="Restore" :disabled="revisionNumber(revisionLeftIndex) === flow.revision" @click="restoreRevision(revisionLeftIndex, revisionLeftText)">
+                        <el-button :icon="Restore" :disabled="revisionNumber(revisionLeftIndex) === flow?.revision" @click="restoreRevision(revisionLeftIndex, revisionLeftText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ t('restore') }}</span>
                         </el-button>
                     </el-button-group>
@@ -45,7 +45,7 @@
                         <el-button :icon="FileCode" @click="seeRevision(revisionRightIndex, revisionRightText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ t('see full revision') }}</span>
                         </el-button>
-                        <el-button :icon="Restore" :disabled="revisionNumber(revisionRightIndex) === flow.revision" @click="restoreRevision(revisionRightIndex, revisionRightText)">
+                        <el-button :icon="Restore" :disabled="revisionNumber(revisionRightIndex) === flow?.revision" @click="restoreRevision(revisionRightIndex, revisionRightText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ t('restore') }}</span>
                         </el-button>
                     </el-button-group>
@@ -87,7 +87,6 @@
 
 <script lang="ts" setup>
     import {ref, computed, watch} from "vue";
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
     import FileCode from "vue-material-design-icons/FileCode.vue";
@@ -96,8 +95,8 @@
     import Crud from "override/components/auth/Crud.vue";
     import Drawer from "../Drawer.vue";
 
-    import {saveFlowTemplate} from "../../utils/flowTemplate";
     import {useToast} from "../../utils/toast";
+    import {useFlowStore} from "../../stores/flow";
 
     interface Revision {
         revision: number;
@@ -105,7 +104,6 @@
     }
 
     const {t} = useI18n();
-    const store = useStore();
     const route = useRoute();
     const router = useRouter();
     const toast = useToast();
@@ -126,14 +124,19 @@
     ];
     const isModalOpen = ref(false);
 
-    const flow = computed(() => store.state.flow.flow);
+    const flowStore = useFlowStore();
+    const flow = computed(() => flowStore.flow);
 
     function load() {
+        if (!flow.value) {
+            return;
+        }
         const currentRevision = flow.value.revision;
 
         revisions.value = [...Array(currentRevision).keys()].map(((_, i) => {
-            if (currentRevision === revisionNumber(i)) {
-                return flow.value;
+            if (currentRevision === revisionNumber(i) && flow.value?.revision !== undefined && flow.value?.source) {
+                const val = flow.value as Revision
+                return val;
             }
 
             if(revisions.value[i] && revisions.value[i].revision === i + 1) {
@@ -153,7 +156,7 @@
             ) {
                 revisionLeftIndex.value = revisionRightIndex.value - 1;
             }
-        } else if (currentRevision > 0) {
+        } else if (currentRevision && currentRevision > 0) {
             revisionRightIndex.value = currentRevision - 1;
         }
 
@@ -161,7 +164,7 @@
             revisionLeftIndex.value = revisionIndex(
                 route.query.revisionLeft.toString()
             );
-        } else if (currentRevision > 1) {
+        } else if (currentRevision && currentRevision > 1) {
             revisionLeftIndex.value = currentRevision - 2;
         }
     }
@@ -189,13 +192,11 @@
 
     function restoreRevision(index: number, revisionSource: string) {
         toast.confirm(t("restore confirm", {revision: revisionNumber(index)}), () => {
-            return saveFlowTemplate({
-                $store: store,
-                $toast: () => toast,
-            }, revisionSource, "flow")
+            return flowStore.saveFlow({flow: revisionSource})
                 .then((response:any) => {
-                    store.commit("flow/setFlowYaml", response.source);
-                    store.commit("flow/setFlowYamlOrigin", response.source);
+                    toast.saved(response.id);
+                    flowStore.flowYaml = response.source;
+                    flowStore.flowYamlBeforeAdd = response.source;
                     load()
                 })
                 .then(() => {
@@ -217,9 +218,9 @@
     }
 
     async function fetchRevision(revision: string) {
-        const revisionFetched = await store.dispatch("flow/loadFlow", {
-            namespace: flow.value.namespace,
-            id: flow.value.id,
+        const revisionFetched = await flowStore.loadFlow({
+            namespace: flow.value?.namespace ?? "",
+            id: flow.value?.id ?? "",
             revision,
             allowDeleted: true,
             store: false

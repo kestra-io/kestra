@@ -8,6 +8,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Rethrow;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
@@ -69,7 +70,7 @@ public class NamespaceFileController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(tags = {"Files"}, summary = "Get namespace file content")
-    public StreamedFile getFileContent(
+    public HttpResponse<StreamedFile> getFileContent(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri") @QueryValue String path
     ) throws IOException, URISyntaxException {
@@ -80,7 +81,7 @@ public class NamespaceFileController {
         forbiddenPathsGuard(encodedPath);
 
         InputStream fileHandler = storageInterface.get(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace, encodedPath).uri());
-        return new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        return HttpResponse.ok(new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)).header(HttpHeaders.CACHE_CONTROL, "no-cache");
     }
 
     @ExecuteOn(TaskExecutors.IO)

@@ -11,9 +11,9 @@
                     </span>
                     <recursive-toc :parent="{children}">
                         <template #default="{path, title}">
-                            <context-docs-link 
-                                @click="menuOpen = false" 
-                                :href="path.slice(5)" 
+                            <context-docs-link
+                                @click="menuOpen = false"
+                                :href="path.slice(5)"
                                 use-raw
                                 :class="{'active-page': isCurrentPage(path)}"
                             >
@@ -57,22 +57,25 @@
         "Build with Kestra": [
             "Concepts",
             "Workflow Components",
-            "Expressions",
+            "Multi-Language Script Tasks",
             "Version Control & CI/CD",
             "Plugin Developer Guide",
             "How-to Guides"
         ],
         "Scale with Kestra": [
-            "Enterprise Edition",
+            "Cloud & Enterprise Edition",
             "Task Runners",
             "Best Practices"
         ],
         "Manage Kestra": [
             "Administrator Guide",
-            "Configuration Guide",
-            "Migration Guide",
+            "Migration Guide"
+        ],
+        "Reference Docs": [
+            "Configuration",
+            "Expressions",
+            "API Reference",
             "Terraform Provider",
-            "API Reference"
         ]
     }
 
@@ -88,11 +91,11 @@
         if (!currentDocPath.value || !path) return false;
         const normalizedCurrent = normalizePath(currentDocPath.value);
         const normalizedPath = normalizePath(path);
-        
+
         if (normalizedCurrent === normalizedPath) return true;
-        
+
         if (normalizedCurrent.startsWith(normalizedPath + "/")) return true;
-        
+
         return false;
     };
 

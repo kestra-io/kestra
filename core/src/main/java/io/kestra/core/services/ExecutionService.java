@@ -317,6 +317,32 @@ public class ExecutionService {
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
 
+    public Execution changeTaskRunState(final Execution execution, Flow flow, String taskRunId, State.Type newState) throws Exception {
+        Execution newExecution = markAs(execution, flow, taskRunId, newState);
+
+        // if the execution was terminated, it could have executed errors/finally/afterExecutions, we must remove them as the execution will be restarted
+        if (execution.getState().isTerminated()) {
+            List<TaskRun> newTaskRuns =  newExecution.getTaskRunList();
+            // We need to remove global error tasks and flowable error tasks if any
+            flow
+                .allErrorsWithChildren()
+                .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+
+            // We need to remove global finally tasks and flowable error tasks if any
+            flow
+                .allFinallyWithChildren()
+                .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+
+            // We need to remove afterExecution tasks
+            ListUtils.emptyOnNull(flow.getAfterExecution())
+                .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+
+            return newExecution.withTaskRunList(newTaskRuns);
+        } else {
+            return newExecution;
+        }
+    }
+
     public Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState) throws Exception {
         return this.markAs(execution, flow, taskRunId, newState, null, null);
     }
@@ -338,20 +364,29 @@ public class ExecutionService {
             boolean isFlowable = task.isFlowable();
 
             if (!isFlowable || s.equals(taskRunId)) {
-                TaskRun newTaskRun = originalTaskRun.withState(newState);
+                TaskRun newTaskRun;
 
                 if (task instanceof Pause pauseTask) {
-                    Variables variables = variablesService.of(StorageContext.forTask(originalTaskRun), pauseTask.generateOutputs(onResumeInputs, resumed));
-                    newTaskRun = newTaskRun.withOutputs(variables);
-                }
+                    State.Type terminalState = newState == State.Type.RUNNING ? State.Type.SUCCESS : newState;
+                    Pause.Resumed _resumed = resumed != null ? resumed : Pause.Resumed.now(terminalState);
+                    Variables variables = variablesService.of(StorageContext.forTask(originalTaskRun), pauseTask.generateOutputs(onResumeInputs, _resumed));
+                    newTaskRun = originalTaskRun.withOutputs(variables);
 
-                // if it's a Pause task with no subtask, we terminate the task
-                if (task instanceof Pause pauseTask && ListUtils.isEmpty(pauseTask.getTasks())) {
-                    if (newState == State.Type.RUNNING) {
-                        newTaskRun = newTaskRun.withState(State.Type.SUCCESS);
-                    } else if (newState == State.Type.KILLING) {
-                        newTaskRun = newTaskRun.withState(State.Type.KILLED);
+                    // if it's a Pause task with no subtask, we terminate the task
+                    if (ListUtils.isEmpty(pauseTask.getTasks()) && ListUtils.isEmpty(pauseTask.getErrors()) && ListUtils.isEmpty(pauseTask.getFinally())) {
+                        if (newState == State.Type.RUNNING) {
+                            newTaskRun = newTaskRun.withState(State.Type.SUCCESS);
+                        } else if (newState == State.Type.KILLING) {
+                            newTaskRun = newTaskRun.withState(State.Type.KILLED);
+                        } else {
+                            newTaskRun = newTaskRun.withState(newState);
+                        }
+                    } else {
+                        // we should set the state to RUNNING so that subtasks are executed
+                        newTaskRun = newTaskRun.withState(State.Type.RUNNING);
                     }
+                } else {
+                    newTaskRun =  originalTaskRun.withState(newState);
                 }
 
                 if (originalTaskRun.getAttempts() != null && !originalTaskRun.getAttempts().isEmpty()) {

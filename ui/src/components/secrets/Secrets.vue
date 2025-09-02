@@ -84,7 +84,7 @@
     import {useI18n} from "vue-i18n";
     import {computed, ref} from "vue";
     import useRouteContext from "../../mixins/useRouteContext.js";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc.js";
     import sourceImg from "../../assets/demo/secrets.png";
     import DemoButtons from "../demo/DemoButtons.vue";
     import EmptyTemplate from "../layout/EmptyTemplate.vue";

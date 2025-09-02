@@ -71,7 +71,7 @@
     import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {useApiStore} from "../stores/api"
-    import {useMiscStore} from "../stores/misc"
+    import {useMiscStore} from "override/stores/misc"
 
     interface Props {
         visible?: boolean

@@ -1,33 +1,34 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
     <section class="full-container">
-        <MultiPanelEditorView v-if="flow" />
+        <MultiPanelFlowEditorView v-if="flowStore.flow" />
     </section>
 </template>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import MultiPanelEditorView from "./MultiPanelEditorView.vue";
+    import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
     import {storageKeys} from "../../utils/constants";
     import {useBlueprintsStore} from "../../stores/blueprints";
     import {useCoreStore} from "../../stores/core";
+    import {editorViewTypes} from "../../utils/constants";
 
-    import {getRandomFlowID} from "../../../scripts/product/flow";
+    import {getRandomID} from "../../../scripts/id";
     import {useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
         mixins: [RouteContext],
         components: {
-            MultiPanelEditorView,
+            MultiPanelFlowEditorView,
             TopNavBar
         },
 
         created() {
-            this.$store.commit("flow/setIsCreating", true);
+            this.flowStore.isCreating = true;
             if (this.$route.query.reset) {
                 localStorage.setItem("tourDoneOrSkip", undefined);
                 this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, tourStarted: true};
@@ -37,21 +38,21 @@
             this.editorStore.closeAllTabs()
         },
         beforeUnmount() {
-            this.$store.commit("flow/setFlowValidation", undefined);
+            this.flowStore.flowValidation = undefined;
         },
         methods: {
             async setupFlow() {
                 const blueprintId = this.$route.query.blueprintId;
                 const blueprintSource = this.$route.query.blueprintSource;
                 let flowYaml = ""
-                if (this.$route.query.copy && this.flow){
-                    flowYaml = this.flow.source;
+                if (this.$route.query.copy && this.flowStore.flow){
+                    flowYaml = this.flowStore.flow.source;
                 } else if (blueprintId && blueprintSource) {
                     flowYaml = await this.blueprintsStore.getBlueprintSource({type: blueprintSource, kind: "flow", id: blueprintId});
                 } else {
                     const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
                     const selectedNamespace = this.$route.query.namespace || defaultNamespace || "company.team";
-                    flowYaml = `id: ${getRandomFlowID()}
+                    flowYaml = `id: ${getRandomID()}
 namespace: ${selectedNamespace}
 
 tasks:
@@ -60,17 +61,15 @@ tasks:
     message: Hello World! 🚀`;
                 }
 
-                this.$store.commit("flow/setFlowYaml", flowYaml);
-                this.$store.commit("flow/setFlowYamlBeforeAdd", flowYaml);
+                this.flowStore.flowYaml = flowYaml;
+                this.flowStore.flowYamlBeforeAdd = flowYaml;
 
-                this.$store.commit("flow/setFlow", {...YAML_UTILS.parse(this.flowYaml), source: this.flowYaml});
-                this.$store.dispatch("flow/initYamlSource", {});
+                this.flowStore.flow = {...YAML_UTILS.parse(this.flowYaml), source: this.flowStore.flowYaml};
+                this.flowStore.initYamlSource({viewTypes: editorViewTypes.SOURCE_DOC});
             }
         },
         computed: {
-            ...mapState("flow", ["flowGraph", "flowYaml", "flow", "flowValidation", "flowYaml"]),
-            ...mapState("auth", ["user"]),
-            ...mapStores(useBlueprintsStore, useCoreStore, useEditorStore),
+            ...mapStores(useBlueprintsStore, useCoreStore, useEditorStore, useFlowStore),
             routeInfo() {
                 return {
                     title: this.$t("flows")
@@ -81,7 +80,7 @@ tasks:
             }
         },
         beforeRouteLeave(to, from, next) {
-            this.$store.commit("flow/setFlow", null);
+            this.flowStore.flow = undefined;
             next();
         }
     };

@@ -3,32 +3,35 @@
         <el-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
             <template #default="scope">
                 <template v-if="isComplex(scope.row[column])">
-                    <editor
-                        :full-height="false"
-                        :input="true"
-                        :navbar="false"
-                        :model-value="JSON.stringify(scope.row[column])"
-                        lang="json"
-                        read-only
+                    <el-input
+                        type="textarea"
+                        :model-value="truncate(JSON.stringify(scope.row[column], null, 2))"
+                        readonly
+                        :rows="3"
+                        autosize
+                        class="ks-editor"
+                        resize="none"
                     />
                 </template>
                 <template v-else>
-                    {{ scope.row[column] }}
+                    {{ truncate(scope.row[column]) }}
                 </template>
             </template>
         </el-table-column>
     </el-table>
 </template>
 <script>
-    import Editor from "./inputs/Editor.vue";
-
     export default {
         name: "ListPreview",
-        components: {Editor},
         props: {
             value: {
                 type: Array,
                 required: true
+            }
+        },
+        data() {
+            return {
+                maxColumnLength: 100
             }
         },
         computed: {
@@ -43,6 +46,12 @@
         methods: {
             isComplex(data) {
                 return data instanceof Array || data instanceof Object;
+            },
+            truncate(text) {
+                if (typeof text !== "string") return text;
+                return text.length > this.maxColumnLength
+                    ? text.slice(0, this.maxColumnLength) + "..."
+                    : text;
             }
         }
     }

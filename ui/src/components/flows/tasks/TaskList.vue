@@ -4,32 +4,33 @@
             :title="root"
             :elements="items"
             :section
-            :block-schema-path="[schemaPath, 'properties', root, 'items'].join('/')"
-            @remove="(yaml) => store.commit('flow/setFlowYaml', yaml)"
-            @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
+            :block-schema-path="[blockSchemaPath, 'properties', root, 'items'].join('/')"
+            @remove="removeItem"
+            @reorder="(yaml) => flowStore.flowYaml = yaml"
         />
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed, inject, ref} from "vue";
-    import {useStore} from "vuex";
     import Collapse from "../../code/components/collapse/Collapse.vue";
-    import {SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
+    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
+    import {useFlowStore} from "../../../stores/flow";
 
-    const schemaPath = inject(SCHEMA_PATH_INJECTION_KEY, ref())
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
 
     defineOptions({
         inheritAttrs: false
     });
 
-    const store = useStore();
+    const flowStore = useFlowStore();
 
     interface Task {
         id:string,
         type:string
     }
 
+    const emits = defineEmits(["update:modelValue"]);
     const props = withDefaults(defineProps<{
         modelValue?: Task[],
         root?: string;
@@ -41,6 +42,15 @@
     const items = computed(() =>
         !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     );
+
+    function removeItem(yaml: string, index: number){
+        flowStore.flowYaml = yaml;
+
+        let localItems = [...items.value]
+        localItems.splice(index, 1)
+
+        emits("update:modelValue", localItems);
+    };
 
     const section = computed(() => {
         return props.root ?? "tasks";

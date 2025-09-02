@@ -1,8 +1,8 @@
 <template>
-    <Splitpanes class="default-theme" v-bind="$attrs" @resize="onResize">
-        <Pane
+    <el-splitter class="default-theme" v-bind="$attrs" @resize="onResize">
+        <el-splitter-panel
             v-for="(panel, panelIndex) in panels"
-            min-size="10"
+            min="10%"
             :key="panelIndex"
             :size="panel.size"
             @dragover.prevent="(e:DragEvent) => panelDragOver(e, panelIndex)"
@@ -139,8 +139,8 @@
                     :class="{dragover: panel.dragover}"
                 />
             </div>
-        </Pane>
-    </Splitpanes>
+        </el-splitter-panel>
+    </el-splitter>
 
     <div
         v-if="showDropZones"
@@ -168,9 +168,6 @@
     import {nextTick, ref, watch, provide, computed} from "vue";
     import {useI18n} from "vue-i18n";
 
-    import "splitpanes/dist/splitpanes.css"
-    import {Splitpanes, Pane} from "splitpanes"
-
     import {VISIBLE_PANELS_INJECTION_KEY} from "./code/injectionKeys";
     import {CODE_PREFIX} from "./flows/useCodePanels";
     import {useKeyShortcuts} from "../utils/useKeyShortcuts";
@@ -185,6 +182,7 @@
     import Close from "vue-material-design-icons/Close.vue";
     import Keyboard from "vue-material-design-icons/Keyboard.vue";
     import {useEditorStore} from "../stores/editor";
+    import {trackTabOpen, trackTabClose} from "../utils/tabTracking";
 
     const {t} = useI18n();
     const {showKeyShortcuts} = useKeyShortcuts();
@@ -250,6 +248,8 @@
     const editorStore = useEditorStore()
 
     const handleTabClick = (panel: Panel, tab: Tab) => {
+        trackTabOpen(tab);
+
         panel.activeTab = tab
 
         if(tab.value.startsWith(CODE_PREFIX)){
@@ -270,10 +270,10 @@
         !draggingPanel.value
     );
 
-    function onResize(e: {size:number}[]) {
-        let i = 0;
-        for(const p of panels.value){
-            p.size = e[i++].size
+    function onResize(_index: number, sizes: number[]) {
+        // Element Plus resize event provides sizes array and index of the resized panel
+        for (let i = 0; i < panels.value.length && i < sizes.length; i++) {
+            panels.value[i].size = sizes[i];
         }
     }
 
@@ -453,7 +453,7 @@
         }
     }
 
-    function newPanelDrop(e: DragEvent, direction: "left" | "right") {
+    function newPanelDrop(_e: DragEvent, direction: "left" | "right") {
         if (!movedTabInfo.value) return;
 
         const {tab: movedTab} = movedTabInfo.value;
@@ -497,10 +497,17 @@
     }
 
     function closeAllTabs(panelIndex: number){
+        const panel = panels.value[panelIndex];
+        panel.tabs.forEach(tab => {
+            trackTabClose(tab);
+        });
+
         panels.value[panelIndex].tabs = [];
     }
 
     function destroyTab(panelIndex:number, tab: Tab){
+        trackTabClose(tab);
+
         const panel = panels.value[panelIndex];
         const tabIndex = panel.tabs.findIndex((t) => t.value === tab.value);
         panel.tabs.splice(tabIndex, 1);
@@ -545,7 +552,7 @@
         }
     }
 
-    function panelDragOver(e: DragEvent, panelIndex: number) {
+    function panelDragOver(_e: DragEvent, panelIndex: number) {
         if (draggingPanel.value === null || draggingPanel.value === panelIndex) return;
 
         panels.value.forEach(panel => panel.dragover = false);
@@ -556,7 +563,7 @@
         panels.value.forEach(panel => panel.dragover = false);
     }
 
-    function panelDrop(e: DragEvent, targetPanelIndex: number) {
+    function panelDrop(_e: DragEvent, targetPanelIndex: number) {
         if (draggingPanel.value === null || draggingPanel.value === targetPanelIndex) return;
 
         const panelsCopy = [...panels.value];
@@ -730,13 +737,13 @@
     }
 
     .default-theme{
-        .splitpanes__pane {
+        :deep(.el-splitter-panel) {
             background-color: var(--ks-background-panel);
             display: grid;
             grid-template-rows: auto 1fr;
         }
 
-        :deep(.splitpanes__splitter){
+        :deep(.el-splitter__splitter){
             border-left-color: var(--ks-border-primary);
             background-color: var(--ks-background-panel);
             &:before, &:after{
@@ -751,7 +758,7 @@
         overflow: auto;
     }
 
-    .splitpanes__pane{
+    .el-splitter-panel{
         transition: none;
         &.dragging {
             opacity: 0.5;

@@ -6,8 +6,8 @@ import BlueprintsBrowser from "../../../override/components/flows/blueprints/Blu
 import Dashboard from "../../../components/dashboard/Dashboard.vue";
 import Flows from "../../../components/flows/Flows.vue";
 import Executions from "../../../components/executions/Executions.vue";
-import Dependencies from "../../../components/namespaces/components/content/Dependencies.vue";
-import NamespaceFilesEditorView from "../components/NamespaceFilesEditorView.vue";
+import Dependencies from "../../../components/dependencies/Dependencies.vue";
+import NamespaceFilesEditorView from "../../../components/namespaces/components/NamespaceFilesEditorView.vue";
 
 export interface Tab {
     locked?: boolean;
@@ -104,7 +104,7 @@ export function useHelpers() {
             name: "dependencies",
             title: t("dependencies"),
             component: Dependencies,
-            props: {namespace: namespace.value, type: "dependencies"},
+            maximized: true,
         },
         {
             maximized: true,

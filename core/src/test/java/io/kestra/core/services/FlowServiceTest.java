@@ -412,4 +412,23 @@ class FlowServiceTest {
             "The task 'for' cannot use the 'workerGroup' property as it's only relevant for runnable tasks."
         );
     }
+
+    @Test
+    void shouldReturnValidationErrorForReservedFlowId() {
+        // Given
+        String source = """
+        id: pause
+        namespace: io.kestra.unittest
+        tasks:
+          - id: task
+            type: io.kestra.plugin.core.log.Log
+            message: Reserved id test
+        """;
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", source);
+
+        // Then
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().getConstraints()).contains("Flow id is a reserved keyword: pause");
+    }
 }

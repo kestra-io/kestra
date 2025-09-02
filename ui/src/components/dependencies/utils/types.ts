@@ -3,15 +3,20 @@ export const EDGE = "EDGE" as const;
 
 export const FLOW = "FLOW" as const;
 export const EXECUTION = "EXECUTION" as const;
+export const NAMESPACE = "NAMESPACE" as const;
 
 type Flow = {
     subtype: typeof FLOW;
-    revision?: number;
 };
 
 type Execution = {
     subtype: typeof EXECUTION;
+    id?: string;
     state?: string;
+};
+
+type Namespace = {
+    subtype: typeof NAMESPACE;
 };
 
 export type Node = {
@@ -19,7 +24,7 @@ export type Node = {
     type: "NODE";
     flow: string;
     namespace: string;
-    metadata: Flow | Execution;
+    metadata: Flow | Execution | Namespace;
 };
 
 export type Edge = {

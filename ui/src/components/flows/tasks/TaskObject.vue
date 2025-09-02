@@ -107,6 +107,13 @@
         })
     }
 
+    function isDeprecated(value) {
+        if(value?.allOf){
+            return value.allOf.some(isDeprecated);
+        }
+        return value?.$deprecated;
+    }
+
     export default {
         inheritAttrs: false,
         name: "TaskObject",
@@ -140,10 +147,10 @@
                 return this.requiredProperties.length ? this.requiredProperties : this.sortedProperties;
             },
             optionalProperties() {
-                return this.merge ? [] : this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p) && !v.$deprecated && v.$group !== "connection");
+                return this.merge ? [] : this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p) && !isDeprecated(v) && v.$group !== "connection");
             },
             deprecatedProperties() {
-                return this.merge ? [] : this.sortedProperties.filter(([k,v]) => v && v.$deprecated && this.modelValue[k] !== undefined);
+                return this.merge ? [] : this.sortedProperties.filter(([k,v]) => v && isDeprecated(v) && this.modelValue[k] !== undefined);
             },
             connectionProperties() {
                 return this.merge ? [] : this.sortedProperties.filter(([p,v]) => v && v.$group === "connection" && !this.isRequired(p));

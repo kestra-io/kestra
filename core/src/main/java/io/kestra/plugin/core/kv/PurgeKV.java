@@ -34,12 +34,13 @@ import org.apache.commons.lang3.StringUtils;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete every expired keys globally of for a specific namespace."
+    title = "Delete expired keys globally for a specific namespace.",
+    description = "This task will delete expired keys from the Kestra KV store. By default, it will only delete expired keys, but you can choose to delete all keys by setting `expiredOnly` to false. You can also filter keys by a specific pattern and choose to include child namespaces."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Delete every expired keys globally of for a specific namespace, with or without including child namespaces.",
+            title = "Delete expired keys globally for a specific namespace, with or without including child namespaces.",
             full = true,
             code = """
                 id: purge_kv_store
@@ -48,12 +49,10 @@ import org.apache.commons.lang3.StringUtils;
                 tasks:
                   - id: purge_kv
                     type: io.kestra.plugin.core.kv.PurgeKV
-                    description: it will remove the KV from the storage and from Kestra
-                    expiredOnly: false # true by default
-                    namespaces: # by default, it should purge all KV from all namespaces; otherwise only keys from an array of namespaces; can't be used with namespacePattern
-                    namespacePattern: * # by default, it should purge all KV from all namespaces; otherwise lob-Pattern e.g. AI_*; can't be used with namespaces
-                    includeChildNamespaces: true # default true
-                    keyPattern: * # by default all, optionally specify Glob-Pattern e.g. AI_*
+                    expiredOnly: true # by default true, if false it will delete all keys
+                    namespaces: 
+                      - company
+                    includeChildNamespaces: true # This will include child namespaces like company.team, company.data, etc.
                 """
         )
     }
@@ -61,22 +60,24 @@ import org.apache.commons.lang3.StringUtils;
 public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
 
     @Schema(
-        title = "Key pattern. Delete only key matching the blob pattern"
+        title = "Key pattern -- delete only keys matching the blob pattern"
     )
     private Property<String> keyPattern;
 
     @Schema(
-        title = "List of namespaces to delete key from"
+        title = "List of namespaces to delete keys from",
+        description = "If not set, all namespaces will be considered. Can't be used with namespacePattern."
     )
     private Property<List<String>> namespaces;
 
     @Schema(
-        title = "Blob pattern fo the namespaces to delete key from"
+        title = "Blob pattern for the namespaces to delete keys from",
+        description = "If not set (e.g., AI_*), all namespaces will be considered. Can't be used with namespaces."
     )
     private Property<String> namespacePattern;
 
     @Schema(
-        title = "Delete only expired keys. Default true"
+        title = "Delete only expired keys -- defaults to true"
     )
     @Builder.Default
     private Property<Boolean> expiredOnly = Property.ofValue(true);
@@ -184,7 +185,7 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The number of keys purged."
+            title = "The number of keys purged"
         )
         private Long size;
     }

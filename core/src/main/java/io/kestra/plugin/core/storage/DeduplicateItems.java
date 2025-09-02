@@ -66,7 +66,7 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
     private Property<String> from;
 
     @Schema(
-        title = "The 'pebble' expression to extract the deduplication key from each item",
+        title = "The Pebble expression to extract the deduplication key from each item",
         description = "The 'pebble' expression can be used for constructing a composite key."
     )
     @PluginProperty

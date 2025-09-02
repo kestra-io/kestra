@@ -92,19 +92,19 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 public class Concat extends Task implements RunnableTask<Concat.Output> {
     @Schema(
         title = "List of files to be concatenated",
-        description = "Must be `kestra://` storage URIs; it can be a list of strings or a json string."
+        description = "Must be `kestra://` storage URIs; it can be a list of strings or a JSON string."
     )
     @PluginProperty(dynamic = true, internalStorageURI = true)
     @NotNull
     private Object files;
 
     @Schema(
-        title = "The separator to used between files -- the default is no separator"
+        title = "The separator to used between files — the default is no separator"
     )
     private Property<String> separator;
 
     @Schema(
-        title = "The extension of the created file -- the default is .tmp"
+        title = "The extension of the created file — the default is `.tmp`"
     )
     @Builder.Default
     private Property<String> extension = Property.ofValue(".tmp");

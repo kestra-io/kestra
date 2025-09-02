@@ -162,15 +162,10 @@
                             :sort-orders="['ascending', 'descending']"
                             :label="$t('id')"
                         >
-                            <template #default="scope"> 
-                                <a
-                                    :href="`/executions/${scope.row.id}`"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    {{ scope.row.id }}
-                                </a>
-                            </template>
+                           <template #default="scope">
+  <Id :value="scope.row.id" />
+</template>
+
                         </el-table-column>
 
 

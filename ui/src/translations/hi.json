@@ -1103,6 +1103,8 @@
     "replay from beginning tooltip": "शुरुआत से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay from task tooltip": "Task <code>{taskId}</code> से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay latest revision": "नवीनतम पुनरीक्षण का उपयोग करके पुनः चलाएँ",
+    "replay the execution": "फ्लो <code>{flowId}</code> के लिए निष्पादन <code>{executionId}</code> को पुनः चलाएं",
+    "replay with inputs": "इनपुट्स के साथ पुनः चलाएं",
     "replayed": "निष्पादन पुनः चलाया गया है",
     "required field": "आवश्यक फ़ील्ड",
     "reset": "पुनः प्रारंभ करें",

@@ -1103,6 +1103,8 @@
     "replay from beginning tooltip": "Criar uma execução similar começando do início",
     "replay from task tooltip": "Criar uma execução similar começando da task <code>{taskId}</code>",
     "replay latest revision": "Repetir usando a última revisão",
+    "replay the execution": "Reproduzir a execução <code>{executionId}</code> para o flow <code>{flowId}</code>",
+    "replay with inputs": "Repetir com inputs",
     "replayed": "Execução foi repetida",
     "required field": "Campo obrigatório",
     "reset": "Reiniciar",

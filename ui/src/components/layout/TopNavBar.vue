@@ -44,7 +44,6 @@
 </template>
 
 <script>
-    import {mapGetters} from "vuex";
     import {mapStores} from "pinia";
     import {useLogsStore} from "../../stores/logs";
     import {useBookmarksStore} from "../../stores/bookmarks";
@@ -56,6 +55,7 @@
     import StarIcon from "vue-material-design-icons/Star.vue";
     import Information from "vue-material-design-icons/Information.vue"
     import Badge from "../global/Badge.vue";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {
@@ -84,11 +84,10 @@
             },
         },
         computed: {
-            ...mapGetters("auth", ["user"]),
-            ...mapStores(useLogsStore, useBookmarksStore, useCoreStore),
+            ...mapStores(useLogsStore, useBookmarksStore, useCoreStore, useAuthStore),
             tourEnabled(){
                 // Temporary solution to not showing the tour menu item for EE
-                return this.coreStore.tutorialFlows?.length && !Object.keys(this.user).length
+                return this.coreStore.tutorialFlows?.length && !Object.keys(this.authStore.user).length
             },
             shouldDisplayDeleteButton() {
                 return this.$route.name === "flows/update" && this.$route.params?.tab === "logs"

@@ -218,10 +218,19 @@
                                         class="d-flex justify-content-between align-items-center"
                                     >
                                         <Status :status="getLastExecution(scope.row)?.status" size="small" />
-                                        <div class="height: 100px;">
-                                            <Bar :chart="mappedChart(scope.row.id, scope.row.namespace)" showDefault short />
-                                        </div>
                                     </div>
+                                </template>
+                            </el-table-column>
+
+                            <el-table-column
+                                prop="state"
+                                v-if="displayColumn('state') &&
+                                    user.hasAny(permission.EXECUTION)"
+                                :label="$t('execution statistics')"
+                                className="row-graph"
+                            >
+                                <template #default="scope">
+                                    <TimeSeries :chart="mappedChart(scope.row.id, scope.row.namespace)" showDefault short />
                                 </template>
                             </el-table-column>
 
@@ -280,8 +289,7 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
     import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
-
-    import Bar from "../dashboard/sections/Bar.vue";
+    import TimeSeries from "../dashboard/sections/TimeSeries.vue";
 
     const file = ref(null);
 </script>
@@ -309,15 +317,18 @@
     import {storageKeys} from "../../utils/constants";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import {useAuthStore} from "override/stores/auth.ts";
     import {useFlowStore} from "../../stores/flow.ts";
 
     const CHART_DEFINITION = {
-        id: "executions_per_namespace_bars",
-        type: "io.kestra.plugin.core.dashboard.chart.Bar",
+        id: "total_executions_timeseries",
+        type: "io.kestra.plugin.core.dashboard.chart.TimeSeries",
         chartOptions: {
-            displayName: "Executions (per namespace)",
+            displayName: "Total Executions",
+            description: "Executions duration and count per date",
             legend: {enabled: false},
-            column: "total",
+            column: "date",
+            colorByColumn: "state",
             width: 12,
         },
         data: {
@@ -326,6 +337,7 @@
                 date: {field: "START_DATE", displayName: "Date"},
                 state: {field: "STATE"},
                 total: {displayName: "Executions", agg: "COUNT"},
+                duration: {field: "DURATION", displayName: "Duration", agg: "SUM"},
             },
             where: [
                 {
@@ -420,7 +432,10 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore, useFlowStore),
+            ...mapStores(useExecutionsStore, useFlowStore, useAuthStore),
+            user() {
+                return this.authStore.user;
+            },
             routeInfo() {
                 return {
                     title: this.$t("flows"),
@@ -431,8 +446,7 @@
             },
             canCreate() {
                 return (
-                    this.user &&
-                    this.user.hasAnyActionOnAnyNamespace(
+                    this.user?.hasAnyActionOnAnyNamespace(
                         permission.FLOW,
                         action.CREATE,
                     )
@@ -440,8 +454,7 @@
             },
             canRead() {
                 return (
-                    this.user &&
-                    this.user.isAllowed(
+                    this.user?.isAllowed(
                         permission.FLOW,
                         action.READ,
                         this.$route.query.namespace,
@@ -450,8 +463,7 @@
             },
             canDelete() {
                 return (
-                    this.user &&
-                    this.user.isAllowed(
+                    this.user?.isAllowed(
                         permission.FLOW,
                         action.DELETE,
                         this.$route.query.namespace,
@@ -460,8 +472,7 @@
             },
             canUpdate() {
                 return (
-                    this.user &&
-                    this.user.isAllowed(
+                    this.user?.isAllowed(
                         permission.FLOW,
                         action.UPDATE,
                         this.$route.query.namespace,

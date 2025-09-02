@@ -16,7 +16,6 @@
     "Per page": "ページごと",
     "Previous step": "前のステップ",
     "Reset guided tour": "ガイド付きツアーを再起動",
-    "Select namespace": "Namespace",
     "Set default page": "デフォルトページを設定",
     "Set labels": "ラベルを設定",
     "Set labels done": "実行のラベルが正常に設定されました",
@@ -49,8 +48,12 @@
     "aggregation": "集計",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "注意: 現時点では、AIプロバイダーとしてGeminiのみがサポートされています。\n\n設定を保存した後、Kestraインスタンスを再起動してください。",
+          "header": "<b>AI Copilotはまだ設定されていません。</b>\n\nAI Copilotを有効にするには、次のスニペットをKestraインスタンスの設定ファイル（例：<code>application.yml</code>）に追加し、<code>geminiApiKey</code>を実際のキーに置き換えてください。"
+        },
         "generating": "フローのYAMLを生成しています...",
-        "prompt_placeholder": "Kestra flowを作成するための指示を入力してください。",
+        "prompt_placeholder": "指示を入力してKestra flowを作成してください。例: 毎週月曜日の午前9時に実行されるflowを作成してください。",
         "title": "AIエージェント"
       }
     },
@@ -214,6 +217,7 @@
       "edition": {
         "chart": "このチャートを編集",
         "confirmation": "ダッシュボード<code>{title}</code>の変更が保存されました。",
+        "id readonly": "プロパティ `id` は変更できません — 現在、初期値に設定されています。変更したい場合は、新しいダッシュボードを作成し、古いものを削除してください。",
         "label": "ダッシュボードを編集"
       },
       "empty": "表示する結果がありません。",
@@ -444,8 +448,18 @@
         "title": "このFlowには制限が設定されていません。"
       },
       "dependencies": {
-        "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。",
-        "title": "このFlowには依存関係が設定されていません。"
+        "EXECUTION": {
+          "content": "<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">実行の依存関係</a>についての詳細は、ドキュメントをご覧ください。",
+          "title": "現在、依存関係はありません。"
+        },
+        "FLOW": {
+          "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> についての詳細は、ドキュメントをご覧ください。",
+          "title": "現在、依存関係はありません。"
+        },
+        "NAMESPACE": {
+          "content": "<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> についての詳細は、ドキュメントをご覧ください。",
+          "title": "現在、依存関係はありません。"
+        }
       },
       "plugins": {
         "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。",
@@ -458,6 +472,10 @@
       "triggers": {
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "あなたのflowにはTriggerがありません。"
+      },
+      "versionPlugin": {
+        "content": "ここでは、Kestraインスタンスにインストールされているすべてのプラグインを管理できます。新しくインストールされたプラグインは、インスタンスの設定によっては、すべてのKestraサービスで直ちに利用可能にならない場合があります。",
+        "title": "まだバージョン管理されたプラグインがありません！"
       }
     },
     "empty search": "検索結果がありません",
@@ -708,6 +726,7 @@
         "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>"
       },
       "duplicate": "このキーは既に存在します",
+      "inherited": "継承されたKVペア",
       "name": "KV Store",
       "type": "タイプ",
       "update": "キー'{key}'の値を更新"
@@ -1028,6 +1047,7 @@
     "pause done": "実行がPAUSEDされています",
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
     "playground": {
+      "clear_history": "履歴をクリア",
       "confirm_create": "フローを作成中はプレイグラウンドを実行できません。プレイグラウンドの実行を開始すると、flowが作成されます。",
       "history": "直近10回の実行",
       "play_icon_info": "ノーコードまたはトポロジービューで再生アイコンをクリックすることもできます。",
@@ -1037,7 +1057,8 @@
       "run_task_info": "Flow Codeエディタ内の任意のtaskにカーソルを合わせ、「Run task」ボタンをクリックしてtaskをテストします。",
       "run_this_task": "このtaskを実行",
       "title": "プレイグラウンド",
-      "toggle": "プレイグラウンド"
+      "toggle": "プレイグラウンド",
+      "tooltip_persistence": "Playgroundをオフにしてから再度オンにすると、ページに留まっている限り情報は保持されます。"
     },
     "pluginDefaults": "プラグインのデフォルト",
     "pluginPage": {
@@ -1055,7 +1076,12 @@
     "port": "ポート",
     "prefill inputs": "自動入力",
     "prev_execution": "前回の実行",
-    "preview": "プレビュー",
+    "preview": {
+      "auto-view": "自動ビュー",
+      "force-editor": "エディタービューを強制する",
+      "label": "プレビュー",
+      "view": "表示"
+    },
     "properties": {
       "hidden": "テーブルに隠す",
       "hint": "表示する列を選択",
@@ -1077,6 +1103,8 @@
     "replay from beginning tooltip": "最初から開始する同様の実行を作成",
     "replay from task tooltip": "Task <code>{taskId}</code>から開始する同様の実行を作成",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
+    "replay the execution": "フロー<code>{flowId}</code>の実行<code>{executionId}</code>を再実行する",
+    "replay with inputs": "入力を使用してリプレイ",
     "replayed": "実行がリプレイされました",
     "required field": "必須フィールド",
     "reset": "再起動",

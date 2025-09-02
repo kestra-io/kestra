@@ -12,41 +12,38 @@
         <span :class="className">{{ inverted ? full : from }}</span>
     </el-tooltip>
 </template>
-<script>
+<script lang="ts" setup>
+    import {computed, getCurrentInstance} from "vue";
     import Utils from "../../utils/utils";
 
-    export default {
-        props: {
-            date: {
-                type: String,
-                default: undefined
-            },
-            inverted: {
-                type: Boolean,
-                default: false
-            },
-            format: {
-                type: String,
-                default: undefined
-            },
-            className: {
-                type: String,
-                default: null
-            }
+    const props = defineProps({
+        date: {
+            type: [Date, String],
+            default: undefined
         },
-        methods: {
-            uid(key) {
-                return key + "-" + Utils.uid();
-            }
+        inverted: {
+            type: Boolean,
+            default: false
         },
-        computed: {
-            from() {
-                return this.$moment(this.date).fromNow();
-            },
-            full() {
-                return this.$filters.date(this.date, this.format);
-            },
-
+        format: {
+            type: String,
+            default: undefined
+        },
+        className: {
+            type: String,
+            default: null
         }
-    };
+    })
+
+    function uid(key: string) {
+        return key + "-" + Utils.uid();
+    }
+    const {$moment, $filters} = getCurrentInstance()?.appContext.config.globalProperties || {} as any;
+
+    const from = computed(() => {
+        return $moment(props.date).fromNow();
+    })
+    const full = computed(() => {
+        return $filters.date(props.date, props.format);
+    })
 </script>

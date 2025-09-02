@@ -15,7 +15,7 @@
             :infiniteScrollDelay="0"
             :height="data.length === 0 && infiniteScrollLoad === undefined ? '100px' : tableHeight"
         >
-            <el-table-column type="selection" v-if="selectable" />
+            <el-table-column type="selection" v-if="selectable && showSelection" />
             <slot name="default" />
         </el-table>
     </div>
@@ -122,7 +122,7 @@
                 return this.stillHaveDataToFetch || this.tableView === undefined ? "100%" : `min(${this.tableView.scrollHeight}px, 100%)`;
             },
             async infiniteScrollLoadWithDisableHandling() {
-                let load = await this.infiniteScrollLoad?.();
+                let load = await this.infiniteScrollLoad();
                 while (load !== undefined && load.length === 0) {
                     load = await this.infiniteScrollLoad();
                 }
@@ -133,26 +133,12 @@
             }
         },
         props: {
-            selectable: {
-                type: Boolean,
-                default: true
-            },
-            expandable: {
-                type: Boolean,
-                default: false
-            },
-            data: {
-                type: Array,
-                default: () => []
-            },
-            noDataText: {
-                type: String,
-                default: undefined
-            },
-            infiniteScrollLoad: {
-                type: Function,
-                default: undefined
-            }
+            showSelection: {type: Boolean, default: true},
+            selectable: {type: Boolean, default: true},
+            expandable: {type: Boolean, default: false},
+            data: {type: Array, default: () => []},
+            noDataText: {type: String, default: undefined},
+            infiniteScrollLoad: {type: Function, default: undefined}
         },
         emits: [
             "selection-change"

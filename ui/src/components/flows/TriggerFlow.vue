@@ -57,7 +57,6 @@
 
 <script>
     import FlowRun from "./FlowRun.vue";
-    import {mapState} from "vuex";
     import Flash from "vue-material-design-icons/Flash.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import {shallowRef} from "vue";
@@ -172,7 +171,6 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useApiStore, useCoreStore, useExecutionsStore, usePlaygroundStore, useFlowStore),
             computedFlowId() {
                 return this.flowId || this.localFlow?.id;

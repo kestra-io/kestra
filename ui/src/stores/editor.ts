@@ -1,4 +1,5 @@
 import {defineStore} from "pinia"
+import {trackFileOpen} from "../utils/tabTracking";
 
 export interface EditorTabProps {
     name: string;
@@ -54,6 +55,11 @@ export const useEditorStore = defineStore("editor", {
             if (index === -1) {
                 this.tabs.push({name, extension, persistent, path, flow});
                 isDirty = false;
+                
+                if (path && !flow) {
+                    const fileName = name || path.split("/").pop() || "";
+                    trackFileOpen(fileName);
+                }
             } else {
                 isDirty = this.tabs[index].dirty;
             }

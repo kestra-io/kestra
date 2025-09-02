@@ -9,7 +9,7 @@ import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
 
 import EditorSidebarWrapper from "../../../components/inputs/EditorSidebarWrapper.vue";
 import EditorWrapper from "../../../components/inputs/EditorWrapper.vue";
-import NoCodeWrapper from "../../../components/code/NoCodeWrapper.vue";
+import NoCode from "../../../components/code/NoCode.vue";
 import LowCodeEditorWrapper from "../../../components/inputs/LowCodeEditorWrapper.vue";
 import PluginDocumentationWrapper from "../../../components/plugins/PluginDocumentationWrapper.vue";
 import BlueprintsWrapper from "../../../components/flows/blueprints/BlueprintsWrapper.vue";
@@ -31,7 +31,7 @@ export const EDITOR_ELEMENTS = [
             label: "No-code"
         },
         value: "nocode",
-        component: markRaw(NoCodeWrapper),
+        component: markRaw(NoCode),
     },
     {
         button: {

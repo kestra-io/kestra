@@ -17,6 +17,7 @@ import {InputType} from "../utils/inputs";
 import {globalI18n} from "../translations/i18n";
 import {transformResponse} from "../components/dependencies/composables/useDependencies";
 import {useNamespacesStore} from "override/stores/namespaces";
+import {useAuthStore} from "override/stores/auth";
 
 const textYamlHeader = {
     headers: {
@@ -488,72 +489,71 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }) {
+    function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false) {
         return store.$http.get(`${apiUrl(store)}/flows/${options.namespace}/${options.id}/dependencies?expandAll=true`).then(response => {
             return {
-                data: transformResponse(response.data, options.subtype),
+                ...(!onlyCount ? {data: transformResponse(response.data, options.subtype)} : {}),
                 count: response.data.nodes ? [...new Set(response.data.nodes.map((r:{uid:string}) => r.uid))].length : 0
             };
         })
     }
 
-    function deleteFlowAndDependencies(){
-        const metadata = flowYamlMetadata.value;
+function deleteFlowAndDependencies() {
+    const metadata = flowYamlMetadata.value;
 
-        return new Promise((resolve, reject) => store.$http
-            .get(
-                `${apiUrl(store)}/flows/${metadata.namespace}/${metadata.id
-                }/dependencies`,
-                {params: {destinationOnly: true}}
-            )
-            .then((response) => {
-                let warning = "";
-
-                if (response.data && response.data.nodes) {
-                    const deps = response.data.nodes
-                        .filter(
-                            (n: any) =>
-                                !(
-                                    n.namespace === metadata.namespace &&
-                                    n.id === metadata.id
-                                )
-                        )
-                        .map(
-                            (n: any) =>
-                                "<li>" +
-                                n.namespace +
-                                ".<code>" +
-                                n.id +
-                                "</code></li>"
-                        )
-                        .join("\n");
-
-                    if (deps.length) {
-                        warning =
-                            "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
-                            "<div class=\"el-alert__content\">\n" +
-                            "<p class=\"el-alert__description\">\n" +
-                            t("dependencies delete flow") +
-                            "<ul>\n" +
-                            deps +
-                            "</ul>\n" +
-                            "</p>\n" +
-                            "</div>\n" +
-                            "</div>";
-                    }
-                }
-
-                return t("delete confirm", {name: metadata.id}) + warning;
-            })
-            .then((message) => {
-                return toast
-                    .confirm(message, () => {
-                        resolve(deleteFlow(metadata.value));
-                        return Promise.resolve();
-                    })
-            }).catch(reject)
+    return store.$http
+        .get(
+            `${apiUrl(store)}/flows/${metadata.namespace}/${metadata.id}/dependencies`,
+            {params: {destinationOnly: true}}
         )
-    }
+        .then((response) => {
+            let warning = "";
+            if (response.data && response.data.nodes) {
+                const deps = response.data.nodes
+                    .filter(
+                        (n: any) =>
+                            !(
+                                n.namespace === metadata.namespace &&
+                                n.id === metadata.id
+                            )
+                    )
+                    .map(
+                        (n: any) =>
+                            "<li>" +
+                            n.namespace +
+                            ".<code>" +
+                            n.id +
+                            "</code></li>"
+                    )
+                    .join("\n");
+
+                if (deps.length) {
+                    warning =
+                        "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
+                        "<div class=\"el-alert__content\">\n" +
+                        "<p class=\"el-alert__description\">\n" +
+                        t("dependencies delete flow") +
+                        "<ul>\n" +
+                        deps +
+                        "</ul>\n" +
+                        "</p>\n" +
+                        "</div>\n" +
+                        "</div>";
+                }
+            }
+            return t("delete confirm", {name: metadata.id}) + warning;
+        })
+        .then((message) => {
+            return new Promise((resolve, reject) => {
+                toast.confirm(message, () => {
+                    return deleteFlow({namespace: metadata.namespace, id: metadata.id}).then(resolve).catch(reject);
+                }, "warning");
+            });
+        })
+        .catch(error => {
+            return Promise.reject(error);
+        });
+}
 
     function deleteFlow(options: { namespace: string, id: string }) {
         return store.$http.delete(`${apiUrl(store)}/flows/${options.namespace}/${options.id}`).then(() => {
@@ -764,17 +764,19 @@ export const useFlowStore = defineStore("flow", () => {
         flow.value = {...flowVar}
     }
 
+    const authStore = useAuthStore()
+
 
     const isFlow = computed(() => {
         const currentTab = useEditorStore().current;
         return currentTab?.flow !== undefined || isCreating.value;
     })
     const isAllowedEdit = computed((): boolean => {
-        if (!flow.value || !store.getters["auth/user"]) {
+        if (!flow.value || !authStore.user) {
             return false;
         }
 
-        return store.getters["auth/user"].isAllowed(
+        return authStore.user.isAllowed(
             permission.FLOW,
             action.UPDATE,
             flow.value?.namespace,

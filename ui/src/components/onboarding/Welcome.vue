@@ -57,7 +57,6 @@
 
 <script setup lang="ts">
     import {computed, getCurrentInstance} from "vue";
-    import {useStore} from "vuex";
     import {useCoreStore} from "../../stores/core";
     import {useI18n} from "vue-i18n";
     import Plus from "vue-material-design-icons/Plus.vue";
@@ -70,15 +69,13 @@
     import useRestoreUrl from "../../composables/useRestoreUrl";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {useAuthStore} from "override/stores/auth";
 
     const {topbar = true} = defineProps<{topbar?: boolean}>();
 
-    const store = useStore();
     const coreStore = useCoreStore();
     const {t} = useI18n();
     const instance = getCurrentInstance();
-
-    const user = computed(() => store.state.auth.user);
 
     const logo = computed(() => {
         return (localStorage.getItem("theme") || "light") === "light" ? kestraWelcome : kestraWelcome;
@@ -88,8 +85,10 @@
         title: t("welcome_page.welcome")
     }));
 
+    const authStore = useAuthStore();
+
     const canCreate = computed(() => {
-        return user.value && user.value.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
+        return authStore.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
     });
 
     useRouteContext(routeInfo);

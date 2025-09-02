@@ -1,16 +1,14 @@
 import globals from "globals";
 import pluginJs from "@eslint/js";
+import {defineConfig, globalIgnores} from "eslint/config";
 import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
 
 const components = (folder) => `src/components/${folder}/**/*.vue`;
 
 /** @type {import('eslint').Linter.Config[]} */
-export default [
-    {
-        files: ["**/*.{js,mjs,cjs,ts,vue}"],
-        ignores: ["node_modules", "node"],
-    },
+export default defineConfig([
+    globalIgnores(["node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*"]),
     {languageOptions: {globals: globals.browser}},
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
@@ -105,6 +103,7 @@ export default [
     {
         // Enforce the use of the <script setup> block in components within these paths
         files: [components("filter"), components("code")],
+        ignores: [components("code/components/tasks")],
         rules: {"vue/component-api-style": ["error", ["script-setup"]]},
     },
     {
@@ -113,4 +112,4 @@ export default [
             "no-console": ["off"]
         }
     }
-];
+]);

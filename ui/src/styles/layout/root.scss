@@ -148,3 +148,7 @@ $logLevels: "trace", "debug", "info", "warn", "error";
         padding-right: .5rem;
     }
 }
+
+.keep-whitespace {
+    white-space: pre-wrap;
+}

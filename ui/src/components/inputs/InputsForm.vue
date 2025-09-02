@@ -265,7 +265,6 @@
 </script>
 <script>
     import {toRaw} from "vue";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import debounce from "lodash/debounce";
@@ -284,7 +283,6 @@
 
     export default {
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useExecutionsStore),
             inputErrors() {
                 // we only keep errors that don't target an input directly
@@ -404,12 +402,12 @@
             },
             updateDefaults() {
                 for (const input of this.inputsMetaData || []) {
-                    if (this.inputsValues[input.id] === undefined || this.inputsValues[input.id] === null) {
-                        const {type, defaults} = input;
+                    const {type, id, value} = input;
+                    if (this.inputsValues[id] === undefined || this.inputsValues[id] === null || input.isDefault) {
                         if (type === "MULTISELECT") {
-                            this.multiSelectInputs[input.id] = input.defaults;
+                            this.multiSelectInputs[id] = value;
                         }
-                        this.inputsValues[input.id] = Inputs.normalize(type, defaults);
+                        this.inputsValues[id] = Inputs.normalize(type, value);
                     }
                 }
             },
@@ -419,6 +417,7 @@
                 setTimeout(() => {
                     this.inputsValidated.add(input.id);
                 }, 2000);
+                input.isDefault = false;
                 this.$emit("update:modelValue", this.inputsValues);
             },
             onSubmit() {
@@ -462,13 +461,18 @@
                 if (this.inputsMetaData === undefined || this.inputsMetaData.length === 0) {
                     return;
                 }
-
-                const formData = inputsToFormData(this, this.inputsMetaData, this.inputsValues);
+              
+                const inputsValuesWithNoDefault = this.inputsMetaData.reduce((acc, input) => {
+                    acc[input.id] = input.isDefault ? undefined : this.inputsValues[input.id];
+                    return acc;
+                }, {});
+                
+                const formData = inputsToFormData(this, this.inputsMetaData, inputsValuesWithNoDefault);
 
                 const metadataCallback = (response) => {
                     this.inputsMetaData = response.inputs.reduce((acc,it) => {
                         if(it.enabled){
-                            acc.push({...it.input, errors: it.errors});
+                            acc.push({...it.input, errors: it.errors, value: it.value, isDefault: it.isDefault});
                         }
                         return acc;
                     }, [])

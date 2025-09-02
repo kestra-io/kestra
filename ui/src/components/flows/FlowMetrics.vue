@@ -49,7 +49,7 @@
     import {defineComponent} from "vue";
     import {Bar} from "vue-chartjs";
     import {mapStores} from "pinia";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc.js";
     import {useFlowStore} from "../../stores/flow";
     import moment from "moment";
     import {defaultConfig, getFormat, tooltip} from "../dashboard/composables/charts";

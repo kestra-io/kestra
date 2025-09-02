@@ -15,7 +15,7 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <Sections :charts :dashboard="{id: 'default', charts: []}" showDefault />
+                    <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" showDefault />
                 </template>
 
                 <template #table v-if="logsStore.logs !== undefined && logsStore.logs.length > 0">
@@ -188,6 +188,7 @@
             },
             refresh() {
                 this.lastRefreshDate = new Date();
+                this.$refs.dashboard.refreshCharts();
                 this.load();
             },
             loadQuery(base) {

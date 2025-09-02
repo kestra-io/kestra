@@ -1,4 +1,5 @@
-import {defineStore} from "pinia";
+import {defineStore} from "pinia"
+import {trackPluginDocumentationView} from "../utils/tabTracking";;
 import {apiUrlWithoutTenants} from "override/utils/route";
 import semver from "semver";
 import {useApiStore} from "./api";
@@ -7,7 +8,7 @@ import InitialFlowSchema from "./flow-schema.json"
 import {toRaw} from "vue";
 import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
 
-interface PluginComponent {
+export interface PluginComponent {
     icon?: string;
     cls?: string;
     deprecated?: boolean;
@@ -18,7 +19,7 @@ interface PluginComponent {
     markdown?: string;
 }
 
-interface Plugin {
+export interface Plugin {
     tasks: PluginComponent[];
     triggers: PluginComponent[];
     conditions: PluginComponent[];
@@ -27,8 +28,12 @@ interface Plugin {
     taskRunners: PluginComponent[];
     charts: PluginComponent[];
     dataFilters: PluginComponent[];
+    dataFiltersKPI: PluginComponent[];
     aliases: PluginComponent[];
     logExporters: PluginComponent[];
+    apps: PluginComponent[];
+    appBlocks: PluginComponent[];
+    additionalPlugins: PluginComponent[];
 }
 
 interface State {
@@ -138,6 +143,20 @@ export const usePluginsStore = defineStore("plugins", {
             }
             return obj;
         },
+
+        async filteredPlugins(excludedElements: string[]) {
+            if (this.plugins === undefined) {
+                this.plugins = await this.listWithSubgroup({includeDeprecated: false});
+            }
+
+            return this.plugins.map(p => ({
+                ...p,
+                ...Object.fromEntries(excludedElements.map(e => [e, undefined]))
+            })).filter(p => Object.entries(p)
+                    .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+                    .some(([, value]: [string, PluginComponent[]]) => value.length !== 0))
+        },
+
         async list() {
             const response = await this.$http.get<Plugin[]>(`${apiUrlWithoutTenants()}/plugins`);
             this.plugins = response.data;
@@ -188,16 +207,15 @@ export const usePluginsStore = defineStore("plugins", {
             return response.data;
         },
 
-        loadVersions(options: {cls: string; commit?: boolean}) {
-            const promise = this.$http.get(
+        async loadVersions(options: {cls: string; commit?: boolean}): Promise<{type: string, versions: string[]}> {
+            const response = await this.$http.get(
                 `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions`
             );
-            return promise.then(response => {
-                if (options.commit !== false) {
-                    this.versions = response.data.versions;
-                }
-                return response.data;
-            });
+            if (options.commit !== false) {
+                this.versions = response.data.versions;
+            }
+
+            return response.data;
         },
 
         fetchIcons() {
@@ -212,12 +230,15 @@ export const usePluginsStore = defineStore("plugins", {
             const apiStore = useApiStore();
 
             const apiPromise = apiStore.pluginIcons().then(response => {
-                this.icons = this.icons ?? {};
+                // to avoid unnecessary dom updates and calculations in the reactivity rendering of Vue,
+                // we do all our updates to a temporary object, then commit the changes all at once
+                const tempIcons = toRaw(this.icons) ?? {};
                 for (const [key, plugin] of Object.entries(response.data)) {
-                    if (this.icons && this.icons[key] === undefined) {
-                        this.icons[key] = plugin as string;
+                    if (tempIcons && tempIcons[key] === undefined) {
+                        tempIcons[key] = plugin as string;
                     }
                 }
+                this.icons = tempIcons;
             });
 
             const iconsPromise =
@@ -316,6 +337,8 @@ export const usePluginsStore = defineStore("plugins", {
                     version,
                     ...plugin,
                 };
+
+                trackPluginDocumentationView(type);
 
                 this.forceIncludeProperties = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version");
             });

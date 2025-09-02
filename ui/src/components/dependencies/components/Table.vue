@@ -20,7 +20,10 @@
                 <section id="row">
                     <section id="left">
                         <div id="link">
-                            <Link :node="row.data" :subtype="row.data.metadata.subtype" />
+                            <Link
+                                :node="row.data"
+                                :subtype="row.data.metadata.subtype"
+                            />
                         </div>
 
                         <p class="description">
@@ -60,21 +63,24 @@
         selected: Node["id"] | undefined;
     }>();
 
-    const focusSelectedRow = ()=>{
+    const focusSelectedRow = () => {
         const row = document.querySelector<HTMLElement>(".el-table__row.selected");
 
         if (!row) return;
 
         row.scrollIntoView({behavior: "smooth", block: "center"});
-    }
+    };
 
-    watch(() => props.selected, async (ID) => {
-        if (!ID) return;
+    watch(
+        () => props.selected,
+        async (ID) => {
+            if (!ID) return;
 
-        await nextTick();
+            await nextTick();
 
-        focusSelectedRow();
-    });
+            focusSelectedRow();
+        },
+    );
 
     const search = ref("");
     const results = computed(() => {
@@ -87,7 +93,10 @@
         return NODES.filter(({data}) => {
             const {flow, namespace} = data;
 
-            return (flow?.toLowerCase().includes(f) || namespace?.toLowerCase().includes(f));
+            return (
+                flow?.toLowerCase().includes(f) ||
+                namespace?.toLowerCase().includes(f)
+            );
         });
     });
 </script>
@@ -96,7 +105,7 @@
 section#input {
     position: sticky;
     top: 0;
-    z-index: 10; // keeps it above table rows
+    z-index: 10; // Keeps it above table rows
     padding: 0.5rem;
     background-color: var(--ks-background-input);
 

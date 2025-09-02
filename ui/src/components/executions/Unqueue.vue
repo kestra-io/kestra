@@ -49,13 +49,13 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
     import Status from "../../components/Status.vue";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {Status},
@@ -89,8 +89,7 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useAuthStore),
             states() {
                 return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
                     code: value,
@@ -98,7 +97,7 @@
                 }));
             },
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 

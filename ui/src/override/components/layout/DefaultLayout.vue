@@ -20,7 +20,7 @@
     import {onMounted, ref} from "vue"
     import {useSurveySkip} from "../../../composables/useSurveyData"
     import {useCoreStore} from "../../../stores/core"
-    import {useMiscStore} from "../../../stores/misc"
+    import {useMiscStore} from "override/stores/misc"
 
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()

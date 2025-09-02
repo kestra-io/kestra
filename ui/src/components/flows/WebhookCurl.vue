@@ -35,7 +35,7 @@
     import {useI18n} from "vue-i18n";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
     import Editor from "../inputs/Editor.vue";
-    import {apiUrlWithoutTenants} from "../../override/utils/route";
+    import {baseUrl, basePathWithoutTenant, apiUrlWithoutTenants} from "../../override/utils/route";
     import {useFlowStore} from "../../stores/flow";
 
     interface Flow {
@@ -73,7 +73,8 @@
     });
 
     const generateWebhookUrl = (trigger: Trigger): string => {
-        return `${apiUrlWithoutTenants()}/executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`;
+        const origin = baseUrl ? apiUrlWithoutTenants() : `${location.origin}${basePathWithoutTenant()}`;
+        return `${origin}/executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`;
     };
 
     const generateWebhookCurlCommand = (trigger: Trigger): string => {

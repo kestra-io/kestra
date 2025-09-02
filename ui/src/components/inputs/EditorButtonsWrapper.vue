@@ -68,7 +68,9 @@
 
     const {translateError, translateErrorWithKey} = useFlowOutdatedErrors();
 
-    const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "true");
+    // If playground is not defined, enable it by default
+    const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "false" ? false : true);
+
     const isCreating = computed(() => flowStore.isCreating === true)
     const isReadOnly = computed(() => flowStore.isReadOnly)
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
@@ -76,7 +78,6 @@
     const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
     const flowInfos = computed(() => flowStore.flowInfos)
     const tabs = computed<{dirty?:boolean}[]>(() => editorStore.tabs)
-    const metadata = computed(() => flowStore.metadata);
     const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
     const flowWarnings = computed(() => {
 
@@ -119,8 +120,11 @@
     }
 
     const deleteFlow = () => {
+        const flowId = flowStore.flowYamlMetadata?.id;
+
         flowStore.deleteFlowAndDependencies()
             .then(() => {
+                toast.deleted(flowId);
                 return router.push({
                     name: "flows/list",
                     params: {
@@ -128,8 +132,8 @@
                     },
                 });
             })
-            .then(() => {
-                toast.deleted(metadata.value?.id);
+            .catch(() => {
+                toast.error(`Failed to delete flow ${flowId}`);
             });
     };
 </script>

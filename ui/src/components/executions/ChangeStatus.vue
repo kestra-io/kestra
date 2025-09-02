@@ -64,7 +64,6 @@
 
 <script>
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
@@ -73,6 +72,7 @@
     import Status from "../../components/Status.vue";
     import ExecutionUtils from "../../utils/executionUtils";
     import {shallowRef} from "vue";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {StateMachine, Status},
@@ -136,8 +136,7 @@
             },
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useAuthStore),
             uuid() {
                 return "changestatus-" + this.execution.id + (this.taskRun ? "-" + this.taskRun.id : "");
             },
@@ -163,7 +162,7 @@
                     })
             },
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 

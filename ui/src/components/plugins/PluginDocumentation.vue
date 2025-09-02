@@ -50,7 +50,7 @@
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {mapStores} from "pinia";
     import {usePluginsStore} from "../../stores/plugins";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     export default {
         props: {

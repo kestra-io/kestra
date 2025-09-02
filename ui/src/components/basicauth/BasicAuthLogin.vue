@@ -79,7 +79,7 @@
     import Logo from "../home/Logo.vue"
 
     import {useCoreStore} from "../../stores/core"
-    import {useMiscStore} from "../../stores/misc"
+    import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
     import * as BasicAuth from "../../utils/basicAuth";

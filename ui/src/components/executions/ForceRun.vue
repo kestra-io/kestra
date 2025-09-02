@@ -35,12 +35,12 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {State} from "@kestra-io/ui-libs";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         props: {
@@ -76,10 +76,9 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useAuthStore),
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 

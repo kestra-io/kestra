@@ -71,7 +71,7 @@
     import {useStore} from "vuex";
     import useNamespaces, {Namespace} from "../../../composables/useNamespaces.ts";
     import {useI18n} from "vue-i18n";
-    import {useMiscStore} from "../../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     import Navbar from "../../../components/layout/TopNavBar.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
@@ -82,6 +82,7 @@
 
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
+    import {useAuthStore} from "override/stores/auth";
 
     interface Node {
         id: string;
@@ -101,10 +102,9 @@
 
     const store = useStore();
 
-    const user = computed(() => store.state.auth.user);
+    const authStore = useAuthStore();
     const canCreate = computed(() => {
-        if (Object.keys(user.value).length === 0) return false;
-        return user.value.hasAnyAction(permission.NAMESPACE, action.CREATE);
+        return authStore.user?.hasAnyAction(permission.NAMESPACE, action.CREATE);
     });
 
     const namespaces = ref([]) as Ref<Namespace[]>;
@@ -146,7 +146,6 @@
                     currentLevel[label] = {
                         id: label,
                         label,
-                        disabled: item.disabled,
                         description: isLeaf ? item.description : undefined,
                         children: [],
                     };
@@ -159,7 +158,6 @@
                 const result: Node = {
                     id: node.id,
                     label: node.label,
-                    disabled: node.disabled,
                     description: node.description,
                     children: node.children ? build(node.children) : undefined,
                 };

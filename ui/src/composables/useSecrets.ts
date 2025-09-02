@@ -1,7 +1,7 @@
 import {Store} from "vuex";
 import {EntityIterator, FetchResult} from "./entityIterator.ts";
 import {NamespaceIterator} from "./useNamespaces.ts";
-import {Me} from "../stores/auth";
+import {Me} from ".override/stores/auth";
 import {useNamespacesStore} from "override/stores/namespaces.ts";
 import permissions from "../models/permission";
 import actions from "../models/action";
@@ -60,10 +60,10 @@ export class AllSecretIterator extends EntityIterator<NamespaceSecret>{
     private namespaceSecretIterator: NamespaceSecretIterator | undefined;
     private areNamespaceSecretsReadOnly = ref({}) as unknown as {[namespace: string]: boolean};
 
-    constructor(store: Store<any>, fetchSize: number, options?: any) {
+    constructor(store: Store<any>, user: Me, fetchSize: number, options?: any) {
         super(fetchSize, options);
         this.store = store;
-        this.user = this.store.state?.["auth"]?.user;
+        this.user = user;
     }
 
     stopCondition(): boolean {
@@ -118,6 +118,6 @@ export function useNamespaceSecrets(store: Store<any>, namespace: string, secret
     return new NamespaceSecretIterator(store, namespace, secretsFetchSize, options);
 }
 
-export function useAllSecrets(store: Store<any>, secretsFetchSize: number, options?: any): AllSecretIterator {
-    return new AllSecretIterator(store, secretsFetchSize, options);
+export function useAllSecrets(store: Store<any>, user: Me, secretsFetchSize: number, options?: any): AllSecretIterator {
+    return new AllSecretIterator(store, user, secretsFetchSize, options);
 }

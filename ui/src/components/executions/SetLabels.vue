@@ -49,9 +49,8 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {State} from "@kestra-io/ui-libs"
@@ -59,6 +58,7 @@
     import {filterLabels} from "./utils"
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {LabelInput},
@@ -95,10 +95,9 @@
             },
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useMiscStore, useExecutionsStore),
+            ...mapStores(useMiscStore, useExecutionsStore, useAuthStore),
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 

@@ -542,7 +542,7 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/sla-parent-flow.yaml", "flows/valids/sla-subflow.yaml"})
-    void executionConditionSLAShouldLaslaViolationOnSubflowMayEndTheParentFlowbel() throws Exception {
+    void slaViolationOnSubflowMayEndTheParentFlow() throws Exception {
         slaTestCase.slaViolationOnSubflowMayEndTheParentFlow();
     }
 

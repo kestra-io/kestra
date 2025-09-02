@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionError;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import jakarta.inject.Singleton;
@@ -32,5 +33,18 @@ public class ConcurrencyLimitService {
         }
 
         return execution.withState(state);
+    }
+
+    /**
+     * Mark an execution as failed because it exceeded concurrency limits.
+     */
+    public Execution failDueToConcurrencyLimit(Execution execution) {
+        ExecutionError error = ExecutionError.builder()
+            .type("CONCURRENCY_LIMIT_EXCEEDED")
+            .message("Execution marked Failed because it exceeded the allowed concurrency limit.")
+            .build();
+
+        return execution.withState(State.Type.FAILED)
+                        .withError(error);
     }
 }

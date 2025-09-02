@@ -113,12 +113,6 @@
             <template #label>
                 <code>{{ $t("concurrency") }}</code>
                 <br>
-                <task-basic
-                    :schema="concurrencySchema"
-                    v-model="newMetadata.concurrency"
-                    root="concurrency"
-                    v-if="showConcurrency"
-                />
             </template>
         </el-form-item>
         <el-form-item>
@@ -132,8 +126,6 @@
     </el-form>
 </template>
 <script setup>
-    import TaskBasic from "./tasks/TaskBasic.vue";
-
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
     import Plus from "vue-material-design-icons/Plus.vue";

@@ -37,7 +37,7 @@
 </template>
 
 <script>
-    import Task from "./Task";
+    import Task from "./MixinTask";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import getTaskComponent from "./getTaskComponent";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";

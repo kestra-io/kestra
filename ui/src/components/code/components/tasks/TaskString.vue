@@ -45,12 +45,12 @@
     </div>
 </template>
 <script setup>
-    import Editor from "../../../components/inputs/Editor.vue";
-    import InputText from "../../code/components/inputs/InputText.vue";
+    import Editor from "../../../../components/inputs/Editor.vue";
+    import InputText from "../inputs/InputText.vue";
     import IconCodeBracesBox from "vue-material-design-icons/CodeBracesBox.vue";
 </script>
 <script>
-    import Task from "./Task";
+    import Task from "./MixinTask";
 
     export default {
         inheritAttrs: false,

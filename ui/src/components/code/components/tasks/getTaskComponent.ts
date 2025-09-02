@@ -12,10 +12,6 @@ function getType(property: any, key?: string, schema?: any): string {
             return "task"
         }
 
-        if (property.$ref.includes(".conditions.")) {
-            return "condition"
-        }
-
         if (property.$ref.includes("tasks.runners.TaskRunner")) {
             return "task-runner"
         }

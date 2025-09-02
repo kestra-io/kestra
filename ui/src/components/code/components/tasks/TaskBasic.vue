@@ -53,10 +53,10 @@
 <script setup>
     import getTaskComponent from "./getTaskComponent";
     import Help from "vue-material-design-icons/HelpBox.vue";
-    import Markdown from "../../layout/Markdown.vue";
+    import Markdown from "../../../layout/Markdown.vue";
 </script>
 <script>
-    import Task from "./Task";
+    import Task from "./MixinTask";
 
     export default {
         name: "TaskBasic",
@@ -147,7 +147,7 @@
 </script>
 
 <style lang="scss" scoped>
-@import "../../code/styles/code.scss";
+@import "../../styles/code.scss";
 
 .type-tag {
     background-color: var(--ks-tag-background);

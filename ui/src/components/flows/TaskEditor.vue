@@ -35,8 +35,7 @@
     import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    // @ts-expect-error TaskObject can't be typed for now because of time constraints
-    import TaskObject from "./tasks/TaskObject.vue";
+    import TaskObject from "../code/components/tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {NoCodeElement, Schemas} from "../code/utils/types";
     import {

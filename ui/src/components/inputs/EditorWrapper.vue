@@ -186,22 +186,22 @@
     function updatePluginDocumentation(event: any) {
         const source = event.model.getValue();
         const cursorOffset = event.model.getOffsetAt(event.position);
-        
+
         const isPlugin = (type: string) => pluginsStore.allTypes.includes(type);
-        const isInRange = (range: [number, number, number]) => 
+        const isInRange = (range: [number, number, number]) =>
             cursorOffset >= range[0] && cursorOffset <= range[2];
         const getRangeSize = (range: [number, number, number]) => range[2] - range[0];
 
         const getElementFromRange = (typeElement: any) => {
             const wrapper = YAML_UTILS.localizeElementAtIndex(source, typeElement.range[0]);
             return wrapper?.value?.type && isPlugin(wrapper.value.type)
-                ? wrapper.value 
+                ? wrapper.value
                 : {type: typeElement.type};
         };
 
         const selectedElement = YAML_UTILS.extractFieldFromMaps(source, "type", () => true, isPlugin)
             .filter(el => el.range && isInRange(el.range))
-            .reduce((closest, current) => 
+            .reduce((closest, current) =>
                         !closest || getRangeSize(current.range) < getRangeSize(closest.range)
                             ? current
                             : closest
@@ -237,6 +237,7 @@
 
     const saveFileContent = async () => {
         clearTimeout(timeout.value);
+        if(!namespace.value || !props.path) return
         await namespacesStore.createFile({
             namespace: namespace.value,
             path: props.path,

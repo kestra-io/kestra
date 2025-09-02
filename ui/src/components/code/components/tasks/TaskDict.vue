@@ -39,11 +39,11 @@
 <script lang="ts" setup>
     import {computed, ref, watch} from "vue";
     import {useI18n} from "vue-i18n";
-    import {DeleteOutline} from "../../code/utils/icons";
+    import {DeleteOutline} from "../../utils/icons";
 
-    import InputText from "../../code/components/inputs/InputText.vue";
+    import InputText from "../inputs/InputText.vue";
     import TaskExpression from "./TaskExpression.vue";
-    import Add from "../../code/components/Add.vue";
+    import Add from "../Add.vue";
     import getTaskComponent from "./getTaskComponent";
     import debounce from "lodash/debounce";
 
@@ -153,5 +153,5 @@
 </script>
 
 <style scoped lang="scss">
-@import "../../code/styles/code.scss";
+@import "../../styles/code.scss";
 </style>

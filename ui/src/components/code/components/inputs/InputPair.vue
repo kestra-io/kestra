@@ -25,7 +25,7 @@
                 />
             </el-col>
             <el-col :span="16" class="d-flex">
-                <slot name="value-field" :value="pair[1]" :key="pair[0]">
+                <slot name="value-field" :value="pair[1]" :key="pair[0]" :index="index" :update-value="updateValue">
                     <InputText
                         :model-value="pair[1]"
                         :placeholder="t('value')"
@@ -109,15 +109,19 @@
 
     function updateModel() {
         localEdit.value = true;
-        emit("update:modelValue", Object.fromEntries(internalPairs.value.filter(pair => pair[0] !== "" && pair[1] !== undefined)));
+        const newVal = Object.fromEntries(internalPairs.value.filter(pair => pair[0] !== "" && pair[1] !== undefined))
+
+        emit("update:modelValue", newVal);
     }
 
     function handleKeyInput(index: number, newValue: string) {
+
         internalPairs.value[index][0] = newValue.toString();
         updateModel()
     };
 
     function addPair() {
+
         internalPairs.value.push(["", undefined])
         updateModel()
     };
@@ -128,6 +132,7 @@
     };
 
     function updateValue (pairId: number, newValue: string){
+
         internalPairs.value[pairId][1] = newValue;
         updateModel()
     };

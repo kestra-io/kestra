@@ -1103,6 +1103,8 @@
     "replay from beginning tooltip": "最初から開始する同様の実行を作成",
     "replay from task tooltip": "Task <code>{taskId}</code>から開始する同様の実行を作成",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
+    "replay the execution": "フロー<code>{flowId}</code>の実行<code>{executionId}</code>を再実行する",
+    "replay with inputs": "入力を使用してリプレイ",
     "replayed": "実行がリプレイされました",
     "required field": "必須フィールド",
     "reset": "再起動",

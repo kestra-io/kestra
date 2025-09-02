@@ -40,9 +40,6 @@ export default defineComponent({
         isRequired(key: string) {
             return this.schema?.required?.includes(key);
         },
-        onShow() {
-        },
-
         onInput(value:any) {
             this.$emit("update:modelValue", collapseEmptyValues(value));
         }
@@ -63,7 +60,7 @@ export default defineComponent({
             return YAML_UTILS.stringify(this.values);
         },
         info() {
-            return `${this.schema?.title || this.schema?.type}`
+            return this.schema?.title ?? this.schema?.type
         },
         isValid() {
             return true;

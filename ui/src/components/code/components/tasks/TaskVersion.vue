@@ -10,7 +10,7 @@
 <script setup lang="ts">
     import {computed, getCurrentInstance} from "vue";
     import {useI18n} from "vue-i18n";
-    import InputText from "../../code/components/inputs/InputText.vue";
+    import InputText from "../inputs/InputText.vue";
 
     const {t} = useI18n()
 

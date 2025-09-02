@@ -132,6 +132,10 @@ public class FlowAiCopilot {
 
         List<String> mostRelevantPlugins = this.mostRelevantPlugins(pluginFinder, enhancedPrompt);
 
-        return this.generateFlowYaml(flowYamlBuilder, mostRelevantPlugins, enhancedPrompt);
+        String generatedFlowYaml = this.generateFlowYaml(flowYamlBuilder, mostRelevantPlugins, enhancedPrompt);
+        if (generatedFlowYaml.equals(flowGenerationPrompt.flowYaml())) {
+            throw new AiException(ALREADY_VALID_FLOW);
+        }
+        return generatedFlowYaml;
     }
 }

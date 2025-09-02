@@ -40,7 +40,7 @@ public interface FlowYamlBuilder {
         - To avoid escaping quotes, use double quotes first and if you need quotes inside, use single ones. Only escape them if you have 3+ level quotes, for example: `message: "Hello {{inputs.userJson | jq('.name')}_}"`.
         - A property key is unique within each type.
         - When fetching data from the JDBC plugin, always use fetchType: STORE.
-        - Manipulating date in pebble expressions can be done through `dateAdd` (`{{now()|dateAdd(-1,'DAYS')}_}`) and `date` filters (`{{"July 24, 2001"|date("yyyy-MM-dd",existingFormat="MMMM dd, yyyy")}_}`).
+        - Manipulating date in pebble expressions can be done through `dateAdd` (`{{now()|dateAdd(-1,'DAYS')}_}`) and `date` filters (`{{"July 24, 2001"|date("yyyy-MM-dd",existingFormat="MMMM dd, yyyy")}_}`). Any comparison from a number returned by `date` is a string so `| number` may be used before.
         - Current date is `{{current_date_time}}`.
         - Always preserve root-level `id` and `namespace` if provided.
         - Don't add any Schedule trigger unless a regular occurrence is asked.

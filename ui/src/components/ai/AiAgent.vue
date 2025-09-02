@@ -129,9 +129,9 @@
             })
             highlightedAiConfiguration.value = highlighter.codeToHtml(`kestra:
   ai:
-    type: "gemini"
-    gemini:
-      api-key: "geminiApiKey"`, {lang: "yaml", theme: Utils.getTheme() === "dark" ? "github-dark" : "github-light"})
+    type: "openai"
+    openai:
+      api-key: "openAiApiKey"`, {lang: "yaml", theme: Utils.getTheme() === "dark" ? "github-dark" : "github-light"})
         }
     });
 </script>

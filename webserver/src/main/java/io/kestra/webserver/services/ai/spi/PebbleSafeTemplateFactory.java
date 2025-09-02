@@ -34,7 +34,7 @@ public class PebbleSafeTemplateFactory implements PromptTemplateFactory {
          * such as replacing these placeholders with their corresponding values.
          */
         @SuppressWarnings({"RegExpRedundantEscape"})
-        private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{_\\{\\s*(.+?)\\s*\\}\\}");
+        private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{_\\{\\s*(.+?)\\s*}_}");
 
         private final String template;
 
@@ -68,7 +68,7 @@ public class PebbleSafeTemplateFactory implements PromptTemplateFactory {
         }
 
         private static String inAiVarBrackets(String variable) {
-            return "{_{" + variable + "}}";
+            return "{_{" + variable + "}_}";
         }
     }
 }

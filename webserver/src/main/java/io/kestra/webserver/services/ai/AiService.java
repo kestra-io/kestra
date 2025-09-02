@@ -28,7 +28,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
     private final Map<String, ConversationMetadata> metadataByConversationId = new ConcurrentHashMap<>();
 
-    public abstract ChatModel chatModel(List<ChatModelListener> listeners, String modelName, String apiKey, double temperature, Double topP, int maxOutputTokens);
+    public abstract ChatModel chatModel(List<ChatModelListener> listeners);
 
     private List<ChatModelListener> listeners(String spanName, String conversationId) {
         List<ChatModelListener> listeners = new ArrayList<>(this.listeners);
@@ -39,12 +39,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private PluginFinder pluginFinder(String conversationId) {
         return AiServices.builder(PluginFinder.class)
             .chatModel(this.chatModel(
-                this.listeners("PluginFinder", conversationId),
-                aiConfiguration.modelName(),
-                aiConfiguration.apiKey(),
-                aiConfiguration.temperature(),
-                aiConfiguration.topP(),
-                Math.min(2048, aiConfiguration.maxOutputTokens())
+                this.listeners("PluginFinder", conversationId)
             ))
             .build();
     }
@@ -52,12 +47,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private FlowYamlBuilder flowYamlBuilder(String conversationId) {
         return AiServices.builder(FlowYamlBuilder.class)
             .chatModel(this.chatModel(
-                this.listeners("FlowYamlBuilder", conversationId),
-                aiConfiguration.modelName(),
-                aiConfiguration.apiKey(),
-                aiConfiguration.temperature(),
-                aiConfiguration.topP(),
-                aiConfiguration.maxOutputTokens()
+                this.listeners("FlowYamlBuilder", conversationId)
             )).build();
     }
 

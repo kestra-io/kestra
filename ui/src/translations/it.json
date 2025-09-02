@@ -217,6 +217,7 @@
       "edition": {
         "chart": "Modifica questo grafico",
         "confirmation": "Le modifiche nel dashboard <code>{title}</code> sono state salvate.",
+        "id readonly": "La proprietà `id` non può essere modificata — è ora impostata sui suoi valori iniziali. Se desideri cambiarla, puoi creare una nuova dashboard e rimuovere quella vecchia.",
         "label": "Modifica Dashboard"
       },
       "empty": "Non ci sono risultati da mostrare.",
@@ -447,8 +448,18 @@
         "title": "Nessun limite è impostato per questo Flow."
       },
       "dependencies": {
-        "content": "Per saperne di più sulle <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dipendenze dei Flow</a> nella nostra documentazione.",
-        "title": "Nessuna dipendenza è impostata per questo Flow."
+        "EXECUTION": {
+          "content": "Per saperne di più sulle <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Dipendenze di Esecuzione</a> nella nostra documentazione.",
+          "title": "Attualmente non ci sono dipendenze."
+        },
+        "FLOW": {
+          "content": "Leggi di più su <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> nella nostra documentazione.",
+          "title": "Attualmente non ci sono dipendenze."
+        },
+        "NAMESPACE": {
+          "content": "Per saperne di più sulle <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a>, consulta la nostra documentazione.",
+          "title": "Attualmente non ci sono dipendenze."
+        }
       },
       "plugins": {
         "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">limiti di Concurrency</a></strong> nella nostra documentazione.",
@@ -715,6 +726,7 @@
         "warning": "Non hai i permessi per quei namespace, quindi verranno omessi: <code>{namespaces}</code>"
       },
       "duplicate": "Questo key esiste già",
+      "inherited": "Coppie KV ereditate",
       "name": "KV Store",
       "type": "Tipo",
       "update": "Aggiorna il value per il key '{key}'"
@@ -1035,6 +1047,7 @@
     "pause done": "L'esecuzione è PAUSED",
     "pause title": "Metti in pausa l'esecuzione <code>{id}</code>.<br/>Nota che i task attualmente in esecuzione verranno comunque elaborati e l'esecuzione dovrà essere ripresa manualmente.",
     "playground": {
+      "clear_history": "Cancella cronologia",
       "confirm_create": "Non puoi eseguire il playground mentre crei un flow. Avviare un'esecuzione del playground creerà il flow.",
       "history": "Ultime 10 esecuzioni",
       "play_icon_info": "Puoi anche fare clic sull'icona Play nelle viste No-Code o Topology.",
@@ -1044,7 +1057,8 @@
       "run_task_info": "Passa il mouse su qualsiasi task nell'editor del Flow Code e fai clic sul pulsante \"Run task\" per testare il tuo task.",
       "run_this_task": "Esegui questo task",
       "title": "Playground",
-      "toggle": "Playground"
+      "toggle": "Playground",
+      "tooltip_persistence": "Se disattivi e riattivi il Playground, le informazioni rimangono finché resti sulla pagina."
     },
     "pluginDefaults": "Plugin predefiniti",
     "pluginPage": {
@@ -1062,7 +1076,12 @@
     "port": "Porta",
     "prefill inputs": "Precompila",
     "prev_execution": "Esecuzione precedente",
-    "preview": "Anteprima",
+    "preview": {
+      "auto-view": "Visualizzazione automatica",
+      "force-editor": "Forza vista editor",
+      "label": "Anteprima",
+      "view": "Visualizza"
+    },
     "properties": {
       "hidden": "Nascosto nella Tabella",
       "hint": "Scegli colonne visibili",

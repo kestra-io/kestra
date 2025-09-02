@@ -3,6 +3,7 @@ package io.kestra.core.models.flows.input;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.validations.Regex;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -13,6 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -55,6 +57,23 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
     @NotNull
     @Builder.Default
     Boolean allowCustomValue = false;
+
+    @Schema(
+        title = "Whether the first value of the multi-select should be selected by default."
+    )
+    @NotNull
+    @Builder.Default
+    Boolean autoSelectFirst = false;
+
+    @Override
+    public Property<List<String>> getDefaults() {
+        Property<List<String>> baseDefaults = super.getDefaults();
+        if (baseDefaults == null && autoSelectFirst && !Optional.ofNullable(values).map(Collection::isEmpty).orElse(true)) {
+            return Property.ofValue(List.of(values.getFirst()));
+        }
+
+        return baseDefaults;
+    }
 
     @Override
     public void validate(List<String> inputs) throws ConstraintViolationException {
@@ -100,6 +119,7 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
                 .dependsOn(getDependsOn())
                 .itemType(getItemType())
                 .displayName(getDisplayName())
+                .autoSelectFirst(getAutoSelectFirst())
                 .build();
         }
         return this;

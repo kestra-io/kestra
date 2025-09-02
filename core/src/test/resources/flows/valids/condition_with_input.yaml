@@ -1,0 +1,19 @@
+id: condition_with_input
+namespace: io.kestra.tests
+
+inputs:
+  - id: condition
+    type: SELECT
+    values:
+      - success
+      - fail
+    defaults: success
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World!
+
+  - id: fail
+    type: io.kestra.plugin.core.execution.Fail
+    runIf: "{{ inputs.condition == 'fail' }}"

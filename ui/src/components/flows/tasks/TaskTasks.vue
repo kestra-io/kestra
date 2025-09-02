@@ -4,7 +4,7 @@
             title="tasks"
             :elements="items"
             :section
-            :block-schema-path="[schemaPath, 'properties', root, 'items'].join('/')"
+            :block-schema-path="[blockSchemaPath, 'properties', root, 'items'].join('/')"
             @remove="(yaml) => flowStore.flowYaml = yaml"
             @reorder="(yaml) => flowStore.flowYaml = yaml"
         />
@@ -14,10 +14,10 @@
 <script setup lang="ts">
     import {computed, inject, ref} from "vue";
     import Collapse from "../../code/components/collapse/Collapse.vue";
-    import {SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
+    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
     import {useFlowStore} from "../../../stores/flow";
 
-    const schemaPath = inject(SCHEMA_PATH_INJECTION_KEY, ref())
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref())
 
     defineOptions({
         inheritAttrs: false

@@ -19,6 +19,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.flow.Pause;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
@@ -250,7 +251,7 @@ public class FlowService {
         // add warning for runnable properties (timeout, workerGroup, taskCache) when used not in a runnable
         flow.allTasksWithChilds().forEach(task -> {
             if (!(task instanceof RunnableTask<?>)) {
-                if (task.getTimeout() != null) {
+                if (task.getTimeout() != null && !(task instanceof Pause)) {
                     warnings.add("The task '" + task.getId() + "' cannot use the 'timeout' property as it's only relevant for runnable tasks.");
                 }
                 if (task.getTaskCache() != null) {

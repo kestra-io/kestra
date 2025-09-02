@@ -217,6 +217,7 @@
       "edition": {
         "chart": "このチャートを編集",
         "confirmation": "ダッシュボード<code>{title}</code>の変更が保存されました。",
+        "id readonly": "プロパティ `id` は変更できません — 現在、初期値に設定されています。変更したい場合は、新しいダッシュボードを作成し、古いものを削除してください。",
         "label": "ダッシュボードを編集"
       },
       "empty": "表示する結果がありません。",
@@ -447,8 +448,18 @@
         "title": "このFlowには制限が設定されていません。"
       },
       "dependencies": {
-        "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。",
-        "title": "このFlowには依存関係が設定されていません。"
+        "EXECUTION": {
+          "content": "<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">実行の依存関係</a>についての詳細は、ドキュメントをご覧ください。",
+          "title": "現在、依存関係はありません。"
+        },
+        "FLOW": {
+          "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> についての詳細は、ドキュメントをご覧ください。",
+          "title": "現在、依存関係はありません。"
+        },
+        "NAMESPACE": {
+          "content": "<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> についての詳細は、ドキュメントをご覧ください。",
+          "title": "現在、依存関係はありません。"
+        }
       },
       "plugins": {
         "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。",
@@ -715,6 +726,7 @@
         "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>"
       },
       "duplicate": "このキーは既に存在します",
+      "inherited": "継承されたKVペア",
       "name": "KV Store",
       "type": "タイプ",
       "update": "キー'{key}'の値を更新"
@@ -1035,6 +1047,7 @@
     "pause done": "実行がPAUSEDされています",
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
     "playground": {
+      "clear_history": "履歴をクリア",
       "confirm_create": "フローを作成中はプレイグラウンドを実行できません。プレイグラウンドの実行を開始すると、flowが作成されます。",
       "history": "直近10回の実行",
       "play_icon_info": "ノーコードまたはトポロジービューで再生アイコンをクリックすることもできます。",
@@ -1044,7 +1057,8 @@
       "run_task_info": "Flow Codeエディタ内の任意のtaskにカーソルを合わせ、「Run task」ボタンをクリックしてtaskをテストします。",
       "run_this_task": "このtaskを実行",
       "title": "プレイグラウンド",
-      "toggle": "プレイグラウンド"
+      "toggle": "プレイグラウンド",
+      "tooltip_persistence": "Playgroundをオフにしてから再度オンにすると、ページに留まっている限り情報は保持されます。"
     },
     "pluginDefaults": "プラグインのデフォルト",
     "pluginPage": {
@@ -1062,7 +1076,12 @@
     "port": "ポート",
     "prefill inputs": "自動入力",
     "prev_execution": "前回の実行",
-    "preview": "プレビュー",
+    "preview": {
+      "auto-view": "自動ビュー",
+      "force-editor": "エディタービューを強制する",
+      "label": "プレビュー",
+      "view": "表示"
+    },
     "properties": {
       "hidden": "テーブルに隠す",
       "hint": "表示する列を選択",

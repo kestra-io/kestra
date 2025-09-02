@@ -74,7 +74,7 @@ function getType(property: any, key?: string, schema?: any): string {
     }
 
     if (property.type === "array") {
-        if (property.items?.anyOf?.length === 0 || property.items?.anyOf?.length > 10 || key === "pluginDefaults") {
+        if (property.items?.anyOf?.length === 0 || property.items?.anyOf?.length > 10 || key === "pluginDefaults" || key === "layout") {
             return "list";
         }
 

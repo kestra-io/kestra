@@ -74,7 +74,7 @@
                         // https://github.com/kestra-io/kestra/issues/10484
                         setTimeout(() => {
                             this.flowStore
-                                .loadDependencies({namespace: flow.namespace, id: flow.id})
+                                .loadDependencies({namespace: flow.namespace, id: flow.id}, true)
                                 .then(({count}) => this.dependenciesCount = count);
                         }, 1000);
                     }

@@ -217,6 +217,7 @@
       "edition": {
         "chart": "编辑此图表",
         "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
+        "id readonly": "属性 `id` 不能更改——它现在设置为初始值。如果您想更改它，可以创建一个新的仪表板并删除旧的。",
         "label": "编辑仪表板"
       },
       "empty": "没有结果显示。",
@@ -447,8 +448,18 @@
         "title": "此Flow未设置限制。"
       },
       "dependencies": {
-        "content": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。",
-        "title": "此Flow未设置依赖项。"
+        "EXECUTION": {
+          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">执行依赖关系</a>的信息，请参阅我们的文档。",
+          "title": "当前没有依赖项。"
+        },
+        "FLOW": {
+          "content": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。",
+          "title": "当前没有依赖项。"
+        },
+        "NAMESPACE": {
+          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a>的信息，请参阅我们的文档。",
+          "title": "当前没有依赖项。"
+        }
       },
       "plugins": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
@@ -715,6 +726,7 @@
         "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
       },
       "duplicate": "此键已存在",
+      "inherited": "继承的KV对",
       "name": "键值存储",
       "type": "类型",
       "update": "更新键 '{key}' 的值"
@@ -1035,6 +1047,7 @@
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
     "playground": {
+      "clear_history": "清除历史记录",
       "confirm_create": "在创建flow时无法运行playground。启动playground运行将创建flow。",
       "history": "最近10次运行",
       "play_icon_info": "您还可以在无代码或拓扑视图中点击播放图标。",
@@ -1044,7 +1057,8 @@
       "run_task_info": "将鼠标悬停在Flow Code编辑器中的任何task上，然后点击“Run task”按钮以测试您的task。",
       "run_this_task": "运行此task",
       "title": "游乐场",
-      "toggle": "游乐场"
+      "toggle": "游乐场",
+      "tooltip_persistence": "如果您关闭并重新打开Playground，只要您停留在页面上，信息将保持不变。"
     },
     "pluginDefaults": "插件默认值",
     "pluginPage": {
@@ -1062,7 +1076,12 @@
     "port": "端口",
     "prefill inputs": "预填",
     "prev_execution": "先前执行",
-    "preview": "预览",
+    "preview": {
+      "auto-view": "自动视图",
+      "force-editor": "强制编辑器视图",
+      "label": "预览",
+      "view": "查看"
+    },
     "properties": {
       "hidden": "隐藏在表格中",
       "hint": "选择可见列",

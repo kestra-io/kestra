@@ -579,7 +579,6 @@
     "warning detected": "Warning(s) detected",
     "informative notice": "Note(s)",
     "cannot swap tasks": "Can't swap the tasks",
-    "preview": "Preview",
     "open": "Open",
     "dependency task": "Task {taskId} is a dependency of another task",
     "administration": "Administration",
@@ -987,7 +986,8 @@
       "delete multiple": {
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
         "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>"
-      }
+      },
+      "inherited": "Inherited KV pairs"
     },
     "expiration": "Expiration",
     "failed to render pdf": "Failed to render the PDF preview",
@@ -1319,8 +1319,18 @@
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
       },
       "dependencies": {
-        "title": "No dependencies are set for this Flow.",
-        "content": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
+        "FLOW": {
+          "title": "There are currently no dependencies.",
+          "content": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
+        },
+        "EXECUTION": {
+          "title": "There are currently no dependencies.",
+          "content": "Read more about <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Execution Dependencies</a> in our documentation."
+        },
+        "NAMESPACE": {
+          "title": "There are currently no dependencies.",
+          "content": "Read more about <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> in our documentation."
+        }
       },
       "plugins": {
         "title": "No plugin defaults are set for this for this Namespace.",
@@ -1373,7 +1383,8 @@
       "edition": {
         "label": "Edit Dashboard",
         "confirmation": "Changes in dashboard <code>{title}</code> are saved.",
-        "chart": "Edit this chart"
+        "chart": "Edit this chart",
+        "id readonly": "The property `id` cannot be changed — it's now set to its initial values. If you want to change it, you can create a new dashboard and remove the old one."
       },
       "deletion": {
         "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
@@ -1472,7 +1483,9 @@
       "run_task_and_downstream": "Run task & downstream",
       "run_all_tasks": "Run All Tasks",
       "history": "Last 10 runs",
-      "confirm_create": "You cannot run the playground while creating a flow. Launching a playground run will create the flow."
+      "clear_history": "Clear history",
+      "confirm_create": "You cannot run the playground while creating a flow. Launching a playground run will create the flow.",
+      "tooltip_persistence": "If you turn Playground off and back on, the information remains as long as you stay on the page."
     },
     "submit": "Submit",
     "to toggle": "to toggle",
@@ -1498,6 +1511,12 @@
         "placeholder": "Search by flow or namespace...",
         "no_results": "No results found for {term}"
       }
+    },
+    "preview": {
+      "label": "Preview",
+      "force-editor": "Enforce editor view",
+      "auto-view": "Auto view",
+      "view": "View"
     }
   }
 }

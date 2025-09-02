@@ -217,6 +217,7 @@
       "edition": {
         "chart": "इस चार्ट को संपादित करें",
         "confirmation": "डैशबोर्ड <code>{title}</code> में परिवर्तन सहेजे गए हैं।",
+        "id readonly": "संपत्ति `id` को बदला नहीं जा सकता — यह अब अपनी प्रारंभिक मानों पर सेट है। यदि आप इसे बदलना चाहते हैं, तो आप एक नया डैशबोर्ड बना सकते हैं और पुराने को हटा सकते हैं।",
         "label": "डैशबोर्ड संपादित करें"
       },
       "empty": "कोई परिणाम नहीं दिखाया जा सकता।",
@@ -447,8 +448,18 @@
         "title": "इस Flow के लिए कोई सीमाएँ निर्धारित नहीं हैं।"
       },
       "dependencies": {
-        "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।",
-        "title": "इस Flow के लिए कोई dependencies सेट नहीं हैं।"
+        "EXECUTION": {
+          "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Execution Dependencies</a> के बारे में अधिक पढ़ें।",
+          "title": "वर्तमान में कोई निर्भरता नहीं है।"
+        },
+        "FLOW": {
+          "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।",
+          "title": "वर्तमान में कोई dependencies नहीं हैं।"
+        },
+        "NAMESPACE": {
+          "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> के बारे में अधिक पढ़ें।",
+          "title": "वर्तमान में कोई निर्भरता नहीं है।"
+        }
       },
       "plugins": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
@@ -715,6 +726,7 @@
         "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>"
       },
       "duplicate": "यह key पहले से मौजूद है",
+      "inherited": "विरासत में मिले KV जोड़े",
       "name": "KV Store",
       "type": "प्रकार",
       "update": "key '{key}' के लिए value अपडेट करें"
@@ -1035,6 +1047,7 @@
     "pause done": "निष्पादन PAUSED है",
     "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
     "playground": {
+      "clear_history": "इतिहास साफ़ करें",
       "confirm_create": "आप एक flow बनाते समय playground नहीं चला सकते। एक playground रन शुरू करने से flow बन जाएगा।",
       "history": "पिछले 10 रन",
       "play_icon_info": "आप No-Code या Topology दृश्य में Play आइकन पर भी क्लिक कर सकते हैं।",
@@ -1044,7 +1057,8 @@
       "run_task_info": "Flow Code संपादक में किसी भी task पर होवर करें और अपने task का परीक्षण करने के लिए \"Run task\" बटन पर क्लिक करें।",
       "run_this_task": "इस task को चलाएं",
       "title": "प्लेग्राउंड",
-      "toggle": "प्लेग्राउंड"
+      "toggle": "प्लेग्राउंड",
+      "tooltip_persistence": "यदि आप Playground को बंद करके फिर से चालू करते हैं, तो जानकारी तब तक बनी रहती है जब तक आप पृष्ठ पर रहते हैं।"
     },
     "pluginDefaults": "प्लगइन डिफॉल्ट्स",
     "pluginPage": {
@@ -1062,7 +1076,12 @@
     "port": "पोर्ट",
     "prefill inputs": "पूर्व-भरण",
     "prev_execution": "पिछला निष्पादन",
-    "preview": "पूर्वावलोकन",
+    "preview": {
+      "auto-view": "स्वचालित दृश्य",
+      "force-editor": "संपादक दृश्य लागू करें",
+      "label": "पूर्वावलोकन",
+      "view": "देखें"
+    },
     "properties": {
       "hidden": "टेबल में छिपा हुआ",
       "hint": "दृश्य स्तंभ चुनें",

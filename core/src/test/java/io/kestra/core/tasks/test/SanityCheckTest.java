@@ -61,7 +61,7 @@ class SanityCheckTest {
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/pause.yaml")
+    @ExecuteFlow("sanity-checks/pause-test.yaml")
     void qaPause(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -102,6 +102,13 @@ class SanityCheckTest {
     @ExecuteFlow("sanity-checks/write.yaml")
     void qaWrite(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(3);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @ExecuteFlow("sanity-checks/purge_kv.yaml")
+    void qaPurgeKv(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(6);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 }

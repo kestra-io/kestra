@@ -3,8 +3,8 @@ package io.kestra.core.runners;
 import io.kestra.core.server.Service;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.worker.DefaultWorker;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -24,12 +24,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @SuppressWarnings("try")
 @Slf4j
 @Singleton
-@Requires(missingBeans = RunnerInterface.class)
-public class StandAloneRunner implements RunnerInterface, AutoCloseable {
-    @Setter protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
-    @Setter protected boolean schedulerEnabled = true;
-    @Setter protected boolean workerEnabled = true;
-    @Setter protected boolean indexerEnabled = true;
+public class TestRunner implements Runnable, AutoCloseable {
+    @Setter private int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
+    @Setter private boolean schedulerEnabled = true;
+    @Setter private boolean workerEnabled = true;
 
     @Inject
     private ExecutorsUtils executorsUtils;
@@ -44,7 +42,7 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
 
     private final AtomicBoolean running = new AtomicBoolean(false);
 
-    private volatile ExecutorService poolExecutor;
+    private ExecutorService poolExecutor;
 
     @Override
     public void run() {
@@ -56,7 +54,7 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
         if (workerEnabled) {
             // FIXME: For backward-compatibility with Kestra 0.15.x and earliest we still used UUID for Worker ID instead of IdUtils
             String workerID = UUID.randomUUID().toString();
-            Worker worker = applicationContext.createBean(Worker.class, workerID, workerThread, null);
+            Worker worker = applicationContext.createBean(DefaultWorker.class, workerID, workerThread, null);
             applicationContext.registerSingleton(worker); //
             poolExecutor.execute(worker);
             servers.add(worker);
@@ -68,11 +66,10 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
             servers.add(scheduler);
         }
 
-        if (indexerEnabled) {
-            Indexer indexer = applicationContext.getBean(Indexer.class);
-            poolExecutor.execute(indexer);
-            servers.add(indexer);
-        }
+        // always start an indexer in test
+        Indexer indexer = applicationContext.getBean(Indexer.class);
+        poolExecutor.execute(indexer);
+        servers.add(indexer);
 
         try {
             Await.until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()), null, runningTimeout);

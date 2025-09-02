@@ -12,7 +12,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.RunnerUtils;
-import io.kestra.core.scheduler.AbstractScheduler;
+import io.kestra.scheduler.AbstractScheduler;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;

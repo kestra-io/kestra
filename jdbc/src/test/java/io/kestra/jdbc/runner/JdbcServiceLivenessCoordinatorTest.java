@@ -44,13 +44,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-@KestraTest(environments =  {"test", "liveness"})
+@KestraTest(environments =  {"test", "liveness"}, startRunner = true, startWorker = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // must be per-class to allow calling once init() which took a lot of time
 @Property(name = "kestra.server-type", value = "EXECUTOR")
 public abstract class JdbcServiceLivenessCoordinatorTest {
-    @Inject
-    private StandAloneRunner runner;
-
     @Inject
     private ApplicationContext applicationContext;
 
@@ -92,11 +89,6 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
 
         // Simulate that executor and workers are not running on the same JVM.
         jdbcServiceLivenessHandler.setServerInstance(IdUtils.create());
-
-        // start the runner
-        runner.setSchedulerEnabled(false);
-        runner.setWorkerEnabled(false);
-        runner.run();
     }
 
     @AfterEach

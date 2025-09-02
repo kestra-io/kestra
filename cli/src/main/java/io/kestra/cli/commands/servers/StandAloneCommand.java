@@ -109,25 +109,26 @@ public class StandAloneCommand extends AbstractServerCommand {
             }
         }
 
-        StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class);
+        try (StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class)) {
 
-        if (this.workerThread == 0) {
-            standAloneRunner.setWorkerEnabled(false);
-        } else {
-            standAloneRunner.setWorkerThread(this.workerThread);
+            if (this.workerThread == 0) {
+                standAloneRunner.setWorkerEnabled(false);
+            } else {
+                standAloneRunner.setWorkerThread(this.workerThread);
+            }
+
+            if (this.indexerDisabled) {
+                standAloneRunner.setIndexerEnabled(false);
+            }
+
+            standAloneRunner.run();
+
+            if (fileWatcher != null) {
+                fileWatcher.startListeningFromConfig();
+            }
+
+            Await.until(() -> !this.applicationContext.isRunning());
         }
-
-        if (this.indexerDisabled) {
-            standAloneRunner.setIndexerEnabled(false);
-        }
-
-        standAloneRunner.run();
-
-        if (fileWatcher != null) {
-            fileWatcher.startListeningFromConfig();
-        }
-
-        Await.until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

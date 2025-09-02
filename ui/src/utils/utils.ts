@@ -229,9 +229,9 @@ export default class Utils {
             removeClasses();
             htmlClass.add(theme);
         }
-        
+
         miscStore.theme = theme;
-        
+
         localStorage.setItem("theme", theme);
     }
 
@@ -316,27 +316,27 @@ export const useTheme = () => {
     return computed<"light" | "dark">(() => miscStore.theme as "light" | "dark");
 }
 
-function resolve$ref(obj: Record<string, any>, fullObject: Record<string, any>) {
+export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>, ) {
     if (obj === undefined || obj === null) {
-        return;
+        return obj;
     }
     if(obj.$ref){
-        return getValueAtJsonPath(fullObject, obj.$ref);
+        return getValueAtJsonPath(fullSchema, obj.$ref);
     }
-    return obj
+    return obj;
 }
 
-export function getValueAtJsonPath(obj: Record<string, any>, path: string): any {
-    if (!obj || !path || typeof path !== "string") {
+export function getValueAtJsonPath(fullSchema: Record<string, any>, path: string): any {
+    if (!fullSchema || !path || typeof path !== "string") {
         return undefined;
     }
 
     const keys = path.replace(/^#\//, "").split("/");
-    let current = obj;
+    let current = fullSchema;
 
     for (const key of keys) {
         if (current && key in current) {
-            current = resolve$ref(current[key], obj);
+            current = resolve$ref(fullSchema, current[key]);
         } else {
             return undefined;
         }

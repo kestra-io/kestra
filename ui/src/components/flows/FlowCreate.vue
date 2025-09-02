@@ -16,7 +16,7 @@
     import {useCoreStore} from "../../stores/core";
     import {editorViewTypes} from "../../utils/constants";
 
-    import {getRandomFlowID} from "../../../scripts/product/flow";
+    import {getRandomID} from "../../../scripts/id";
     import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
 
@@ -52,7 +52,7 @@
                 } else {
                     const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
                     const selectedNamespace = this.$route.query.namespace || defaultNamespace || "company.team";
-                    flowYaml = `id: ${getRandomFlowID()}
+                    flowYaml = `id: ${getRandomID()}
 namespace: ${selectedNamespace}
 
 tasks:

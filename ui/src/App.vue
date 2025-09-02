@@ -17,7 +17,6 @@
     import VueTour from "./components/onboarding/VueTour.vue";
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
     import DocIdDisplay from "./components/DocIdDisplay.vue";
-    import posthog from "posthog-js";
     import "@kestra-io/ui-libs/style.css";
 
     import {useApiStore} from "./stores/api";
@@ -25,6 +24,7 @@
     import {useLayoutStore} from "./stores/layout";
     import {useCoreStore} from "./stores/core";
     import {useDocStore} from "./stores/doc";
+    import {initPostHogForSetup} from "./composables/usePosthog";
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "./stores/executions";
     import * as BasicAuth from "./utils/basicAuth";
@@ -116,62 +116,9 @@
                     uid: uid,
                 });
 
-                const apiConfig = await this.apiStore.loadConfig();
-                this.initStats(apiConfig, config, uid);
+                await initPostHogForSetup(config);
 
                 return config;
-            },
-            initStats(apiConfig, config, uid) {
-                if (this.miscStore.configs["isAnonymousUsageEnabled"] === false) {
-                    return;
-                }
-
-                // only run posthog in production
-                if (import.meta.env.MODE === "production") {
-                    posthog.init(
-                        apiConfig.posthog.token,
-                        {
-                            api_host: apiConfig.posthog.apiHost,
-                            ui_host: "https://eu.posthog.com",
-                            capture_pageview: false,
-                            capture_pageleave: true,
-                            autocapture: false,
-                        }
-                    )
-
-                    posthog.register_once(this.statsGlobalData(config, uid));
-
-                    if (!posthog.get_property("__alias")) {
-                        posthog.alias(apiConfig.id);
-                    }
-                }
-
-                let surveyVisible = false;
-                window.addEventListener("PHSurveyShown", () => {
-                    surveyVisible = true;
-                });
-
-                window.addEventListener("PHSurveyClosed", () => {
-                    surveyVisible = false;
-                })
-
-                window.addEventListener("KestraRouterAfterEach", () => {
-                    if (surveyVisible) {
-                        window.dispatchEvent(new Event("PHSurveyClosed"))
-                        surveyVisible = false;
-                    }
-                })
-            },
-            statsGlobalData(config, uid) {
-                return {
-                    from: "APP",
-                    iid: config.uuid,
-                    uid: uid,
-                    app: {
-                        version: config.version,
-                        type: "OSS"
-                    }
-                }
             },
         },
         watch: {

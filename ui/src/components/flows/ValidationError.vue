@@ -160,7 +160,7 @@
         }
 
         &.success {
-            border-color: rgb(var(--ks-border-success));
+            border-color: var(--ks-border-success);
         }
 
         &:not(.success) span:not(.material-design-icon) {

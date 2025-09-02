@@ -15,6 +15,7 @@
                         fullscreen: currentStep(tour).fullscreen,
                         color: tour.currentStep === 1,
                         condensed: currentStep(tour).condensed,
+                        second: tour.currentStep === 1
                     }"
                 >
                     <template #header>
@@ -479,8 +480,16 @@ $flow-image-size-container: 36px;
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+
+    &.second {
+        justify-content: flex-start;
+
+        & .flows {
+            margin-top: 160px !important;
+        }
+    }
 }
 
 #app .v-step {

@@ -103,8 +103,6 @@
     </div>
 </template>
 <script setup>
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
     import Sections from "../sections/Sections.vue";
     import ValidationErrors from "../../flows/ValidationError.vue"
@@ -125,6 +123,8 @@
     import yaml from "yaml";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {useCoreStore} from "../../../stores/core.js";
 
     export default {
         computed: {
@@ -144,6 +144,9 @@
             displaySide() {
                 return this.currentView !== this.views.NONE && this.currentView !== this.views.DASHBOARD;
             },
+            dashboardId() {
+                return this.initialSource === undefined ? undefined : YAML_UTILS.parse(this.initialSource).id
+            }
         },
         props: {
             allowSaveUnchanged: {
@@ -151,6 +154,10 @@
                 default: false
             },
             initialSource: {
+                type: String,
+                default: undefined
+            },
+            modelValue: {
                 type: String,
                 default: undefined
             }
@@ -164,7 +171,7 @@
         methods: {
             async updatePluginDocumentation(event) {
                 if (this.currentView === this.views.DOC) {
-                    const type = YAML_UTILS.getTaskType(event.model.getValue(), event.position, this.plugins)
+                    const type = YAML_UTILS.getTypeAtPosition(event.model.getValue(), event.position, this.plugins);
                     if (type) {
 
                         this.pluginsStore.load({cls: type})
@@ -280,6 +287,23 @@
                             this.errors = undefined;
                         }
                     });
+
+                if (YAML_UTILS.parse(this.source).id !== this.dashboardId) {
+                    const coreStore = useCoreStore();
+                    coreStore.message = {
+                        variant: "error",
+                        title: this.$t("readonly property"),
+                        message: this.$t("dashboards.edition.id readonly"),
+                    };
+
+                    this.$nextTick(() => {
+                        this.source = YAML_UTILS.replaceBlockWithPath({
+                            source: this.source,
+                            path: "id",
+                            newContent: this.dashboardId
+                        });
+                    })
+                }
             }
         },
         beforeUnmount() {

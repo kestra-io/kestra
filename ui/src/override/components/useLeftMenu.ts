@@ -259,5 +259,8 @@ export function useLeftMenu() {
         ];
     };
 
-    return {generateMenu};
+    return {
+        routeStartWith,
+        generateMenu
+    };
 }

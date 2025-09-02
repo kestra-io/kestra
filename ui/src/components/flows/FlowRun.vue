@@ -46,16 +46,15 @@
                 <div class="right-align">
                     <el-form-item class="submit">
                         <el-button
-                            data-test-id="execute-dialog-button"
-                            :icon="Flash"
-                            class="flow-run-trigger-button"
-                            :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}"
-                            @click.prevent="onSubmit($refs.form); executeClicked = true;"
+                            :data-test-id="buttonTestId"
+                            :icon="buttonIcon"
+                            :disabled="!flowCanBeExecuted"
+                            :class="{'flow-run-trigger-button': true, 'onboarding-glow': coreStore.guidedProperties.tourStarted}"
                             type="primary"
                             native-type="submit"
-                            :disabled="!flowCanBeExecuted"
+                            @click.prevent="onSubmit($refs.form); executeClicked = true;"
                         >
-                            {{ $t('launch execution') }}
+                            {{ $t(buttonText) }}
                         </el-button>
                         <el-text v-if="haveBadLabels" type="danger" size="small">
                             {{ $t('wrong labels') }}
@@ -73,20 +72,20 @@
 </script>
 
 <script>
+    import moment from "moment-timezone";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
     import {executeTask} from "../../utils/submitTask"
-    import InputsForm from "../../components/inputs/InputsForm.vue";
-    import LabelInput from "../../components/labels/LabelInput.vue";
-    import Curl from "./Curl.vue";
-    import WebhookCurl from "./WebhookCurl.vue";
+    import {TIMEZONE_STORAGE_KEY} from "../settings/BasicSettings.vue";
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
     import Inputs from "../../utils/inputs";
-    import {TIMEZONE_STORAGE_KEY} from "../settings/BasicSettings.vue";
-    import moment from "moment-timezone";
+    import Curl from "./Curl.vue";
+    import WebhookCurl from "./WebhookCurl.vue";
+    import InputsForm from "../../components/inputs/InputsForm.vue";
+    import LabelInput from "../../components/labels/LabelInput.vue";
 
     export default {
         components: {
@@ -96,18 +95,13 @@
             WebhookCurl
         },
         props: {
-            redirect: {
-                type: Boolean,
-                default: true
-            },
-            embed: {
-                type: Boolean,
-                default: false
-            },
-            selectedTrigger:{
-                type: Object,
-                default: undefined
-            }
+            redirect: {type: Boolean, default: true},
+            embed: {type: Boolean, default: false},
+            replaySubmit: {type: Function, default: null},
+            selectedTrigger: {type: Object, default: undefined},
+            buttonText: {type: String, default: "launch execution"},
+            buttonIcon: {type: [Object, Function], default: () => Flash},
+            buttonTestId: {type: String, default: "execute-dialog-button"},
         },
         data() {
             return {
@@ -185,19 +179,34 @@
                             return false;
                         }
 
-                        executeTask(this, this.flow, this.inputs, {
-                            redirect: this.redirect,
-                            newTab: this.newTab,
-                            id: this.flow.id,
-                            namespace: this.flow.namespace,
-                            labels: [...new Set(
-                                this.executionLabels
-                                    .filter(label => label.key && label.value)
-                                    .map(label => `${label.key}:${label.value}`)
-                            )],
-                            scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
-                            nextStep: true,
-                        })
+                        if (this.replaySubmit) {
+                            this.replaySubmit({
+                                formRef,
+                                id: this.flow.id,
+                                namespace: this.flow.namespace,
+                                inputs: this.inputs,
+                                labels: [...new Set(
+                                    this.executionLabels
+                                        .filter(label => label.key && label.value)
+                                        .map(label => `${label.key}:${label.value}`)
+                                )],                                
+                                scheduleDate: this.scheduleDate
+                            });
+                        } else {
+                            executeTask(this, this.flow, this.inputs, {
+                                redirect: this.redirect,
+                                newTab: this.newTab,
+                                id: this.flow.id,
+                                namespace: this.flow.namespace,
+                                labels: [...new Set(
+                                    this.executionLabels
+                                        .filter(label => label.key && label.value)
+                                        .map(label => `${label.key}:${label.value}`)
+                                )],
+                                scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
+                                nextStep: true,
+                            });
+                        }
                         this.$emit("executionTrigger");
                     });
                 }

@@ -27,6 +27,7 @@ export interface Execution{
         startDate: string;
         duration: string;
     }
+    inputs?: Record<string, any>;
 }
 
 export const useExecutionsStore = defineStore("executions", () => {
@@ -144,6 +145,22 @@ export const useExecutionsStore = defineStore("executions", () => {
                     taskRunId: options.taskRunId,
                     revision: options.revision,
                     breakpoints: options.breakpoints ? options.breakpoints : undefined
+                }
+            })
+    }
+
+    const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }) => {
+        return store.$http.post(
+            `${apiUrl(store)}/executions/${options.executionId}/replay-with-inputs`,
+            options.formData,
+            {
+                params: {
+                    taskRunId: options.taskRunId,
+                    revision: options.revision,
+                    breakpoints: options.breakpoints ? options.breakpoints : undefined
+                },
+                headers: {
+                    "Content-Type": "multipart/form-data"
                 }
             })
     }
@@ -695,6 +712,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         queryReplayExecution,
         queryChangeExecutionStatus,
         replayExecution,
+        replayExecutionWithInputs,
         changeExecutionStatus,
         changeStatus,
         kill,

@@ -1,7 +1,7 @@
 <template>
     <el-form label-position="top" class="w-100">
         <template v-if="sortedProperties">
-            <template v-for="[fieldKey, fieldSchema] in requiredProperties" :key="fieldKey">
+            <template v-for="[fieldKey, fieldSchema] in protectedRequiredProperties" :key="fieldKey">
                 <TaskWrapper :merge>
                     <template #tasks>
                         <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
@@ -9,7 +9,7 @@
                 </TaskWrapper>
             </template>
 
-            <el-collapse v-model="activeNames" v-if="optionalProperties?.length || deprecatedProperties?.length || connectionProperties?.length" class="collapse">
+            <el-collapse v-model="activeNames" v-if="requiredProperties.length && (optionalProperties?.length || deprecatedProperties?.length || connectionProperties?.length)" class="collapse">
                 <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="$t('no_code.sections.connection')">
                     <template v-for="[fieldKey, fieldSchema] in connectionProperties" :key="fieldKey">
                         <TaskWrapper>
@@ -68,14 +68,16 @@
 <script>
     import Task from "./Task";
 
+    const FIRST_FIELDS = ["id", "forced", "on", "type"];
+
     function sortProperties(properties, required) {
         if(!properties.length) {
             return [];
         }
         return properties.sort((a, b) => {
-            if (a[0] === "id" || a[0] === "forced") {
+            if (FIRST_FIELDS.includes(a[0])) {
                 return -1;
-            } else if (b[0] === "id" || b[0] === "forced") {
+            } else if (FIRST_FIELDS.includes(b[0])) {
                 return 1;
             }
 
@@ -124,8 +126,8 @@
         },
         computed: {
             filteredProperties() {
-                return this.properties ? Object.entries(this.properties).filter(([key]) => {
-                    return !(key === "type");
+                return this.properties ? Object.entries(this.properties).filter(([key, value]) => {
+                    return !(key === "type") && !Array.isArray(value);
                 }) : [];
             },
             sortedProperties() {
@@ -133,6 +135,9 @@
             },
             requiredProperties() {
                 return this.merge ? this.sortedProperties : this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));
+            },
+            protectedRequiredProperties(){
+                return this.requiredProperties.length ? this.requiredProperties : this.sortedProperties;
             },
             optionalProperties() {
                 return this.merge ? [] : this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p) && !v.$deprecated && v.$group !== "connection");

@@ -229,9 +229,9 @@
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
             () => {
-                const section = event.section ? event.section : SECTIONS.TASKS;
+                const section = event.section ? event.section.toLowerCase() : SECTIONS.TASKS.toLowerCase();
                 if (
-                    section === SECTIONS.TASKS &&
+                    section === SECTIONS.TASKS.toLowerCase() &&
                     flowParsed.tasks.length === 1 &&
                     flowParsed.tasks.map((e: any) => e.id).includes(event.id)
                 ) {

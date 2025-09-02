@@ -217,6 +217,7 @@
       "edition": {
         "chart": "编辑此图表",
         "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
+        "id readonly": "属性 `id` 不能更改——它现在设置为初始值。如果您想更改它，可以创建一个新的仪表板并删除旧的。",
         "label": "编辑仪表板"
       },
       "empty": "没有结果显示。",
@@ -447,8 +448,18 @@
         "title": "此Flow未设置限制。"
       },
       "dependencies": {
-        "content": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。",
-        "title": "此Flow未设置依赖项。"
+        "EXECUTION": {
+          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">执行依赖关系</a>的信息，请参阅我们的文档。",
+          "title": "当前没有依赖项。"
+        },
+        "FLOW": {
+          "content": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。",
+          "title": "当前没有依赖项。"
+        },
+        "NAMESPACE": {
+          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a>的信息，请参阅我们的文档。",
+          "title": "当前没有依赖项。"
+        }
       },
       "plugins": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
@@ -715,6 +726,7 @@
         "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
       },
       "duplicate": "此键已存在",
+      "inherited": "继承的KV对",
       "name": "键值存储",
       "type": "类型",
       "update": "更新键 '{key}' 的值"
@@ -1064,7 +1076,12 @@
     "port": "端口",
     "prefill inputs": "预填",
     "prev_execution": "先前执行",
-    "preview": "预览",
+    "preview": {
+      "auto-view": "自动视图",
+      "force-editor": "强制编辑器视图",
+      "label": "预览",
+      "view": "查看"
+    },
     "properties": {
       "hidden": "隐藏在表格中",
       "hint": "选择可见列",

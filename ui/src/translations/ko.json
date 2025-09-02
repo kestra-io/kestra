@@ -217,6 +217,7 @@
       "edition": {
         "chart": "이 차트 편집",
         "confirmation": "대시보드 <code>{title}</code>의 변경 사항이 저장되었습니다.",
+        "id readonly": "`id` 속성은 변경할 수 없습니다 — 현재 초기 값으로 설정되어 있습니다. 변경하려면 새 대시보드를 생성하고 기존 것을 제거할 수 있습니다.",
         "label": "대시보드 편집"
       },
       "empty": "결과가 표시되지 않습니다.",
@@ -447,8 +448,18 @@
         "title": "이 Flow에 대한 제한이 설정되지 않았습니다."
       },
       "dependencies": {
-        "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
-        "title": "이 Flow에 대한 종속성이 설정되지 않았습니다."
+        "EXECUTION": {
+          "content": "<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">실행 종속성</a>에 대한 자세한 내용은 문서를 참조하세요.",
+          "title": "현재 종속성이 없습니다."
+        },
+        "FLOW": {
+          "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
+          "title": "현재 종속성이 없습니다."
+        },
+        "NAMESPACE": {
+          "content": "<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
+          "title": "현재 종속성이 없습니다."
+        }
       },
       "plugins": {
         "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
@@ -715,6 +726,7 @@
         "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>"
       },
       "duplicate": "이 키는 이미 존재합니다",
+      "inherited": "상속된 KV 쌍",
       "name": "KV Store",
       "type": "유형",
       "update": "키 '{key}'의 값을 업데이트하세요"
@@ -1064,7 +1076,12 @@
     "port": "포트",
     "prefill inputs": "미리 채우기",
     "prev_execution": "이전 실행",
-    "preview": "미리보기",
+    "preview": {
+      "auto-view": "자동 보기",
+      "force-editor": "편집기 보기 강제 적용",
+      "label": "미리보기",
+      "view": "보기"
+    },
     "properties": {
       "hidden": "테이블에 숨김",
       "hint": "열 표시 선택",

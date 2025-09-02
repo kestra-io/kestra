@@ -29,10 +29,10 @@ const VARIABLES = {
 };
 
 const nodeBase: cytoscape.Css.Node = {
-    "label": "data(flow)",
+    label: "data(flow)",
     "border-width": 2,
     "border-style": "solid",
-    "color": cssVariable("--ks-content-primary"),
+    color: cssVariable("--ks-content-primary"),
     "font-size": 10,
     "text-valign": "bottom",
     "text-margin-y": 10,
@@ -41,13 +41,13 @@ const nodeBase: cytoscape.Css.Node = {
 const edgeBase: cytoscape.Css.Edge = {
     "target-arrow-shape": "triangle",
     "curve-style": "bezier",
-    "width": 2,
+    width: 2,
     "line-style": "solid",
 };
 
 const edgeAnimated: cytoscape.Css.Edge = {
     "line-style": "dashed",
-    "line-dash-pattern": [3, 5]
+    "line-dash-pattern": [3, 5],
 };
 
 function nodeColors(type: keyof typeof VARIABLES.node = "default"): Partial<cytoscape.Css.Node> {
@@ -71,7 +71,12 @@ export const style: cytoscape.StylesheetJson = [
     },
     {
         selector: "node.faded",
-        style: {...nodeBase, ...nodeColors("faded"), "background-opacity": 0.75, "border-opacity": 0.75},
+        style: {
+            ...nodeBase,
+            ...nodeColors("faded"),
+            "background-opacity": 0.75,
+            "border-opacity": 0.75,
+        },
     },
     {
         selector: "node.selected",

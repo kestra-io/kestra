@@ -217,6 +217,7 @@
       "edition": {
         "chart": "Editar este gráfico",
         "confirmation": "Los cambios en el dashboard <code>{title}</code> se han guardado.",
+        "id readonly": "La propiedad `id` no se puede cambiar — ahora está establecida en sus valores iniciales. Si deseas cambiarla, puedes crear un nuevo dashboard y eliminar el antiguo.",
         "label": "Editar Dashboard"
       },
       "empty": "No hay resultados para mostrar.",
@@ -447,8 +448,18 @@
         "title": "No se han establecido límites para este Flow."
       },
       "dependencies": {
-        "content": "Lea más sobre <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> en nuestra documentación.",
-        "title": "No hay dependencias establecidas para este Flow."
+        "EXECUTION": {
+          "content": "Lea más sobre <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Dependencias de Ejecución</a> en nuestra documentación.",
+          "title": "Actualmente no hay dependencias."
+        },
+        "FLOW": {
+          "content": "Lea más sobre <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> en nuestra documentación.",
+          "title": "Actualmente no hay dependencias."
+        },
+        "NAMESPACE": {
+          "content": "Lea más sobre <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> en nuestra documentación.",
+          "title": "Actualmente no hay dependencias."
+        }
       },
       "plugins": {
         "content": "Lee más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> en nuestra documentación.",
@@ -715,6 +726,7 @@
         "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>"
       },
       "duplicate": "Esta key ya existe",
+      "inherited": "Pares KV heredados",
       "name": "KV Store",
       "type": "Tipo",
       "update": "Actualizar value para key '{key}'"
@@ -1064,7 +1076,12 @@
     "port": "Puerto",
     "prefill inputs": "Prefill",
     "prev_execution": "Ejecución anterior",
-    "preview": "Vista previa",
+    "preview": {
+      "auto-view": "Vista automática",
+      "force-editor": "Forzar vista del editor",
+      "label": "Vista previa",
+      "view": "Ver"
+    },
     "properties": {
       "hidden": "Oculto en la Tabla",
       "hint": "Elegir Columnas Visibles",

@@ -25,4 +25,4 @@ const ANIMALS: string[] = [
 const getRandomNumber = (minimum: number = MINIMUM, maximum: number = MAXIMUM): number => Math.floor(Math.random() * (maximum - minimum + 1)) + minimum;
 const getRandomAnimal = (): string => ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
 
-export const getRandomFlowID = (): string => `${getRandomAnimal()}_${getRandomNumber()}`.toLowerCase();
+export const getRandomID = (): string => `${getRandomAnimal()}_${getRandomNumber()}`.toLowerCase();

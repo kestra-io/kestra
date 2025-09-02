@@ -1002,6 +1002,10 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
         try {
             executionQueue.emit(processed.getExecution());
+
+            // process flow triggers to allow listening on QUEUED and RUNNING state for concurrency limit
+            flowTriggerService.computeExecutionsFromFlowTriggers(processed.getExecution(), allFlows, Optional.of(multipleConditionStorage))
+                .forEach(throwConsumer(executionFromFlowTrigger -> this.executionQueue.emit(executionFromFlowTrigger)));
         } catch (QueueException e) {
             try {
                 this.executionQueue.emit(
@@ -1053,7 +1057,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 }
 
                 // purge the trigger: reset scheduler trigger at end
-                // IMPORTANT: this is to cover an edge case, execution created for failed trigger didn't have any taskrun so they will arrives directly here.
+                // IMPORTANT: this is to cover an edge case, execution created for failed trigger didn't have any taskrun so they will arrive directly here.
                 // We need to detect that and reset them as they will never reach the reset code later on this method.
                 if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
                     FlowWithSource flow = executor.getFlow();
@@ -1141,6 +1145,10 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             executionRunningStorage.save(executionRunning);
                             executionQueue.emit(newExecution);
                             metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+
+                            // process flow triggers to allow listening on RUNNING state after a QUEUED state
+                            flowTriggerService.computeExecutionsFromFlowTriggers(newExecution, allFlows, Optional.of(multipleConditionStorage))
+                                .forEach(throwConsumer(executionFromFlowTrigger -> this.executionQueue.emit(executionFromFlowTrigger)));
                         })
                     );
                 }
@@ -1223,7 +1231,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     .increment();
 
                 try {
-                    // Handle paused tasks
+                    // Handle paused tasks and scheduledAt
                     if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW) && !pair.getLeft().getState().isTerminated()) {
                         if (executionDelay.getTaskRunId() == null) {
                             // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
@@ -1242,7 +1250,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             executor = executor.withExecution(markAsExecution, "pausedRestart");
                         }
                     }
-                    // Handle failed tasks
+                    // Handle failed task retries
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
                         Execution newAttempt = executionService.retryTask(
                             pair.getKey(),
@@ -1250,11 +1258,12 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         );
                         executor = executor.withExecution(newAttempt, "retryFailedTask");
                     }
-                    // Handle failed flow
+                    // Handle failed flow retries
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)) {
                         Execution newExecution = executionService.replay(executor.getExecution(), null, null);
                         executor = executor.withExecution(newExecution, "retryFailedFlow");
                     }
+                    // Handle WaitFor
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
                         Execution execution  = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
                         executor = executor.withExecution(execution, "continueLoop");

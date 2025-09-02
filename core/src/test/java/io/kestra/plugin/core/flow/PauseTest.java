@@ -53,7 +53,7 @@ public class PauseTest {
     Suite suite;
 
     @Test
-    @LoadFlows({"flows/valids/pause.yaml"})
+    @LoadFlows({"flows/valids/pause-test.yaml"})
     void run() throws Exception {
         suite.run(runnerUtils);
     }
@@ -139,6 +139,12 @@ public class PauseTest {
         suite.shouldExecuteOnPauseTask(execution);
     }
 
+    @Test
+    @ExecuteFlow("flows/valids/pause-errors-finally-after-execution.yaml")
+    void shouldExecuteErrorsFinallyAndAfterExecution(Execution execution) throws Exception {
+        suite.shouldExecuteErrorsFinallyAndAfterExecution(execution);
+    }
+
     @Singleton
     public static class Suite {
         @Inject
@@ -155,7 +161,7 @@ public class PauseTest {
         protected QueueInterface<Execution> executionQueue;
 
         public void run(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause", null, null, Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
             Flow flow = flowRepository.findByExecution(execution);
 
@@ -236,7 +242,7 @@ public class PauseTest {
             );
 
             assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count()).as("Task runs were: " + execution.getTaskRunList().toString()).isEqualTo(1L);
-            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(1L);
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(2L);
             assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.FAILED).count()).isEqualTo(1L);
             assertThat(execution.getTaskRunList()).hasSize(1);
         }
@@ -255,9 +261,9 @@ public class PauseTest {
             );
 
             assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count()).as("Task runs were: " + execution.getTaskRunList().toString()).isEqualTo(1L);
-            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(1L);
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(2L);
             assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.WARNING).count()).isEqualTo(1L);
-            assertThat(execution.getTaskRunList()).hasSize(2);
+            assertThat(execution.getTaskRunList()).hasSize(3);
         }
 
         public void runEmptyTasks(RunnerUtils runnerUtils) throws Exception {
@@ -384,6 +390,19 @@ public class PauseTest {
             assertThat(execution.getTaskRunList()).hasSize(2);
             assertThat(execution.getTaskRunList().getLast().getTaskId()).isEqualTo("hello");
             assertThat(execution.getTaskRunList().getLast().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        }
+
+        public void shouldExecuteErrorsFinallyAndAfterExecution(Execution execution) throws Exception {
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.getTaskRunList()).hasSize(4);
+            assertThat(execution.findTaskRunsByTaskId("pause")).hasSize(1);
+            assertThat(execution.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("logError")).hasSize(1);
+            assertThat(execution.findTaskRunsByTaskId("logError").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(execution.findTaskRunsByTaskId("logFinally")).hasSize(1);
+            assertThat(execution.findTaskRunsByTaskId("logFinally").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(execution.findTaskRunsByTaskId("logAfter")).hasSize(1);
+            assertThat(execution.findTaskRunsByTaskId("logAfter").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         }
     }
 }

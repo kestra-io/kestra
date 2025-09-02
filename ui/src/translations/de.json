@@ -217,6 +217,7 @@
       "edition": {
         "chart": "Bearbeiten Sie dieses Diagramm",
         "confirmation": "Änderungen im Dashboard <code>{title}</code> werden gespeichert.",
+        "id readonly": "Die Eigenschaft `id` kann nicht geändert werden — sie ist jetzt auf ihre Anfangswerte festgelegt. Wenn Sie sie ändern möchten, können Sie ein neues Dashboard erstellen und das alte entfernen.",
         "label": "Dashboard bearbeiten"
       },
       "empty": "Es gibt keine Ergebnisse anzuzeigen.",
@@ -447,8 +448,18 @@
         "title": "Für diesen Flow sind keine Grenzen festgelegt."
       },
       "dependencies": {
-        "content": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow-Abhängigkeiten</a> in unserer Dokumentation.",
-        "title": "Für diesen Flow sind keine Abhängigkeiten festgelegt."
+        "EXECUTION": {
+          "content": "Erfahren Sie mehr über <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Ausführungsabhängigkeiten</a> in unserer Dokumentation.",
+          "title": "Derzeit gibt es keine Abhängigkeiten."
+        },
+        "FLOW": {
+          "content": "Erfahren Sie mehr über <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow-Abhängigkeiten</a> in unserer Dokumentation.",
+          "title": "Derzeit gibt es keine Abhängigkeiten."
+        },
+        "NAMESPACE": {
+          "content": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> in unserer Dokumentation.",
+          "title": "Derzeit gibt es keine Abhängigkeiten."
+        }
       },
       "plugins": {
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
@@ -715,6 +726,7 @@
         "warning": "Du hast keine Berechtigungen für diese namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>"
       },
       "duplicate": "Dieser Key existiert bereits",
+      "inherited": "Geerbte KV-Paare",
       "name": "KV Store",
       "type": "Typ",
       "update": "Wert für Key '{key}' aktualisieren"
@@ -1064,7 +1076,12 @@
     "port": "Port",
     "prefill inputs": "Vorausfüllen",
     "prev_execution": "Vorherige Ausführung",
-    "preview": "Vorschau",
+    "preview": {
+      "auto-view": "Automatische Ansicht",
+      "force-editor": "Editoransicht erzwingen",
+      "label": "Vorschau",
+      "view": "Anzeigen"
+    },
     "properties": {
       "hidden": "In Tabelle versteckt",
       "hint": "Sichtbare Spalten auswählen",

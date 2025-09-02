@@ -38,6 +38,8 @@
     import type {Dashboard} from "../../../components/dashboard/composables/useDashboards";
     import {getDashboard, processFlowYaml} from "../../../components/dashboard/composables/useDashboards";
 
+    import {getRandomID} from "../../../../scripts/id";
+
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const save = async (source: string) => {
         const response = await dashboardStore.create(source)
@@ -69,6 +71,8 @@
             } else {
                 dashboard.value.sourceCode = name === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN;
             }
+
+            dashboard.value.sourceCode = "id: " + getRandomID() + "\n" + dashboard.value.sourceCode;
         }
     });
 

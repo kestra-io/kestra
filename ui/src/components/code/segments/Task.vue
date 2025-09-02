@@ -16,7 +16,8 @@
     import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants";
     import {
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
-        FLOW_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
+        UPDATE_TASK_FUNCTION_INJECTION_KEY,
+        FULL_SOURCE_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY,
@@ -25,8 +26,7 @@
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import {useFlowStore} from "../../../stores/flow";
 
-    const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
-    const flow = inject(FLOW_INJECTION_KEY, ref(""));
+    const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""));
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
     const position = inject(POSITION_INJECTION_KEY, "after");
@@ -36,7 +36,8 @@
     );
 
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
-    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
+    const updateTask = inject(UPDATE_TASK_FUNCTION_INJECTION_KEY, () => {})
 
     const closeTaskAddition = inject(
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
@@ -140,8 +141,8 @@
             const currentRefPath = (refPath !== undefined && refPath !== null) ? refPath + (position === "after" ? 1 : 0) : 0;
             editTask(
                 fieldName ? `${parentPath}[${currentRefPath}].${fieldName}` : parentPath,
-                blockSchemaPath,
-                fieldName ? undefined : currentRefPath,
+                blockSchemaPath.value,
+                fieldName ? undefined : currentRefPath
             );
             hasMovedToEdit.value = true;
             nextTick(() => {
@@ -149,7 +150,7 @@
             });
         }
 
-        emits("updateTask", result);
+        updateTask(result);
     };
 
     const hasMovedToEdit = ref(false);

@@ -85,13 +85,23 @@
         }))
     };
 
-    const onEdit = (source:string, currentIsFlow = false) => {
+    const onEdit = async (source: string, currentIsFlow = false) => {
         flowStore.flowYaml = source
-        return flowStore.onEdit({
+        const result = await flowStore.onEdit({
             source,
             currentIsFlow,
             editorViewType: "YAML",
         })
+        
+        if (currentIsFlow && source) {
+            await flowStore.loadGraphFromSource({
+                flow: source,
+            }).catch((error) => {
+                console.error("Error loading graph:", error);
+            })
+        }
+        
+        return result
     }
 </script>
 

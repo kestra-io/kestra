@@ -214,6 +214,13 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/trigger-flow-listener-with-concurrency-limit.yaml",
+        "flows/valids/trigger-flow-with-concurrency-limit.yaml"})
+    void flowTriggerWithConcurrencyLimit() throws Exception {
+        flowTriggerCaseTest.triggerWithConcurrencyLimit();
+    }
+
+    @Test
     @LoadFlows({"flows/valids/trigger-multiplecondition-listener.yaml",
         "flows/valids/trigger-multiplecondition-flow-a.yaml",
         "flows/valids/trigger-multiplecondition-flow-b.yaml"})
@@ -312,7 +319,7 @@ public abstract class AbstractRunnerTest {
     }
 
     @RetryingTest(5) // flaky on MySQL
-    @LoadFlows({"flows/valids/pause.yaml"})
+    @LoadFlows({"flows/valids/pause-test.yaml"})
     public void pauseRun() throws Exception {
         pauseTest.run(runnerUtils);
     }

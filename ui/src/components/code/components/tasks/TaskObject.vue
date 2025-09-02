@@ -121,6 +121,13 @@
         });
     }
 
+    function isDeprecated(value: any) {
+        if(value?.allOf){
+            return value.allOf.some(isDeprecated);
+        }
+        return value?.$deprecated;
+    }
+
     const filteredProperties = computed<Entry[]>(() => {
         const propertiesProc = (props.properties ?? props.schema?.properties);
         return propertiesProc
@@ -141,12 +148,12 @@
     });
 
     const optionalProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !v.$deprecated && v.$group !== "connection");
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && v.$group !== "connection");
     });
 
     const deprecatedProperties = computed<Entry[]>(() => {
         const obj = (typeof props.modelValue === "object" && props.modelValue !== null) ? (props.modelValue as Record<string, any>) : {};
-        return props.merge ? [] : sortedProperties.value.filter(([k, v]) => v && v.$deprecated && obj[k] !== undefined);
+        return props.merge ? [] : sortedProperties.value.filter(([k, v]) => v && isDeprecated(v) && obj[k] !== undefined);
     });
 
     const connectionProperties = computed<Entry[]>(() => {

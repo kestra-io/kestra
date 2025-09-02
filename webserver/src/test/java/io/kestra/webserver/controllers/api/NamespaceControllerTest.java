@@ -14,7 +14,6 @@ import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.webserver.models.api.secret.ApiSecretListResponse;
 import io.kestra.webserver.models.api.secret.ApiSecretMeta;
-import io.kestra.webserver.models.namespaces.NamespaceWithDisabled;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -68,19 +67,18 @@ public class NamespaceControllerTest {
         flow("my.ns.flow");
         flow("another.ns");
 
-        PagedResults<NamespaceWithDisabled> list = client.toBlocking().retrieve(
+        PagedResults<Namespace> list = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/namespaces/search"),
-            Argument.of(PagedResults.class, NamespaceWithDisabled.class)
+            Argument.of(PagedResults.class, Namespace.class)
         );
         assertThat(list.getTotal()).isEqualTo(6L);
         assertThat(list.getResults().size()).isEqualTo(6);
-        assertThat(list.getResults(), everyItem(hasProperty("disabled", is(true))));
-        assertThat(list.getResults().stream().map(NamespaceWithDisabled::getId).toList()).containsExactlyInAnyOrder("my", "my.ns", "my.ns.flow", "another", "another.ns", "system");
+        assertThat(list.getResults().stream().map(Namespace::getId).toList()).containsExactlyInAnyOrder("my", "my.ns", "my.ns.flow", "another", "another.ns", "system");
 
 
         list = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/namespaces/search?size=2&sort=id:desc"),
-            Argument.of(PagedResults.class, NamespaceWithDisabled.class)
+            Argument.of(PagedResults.class, Namespace.class)
         );
         assertThat(list.getTotal()).isEqualTo(6L);
         assertThat(list.getResults().size()).isEqualTo(2);
@@ -89,7 +87,7 @@ public class NamespaceControllerTest {
 
         list = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/namespaces/search?page=2&size=2&sort=id:desc"),
-            Argument.of(PagedResults.class, NamespaceWithDisabled.class)
+            Argument.of(PagedResults.class, Namespace.class)
         );
         assertThat(list.getTotal()).isEqualTo(6L);
         assertThat(list.getResults().size()).isEqualTo(2);
@@ -98,14 +96,14 @@ public class NamespaceControllerTest {
 
         list = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/namespaces/search?q=ns"),
-            Argument.of(PagedResults.class, NamespaceWithDisabled.class)
+            Argument.of(PagedResults.class, Namespace.class)
         );
         assertThat(list.getTotal()).isEqualTo(3L);
         assertThat(list.getResults().size()).isEqualTo(3);
 
         list = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/namespaces/search?page=4&size=2&sort=id:desc"),
-            Argument.of(PagedResults.class, NamespaceWithDisabled.class)
+            Argument.of(PagedResults.class, Namespace.class)
         );
         assertThat(list.getTotal()).isEqualTo(0L);
         assertThat(list.getResults()).isEmpty();

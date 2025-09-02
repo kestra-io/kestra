@@ -2,7 +2,6 @@ package io.kestra.core.storages;
 
 import io.kestra.core.utils.WindowsUtils;
 import jakarta.annotation.Nullable;
-import org.apache.commons.io.FilenameUtils;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -103,7 +102,7 @@ public record NamespaceFile(
             filePath = filePath.getRoot().relativize(filePath);
         }
         // Need to remove starting trailing slash for Windows
-        String pathWithoutTrailingSlash = path.toString().replaceFirst("^[.]*[\\\\|/]*", "");
+        String pathWithoutTrailingSlash = path.toString().replaceFirst("^[.]*[\\\\|/]+", "");
 
         return new NamespaceFile(
             pathWithoutTrailingSlash,

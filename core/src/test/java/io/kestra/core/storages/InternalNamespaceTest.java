@@ -17,8 +17,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
 
 class InternalNamespaceTest {
 
@@ -38,7 +38,7 @@ class InternalNamespaceTest {
     void shouldGetAllNamespaceFiles() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
-        final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
+        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface);
 
         // When
         namespace.putFile(Path.of("/sub/dir/file1.txt"), new ByteArrayInputStream("1".getBytes()));
@@ -56,7 +56,7 @@ class InternalNamespaceTest {
     void shouldPutFileGivenNoTenant() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
-        final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
+        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface);
 
         // When
         NamespaceFile namespaceFile = namespace.putFile(Path.of("/sub/dir/file.txt"), new ByteArrayInputStream("1".getBytes()));
@@ -73,7 +73,7 @@ class InternalNamespaceTest {
     void shouldSucceedPutFileGivenExistingFileForConflictOverwrite() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
-        final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
+        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface);
 
         NamespaceFile namespaceFile = namespace.get(Path.of("/sub/dir/file.txt"));
 
@@ -92,7 +92,7 @@ class InternalNamespaceTest {
     void shouldFailPutFileGivenExistingFileForError() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
-        final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
+        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface);
 
         NamespaceFile namespaceFile = namespace.get(Path.of("/sub/dir/file.txt"));
 
@@ -109,7 +109,7 @@ class InternalNamespaceTest {
     void shouldIgnorePutFileGivenExistingFileForSkip() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
-        final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
+        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface);
 
         NamespaceFile namespaceFile = namespace.get(Path.of("/sub/dir/file.txt"));
 
@@ -128,7 +128,7 @@ class InternalNamespaceTest {
     void shouldFindAllMatchingGivenNoTenant() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
-        final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
+        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface);
 
         // When
         namespace.putFile(Path.of("/a/b/c/1.sql"), new ByteArrayInputStream("1".getBytes()));
@@ -171,7 +171,7 @@ class InternalNamespaceTest {
     void shouldReturnNoNamespaceFileForEmptyNamespace() throws IOException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
-        final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
+        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface);
         List<NamespaceFile> namespaceFiles = namespace.findAllFilesMatching((unused) -> true);
         assertThat(namespaceFiles.size()).isZero();
     }

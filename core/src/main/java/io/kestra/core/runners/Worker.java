@@ -85,7 +85,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @Inject
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)
-    private QueueInterface<WorkerJob> workerJobQueue;
+    private WorkerJobQueueInterface workerJobQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
@@ -274,12 +274,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
             }
         }));
 
-        this.receiveCancellations.addFirst(this.workerJobQueue.receive(
+        this.receiveCancellations.addFirst(this.workerJobQueue.subscribe(
+            this.id,
             this.workerGroup,
-            Worker.class,
             either -> {
                 pendingJobCount.incrementAndGet();
-
                 executorService.execute(() -> {
                     pendingJobCount.decrementAndGet();
                     runningJobCount.incrementAndGet();
@@ -508,14 +507,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
             Execution execution = workerTrigger.getTrigger().isFailOnTriggerError() ? TriggerService.generateExecution(workerTrigger.getTrigger(), workerTrigger.getConditionContext(), workerTrigger.getTriggerContext(), (Output) null)
                 .withState(FAILED) : null;
             if (execution != null) {
-                RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution))
-                    .forEach(log -> {
-                        try {
-                            logQueue.emitAsync(log);
-                        } catch (QueueException ex) {
-                            // fail silently
-                        }
-                    });
+                try {
+                    logQueue.emitAsync(RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution)));
+                } catch (QueueException ex) {
+                    // fail silently
+                }
             }
             this.workerTriggerResultQueue.emit(
                 WorkerTriggerResult.builder()
@@ -764,6 +760,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(state));
 
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun(), dynamicTaskRuns);
+
             this.workerTaskResultQueue.emit(workerTaskResult);
 
             // upload the cache file, hash may not be present if we didn't succeed in computing it
@@ -794,6 +791,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
             TaskRun failed = workerTask.fail();
             if (e instanceof MessageTooBigException) {
                 // If it's a message too big, we remove the outputs
+                failed = failed.withOutputs(Variables.empty());
+            }
+            if (e instanceof UnsupportedMessageException) {
+                // we expect the offending char is in the output so we remove it
                 failed = failed.withOutputs(Variables.empty());
             }
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(failed);

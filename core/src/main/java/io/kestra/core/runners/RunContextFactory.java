@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginConfigurations;
@@ -77,7 +78,7 @@ public class RunContextFactory {
     public RunContextInitializer initializer() {
         return applicationContext.getBean(RunContextInitializer.class);
     }
-
+    
     public RunContext of(FlowInterface flow, Execution execution) {
         return of(flow, execution, Function.identity());
     }
@@ -98,7 +99,7 @@ public class RunContextFactory {
                     .withDecryptVariables(true)
                     .withSecretInputs(secretInputsFromFlow(flow))
                 )
-                .build(runContextLogger))
+                .build(runContextLogger, PropertyContext.create(variableRenderer)))
             .withSecretInputs(secretInputsFromFlow(flow))
             .build();
     }
@@ -127,7 +128,7 @@ public class RunContextFactory {
                 .withTaskRun(taskRun)
                 .withDecryptVariables(decryptVariables)
                 .withSecretInputs(secretInputsFromFlow(flow))
-                .build(runContextLogger))
+                .build(runContextLogger, PropertyContext.create(variableRenderer)))
             .withKvStoreService(kvStoreService)
             .withSecretInputs(secretInputsFromFlow(flow))
             .withTask(task)
@@ -146,7 +147,7 @@ public class RunContextFactory {
                 .withFlow(flow)
                 .withTrigger(trigger)
                 .withSecretInputs(secretInputsFromFlow(flow))
-                .build(runContextLogger)
+                .build(runContextLogger, PropertyContext.create(variableRenderer))
             )
             .withSecretInputs(secretInputsFromFlow(flow))
             .withTrigger(trigger)

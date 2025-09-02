@@ -4,6 +4,7 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -116,6 +117,25 @@ public final class Enums {
             .orElseThrow(() -> new IllegalArgumentException(
                 "Unsupported %s '%s'. Expected one of: %s".formatted(typeName, value, mapping.keySet())
             ));
+    }
+
+    /**
+     * Convert an object to a list of a specific enum.
+     * @param value the object to convert to list of enum.
+     * @param enumClass the class of the enum to convert to.
+     * @return A list of the corresponding enum type
+     * @param <T> The type of the enum.
+     * @throws IllegalArgumentException If the value does not match any enum value.
+     */
+    public static <T extends Enum<T>> List<T> fromList(Object value, Class<T> enumClass) {
+        return switch (value) {
+            case List<?> list when !list.isEmpty() && enumClass.isInstance(list.getFirst()) -> (List<T>) list;
+            case List<?> list when !list.isEmpty() && list.getFirst() instanceof String ->
+                list.stream().map(item -> Enum.valueOf(enumClass, item.toString().toUpperCase())).collect(Collectors.toList());
+            case Enum<?> enumValue when enumClass.isInstance(enumValue) -> List.of(enumClass.cast(enumValue));
+            case String stringValue -> List.of(Enum.valueOf(enumClass, stringValue.toUpperCase()));
+            default -> throw new IllegalArgumentException("Field requires a " + enumClass.getSimpleName() + " or List<" + enumClass.getSimpleName() + "> value");
+        };
     }
 
     private Enums() {

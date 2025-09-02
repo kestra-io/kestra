@@ -27,7 +27,7 @@ jobs:
       ui: ${{ steps.changes.outputs.ui }}
       backend: ${{ steps.changes.outputs.backend }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: "!startsWith(github.ref, 'refs/tags/v')"
       - uses: dorny/paths-filter@v3
         if: "!startsWith(github.ref, 'refs/tags/v')"

@@ -1,0 +1,17 @@
+id: flow-concurrency-queue-after-execution
+namespace: io.kestra.tests
+
+concurrency:
+  behavior: QUEUE
+  limit: 1
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT2S
+
+afterExecution:
+  - id: afterExecution
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      some: value

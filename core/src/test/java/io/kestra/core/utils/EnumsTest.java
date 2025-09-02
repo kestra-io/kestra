@@ -1,6 +1,9 @@
 package io.kestra.core.utils;
 
-import org.junit.Assert;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +28,7 @@ class EnumsTest {
 
     @Test
     void shouldThrowExceptionGivenInvalidString() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () -> {
             Enums.getForNameIgnoreCase("invalid", TestEnum.class);
         });
     }
@@ -49,9 +52,20 @@ class EnumsTest {
         String invalidValue = "invalidValue";
 
         // Act & Assert
-        IllegalArgumentException exception = Assert.assertThrows(IllegalArgumentException.class, () ->
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
             Enums.fromString(invalidValue, mapping, "TestEnumWithValue")
         );
+    }
+
+    @Test
+    void should_get_from_list(){
+        assertThat(Enums.fromList(List.of(TestEnum.ENUM1, TestEnum.ENUM2), TestEnum.class)).isEqualTo(List.of(TestEnum.ENUM1, TestEnum.ENUM2));
+        assertThat(Enums.fromList(List.of("ENUM1", "ENUM2"), TestEnum.class)).isEqualTo(List.of(TestEnum.ENUM1, TestEnum.ENUM2));
+        assertThat(Enums.fromList(TestEnum.ENUM1, TestEnum.class)).isEqualTo(List.of(TestEnum.ENUM1));
+        assertThat(Enums.fromList("ENUM1", TestEnum.class)).isEqualTo(List.of(TestEnum.ENUM1));
+
+        assertThrows(IllegalArgumentException.class, () -> Enums.fromList(List.of("string1", "string2"), TestEnum.class));
+        assertThrows(IllegalArgumentException.class, () -> Enums.fromList("non enum value", TestEnum.class));
     }
 
     enum TestEnum {

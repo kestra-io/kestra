@@ -246,7 +246,7 @@ class KVControllerTest {
         // Then
         Assertions.assertEquals(HttpStatus.OK, response.getStatus());
         Assertions.assertEquals(new ApiDeleteBulkResponse(List.of()), response.body());
-        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isFalse();
+        assertThat(storageInterface.exists(MAIN_TENANT, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isFalse();
     }
 
     @Test

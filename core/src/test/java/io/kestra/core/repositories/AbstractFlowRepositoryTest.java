@@ -160,6 +160,7 @@ public abstract class AbstractFlowRepositoryTest {
             QueryFilter.builder().field(Field.TIME_RANGE).value("test").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.TRIGGER_ID).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value("test").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.WORKER_ID).value("test").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.EXISTING_ONLY).value("test").operation(Op.EQUALS).build(),
@@ -284,7 +285,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void findByNamespace() {
         List<Flow> save = flowRepository.findByNamespace(MAIN_TENANT, "io.kestra.tests");
-        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 22);
+        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 24);
 
         save = flowRepository.findByNamespace(MAIN_TENANT, "io.kestra.tests2");
         assertThat((long) save.size()).isEqualTo(1L);
@@ -613,7 +614,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void findDistinctNamespace() {
         List<String> distinctNamespace = flowRepository.findDistinctNamespace(MAIN_TENANT);
-        assertThat((long) distinctNamespace.size()).isEqualTo(8L);
+        assertThat((long) distinctNamespace.size()).isEqualTo(9L);
     }
 
     @Test

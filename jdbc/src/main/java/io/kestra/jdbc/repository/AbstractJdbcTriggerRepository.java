@@ -301,11 +301,10 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     private SelectConditionStep<?> generateSelect(DSLContext context, String tenantId, List<QueryFilter> filters){
         SelectConditionStep<?> select = context
             .select(field("value"))
-            .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId));
 
-        return filter(select, filters, "next_execution_date", Resource.TRIGGER);
+        return select.and(filter(filters, "next_execution_date", Resource.TRIGGER));
     }
 
     @Override
@@ -317,7 +316,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.fullTextCondition(query))
                     .and(this.defaultFilter(tenantId));

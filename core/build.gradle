@@ -63,6 +63,10 @@ dependencies {
         exclude group: 'com.fasterxml.jackson.core'
     }
 
+    // micrometer
+    implementation "io.micronaut.micrometer:micronaut-micrometer-observation"
+    implementation 'io.micrometer:micrometer-java21'
+
     // test
     testAnnotationProcessor project(':processor')
     testImplementation project(':tests')

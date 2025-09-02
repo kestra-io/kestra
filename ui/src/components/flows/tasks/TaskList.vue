@@ -5,7 +5,7 @@
             :elements="items"
             :section
             :block-schema-path="[blockSchemaPath, 'properties', root, 'items'].join('/')"
-            @remove="(yaml) => flowStore.flowYaml = yaml"
+            @remove="removeItem"
             @reorder="(yaml) => flowStore.flowYaml = yaml"
         />
     </div>
@@ -30,6 +30,7 @@
         type:string
     }
 
+    const emits = defineEmits(["update:modelValue"]);
     const props = withDefaults(defineProps<{
         modelValue?: Task[],
         root?: string;
@@ -41,6 +42,15 @@
     const items = computed(() =>
         !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     );
+
+    function removeItem(yaml: string, index: number){
+        flowStore.flowYaml = yaml;
+
+        let localItems = [...items.value]
+        localItems.splice(index, 1)
+
+        emits("update:modelValue", localItems);
+    };
 
     const section = computed(() => {
         return props.root ?? "tasks";

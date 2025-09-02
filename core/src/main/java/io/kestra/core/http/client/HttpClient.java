@@ -6,8 +6,14 @@ import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.apache.*;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.micrometer.common.KeyValues;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientContext;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.DefaultApacheHttpClientObservationConvention;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.ObservationExecChainHandler;
+import io.micrometer.observation.ObservationRegistry;
 import io.micronaut.http.MediaType;
 import jakarta.annotation.Nullable;
 import lombok.Builder;
@@ -16,6 +22,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hc.client5.http.ContextBuilder;
 import org.apache.hc.client5.http.auth.*;
 import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.impl.ChainElement;
 import org.apache.hc.client5.http.impl.DefaultAuthenticationStrategy;
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -50,11 +57,16 @@ public class HttpClient implements Closeable {
     private transient CloseableHttpClient client;
     private final RunContext runContext;
     private final HttpConfiguration configuration;
+    private ObservationRegistry observationRegistry;
 
     @Builder
     public HttpClient(RunContext runContext, @Nullable HttpConfiguration configuration) throws IllegalVariableEvaluationException {
         this.runContext = runContext;
         this.configuration = configuration == null ? HttpConfiguration.builder().build() : configuration;
+        if (runContext instanceof DefaultRunContext defaultRunContext) {
+            this.observationRegistry = defaultRunContext.getApplicationContext().findBean(ObservationRegistry.class).orElse(null);
+        }
+
         this.client = this.createClient();
     }
 
@@ -66,6 +78,13 @@ public class HttpClient implements Closeable {
         org.apache.hc.client5.http.impl.classic.HttpClientBuilder builder = HttpClients.custom()
             .disableDefaultUserAgent()
             .setUserAgent("Kestra");
+
+        if (observationRegistry != null) {
+            // micrometer, must be placed before the retry strategy (see https://docs.micrometer.io/micrometer/reference/reference/httpcomponents.html#_retry_strategy_considerations)
+            builder.addExecInterceptorAfter(ChainElement.RETRY.name(), "micrometer",
+                new ObservationExecChainHandler(observationRegistry, new CustomApacheHttpClientObservationConvention())
+            );
+        }
 
         // logger
         if (this.configuration.getLogs() != null && this.configuration.getLogs().length > 0) {
@@ -295,6 +314,16 @@ public class HttpClient implements Closeable {
     public void close() throws IOException {
         if (this.client != null) {
             this.client.close();
+        }
+    }
+
+    public static class CustomApacheHttpClientObservationConvention extends DefaultApacheHttpClientObservationConvention {
+        @Override
+        public KeyValues getLowCardinalityKeyValues(ApacheHttpClientContext context) {
+            return KeyValues.concat(
+                super.getLowCardinalityKeyValues(context),
+                KeyValues.of("type", "core-client")
+            );
         }
     }
 }

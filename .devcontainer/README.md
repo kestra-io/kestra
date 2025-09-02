@@ -140,4 +140,4 @@ If you want your plugins to be loaded inside your devcontainer, point the `sourc
 
 If you want to commit to GitHub, make sure to navigate to the `~/.ssh` folder and either create a new SSH key or override the existing `id_ed25519` file and paste an existing SSH key from your local machine into this file. You will then need to change the permissions of the file by running: `chmod 600 id_ed25519`. This will allow you to then push to GitHub.
 
----
+--- 

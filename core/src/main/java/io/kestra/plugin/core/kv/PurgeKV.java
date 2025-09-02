@@ -50,7 +50,7 @@ import org.apache.commons.lang3.StringUtils;
                   - id: purge_kv
                     type: io.kestra.plugin.core.kv.PurgeKV
                     expiredOnly: true
-                    namespaces: 
+                    namespaces:
                       - company
                     includeChildNamespaces: true
                 """
@@ -60,7 +60,7 @@ import org.apache.commons.lang3.StringUtils;
 public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
 
     @Schema(
-        title = "Key pattern, e.g. 'AI_*'"
+        title = "Key pattern, e.g. 'AI_*'",
         description = "Delete only keys matching the glob pattern."
     )
     private Property<String> keyPattern;

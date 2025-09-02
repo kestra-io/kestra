@@ -31,7 +31,7 @@ import lombok.experimental.SuperBuilder;
             title = "Display a chart with a Executions per Namespace broken out by State.",
             full = true,
             code = { """
-            charts:                
+            charts:
               - id: executions_per_namespace_bars
                 type: io.kestra.plugin.core.dashboard.chart.Bar
                 chartOptions:

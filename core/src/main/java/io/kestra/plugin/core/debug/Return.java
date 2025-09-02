@@ -50,7 +50,7 @@ import java.util.Optional;
                     Bearer {{ inputs.token }}
                     {%- elseif inputs.username is not empty and inputs.password is not empty -%}
                     Basic {{ (inputs.username + ':' + inputs.password) | base64encode }}
-                    {%- endif -%} 
+                    {%- endif -%}
                 """
         )
     },

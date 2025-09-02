@@ -317,6 +317,32 @@ public class ExecutionService {
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
 
+    public Execution changeTaskRunState(final Execution execution, Flow flow, String taskRunId, State.Type newState) throws Exception {
+        Execution newExecution = markAs(execution, flow, taskRunId, newState);
+
+        // if the execution was terminated, it could have executed errors/finally/afterExecutions, we must remove them as the execution will be restarted
+        if (execution.getState().isTerminated()) {
+            List<TaskRun> newTaskRuns =  newExecution.getTaskRunList();
+            // We need to remove global error tasks and flowable error tasks if any
+            flow
+                .allErrorsWithChildren()
+                .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+
+            // We need to remove global finally tasks and flowable error tasks if any
+            flow
+                .allFinallyWithChildren()
+                .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+
+            // We need to remove afterExecution tasks
+            ListUtils.emptyOnNull(flow.getAfterExecution())
+                .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+
+            return newExecution.withTaskRunList(newTaskRuns);
+        } else {
+            return newExecution;
+        }
+    }
+
     public Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState) throws Exception {
         return this.markAs(execution, flow, taskRunId, newState, null, null);
     }

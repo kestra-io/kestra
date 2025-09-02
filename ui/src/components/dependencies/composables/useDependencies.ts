@@ -13,6 +13,8 @@ import type {RouteParams} from "vue-router";
 
 import {v4 as uuid} from "uuid";
 
+import throttle from "lodash/throttle";
+
 import cytoscape from "cytoscape";
 
 import {State, cssVariable} from "@kestra-io/ui-libs";
@@ -120,22 +122,31 @@ function setExecutionNodeColors(cy: cytoscape.Core, nodes?: cytoscape.NodeSingul
 }
 
 /**
- * Applies the given color to specified edges in the cytoscape graph.
+ * Throttled function that applies the given color to specified edges in the cytoscape graph.
  *
  * - Removes the `FADED` class and adds the `EXECUTIONS` class to each edge.
  * - Sets the edge’s line and arrow colors using the provided color.
+ * - The operation is throttled to limit how often edge styles are updated, preventing performance issues
+ *   when called frequently in rapid succession (e.g., event streams).
  *
- * @param edges - Array of edges to apply colors to.
- * @param color - The color to apply to edges.
+ * @param edges - Collection of edges to apply colors to.
+ * @param color - The color to apply to the edges.
+ * @remarks
+ * The throttling interval is currently set to 300ms. Leading and trailing calls are both executed,
+ * ensuring the first and last updates within the interval are applied.
  */
-function setExecutionEdgeColors(edges: cytoscape.EdgeCollection, color: string): void {
-    edges.forEach((edge) => {
-        edge.removeClass(FADED).addClass(EXECUTIONS).style({
-            "line-color": color,
-            "target-arrow-color": color
+const setExecutionEdgeColors = throttle(
+    (edges: cytoscape.EdgeCollection, color: string) => {
+        edges.forEach((edge) => {
+            edge.removeClass(FADED).addClass(EXECUTIONS).style({
+                "line-color": color,
+                "target-arrow-color": color,
+            });
         });
-    });
-}
+    },
+    300,
+    {leading: true, trailing: true},
+);
 
 /**
  * Removes the specified CSS classes from all elements (nodes and edges) in the cytoscape instance.
@@ -324,24 +335,20 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
     watch(
         messages,
         (newMessages) => {
-            if (newMessages.length <= 0) return;
+            if (!newMessages?.length) return;
 
-            newMessages.forEach((message: Record<string, any>) => {
-                const matched = cy.nodes().filter((element) => element.data("id") === `${message.tenantId}_${message.namespace}_${message.flowId}`);
+            const message = newMessages[newMessages.length - 1]; // Only process the newest event message
 
-                if (matched.nonempty()) {
-                    matched.forEach((node: cytoscape.NodeSingular) => {
-                        const state = message.state.current;
+            const matched = cy.getElementById(`${message.tenantId}_${message.namespace}_${message.flowId}`);
 
-                        node.data({...node.data(), metadata: {...node.data("metadata"), state}});
+            if (matched.nonempty()) {
+                const state = message.state.current;
 
-                        nextTick(() => {}); // Needed to ensure that table nodes are updated after the DOM is ready
+                matched.data({...matched.data(), metadata: {...matched.data("metadata"), id: message.executionId, state}});
 
-                        setExecutionNodeColors(cy, node.toArray());
-                        setExecutionEdgeColors(node.connectedEdges(), getStateColor(undefined, state));
-                    });
-                }
-            });
+                setExecutionNodeColors(cy, [matched]);
+                setExecutionEdgeColors(matched.connectedEdges(), getStateColor(undefined, state));
+            }
         },
         {deep: true},
     );

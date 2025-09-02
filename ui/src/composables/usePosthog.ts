@@ -16,17 +16,31 @@ interface UserFormData {
 
 interface Config {
     isAnonymousUsageEnabled?: boolean
+    isUiAnonymousUsageEnabled?: boolean
     uuid?: string
     version?: string
+    edition?: string
+}
+
+function statsGlobalData(config: Config, uid: string): any {
+    return {
+        from: "APP",
+        iid: config.uuid,
+        uid: uid,
+        app: {
+            version: config.version,
+            type: config.edition
+        }
+    }
 }
 
 export async function initPostHogForSetup(config: Config): Promise<void> {
     try {
-        if (!config?.isAnonymousUsageEnabled) return
+        if (!config.isUiAnonymousUsageEnabled) return
 
         const apiStore = useApiStore()
         const apiConfig = await apiStore.loadConfig()
-        
+
         if (!apiConfig?.posthog?.token || (window as any).posthog?.__loaded) return
 
         const uid = getUID()
@@ -42,22 +56,40 @@ export async function initPostHogForSetup(config: Config): Promise<void> {
             autocapture: false,
         })
 
+        posthog.register_once(statsGlobalData(config, uid));
+
         if (!posthog.get_property("__alias")) {
             posthog.alias(apiConfig.id)
         }
+
+        let surveyVisible = false;
+        window.addEventListener("PHSurveyShown", () => {
+            surveyVisible = true;
+        });
+
+        window.addEventListener("PHSurveyClosed", () => {
+            surveyVisible = false;
+        })
+
+        window.addEventListener("KestraRouterAfterEach", () => {
+            if (surveyVisible) {
+                window.dispatchEvent(new Event("PHSurveyClosed"))
+                surveyVisible = false;
+            }
+        })
     } catch (error) {
         console.error("Failed to initialize PostHog:", error)
     }
 }
 
 export function trackSetupEvent(
-    eventName: string, 
-    additionalData: Record<string, any>, 
+    eventName: string,
+    additionalData: Record<string, any>,
     userFormData: UserFormData
 ): void {
     const miscStore = useMiscStore()
     const uid = getUID()
-    
+
     if (!miscStore.configs?.isAnonymousUsageEnabled || !uid) return
 
     const userInfo = userFormData.firstName ? {

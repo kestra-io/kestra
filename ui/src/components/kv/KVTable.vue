@@ -189,6 +189,14 @@
             </el-button>
         </template>
     </Drawer>
+
+    <drawer
+        v-if="namespacesStore.inheritedKVModalVisible"
+        v-model="namespacesStore.inheritedKVModalVisible"
+        :title="$t('kv.inherited')"
+    >
+        <InheritedKVs :namespace="namespacesStore?.namespace?.id" />
+    </drawer>
 </template>
 
 <script setup lang="ts">
@@ -207,6 +215,8 @@
     import KestraFilter from "../filter/KestraFilter.vue";
     import Id from "../Id.vue";
     import Drawer from "../Drawer.vue";
+
+    import InheritedKVs from "./InheritedKVs.vue";
 </script>
 
 <script lang="ts">

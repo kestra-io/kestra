@@ -217,6 +217,7 @@
       "edition": {
         "chart": "Editar este gráfico",
         "confirmation": "Los cambios en el dashboard <code>{title}</code> se han guardado.",
+        "id readonly": "La propiedad `id` no se puede cambiar — ahora está establecida en sus valores iniciales. Si deseas cambiarla, puedes crear un nuevo dashboard y eliminar el antiguo.",
         "label": "Editar Dashboard"
       },
       "empty": "No hay resultados para mostrar.",
@@ -725,6 +726,7 @@
         "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>"
       },
       "duplicate": "Esta key ya existe",
+      "inherited": "Pares KV heredados",
       "name": "KV Store",
       "type": "Tipo",
       "update": "Actualizar value para key '{key}'"

@@ -217,6 +217,7 @@
       "edition": {
         "chart": "编辑此图表",
         "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
+        "id readonly": "属性 `id` 不能更改——它现在设置为初始值。如果您想更改它，可以创建一个新的仪表板并删除旧的。",
         "label": "编辑仪表板"
       },
       "empty": "没有结果显示。",
@@ -725,6 +726,7 @@
         "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
       },
       "duplicate": "此键已存在",
+      "inherited": "继承的KV对",
       "name": "键值存储",
       "type": "类型",
       "update": "更新键 '{key}' 的值"

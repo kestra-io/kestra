@@ -301,7 +301,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         private final String executionId;
 
         @Schema(
-            title = "The subflow execution final state",
+            title = "The final state of the subflow execution",
             description = "This output is only available if `wait` is set to `true`."
         )
         private final State.Type state;

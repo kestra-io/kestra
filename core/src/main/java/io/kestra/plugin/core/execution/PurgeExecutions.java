@@ -63,7 +63,7 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
     private Property<String> startDate;
 
     @Schema(
-        title = "The date before which data should to be purged.",
+        title = "The date before which data should be purged.",
         description = "All data of flows executed before this date will be purged."
     )
     @NotNull

@@ -171,7 +171,7 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
     protected void handleAllServiceInNotRunningState() {
         // Soft delete all services which are NOT_RUNNING anymore.
         store.findAllInstancesInStates(Set.of(Service.ServiceState.NOT_RUNNING))
-            .forEach(instance -> safelyUpdate(instance, Service.ServiceState.EMPTY, null));
+            .forEach(instance -> safelyUpdate(instance, Service.ServiceState.INACTIVE, null));
     }
 
     protected void handleAllServicesForTerminatedStates(final Instant now) {

@@ -2,10 +2,13 @@ package io.kestra.core.plugins;
 
 import io.kestra.core.models.Plugin;
 
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 
 /**
  * Registry for managing all Kestra's {@link Plugin}.
@@ -123,4 +126,25 @@ public interface PluginRegistry {
      * @return {@code true} if supported. Otherwise {@code false}.
      */
     boolean isVersioningSupported();
+    
+    /**
+     * Computes a CRC32 hash value representing the current content of the plugin registry.
+     *
+     * @return a {@code long} containing the CRC32 checksum value, serving as a compact
+     *         representation of the registry's content
+     */
+    default long hash() {
+        Checksum crc32 = new CRC32();
+        
+        for (RegisteredPlugin plugin : plugins()) {
+            Optional.ofNullable(plugin.getExternalPlugin())
+                .map(ExternalPlugin::getLocation)
+                .map(URL::getPath)
+                .ifPresent(path -> {
+                    byte[] bytes = plugin.path().getBytes();
+                    crc32.update(bytes, 0, bytes.length);
+                });
+        }
+        return crc32.getValue();
+    }
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.reporter.Reportable;
 import io.kestra.core.reporter.reports.FeatureUsageReport;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
@@ -95,8 +96,10 @@ public class MiscController {
 
     @io.micronaut.context.annotation.Value("${kestra.hidden-labels.prefixes:}")
     private List<String> hiddenLabelsPrefixes;
-
-
+    @Inject
+    private PluginRegistry pluginRegistry;
+    
+    
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
@@ -122,7 +125,8 @@ public class MiscController {
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .resourceToFilters(QueryFilter.Resource.asResourceList())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
-            .url(kestraUrl);
+            .url(kestraUrl)
+            .pluginsHash(pluginRegistry.hash());
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -216,6 +220,8 @@ public class MiscController {
         Boolean isAiEnabled;
 
         Boolean isBasicAuthInitialized;
+        
+        Long pluginsHash;
     }
 
     @Value

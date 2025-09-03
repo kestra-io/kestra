@@ -14,9 +14,9 @@ dependencies {
     def slf4jVersion = "2.0.17"
     def protobufVersion = "3.25.5" // Orc still uses 3.25.5 see https://github.com/apache/orc/blob/main/java/pom.xml
     def bouncycastleVersion = "1.81"
-    def mavenResolverVersion = "1.9.22"
-    def jollydayVersion = "0.32.0"
-    def jsonschemaVersion = "4.37.0"
+    def mavenResolverVersion = "2.0.10"
+    def jollydayVersion = "1.5.6"
+    def jsonschemaVersion = "4.38.0"
     def kafkaVersion = "4.0.0"
     def opensearchVersion = "3.2.0"
     def opensearchRestVersion = "3.2.0"
@@ -32,9 +32,9 @@ dependencies {
     api platform("io.micronaut.platform:micronaut-platform:4.9.3")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.66.0')
+    api platform('com.google.cloud:libraries-bom:26.67.0')
     api platform("com.azure:azure-sdk-bom:1.2.37")
-    api platform('software.amazon.awssdk:bom:2.32.31')
+    api platform('software.amazon.awssdk:bom:2.33.0')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
 
@@ -89,17 +89,17 @@ dependencies {
         api group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
         api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.2'
         api group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
-        api group: 'net.thisptr', name: 'jackson-jq', version: '1.5.0'
+        api group: 'net.thisptr', name: 'jackson-jq', version: '1.6.0'
         api group: 'com.google.guava', name: 'guava', version: '33.4.8-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.20.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.18.0'
         api 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
         api 'ch.qos.logback.contrib:logback-jackson:0.1.5'
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-impl', version: mavenResolverVersion
-        api group: 'org.apache.maven.resolver', name: 'maven-resolver-supplier', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-supplier-mvn3', version: mavenResolverVersion
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-connector-basic', version: mavenResolverVersion
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-file', version: mavenResolverVersion
-        api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-http', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-apache', version: mavenResolverVersion
         api 'com.github.oshi:oshi-core:6.8.3'
         api 'io.pebbletemplates:pebble:3.2.4'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.7.0'
@@ -124,6 +124,7 @@ dependencies {
         api "org.xhtmlrenderer:flying-saucer-core:$flyingSaucerVersion"
         api "org.xhtmlrenderer:flying-saucer-pdf:$flyingSaucerVersion"
         api group: 'jakarta.mail', name: 'jakarta.mail-api', version: '2.1.4'
+        api group: 'jakarta.annotation', name: 'jakarta.annotation-api', version: '3.0.0'
         api group: 'org.eclipse.angus', name: 'jakarta.mail', version: '2.0.4'
         api group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '3.2.2'
         api group: 'de.siegmar', name: 'fastcsv', version: '4.0.0'
@@ -143,7 +144,7 @@ dependencies {
         api group: 'org.exparity', name: 'hamcrest-date', version: '2.0.8'
         api "org.wiremock:wiremock-jetty12:3.13.1"
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
-        api "com.microsoft.playwright:playwright:1.54.0"
+        api "com.microsoft.playwright:playwright:1.55.0"
         api "org.awaitility:awaitility:4.3.0"
 
         // Kestra components

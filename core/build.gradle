@@ -42,10 +42,10 @@ dependencies {
 
     // plugins
     implementation 'org.apache.maven.resolver:maven-resolver-impl'
-    implementation 'org.apache.maven.resolver:maven-resolver-supplier'
+    implementation 'org.apache.maven.resolver:maven-resolver-supplier-mvn3'
     implementation 'org.apache.maven.resolver:maven-resolver-connector-basic'
     implementation 'org.apache.maven.resolver:maven-resolver-transport-file'
-    implementation 'org.apache.maven.resolver:maven-resolver-transport-http'
+    implementation 'org.apache.maven.resolver:maven-resolver-transport-apache'
 
     // scheduler
     implementation group: 'com.cronutils', name: 'cron-utils'

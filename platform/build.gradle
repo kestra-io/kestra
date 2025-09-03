@@ -27,7 +27,7 @@ dependencies {
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
-    api platform("io.micronaut.platform:micronaut-platform:4.9.2")
+    api platform("io.micronaut.platform:micronaut-platform:4.9.3")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.66.0')
@@ -58,6 +58,12 @@ dependencies {
         api("com.fasterxml.jackson.datatype:jackson-datatype-guava:$jacksonVersion")
         api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
         api("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion")
+
+        // http5 client
+        api("org.apache.httpcomponents.client5:httpclient5:5.5")
+        api("org.apache.httpcomponents.core5:httpcore5:5.3.5")
+        api("org.apache.httpcomponents.core5:httpcore5-h2:5.3.5")
+
         api("com.fasterxml.uuid:java-uuid-generator:$jugVersion")
         // issue with the Docker lib having a too old version for the k8s extension
         api("org.apache.commons:commons-compress:1.28.0")

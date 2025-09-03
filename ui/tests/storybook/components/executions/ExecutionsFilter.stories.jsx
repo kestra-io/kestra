@@ -70,6 +70,11 @@ function getDecorators(executionsSearchData) {
                     component: {template: "<div>home</div>"},
                 },
                 {
+                    path: "/dashboards/edit",
+                    name: "dashboards/update",
+                    component: {template: "<div>dashboard update</div>"},
+                },
+                {
                     path: "/flows/update/:namespace/:id?/:flowId?",
                     name: "flows/update",
                     component: {template: "<div>updateflows</div>"},

@@ -64,10 +64,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import {templateRef} from "@vueuse/core";
+    import {computed, ref, useTemplateRef} from "vue";
     import Help from "vue-material-design-icons/Information.vue";
-    import Markdown from "../../layout/Markdown.vue";
+    import Markdown from "../../../layout/Markdown.vue";
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
     import ClearButton from "./ClearButton.vue";
     import getTaskComponent from "./getTaskComponent";
@@ -87,7 +86,7 @@
         (e: "update:modelValue", value?: Record<string, any> | string | number | boolean | Array<any>): void;
     }>();
 
-    const taskComponent = templateRef<{resetSelectType?: () => void}>("taskComponent");
+    const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent");
 
     const isRequired = computed(() => {
         return !props.disabled && props.required?.includes(props.fieldKey);// && props.schema.$required;

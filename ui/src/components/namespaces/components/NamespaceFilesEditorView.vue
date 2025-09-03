@@ -58,7 +58,7 @@
             :style="{left: `${tabContextMenu.x}px`, top: `${tabContextMenu.y}px`}"
             class="tabs-context"
         >
-            <el-menu-item :disabled="tabContextMenu.tab.persistent" @click="closeTab(tabContextMenu.tab, tabContextMenu.index)">
+            <el-menu-item :disabled="tabContextMenu.tab?.persistent" @click="closeTab(tabContextMenu.tab, tabContextMenu.index)">
                 {{ t("namespace_editor.close.tab") }}
             </el-menu-item>
             <el-menu-item @click="closeAllTabs">
@@ -73,34 +73,6 @@
         </el-menu>
 
         <div class="d-inline-flex align-items-center">
-            <el-switch
-                v-if="!isNamespace"
-                v-model="editorViewType"
-                @change="(val) => editorViewType = val"
-                active-value="NO_CODE"
-                inactive-value="YAML"
-                :inactive-text="t('no_code.labels.no_code')"
-                size="small"
-                class="me-2"
-            />
-
-            <SwitchView
-                v-if="!isNamespace"
-                :type="viewType"
-                class="to-topology-button"
-                @switch-view="switchViewType"
-            />
-
-            <ValidationError
-                v-if="!isNamespace"
-                ref="validationDomElement"
-                class="validation"
-                tooltip-placement="bottom-start"
-                :errors="flowErrors"
-                :warnings="flowWarnings"
-                :infos="flowInfos"
-            />
-
             <EditorButtons
                 v-if="isCreating || openedTabs.length"
                 :is-creating="props.isCreating"
@@ -117,7 +89,7 @@
                     () =>
                         router.push({
                             name: 'flows/create',
-                            query: {copy: true},
+                            query: {copy: 'true'},
                             params: {tenant: routeParams.tenant},
                         })
                 "
@@ -146,13 +118,11 @@
                         :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
                         :extension="currentTab?.extension"
                         @update:model-value="editorUpdate"
-                        @cursor="updatePluginDocumentation"
                         :creating="isCreating"
                         @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
                         @tab-loaded="onTabLoaded"
                         :read-only="isReadOnly"
                         :navbar="false"
-                        :original="isNamespace ? undefined : flowYaml"
                         :diff-side-by-side="false"
                     />
                 </template>
@@ -187,14 +157,14 @@
                             </template>
                         </el-dropdown>
                         <input
-                            ref="filePicker"
+                            ref="$refsFilePicker"
                             type="file"
                             multiple
                             class="hidden"
                             @change="handleFileImport"
                         >
                         <input
-                            ref="folderPicker"
+                            ref="$refsFilePicker"
                             type="file"
                             webkitdirectory
                             mozdirectory
@@ -210,11 +180,11 @@
                             </el-button>
                             <template #dropdown>
                                 <el-dropdown-menu>
-                                    <el-dropdown-item @click="$refs.filePicker.click()">
+                                    <el-dropdown-item @click="$refsFilePicker?.click()">
                                         <File class="me-2" />
                                         {{ t("namespace files.import.files") }}
                                     </el-dropdown-item>
-                                    <el-dropdown-item @click="$refs.folderPicker.click()">
+                                    <el-dropdown-item @click="$refsFolderPicker?.click()">
                                         <Folder class="me-2" />
                                         {{ t("namespace files.import.folder") }}
                                     </el-dropdown-item>
@@ -234,162 +204,8 @@
                     </div>
                 </div>
             </template>
-            <NoCode
-                v-else-if="isFlow"
-                :flow="flowYaml"
-                :section="route.query.section?.toString()"
-                :task-id="route.query.identifier?.toString()"
-                :position="route.query.position === 'before' ? 'before' : 'after'"
-                @update-metadata="(e) => onUpdateMetadata(e, true)"
-                @update-task="(e) => editorUpdate(e)"
-                @reorder="(yaml) => handleReorder(yaml)"
-            />
         </div>
-        <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
-        <div :class="{'d-flex': combinedEditor}" :style="viewType === editorViewTypes.SOURCE ? `display: none` : combinedEditor ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : 'flex: 1 0 0%'">
-            <div
-                v-if="viewType === editorViewTypes.SOURCE_BLUEPRINTS"
-                class="combined-right-view enhance-readability"
-            >
-                <Blueprints @loaded="blueprintsLoaded = true" embed kind="flow" combined-view />
-            </div>
-
-            <div
-                v-else-if="viewType === editorViewTypes.SOURCE_TOPOLOGY || viewType === editorViewTypes.TOPOLOGY"
-                :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : 'vueflow'"
-                class="topology-display"
-            >
-                <LowCodeEditor
-                    v-if="flowGraph"
-                    ref="lowCodeEditorRef"
-                    @follow="forwardEvent('follow', $event)"
-                    @on-edit="(event, isFlow) => onEdit(event, isFlow)"
-                    @loading="loadingState"
-                    @expand-subflow="onExpandSubflow"
-                    @swapped-task="onSwappedTask"
-                    :flow-graph="flowGraph"
-                    :flow-id="flowId"
-                    :namespace="namespace"
-                    :execution="execution"
-                    :is-read-only="isReadOnly"
-                    :source="flowYaml"
-                    :is-allowed-edit="isAllowedEdit"
-                    :horizontal-default="viewType === editorViewTypes.SOURCE_TOPOLOGY
-                        ? false
-                        : viewType === editorViewTypes.SOURCE_BLUEPRINTS
-                            ? true
-                            : undefined"
-                    :expanded-subflows="props.expandedSubflows"
-                />
-                <el-alert v-else type="warning" :closable="false">
-                    {{ t("unable to generate graph") }}
-                </el-alert>
-            </div>
-
-            <PluginDocumentation
-                v-else-if="viewType === editorViewTypes.SOURCE_DOC"
-                class="plugin-doc combined-right-view enhance-readability"
-            />
-        </div>
-
-        <Drawer
-            v-model="isNewErrorOpen"
-            title="Add a global error handler"
-        >
-            <el-form label-position="top">
-                <task-editor
-                    :section="SECTIONS.TASKS"
-                    @update:model-value="onUpdateNewError"
-                />
-            </el-form>
-            <template #footer>
-                <ValidationError :errors="taskErrors" />
-                <el-button
-                    :icon="ContentSave"
-                    @click="onSaveNewError()"
-                    type="primary"
-                    :disabled="Boolean(taskErrors)"
-                >
-                    {{ t("save") }}
-                </el-button>
-            </template>
-        </Drawer>
-        <Drawer
-            v-model="isNewTriggerOpen"
-            title="Add a trigger"
-        >
-            <el-form label-position="top">
-                <task-editor
-                    :section="SECTIONS.TRIGGERS"
-                    @update:model-value="onUpdateNewTrigger"
-                />
-            </el-form>
-            <template #footer>
-                <ValidationError :errors="taskErrors" />
-                <el-button
-                    :icon="ContentSave"
-                    @click="onSaveNewTrigger()"
-                    type="primary"
-                    :disabled="Boolean(taskErrors)"
-                >
-                    {{ t("save") }}
-                </el-button>
-            </template>
-        </Drawer>
-        <Drawer
-            v-if="isEditMetadataOpen"
-            v-model="isEditMetadataOpen"
-        >
-            <template #header>
-                <code>flow metadata</code>
-            </template>
-
-            <el-form label-position="top">
-                <metadata-editor
-                    :metadata="flowStore.flowYamlMetadata"
-                    @update:model-value="onUpdateMetadata"
-                    :editing="!props.isCreating"
-                />
-            </el-form>
-            <template #footer>
-                <el-button
-                    :icon="ContentSave"
-                    @click="onSaveMetadata()"
-                    type="primary"
-                    :disabled="!checkRequiredMetadata()"
-                    class="edit-flow-save-button"
-                >
-                    {{ t("save") }}
-                </el-button>
-            </template>
-        </Drawer>
     </div>
-    <el-dialog
-        v-if="confirmOutdatedSaveDialog"
-        v-model="confirmOutdatedSaveDialog"
-        destroy-on-close
-        :append-to-body="true"
-    >
-        <template #header>
-            <h5>{{ t(`${baseOutdatedTranslationKey}.title`) }}</h5>
-        </template>
-        {{ t(`${baseOutdatedTranslationKey}.description`) }}
-        {{ t(`${baseOutdatedTranslationKey}.details`) }}
-        <template #footer>
-            <el-button @click="confirmOutdatedSaveDialog = false">
-                {{ t("cancel") }}
-            </el-button>
-            <el-button
-                type="warning"
-                @click="
-                    saveWithoutRevisionGuard();
-                    confirmOutdatedSaveDialog = false;
-                "
-            >
-                {{ t("ok") }}
-            </el-button>
-        </template>
-    </el-dialog>
     <el-dialog
         v-model="dialog.visible"
         :title="dialog.type === 'file' ? t('namespace files.create.file') : t('namespace files.create.folder')"
@@ -439,27 +255,24 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
+    import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useStorage} from "@vueuse/core";
     import {useI18n} from "vue-i18n";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import {Utils, SECTIONS} from "@kestra-io/ui-libs";
+    import {useToast} from "../../../utils/toast";
 
-    import {useCoreStore} from "../../stores/core";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {useEditorStore} from "../../stores/editor";
     import {useAuthStore} from "override/stores/auth";
-    import {useFlowStore} from "../../stores/flow";
     import {useNamespacesStore} from "override/stores/namespaces";
+    import {useCoreStore} from "../../../stores/core";
+    import {usePluginsStore} from "../../../stores/plugins";
+    import {useFlowStore} from "../../../stores/flow";
+    import {EditorTabProps, useEditorStore} from "../../../stores/editor";
 
-    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
+    import {useFlowOutdatedErrors} from "../../inputs/flowOutdatedErrors";
 
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import {storageKeys, editorViewTypes} from "../../utils/constants";
-
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import permission from "../../../models/permission";
+    import action from "../../../models/action";
+    import {storageKeys, editorViewTypes} from "../../../utils/constants";
     import MenuOpen from "vue-material-design-icons/MenuOpen.vue";
     import MenuClose from "vue-material-design-icons/MenuClose.vue";
     import Close from "vue-material-design-icons/Close.vue";
@@ -471,19 +284,12 @@
     import File from "vue-material-design-icons/File.vue";
     import Folder from "vue-material-design-icons/Folder.vue";
 
-    import TypeIcon from "../utils/icons/Type.vue"
-    import SwitchView from "./SwitchView.vue";
-    import Editor from "./Editor.vue";
-    import NoCode from "../code/NoCode.vue";
-    import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
-    import LowCodeEditor from "./LowCodeEditor.vue";
-    import Drawer from "../Drawer.vue";
-    import PluginDocumentation from "../plugins/PluginDocumentation.vue";
-    import TaskEditor from "../flows/TaskEditor.vue";
-    import ValidationError from "../flows/ValidationError.vue";
-    import EditorButtons from "./EditorButtons.vue";
-    import MetadataEditor from "../flows/MetadataEditor.vue";
-    import {useToast} from "../../utils/toast";
+    import TypeIcon from "../../utils/icons/Type.vue"
+    import {ElTooltip} from "element-plus"
+
+    import Editor from "../../inputs/Editor.vue";
+    import EditorButtons from "../../inputs/EditorButtons.vue";
+
 
 
     const coreStore = useCoreStore();
@@ -495,8 +301,10 @@
     const toast = useToast();
     const {t} = useI18n();
     const tours = getCurrentInstance()?.appContext.config.globalProperties.$tours;
-    const lowCodeEditorRef = ref(null);
     const tabsScrollRef = ref();
+
+    const $refsFilePicker = ref<HTMLInputElement | null>(null);
+    const $refsFolderPicker = ref<HTMLInputElement | null>(null);
 
     const props = defineProps({
         flowGraph: {
@@ -569,8 +377,8 @@
 
     const {translateError, translateErrorWithKey} = useFlowOutdatedErrors()
 
-    const baseOutdatedTranslationKey = computed(() => flowStore.baseOutdatedTranslationKey);
     const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
+
     const flowWarnings = computed(() => {
         if (isFlow.value) {
             const outdatedWarning =
@@ -580,7 +388,7 @@
 
             const deprecationWarnings =
                 flowStore.flowValidation?.deprecationPaths?.map(
-                    (f) => `${f} ${t("is deprecated")}.`
+                    (f: string) => `${f} ${t("is deprecated")}.`
                 ) ?? [];
 
             const otherWarnings = flowStore.flowValidation?.warnings ?? [];
@@ -596,9 +404,8 @@
 
         return undefined;
     });
-    const flowInfos = computed(() => flowStore.flowInfos);
-    const flowHaveTasks = computed(() => Boolean(flowStore.flowHaveTasks));
 
+    const flowHaveTasks = computed(() => Boolean(flowStore.flowHaveTasks));
     const editorViewType = useStorage(storageKeys.EDITOR_VIEW_TYPE, "YAML");
 
     watch(editorViewType, (value) => {
@@ -635,25 +442,17 @@
 
     flowStore.haveChange = props.isDirty;
 
-    const editorDomElement = ref(null);
+    const editorDomElement = ref<any>(null);
     const editorWidth = useStorage("editor-size", 50);
-    const validationDomElement = ref(null);
     const isLoading = ref(false);
     const flowYaml = computed(() => flowStore.flowYaml);
     const flowYamlOrigin = computed(() => flowStore.flowYamlOrigin);
     const metadata = computed(() => flowStore.metadata);
-    const newTrigger = ref(null);
-    const isNewTriggerOpen = ref(false);
-    const newError = ref(null);
-    const isNewErrorOpen = ref(false);
-    const isEditMetadataOpen = ref(false);
     const viewType = ref(initViewType());
     const isHorizontal = ref(isHorizontalDefault());
     const updatedFromEditor = ref(false);
-    const timer = ref(null);
+    const timer = ref<number>();
     const routeParams = router.currentRoute.value.params;
-    const blueprintsLoaded = ref(false);
-    const confirmOutdatedSaveDialog = ref(false);
 
     const editorStore = useEditorStore();
 
@@ -665,7 +464,7 @@
         switchViewType(editorViewTypes.SOURCE_TOPOLOGY);
     });
 
-    const toggleExplorer = ref(null);
+    const toggleExplorer = ref<typeof ElTooltip>();
     const explorerVisible = computed(() => editorStore.explorerVisible);
     const toggleExplorerVisibility = () => {
         toggleExplorer.value?.hide();
@@ -674,18 +473,14 @@
     const currentTab = computed(() => editorStore.current);
     const openedTabs = computed(() => editorStore.tabs);
 
-    const changeCurrentTab = (tab) => {
+    const changeCurrentTab = (tab: EditorTabProps) => {
         editorStore.openTab(tab);
     };
 
-    const persistViewType = (value) => {
+    const persistViewType = (value: string) => {
         viewType.value = value;
         localStorage.setItem(editorViewTypes.STORAGE_KEY, value);
     };
-
-    const taskErrors = computed(() => {
-        return flowStore.taskError?.split(/, ?/);
-    });
 
     watch(
         () => props.expandedSubflows,
@@ -696,15 +491,11 @@
         }
     );
 
-    const onResize = () => {
-        if (validationDomElement.value && editorDomElement.value) {
-            validationDomElement.value.onResize(
-                editorDomElement.value.$el.offsetWidth
-            );
-        }
-    };
-
     const pluginsStore = usePluginsStore();
+
+    const stopTourLocal = () => {
+        stopTour();
+    }
 
     onMounted(async () => {
         if(guidedProperties.value?.tourStarted) {
@@ -737,10 +528,7 @@
                 persistViewType(editorViewTypes.SOURCE);
             }
         }, 200);
-        window.addEventListener("popstate", () => {
-            stopTour();
-        });
-        window.addEventListener("resize", onResize);
+        window.addEventListener("popstate", stopTourLocal);
 
         if (props.isCreating) {
             editorStore.closeTabs();
@@ -748,13 +536,9 @@
     });
 
     onBeforeUnmount(() => {
-        window.removeEventListener("resize", onResize);
-
         pluginsStore.editorPlugin = undefined;
         document.removeEventListener("keydown", saveUsingKeyboard);
-        document.removeEventListener("popstate", () => {
-            stopTour();
-        });
+        document.removeEventListener("popstate", stopTourLocal);
 
         editorStore.closeAllTabs();
 
@@ -771,16 +555,6 @@
 
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit);
 
-    const forwardEvent = (type, event) => {
-        emit(type, event);
-    };
-
-    const updatePluginDocumentation = (event) => {
-        const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
-        let element = elementWrapper.value.type !== undefined ? elementWrapper.value : elementWrapper.parents.findLast(p => p.type !== undefined);
-        pluginsStore.updateDocumentation(element);
-    };
-
     const fetchGraph = async () => {
         if(props.isNamespace) return;
 
@@ -791,14 +565,14 @@
                     // due to usage of axios instance instead of $http which doesn't convert arrays
                     subflows: props.expandedSubflows.join(","),
                 },
-                validateStatus: (status) => {
+                validateStatus: (status: number) => {
                     return status === 200;
                 },
             },
         });
     };
 
-    const onEdit = (source, currentIsFlow = false) => {
+    const onEdit = (source: string, currentIsFlow = false) => {
         flowStore.flowYaml = source;
         return flowStore.onEdit({
             source,
@@ -809,122 +583,21 @@
                 editorViewTypes.SOURCE_TOPOLOGY,
             ].includes(viewType.value),
         }).then((value) => {
-            if (validationDomElement.value && editorDomElement.value?.$el?.offsetWidth) {
-                validationDomElement.value.onResize(editorDomElement.value.$el.offsetWidth);
-            }
-
             return value;
         });
     };
 
-    const loadingState = (value) => {
-        isLoading.value = value;
-    };
-
-    const onUpdateNewTrigger = (event) => {
-        clearTimeout(timer.value);
-        timer.value = setTimeout(
-            () =>
-                flowStore.validateTask({
-                    task: event,
-                    section: SECTIONS.TRIGGERS,
-                }),
-            500
-        );
-        newTrigger.value = event;
-    };
-
-    const onSaveNewTrigger = () => {
-        const source = flowYaml.value;
-        const existingTask = YAML_UTILS.checkTaskAlreadyExist(
-            source,
-            newTrigger.value
-        );
-        if (existingTask) {
-            coreStore.message = {
-                variant: "error",
-                title: t("trigger_id_exists"),
-                message: t("trigger_id_message", {existingTrigger: existingTask}),
-            };
-            return;
-        }
-        onEdit(YAML_UTILS.insertSection("triggers", source, newTrigger.value), true);
-        newTrigger.value = null;
-        isNewTriggerOpen.value = false;
-        flowStore.haveChange = true;
-    };
-
-    const onUpdateNewError = (event) => {
-        clearTimeout(timer.value);
-        timer.value = setTimeout(
-            () =>
-                flowStore.validateTask({
-                    task: event,
-                    section: SECTIONS.TASKS,
-                }),
-            500
-        );
-
-        newError.value = event;
-    };
-
-    const onSaveNewError = () => {
-        const source = flowYaml.value;
-        const existingTask = YAML_UTILS.checkTaskAlreadyExist(
-            source,
-            newError.value
-        );
-        if (existingTask) {
-            coreStore.message = {
-                variant: "error",
-                title: t("task_id_exists"),
-                message: t("task_id_message", {existingTask}),
-            };
-            return;
-        }
-        onEdit(YAML_UTILS.insertSection("errors", source, newError.value), true);
-        newError.value = null;
-        isNewErrorOpen.value = false;
-    };
-
-    const checkRequiredMetadata = () => {
-        const md = metadata.value ?? flowStore.flowYamlMetadata;
-
-        return md.id.length > 0 && md.namespace.length > 0;
-    };
-
-    const onUpdateMetadata = (event, shouldSave) => {
-        if(shouldSave) {
-            flowStore.metadata = {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)};
-            flowStore.onSaveMetadata();
-            flowStore.validateFlow({flow: flowYaml.value});
-        } else {
-            flowStore.metadata = event.concurrency?.limit === 0 ?  {concurrency: null} : event;
-        }
-    };
-
-    const onSaveMetadata = () => {
-        flowStore.onSaveMetadata();
-        isEditMetadataOpen.value = false;
-    };
-
-    const handleReorder = (yaml) => {
-        flowStore.flowYaml = yaml;
-        flowStore.haveChange = true;
-        save();
-    };
-
-    const editorUpdate = (source) => {
+    const editorUpdate = (source: string) => {
         const currentIsFlow = isFlow.value;
 
         updatedFromEditor.value = true;
         flowStore.flowYaml = source;
 
         clearTimeout(timer.value);
-        timer.value = setTimeout(() => onEdit(source, currentIsFlow), 500);
+        timer.value = setTimeout(() => onEdit(source, currentIsFlow), 500) as any;
     };
 
-    const switchViewType = (event, shouldPersist = true) => {
+    const switchViewType = (event: string, shouldPersist = true) => {
         if(shouldPersist) persistViewType(event)
         else viewType.value = event
 
@@ -946,23 +619,7 @@
 
     const flowParsed = computed(() => flowStore.flowParsed);
 
-    const saveWithoutRevisionGuard = async () => {
-        clearTimeout(timer.value);
-        const result = await flowStore.saveWithoutRevisionGuard();
-        if(result === "redirect_to_update"){
-            await router.push({
-                name: "flows/update",
-                params: {
-                    id: flowParsed.value.id,
-                    namespace: flowParsed.value.namespace,
-                    tab: "edit",
-                    tenant: routeParams.tenant,
-                },
-            });
-        }
-    };
-
-    const saveUsingKeyboard = (e) => {
+    const saveUsingKeyboard = (e: KeyboardEvent) => {
         if (e.ctrlKey && e.key === "s") {
             e.preventDefault();
             return save();
@@ -973,7 +630,7 @@
         clearTimeout(timer.value);
         const result = await flowStore.save({
             content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
-            namespace: props.namespace ?? route.params.namespace,
+            namespace: props.namespace ?? route.params.namespace.toString(),
         })
         if(result === "redirect_to_update"){
             await router.push({
@@ -988,7 +645,7 @@
         }
     };
 
-    const execute = (_) => {
+    const execute = () => {
         flowStore.executeFlow = true;
     };
 
@@ -1021,63 +678,7 @@
         ].includes(viewType.value)
     );
 
-    const dragEditor = (e) => {
-        let dragX = e.clientX;
-
-        const {offsetWidth, parentNode} = document.getElementById("editorWrapper");
-        let blockWidthPercent = (offsetWidth / parentNode.offsetWidth) * 100;
-
-        const isNoCode = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE";
-        const maxWidth = isNoCode ? 33.3 : 75;
-
-        document.onmousemove = function onMouseMove(e) {
-            let percent = blockWidthPercent + ((e.clientX - dragX) / parentNode.offsetWidth) * 100;
-
-            editorWidth.value = percent > maxWidth ? maxWidth : percent < 25 ? 25 : percent;
-            validationDomElement.value.onResize((percent * parentNode.offsetWidth) / 100);
-        };
-
-        document.onmouseup = () => {
-            document.onmousemove = document.onmouseup = null;
-        };
-    };
-
-    const onExpandSubflow = (e) => {
-        emit("expand-subflow", e);
-    };
-
-    const onSwappedTask = (swappedTasks) => {
-        emit(
-            "expand-subflow",
-            props.expandedSubflows.map((expandedSubflow) => {
-                let swappedTaskSplit;
-                if (expandedSubflow === swappedTasks[0]) {
-                    swappedTaskSplit = swappedTasks[1].split(".");
-                    swappedTaskSplit.pop();
-
-                    return (
-                        swappedTaskSplit.join(".") +
-                        "." +
-                        Utils.afterLastDot(expandedSubflow)
-                    );
-                }
-                if (expandedSubflow === swappedTasks[1]) {
-                    swappedTaskSplit = swappedTasks[0].split(".");
-                    swappedTaskSplit.pop();
-
-                    return (
-                        swappedTaskSplit.join(".") +
-                        "." +
-                        Utils.afterLastDot(expandedSubflow)
-                    );
-                }
-
-                return expandedSubflow;
-            })
-        );
-    };
-
-    const isActiveTab = (tab) => {
+    const isActiveTab = (tab: EditorTabProps) => {
         if (!currentTab.value) {
             return false;
         }
@@ -1089,33 +690,37 @@
         return tab.name === currentTab.value.name;
     }
 
-    const draggedTabIndex = ref(null);
-    const dragOverTabIndex = ref(null);
+    const draggedTabIndex = ref<number | null>(null);
+    const dragOverTabIndex = ref<number | null>(null);
 
-    const onDragStart = (event, index) => {
+    const onDragStart = (event: DragEvent, index: number) => {
         draggedTabIndex.value = index;
-        event.dataTransfer.effectAllowed = "move";
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move";
+        }
     };
-    const onDragOver = (event, index) => {
+
+    const onDragOver = (event: DragEvent, index: number) => {
         event.preventDefault();
         if (index !== draggedTabIndex.value) {
             dragOverTabIndex.value = index;
         }
     };
-    const onDrop = (event, to) => {
+
+    const onDrop = (event: DragEvent, to: number) => {
         event.preventDefault();
         const from = draggedTabIndex.value;
-        if (from !== to) {
+        if (from !== null && from !== to) {
             editorStore.reorderTabs({from, to});
         }
         draggedTabIndex.value = null;
         dragOverTabIndex.value = null;
     };
 
-    async function loadFileAtPath(path){
+    async function loadFileAtPath(path: string){
         const content = await namespacesStore.readFile({
             path,
-            namespace: props.namespace ?? route.params.namespace ?? route.params.id,
+            namespace: props.namespace ?? route.params.namespace?.toString() ?? route.params.id?.toString() ?? "",
         })
         flowStore.flowYaml = content;
     }
@@ -1125,10 +730,10 @@
     watch(currentTab, (current, previous) => {
         if(previous?.flow) persistViewType(viewType.value);
 
-        dirtyBeforeLoad.value = current?.dirty;
+        dirtyBeforeLoad.value = current?.dirty ?? false;
 
         if(current?.flow){
-            switchViewType(loadViewType(), false)
+            switchViewType(loadViewType() ?? editorViewTypes.SOURCE, false)
         }else {
             switchViewType(editorViewTypes.SOURCE, false)
             if(current?.path && !current.dirty) {
@@ -1145,14 +750,16 @@
         });
     })
 
-    function onTabLoaded(tab, source){
+    function onTabLoaded(tab: any, source: string) {
         clearTimeout(timer.value);
 
         // once the tab is finished loading, restore the dirty state
-        if(tab.path === currentTab.value.path){
-            flowYaml.value = source;
+        if(tab.path === currentTab.value?.path){
+            flowStore.flowYaml = source;
             onEdit(source, tab.flow);
-            currentTab.value.dirty = dirtyBeforeLoad.value
+            if (currentTab.value) {
+                currentTab.value.dirty = dirtyBeforeLoad.value;
+            }
         }
     }
 
@@ -1160,11 +767,11 @@
         visible: false,
         x: 0,
         y: 0,
-        tab: null,
-        index: null,
+        tab: undefined as undefined | EditorTabProps,
+        index: undefined as undefined | number,
     });
 
-    const onTabContextMenu = (event, tab, index) => {
+    const onTabContextMenu = (event: MouseEvent, tab: EditorTabProps, index: number) => {
         tabContextMenu.value = {
             visible: true,
             x: event.clientX,
@@ -1183,36 +790,41 @@
 
     const FLOW_TAB = computed(() => editorStore.tabs?.find(tab => tab.name === "Flow"))
 
-    const closeTab = (tab, index) => {
+    const closeTab = (tab?: EditorTabProps, index?: number) => {
         editorStore.closeTab({...tab, index});
     };
 
-    const closeTabs = (tabsToClose, openTab) => {
-        tabsToClose.forEach(tab => {
+    const closeTabs = (tabsToClose: EditorTabProps[], openTab?: EditorTabProps) => {
+        tabsToClose?.forEach((tab: EditorTabProps) => {
             editorStore.closeTab(tab);
         });
-        editorStore.openTab(openTab);
+        if(openTab){
+            editorStore.openTab(openTab);
+        }
         hideTabContextMenu();
     };
 
     const closeAllTabs = () => {
-        closeTabs(openedTabs.value.filter(tab => tab !== FLOW_TAB.value), FLOW_TAB.value);
+        if (FLOW_TAB.value) {
+            closeTabs(openedTabs.value.filter(tab => tab !== FLOW_TAB.value), FLOW_TAB.value);
+        }
     };
 
-    const closeOtherTabs = (tab) => {
+    const closeOtherTabs = (tab?: EditorTabProps) => {
         closeTabs(openedTabs.value.filter(t => t !== FLOW_TAB.value && t !== tab), tab);
     };
 
-    const closeTabsToRight = (index) => {
+    const closeTabsToRight = (index: number = -1) => {
         closeTabs(openedTabs.value.slice(index + 1).filter(tab => tab !== FLOW_TAB.value), openedTabs.value[index]);
     };
 
     const dialog = ref({
         visible: false,
-        type: "file",
-        name: undefined,
-        folder: undefined,
+        type: "file" as "file" | "folder",
+        name: undefined as string | undefined,
+        folder: undefined as string | undefined,
     });
+
     const createFile = () => {
         dialog.value = {
             visible: true,
@@ -1222,6 +834,7 @@
         };
         editorStore.toggleExplorerVisibility(true);
     };
+
     const createFolder = () => {
         dialog.value = {
             visible: true,
@@ -1231,10 +844,17 @@
         };
         editorStore.toggleExplorerVisibility(true);
     };
+
+    interface TreeItem {
+        fileName: string;
+        type: "Directory" | "File";
+        children?: TreeItem[];
+    }
+
     const folders = computed(() => {
-        function extractPaths(basePath = "", array) {
-            const paths = [];
-            array?.forEach((item) => {
+        function extractPaths(basePath = "", array: TreeItem[]): string[] {
+            const paths: string[] = [];
+            array?.forEach((item: TreeItem) => {
                 if (item.type === "Directory") {
                     const folderPath = `${basePath}${item.fileName}`;
                     paths.push(folderPath);
@@ -1250,21 +870,22 @@
         }
         return extractPaths(undefined, editorStore.treeData);
     });
+
     const dialogHandler = async () => {
         try {
-            const path = dialog.value.folder
+            const path = (dialog.value.folder
                 ? `${dialog.value.folder}/${dialog.value.name}`
-                : dialog.value.name;
+                : dialog.value.name) ?? "";
 
             if (dialog.value.type === "file") {
                 await namespacesStore.createFile({
-                    namespace: props.namespace ?? route.params.namespace,
+                    namespace: props.namespace ?? route.params.namespace?.toString(),
                     path,
                     content: "",
                 });
             } else {
                 await namespacesStore.createDirectory({
-                    namespace: props.namespace ?? route.params.namespace,
+                    namespace: props.namespace ?? route.params.namespace?.toString(),
                     path,
                 });
             }
@@ -1272,9 +893,9 @@
             editorStore.refreshTree();
             if (dialog.value.type === "file") {
                 editorStore.openTab({
-                    name: dialog.value.name,
+                    name: dialog.value.name!,
                     path,
-                    extension: dialog.value.name.split(".").pop()
+                    extension: dialog.value.name!.split(".").pop()
                 });
             }
         } catch (error) {
@@ -1282,24 +903,28 @@
             toast.error(t("namespace files.create.error"), "error");
         }
     };
-    const handleFileImport = async (event) => {
-        const files = event.target.files;
+
+    const handleFileImport = async (event: Event) => {
+        const target = event.target as HTMLInputElement;
+        const files = target.files;
+        if (!files) return;
+
         for (const file of files) {
-            const content = await new Promise((resolve) => {
+            const content = (await new Promise<ArrayBuffer>((resolve) => {
                 const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
+                reader.onload = (e) => resolve(e.target?.result as ArrayBuffer);
                 reader.readAsArrayBuffer(file);
-            });
+            })).toString() ?? "";
             const path = file.webkitRelativePath || file.name;
 
             await namespacesStore.importFileDirectory({
-                namespace: props.namespace ?? route.params.namespace,
+                namespace: props.namespace ?? route.params.namespace?.toString(),
                 content,
                 path
             });
         }
         editorStore.refreshTree();
-        event.target.value = "";
+        target.value = "";
     };
 </script>
 
@@ -1427,7 +1052,7 @@ html.dark .el-card :deep(.enhance-readability) {
     height: 100%;
 
     .img {
-        background: url("../../assets/empty-ns-files.png") no-repeat center;
+        background: url("../../../assets/empty-ns-files.png") no-repeat center;
         background-size: contain;
         width: 180px;
         height: 180px;

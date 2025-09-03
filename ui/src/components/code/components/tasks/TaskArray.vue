@@ -16,7 +16,7 @@
             />
         </el-col>
         <el-col :span="items.length > 1 ? 20 : 22" class="pe-2">
-            <TaskWrapper :merge="!needWrapper">
+            <Wrapper :merge="!needWrapper">
                 <template #tasks>
                     <component
                         :key="'array-' + index"
@@ -30,7 +30,7 @@
                         @update:model-value="handleInput($event, index)"
                     />
                 </template>
-            </TaskWrapper>
+            </Wrapper>
         </el-col>
         <el-col :span="2" class="d-flex align-items-center justify-content-center delete">
             <DeleteOutline @click="removeItem(index)" />
@@ -42,12 +42,12 @@
 <script setup lang="ts">
     import {computed, inject, provide, ref} from "vue";
 
-    import {DeleteOutline, ChevronUp, ChevronDown} from "../../code/utils/icons";
+    import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
 
-    import Add from "../../code/components/Add.vue";
+    import Add from "../Add.vue";
     import getTaskComponent from "./getTaskComponent";
-    import TaskWrapper from "./TaskWrapper.vue";
-    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
+    import Wrapper from "./Wrapper.vue";
+    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
 
     defineOptions({inheritAttrs: false});
 
@@ -137,7 +137,7 @@
 </script>
 
 <style scoped lang="scss">
-@import "../../code/styles/code.scss";
+@import "../../styles/code.scss";
 
 .disabled {
     opacity: 0.5;

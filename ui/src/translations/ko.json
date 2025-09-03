@@ -1103,6 +1103,8 @@
     "replay from beginning tooltip": "처음부터 재실행",
     "replay from task tooltip": "<code>{taskId}</code> Task에서 재실행",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
+    "replay the execution": "flow <code>{flowId}</code>의 실행 <code>{executionId}</code>을(를) 다시 실행합니다.",
+    "replay with inputs": "입력과 함께 재실행",
     "replayed": "재실행되었습니다.",
     "required field": "필수 필드",
     "reset": "재시작",

@@ -16,7 +16,7 @@
     </el-select>
 </template>
 <script>
-    import Task from "./Task";
+    import Task from "./MixinTask";
     export default {
         mixins: [Task],
     };

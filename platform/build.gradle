@@ -23,6 +23,8 @@ dependencies {
     def flyingSaucerVersion = "9.13.3"
     def jacksonVersion = "2.19.2"
     def jugVersion = "5.1.0"
+    def langchain4jVersion = "1.4.0"
+    def langchain4jCommunityVersion = "1.4.0-beta10"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
@@ -33,7 +35,8 @@ dependencies {
     api platform('com.google.cloud:libraries-bom:26.66.0')
     api platform("com.azure:azure-sdk-bom:1.2.37")
     api platform('software.amazon.awssdk:bom:2.32.31')
-
+    api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
+    api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
 
     constraints {
         // need to force this dep as mysql-connector brings a version incompatible with the Google Cloud libs

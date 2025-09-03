@@ -224,10 +224,24 @@ function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selecte
  * @param cy - The cytoscape core instance containing the graph.
  */
 function hoverHandler(cy: cytoscape.Core): void {
-    ["node", "edge"].forEach((type) => {
-        cy.on("mouseover", type, (event: cytoscape.EventObject) => event.target.addClass(HOVERED));
-        cy.on("mouseout", type, (event: cytoscape.EventObject) => event.target.removeClass(HOVERED));
+    // Node hover: highlight node + connected edges + connected nodes
+    cy.on("mouseover", "node", (event: cytoscape.EventObject) => {
+        const node = event.target;
+        node.union(node.connectedEdges())
+            .union(node.connectedEdges().connectedNodes())
+            .addClass(HOVERED);
     });
+
+    cy.on("mouseout", "node", (event: cytoscape.EventObject) => {
+        const node = event.target;
+        node.union(node.connectedEdges())
+            .union(node.connectedEdges().connectedNodes())
+            .removeClass(HOVERED);
+    });
+
+    // Edge hover: highlight only the edge itself
+    cy.on("mouseover", "edge", (event: cytoscape.EventObject) => event.target.addClass(HOVERED));
+    cy.on("mouseout", "edge", (event: cytoscape.EventObject) => event.target.removeClass(HOVERED));
 }
 
 /**

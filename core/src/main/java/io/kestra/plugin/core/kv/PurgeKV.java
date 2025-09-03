@@ -95,18 +95,19 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
     @Override
     public Output run(RunContext runContext) throws Exception {
         List<String> kvNamespaces = findNamespaces(runContext);
-        boolean expired = runContext.render(expiredOnly).as(Boolean.class).orElse(true);
+        boolean purgeExpiredOnly = runContext.render(expiredOnly).as(Boolean.class).orElse(true);
         String renderedKeyPattern = runContext.render(keyPattern).as(String.class).orElse(null);
         boolean keyFiltering = StringUtils.isNotBlank(renderedKeyPattern);
+        runContext.logger().info("purging {} namespaces: {}", kvNamespaces.size(), kvNamespaces);
         AtomicLong count = new AtomicLong();
         for (String ns : kvNamespaces) {
             KVStore kvStore = runContext.namespaceKv(ns);
             List<KVEntry> kvEntries = new ArrayList<>();
             List<KVEntry> allKvEntries = kvStore.listAll();
-            if (expired){
+            if (purgeExpiredOnly){
                 Instant now = Instant.now();
                 kvEntries.addAll(allKvEntries.stream()
-                    .filter(kv -> kv.expirationDate().isBefore(now))
+                    .filter(kv -> kv.expirationDate() != null && kv.expirationDate().isBefore(now))
                     .toList());
             } else {
                 kvEntries.addAll(allKvEntries);
@@ -125,6 +126,7 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
             }
             count.addAndGet(keys.size());
         }
+        runContext.logger().info("purged {} keys", count.get());
 
         return Output.builder()
             .size(count.get())

@@ -17,7 +17,6 @@ import java.util.List;
 
 @Singleton
 @Requires(property = "kestra.ai.type", value = OpenAiAiService.TYPE)
-@Requires(property = "kestra.ai.openai.api-key")
 @Slf4j
 public class OpenAiAiService extends AiService<OpenAiConfiguration> {
     public static final String TYPE = "openai";

@@ -37,10 +37,10 @@ public interface FlowYamlBuilder {
         - Triggers expose some variables that can be accessed through `trigger.outputName` in expressions. The only variables available are those defined in the trigger's outputs.
         - Unless specified by the user, never assume a local port to serve any content, always use a remote URL (like a public HTTP server) to fetch content.
         - Unless specified by the user, do not use any authenticated API, always use public APIs or those that don't require authentication.
-        - To avoid escaping quotes, use double quotes first and if you need quotes inside, use single ones. Only escape them if you have 3+ level quotes, for example: `message: "Hello {{inputs.userJson | jq('.name')}_}"`.
+        - To avoid escaping quotes, use double quotes first and if you need quotes inside, use single ones. Only escape them if you have 3+ level quotes, for example: `message: "Hello {{inputs.userJson | jq('.name')}}"` is preferred but `message: "Hello \\"Bob\\""` may still be used.
         - A property key is unique within each type.
         - When fetching data from the JDBC plugin, always use fetchType: STORE.
-        - Manipulating date in pebble expressions can be done through `dateAdd` (`{{now()|dateAdd(-1,'DAYS')}_}`) and `date` filters (`{{"July 24, 2001"|date("yyyy-MM-dd",existingFormat="MMMM dd, yyyy")}_}`). Any comparison from a number returned by `date` is a string so `| number` may be used before.
+        - Manipulating date in pebble expressions can be done through `dateAdd` (`{{now()|dateAdd(-1,'DAYS')}}`) and `date` filters (`{{"July 24, 2001"|date("yyyy-MM-dd",existingFormat="MMMM dd, yyyy")}}`). Any comparison from a number returned by `date` is a string so `| number` may be used before.
         - Current date is `{{current_date_time}}`.
         - Always preserve root-level `id` and `namespace` if provided.
         - Don't add any Schedule trigger unless a regular occurrence is asked.

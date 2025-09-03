@@ -92,7 +92,7 @@ jobs:
 
       - name: GCP - Setup Cloud SDK
         if: env.GOOGLE_SERVICE_ACCOUNT != ''
-        uses: "google-github-actions/setup-gcloud@v2"
+        uses: "google-github-actions/setup-gcloud@v3"
 
         # Allure check
       - uses: rlespinasse/github-slug-action@v5

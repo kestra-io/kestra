@@ -307,7 +307,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         private final State.Type state;
 
         @Schema(
-            title = "The subflow exectution extracted outputs"
+            title = "The outputs returned by the subflow exectution"
         )
         private final Map<String, Object> outputs;
     }

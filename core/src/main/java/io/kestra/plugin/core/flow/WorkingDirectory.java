@@ -184,8 +184,8 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     @Schema(
         title = "Cache configuration",
         description = """
-            When a cache is configured, an archive of the files denoted by the cache configuration is created at the end of the task execution and saved in Kestra's internal storage.
-            Then at the beginning of the next task execution, the file archive is retrieved and the working directory initialized with it.
+            When a cache is configured, an archive of the files denoted by the cache configuration is created at the end of the task run and saved in Kestra's internal storage.
+            Then, at the beginning of the next task execution, the file archive is retrieved and the working directory is initialized with it.
             """
     )
     @PluginProperty

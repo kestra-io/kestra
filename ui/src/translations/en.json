@@ -189,6 +189,8 @@
     "replay latest revision": "Replay using latest revision",
     "replayed": "Execution is replayed",
     "replay confirm": "Are you sure you want to replay this execution <code>{id}</code> and create a new one?",
+    "replay with inputs": "Replay with inputs",
+    "replay the execution": "Replay the execution <code>{executionId}</code> for the flow <code>{flowId}</code>",
     "prefill inputs": "Prefill",
     "current": "current",
     "change state": "Change state",
@@ -1468,8 +1470,8 @@
         "prompt_placeholder": "Enter instructions to create your Kestra flow. Example prompt: Create a flow that runs every Monday at 9 AM.",
         "generating": "Generating Flow YAML for you...",
         "enable_instructions": {
-            "header":"<b>AI Copilot hasn't been configured yet.</b>\n\nTo enable AI Copilot, add the following snippet to your Kestra instance configuration file (e.g. <code>application.yml</code>), replacing <code>geminiApiKey</code> with your actual key:",
-            "footer": "Note: At this time, only Gemini is supported as the AI provider.\n\nRestart your Kestra instance after saving the configuration."
+            "header":"<b>AI Copilot hasn't been configured yet.</b>\n\nTo enable AI Copilot, add the following snippet to your Kestra instance configuration file (e.g. <code>application.yml</code>), replacing <code>openAiApiKey</code> with your actual key:",
+            "footer": "Note: At this time, only OpenAI is supported as the AI provider.\n\nRestart your Kestra instance after saving the configuration."
         }
       }
     },

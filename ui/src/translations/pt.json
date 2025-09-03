@@ -49,8 +49,8 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Nota: Neste momento, apenas o Gemini é suportado como provedor de IA.\n\nReinicie sua instância do Kestra após salvar a configuração.",
-          "header": "<b>AI Copilot ainda não foi configurado.</b>\n\nPara habilitar o AI Copilot, adicione o seguinte trecho ao arquivo de configuração da sua instância Kestra (por exemplo, <code>application.yml</code>), substituindo <code>geminiApiKey</code> pelo seu key real:"
+          "footer": "Nota: Neste momento, apenas a OpenAI é suportada como provedor de IA.\n\nReinicie sua instância do Kestra após salvar a configuração.",
+          "header": "<b>AI Copilot ainda não foi configurado.</b>\n\nPara habilitar o AI Copilot, adicione o seguinte trecho ao arquivo de configuração da sua instância Kestra (por exemplo, <code>application.yml</code>), substituindo <code>openAiApiKey</code> pela sua chave real:"
         },
         "generating": "Gerando Flow YAML para você...",
         "prompt_placeholder": "Insira instruções para criar seu flow Kestra. Exemplo de prompt: Crie um flow que execute toda segunda-feira às 9h.",
@@ -1103,6 +1103,8 @@
     "replay from beginning tooltip": "Criar uma execução similar começando do início",
     "replay from task tooltip": "Criar uma execução similar começando da task <code>{taskId}</code>",
     "replay latest revision": "Repetir usando a última revisão",
+    "replay the execution": "Reproduzir a execução <code>{executionId}</code> para o flow <code>{flowId}</code>",
+    "replay with inputs": "Repetir com inputs",
     "replayed": "Execução foi repetida",
     "required field": "Campo obrigatório",
     "reset": "Reiniciar",

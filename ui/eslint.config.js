@@ -89,6 +89,7 @@ export default [
     {
         // Enforce the use of the <script setup> block in components within these paths
         files: [components("filter"), components("code")],
+        ignores: [components("code/components/tasks")],
         rules: {"vue/component-api-style": ["error", ["script-setup"]]},
     },
     {

@@ -6,25 +6,25 @@
             />
 
             <el-form v-else label-position="top">
-                <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema)" :transparent="v.fieldKey === 'inputs'">
+                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema)" :transparent="v.fieldKey === 'inputs'">
                     <template #tasks>
                         <TaskObjectField
                             v-bind="v"
                             @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
                         />
                     </template>
-                </TaskWrapper>
+                </Wrapper>
 
                 <hr class="my-4">
 
-                <TaskWrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :merge="shouldMerge(v.schema)" :transparent="SECTIONS_IDS.includes(v.fieldKey)">
+                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :merge="shouldMerge(v.schema)" :transparent="SECTIONS_IDS.includes(v.fieldKey)">
                     <template #tasks>
                         <TaskObjectField
                             v-bind="v"
                             @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
                         />
                     </template>
-                </TaskWrapper>
+                </Wrapper>
             </el-form>
         </div>
     </div>
@@ -37,8 +37,8 @@
     import {removeNullAndUndefined} from "./utils/cleanUp";
 
     import Task from "./segments/Task.vue";
-    import TaskWrapper from "../flows/tasks/TaskWrapper.vue";
-    import TaskObjectField from "../flows/tasks/TaskObjectField.vue";
+    import Wrapper from "./components/tasks/Wrapper.vue";
+    import TaskObjectField from "./components/tasks/TaskObjectField.vue";
     import {
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         CLOSE_TASK_FUNCTION_INJECTION_KEY,

@@ -84,6 +84,7 @@
 
     const props = defineProps<{
         flow: string,
+        conversationId: string
     }>();
 
     const error = ref<string | undefined>(undefined);
@@ -96,7 +97,8 @@
         try {
             aiResponse = await aiStore.generateFlow({
                 userPrompt: prompt.value,
-                flowYaml: props.flow
+                flowYaml: props.flow,
+                conversationId: props.conversationId
             }) as string;
             emit("generatedYaml", aiResponse);
         } catch (e: any) {
@@ -127,9 +129,9 @@
             })
             highlightedAiConfiguration.value = highlighter.codeToHtml(`kestra:
   ai:
-    type: "gemini"
-    gemini:
-      api-key: "geminiApiKey"`, {lang: "yaml", theme: Utils.getTheme() === "dark" ? "github-dark" : "github-light"})
+    type: "openai"
+    openai:
+      api-key: "openAiApiKey"`, {lang: "yaml", theme: Utils.getTheme() === "dark" ? "github-dark" : "github-light"})
         }
     });
 </script>

@@ -42,7 +42,6 @@ import lombok.experimental.SuperBuilder;
 
                       - Use this insight to identify trends and optimize performance.
                 """
-                
             }
         )
     }

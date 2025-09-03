@@ -128,7 +128,7 @@ public class FlowAiCopilot {
             User's prompt:
             ```
             %s
-            ```""".formatted(flowGenerationPrompt.flowYaml(), flowGenerationPrompt.userPrompt());
+            ```""".formatted(Optional.ofNullable(flowGenerationPrompt.flowYaml()).orElse(""), flowGenerationPrompt.userPrompt());
 
         List<String> mostRelevantPlugins = this.mostRelevantPlugins(pluginFinder, enhancedPrompt);
 

@@ -1103,6 +1103,8 @@
     "replay from beginning tooltip": "从头开始创建相似的执行",
     "replay from task tooltip": "从任务 <code>{taskId}</code> 创建相似的执行",
     "replay latest revision": "使用最新修订版重放",
+    "replay the execution": "重放 flow <code>{flowId}</code> 的执行 <code>{executionId}</code>",
+    "replay with inputs": "使用输入重放",
     "replayed": "执行已重放",
     "required field": "必填字段",
     "reset": "重置",

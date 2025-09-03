@@ -21,8 +21,8 @@
         REF_PATH_INJECTION_KEY,
         CREATING_TASK_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY
-    } from "../../code/injectionKeys";
-    import Element from "../../code/components/collapse/Element.vue";
+    } from "../../injectionKeys";
+    import Element from "../collapse/Element.vue";
 
     const model = defineModel({
         type: Object,

@@ -1103,6 +1103,8 @@
     "replay from beginning tooltip": "Создать аналогичное выполнение, начиная с начала",
     "replay from task tooltip": "Создать аналогичное выполнение, начиная с задачи <code>{taskId}</code>",
     "replay latest revision": "Повтор с использованием последней редакции",
+    "replay the execution": "Повторить выполнение <code>{executionId}</code> для flow <code>{flowId}</code>",
+    "replay with inputs": "Воспроизвести с inputами",
     "replayed": "Выполнение повторено",
     "required field": "Обязательное поле",
     "reset": "Перезапустить",

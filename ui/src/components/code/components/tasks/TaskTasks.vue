@@ -1,11 +1,11 @@
 <template>
     <div class="tasks-wrapper">
         <Collapse
-            :title="root"
+            title="tasks"
             :elements="items"
             :section
             :block-schema-path="[blockSchemaPath, 'properties', root, 'items'].join('/')"
-            @remove="removeItem"
+            @remove="(yaml) => flowStore.flowYaml = yaml"
             @reorder="(yaml) => flowStore.flowYaml = yaml"
         />
     </div>
@@ -13,11 +13,11 @@
 
 <script setup lang="ts">
     import {computed, inject, ref} from "vue";
-    import Collapse from "../../code/components/collapse/Collapse.vue";
-    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../code/injectionKeys";
-    import {useFlowStore} from "../../../stores/flow";
+    import Collapse from "../collapse/Collapse.vue";
+    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
+    import {useFlowStore} from "../../../../stores/flow";
 
-    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref())
 
     defineOptions({
         inheritAttrs: false
@@ -30,7 +30,6 @@
         type:string
     }
 
-    const emits = defineEmits(["update:modelValue"]);
     const props = withDefaults(defineProps<{
         modelValue?: Task[],
         root?: string;
@@ -43,22 +42,13 @@
         !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     );
 
-    function removeItem(yaml: string, index: number){
-        flowStore.flowYaml = yaml;
-
-        let localItems = [...items.value]
-        localItems.splice(index, 1)
-
-        emits("update:modelValue", localItems);
-    };
-
     const section = computed(() => {
         return props.root ?? "tasks";
     });
 </script>
 
 <style scoped lang="scss">
-@import "../../code/styles/code.scss";
+@import "../../styles/code.scss";
 
 .tasks-wrapper {
     width: 100%;

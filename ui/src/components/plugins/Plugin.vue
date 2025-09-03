@@ -59,6 +59,7 @@
                         :schema="pluginsStore.plugin.schema"
                         :props-initially-expanded="true"
                         :plugin-type="pluginType"
+                        no-url-change
                     >
                         <template #markdown="{content}">
                             <markdown font-size-var="font-size-base" :source="content" />

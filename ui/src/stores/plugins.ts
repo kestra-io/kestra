@@ -8,7 +8,7 @@ import InitialFlowSchema from "./flow-schema.json"
 import {toRaw} from "vue";
 import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
 
-interface PluginComponent {
+export interface PluginComponent {
     icon?: string;
     cls?: string;
     deprecated?: boolean;

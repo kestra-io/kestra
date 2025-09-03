@@ -9,10 +9,10 @@
 </template>
 <script>
     import {mapStores} from "pinia";
-    import Task from "./Task";
-    import NamespaceSelect from "../../namespaces/components/NamespaceSelect.vue";
+    import Task from "./MixinTask";
+    import NamespaceSelect from "../../../namespaces/components/NamespaceSelect.vue";
 
-    import {useFlowStore} from "../../../stores/flow";
+    import {useFlowStore} from "../../../../stores/flow";
     export default {
         components: {NamespaceSelect},
         mixins: [Task],

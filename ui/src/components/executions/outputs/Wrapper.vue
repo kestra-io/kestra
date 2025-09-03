@@ -150,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, shallowRef, onMounted} from "vue";
+    import {ref, computed, shallowRef, onMounted, watch} from "vue";
     import {ElTree} from "element-plus";
     import {useStore} from "vuex";
     import {useExecutionsStore} from "../../../stores/executions";
@@ -320,6 +320,12 @@
             return selected.value[selected.value.length - 1];
         return undefined;
     });
+
+    watch(selectedValue, () => {
+        debugError.value = "";
+        debugStackTrace.value = "";
+    });
+
     const selectedNode = () => {
         const node = cascader.value?.getCheckedNodes();
 

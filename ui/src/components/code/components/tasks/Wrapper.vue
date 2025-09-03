@@ -6,7 +6,7 @@
 </template>
 
 <script lang="ts" setup>
-    defineOptions({name: "TaskWrapper"});
+    defineOptions({name: "Wrapper"});
 
     defineProps<{merge?: boolean, transparent?: boolean}>();
 </script>

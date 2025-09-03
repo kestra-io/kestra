@@ -31,7 +31,7 @@ import java.time.LocalDate;
     examples = {
         @Example(
             full = true,
-            title = "Trigger condition to excute the flow only on public holidays.",
+            title = "Trigger condition to execute the flow only on public holidays.",
             code = """
                 id: schedule_condition_public-holiday
                 namespace: company.team
@@ -52,7 +52,7 @@ import java.time.LocalDate;
         ),
         @Example(
             full = true,
-            title = "Trigger condition to excute the flow only on work days in France.",
+            title = "Trigger condition to execute the flow only on work days in France.",
             code = """
                 id: schedule-condition-work-days
                 namespace: company.team

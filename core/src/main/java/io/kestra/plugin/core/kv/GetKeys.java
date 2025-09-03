@@ -54,7 +54,7 @@ public class GetKeys extends Task implements RunnableTask<GetKeys.Output> {
 
     @NotNull
     @Schema(
-        title = "The namespace in which to get the values"
+        title = "The namespace from which to get the KV pairs"
     )
     @Builder.Default
     private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");

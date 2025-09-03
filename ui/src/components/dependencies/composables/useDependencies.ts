@@ -181,14 +181,15 @@ export function fit(cy: cytoscape.Core, padding: number = 50): void {
 /**
  * Handles selecting a node in the cytoscape graph.
  *
- * - Removes all existing `selected`, `faded`, `hovered` and `executions` states from nodes and edges.
- * - Marks the chosen node as selected.
- * - Applies a faded style to connected elements based on the subtype:
- *   - FLOW: Fades both connected edges and neighbor nodes.
- *   - EXECUTION: Highlights connected edges with execution color, fades neighbor nodes.
- *   - NAMESPACE: Fades both connected edges and neighbor nodes.
+ * - Clears all existing states (`selected`, `faded`, `hovered`, `executions`) from the graph.
+ * - Applies the `FADED` class to all elements by default.
+ * - Marks the clicked node as `SELECTED`.
+ * - Marks its direct edges and first-level child nodes as `SELECTED`.
+ * - If the subtype is `EXECUTION`, styles the connected edges with the appropriate execution color.
  * - Updates the provided Vue ref with the selected node’s ID.
  * - Smoothly centers and zooms the viewport on the selected node.
+ *
+ * Coloring logic is based on: https://github.com/kestra-io/kestra/issues/10925#issuecomment-3245743846
  *
  * @param cy - The cytoscape core instance managing the graph.
  * @param node - The node element to select.
@@ -197,24 +198,31 @@ export function fit(cy: cytoscape.Core, padding: number = 50): void {
  * @param id - Optional explicit ID to assign to the ref (defaults to the node’s own ID).
  */
 function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE, id?: Node["id"]): void {
-    // Remove all "selected", "faded", "hovered" and "executions" classes from every element
+    // Clear all existing classes
     clearClasses(cy, subtype);
 
-    // Mark the chosen node as selected
+    // Fade all elements in the graph
+    cy.elements().addClass(FADED);
+
+    // Mark the clicked node as selected
     node.addClass(SELECTED);
 
-    if (subtype === FLOW || subtype === NAMESPACE) {
-        // FLOW or NAMESPACE: Fade both connected edges and neighbor nodes
-        node.connectedEdges().union(node.connectedEdges().connectedNodes()).addClass(FADED);
-    } else {
-        // EXECUTION: Highlight connected edges with execution color
-        setExecutionEdgeColors(node.connectedEdges(), getStateColor(node));
+    // Highlight direct edges and first-level child nodes of the selected node
+    const edges = node.connectedEdges();
+    const children = edges.connectedNodes();
+
+    edges.addClass(SELECTED);
+    children.addClass(SELECTED);
+
+    // If subtype is EXECUTION, apply execution-specific edge styling
+    if (subtype === EXECUTION) {
+        setExecutionEdgeColors(edges, getStateColor(node));
     }
 
-    // Update the Vue ref with the selected node’s ID
+    // Update the Vue ref with the selected node's ID
     selected.value = id ?? node.id();
 
-    // Center and zoom the viewport on the selected node
+    // Smoothly center and zoom the viewport on the selected node
     cy.animate({center: {eles: node}, zoom: 1.2}, {duration: 500});
 }
 

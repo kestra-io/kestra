@@ -24,6 +24,7 @@ const VARIABLES = {
     edge: {
         default: "--ks-dependencies-edge-default",
         faded: "--ks-dependencies-edge-faded",
+        selected: "--ks-dependencies-node-background-selected",
         hovered: "--ks-dependencies-edge-hovered",
     },
 };
@@ -92,7 +93,11 @@ export const getStyle = (): cytoscape.StylesheetJson => [
     },
     {
         selector: "edge.faded",
-        style: {...edgeBase, ...edgeColors("faded"), ...edgeAnimated},
+        style: {...edgeBase, ...edgeColors("faded")},
+    },
+    {
+        selector: "edge.selected",
+        style: {...edgeBase, ...edgeColors("selected"), ...edgeAnimated},
     },
     {
         selector: "edge.hovered",

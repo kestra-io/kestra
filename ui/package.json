@@ -101,7 +101,7 @@
         "@types/testing-library__user-event": "^4.1.1",
         "@typescript-eslint/parser": "^8.39.0",
         "@vitejs/plugin-vue": "^6.0.1",
-        "@vitejs/plugin-vue-jsx": "^5.0.1",
+        "@vitejs/plugin-vue-jsx": "^5.1.1",
         "@vitest/browser": "^3.2.4",
         "@vitest/coverage-v8": "^3.2.4",
         "@vue/eslint-config-prettier": "^10.2.0",

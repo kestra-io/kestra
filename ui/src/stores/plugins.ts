@@ -61,6 +61,7 @@ interface LoadOptions {
     version?: string;
     all?: boolean;
     commit?: boolean;
+    hash?: number;
 }
 
 interface JsonSchemaDef {
@@ -177,17 +178,19 @@ export const usePluginsStore = defineStore("plugins", {
             }
 
             const id = options.version ? `${options.cls}/${options.version}` : options.cls;
-            const cachedPluginDoc = this.pluginsDocumentation[id];
+            const cachedPluginDoc = this.pluginsDocumentation[options.hash ? options.hash + id : id];
             if (!options.all && cachedPluginDoc) {
                 this.plugin = cachedPluginDoc;
                 return cachedPluginDoc;
             }
 
-            const url = options.version ?
+            const baseUrl = options.version ?
                 `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions/${options.version}` :
                 `${apiUrlWithoutTenants()}/plugins/${options.cls}`;
 
-            const response = await this.$http.get<PluginComponent>(url, {params: options});
+            const url = options.hash ? `${baseUrl}?hash=${options.hash}` : baseUrl;
+            
+            const response = await this.$http.get<PluginComponent>(url);
 
             if (options.commit !== false) {
                 if (options.all === true) {
@@ -200,7 +203,7 @@ export const usePluginsStore = defineStore("plugins", {
             if (!options.all) {
                 this.pluginsDocumentation = {
                     ...this.pluginsDocumentation,
-                    [id]: response.data
+                    [options.hash ? options.hash+id : id]: response.data
                 };
             }
 
@@ -289,7 +292,7 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
 
-        async updateDocumentation(pluginElement?: ({type: string, version?: string} & Record<string, any>) | undefined) {
+        async updateDocumentation(pluginElement?: ({type: string, version?: string, hash?: number} & Record<string, any>) | undefined) {
             if (!pluginElement?.type || !this.allTypes.includes(pluginElement.type)) {
                 this.editorPlugin = undefined;
                 this.currentlyLoading = undefined;
@@ -310,7 +313,7 @@ export const usePluginsStore = defineStore("plugins", {
                 return;
             }
 
-            let payload: LoadOptions = {cls: type};
+            let payload: LoadOptions = {cls: type, hash: pluginElement.hash};
 
             if (version !== undefined) {
                 // Check if the version is valid to avoid error

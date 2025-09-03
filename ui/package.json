@@ -85,7 +85,7 @@
         "@eslint/js": "^9.32.0",
         "@playwright/test": "^1.54.2",
         "@rushstack/eslint-patch": "^1.12.0",
-        "@shikijs/markdown-it": "^3.9.2",
+        "@shikijs/markdown-it": "^3.12.2",
         "@storybook/addon-themes": "^9.1.1",
         "@storybook/addon-vitest": "^9.1.1",
         "@storybook/test-runner": "^0.23.0",

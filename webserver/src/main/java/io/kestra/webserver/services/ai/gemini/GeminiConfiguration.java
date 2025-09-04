@@ -11,12 +11,12 @@ public record GeminiConfiguration (
     @Bindable(defaultValue = "gemini-2.5-flash")
     String modelName,
     @Bindable(defaultValue = "0.7")
-    double temperature,
+    Double temperature,
     @Nullable
     Double topP,
     @Nullable
     Integer topK,
-    @Bindable(defaultValue = "50000")
+    @Bindable(defaultValue = "4000")
     int maxOutputTokens,
     @Bindable(defaultValue = "false")
     boolean logRequests,

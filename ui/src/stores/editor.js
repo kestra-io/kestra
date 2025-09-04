@@ -76,7 +76,8 @@ export default {
                         return tab.name === name;
                     });
 
-            if (state.current?.name === name) {
+            if(!name) this.current = this.tabs?.[0] ?? []; // Handle tab closing by clicking the cross icon in the corner of the panel
+            else if (this.current?.name === name) {
                 if(POSITION - 1 >= 0){
                     commit("setCurrentTab", state.tabs[POSITION - 1]);
                 }else{

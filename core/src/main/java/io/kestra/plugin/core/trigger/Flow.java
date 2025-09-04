@@ -193,7 +193,37 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                             - field: NAMESPACE
                               type: STARTS_WITH
                               value: company"""
+        ),
+        @Example(
+            full = true,
+            title = """
+                4) Create a `System Flow` to send a Sentry issue on any failure or warning state \
+                within the `company.payroll` namespace. This example uses the Sentry Execution task and a Flow trigger with `conditions`.""",
+            code = """
+                id: sentry_execution_example
+                namespace: company.team
+                
+                tasks:
+                - id: send_alert
+                  type: io.kestra.plugin.notifications.sentry.SentryExecution
+                    executionId: "{{ trigger.executionId }}"
+                    transaction: "/execution/id/{{ trigger.executionId }}"
+                    dsn: "{{ secret('SENTRY_DSN') }}"
+                    level: ERROR
+
+                triggers:
+                - id: failed_prod_workflows
+                    type: io.kestra.plugin.core.trigger.Flow
+                    conditions:
+                    - type: io.kestra.plugin.core.condition.ExecutionStatus
+                        in:
+                        - FAILED
+                        - WARNING
+                    - type: io.kestra.plugin.core.condition.ExecutionNamespace
+                        namespace: company.payroll
+                        prefix: false"""                                
         )
+
     },
     aliases = "io.kestra.core.models.triggers.types.Flow"
 )

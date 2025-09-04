@@ -78,7 +78,9 @@
 
     const openTabs = ref<string[]>([])
 
-    function setTabValue(tabValue: string){
+    const defaultPanelSize = computed(() => panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length);
+
+    function setTabValue(tabValue: string) {
         // Show dialog instead of creating panel
         if(tabValue === "keyshortcuts"){
             showKeyShortcuts();
@@ -90,33 +92,39 @@
             return
         }
         const {prepend, panel} = getPanelFromValue(tabValue)
-        
+
         trackTabOpen(panel.activeTab);
-        
+
+        const panelWithDefaultSize = {
+            ...panel,
+            size: defaultPanelSize.value,
+        }
+
         if(prepend){
-            panels.value.unshift(panel)
+            panels.value.unshift(panelWithDefaultSize)
         }else{
-            panels.value.push(panel)
+            panels.value.push(panelWithDefaultSize)
         }
     }
 
     const {t} = useI18n()
 
 
-    function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
+    function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Omit<Panel, "size">}{
         const tab = setupInitialNoCodeTab(RawNoCode, value, t, noCodeHandlers, flowStore.flowYaml ?? "")
         return staticGetPanelFromValue(value, tab, dirtyFlow)
     }
 
-    function staticGetPanelFromValue(value: string, tab?: Tab, dirtyFlow = false): {prepend: boolean, panel: Panel}{
+    function staticGetPanelFromValue(value: string, tab?: Tab, dirtyFlow = false): {prepend: boolean, panel: Omit<Panel, "size">}{
         const element: Tab = tab ?? EDITOR_ELEMENTS.find(e => e.value === value)!
 
         if(isTabFlowRelated(element)){
             element.dirty = dirtyFlow
         }
+
         return {
             prepend: "files" === value,
-            panel:{
+            panel: {
                 activeTab: element,
                 tabs: [element]
             }
@@ -157,9 +165,12 @@
     const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, tempActions)
 
     const panels = useStorage<Panel[]>(
-        `flow-${flowStore.flow?.namespace}-${flowStore.flow?.id}`,
+        `el-fl-${flowStore.flow?.namespace}-${flowStore.flow?.id}`,
         DEFAULT_ACTIVE_TABS
-            .map((t) => staticGetPanelFromValue(t).panel),
+            .map((t) => ({
+                ...staticGetPanelFromValue(t).panel,
+                size: 100 / DEFAULT_ACTIVE_TABS.length
+            })),
         undefined,
         {
             serializer: {

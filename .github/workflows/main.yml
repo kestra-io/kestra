@@ -3,6 +3,14 @@ name: Main Workflow
 on:
   workflow_dispatch:
     inputs:
+      skip-test:
+        description: 'Skip test'
+        type: choice
+        required: true
+        default: 'false'
+        options:
+          - "true"
+          - "false"
       plugin-version:
           description: "plugins version"
           required: false

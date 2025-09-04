@@ -84,7 +84,7 @@
     const query = computed(() => {
         return {
             name: ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home",
-            params: JSON.stringify(route.params),
+            params: JSON.stringify({...route.params, dashboard: undefined}),
         };
     });
 

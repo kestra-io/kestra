@@ -64,6 +64,9 @@
 
         if (blueprintId) {
             dashboard.value.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId});
+            if (!/^id:.*$/m.test(dashboard.value.sourceCode)) {
+                dashboard.value.sourceCode = "id: " + blueprintId + "\n" + dashboard.value.sourceCode;
+            }
         } else {
             if (name === "flows/update") {
                 const {namespace, id} = JSON.parse(params);

@@ -145,7 +145,7 @@
                 return this.currentView !== this.views.NONE && this.currentView !== this.views.DASHBOARD;
             },
             dashboardId() {
-                return this.initialSource === undefined ? undefined : YAML_UTILS.parse(this.initialSource).id
+                return this.$route.params.dashboard
             }
         },
         props: {
@@ -288,7 +288,7 @@
                         }
                     });
 
-                if (YAML_UTILS.parse(this.source).id !== this.dashboardId) {
+                if (this.dashboardId !== undefined && YAML_UTILS.parse(this.source).id !== this.dashboardId) {
                     const coreStore = useCoreStore();
                     coreStore.message = {
                         variant: "error",

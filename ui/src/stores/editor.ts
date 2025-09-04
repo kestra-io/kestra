@@ -92,7 +92,8 @@ export const useEditorStore = defineStore("editor", {
                         return tab.name === name;
                     });
 
-            if (this.current?.name === name) {
+            if(!name) this.current = this.tabs?.[0] ?? []; // Handle tab closing by clicking the cross icon in the corner of the panel
+            else if (this.current?.name === name) {
                 if(POSITION - 1 >= 0){
                     this.current = this.tabs[POSITION - 1];
                 }else{

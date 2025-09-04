@@ -4,7 +4,7 @@ import humanizeDuration from "humanize-duration";
 import {useMiscStore} from "override/stores/misc";
 
 const humanizeDurationLanguages = {
-    "en" : {
+    "en": {
         y: () => "y",
         mo: () => "mo",
         w: () => "w",
@@ -14,7 +14,7 @@ const humanizeDurationLanguages = {
         s: () => "s",
         ms: () => "ms",
     },
-    "fr" : {
+    "fr": {
         y: () => "a",
         mo: () => "mo",
         w: () => "se",
@@ -24,7 +24,7 @@ const humanizeDurationLanguages = {
         s: () => "s",
         ms: () => "ms",
     },
-    "zh_CN" : {
+    "zh_CN": {
         y: () => "年",
         mo: () => "月",
         w: () => "周",
@@ -50,11 +50,11 @@ export default class Utils {
             }
 
             return Object
-                    .keys(child)
-                    .map(key => typeof child[key] === "object" ?
-                        _flatten(child[key], path.concat([key])) :
-                        ({[path.concat([key]).join(".")]: child[key]})
-                    );
+                .keys(child)
+                .map(key => typeof child[key] === "object" ?
+                    _flatten(child[key], path.concat([key])) :
+                    ({[path.concat([key]).join(".")]: child[key]})
+                );
         }(object));
     }
 
@@ -99,8 +99,8 @@ export default class Utils {
      */
     static humanFileSize(bytes: number, si = false, dp = 1) {
         if (bytes === undefined) {
-           // when the size is 0 it arrives as undefined here!
-           return "0B";
+            // when the size is 0 it arrives as undefined here!
+            return "0B";
         }
         const thresh = si ? 1000 : 1024;
 
@@ -210,17 +210,16 @@ export default class Utils {
         // class name
         const htmlClass = document.getElementsByTagName("html")[0].classList;
 
-        function removeClasses()
-        {
+        function removeClasses() {
             htmlClass.forEach((cls) => {
-            if (cls === "dark" || cls === "light" || cls === "syncWithSystem") {
-                htmlClass.remove(cls);
-            }
+                if (cls === "dark" || cls === "light" || cls === "syncWithSystem") {
+                    htmlClass.remove(cls);
+                }
             })
         }
         removeClasses();
 
-        if(theme === "syncWithSystem") {
+        if (theme === "syncWithSystem") {
             removeClasses();
             const systemTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
             htmlClass.add(theme, systemTheme);
@@ -235,7 +234,7 @@ export default class Utils {
         localStorage.setItem("theme", theme);
     }
 
-    static getTheme():  "light" | "dark" | undefined {
+    static getTheme(): "light" | "dark" | undefined {
         let theme = (localStorage.getItem("theme") as "syncWithSystem" | "dark" | "light" | null) ?? "light";
 
         if (theme === "syncWithSystem") {
@@ -249,12 +248,12 @@ export default class Utils {
         return localStorage.getItem("lang") || "en";
     }
 
-    static splitFirst(str: string, separator: string){
+    static splitFirst(str: string, separator: string) {
         return str.split(separator).slice(1).join(separator);
     }
 
     static asArray(objOrArray: any | any[]) {
-        if(objOrArray === undefined) {
+        if (objOrArray === undefined) {
             return [];
         }
 
@@ -262,7 +261,7 @@ export default class Utils {
     }
 
     static async copy(text: string) {
-        if(navigator.clipboard) {
+        if (navigator.clipboard) {
             await navigator.clipboard.writeText(text);
             return;
         }
@@ -316,11 +315,11 @@ export const useTheme = () => {
     return computed<"light" | "dark">(() => miscStore.theme as "light" | "dark");
 }
 
-export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>, ) {
+export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>,) {
     if (obj === undefined || obj === null) {
         return obj;
     }
-    if(obj.$ref){
+    if (obj.$ref) {
         return getValueAtJsonPath(fullSchema, obj.$ref);
     }
     return obj;
@@ -343,4 +342,12 @@ export function getValueAtJsonPath(fullSchema: Record<string, any>, path: string
     }
 
     return current;
+}
+
+export function deepEqual(x: any, y: any): boolean {
+    const ok = Object.keys, tx = typeof x, ty = typeof y;
+    return x && y && tx === "object" && tx === ty ? (
+        ok(x).length === ok(y).length &&
+        ok(x).every(key => deepEqual(x[key], y[key]))
+    ) : (x === y);
 }

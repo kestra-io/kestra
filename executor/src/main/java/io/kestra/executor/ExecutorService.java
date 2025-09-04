@@ -94,6 +94,10 @@ public class ExecutorService {
     @Named(QueueFactoryInterface.KILL_NAMED)
     protected QueueInterface<ExecutionKilled> killQueue;
 
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    private QueueInterface<LogEntry> logQueue;
+
     protected FlowMetaStoreInterface flowExecutorInterface() {
         // bean is injected late, so we need to wait
         if (this.flowExecutorInterface == null) {
@@ -124,10 +128,17 @@ public class ExecutorService {
                     executionRunning
                         .withExecution(executionRunning.getExecution().withState(State.Type.CANCELLED))
                         .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
-                case FAIL ->
-                    executionRunning
-                        .withExecution(executionRunning.getExecution().failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to concurrency limit exceeded")).getExecution())
+                case FAIL -> {
+                    var failedExecution = executionRunning.getExecution().failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to concurrency limit exceeded"));
+                    try {
+                        logQueue.emitAsync(failedExecution.getLogs());
+                    } catch (QueueException ex) {
+                        // fail silently
+                    }
+                    yield executionRunning
+                        .withExecution(failedExecution.getExecution())
                         .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
+                }
 
             };
         }

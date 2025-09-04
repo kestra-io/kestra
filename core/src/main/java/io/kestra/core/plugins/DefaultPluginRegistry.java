@@ -43,7 +43,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
         static final DefaultPluginRegistry INSTANCE = new DefaultPluginRegistry();
     }
 
-    private final Map<PluginIdentifier, PluginClassAndMetadata<? extends Plugin>> pluginClassByIdentifier = new ConcurrentHashMap<>();
+    protected final Map<PluginIdentifier, PluginClassAndMetadata<? extends Plugin>> pluginClassByIdentifier = new ConcurrentHashMap<>();
     private final Map<PluginBundleIdentifier, RegisteredPlugin> plugins = new ConcurrentHashMap<>();
     private final PluginScanner scanner = new PluginScanner(DefaultPluginRegistry.class.getClassLoader());
     private final AtomicBoolean initialized = new AtomicBoolean(false);
@@ -204,10 +204,14 @@ public class DefaultPluginRegistry implements PluginRegistry {
         lock.lock();
         try {
             plugins.put(PluginBundleIdentifier.of(plugin), plugin);
-            pluginClassByIdentifier.putAll(getPluginClassesByIdentifier(plugin));
+            registerAll(getPluginClassesByIdentifier(plugin));
         } finally {
             lock.unlock();
         }
+    }
+    
+    protected void registerAll(Map<PluginIdentifier, PluginClassAndMetadata<? extends Plugin>> plugins) {
+        pluginClassByIdentifier.putAll(plugins);
     }
 
     @SuppressWarnings("unchecked")

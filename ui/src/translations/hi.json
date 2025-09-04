@@ -175,12 +175,12 @@
     "confirm password": "पासवर्ड की पुष्टि करें",
     "confirmation": "पुष्टि",
     "contextBar": {
-      "demo": "डेमो प्राप्त करें",
+      "demo": "डेमो",
       "docs": "डॉक्स",
       "help": "मदद",
-      "issue": "समस्या खोलें",
+      "issue": "समस्या",
       "news": "समाचार",
-      "star": "रेपो को स्टार करें"
+      "star": "हमें स्टार दें"
     },
     "continue backfill": "Backfill जारी रखें",
     "continue backfills": "Backfills जारी रखें",

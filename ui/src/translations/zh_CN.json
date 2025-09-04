@@ -175,12 +175,12 @@
     "confirm password": "确认密码",
     "confirmation": "确认",
     "contextBar": {
-      "demo": "获取演示",
+      "demo": "演示",
       "docs": "文档",
       "help": "帮助",
-      "issue": "打开问题",
+      "issue": "问题",
       "news": "新闻",
-      "star": "为仓库加星"
+      "star": "点赞我们"
     },
     "continue backfill": "继续回填",
     "continue backfills": "继续回填",

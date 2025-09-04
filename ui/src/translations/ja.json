@@ -175,12 +175,12 @@
     "confirm password": "パスワードを確認",
     "confirmation": "確認",
     "contextBar": {
-      "demo": "デモを取得",
+      "demo": "デモ",
       "docs": "ドキュメント",
       "help": "ヘルプ",
-      "issue": "問題を開く",
+      "issue": "問題",
       "news": "ニュース",
-      "star": "リポジトリをスターする"
+      "star": "お気に入りに追加"
     },
     "continue backfill": "backfillを続行",
     "continue backfills": "backfillを続行",

@@ -175,12 +175,12 @@
     "confirm password": "Confirmar senha",
     "confirmation": "Confirmação",
     "contextBar": {
-      "demo": "Obter uma demonstração",
+      "demo": "Demonstração",
       "docs": "Documentos",
       "help": "Ajuda",
-      "issue": "Abrir um Issue",
+      "issue": "Problema",
       "news": "Notícias",
-      "star": "Adicione uma estrela ao repositório"
+      "star": "Nos avalie com uma estrela"
     },
     "continue backfill": "Continuar o backfill",
     "continue backfills": "Continuar backfills",

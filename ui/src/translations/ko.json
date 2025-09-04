@@ -175,12 +175,12 @@
     "confirm password": "비밀번호 확인",
     "confirmation": "확인",
     "contextBar": {
-      "demo": "데모 받기",
+      "demo": "데모",
       "docs": "문서",
       "help": "도움말",
-      "issue": "이슈 열기",
+      "issue": "문제",
       "news": "뉴스",
-      "star": "레포에 별표 추가"
+      "star": "우리를 Star 하세요"
     },
     "continue backfill": "backfill 계속",
     "continue backfills": "backfill 계속",

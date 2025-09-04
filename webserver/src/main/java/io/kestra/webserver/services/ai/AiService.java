@@ -1,6 +1,5 @@
 package io.kestra.webserver.services.ai;
 
-import com.posthog.java.PostHog;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.service.AiServices;
@@ -10,6 +9,7 @@ import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.models.ai.FlowGenerationPrompt;
+import io.kestra.webserver.services.posthog.PosthogService;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AiService<T extends AiConfiguration> implements AiServiceInterface {
-    private final PostHog postHog;
+    private final PosthogService postHogService;
     @Getter
     private final T aiConfiguration;
     private final FlowAiCopilot flowAiCopilot;
@@ -56,13 +56,13 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         final JsonSchemaGenerator jsonSchemaGenerator,
         final VersionProvider versionProvider,
         final InstanceService instanceService,
-        final PostHog postHog,
+        final PosthogService postHogService,
         final String aiProvider,
         final List<ChatModelListener> listeners,
         final T aiConfiguration
     ) {
         this.instanceUid = instanceService.fetch();
-        this.postHog = postHog;
+        this.postHogService = postHogService;
         this.aiProvider = aiProvider;
         this.listeners = listeners;
         this.aiConfiguration = aiConfiguration;
@@ -73,13 +73,13 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     public String generateFlow(String ip, FlowGenerationPrompt flowGenerationPrompt) {
         String parentSpanId = IdUtils.create();
         Map<String, String> inputState = Map.of("flowYaml", flowGenerationPrompt.flowYaml(), "userPrompt", flowGenerationPrompt.userPrompt());
-        this.postHog.capture(flowGenerationPrompt.conversationId(), "$ai_trace", Map.of(
+        this.postHogService.capture(flowGenerationPrompt.conversationId(), "$ai_trace", Map.of(
             "$ai_trace_id", flowGenerationPrompt.conversationId(),
             "$ai_span_name", "FlowGenerationSession",
             "$ai_input_state", inputState
         ));
 
-        this.postHog.capture(flowGenerationPrompt.conversationId(), "$ai_span", Map.of(
+        this.postHogService.capture(flowGenerationPrompt.conversationId(), "$ai_span", Map.of(
             "$ai_trace_id", flowGenerationPrompt.conversationId(),
             "$ai_span_id", parentSpanId,
             "$ai_span_name", "FlowGenerationAttempt",
@@ -93,8 +93,17 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             flowGenerationPrompt
         );
         metadataByConversationId.remove(flowGenerationPrompt.conversationId());
+
+        this.postHogService.capture(flowGenerationPrompt.conversationId(), "$ai_span", Map.of(
+            "$ai_trace_id", flowGenerationPrompt.conversationId(),
+            "$ai_span_id", IdUtils.create(),
+            "$ai_span_name", "FlowGenerationResult",
+            "$ai_input_state", inputState,
+            "$ai_output_state", Map.of("generatedFlow", generatedFlow)
+        ));
         return generatedFlow;
     }
 
-    public record ConversationMetadata(String conversationId, String ip, String parentSpanId) {}
+    public record ConversationMetadata(String conversationId, String ip, String parentSpanId) {
+    }
 }

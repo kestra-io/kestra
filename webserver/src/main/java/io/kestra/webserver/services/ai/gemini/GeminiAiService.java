@@ -1,6 +1,5 @@
 package io.kestra.webserver.services.ai.gemini;
 
-import com.posthog.java.PostHog;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
@@ -8,7 +7,8 @@ import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
-import io.kestra.webserver.services.ai.*;
+import io.kestra.webserver.services.ai.AiService;
+import io.kestra.webserver.services.posthog.PosthogService;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +22,8 @@ import java.util.List;
 public class GeminiAiService extends AiService<GeminiConfiguration> {
     public static final String TYPE = "gemini";
 
-    public GeminiAiService(PluginRegistry pluginRegistry, JsonSchemaGenerator jsonSchemaGenerator, VersionProvider versionProvider, InstanceService instanceService, PostHog postHog, List<ChatModelListener> listeners, GeminiConfiguration geminiConfiguration) {
-        super(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, postHog, TYPE, listeners, geminiConfiguration);
+    public GeminiAiService(PluginRegistry pluginRegistry, JsonSchemaGenerator jsonSchemaGenerator, VersionProvider versionProvider, InstanceService instanceService, PosthogService posthogService, List<ChatModelListener> listeners, GeminiConfiguration geminiConfiguration) {
+        super(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, TYPE, listeners, geminiConfiguration);
     }
 
     public ChatModel chatModel(List<ChatModelListener> listeners) {

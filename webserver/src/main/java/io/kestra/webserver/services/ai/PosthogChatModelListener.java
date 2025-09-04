@@ -1,7 +1,6 @@
 package io.kestra.webserver.services.ai;
 
 import com.google.common.collect.Maps;
-import com.posthog.java.PostHog;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -10,6 +9,8 @@ import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.listener.ChatModelResponseContext;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.webserver.services.posthog.PosthogService;
 import io.micrometer.core.instrument.Clock;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -23,7 +24,7 @@ import java.util.Optional;
 @Slf4j
 public class PosthogChatModelListener implements ChatModelListener {
     @Inject
-    private PostHog postHog;
+    private PosthogService posthogService;
 
     @Override
     public void onResponse(ChatModelResponseContext responseContext) {
@@ -75,9 +76,9 @@ public class PosthogChatModelListener implements ChatModelListener {
     private void send(Map<Object, Object> attributes, Map<String, Object> properties) {
         properties.put("$ai_parent_id", attributes.get(MetadataAppenderChatModelListener.PARENT_ID).toString());
         properties.put("$ai_span_name", attributes.get(MetadataAppenderChatModelListener.SPAN_NAME));
-        properties.put("$ai_span_id", attributes.get(MetadataAppenderChatModelListener.SPAN_ID));
+        properties.put("$ai_span_id", IdUtils.create());
 
-        postHog.capture(
+        posthogService.capture(
             attributes.get(MetadataAppenderChatModelListener.INSTANCE_UID).toString(),
             "$ai_generation",
             properties

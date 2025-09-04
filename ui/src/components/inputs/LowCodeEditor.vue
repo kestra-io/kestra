@@ -91,7 +91,6 @@
 <script lang="ts" setup>
     // Core
     import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
-    import type {Ref} from "vue";
 
     import {useI18n} from "vue-i18n";
     import {useStorage} from "@vueuse/core";
@@ -121,7 +120,7 @@
     const vueflowId = ref(Math.random().toString());
     const {fitView} = useVueFlow(vueflowId.value);
 
-    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref(null)) as Ref<any>;
+    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
 
     const executionsStore = useExecutionsStore();
     const playgroundStore = usePlaygroundStore();

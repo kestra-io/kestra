@@ -113,7 +113,7 @@
     import {SECTIONS} from "@kestra-io/ui-libs";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
-    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
+    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys";
     import {useCoreStore} from "../../stores/core";
     import {usePluginsStore} from "../../stores/plugins";
     import {useExecutionsStore} from "../../stores/executions";

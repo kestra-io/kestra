@@ -168,7 +168,7 @@
     import {nextTick, ref, watch, provide, computed} from "vue";
     import {useI18n} from "vue-i18n";
 
-    import {VISIBLE_PANELS_INJECTION_KEY} from "./code/injectionKeys";
+    import {VISIBLE_PANELS_INJECTION_KEY} from "./no-code/injectionKeys";
     import {CODE_PREFIX} from "./flows/useCodePanels";
     import {useKeyShortcuts} from "../utils/useKeyShortcuts";
 

@@ -13,8 +13,9 @@ import NoCode from "../../../components/code/NoCode.vue";
 import LowCodeEditorWrapper from "../../../components/inputs/LowCodeEditorWrapper.vue";
 import PluginDocumentationWrapper from "../../../components/plugins/PluginDocumentationWrapper.vue";
 import BlueprintsWrapper from "../../../components/flows/blueprints/BlueprintsWrapper.vue";
+import {storageKeys} from "../../../utils/constants";
 
-export const DEFAULT_ACTIVE_TABS = ["code", "doc"]
+export const DEFAULT_ACTIVE_TABS = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE" ? ["nocode", "doc"] : ["code", "doc"]
 
 export const EDITOR_ELEMENTS = [
     {

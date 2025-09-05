@@ -40,6 +40,7 @@
                 class="position-absolute prompt"
                 @close="aiAgentOpened = false"
                 :flow="editorContent"
+                :conversation-id="conversationId"
                 @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
             />
         </Transition>
@@ -60,6 +61,7 @@
     import {EditorTabProps, useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {useNamespacesStore} from "override/stores/namespaces";
+    import {useMiscStore} from "override/stores/misc";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
 
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -70,6 +72,7 @@
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
+    import Utils from "../../utils/utils.ts";
 
     const route = useRoute();
     const router = useRouter();
@@ -117,8 +120,10 @@
         const content = await namespacesStore.readFile({namespace: fileNamespace.toString(), path: props.path ?? ""})
         editorStore.setTabContent({path: props.path, content})
     }
+    
 
     onMounted(() => {
+        loadPluginsHash();
         loadFile();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
@@ -142,6 +147,7 @@
     const isReadOnly = computed(() => flowStore.flow?.deleted || !flowStore.isAllowedEdit || flowStore.readOnlySystemLabel);
 
     const timeout = ref<any>(null);
+    const hash = ref<any>(null);
 
     const editorContent = computed(() => {
         return draftSource.value ?? source.value;
@@ -149,7 +155,14 @@
 
     const pluginsStore = usePluginsStore();
     const namespacesStore = useNamespacesStore();
+    const miscStore = useMiscStore();
 
+    function loadPluginsHash() {
+        miscStore.loadConfigs().then(config => {
+            hash.value = config.pluginsHash;
+        });
+    }
+    
     function editorUpdate(newValue: string){
         if (editorContent.value === newValue) {
             return;
@@ -207,7 +220,8 @@
                             : closest
                     , null as any);
 
-        const result = selectedElement ? getElementFromRange(selectedElement) : undefined;
+        let result = selectedElement ? getElementFromRange(selectedElement) : undefined;
+        result = {...result, hash: hash.value};
         pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
     };
 
@@ -264,9 +278,12 @@
         flowStore.executeFlow = true;
     };
 
+    const conversationId = ref<string>(Utils.uid());
+
     function acceptDraft() {
         const accepted = draftSource.value;
         draftSource.value = undefined;
+        conversationId.value = Utils.uid();
         editorUpdate(accepted!);
     }
 

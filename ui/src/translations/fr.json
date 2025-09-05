@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Remarque : Actuellement, seul Gemini est pris en charge comme fournisseur d'IA.\n\nRedémarrez votre instance Kestra après avoir enregistré la configuration.",
+          "footer": "Remarque : Pour le moment, seul Gemini est pris en charge comme fournisseur d'IA.\n\nRedémarrez votre instance Kestra après avoir enregistré la configuration.",
           "header": "<b>AI Copilot n'a pas encore été configuré.</b>\n\nPour activer AI Copilot, ajoutez l'extrait suivant à votre fichier de configuration de l'instance Kestra (par exemple, <code>application.yml</code>), en remplaçant <code>geminiApiKey</code> par votre clé réelle :"
         },
         "generating": "Génération du YAML de flow pour vous...",
@@ -175,12 +175,12 @@
     "confirm password": "Confirmer le mot de passe",
     "confirmation": "Confirmation",
     "contextBar": {
-      "demo": "Obtenez une démo",
+      "demo": "Démo",
       "docs": "Docs",
       "help": "Aide",
-      "issue": "Ouvrir un Issue",
+      "issue": "Problème",
       "news": "Nouvelles",
-      "star": "Ajoutez une étoile au repo"
+      "star": "Ajoutez-nous aux favoris"
     },
     "continue backfill": "Continuer le backfill",
     "continue backfills": "Continuer les backfills",

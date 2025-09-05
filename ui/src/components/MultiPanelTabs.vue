@@ -1,10 +1,10 @@
 <template>
-    <el-splitter class="default-theme" v-bind="$attrs" @resize="onResize">
+    <el-splitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
         <el-splitter-panel
             v-for="(panel, panelIndex) in panels"
             min="10%"
             :key="panelIndex"
-            :size="panel.size"
+            :size="panelSizes[panelIndex] ?? panel.size"
             @dragover.prevent="(e:DragEvent) => panelDragOver(e, panelIndex)"
             @dragleave.prevent="panelDragLeave"
             @drop.prevent="(e:DragEvent) => panelDrop(e, panelIndex)"
@@ -172,7 +172,6 @@
     import {CODE_PREFIX} from "./flows/useCodePanels";
     import {useKeyShortcuts} from "../utils/useKeyShortcuts";
 
-
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
     import DragVertical from "vue-material-design-icons/DragVertical.vue";
@@ -220,9 +219,9 @@
     }
 
     export interface Panel {
-        size?: number;
+        size: number;
         tabs: Tab[],
-        dragover?:boolean,
+        dragover?: boolean,
         activeTab: Tab,
     }
 
@@ -271,11 +270,22 @@
     );
 
     function onResize(_index: number, sizes: number[]) {
+        const sumSizes = sizes.reduce((a, b) => a + b, 0) / 100;
+
         // Element Plus resize event provides sizes array and index of the resized panel
         for (let i = 0; i < panels.value.length && i < sizes.length; i++) {
-            panels.value[i].size = sizes[i];
+            panels.value[i].size = sizes[i] / sumSizes;
         }
     }
+
+    // let the panelSizes be dealt with by the el-splitter once set
+    // by the prop
+    const panelSizes = computed<number[]>((prevValue) => {
+        if(prevValue?.length === panels.value.length){
+            return prevValue
+        }
+        return panels.value.map(panel => panel.size);
+    });
 
     function dragstart(panelIndex: number, tabId: string) {
         dragging.value = true;
@@ -453,6 +463,8 @@
         }
     }
 
+    const defaultSize = computed(() => panels.value.reduce((acc, panel) => acc + panel.size, 0));
+
     function newPanelDrop(_e: DragEvent, direction: "left" | "right") {
         if (!movedTabInfo.value) return;
 
@@ -461,7 +473,8 @@
         // Create a new panel with the dragged tab
         const newPanel = {
             tabs: [movedTab],
-            activeTab: movedTab
+            activeTab: movedTab,
+            size: defaultSize.value
         };
 
         // Add the new panel based on the drop direction, not relative to original panel
@@ -511,17 +524,17 @@
         const panel = panels.value[panelIndex];
         const tabIndex = panel.tabs.findIndex((t) => t.value === tab.value);
         panel.tabs.splice(tabIndex, 1);
-        if(panel.activeTab.value === tab.value){
-            panel.activeTab = panel.tabs[0];
+        if (panel.activeTab.value === tab.value) {
+            panel.activeTab = panel.tabs[tabIndex - 1] ?? panel.tabs[0];
         }
         emit("removeTab", tab.value)
     }
 
     watch(panels, () => {
         let index = 0;
-        for(const panel of panels.value){
-            if(panel.tabs.length === 0){
-                panels.value.splice(index, 1)
+        for (const panel of panels.value) {
+            if (panel.tabs.length === 0) {
+                panels.value.splice(index, 1);
             }
             index++;
         }
@@ -531,7 +544,8 @@
         const panel = panels.value[panelIndex];
         const newPanel = {
             tabs: [panel.activeTab],
-            activeTab: panel.activeTab
+            activeTab: panel.activeTab,
+            size: defaultSize.value
         }
         panels.value.splice(panelIndex + 1, 0, newPanel)
 

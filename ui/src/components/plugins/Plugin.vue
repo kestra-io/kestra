@@ -122,12 +122,16 @@
                 isLoading: false,
                 version: undefined,
                 pluginType: undefined,
-                filteredPlugins: undefined
+                filteredPlugins: undefined,
+                hash: undefined
             };
         },
         created() {
-            this.loadToc();
-            this.loadPlugin();
+            this.miscStore.loadConfigs().then(config => {
+                this.hash = config.pluginsHash;
+                this.loadToc();
+                this.loadPlugin();
+            });
         },
         watch: {
             $route: {
@@ -167,7 +171,7 @@
                 if (this.$route.params.version) {
                     this.version = this.$route.params.version;
                 }
-                const params = {...this.$route.params};
+                const params = {...this.$route.params, hash: this.hash};
                 if (params.cls) {
                     this.isLoading = true;
                     Promise.all([

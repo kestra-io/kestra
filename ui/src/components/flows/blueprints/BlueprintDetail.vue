@@ -1,8 +1,8 @@
 <template>
     <top-nav-bar v-if="!embed && blueprint" :title="blueprint.title" :breadcrumb="breadcrumb" v-loading="!blueprint">
         <template #additional-right>
-            <ul v-if="userCanCreateFlow">
-                <router-link :to="toEditor()">
+            <ul v-if="userCanCreate">
+                <router-link :to="editorRoute">
                     <el-button type="primary" v-if="!embed">
                         {{ $t('use') }}
                     </el-button>
@@ -84,7 +84,6 @@
     </section>
 </template>
 <script setup>
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import Editor from "../../inputs/Editor.vue";
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
@@ -94,13 +93,13 @@
 <script>
     import Markdown from "../../layout/Markdown.vue";
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
-    import permission from "../../../models/permission";
-    import action from "../../../models/action";
     import {mapStores} from "pinia";
     import {usePluginsStore} from "../../../stores/plugins";
     import {useBlueprintsStore} from "../../../stores/blueprints";
     import {useAuthStore} from "override/stores/auth"
     import {useFlowStore} from "../../../stores/flow";
+    import {canCreate} from "override/composables/blueprintsPermissions.js";
+    import {parse as parseFlow} from "@kestra-io/ui-libs/flow-yaml-utils";
 
     export default {
         components: {Markdown, CopyToClipboard},
@@ -156,18 +155,12 @@
                         }
                     })
                 }
-            },
-            toEditor() {
-                const query = this.blueprintKind === "flow" ?
-                    {blueprintId: this.blueprintId, blueprintSource: this.$route.params.tab} :
-                    {blueprintId: this.blueprintId};
-                return {name: `${this.blueprintKind}s/create`, query};
             }
         },
         async created() {
             this.blueprintsStore.getBlueprint({
                 type: this.combinedView ? this.blueprintType : this.$route.params.tab,
-                kind: this.blueprintKind,
+                kind: this.kind,
                 id: this.blueprintId
             })
                 .then(data => {
@@ -177,7 +170,7 @@
                             if (this.$route.params.tab === "community") {
                                 this.blueprintsStore.getBlueprintGraph({
                                     type: this.$route.params.tab,
-                                    kind: this.blueprintKind,
+                                    kind: this.kind,
                                     id: this.blueprintId,
                                     validateStatus: (status) => {
                                         return status === 200;
@@ -205,18 +198,28 @@
         },
         computed: {
             ...mapStores(usePluginsStore, useBlueprintsStore, useFlowStore, useAuthStore),
-            userCanCreateFlow() {
-                return this.authStore.user?.hasAnyAction(permission.FLOW, action.CREATE);
+            userCanCreate() {
+                return canCreate(this.kind);
             },
             parsedFlow() {
                 return {
-                    ...YAML_UTILS.parse(this.blueprint.source),
+                    ...parseFlow(this.blueprint.source),
                     source: this.blueprint.source
                 }
             },
-            blueprintKind() {
-                return this.kind;
-            },
+            editorRoute() {
+                let additionalQuery = {};
+                if (this.kind === "flow") {
+                    additionalQuery.blueprintSource = this.$route.params.tab;
+                } else if (this.kind === "dashboard") {
+                    additionalQuery = {
+                        name: "home",
+                        params: this.$route.params.tenant === undefined ? undefined : JSON.stringify({tenant: this.$route.params.tenant}),
+                    };
+                }
+
+                return {name: `${this.kind}s/create`, params: {tenant: this.$route.params.tenant}, query: {blueprintId: this.blueprintId, ...additionalQuery}};
+            }
         },
     };
 </script>

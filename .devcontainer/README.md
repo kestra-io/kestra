@@ -25,7 +25,7 @@ In the meantime, you can move onto the next step...
 
 ### Requirements
 
-- Java 17 or Java 21 (LTS versions).
+- Java 21 (LTS versions).
   > ⚠️ Java 24 and above are not supported yet and will fail with `invalid source release: 21`.
 - Gradle (comes with wrapper `./gradlew`)
 - Docker (optional, for running Kestra in containers)

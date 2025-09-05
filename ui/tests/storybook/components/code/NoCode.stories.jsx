@@ -1,4 +1,4 @@
-import NoCode from "../../../../src/components/code/NoCode.vue";
+import NoCode from "../../../../src/components/no-code/NoCode.vue";
 import InitialSchema from "../../../../src/stores/flow-schema.json";
 import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";

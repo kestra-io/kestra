@@ -193,7 +193,7 @@
 </script>
 <style scoped lang="scss">
 div.line {
-    position: relative; //to allow `clipboard` button to use absolute positioning
+    position: relative; //to allow `clipboard` button to correctly use absolute positioning
     cursor: text;
     white-space: pre-wrap;
     word-break: break-all;

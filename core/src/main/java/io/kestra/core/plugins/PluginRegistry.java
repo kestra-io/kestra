@@ -3,6 +3,7 @@ package io.kestra.core.plugins;
 import io.kestra.core.models.Plugin;
 
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -138,10 +139,9 @@ public interface PluginRegistry {
         
         for (RegisteredPlugin plugin : plugins()) {
             Optional.ofNullable(plugin.getExternalPlugin())
-                .map(ExternalPlugin::getLocation)
-                .map(URL::getPath)
-                .ifPresent(path -> {
-                    byte[] bytes = plugin.path().getBytes();
+                .map(ExternalPlugin::getCrc32)
+                .ifPresent(checksum -> {
+                    byte[] bytes = ByteBuffer.allocate(Long.BYTES).putLong(checksum).array();
                     crc32.update(bytes, 0, bytes.length);
                 });
         }

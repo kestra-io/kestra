@@ -35,20 +35,20 @@
     import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import TaskObject from "../code/components/tasks/TaskObject.vue";
-    import PluginSelect from "../../components/plugins/PluginSelect.vue";
-    import {NoCodeElement, Schemas} from "../code/utils/types";
+    import TaskObject from "./tasks/TaskObject.vue";
+    import PluginSelect from "../../plugins/PluginSelect.vue";
+    import {NoCodeElement, Schemas} from "../utils/types";
     import {
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
-    } from "../code/injectionKeys";
-    import {removeNullAndUndefined} from "../code/utils/cleanUp";
-    import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
-    import {usePlaygroundStore} from "../../stores/playground";
-    import {getValueAtJsonPath, resolve$ref} from "../../utils/utils";
-    import PlaygroundRunTaskButton from "../inputs/PlaygroundRunTaskButton.vue";
+    } from "../injectionKeys";
+    import {removeNullAndUndefined} from "../utils/cleanUp";
+    import {removeRefPrefix, usePluginsStore} from "../../../stores/plugins";
+    import {usePlaygroundStore} from "../../../stores/playground";
+    import {getValueAtJsonPath, resolve$ref} from "../../../utils/utils";
+    import PlaygroundRunTaskButton from "../../inputs/PlaygroundRunTaskButton.vue";
 
     const {t} = useI18n();
 

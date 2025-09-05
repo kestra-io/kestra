@@ -22,7 +22,7 @@
         REF_PATH_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY,
     } from "../injectionKeys";
-    import TaskEditor from "../../../components/flows/TaskEditor.vue";
+    import TaskEditor from "../components/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import {useFlowStore} from "../../../stores/flow";
 

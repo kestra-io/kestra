@@ -642,6 +642,7 @@
                 return  [
                     {value: "YYYY-MM-DDTHH:mm:ssZ"},
                     {value: "YYYY-MM-DD hh:mm:ss A"},
+                    {value: "YYYY-MM-DD HH:mm:ss.SSS"},
                     {value: "DD/MM/YYYY HH:mm:ss"},
                     {value: "lll"},
                     {value: "llll"},

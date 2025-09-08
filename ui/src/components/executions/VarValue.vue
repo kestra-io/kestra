@@ -19,6 +19,7 @@
     <el-button-group v-else-if="isURI(value)">
         <el-button
             type="primary"
+            tag="a"
             size="small"
             :href="value"
             target="_blank"

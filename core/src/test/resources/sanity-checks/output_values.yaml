@@ -1,5 +1,5 @@
 id: output_values
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 variables:
   var1: "myvaribale"

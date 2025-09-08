@@ -6,6 +6,7 @@
     />
 
     <Action
+        v-if="tab === 'kv'"
         :label="t('kv.inherited')"
         :icon="FamilyTree"
         @click="namespacesStore.inheritedKVModalVisible = true"

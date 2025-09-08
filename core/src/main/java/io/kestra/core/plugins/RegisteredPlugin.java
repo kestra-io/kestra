@@ -308,6 +308,10 @@ public class RegisteredPlugin {
         }
         return null;
     }
+    
+    public long crc32() {
+        return Optional.ofNullable(externalPlugin).map(ExternalPlugin::getCrc32).orElse(-1L);
+    }
 
     @Override
     public String toString() {

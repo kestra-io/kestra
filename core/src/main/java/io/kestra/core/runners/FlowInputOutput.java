@@ -382,6 +382,15 @@ public class FlowInputOutput {
             .stream()
             .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue().value()), HashMap::putAll)
         );
+        // Hack: Pre-inject all inputs that have a default value with 'null' to prevent
+        // RunContextFactory from attempting to render them when absent, which could
+        // otherwise cause an exception if a Pebble expression is involved.
+        List<Input<?>> inputs = Optional.ofNullable(flow).map(FlowInterface::getInputs).orElse(List.of());
+        for (Input<?> input : inputs) {
+            if (input.getDefaults() != null && !flattenInputs.containsKey(input.getId())) {
+                flattenInputs.put(input.getId(), null);
+            }
+        }
         return runContextFactory.of(flow, execution, vars -> vars.withInputs(flattenInputs));
     }
 

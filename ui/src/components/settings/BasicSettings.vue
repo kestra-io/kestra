@@ -276,6 +276,7 @@
     import Row from "./components/block/Row.vue"
     import Column from "./components/block/Column.vue"
     import {useAuthStore} from "override/stores/auth"
+    import {useFlowStore} from "../../stores/flow"
 
     export const DATE_FORMAT_STORAGE_KEY = "dateFormat";
     export const TIMEZONE_STORAGE_KEY = "timezone";
@@ -606,7 +607,7 @@
             document.removeEventListener("click", this.handleNavigationClick, true);
         },
         computed: {
-            ...mapStores(useLayoutStore, useMiscStore, useTemplateStore, useAuthStore),
+            ...mapStores(useLayoutStore, useMiscStore, useTemplateStore, useAuthStore, useFlowStore),
             mappedTheme() {
                 return this.miscStore.theme;
             },

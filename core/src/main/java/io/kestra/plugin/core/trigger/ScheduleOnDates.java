@@ -46,7 +46,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     private final Duration interval = null;
 
     @Schema(
-        title = "The inputs to pass to the scheduled flow."
+        title = "The inputs to pass to the scheduled flow"
     )
     @PluginProperty(dynamic = true)
     private Map<String, Object> inputs;
@@ -63,7 +63,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     private Property<List<ZonedDateTime>> dates;
 
     @Schema(
-        title = "What to do in case of missed schedules",
+        title = "Action to take in the case of missed schedules",
         description = "`ALL` will recover all missed schedules, `LAST`  will only recovered the last missing one, `NONE` will not recover any missing schedule.\n" +
             "The default is `ALL` unless a different value is configured using the global plugin configuration."
     )

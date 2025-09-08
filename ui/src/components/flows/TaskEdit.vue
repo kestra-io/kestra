@@ -89,7 +89,7 @@
     import CodeTags from "vue-material-design-icons/CodeTags.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Editor from "../inputs/Editor.vue";
-    import TaskEditor from "./TaskEditor.vue";
+    import TaskEditor from "../no-code/components/TaskEditor.vue";
     import Drawer from "../Drawer.vue";
     import {canSaveFlowTemplate} from "../../utils/flowTemplate";
     import Markdown from "../layout/Markdown.vue";

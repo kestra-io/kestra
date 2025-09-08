@@ -122,11 +122,9 @@
                 return this.stillHaveDataToFetch || this.tableView === undefined ? "100%" : `min(${this.tableView.scrollHeight}px, 100%)`;
             },
             async infiniteScrollLoadWithDisableHandling() {
-                let load
-                if (this.infiniteScrollLoad) {
-                    do {
-                        load = await this.infiniteScrollLoad();
-                    } while (load !== undefined && load.length === 0)
+                let load = await this.infiniteScrollLoad();
+                while (load !== undefined && load.length === 0) {
+                    load = await this.infiniteScrollLoad();
                 }
 
                 this.infiniteScrollDisabled = load === undefined;

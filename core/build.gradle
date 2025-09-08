@@ -42,10 +42,10 @@ dependencies {
 
     // plugins
     implementation 'org.apache.maven.resolver:maven-resolver-impl'
-    implementation 'org.apache.maven.resolver:maven-resolver-supplier'
+    implementation 'org.apache.maven.resolver:maven-resolver-supplier-mvn3'
     implementation 'org.apache.maven.resolver:maven-resolver-connector-basic'
     implementation 'org.apache.maven.resolver:maven-resolver-transport-file'
-    implementation 'org.apache.maven.resolver:maven-resolver-transport-http'
+    implementation 'org.apache.maven.resolver:maven-resolver-transport-apache'
 
     // scheduler
     implementation group: 'com.cronutils', name: 'cron-utils'
@@ -74,6 +74,9 @@ dependencies {
     testImplementation project(':repository-memory')
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
+    testImplementation project(':worker')
+    testImplementation project(':scheduler')
+    testImplementation project(':executor')
 
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.micronaut:micronaut-http-server-netty"

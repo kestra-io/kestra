@@ -4,11 +4,10 @@ import permission from "../models/permission";
 import action from "../models/action";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import Utils from "../utils/utils";
-import {editorViewTypes} from "../utils/constants";
+import {editorViewTypes, storageKeys} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
 import {useEditorStore} from "./editor";
-
 import {defineStore} from "pinia";
 import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
 import {Store, useStore} from "vuex";
@@ -18,6 +17,7 @@ import {globalI18n} from "../translations/i18n";
 import {transformResponse} from "../components/dependencies/composables/useDependencies";
 import {useNamespacesStore} from "override/stores/namespaces";
 import {useAuthStore} from "override/stores/auth";
+import {useRoute} from "vue-router";
 
 const textYamlHeader = {
     headers: {
@@ -130,6 +130,13 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     const namespaceStore = useNamespacesStore()
+
+    const route = useRoute();
+
+    const getNamespace = () => {
+        const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
+        return route.query.namespace || defaultNamespace || "company.team";
+    }
 
     async function save({content, namespace}: { content?: string, namespace?: string }) {
         const editorStore = useEditorStore()
@@ -932,5 +939,6 @@ function deleteFlowAndDependencies() {
         loadFlowAggregatedMetrics,
         loadTaskAggregatedMetrics,
         loadTasksWithMetrics,
+        getNamespace,
     }
 })

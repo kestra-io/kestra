@@ -54,7 +54,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 )
 public class Log extends Task implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "One or more message(s) to be sent to the backend as logs.",
+        title = "One or more message(s) to be sent to the backend as logs",
         description = "It can be a string or an array of strings.",
         oneOf = {
             String.class,

@@ -33,7 +33,7 @@
         FULL_SCHEMA_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
-    } from "../code/injectionKeys";
+    } from "../no-code/injectionKeys";
     import {getValueAtJsonPath} from "../../utils/utils";
 
     const pluginsStore = usePluginsStore();

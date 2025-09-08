@@ -5,12 +5,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.reporter.Reportable;
 import io.kestra.core.reporter.reports.FeatureUsageReport;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.services.InstanceService;
+import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthService;
@@ -26,11 +28,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Value;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -96,6 +94,12 @@ public class MiscController {
     @io.micronaut.context.annotation.Value("${kestra.hidden-labels.prefixes:}")
     private List<String> hiddenLabelsPrefixes;
 
+    @Inject
+    private PluginRegistry pluginRegistry;
+
+    @Inject
+    protected EditionProvider editionProvider;
+
 
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
@@ -104,7 +108,7 @@ public class MiscController {
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
             .uuid(instanceService.fetch())
-            .edition(Edition.OSS)
+            .edition(editionProvider.get())
             .version(versionProvider.getVersion())
             .commitId(versionProvider.getRevision())
             .commitDate(versionProvider.getDate())
@@ -122,7 +126,8 @@ public class MiscController {
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .resourceToFilters(QueryFilter.Resource.asResourceList())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
-            .url(kestraUrl);
+            .url(kestraUrl)
+            .pluginsHash(pluginRegistry.hash());
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -134,11 +139,6 @@ public class MiscController {
         }
 
         return builder.build();
-    }
-
-    public enum Edition {
-        OSS,
-        EE
     }
 
     @Get("/{tenant}/usages/all")
@@ -180,7 +180,7 @@ public class MiscController {
 
         String version;
 
-        Edition edition;
+        EditionProvider.Edition edition;
 
         String commitId;
 
@@ -216,6 +216,8 @@ public class MiscController {
         Boolean isAiEnabled;
 
         Boolean isBasicAuthInitialized;
+
+        Long pluginsHash;
     }
 
     @Value

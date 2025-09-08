@@ -28,6 +28,7 @@
                     :schema="pluginsStore.editorPlugin.schema"
                     :pluginType="pluginsStore.editorPlugin.cls"
                     :forceIncludeProperties="pluginsStore.forceIncludeProperties"
+                    noUrlChange
                 >
                     <template #markdown="{content}">
                         <Markdown font-size-var="font-size-base" :source="content" />

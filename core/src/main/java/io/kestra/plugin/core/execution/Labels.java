@@ -36,7 +36,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Allow to add or overwrite labels for the current execution at runtime.",
+    title = "Add or overwrite labels for the current execution at runtime.",
     description = "Trying to pass a system label (a label starting with `system.`) will fail the task."
 )
 @Plugin(
@@ -76,7 +76,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @Schema(
-        title = "Labels to add to the current execution.",
+        title = "Labels to add to the current execution",
         description = "The value should result in a list of labels or a labelKey:labelValue map",
         oneOf = {
             String.class,

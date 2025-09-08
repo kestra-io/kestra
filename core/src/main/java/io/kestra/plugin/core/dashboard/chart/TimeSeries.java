@@ -29,7 +29,7 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Display a chart with Executions over the last week.",
             full = true,
-            code = { """    
+            code = { """
                 charts:
                   - id: executions_timeseries
                     type: io.kestra.plugin.core.dashboard.chart.TimeSeries

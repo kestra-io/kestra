@@ -651,10 +651,6 @@
     }
 </script>
 
-<style scoped lang="scss">
-@import "../code/styles/code.scss";
-</style>
-
 <style lang="scss">
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 @import "../../styles/layout/root-dark.scss";

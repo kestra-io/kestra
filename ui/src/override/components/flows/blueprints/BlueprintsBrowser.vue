@@ -108,7 +108,7 @@
                                         class="copy-button p-2"
                                     />
                                 </el-tooltip>
-                                <el-button v-else type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                                <el-button v-else-if="userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                     {{ $t('use') }}
                                 </el-button>
                             </div>
@@ -129,8 +129,6 @@
     import DataTableActions from "../../../../mixins/dataTableActions";
     import DataTable from "../../../../components/layout/DataTable.vue";
     import RestoreUrl from "../../../../mixins/restoreUrl";
-    import permission from "../../../../models/permission";
-    import action from "../../../../models/action";
     import Utils from "../../../../utils/utils";
     import Errors from "../../../../components/errors/Errors.vue";
     import {editorViewTypes} from "../../../../utils/constants";
@@ -140,6 +138,7 @@
     import {useCoreStore} from "../../../../stores/core";
     import {useDocStore} from "../../../../stores/doc";
     import {useAuthStore} from "override/stores/auth";
+    import {canCreate} from "override/composables/blueprintsPermissions.js";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
@@ -194,16 +193,8 @@
             },
             async blueprintToEditor(blueprintId) {
                 localStorage.setItem(editorViewTypes.STORAGE_KEY, editorViewTypes.SOURCE_TOPOLOGY);
-                const query = this.blueprintKind === "flow" ?
-                    {blueprintId: blueprintId, blueprintSource: this.blueprintType} :
-                    {blueprintId: blueprintId};
-                this.$router.push({
-                    name: `${this.blueprintKind}s/create`,
-                    params: {
-                        tenant: this.$route.params.tenant
-                    },
-                    query: query
-                });
+
+                this.$router.push(this.editorRoute(blueprintId));
             },
             goToDetail(blueprintId) {
                 if (this.embed) {
@@ -278,13 +269,26 @@
                 this.ready = false;
                 this.selectedTag = 0;
                 this.load(this.onDataLoaded);
+            },
+            editorRoute(blueprintId) {
+                let additionalQuery = {};
+                if (this.blueprintKind === "flow") {
+                    additionalQuery.blueprintSource = this.blueprintType;
+                } else if (this.blueprintKind === "dashboard") {
+                    additionalQuery = {
+                        name: "home",
+                        params: this.$route.params.tenant === undefined ? undefined : JSON.stringify({tenant: this.$route.params.tenant}),
+                    };
+                }
+
+                return {name: `${this.blueprintKind}s/create`, params: {tenant: this.$route.params.tenant}, query: {blueprintId, ...additionalQuery}};
             }
         },
         computed: {
             ...mapStores(usePluginsStore, useBlueprintsStore, useCoreStore, useDocStore, useAuthStore),
-            userCanCreateFlow() {
-                return this.authStore.user.hasAnyAction(permission.FLOW, action.CREATE);
-            },
+            userCanCreate() {
+                return canCreate(this.blueprintKind);
+            }
         },
         watch: {
             $route(newValue, oldValue) {

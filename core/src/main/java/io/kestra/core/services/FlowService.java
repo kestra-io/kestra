@@ -408,7 +408,7 @@ public class FlowService {
         return latestFlows.values().stream().filter(flow -> !flow.isDeleted());
     }
 
-    protected boolean removeUnwanted(Flow f, Execution execution) {
+    public boolean removeUnwanted(Flow f, Execution execution) {
         // we don't allow recursive
         return !f.uidWithoutRevision().equals(FlowId.uidWithoutRevision(execution));
     }

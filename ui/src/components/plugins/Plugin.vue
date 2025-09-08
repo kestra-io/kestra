@@ -59,6 +59,7 @@
                         :schema="pluginsStore.plugin.schema"
                         :propsInitiallyExpanded="true"
                         :pluginType="pluginType"
+                        noUrlChange
                     >
                         <template #markdown="{content}">
                             <Markdown font-size-var="font-size-base" :source="content" />
@@ -121,12 +122,16 @@
                 isLoading: false,
                 version: undefined,
                 pluginType: undefined,
-                filteredPlugins: undefined
+                filteredPlugins: undefined,
+                hash: undefined
             };
         },
         created() {
-            this.loadToc();
-            this.loadPlugin();
+            this.miscStore.loadConfigs().then(config => {
+                this.hash = config.pluginsHash;
+                this.loadToc();
+                this.loadPlugin();
+            });
         },
         watch: {
             $route: {
@@ -166,7 +171,7 @@
                 if (this.$route.params.version) {
                     this.version = this.$route.params.version;
                 }
-                const params = {...this.$route.params};
+                const params = {...this.$route.params, hash: this.hash};
                 if (params.cls) {
                     this.isLoading = true;
                     Promise.all([

@@ -1,8 +1,13 @@
 <template>
-    <Empty v-if="!loading && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
+    <div v-if="loading" class="loading-state" v-loading="loading">
+        <div class="loading-content">
+            Loading dependencies...
+        </div>
+    </div>
+    <Empty v-else-if="!loading && getElements().length === 0" :type="`dependencies.${SUBTYPE}`" />
     <el-splitter v-else class="dependencies">
         <el-splitter-panel id="graph" v-bind="PANEL">
-            <div v-loading="loading" ref="container" />
+            <div ref="container" />
 
             <div class="controls">
                 <el-button
@@ -117,5 +122,19 @@
         flex-direction: column;
         height: 100%;
     }
+}
+
+// css added to avoid blinking hence show some loading components here
+.loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 135px);
+    width: 100%;
+}
+
+.loading-content {
+    text-align: center;
+    color: var(--ks-content-secondary-color);
 }
 </style>

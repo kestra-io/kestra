@@ -93,14 +93,14 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 public class Switch extends Task implements FlowableTask<Switch.Output> {
     @NotNull
     @Schema(
-        title = "The value to be evaluated."
+        title = "The value to be evaluated"
     )
     private Property<String> value;
 
     // @FIXME: @Valid break on io.micronaut.validation.validator.DefaultValidator#cascadeToOne with "Cannot validate java.util.ArrayList"
     // @Valid
     @Schema(
-        title = "The map of keys and a list of tasks to be executed if the conditional `value` matches the key."
+        title = "The map of keys and a list of tasks to be executed if the conditional `value` matches the key"
     )
     @PluginProperty
     private Map<String, List<Task>> cases;

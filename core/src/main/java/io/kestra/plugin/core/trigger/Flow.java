@@ -236,9 +236,9 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Schema(
         title = "Pass upstream flow's outputs to inputs of the current flow.",
         description = """
-            The inputs allow you to pass data object or a file to the downstream flow as long as those outputs are defined on the flow-level in the upstream flow.
+            The inputs property passes data objects or a file to the downstream flow as long as those outputs are defined on the flow-level in the upstream flow.
             ::alert{type="warning"}
-            Make sure that the inputs and task outputs defined in this Flow trigger match the outputs of the upstream flow. Otherwise, the downstream flow execution will not to be created. If that happens, go to the Logs tab on the Flow page to understand the error.
+            Make sure that the inputs and task outputs defined in this Flow trigger match the outputs of the upstream flow. Otherwise, the downstream flow execution will not to be created. If that happens, go to the Logs tab on the Flow page to investigate the error.
             ::"""
     )
     @PluginProperty
@@ -364,7 +364,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         protected TimeWindow timeWindow = TimeWindow.builder().build();
 
         @Schema(
-            title = "Whether to reset the evaluation results of preconditions after a first successful evaluation within the given time window.",
+            title = "Whether to reset the evaluation results of preconditions after a first successful evaluation within the given time window",
             description = """
             By default, after a successful evaluation of the set of preconditions, the evaluation result is reset. This means the same set of conditions needs to be successfully evaluated again within the same time window to trigger a new execution.
             In this setup, to create multiple executions, the same set of conditions must be evaluated to `true` multiple times within the defined window.
@@ -374,13 +374,13 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Builder.Default
         private Boolean resetOnSuccess = Boolean.TRUE;
 
-        @Schema(title = "A list of preconditions to met, in the form of upstream flows.")
+        @Schema(title = "A list of preconditions to meet, in the form of upstream flows")
         @PluginProperty
         private List<UpstreamFlow> flows;
 
         @Valid
         @PluginProperty
-        @Schema(title = "A list of preconditions to met, in the form of execution filters.")
+        @Schema(title = "A list of preconditions to meet, in the form of execution filters")
         private List<ExecutionFilter> where;
 
         @JsonIgnore
@@ -415,19 +415,19 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Getter
     public static class UpstreamFlow {
         @NotNull
-        @Schema(title = "The namespace of the flow.")
+        @Schema(title = "The namespace of the flow")
         @PluginProperty
         private String namespace;
 
-        @Schema(title = "The flow id.")
+        @Schema(title = "The flow ID")
         @PluginProperty
         private String flowId;
 
-        @Schema(title = "The execution states.")
+        @Schema(title = "The execution states")
         @PluginProperty
         private List<State.Type> states;
 
-        @Schema(title = "A key/value map of labels.")
+        @Schema(title = "A key/value map of labels")
         @PluginProperty
         private Map<String, Object> labels;
     }
@@ -476,19 +476,19 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @NotNull
         @NotEmpty
         @PluginProperty
-        @Schema(title = "A unique identifier for the filter.")
+        @Schema(title = "A unique identifier for the filter")
         private String id;
 
         @Builder.Default
         @PluginProperty
-        @Schema(title = "The operand to apply between all filters of the precondition.")
+        @Schema(title = "The operand to apply between all filters of the precondition")
         private Operand operand = Operand.AND;
 
         @NotNull
         @NotEmpty
         @Valid
         @PluginProperty
-        @Schema(title = "The list of filters.")
+        @Schema(title = "The list of filters")
         private List<Filter> filters;
     }
 
@@ -504,28 +504,28 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @NotNull
         @PluginProperty
         @Schema(
-            title = "The field which will be filtered."
+            title = "The field which will be filtered"
         )
         private Field field;
 
         @NotNull
         @PluginProperty
         @Schema(
-            title = "The type of filter.",
+            title = "The type of filter",
             description = "Can be set to one of the following: `EQUAL_TO`, `NOT_EQUAL_TO`, `IS_NULL`, `IS_NOT_NULL`, `IS_TRUE`, `IS_FALSE`, `STARTS_WITH`, `ENDS_WITH`, `REGEX`, `CONTAINS`. Depending on the `type`, you will need to also set the `value` or `values` property."
         )
         private Type type;
 
         @PluginProperty
         @Schema(
-            title = "The single value to filter the `field` on.",
+            title = "The single value to filter the `field` on",
             description = "Must be set according to its `type`."
         )
         private String value;
 
         @PluginProperty
         @Schema(
-            title = "The list of values to filter the `field` on.",
+            title = "The list of values to filter the `field` on",
             description = "Must be set for the following types: IN, NOT_IN."
         )
         private List<String> values;
@@ -606,31 +606,31 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "The execution ID that triggered the current flow.")
+        @Schema(title = "The execution ID that triggered the current flow")
         @NotNull
         private String executionId;
 
-        @Schema(title = "The execution labels that triggered the current flow.")
+        @Schema(title = "The execution labels that triggered the current flow")
         @NotNull
         private Map<String, Object> executionLabels;
 
-        @Schema(title = "The execution state.")
+        @Schema(title = "The execution state")
         @NotNull
         private State.Type state;
 
-        @Schema(title = "The namespace of the flow that triggered the current flow.")
+        @Schema(title = "The namespace of the flow that triggered the current flow")
         @NotNull
         private String namespace;
 
-        @Schema(title = "The flow ID whose execution triggered the current flow.")
+        @Schema(title = "The flow ID whose execution triggered the current flow")
         @NotNull
         private String flowId;
 
-        @Schema(title = "The flow revision that triggered the current flow.")
+        @Schema(title = "The flow revision that triggered the current flow")
         @NotNull
         private Integer flowRevision;
 
-        @Schema(title = "The extracted outputs from the flow that triggered the current flow.")
+        @Schema(title = "The extracted outputs from the flow that triggered the current flow")
         private Map<String, Object> outputs;
     }
 }

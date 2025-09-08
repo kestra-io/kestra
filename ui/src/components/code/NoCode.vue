@@ -59,11 +59,12 @@
     } from "./injectionKeys";
     import {useFlowFields, SECTIONS_IDS} from "./utils/useFlowFields";
     import {debounce} from "lodash";
+    import {NoCodeProps} from "../flows/noCodeTypes";
     import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {usePluginsStore} from "../../stores/plugins";
     import {useKeyboardSave} from "./utils/useKeyboardSave";
-    import {NoCodeProps} from "../flows/noCodeTypes";
+    import {deepEqual} from "../../utils/utils";
 
 
     const props = defineProps<NoCodeProps>();
@@ -120,6 +121,11 @@
     const editorStore = useEditorStore();
 
     const editorUpdate = (source: string) => {
+        // if no-code would not change the structure of the flow,
+        // do not trigger an update as it would remove all formatting and comments
+        if(deepEqual(YAML_UTILS.parse(source), flowStore.flowParsed)) {
+            return;
+        }
         flowStore.flowYaml = source;
         flowStore.haveChange = true;
         validateFlow();
@@ -184,11 +190,11 @@
 
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {
         emit("createTask", parentPath, blockSchemaPath, refPath, "after")
-    });
+    })
 
     provide(EDIT_TASK_FUNCTION_INJECTION_KEY, ( parentPath, blockSchemaPath, refPath) => {
         emit("editTask", parentPath, blockSchemaPath, refPath)
-    });
+    })
 
 
 </script>

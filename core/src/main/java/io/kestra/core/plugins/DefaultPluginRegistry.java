@@ -195,14 +195,17 @@ public class DefaultPluginRegistry implements PluginRegistry {
      */
     public void register(final RegisteredPlugin plugin) {
         final PluginBundleIdentifier identifier = PluginBundleIdentifier.of(plugin);
-
-        // Skip registration if plugin-bundle already exists in the registry.
-        if (containsPluginBundle(identifier)) {
-            return;
+        // Skip registration if the same plugin already exists in the registry.
+        final RegisteredPlugin existing = plugins.get(identifier);
+        if (existing != null && existing.crc32() == plugin.crc32()) {
+            return; // same plugin already registered
         }
-
+        
         lock.lock();
         try {
+            if (existing != null) {
+                unregister(List.of(existing));
+            }
             plugins.put(PluginBundleIdentifier.of(plugin), plugin);
             registerAll(getPluginClassesByIdentifier(plugin));
         } finally {

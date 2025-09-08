@@ -73,7 +73,7 @@ public class Assert extends Task implements RunnableTask<VoidOutput> {
     @PluginProperty(dynamic = true)
     private List<String> conditions;
 
-    @Schema(title = "Optional error message.")
+    @Schema(title = "Optional error message")
     private Property<String> errorMessage;
 
     @Override

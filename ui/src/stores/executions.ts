@@ -1,13 +1,12 @@
-import axios from "axios";
 import {defineStore} from "pinia";
 import {ref, watch} from "vue";
 import {apiUrl} from "override/utils/route";
 import Utils from "../utils/utils";
-import {useStore, Store} from "vuex";
 import {useCoreStore} from "./core";
 import throttle from "lodash/throttle";
 import {useRoute} from "vue-router";
 import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants.ts";
+import {useAxios} from "../utils/axios";
 
 interface LogsState {
     total: number;
@@ -20,6 +19,7 @@ export interface Execution{
         id: string,
         taskId: string,
         value?: string
+        executionId?: string
     }[]
     state: {
         current: string;
@@ -58,19 +58,12 @@ export const useExecutionsStore = defineStore("executions", () => {
         }
     });
 
-    const store = useStore() as Store<any> & {
-        $http: {
-            post: (url: string, data?: any, config?: any) => Promise<any>;
-            get: (url: string, config?: any) => Promise<any>;
-            delete: (url: string, config?: any) => Promise<any>;
-        }
-    };
-
     const coreStore = useCoreStore();
+    const axios = useAxios();
 
     // Actions
     const restartExecution = (options: { executionId: string; revision?: number }) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/${options.executionId}/restart`,
             null,
             {
@@ -81,14 +74,14 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const bulkRestartExecution = (options: { executionsId: string[] }) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/restart/by-ids`,
             options.executionsId
         )
     }
 
     const queryRestartExecution = (options: Record<string, any>) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/restart/by-query`,
             {},
             {params: options}
@@ -96,14 +89,14 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const bulkResumeExecution = (options: { executionsId: string[] }) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/resume/by-ids`,
             options.executionsId
         )
     }
 
     const queryResumeExecution = (options: Record<string, any>) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/resume/by-query`,
             {},
             {params: options}
@@ -111,7 +104,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const bulkReplayExecution = (options: { executionsId: string[] } & Record<string, any>) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/replay/by-ids`,
             options.executionsId,
             {params: options}
@@ -119,7 +112,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const bulkChangeExecutionStatus = (options: { executionsId: string[]; newStatus: string }) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/change-status/by-ids`,
             options.executionsId,
             {
@@ -131,7 +124,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const queryReplayExecution = (options: Record<string, any>) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/replay/by-query`,
             {},
             {params: options}
@@ -139,7 +132,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const queryChangeExecutionStatus = (options: Record<string, any>) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/change-status/by-query`,
             {},
             {params: options}
@@ -147,7 +140,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/${options.executionId}/replay`,
             null,
             {
@@ -160,7 +153,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/${options.executionId}/replay-with-inputs`,
             options.formData,
             {
@@ -176,7 +169,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const changeExecutionStatus = (options: { executionId: string; state: string }) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/${options.executionId}/change-status`,
             null,
             {
@@ -187,7 +180,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const changeStatus = (options: { executionId: string; taskRunId?: string; state: string }) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/${options.executionId}/state`,
             {
                 taskRunId: options.taskRunId,
@@ -196,19 +189,19 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const kill = (options: { id: string; isOnKillCascade?: boolean }) => {
-        return store.$http.delete(`${apiUrl()}/executions/${options.id}/kill?isOnKillCascade=${options.isOnKillCascade}`);
+        return axios.delete(`${apiUrl()}/executions/${options.id}/kill?isOnKillCascade=${options.isOnKillCascade}`);
     }
 
     const bulkKill = (options: { executionsId: string[] }) => {
-        return store.$http.delete(`${apiUrl()}/executions/kill/by-ids`, {data: options.executionsId});
+        return axios.delete(`${apiUrl()}/executions/kill/by-ids`, {data: options.executionsId});
     }
 
     const queryKill = (options: Record<string, any>) => {
-        return store.$http.delete(`${apiUrl()}/executions/kill/by-query`, {params: options});
+        return axios.delete(`${apiUrl()}/executions/kill/by-query`, {params: options});
     }
 
     const resume = (options: { id: string; formData: any }) => {
-        return store.$http.post(`${apiUrl()}/executions/${options.id}/resume`, Utils.toFormData(options.formData), {
+        return axios.post(`${apiUrl()}/executions/${options.id}/resume`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data"
@@ -217,7 +210,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const validateResume = (options: { id: string; formData: any }) => {
-        return store.$http.post(`${apiUrl()}/executions/${options.id}/resume/validate`, Utils.toFormData(options.formData), {
+        return axios.post(`${apiUrl()}/executions/${options.id}/resume/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data"
@@ -226,18 +219,18 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const pause = (options: { id: string }) => {
-        return store.$http.post(`${apiUrl()}/executions/${options.id}/pause`);
+        return axios.post(`${apiUrl()}/executions/${options.id}/pause`);
     }
 
     const bulkPauseExecution = (options: { executionsId: string[] }) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/pause/by-ids`,
             options.executionsId
         )
     }
 
     const queryPauseExecution = (options: Record<string, any>) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/pause/by-query`,
             {},
             {params: options}
@@ -245,14 +238,14 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const loadExecution = (options: { id: string }) => {
-        return store.$http.get(`${apiUrl()}/executions/${options.id}`).then(response => {
+        return axios.get(`${apiUrl()}/executions/${options.id}`).then(response => {
             execution.value = response.data;
             return response.data;
         })
     }
 
     const findExecutions = (options: { commit?: boolean } & Record<string, any>) => {
-        return store.$http.get(`${apiUrl()}/executions/search`, {params: options}).then(response => {
+        return axios.get(`${apiUrl()}/executions/search`, {params: options}).then(response => {
             if (options.commit !== false) {
                 executions.value = response.data.results;
                 total.value = response.data.total;
@@ -262,7 +255,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }) => {
-        return store.$http.post(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
+        return axios.post(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data"
@@ -283,7 +276,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         labels?: string[];
         scheduleDate?: string,
     }) => {
-        return store.$http.post(`${apiUrl()}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
+        return axios.post(`${apiUrl()}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data"
@@ -303,17 +296,17 @@ export const useExecutionsStore = defineStore("executions", () => {
             .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
             .join("&");
 
-        return store.$http.delete(`${apiUrl()}/executions/${id}?${qs}`).then(() => {
+        return axios.delete(`${apiUrl()}/executions/${id}?${qs}`).then(() => {
             execution.value = undefined;
         })
     }
 
     const bulkDeleteExecution = (options: { executionsId: string[] } & Record<string, any>) => {
-        return store.$http.delete(`${apiUrl()}/executions/by-ids`, {data: options.executionsId, params: {...options}})
+        return axios.delete(`${apiUrl()}/executions/by-ids`, {data: options.executionsId, params: {...options}})
     }
 
     const queryDeleteExecution = (options: Record<string, any>) => {
-        return store.$http.delete(`${apiUrl()}/executions/by-query`, {params: options})
+        return axios.delete(`${apiUrl()}/executions/by-query`, {params: options})
     }
 
     const sse = ref<EventSource | undefined>(undefined);
@@ -404,7 +397,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const loadLogs = (options: { executionId: string; params?: Record<string, any>; store?: boolean }) => {
-        return store.$http.get(`${apiUrl()}/logs/${options.executionId}`, {
+        return axios.get(`${apiUrl()}/logs/${options.executionId}`, {
             params: options.params
         }).then(response => {
             if (options.store === false) {
@@ -416,7 +409,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const loadMetrics = (options: { executionId: string; params?: Record<string, any>; store?: boolean }) => {
-        return store.$http.get(`${apiUrl()}/metrics/${options.executionId}`, {
+        return axios.get(`${apiUrl()}/metrics/${options.executionId}`, {
             params: options.params
         }).then(response => {
             if (options.store === false) {
@@ -429,7 +422,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const downloadLogs = (options: { executionId: string; params?: Record<string, any> }) => {
-        return store.$http.get(`${apiUrl()}/logs/${options.executionId}/download`, {
+        return axios.get(`${apiUrl()}/logs/${options.executionId}/download`, {
             params: options.params
         }).then(response => {
             return response.data;
@@ -437,7 +430,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const deleteLogs = (options: { executionId: string; params?: Record<string, any> }) => {
-        return store.$http.delete(`${apiUrl()}/logs/${options.executionId}`, {
+        return axios.delete(`${apiUrl()}/logs/${options.executionId}`, {
             params: options.params
         }).then(response => {
             return response.data;
@@ -446,7 +439,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const _filePreview = ref<any | undefined>(undefined);
     const filePreview = (options: { executionId: string } & Record<string, any>) => {
-        return store.$http.get(`${apiUrl()}/executions/${options.executionId}/file/preview`, {
+        return axios.get(`${apiUrl()}/executions/${options.executionId}/file/preview`, {
             params: options
         }).then(response => {
             let data = {...response.data};
@@ -467,7 +460,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const setLabels = (options: { executionId: string; labels: any }) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/${options.executionId}/labels`,
             options.labels,
             {
@@ -478,28 +471,28 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const querySetLabels = (options: { data: any; params: Record<string, any> }) => {
-        return store.$http.post(`${apiUrl()}/executions/labels/by-query`, options.data, {
+        return axios.post(`${apiUrl()}/executions/labels/by-query`, options.data, {
             params: options.params
         })
     }
 
     const bulkSetLabels = (options: any) => {
-        return store.$http.post(`${apiUrl()}/executions/labels/by-ids`, options)
+        return axios.post(`${apiUrl()}/executions/labels/by-ids`, options)
     }
 
     const unqueue = (options: { id: string; state: string }) => {
-        return store.$http.post(`${apiUrl()}/executions/${options.id}/unqueue?state=${options.state}`);
+        return axios.post(`${apiUrl()}/executions/${options.id}/unqueue?state=${options.state}`);
     }
 
     const bulkUnqueueExecution = (options: { executionsId: string[]; newStatus: string }) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/unqueue/by-ids?state=${options.newStatus}`,
             options.executionsId
         )
     }
 
     const queryUnqueueExecution = (options: { newStatus: string } & Record<string, any>) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/unqueue/by-query?state=${options.newStatus}`,
             {},
             {params: options}
@@ -507,18 +500,18 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const forceRun = (options: { id: string }) => {
-        return store.$http.post(`${apiUrl()}/executions/${options.id}/force-run`);
+        return axios.post(`${apiUrl()}/executions/${options.id}/force-run`);
     }
 
     const bulkForceRunExecution = (options: { executionsId: string[] }) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/force-run/by-ids`,
             options.executionsId
         )
     }
 
     const queryForceRunExecution = (options: Record<string, any>) => {
-        return store.$http.post(
+        return axios.post(
             `${apiUrl()}/executions/force-run/by-query`,
             {},
             {params: options}
@@ -527,7 +520,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const loadFlowForExecution = (options: { namespace: string; flowId: string; revision?: number, store: boolean }) => {
         const revision = options.revision ? `?revision=${options.revision}` : "";
-        return store.$http.get(`${apiUrl()}/executions/flows/${options.namespace}/${options.flowId}${revision}`)
+        return axios.get(`${apiUrl()}/executions/flows/${options.namespace}/${options.flowId}${revision}`)
             .then(response => {
                 if (options.store) {
                     flow.value = response.data;
@@ -537,7 +530,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const loadFlowForExecutionByExecutionId = (options: { id: string, revision?: string }) => {
-        return store.$http.get(`${apiUrl()}/executions/${options.id}/flow`)
+        return axios.get(`${apiUrl()}/executions/${options.id}/flow`)
             .then(response => {
                 flow.value = response.data;
                 return response.data;
@@ -643,21 +636,21 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const loadNamespaces = () => {
-        return store.$http.get(`${apiUrl()}/executions/namespaces`)
+        return axios.get(`${apiUrl()}/executions/namespaces`)
             .then(response => {
                 namespaces.value = response.data;
             })
     }
 
     const loadFlowsExecutable = (options: { namespace: string }) => {
-        return store.$http.get(`${apiUrl()}/executions/namespaces/${options.namespace}/flows`)
+        return axios.get(`${apiUrl()}/executions/namespaces/${options.namespace}/flows`)
             .then(response => {
                 flowsExecutable.value = response.data;
             })
     }
 
     const loadLatestExecutions = (options: { flowFilters: any }) => {
-        return store.$http.post(`${apiUrl()}/executions/latest`, options.flowFilters).then(response => {
+        return axios.post(`${apiUrl()}/executions/latest`, options.flowFilters).then(response => {
             return response.data;
         })
     }
@@ -685,7 +678,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const getFlowExecutions = ({namespace, flowId}: { namespace: string; flowId: string }) => {
-        return store.$http.get(`${apiUrl()}/executions`, {
+        return axios.get(`${apiUrl()}/executions`, {
             params: {
                 namespace,
                 flowId,

@@ -9,7 +9,6 @@ import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.repositories.SaveRepositoryInterface;
 import io.kestra.core.runners.Indexer;
-import io.kestra.core.runners.IndexerInterface;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.IdUtils;
@@ -36,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Singleton
 @JdbcRunnerEnabled
-public class JdbcIndexer implements IndexerInterface {
+public class JdbcIndexer implements Indexer {
     private final LogRepositoryInterface logRepository;
     private final JdbcQueue<LogEntry> logQueue;
 

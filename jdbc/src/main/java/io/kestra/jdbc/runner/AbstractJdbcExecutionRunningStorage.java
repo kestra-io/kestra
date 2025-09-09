@@ -20,6 +20,12 @@ public class AbstractJdbcExecutionRunningStorage extends AbstractJdbcRepository 
         this.jdbcRepository = jdbcRepository;
     }
 
+    public void save(ExecutionRunning executionRunning) {
+        jdbcRepository.getDslContextWrapper().transaction(
+            configuration -> save(DSL.using(configuration), executionRunning)
+        );
+    }
+
     public void save(DSLContext dslContext, ExecutionRunning executionRunning) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(executionRunning);
         this.jdbcRepository.persist(executionRunning, dslContext, fields);

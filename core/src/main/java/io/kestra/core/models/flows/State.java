@@ -116,7 +116,7 @@ public class State {
     }
 
     public Instant maxDate() {
-        if (this.histories.size() == 0) {
+        if (this.histories.isEmpty()) {
             return Instant.now();
         }
 
@@ -124,7 +124,7 @@ public class State {
     }
 
     public Instant minDate() {
-        if (this.histories.size() == 0) {
+        if (this.histories.isEmpty()) {
             return Instant.now();
         }
 
@@ -174,6 +174,11 @@ public class State {
     }
 
     @JsonIgnore
+    public boolean isQueued() {
+        return this.current.isQueued();
+    }
+
+    @JsonIgnore
     public boolean isRetrying() {
         return this.current.isRetrying();
     }
@@ -204,6 +209,14 @@ public class State {
             return false;
         }
         return this.histories.get(this.histories.size() - 2).state.isPaused();
+    }
+
+    /**
+     * Return true if the execution has failed, then was restarted.
+     * This is to disambiguate between a RESTARTED after PAUSED and RESTARTED after FAILED state.
+     */
+    public boolean failedThenRestarted() {
+       return this.current ==  Type.RESTARTED && this.histories.get(this.histories.size() - 2).state.isFailed();
     }
 
     @Introspected
@@ -262,6 +275,10 @@ public class State {
 
         public boolean isKilled(){
             return this == Type.KILLED;
+        }
+
+        public boolean isQueued(){
+            return this == Type.QUEUED;
         }
 
         /**

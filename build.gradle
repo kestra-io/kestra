@@ -21,7 +21,7 @@ plugins {
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "6.2.0.5505"
+    id "org.sonarqube" version "6.3.1.5724"
     id 'jacoco-report-aggregation'
 
     // helper
@@ -617,6 +617,28 @@ subprojects {subProject ->
                 tasks.matching { it.name.startsWith("publish") }.configureEach {
                     dependsOn rootProject.tasks.named("shadowJar")
                     dependsOn rootProject.tasks.named("executableJar")
+                }
+            }
+        }
+
+        if (subProject.name != 'platform' && subProject.name != 'cli') {
+            // only if a test source set actually exists (avoids empty artifacts)
+            def hasTests = subProject.extensions.findByName('sourceSets')?.findByName('test') != null
+
+            if (hasTests) {
+                // wire the artifact onto every Maven publication of this subproject
+                publishing {
+                    publications {
+                        withType(MavenPublication).configureEach { pub ->
+                            // keep the normal java component + sources/javadoc already configured
+                            pub.artifact(subProject.tasks.named('testsJar').get())
+                        }
+                    }
+                }
+
+                // make sure publish tasks build the tests jar first
+                tasks.matching { it.name.startsWith('publish') }.configureEach {
+                    dependsOn subProject.tasks.named('testsJar')
                 }
             }
         }

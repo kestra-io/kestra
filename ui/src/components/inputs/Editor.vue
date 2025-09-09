@@ -9,7 +9,7 @@
                             :content="t('Fold content lines')"
                             :persistent="false"
                             transition=""
-                            :hide-after="0"
+                            :hideAfter="0"
                         >
                             <el-button
                                 :icon="icon.UnfoldLessHorizontal"
@@ -22,7 +22,7 @@
                             :content="t('Unfold content lines')"
                             :persistent="false"
                             transition=""
-                            :hide-after="0"
+                            :hideAfter="0"
                         >
                             <el-button
                                 :icon="icon.UnfoldMoreHorizontal"
@@ -47,14 +47,14 @@
                     :theme="themeComputed"
                     :value="modelValue"
                     :options="options"
-                    :diff-editor="original !== undefined"
+                    :diffEditor="original !== undefined"
                     :original="original"
                     :language="lang"
                     :extension="extension"
-                    :schema-type="schemaType"
+                    :schemaType="schemaType"
                     :input="input"
                     :creating="creating"
-                    :large-suggestions="largeSuggestions"
+                    :largeSuggestions="largeSuggestions"
                     @mouse-move="emit('mouse-move', $event)"
                     @mouse-leave="emit('mouse-leave', $event)"
                     @change="onInput"
@@ -85,7 +85,7 @@
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
     import {useDocStore} from "../../stores/doc";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     // @ts-expect-error no clean way to have focus on inputs
@@ -371,14 +371,27 @@
         });
 
         if (props.input) {
-            editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyH, () => {});
-            editor.addCommand(KeyCode.F1, () => {});
+            editor.addAction({
+                id: "prevent-ctrl-h",
+                label: "Prevent CTRL + H",
+                keybindings: [KeyMod.CtrlCmd | KeyCode.KeyH],
+                run: () => {}
+            });
+
+            editor.addAction({
+                id: "prevent-f1",
+                label: "Prevent F1",
+                keybindings: [KeyCode.F1],
+                run: () => {}
+            });
 
             if (!props.readOnly) {
-                editor.addCommand(
-                    KeyMod.CtrlCmd | KeyCode.KeyF,
-                    () => {},
-                );
+                editor.addAction({
+                    id: "prevent-ctrl-f",
+                    label: "Prevent CTRL + F",
+                    keybindings: [KeyMod.CtrlCmd | KeyCode.KeyF],
+                    run: () => {}
+                });
             }
         }
 
@@ -636,10 +649,6 @@
         });
     }
 </script>
-
-<style scoped lang="scss">
-@import "../code/styles/code.scss";
-</style>
 
 <style lang="scss">
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";

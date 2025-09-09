@@ -2,12 +2,12 @@
     <div>
         <div data-testid="monaco-editor" class="ks-monaco-editor" ref="editorRef" />
         <div ref="datePickerWrapper" v-show="datePickerShown">
-            <el-date-picker
+            <ElDatePicker
                 ref="datePicker"
                 type="datetime"
                 v-model="selectedDate"
                 :teleported="false"
-                :default-value="nowMoment.toDate()"
+                :defaultValue="nowMoment.toDate()"
                 @change="datePickerCallback"
                 @keydown.esc.prevent="editorResolved?.focus()"
                 @keydown.enter.prevent="datePickerCallback"
@@ -53,7 +53,7 @@
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import configureLanguage from "../../composables/monaco/languages/languagesConfigurator";
 
-    import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
+    import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys.ts";
 
     import YamlWorker from "./yaml.worker.js?worker";
     import Utils from "../../utils/utils";
@@ -67,6 +67,7 @@
     import ICodeEditor = editor.ICodeEditor;
     import debounce from "lodash/debounce";
     import {usePluginsStore} from "../../stores/plugins.ts";
+    import {useFlowStore} from "../../stores/flow.ts";
     import EditorType = editor.EditorType;
 
     const store = useStore();
@@ -503,6 +504,7 @@
     const disposeCompletions = ref<() => void>();
 
     const pluginsStore = usePluginsStore();
+    const flowStore = useFlowStore();
 
     const prefix = computed(() => props.schemaType ? `${props.schemaType}-` : "");
     onMounted(async function () {
@@ -512,6 +514,7 @@
         if (props.language !== undefined) {
             await configureLanguage(
                 store,
+                flowStore,
                 pluginsStore,
                 t,
                 props.diffEditor ? undefined : editorResolved.value as ICodeEditor,

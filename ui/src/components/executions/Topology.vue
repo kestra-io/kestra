@@ -1,18 +1,18 @@
 <template>
     <el-card>
         <div class="vueflow">
-            <low-code-editor
+            <LowCodeEditor
                 :key="execution.id"
                 v-if="execution && flowGraph"
-                :flow-id="execution.flowId"
+                :flowId="execution.flowId"
                 :namespace="execution.namespace"
-                :flow-graph="flowGraph"
-                :source="flow?.source"
+                :flowGraph="flowGraph"
+                :source="flowStore.flow?.source"
                 :execution="execution"
-                :expanded-subflows="expandedSubflows"
-                is-read-only
+                :expandedSubflows="expandedSubflows"
+                isReadOnly
                 @follow="$emit('follow', $event)"
-                view-type="topology"
+                viewType="topology"
                 @expand-subflow="onExpandSubflow"
             />
             <el-loading v-else-if="loading" />
@@ -24,19 +24,18 @@
 </template>
 <script>
     import throttle from "lodash/throttle";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {Utils, State} from "@kestra-io/ui-libs";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
     import {useExecutionsStore} from "../../stores/executions";
+    import {useFlowStore} from "../../stores/flow";
     export default {
         emits: ["follow"],
         components: {
             LowCodeEditor
         },
         computed: {
-            ...mapState("flow", ["flow"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useFlowStore),
             execution() {
                 return this.executionsStore.execution;
             },

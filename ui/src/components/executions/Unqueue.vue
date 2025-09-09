@@ -9,7 +9,7 @@
         {{ $t('unqueue') }}
     </component>
 
-    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('unqueue')" />
         </template>
@@ -29,7 +29,7 @@
                     :disabled="item.disabled"
                 >
                     <template #default>
-                        <status size="small" :label="true" class="me-1" :status="item.code" />
+                        <Status size="small" :label="true" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </el-option>
@@ -37,7 +37,7 @@
         </template>
 
         <template #footer>
-            <el-button :icon="QueueFirstInLastOut" type="primary" @click="unqueue()" native-type="submit">
+            <el-button :icon="QueueFirstInLastOut" type="primary" @click="unqueue()" nativeType="submit">
                 {{ $t('unqueue') }}
             </el-button>
         </template>
@@ -49,13 +49,13 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
     import Status from "../../components/Status.vue";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {Status},
@@ -89,8 +89,7 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useAuthStore),
             states() {
                 return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
                     code: value,
@@ -98,7 +97,7 @@
                 }));
             },
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 

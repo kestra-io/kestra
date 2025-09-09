@@ -130,7 +130,7 @@ public class ConditionService {
         return this.conditionContext(runContext, flow, execution, null);
     }
 
-    boolean valid(FlowInterface flow, List<Condition> list, ConditionContext conditionContext) {
+    public boolean valid(FlowInterface flow, List<Condition> list, ConditionContext conditionContext) {
         return list
             .stream()
             .allMatch(condition -> {

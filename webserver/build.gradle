@@ -22,7 +22,11 @@ dependencies {
     implementation "io.micronaut.cache:micronaut-cache-core"
     implementation "io.micronaut.cache:micronaut-cache-caffeine"
 
-    implementation 'com.google.adk:google-adk:0.2.0'
+    implementation("com.posthog.java:posthog:1.2.0")
+
+    // ai
+    implementation("dev.langchain4j:langchain4j")
+    implementation("dev.langchain4j:langchain4j-google-ai-gemini:1.4.0")
 
     implementation("de.siegmar:fastcsv")
 
@@ -30,6 +34,7 @@ dependencies {
     testAnnotationProcessor project(':processor')
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':storage-local')
+    testImplementation project(':worker')
     testImplementation "org.wiremock:wiremock-jetty12"
     testImplementation "org.awaitility:awaitility"
 

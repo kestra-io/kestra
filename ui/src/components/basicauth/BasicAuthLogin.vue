@@ -29,7 +29,7 @@
                     id="input-password"
                     :placeholder="t('password')"
                     type="password"
-                    show-password
+                    showPassword
                     required
                     prop="password"
                 >
@@ -43,7 +43,7 @@
                     type="primary"
                     class="w-100"
                     size="large"
-                    native-type="submit"
+                    nativeType="submit"
                     @click="handleSubmit"
                     :disabled="isLoginDisabled"
                     :loading="isLoading"
@@ -79,7 +79,7 @@
     import Logo from "../home/Logo.vue"
 
     import {useCoreStore} from "../../stores/core"
-    import {useMiscStore} from "../../stores/misc"
+    import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
     import * as BasicAuth from "../../utils/basicAuth";

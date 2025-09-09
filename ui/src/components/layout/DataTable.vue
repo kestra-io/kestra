@@ -1,23 +1,23 @@
 <template>
     <div>
         <nav data-component="FILENAME_PLACEHOLDER#nav" v-if="hasNavBar">
-            <collapse>
+            <Collapse>
                 <slot name="navbar" />
-            </collapse>
+            </Collapse>
         </nav>
 
         <el-container data-component="FILENAME_PLACEHOLDER#container" direction="vertical" v-loading="isLoading">
             <slot name="top" data-component="FILENAME_PLACEHOLDER#top" />
 
-            <pagination v-if="!embed && !hideTopPagination" :size="size" :top="true" :page="page" :total="total" @page-changed="onPageChanged">
+            <Pagination v-if="!embed && !hideTopPagination" :size="size" :top="true" :page="page" :total="total" @page-changed="onPageChanged">
                 <template #search>
                     <slot name="search" />
                 </template>
-            </pagination>
+            </Pagination>
 
             <slot name="table" data-component="FILENAME_PLACEHOLDER#table" />
 
-            <pagination v-if="total > 0" :size="size" :page="page" :total="total" @page-changed="onPageChanged" />
+            <Pagination v-if="total > 0" :size="size" :page="page" :total="total" @page-changed="onPageChanged" />
         </el-container>
     </div>
 </template>

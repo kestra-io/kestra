@@ -126,15 +126,15 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @NotNull
     @Builder.Default
     @Schema(
-        title = "Number of concurrent parallel tasks that can be running at any point in time.",
-        description = "If the value is `0`, no limit exist and all the tasks will start at the same time."
+        title = "Number of concurrent parallel tasks that can be running at any point in time",
+        description = "If the value is `0`, no limit exists and all the tasks will start at the same time."
     )
     private final Property<Integer> concurrent = Property.ofValue(0);
 
     @NotNull
     @PluginProperty(dynamic = true)
     @Schema(
-        title = "The list of values for this task.",
+        title = "The list of values for this task",
         description = "The value can be passed as a string, a list of strings, or a list of objects.",
         oneOf = {String.class, Object[].class}
     )

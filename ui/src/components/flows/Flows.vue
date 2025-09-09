@@ -796,4 +796,9 @@
 .flows-table .el-table__cell {
     vertical-align: middle;
 }
+
+:deep(.flows-table) .el-scrollbar__thumb {
+    background-color: var(--ks-border-active) !important;
+}
+
 </style>

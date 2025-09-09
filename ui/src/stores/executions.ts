@@ -1,6 +1,6 @@
 import axios from "axios";
 import {defineStore} from "pinia";
-import {ref} from "vue";
+import {ref, watch} from "vue";
 import {apiUrl} from "override/utils/route";
 import Utils from "../utils/utils";
 import {useStore, Store} from "vuex";
@@ -47,6 +47,16 @@ export const useExecutionsStore = defineStore("executions", () => {
     const flowGraph = ref<any | undefined>(undefined);
     const namespaces = ref<string[]>([]);
     const flowsExecutable = ref<any[]>([]);
+
+
+    // clear flow graph when execution is reset
+    // since it is supposed to represent the current execution's flow
+    watch(execution, (newExecution) => {
+        if(!newExecution){
+            flowGraph.value = undefined;
+            flow.value = undefined;
+        }
+    });
 
     const store = useStore() as Store<any> & {
         $http: {

@@ -35,7 +35,7 @@ import java.util.OptionalInt;
     title = "Make an HTTP API request to a specified URL and store the response as an output.",
     description = """
                   This task makes an API call to a specified URL of an HTTP server and stores the response as an output.
-                  Kestra offers 600+ plugins. Before using the generic HTTP task, check if a dedicated plugin fits your use case — it's recommended to use plugins first and only fall back to HTTP when needed.
+                  Kestra offers hundreds of plugins. Before using the generic HTTP task, check if a dedicated plugin fits your use case — it's recommended to use plugins first and only fall back to HTTP when needed.
                   By default, the maximum length of the response is limited to 10MB, but it can be increased to at most 2GB by using the `options.maxContentLength` property.
                   Note that the response is added as an output of the task. If you need to process large API payloads, we recommend using the `Download` task instead."""
 )
@@ -78,7 +78,7 @@ import java.util.OptionalInt;
                 """
         ),
         @Example(
-            title = "Execute a Kestra flow via an HTTP request authenticated with API key passed in the header.",
+            title = "Execute a Kestra flow via an HTTP request authenticated with an API key passed in the header.",
             full = true,
             code = """
                 id: api_key_auth_call
@@ -94,7 +94,7 @@ import java.util.OptionalInt;
                 """
         ),
         @Example(
-            title = "Execute a Kestra flow via an HTTP request authenticated with API key passed in the query parameters.",
+            title = "Execute a Kestra flow via an HTTP request authenticated with an API key passed in the query parameters.",
             full = true,
             code = """
                 id: api_key_auth_call
@@ -359,36 +359,36 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The URL of the current request."
+            title = "The URL of the current request"
         )
         private final URI uri;
 
         @Schema(
-            title = "The status code of the response."
+            title = "The status code of the response"
         )
         private final Integer code;
 
         @Schema(
-            title = "The headers of the response."
+            title = "The headers of the response"
         )
         @PluginProperty(additionalProperties = List.class)
         private final Map<String, List<String>> headers;
 
         @Schema(
-            title = "The body of the response.",
-            description = "Kestra will by default store the task output using this property. However, if the `encryptBody` property is set to `true`, kestra will instead encrypt the output and store it using the `encryptedBody` output property."
+            title = "The body of the response",
+            description = "Kestra, by default, stores the task output using this property. However, if the `encryptBody` property is set to `true`, Kestra will instead encrypt the output and store it using the `encryptedBody` output property."
         )
         private Object body;
 
         @Schema(
-            title = "The encrypted body of the response.",
-            description = "If the `encryptBody` property is set to `true`, kestra will automatically encrypt the output before storing it, and decrypt it when the output is retrieved in a downstream task."
+            title = "The encrypted body of the response",
+            description = "If the `encryptBody` property is set to `true`, Kestra will automatically encrypt the output before storing it, and decrypt it when the output is retrieved in a downstream task."
         )
         private EncryptedString encryptedBody;
 
         @Schema(
             title = "The form data to be sent in the request body",
-            description = "When sending a file, you can pass a list of maps (i.e. a list of key-value pairs) with a key 'name' and value of the filename, as well as 'content' key with the file's content as value (e.g. passed from flow inputs or outputs from another task)."
+            description = "When sending a file, you can pass a list of maps (i.e., a list of key-value pairs) with a key 'name' and value of the filename, as well as 'content' key with the file's content as value (e.g., passed from flow inputs or outputs from another task)."
         )
         @PluginProperty(dynamic = true)
         protected Map<String, Object> formData;

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       releaseVersion:
-        description: 'The release version (e.g., 0.21.0-rc1)'
+        description: 'The release version (e.g., 0.21.0)'
         required: true
         type: string
       nextVersion:
@@ -23,8 +23,8 @@ jobs:
       # Checks
       - name: Check Inputs
         run: |
-          if ! [[ "$RELEASE_VERSION" =~ ^[0-9]+(\.[0-9]+)\.0-rc[01](-SNAPSHOT)?$ ]]; then
-            echo "Invalid release version. Must match regex: ^[0-9]+(\.[0-9]+)\.0-rc[01](-SNAPSHOT)?$"
+          if ! [[ "$RELEASE_VERSION" =~ ^[0-9]+(\.[0-9]+)\.0$ ]]; then
+            echo "Invalid release version. Must match regex: ^[0-9]+(\.[0-9]+)\.0$"
             exit 1
           fi
 
@@ -78,7 +78,6 @@ jobs:
           git checkout develop;
 
           if [[ "$RELEASE_VERSION" == *"-SNAPSHOT" ]]; then
-            # -SNAPSHOT qualifier maybe used to test release-candidates
             ./gradlew release -Prelease.useAutomaticVersion=true \
             -Prelease.releaseVersion="${RELEASE_VERSION}" \
             -Prelease.newVersion="${NEXT_VERSION}" \

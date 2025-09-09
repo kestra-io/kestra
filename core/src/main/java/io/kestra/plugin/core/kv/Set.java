@@ -54,31 +54,31 @@ import java.time.Instant;
 public class Set extends Task implements RunnableTask<VoidOutput> {
     @NotNull
     @Schema(
-        title = "The key for which to set the value."
+        title = "The key to set the value for"
     )
     private Property<String> key;
 
     @Schema(
-        title = "The description of the KV."
+        title = "The description of the KV pair"
     )
     private Property<String> kvDescription;
 
     @NotNull
     @Schema(
-        title = "The value to map to the key."
+        title = "The value to map to the key"
     )
     private Property<String> value;
 
     @NotNull
     @Schema(
-        title = "The namespace in which the KV pair will be stored. By default, Kestra will use the namespace of the flow."
+        title = "The namespace in which the KV pair will be stored – by default, Kestra will use the namespace of the flow."
     )
     @Builder.Default
     private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
 
     @NotNull
     @Schema(
-        title = "Whether to overwrite or fail if a value for the given key already exists."
+        title = "Flag specifying whether to overwrite or fail if a value for the given key already exists."
     )
     @Builder.Default
     private Property<Boolean> overwrite = Property.ofValue(true);

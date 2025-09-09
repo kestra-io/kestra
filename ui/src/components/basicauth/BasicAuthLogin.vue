@@ -29,7 +29,7 @@
                     id="input-password"
                     :placeholder="t('password')"
                     type="password"
-                    show-password
+                    showPassword
                     required
                     prop="password"
                 >
@@ -43,7 +43,7 @@
                     type="primary"
                     class="w-100"
                     size="large"
-                    native-type="submit"
+                    nativeType="submit"
                     @click="handleSubmit"
                     :disabled="isLoginDisabled"
                     :loading="isLoading"

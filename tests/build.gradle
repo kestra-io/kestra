@@ -1,5 +1,8 @@
 dependencies {
     implementation project(':core')
+    implementation project(':worker')
+    implementation project(':scheduler')
+    implementation project(':executor')
     implementation "io.micronaut:micronaut-runtime"
     implementation "io.micronaut.test:micronaut-test-junit5"
 

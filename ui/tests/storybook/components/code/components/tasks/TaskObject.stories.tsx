@@ -1,4 +1,4 @@
-import TaskObject from "../../../../../../src/components/code/components/tasks/TaskObject.vue";
+import TaskObject from "../../../../../../src/components/no-code/components/tasks/TaskObject.vue";
 import {ref} from "vue"
 import {StoryObj} from "@storybook/vue3-vite";
 import {waitFor, within, expect, fireEvent} from "storybook/test";

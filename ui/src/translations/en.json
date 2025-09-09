@@ -129,9 +129,9 @@
       "news": "News",
       "docs": "Docs",
       "help": "Help",
-      "issue": "Open an Issue",
-      "demo": "Get a demo",
-      "star": "Star the repo"
+      "issue": "Issue",
+      "demo": "Demo",
+      "star": "Star us"
     },
     "source": "Source",
     "source only": "Source only",

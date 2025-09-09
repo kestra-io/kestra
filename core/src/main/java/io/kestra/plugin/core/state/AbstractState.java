@@ -30,7 +30,7 @@ public abstract class AbstractState extends Task {
     public static final String TASKS_STATES = "tasks-states";
 
     @Schema(
-        title = "The name of the state file."
+        title = "The name of the state file"
     )
     @NotNull
     @Builder.Default
@@ -38,14 +38,14 @@ public abstract class AbstractState extends Task {
 
     @Schema(
         title = "Share state for the current namespace.",
-        description = "By default, the state is isolated by namespace **and** flow, setting to `true` will allow to share the state between the **same** namespace"
+        description = "By default, the state is isolated by namespace **and** flow, setting to `true` will share the state between the **same** namespace"
     )
     @Builder.Default
     private final Property<Boolean> namespace = Property.ofValue(false);
 
     @Schema(
         title = "Isolate the state with `taskrun.value`.",
-        description = "By default, the state will be isolated with `taskrun.value` (during iteration with each). Setting to `false` will allow using the same state for every run of the iteration."
+        description = "By default, the state will be isolated with `taskrun.value` (during iteration with each). Setting to `false` will use the same state for every run of the iteration."
     )
     @Builder.Default
     private final Property<Boolean> taskrunValue = Property.ofValue(true);

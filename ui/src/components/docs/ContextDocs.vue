@@ -1,5 +1,5 @@
 <template>
-    <context-info-content :title="routeInfo.title">
+    <ContextInfoContent :title="routeInfo.title">
         <template #back-button>
             <button 
                 class="back-button" 
@@ -27,15 +27,15 @@
             </router-link>
         </template>
         <div ref="docWrapper" class="docs-controls">
-            <context-docs-search />
-            <docs-menu />
-            <docs-layout>
+            <ContextDocsSearch />
+            <DocsMenu />
+            <DocsLayout>
                 <template #content>
                     <MDCRenderer v-if="ast?.body" :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
                 </template>
-            </docs-layout>
+            </DocsLayout>
         </div>
-    </context-info-content>
+    </ContextInfoContent>
 </template>
 
 <script lang="ts" setup>

@@ -1,5 +1,5 @@
 import {provide, ref} from "vue";
-import {TOPOLOGY_CLICK_INJECTION_KEY} from "../../../../src/components/code/injectionKeys";
+import {TOPOLOGY_CLICK_INJECTION_KEY} from "../../../../src/components/no-code/injectionKeys";
 import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import LowCodeEditor from "../../../../src/components/inputs/LowCodeEditor.vue";

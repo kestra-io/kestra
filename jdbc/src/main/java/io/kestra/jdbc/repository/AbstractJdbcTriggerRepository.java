@@ -14,7 +14,7 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.core.schedulers.ScheduleContextInterface;
+import io.kestra.core.runners.ScheduleContextInterface;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.runner.JdbcQueueIndexerInterface;

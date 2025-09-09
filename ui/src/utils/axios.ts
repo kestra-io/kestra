@@ -300,6 +300,5 @@ export default (
 export const useAxios = () => {
     const router = useRouter();
     const isOSS = getCurrentInstance()!.appContext.config.globalProperties.$isOSS;
-    const instance = initAxios(router, isOSS);
-    return {$http: instance}
+    return initAxios(router, isOSS)
 };

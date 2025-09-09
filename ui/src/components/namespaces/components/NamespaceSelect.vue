@@ -3,16 +3,16 @@
         class="fit-text"
         v-model="modelValue"
         :multiple
-        collapse-tags
+        collapseTags
         :disabled="readOnly"
         :clearable="clearable"
-        :allow-create="taggable"
+        :allowCreate="taggable"
         filterable
         remote
-        remote-show-suffix
-        :remote-method="onSearch"
+        remoteShowSuffix
+        :remoteMethod="onSearch"
         :placeholder="t('namespaces')"
-        :suffix-icon="readOnly ? Lock : undefined"
+        :suffixIcon="readOnly ? Lock : undefined"
     >
         <template #tag>
             <el-tag
@@ -22,7 +22,7 @@
                 closable
                 @close="modelValue = (modelValue as string[]).filter(v => v !== value)"
             >
-                <dots-square class="tag-icon" />
+                <DotsSquare class="tag-icon" />
                 {{ value }}
             </el-tag>
         </template>

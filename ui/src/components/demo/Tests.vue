@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" />
+    <TopNavBar :title="routeInfo.title" />
     <Layout
         :title="t(`demos.tests.title`)"
         :image="{source: sourceImg, alt: t(`demos.tests.title`)}"

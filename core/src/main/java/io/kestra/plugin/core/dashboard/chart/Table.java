@@ -25,7 +25,7 @@ import lombok.experimental.SuperBuilder;
 @Plugin(
     examples = {
         @Example(
-            title = "Display a table with a Log count for each level by Namespace.",
+            title = "Display a table with Log counts for each level by Namespace.",
             full = true,
             code = { """
                 charts:

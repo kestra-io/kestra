@@ -5,10 +5,10 @@
         effect="light"
         placement="top"
         :persistent="false"
-        :hide-after="0"
-        :popper-class="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
+        :hideAfter="0"
+        :popperClass="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
         :content="tooltipContent"
-        raw-content
+        rawContent
     >
         <div>
             <Bar

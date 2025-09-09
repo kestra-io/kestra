@@ -8,7 +8,7 @@
     >
         {{ $t("preview.label") }}
     </el-button>
-    <drawer
+    <Drawer
         v-if="selectedPreview === value && preview"
         v-model="isPreviewOpen"
     >
@@ -16,7 +16,7 @@
             {{ $t("preview.label") }}
         </template>
         <template #default>
-            <el-alert v-if="preview.truncated" show-icon type="warning" :closable="false" class="mb-2">
+            <el-alert v-if="preview.truncated" showIcon type="warning" :closable="false" class="mb-2">
                 {{ $t('file preview truncated') }}
             </el-alert>
             <el-form class="ks-horizontal max-size mt-3">
@@ -58,23 +58,23 @@
                     <el-switch
                         v-model="forceEditor"
                         class="ml-3"
-                        :active-text="$t('preview.force-editor')"
-                        :inactive-text="$t('preview.auto-view')"
+                        :activeText="$t('preview.force-editor')"
+                        :inactiveText="$t('preview.auto-view')"
                     />
                 </el-form-item>
             </el-form>
-            <list-preview v-if="!forceEditor && preview.type === 'LIST'" :value="preview.content" />
+            <ListPreview v-if="!forceEditor && preview.type === 'LIST'" :value="preview.content" />
             <img v-else-if="!forceEditor && preview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
-            <pdf-preview v-else-if="!forceEditor && preview.type === 'PDF'" :source="preview.content" />
-            <markdown v-else-if="!forceEditor && preview.type === 'MARKDOWN'" :source="preview.content" />
-            <editor
+            <PdfPreview v-else-if="!forceEditor && preview.type === 'PDF'" :source="preview.content" />
+            <Markdown v-else-if="!forceEditor && preview.type === 'MARKDOWN'" :source="preview.content" />
+            <Editor
                 v-else
-                :model-value="!forceEditor ? preview.content : JSON.stringify(preview.content, null, 2)"
+                :modelValue="!forceEditor ? preview.content : JSON.stringify(preview.content, null, 2)"
                 :lang="!forceEditor ? extensionToMonacoLang : 'json'"
-                read-only
+                readOnly
                 input
-                :word-wrap="wordWrap"
-                :full-height="false"
+                :wordWrap="wordWrap"
+                :fullHeight="false"
                 :navbar="false"
                 class="position-relative"
             >
@@ -84,7 +84,7 @@
                             <el-tooltip
                                 :content="$t('toggle_word_wrap')"
                                 placement="bottom"
-                                :auto-close="2000"
+                                :autoClose="2000"
                             >
                                 <el-button
                                     :icon="Wrap"
@@ -95,9 +95,9 @@
                         </template>
                     </CopyToClipboard>
                 </template>
-            </editor>
+            </Editor>
         </template>
-    </drawer>
+    </Drawer>
 </template>
 
 <script setup>

@@ -1,5 +1,5 @@
 <template>
-    <ChildTableOfContents :page-url="pageUrl" :max="max" :render-link="ContextDocsTOCLink" />
+    <ChildTableOfContents :pageUrl="pageUrl" :max="max" :renderLink="ContextDocsTOCLink" />
 </template>
 
 <script lang="ts" setup>

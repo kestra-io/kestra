@@ -1,15 +1,15 @@
 <template>
     <rapi-doc
-        :spec-url="docStore.resourceUrl('kestra-ee.yml')"
+        :specUrl="docStore.resourceUrl('kestra-ee.yml')"
         :theme="theme"
-        render-style="view"
-        show-header="false"
-        show-info="false"
-        allow-authentication="false"
-        allow-server-selection="false"
-        allow-try="false"
-        regular-font="Public Sans"
-        mono-font="Source Code Pro"
+        renderStyle="view"
+        showHeader="false"
+        showInfo="false"
+        allowAuthentication="false"
+        allowServerSelection="false"
+        allowTry="false"
+        regularFont="Public Sans"
+        monoFont="Source Code Pro"
     />
 </template>
 

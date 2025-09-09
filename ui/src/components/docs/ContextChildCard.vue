@@ -1,11 +1,11 @@
 <template>
     <div class="row row-cols-1 row-cols-xxl-2 g-3 card-group">
-        <context-docs-link
+        <ContextDocsLink
             :href="item.path"
             class="col"
             v-for="item in navigation"
             :key="item.path"
-            use-raw
+            useRaw
         >
             <div class="card h-100">
                 <div class="card-body d-flex align-items-center">
@@ -27,7 +27,7 @@
                     </div>
                 </div>
             </div>
-        </context-docs-link>
+        </ContextDocsLink>
     </div>
 </template>
 

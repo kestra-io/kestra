@@ -175,12 +175,12 @@
     "confirm password": "Potwierdź hasło",
     "confirmation": "Potwierdzenie",
     "contextBar": {
-      "demo": "Uzyskaj demo",
+      "demo": "Demo",
       "docs": "Dokumentacja",
       "help": "Pomoc",
-      "issue": "Otwórz Issue",
+      "issue": "Problem",
       "news": "Wiadomości",
-      "star": "Dodaj gwiazdkę repozytorium"
+      "star": "Oceń nas gwiazdkami"
     },
     "continue backfill": "Kontynuuj backfill",
     "continue backfills": "Kontynuuj backfills",
@@ -1103,6 +1103,8 @@
     "replay from beginning tooltip": "Utwórz podobne wykonanie zaczynając od początku",
     "replay from task tooltip": "Utwórz podobne wykonanie zaczynając od task <code>{taskId}</code>",
     "replay latest revision": "Odtwórz używając najnowszej wersji",
+    "replay the execution": "Odtwórz wykonanie <code>{executionId}</code> dla flow <code>{flowId}</code>",
+    "replay with inputs": "Odtwórz z inputami",
     "replayed": "Wykonanie zostało odtworzone",
     "required field": "Wymagane pole",
     "reset": "Restartuj",

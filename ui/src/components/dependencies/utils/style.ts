@@ -5,30 +5,31 @@ import {cssVariable} from "@kestra-io/ui-libs";
 const VARIABLES = {
     node: {
         default: {
-            background: "--ks-dependencies-node-background",
-            border: "--ks-dependencies-node-border",
+            background: "--ks-dependencies-node-background-default",
+            border: "--ks-dependencies-node-border-default",
         },
         faded: {
-            background: "--ks-dependencies-node-background-selected-level2",
-            border: "--ks-dependencies-node-border-selected-level2",
+            background: "--ks-dependencies-node-background-faded",
+            border: "--ks-dependencies-node-border-faded",
         },
         selected: {
             background: "--ks-dependencies-node-background-selected",
             border: "--ks-dependencies-node-border-selected",
         },
         hovered: {
-            background: "--ks-dependencies-node-background-hover",
-            border: "--ks-dependencies-node-border-hover",
+            background: "--ks-dependencies-node-background-hovered",
+            border: "--ks-dependencies-node-border-hovered",
         },
     },
     edge: {
-        default: "--ks-dependencies-node-border",
-        faded: "--ks-dependencies-edge-selected-level2",
-        hovered: "--ks-dependencies-edge-hover",
+        default: "--ks-dependencies-edge-default",
+        faded: "--ks-dependencies-edge-faded",
+        selected: "--ks-dependencies-node-background-selected",
+        hovered: "--ks-dependencies-edge-hovered",
     },
 };
 
-const nodeBase: cytoscape.Css.Node = {
+const nodeBase = (): cytoscape.Css.Node => ({
     label: "data(flow)",
     "border-width": 2,
     "border-style": "solid",
@@ -36,7 +37,7 @@ const nodeBase: cytoscape.Css.Node = {
     "font-size": 10,
     "text-valign": "bottom",
     "text-margin-y": 10,
-};
+});
 
 const edgeBase: cytoscape.Css.Edge = {
     "target-arrow-shape": "triangle",
@@ -64,15 +65,15 @@ export function edgeColors(type: keyof typeof VARIABLES.edge = "default"): Parti
     };
 }
 
-export const style: cytoscape.StylesheetJson = [
+export const getStyle = (): cytoscape.StylesheetJson => [
     {
         selector: "node",
-        style: {...nodeBase, ...nodeColors("default")},
+        style: {...nodeBase(), ...nodeColors("default")},
     },
     {
         selector: "node.faded",
         style: {
-            ...nodeBase,
+            ...nodeBase(),
             ...nodeColors("faded"),
             "background-opacity": 0.75,
             "border-opacity": 0.75,
@@ -80,11 +81,11 @@ export const style: cytoscape.StylesheetJson = [
     },
     {
         selector: "node.selected",
-        style: {...nodeBase, ...nodeColors("selected")},
+        style: {...nodeBase(), ...nodeColors("selected")},
     },
     {
         selector: "node.hovered",
-        style: {...nodeBase, ...nodeColors("hovered")},
+        style: {...nodeBase(), ...nodeColors("hovered")},
     },
     {
         selector: "edge",
@@ -92,7 +93,11 @@ export const style: cytoscape.StylesheetJson = [
     },
     {
         selector: "edge.faded",
-        style: {...edgeBase, ...edgeColors("faded"), ...edgeAnimated},
+        style: {...edgeBase, ...edgeColors("faded")},
+    },
+    {
+        selector: "edge.selected",
+        style: {...edgeBase, ...edgeColors("selected"), ...edgeAnimated},
     },
     {
         selector: "edge.hovered",

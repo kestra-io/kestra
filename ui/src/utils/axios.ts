@@ -1,7 +1,6 @@
 import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios"
 import NProgress from "nprogress"
 import {Router} from "vue-router"
-import {Store} from "vuex"
 import {storageKeys} from "./constants"
 import {useLayoutStore} from "../stores/layout"
 import {useCoreStore} from "../stores/core"
@@ -73,7 +72,7 @@ interface QueueItem {
 
 export default (
     callback: (instance: AxiosInstance) => void,
-    store: Store<any>,
+    _store: any,
     router: Router,
     oss: boolean = false
 ): void => {

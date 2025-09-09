@@ -1,5 +1,5 @@
 <template>
-    <sidebar-menu
+    <SidebarMenu
         ref="sideBarRef"
         data-component="FILENAME_PLACEHOLDER"
         id="side-menu"
@@ -7,21 +7,18 @@
         @update:collapsed="onToggleCollapse"
         width="268px"
         :collapsed="collapsed"
-        link-component-name="LeftMenuLink"
-        hide-toggle
+        linkComponentName="LeftMenuLink"
+        hideToggle
     >
         <template #header>
             <el-button @click="collapsed = onToggleCollapse(!collapsed)" class="collapseButton" :size="collapsed ? 'small':undefined">
-                <chevron-right v-if="collapsed" />
-                <chevron-left v-else />
+                <ChevronRight v-if="collapsed" />
+                <ChevronLeft v-else />
             </el-button>
             <div class="logo">
-                <router-link v-if="showLink" :to="{name: 'home'}">
+                <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
                     <span class="img" />
-                </router-link>
-                <div v-else class="logo-img">
-                    <span class="img" />
-                </div>
+                </component>
             </div>
             <Environment />
         </template>
@@ -29,7 +26,7 @@
         <template #footer>
             <slot name="footer" />
         </template>
-    </sidebar-menu>
+    </SidebarMenu>
 </template>
 
 <script setup>
@@ -93,7 +90,7 @@
     function disabledCurrentRoute(items) {
         return items
             .map(r => {
-                if (r.href === $route.path) {
+                if (r.href?.path === $route.path) {
                     r.disabled = true;
                 }
 
@@ -212,7 +209,7 @@
             height: 112px;
             position: relative;
 
-            a, .logo-img {
+            > * {
                 transition: 0.2s all;
                 position: absolute;
                 left: 37px;
@@ -283,6 +280,7 @@
 
             &_disabled {
                 pointer-events: auto;
+                opacity: 1;
             }
 
             &:hover, body &_hover {
@@ -378,7 +376,7 @@
 
         &.vsm_collapsed {
             .logo {
-                a {
+                > * {
                     left: 10px;
 
                     span.img {

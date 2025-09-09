@@ -81,9 +81,7 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
 
     Flux<LogEntry> findAsync(
         @Nullable String tenantId,
-        @Nullable String namespace,
-        @Nullable Level minLevel,
-        ZonedDateTime startDate
+        List<QueryFilter> filters
     );
 
     Flux<LogEntry> findAllAsync(@Nullable String tenantId);
@@ -96,5 +94,7 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
 
     void deleteByQuery(String tenantId, String namespace, String flowId, String triggerId);
 
-    int deleteByQuery(String tenantId, String namespace, String flowId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate);
+    void deleteByFilters(String tenantId, List<QueryFilter> filters);
+
+    int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate);
 }

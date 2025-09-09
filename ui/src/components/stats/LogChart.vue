@@ -4,9 +4,9 @@
             effect="light"
             placement="bottom"
             :persistent="false"
-            :hide-after="0"
+            :hideAfter="0"
             transition=""
-            :popper-class="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
+            :popperClass="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
         >
             <template #content>
                 <span v-html="tooltipContent" />
@@ -19,7 +19,7 @@
 <script>
     import {computed, defineComponent, ref, getCurrentInstance} from "vue";
     import {Bar} from "vue-chartjs";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc.js";
     import Utils from "../../utils/utils";
     import {
         defaultConfig,

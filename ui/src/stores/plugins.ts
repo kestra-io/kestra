@@ -1,13 +1,14 @@
-import {defineStore} from "pinia";
+import {defineStore} from "pinia"
+import {trackPluginDocumentationView} from "../utils/tabTracking";;
 import {apiUrlWithoutTenants} from "override/utils/route";
 import semver from "semver";
 import {useApiStore} from "./api";
-import {Schemas} from "../components/code/utils/types";
+import {Schemas} from "../components/no-code/utils/types";
 import InitialFlowSchema from "./flow-schema.json"
 import {toRaw} from "vue";
 import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
 
-interface PluginComponent {
+export interface PluginComponent {
     icon?: string;
     cls?: string;
     deprecated?: boolean;
@@ -18,7 +19,7 @@ interface PluginComponent {
     markdown?: string;
 }
 
-interface Plugin {
+export interface Plugin {
     tasks: PluginComponent[];
     triggers: PluginComponent[];
     conditions: PluginComponent[];
@@ -27,8 +28,12 @@ interface Plugin {
     taskRunners: PluginComponent[];
     charts: PluginComponent[];
     dataFilters: PluginComponent[];
+    dataFiltersKPI: PluginComponent[];
     aliases: PluginComponent[];
     logExporters: PluginComponent[];
+    apps: PluginComponent[];
+    appBlocks: PluginComponent[];
+    additionalPlugins: PluginComponent[];
 }
 
 interface State {
@@ -56,6 +61,7 @@ interface LoadOptions {
     version?: string;
     all?: boolean;
     commit?: boolean;
+    hash?: number;
 }
 
 interface JsonSchemaDef {
@@ -138,6 +144,20 @@ export const usePluginsStore = defineStore("plugins", {
             }
             return obj;
         },
+
+        async filteredPlugins(excludedElements: string[]) {
+            if (this.plugins === undefined) {
+                this.plugins = await this.listWithSubgroup({includeDeprecated: false});
+            }
+
+            return this.plugins.map(p => ({
+                ...p,
+                ...Object.fromEntries(excludedElements.map(e => [e, undefined]))
+            })).filter(p => Object.entries(p)
+                    .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+                    .some(([, value]: [string, PluginComponent[]]) => value.length !== 0))
+        },
+
         async list() {
             const response = await this.$http.get<Plugin[]>(`${apiUrlWithoutTenants()}/plugins`);
             this.plugins = response.data;
@@ -158,17 +178,19 @@ export const usePluginsStore = defineStore("plugins", {
             }
 
             const id = options.version ? `${options.cls}/${options.version}` : options.cls;
-            const cachedPluginDoc = this.pluginsDocumentation[id];
+            const cachedPluginDoc = this.pluginsDocumentation[options.hash ? options.hash + id : id];
             if (!options.all && cachedPluginDoc) {
                 this.plugin = cachedPluginDoc;
                 return cachedPluginDoc;
             }
 
-            const url = options.version ?
+            const baseUrl = options.version ?
                 `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions/${options.version}` :
                 `${apiUrlWithoutTenants()}/plugins/${options.cls}`;
 
-            const response = await this.$http.get<PluginComponent>(url, {params: options});
+            const url = options.hash ? `${baseUrl}?hash=${options.hash}` : baseUrl;
+
+            const response = await this.$http.get<PluginComponent>(url);
 
             if (options.commit !== false) {
                 if (options.all === true) {
@@ -181,23 +203,22 @@ export const usePluginsStore = defineStore("plugins", {
             if (!options.all) {
                 this.pluginsDocumentation = {
                     ...this.pluginsDocumentation,
-                    [id]: response.data
+                    [options.hash ? options.hash+id : id]: response.data
                 };
             }
 
             return response.data;
         },
 
-        loadVersions(options: {cls: string; commit?: boolean}) {
-            const promise = this.$http.get(
+        async loadVersions(options: {cls: string; commit?: boolean}): Promise<{type: string, versions: string[]}> {
+            const response = await this.$http.get(
                 `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions`
             );
-            return promise.then(response => {
-                if (options.commit !== false) {
-                    this.versions = response.data.versions;
-                }
-                return response.data;
-            });
+            if (options.commit !== false) {
+                this.versions = response.data.versions;
+            }
+
+            return response.data;
         },
 
         fetchIcons() {
@@ -212,12 +233,15 @@ export const usePluginsStore = defineStore("plugins", {
             const apiStore = useApiStore();
 
             const apiPromise = apiStore.pluginIcons().then(response => {
-                this.icons = response.data ?? {};
+                // to avoid unnecessary dom updates and calculations in the reactivity rendering of Vue,
+                // we do all our updates to a temporary object, then commit the changes all at once
+                const tempIcons = toRaw(this.icons) ?? {};
                 for (const [key, plugin] of Object.entries(response.data)) {
-                    if (this.icons && this.icons[key] === undefined) {
-                        this.icons[key] = plugin as string;
+                    if (tempIcons && tempIcons[key] === undefined) {
+                        tempIcons[key] = plugin as string;
                     }
                 }
+                this.icons = tempIcons;
             });
 
             const iconsPromise =
@@ -268,7 +292,7 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
 
-        async updateDocumentation(pluginElement: ({type: string, version?: string} & Record<string, any>) | undefined) {
+        async updateDocumentation(pluginElement?: ({type: string, version?: string, hash?: number} & Record<string, any>) | undefined) {
             if (!pluginElement?.type || !this.allTypes.includes(pluginElement.type)) {
                 this.editorPlugin = undefined;
                 this.currentlyLoading = undefined;
@@ -289,7 +313,7 @@ export const usePluginsStore = defineStore("plugins", {
                 return;
             }
 
-            let payload: LoadOptions = {cls: type};
+            let payload: LoadOptions = {cls: type, hash: pluginElement.hash};
 
             if (version !== undefined) {
                 // Check if the version is valid to avoid error
@@ -316,6 +340,8 @@ export const usePluginsStore = defineStore("plugins", {
                     version,
                     ...plugin,
                 };
+
+                trackPluginDocumentationView(type);
 
                 this.forceIncludeProperties = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version");
             });

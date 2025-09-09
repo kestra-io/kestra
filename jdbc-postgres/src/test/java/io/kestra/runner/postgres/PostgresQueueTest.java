@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.UnsupportedMessageException;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.runner.JdbcQueueTest;
@@ -31,7 +32,8 @@ class PostgresQueueTest extends JdbcQueueTest {
             .build();
 
         var exception = assertThrows(QueueException.class, () -> workerTaskResultQueue.emit(workerTaskResult));
-        assertThat(exception.getMessage()).isEqualTo("Unable to emit a message to the queue");
+        assertThat(exception).isInstanceOf(UnsupportedMessageException.class);
+        assertThat(exception.getMessage()).contains("ERROR: unsupported Unicode escape sequence");
         assertThat(exception.getCause()).isInstanceOf(DataException.class);
     }
 }

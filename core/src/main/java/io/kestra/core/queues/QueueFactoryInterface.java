@@ -5,11 +5,9 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.runners.*;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.templates.Template;
 
 public interface QueueFactoryInterface {
     String EXECUTION_NAMED = "executionQueue";
@@ -28,12 +26,13 @@ public interface QueueFactoryInterface {
     String SUBFLOWEXECUTIONRESULT_NAMED = "subflowExecutionResultQueue";
     String CLUSTER_EVENT_NAMED = "clusterEventQueue";
     String SUBFLOWEXECUTIONEND_NAMED = "subflowExecutionEndQueue";
+    String EXECUTION_RUNNING_NAMED = "executionRunningQueue";
 
     QueueInterface<Execution> execution();
 
     QueueInterface<Executor> executor();
 
-    QueueInterface<WorkerJob> workerJob();
+    WorkerJobQueueInterface workerJob();
 
     QueueInterface<WorkerTaskResult> workerTaskResult();
 
@@ -58,4 +57,6 @@ public interface QueueFactoryInterface {
     QueueInterface<SubflowExecutionResult> subflowExecutionResult();
 
     QueueInterface<SubflowExecutionEnd> subflowExecutionEnd();
+
+    QueueInterface<ExecutionRunning> executionRunning();
 }

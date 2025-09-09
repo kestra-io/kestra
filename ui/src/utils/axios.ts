@@ -6,6 +6,7 @@ import {storageKeys} from "./constants"
 import {useLayoutStore} from "../stores/layout"
 import {useCoreStore} from "../stores/core"
 import * as BasicAuth from "../utils/basicAuth"
+import {useAuthStore} from "override/stores/auth"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -114,8 +115,10 @@ export default (
                 return Promise.reject(errorResponse)
             }
 
+            const authStore = useAuthStore()
+
             if (errorResponse.response.status === 401
-                && (oss || !store.getters["auth/isLogged"])) {
+                && (oss || !authStore.isLogged)) {
                 const base_path = window.KESTRA_BASE_PATH.endsWith("/") ? window.KESTRA_BASE_PATH.slice(0, -1) : window.KESTRA_BASE_PATH
 
                 if (window.location.pathname.startsWith(base_path + "/ui/login")) {
@@ -131,7 +134,7 @@ export default (
 
             // Authentication expired
             if (errorResponse.response.status === 401 &&
-                store.getters["auth/isLogged"] && !oss &&
+                authStore.isLogged && !oss &&
                 !document.cookie.split("; ").map(cookie => cookie.split("=")[0]).includes("JWT")
                 && !impersonate) {
 
@@ -153,7 +156,7 @@ export default (
                     BasicAuth.logout()
                     delete instance.defaults.headers.common["Authorization"]
 
-                    store.dispatch("auth/logout").catch(() => {})
+                    authStore.logout().catch(() => {})
 
                     const currentPath = window.location.pathname
                     const isLoginPath = currentPath.includes("/login")
@@ -217,7 +220,7 @@ export default (
                         BasicAuth.logout()
                         delete instance.defaults.headers.common["Authorization"]
 
-                        store.dispatch("auth/logout").catch(() => {})
+                        authStore.logout().catch(() => {})
 
                         const currentPath = window.location.pathname
                         const isLoginPath = currentPath.includes("/login")

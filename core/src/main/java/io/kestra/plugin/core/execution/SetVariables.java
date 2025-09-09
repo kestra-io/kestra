@@ -22,7 +22,7 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Allow to set execution variables. These variables will then be available via the `{{ vars.name }}` expression."
+    title = "Allow to set execution variables. These variables are available via the `{{ vars.name }}` expression."
 )
 @Plugin(
     examples = {
@@ -53,7 +53,7 @@ public class SetVariables extends Task implements ExecutionUpdatableTask {
     @NotNull
     private Property<Map<String, Object>> variables;
 
-    @Schema(title = "Whether to overwrite existing variables")
+    @Schema(title = "Flag specifying whether to overwrite existing variables")
     @NotNull
     @Builder.Default
     private Property<Boolean> overwrite = Property.ofValue(true);

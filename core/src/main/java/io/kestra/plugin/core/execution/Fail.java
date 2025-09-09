@@ -119,7 +119,7 @@ public class Fail extends Task implements RunnableTask<VoidOutput> {
     )
     private Property<String> condition;
 
-    @Schema(title = "Optional error message.")
+    @Schema(title = "Optional error message")
     @Builder.Default
     private Property<String> errorMessage = Property.ofValue("Task failure");
 

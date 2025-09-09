@@ -1,0 +1,23 @@
+id: pause-with-errors-finally-after-execution
+namespace: io.kestra.tests
+
+tasks:
+  - id: pause
+    type: io.kestra.plugin.core.flow.Pause
+    timeout: PT0.25S
+    errors:
+      - id: logError
+        type: io.kestra.plugin.core.log.Log
+        message: I'm in error
+    finally:
+      - id: logFinally
+        type: io.kestra.plugin.core.log.Log
+        message: I'm in finally
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: I'm after the pause
+
+afterExecution:
+  - id: logAfter
+    type: io.kestra.plugin.core.log.Log
+    message: I'm after the execution

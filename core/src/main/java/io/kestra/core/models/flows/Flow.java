@@ -61,13 +61,10 @@ public class Flow extends AbstractFlow implements HasUID {
             }
         });
 
-    String description;
-
     Map<String, Object> variables;
 
     @Valid
     @NotEmpty
-
     @Schema(additionalProperties = Schema.AdditionalPropertiesValue.TRUE)
     List<Task> tasks;
 
@@ -125,7 +122,7 @@ public class Flow extends AbstractFlow implements HasUID {
     AbstractRetry retry;
 
     @Valid
-    @PluginProperty(beta = true)
+    @PluginProperty
     List<SLA> sla;
 
     public Stream<String> allTypes() {
@@ -186,7 +183,7 @@ public class Flow extends AbstractFlow implements HasUID {
             .toList();
     }
 
-    public List<Task> allErrorsWithChildrend() {
+    public List<Task> allErrorsWithChildren() {
         var allErrors = allTasksWithChilds().stream()
             .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
             .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream())

@@ -27,7 +27,7 @@
         </div>
         <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
             <div class="d-none d-lg-flex align-items-center">
-                <global-search class="trigger-flow-guided-step" />
+                <GlobalSearch class="trigger-flow-guided-step" />
             </div>
             <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
                 <el-button v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" @click="deleteLogs()">
@@ -37,14 +37,13 @@
             </div>
             <slot name="additional-right" />
             <div class="d-flex fixed-buttons icons">
-                <impersonating />
+                <Impersonating />
             </div>
         </div>
     </nav>
 </template>
 
 <script>
-    import {mapGetters} from "vuex";
     import {mapStores} from "pinia";
     import {useLogsStore} from "../../stores/logs";
     import {useBookmarksStore} from "../../stores/bookmarks";
@@ -56,6 +55,7 @@
     import StarIcon from "vue-material-design-icons/Star.vue";
     import Information from "vue-material-design-icons/Information.vue"
     import Badge from "../global/Badge.vue";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {
@@ -84,11 +84,10 @@
             },
         },
         computed: {
-            ...mapGetters("auth", ["user"]),
-            ...mapStores(useLogsStore, useBookmarksStore, useCoreStore),
+            ...mapStores(useLogsStore, useBookmarksStore, useCoreStore, useAuthStore),
             tourEnabled(){
                 // Temporary solution to not showing the tour menu item for EE
-                return this.coreStore.tutorialFlows?.length && !Object.keys(this.user).length
+                return this.coreStore.tutorialFlows?.length && !Object.keys(this.authStore.user).length
             },
             shouldDisplayDeleteButton() {
                 return this.$route.name === "flows/update" && this.$route.params?.tab === "logs"

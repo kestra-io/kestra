@@ -1,5 +1,6 @@
 import {Store} from "vuex";
 import {EntityIterator} from "./entityIterator.ts";
+import {useNamespacesStore} from "override/stores/namespaces.ts";
 
 export interface Namespace {
     id: string;
@@ -16,7 +17,8 @@ export class NamespaceIterator extends EntityIterator<Namespace>{
     }
 
     fetchCall(): Promise<{ total: number; results: Namespace[] }> {
-        return this.store.dispatch("namespace/search", this.fetchOptions());
+        const namespacesStore = useNamespacesStore();
+        return namespacesStore.search(this.fetchOptions());
     }
 }
 

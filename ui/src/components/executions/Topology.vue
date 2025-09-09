@@ -1,18 +1,18 @@
 <template>
     <el-card>
         <div class="vueflow">
-            <low-code-editor
+            <LowCodeEditor
                 :key="execution.id"
                 v-if="execution && flowGraph"
-                :flow-id="execution.flowId"
+                :flowId="execution.flowId"
                 :namespace="execution.namespace"
-                :flow-graph="flowGraph"
-                :source="flow?.source"
+                :flowGraph="flowGraph"
+                :source="flowStore.flow?.source"
                 :execution="execution"
-                :expanded-subflows="expandedSubflows"
-                is-read-only
-                @follow="forwardEvent('follow', $event)"
-                view-type="topology"
+                :expandedSubflows="expandedSubflows"
+                isReadOnly
+                @follow="$emit('follow', $event)"
+                viewType="topology"
                 @expand-subflow="onExpandSubflow"
             />
             <el-loading v-else-if="loading" />
@@ -24,19 +24,18 @@
 </template>
 <script>
     import throttle from "lodash/throttle";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
-    import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants.ts";
     import {Utils, State} from "@kestra-io/ui-libs";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
     import {useExecutionsStore} from "../../stores/executions";
+    import {useFlowStore} from "../../stores/flow";
     export default {
+        emits: ["follow"],
         components: {
             LowCodeEditor
         },
         computed: {
-            ...mapState("flow", ["flow"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useFlowStore),
             execution() {
                 return this.executionsStore.execution;
             },
@@ -82,93 +81,19 @@
                 delete this.sseBySubflow[subflow];
                 this.executionsStore.removeSubflowExecution(subflow)
             },
-            forwardEvent(type, event) {
-                this.$emit(type, event);
-            },
             loadData() {
                 this.loadGraph();
-            },
-            isUnused: function (nodeByUid, nodeUid) {
-                let nodeToCheck = nodeByUid[nodeUid];
-
-                if(!nodeToCheck) {
-                    return false;
-                }
-
-                if(!nodeToCheck.task) {
-                    // check if parent is unused (current node is probably a cluster root or end)
-                    const splitUid = nodeToCheck.uid.split(".");
-                    splitUid.pop();
-                    return this.isUnused(nodeByUid, splitUid.join("."));
-                }
-
-                if (!nodeToCheck.executionId) {
-                    return true;
-                }
-
-                const nodeExecution = nodeToCheck.executionId === this.execution?.id ? this.execution
-                    : Object.values(this.executionsStore.subflowsExecutions).filter(execution => execution.id === nodeToCheck.executionId)?.[0];
-
-                if (!nodeExecution) {
-                    return true;
-                }
-
-                return !nodeExecution.taskRunList.some(taskRun => taskRun.taskId === nodeToCheck.task?.id);
-
-
             },
             loadGraph(force) {
                 this.loading = true;
 
                 if (this.execution && (force || (this.flowGraph === undefined || this.previousExecutionId !== this.execution.id))) {
                     this.previousExecutionId = this.execution.id;
-                    this.executionsStore.loadGraph({
+                    this.executionsStore.loadAugmentedGraph({
                         id: this.execution.id,
                         params: {
                             subflows: this.expandedSubflows
                         }
-                    }).then(() => {
-                        const subflowPaths = this.flowGraph.clusters
-                            ?.map(c => c.cluster)
-                            ?.filter(cluster => cluster.type.endsWith("SubflowGraphCluster"))
-                            ?.map(cluster => cluster.uid.replace(CLUSTER_PREFIX, ""))
-                            ?? [];
-                        const nodeByUid = {};
-
-                        this.flowGraph.nodes
-                            // lowest depth first to be available in nodeByUid map for child-to-parent unused check
-                            .sort((a, b) => a.uid.length - b.uid.length)
-                            .forEach(node => {
-                                nodeByUid[node.uid] = node;
-
-                                const parentSubflow = subflowPaths.filter(subflowPath => node.uid.startsWith(subflowPath + "."))
-                                    .sort((a, b) => b.length - a.length)?.[0]
-
-                                if(parentSubflow) {
-                                    const subflowsExecutions = this.executionsStore.subflowsExecutions;
-                                    if(parentSubflow in subflowsExecutions) {
-                                        node.executionId = subflowsExecutions[parentSubflow]?.id;
-                                    }
-
-                                    return;
-                                }
-
-                                node.executionId = this.execution.id;
-
-                                // reduce opacity for cluster root & end
-                                if(!node.task && this.isUnused(nodeByUid, node.uid)) {
-                                    node.unused = true;
-                                }
-                            });
-
-                        this.flowGraph.edges
-                            // keep only unused (or skipped) paths
-                            .filter(edge => {
-                                return this.isUnused(nodeByUid, edge.target) || this.isUnused(nodeByUid, edge.source);
-                            }).forEach(edge => edge.unused = true);
-
-                        // force refresh - Create a new object reference to trigger reactivity
-                        this.executionsStore.flowGraph = Object.assign({}, this.flowGraph);
                     }).catch(() => {
                         this.expandedSubflows = this.previousExpandedSubflows;
 
@@ -235,7 +160,7 @@
                     return;
                 }
 
-                this.executionsStore.followExecution({id: executionId})
+                this.executionsStore.followExecution({id: executionId}, this.$t)
                     .then(sse => {
                         this.sseBySubflow[subflow] = sse;
                         sse.onmessage = (executionEvent) => {

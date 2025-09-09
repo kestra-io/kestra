@@ -1,13 +1,17 @@
-import {nextTick} from "vue"
+import {nextTick, ref} from "vue"
 import {createI18n, type I18n} from "vue-i18n"
 
 const translations = import.meta.glob(["./*.json", "!./en.json"])
 
 export const SUPPORT_LOCALES = ["de","en","es","fr","hi","it","ja","ko","pl","pt","ru","zh_CN"] as const
+type Locales = (typeof SUPPORT_LOCALES)[number]
 
-export function setupI18n(options: {locale: (typeof SUPPORT_LOCALES)[number]} = {locale: "en"}) {
-  const i18n = createI18n(options)
+export const globalI18n = ref<I18n<any, any, any, Locales, false>["global"]>()
+
+export function setupI18n(options: {locale: Locales} = {locale: "en"}) {
+  const i18n = createI18n<false>(options)
   setI18nLanguage(i18n, options.locale)
+  globalI18n.value = i18n.global
   return i18n
 }
 
@@ -15,7 +19,7 @@ export function setI18nLanguage(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[num
   if (i18n.mode === "legacy") {
     i18n.global.locale = locale
   } else {
-    // @ts-expect-error vue-i18n is not typed correcly it seems
+    // @ts-expect-error vue-i18n is not typed correctly it seems
     i18n.global.locale.value = locale
   }
   /**

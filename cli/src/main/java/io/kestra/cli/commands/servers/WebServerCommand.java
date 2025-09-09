@@ -2,7 +2,7 @@ package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.ServerType;
-import io.kestra.core.runners.IndexerInterface;
+import io.kestra.core.runners.Indexer;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.micronaut.context.ApplicationContext;
@@ -54,7 +54,7 @@ public class WebServerCommand extends AbstractServerCommand {
         if (!indexerDisabled) {
             log.info("Starting an embedded indexer, this can be disabled by using `--no-indexer`.");
             poolExecutor = executorsUtils.cachedThreadPool("webserver-indexer");
-            poolExecutor.execute(applicationContext.getBean(IndexerInterface.class));
+            poolExecutor.execute(applicationContext.getBean(Indexer.class));
             shutdownHook(false, () -> poolExecutor.shutdown());
         }
 

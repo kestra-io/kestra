@@ -16,12 +16,12 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "8.3.8"
+    id "com.gradleup.shadow" version "8.3.9"
     id "application"
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "6.2.0.5505"
+    id "org.sonarqube" version "6.3.1.5724"
     id 'jacoco-report-aggregation'
 
     // helper
@@ -225,14 +225,14 @@ subprojects {
         }
 
         testlogger {
-            theme 'mocha-parallel'
-            showExceptions true
-            showFullStackTraces true
-            showCauses true
-            slowThreshold 2000
-            showStandardStreams true
-            showPassedStandardStreams false
-            showSkippedStandardStreams true
+            theme = 'mocha-parallel'
+            showExceptions = true
+            showFullStackTraces = true
+            showCauses = true
+            slowThreshold = 2000
+            showStandardStreams = true
+            showPassedStandardStreams = false
+            showSkippedStandardStreams = true
         }
     }
 }
@@ -410,7 +410,7 @@ jar {
 shadowJar {
     archiveClassifier.set(null)
     mergeServiceFiles()
-    zip64 true
+    zip64 = true
 }
 
 distZip.dependsOn shadowJar
@@ -427,8 +427,8 @@ def executableDir = layout.buildDirectory.dir("executable")
 def executable = layout.buildDirectory.file("executable/${project.name}-${project.version}").get().asFile
 
 tasks.register('writeExecutableJar') {
-    group "build"
-    description "Write an executable jar from shadow jar"
+    group = "build"
+    description = "Write an executable jar from shadow jar"
     dependsOn = [shadowJar]
 
     final shadowJarFile =  tasks.shadowJar.outputs.files.singleFile
@@ -454,8 +454,8 @@ tasks.register('writeExecutableJar') {
 }
 
 tasks.register('executableJar', Zip) {
-    group "build"
-    description "Zip the executable jar"
+    group = "build"
+    description = "Zip the executable jar"
     dependsOn = [writeExecutableJar]
 
     archiveFileName = "${project.name}-${project.version}.zip"
@@ -617,6 +617,28 @@ subprojects {subProject ->
                 tasks.matching { it.name.startsWith("publish") }.configureEach {
                     dependsOn rootProject.tasks.named("shadowJar")
                     dependsOn rootProject.tasks.named("executableJar")
+                }
+            }
+        }
+
+        if (subProject.name != 'platform' && subProject.name != 'cli') {
+            // only if a test source set actually exists (avoids empty artifacts)
+            def hasTests = subProject.extensions.findByName('sourceSets')?.findByName('test') != null
+
+            if (hasTests) {
+                // wire the artifact onto every Maven publication of this subproject
+                publishing {
+                    publications {
+                        withType(MavenPublication).configureEach { pub ->
+                            // keep the normal java component + sources/javadoc already configured
+                            pub.artifact(subProject.tasks.named('testsJar').get())
+                        }
+                    }
+                }
+
+                // make sure publish tasks build the tests jar first
+                tasks.matching { it.name.startsWith('publish') }.configureEach {
+                    dependsOn subProject.tasks.named('testsJar')
                 }
             }
         }

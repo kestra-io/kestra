@@ -3,6 +3,7 @@ package io.kestra.core.validations;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -56,7 +57,7 @@ class InputTest {
         var fileInput = FileInput.builder()
             .id("test")
             .type(Type.FILE)
-            .defaults(URI.create("http://some.uri"))
+            .defaults(Property.ofValue(URI.create("http://some.uri")))
             .build();
 
         assertThat(modelValidator.isValid(fileInput)).isPresent();
@@ -67,7 +68,7 @@ class InputTest {
         var fileInput = FileInput.builder()
             .id("test")
             .type(Type.FILE)
-            .defaults(URI.create("file:///tmp.file.txt"))
+            .defaults(Property.ofValue(URI.create("file:///tmp.file.txt")))
             .build();
 
         assertThat(modelValidator.isValid(fileInput)).isEmpty();

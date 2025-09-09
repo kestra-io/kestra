@@ -50,7 +50,6 @@
     "delete": "Delete",
     "deleted": "Successfully deleted",
     "deleted confirm": "<em>{name}</em> is successfully deleted!",
-    "Select namespace": "Namespace",
     "Add flow": "Add flow",
     "add": "Add",
     "add_new_item": "Add new item",
@@ -130,9 +129,9 @@
       "news": "News",
       "docs": "Docs",
       "help": "Help",
-      "issue": "Open an Issue",
-      "demo": "Get a demo",
-      "star": "Star the repo"
+      "issue": "Issue",
+      "demo": "Demo",
+      "star": "Star us"
     },
     "source": "Source",
     "source only": "Source only",
@@ -190,6 +189,8 @@
     "replay latest revision": "Replay using latest revision",
     "replayed": "Execution is replayed",
     "replay confirm": "Are you sure you want to replay this execution <code>{id}</code> and create a new one?",
+    "replay with inputs": "Replay with inputs",
+    "replay the execution": "Replay the execution <code>{executionId}</code> for the flow <code>{flowId}</code>",
     "prefill inputs": "Prefill",
     "current": "current",
     "change state": "Change state",
@@ -253,6 +254,7 @@
     "output": "Output",
     "eval": {
       "title": "Debug Expression",
+      "render": "Render Expression",
       "tooltip": "Render any Pebble expression and inspect the Execution context."
     },
     "attempt": "Attempt",
@@ -274,7 +276,9 @@
       "zoom-in": "Zoom in",
       "zoom-out": "Zoom out",
       "zoom-reset": "Reset zoom",
-      "zoom-fit": "Fit"
+      "zoom-fit": "Fit",
+      "invalid": "Graph error",
+      "invalid_description": "An error occurred while loading the graph. Please check the source code for errors."
     },
     "show task logs": "Show task logs",
     "show task condition": "Show task condition",
@@ -577,7 +581,6 @@
     "warning detected": "Warning(s) detected",
     "informative notice": "Note(s)",
     "cannot swap tasks": "Can't swap the tasks",
-    "preview": "Preview",
     "open": "Open",
     "dependency task": "Task {taskId} is a dependency of another task",
     "administration": "Administration",
@@ -773,6 +776,7 @@
             "execute_default_tab": "Default Execution Tab",
             "multi_panel_editor": "Multi Panel Editor",
             "flow_default_tab": "Default Flow Tab",
+            "playground": "Playground",
             "auto_refresh_interval": "Auto Refresh Interval"
           }
         },
@@ -786,6 +790,7 @@
             "editor_folding_stratgy": "Automatic Code Folding in the Editor",
             "editor_hover_description": "Hover on property to see description",
             "environment_name": "Environment Name",
+            "environment_name_tooltip": "This environment name is set from the config but can be changed.",
             "environment_color": "Environment Color",
             "chart_color_scheme": {
               "label": "Chart Color Scheme",
@@ -944,6 +949,7 @@
       "button": "Talk to us"
     },
     "flow_only": "Only available on Flow tab.",
+    "bulk action async warning": "This might take a few moments.",
     "bulk unpause backfills": "Unpause {count} backfill",
     "bulk pause backfills": "Pause {count} backfill",
     "bulk delete backfills": "Delete {count} backfill",
@@ -982,7 +988,8 @@
       "delete multiple": {
         "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
         "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>"
-      }
+      },
+      "inherited": "Inherited KV pairs"
     },
     "expiration": "Expiration",
     "failed to render pdf": "Failed to render the PDF preview",
@@ -1006,6 +1013,12 @@
     "curl": {
       "command": "cURL command",
       "note": "Note that for SECRET and FILE input type, the command must be accommodated to match the real values."
+    },
+    "webhook": {
+      "curl_command": "Webhook cURL command",
+      "payload": "Webhook Payload (JSON)",
+      "curl_note": "Use this cURL command to trigger the flow via webhook with custom JSON payload",
+      "no_triggers": "This flow has no enabled webhook triggers"
     },
     "logs_view": {
       "raw": "Temporal view",
@@ -1188,6 +1201,7 @@
         }
       },
       "select": {
+        "task": "Select a task",
         "tasks": "Select a task",
         "triggers": "Select a trigger",
         "errors": "Select a task",
@@ -1247,7 +1261,7 @@
     },
     "debug": "Debug",
     "default": "Default",
-    "data_not_protected": "Your data is not protected. Don't loose it. <b>Enable our free security features or try our paid offering.</b>",
+    "data_not_protected": "Your data is not protected. Don't lose it. <b>Enable our free security features or try our paid offering.</b>",
     "activate_basic_auth": "Activate Basic Authentication",
     "dark_version": "Dark version",
     "use_dark_background": "Use this version when working on a dark background to ensure our name remains readable.",
@@ -1307,8 +1321,18 @@
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
       },
       "dependencies": {
-        "title": "No dependencies are set for this Flow.",
-        "content": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
+        "FLOW": {
+          "title": "There are currently no dependencies.",
+          "content": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
+        },
+        "EXECUTION": {
+          "title": "There are currently no dependencies.",
+          "content": "Read more about <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Execution Dependencies</a> in our documentation."
+        },
+        "NAMESPACE": {
+          "title": "There are currently no dependencies.",
+          "content": "Read more about <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> in our documentation."
+        }
       },
       "plugins": {
         "title": "No plugin defaults are set for this for this Namespace.",
@@ -1317,6 +1341,10 @@
       "triggers": {
         "title": "Your flow doesn't have any Triggers.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."
+      },
+      "versionPlugin": {
+        "title": "You have no versioned plugin yet!",
+        "content": "Here you can manage all the plugins installed on your Kestra instance. Newly installed plugins may not be immediately available in all Kestra services, depending on the configuration of your instance."
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",
@@ -1357,7 +1385,8 @@
       "edition": {
         "label": "Edit Dashboard",
         "confirmation": "Changes in dashboard <code>{title}</code> are saved.",
-        "chart": "Edit this chart"
+        "chart": "Edit this chart",
+        "id readonly": "The property `id` cannot be changed — it's now set to its initial values. If you want to change it, you can create a new dashboard and remove the old one."
       },
       "deletion": {
         "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
@@ -1437,15 +1466,59 @@
     },
     "ai": {
       "flow": {
-        "title": "AI Agent",
-        "prompt_placeholder": "Enter instructions to create your Kestra flow.",
-        "generating": "Generating Flow YAML for you..."
+        "title": "AI Copilot",
+        "prompt_placeholder": "Enter instructions to create your Kestra flow. Example prompt: Create a flow that runs every Monday at 9 AM.",
+        "generating": "Generating Flow YAML for you...",
+        "enable_instructions": {
+            "header":"<b>AI Copilot hasn't been configured yet.</b>\n\nTo enable AI Copilot, add the following snippet to your Kestra instance configuration file (e.g. <code>application.yml</code>), replacing <code>geminiApiKey</code> with your actual key:",
+            "footer": "Note: At this time, only Gemini is supported as the AI provider.\n\nRestart your Kestra instance after saving the configuration."
+        }
       }
+    },
+    "playground": {
+      "title": "Playground",
+      "run_task_info": "Hover over any task in the Flow Code editor and click the \"Run task\" button to test your task.",
+      "play_icon_info": "You can also hit the Play icon in the No-Code or Topology views.",
+      "toggle": "Playground",
+      "run_task": "Run task",
+      "run_this_task": "Run this task",
+      "run_task_and_downstream": "Run task & downstream",
+      "run_all_tasks": "Run All Tasks",
+      "history": "Last 10 runs",
+      "clear_history": "Clear history",
+      "confirm_create": "You cannot run the playground while creating a flow. Launching a playground run will create the flow.",
+      "tooltip_persistence": "If you turn Playground off and back on, the information remains as long as you stay on the page."
     },
     "submit": "Submit",
     "to toggle": "to toggle",
     "accept": "Accept",
     "reject": "Reject",
-    "last modified": "Last modified"
+    "last modified": "Last modified",
+    "run task in playground": "Run task in playground",
+    "task is running": "Task is running",
+    "task was successful": "Task was successful",
+    "task failed": "Task failed",
+    "task was skipped": "Task was skipped",
+    "task sent a warning": "Task sent a warning",
+    "defaultsToNamespaceFile": "Defaults to namespace file: <code>{name}</code>",
+    "no_file_choosen": "No file chosen",
+    "dependency": {
+      "controls": {
+        "zoom_in": "Zoom in",
+        "zoom_out": "Zoom out",
+        "clear_selection": "Clear selection",
+        "fit_view": "Fit to screen"
+      },
+      "search": {
+        "placeholder": "Search by flow or namespace...",
+        "no_results": "No results found for {term}"
+      }
+    },
+    "preview": {
+      "label": "Preview",
+      "force-editor": "Enforce editor view",
+      "auto-view": "Auto view",
+      "view": "View"
+    }
   }
 }

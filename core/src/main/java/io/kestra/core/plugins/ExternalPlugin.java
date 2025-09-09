@@ -14,4 +14,5 @@ import java.net.URL;
 public class ExternalPlugin {
     private final URL location;
     private final URL[] resources;
+    private final long crc32;
 }

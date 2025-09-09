@@ -53,7 +53,7 @@ import java.util.List;
 )
 public class Split extends Task implements RunnableTask<Split.Output>, StorageSplitInterface {
     @Schema(
-        title = "The file to be split."
+        title = "The file to be split"
     )
     @NotNull
     @PluginProperty(internalStorageURI = true)
@@ -81,7 +81,7 @@ public class Split extends Task implements RunnableTask<Split.Output>, StorageSp
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The URIs of split files in the Kestra's internal storage."
+            title = "The URIs of split files in Kestra's internal storage"
         )
         private final List<URI> uris;
     }

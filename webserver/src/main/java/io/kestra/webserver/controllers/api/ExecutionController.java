@@ -624,7 +624,9 @@ public class ExecutionController {
         }
     }
 
-    public record WebhookResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, ExecutionTrigger trigger, Map<String, Object> outputs, List<Label> labels, State state, URI url) {
+    public record WebhookResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision,
+                                  ExecutionTrigger trigger, Map<String, Object> outputs, List<Label> labels,
+                                  State state, URI url) {
         public static WebhookResponse fromExecution(Execution execution, URI url) {
             return new WebhookResponse(execution.getTenantId(), execution.getId(), execution.getNamespace(), execution.getFlowId(), execution.getFlowRevision(), execution.getTrigger(), execution.getOutputs(), execution.getLabels(), execution.getState(), url);
         }
@@ -750,7 +752,7 @@ public class ExecutionController {
 
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
         ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs, Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata, Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, URI url) {
-            super(tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate, traceParent, fixtures,kind, breakpoints);
+            super(tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate, traceParent, fixtures, kind, breakpoints);
 
             this.url = url;
         }
@@ -870,7 +872,8 @@ public class ExecutionController {
         }
 
         InputStream fileHandler = switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME -> storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+            case StorageContext.KESTRA_SCHEME ->
+                storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().get(path);
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 URI uri = nsFileToInternalStorageURI(path, execution.get());
@@ -906,7 +909,8 @@ public class ExecutionController {
         }
 
         long size = switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME -> storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize();
+            case StorageContext.KESTRA_SCHEME ->
+                storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize();
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().getAttributes(path).size();
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 URI uri = nsFileToInternalStorageURI(path, execution.get());
@@ -1054,6 +1058,32 @@ public class ExecutionController {
         return innerReplay(execution.get(), taskRunId, revision, breakpoints);
     }
 
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/replay-with-inputs", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Operation(tags = {"Executions"}, summary = "Create a new execution from an old one and start it from a specified task run id")
+    public Mono<Execution> replayExecutionWithinputs(
+        @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
+        @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
+        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision,
+        @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints,
+        @RequestBody(description = "The inputs") @Body MultipartBody inputs
+    ) {
+        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+        if (execution.isEmpty()) {
+            return null;
+        }
+        Execution current = execution.get();
+
+        this.controlRevision(current, revision);
+
+        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
+
+        return flowInputOutput.readExecutionInputs(flow, current, inputs)
+            .flatMap(newInputs -> Mono.fromCallable(() ->
+                innerReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
+
+    }
+
     private Execution innerReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
         Execution replay = executionService.replay(execution, taskRunId, revision)
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
@@ -1103,7 +1133,7 @@ public class ExecutionController {
 
         Flow flow = flowRepository.findByExecution(execution.get());
 
-        Execution replay = executionService.markAs(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
+        Execution replay = executionService.changeTaskRunState(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
         List<Label> newLabels = new ArrayList<>(replay.getLabels());
         if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
             newLabels.add(new Label(Label.RESTARTED, "true"));
@@ -1379,16 +1409,14 @@ public class ExecutionController {
         Pause.Resumed resumed = createResumed();
 
         return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs, resumed)
-            .<HttpResponse<?>>handle((resumeExecution, sink) -> {
+            .handle((resumeExecution, sink) -> {
                 try {
                     this.executionQueue.emit(resumeExecution);
                     sink.next(HttpResponse.noContent());
                 } catch (QueueException e) {
                     sink.error(e);
                 }
-            })
-            // need to consume the inputs in case of error
-            .doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast());
+            });
     }
 
     protected Pause.Resumed createResumed() {
@@ -1805,12 +1833,25 @@ public class ExecutionController {
 
                     // Register for updates
                     streamingService.registerSubscriber(executionId, subscriberId, emitter, flow);
-                } catch (TimeoutException e) {
-                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
-                        "Unable to find execution " + executionId));
+
+                    // Fetch again the execution to avoid race when execution is ended before we are subscribed
+                    execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null);
+                    if (streamingService.isStopFollow(flow, execution)) {
+                        emitter.next(Event.of(execution).id("end"));
+                        emitter.complete();
+                    }
+
+                    if (execution.getState().isBreakpoint()) {
+                        emitter.next(Event.of(execution).id("progress"));
+                    }
                 } catch (IllegalStateException e) {
+                    log.error(e.getMessage(), e);
                     emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
                         "Unable to find flow for execution " + executionId));
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
+                        "Unable to find execution " + executionId));
                 }
             }, FluxSink.OverflowStrategy.BUFFER)
             .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
@@ -1843,7 +1884,8 @@ public class ExecutionController {
         }
 
         InputStream fileStream = switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME -> storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
+            case StorageContext.KESTRA_SCHEME ->
+                storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().get(path);
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 URI uri = nsFileToInternalStorageURI(path, execution.get());
@@ -1958,7 +2000,10 @@ public class ExecutionController {
             );
         }
 
-        executions.forEach(execution -> setLabelsOnTerminatedExecution(execution, ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels())));
+        executions.forEach(execution -> setLabelsOnTerminatedExecution(
+            execution,
+            Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels())))
+        );
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
@@ -2420,6 +2465,8 @@ public class ExecutionController {
             Object value,
             @Parameter(description = "Specifies whether the input is enabled")
             boolean enabled,
+            @Parameter(description = "Specifies whether the input value is the default")
+            boolean isDefault,
             @Parameter(description = "The validation errors")
             List<ApiInputError> errors
         ) {
@@ -2441,6 +2488,7 @@ public class ExecutionController {
                     it.input(),
                     it.value(),
                     it.enabled(),
+                    it.isDefault(),
                     Optional.ofNullable(it.exception()).map(exception ->
                         exception.getConstraintViolations()
                             .stream()

@@ -3,18 +3,20 @@
         <slot name="top-bar" />
         <Topology
             :id="vueflowId"
-            :is-horizontal="isHorizontal"
-            :is-read-only="isReadOnly"
-            :is-allowed-edit="isAllowedEdit"
+            :isHorizontal="isHorizontal"
+            :isReadOnly="isReadOnly"
+            :isAllowedEdit="isAllowedEdit"
             :source="source"
-            :toggle-orientation-button="toggleOrientationButton"
-            :flow-graph="props.flowGraph"
-            :flow-id="flowId"
+            :toggleOrientationButton="toggleOrientationButton"
+            :flowGraph="playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph"
+            :flowId="flowId"
             :namespace="namespace"
-            :expanded-subflows="props.expandedSubflows"
+            :expandedSubflows="props.expandedSubflows"
             :icons="pluginsStore.icons"
             :execution="executionsStore.execution"
-            :subflows-executions="executionsStore.subflowsExecutions"
+            :subflowsExecutions="executionsStore.subflowsExecutions"
+            :playgroundEnabled="playgroundStore.enabled"
+            :playgroundReadyToStart="playgroundStore.readyToStart"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -27,55 +29,36 @@
             @swapped-task="onSwappedTask"
             @message="message"
             @expand-subflow="expandSubflow"
+            @run-task="playgroundStore.runUntilTask($event.task.id)"
         />
 
-        <!-- Drawer to create/add task -->
-        <task-edit
-            v-if="source"
-            component="div"
-            is-hidden
-            class="node-action"
-            :section="taskEditData?.section"
-            :task="taskObject"
-            :flow-id="flowId"
-            size="small"
-            :namespace="namespace"
-            :revision="execution ? execution.flowRevision : undefined"
-            @update:task="confirmEdit"
-            @close="closeEdit()"
-            :flow-source="source"
-            ref="taskEditDomElement"
-        />
-
-        <!--    Drawer to task informations (logs, description, ..)   -->
-        <!--    Assuming selectedTask is always the id and the required data for the opened drawer    -->
-        <drawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
+        <Drawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
             <template #header>
                 <code>{{ selectedTask.id }}</code>
             </template>
             <div v-if="isShowLogsOpen">
-                <collapse>
+                <Collapse>
                     <el-form-item>
-                        <search-field
+                        <SearchField
                             :router="false"
                             @search="onSearch"
                             class="me-2"
                         />
                     </el-form-item>
                     <el-form-item>
-                        <log-level-selector
+                        <LogLevelSelector
                             :value="logLevel"
                             @update:model-value="onLevelChange"
                         />
                     </el-form-item>
-                </collapse>
-                <task-run-details
+                </Collapse>
+                <TaskRunDetails
                     v-for="taskRun in selectedTask.taskRuns"
                     :key="taskRun.id"
-                    :target-execution-id="selectedTask.execution?.id"
-                    :task-run-id="taskRun.id"
+                    :targetExecutionId="selectedTask.execution?.id"
+                    :taskRunId="taskRun.id"
                     :filter="logFilter"
-                    :exclude-metas="[
+                    :excludeMetas="[
                         'namespace',
                         'flowId',
                         'taskId',
@@ -86,23 +69,22 @@
                 />
             </div>
             <div v-if="isShowDescriptionOpen">
-                <markdown
-                    class="markdown-tooltip"
+                <Markdown
                     :source="selectedTask.description"
                 />
             </div>
             <div v-if="isShowConditionOpen">
-                <editor
-                    :read-only="true"
+                <Editor
+                    :readOnly="true"
                     :input="true"
-                    :full-height="false"
+                    :fullHeight="false"
                     :navbar="false"
-                    :model-value="selectedTask.runIf"
+                    :modelValue="selectedTask.runIf"
                     lang="yaml"
                     class="mt-3"
                 />
             </div>
-        </drawer>
+        </Drawer>
     </div>
 </template>
 
@@ -115,34 +97,37 @@
     import {useRouter} from "vue-router";
     import {useVueFlow} from "@vue-flow/core";
 
-    import TaskEdit from "../flows/TaskEdit.vue";
+    // @ts-expect-error no types for SearchField yet
     import SearchField from "../layout/SearchField.vue";
+    // @ts-expect-error no types for LogLevelSelector yet
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
+    // @ts-expect-error no types for TaskRunDetails yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
+    // @ts-expect-error no types for Collapse yet
     import Collapse from "../layout/Collapse.vue";
     import Drawer from "../Drawer.vue";
-
-    // Topology
-    import {Topology} from "@kestra-io/ui-libs";
-
-    // Utils
-    import {SECTIONS} from "@kestra-io/ui-libs";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import Markdown from "../layout/Markdown.vue";
     import Editor from "./Editor.vue";
+
+    import {Topology} from "@kestra-io/ui-libs";
+    import {SECTIONS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+
+    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys";
+    import {useCoreStore} from "../../stores/core";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {usePlaygroundStore} from "../../stores/playground";
 
     const router = useRouter();
 
     const vueflowId = ref(Math.random().toString());
     const {fitView} = useVueFlow(vueflowId.value);
 
-    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
-    import {useCoreStore} from "../../stores/core";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {useExecutionsStore} from "../../stores/executions";
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
 
     const executionsStore = useExecutionsStore();
+    const playgroundStore = usePlaygroundStore();
 
     // props
     const props = withDefaults(
@@ -190,7 +175,6 @@
     const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"));
     const vueFlow = ref<HTMLDivElement>();
     const timer = ref<ReturnType<typeof setTimeout>>();
-    const taskObject = ref();
     const taskEditData = ref();
     const taskEditDomElement = ref();
     const isShowLogsOpen = ref(false);
@@ -207,6 +191,14 @@
         observeWidth();
         pluginsStore.fetchIcons()
     });
+
+    watch(() => executionsStore.execution?.id, (id) => {
+        if (id) {
+            executionsStore.loadAugmentedGraph({
+                id,
+            });
+        }
+    }, {immediate: true});
 
     watch(
         () => isDrawerOpen.value,
@@ -240,9 +232,9 @@
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
             () => {
-                const section = event.section ? event.section : SECTIONS.TASKS;
+                const section = event.section ? event.section.toLowerCase() : SECTIONS.TASKS.toLowerCase();
                 if (
-                    section === SECTIONS.TASKS &&
+                    section === SECTIONS.TASKS.toLowerCase() &&
                     flowParsed.tasks.length === 1 &&
                     flowParsed.tasks.map((e: any) => e.id).includes(event.id)
                 ) {
@@ -298,74 +290,6 @@
             taskId: event.task.id,
         };
         taskEditDomElement.value.$refs.taskEdit.click();
-    };
-
-    const confirmEdit = (event: string) => {
-        const source = props.source ?? "";
-        const task = YAML_UTILS.extractBlock({
-            section: "tasks",
-            source: props.source ?? "",
-            key: YAML_UTILS.parse(event).id
-        });
-        if (
-            task === undefined ||
-            (task && YAML_UTILS.parse(event).id === taskEditData.value.oldTaskId)
-        ) {
-            switch (taskEditData.value.action) {
-            case "create_task":
-                emit(
-                    "on-edit",
-                    YAML_UTILS.insertBlock({
-                        section: "tasks",
-                        source,
-                        parentKey: taskEditData.value.insertionDetails[0],
-                        newBlock:event,
-                        position: taskEditData.value.insertionDetails[1],
-                    }),
-                    true,
-                );
-                return;
-            case "edit_task":
-                emit(
-                    "on-edit",
-                    YAML_UTILS.replaceBlockInDocument({
-                        section: "tasks",
-                        source,
-                        key: taskEditData.value.oldTaskId,
-                        keyName: "id",
-                        newContent: event,
-                    }),
-                    true,
-                );
-                return;
-            case "add_flowable_error":
-                emit(
-                    "on-edit",
-                    YAML_UTILS.insertErrorInFlowable(
-                        props.source,
-                        event,
-                        taskEditData.value.taskId,
-                    ),
-                    true,
-                );
-                return;
-            }
-        } else {
-            coreStore.message = {
-                variant: "error",
-                title: t("error detected"),
-                message: t("Task Id already exist in the flow", {
-                    taskId: YAML_UTILS.parse(event).id,
-                }),
-            };
-        }
-        taskEditData.value = null;
-        taskObject.value = null;
-    };
-
-    const closeEdit = () => {
-        taskEditData.value = null;
-        taskObject.value = null;
     };
 
     const fitViewOrientation = () => {

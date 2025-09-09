@@ -29,7 +29,7 @@ jobs:
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         name: Checkout - Current ref
         with:
           fetch-depth: 0
@@ -86,13 +86,13 @@ jobs:
         id: auth
         if: always() && env.GOOGLE_SERVICE_ACCOUNT != ''
         continue-on-error: true
-        uses: "google-github-actions/auth@v2"
+        uses: "google-github-actions/auth@v3"
         with:
           credentials_json: "${{ secrets.GOOGLE_SERVICE_ACCOUNT }}"
 
       - name: GCP - Setup Cloud SDK
         if: env.GOOGLE_SERVICE_ACCOUNT != ''
-        uses: "google-github-actions/setup-gcloud@v2"
+        uses: "google-github-actions/setup-gcloud@v3"
 
         # Allure check
       - uses: rlespinasse/github-slug-action@v5

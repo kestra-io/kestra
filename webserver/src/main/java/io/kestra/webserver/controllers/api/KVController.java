@@ -8,6 +8,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.NamespaceUtils;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
@@ -23,9 +24,13 @@ import jakarta.inject.Inject;
 
 import java.io.*;
 import java.time.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 
 @Validated
 @Controller("/api/v1/{tenant}/namespaces/{namespace}/kv")
@@ -33,7 +38,7 @@ public class KVController {
     @Inject
     private StorageInterface storageInterface;
     @Inject
-    private TenantService tenantService;
+    protected TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get
@@ -42,6 +47,34 @@ public class KVController {
         @Parameter(description = "The namespace id") @PathVariable String namespace
     ) throws IOException {
         return kvStore(namespace).list();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get("/inheritance")
+    @Operation(tags = {"KV"}, summary = "List all keys for a namespace and parent namespaces")
+    public List<KVEntry> listKeysWithInheritence(
+        @Parameter(description = "The namespace id") @PathVariable String namespace
+    ) throws IOException {
+        List<String> namespaces = NamespaceUtils.asTree(namespace);
+        return getKvEntriesWithInheritance(namespaces);
+    }
+
+    protected List<KVEntry> getKvEntriesWithInheritance(List<String> namespaces) throws IOException {
+        List<KVEntry> kvEntries = new ArrayList<>();
+        Set<String> keys = new HashSet<>();
+        List<String> sortedNamespaces = namespaces.stream()
+            .sorted(Comparator.comparingInt(String::length).reversed())
+            .toList();
+        for (String ns : sortedNamespaces) {
+            List<KVEntry> entries = kvStore(ns).list();
+            entries.forEach(key -> {
+                if (!keys.contains(key.key())) {
+                    keys.add(key.key());
+                    kvEntries.add(key);
+                }
+            });
+        }
+        return kvEntries;
     }
 
     @ExecuteOn(TaskExecutors.IO)

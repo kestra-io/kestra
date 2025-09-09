@@ -3,9 +3,9 @@
         effect="light"
         :persistent="false"
         transition=""
-        :hide-after="0"
+        :hideAfter="0"
         :content="$t('change state tooltip')"
-        raw-content
+        rawContent
         :placement="tooltipPosition"
     >
         <component
@@ -19,7 +19,7 @@
         </component>
     </el-tooltip>
 
-    <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -28,7 +28,7 @@
             <p v-html="$t('change execution state confirm', {id: execution.id})" />
 
             <p>
-                {{ $t("change state current state") }} <status size="small" class="me-1" :status="execution.state.current" />
+                {{ $t("change state current state") }} <Status size="small" class="me-1" :status="execution.state.current" />
             </p>
 
             <el-select
@@ -43,7 +43,7 @@
                     :disabled="item.disabled"
                 >
                     <template #default>
-                        <status size="small" :label="true" class="me-1" :status="item.code" />
+                        <Status size="small" :label="true" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </el-option>
@@ -70,7 +70,6 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
@@ -78,6 +77,7 @@
     import {State} from "@kestra-io/ui-libs"
     import Status from "../../components/Status.vue";
     import ExecutionUtils from "../../utils/executionUtils";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {StateMachine, Status},
@@ -134,8 +134,7 @@
             },
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useAuthStore),
             uuid() {
                 return "changestatus-" + this.execution.id;
             },
@@ -163,7 +162,7 @@
                     })
             },
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 

@@ -11,7 +11,7 @@
             :value="item"
         >
             <span class="options">
-                <task-icon v-if="hasIcons" :cls="item" :only-icon="true" :icons="pluginsStore.icons" />
+                <TaskIcon v-if="hasIcons" :cls="item" :onlyIcon="true" :icons="pluginsStore.icons" />
                 <span>
                     {{ item }}
                 </span>
@@ -19,34 +19,36 @@
         </el-option>
 
         <template #prefix>
-            <task-icon v-if="modelValue && hasIcons" :cls="modelValue" :only-icon="true" :icons="pluginsStore.icons" />
+            <TaskIcon v-if="modelValue && hasIcons" :cls="modelValue" :onlyIcon="true" :icons="pluginsStore.icons" />
         </template>
     </el-select>
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, onBeforeMount} from "vue";
+    import {computed, inject, onBeforeMount, ref} from "vue";
     import {useI18n} from "vue-i18n";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {
-        BLOCK_SCHEMA_PATH_INJECTION_KEY,
-        PARENT_PATH_INJECTION_KEY
-    } from "../code/injectionKeys";
+        FULL_SCHEMA_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY,
+        SCHEMA_DEFINITIONS_INJECTION_KEY,
+    } from "../no-code/injectionKeys";
     import {getValueAtJsonPath} from "../../utils/utils";
 
     const pluginsStore = usePluginsStore();
 
-    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, "");
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
+    const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
 
     const blockType = parentPath.split(".").pop() ?? "";
 
     const fieldDefinition = computed(() => {
-        if (blockSchemaPath.length === 0) {
+        if (props.blockSchemaPath.length === 0) {
             console.error("Definition key is required for PluginSelect component");
         }
-        return getValueAtJsonPath(pluginsStore.flowSchema, blockSchemaPath);
+        return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath);
     })
 
     onBeforeMount(() => {
@@ -54,6 +56,17 @@
             pluginsStore.listWithSubgroup({includeDeprecated: false});
         }
     })
+
+    const allRefs = computed(() => fieldDefinition.value?.anyOf?.map((item: any) => {
+        if (item.allOf) {
+            // if the item is an allOf, we need to find the first item that has a $ref
+            const refItem = item.allOf.find((d: any) => d.$ref);
+            if (refItem?.$ref) {
+                return removeRefPrefix(refItem.$ref);
+            }
+        }
+        return removeRefPrefix(item.$ref);
+    }) || []);
 
     const taskModels = computed(() => {
         if (blockType === "pluginDefaults") {
@@ -73,20 +86,10 @@
 
             return Array.from(models);
         }
-        const allRefs = fieldDefinition.value?.anyOf?.map((item: any) => {
-            if (item.allOf) {
-                // if the item is an allOf, we need to find the first item that has a $ref
-                const refItem = item.allOf.find((d: any) => d.$ref);
-                if (refItem?.$ref) {
-                    return removeRefPrefix(refItem.$ref);
-                }
-            }
-            return removeRefPrefix(item.$ref);
-        }) || [];
 
-        return allRefs.reduce((acc: string[], item: string) => {
-            const def = pluginsStore.flowDefinitions?.[item]
-            
+        return allRefs.value.reduce((acc: string[], item: string) => {
+            const def = rootDefinitions.value?.[item]
+
             if (!def || def.$deprecated) {
                 return acc;
             }
@@ -112,6 +115,10 @@
         type: String,
         default: "",
     });
+
+    const props = defineProps<{
+        blockSchemaPath: string,
+    }>()
 </script>
 
 <style lang="scss" scoped>

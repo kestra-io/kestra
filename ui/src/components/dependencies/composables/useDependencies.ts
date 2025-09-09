@@ -281,7 +281,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
     let cy: cytoscape.Core;
 
-    const isLoading = ref(true);
+    const isLoading = ref(false);
     const isRendering = ref(true);
 
     const selectedNodeID: Ref<Node["id"] | undefined> = ref(undefined);
@@ -307,6 +307,8 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
         if (isTesting) elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
         else {
+            isLoading.value = true;
+
             if (subtype === NAMESPACE) {
                 const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});
                 const nodes = data.nodes ?? [];

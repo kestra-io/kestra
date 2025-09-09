@@ -357,7 +357,7 @@
                 let kvFetch;
                 if (this.namespace === undefined) {
                     if (this.namespaceIterator === undefined) {
-                        this.namespaceIterator = useNamespaces(this.$store, 20);
+                        this.namespaceIterator = useNamespaces(20);
                     }
 
                     const namespaces = (await ((this.namespaceIterator as NamespaceIterator).next())).map(n => n.id);

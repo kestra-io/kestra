@@ -79,8 +79,6 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
     configureAxios((instance) => {
         app.use(VueAxios, instance);
         app.provide("axios", instance);
-        store.$http = app.$http;
-        store.axios = app.axios;
         piniaStore.$http = app.$http;
     }, store, router, true);
 

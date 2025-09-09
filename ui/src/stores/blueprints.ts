@@ -27,8 +27,6 @@ export const useBlueprintsStore = defineStore("blueprints", {
         source: undefined,
         graph: undefined
     }),
-    getters: {
-    },
     actions: {
         async getBlueprint(options: BlueprintOptions) {
             const kind = options.kind && options.type !== "custom" ? `/${options.kind}` : "";

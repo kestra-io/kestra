@@ -54,7 +54,7 @@
         });
 
         if (response.data.id === props.execution.id) {
-            response = await ExecutionUtils.waitForState(axios, response.data);
+            response = await ExecutionUtils.waitForState(axios, response.data) as any;
         }
 
         const execution = response.data;

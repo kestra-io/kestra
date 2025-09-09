@@ -1,4 +1,3 @@
-import {Store} from "vuex";
 import {useI18n} from "vue-i18n";
 import {configureMonacoYaml} from "monaco-yaml";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
@@ -118,7 +117,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         };
     }
 
-    configureAutoCompletion(_: ReturnType<typeof useI18n>["t"], __: Store<Record<string, any>>, ___: monaco.editor.ICodeEditor | undefined) {
+    configureAutoCompletion(_: ReturnType<typeof useI18n>["t"], ___: monaco.editor.ICodeEditor | undefined) {
         const autoCompletionProviders: IDisposable[] = [];
         const yamlAutoCompletion = this._yamlAutoCompletion;
 

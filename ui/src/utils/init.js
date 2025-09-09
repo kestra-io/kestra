@@ -47,7 +47,7 @@ import {useDocStore} from "../stores/doc";
 import LeftMenuLink from "../components/LeftMenuLink.vue";
 import RouterMd from "../components/utils/RouterMd.vue";
 import Utils from "./utils";
-import {useAxios} from "./axios";
+import {createAxios} from "./axios";
 
 
 export default async (app, routes, stores, translations, additionalTranslations = {}) => {
@@ -81,8 +81,7 @@ export default async (app, routes, stores, translations, additionalTranslations 
 
     let piniaStore = createPinia();
     piniaStore.use(({store: piniaStoreLocal}) => {
-        piniaStoreLocal.$http = useAxios();
-        piniaStoreLocal.$router = router;
+        piniaStoreLocal.$http = createAxios(router);
     });
     app.use(piniaStore);
 

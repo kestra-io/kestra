@@ -71,9 +71,9 @@ interface QueueItem {
     resolve: (value: AxiosResponse | Promise<AxiosResponse>) => void
 }
 
-const initAxios = (
+export const createAxios = (
     router: Router,
-    oss: boolean = false
+    oss: boolean
 ) => {
     const instance: AxiosInstance = axios.create({
         timeout: 15000,
@@ -292,13 +292,13 @@ const initAxios = (
 export default (
     callback: (instance: AxiosInstance) => void,
     _store: any,
-    ...args: Parameters<typeof initAxios>
+    ...args: Parameters<typeof createAxios>
 ) => {
-    callback(initAxios(...args));
+    callback(createAxios(...args));
 }
 
 export const useAxios = () => {
     const router = useRouter();
     const isOSS = getCurrentInstance()!.appContext.config.globalProperties.$isOSS;
-    return initAxios(router, isOSS)
+    return createAxios(router, isOSS)
 };

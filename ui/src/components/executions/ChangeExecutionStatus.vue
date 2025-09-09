@@ -3,9 +3,9 @@
         effect="light"
         :persistent="false"
         transition=""
-        :hide-after="0"
+        :hideAfter="0"
         :content="$t('change state tooltip')"
-        raw-content
+        rawContent
         :placement="tooltipPosition"
     >
         <component
@@ -19,7 +19,7 @@
         </component>
     </el-tooltip>
 
-    <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -28,7 +28,7 @@
             <p v-html="$t('change execution state confirm', {id: execution.id})" />
 
             <p>
-                {{ $t("change state current state") }} <status size="small" class="me-1" :status="execution.state.current" />
+                {{ $t("change state current state") }} <Status size="small" class="me-1" :status="execution.state.current" />
             </p>
 
             <el-select
@@ -43,7 +43,7 @@
                     :disabled="item.disabled"
                 >
                     <template #default>
-                        <status size="small" :label="true" class="me-1" :status="item.code" />
+                        <Status size="small" :label="true" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </el-option>

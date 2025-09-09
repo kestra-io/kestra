@@ -11,7 +11,7 @@
         >
             {{ $t('download') }}
         </el-button>
-        <FilePreview v-if="isFile(value)" :value="value" :execution-id="execution.id" />
+        <FilePreview v-if="isFile(value)" :value="value" :executionId="execution.id" />
         <el-button disabled size="small" type="primary" v-if="humanSize">
             ({{ humanSize }})
         </el-button>
@@ -19,6 +19,7 @@
     <el-button-group v-else-if="isURI(value)">
         <el-button
             type="primary"
+            tag="a"
             size="small"
             :href="value"
             target="_blank"

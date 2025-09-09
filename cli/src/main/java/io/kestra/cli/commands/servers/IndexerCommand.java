@@ -2,7 +2,7 @@ package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.ServerType;
-import io.kestra.core.runners.IndexerInterface;
+import io.kestra.core.runners.Indexer;
 import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -29,7 +29,7 @@ public class IndexerCommand extends AbstractServerCommand {
     public Integer call() throws Exception {
         super.call();
 
-        IndexerInterface indexer = applicationContext.getBean(IndexerInterface.class);
+        Indexer indexer = applicationContext.getBean(Indexer.class);
         indexer.run();
 
         Await.until(() -> !this.applicationContext.isRunning());

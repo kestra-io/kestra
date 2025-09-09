@@ -7,7 +7,7 @@
     >
         <span v-if="component !== 'el-button'">{{ $t('change state') }}</span>
 
-        <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroy-on-close :append-to-body="true">
+        <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
             <template #header>
                 <h5>{{ $t("confirmation") }}</h5>
             </template>
@@ -16,7 +16,7 @@
                 <p v-html="$t('change state confirm', {id: execution.id, task: taskRun.taskId})" />
 
                 <p>
-                    {{ $t('change state current state') }} <status size="small" class="me-1" :status="taskRun.state.current" />
+                    {{ $t('change state current state') }} <Status size="small" class="me-1" :status="taskRun.state.current" />
                 </p>
 
                 <el-select
@@ -31,7 +31,7 @@
                         :disabled="item.disabled"
                     >
                         <template #default>
-                            <status size="small" :label="true" class="me-1" :status="item.code" />
+                            <Status size="small" :label="true" class="me-1" :status="item.code" />
                             <span v-html="item.label" />
                         </template>
                     </el-option>

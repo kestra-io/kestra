@@ -7,20 +7,20 @@
                         <h5 class="m-3">RUNNING</h5> {{ runningCount }}/{{ flowStore.flow.concurrency.limit }} {{ $t('active-slots') }}
                     </span>
                     <span class="col d-flex justify-content-end align-items-center">
-                        {{ $t('behavior') }}: <status class="mx-2" :status="flowStore.flow.concurrency.behavior" size="small" />
+                        {{ $t('behavior') }}: <Status class="mx-2" :status="flowStore.flow.concurrency.behavior" size="small" />
                     </span>
                 </div>
                 <div class="progressbar mb-3">
-                    <el-progress :stroke-width="16" color="#5BB8FF" :percentage="progress" :show-text="false" />
+                    <el-progress :stroke-width="16" color="#5BB8FF" :percentage="progress" :showText="false" />
                 </div>
             </el-card>
             <el-card>
-                <executions
-                    :restore-url="false"
+                <Executions
+                    :restoreUrl="false"
                     :topbar="false"
                     :namespace="flowStore.flow.namespace"
-                    :flow-id="flowStore.flow.id"
-                    is-concurrency
+                    :flowId="flowStore.flow.id"
+                    isConcurrency
                     :statuses="[State.QUEUED, State.RUNNING, State.PAUSED]"
                     @state-count="setRunningCount"
                     filter

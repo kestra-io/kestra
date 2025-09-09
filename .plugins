@@ -36,6 +36,7 @@
 #plugin-gemini:io.kestra.plugin:plugin-gemini:LATEST
 #plugin-git:io.kestra.plugin:plugin-git:LATEST
 #plugin-github:io.kestra.plugin:plugin-github:LATEST
+#plugin-gitlab:io.kestra.plugin:plugin-gitlab:LATEST
 #plugin-googleworkspace:io.kestra.plugin:plugin-googleworkspace:LATEST
 #plugin-graalvm:io.kestra.plugin:plugin-graalvm:LATEST
 #plugin-graphql:io.kestra.plugin:plugin-graphql:LATEST
@@ -108,16 +109,17 @@
 #plugin-serdes:io.kestra.plugin:plugin-serdes:LATEST
 #plugin-servicenow:io.kestra.plugin:plugin-servicenow:LATEST
 #plugin-sifflet:io.kestra.plugin:plugin-sifflet:LATEST
-#plugin-singer:io.kestra.plugin:plugin-singer:LATEST
 #plugin-soda:io.kestra.plugin:plugin-soda:LATEST
 #plugin-solace:io.kestra.plugin:plugin-solace:LATEST
 #plugin-spark:io.kestra.plugin:plugin-spark:LATEST
 #plugin-sqlmesh:io.kestra.plugin:plugin-sqlmesh:LATEST
+#plugin-supabase:io.kestra.plugin:plugin-supabase:LATEST
 #plugin-surrealdb:io.kestra.plugin:plugin-surrealdb:LATEST
 #plugin-terraform:io.kestra.plugin:plugin-terraform:LATEST
 #plugin-transform:io.kestra.plugin:plugin-transform-grok:LATEST
 #plugin-transform:io.kestra.plugin:plugin-transform-json:LATEST
 #plugin-tika:io.kestra.plugin:plugin-tika:LATEST
+#plugin-trivy:io.kestra.plugin:plugin-trivy:LATEST
 #plugin-weaviate:io.kestra.plugin:plugin-weaviate:LATEST
 #plugin-zendesk:io.kestra.plugin:plugin-zendesk:LATEST
 #plugin-typesense:io.kestra.plugin:plugin-typesense:LATEST

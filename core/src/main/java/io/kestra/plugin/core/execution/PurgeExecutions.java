@@ -45,59 +45,59 @@ import java.util.List;
 )
 public class PurgeExecutions extends Task implements RunnableTask<PurgeExecutions.Output> {
     @Schema(
-        title = "Namespace whose flows need to be purged, or namespace of the flow that needs to be purged.",
+        title = "Namespace whose flows need to be purged, or namespace of the flow that needs to be purged",
         description = "If `flowId` isn't provided, this is a namespace prefix, else the namespace of the flow."
     )
     private Property<String> namespace;
 
     @Schema(
-        title = "The flow ID to be purged.",
+        title = "The flow ID to be purged",
         description = "You need to provide the `namespace` properties if you want to purge a flow."
     )
     private Property<String> flowId;
 
     @Schema(
-        title = "The minimum date to be purged.",
+        title = "The date after which data should be purged",
         description = "All data of flows executed after this date will be purged."
     )
     private Property<String> startDate;
 
     @Schema(
-        title = "The maximum date to be purged.",
+        title = "The date before which data should be purged.",
         description = "All data of flows executed before this date will be purged."
     )
     @NotNull
     private Property<String> endDate;
 
     @Schema(
-        title = "The state of the executions to be purged.",
+        title = "The state of the executions to be purged",
         description = "If not set, executions for any states will be purged."
     )
     private Property<List<State.Type>> states;
 
     @Schema(
-        title = "Whether to purge executions."
+        title = "Flag specifying whether to purge executions"
     )
     @Builder.Default
     private Property<Boolean> purgeExecution = Property.ofValue(true);
 
     @Schema(
-        title = "Whether to purge execution's logs.",
+        title = "Flag specifying whether to purge execution logs",
         description = """
-            This will only purge logs from executions not from triggers, and it will do it execution by execution.
-            The `io.kestra.plugin.core.log.PurgeLogs` task is a better fit to purge logs as it will purge logs in bulk, and will also purge logs not tied to an execution like trigger logs."""
+            This will only purge logs from executions, not from triggers, and it will do it execution by execution.
+            The `io.kestra.plugin.core.log.PurgeLogs` task is a better fit to purge, as it will purge logs in bulk and will also purge logs not tied to an execution like trigger logs."""
     )
     @Builder.Default
     private Property<Boolean> purgeLog = Property.ofValue(true);
 
     @Schema(
-        title = "Whether to purge execution's metrics."
+        title = "Flag specifying whether to purge execution's metrics."
     )
     @Builder.Default
     private Property<Boolean> purgeMetric = Property.ofValue(true);
 
     @Schema(
-        title = "Whether to purge execution's files from the Kestra's internal storage."
+        title = "Flag specifying whether to purge execution's files from the Kestra's internal storage"
     )
     @Builder.Default
     private Property<Boolean> purgeStorage = Property.ofValue(true);
@@ -141,22 +141,22 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The count of deleted executions."
+            title = "The count of deleted executions"
         )
         private int executionsCount;
 
         @Schema(
-            title = "The count of deleted logs."
+            title = "The count of deleted logs"
         )
         private int logsCount;
 
         @Schema(
-            title = "The count of deleted storage files."
+            title = "The count of deleted storage files"
         )
         private int storagesCount;
 
         @Schema(
-            title = "The count of deleted metrics."
+            title = "The count of deleted metrics"
         )
         private int metricsCount;
     }

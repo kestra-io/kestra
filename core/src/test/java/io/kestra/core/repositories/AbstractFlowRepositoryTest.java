@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import com.google.common.collect.ImmutableMap;
 import io.kestra.core.Helpers;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
@@ -10,13 +11,17 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
-import io.kestra.core.schedulers.AbstractSchedulerTest;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
@@ -28,7 +33,8 @@ import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
-import lombok.Getter;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -552,9 +558,9 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace(TEST_NAMESPACE)
             .tenantId(MAIN_TENANT)
-            .triggers(Collections.singletonList(AbstractSchedulerTest.UnitTest.builder()
+            .triggers(Collections.singletonList(UnitTest.builder()
                 .id("sleep")
-                .type(AbstractSchedulerTest.UnitTest.class.getName())
+                .type(UnitTest.class.getName())
                 .build()))
             .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()))
             .build();
@@ -592,9 +598,9 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace(TEST_NAMESPACE)
             .tenantId(MAIN_TENANT)
-            .triggers(Collections.singletonList(AbstractSchedulerTest.UnitTest.builder()
+            .triggers(Collections.singletonList(UnitTest.builder()
                 .id("sleep")
-                .type(AbstractSchedulerTest.UnitTest.class.getName())
+                .type(UnitTest.class.getName())
                 .build()))
             .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()))
             .build();
@@ -911,4 +917,47 @@ public abstract class AbstractFlowRepositoryTest {
         return GenericFlow.fromYaml(TEST_TENANT_ID, source);
     }
 
+    protected static int COUNTER = 0;
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    public static class UnitTest extends AbstractTrigger implements PollingTriggerInterface {
+        @Builder.Default
+        private final Duration interval = Duration.ofSeconds(2);
+
+        private String defaultInjected;
+
+        public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws InterruptedException {
+            COUNTER++;
+
+            if (COUNTER % 2 == 0) {
+                Thread.sleep(4000);
+
+                return Optional.empty();
+            } else {
+                Execution execution = Execution.builder()
+                    .id(IdUtils.create())
+                    .tenantId(context.getTenantId())
+                    .namespace(context.getNamespace())
+                    .flowId(context.getFlowId())
+                    .flowRevision(conditionContext.getFlow().getRevision())
+                    .state(new State())
+                    .trigger(ExecutionTrigger.builder()
+                        .id(this.getId())
+                        .type(this.getType())
+                        .variables(ImmutableMap.of(
+                            "counter", COUNTER,
+                            "defaultInjected", defaultInjected == null ? "ko" : defaultInjected
+                        ))
+                        .build()
+                    )
+                    .build();
+
+                return Optional.of(execution);
+            }
+        }
+    }
 }

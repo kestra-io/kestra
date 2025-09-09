@@ -50,7 +50,7 @@
       "flow": {
         "enable_instructions": {
           "footer": "Nota: Al momento, solo Gemini è supportato come provider AI.\n\nRiavvia la tua istanza di Kestra dopo aver salvato la configurazione.",
-          "header": "<b>AI Copilot non è stato ancora configurato.</b>\n\nPer abilitare AI Copilot, aggiungi il seguente snippet al file di configurazione della tua istanza di Kestra (ad esempio, <code>application.yml</code>), sostituendo <code>geminiApiKey</code> con il tuo key effettivo:"
+          "header": "<b>AI Copilot non è stato ancora configurato.</b>\n\nPer abilitare AI Copilot, aggiungi il seguente snippet al file di configurazione della tua istanza di Kestra (ad esempio <code>application.yml</code>), sostituendo <code>geminiApiKey</code> con la tua chiave effettiva:"
         },
         "generating": "Generazione del Flow YAML per te...",
         "prompt_placeholder": "Inserisci le istruzioni per creare il tuo flow di Kestra. Esempio di prompt: Crea un flow che si esegue ogni lunedì alle 9 AM.",
@@ -175,12 +175,12 @@
     "confirm password": "Conferma password",
     "confirmation": "Conferma",
     "contextBar": {
-      "demo": "Ottieni una demo",
+      "demo": "Demo",
       "docs": "Documenti",
       "help": "Aiuto",
-      "issue": "Apri un'Issue",
+      "issue": "Problema",
       "news": "Notizie",
-      "star": "Aggiungi una stella al repository"
+      "star": "Metti una stella"
     },
     "continue backfill": "Continua il backfill",
     "continue backfills": "Continua i backfills",

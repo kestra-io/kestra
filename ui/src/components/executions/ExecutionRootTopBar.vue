@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
+    <TopNavBar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
         <template #title>
             {{ routeInfo?.title }}
             <Badge v-if="isATestExecution" :label="$t('test-badge-text')" :tooltip="$t('test-badge-tooltip')" />
@@ -24,11 +24,11 @@
                     </el-button>
                 </li>
                 <li v-if="isAllowedTrigger">
-                    <trigger-flow type="primary" :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
+                    <TriggerFlow type="primary" :flowId="$route.params.flowId" :namespace="$route.params.namespace" />
                 </li>
             </ul>
         </template>
-    </top-nav-bar>
+    </TopNavBar>
 </template>
 
 <script setup>

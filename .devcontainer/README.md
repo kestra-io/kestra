@@ -23,7 +23,15 @@ In the meantime, you can move onto the next step...
 
 ---
 
+### Requirements
+
+- Java 21 (LTS versions).
+  > ⚠️ Java 24 and above are not supported yet and will fail with `invalid source release: 21`.
+- Gradle (comes with wrapper `./gradlew`)
+- Docker (optional, for running Kestra in containers)
+
 ### Development:
+
 - (Optional) By default, your dev server will target `localhost:8080`. If your backend is running elsewhere, you can create `.env.development.local` under `ui` folder with this content:
 ```
 VITE_APP_API_URL={myApiUrl}

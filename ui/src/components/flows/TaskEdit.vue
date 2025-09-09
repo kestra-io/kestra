@@ -6,7 +6,7 @@
         ref="taskEdit"
     >
         <span v-if="component !== 'el-button' && !isHidden">{{ t("show task source") }}</span>
-        <drawer
+        <Drawer
             v-if="isModalOpen"
             v-model="isModalOpen"
         >
@@ -27,7 +27,7 @@
                         {{ t("save task") }}
                     </el-button>
                     <el-alert
-                        show-icon
+                        showIcon
                         :closable="false"
                         class="mb-0 mt-3"
                         v-if="revision && revisions?.length !== revision"
@@ -43,7 +43,7 @@
                     <template #label>
                         <span>{{ t("form") }}</span>
                     </template>
-                    <task-editor
+                    <TaskEditor
                         ref="editor"
                         v-model="taskYaml"
                         :section="section"
@@ -54,13 +54,13 @@
                     <template #label>
                         <span>{{ t("source") }}</span>
                     </template>
-                    <editor
-                        :read-only="readOnly"
+                    <Editor
+                        :readOnly="readOnly"
                         ref="editor"
                         @save="saveTask"
                         v-model="taskYaml"
-                        :schema-type="section.toLowerCase()"
-                        :full-height="false"
+                        :schemaType="section.toLowerCase()"
+                        :fullHeight="false"
                         :navbar="false"
                         lang="yaml"
                         @update:model-value="onInput"
@@ -73,11 +73,11 @@
                         </span>
                     </template>
                     <div class="documentation">
-                        <markdown :source="pluginMarkdown" />
+                        <Markdown :source="pluginMarkdown" />
                     </div>
                 </el-tab-pane>
             </el-tabs>
-        </drawer>
+        </Drawer>
     </component>
 </template>
 
@@ -89,7 +89,7 @@
     import CodeTags from "vue-material-design-icons/CodeTags.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Editor from "../inputs/Editor.vue";
-    import TaskEditor from "./TaskEditor.vue";
+    import TaskEditor from "../no-code/components/TaskEditor.vue";
     import Drawer from "../Drawer.vue";
     import {canSaveFlowTemplate} from "../../utils/flowTemplate";
     import Markdown from "../layout/Markdown.vue";

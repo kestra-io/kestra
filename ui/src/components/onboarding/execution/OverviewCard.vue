@@ -7,7 +7,7 @@
                         {{ title }}
                     </h5>
                     <div>
-                        <markdown :source="$t(`execution_guide.${category}.text`)" />
+                        <Markdown :source="$t(`execution_guide.${category}.text`)" />
                     </div>
                     <el-link underline="never" :href="getLink()" target="_blank">
                         {{ category === 'videos_tutorials' ? $t('watch') : $t('learn_more') }}

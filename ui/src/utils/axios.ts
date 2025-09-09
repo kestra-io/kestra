@@ -1,11 +1,12 @@
 import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios"
 import NProgress from "nprogress"
-import {Router} from "vue-router"
+import {Router, useRouter} from "vue-router"
 import {storageKeys} from "./constants"
 import {useLayoutStore} from "../stores/layout"
 import {useCoreStore} from "../stores/core"
 import * as BasicAuth from "../utils/basicAuth"
 import {useAuthStore} from "override/stores/auth"
+import {getCurrentInstance} from "vue"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -70,12 +71,10 @@ interface QueueItem {
     resolve: (value: AxiosResponse | Promise<AxiosResponse>) => void
 }
 
-export default (
-    callback: (instance: AxiosInstance) => void,
-    _store: any,
+const initAxios = (
     router: Router,
     oss: boolean = false
-): void => {
+) => {
     const instance: AxiosInstance = axios.create({
         timeout: 15000,
         headers: {"Content-Type": "application/json"},
@@ -287,6 +286,20 @@ export default (
         }
     })
 
-    callback(instance);
+    return instance;
 };
 
+export default (
+    callback: (instance: AxiosInstance) => void,
+    _store: any,
+    ...args: Parameters<typeof initAxios>
+) => {
+    callback(initAxios(...args));
+}
+
+export const useAxios = () => {
+    const router = useRouter();
+    const isOSS = getCurrentInstance()!.appContext.config.globalProperties.$isOSS;
+    const instance = initAxios(router, isOSS);
+    return {$http: instance}
+};

@@ -299,6 +299,6 @@ export default (
 
 export const useAxios = () => {
     const router = useRouter();
-    const isOSS = getCurrentInstance()!.appContext.config.globalProperties.$isOSS;
+    const isOSS = getCurrentInstance()?.appContext.config.globalProperties.$isOSS ?? false;
     return createAxios(router, isOSS)
 };

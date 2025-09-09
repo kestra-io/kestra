@@ -305,6 +305,21 @@ subprojects {
                     logger.lifecycle("Merged ${files.size()} files into ${out} — open it in chrome://tracing or Perfetto UI.")
                 }
             }
+
+            //groovy
+            // number of concurrent test processes
+//            maxParallelForks = Math.max(1, Runtime.runtime.availableProcessors().intdiv(2))
+            // keep 1 JVM hot; set >0 to periodically fork (helps with leaks/heavy tests)
+//            forkEvery = 0
+
+            // JUnit 5 parallel settings
+            systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
+            systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+            systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'concurrent'
+            systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
+            // or fixed parallelism:
+            // systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'fixed'
+            // systemProperty 'junit.jupiter.execution.parallel.config.fixed.parallelism', '8'
         }
 
         testlogger {

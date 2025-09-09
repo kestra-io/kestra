@@ -800,5 +800,4 @@
 :deep(.flows-table) .el-scrollbar__thumb {
     background-color: var(--ks-border-active) !important;
 }
-
 </style>

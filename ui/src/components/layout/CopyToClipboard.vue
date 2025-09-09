@@ -4,7 +4,7 @@
             trigger="click"
             :content="$t('copied')"
             placement="left"
-            :auto-close="2000"
+            :autoClose="2000"
         >
             <el-button :icon="ContentCopy" type="default" :link @click="copyText">
                 <span v-if="label">{{ label }}</span>

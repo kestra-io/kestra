@@ -209,7 +209,13 @@ public class FlowTopologyService {
             return validateMultipleConditions(multipleCondition.getConditions(), child, execution);
         }
 
-        return this.conditionService.isValid(condition, child, execution);
+        try {
+            return this.conditionService.isValid(condition, child, execution);
+        } catch (Exception e) {
+            // extra safety net, it means there is a bug
+            log.error("unable to validate condition in FlowTopologyService, flow: {}, condition: {}", child.uid(), condition, e);
+            return false;
+        }
     }
 
     private boolean validateMultipleConditions(Map<String, Condition> multipleConditions, FlowInterface child, Execution execution) {

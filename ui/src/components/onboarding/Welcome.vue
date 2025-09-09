@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar v-if="topbar" :title="routeInfo.title">
+    <TopNavBar v-if="topbar" :title="routeInfo.title">
         <template #additional-right>
             <ul>
                 <li>
@@ -9,7 +9,7 @@
                 </li>
             </ul>
         </template>
-    </top-nav-bar>
+    </TopNavBar>
     <div class="main">
         <div class="section-1">
             <div class="section-1-main">
@@ -48,7 +48,7 @@
                 <el-divider>
                     {{ $t("welcome_page.guide") }}
                 </el-divider>
-                <onboarding-bottom />
+                <OnboardingBottom />
             </div>
         </div>
     </div>

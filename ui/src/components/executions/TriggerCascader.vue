@@ -4,7 +4,7 @@
             class="d-flex flex-column left"
             :style="{width: leftWidth + '%'}"
         >
-            <el-cascader-panel
+            <ElCascaderPanel
                 ref="cascader"
                 v-model="selected"
                 :options="options"
@@ -27,7 +27,7 @@
                         </code>
                     </div>
                 </template>
-            </el-cascader-panel>
+            </ElCascaderPanel>
         </div>
         <div class="right wrapper fixed-right" :style="{width: 100 - leftWidth + '%'}">
             <div class="w-100 overflow-auto debug-wrapper">
@@ -39,11 +39,11 @@
                     <div class="d-flex flex-column p-3 debug">
                         <Editor
                             ref="debugEditor"
-                            :full-height="false"
-                            :custom-height="20"
+                            :fullHeight="false"
+                            :customHeight="20"
                             :input="true"
                             :navbar="false"
-                            :model-value="computedDebugValue"
+                            :modelValue="computedDebugValue"
                             @update:model-value="editorValue = $event"
                             @confirm="onDebugExpression($event)"
                             class="w-100"
@@ -64,12 +64,12 @@
 
                         <Editor
                             v-if="debugExpression"
-                            :read-only="true"
+                            :readOnly="true"
                             :input="true"
-                            :full-height="false"
-                            :custom-height="20"
+                            :fullHeight="false"
+                            :customHeight="20"
                             :navbar="false"
-                            :model-value="debugExpression"
+                            :modelValue="debugExpression"
                             :lang="isJSON ? 'json' : ''"
                             class="mt-3"
                         />

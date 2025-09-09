@@ -3,8 +3,8 @@
     <section class="full-container">
         <Editor
             v-if="dashboard.sourceCode"
-            :initial-source="dashboard.sourceCode"
-            allow-save-unchanged
+            :initialSource="dashboard.sourceCode"
+            allowSaveUnchanged
             @save="save"
         />
     </section>
@@ -64,6 +64,9 @@
 
         if (blueprintId) {
             dashboard.value.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId});
+            if (!/^id:.*$/m.test(dashboard.value.sourceCode)) {
+                dashboard.value.sourceCode = "id: " + blueprintId + "\n" + dashboard.value.sourceCode;
+            }
         } else {
             if (name === "flows/update") {
                 const {namespace, id} = JSON.parse(params);

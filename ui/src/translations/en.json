@@ -129,9 +129,9 @@
       "news": "News",
       "docs": "Docs",
       "help": "Help",
-      "issue": "Open an Issue",
-      "demo": "Get a demo",
-      "star": "Star the repo"
+      "issue": "Issue",
+      "demo": "Demo",
+      "star": "Star us"
     },
     "source": "Source",
     "source only": "Source only",
@@ -189,6 +189,8 @@
     "replay latest revision": "Replay using latest revision",
     "replayed": "Execution is replayed",
     "replay confirm": "Are you sure you want to replay this execution <code>{id}</code> and create a new one?",
+    "replay with inputs": "Replay with inputs",
+    "replay the execution": "Replay the execution <code>{executionId}</code> for the flow <code>{flowId}</code>",
     "prefill inputs": "Prefill",
     "current": "current",
     "change state": "Change state",

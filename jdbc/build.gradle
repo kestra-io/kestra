@@ -4,6 +4,9 @@ configurations {
 
 dependencies {
     implementation project(":core")
+    implementation project(":scheduler")
+    implementation project(":executor")
+    implementation project(":worker")
 
     implementation("io.micronaut.data:micronaut-data-jdbc")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")

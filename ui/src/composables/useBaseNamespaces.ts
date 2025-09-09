@@ -159,12 +159,12 @@ export function useBaseNamespacesStore() {
     }
 
     async function createDirectory(this: any, payload: {namespace: string; path: string}) {
-        const URL = `${base(this, payload.namespace)}/files/directory?path=${slashPrefix(payload.path)}`;
+        const URL = `${base(payload.namespace)}/files/directory?path=${slashPrefix(payload.path)}`;
         await axios.post(URL);
     }
 
     async function readDirectory(this: any, payload: {namespace: string; path?: string}) {
-        const URL = `${base(this, payload.namespace)}/files/directory${payload.path ? `?path=${slashPrefix(safePath(payload.path))}` : ""}`;
+        const URL = `${base(payload.namespace)}/files/directory${payload.path ? `?path=${slashPrefix(safePath(payload.path))}` : ""}`;
         const request = await axios.get(URL);
         return request.data ?? [];
     }
@@ -174,14 +174,14 @@ export function useBaseNamespacesStore() {
         const BLOB = new Blob([payload.content], {type: "text/plain"});
         DATA.append("fileContent", BLOB);
 
-        const URL = `${base(this, payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
+        const URL = `${base(payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
         await axios.post(URL, Utils.toFormData(DATA), HEADERS);
     }
 
     async function readFile(this: any, payload: {namespace: string; path: string}) {
         if (!payload.path) return;
 
-        const URL = `${base(this, payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
+        const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
         const request = await axios.get(URL, {
             ...VALIDATE,
             transformResponse: (response: any) => response,
@@ -198,7 +198,7 @@ export function useBaseNamespacesStore() {
     }
 
     async function searchFiles(this: any, payload: {namespace: string; query: string}) {
-        const URL = `${base(this, payload.namespace)}/files/search?q=${payload.query}`;
+        const URL = `${base(payload.namespace)}/files/search?q=${payload.query}`;
         const request = await axios.get(URL);
         return request.data ?? [];
     }
@@ -208,27 +208,27 @@ export function useBaseNamespacesStore() {
         const BLOB = new Blob([payload.content], {type: "text/plain"});
         DATA.append("fileContent", BLOB);
 
-        const URL = `${base(this, payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
+        const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
         await axios.post(URL, DATA, HEADERS);
     }
 
     async function moveFileDirectory(this: any, payload: {namespace: string; old: string; new: string}) {
-        const URL = `${base(this, payload.namespace)}/files?from=${slashPrefix(payload.old)}&to=${slashPrefix(payload.new)}`;
+        const URL = `${base(payload.namespace)}/files?from=${slashPrefix(payload.old)}&to=${slashPrefix(payload.new)}`;
         await axios.put(URL);
     }
 
     async function renameFileDirectory(this: any, payload: {namespace: string; old: string; new: string}) {
-        const URL = `${base(this, payload.namespace)}/files?from=${slashPrefix(payload.old)}&to=${slashPrefix(payload.new)}`;
+        const URL = `${base(payload.namespace)}/files?from=${slashPrefix(payload.old)}&to=${slashPrefix(payload.new)}`;
         await axios.put(URL);
     }
 
     async function deleteFileDirectory(this: any, payload: {namespace: string; path: string}) {
-        const URL = `${base(this, payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
+        const URL = `${base(payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
         await axios.delete(URL);
     }
 
     async function exportFileDirectory(this: any, payload: {namespace: string}) {
-        const URL = `${base(this, payload.namespace)}/files/export`;
+        const URL = `${base(payload.namespace)}/files/export`;
         const request = await axios.get(URL);
 
         const name = payload.namespace + "_files.zip";

@@ -39,7 +39,8 @@ class PluginDeserializerTest {
         TestPluginHolder deserialized = om.readValue(input, TestPluginHolder.class);
         // Then
         Assertions.assertEquals(TestPlugin.class.getCanonicalName(), deserialized.plugin().getType());
-        Mockito.verify(registry, Mockito.only()).findClassByIdentifier(identifier);
+        Mockito.verify(registry, Mockito.times(1)).isVersioningSupported(null);
+        Mockito.verify(registry, Mockito.times(1)).findClassByIdentifier(identifier);
     }
 
     @Test
@@ -62,12 +63,12 @@ class PluginDeserializerTest {
 
     @Test
     void shouldReturnNullPluginIdentifierGivenNullType() {
-        Assertions.assertNull(PluginDeserializer.extractPluginRawIdentifier(new TextNode(null)));
+        Assertions.assertNull(PluginDeserializer.extractPluginRawIdentifier(new TextNode(null), unused -> true));
     }
 
     @Test
     void shouldReturnNullPluginIdentifierGivenEmptyType() {
-        Assertions.assertNull(PluginDeserializer.extractPluginRawIdentifier(new TextNode("")));
+        Assertions.assertNull(PluginDeserializer.extractPluginRawIdentifier(new TextNode(""), unused -> true));
     }
 
     public record TestPluginHolder(Plugin plugin) {

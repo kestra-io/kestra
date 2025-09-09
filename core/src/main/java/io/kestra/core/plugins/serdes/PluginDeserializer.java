@@ -21,6 +21,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Specific {@link JsonDeserializer} for deserializing classes that implements the {@link Plugin} interface.
@@ -85,8 +86,9 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
                              JsonNode node,
                              DeserializationContext context) throws IOException {
         Class<? extends Plugin> pluginType = null;
+        
+        final String identifier = extractPluginRawIdentifier(node, pluginRegistry::isVersioningSupported);
 
-        final String identifier = extractPluginRawIdentifier(node);
         if (identifier != null) {
             log.trace("Looking for Plugin for: {}",
                 identifier
@@ -103,7 +105,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             );
 
             if (DataChart.class.isAssignableFrom(pluginType)) {
-                final Class<? extends Plugin> dataFilterClass = pluginRegistry.findClassByIdentifier(extractPluginRawIdentifier(node.get("data")));
+                final Class<? extends Plugin> dataFilterClass = pluginRegistry.findClassByIdentifier(extractPluginRawIdentifier(node.get("data"), pluginRegistry::isVersioningSupported));
                 ParameterizedType genericDataFilterClass = (ParameterizedType) dataFilterClass.getGenericSuperclass();
                 Type dataFieldsEnum = genericDataFilterClass.getActualTypeArguments()[0];
                 TypeFactory typeFactory = JacksonMapper.ofJson().getTypeFactory();
@@ -141,15 +143,15 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             "No plugin registered for the defined type: '" + type + "'"
         );
     }
-
-    static String extractPluginRawIdentifier(final JsonNode node) {
+    
+    static String extractPluginRawIdentifier(final JsonNode node, final Function<String, Boolean> isVersioningSupported) {
         String type = Optional.ofNullable(node.get(TYPE)).map(JsonNode::textValue).orElse(null);
-        String version = Optional.ofNullable(node.get(VERSION)).map(JsonNode::textValue).orElse(null);
+        String version = Optional.ofNullable(node.get(VERSION)).map(JsonNode::asText).orElse(null);
 
         if (type == null || type.isEmpty()) {
             return null;
         }
-
-        return version != null && !version.isEmpty() ? type + ":" + version : type;
+        
+        return isVersioningSupported.apply(type) && version != null && !version.isEmpty() ? type + ":" + version : type;
     }
 }

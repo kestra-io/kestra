@@ -116,4 +116,12 @@ public interface PluginRegistry {
     default void clear() {
 
     }
+    
+    /**
+     * Checks whether plugin-versioning is supported by this registry.
+     * @param type the plugin type.
+     * @return {@code true} if supported. Otherwise {@code false}.
+     */
+    boolean isVersioningSupported(String type);
+
 }

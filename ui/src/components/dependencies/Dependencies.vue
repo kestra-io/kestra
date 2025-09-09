@@ -1,13 +1,8 @@
 <template>
-    <div v-if="isLoading" class="loading-state" v-loading="isLoading">
-        <div class="loading-content">
-            Loading dependencies...
-        </div>
-    </div>
-    <Empty v-else-if="!isLoading && getElements().length === 0" :type="`dependencies.${SUBTYPE}`" />
+    <Empty v-if="!loading && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
     <el-splitter v-else class="dependencies">
         <el-splitter-panel id="graph" v-bind="PANEL">
-            <div v-loading="isRendering" ref="container" />
+            <div v-loading="loading" ref="container" />
 
             <div class="controls">
                 <el-button
@@ -79,7 +74,7 @@
     const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE ? String(route.params.id) : String(route.params.flowId);
     const TESTING = false; // When true, bypasses API data fetching and uses mock/test data.
 
-    const {getElements, isLoading, isRendering, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE, initialNodeID, route.params, TESTING);
+    const {getElements, loading, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE, initialNodeID, route.params, TESTING);
 </script>
 
 <style scoped lang="scss">
@@ -122,19 +117,5 @@
         flex-direction: column;
         height: 100%;
     }
-}
-
-// css added to avoid blinking hence show some loading components here
-.loading-state {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: calc(100vh - 135px);
-    width: 100%;
-}
-
-.loading-content {
-    text-align: center;
-    color: var(--ks-content-secondary-color);
 }
 </style>

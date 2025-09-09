@@ -2,8 +2,8 @@ import {ref} from "vue";
 import {apiUrl, apiUrlWithTenant} from "override/utils/route";
 import Utils from "../utils/utils";
 
-function base(store: any, namespace: string) {
-    return `${apiUrl(store.vuexStore)}/namespaces/${namespace}`;
+function base(namespace: string) {
+    return `${apiUrl()}/namespaces/${namespace}`;
 }
 
 const HEADERS = {headers: {"Content-Type": "multipart/form-data"}};
@@ -25,7 +25,7 @@ export function useBaseNamespacesStore() {
     const existing = ref(true);
 
     async function loadAutocomplete(this: any, options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
-        const response = await this.$http.post(`${apiUrlWithTenant(this.vuexStore, this.$router.currentRoute)}/namespaces/autocomplete`, options ?? {});
+        const response = await this.$http.post(`${apiUrlWithTenant(this.$router.currentRoute)}/namespaces/autocomplete`, options ?? {});
         autocomplete.value = response.data;
         return response.data;
     }
@@ -33,7 +33,7 @@ export function useBaseNamespacesStore() {
     async function search(this: any, options: any) {
         const shouldCommit = options.commit !== false;
         delete options.commit;
-        const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/search`, {params: options, ...VALIDATE});
+        const response = await this.$http.get(`${apiUrl()}/namespaces/search`, {params: options, ...VALIDATE});
         if (response.status === 200 && shouldCommit) {
             namespaces.value = response.data.results;
             total.value = response.data.total;
@@ -42,7 +42,7 @@ export function useBaseNamespacesStore() {
     }
 
     async function load(this: any, id: string) {
-        const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${id}`, VALIDATE);
+        const response = await this.$http.get(`${apiUrl()}/namespaces/${id}`, VALIDATE);
 
         if(response.status === 200) {
             namespace.value = response.data;
@@ -57,17 +57,17 @@ export function useBaseNamespacesStore() {
     }
 
     async function loadDependencies(this: any, options: {namespace: string}) {
-        return await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${options.namespace}/dependencies`);
+        return await this.$http.get(`${apiUrl()}/namespaces/${options.namespace}/dependencies`);
     }
 
     async function kvsList(this: any, item: {id: string}) {
-        const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${item.id}/kv`, VALIDATE);
+        const response = await this.$http.get(`${apiUrl()}/namespaces/${item.id}/kv`, VALIDATE);
         kvs.value = response.data;
         return response.data;
     }
 
     async function kv(this: any, payload: {namespace: string; key: string}) {
-        const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${payload.namespace}/kv/${payload.key}`);
+        const response = await this.$http.get(`${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`);
         const data = response.data;
         const contentLength = response.headers?.["content-length"];
         if (contentLength === (data.length + 2).toString()) {
@@ -77,13 +77,13 @@ export function useBaseNamespacesStore() {
     }
 
     async function loadInheritedKVs(this: any, id: string) {
-        const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${id}/kv/inheritance`, {...VALIDATE});
+        const response = await this.$http.get(`${apiUrl()}/namespaces/${id}/kv/inheritance`, {...VALIDATE});
         inheritedKVs.value = response.data;
     }
 
     async function createKv(this: any, payload: {namespace: string; key: string; value: any; contentType: string; description: string; ttl: string}) {
         await this.$http.put(
-            `${apiUrl(this.vuexStore)}/namespaces/${payload.namespace}/kv/${payload.key}`,
+            `${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`,
             payload.value,
             {
                 headers: {
@@ -97,19 +97,19 @@ export function useBaseNamespacesStore() {
     }
 
     async function deleteKv(this: any, payload: {namespace: string; key: string}) {
-        await this.$http.delete(`${apiUrl(this.vuexStore)}/namespaces/${payload.namespace}/kv/${payload.key}`);
+        await this.$http.delete(`${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`);
         return kvsList.call(this, {id: payload.namespace});
     }
 
     async function deleteKvs(this: any, payload: {namespace: string; request: any}) {
-        await this.$http.delete(`${apiUrl(this.vuexStore)}/namespaces/${payload.namespace}/kv`, {
+        await this.$http.delete(`${apiUrl()}/namespaces/${payload.namespace}/kv`, {
             data: payload.request
         });
         return kvsList.call(this, {id: payload.namespace});
     }
 
     async function loadInheritedSecrets(this: any, {id, commit: shouldCommit, ...params}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<Record<string, string[]>> {
-        const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${id}/inherited-secrets`, {
+        const response = await this.$http.get(`${apiUrl()}/namespaces/${id}/inherited-secrets`, {
             ...VALIDATE,
             params
         });
@@ -123,7 +123,7 @@ export function useBaseNamespacesStore() {
     }
 
     async function listSecrets(this: any, {id, commit: shouldCommit, ...params}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: string}[], readOnly?: boolean}> {
-        const response = await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${id}/secrets`, {
+        const response = await this.$http.get(`${apiUrl()}/namespaces/${id}/secrets`, {
             ...VALIDATE,
             params
         });
@@ -181,7 +181,7 @@ export function useBaseNamespacesStore() {
         const URL = `${base(this, payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
         const request = await this.$http.get(URL, {
             ...VALIDATE,
-            transformResponse: (response: any) => response, 
+            transformResponse: (response: any) => response,
             responseType: "json"
         });
 

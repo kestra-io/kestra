@@ -4,7 +4,7 @@ export default class ExecutionUtils {
     static waitFor($http, store, execution, predicate) {
         return new Promise((resolve) => {
             let callback = () => {
-                $http.get(`${apiUrl(store)}/executions/${execution.id}`).then(response => {
+                $http.get(`${apiUrl()}/executions/${execution.id}`).then(response => {
                     const result = predicate(response.data)
 
                     if (result === true) {

@@ -132,7 +132,7 @@ export default {
             }
 
             return this.$http
-                .get(`${apiUrl(this.$store)}/flows/${this.flowStore.flow.namespace}/${this.flowStore.flow.id}/dependencies`, {params: {destinationOnly: true}})
+                .get(`${apiUrl()}/flows/${this.flowStore.flow.namespace}/${this.flowStore.flow.id}/dependencies`, {params: {destinationOnly: true}})
                 .then(response => {
                     let warning = "";
 

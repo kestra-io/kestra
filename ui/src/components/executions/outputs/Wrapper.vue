@@ -174,7 +174,7 @@
     const debugCollapse = ref<string>("");
     const debugEditor = ref<InstanceType<typeof Editor>>();
     const debugExpression = ref<string>("");
-    
+
     const computedDebugValue = computed(() => {
         const formatTask = (task) => {
             if (!task) return "";
@@ -215,7 +215,7 @@
 
         if (!taskRun) return;
 
-        const URL = `${apiUrl(store)}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
+        const URL = `${apiUrl()}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
         store.$http
             .post(URL, expression, {headers: {"Content-type": "text/plain"}})
             .then((response) => {

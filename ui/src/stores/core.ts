@@ -41,7 +41,7 @@ export const useCoreStore = defineStore("core", {
 
     actions: {
         async readTutorialFlows() {
-            const response = await this.$http.get(`${apiUrl(this.vuexStore)}/flows/tutorial`);
+            const response = await this.$http.get(`${apiUrl()}/flows/tutorial`);
             this.tutorialFlows = response.data;
             return response.data;
         },

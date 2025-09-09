@@ -71,7 +71,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     // Actions
     const restartExecution = (options: { executionId: string; revision?: number }) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/${options.executionId}/restart`,
+            `${apiUrl()}/executions/${options.executionId}/restart`,
             null,
             {
                 params: {
@@ -82,14 +82,14 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const bulkRestartExecution = (options: { executionsId: string[] }) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/restart/by-ids`,
+            `${apiUrl()}/executions/restart/by-ids`,
             options.executionsId
         )
     }
 
     const queryRestartExecution = (options: Record<string, any>) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/restart/by-query`,
+            `${apiUrl()}/executions/restart/by-query`,
             {},
             {params: options}
         )
@@ -97,14 +97,14 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const bulkResumeExecution = (options: { executionsId: string[] }) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/resume/by-ids`,
+            `${apiUrl()}/executions/resume/by-ids`,
             options.executionsId
         )
     }
 
     const queryResumeExecution = (options: Record<string, any>) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/resume/by-query`,
+            `${apiUrl()}/executions/resume/by-query`,
             {},
             {params: options}
         )
@@ -112,7 +112,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const bulkReplayExecution = (options: { executionsId: string[] } & Record<string, any>) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/replay/by-ids`,
+            `${apiUrl()}/executions/replay/by-ids`,
             options.executionsId,
             {params: options}
         )
@@ -120,7 +120,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const bulkChangeExecutionStatus = (options: { executionsId: string[]; newStatus: string }) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/change-status/by-ids`,
+            `${apiUrl()}/executions/change-status/by-ids`,
             options.executionsId,
             {
                 params: {
@@ -132,7 +132,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const queryReplayExecution = (options: Record<string, any>) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/replay/by-query`,
+            `${apiUrl()}/executions/replay/by-query`,
             {},
             {params: options}
         )
@@ -140,7 +140,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const queryChangeExecutionStatus = (options: Record<string, any>) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/change-status/by-query`,
+            `${apiUrl()}/executions/change-status/by-query`,
             {},
             {params: options}
         )
@@ -148,7 +148,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/${options.executionId}/replay`,
+            `${apiUrl()}/executions/${options.executionId}/replay`,
             null,
             {
                 params: {
@@ -161,7 +161,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/${options.executionId}/replay-with-inputs`,
+            `${apiUrl()}/executions/${options.executionId}/replay-with-inputs`,
             options.formData,
             {
                 params: {
@@ -177,7 +177,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const changeExecutionStatus = (options: { executionId: string; state: string }) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/${options.executionId}/change-status`,
+            `${apiUrl()}/executions/${options.executionId}/change-status`,
             null,
             {
                 params: {
@@ -188,7 +188,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const changeStatus = (options: { executionId: string; taskRunId?: string; state: string }) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/${options.executionId}/state`,
+            `${apiUrl()}/executions/${options.executionId}/state`,
             {
                 taskRunId: options.taskRunId,
                 state: options.state,
@@ -196,19 +196,19 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const kill = (options: { id: string; isOnKillCascade?: boolean }) => {
-        return store.$http.delete(`${apiUrl(store)}/executions/${options.id}/kill?isOnKillCascade=${options.isOnKillCascade}`);
+        return store.$http.delete(`${apiUrl()}/executions/${options.id}/kill?isOnKillCascade=${options.isOnKillCascade}`);
     }
 
     const bulkKill = (options: { executionsId: string[] }) => {
-        return store.$http.delete(`${apiUrl(store)}/executions/kill/by-ids`, {data: options.executionsId});
+        return store.$http.delete(`${apiUrl()}/executions/kill/by-ids`, {data: options.executionsId});
     }
 
     const queryKill = (options: Record<string, any>) => {
-        return store.$http.delete(`${apiUrl(store)}/executions/kill/by-query`, {params: options});
+        return store.$http.delete(`${apiUrl()}/executions/kill/by-query`, {params: options});
     }
 
     const resume = (options: { id: string; formData: any }) => {
-        return store.$http.post(`${apiUrl(store)}/executions/${options.id}/resume`, Utils.toFormData(options.formData), {
+        return store.$http.post(`${apiUrl()}/executions/${options.id}/resume`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data"
@@ -217,7 +217,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const validateResume = (options: { id: string; formData: any }) => {
-        return store.$http.post(`${apiUrl(store)}/executions/${options.id}/resume/validate`, Utils.toFormData(options.formData), {
+        return store.$http.post(`${apiUrl()}/executions/${options.id}/resume/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data"
@@ -226,33 +226,33 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const pause = (options: { id: string }) => {
-        return store.$http.post(`${apiUrl(store)}/executions/${options.id}/pause`);
+        return store.$http.post(`${apiUrl()}/executions/${options.id}/pause`);
     }
 
     const bulkPauseExecution = (options: { executionsId: string[] }) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/pause/by-ids`,
+            `${apiUrl()}/executions/pause/by-ids`,
             options.executionsId
         )
     }
 
     const queryPauseExecution = (options: Record<string, any>) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/pause/by-query`,
+            `${apiUrl()}/executions/pause/by-query`,
             {},
             {params: options}
         )
     }
 
     const loadExecution = (options: { id: string }) => {
-        return store.$http.get(`${apiUrl(store)}/executions/${options.id}`).then(response => {
+        return store.$http.get(`${apiUrl()}/executions/${options.id}`).then(response => {
             execution.value = response.data;
             return response.data;
         })
     }
 
     const findExecutions = (options: { commit?: boolean } & Record<string, any>) => {
-        return store.$http.get(`${apiUrl(store)}/executions/search`, {params: options}).then(response => {
+        return store.$http.get(`${apiUrl()}/executions/search`, {params: options}).then(response => {
             if (options.commit !== false) {
                 executions.value = response.data.results;
                 total.value = response.data.total;
@@ -262,7 +262,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }) => {
-        return store.$http.post(`${apiUrl(store)}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
+        return store.$http.post(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data"
@@ -283,7 +283,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         labels?: string[];
         scheduleDate?: string,
     }) => {
-        return store.$http.post(`${apiUrl(store)}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
+        return store.$http.post(`${apiUrl()}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data"
@@ -303,17 +303,17 @@ export const useExecutionsStore = defineStore("executions", () => {
             .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
             .join("&");
 
-        return store.$http.delete(`${apiUrl(store)}/executions/${id}?${qs}`).then(() => {
+        return store.$http.delete(`${apiUrl()}/executions/${id}?${qs}`).then(() => {
             execution.value = undefined;
         })
     }
 
     const bulkDeleteExecution = (options: { executionsId: string[] } & Record<string, any>) => {
-        return store.$http.delete(`${apiUrl(store)}/executions/by-ids`, {data: options.executionsId, params: {...options}})
+        return store.$http.delete(`${apiUrl()}/executions/by-ids`, {data: options.executionsId, params: {...options}})
     }
 
     const queryDeleteExecution = (options: Record<string, any>) => {
-        return store.$http.delete(`${apiUrl(store)}/executions/by-query`, {params: options})
+        return store.$http.delete(`${apiUrl()}/executions/by-query`, {params: options})
     }
 
     const sse = ref<EventSource | undefined>(undefined);
@@ -355,7 +355,7 @@ export const useExecutionsStore = defineStore("executions", () => {
             execution.value = undefined;
             closeSSE();
         }
-        const serverSentEventSource = new EventSource(`${apiUrl(store)}/executions/${options.id}/follow`, {withCredentials: true});
+        const serverSentEventSource = new EventSource(`${apiUrl()}/executions/${options.id}/follow`, {withCredentials: true});
         if (options.rawSSE) {
             return Promise.resolve(serverSentEventSource);
         }
@@ -396,15 +396,15 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     function followExecutionDependencies(options: { id: string; expandAll?: boolean }) {
-        return new EventSource(`${apiUrl(store)}/executions/${options.id}/follow-dependencies${options.expandAll ? "?expandAll=true" : ""}`, {withCredentials: true});
+        return new EventSource(`${apiUrl()}/executions/${options.id}/follow-dependencies${options.expandAll ? "?expandAll=true" : ""}`, {withCredentials: true});
     }
 
     const followLogs = (options: { id: string }) => {
-        return Promise.resolve(new EventSource(`${apiUrl(store)}/logs/${options.id}/follow`, {withCredentials: true}));
+        return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow`, {withCredentials: true}));
     }
 
     const loadLogs = (options: { executionId: string; params?: Record<string, any>; store?: boolean }) => {
-        return store.$http.get(`${apiUrl(store)}/logs/${options.executionId}`, {
+        return store.$http.get(`${apiUrl()}/logs/${options.executionId}`, {
             params: options.params
         }).then(response => {
             if (options.store === false) {
@@ -416,7 +416,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const loadMetrics = (options: { executionId: string; params?: Record<string, any>; store?: boolean }) => {
-        return store.$http.get(`${apiUrl(store)}/metrics/${options.executionId}`, {
+        return store.$http.get(`${apiUrl()}/metrics/${options.executionId}`, {
             params: options.params
         }).then(response => {
             if (options.store === false) {
@@ -429,7 +429,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const downloadLogs = (options: { executionId: string; params?: Record<string, any> }) => {
-        return store.$http.get(`${apiUrl(store)}/logs/${options.executionId}/download`, {
+        return store.$http.get(`${apiUrl()}/logs/${options.executionId}/download`, {
             params: options.params
         }).then(response => {
             return response.data;
@@ -437,7 +437,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const deleteLogs = (options: { executionId: string; params?: Record<string, any> }) => {
-        return store.$http.delete(`${apiUrl(store)}/logs/${options.executionId}`, {
+        return store.$http.delete(`${apiUrl()}/logs/${options.executionId}`, {
             params: options.params
         }).then(response => {
             return response.data;
@@ -446,7 +446,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const _filePreview = ref<any | undefined>(undefined);
     const filePreview = (options: { executionId: string } & Record<string, any>) => {
-        return store.$http.get(`${apiUrl(store)}/executions/${options.executionId}/file/preview`, {
+        return store.$http.get(`${apiUrl()}/executions/${options.executionId}/file/preview`, {
             params: options
         }).then(response => {
             let data = {...response.data};
@@ -468,7 +468,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const setLabels = (options: { executionId: string; labels: any }) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/${options.executionId}/labels`,
+            `${apiUrl()}/executions/${options.executionId}/labels`,
             options.labels,
             {
                 headers: {
@@ -478,48 +478,48 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const querySetLabels = (options: { data: any; params: Record<string, any> }) => {
-        return store.$http.post(`${apiUrl(store)}/executions/labels/by-query`, options.data, {
+        return store.$http.post(`${apiUrl()}/executions/labels/by-query`, options.data, {
             params: options.params
         })
     }
 
     const bulkSetLabels = (options: any) => {
-        return store.$http.post(`${apiUrl(store)}/executions/labels/by-ids`, options)
+        return store.$http.post(`${apiUrl()}/executions/labels/by-ids`, options)
     }
 
     const unqueue = (options: { id: string; state: string }) => {
-        return store.$http.post(`${apiUrl(store)}/executions/${options.id}/unqueue?state=${options.state}`);
+        return store.$http.post(`${apiUrl()}/executions/${options.id}/unqueue?state=${options.state}`);
     }
 
     const bulkUnqueueExecution = (options: { executionsId: string[]; newStatus: string }) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/unqueue/by-ids?state=${options.newStatus}`,
+            `${apiUrl()}/executions/unqueue/by-ids?state=${options.newStatus}`,
             options.executionsId
         )
     }
 
     const queryUnqueueExecution = (options: { newStatus: string } & Record<string, any>) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/unqueue/by-query?state=${options.newStatus}`,
+            `${apiUrl()}/executions/unqueue/by-query?state=${options.newStatus}`,
             {},
             {params: options}
         )
     }
 
     const forceRun = (options: { id: string }) => {
-        return store.$http.post(`${apiUrl(store)}/executions/${options.id}/force-run`);
+        return store.$http.post(`${apiUrl()}/executions/${options.id}/force-run`);
     }
 
     const bulkForceRunExecution = (options: { executionsId: string[] }) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/force-run/by-ids`,
+            `${apiUrl()}/executions/force-run/by-ids`,
             options.executionsId
         )
     }
 
     const queryForceRunExecution = (options: Record<string, any>) => {
         return store.$http.post(
-            `${apiUrl(store)}/executions/force-run/by-query`,
+            `${apiUrl()}/executions/force-run/by-query`,
             {},
             {params: options}
         )
@@ -527,7 +527,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const loadFlowForExecution = (options: { namespace: string; flowId: string; revision?: number, store: boolean }) => {
         const revision = options.revision ? `?revision=${options.revision}` : "";
-        return store.$http.get(`${apiUrl(store)}/executions/flows/${options.namespace}/${options.flowId}${revision}`)
+        return store.$http.get(`${apiUrl()}/executions/flows/${options.namespace}/${options.flowId}${revision}`)
             .then(response => {
                 if (options.store) {
                     flow.value = response.data;
@@ -537,7 +537,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const loadFlowForExecutionByExecutionId = (options: { id: string, revision?: string }) => {
-        return store.$http.get(`${apiUrl(store)}/executions/${options.id}/flow`)
+        return store.$http.get(`${apiUrl()}/executions/${options.id}/flow`)
             .then(response => {
                 flow.value = response.data;
                 return response.data;
@@ -546,7 +546,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const fetchGraph = (options: { id: string; params?: Record<string, any> }) => {
         const params = options.params ? options.params : {};
-        return axios.get(`${apiUrl(store)}/executions/${options.id}/graph`, {params, withCredentials: true, paramsSerializer: {indexes: null}})
+        return axios.get(`${apiUrl()}/executions/${options.id}/graph`, {params, withCredentials: true, paramsSerializer: {indexes: null}})
             .then(response => {
                 return response.data;
             })
@@ -643,21 +643,21 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const loadNamespaces = () => {
-        return store.$http.get(`${apiUrl(store)}/executions/namespaces`)
+        return store.$http.get(`${apiUrl()}/executions/namespaces`)
             .then(response => {
                 namespaces.value = response.data;
             })
     }
 
     const loadFlowsExecutable = (options: { namespace: string }) => {
-        return store.$http.get(`${apiUrl(store)}/executions/namespaces/${options.namespace}/flows`)
+        return store.$http.get(`${apiUrl()}/executions/namespaces/${options.namespace}/flows`)
             .then(response => {
                 flowsExecutable.value = response.data;
             })
     }
 
     const loadLatestExecutions = (options: { flowFilters: any }) => {
-        return store.$http.post(`${apiUrl(store)}/executions/latest`, options.flowFilters).then(response => {
+        return store.$http.post(`${apiUrl()}/executions/latest`, options.flowFilters).then(response => {
             return response.data;
         })
     }
@@ -685,7 +685,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const getFlowExecutions = ({namespace, flowId}: { namespace: string; flowId: string }) => {
-        return store.$http.get(`${apiUrl(store)}/executions`, {
+        return store.$http.get(`${apiUrl()}/executions`, {
             params: {
                 namespace,
                 flowId,

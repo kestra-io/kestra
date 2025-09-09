@@ -409,14 +409,14 @@
         },
         methods: {
             fileUrl(path) {
-                return `${apiUrl(this.$store)}/executions/${this.followedExecution.id}/file?path=${path}`;
+                return `${apiUrl()}/executions/${this.followedExecution.id}/file?path=${path}`;
             },
             async fetchAndStoreLogFileSize(path){
                 if (this.logFileSizeByPath[path] !== undefined) {
                     return;
                 }
 
-                const axiosResponse = await this.$http(`${apiUrl(this.$store)}/executions/${this.followedExecution.id}/file/metas?path=${path}`, {
+                const axiosResponse = await this.$http(`${apiUrl()}/executions/${this.followedExecution.id}/file/metas?path=${path}`, {
                     validateStatus: (status) => status === 200 || status === 404 || status === 422
                 });
                 this.logFileSizeByPath[path] = Utils.humanFileSize(axiosResponse.data.size);

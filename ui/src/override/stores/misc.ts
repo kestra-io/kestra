@@ -16,8 +16,6 @@ export const useMiscStore = defineStore("misc", {
         theme: "light"
     }),
 
-
-
     actions: {
         async loadConfigs() {
             const response = await this.$http.get(`${apiUrlWithoutTenants()}/configs`);
@@ -32,7 +30,7 @@ export const useMiscStore = defineStore("misc", {
 
         async loadAllUsages() {
             if(this.configs.isBasicAuthInitialized && BasicAuth.isLoggedIn()){
-                const response = await this.$http.get(`${apiUrl(this.vuexStore)}/usages/all`);
+                const response = await this.$http.get(`${apiUrl()}/usages/all`);
                 return response.data;
             }
             return [];
@@ -49,7 +47,7 @@ export const useMiscStore = defineStore("misc", {
             localStorage.setItem("firstName", options.firstName);
             localStorage.setItem("lastName", options.lastName);
 
-            await this.$http.post(`${apiUrl(this.vuexStore)}/basicAuth`, {
+            await this.$http.post(`${apiUrl()}/basicAuth`, {
                 uid: localStorage.getItem("uid"),
                 username: email,
                 password: options.password,

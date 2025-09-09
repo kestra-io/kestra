@@ -23,7 +23,6 @@ export const useEditorStore = defineStore("editor", () => {
     const treeData = ref([])
     const treeRefresh = ref(0)
 
-
     const namespaceStore = useNamespacesStore();
     function saveAllTabs({namespace}: {namespace: string}) {
         return Promise.all(
@@ -43,6 +42,7 @@ export const useEditorStore = defineStore("editor", () => {
             })
         );
     }
+
     function openTab(payload: EditorTabProps) {
         const {name, extension, persistent, path, flow} = payload;
 
@@ -76,6 +76,7 @@ export const useEditorStore = defineStore("editor", () => {
             flow
         }
     }
+
     function closeTab(payload: {name?: string, index?: number, path?: string}) {
         const {name, index, path} = payload;
 
@@ -104,24 +105,30 @@ export const useEditorStore = defineStore("editor", () => {
             }
         }
     }
+
     function updateOnboarding() {
         onboarding.value = true;
     }
+
     function toggleExplorerVisibility(isVisible?: boolean) {
         explorerVisible.value = isVisible ?? !explorerVisible.value;
     }
+
     function closeExplorer() {
         explorerVisible.value = false;
     }
+
     function changeExplorerWidth(width: number) {
         explorerWidth.value = width > 40 ? 40 : width < 20 ? 20 : width;
     }
+
     function setTabContent(payload: Partial<EditorTabProps>) {
         const tab = tabs.value.find((tab) => tab.path === payload.path);
         if(tab){
             tab.content = payload.content;
         }
     }
+
     function setTabDirty(payload: {name?: string, dirty: boolean, path?: string}) {
         const {name, dirty, path} =
             payload;
@@ -136,19 +143,23 @@ export const useEditorStore = defineStore("editor", () => {
         if(tabs.value[tabIdxToDirty]) tabs.value[tabIdxToDirty].dirty = dirty;
         if(current.value) current.value.dirty = dirty;
     }
+
     function closeTabs() {
         if (tabs.value[0]) {
             tabs.value = [tabs.value[0]];
         }
     }
+
     function closeAllTabs() {
         tabs.value = [];
         current.value = undefined
     }
+
     function reorderTabs({from, to}: {from: number, to: number}) {
         const tab = tabs.value.splice(from, 1)[0];
         tabs.value.splice(to, 0, tab);
     }
+
     function refreshTree() {
         explorerVisible.value = true;
         treeRefresh.value = Date.now();

@@ -2,7 +2,7 @@
     <Timeline :histories="execution.state.histories" />
     <div v-if="execution" class="execution-overview">
         <div v-if="isFailed()">
-            <el-alert type="error" :closable="false" show-icon class="mb-4 main-error">
+            <el-alert type="error" :closable="false" showIcon class="mb-4 main-error">
                 <template #title>
                     <div @click="isExpanded = !isExpanded">
                         <Markdown
@@ -11,8 +11,8 @@
                             :html="false"
                         />
                         <span class="toggle-icon" v-if="errorLogs">
-                            <chevron-up v-if="isExpanded" />
-                            <chevron-down v-else />
+                            <ChevronUp v-if="isExpanded" />
+                            <ChevronDown v-else />
                         </span>
                         <span v-if="!errorLogs">
                             {{ $t('error detected') }}
@@ -21,7 +21,7 @@
                 </template>
                 <div v-if="isExpanded && errorLogs" class="error-stack">
                     <div v-for="log in errorLogs" :key="log" class="stack-line">
-                        <log-line :level="log.level" :log="log" :exclude-metas="['namespace', 'flowId', 'executionId']" />
+                        <LogLine :level="log.level" :log="log" :excludeMetas="['namespace', 'flowId', 'executionId']" />
                     </div>
                     <div class="text-end" v-if="errorLogsMore">
                         <router-link :to="{name: 'executions/update', params: {tenantId: execution.tenantId, id: execution.id, namespace: execution.namespace, flowId: execution.flowId, tab: 'logs'}, query: {level: 'ERROR'}}">
@@ -38,7 +38,7 @@
             <el-alert type="warning" :closable="false" class="mb-4 main-warning">
                 <template #title>
                     <div>
-                        <alert class="main-icon" />
+                        <Alert class="main-icon" />
                         {{ $t('execution restarted', {nbRestart: execution?.metadata?.attemptNumber - 1}) }}
                     </div>
                 </template>
@@ -67,19 +67,19 @@
 
         <el-row class="mb-3">
             <el-col :span="24" class="gap-2 d-flex justify-content-end actions-buttons">
-                <set-labels :execution="execution" />
-                <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
-                <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
-                <change-execution-status :execution="execution" @follow="forwardEvent('follow', $event)" />
-                <pause v-if="execution.state.current !== 'PAUSED'" :execution="execution" />
-                <unqueue :execution="execution" />
-                <force-run :execution="execution" />
-                <resume :execution="execution" />
-                <kill :execution="execution" />
+                <SetLabels :execution="execution" />
+                <Restart isReplay :execution="execution" @follow="forwardEvent('follow', $event)" />
+                <Restart :execution="execution" @follow="forwardEvent('follow', $event)" />
+                <ChangeExecutionStatus :execution="execution" @follow="forwardEvent('follow', $event)" />
+                <Pause v-if="execution.state.current !== 'PAUSED'" :execution="execution" />
+                <Unqueue :execution="execution" />
+                <ForceRun :execution="execution" />
+                <Resume :execution="execution" />
+                <Kill :execution="execution" />
             </el-col>
         </el-row>
 
-        <el-table table-layout="auto" fixed :data="items" :show-header="false" class="mb-0">
+        <el-table tableLayout="auto" fixed :data="items" :showHeader="false" class="mb-0">
             <el-table-column prop="key" :label="$t('key')" />
 
             <el-table-column prop="value" :label="$t('value')">
@@ -94,16 +94,16 @@
                         <code class="parent-execution">{{ scope.row.value }}</code>
                     </router-link>
                     <span v-else-if="scope.row.date">
-                        <date-ago :date="scope.row.value" />
+                        <DateAgo :date="scope.row.value" />
                     </span>
                     <span v-else-if="scope.row.duration">
-                        <duration :histories="scope.row.value" />
+                        <Duration :histories="scope.row.value" />
                     </span>
                     <span v-else-if="scope.row.key === $t('state')">
-                        <status :status="scope.row.value" />
+                        <Status :status="scope.row.value" />
                     </span>
                     <span v-else-if="scope.row.key === $t('labels')">
-                        <labels :labels="scope.row.value" read-only />
+                        <Labels :labels="scope.row.value" readOnly />
                     </span>
                     <span v-else>
                         <span v-if="scope.row.key === $t('revision')">

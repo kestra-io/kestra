@@ -1,6 +1,6 @@
 <template>
     <TopNavBar
-        :title="route.title"
+        :title="routeInfo.title"
         :breadcrumb="[{label: t('dashboards.labels.singular'), link: {}}]"
         :description="props.dashboard?.description"
     >
@@ -14,13 +14,6 @@
                     >
                         <el-button :icon="Pencil">
                             {{ t("dashboards.edition.label") }}
-                        </el-button>
-                    </router-link>
-                </li>
-                <li v-if="!props.dashboard?.id">
-                    <router-link :to="{name: 'dashboards/create'}">
-                        <el-button :icon="ViewDashboardEdit">
-                            {{ t("dashboards.creation.label") }}
                         </el-button>
                     </router-link>
                 </li>
@@ -49,7 +42,6 @@
 
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
-    import ViewDashboardEdit from "vue-material-design-icons/ViewDashboardEdit.vue";
 
     import permission from "../../../models/permission";
     import action from "../../../models/action";
@@ -59,9 +51,8 @@
     const user = computed(() => authStore.user);
     const isAllowed = computed(() => user.value.isAllowedGlobal(permission.FLOW, action.CREATE));
 
-    const route = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
+    const routeInfo = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
 
     import useRouteContext from "../../../mixins/useRouteContext";
-
-    useRouteContext(route);
+    useRouteContext(routeInfo);
 </script>

@@ -5,6 +5,8 @@ import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
 import io.kestra.core.http.client.HttpClientException;
+import io.kestra.core.http.client.HttpClientRequestException;
+import io.kestra.core.http.client.HttpClientResponseException;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -101,8 +103,15 @@ public class HttpFunction<T> implements Function {
         try (HttpClient httpClient = new HttpClient(runContext, httpConfiguration)) {
             HttpResponse<Object> response = httpClient.request(httpRequest, Object.class);
             return response.getBody();
-        } catch (HttpClientException | IllegalVariableEvaluationException | IOException e) {
-            throw new PebbleException(e, "Unable to execute HTTP request", lineNumber, self.getName());
+        } catch (HttpClientResponseException e) {
+            if (e.getResponse() != null) {
+                String msg = "Failed to execute HTTP Request, server respond with status " + e.getResponse().getStatus().getCode() + " : " + e.getResponse().getStatus().getReason();
+                throw new PebbleException(e, msg , lineNumber, self.getName());
+            } else {
+                throw new PebbleException( e, "Failed to execute HTTP request ", lineNumber, self.getName());
+            }
+        } catch(HttpClientException | IllegalVariableEvaluationException | IOException e ) {
+            throw new PebbleException( e, "Failed to execute HTTP request ", lineNumber, self.getName());
         }
     }
 

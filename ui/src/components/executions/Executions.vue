@@ -21,7 +21,7 @@
                         <TriggerFlow
                             v-if="flowStore.flow"
                             :disabled="flowStore.flow.disabled || isReadOnly"
-                            :flow-id="flowStore.flow.id"
+                            :flowId="flowStore.flow.id"
                             :namespace="flowStore.flow.namespace"
                         />
                     </li>
@@ -46,7 +46,7 @@
                         refresh: {shown: true, callback: refresh},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
                     }"
-                    :properties-width="182"
+                    :propertiesWidth="182"
                     :properties="{
                         shown: true,
                         columns: optionalColumns,
@@ -58,15 +58,15 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections ref="dashboardComponent" :dashboard="{id: 'default'}" :charts show-default />
+                <Sections ref="dashboardComponent" :dashboard="{id: 'default'}" :charts showDefault />
             </template>
 
             <template #table>
                 <SelectTable
                     ref="selectTable"
                     :data="executionsStore.executions"
-                    :default-sort="{prop: 'state.startDate', order: 'descending'}"
-                    table-layout="auto"
+                    :defaultSort="{prop: 'state.startDate', order: 'descending'}"
+                    tableLayout="auto"
                     fixed
                     @row-dblclick="row => onRowDoubleClick(executionParams(row))"
                     @sort-change="onSort"
@@ -76,7 +76,7 @@
                 >
                     <template #select-actions>
                         <BulkSelect
-                            :select-all="queryBulkAction"
+                            :selectAll="queryBulkAction"
                             :selections="selection"
                             :total="executionsStore.total"
                             @update:select-all="toggleAllSelection"
@@ -128,9 +128,9 @@
                         <el-dialog
                             v-if="isOpenLabelsModal"
                             v-model="isOpenLabelsModal"
-                            destroy-on-close
-                            :append-to-body="true"
-                            align-center
+                            destroyOnClose
+                            :appendToBody="true"
+                            alignCenter
                         >
                             <template #header>
                                 <h5>{{ $t("Set labels") }}</h5>
@@ -159,7 +159,7 @@
                         <el-table-column
                             prop="id"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('id')"
                         >
                             <template #default="scope">
@@ -175,7 +175,7 @@
                             prop="state.startDate"
                             v-if="displayColumn('state.startDate')"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('start date')"
                         >
                             <template #default="scope">
@@ -187,7 +187,7 @@
                             prop="state.endDate"
                             v-if="displayColumn('state.endDate')"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('end date')"
                         >
                             <template #default="scope">
@@ -199,7 +199,7 @@
                             prop="state.duration"
                             v-if="displayColumn('state.duration')"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('duration')"
                         >
                             <template #default="scope">
@@ -214,7 +214,7 @@
                             v-if="$route.name !== 'flows/update' && displayColumn('namespace')"
                             prop="namespace"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('namespace')"
                             :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)"
                         />
@@ -223,7 +223,7 @@
                             v-if="$route.name !== 'flows/update' && displayColumn('flowId')"
                             prop="flowId"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('flow')"
                         >
                             <template #default="scope">
@@ -245,7 +245,7 @@
                             prop="state.current"
                             v-if="displayColumn('state.current')"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('state')"
                         >
                             <template #default="scope">
@@ -257,7 +257,7 @@
                             prop="flowRevision"
                             v-if="displayColumn('flowRevision')"
                             :label="$t('revision')"
-                            class-name="shrink"
+                            className="shrink"
                         >
                             <template #default="scope">
                                 <code class="code-text">{{ scope.row.flowRevision }}</code>
@@ -303,8 +303,8 @@
                         </el-table-column>
 
                         <el-table-column
-                            column-key="action"
-                            class-name="row-action"
+                            columnKey="action"
+                            className="row-action"
                             :label="$t('actions')"
                         >
                             <template #default="scope">
@@ -323,7 +323,7 @@
         </DataTable>
     </section>
 
-    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -362,7 +362,7 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroyOnClose :appendToBody="true">
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -401,7 +401,7 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>

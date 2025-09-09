@@ -34,7 +34,7 @@ dependencies {
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.67.0')
     api platform("com.azure:azure-sdk-bom:1.2.37")
-    api platform('software.amazon.awssdk:bom:2.33.0')
+    api platform('software.amazon.awssdk:bom:2.33.2')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
 
@@ -74,7 +74,7 @@ dependencies {
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
-        api 'software.amazon.awssdk.crt:aws-crt:0.38.9'
+        api 'software.amazon.awssdk.crt:aws-crt:0.38.11'
 
         // we need at least 0.14, it could be removed when Micronaut contains a recent only version in their BOM
         api "io.micrometer:micrometer-core:1.15.3"
@@ -157,5 +157,7 @@ dependencies {
         api "io.kestra:repository-memory:$version"
         api "io.kestra:runner-memory:$version"
         api "io.kestra:storage-local:$version"
+        api "io.kestra:scheduler:$version"
+        api "io.kestra:worker:$version"
     }
 }

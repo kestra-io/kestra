@@ -2,10 +2,10 @@
     <el-drawer
         data-component="FILENAME_PLACEHOLDER"
         v-model="modelValue"
-        destroy-on-close
-        lock-scroll
+        destroyOnClose
+        lockScroll
         size=""
-        :append-to-body="true"
+        :appendToBody="true"
         :class="{'full-screen': fullScreen}"
         ref="editorDomElement"
     >

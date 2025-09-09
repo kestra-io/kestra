@@ -4,11 +4,11 @@
             effect="light"
             v-if="tooltip"
             :content="tooltip"
-            :raw-content="true"
+            :rawContent="true"
             v-bind="placement ? {placement} : {}"
             :persistent="false"
             transition=""
-            :hide-after="0"
+            :hideAfter="0"
         >
             <slot />
         </el-tooltip>

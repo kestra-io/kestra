@@ -88,9 +88,9 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
     private final Duration interval = Duration.ofSeconds(60);
 
     @Schema(
-            title = "The condition on the HTTP response to trigger a flow which can be any expression that evaluates to a boolean value.",
+            title = "The condition on the HTTP response to trigger a flow, which can be any expression that evaluates to a boolean value.",
             description = """
-                The condition will be evaluated after calling the HTTP endpoint, it can use the response itself to determine whether to start a flow or not.
+                The condition will be evaluated after calling the HTTP endpoint; it can use the response itself to determine whether to start a flow or not.
                 The following variables are available when evaluating the condition:
                 - `response.statusCode`: the response HTTP status code
                 - `response.body`: the response body as a string
@@ -124,8 +124,8 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
 
     @Builder.Default
     @Schema(
-        title = "If true, the HTTP response body will be automatically encrypted and decrypted in the outputs if encryption is configured",
-        description = "When true, the `encryptedBody` output will be filled, otherwise the `body` output will be filled"
+        title = "If true, the HTTP response body will be automatically encrypted and decrypted in the outputs if encryption is configured.",
+        description = "When true, the `encryptedBody` output will be filled, otherwise the `body` output will be filled."
     )
     private Property<Boolean> encryptBody = Property.ofValue(false);
 

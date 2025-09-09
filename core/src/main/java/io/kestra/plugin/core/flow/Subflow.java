@@ -86,34 +86,34 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
     @NotEmpty
     @Schema(
-        title = "The namespace of the subflow to be executed."
+        title = "The namespace of the subflow to be executed"
     )
     @PluginProperty(dynamic = true)
     private String namespace;
 
     @NotNull
     @Schema(
-        title = "The identifier of the subflow to be executed."
+        title = "The identifier of the subflow to be executed"
     )
     @PluginProperty(dynamic = true)
     private String flowId;
 
     @Schema(
-        title = "The revision of the subflow to be executed.",
-        description = "By default, the last, i.e. the most recent, revision of the subflow is executed."
+        title = "The revision of the subflow to be executed",
+        description = "By default, the last, i.e., the most recent, revision of the subflow is executed."
     )
     @PluginProperty(dynamic = true)
     @Min(value = 1)
     private Integer revision;
 
     @Schema(
-        title = "The inputs to pass to the subflow to be executed."
+        title = "The inputs to pass to the subflow to be executed"
     )
     @PluginProperty(dynamic = true)
     private Map<String, Object> inputs;
 
     @Schema(
-        title = "The labels to pass to the subflow to be executed.",
+        title = "The labels to pass to the subflow to be executed",
         implementation = Object.class, oneOf = {List.class, Map.class}
     )
     @PluginProperty(dynamic = true)
@@ -123,14 +123,14 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
     @Builder.Default
     @Schema(
-        title = "Whether to wait for the subflow execution to finish before continuing the current execution."
+        title = "Flag specifying whether to wait for the subflow execution to finish before continuing the current execution."
     )
     @PluginProperty
     private final Boolean wait = true;
 
     @Builder.Default
     @Schema(
-        title = "Whether to fail the current execution if the subflow execution fails or is killed.",
+        title = "Flag specifying whether to fail the current execution if the subflow execution fails or is killed.",
         description = "Note that this option works only if `wait` is set to `true`."
     )
     @PluginProperty
@@ -138,7 +138,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
     @Builder.Default
     @Schema(
-        title = "Whether the subflow should inherit labels from this execution that triggered it.",
+        title = "Flag specifying whether the subflow should inherit labels from this execution that triggered it.",
         description = "By default, labels are not passed to the subflow execution. If you set this option to `true`, the child flow execution will inherit all labels from the parent execution."
     )
     private final Property<Boolean> inheritLabels = Property.ofValue(false);
@@ -147,8 +147,8 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
      * @deprecated Output value should now be defined part of the Flow definition.
      */
     @Schema(
-        title = "Outputs from the subflow executions.",
-        description = "Allows to specify outputs as key-value pairs to extract any outputs from the subflow execution into output of this task execution." +
+        title = "Outputs from the subflow executions",
+        description = "Specify outputs as key-value pairs to extract any outputs from the subflow execution into output of this task execution." +
             "This property is deprecated since v0.15.0, please use the `outputs` property on the Subflow definition for defining the output values available and exposed to this task execution."
     )
     @PluginProperty(dynamic = true)
@@ -161,7 +161,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     private Property<ZonedDateTime> scheduleDate;
 
     @Schema(
-        title = "What to do when a failed execution is restarting.",
+        title = "Action to take when a failed execution is restarting",
         description = """
             - RETRY_FAILED (default): will restart the subflow execution if it's failed.
             - NEW_EXECUTION: will create a new subflow execution.""
@@ -296,18 +296,18 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The ID of the subflow execution."
+            title = "The subflow execution ID"
         )
         private final String executionId;
 
         @Schema(
-            title = "The final state of the subflow execution.",
+            title = "The final state of the subflow execution",
             description = "This output is only available if `wait` is set to `true`."
         )
         private final State.Type state;
 
         @Schema(
-            title = "The extracted outputs from the subflow execution."
+            title = "The outputs returned by the subflow exectution"
         )
         private final Map<String, Object> outputs;
     }

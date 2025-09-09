@@ -58,7 +58,7 @@
         UPDATE_TASK_FUNCTION_INJECTION_KEY,
     } from "./injectionKeys";
     import {useFlowFields, SECTIONS_IDS} from "./utils/useFlowFields";
-    import {debounce} from "lodash";
+    import debounce from "lodash/debounce";
     import {NoCodeProps} from "../flows/noCodeTypes";
     import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";

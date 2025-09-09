@@ -314,7 +314,7 @@
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import Kicon from "../Kicon.vue";
     import Labels from "../layout/Labels.vue";
-    import {storageKeys} from "../../utils/constants";
+    import {defaultNamespace} from "../../composables/useNamespaces";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
     import {useAuthStore} from "override/stores/auth.ts";
@@ -486,14 +486,11 @@
             }
         },
         beforeRouteEnter(to, _, next) {
-            const defaultNamespace = localStorage.getItem(
-                storageKeys.DEFAULT_NAMESPACE,
-            );
             const query = {...to.query};
             let queryHasChanged = false;
             const queryKeys = Object.keys(query);
-            if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][PREFIX]"] = defaultNamespace;
+            if (defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+                query["filters[namespace][PREFIX]"] = defaultNamespace();
                 queryHasChanged = true;
             }
 

@@ -69,7 +69,7 @@
     import {useRoute} from "vue-router";
     import useRouteContext from "../../../mixins/useRouteContext.ts";
     import {useStore} from "vuex";
-    import useNamespaces, {Namespace} from "../../../composables/useNamespaces.ts";
+    import useNamespaces, {Namespace} from "../../../composables/useNamespaces";
     import {useI18n} from "vue-i18n";
     import {useMiscStore} from "override/stores/misc";
 

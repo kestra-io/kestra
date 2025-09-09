@@ -5,7 +5,7 @@ import {apiUrl} from "override/utils/route";
 import Utils from "../utils/utils";
 import {useStore, Store} from "vuex";
 import {useCoreStore} from "./core";
-import {throttle} from "lodash";
+import throttle from "lodash/throttle";
 import {useRoute} from "vue-router";
 import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants.ts";
 

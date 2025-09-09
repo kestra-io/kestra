@@ -221,7 +221,7 @@
 
 <script lang="ts">
     import {mapStores} from "pinia";
-    import {groupBy} from "lodash";
+    import _groupBy from "lodash/groupBy";
     import {useNamespacesStore} from "override/stores/namespaces";
     import useNamespaces from "../../composables/useNamespaces";
     import {NamespaceIterator} from "../../composables/useNamespaces";
@@ -425,7 +425,7 @@
                 });
             },
             removeKvs() {
-                const groupedByNamespace = groupBy(this.selection, "namespace");
+                const groupedByNamespace = _groupBy(this.selection, "namespace");
                 const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => this.authStore.user.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
                 const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs);
                 const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n));

@@ -640,10 +640,18 @@
                 ]
             },
             dateFormats() {
-                return  [
+                return [
                     {value: "YYYY-MM-DDTHH:mm:ssZ"},
                     {value: "YYYY-MM-DD hh:mm:ss A"},
                     {value: "DD/MM/YYYY HH:mm:ss"},
+                    {value: "MM/DD/YYYY HH:mm:ss"},
+                    {value: "YYYY.MM.DD HH:mm:ss"},
+                    {value: "DD.MM.YYYY HH:mm:ss"},
+                    {value: "YYYY-MM-DD HH:mm:ss.SSS"},
+                    {value: "HH:mm:ss DD/MM/YYYY"},
+                    {value: "HH:mm:ss MM/DD/YYYY"},
+                    {value: "ddd, DD MMM YYYY HH:mm:ss"},
+                    {value: "dddd, MMMM Do YYYY, h:mm:ss a"},
                     {value: "lll"},
                     {value: "llll"},
                     {value: "LLL"},

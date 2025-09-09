@@ -79,7 +79,9 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
     configureAxios((instance) => {
         app.use(VueAxios, instance);
         app.provide("axios", instance);
-        piniaStore.$http = app.$http;
+        piniaStore.use(({store: piniaStoreLocal}) => {
+            piniaStoreLocal.$http = instance;
+        });
     }, store, router, true);
 
     app.config.globalProperties.$isOss = true; // Set to true for OSS version

@@ -1,9 +1,9 @@
 <template>
-    <errors code="404" v-if="error && embed" />
+    <Errors code="404" v-if="error && embed" />
     <div v-else>
         <slot name="nav" />
         <slot name="content">
-            <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" hide-top-pagination divider>
+            <DataTable class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" hideTopPagination divider>
                 <template #navbar>
                     <el-radio-group v-if="ready && !system && !embed" v-model="selectedTag" class="tags-selection">
                         <el-radio-button
@@ -36,7 +36,7 @@
                     <KestraFilter
                         :prefix="`blueprintsBrowser${blueprintType}`"
                         :placeholder="$t('search')"
-                        legacy-query
+                        legacyQuery
                     />
                 </template>
                 <template #table>
@@ -71,7 +71,7 @@
                                                 </el-tag>
                                             </div>
                                             <div class="tasks-container">
-                                                <task-icon
+                                                <TaskIcon
                                                     :icons="pluginsStore.icons"
                                                     :cls="task"
                                                     :key="task"
@@ -89,7 +89,7 @@
                                     </div>
                                 </div>
                                 <div v-if="!embed" class="tasks-container">
-                                    <task-icon
+                                    <TaskIcon
                                         :icons="pluginsStore.icons"
                                         :cls="task"
                                         :key="task"
@@ -99,7 +99,7 @@
                             </div>
                             <div class="side buttons ms-auto">
                                 <slot name="buttons" :blueprint="blueprint" />
-                                <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :auto-close="2000" effect="light">
+                                <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
                                     <el-button
                                         type="primary"
                                         size="default"
@@ -115,7 +115,7 @@
                         </component>
                     </el-card>
                 </template>
-            </data-table>
+            </DataTable>
             <slot name="bottom-bar" />
         </slot>
     </div>

@@ -1,19 +1,19 @@
 <template>
     <template v-if="flow">
-        <el-alert v-if="flow.disabled" type="warning" show-icon :closable="false">
+        <el-alert v-if="flow.disabled" type="warning" showIcon :closable="false">
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
         </el-alert>
 
-        <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="false">
-            <inputs-form :initial-inputs="flow.inputs" :selected-trigger="selectedTrigger" :flow="flow" v-model="inputs" :execute-clicked="executeClicked" @confirm="onSubmit($refs.form)" />
+        <el-form labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
+            <InputsForm :initialInputs="flow.inputs" :selectedTrigger="selectedTrigger" :flow="flow" v-model="inputs" :executeClicked="executeClicked" @confirm="onSubmit($refs.form)" />
 
             <el-collapse v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
                     <el-form-item
                         :label="$t('execution labels')"
                     >
-                        <label-input
+                        <LabelInput
                             :key="executionLabels"
                             v-model:labels="executionLabels"
                         />
@@ -28,7 +28,7 @@
                     </el-form-item>
                 </el-collapse-item>
                 <el-collapse-item :title="$t('curl.command')" name="curl">
-                    <curl :flow="flow" :execution-labels="executionLabels" :inputs="inputs" />
+                    <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
                 </el-collapse-item>
                 <el-collapse-item v-if="hasWebhookTriggers" :title="$t('webhook.curl_command')" name="webhook-curl">
                     <WebhookCurl :flow="flow" />
@@ -51,7 +51,7 @@
                             :disabled="!flowCanBeExecuted"
                             :class="{'flow-run-trigger-button': true, 'onboarding-glow': coreStore.guidedProperties.tourStarted}"
                             type="primary"
-                            native-type="submit"
+                            nativeType="submit"
                             @click.prevent="onSubmit($refs.form); executeClicked = true;"
                         >
                             {{ $t(buttonText) }}

@@ -37,7 +37,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Plugin(
     examples = {
         @Example(
-            title = "Send a slack notification if there is no execution for a flow for the last 24 hours.",
+            title = "Send a slack notification if there is no execution for a flow in the last 24 hours.",
             full = true,
             code = """
                 id: executions_count
@@ -78,32 +78,32 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 )
 public class Count extends Task implements RunnableTask<Count.Output> {
     @Schema(
-        title = "A list of flows to be filtered.",
+        title = "A list of flows to be filtered",
         description = "If not provided, namespaces must be set."
     )
     @PluginProperty
     protected List<Flow> flows;
 
     @Schema(
-        title = "A list of states to be filtered."
+        title = "A list of states to be filtered"
     )
     protected Property<List<State.Type>> states;
 
     @NotNull
     @Schema(
-        title = "The start date."
+        title = "The start date"
     )
     protected Property<String> startDate;
 
     @Schema(
-        title = "The end date."
+        title = "The end date"
     )
     protected Property<String> endDate;
 
     @NotNull
     @Schema(
-        title = "The expression to look at against each flow.",
-        description = "The expression is such that expression must return `true` in order to keep the current line.\n" +
+        title = "The expression to check against each flow",
+        description = "The expression is such that the expression must return `true` in order to keep the current line.\n" +
             "Some examples: \n" +
             "- ```yaml {{ eq count 0 }} ```: no execution found\n" +
             "- ```yaml {{ gte count 5 }} ```: more than 5 executions\n"
@@ -121,7 +121,7 @@ public class Count extends Task implements RunnableTask<Count.Output> {
             .getBean(ExecutionRepositoryInterface.class);
 
         if (flows == null && namespaces == null) {
-            throw new IllegalArgumentException("You must provide a list of flows or namespaces");
+            throw new IllegalArgumentException("You must provide a list of flows or namespaces.");
         }
 
         var flowInfo = runContext.flowInfo();

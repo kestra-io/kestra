@@ -3,9 +3,9 @@
         v-if="isReplay || enabled"
         :placement="tooltipPosition"
         :persistent="false"
-        :hide-after="0"
+        :hideAfter="0"
         :content="tooltip"
-        raw-content
+        rawContent
         transition=""
         effect="light"
     >
@@ -33,7 +33,7 @@
             </component>
         </span>
     </el-tooltip>
-    <el-dialog v-if="enabled && isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="enabled && isOpen" v-model="isOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <h5>{{ t("confirmation") }}</h5>
         </template>
@@ -72,13 +72,13 @@
         </el-form>
     </el-dialog>
 
-    <el-dialog v-if="isReplayWithInputsOpen" v-model="isReplayWithInputsOpen" destroy-on-close :append-to-body="true" width="60%">
+    <el-dialog v-if="isReplayWithInputsOpen" v-model="isReplayWithInputsOpen" destroyOnClose :appendToBody="true" width="60%">
         <template #header>
             <span v-html="t('replay the execution', {executionId: execution.id, flowId: execution.flowId})" />
         </template>
         <ReplayWithInputs
             :execution
-            :task-run="taskRun"
+            :taskRun="taskRun"
             :revision="revisionsSelected"
             @execution-trigger="closeReplayWithInputsModal"
         />

@@ -18,16 +18,16 @@
                 {{ $t("absolute") }}
             </el-radio-button>
         </el-radio-group>
-        <date-range
+        <DateRange
             v-if="selectedFilterType === filterType.ABSOLUTE"
-            :start-date="startDate"
-            :end-date="endDate"
+            :startDate="startDate"
+            :endDate="endDate"
             @update:model-value="onAbsFilterChange"
             class="w-auto"
         />
-        <time-select
+        <TimeSelect
             v-if="selectedFilterType === filterType.RELATIVE"
-            :time-range="timeRange"
+            :timeRange="timeRange"
             @update:model-value="onRelFilterChange"
         />
     </div>
@@ -50,16 +50,16 @@
                 {{ $t("absolute") }}
             </el-radio-button>
         </el-radio-group>
-        <date-range
+        <DateRange
             v-if="selectedFilterType === filterType.ABSOLUTE"
-            :start-date="startDate"
-            :end-date="endDate"
+            :startDate="startDate"
+            :endDate="endDate"
             @update:model-value="onAbsFilterChange"
             class="w-auto"
         />
-        <time-select
+        <TimeSelect
             v-if="selectedFilterType === filterType.RELATIVE"
-            :time-range="timeRange"
+            :timeRange="timeRange"
             @update:model-value="onRelFilterChange"
         />
     </template>

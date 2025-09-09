@@ -401,7 +401,7 @@ public class JdbcExecutor implements ExecutorInterface {
                             .toList()
                     );
                 } catch (Exception e) {
-                    log.error("Unable to save flow topology", e);
+                    log.error("Unable to save flow topology for flow " + flow.uid(), e);
                 }
 
             }

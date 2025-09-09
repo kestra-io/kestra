@@ -129,8 +129,8 @@
                     <component
                         :key="panel.activeTab.value"
                         :is="panel.activeTab.component"
-                        :panel-index="panelIndex"
-                        :tab-index="panel.tabs.findIndex(t => t.value === panel.activeTab.value)"
+                        :panelIndex="panelIndex"
+                        :tabIndex="panel.tabs.findIndex(t => t.value === panel.activeTab.value)"
                     />
                 </KeepAlive>
                 <div
@@ -168,7 +168,7 @@
     import {nextTick, ref, watch, provide, computed} from "vue";
     import {useI18n} from "vue-i18n";
 
-    import {VISIBLE_PANELS_INJECTION_KEY} from "./code/injectionKeys";
+    import {VISIBLE_PANELS_INJECTION_KEY} from "./no-code/injectionKeys";
     import {CODE_PREFIX} from "./flows/useCodePanels";
     import {useKeyShortcuts} from "../utils/useKeyShortcuts";
 
@@ -463,7 +463,7 @@
         }
     }
 
-    const defaultSize = computed(() => panels.value.reduce((acc, panel) => acc + panel.size, 0));
+    const defaultSize = computed(() => panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length);
 
     function newPanelDrop(_e: DragEvent, direction: "left" | "right") {
         if (!movedTabInfo.value) return;

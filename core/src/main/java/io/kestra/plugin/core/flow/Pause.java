@@ -167,7 +167,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
     }
 
     @Schema(
-        title = "Duration of the pause. If not set, the task will wait forever to be manually resumed except if a timeout is set, in this case, the timeout will be honored.",
+        title = "Duration of the pause - if not set, the task will wait forever to be manually resumed except if a timeout is set, in this case, the timeout will be honored.",
         description = "The duration is a string in [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no pauseDuration and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
         implementation = Duration.class
     )
@@ -189,14 +189,14 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
     @Valid
     @Schema(
-        title = "A runnable task that will be executed when it's paused."
+        title = "A runnable task that will be executed when it's paused"
     )
     @PluginProperty
     private Task onPause;
 
     @Valid
     @Schema(
-        title = "Inputs to be passed to the execution when it's resumed.",
+        title = "Inputs to be passed to the execution when it's resumed",
         description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution, which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task.")
     @PluginProperty
     private List<Input<?>> onResume;
@@ -322,7 +322,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
     public static class Output implements io.kestra.core.models.tasks.Output {
         private Map<String, Object> onResume;
 
-        @Schema(title = "Resumed information: when and by who the execution was resumed.")
+        @Schema(title = "Resumed information: when and by who the execution was resumed")
         private Resumed resumed;
     }
 

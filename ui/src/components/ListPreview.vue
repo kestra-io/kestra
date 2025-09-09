@@ -5,7 +5,7 @@
                 <template v-if="isComplex(scope.row[column])">
                     <el-input
                         type="textarea"
-                        :model-value="truncate(JSON.stringify(scope.row[column], null, 2))"
+                        :modelValue="truncate(JSON.stringify(scope.row[column], null, 2))"
                         readonly
                         :rows="3"
                         autosize

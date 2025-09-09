@@ -1,7 +1,7 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" />
+    <TopNavBar :title="routeInfo.title" />
     <section class="container" v-if="ready">
-        <data-table @page-changed="onPageChanged" ref="dataTable" :total="taskrunsStore.total">
+        <DataTable @page-changed="onPageChanged" ref="dataTable" :total="taskrunsStore.total">
             <template #navbar>
                 <KestraFilter
                     prefix="taskruns"
@@ -10,7 +10,7 @@
                         refresh: {shown: true, callback: () => load()},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
                     }"
-                    legacy-query
+                    legacyQuery
                 />
             </template>
 
@@ -18,52 +18,52 @@
                 <el-table
                     :data="taskrunsStore.taskruns"
                     ref="table"
-                    :default-sort="{prop: 'state.startDate', order: 'descending'}"
-                    table-layout="auto"
+                    :defaultSort="{prop: 'state.startDate', order: 'descending'}"
+                    tableLayout="auto"
                     fixed
                     @row-dblclick="onRowDoubleClick"
                     @sort-change="onSort"
                 >
                     <el-table-column prop="executionId" :label="$t('execution')">
                         <template #default="scope">
-                            <id :value="scope.row.executionId" :shrink="true" @click="onRowDoubleClick(scope.row)" />
+                            <Id :value="scope.row.executionId" :shrink="true" @click="onRowDoubleClick(scope.row)" />
                         </template>
                     </el-table-column>
 
                     <el-table-column prop="taskId" :label="$t('task')">
                         <template #default="scope">
-                            <id :value="scope.row.taskId" :shrink="true" />
+                            <Id :value="scope.row.taskId" :shrink="true" />
                         </template>
                     </el-table-column>
 
-                    <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
+                    <el-table-column prop="id" sortable="custom" :sortOrders="['ascending', 'descending']" :label="$t('id')">
                         <template #default="scope">
-                            <id :value="scope.row.id" :shrink="true" />
+                            <Id :value="scope.row.id" :shrink="true" />
                         </template>
                     </el-table-column>
 
-                    <el-table-column prop="taskRunList.state.startDate" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('start date')">
+                    <el-table-column prop="taskRunList.state.startDate" sortable="custom" :sortOrders="['ascending', 'descending']" :label="$t('start date')">
                         <template #default="scope">
-                            <date-ago :inverted="true" :date="scope.row.state.startDate" />
+                            <DateAgo :inverted="true" :date="scope.row.state.startDate" />
                         </template>
                     </el-table-column>
 
-                    <el-table-column prop="state.endDate" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('end date')">
+                    <el-table-column prop="state.endDate" sortable="custom" :sortOrders="['ascending', 'descending']" :label="$t('end date')">
                         <template #default="scope">
-                            <date-ago :inverted="true" :date="scope.row.state.endDate" />
+                            <DateAgo :inverted="true" :date="scope.row.state.endDate" />
                         </template>
                     </el-table-column>
 
-                    <el-table-column prop="state.duration" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('duration')">
+                    <el-table-column prop="state.duration" sortable="custom" :sortOrders="['ascending', 'descending']" :label="$t('duration')">
                         <template #default="scope">
                             <span v-if="isRunning(scope.row)">{{ $filters.humanizeDuration(durationFrom(scope.row)) }}</span>
                             <span v-else>{{ $filters.humanizeDuration(scope.row.state.duration) }}</span>
                         </template>
                     </el-table-column>
 
-                    <el-table-column v-if="$route.name !== 'flows/update'" prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" />
+                    <el-table-column v-if="$route.name !== 'flows/update'" prop="namespace" sortable="custom" :sortOrders="['ascending', 'descending']" :label="$t('namespace')" />
 
-                    <el-table-column v-if="$route.name !== 'flows/update'" prop="flowId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('flow')">
+                    <el-table-column v-if="$route.name !== 'flows/update'" prop="flowId" sortable="custom" :sortOrders="['ascending', 'descending']" :label="$t('flow')">
                         <template #default="scope">
                             <router-link :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
                                 {{ scope.row.flowId }}
@@ -77,24 +77,24 @@
                         </template>
                     </el-table-column>
 
-                    <el-table-column prop="state.current" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('state')">
+                    <el-table-column prop="state.current" sortable="custom" :sortOrders="['ascending', 'descending']" :label="$t('state')">
                         <template #default="scope">
-                            <status :status="scope.row.state.current" size="small" />
+                            <Status :status="scope.row.state.current" size="small" />
                         </template>
                     </el-table-column>
 
-                    <el-table-column column-key="action" class-name="row-action">
+                    <el-table-column columnKey="action" className="row-action">
                         <template #default="scope">
                             <router-link :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}">
-                                <kicon :tooltip="$t('details')" placement="left">
+                                <Kicon :tooltip="$t('details')" placement="left">
                                     <TextSearch />
-                                </kicon>
+                                </Kicon>
                             </router-link>
                         </template>
                     </el-table-column>
                 </el-table>
             </template>
-        </data-table>
+        </DataTable>
     </section>
 </template>
 <script setup>

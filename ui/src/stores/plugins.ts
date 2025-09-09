@@ -3,7 +3,7 @@ import {trackPluginDocumentationView} from "../utils/tabTracking";;
 import {apiUrlWithoutTenants} from "override/utils/route";
 import semver from "semver";
 import {useApiStore} from "./api";
-import {Schemas} from "../components/code/utils/types";
+import {Schemas} from "../components/no-code/utils/types";
 import InitialFlowSchema from "./flow-schema.json"
 import {toRaw} from "vue";
 import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
@@ -189,7 +189,7 @@ export const usePluginsStore = defineStore("plugins", {
                 `${apiUrlWithoutTenants()}/plugins/${options.cls}`;
 
             const url = options.hash ? `${baseUrl}?hash=${options.hash}` : baseUrl;
-            
+
             const response = await this.$http.get<PluginComponent>(url);
 
             if (options.commit !== false) {

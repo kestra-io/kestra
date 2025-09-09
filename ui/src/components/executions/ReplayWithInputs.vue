@@ -2,10 +2,10 @@
     <FlowRun
         flow
         execution
-        button-text="replay"
-        :button-icon="PlayBoxMultiple"
-        :replay-submit="handleReplaySubmit"
-        button-test-id="replay-dialog-button"
+        buttonText="replay"
+        :buttonIcon="PlayBoxMultiple"
+        :replaySubmit="handleReplaySubmit"
+        buttonTestId="replay-dialog-button"
         @execution-trigger="$emit('executionTrigger')"
     />
 </template>

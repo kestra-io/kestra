@@ -68,12 +68,12 @@ export default async (app, routes, _stores, translations, additionalTranslations
     );
 
     // router
-    let router = createRouter({
+    const router = createRouter({
         history: createWebHistory(window.KESTRA_UI_PATH),
         routes
     });
 
-    let piniaStore = createPinia();
+    const piniaStore = createPinia();
     app.use(piniaStore);
 
     /**

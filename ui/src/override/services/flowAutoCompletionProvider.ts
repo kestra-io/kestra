@@ -1,4 +1,5 @@
 import {ComputedRef} from "vue";
+import type {Store} from "vuex";
 import type {JSONSchema} from "@kestra-io/ui-libs";
 import {YamlElement} from "@kestra-io/ui-libs";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";

@@ -159,7 +159,7 @@ export const createAxios = (
                     const currentPath = window.location.pathname
                     const isLoginPath = currentPath.includes("/login")
 
-                    router.push({
+                    router?.push({
                         name: "login",
                         query: (isLoginPath ? {} : {from: currentPath})
                     })
@@ -221,7 +221,7 @@ export const createAxios = (
                         const currentPath = window.location.pathname
                         const isLoginPath = currentPath.includes("/login")
 
-                        router.push({
+                        router?.push({
                             name: "login",
                             query: (isLoginPath ? {} : {from: currentPath})
                         })

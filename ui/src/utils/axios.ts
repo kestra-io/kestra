@@ -297,8 +297,8 @@ let axiosInstance: AxiosInstance | null = null;
 
 export const useAxios = () => {
     const router = useRouter();
-    const isOSS = getCurrentInstance()?.appContext.config.globalProperties.$isOSS ?? false;
     if (!axiosInstance) {
+        const isOSS = getCurrentInstance()?.appContext.config.globalProperties.$isOSS ?? false;
         axiosInstance = createAxios(router, isOSS);
     }
     return axiosInstance;

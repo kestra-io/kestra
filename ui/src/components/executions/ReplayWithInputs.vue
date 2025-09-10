@@ -45,7 +45,7 @@
 
     const handleReplaySubmit = async ({inputs}: any) => {
 
-        const formData = inputsToFormData({$http: null, $store: null}, flow.value.inputs, inputs);
+        const formData = inputsToFormData({}, flow.value.inputs, inputs);
         let response = await executionsStore.replayExecutionWithInputs({
             executionId: props.execution.id,
             taskRunId: props.taskRun?.id,

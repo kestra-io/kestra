@@ -174,7 +174,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
 
         try {
             templateQueue.emit(template);
-            eventPublisher.publishEvent(new CrudEvent<>(template, CrudEventType.CREATE));
+            eventPublisher.publishEvent(CrudEvent.create(template));
 
             return template;
         } catch (QueueException e) {
@@ -217,7 +217,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
 
         try {
             templateQueue.emit(deleted);
-            eventPublisher.publishEvent(new CrudEvent<>(deleted, CrudEventType.DELETE));
+            eventPublisher.publishEvent(CrudEvent.delete(deleted));
         } catch (QueueException e) {
             throw new RuntimeException(e);
         }

@@ -172,22 +172,19 @@ public final class JacksonMapper {
 
         return Pair.of(patchPrevToNew, patchNewToPrev);
     }
-
-    public static String applyPatches(Object object, List<JsonNode> patches) throws JsonProcessingException {
+    
+    public static JsonNode applyPatchesOnJsonNode(JsonNode jsonObject, List<JsonNode> patches) {
         for (JsonNode patch : patches) {
             try {
                 // Required for ES
                 if (patch.findValue("value") == null) {
-                    ((ObjectNode) patch.get(0)).set("value", (JsonNode) null);
+                    ((ObjectNode) patch.get(0)).set("value", null);
                 }
-                JsonNode current = MAPPER.valueToTree(object);
-                object = JsonPatch.fromJson(patch).apply(current);
+                jsonObject = JsonPatch.fromJson(patch).apply(jsonObject);
             } catch (IOException | JsonPatchException e) {
                 throw new RuntimeException(e);
             }
         }
-        return MAPPER.writeValueAsString(object);
+        return jsonObject;
     }
-
-
 }

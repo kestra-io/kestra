@@ -238,7 +238,8 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([]);
                 }
-                return Array.from(new Set<string>((await this.namespacesStore.usableSecrets(namespace)).map(secret => QUOTE + secret + QUOTE)));
+                const secrets: string[] = await (this.namespacesStore as any).usableSecrets(namespace)
+                return Array.from(new Set<string>(secrets.map(secret => QUOTE + secret + QUOTE)));
             }
             case "kv": {
                 const namespace = this.extractArgValue(namespaceArg);

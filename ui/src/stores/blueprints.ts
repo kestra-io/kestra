@@ -27,27 +27,25 @@ export const useBlueprintsStore = defineStore("blueprints", {
         source: undefined,
         graph: undefined
     }),
-    getters: {
-    },
     actions: {
         async getBlueprint(options: BlueprintOptions) {
             const kind = options.kind && options.type !== "custom" ? `/${options.kind}` : "";
             const response = await this.$http.get(
-                `${apiUrl(this.vuexStore)}/blueprints/${options.type}${kind}/${options.id}`
+                `${apiUrl()}/blueprints/${options.type}${kind}/${options.id}`
             );
             this.blueprint = response.data;
-            
+
             if (response.data?.id) {
                 trackBlueprintSelection(response.data.id);
             }
-            
+
             return response.data;
         },
 
         async getBlueprintSource(options: BlueprintOptions) {
             const kind = options.kind && options.type !== "custom" ? `/${options.kind}` : "";
             const response = await this.$http.get(
-                `${apiUrl(this.vuexStore)}/blueprints/${options.type}${kind}/${options.id}/source`
+                `${apiUrl()}/blueprints/${options.type}${kind}/${options.id}/source`
             );
             this.source = response.data;
             return response.data;
@@ -56,7 +54,7 @@ export const useBlueprintsStore = defineStore("blueprints", {
         async getBlueprintGraph(options: BlueprintOptions) {
             const kind = options.kind && options.type !== "custom" ? `/${options.kind}` : "";
             const response = await this.$http.get(
-                `${apiUrl(this.vuexStore)}/blueprints/${options.type}${kind}/${options.id}/graph`
+                `${apiUrl()}/blueprints/${options.type}${kind}/${options.id}/graph`
             );
             this.graph = response.data;
             return response.data;
@@ -65,7 +63,7 @@ export const useBlueprintsStore = defineStore("blueprints", {
         async getBlueprintsForQuery(options: BlueprintOptions) {
             const kind = options.kind && options.type !== "custom" ? `/${options.kind}` : "";
             const response = await this.$http.get(
-                `${apiUrl(this.vuexStore)}/blueprints/${options.type}${kind}`,
+                `${apiUrl()}/blueprints/${options.type}${kind}`,
                 {params: options.params}
             );
             this.blueprints = response.data;
@@ -75,7 +73,7 @@ export const useBlueprintsStore = defineStore("blueprints", {
         async getBlueprintTagsForQuery(options: BlueprintOptions) {
             const kind = options.kind && options.type !== "custom" ? `/${options.kind}` : "";
             const response = await this.$http.get(
-                `${apiUrl(this.vuexStore)}/blueprints/${options.type}${kind}/tags`,
+                `${apiUrl()}/blueprints/${options.type}${kind}/tags`,
                 {params: options.params}
             );
             return response.data;

@@ -48,10 +48,10 @@ class StateTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @LoadFlows({"flows/valids/state.yaml"})
+    @LoadFlows(value = {"flows/valids/state.yaml"}, tenantId = "tenant1")
     void each() throws TimeoutException, InternalException, QueueException {
 
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", "each"));
+        Execution execution = runnerUtils.runOne("tenant1", "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", "each"));
         assertThat(execution.getTaskRunList()).hasSize(17);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(((Map<String, String>) execution.findTaskRunByTaskIdAndValue("regetEach1", List.of("b")).getOutputs().get("data")).get("value")).isEqualTo("null-b");

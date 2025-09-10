@@ -52,9 +52,9 @@ public class WorkingDirectoryTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/working-directory.yaml"})
+    @LoadFlows(value = {"flows/valids/working-directory.yaml"}, tenantId = "tenant1")
     void failed() throws TimeoutException, QueueException {
-        suite.failed(runnerUtils);
+        suite.failed("tenant1", runnerUtils);
     }
 
     @Test
@@ -100,9 +100,9 @@ public class WorkingDirectoryTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/working-directory-outputs.yml"})
+    @LoadFlows(value = {"flows/valids/working-directory-outputs.yml"}, tenantId = "output")
     void outputFiles() throws Exception {
-        suite.outputFiles(runnerUtils);
+        suite.outputFiles("output", runnerUtils);
     }
 
     @Test
@@ -132,8 +132,8 @@ public class WorkingDirectoryTest {
             assertThat((String) execution.getTaskRunList().get(3).getOutputs().get("value")).startsWith("kestra://");
         }
 
-        public void failed(RunnerUtils runnerUtils) throws TimeoutException, QueueException {
-            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory", null,
+        public void failed(String tenantId, RunnerUtils runnerUtils) throws TimeoutException, QueueException {
+            Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests", "working-directory", null,
                 (f, e) -> ImmutableMap.of("failed", "true"), Duration.ofSeconds(60)
             );
 
@@ -151,9 +151,9 @@ public class WorkingDirectoryTest {
         }
 
         @SuppressWarnings("unchecked")
-        public void outputFiles(RunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException {
+        public void outputFiles(String tenantId, RunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException {
 
-            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-outputs");
+            Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests", "working-directory-outputs");
 
             assertThat(execution.getTaskRunList()).hasSize(2);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

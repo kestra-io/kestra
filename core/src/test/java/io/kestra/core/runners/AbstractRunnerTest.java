@@ -300,9 +300,9 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/working-directory.yaml"})
+    @LoadFlows(value = {"flows/valids/working-directory.yaml"}, tenantId = "tenant1")
     public void workerFailed() throws Exception {
-        workingDirectoryTest.failed(runnerUtils);
+        workingDirectoryTest.failed("tenant1", runnerUtils);
     }
 
     @Test

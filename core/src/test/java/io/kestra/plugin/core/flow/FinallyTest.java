@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FinallyTest {
 
     public static final String NAMESPACE = "io.kestra.tests";
+    private static final String TENANT_ID = "tenant1";
     @Inject
     protected RunnerUtils runnerUtils;
 
@@ -46,10 +47,10 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-sequential.yaml"})
+    @LoadFlows(value = {"flows/valids/finally-sequential.yaml"}, tenantId = TENANT_ID)
     void sequentialWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            TENANT_ID,
             NAMESPACE, "finally-sequential", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", true)),
             Duration.ofSeconds(60)
@@ -92,10 +93,10 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-sequential-error.yaml"})
+    @LoadFlows(value = {"flows/valids/finally-sequential-error.yaml"}, tenantId = TENANT_ID)
     void sequentialErrorBlockWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            TENANT_ID,
             NAMESPACE, "finally-sequential-error", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", true)),
             Duration.ofSeconds(60)
@@ -128,10 +129,10 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-allowfailure.yaml"})
+    @LoadFlows(value = {"flows/valids/finally-allowfailure.yaml"}, tenantId = TENANT_ID)
     void allowFailureWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            TENANT_ID,
             NAMESPACE, "finally-allowfailure", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", true)),
             Duration.ofSeconds(60)
@@ -164,10 +165,10 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-parallel.yaml"})
+    @LoadFlows(value = {"flows/valids/finally-parallel.yaml"}, tenantId = TENANT_ID)
     void parallelWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            TENANT_ID,
             NAMESPACE, "finally-parallel", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", true)),
             Duration.ofSeconds(60)
@@ -183,10 +184,10 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-foreach.yaml"})
+    @LoadFlows(value = {"flows/valids/finally-foreach.yaml"}, tenantId = TENANT_ID)
     void forEachWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            TENANT_ID,
             NAMESPACE, "finally-foreach", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", false)),
             Duration.ofSeconds(60)
@@ -236,10 +237,10 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-eachparallel.yaml"})
+    @LoadFlows(value = {"flows/valids/finally-eachparallel.yaml"}, tenantId = TENANT_ID)
     void eachParallelWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            TENANT_ID,
             NAMESPACE, "finally-eachparallel", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", true)),
             Duration.ofSeconds(60)
@@ -255,10 +256,10 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-dag.yaml"})
+    @LoadFlows(value = {"flows/valids/finally-dag.yaml"}, tenantId = TENANT_ID)
     void dagWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            TENANT_ID,
             NAMESPACE, "finally-dag", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", false)),
             Duration.ofSeconds(60)
@@ -308,10 +309,10 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-flow.yaml"})
+    @LoadFlows(value = {"flows/valids/finally-flow.yaml"}, tenantId = TENANT_ID)
     void flowWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            TENANT_ID,
             NAMESPACE, "finally-flow", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", true)),
             Duration.ofSeconds(60)
@@ -342,10 +343,10 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-flow-error.yaml"})
+    @LoadFlows(value = {"flows/valids/finally-flow-error.yaml"}, tenantId = TENANT_ID)
     void flowErrorBlockWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            TENANT_ID,
             NAMESPACE, "finally-flow-error", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", true)),
             Duration.ofSeconds(60)

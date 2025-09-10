@@ -57,6 +57,93 @@ public class RequestUtils {
         }
     }
 
+    /**
+     * if filters is defined, use that, otherwise map all legacy params to the new filter API
+     * if you are manipulating an entity queryable by date, use {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, ZonedDateTime, ZonedDateTime, List, List, Duration, ExecutionRepositoryInterface.ChildFilter, List, String, String)} instead
+     *
+     * @return the new filter list
+     */
+    public static List<QueryFilter> getFiltersOrDefaultToLegacyMapping(
+        List<QueryFilter> filters,
+        String query,
+        String namespace,
+        String flowId,
+        String triggerId,
+        Level minLevel,
+        List<FlowScope> scope,
+        List<String> labels,
+        ExecutionRepositoryInterface.ChildFilter childFilter,
+        List<State.Type> state,
+        String workerId,
+        String triggerExecutionId
+    ) {
+        if (filters != null && !filters.isEmpty()) {
+            return filters;
+        }
+        return mapLegacyParamsToFilters(
+            query,
+            namespace,
+            flowId,
+            triggerId,
+            minLevel,
+            null,
+            null,
+            scope,
+            labels,
+            null,
+            childFilter,
+            state,
+            workerId,
+            triggerExecutionId
+        );
+    }
+
+    /**
+     * same as {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, List, List, ExecutionRepositoryInterface.ChildFilter, List, String, String)}
+     * , it additionally adds an Entity queryable by date, do date validation, and potentially add startDate filter
+     *
+     * @return the new filter list with dates handled, and a potential default startDate filter
+     */
+    public static List<QueryFilter> getFiltersOrDefaultToLegacyMapping(
+        List<QueryFilter> filters,
+        String query,
+        String namespace,
+        String flowId,
+        String triggerId,
+        Level minLevel,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        List<FlowScope> scope,
+        List<String> labels,
+        Duration timeRange,
+        ExecutionRepositoryInterface.ChildFilter childFilter,
+        List<State.Type> state,
+        String workerId,
+        String triggerExecutionId
+    ) {
+        if (filters != null && !filters.isEmpty()) {
+            return QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters);
+        }
+        return QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(
+            mapLegacyParamsToFilters(
+                query,
+                namespace,
+                flowId,
+                triggerId,
+                minLevel,
+                startDate,
+                endDate,
+                scope,
+                labels,
+                timeRange,
+                childFilter,
+                state,
+                workerId,
+                triggerExecutionId
+            )
+        );
+    }
+
     public static List<QueryFilter> mapLegacyParamsToFilters(
         String query,
         String namespace,

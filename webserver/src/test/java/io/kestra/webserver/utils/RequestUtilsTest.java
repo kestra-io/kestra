@@ -15,14 +15,34 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RequestUtilsTest {
+    @ParameterizedTest
+    @CsvSource({
+        "timestamp:2023-12-18T14:32:14Z,timestamp,2023-12-18T14:32:14Z",
+        "url:https://your@company.com,url,https://your@company.com",
+        "city:Düsseldorf,city,Düsseldorf",
+        "key:foo bar,key,foo bar",
+    })
+    void toMap(String input, String key, String value) {
+        final Map<String, String> resultMap = RequestUtils.toMap(List.of(input));
+
+        assertThat(resultMap).containsEntry(key, value);
+    }
+
     @Test
     void toMapNullHandling() {
-        assertThat(RequestUtils.toMap(null), is(Map.of()));
+        assertThat(RequestUtils.toMap(null)).isEqualTo(Map.of());
+    }
+
+    @Test
+    void toMapWithMissingSeparator() {
+        assertThrows(
+            HttpStatusException.class,
+            () -> RequestUtils.toMap(List.of("foo"))
+        );
     }
 
     @Test
@@ -55,13 +75,19 @@ class RequestUtilsTest {
     }
 
     @Test
+    void toMapTrimWorks() {
+        final Map<String, String> resultMap = RequestUtils.toMap(List.of(" key : value "));
+        assertThat(resultMap).containsEntry("key", "value");
+    }
+
+    @Test
     void testMapLegacyParamsToFilters() {
         ZonedDateTime startDate = ZonedDateTime.parse("2024-01-01T10:00:00Z");
         ZonedDateTime endDate = ZonedDateTime.parse("2024-01-02T10:00:00Z");
-        Duration timeRange = Duration.ofHours(24);
         List<State.Type> state = List.of(State.Type.RUNNING, State.Type.FAILED);
 
-        List<QueryFilter> filters = RequestUtils.mapLegacyParamsToFilters(
+        List<QueryFilter> filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            null,
             "test-query",
             "test-namespace",
             "test-flow",
@@ -71,7 +97,7 @@ class RequestUtilsTest {
             endDate,
             null,
             List.of("key:value"),
-            timeRange,
+            null,
             ExecutionRepositoryInterface.ChildFilter.MAIN,
             state,
             "worker-1",
@@ -84,18 +110,44 @@ class RequestUtilsTest {
         assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.TRIGGER_ID && f.value().equals("test-trigger")));
         assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.START_DATE && f.value().equals(startDate.toString())));
         assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.END_DATE && f.value().equals(endDate.toString())));
-        assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.TIME_RANGE && f.value().equals(timeRange)));
         assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.STATE && f.value().equals(state)));
         assertTrue(filters.stream().anyMatch(f -> f.field() == Field.TRIGGER_EXECUTION_ID && f.value().equals("test_trigger_id")));
     }
 
     @Test
-    void testMapLegacyParamsToFiltersHandlesNulls() {
-        List<QueryFilter> filters = RequestUtils.mapLegacyParamsToFilters(
-            null, null, null, null, null, null, null, null, null, null, null, null, null, null
+    void testMapLegacyParamsToFilters_timerangeShouldBeTransformedToStartdateFilter() {
+        Duration timeRange = Duration.ofHours(24);
+
+        List<QueryFilter> filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            timeRange,
+            null,
+            null,
+            null,
+            null
         );
 
-        assertTrue(filters.isEmpty(), "Filters should be empty when all inputs are null.");
+        assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.START_DATE && f.value() != null));
+        assertTrue(filters.stream().noneMatch(f -> f.field() == QueryFilter.Field.END_DATE));
+        assertTrue(filters.stream().noneMatch(f -> f.field() == QueryFilter.Field.TIME_RANGE));
+    }
+
+    @Test
+    void testMapLegacyParamsToFiltersHandlesNulls() {
+        List<QueryFilter> filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            null, null, null, null, null, null, null, null, null, null, null, null
+        );
+
+        assertTrue(filters.size() == 0, "Filters should be empty.");
     }
 
     @Test

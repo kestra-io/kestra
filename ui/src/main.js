@@ -38,10 +38,10 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
             const configs = await miscStore.loadConfigs();
 
             if(!configs.isBasicAuthInitialized) {
-                // Since, Configs takes preference
+                // Since, Configs takes preference 
                 // we need to check if any regex validation error in BE.
                 const validationErrors = await miscStore.loadBasicAuthValidationErrors()
-
+                
                 if (validationErrors?.length > 0) {
                     // Creds exist in config but failed validation
                     // Route to login to show errors
@@ -79,11 +79,12 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
     configureAxios((instance) => {
         app.use(VueAxios, instance);
         app.provide("axios", instance);
-        piniaStore.use(({store: piniaStoreLocal}) => {
-            piniaStoreLocal.$http = instance;
-        });
+        store.$http = app.$http;
+        store.axios = app.axios;
+        piniaStore.$http = app.$http;
     }, store, router, true);
 
+    piniaStore.vuexStore = store;
     app.config.globalProperties.$isOss = true; // Set to true for OSS version
 
     // mount

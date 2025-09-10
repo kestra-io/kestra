@@ -15,14 +15,11 @@
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";
     import {useRouter, useRoute} from "vue-router";
-    // @ts-expect-error no types yet
     import {inputsToFormData} from "../../utils/submitTask";
     import {useExecutionsStore} from "../../stores/executions";
-    import * as ExecutionUtils from "../../utils/executionUtils";
-    // @ts-expect-error no types yet
+    import ExecutionUtils from "../../utils/executionUtils";
     import FlowRun from "../../components/flows/FlowRun.vue";
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
-    import {useAxios} from "../../utils/axios";
 
     const {t} = useI18n();
     const toast = useToast();
@@ -41,10 +38,8 @@
 
     const flow = computed(() => executionsStore.flow);
 
-    const axios = useAxios()
-
     const handleReplaySubmit = async ({inputs}: any) => {
-
+        
         const formData = inputsToFormData({$http: null, $store: null}, flow.value.inputs, inputs);
         let response = await executionsStore.replayExecutionWithInputs({
             executionId: props.execution.id,
@@ -54,7 +49,7 @@
         });
 
         if (response.data.id === props.execution.id) {
-            response = await ExecutionUtils.waitForState(axios, response.data) as any;
+            response = await ExecutionUtils.waitForState(null, null, response.data);
         }
 
         const execution = response.data;

@@ -69,7 +69,7 @@
                 return this.executionsStore.execution;
             },
             finalApiUrl() {
-                return apiUrl();
+                return apiUrl(this.$store);
             },
             canDelete() {
                 return this.execution && this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace);

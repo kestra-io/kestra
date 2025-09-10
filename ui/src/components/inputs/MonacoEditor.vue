@@ -39,6 +39,7 @@
         VNode,
         watch
     } from "vue";
+    import {useStore} from "vuex";
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
     import "monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.js";
@@ -69,6 +70,7 @@
     import {useFlowStore} from "../../stores/flow.ts";
     import EditorType = editor.EditorType;
 
+    const store = useStore();
     const currentInstance = getCurrentInstance()!;
     const {t} = useI18n();
 
@@ -99,7 +101,7 @@
     });
 
     import {useRoute} from "vue-router";
-    import {useEditorStore} from "../../stores/editor";
+    import {useEditorStore} from "../../stores/editor.ts";
     const route = useRoute();
 
     const highlightLine = () => {
@@ -511,6 +513,7 @@
 
         if (props.language !== undefined) {
             await configureLanguage(
+                store,
                 flowStore,
                 pluginsStore,
                 t,

@@ -1,5 +1,6 @@
 import {useValues} from "../../../../components/filter/composables/useValues.ts";
 import {Value} from "../../../../components/filter/utils/types.ts";
+import {Store} from "vuex";
 
 export enum Comparators {
     EQUALS = "=",
@@ -55,7 +56,7 @@ export const PICK_DATE_VALUE = "PICK_DATE";
 
 export type ValueCompletions = Value[] | typeof PICK_DATE_VALUE;
 
-export type Fetcher = (hardcodedValues: ReturnType<typeof useValues>["VALUES"]) => Promise<ValueCompletions>;
+export type Fetcher = (store: Store<Record<string, any>>, hardcodedValues: ReturnType<typeof useValues>["VALUES"]) => Promise<ValueCompletions>;
 
 export class FilterKeyCompletions {
     private readonly _comparators: Comparators[];

@@ -1,6 +1,7 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import {editor, IPosition, IRange} from "monaco-editor/esm/vs/editor/editor.api";
 import AbstractLanguageConfigurator from "../abstractLanguageConfigurator";
+import {Store} from "vuex";
 import {useI18n} from "vue-i18n";
 import {FilterLanguage} from "./filterLanguage";
 import {useValues} from "../../../../components/filter/composables/useValues";
@@ -38,7 +39,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
         return legacyFilterRegex.test(this.language);
     }
 
-    async configure(pluginsStore: ReturnType<typeof usePluginsStore>, t: ReturnType<typeof useI18n>["t"], editorInstance: editor.ICodeEditor | undefined): Promise<monaco.IDisposable[]> {
+    async configure(store: Store<Record<string, any>>, pluginsStore: ReturnType<typeof usePluginsStore>, t: ReturnType<typeof useI18n>["t"], editorInstance: editor.ICodeEditor | undefined): Promise<monaco.IDisposable[]> {
         filterLanguages = await loadFilterLanguages();
 
         this._filterLanguage = filterLanguages.find(filterLanguage => filterLanguage.domain === this._domain);
@@ -53,7 +54,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                     ?.join("|") + ")"
             ));
 
-        return super.configure(pluginsStore, t, editorInstance);
+        return super.configure(store, pluginsStore, t, editorInstance);
     }
 
     async configureLanguage(): Promise<void> {
@@ -146,7 +147,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
         }
     }
 
-    configureAutoCompletion(t: ReturnType<typeof useI18n>["t"], __: editor.ICodeEditor | undefined) {
+    configureAutoCompletion(t: ReturnType<typeof useI18n>["t"], store: Store<Record<string, any>>, __: editor.ICodeEditor | undefined) {
         const filterLanguage = this._filterLanguage;
         if (filterLanguage === undefined) {
             return [];
@@ -317,6 +318,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
 
                         if (key !== undefined) {
                             const valueCompletions = await filterLanguage.valueCompletion(
+                                store,
                                 hardcodedValues,
                                 key
                             );

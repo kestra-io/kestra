@@ -79,6 +79,27 @@ export default async (app, routes, stores, translations, additionalTranslations 
     app.use(store);
 
     let piniaStore = createPinia();
+    piniaStore.use(({store:piniaStoreLocal}) => {
+        piniaStoreLocal.vuexStore = store;
+        piniaStoreLocal.$http = {
+            get: (url, config) => {
+                return store.$http.get(url, config);
+            },
+            post: (url, data, config) => {
+                return store.$http.post(url, data, config);
+            },
+            put: (url, data, config) => {
+                return store.$http.put(url, data, config);
+            },
+            delete: (url, config) => {
+                return store.$http.delete(url, config);
+            },
+            patch: (url, data, config) => {
+                return store.$http.patch(url, data, config);
+            }
+        };
+        piniaStoreLocal.$router = router;
+    });
     app.use(piniaStore);
 
     /**

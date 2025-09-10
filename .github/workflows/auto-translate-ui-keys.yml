@@ -39,7 +39,7 @@ jobs:
             OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
         - name: Set up Node
-          uses: actions/setup-node@v4
+          uses: actions/setup-node@v5
           with:
             node-version: "20.x"
 

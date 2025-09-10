@@ -1,7 +1,7 @@
 import {Store} from "vuex";
 import {EntityIterator, FetchResult} from "./entityIterator.ts";
 import {NamespaceIterator} from "./useNamespaces.ts";
-import {Me} from ".override/stores/auth";
+import {Me} from "override/stores/auth";
 import {useNamespacesStore} from "override/stores/namespaces.ts";
 import permissions from "../models/permission";
 import actions from "../models/action";
@@ -18,13 +18,11 @@ export type SecretIterator = NamespaceSecretIterator | AllSecretIterator;
 type NamespaceSecretFetchResult = FetchResult<NamespaceSecret> & { readOnly: boolean };
 
 export class NamespaceSecretIterator extends EntityIterator<NamespaceSecret>{
-    private readonly store: Store<any>;
     readonly namespace: string;
     areNamespaceSecretsReadOnly = ref(undefined) as unknown as boolean | undefined;
 
-    constructor(store: Store<any>, namespace: string, fetchSize: number, options?: any) {
+    constructor(_store: Store<any>, namespace: string, fetchSize: number, options?: any) {
         super(fetchSize, options);
-        this.store = store;
         this.namespace = namespace;
     }
 

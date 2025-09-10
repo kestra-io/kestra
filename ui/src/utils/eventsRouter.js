@@ -17,7 +17,7 @@ export const pageFromRoute = (route) => {
     }
 }
 
-export default (app, store, router) => {
+export default (_app, router) => {
     const apiStore = useApiStore();
     router.afterEach((to, from) => {
         nextTick().then(() => {

@@ -6,7 +6,6 @@ import initApp from "./utils/init"
 import configureAxios from "./utils/axios"
 import routes from "./routes/routes";
 import en from "./translations/en.json";
-import stores from "./stores/store";
 import {setupTenantRouter} from "./composables/useTenant";
 import * as BasicAuth from "./utils/basicAuth";
 import {useMiscStore} from "override/stores/misc";
@@ -23,7 +22,7 @@ const handleAuthError = (error, to) => {
     return {name: "setup"}
 }
 
-initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
+initApp(app, routes, null, en).then(({router, piniaStore}) => {
     router.beforeEach(async (to, from, next) => {
         if (["login", "setup"].includes(to.name)) {
             return next();
@@ -82,7 +81,7 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
         piniaStore.use(({store: piniaStoreLocal}) => {
             piniaStoreLocal.$http = instance;
         });
-    }, store, router, true);
+    }, null, router, true);
 
     app.config.globalProperties.$isOss = true; // Set to true for OSS version
 

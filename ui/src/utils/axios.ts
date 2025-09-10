@@ -72,10 +72,10 @@ interface QueueItem {
 }
 
 export const createAxios = (
-    router: Router,
+    router: Router | undefined,
     oss: boolean
 ) => {
-    const instance: AxiosInstance = axios.create({
+    const instance = axios.create({
         timeout: 15000,
         headers: {"Content-Type": "application/json"},
         withCredentials: true,
@@ -265,7 +265,7 @@ export const createAxios = (
         indexes: null
     };
 
-    router.beforeEach((_to, _from, next) => {
+    router?.beforeEach((_to, _from, next) => {
         if (pendingRoute) {
             requestsTotal--;
         }
@@ -275,7 +275,7 @@ export const createAxios = (
         next();
     });
 
-    router.afterEach(() => {
+    router?.afterEach(() => {
         if (pendingRoute) {
             increaseProgress();
             pendingRoute = false;

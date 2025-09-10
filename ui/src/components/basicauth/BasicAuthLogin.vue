@@ -68,7 +68,6 @@
 <script setup lang="ts">
     import {ref, computed} from "vue"
     import {useRouter, useRoute} from "vue-router"
-    import {useStore} from "vuex"
     import {useI18n} from "vue-i18n"
     import {ElMessage} from "element-plus"
     import type {FormInstance} from "element-plus"
@@ -91,7 +90,6 @@
 
     const router = useRouter()
     const route = useRoute()
-    const store = useStore()
     const {t} = useI18n()
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
@@ -115,7 +113,7 @@
     const validateCredentials = async (auth: string) => {
         try {
             document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`;
-            await axios.get(`${apiUrl(store)}/usages/all`, {
+            await axios.get(`${apiUrl()}/usages/all`, {
                 timeout: 10000,
                 withCredentials: true
             })

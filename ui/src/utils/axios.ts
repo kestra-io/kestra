@@ -293,8 +293,13 @@ export default (
     callback(createAxios(...args));
 }
 
+let axiosInstance: AxiosInstance | null = null;
+
 export const useAxios = () => {
     const router = useRouter();
     const isOSS = getCurrentInstance()?.appContext.config.globalProperties.$isOSS ?? false;
-    return createAxios(router, isOSS)
+    if (!axiosInstance) {
+        axiosInstance = createAxios(router, isOSS);
+    }
+    return axiosInstance;
 };

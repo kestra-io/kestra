@@ -31,7 +31,7 @@
                                         v-if="data.icon"
                                         :icons="pluginsStore.icons"
                                         :cls="icons[data.taskId]"
-                                        only-icon
+                                        onlyIcon
                                     />
                                     <span :class="{'ms-3': data.icon}">{{
                                         data.label
@@ -73,13 +73,13 @@
                                 </template>
 
                                 <div class="d-flex flex-column p-3 debug">
-                                    <editor
+                                    <Editor
                                         ref="debugEditor"
-                                        :full-height="false"
-                                        :custom-height="20"
+                                        :fullHeight="false"
+                                        :customHeight="20"
                                         :input="true"
                                         :navbar="false"
-                                        :model-value="computedDebugValue"
+                                        :modelValue="computedDebugValue"
                                         @update:model-value="editorValue = $event"
                                         @confirm="onDebugExpression($event)"
                                         class="w-100"
@@ -97,14 +97,14 @@
                                         {{ t("eval.title") }}
                                     </el-button>
 
-                                    <editor
+                                    <Editor
                                         v-if="debugExpression"
-                                        :read-only="true"
+                                        :readOnly="true"
                                         :input="true"
-                                        :full-height="false"
-                                        :custom-height="20"
+                                        :fullHeight="false"
+                                        :customHeight="20"
                                         :navbar="false"
-                                        :model-value="debugExpression"
+                                        :modelValue="debugExpression"
                                         :lang="isJSON ? 'json' : ''"
                                         class="mt-3"
                                     />
@@ -140,7 +140,7 @@
                         />
                         <SubFlowLink
                             v-if="selectedNode().label === 'executionId'"
-                            :execution-id="selectedNode().value"
+                            :executionId="selectedNode().value"
                         />
                     </div>
                 </div>
@@ -174,7 +174,7 @@
     const debugCollapse = ref<string>("");
     const debugEditor = ref<InstanceType<typeof Editor>>();
     const debugExpression = ref<string>("");
-    
+
     const computedDebugValue = computed(() => {
         const formatTask = (task) => {
             if (!task) return "";
@@ -215,7 +215,7 @@
 
         if (!taskRun) return;
 
-        const URL = `${apiUrl(store)}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
+        const URL = `${apiUrl()}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
         store.$http
             .post(URL, expression, {headers: {"Content-type": "text/plain"}})
             .then((response) => {

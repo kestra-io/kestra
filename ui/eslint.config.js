@@ -1,16 +1,14 @@
 import globals from "globals";
 import pluginJs from "@eslint/js";
+import {defineConfig, globalIgnores} from "eslint/config";
 import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
 
 const components = (folder) => `src/components/${folder}/**/*.vue`;
 
 /** @type {import('eslint').Linter.Config[]} */
-export default [
-    {
-        files: ["**/*.{js,mjs,cjs,ts,vue}"],
-        ignores: ["node_modules", "node"],
-    },
+export default defineConfig([
+    globalIgnores(["node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*"]),
     {languageOptions: {globals: globals.browser}},
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
@@ -60,6 +58,22 @@ export default [
                     order: ["template", "script", "style"],
                 },
             ],
+            "vue/enforce-style-attribute": [
+                "warn",
+                {"allow": ["scoped"]}
+            ],
+
+            "vue/component-name-in-template-casing": [
+                "error",
+                "PascalCase",
+                {
+                    "registeredComponentsOnly": true,
+                }
+            ],
+            "vue/attribute-hyphenation": [
+                "error",
+                "never"
+            ],
             "@typescript-eslint/consistent-type-assertions": [
                 "error",
                 {
@@ -98,4 +112,4 @@ export default [
             "no-console": ["off"]
         }
     }
-];
+]);

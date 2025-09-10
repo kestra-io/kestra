@@ -1,5 +1,6 @@
 import {computed, nextTick, onMounted, ref} from "vue";
 import {useRoute, useRouter} from "vue-router";
+import {defaultNamespace} from "./useNamespaces.ts";
 
 interface UseRestoreUrlOptions {
     restoreUrl?: boolean;
@@ -57,8 +58,8 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
 
         let change = false;
 
-        if (!localExist && isDefaultNamespaceAllow && localStorage.getItem("defaultNamespace")) {
-            local["namespace"] = localStorage.getItem("defaultNamespace");
+        if (!localExist && isDefaultNamespaceAllow && defaultNamespace()) {
+            local["namespace"] = defaultNamespace();
         }
 
         for (const key in local) {

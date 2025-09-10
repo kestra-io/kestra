@@ -1,3 +1,5 @@
+import {defaultNamespace} from "../composables/useNamespaces.js";
+
 export default {
     props: {
         restoreUrl: {
@@ -55,8 +57,8 @@ export default {
 
             let change = false
 
-            if (!localExist && this.isDefaultNamespaceAllow && localStorage.getItem("defaultNamespace")) {
-                local["namespace"] = localStorage.getItem("defaultNamespace");
+            if (!localExist && this.isDefaultNamespaceAllow && defaultNamespace()) {
+                local["namespace"] = defaultNamespace();
             }
 
             for (const key in local) {

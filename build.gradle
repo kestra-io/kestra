@@ -32,7 +32,7 @@ plugins {
 
     // release
     id 'net.researchgate.release' version '3.1.0'
-    id "com.gorylenko.gradle-git-properties" version "2.5.2"
+    id "com.gorylenko.gradle-git-properties" version "2.5.3"
     id 'signing'
     id "com.vanniktech.maven.publish" version "0.34.0"
 

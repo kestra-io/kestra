@@ -2,13 +2,13 @@
     <el-tooltip :disabled="tooltip === undefined" :content="tooltip" effect="light">
         <el-select
             data-test-id="time-selector"
-            :model-value="value"
+            :modelValue="value"
             :placeholder="placeholder"
             @change="$emit('change', $event)"
             :clearable="clearable"
         >
             <template #prefix>
-                <clock-outline />
+                <ClockOutline />
             </template>
             <el-option
                 v-for="preset in options"

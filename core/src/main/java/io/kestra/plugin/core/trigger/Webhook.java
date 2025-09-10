@@ -33,7 +33,7 @@ import jakarta.validation.constraints.Size;
 @Schema(
     title = "Execute a flow from an API call triggered by a webhook.",
     description = """
-        Webhook trigger allows you to create a unique URL that you can use to trigger a Kestra flow execution based on events in another application such as GitHub or Amazon EventBridge. In order to use that URL, you have to add a secret key that will secure your webhook URL.
+        Webhook trigger allows you to create a unique URL that you can use to trigger a Kestra flow execution based on events in another application such as GitHub or Amazon EventBridge. In order to use that URL, you have to add a secret key to secure your webhook URL.
 
         The URL will then follow the following format: `https://{your_hostname}/api/v1/executions/webhook/{namespace}/{flowId}/{key}`. Replace the templated values according to your workflow setup.
 
@@ -44,7 +44,7 @@ import jakarta.validation.constraints.Size;
         - `{{ trigger.headers }}`
 
         The webhook response will be one of the following HTTP status codes:
-        - 404 if the namespace, flow or webhook key is not found.
+        - 404 if the namespace, flow, or webhook key is not found.
         - 200 if the webhook triggers an execution.
         - 204 if the webhook cannot trigger an execution due to a lack of matching event conditions sent by other application.
 
@@ -53,7 +53,7 @@ import jakarta.validation.constraints.Size;
 @Plugin(
     examples = {
         @Example(
-            title = "Add a webhook trigger to the current flow with the key `4wjtkzwVGBM9yKnjm3yv8r`, the webhook will be available at the URI `/api/v1/executions/webhook/{namespace}/{flowId}/4wjtkzwVGBM9yKnjm3yv8r`.",
+            title = "Add a webhook trigger to the current flow with the key `4wjtkzwVGBM9yKnjm3yv8r`; the webhook will be available at the URI `/api/v1/executions/webhook/{namespace}/{flowId}/4wjtkzwVGBM9yKnjm3yv8r`.",
             code = """
                 id: webhook_flow
                 namespace: company.team
@@ -105,7 +105,7 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
     @NotNull
     @Schema(
         title = "The unique key that will be part of the URL.",
-        description = "The key is used for generating the URL of the webhook.\n" +
+        description = "The key is used for generating the webhook URL.\n" +
             "\n" +
             "::alert{type=\"warning\"}\n" +
             "Make sure to keep the webhook key secure. It's the only security mechanism to protect your endpoint from bad actors, and must be considered as a secret. You can use a random key generator to create the key.\n" +
@@ -167,19 +167,19 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
     @AllArgsConstructor
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The full body for the webhook request.",
+            title = "The full body for the webhook request",
             description = "We try to deserialize the incoming request as JSON (array or object).\n" +
-                "If we can't deserialize, the full body as string will be available."
+                "If we can't deserialize, the full body will be available as a string."
         )
         @NotNull
         private Object body;
 
-        @Schema(title = "The headers for the webhook request.")
+        @Schema(title = "The headers for the webhook request")
         @NotNull
         private Map<String, List<String>> headers;
 
 
-        @Schema(title = "The parameters for the webhook request.")
+        @Schema(title = "The parameters for the webhook request")
         @NotNull
         private Map<String, List<String>> parameters;
     }

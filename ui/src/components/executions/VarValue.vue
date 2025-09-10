@@ -11,7 +11,7 @@
         >
             {{ $t('download') }}
         </el-button>
-        <FilePreview v-if="isFile(value)" :value="value" :execution-id="execution.id" />
+        <FilePreview v-if="isFile(value)" :value="value" :executionId="execution.id" />
         <el-button disabled size="small" type="primary" v-if="humanSize">
             ({{ humanSize }})
         </el-button>
@@ -19,6 +19,7 @@
     <el-button-group v-else-if="isURI(value)">
         <el-button
             type="primary"
+            tag="a"
             size="small"
             :href="value"
             target="_blank"
@@ -70,11 +71,11 @@
                 }
             },
             itemUrl(value) {
-                return `${apiUrl(this.$store)}/executions/${this.execution.id}/file?path=${encodeURI(value)}`;
+                return `${apiUrl()}/executions/${this.execution.id}/file?path=${encodeURI(value)}`;
             },
             getFileSize(){
                 if (this.isFile(this.value)) {
-                    this.$http(`${apiUrl(this.$store)}/executions/${this?.execution?.id}/file/metas?path=${this.value}`, {
+                    this.$http(`${apiUrl()}/executions/${this?.execution?.id}/file/metas?path=${this.value}`, {
                         validateStatus: (status) => status === 200 || status === 404 || status === 422
                     }).then(r => this.humanSize = Utils.humanFileSize(r.data.size))
                 }

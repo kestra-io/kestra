@@ -1,5 +1,5 @@
 <template>
-    <el-dropdown trigger="click" hide-on-click placement="bottom-end">
+    <el-dropdown trigger="click" hideOnClick placement="bottom-end">
         <el-button :icon="Menu">
             <span class="text-truncate">
                 {{ selected ?? t("dashboards.default") }}
@@ -32,7 +32,7 @@
                 <el-input
                     v-model="search"
                     :placeholder="t('search')"
-                    :prefix-icon="Magnify"
+                    :prefixIcon="Magnify"
                     clearable
                     class="my-1 mb-3 search"
                 />

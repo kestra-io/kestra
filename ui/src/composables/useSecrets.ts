@@ -1,7 +1,6 @@
-import {Store} from "vuex";
 import {EntityIterator, FetchResult} from "./entityIterator.ts";
 import {NamespaceIterator} from "./useNamespaces.ts";
-import {Me} from ".override/stores/auth";
+import {Me} from "override/stores/auth";
 import {useNamespacesStore} from "override/stores/namespaces.ts";
 import permissions from "../models/permission";
 import actions from "../models/action";
@@ -18,13 +17,11 @@ export type SecretIterator = NamespaceSecretIterator | AllSecretIterator;
 type NamespaceSecretFetchResult = FetchResult<NamespaceSecret> & { readOnly: boolean };
 
 export class NamespaceSecretIterator extends EntityIterator<NamespaceSecret>{
-    private readonly store: Store<any>;
     readonly namespace: string;
     areNamespaceSecretsReadOnly = ref(undefined) as unknown as boolean | undefined;
 
-    constructor(store: Store<any>, namespace: string, fetchSize: number, options?: any) {
+    constructor(namespace: string, fetchSize: number, options?: any) {
         super(fetchSize, options);
-        this.store = store;
         this.namespace = namespace;
     }
 
@@ -54,15 +51,13 @@ export class NamespaceSecretIterator extends EntityIterator<NamespaceSecret>{
 }
 
 export class AllSecretIterator extends EntityIterator<NamespaceSecret>{
-    private readonly store: Store<any>;
     private readonly user: Me;
     private namespaceIterator: NamespaceIterator | undefined;
     private namespaceSecretIterator: NamespaceSecretIterator | undefined;
     private areNamespaceSecretsReadOnly = ref({}) as unknown as {[namespace: string]: boolean};
 
-    constructor(store: Store<any>, user: Me, fetchSize: number, options?: any) {
+    constructor(user: Me, fetchSize: number, options?: any) {
         super(fetchSize, options);
-        this.store = store;
         this.user = user;
     }
 
@@ -72,7 +67,7 @@ export class AllSecretIterator extends EntityIterator<NamespaceSecret>{
 
     async fetchCall(): Promise<FetchResult<NamespaceSecret>> {
         if (this.namespaceIterator === undefined) {
-            this.namespaceIterator = new NamespaceIterator(this.store, 20, {
+            this.namespaceIterator = new NamespaceIterator(20, {
                 commit: false,
                 sort: "id:asc"
             });
@@ -89,7 +84,7 @@ export class AllSecretIterator extends EntityIterator<NamespaceSecret>{
                     continue;
                 }
 
-                this.namespaceSecretIterator = new NamespaceSecretIterator(this.store, namespace.id, this.fetchSize, this.options);
+                this.namespaceSecretIterator = new NamespaceSecretIterator(namespace.id, this.fetchSize, this.options);
             }
 
             const fetch = {
@@ -114,10 +109,10 @@ export class AllSecretIterator extends EntityIterator<NamespaceSecret>{
     }
 }
 
-export function useNamespaceSecrets(store: Store<any>, namespace: string, secretsFetchSize: number, options?: any): NamespaceSecretIterator {
-    return new NamespaceSecretIterator(store, namespace, secretsFetchSize, options);
+export function useNamespaceSecrets(namespace: string, secretsFetchSize: number, options?: any): NamespaceSecretIterator {
+    return new NamespaceSecretIterator( namespace, secretsFetchSize, options);
 }
 
-export function useAllSecrets(store: Store<any>, user: Me, secretsFetchSize: number, options?: any): AllSecretIterator {
-    return new AllSecretIterator(store, user, secretsFetchSize, options);
+export function useAllSecrets(user: Me, secretsFetchSize: number, options?: any): AllSecretIterator {
+    return new AllSecretIterator(user, secretsFetchSize, options);
 }

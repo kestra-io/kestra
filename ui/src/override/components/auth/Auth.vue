@@ -43,7 +43,6 @@
 
 <script setup lang="ts">
     import {RouterLink, useRouter} from "vue-router";
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
@@ -52,14 +51,15 @@
     import Logout from "vue-material-design-icons/Logout.vue";
 
     import * as BasicAuth from "../../../utils/basicAuth";
+    import {useAxios} from "../../../utils/axios";
 
     const router = useRouter();
-    const store = useStore() as any;
+    const axios = useAxios();
     const {t} = useI18n();
 
     const logout = () => {
         BasicAuth.logout();
-        delete store.$http?.defaults?.headers?.common?.["Authorization"];
+        delete axios.defaults.headers.common["Authorization"];
         router.push({name: "login"});
     };
 </script>

@@ -1137,15 +1137,3 @@
         color: var(--bs-code-color) !important;
     }
 </style>
-
-<style lang="scss">
-    .el-message-box {
-        padding: 2rem;
-        max-width: initial;
-        width: 500px;
-
-        .custom-warning {
-            margin: 1rem 0;
-        }
-    }
-</style>

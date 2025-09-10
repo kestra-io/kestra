@@ -161,9 +161,7 @@ export const createAxios = (
 
                     router.push({
                         name: "login",
-                        query: {
-                            ...(isLoginPath ? {} : {from: currentPath})
-                        }
+                        query: (isLoginPath ? {} : {from: currentPath})
                     })
 
                     return Promise.reject(errorResponse)
@@ -225,9 +223,7 @@ export const createAxios = (
 
                         router.push({
                             name: "login",
-                            query: {
-                                ...(isLoginPath ? {} : {from: currentPath})
-                            }
+                            query: (isLoginPath ? {} : {from: currentPath})
                         })
 
                         return Promise.reject(errorResponse)

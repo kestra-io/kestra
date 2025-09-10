@@ -156,8 +156,8 @@
                 } else {
                     return {
                         name: this.routeName || this.$route.name,
-                        params: {...this.$route.params, ...{tab: tab.name}},
-                        query: {...(tab.query || {})}
+                        params: {...this.$route.params, tab: tab.name},
+                        query: {...tab.query}
                     };
                 }
             },

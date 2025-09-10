@@ -492,7 +492,7 @@ export const useFlowStore = defineStore("flow", () => {
         return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/dependencies?expandAll=true`).then(response => {
             return {
                 ...(!onlyCount ? {data: transformResponse(response.data, options.subtype)} : {}),
-                count: response.data.nodes ? [...new Set(response.data.nodes.map((r:{uid:string}) => r.uid))].length : 0
+                count: response.data.nodes ? new Set(response.data.nodes.map((r:{uid:string}) => r.uid)).size : 0
             };
         })
     }

@@ -23,15 +23,13 @@ export abstract class FilterLanguage {
 
     protected constructor(domain: string | undefined, filterKeyCompletions: Record<string, FilterKeyCompletions>, textFilterSupported: boolean = true) {
         this._domain = domain;
-        this._filterKeyCompletions = [
-            ...(Object.entries(filterKeyCompletions).map(([key, filterKeyCompletion]) => [
+        this._filterKeyCompletions = (Object.entries(filterKeyCompletions).map(([key, filterKeyCompletion]) => [
                 {
                     key: key,
                     regex: new RegExp("^" + key.replaceAll(".", "\\.").replaceAll(/\$?\{([^}]*)}/g, ".*") + "$")
                 },
                 filterKeyCompletion
-            ]) as FilterKeyCompletionEntries)
-        ];
+            ]) as FilterKeyCompletionEntries);
         this._textFilterSupported = textFilterSupported;
 
         if (textFilterSupported) {

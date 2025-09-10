@@ -295,7 +295,6 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import _merge from "lodash/merge";
@@ -431,7 +430,6 @@
             };
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useExecutionsStore, useFlowStore, useAuthStore),
             user() {
                 return this.authStore.user;

@@ -91,13 +91,12 @@
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
     import {State} from "@kestra-io/ui-libs"
-    import {useStore} from "vuex"
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../stores/executions"
     import action from "../../models/action"
     import permission from "../../models/permission"
-    import ExecutionUtils from "../../utils/executionUtils"
+    import * as ExecutionUtils from "../../utils/executionUtils"
     import ReplayWithInputs from "./ReplayWithInputs.vue"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
@@ -115,7 +114,6 @@
     const emit = defineEmits(["follow"])
 
     const {t} = useI18n()
-    const store = useStore()
     const toast = useToast()
     const router = useRouter()
     const flowStore = useFlowStore()
@@ -214,7 +212,7 @@
         })
 
         const execution = response.data.id === props.execution.id && $http
-            ? await ExecutionUtils.waitForState($http, store, response.data)
+            ? await ExecutionUtils.waitForState($http, response.data)
             : response.data
 
         executionsStore.execution = execution

@@ -96,7 +96,7 @@ class KVControllerTest {
 
         List<KVEntry> res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/inheritance"), Argument.of(List.class, KVEntry.class));
 
-        assertThat(res).hasSize(3);
+        assertThat(res).hasSize(2);
         Map<String, String> keyDescriptions = res.stream()
             .collect(Collectors.toMap(KVEntry::key, KVEntry::description));
         assertThat(keyDescriptions).isEqualTo(Map.of("shared-key", namespaceDescription,

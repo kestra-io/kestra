@@ -163,11 +163,19 @@
                             :label="$t('id')"
                         >
                             <template #default="scope">
-                                <Id
-                                    :value="scope.row.id"
-                                    :shrink="true"
-                                    @click="onRowDoubleClick(executionParams(scope.row))"
-                                />
+                                <RouterLink
+                                    :to="{
+                                        name: 'executions/update',
+                                        params: {
+                                            namespace: scope.row.namespace,
+                                            flowId: scope.row.flowId,
+                                            id: scope.row.id
+                                        }
+                                    }"
+                                    class="execution-id"
+                                >
+                                    <Id :value="scope.row.id" :shrink="true" />
+                                </RouterLink>
                             </template>
                         </el-table-column>
 
@@ -1123,6 +1131,10 @@
     }
     .code-text {
         color: var(--ks-content-primary);
+    }
+
+    :deep(a.execution-id) code {
+        color: var(--bs-code-color) !important;
     }
 </style>
 

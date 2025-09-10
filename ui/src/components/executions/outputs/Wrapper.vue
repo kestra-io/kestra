@@ -175,12 +175,12 @@
     const debugExpression = ref<string>("");
 
     const computedDebugValue = computed(() => {
-        const formatTask = (task) => {
+        const formatTask = (task: string) => {
             if (!task) return "";
             return task.includes("-") ? `["${task}"]` : `.${task}`;
         };
 
-        const formatPath = (path) => {
+        const formatPath = (path: string) => {
             if (!path.includes("-")) return `.${path}`;
 
             const bracketIndex = path.indexOf("[");
@@ -291,7 +291,7 @@
         return {label: trim(data.value), regular: true};
     };
 
-    const expandedValue = ref([]);
+    const expandedValue = ref("");
     const selected = ref<string[]>([]);
 
     onMounted(() => {

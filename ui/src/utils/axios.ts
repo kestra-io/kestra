@@ -72,10 +72,10 @@ interface QueueItem {
 }
 
 export const createAxios = (
-    router: Router,
+    router: Router | undefined,
     oss: boolean
 ) => {
-    const instance: AxiosInstance = axios.create({
+    const instance = axios.create({
         timeout: 15000,
         headers: {"Content-Type": "application/json"},
         withCredentials: true,
@@ -159,11 +159,9 @@ export const createAxios = (
                     const currentPath = window.location.pathname
                     const isLoginPath = currentPath.includes("/login")
 
-                    router.push({
+                    router?.push({
                         name: "login",
-                        query: {
-                            ...(isLoginPath ? {} : {from: currentPath})
-                        }
+                        query: (isLoginPath ? {} : {from: currentPath})
                     })
 
                     return Promise.reject(errorResponse)
@@ -223,11 +221,9 @@ export const createAxios = (
                         const currentPath = window.location.pathname
                         const isLoginPath = currentPath.includes("/login")
 
-                        router.push({
+                        router?.push({
                             name: "login",
-                            query: {
-                                ...(isLoginPath ? {} : {from: currentPath})
-                            }
+                            query: (isLoginPath ? {} : {from: currentPath})
                         })
 
                         return Promise.reject(errorResponse)
@@ -269,7 +265,7 @@ export const createAxios = (
         indexes: null
     };
 
-    router.beforeEach((_to, _from, next) => {
+    router?.beforeEach((_to, _from, next) => {
         if (pendingRoute) {
             requestsTotal--;
         }
@@ -279,7 +275,7 @@ export const createAxios = (
         next();
     });
 
-    router.afterEach(() => {
+    router?.afterEach(() => {
         if (pendingRoute) {
             increaseProgress();
             pendingRoute = false;
@@ -297,8 +293,13 @@ export default (
     callback(createAxios(...args));
 }
 
+let axiosInstance: AxiosInstance | null = null;
+
 export const useAxios = () => {
     const router = useRouter();
-    const isOSS = getCurrentInstance()?.appContext.config.globalProperties.$isOSS ?? false;
-    return createAxios(router, isOSS)
+    if (!axiosInstance) {
+        const isOSS = getCurrentInstance()?.appContext.config.globalProperties.$isOSS ?? false;
+        axiosInstance = createAxios(router, isOSS);
+    }
+    return axiosInstance;
 };

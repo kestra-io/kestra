@@ -1,5 +1,6 @@
 import {EntityIterator} from "./entityIterator.ts";
 import {useNamespacesStore} from "override/stores/namespaces.ts";
+import {storageKeys} from "../utils/constants.ts";
 
 export interface Namespace {
     id: string;
@@ -16,6 +17,10 @@ export class NamespaceIterator extends EntityIterator<Namespace>{
         const namespacesStore = useNamespacesStore();
         return namespacesStore.search(this.fetchOptions());
     }
+}
+
+export function defaultNamespace() {
+    return localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
 }
 
 export default function useNamespaces(fetchSize: number, options?: any): NamespaceIterator {

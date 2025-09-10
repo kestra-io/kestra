@@ -11,7 +11,6 @@
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
-    import {storageKeys} from "../../utils/constants";
     import {useBlueprintsStore} from "../../stores/blueprints";
     import {useCoreStore} from "../../stores/core";
     import {editorViewTypes} from "../../utils/constants";
@@ -19,6 +18,7 @@
     import {getRandomID} from "../../../scripts/id";
     import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
+    import {defaultNamespace} from "../../composables/useNamespaces";
 
     export default {
         mixins: [RouteContext],
@@ -50,8 +50,7 @@
                 } else if (blueprintId && blueprintSource) {
                     flowYaml = await this.blueprintsStore.getBlueprintSource({type: blueprintSource, kind: "flow", id: blueprintId});
                 } else {
-                    const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
-                    const selectedNamespace = this.$route.query.namespace || defaultNamespace || "company.team";
+                    const selectedNamespace = this.$route.query.namespace || defaultNamespace() || "company.team";
                     flowYaml = `id: ${getRandomID()}
 namespace: ${selectedNamespace}
 

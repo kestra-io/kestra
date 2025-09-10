@@ -199,6 +199,75 @@ public class FlowTopologyTest {
 
     }
 
+    @Test
+    void flowTriggerWithTargetFlow() throws FlowProcessingException {
+        // Given
+        var tenantId = randomTenantId();
+        var parent = flowService.importFlow(tenantId,
+            """
+                id: parent
+                namespace: io.kestra.unittest
+                inputs:
+                  - id: a
+                    type: BOOL
+                    defaults: true
+                
+                  - id: b
+                    type: BOOL
+                    defaults: "{{ inputs.a == true }}"
+                    dependsOn:
+                      inputs:
+                        - a
+                tasks:
+                  - id: helloA
+                    type: io.kestra.plugin.core.log.Log
+                    message: Hello A
+                """);
+        var child = flowService.importFlow(tenantId, """
+            id: child
+            namespace: io.kestra.unittest
+            tasks:
+              - id: helloB
+                type: io.kestra.plugin.core.log.Log
+                message: Hello B
+            triggers:
+              - id: release
+                type: io.kestra.plugin.core.trigger.Flow
+                states:
+                  - SUCCESS
+                preconditions:
+                  id: flows
+                  flows:
+                   - namespace: io.kestra.unittest
+                     flowId: parent
+            """);
+        var unrelatedFlow = flowService.importFlow(tenantId, """
+            id: unrelated_flow
+            namespace: io.kestra.unittest
+            tasks:
+              - id: download
+                type: io.kestra.plugin.core.http.Download
+            """);
+
+        // When
+        computeAndSaveTopologies(List.of(child, parent, unrelatedFlow));
+        System.out.println();
+        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
+            System.out.println(FlowTopologyTestData.of(topology));
+        });
+
+        var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", parent.getId(), false, true);
+        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
+            System.out.println(FlowTopologyTestData.of(topology));
+        });
+
+        // Then
+        assertThat(dependencies.map(FlowTopologyTestData::of))
+            .containsExactlyInAnyOrder(
+                new FlowTopologyTestData(parent, child)
+            );
+    }
+
     /**
      * this function mimics the production behaviour
      */

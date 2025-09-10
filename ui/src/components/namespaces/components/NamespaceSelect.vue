@@ -41,7 +41,7 @@
     import {useNamespacesStore} from "override/stores/namespaces"
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue"
     import Lock from "vue-material-design-icons/Lock.vue";
-    import {storageKeys} from "../../../utils/constants";
+    import {defaultNamespace} from "../../../composables/useNamespaces";
 
     const {t} = useI18n();
 
@@ -79,13 +79,13 @@
 
     onMounted(() => {
         if (modelValue.value === undefined || modelValue.value.length === 0) {
-            const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
+            const defaultNamespaceVal = defaultNamespace();
             if (Array.isArray(modelValue.value)) {
-                if (defaultNamespace != null) {
-                    modelValue.value = [defaultNamespace];
+                if (defaultNamespaceVal != null) {
+                    modelValue.value = [defaultNamespaceVal];
                 }
             } else {
-                modelValue.value = defaultNamespace ?? modelValue.value;
+                modelValue.value = defaultNamespaceVal ?? modelValue.value;
             }
         }
     })

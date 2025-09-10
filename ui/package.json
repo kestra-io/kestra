@@ -75,7 +75,6 @@
         "vue-virtual-scroller": "^2.0.0-beta.8",
         "vue3-popper": "^1.5.0",
         "vue3-tour": "github:kestra-io/vue3-tour",
-        "vuex": "^4.1.0",
         "xss": "^1.0.15",
         "yaml": "^2.8.1"
     },

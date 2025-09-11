@@ -4,7 +4,7 @@ import {FilterLanguage} from "../filterLanguage.ts";
 const flowDashboardFilterKeys: Record<string, FilterKeyCompletions> = {
     timeRange: new FilterKeyCompletions(
         [Comparators.EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.RELATIVE_DATE,
+        async (hardcodedValues) => hardcodedValues.RELATIVE_DATE,
         false,
         ["timeRange", "startDate", "endDate"]
     ),

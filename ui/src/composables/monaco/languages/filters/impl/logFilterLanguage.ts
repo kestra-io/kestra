@@ -27,11 +27,11 @@ const logFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     level: new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.LEVELS
+        async (hardcodedValues) => hardcodedValues.LEVELS
     ),
     timeRange: new FilterKeyCompletions(
         [Comparators.EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.RELATIVE_DATE,
+        async (hardcodedValues) => hardcodedValues.RELATIVE_DATE,
         false,
         ["timeRange", "startDate", "endDate"]
     ),
@@ -49,7 +49,7 @@ const logFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     scope: new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.SCOPES,
+        async (hardcodedValues) => hardcodedValues.SCOPES,
         undefined,
         ["scope"]
     ),

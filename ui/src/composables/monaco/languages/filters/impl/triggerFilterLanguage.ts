@@ -37,7 +37,7 @@ const triggerFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     timeRange: new FilterKeyCompletions(
         [Comparators.EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.RELATIVE_DATE,
+        async (hardcodedValues) => hardcodedValues.RELATIVE_DATE,
         false,
         ["timeRange", "startDate", "endDate"]
     ),
@@ -55,7 +55,7 @@ const triggerFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     scope: new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.SCOPES,
+        async (hardcodedValues) => hardcodedValues.SCOPES,
         undefined,
         ["scope"]
     ),

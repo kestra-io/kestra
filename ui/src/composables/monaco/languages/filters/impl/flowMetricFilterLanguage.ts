@@ -19,7 +19,7 @@ const flowMetricFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     aggregation: new FilterKeyCompletions(
         [Comparators.EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.AGGREGATIONS
+        async (hardcodedValues) => hardcodedValues.AGGREGATIONS
     ),
     startDate: new FilterKeyCompletions(
         [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.GREATER_THAN, Comparators.LESS_THAN_OR_EQUAL_TO, Comparators.LESS_THAN, Comparators.EQUALS, Comparators.NOT_EQUALS],

@@ -193,6 +193,7 @@
 </script>
 <style scoped lang="scss">
 div.line {
+    position: relative; 
     cursor: text;
     white-space: pre-wrap;
     word-break: break-all;

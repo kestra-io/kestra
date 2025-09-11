@@ -13,7 +13,7 @@ export const useTaskRunsStore = defineStore("taskruns", {
     }),
     actions: {
         findTaskRuns(options: any) {
-            return this.$http.get(`${apiUrl(this.vuexStore)}/taskruns/search`, {params: options}).then(response => {
+            return this.$http.get(`${apiUrl()}/taskruns/search`, {params: options}).then(response => {
                 this.taskruns = response.data.results;
                 this.total = response.data.total;
             });

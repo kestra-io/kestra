@@ -57,6 +57,7 @@
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw";
     import {useLogsStore} from "../../stores/logs";
+    import {defaultNamespace} from "../../composables/useNamespaces";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -147,15 +148,12 @@
             }
         },
         beforeRouteEnter(to, _, next) {
-            const defaultNamespace = localStorage.getItem(
-                storageKeys.DEFAULT_NAMESPACE,
-            );
             const query = {...to.query};
             let queryHasChanged = false;
 
             const queryKeys = Object.keys(query);
-            if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][PREFIX]"] = defaultNamespace;
+            if (defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+                query["filters[namespace][PREFIX]"] = defaultNamespace();
                 queryHasChanged = true;
             }
 
@@ -170,12 +168,6 @@
             }
         },
         methods: {
-            LogFilterLanguage() {
-                return LogFilterLanguage
-            },
-            onDateFilterTypeChange(event) {
-                this.canAutoRefresh = event;
-            },
             showStatChart() {
                 return this.showChart;
             },

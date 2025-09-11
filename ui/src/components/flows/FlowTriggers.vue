@@ -347,7 +347,7 @@
                 if (flowTriggers) {
                     const triggers = flowTriggers.map(flowTrigger => {
                         let pollingTrigger = this.triggers.find(trigger => trigger.triggerId === flowTrigger.id)
-                        return {...flowTrigger, ...(pollingTrigger || {})}
+                        return {...flowTrigger, ...pollingTrigger}
                     })
 
                     return !this.query ? triggers : triggers.filter(trigger => trigger.id.includes(this.query))

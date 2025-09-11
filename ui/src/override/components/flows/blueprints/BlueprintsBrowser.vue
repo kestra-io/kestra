@@ -33,11 +33,16 @@
                     </nav>
                 </template>
                 <template #top>
-                    <KestraFilter
-                        :prefix="`blueprintsBrowser${blueprintType}`"
-                        :placeholder="$t('search')"
-                        legacyQuery
-                    />
+                    <el-row class="mb-3 px-3" justify="center">
+                        <el-col :xs="24" :sm="18" :md="12" :lg="10" :xl="8">
+                            <el-input
+                                v-model="searchText"
+                                :placeholder="$t('search')"
+                                clearable
+                                @input="updateSearch"
+                            />
+                        </el-col>
+                    </el-row>     
                 </template>
                 <template #table>
                     <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
@@ -132,7 +137,6 @@
     import Utils from "../../../../utils/utils";
     import Errors from "../../../../components/errors/Errors.vue";
     import {editorViewTypes} from "../../../../utils/constants";
-    import KestraFilter from "../../../../components/filter/KestraFilter.vue";
     import {usePluginsStore} from "../../../../stores/plugins";
     import {useBlueprintsStore} from "../../../../stores/blueprints";
     import {useCoreStore} from "../../../../stores/core";
@@ -142,7 +146,7 @@
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
-        components: {TaskIcon, DataTable, Errors, KestraFilter},
+        components: {TaskIcon, DataTable, Errors},
         emits: ["goToDetail", "loaded"],
         props: {
             blueprintType: {
@@ -171,7 +175,7 @@
         },
         data() {
             return {
-                q: undefined,
+                searchText: "",
                 selectedTag: this.initSelectedTag(),
                 tags: undefined,
                 total: 0,
@@ -182,9 +186,17 @@
                 error: false
             }
         },
+        created() {
+            this.searchText = this.$route.query?.q || "";
+        },
         methods: {
             initSelectedTag() {
                 return this.$route?.query?.selectedTag ?? 0
+            },
+            updateSearch(value) {
+                this.$router.push({
+                    query: {...this.$route.query, q: value || undefined}
+                });
             },
             async copy(id) {
                 await Utils.copy(
@@ -203,12 +215,11 @@
             },
             loadTags(beforeLoadBlueprintType) {
                 const query = {}
-                if (this.$route.query.q || this.q) {
-                    query.q = this.$route.query.q || this.q;
+                if (this.$route.query.q || this.searchText) {
+                    query.q = this.$route.query.q || this.searchText;
                 }
                 return this.blueprintsStore.getBlueprintTagsForQuery({type: this.blueprintType, kind: this.blueprintKind, ...query})
                     .then(data => {
-                        // Handle switch tab while fetching data
                         if (this.blueprintType === beforeLoadBlueprintType) {
                             this.tags = this.tagsResponseMapper(data);
                         }
@@ -225,8 +236,8 @@
                     query.size = parseInt(this.$route.query.size || this.internalPageSize);
                 }
 
-                if (this.$route.query.q || this.q) {
-                    query.q = this.$route.query.q || this.q;
+                if (this.$route.query.q || this.searchText) {
+                    query.q = this.$route.query.q || this.searchText;
                 }
 
                 if (this.system) {
@@ -294,9 +305,10 @@
             $route(newValue, oldValue) {
                 if (oldValue.name === newValue.name) {
                     this.selectedTag = this.initSelectedTag();
+                    this.searchText = newValue.query?.q || "";
                 }
             },
-            q() {
+            searchText() {
                 this.load(this.onDataLoaded);
             },
             selectedTag(newSelectedTag) {
@@ -364,12 +376,6 @@
                 padding: .5rem 0;
             }
         }
-    }
-
-    .blueprints-search {
-        width: 300px;
-        height: 24px;
-        font-size: 12px;
     }
 
     .blueprints {

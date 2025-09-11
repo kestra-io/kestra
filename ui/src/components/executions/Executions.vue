@@ -163,11 +163,19 @@
                             :label="$t('id')"
                         >
                             <template #default="scope">
-                                <Id
-                                    :value="scope.row.id"
-                                    :shrink="true"
-                                    @click="onRowDoubleClick(executionParams(scope.row))"
-                                />
+                                <RouterLink
+                                    :to="{
+                                        name: 'executions/update',
+                                        params: {
+                                            namespace: scope.row.namespace,
+                                            flowId: scope.row.flowId,
+                                            id: scope.row.id
+                                        }
+                                    }"
+                                    class="execution-id"
+                                >
+                                    <Id :value="scope.row.id" :shrink="true" />
+                                </RouterLink>
                             </template>
                         </el-table-column>
 
@@ -482,6 +490,8 @@
     import {useAuthStore} from "override/stores/auth.ts";
     import {useFlowStore} from "../../stores/flow.ts";
 
+    import {defaultNamespace} from "../../composables/useNamespaces";
+
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
@@ -705,15 +715,12 @@
             }
         },
         beforeRouteEnter(to, _, next) {
-            const defaultNamespace = localStorage.getItem(
-                storageKeys.DEFAULT_NAMESPACE,
-            );
             const query = {...to.query};
             let queryHasChanged = false;
 
             const queryKeys = Object.keys(query);
-            if (this?.namespace === undefined && defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][PREFIX]"] = defaultNamespace;
+            if (this?.namespace === undefined && defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+                query["filters[namespace][PREFIX]"] = defaultNamespace();
                 queryHasChanged = true;
             }
 
@@ -1125,16 +1132,8 @@
     .code-text {
         color: var(--ks-content-primary);
     }
-</style>
 
-<style lang="scss">
-    .el-message-box {
-        padding: 2rem;
-        max-width: initial;
-        width: 500px;
-
-        .custom-warning {
-            margin: 1rem 0;
-        }
+    :deep(a.execution-id) code {
+        color: var(--bs-code-color) !important;
     }
 </style>

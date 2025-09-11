@@ -173,9 +173,6 @@
             },
         },
         methods: {
-            onDateFilterTypeChange(event) {
-                this.canAutoRefresh = event;
-            },
             isRunning(item){
                 return State.isRunning(item.state.current);
             },

@@ -260,7 +260,7 @@ function hoverHandler(cy: cytoscape.Core): void {
  * @param initialNodeID - Optional ID of the node to preselect after layout completes.
  * @param params - Vue Router params, expected to include `id` and `namespace`.
  * @param isTesting - When true, bypasses API data fetching and uses mock/test data.
- * @returns An object with element getters, loading state, selected node ID,
+ * @returns An object with element getters, loading state, rendering state, selected node ID,
  *          selection helpers, and control handlers.
  */
 export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE = FLOW, initialNodeID: string, params: RouteParams, isTesting = false) {
@@ -281,7 +281,8 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
     let cy: cytoscape.Core;
 
-    const loading = ref(true);
+    const isLoading = ref(true);
+    const isRendering = ref(true);
 
     const selectedNodeID: Ref<Node["id"] | undefined> = ref(undefined);
 
@@ -304,15 +305,23 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
     onMounted(async () => {
         if (!container.value) return;
 
-        if (isTesting) elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
+        if (isTesting) {
+            elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
+
+            isLoading.value = false;
+        }
         else {
             if (subtype === NAMESPACE) {
                 const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});
                 const nodes = data.nodes ?? [];
                 elements.value = {data: transformResponse(data, NAMESPACE), count: new Set(nodes.map((r: { uid: string }) => r.uid)).size};
+
+                isLoading.value = false;
             } else {
                 const result = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype});
                 elements.value = {data: result.data ?? [], count: result.count};
+
+                isLoading.value = false;
             }
         }
 
@@ -348,10 +357,9 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
             selectHandler(cy, node, selectedNodeID, subtype);
         });
 
-        cy.on("layoutstop", () => {
-            loading.value = false;
-
+        cy.on("layoutstop", () => {           
             // Reveal nodes after layout rendering completes
+            isRendering.value = false;
             cy.nodes().style("display", "element");
 
             const node = isTesting ? cy.nodes()[0] : cy.nodes().filter((n) => n.data("flow") === initialNodeID);
@@ -420,7 +428,8 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
     return {
         getElements: () => elements.value.data,
-        loading,
+        isLoading,
+        isRendering,
         selectedNodeID,
         selectNode,
         handlers: {

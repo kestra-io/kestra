@@ -1,6 +1,5 @@
-
-import {useStore} from "vuex";
 import PluginDocumentation from "../../../../src/components/plugins/PluginDocumentation.vue";
+import {useAxios} from "../../../../src/utils/axios";
 
 export default {
     title: "Components/Plugins/PluginDocumentation",
@@ -12,12 +11,11 @@ export default {
 
 const Template = (args) => ({
     setup() {
-        const store = useStore()
-        store.$http = {
-            get(){
+        const axios = useAxios()
+        axios.get = () =>{
                 return  Promise.resolve({data: []})
             }
-        }
+
         return () => <PluginDocumentation {...args} />
     }
 });

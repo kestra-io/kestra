@@ -1,5 +1,4 @@
-import type {Store} from "vuex";
-import {describe, expect, it, Mock, vi} from "vitest"
+import {describe, expect, it, vi} from "vitest"
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
@@ -43,34 +42,6 @@ const propertiesSchemaWrapper = (properties: Record<string, any>) => ({
         }
     }
 })
-
-interface MockStore<T> extends Store<T> {
-    dispatch: Mock<() => Promise<any>>
-}
-
-const mockedStore: MockStore<Record<string, any>> = {
-    state: {
-        namespace: {}
-    },
-    dispatch: vi.fn((type, payload) => {
-        if (type === "namespace/loadAutocomplete") {
-            return Promise.resolve(["my.namespace", "another.namespace"])
-        } else if (type === "namespace/inheritedSecrets") {
-            if (payload.id === "my.namespace") {
-                return Promise.resolve({"my.namespace": ["myFirstSecret", "mySecondSecret"], "my": ["myInheritedSecret"]});
-            } else if (payload.id === "another.namespace") {
-                return Promise.resolve({"another.namespace": ["anotherNsFirstSecret", "anotherNsSecondSecret"]});
-            }
-        } else if (type === "namespace/kvsList") {
-            if (payload.id === "my.namespace") {
-                return Promise.resolve([{key: "myFirstKv"}, {key: "mySecondKv"}]);
-            } else if (payload.id === "another.namespace") {
-                return Promise.resolve([{key: "anotherNsFirstKv"}, {key: "anotherNsSecondKv"}]);
-            }
-        }
-        return Promise.reject("404")
-    })
-} as any
 
 const pluginsStore = {
     load: vi.fn((payload: any) =>{
@@ -151,12 +122,12 @@ const namespacesStore = {
     })
 } as any
 
-const provider = new FlowAutoCompletion(mockedStore, flowStore, pluginsStore, namespacesStore);
+const provider = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore);
 const parsed = YAML_UTILS.parse(defaultFlow);
 
 describe("FlowAutoCompletionProvider", () => {
     it("root autocompletions", async () => {
-        expect(await new FlowAutoCompletion(mockedStore, flowStore, pluginsStore, namespacesStore).rootFieldAutoCompletion()).toEqual([
+        expect(await new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore).rootFieldAutoCompletion()).toEqual([
             "outputs",
             "inputs",
             "vars",

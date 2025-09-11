@@ -96,6 +96,7 @@ import Markdown from "../sections/Markdown.vue";
 import Pie from "../sections/Pie.vue";
 import Table from "../sections/Table.vue";
 import TimeSeries from "../sections/TimeSeries.vue";
+import {FilterObject} from "../../../utils/filters.ts";
 
 export const TYPES: Record<string, any> = {
     "io.kestra.plugin.core.dashboard.chart.Bar": Bar,
@@ -118,7 +119,7 @@ export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions
 
 export const processFlowYaml = (yaml: string, namespace: string, flow: string): string => yaml.replace(/--NAMESPACE--/g, namespace).replace(/--FLOW--/g, flow);
 
-export function useChartGenerator(props: {chart: Chart; filters: string[]; showDefault: boolean;}, includeHooks: boolean = true) {
+export function useChartGenerator(props: {chart: Chart; filters: FilterObject[]; showDefault: boolean;}, includeHooks: boolean = true) {
     const percentageShown = computed(() => props.chart?.chartOptions?.numberType === "PERCENTAGE");
 
     const route = useRoute();
@@ -130,7 +131,7 @@ export function useChartGenerator(props: {chart: Chart; filters: string[]; showD
 
     const data = ref();
     const generate = async (id: string, pagination?: { pageNumber: number; pageSize: number }) => {
-        const filters = props.filters.concat(decodeSearchParams(route.query, undefined, []) ?? []);
+        const filters = props.filters.concat(decodeSearchParams(route.query) ?? []);
         const parameters: Parameters = {...pagination, filters: (filters ?? {})};
 
         if (!props.showDefault) {

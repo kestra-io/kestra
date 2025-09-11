@@ -33,6 +33,12 @@ export function date (dateString:string, format?:string) {
         .format(f);
 }
 
+export interface FilterObject{
+    field: string;
+    value: string | string[];
+    operation: string;
+}
+
 export default {
     invisibleSpace,
     humanizeDuration,

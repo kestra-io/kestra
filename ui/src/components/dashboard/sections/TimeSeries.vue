@@ -34,6 +34,7 @@
     import {defaultConfig, getConsistentHEXColor, chartClick, tooltip} from "../composables/charts.js";
     import {cssVariable, Utils} from "@kestra-io/ui-libs";
     import KestraUtils, {useTheme} from "../../../utils/utils";
+    import {FilterObject} from "../../../utils/filters";
 
     const route = useRoute();
     const router = useRouter();
@@ -41,7 +42,7 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({
         chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<string[]>, default: () => []},
+        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
         short: {type: Boolean, default: false},
     });

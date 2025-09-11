@@ -22,12 +22,13 @@
 
 
     import {customBarLegend} from "../composables/useLegend";
-    import {useTheme} from "../../../utils/utils.js";
+    import {useTheme} from "../../../utils/utils";
     import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts.js";
 
 
     import {useRoute, useRouter} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
+    import {FilterObject} from "../../../utils/filters";
 
     const router = useRouter();
 
@@ -36,7 +37,7 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({
         chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<string[]>, default: () => []},
+        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
         short: {type: Boolean, default: false},
     });

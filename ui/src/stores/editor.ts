@@ -1,7 +1,7 @@
 import {defineStore} from "pinia"
 import {trackFileOpen} from "../utils/tabTracking";
 import {ref} from "vue";
-import {useNamespacesStore} from "../override/stores/namespaces";
+import {useNamespacesStore} from "override/stores/namespaces";
 
 export interface EditorTabProps {
     name: string;

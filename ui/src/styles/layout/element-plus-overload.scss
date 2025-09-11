@@ -100,11 +100,11 @@
 
 .el-button--wrap {
   display: inline-block;
-  max-width: 100%;     
+  max-width: 100%;
   overflow: hidden;
-  
+
   > span {
-    display: inline-block;   
+    display: inline-block;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -692,6 +692,13 @@ form.ks-horizontal {
 .el-message-box {
     --el-messagebox-title-color: var(--ks-content-primary);
     border: 1px solid var(--ks-border-primary);
+    padding: 2rem;
+    max-width: initial;
+    width: 500px;
+
+    .custom-warning {
+        margin: 1rem 0;
+    }
 
     &.full-screen {
         max-width: 80%;

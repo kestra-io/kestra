@@ -548,7 +548,7 @@
                         }
                         break
                     case "theme":
-                        Utils.switchTheme(this.$store, this.pendingSettings[key]);
+                        Utils.switchTheme(this.miscStore, this.pendingSettings[key]);
                         localStorage.setItem(key, Utils.getTheme())
                         break
                     case "lang":
@@ -592,7 +592,7 @@
             },
             updateThemeBasedOnSystem() {
                 if (this.theme === "syncWithSystem") {
-                    Utils.switchTheme(this.$store, "syncWithSystem");
+                    Utils.switchTheme(this.miscStore, "syncWithSystem");
                 }
             },
         },

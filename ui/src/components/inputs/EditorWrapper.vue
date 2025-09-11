@@ -25,8 +25,8 @@
             <template #absolute>
                 <AITriggerButton
                     :show="isCurrentTabFlow"
-                    :opened="aiAgentOpened"
-                    @click="draftSource = undefined; aiAgentOpened = true"
+                    :opened="aiCopilotOpened"
+                    @click="draftSource = undefined; aiCopilotOpened = true"
                 />
                 <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
             </template>
@@ -35,13 +35,13 @@
             </template>
         </Editor>
         <Transition name="el-zoom-in-center">
-            <AiAgent
-                v-if="aiAgentOpened"
+            <AiCopilot
+                v-if="aiCopilotOpened"
                 class="position-absolute prompt"
-                @close="aiAgentOpened = false"
+                @close="aiCopilotOpened = false"
                 :flow="editorContent"
                 :conversationId="conversationId"
-                @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
+                @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
             />
         </Transition>
         <AcceptDecline
@@ -68,7 +68,7 @@
 
     import Editor from "./Editor.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import AiAgent from "../ai/AiAgent.vue";
+    import AiCopilot from "../ai/AiCopilot.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
@@ -88,10 +88,10 @@
             event.stopPropagation();
             event.stopImmediatePropagation();
             draftSource.value = undefined;
-            aiAgentOpened.value = !aiAgentOpened.value;
+            aiCopilotOpened.value = !aiCopilotOpened.value;
         }
     };
-    const aiAgentOpened = ref(false);
+    const aiCopilotOpened = ref(false);
     const draftSource = ref<string | undefined>(undefined);
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
@@ -289,7 +289,7 @@
 
     function declineDraft() {
         draftSource.value = undefined;
-        aiAgentOpened.value = true;
+        aiCopilotOpened.value = true;
     }
 
     const {

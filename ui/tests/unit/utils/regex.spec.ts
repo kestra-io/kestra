@@ -62,13 +62,13 @@ describe("Regex", () => {
     })
 
     it("capture string value", () => {
-        let stringMatcher = new RegExp(RegexProvider.captureStringValue).exec("'a'") ?? [];
+        let stringMatcher: RegExpExecArray | [] | null = new RegExp(RegexProvider.captureStringValue).exec("'a'") ?? [];
         expect([...stringMatcher]).toEqual(["'a'", "a"]);
 
         stringMatcher = new RegExp(RegexProvider.captureStringValue).exec("\"a\"") ?? [];
         expect([...stringMatcher]).toEqual(["\"a\"", "a"]);
 
-        stringMatcher = new RegExp(RegexProvider.captureStringValue).exec("a") ?? [];
+        stringMatcher = new RegExp(RegexProvider.captureStringValue).exec("a");
         expect(stringMatcher).toBeNull();
     })
 })

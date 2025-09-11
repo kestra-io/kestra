@@ -182,7 +182,7 @@ export const customBarLegend = defineChartPlugin<"bar">({
 
 const generateTotalsLegend = (isDuration: boolean) => (defineChartPlugin<"bar" | "pie" | "doughnut">({
     id: "totalsLegend",
-    afterUpdate(chart, args, options) {
+    afterUpdate(chart, _args, options) {
         const ul = getOrCreateLegendList(options.containerID, "column", "auto");
 
         while (ul.firstChild) {

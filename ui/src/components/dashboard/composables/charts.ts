@@ -207,7 +207,7 @@ export function backgroundFromState(state: string, alpha = 1) {
     return `rgba(${r},${g},${b},${alpha})`;
 }
 
-export function getConsistentHEXColor(theme: string, value: string) {
+export function getConsistentHEXColor(_theme: "light" | "dark", value: string) {
     // TODO: This was added as part of https://github.com/kestra-io/kestra/issues/10055
     // Idea is to separate the value to parts and only use the status
     // Needs to be made more generic and robust as part of the https://github.com/kestra-io/kestra/issues/9149#issuecomment-2969506266

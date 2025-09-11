@@ -1,5 +1,5 @@
 <template>
-    <Navbar :title="routeInfo.title">
+    <Navbar :title="routeInfoTitle">
         <template #additional-right v-if="miscStore.configs?.secretsEnabled">
             <ul>
                 <li>
@@ -83,7 +83,7 @@
     import Navbar from "../layout/TopNavBar.vue";
     import {useI18n} from "vue-i18n";
     import {computed, ref} from "vue";
-    import useRouteContext from "../../mixins/useRouteContext.js";
+    import useRouteContext from "../../composables/useRouteContext";
     import {useMiscStore} from "override/stores/misc.js";
     import sourceImg from "../../assets/demo/secrets.png";
     import DemoButtons from "../demo/DemoButtons.vue";
@@ -102,9 +102,9 @@
     const hasData = ref(undefined);
 
     const {t} = useI18n({useScope: "global"});
-    const routeInfo = computed(() => ({title: t("secret.names")}));
+    const routeInfoTitle = computed(() => t("secret.names"));
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfoTitle);
 </script>
 
 <style lang="scss" scoped>

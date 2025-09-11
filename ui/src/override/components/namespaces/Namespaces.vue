@@ -1,5 +1,5 @@
 <template>
-    <Navbar :title="details.title">
+    <Navbar :title="routeInfoTitle">
         <template #additional-right>
             <Action
                 v-if="canCreate"
@@ -67,7 +67,7 @@
     import {computed, onMounted, Ref, ref, watch} from "vue";
 
     import {useRoute} from "vue-router";
-    import useRouteContext from "../../../mixins/useRouteContext.ts";
+    import useRouteContext from "../../../composables/useRouteContext";
     import useNamespaces, {Namespace} from "../../../composables/useNamespaces";
     import {useI18n} from "vue-i18n";
     import {useMiscStore} from "override/stores/misc";
@@ -87,7 +87,7 @@
         id: string;
         label: string;
         description?: string;
-        disabled: boolean;
+        disabled?: boolean;
         children?: Node[];
         system?: boolean;
     }
@@ -96,8 +96,8 @@
 
     const {t} = useI18n({useScope: "global"});
 
-    const details = computed(() => ({title: t("namespaces")}));
-    useRouteContext(details);
+    const routeInfoTitle = computed(() => t("namespaces"));
+    useRouteContext(routeInfoTitle);
 
 
     const authStore = useAuthStore();

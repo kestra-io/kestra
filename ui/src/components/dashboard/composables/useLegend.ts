@@ -152,7 +152,7 @@ export const customBarLegend = defineChartPlugin<"bar">({
 
             const boxSpan = document.createElement("span");
             const color = item.strokeStyle === "transparent" ? getConsistentHEXColor(Utils.getTheme(), item.text) : item.strokeStyle;
-            boxSpan.style.background = color;
+            if(typeof color === "string") boxSpan.style.background = color;
             boxSpan.style.borderColor = "transparent";
             boxSpan.style.height = "5px";
             boxSpan.style.width = "5px";

@@ -234,7 +234,7 @@ export default class Utils {
         localStorage.setItem("theme", theme);
     }
 
-    static getTheme(): "light" | "dark" | undefined {
+    static getTheme(): "light" | "dark" {
         let theme = (localStorage.getItem("theme") as "syncWithSystem" | "dark" | "light" | null) ?? "light";
 
         if (theme === "syncWithSystem") {

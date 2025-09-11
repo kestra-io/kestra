@@ -173,7 +173,7 @@
             result.unshift({...systemItem, system: true});
         }
 
-        return result;
+        return [...result,...result,...result,...result];
     });
 
     const namespaceLabel = (path) => {

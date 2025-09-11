@@ -1345,6 +1345,10 @@
       "versionPlugin": {
         "title": "You have no versioned plugin yet!",
         "content": "Here you can manage all the plugins installed on your Kestra instance. Newly installed plugins may not be immediately available in all Kestra services, depending on the configuration of your instance."
+      },
+      "panels": {
+        "title": "No panels are currently open.",
+        "content": "Open one or more panels form the list above to display multiple features side by side."
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",
@@ -1352,7 +1356,8 @@
     "multi_panel_editor": {
       "move_right": "Move right",
       "move_left": "Move left",
-      "close_all_tabs": "Close all tabs"
+      "close_all_tabs": "Close all tabs",
+      "close_all_panels": "Close all panels"
     },
     "search_docs": "Search",
     "no_results_found": "No results found",

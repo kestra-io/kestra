@@ -20,4 +20,5 @@ export const images: Record<string, string> = {
     plugins,
     triggers,
     versionPlugin,
+    panels: triggers
 };

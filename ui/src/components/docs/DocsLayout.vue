@@ -14,7 +14,7 @@
                 <slot name="menu" />
             </div>
         </div>
-        <div class="container main-container mx-auto">
+        <div class="container main-container">
             <div class="content">
                 <slot name="content" />
             </div>
@@ -60,6 +60,10 @@
         > div > ul > li > span:first-child {
             font-size: 12px;
         }
+    }
+
+    .main-container {
+        max-width: 100%;
     }
 
     .content {

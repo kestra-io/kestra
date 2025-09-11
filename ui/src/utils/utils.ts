@@ -127,7 +127,7 @@ export default class Utils {
         return moment.duration(isoString).asMilliseconds() / 1000
     }
 
-    static humanDuration(value: string | number, options: humanizeDuration.HumanizerOptions) {
+    static humanDuration(value: string | number, options?: humanizeDuration.HumanizerOptions) {
         options = options || {maxDecimalPoints: 2};
         options.spacer = "";
         options.language = Utils.getLang();

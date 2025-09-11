@@ -152,7 +152,6 @@
 <script setup lang="ts">
     import {ref, computed, shallowRef, onMounted, watch} from "vue";
     import {ElTree} from "element-plus";
-    import {useStore} from "vuex";
     import {useExecutionsStore} from "../../../stores/executions";
     import {usePluginsStore} from "../../../stores/plugins";
 
@@ -166,8 +165,8 @@
     import SubFlowLink from "../../flows/SubFlowLink.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
+    import {useAxios} from "../../../utils/axios";
 
-    const store = useStore();
     const {t} = useI18n({useScope: "global"});
 
     const editorValue = ref<string>("");
@@ -176,12 +175,12 @@
     const debugExpression = ref<string>("");
 
     const computedDebugValue = computed(() => {
-        const formatTask = (task) => {
+        const formatTask = (task: string) => {
             if (!task) return "";
             return task.includes("-") ? `["${task}"]` : `.${task}`;
         };
 
-        const formatPath = (path) => {
+        const formatPath = (path: string) => {
             if (!path.includes("-")) return `.${path}`;
 
             const bracketIndex = path.indexOf("[");
@@ -210,13 +209,15 @@
         const taskRunList = [...execution.value?.taskRunList ?? []];
         return taskRunList.find((e) => e.taskId === filter);
     };
+
+    const axios = useAxios();
     const onDebugExpression = (expression: string) => {
         const taskRun = selectedTask();
 
         if (!taskRun) return;
 
         const URL = `${apiUrl()}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
-        store.$http
+        axios
             .post(URL, expression, {headers: {"Content-type": "text/plain"}})
             .then((response) => {
                 try {
@@ -290,7 +291,7 @@
         return {label: trim(data.value), regular: true};
     };
 
-    const expandedValue = ref([]);
+    const expandedValue = ref("");
     const selected = ref<string[]>([]);
 
     onMounted(() => {

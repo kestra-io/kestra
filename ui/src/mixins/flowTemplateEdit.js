@@ -165,13 +165,14 @@ export default {
                     .then(message => {
                         this.$toast()
                             .confirm(message, () => {
-                                // TODO: When flow store is migrated to Pinia, this will be simplified:
                                 const deletePromise = this.dataType === "template"
                                     ? this.templateStore.deleteTemplate(item)
-                                    : this.$store.dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item);
+                                    : this.dataType === "flow"
+                                        ? this.flowStore.deleteFlow(item)
+                                        : undefined;
 
                                 return deletePromise
-                                    .then(() => {
+                                    ?.then(() => {
                                         this.content = ""
                                         this.previousContent = ""
                                         return this.$router.push({
@@ -246,13 +247,14 @@ export default {
                     return;
                 }
                 this.previousContent = YAML_UTILS.stringify(this.item);
-                // TODO: When flow store is migrated to Pinia, this will be simplified:
                 const createPromise = this.dataType === "template"
                     ? this.templateStore.createTemplate({template: this.content})
-                    : this.$store.dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content});
+                    : this.dataType === "flow"
+                        ? this.flowStore.createFlow({flow: this.content})
+                        : undefined;
 
                 createPromise
-                    .then((data) => {
+                    ?.then((data) => {
                         this.previousContent = data.source ? data.source : YAML_UTILS.stringify(data);
                         this.content = data.source ? data.source : YAML_UTILS.stringify(data);
                         this.onChange();

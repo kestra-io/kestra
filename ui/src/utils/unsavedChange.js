@@ -2,7 +2,7 @@ import {useCoreStore} from "../stores/core";
 import {useEditorStore} from "../stores/editor";
 import {useFlowStore} from "../stores/flow";
 
-export default (app, store, router) => {
+export default (app, router) => {
     const confirmationMessage = app.config.globalProperties.$t("unsaved changed ?");
     const coreStore = useCoreStore();
     const editorStore = useEditorStore()

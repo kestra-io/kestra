@@ -51,8 +51,7 @@ public class PluginResolver {
                 final List<URL> resources = resolveUrlsForPluginPath(path);
                 plugins.add(new ExternalPlugin(
                     path.toUri().toURL(),
-                    resources.toArray(new URL[0]),
-                    computeJarCrc32(path)
+                    resources.toArray(new URL[0])
                 ));
             }
         } catch (final InvalidPathException | MalformedURLException e) {
@@ -124,33 +123,5 @@ public class PluginResolver {
 
         return urls;
     }
-    
-    
-    /**
-     * Compute a CRC32 of the JAR File without reading the whole file
-     *
-     * @param location of the JAR File.
-     * @return the CRC32 of {@code -1} if the checksum can't be computed.
-     */
-    private static long computeJarCrc32(final Path location) {
-        CRC32 crc = new CRC32();
-        try (JarFile jar = new JarFile(location.toFile(), false)) {
-            Enumeration<JarEntry> entries = jar.entries();
-            while (entries.hasMoreElements()) {
-                JarEntry entry = entries.nextElement();
-                crc.update(entry.getName().getBytes());
-                crc.update(longToBytes(entry.getSize()));
-                crc.update(longToBytes(entry.getCrc()));
-            }
-        } catch (Exception e) {
-            return -1;
-        }
-        return crc.getValue();
-    }
-    
-    private static byte[] longToBytes(long x) {
-        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-        buffer.putLong(x);
-        return buffer.array();
-    }
+
 }

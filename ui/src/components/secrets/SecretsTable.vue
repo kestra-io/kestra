@@ -319,7 +319,7 @@
             },
             async fetchSecrets() {
                 if (this.secretsIterator === undefined) {
-                    this.secretsIterator = this.namespace === undefined ? useAllSecrets(this.$store, this.authStore.user, 20) : useNamespaceSecrets(this.$store, this.namespace, 20, {
+                    this.secretsIterator = this.namespace === undefined ? useAllSecrets(this.authStore.user, 20) : useNamespaceSecrets(this.namespace, 20, {
                         sort: this.$route.query.sort || "key:asc",
                         ...(this.searchQuery === undefined ? {} : {filters: {
                             q: {

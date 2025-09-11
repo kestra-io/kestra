@@ -268,7 +268,7 @@
             box-shadow: none;
 
             &_active, body &_active:hover {
-                background-color: var(--ks-button-background-primary);
+                background-color: var(--ks-button-background-primary) !important;
                 color: var(--ks-button-content-primary);
                 font-weight: normal;
             }

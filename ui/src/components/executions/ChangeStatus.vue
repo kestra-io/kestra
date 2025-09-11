@@ -70,7 +70,7 @@
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
     import Status from "../../components/Status.vue";
-    import ExecutionUtils from "../../utils/executionUtils";
+    import * as ExecutionUtils from "../../utils/executionUtils";
     import {shallowRef} from "vue";
     import {useAuthStore} from "override/stores/auth"
 
@@ -109,7 +109,7 @@
                     })
                     .then(response => {
                         if (response.data.id === this.execution.id) {
-                            return ExecutionUtils.waitForState(this.$http, this.$store, response.data);
+                            return ExecutionUtils.waitForState(this.$http, response.data);
                         } else {
                             return response.data;
                         }

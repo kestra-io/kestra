@@ -21,9 +21,21 @@ export interface Tab {
     props?: Record<string, any>;
 }
 
+export interface Breadcrumb {
+    label: string;
+    link?: {
+        name?: string,
+        params?: {
+            id: string,
+            tab: string,
+        }
+    },
+    disabled?: boolean;
+}
+
 interface Details {
     title: string;
-    breadcrumb: Record<string, any>[];
+    breadcrumb: Breadcrumb[];
 }
 
 export const ORDER = [
@@ -53,7 +65,7 @@ export function useHelpers() {
         title: parts.value.at(-1) || t("namespaces"),
         breadcrumb: [
             {label: t("namespaces"), link: {name: "namespaces/list"}},
-            ...parts.value.map((_: string, index: number) => ({
+            ...parts.value.map((_: string, index: number): Breadcrumb => ({
                 label: parts.value[index],
                 link: {
                     name: "namespaces/update",
@@ -64,7 +76,7 @@ export function useHelpers() {
                 },
                 disabled: index === parts.value.length - 1,
             })),
-        ],
+        ] ,
     }));
 
     const tabs: Tab[] = [

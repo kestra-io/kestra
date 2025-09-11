@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar v-if="topbar" :title="routeInfo.title">
+    <TopNavBar v-if="topbar" :title="routeInfoTitle">
         <template #additional-right>
             <ul>
                 <li>
@@ -63,9 +63,8 @@
     import Play from "vue-material-design-icons/Play.vue";
     import OnboardingBottom from "override/components/OnboardingBottom.vue";
     import kestraWelcome from "../../assets/onboarding/kestra_welcome.svg";
-    // @ts-expect-error - Component not typed
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import useRouteContext from "../../mixins/useRouteContext";
+    import useRouteContext from "../../composables/useRouteContext";
     import useRestoreUrl from "../../composables/useRestoreUrl";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -81,9 +80,7 @@
         return (localStorage.getItem("theme") || "light") === "light" ? kestraWelcome : kestraWelcome;
     });
 
-    const routeInfo = computed(() => ({
-        title: t("welcome_page.welcome")
-    }));
+    const routeInfoTitle = computed(() =>  t("welcome_page.welcome"))
 
     const authStore = useAuthStore();
 
@@ -91,7 +88,7 @@
         return authStore.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
     });
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfoTitle);
     useRestoreUrl();
 
     const startTour = () => {

@@ -1,6 +1,6 @@
 <template>
     <TopNavBar
-        :title="routeInfo.title"
+        :title="routeInfoTitle"
         :breadcrumb="[{label: t('dashboards.labels.singular'), link: {}}]"
         :description="props.dashboard?.description"
     >
@@ -51,8 +51,8 @@
     const user = computed(() => authStore.user);
     const isAllowed = computed(() => user.value.isAllowedGlobal(permission.FLOW, action.CREATE));
 
-    const routeInfo = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
+    const routeInfoTitle = computed(() => props.dashboard?.title ?? t("overview"));
 
-    import useRouteContext from "../../../mixins/useRouteContext";
-    useRouteContext(routeInfo);
+    import useRouteContext from "../../../composables/useRouteContext";
+    useRouteContext(routeInfoTitle);
 </script>

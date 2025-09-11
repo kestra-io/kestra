@@ -84,8 +84,8 @@
         breadcrumb: [{label: t("dashboards.creation.label"), link: {}}],
     }));
 
-    const context = ref({title: t("dashboards.creation.label")});
+    const routeInfoTitle = computed(() =>  t("dashboards.creation.label"));
 
-    import useRouteContext from "../../../mixins/useRouteContext";
-    useRouteContext(context);
+    import useRouteContext from "../../../composables/useRouteContext";
+    useRouteContext(routeInfoTitle);
 </script>

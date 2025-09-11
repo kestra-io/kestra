@@ -28,35 +28,17 @@
     </el-table>
 </template>
 
-<script>
+<script setup lang="ts">
+    import {defineProps, defineEmits} from "vue";
     import VarValue from "../executions/VarValue.vue";
     import Markdown from "../layout/Markdown.vue";
     import Cron from "../layout/Cron.vue";
 
-    export default {
-        emits: ["on-copy"],
-        components: {
-            VarValue,
-            Markdown,
-            Cron
-        },
-        props: {
-            data: {
-                type: Object,
-                required: true
-            },
-            execution: {
-                type: Object,
-                required: false,
-                default: undefined
-            }
-        },
-        methods: {
-            emit(type, event) {
-                this.$emit(type, event);
-            }
-        }
-    };
+    defineProps<{
+        data: Record<string, any>;
+        execution?: Record<string, any>;
+    }>();
+    const emit = defineEmits<{ (e: "on-copy", event: any): void }>();
 </script>
 
 <style lang="scss" scoped>

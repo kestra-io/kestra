@@ -38,6 +38,9 @@
     });
 
     onMounted(() => {
+        const main = document.querySelector("main");
+        if(main) main.scrollTop = 0;
+
         if (namespace.value) {
             namespacesStore.load(namespace.value);
         }

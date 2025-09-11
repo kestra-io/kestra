@@ -1,4 +1,5 @@
 import {ref} from "vue";
+import {useRouter} from "vue-router";
 import {apiUrl, apiUrlWithTenant} from "override/utils/route";
 import Utils from "../utils/utils";
 import {useAxios} from "../utils/axios";
@@ -26,9 +27,10 @@ export function useBaseNamespacesStore() {
     const existing = ref(true);
 
     const axios = useAxios();
+    const router = useRouter();
 
     async function loadAutocomplete(this: any, options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
-        const response = await axios.post(`${apiUrlWithTenant(this.$router.currentRoute)}/namespaces/autocomplete`, options ?? {});
+        const response = await axios.post(`${apiUrlWithTenant(router.currentRoute.value)}/namespaces/autocomplete`, options ?? {});
         autocomplete.value = response.data;
         return response.data;
     }

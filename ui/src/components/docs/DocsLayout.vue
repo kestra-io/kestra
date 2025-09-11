@@ -14,7 +14,7 @@
                 <slot name="menu" />
             </div>
         </div>
-        <div class="container main-container">
+        <div class="container main-container mx-auto">
             <div class="content">
                 <slot name="content" />
             </div>

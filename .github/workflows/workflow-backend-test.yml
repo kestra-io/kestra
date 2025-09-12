@@ -57,9 +57,10 @@ jobs:
         run: |
           echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
-          ./gradlew core:check --parallel --tests=io.kestra.core.validations.ScheduleValidationTest
+          ./gradlew core:test --parallel --tests=io.kestra.core.validations.ScheduleValidationTest
 
       - name: new PR test report
+        if: always()
         run: |
           echo $(pwd)
           export KESTRA_PWD=$(pwd) && sh -c 'cd dev-tools/kestra-devtools && npm ci && npm run build && node dist/kestra-devtools-cli.cjs generateTestReportSummary $KESTRA_PWD' > report.md

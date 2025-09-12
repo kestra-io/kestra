@@ -4,6 +4,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.*;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -84,8 +85,9 @@ class URIFetcherTest {
 
     @Test
     void shouldFetchFromNsfile() throws IOException {
-        URI uri = createNsFile(false);
-        RunContext runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", "namespace")));
+        String namespace = IdUtils.create();
+        URI uri = createNsFile(namespace, false);
+        RunContext runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", namespace)));
 
         try (var fetch = URIFetcher.of(uri).fetch(runContext)) {
             String fetchedContent = new String(fetch.readAllBytes());
@@ -95,7 +97,8 @@ class URIFetcherTest {
 
     @Test
     void shouldFetchFromNsfileFromOtherNs() throws IOException {
-        URI uri = createNsFile(true);
+        String namespace = IdUtils.create();
+        URI uri = createNsFile(namespace, true);
         RunContext runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", "other")));
 
         try (var fetch = URIFetcher.of(uri).fetch(runContext)) {
@@ -139,8 +142,7 @@ class URIFetcherTest {
         );
     }
 
-    private URI createNsFile(boolean nsInAuthority) throws IOException {
-        String namespace = "namespace";
+    private URI createNsFile(String namespace, boolean nsInAuthority) throws IOException {
         String filePath = "file.txt";
         storage.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
         storage.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));

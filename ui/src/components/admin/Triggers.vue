@@ -128,12 +128,22 @@
                                 />
                             </template>
                         </el-table-column>
-                        <el-table-column v-if="visibleColumns.date" :label="$t('date')">
+                        <el-table-column v-if="visibleColumns.date">
+                            <template #header>
+                                <el-tooltip :content="$t('last trigger date tooltip')" placement="top" popperClass="wide-tooltip">
+                                    <span>{{ $t('last trigger date') }}</span>
+                                </el-tooltip>
+                            </template>
                             <template #default="scope">
                                 <DateAgo :inverted="true" :date="scope.row.date" />
                             </template>
                         </el-table-column>
-                        <el-table-column v-if="visibleColumns.updatedDate" :label="$t('updated date')">
+                        <el-table-column v-if="visibleColumns.updatedDate">
+                            <template #header>
+                                <el-tooltip :content="$t('context updated date tooltip')" placement="top" popperClass="wide-tooltip">
+                                    <span>{{ $t('context updated date') }}</span>
+                                </el-tooltip>
+                            </template>
                             <template #default="scope">
                                 <DateAgo :inverted="true" :date="scope.row.updatedDate" />
                             </template>
@@ -143,8 +153,12 @@
                             prop="nextExecutionDate"
                             sortable="custom"
                             :sortOrders="['ascending', 'descending']"
-                            :label="$t('next execution date')"
                         >
+                            <template #header>
+                                <el-tooltip :content="$t('next evaluation date tooltip')" placement="top" popperClass="wide-tooltip">
+                                    <span>{{ $t('next evaluation date') }}</span>
+                                </el-tooltip>
+                            </template>
                             <template #default="scope">
                                 <DateAgo :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
@@ -528,16 +542,16 @@
             },
             visibleColumns() {
                 const columns = [
-                    {prop: "triggerId", label: this.$t("id")},
-                    {prop: "flowId", label: this.$t("flow")},
-                    {prop: "namespace", label: this.$t("namespace")},
-                    {prop: "executionId", label: this.$t("current execution")},
-                    {prop: "executionCurrentState", label: this.$t("state")},
-                    {prop: "workerId", label: this.$t("workerId")},
-                    {prop: "date", label: this.$t("date")},
-                    {prop: "updatedDate", label: this.$t("updated date")},
-                    {prop: "nextExecutionDate", label: this.$t("next execution date")},
-                    {prop: "evaluateRunningDate", label: this.$t("evaluation lock date")},
+                    {prop: "triggerId"},
+                    {prop: "flowId"},
+                    {prop: "namespace"},
+                    {prop: "executionId"},
+                    {prop: "executionCurrentState"},
+                    {prop: "workerId"},
+                    {prop: "date"},
+                    {prop: "updatedDate"},
+                    {prop: "nextExecutionDate"},
+                    {prop: "evaluateRunningDate"},
                 ];
 
                 return columns.reduce((acc, column) => {
@@ -545,9 +559,6 @@
                     return acc;
                 }, {});
             },
-            triggerStore() {
-                return useTriggerStore();
-            }
         }
     };
 </script>
@@ -599,4 +610,12 @@
             color: var(--ks-content-link);
         }
     }
+</style>
+<style lang="scss">
+.wide-tooltip {
+    max-width: 400px;
+    white-space: normal;
+    word-break: break-word;
+    color: var(--ks-content-primary) !important;
+}
 </style>

@@ -81,7 +81,7 @@
 </script>
 
 <style scoped lang="scss">
-@import "../../styles/code.scss";
+@import "../../../styles/code.scss";
 @import "@kestra-io/ui-libs/src/scss/_color-palette";
 
 .element {

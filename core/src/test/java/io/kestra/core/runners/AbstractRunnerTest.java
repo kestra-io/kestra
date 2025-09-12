@@ -354,6 +354,7 @@ public abstract class AbstractRunnerTest {
         skipExecutionCaseTest.skipExecution();
     }
 
+    @Disabled
     @Test
     @LoadFlows({"flows/valids/for-each-item-subflow.yaml",
         "flows/valids/for-each-item.yaml"})

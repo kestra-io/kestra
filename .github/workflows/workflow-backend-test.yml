@@ -61,7 +61,7 @@ jobs:
           ./gradlew check javadoc --parallel
 
       - name: comment PR with test report
-        if: always()
+        if: always() && github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
         run: |

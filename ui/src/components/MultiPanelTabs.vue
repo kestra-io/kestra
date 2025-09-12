@@ -100,7 +100,7 @@
                                             {{ t("multi_panel_editor.move_left") }}
                                         </span>
                                     </el-dropdown-item>
-                                    <el-dropdown-item :icon="Close" @click="closeAllTabs(panelIndex)">
+                                    <el-dropdown-item v-if="panel.tabs.length > 1" :icon="Close" @click="closeAllTabs(panelIndex)">
                                         <span class="small-text">
                                             {{ t("multi_panel_editor.close_all_tabs") }}
                                         </span>

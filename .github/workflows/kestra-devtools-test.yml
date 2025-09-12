@@ -29,6 +29,10 @@ jobs:
 #            ui/node_modules
 #          key: modules-${{ hashFiles('ui/package-lock.json') }}
 
+      - name: Npm - install
+#        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+
       - name: Run tests
         run: npm run test
 

@@ -104,7 +104,7 @@ public class InputsTest {
             Execution.builder()
                 .id("test")
                 .namespace(flow.getNamespace())
-                .tenantId(MAIN_TENANT)
+                .tenantId(flow.getTenantId())
                 .flowRevision(1)
                 .flowId(flow.getId())
                 .build(),
@@ -147,7 +147,7 @@ public class InputsTest {
         assertThat(typeds.get("time")).isEqualTo(LocalTime.parse("18:27:49"));
         assertThat(typeds.get("duration")).isEqualTo(Duration.parse("PT5M6S"));
         assertThat((URI) typeds.get("file")).isEqualTo(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application-test.yml"));
-        assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, (URI) typeds.get("file"))))).isEqualTo(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))));
+        assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get("tenant1", null, (URI) typeds.get("file"))))).isEqualTo(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))));
         assertThat(typeds.get("json")).isEqualTo(Map.of("a", "b"));
         assertThat(typeds.get("uri")).isEqualTo("https://www.google.com");
         assertThat(((Map<String, Object>) typeds.get("nested")).get("string")).isEqualTo("a string");

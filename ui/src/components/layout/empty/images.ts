@@ -20,5 +20,5 @@ export const images: Record<string, string> = {
     plugins,
     triggers,
     versionPlugin,
-    panels: triggers
+    panels: triggers // TODO: Replace once https://github.com/kestra-io/kestra/issues/11244 is done
 };

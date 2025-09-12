@@ -19,16 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      #      - name: Cache Node Modules TODO ?
-#        id: cache-node-modules
-#        uses: actions/cache@v4
-#        with:
-#          path: |
-#            ui/node_modules
-#          key: modules-${{ hashFiles('ui/package-lock.json') }}
-
       - name: Npm - install
-#        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         working-directory: 'dev-tools/kestra-devtools'
         run: npm ci
 

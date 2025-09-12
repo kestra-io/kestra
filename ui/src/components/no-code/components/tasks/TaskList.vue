@@ -43,9 +43,11 @@
         !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     );
 
-    function removeItem(yaml: string, index: number){
-        flowStore.flowYaml = yaml;
-
+    function removeItem(_yaml: string, index: number){
+        if(items.value.length <= 1){
+            emits("update:modelValue", undefined);
+            return
+        }
         let localItems = [...items.value]
         localItems.splice(index, 1)
 

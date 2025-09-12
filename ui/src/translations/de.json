@@ -463,6 +463,9 @@
           "title": "Derzeit gibt es keine Abhängigkeiten."
         }
       },
+      "panels": {
+        "content": "Öffnen Sie Flow Code oder No-Code, um mit der Bearbeitung Ihrer flows zu beginnen, oder wählen Sie ein anderes Panel (Topologie, Dokumentation, Dateien, Blueprints, Namespace Context) für verwandte Funktionen aus."
+      },
       "plugins": {
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
         "title": "Für diesen Namespace sind keine Plugin-Standardeinstellungen festgelegt."

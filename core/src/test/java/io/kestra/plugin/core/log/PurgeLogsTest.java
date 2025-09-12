@@ -10,6 +10,7 @@ import jakarta.inject.Inject;
 import java.time.temporal.ChronoUnit;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -51,7 +52,7 @@ class PurgeLogsTest {
         assertThat((int) execution.getTaskRunList().getFirst().getOutputs().get("count")).isPositive();
     }
 
-
+    @org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
     @ParameterizedTest
     @MethodSource("buildArguments")
     @LoadFlows("flows/valids/purge_logs_full_arguments.yaml")

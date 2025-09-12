@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 @KestraTest(startRunner = true)
 class StateTest {
 
+    public static final String FLOW_ID = "state";
+    public static final String NAMESPACE = "io.kestra.tests";
     @Inject
     private RunnerUtils runnerUtils;
 
@@ -30,17 +32,20 @@ class StateTest {
     void set() throws TimeoutException, QueueException {
         String stateName = IdUtils.create();
 
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, NAMESPACE,
+            FLOW_ID,  null, (f, e) -> ImmutableMap.of(FLOW_ID, stateName));
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(((Map<String, Integer>) execution.findTaskRunsByTaskId("createGet").getFirst().getOutputs().get("data")).get("value")).isEqualTo(1);
 
-        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
+        execution = runnerUtils.runOne(MAIN_TENANT, NAMESPACE,
+            FLOW_ID,  null, (f, e) -> ImmutableMap.of(FLOW_ID, stateName));
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(((Map<String, Object>) execution.findTaskRunsByTaskId("updateGet").getFirst().getOutputs().get("data")).get("value")).isEqualTo("2");
 
-        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
+        execution = runnerUtils.runOne(MAIN_TENANT, NAMESPACE,
+            FLOW_ID,  null, (f, e) -> ImmutableMap.of(FLOW_ID, stateName));
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat((Integer) execution.findTaskRunsByTaskId("deleteGet").getFirst().getOutputs().get("count")).isZero();
@@ -48,11 +53,12 @@ class StateTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @LoadFlows({"flows/valids/state.yaml"})
+    @LoadFlows(value = {"flows/valids/state.yaml"}, tenantId = "tenant1")
     void each() throws TimeoutException, InternalException, QueueException {
 
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", "each"));
-        assertThat(execution.getTaskRunList()).hasSize(17);
+        Execution execution = runnerUtils.runOne("tenant1", NAMESPACE,
+            FLOW_ID,  null, (f, e) -> ImmutableMap.of(FLOW_ID, "each"));
+        assertThat(execution.getTaskRunList()).hasSize(19);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(((Map<String, String>) execution.findTaskRunByTaskIdAndValue("regetEach1", List.of("b")).getOutputs().get("data")).get("value")).isEqualTo("null-b");
         assertThat(((Map<String, String>) execution.findTaskRunByTaskIdAndValue("regetEach2", List.of("b")).getOutputs().get("data")).get("value")).isEqualTo("null-a-b");

@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -25,6 +27,7 @@ import static org.junit.Assert.assertThrows;
 
 @KestraTest
 @WireMockTest(httpPort = 28182)
+@Execution(ExecutionMode.SAME_THREAD)
 class HttpFunctionTest {
     @Inject
     private VariableRenderer variableRenderer;

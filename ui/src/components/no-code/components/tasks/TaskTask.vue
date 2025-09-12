@@ -22,7 +22,7 @@
         CREATING_TASK_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY
     } from "../../injectionKeys";
-    import Element from "../collapse/Element.vue";
+    import Element from "./taskList/Element.vue";
 
     const model = defineModel({
         type: Object,

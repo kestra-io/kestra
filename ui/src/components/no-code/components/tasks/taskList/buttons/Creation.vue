@@ -8,8 +8,8 @@
     import {inject} from "vue";
     import {
         CREATE_TASK_FUNCTION_INJECTION_KEY,
-    } from "../../../injectionKeys";
-    import {Plus} from "../../../utils/icons";
+    } from "../../../../injectionKeys";
+    import {Plus} from "../../../../utils/icons";
 
 
     import {useI18n} from "vue-i18n";

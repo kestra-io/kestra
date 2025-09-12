@@ -738,7 +738,7 @@
             if (editorRef.value) {
                 localEditor.value = monaco.editor.create(editorRef.value, options);
                 let localBackspaceTimeout: number | null = null;
-
+                
                 localEditor.value.onKeyDown((e) => {
                     if (e.keyCode === monaco.KeyCode.Backspace) {
                         if (localBackspaceTimeout) clearTimeout(localBackspaceTimeout);

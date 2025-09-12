@@ -98,9 +98,9 @@ public class PauseTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause_on_resume.yaml"})
+    @LoadFlows(value = {"flows/valids/pause_on_resume.yaml"}, tenantId = "tenant1")
     void runOnResumeMissingInputs() throws Exception {
-        suite.runOnResumeMissingInputs(runnerUtils);
+        suite.runOnResumeMissingInputs("tenant1", runnerUtils);
     }
 
     @Test
@@ -110,27 +110,27 @@ public class PauseTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-behavior.yaml"})
+    @LoadFlows(value = {"flows/valids/pause-behavior.yaml"}, tenantId = "resume")
     void runDurationWithCONTINUEBehavior() throws Exception {
-        suite.runDurationWithBehavior(runnerUtils, Pause.Behavior.RESUME);
+        suite.runDurationWithBehavior("resume", runnerUtils, Pause.Behavior.RESUME);
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-behavior.yaml"})
+    @LoadFlows(value = {"flows/valids/pause-behavior.yaml"}, tenantId = "fail")
     void runDurationWithFAILBehavior() throws Exception {
-        suite.runDurationWithBehavior(runnerUtils, Pause.Behavior.FAIL);
+        suite.runDurationWithBehavior("fail", runnerUtils, Pause.Behavior.FAIL);
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-behavior.yaml"})
+    @LoadFlows(value = {"flows/valids/pause-behavior.yaml"}, tenantId = "warn")
     void runDurationWithWARNBehavior() throws Exception {
-        suite.runDurationWithBehavior(runnerUtils, Pause.Behavior.WARN);
+        suite.runDurationWithBehavior("warn", runnerUtils, Pause.Behavior.WARN);
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-behavior.yaml"})
+    @LoadFlows(value = {"flows/valids/pause-behavior.yaml"}, tenantId = "cancel")
     void runDurationWithCANCELBehavior() throws Exception {
-        suite.runDurationWithBehavior(runnerUtils, Pause.Behavior.CANCEL);
+        suite.runDurationWithBehavior("cancel", runnerUtils, Pause.Behavior.CANCEL);
     }
 
     @Test
@@ -329,8 +329,8 @@ public class PauseTest {
             assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, URI.create((String) outputs.get("data")))))).isEqualTo(executionId);
         }
 
-        public void runOnResumeMissingInputs(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause_on_resume", null, null, Duration.ofSeconds(30));
+        public void runOnResumeMissingInputs(String tenantId, RunnerUtils runnerUtils) throws Exception {
+            Execution execution = runnerUtils.runOneUntilPaused(tenantId, "io.kestra.tests", "pause_on_resume", null, null, Duration.ofSeconds(30));
             Flow flow = flowRepository.findByExecution(execution);
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
@@ -365,8 +365,8 @@ public class PauseTest {
             assertThat(outputs.get("asked")).isEqualTo("MISSING");
         }
 
-        public void runDurationWithBehavior(RunnerUtils runnerUtils, Pause.Behavior behavior) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-behavior", null, (unused, _unused) -> Map.of("behavior", behavior), Duration.ofSeconds(30));
+        public void runDurationWithBehavior(String tenantId, RunnerUtils runnerUtils, Pause.Behavior behavior) throws Exception {
+            Execution execution = runnerUtils.runOneUntilPaused(tenantId, "io.kestra.tests", "pause-behavior", null, (unused, _unused) -> Map.of("behavior", behavior), Duration.ofSeconds(30));
             String executionId = execution.getId();
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);

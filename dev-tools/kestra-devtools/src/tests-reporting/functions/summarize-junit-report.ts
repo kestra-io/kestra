@@ -57,6 +57,11 @@ export function summarizeJunitReport(
         }
     }
     let markdownContent = "## Tests report quick summary:";
+    const totalTests = testReports.map(r => r.projectReport.tests).reduce((a,b) => a+b);
+    const totalSuccess = testReports.map(r => r.projectReport.success).reduce((a,b) => a+b);
+    const totalSkipped = testReports.map(r => r.projectReport.skipped).reduce((a,b) => a+b);
+    const totalErrors = testReports.map(r => r.projectReport.failures + r.projectReport.errors).reduce((a,b) => a+b);
+    markdownContent = markdownContent + `\ntotals > tests: ${totalTests}, success: ${totalSuccess}, skipped: ${totalSkipped}, failed: ${totalErrors}\n`;
     markdownContent =
         markdownContent +
         `\n| Project | Status | Success | Skipped | Failed |\n|---|---|---|---|---|`;

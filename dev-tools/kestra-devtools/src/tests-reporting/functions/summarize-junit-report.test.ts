@@ -42,7 +42,6 @@ describe("summarize-junit-report test", () => {
 
         expect(res.hasErrors).equal(false);
         expect(res.markdownContent).contains("java-module-1");
-        expect((res.markdownContent.match(/java-module-1/g) || []).length).toBe(2);// should appear twice
         expect(res.markdownContent).contains("sundayDayOfTheWeekAlias()");
         expect(res.markdownContent).contains("io.kestra.core.some.Test");
     });
@@ -124,15 +123,35 @@ describe("summarize-junit-report test", () => {
         expect(res.markdownContent).contains("this is the error logs details");
     });
 
+
     it("summarizeJunitReport should merge module reports", async () => {
+        // given 1 report the module name should appear twice
+        const res1 = summarizeJunitReport(testReportWithFailedTests, { onlyErrors: true });
+
+        expect(res1.hasErrors).equal(true);
+        expect(res1.markdownContent).contain("java-module-1");
+        expect((res1.markdownContent.match(/java-module-1/g) || []).length).toBe(2);
+
         // given 2 reports for the same module, but for different tests
+        const reports = [...testReportsWithGreenTests, ...testReportWithFailedTests]
+        const res2 = summarizeJunitReport(reports, { onlyErrors: true });
+
+        expect(res2.hasErrors).equal(true);
+        expect(res2.markdownContent).contain("java-module-1");
+
+        // it should not be duplicated
+        expect((res2.markdownContent.match(/java-module-1/g) || []).length).toBe(2);
+    });
+
+    it("summarizeJunitReport should print totals", async () => {
+        // given 2 reports
         const reports = [...testReportsWithGreenTests, ...testReportWithFailedTests]
         const res = summarizeJunitReport(reports, { onlyErrors: true });
 
-        expect(res.hasErrors).equal(true);
-        expect(res.markdownContent).contain("java-module-1");
-
-        // it should not be duplicated
-        expect((res.markdownContent.match(/java-module-1/g) || []).length).toBe(2);
+        // it should contains added/merged totals
+        expect(res.markdownContent).contain("tests: 3");
+        expect(res.markdownContent).contain("failed: 1");
+        expect(res.markdownContent).contain("success: 2");
+        expect(res.markdownContent).contain("skipped: 0");
     });
 });

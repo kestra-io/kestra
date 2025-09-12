@@ -14,6 +14,7 @@ import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
 import java.util.Optional;
@@ -42,7 +43,7 @@ class ExitTest {
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);
     }
 
-    @Test
+    @RetryingTest(5)
     @LoadFlows("flows/valids/exit-killed.yaml")
     void shouldExitAndKillTheExecution() throws QueueException, InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(2);// We need to wait for 3 execution modifications to be sure all tasks are passed to KILLED

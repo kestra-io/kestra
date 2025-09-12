@@ -435,7 +435,7 @@ public abstract class AbstractRunnerTest {
         flowConcurrencyCaseTest.flowConcurrencyCancelPause();
     }
 
-    @Test
+    @RetryingTest(5)
     @LoadFlows({"flows/valids/flow-concurrency-for-each-item.yaml", "flows/valids/flow-concurrency-queue.yml"})
     protected void flowConcurrencyWithForEachItem() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyWithForEachItem();

@@ -4,6 +4,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -23,6 +24,7 @@ import jakarta.inject.Named;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -213,6 +215,15 @@ public abstract class AbstractRunnerTest {
         flowTriggerCaseTest.triggerWithPause();
     }
 
+    @FlakyTest
+    @Disabled
+    @Test
+    @LoadFlows({"flows/valids/trigger-flow-listener-with-concurrency-limit.yaml",
+        "flows/valids/trigger-flow-with-concurrency-limit.yaml"})
+    void flowTriggerWithConcurrencyLimit() throws Exception {
+        flowTriggerCaseTest.triggerWithConcurrencyLimit();
+    }
+
     @Test
     @LoadFlows({"flows/valids/trigger-multiplecondition-listener.yaml",
         "flows/valids/trigger-multiplecondition-flow-a.yaml",
@@ -312,7 +323,7 @@ public abstract class AbstractRunnerTest {
     }
 
     @RetryingTest(5) // flaky on MySQL
-    @LoadFlows({"flows/valids/pause.yaml"})
+    @LoadFlows({"flows/valids/pause-test.yaml"})
     public void pauseRun() throws Exception {
         pauseTest.run(runnerUtils);
     }
@@ -531,7 +542,7 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/sla-parent-flow.yaml", "flows/valids/sla-subflow.yaml"})
-    void executionConditionSLAShouldLaslaViolationOnSubflowMayEndTheParentFlowbel() throws Exception {
+    void slaViolationOnSubflowMayEndTheParentFlow() throws Exception {
         slaTestCase.slaViolationOnSubflowMayEndTheParentFlow();
     }
 

@@ -3,15 +3,16 @@
         class="fit-text"
         v-model="modelValue"
         :multiple
-        collapse-tags
+        collapseTags
         :disabled="readOnly"
         :clearable="clearable"
-        :allow-create="taggable"
+        :allowCreate="taggable"
         filterable
         remote
-        remote-show-suffix
-        :remote-method="onSearch"
+        remoteShowSuffix
+        :remoteMethod="onSearch"
         :placeholder="t('namespaces')"
+        :suffixIcon="readOnly ? Lock : undefined"
     >
         <template #tag>
             <el-tag
@@ -21,7 +22,7 @@
                 closable
                 @close="modelValue = (modelValue as string[]).filter(v => v !== value)"
             >
-                <dots-square class="tag-icon" />
+                <DotsSquare class="tag-icon" />
                 {{ value }}
             </el-tag>
         </template>
@@ -39,6 +40,7 @@
     import {useI18n} from "vue-i18n"
     import {useNamespacesStore} from "override/stores/namespaces"
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue"
+    import Lock from "vue-material-design-icons/Lock.vue";
     import {storageKeys} from "../../../utils/constants";
 
     const {t} = useI18n();

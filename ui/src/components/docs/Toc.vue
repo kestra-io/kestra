@@ -3,12 +3,12 @@
         ref="search"
         class="flex-shrink-0"
         v-model="query"
-        :fetch-suggestions="search"
-        popper-class="doc-toc-search-popper"
+        :fetchSuggestions="search"
+        popperClass="doc-toc-search-popper"
         :placeholder="$t('search')"
     >
         <template #prefix>
-            <magnify />
+            <Magnify />
         </template>
         <template #default="{item}">
             <router-link
@@ -16,7 +16,7 @@
                 class="d-flex gap-2"
             >
                 {{ item.title }}
-                <arrow-right class="is-justify-end" />
+                <ArrowRight class="is-justify-end" />
             </router-link>
         </template>
     </el-autocomplete>
@@ -25,7 +25,7 @@
             <span class="text-secondary">
                 {{ sectionName.toUpperCase() }}
             </span>
-            <recursive-toc :parent="{children}" />
+            <RecursiveToc :parent="{children}" />
         </li>
     </ul>
 </template>

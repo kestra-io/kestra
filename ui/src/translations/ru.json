@@ -48,6 +48,10 @@
     "aggregation": "Агрегация",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "Примечание: В настоящее время поддерживается только Gemini в качестве AI-провайдера.\n\nПерезапустите ваш Kestra instance после сохранения конфигурации.",
+          "header": "<b>AI Copilot еще не настроен.</b>\n\nЧтобы включить AI Copilot, добавьте следующий фрагмент в файл конфигурации вашего экземпляра Kestra (например, <code>application.yml</code>), заменив <code>geminiApiKey</code> на ваш фактический ключ:"
+        },
         "generating": "Генерация YAML для flow...",
         "prompt_placeholder": "Введите инструкции для создания вашего Kestra flow. Пример запроса: Создайте flow, который запускается каждый понедельник в 9 утра.",
         "title": "AI Агент"
@@ -171,12 +175,12 @@
     "confirm password": "Подтвердить пароль",
     "confirmation": "Подтверждение",
     "contextBar": {
-      "demo": "Получить демонстрацию",
+      "demo": "Демо",
       "docs": "Документация",
       "help": "Помощь",
-      "issue": "Открыть Issue",
+      "issue": "Проблема",
       "news": "Новости",
-      "star": "Отметить репозиторий звёздочкой"
+      "star": "Добавьте нас в избранное"
     },
     "continue backfill": "Продолжить заполнение",
     "continue backfills": "Продолжить заполнения",
@@ -213,6 +217,7 @@
       "edition": {
         "chart": "Редактировать этот график",
         "confirmation": "Изменения в панели <code>{title}</code> сохранены.",
+        "id readonly": "Свойство `id` не может быть изменено — оно установлено на начальные значения. Если вы хотите его изменить, вы можете создать новую панель и удалить старую.",
         "label": "Редактировать Dashboard"
       },
       "empty": "Нет результатов для отображения.",
@@ -443,8 +448,18 @@
         "title": "Для этого flow не установлены ограничения."
       },
       "dependencies": {
-        "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации.",
-        "title": "Для этого flow зависимости не установлены."
+        "EXECUTION": {
+          "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">зависимостях выполнения</a> в нашей документации.",
+          "title": "В настоящее время зависимости отсутствуют."
+        },
+        "FLOW": {
+          "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации.",
+          "title": "В настоящее время зависимости отсутствуют."
+        },
+        "NAMESPACE": {
+          "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> в нашей документации.",
+          "title": "В настоящее время зависимости отсутствуют."
+        }
       },
       "plugins": {
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> в нашей документации.",
@@ -457,6 +472,10 @@
       "triggers": {
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> в нашей документации.",
         "title": "Ваш flow не имеет никаких Triggers."
+      },
+      "versionPlugin": {
+        "content": "Здесь вы можете управлять всеми плагинами, установленными на вашем экземпляре Kestra. Недавно установленные плагины могут быть не сразу доступны во всех службах Kestra в зависимости от конфигурации вашего экземпляра.",
+        "title": "У вас еще нет версионированного плагина!"
       }
     },
     "empty search": "Результаты поиска пусты",
@@ -707,6 +726,7 @@
         "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>"
       },
       "duplicate": "Этот key уже существует",
+      "inherited": "Наследуемые KV пары",
       "name": "KV Store",
       "type": "Тип",
       "update": "Обновить значение для key '{key}'"
@@ -1027,6 +1047,7 @@
     "pause done": "Выполнение приостановлено",
     "pause title": "Приостановить выполнение <code>{id}</code>.<br/>Обратите внимание, что текущие RUNNING задачи все равно будут обрабатываться, и выполнение придется возобновить вручную.",
     "playground": {
+      "clear_history": "Очистить историю",
       "confirm_create": "Вы не можете запустить playground во время создания flow. Запуск playground создаст flow.",
       "history": "Последние 10 запусков",
       "play_icon_info": "Вы также можете нажать на значок Play в представлениях No-Code или Topology.",
@@ -1036,7 +1057,8 @@
       "run_task_info": "Наведите курсор на любую task в редакторе Flow Code и нажмите кнопку \"Run task\", чтобы протестировать вашу task.",
       "run_this_task": "Запустить этот task",
       "title": "Песочница",
-      "toggle": "Песочница"
+      "toggle": "Песочница",
+      "tooltip_persistence": "Если вы выключите и снова включите Playground, информация останется, пока вы находитесь на странице."
     },
     "pluginDefaults": "Настройки плагина по умолчанию",
     "pluginPage": {
@@ -1054,7 +1076,12 @@
     "port": "Порт",
     "prefill inputs": "Предзаполнение",
     "prev_execution": "Предыдущее выполнение",
-    "preview": "Предварительный просмотр",
+    "preview": {
+      "auto-view": "Автоматический просмотр",
+      "force-editor": "Принудительный просмотр редактора",
+      "label": "Предварительный просмотр",
+      "view": "Просмотр"
+    },
     "properties": {
       "hidden": "Скрыто в таблице",
       "hint": "Выберите видимые столбцы",
@@ -1076,6 +1103,8 @@
     "replay from beginning tooltip": "Создать аналогичное выполнение, начиная с начала",
     "replay from task tooltip": "Создать аналогичное выполнение, начиная с задачи <code>{taskId}</code>",
     "replay latest revision": "Повтор с использованием последней редакции",
+    "replay the execution": "Повторить выполнение <code>{executionId}</code> для flow <code>{flowId}</code>",
+    "replay with inputs": "Воспроизвести с inputами",
     "replayed": "Выполнение повторено",
     "required field": "Обязательное поле",
     "reset": "Перезапустить",

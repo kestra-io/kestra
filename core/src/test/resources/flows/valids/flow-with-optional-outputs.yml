@@ -1,0 +1,13 @@
+id: flow-with-optional-outputs
+namespace: io.kestra.tests
+
+tasks:
+- id: return
+  type: io.kestra.plugin.core.debug.Return
+  format: "{{ flow.id }}"
+
+outputs:
+- id: "optional"
+  value: "{{ outputs.invalid-task }}"
+  type: STRING
+  required: false

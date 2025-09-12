@@ -13,16 +13,16 @@
                     <el-tooltip v-if="tab.disabled && tab.props && tab.props.showTooltip" :content="$t('add-trigger-in-editor')" placement="top">
                         <span><strong>{{ tab.title }}</strong></span>
                     </el-tooltip>
-                    <enterprise-badge :enable="tab.locked">
+                    <EnterpriseBadge :enable="tab.locked">
                         {{ tab.title }}
                         <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
-                    </enterprise-badge>
+                    </EnterpriseBadge>
                 </component>
             </template>
         </el-tab-pane>
     </el-tabs>
     <section v-if="isEditorActiveTab || activeTab.component" data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
-        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${editorStore.explorerWidth}% - 11px);`" :current-n-s="namespace" v-show="editorStore.explorerVisible" />
+        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${editorStore.explorerWidth}% - 11px);`" :currentNS="namespace" v-show="editorStore.explorerVisible" />
         <div v-if="isEditorActiveTab && editorStore.explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
         <div v-if="isEditorActiveTab" :style="`flex: 1 1 ${100 - (isEditorActiveTab && editorStore.explorerVisible ? editorStore.explorerWidth : 0)}%;`">
             <component
@@ -33,12 +33,12 @@
                 embed
             />
         </div>
-        <blueprint-detail
+        <BlueprintDetail
             v-else-if="selectedBlueprintId"
-            :blueprint-id="selectedBlueprintId"
-            blueprint-type="community"
+            :blueprintId="selectedBlueprintId"
+            blueprintType="community"
             @back="selectedBlueprintId = undefined"
-            combined-view="true"
+            combinedView="true"
             :kind="activeTab.props.blueprintKind"
             :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
         />

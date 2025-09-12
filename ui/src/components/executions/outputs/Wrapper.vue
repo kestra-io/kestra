@@ -31,7 +31,7 @@
                                         v-if="data.icon"
                                         :icons="pluginsStore.icons"
                                         :cls="icons[data.taskId]"
-                                        only-icon
+                                        onlyIcon
                                     />
                                     <span :class="{'ms-3': data.icon}">{{
                                         data.label
@@ -73,13 +73,13 @@
                                 </template>
 
                                 <div class="d-flex flex-column p-3 debug">
-                                    <editor
+                                    <Editor
                                         ref="debugEditor"
-                                        :full-height="false"
-                                        :custom-height="20"
+                                        :fullHeight="false"
+                                        :customHeight="20"
                                         :input="true"
                                         :navbar="false"
-                                        :model-value="computedDebugValue"
+                                        :modelValue="computedDebugValue"
                                         @update:model-value="editorValue = $event"
                                         @confirm="onDebugExpression($event)"
                                         class="w-100"
@@ -91,21 +91,20 @@
                                             onDebugExpression(
                                                 editorValue.length > 0 ? editorValue : computedDebugValue,
                                             )
-
                                         "
-                                        class="mt-3"
+                                        class="mt-3 el-button--wrap"
                                     >
                                         {{ t("eval.title") }}
                                     </el-button>
 
-                                    <editor
+                                    <Editor
                                         v-if="debugExpression"
-                                        :read-only="true"
+                                        :readOnly="true"
                                         :input="true"
-                                        :full-height="false"
-                                        :custom-height="20"
+                                        :fullHeight="false"
+                                        :customHeight="20"
                                         :navbar="false"
-                                        :model-value="debugExpression"
+                                        :modelValue="debugExpression"
                                         :lang="isJSON ? 'json' : ''"
                                         class="mt-3"
                                     />
@@ -141,7 +140,7 @@
                         />
                         <SubFlowLink
                             v-if="selectedNode().label === 'executionId'"
-                            :execution-id="selectedNode().value"
+                            :executionId="selectedNode().value"
                         />
                     </div>
                 </div>
@@ -151,26 +150,31 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, shallowRef, onMounted} from "vue";
+    import {ref, computed, shallowRef, onMounted, watch} from "vue";
     import {ElTree} from "element-plus";
-
     import {useStore} from "vuex";
-    const store = useStore();
-
     import {useExecutionsStore} from "../../../stores/executions";
+    import {usePluginsStore} from "../../../stores/plugins";
 
     import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
-
     import {apiUrl} from "override/utils/route";
+    import {TaskIcon} from "@kestra-io/ui-libs";
 
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
-
     import Editor from "../../inputs/Editor.vue";
-    const editorValue = ref("");
-    const debugCollapse = ref("");
+    import VarValue from "../VarValue.vue";
+    import SubFlowLink from "../../flows/SubFlowLink.vue";
+    import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
+    import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
+
+    const store = useStore();
+    const {t} = useI18n({useScope: "global"});
+
+    const editorValue = ref<string>("");
+    const debugCollapse = ref<string>("");
     const debugEditor = ref<InstanceType<typeof Editor>>();
-    const debugExpression = ref("");
+    const debugExpression = ref<string>("");
+    
     const computedDebugValue = computed(() => {
         const formatTask = (task) => {
             if (!task) return "";
@@ -235,15 +239,6 @@
                 debugStackTrace.value = response.data.stackTrace;
             });
     };
-
-    import VarValue from "../VarValue.vue";
-    import SubFlowLink from "../../flows/SubFlowLink.vue";
-
-    import {TaskIcon} from "@kestra-io/ui-libs";
-
-    import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
-    import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
-    import {usePluginsStore} from "../../../stores/plugins";
 
     const cascader = ref<InstanceType<typeof ElTree> | null>(null);
     const scrollRight = () =>
@@ -325,6 +320,12 @@
             return selected.value[selected.value.length - 1];
         return undefined;
     });
+
+    watch(selectedValue, () => {
+        debugError.value = "";
+        debugStackTrace.value = "";
+    });
+
     const selectedNode = () => {
         const node = cascader.value?.getCheckedNodes();
 
@@ -431,133 +432,131 @@
     const leftWidth = ref("70%");
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .outputs {
     display: flex;
     width: 100%;
     height: 100vh;
     overflow: hidden;
+}
 
-    .el-splitter-bar {
-        width: 3px !important;
-        background-color: var(--ks-border-primary);
+:deep(.el-splitter-bar) {
+    width: 3px !important;
+    background-color: var(--ks-border-primary);
 
-        &:hover {
-            background-color: var(--ks-border-active);
-        }
+    &:hover {
+        background-color: var(--ks-border-active);
+    }
+}
+
+:deep(.el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child),
+.values {
+    pointer-events: none;
+    margin: 0.75rem 0 1.25rem 0;
+}
+
+:deep(.el-cascader-menu__list) {
+    min-height: 100vh;
+}
+
+:deep(.el-cascader-panel) {
+    height: 100%;
+}
+
+.debug {
+    background: var(--ks-background-body);
+}
+
+.bordered {
+    border: 1px solid var(--ks-border-primary);
+}
+
+.bordered > :deep(.el-collapse-item) {
+    margin-bottom: 0px !important;
+}
+
+.wrapper {
+    background: var(--ks-background-card);
+}
+
+:deep(.el-cascader-menu) {
+    min-width: 300px;
+    max-width: 300px;
+
+    &:last-child {
+        border-right: 1px solid var(--ks-border-primary);
     }
 
-    .el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child,
-    .values {
-        pointer-events: none;
-        margin: 0.75rem 0 1.25rem 0;
-    }
-
-    .el-cascader-menu__list {
-        min-height: 100vh;
-    }
-
-    .el-cascader-panel {
+    .el-cascader-menu__wrap {
         height: 100%;
     }
 
-    .debug {
-        background: var(--ks-background-body);
-    }
+    & .el-cascader-node {
+        height: 36px;
+        line-height: 36px;
+        font-size: var(--el-font-size-small);
+        color: var(--ks-content-primary);
 
-    .bordered {
-        border: 1px solid var(--ks-border-primary);
-    }
-
-    .bordered > .el-collapse-item {
-        margin-bottom: 0px !important;
-    }
-
-    .wrapper {
-        background: var(--ks-background-card);
-    }
-
-    .el-cascader-menu {
-        min-width: 300px;
-        max-width: 300px;
-
-        &:last-child {
-            border-right: 1px solid var(--ks-border-primary);
+        &[aria-haspopup="false"] {
+            padding-right: 0.5rem !important;
         }
 
-        .el-cascader-menu__wrap {
-            height: 100%;
+        &:hover {
+            background-color: var(--ks-border-primary);
         }
 
-        & .el-cascader-node {
-            height: 36px;
-            line-height: 36px;
-            font-size: var(--el-font-size-small);
+        &.in-active-path,
+        &.is-active {
+            background-color: var(--ks-border-primary);
+            font-weight: normal;
+        }
+
+        .el-cascader-node__prefix {
+            display: none;
+        }
+
+        .task .wrapper {
+            align-self: center;
+            height: var(--el-font-size-small);
+            width: var(--el-font-size-small);
+        }
+
+        code span.regular {
             color: var(--ks-content-primary);
-
-            &[aria-haspopup="false"] {
-                padding-right: 0.5rem !important;
-            }
-
-            &:hover {
-                background-color: var(--ks-border-primary);
-            }
-
-            &.in-active-path,
-            &.is-active {
-                background-color: var(--ks-border-primary);
-                font-weight: normal;
-            }
-
-            .el-cascader-node__prefix {
-                display: none;
-            }
-
-            .task .wrapper {
-                align-self: center;
-                height: var(--el-font-size-small);
-                width: var(--el-font-size-small);
-            }
-
-            code span.regular {
-                color: var(--ks-content-primary);
-            }
         }
     }
 }
-</style>
-<style lang="scss" scoped>
-    .content-container {
-        height: calc(100vh - 0px);
+.content-container {
+    height: calc(100vh - 0px);
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+:deep(.el-collapse) {
+    .el-collapse-item__wrap {
         overflow-y: auto !important;
-        overflow-x: hidden;
-        word-wrap: break-word;
-        word-break: break-word;
+        max-height: none !important;
     }
 
-    :deep(.el-collapse) {
-        .el-collapse-item__wrap {
-            overflow-y: auto !important;
-            max-height: none !important;
-        }
-        
-        .el-collapse-item__content {
-            overflow-y: auto !important;
-            word-wrap: break-word;
-            word-break: break-word;
-        }
-    }
-
-    :deep(.var-value) {
+    .el-collapse-item__content {
         overflow-y: auto !important;
         word-wrap: break-word;
         word-break: break-word;
     }
+}
 
-    :deep(pre) {
-        white-space: pre-wrap !important;
-        word-wrap: break-word !important;
-        word-break: break-word !important;
-        overflow-wrap: break-word !important;
-    }
+:deep(.var-value) {
+    overflow-y: auto !important;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+:deep(pre) {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+}
 </style>

@@ -48,6 +48,10 @@
     "aggregation": "Aggregation",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "Hinweis: Derzeit wird nur Gemini als KI-Anbieter unterstützt.\n\nStarten Sie Ihre Kestra-Instanz neu, nachdem Sie die Konfiguration gespeichert haben.",
+          "header": "<b>AI Copilot wurde noch nicht konfiguriert.</b>\n\nUm AI Copilot zu aktivieren, fügen Sie den folgenden Ausschnitt in die Konfigurationsdatei Ihrer Kestra-Instanz ein (z. B. <code>application.yml</code>) und ersetzen Sie <code>geminiApiKey</code> durch Ihren tatsächlichen Schlüssel:"
+        },
         "generating": "Erzeuge Flow YAML für Sie...",
         "prompt_placeholder": "Geben Sie Anweisungen ein, um Ihren Kestra flow zu erstellen. Beispielaufforderung: Erstellen Sie einen flow, der jeden Montag um 9 Uhr ausgeführt wird.",
         "title": "KI-Agent"
@@ -171,12 +175,12 @@
     "confirm password": "Passwort bestätigen",
     "confirmation": "Bestätigung",
     "contextBar": {
-      "demo": "Demo anfordern",
+      "demo": "Demo",
       "docs": "Dokumentation",
       "help": "Hilfe",
-      "issue": "Ein Issue öffnen",
+      "issue": "Problem",
       "news": "Nachrichten",
-      "star": "Das Repository mit einem Stern versehen"
+      "star": "Geben Sie uns einen Stern"
     },
     "continue backfill": "Backfill fortsetzen",
     "continue backfills": "Backfills fortsetzen",
@@ -213,6 +217,7 @@
       "edition": {
         "chart": "Bearbeiten Sie dieses Diagramm",
         "confirmation": "Änderungen im Dashboard <code>{title}</code> werden gespeichert.",
+        "id readonly": "Die Eigenschaft `id` kann nicht geändert werden — sie ist jetzt auf ihre Anfangswerte festgelegt. Wenn Sie sie ändern möchten, können Sie ein neues Dashboard erstellen und das alte entfernen.",
         "label": "Dashboard bearbeiten"
       },
       "empty": "Es gibt keine Ergebnisse anzuzeigen.",
@@ -443,8 +448,18 @@
         "title": "Für diesen Flow sind keine Grenzen festgelegt."
       },
       "dependencies": {
-        "content": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow-Abhängigkeiten</a> in unserer Dokumentation.",
-        "title": "Für diesen Flow sind keine Abhängigkeiten festgelegt."
+        "EXECUTION": {
+          "content": "Erfahren Sie mehr über <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Ausführungsabhängigkeiten</a> in unserer Dokumentation.",
+          "title": "Derzeit gibt es keine Abhängigkeiten."
+        },
+        "FLOW": {
+          "content": "Erfahren Sie mehr über <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow-Abhängigkeiten</a> in unserer Dokumentation.",
+          "title": "Derzeit gibt es keine Abhängigkeiten."
+        },
+        "NAMESPACE": {
+          "content": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> in unserer Dokumentation.",
+          "title": "Derzeit gibt es keine Abhängigkeiten."
+        }
       },
       "plugins": {
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
@@ -457,6 +472,10 @@
       "triggers": {
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in unserer Dokumentation.",
         "title": "Ihr flow hat keine Trigger."
+      },
+      "versionPlugin": {
+        "content": "Hier können Sie alle Plugins verwalten, die auf Ihrer Kestra-Instanz installiert sind. Neu installierte Plugins sind möglicherweise nicht sofort in allen Kestra-Diensten verfügbar, abhängig von der Konfiguration Ihrer Instanz.",
+        "title": "Sie haben noch kein versioniertes Plugin!"
       }
     },
     "empty search": "Suchergebnisse sind leer",
@@ -707,6 +726,7 @@
         "warning": "Du hast keine Berechtigungen für diese namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>"
       },
       "duplicate": "Dieser Key existiert bereits",
+      "inherited": "Geerbte KV-Paare",
       "name": "KV Store",
       "type": "Typ",
       "update": "Wert für Key '{key}' aktualisieren"
@@ -1027,6 +1047,7 @@
     "pause done": "Die Ausführung ist PAUSED.",
     "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss.",
     "playground": {
+      "clear_history": "Verlauf löschen",
       "confirm_create": "Sie können den Playground nicht ausführen, während Sie einen flow erstellen. Das Starten eines Playground-Laufs wird den flow erstellen.",
       "history": "Letzte 10 Ausführungen",
       "play_icon_info": "Sie können auch das Play-Symbol in den No-Code- oder Topologie-Ansichten anklicken.",
@@ -1036,7 +1057,8 @@
       "run_task_info": "Bewegen Sie den Mauszeiger über eine beliebige Task im Flow-Code-Editor und klicken Sie auf die Schaltfläche \"Run task\", um Ihre Task zu testen.",
       "run_this_task": "Führe diese Task aus",
       "title": "Spielwiese",
-      "toggle": "Spielplatz"
+      "toggle": "Spielplatz",
+      "tooltip_persistence": "Wenn Sie den Playground ausschalten und wieder einschalten, bleiben die Informationen erhalten, solange Sie auf der Seite bleiben."
     },
     "pluginDefaults": "Plugin-Standardeinstellungen",
     "pluginPage": {
@@ -1054,7 +1076,12 @@
     "port": "Port",
     "prefill inputs": "Vorausfüllen",
     "prev_execution": "Vorherige Ausführung",
-    "preview": "Vorschau",
+    "preview": {
+      "auto-view": "Automatische Ansicht",
+      "force-editor": "Editoransicht erzwingen",
+      "label": "Vorschau",
+      "view": "Anzeigen"
+    },
     "properties": {
       "hidden": "In Tabelle versteckt",
       "hint": "Sichtbare Spalten auswählen",
@@ -1076,6 +1103,8 @@
     "replay from beginning tooltip": "Eine ähnliche Ausführung von Anfang an erstellen",
     "replay from task tooltip": "Eine ähnliche Ausführung ab Task <code>{taskId}</code> erstellen",
     "replay latest revision": "Wiederholen mit neuester Revision",
+    "replay the execution": "Führen Sie die Ausführung <code>{executionId}</code> für den flow <code>{flowId}</code> erneut aus.",
+    "replay with inputs": "Wiedergabe mit Inputs",
     "replayed": "Ausführung ist wiederholt",
     "required field": "Erforderliches Feld",
     "reset": "Neustarten",

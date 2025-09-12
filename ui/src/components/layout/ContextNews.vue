@@ -1,5 +1,5 @@
 <template>
-    <context-info-content :title="t('feeds.title')">
+    <ContextInfoContent :title="t('feeds.title')">
         <div
             class="post"
             :class="{
@@ -16,10 +16,10 @@
                 <h5>
                     {{ feed.title }}
                 </h5>
-                <date-ago class-name="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" />
+                <DateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" />
             </div>
 
-            <markdown class="markdown-tooltip mt-3 postParagraph" :source="feed.description" />
+            <Markdown class="markdown-tooltip mt-3 postParagraph" :source="feed.description" />
 
             <div class="newsButtonBar">
                 <el-button
@@ -43,7 +43,7 @@
 
             <el-divider v-if="index !== feeds.length - 1" />
         </div>
-    </context-info-content>
+    </ContextInfoContent>
 </template>
 
 <script lang="ts" setup>

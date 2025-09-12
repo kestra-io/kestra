@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,6 +65,18 @@ class JacksonMapperTest {
 
         assertThat(integerList.size()).isEqualTo(3);
         assertThat(integerList).containsExactlyInAnyOrder(1, 2, 3);
+    }
+
+    @Test
+    void toMap() throws JsonProcessingException {
+        assertThat(JacksonMapper.toMap("""
+            {
+                "some": "property",
+                "another": "property"
+            }""")).isEqualTo(Map.of(
+                "some", "property",
+            "another", "property"
+        ));
     }
 
     void test(Pojo original, Pojo deserialize) {

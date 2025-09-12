@@ -3,12 +3,16 @@ package io.kestra.webserver.controllers.api;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.collectors.Usage;
+import io.kestra.core.models.collectors.ExecutionUsage;
+import io.kestra.core.models.collectors.FlowUsage;
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.reporter.Reportable;
+import io.kestra.core.reporter.reports.FeatureUsageReport;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
-import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
+import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthService;
@@ -28,6 +32,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -51,7 +56,7 @@ public class MiscController {
     InstanceService instanceService;
 
     @Inject
-    CollectorService collectorService;
+    FeatureUsageReport featureUsageReport;
 
     @Inject
     BasicAuthService basicAuthService;
@@ -64,6 +69,9 @@ public class MiscController {
 
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
     protected Boolean isAnonymousUsageEnabled;
+
+    @io.micronaut.context.annotation.Value("${kestra.ui-anonymous-usage-report.enabled:false}")
+    protected Boolean isUiAnonymousUsageEnabled;
 
     @io.micronaut.context.annotation.Value("${kestra.environment.name}")
     @Nullable
@@ -86,6 +94,12 @@ public class MiscController {
     @io.micronaut.context.annotation.Value("${kestra.hidden-labels.prefixes:}")
     private List<String> hiddenLabelsPrefixes;
 
+    @Inject
+    private PluginRegistry pluginRegistry;
+
+    @Inject
+    protected EditionProvider editionProvider;
+
 
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
@@ -94,12 +108,14 @@ public class MiscController {
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
             .uuid(instanceService.fetch())
+            .edition(editionProvider.get())
             .version(versionProvider.getVersion())
             .commitId(versionProvider.getRevision())
             .commitDate(versionProvider.getDate())
             .isCustomDashboardsEnabled(dashboardRepository.isEnabled())
             .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
+            .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
             .isTemplateEnabled(templateRepository.isPresent())
             .preview(Preview.builder()
                 .initial(this.initialPreviewRows)
@@ -110,7 +126,8 @@ public class MiscController {
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .resourceToFilters(QueryFilter.Resource.asResourceList())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
-            .url(kestraUrl);
+            .url(kestraUrl)
+            .pluginsHash(pluginRegistry.hash());
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -127,8 +144,13 @@ public class MiscController {
     @Get("/{tenant}/usages/all")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Retrieve instance usage information")
-    public Usage getUsages() {
-        return collectorService.metrics(true);
+    public ApiUsage getUsages() {
+        ZonedDateTime now = ZonedDateTime.now();
+        FeatureUsageReport.UsageEvent event = featureUsageReport.report(now.toInstant(), Reportable.TimeInterval.of(now.minus(Duration.ofDays(1)), now));
+        return ApiUsage.builder()
+            .flows(event.getFlows())
+            .executions(event.getExecutions())
+            .build();
     }
 
     @Post(uri = "/{tenant}/basicAuth")
@@ -158,6 +180,8 @@ public class MiscController {
 
         String version;
 
+        EditionProvider.Edition edition;
+
         String commitId;
 
         ZonedDateTime commitDate;
@@ -170,6 +194,9 @@ public class MiscController {
 
         @JsonInclude
         Boolean isAnonymousUsageEnabled;
+
+        @JsonInclude
+        Boolean isUiAnonymousUsageEnabled;
 
         @JsonInclude
         Boolean isTemplateEnabled;
@@ -189,6 +216,8 @@ public class MiscController {
         Boolean isAiEnabled;
 
         Boolean isBasicAuthInitialized;
+
+        Long pluginsHash;
     }
 
     @Value
@@ -211,5 +240,12 @@ public class MiscController {
         private String uid;
         private String username;
         private String password;
+    }
+
+    @SuperBuilder(toBuilder = true)
+    @Getter
+    public static class ApiUsage {
+        private FlowUsage flows;
+        private ExecutionUsage executions;
     }
 }

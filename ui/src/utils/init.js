@@ -1,6 +1,6 @@
 import {createStore} from "vuex";
 import {createRouter, createWebHistory} from "vue-router";
-import VueGtag from "vue-gtag";
+import {configure} from "vue-gtag";
 import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n";
 import moment from "moment-timezone";
 import "moment/dist/locale/de"
@@ -110,7 +110,7 @@ export default async (app, routes, stores, translations, additionalTranslations 
         // so it has a default
         const pathArray = to.path.split("/");
         const docId = pathArray[pathArray.length-1];
-        
+
         const docStore = useDocStore();
         docStore.docId = docId;
 
@@ -135,16 +135,10 @@ export default async (app, routes, stores, translations, additionalTranslations 
 
     // Google Analytics
     if (window.KESTRA_GOOGLE_ANALYTICS !== null) {
-        app.use(
-            VueGtag,
-            {
-                config: {id: window.KESTRA_GOOGLE_ANALYTICS}
-            },
-            router
-        );
+        configure({
+            tagId: window.KESTRA_GOOGLE_ANALYTICS
+        })
     }
-
-
 
     // l18n
     let locale = Utils.getLang();

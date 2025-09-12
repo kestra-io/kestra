@@ -1,5 +1,5 @@
 <template>
-    <sidebar-menu
+    <SidebarMenu
         ref="sideBarRef"
         data-component="FILENAME_PLACEHOLDER"
         id="side-menu"
@@ -7,13 +7,13 @@
         @update:collapsed="onToggleCollapse"
         width="268px"
         :collapsed="collapsed"
-        link-component-name="LeftMenuLink"
-        hide-toggle
+        linkComponentName="LeftMenuLink"
+        hideToggle
     >
         <template #header>
             <el-button @click="collapsed = onToggleCollapse(!collapsed)" class="collapseButton" :size="collapsed ? 'small':undefined">
-                <chevron-right v-if="collapsed" />
-                <chevron-left v-else />
+                <ChevronRight v-if="collapsed" />
+                <ChevronLeft v-else />
             </el-button>
             <div class="logo">
                 <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
@@ -26,7 +26,7 @@
         <template #footer>
             <slot name="footer" />
         </template>
-    </sidebar-menu>
+    </SidebarMenu>
 </template>
 
 <script setup>

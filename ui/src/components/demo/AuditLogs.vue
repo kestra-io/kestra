@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" v-if="!isFullScreen() && !embed" />
+    <TopNavBar :title="routeInfo.title" v-if="!isFullScreen() && !embed" />
     <Layout
         :title="t('demos.audit-logs.title')"
         :image="{source: sourceImg, alt: t('demos.audit-logs.title')}"

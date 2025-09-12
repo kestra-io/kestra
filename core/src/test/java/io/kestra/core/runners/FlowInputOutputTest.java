@@ -1,7 +1,5 @@
 package io.kestra.core.runners;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
-
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.DependsOn;
@@ -11,6 +9,7 @@ import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.http.MediaType;
@@ -30,6 +29,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 @KestraTest
 class FlowInputOutputTest {
@@ -71,8 +72,8 @@ class FlowInputOutputTest {
         // Then
         Assertions.assertEquals(
             List.of(
-                new InputAndValue(input1, "value1", true, null),
-                new InputAndValue(input2, "value2", true, null)),
+                new InputAndValue(input1, "value1", true, false, null),
+                new InputAndValue(input2, "value2", true, false, null)),
             values
         );
     }
@@ -104,9 +105,9 @@ class FlowInputOutputTest {
         // Then
         Assertions.assertEquals(
             List.of(
-                new InputAndValue(input1, "v1", true, null),
-                new InputAndValue(input2, "v2", true, null),
-                new InputAndValue(input3, "v3", true, null)),
+                new InputAndValue(input1, "v1", true, false, null),
+                new InputAndValue(input2, "v2", true, false, null),
+                new InputAndValue(input3, "v3", true, false, null)),
             values
         );
     }
@@ -138,9 +139,9 @@ class FlowInputOutputTest {
         // Then
         Assertions.assertEquals(
             List.of(
-                new InputAndValue(input1, "v1", true, null),
-                new InputAndValue(input2, "v2", false, null),
-                new InputAndValue(input3, "v3", false, null)),
+                new InputAndValue(input1, "v1", true, false, null),
+                new InputAndValue(input2, "v2", false, false, null),
+                new InputAndValue(input3, "v3", false, false, null)),
             values
         );
     }
@@ -168,8 +169,8 @@ class FlowInputOutputTest {
         // Then
         Assertions.assertEquals(
             List.of(
-                new InputAndValue(input1, "value1", true, null),
-                new InputAndValue(input2, "value2", false, null)),
+                new InputAndValue(input1, "value1", true, false, null),
+                new InputAndValue(input2, "value2", false, false, null)),
             values
         );
     }
@@ -224,13 +225,15 @@ class FlowInputOutputTest {
         // Given
         StringInput input1 = StringInput.builder()
             .id("input1")
+            .type(Type.STRING)
             .validator("\\d")
-            .defaults("0")
+            .defaults(Property.ofValue("0"))
             .required(false)
             .build();
         IntInput input2 = IntInput.builder()
+            .type(Type.INT)
             .id("input2")
-            .defaults(0)
+            .defaults(Property.ofValue(0))
             .required(false)
             .build();
 
@@ -244,8 +247,41 @@ class FlowInputOutputTest {
         // Then
         Assertions.assertEquals(
             List.of(
-                new InputAndValue(input1, "0", true, null),
-                new InputAndValue(input2, 0, true, null)),
+                new InputAndValue(input1, "0", true, true, null),
+                new InputAndValue(input2, 0, true, true, null)),
+            values
+        );
+    }
+    
+    @Test
+    void resolveInputsGivenDefaultExpressions() {
+        // Given
+        StringInput input1 = StringInput.builder()
+            .id("input1")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ 'hello' }}"))
+            .required(false)
+            .build();
+        StringInput input2 = StringInput.builder()
+            .id("input2")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ inputs.input1 }}_world"))
+            .required(false)
+            .dependsOn(new DependsOn(List.of("input1"),null))
+            .build();
+        
+        List<Input<?>> inputs = List.of(input1, input2);
+        
+        Map<String, Object> data = Map.of("input42", "foo");
+        
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
+        
+        // Then
+        Assertions.assertEquals(
+            List.of(
+                new InputAndValue(input1, "hello", true, true, null),
+                new InputAndValue(input2, "hello_world", true, true, null)),
             values
         );
     }

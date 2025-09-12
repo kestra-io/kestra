@@ -1,8 +1,8 @@
 <template>
     <template v-if="ready">
-        <execution-root-top-bar :route-info="routeInfo" />
-        <tabs
-            :route-name="$route.params && $route.params.id ? 'executions/update': ''"
+        <ExecutionRootTopBar :routeInfo="routeInfo" />
+        <Tabs
+            :routeName="$route.params && $route.params.id ? 'executions/update': ''"
             @follow="follow"
             :tabs="tabs"
         />
@@ -157,10 +157,10 @@
                         {
                             label: `${ns}.${flowId}`,
                             link: {
-                                name: "namespaces/update",
+                                name: "flows/update",
                                 params: {
-                                    id: ns,
-                                    tab: "executions"
+                                    namespace: ns,
+                                    id: flowId
                                 }
                             }
                         },

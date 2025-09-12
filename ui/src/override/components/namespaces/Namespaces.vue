@@ -12,7 +12,7 @@
     <el-row class="p-5">
         <KestraFilter
             :placeholder="t('search')"
-            legacy-query
+            legacyQuery
         />
 
         <el-col v-if="namespaces.length === 0" class="p-3 namespaces">
@@ -27,7 +27,7 @@
         >
             <el-tree
                 :data="[namespace]"
-                default-expand-all
+                defaultExpandAll
                 :props="{class: 'tree'}"
                 class="h-auto p-2 rounded-full"
             >

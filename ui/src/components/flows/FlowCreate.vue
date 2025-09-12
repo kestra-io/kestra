@@ -1,7 +1,7 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" />
+    <TopNavBar :title="routeInfo.title" />
     <section class="full-container">
-        <MultiPanelEditorView v-if="flowStore.flow" />
+        <MultiPanelFlowEditorView v-if="flowStore.flow" />
     </section>
 </template>
 
@@ -10,20 +10,20 @@
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import MultiPanelEditorView from "./MultiPanelEditorView.vue";
+    import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
     import {storageKeys} from "../../utils/constants";
     import {useBlueprintsStore} from "../../stores/blueprints";
     import {useCoreStore} from "../../stores/core";
     import {editorViewTypes} from "../../utils/constants";
 
-    import {getRandomFlowID} from "../../../scripts/product/flow";
+    import {getRandomID} from "../../../scripts/id";
     import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
 
     export default {
         mixins: [RouteContext],
         components: {
-            MultiPanelEditorView,
+            MultiPanelFlowEditorView,
             TopNavBar
         },
 
@@ -52,7 +52,7 @@
                 } else {
                     const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
                     const selectedNamespace = this.$route.query.namespace || defaultNamespace || "company.team";
-                    flowYaml = `id: ${getRandomFlowID()}
+                    flowYaml = `id: ${getRandomID()}
 namespace: ${selectedNamespace}
 
 tasks:

@@ -16,7 +16,7 @@ describe("summarize-junit-report test", () => {
                 suites: 1,
                 testsuites: [
                     {
-                        name: "io.kestra.core.validations.ScheduleValidationTest",
+                        name: "io.kestra.core.some.Test",
                         errors: 0,
                         skipped: 0,
                         failures: 0,
@@ -27,7 +27,7 @@ describe("summarize-junit-report test", () => {
                         testcases: [
                             {
                                 name: "sundayDayOfTheWeekAlias()",
-                                classname: "io.kestra.core.validations.ScheduleValidationTest",
+                                classname: "io.kestra.core.some.Test",
                                 time: 3,
                                 status: "success",
                             },
@@ -42,8 +42,9 @@ describe("summarize-junit-report test", () => {
 
         expect(res.hasErrors).equal(false);
         expect(res.markdownContent).contains("java-module-1");
+        expect((res.markdownContent.match(/java-module-1/g) || []).length).toBe(2);// should appear twice
         expect(res.markdownContent).contains("sundayDayOfTheWeekAlias()");
-        expect(res.markdownContent).contains("io.kestra.core.validations.ScheduleValidationTest");
+        expect(res.markdownContent).contains("io.kestra.core.some.Test");
     });
 
     it("summarizeJunitReport for one green module should not print tests when onlyErrors:true", async () => {
@@ -71,7 +72,7 @@ describe("summarize-junit-report test", () => {
                 suites: 1,
                 testsuites: [
                     {
-                        name: "io.kestra.core.validations.ScheduleValidationTest",
+                        name: "io.kestra.core.someother.Test2",
                         errors: 0,
                         skipped: 0,
                         failures: 1,
@@ -82,13 +83,13 @@ describe("summarize-junit-report test", () => {
                         testcases: [
                             {
                                 name: "sundayDayOfTheWeekAlias()",
-                                classname: "io.kestra.core.validations.ScheduleValidationTest",
+                                classname: "io.kestra.core.someother.Test2",
                                 time: 3,
                                 status: "success",
                             },
                             {
                                 name: "failingTest()",
-                                classname: "io.kestra.core.validations.ScheduleValidationTest",
+                                classname: "io.kestra.core.someother.Test2",
                                 time: 3,
                                 status: "failed",
                                 message: "java.lang.RuntimeException: I failed and this is my log",
@@ -121,5 +122,17 @@ describe("summarize-junit-report test", () => {
             "java.lang.RuntimeException: I failed and this is my log",
         );
         expect(res.markdownContent).contains("this is the error logs details");
+    });
+
+    it("summarizeJunitReport should merge module reports", async () => {
+        // given 2 reports for the same module, but for different tests
+        const reports = [...testReportsWithGreenTests, ...testReportWithFailedTests]
+        const res = summarizeJunitReport(reports, { onlyErrors: true });
+
+        expect(res.hasErrors).equal(true);
+        expect(res.markdownContent).contain("java-module-1");
+
+        // it should not be duplicated
+        expect((res.markdownContent.match(/java-module-1/g) || []).length).toBe(2);
     });
 });

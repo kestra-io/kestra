@@ -23,7 +23,8 @@ export function summarizeJunitReport(
     const testReportErrorLogs: string[] = [];
     let hasErrors = false;
 
-    for (const report of testReports) {
+    const mergedReports = mergeSameProjectReports(testReports);
+    for (const report of mergedReports) {
         const project = report.projectName;
         const projectReport: JUnitModuleReport = report.projectReport;
         testReportQuickSummaryRows.push(
@@ -71,6 +72,76 @@ export function summarizeJunitReport(
     }
 
     return { hasErrors, markdownContent };
+
+    // merge reports that share the same projectName by concatenating testsuites
+    function mergeSameProjectReports(reports: TestReport[]): TestReport[] {
+        const byProject = new Map<string, JUnitModuleReport>();
+
+        for (const r of reports) {
+            const key = r.projectName;
+            const existing = byProject.get(key);
+            if (!existing) {
+                // clone a shallow copy so we don't mutate the original
+                const cloned: JUnitModuleReport = {
+                    ...r.projectReport,
+                    testsuites: [...r.projectReport.testsuites],
+                } as JUnitModuleReport;
+                computeModuleAggregates(cloned);
+                byProject.set(key, cloned);
+            } else {
+                // concatenate testsuites and recompute aggregates
+                existing.testsuites = [...existing.testsuites, ...r.projectReport.testsuites];
+                computeModuleAggregates(existing);
+            }
+        }
+
+        // rebuild TestReport array
+        return Array.from(byProject.entries()).map(([projectName, projectReport]) => ({
+            projectName,
+            projectReport,
+        }));
+    }
+
+    // recompute success/skip/error/failure counts and overall status from testcases
+    function computeModuleAggregates(moduleReport: JUnitModuleReport): void {
+        let success = 0;
+        let skipped = 0;
+        let errors = 0;
+        let failures = 0;
+
+        for (const suite of moduleReport.testsuites) {
+            for (const tc of suite.testcases) {
+                switch (tc.status) {
+                    case "success":
+                        success++; break;
+                    case "skipped":
+                        skipped++; break;
+                    case "error":
+                        errors++; break;
+                    case "failed":
+                        failures++; break;
+                }
+            }
+        }
+
+        const total = success + skipped + errors + failures;
+        // update known aggregate fields if present on the type
+        moduleReport.success = success;
+        moduleReport.skipped = skipped;
+        moduleReport.errors = errors;
+        moduleReport.failures = failures;
+        if ("tests" in moduleReport) {
+            moduleReport.tests = total;
+        }
+
+        // status rules: all skipped => skipped; any error => error; any failed => failed; else success
+        let status: "success" | "failed" | "error" | "skipped";
+        if (total > 0 && skipped === total) status = "skipped";
+        else if (errors > 0) status = "error";
+        else if (failures > 0) status = "failed";
+        else status = "success";
+        moduleReport.status = status;
+    }
 
     // helpers scoped below
     function escapePipe(s: string | number | undefined): string {

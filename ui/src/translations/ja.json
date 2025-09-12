@@ -463,6 +463,10 @@
           "title": "現在、依存関係はありません。"
         }
       },
+      "panels": {
+        "content": "Flow CodeまたはNo-Codeを開いてflowの編集を開始するか、関連機能のために別のパネル（Topology、Documentation、Files、Blueprints、Namespace Context）を選択してください。",
+        "title": "現在、パネルは開いていません。"
+      },
       "plugins": {
         "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。",
         "title": "このNamespaceにはプラグインのデフォルトが設定されていません。"
@@ -771,6 +775,7 @@
     "monogram": "モノグラム",
     "months": "月",
     "multi_panel_editor": {
+      "close_all_panels": "すべてのパネルを閉じる",
       "close_all_tabs": "すべてのタブを閉じる",
       "move_left": "左に移動",
       "move_right": "右に移動"

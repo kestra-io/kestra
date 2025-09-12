@@ -563,9 +563,10 @@
         displayColumns.value = loadDisplayColumns();
     });
 
-    watch(route, ({query}) => {
+    watch(route, (newRoute) => {
         if (typeof window !== "undefined") {
             let queryHasChanged = false;
+            const query = {...newRoute.query};
             const queryKeys = Object.keys(query);
             if (defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
                 query["filters[namespace][PREFIX]"] = defaultNamespace();
@@ -579,7 +580,7 @@
                 router.replace({...route, query});
             }
         }
-    }, {immediate: true});
+    }, {immediate: true, deep: true});
 
 </script>
 

@@ -29,14 +29,14 @@
     import {computed, inject} from "vue";
     import {useI18n} from "vue-i18n";
     import PlayIcon from "vue-material-design-icons/Play.vue";
-    import {usePluginsStore} from "../../../../stores/plugins";
-    import {usePlaygroundStore} from "../../../../stores/playground";
+    import {usePluginsStore} from "../../../../../stores/plugins";
+    import {usePlaygroundStore} from "../../../../../stores/playground";
 
 
-    import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
+    import {DeleteOutline, ChevronUp, ChevronDown} from "../../../utils/icons";
     import {
         EDIT_TASK_FUNCTION_INJECTION_KEY,
-    } from "../../injectionKeys";
+    } from "../../../injectionKeys";
 
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
 
@@ -81,7 +81,7 @@
 </script>
 
 <style scoped lang="scss">
-@import "../../styles/code.scss";
+@import "../../../styles/code.scss";
 @import "@kestra-io/ui-libs/src/scss/_color-palette";
 
 .element {

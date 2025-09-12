@@ -724,7 +724,10 @@
             });
 
             if (editorRef.value) {
-                localEditor.value = monaco.editor.create(editorRef.value, options);
+                localEditor.value = monaco.editor.create(editorRef.value, {
+                    ...options,
+                    fixedOverflowWidgets: true // Helps suggestion widget render above other elements
+                });
 
                 if (props.suggestionsOnFocus) {
                     localEditor.value.onMouseDown(() => {

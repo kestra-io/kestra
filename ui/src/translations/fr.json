@@ -174,6 +174,8 @@
     "confirm": "Confirmer",
     "confirm password": "Confirmer le mot de passe",
     "confirmation": "Confirmation",
+    "context updated date": "Date de mise à jour du contexte",
+    "context updated date tooltip": "Dernière mise à jour du contexte du trigger. Cela se produit lorsque l'exécution est déclenchée, se termine (verrou libéré), ou après une évaluation (même si aucune exécution n'a lieu).",
     "contextBar": {
       "demo": "Démo",
       "docs": "Docs",
@@ -461,6 +463,10 @@
           "title": "Il n'y a actuellement aucune dépendance."
         }
       },
+      "panels": {
+        "content": "Ouvrez Flow Code ou No-Code pour commencer à éditer vos flows, ou sélectionnez un autre panneau (Topology, Documentation, Files, Blueprints, Namespace Context) pour des fonctionnalités associées.",
+        "title": "Aucun panneau n'est actuellement ouvert."
+      },
       "plugins": {
         "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">limites de Concurrency</a></strong> dans notre documentation.",
         "title": "Aucun paramètre par défaut de plugin n'est défini pour ce namespace."
@@ -740,6 +746,8 @@
     "last execution state": "Dernier état",
     "last execution status": "Statut de la dernière exécution",
     "last modified": "Dernière modification",
+    "last trigger date": "Dernière date de trigger",
+    "last trigger date tooltip": "Dernière exécution du trigger. Peut être dans le passé lors de l'exécution d'un backfill.",
     "launch execution": "Déclencher",
     "learn_more": "En savoir plus",
     "light_background": "C'est l'option préférée lorsque vous travaillez avec un fond clair.",
@@ -767,6 +775,7 @@
     "monogram": "Monogramme",
     "months": "Mois",
     "multi_panel_editor": {
+      "close_all_panels": "Fermer tous les panneaux",
       "close_all_tabs": "Fermer tous les onglets",
       "move_left": "Déplacer à gauche",
       "move_right": "Déplacer vers la droite"
@@ -854,6 +863,8 @@
     "neutral trend": "Stable",
     "new": "Nouveau",
     "new version": "Nouvelle version {version} disponible!",
+    "next evaluation date": "Prochaine date d'évaluation",
+    "next evaluation date tooltip": "Quand le trigger sera évalué la prochaine fois, en fonction de son intervalle. Pas toujours identique à la prochaine date d'exécution si les conditions ne sont pas remplies.",
     "next execution date": "Prochaine date d'exécution",
     "next_execution": "Prochaine exécution",
     "no data current task": "Il n'y a pas de données disponibles pour la tâche actuelle.",

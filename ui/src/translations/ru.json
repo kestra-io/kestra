@@ -174,6 +174,8 @@
     "confirm": "Подтвердить",
     "confirm password": "Подтвердить пароль",
     "confirmation": "Подтверждение",
+    "context updated date": "Дата обновления контекста",
+    "context updated date tooltip": "Когда контекст trigger был обновлен в последний раз. Это происходит, когда выполняется execution, завершается (блокировка снята) или после оценки (даже если execution не происходит).",
     "contextBar": {
       "demo": "Демо",
       "docs": "Документация",
@@ -461,6 +463,10 @@
           "title": "В настоящее время зависимости отсутствуют."
         }
       },
+      "panels": {
+        "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Files, Blueprints, Namespace Context) для связанных функций.",
+        "title": "В настоящее время панели не открыты."
+      },
       "plugins": {
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> в нашей документации.",
         "title": "Для этого namespace не установлены значения по умолчанию для плагинов."
@@ -740,6 +746,8 @@
     "last execution state": "Последнее состояние",
     "last execution status": "Последний статус выполнения",
     "last modified": "Последнее изменение",
+    "last trigger date": "Дата последнего срабатывания",
+    "last trigger date tooltip": "Когда trigger выполнялся в последний раз. Может быть в прошлом при запуске backfill.",
     "launch execution": "Выполнить",
     "learn_more": "Узнать больше",
     "light_background": "Это предпочтительный вариант при работе со светлым фоном.",
@@ -767,6 +775,7 @@
     "monogram": "Монограмма",
     "months": "Месяцы",
     "multi_panel_editor": {
+      "close_all_panels": "Закрыть все панели",
       "close_all_tabs": "Закрыть все вкладки",
       "move_left": "Переместить влево",
       "move_right": "Переместить вправо"
@@ -854,6 +863,8 @@
     "neutral trend": "Стабильно",
     "new": "Новый",
     "new version": "Доступна новая версия {version}!",
+    "next evaluation date": "Следующая дата оценки",
+    "next evaluation date tooltip": "Когда trigger будет оцениваться в следующий раз, на основе его интервала. Не всегда совпадает с датой следующей Ausführung, если условия не выполнены.",
     "next execution date": "Дата следующего выполнения",
     "next_execution": "Следующее выполнение",
     "no data current task": "Для текущего task нет доступных данных",

@@ -78,7 +78,7 @@
 
     const openTabs = ref<string[]>([])
 
-    const defaultPanelSize = computed(() => panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length);
+    const defaultPanelSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length));
 
     function setTabValue(tabValue: string) {
         // Show dialog instead of creating panel

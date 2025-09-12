@@ -75,9 +75,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
      * Initializes the registry by loading all core plugins.
      */
     protected synchronized void init() {
-//        log.info("------------> init: {}", initialized.get());
         if (initialized.compareAndSet(false, true)) {
-//            log.info("-------------> init for real");
             register(scanner.scan());
         }
     }

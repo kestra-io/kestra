@@ -43,6 +43,9 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "fast-xml-parser": "^5.2.5"
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.1",
+    "fast-xml-parser": "^5.2.5",
+    "octokit": "^5.0.3"
   }
 }

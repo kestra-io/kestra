@@ -1,13 +1,9 @@
-import { WorkingDir } from "../utilities/working-dir";
-import {
-    MarkdownString,
-    summarizeJunitReport,
-    TestReport,
-} from "./functions/summarize-junit-report";
-import { parseJunitModuleReport } from "./functions/parse-junit-module-report";
+import {WorkingDir} from "../utilities/working-dir";
+import {MarkdownString, summarizeJunitReport, TestReport,} from "./functions/summarize-junit-report";
+import {parseJunitModuleReport} from "./functions/parse-junit-module-report";
 import fg from "fast-glob";
 import fs from "fs";
-import { getJavaProjectNameFromBuildAbsolutePath } from "./functions/file-path-utils";
+import {getJavaProjectNameFromBuildAbsolutePath} from "./functions/file-path-utils";
 
 /**
  * parse files located at 'testReportsLocationPattern' and generate a summary in Markdown
@@ -17,7 +13,7 @@ import { getJavaProjectNameFromBuildAbsolutePath } from "./functions/file-path-u
 export async function generateTestReportSummary(
     workingDir: WorkingDir,
     options?: {
-        onlyErrors: boolean;
+        onlyErrors?: boolean;
         testReportsLocationPattern?: "**/build/test-results/junit/*.xml";
     },
 ): Promise<MarkdownString> {
@@ -43,5 +39,5 @@ export async function generateTestReportSummary(
     });
 
     // Summarize all parsed reports into a single Markdown string
-    return summarizeJunitReport(moduleReports, { onlyErrors: onlyErrors }).markdownContent;
+    return summarizeJunitReport(moduleReports, {onlyErrors: onlyErrors}).markdownContent;
 }

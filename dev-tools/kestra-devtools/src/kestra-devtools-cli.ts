@@ -1,8 +1,9 @@
 // Simple CLI entry point.
 // Built to dist/kestra-devtools-cli.cjs with a shebang so it can be executed directly.
 
-import { generateTestReportSummary } from "./tests-reporting/generate-test-report-summary";
 import { getWorkingDir } from "./utilities/working-dir";
+import {exportTestReportSummary} from "./tests-reporting/export-test-report-summary";
+import {getPRContext} from "./github-context";
 
 function parseArgs(argv: string[]) {
     // argv[0] = node, argv[1] = script, rest are args
@@ -54,9 +55,11 @@ kestra-devtools-cli generateTestReportSummary /Users/roman/Documents/git-repos/k
             );
             return 1;
         }
+        const ci = Boolean(flags["ci"]);
         const workingDir = getWorkingDir(dirArg);
-        const summary = await generateTestReportSummary(workingDir, {
+        const summary = await exportTestReportSummary(workingDir, {
             onlyErrors: Boolean(flags["only-errors"]),
+            githubContext: ci ? getPRContext() : undefined
         });
         // Print to stdout so it can be piped in CI or viewed in terminal
         console.log(summary);

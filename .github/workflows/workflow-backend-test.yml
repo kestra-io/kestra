@@ -20,6 +20,7 @@ permissions:
   contents: write
   checks: write
   actions: read
+  pull-requests: write
 
 jobs:
   test:
@@ -43,6 +44,15 @@ jobs:
           java-enabled: true
           node-enabled: true
           python-enabled: true
+
+      - name: to delete not commit
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
+        run: |
+          echo $(pwd)
+          export KESTRA_PWD=$(pwd) && sh -c 'cd dev-tools/kestra-devtools && npm ci && npm run build && node dist/kestra-devtools-cli.cjs generateTestReportSummary --only-errors --ci $KESTRA_PWD' > report.md
+          cat report.md
 
       # Services
       - name: Setup - Start docker compose

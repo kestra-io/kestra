@@ -31,6 +31,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -131,6 +132,7 @@ class PluginDefaultServiceTest {
         ), result);
     }
 
+    @org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
     @ParameterizedTest
     @MethodSource
     void flowDefaultsOverrideGlobalDefaults(boolean flowDefaultForced, boolean globalDefaultForced, String fooValue, String barValue, String bazValue) throws FlowProcessingException {

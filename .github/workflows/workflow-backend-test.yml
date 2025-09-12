@@ -20,6 +20,7 @@ permissions:
   contents: write
   checks: write
   actions: read
+  pull-requests: write
 
 jobs:
   test:
@@ -58,6 +59,14 @@ jobs:
           echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
           ./gradlew check javadoc --parallel
+
+      - name: comment PR with test report
+        if: always() && github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
+        run: |
+          export KESTRA_PWD=$(pwd) && sh -c 'cd dev-tools/kestra-devtools && npm ci && npm run build && node dist/kestra-devtools-cli.cjs generateTestReportSummary --only-errors --ci $KESTRA_PWD' > report.md
+          cat report.md
 
       # report test
       - name: Test - Publish Test Results

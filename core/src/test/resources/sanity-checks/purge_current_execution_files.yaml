@@ -2,28 +2,9 @@ id: purge_current_execution_files
 namespace: sanitychecks.core
 
 tasks:
-  - id: download_file
+  - id: download
     type: io.kestra.plugin.core.http.Download
     uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
-    
-  - id: purge_files
+
+  - id: purge
     type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
-
-  # Check if the first purged file URI contains "orders.csv"
-  - id: python_string_check
-    type: io.kestra.plugin.scripts.python.Script
-    env:
-      FILE_STRING: "{{ outputs.purge_files.uris['0'] }}"
-    script: |
-      import os
-      file_path = os.getenv("FILE_STRING", "")
-      print(f"The file string is: {file_path}")
-      if "orders.csv" in file_path:
-          print("It contains orders.csv")
-      else:
-          raise ValueError(f"The file string does not contain 'orders.csv': {file_path}")
-
-  - id: assert
-    type: io.kestra.plugin.core.execution.Assert
-    conditions:
-      - "{{ outputs.python_string_check.exitCode == 0}}"

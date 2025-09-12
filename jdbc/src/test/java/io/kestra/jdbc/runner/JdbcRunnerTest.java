@@ -61,8 +61,8 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // To avoid flooding the database with big messages, we re-init it
-        jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
+//        jdbcTestUtils.drop(); TODO
+//        jdbcTestUtils.migrate();
     }
 
     @Test

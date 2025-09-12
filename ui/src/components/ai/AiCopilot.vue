@@ -17,6 +17,7 @@
             v-model="prompt"
             @keydown.exact.ctrl.enter="$event.preventDefault(); prompt += '\n'"
             @keydown.exact.enter.prevent="submitPrompt"
+            class="ai-copilot-placeholder"
         />
         <template v-else>
             <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
@@ -162,5 +163,10 @@
         :not(:first-child) {
             margin-left: 6px;
         }
+    }
+
+    .ai-copilot-placeholder :deep(textarea::placeholder) {
+        color: gray;
+        font-style: italic;
     }
 </style>

@@ -696,10 +696,17 @@
                     original: originalModel,
                     modified: modifiedModel
                 });
+                let modifiedBackspaceTimeout: number | null = null;
+
                 const modifiedEditor = localDiffEditor.value.getModifiedEditor();
-                modifiedEditor.addCommand(monaco.KeyCode.Backspace, () => {
-                    modifiedEditor.trigger("keyboard", "deleteLeft", null);
-                    modifiedEditor.trigger("keyboard", "editor.action.triggerSuggest", {});
+                modifiedEditor.onKeyDown((e) => {
+                    if (e.keyCode === monaco.KeyCode.Backspace) {
+                        if (modifiedBackspaceTimeout) clearTimeout(modifiedBackspaceTimeout);
+
+                        modifiedBackspaceTimeout = window.setTimeout(() => {
+                            modifiedEditor.trigger("keyboard", "editor.action.triggerSuggest", {});
+                        }, 150); 
+                    }
                 });
             }
         } else {
@@ -733,9 +740,16 @@
 
             if (editorRef.value) {
                 localEditor.value = monaco.editor.create(editorRef.value, options);
-                localEditor.value.addCommand(monaco.KeyCode.Backspace, () => {
-                    localEditor.value!.trigger("keyboard", "deleteLeft", null);
-                    localEditor.value!.trigger("keyboard", "editor.action.triggerSuggest", {});
+                let localBackspaceTimeout: number | null = null;
+
+                localEditor.value.onKeyDown((e) => {
+                    if (e.keyCode === monaco.KeyCode.Backspace) {
+                        if (localBackspaceTimeout) clearTimeout(localBackspaceTimeout);
+
+                        localBackspaceTimeout = window.setTimeout(() => {
+                            localEditor.value!.trigger("keyboard", "editor.action.triggerSuggest", {});
+                        }, 150);
+                    }
                 });
                 if (props.suggestionsOnFocus) {
                     localEditor.value.onMouseDown(() => {

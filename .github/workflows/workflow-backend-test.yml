@@ -28,7 +28,7 @@ jobs:
     env:
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
     steps:
       - uses: actions/checkout@v5
         name: Checkout - Current ref
@@ -62,6 +62,8 @@ jobs:
 
       - name: new PR test report
         if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
         run: |
           echo $(pwd)
           export KESTRA_PWD=$(pwd) && sh -c 'cd dev-tools/kestra-devtools && npm ci && npm run build && node dist/kestra-devtools-cli.cjs generateTestReportSummary --only-errors --ci $KESTRA_PWD' > report.md

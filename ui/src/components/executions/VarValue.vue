@@ -71,11 +71,11 @@
                 }
             },
             itemUrl(value) {
-                return `${apiUrl(this.$store)}/executions/${this.execution.id}/file?path=${encodeURI(value)}`;
+                return `${apiUrl()}/executions/${this.execution.id}/file?path=${encodeURI(value)}`;
             },
             getFileSize(){
                 if (this.isFile(this.value)) {
-                    this.$http(`${apiUrl(this.$store)}/executions/${this?.execution?.id}/file/metas?path=${this.value}`, {
+                    this.$http(`${apiUrl()}/executions/${this?.execution?.id}/file/metas?path=${this.value}`, {
                         validateStatus: (status) => status === 200 || status === 404 || status === 422
                     }).then(r => this.humanSize = Utils.humanFileSize(r.data.size))
                 }

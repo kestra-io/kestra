@@ -277,6 +277,7 @@
     import Column from "./components/block/Column.vue"
     import {useAuthStore} from "override/stores/auth"
     import {useFlowStore} from "../../stores/flow"
+    import {defaultNamespace} from "../../composables/useNamespaces";
 
     export const DATE_FORMAT_STORAGE_KEY = "dateFormat";
     export const TIMEZONE_STORAGE_KEY = "timezone";
@@ -342,7 +343,7 @@
             };
         },
         created() {
-            this.pendingSettings.defaultNamespace = localStorage.getItem("defaultNamespace") || "company.team";
+            this.pendingSettings.defaultNamespace = defaultNamespace();
             this.pendingSettings.editorType = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.pendingSettings.lang = Utils.getLang();
@@ -547,7 +548,7 @@
                         }
                         break
                     case "theme":
-                        Utils.switchTheme(this.$store, this.pendingSettings[key]);
+                        Utils.switchTheme(this.miscStore, this.pendingSettings[key]);
                         localStorage.setItem(key, Utils.getTheme())
                         break
                     case "lang":
@@ -591,7 +592,7 @@
             },
             updateThemeBasedOnSystem() {
                 if (this.theme === "syncWithSystem") {
-                    Utils.switchTheme(this.$store, "syncWithSystem");
+                    Utils.switchTheme(this.miscStore, "syncWithSystem");
                 }
             },
         },

@@ -1,8 +1,8 @@
 import NoCode from "../../../../src/components/no-code/NoCode.vue";
 import InitialSchema from "../../../../src/stores/flow-schema.json";
-import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import {useFlowStore} from "../../../../src/stores/flow";
+import {useAxios} from "../../../../src/utils/axios";
 
 
 export default {
@@ -42,8 +42,8 @@ const PLUGINS_RESPONSE = [{
 
 const Template = (args) => ({
     setup() {
-        const store = useStore()
         const flowStore = useFlowStore()
+        const axios = useAxios()
 
         flowStore.flowYaml = args.flow
         const props = {
@@ -52,8 +52,7 @@ const Template = (args) => ({
             ...args.props
         }
 
-        store.$http = {
-            get(url) {
+        axios.get = (url) => {
                 if (url.endsWith("plugins")) {
                     return Promise.resolve({
                         data: PLUGINS_RESPONSE
@@ -67,8 +66,9 @@ const Template = (args) => ({
                 return Promise.resolve({
                     data: []
                 })
-            },
-            post(url){
+            }
+
+        axios.post = (url) => {
                 if(url.endsWith("flows/validate/task")){
                     return Promise.resolve({data: {}})
                 }
@@ -76,7 +76,7 @@ const Template = (args) => ({
                     data: []
                 })
             }
-        }
+
         return () =>
             <div style="margin: 1rem; width: 400px;border: 1px solid lightgray; padding: .5rem;">
                 <NoCode {...props}/>

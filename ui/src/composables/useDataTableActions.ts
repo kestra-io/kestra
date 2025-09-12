@@ -47,14 +47,14 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
     const embed = computed(() => options.embed);
     const dataTableRef = computed(() => options.dataTableRef?.value);
 
-    const sortString = (sortItem: SortItem): string | undefined => {
+    const sortString = (sortItem: SortItem, sortKeyMapper: (k: string) => string): string | undefined => {
         if (sortItem && sortItem.prop && sortItem.order) {
-            return `${sortItem.prop}:${sortItem.order === "descending" ? "desc" : "asc"}`;
+            return `${sortKeyMapper(sortItem.prop)}:${sortItem.order === "descending" ? "desc" : "asc"}`;
         }
     };
 
-    const onSort = (sortItem: SortItem) => {
-        internalSort.value = sortString(sortItem);
+    const onSort = (sortItem: SortItem, sortKeyMapper = (k: string) => k) => {
+        internalSort.value = sortString(sortItem, sortKeyMapper);
 
         if (internalSort.value) {
             const sort = internalSort.value;

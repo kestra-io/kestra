@@ -174,6 +174,8 @@
     "confirm": "Potwierdź",
     "confirm password": "Potwierdź hasło",
     "confirmation": "Potwierdzenie",
+    "context updated date": "Data aktualizacji kontekstu",
+    "context updated date tooltip": "Kiedy kontekst triggera został ostatnio zaktualizowany. Dzieje się to, gdy wykonanie jest uruchamiane, kończy się (blokada zwolniona) lub po ocenie (nawet jeśli nie dochodzi do wykonania).",
     "contextBar": {
       "demo": "Demo",
       "docs": "Dokumentacja",
@@ -461,6 +463,10 @@
           "title": "Obecnie nie ma zależności."
         }
       },
+      "panels": {
+        "content": "Otwórz Flow Code lub No-Code, aby rozpocząć edycję swoich flows, lub wybierz inny panel (Topology, Documentation, Files, Blueprints, Namespace Context) dla powiązanych funkcji.",
+        "title": "Obecnie żadne panele nie są otwarte."
+      },
       "plugins": {
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Limitach Concurrency</a></strong> w naszej dokumentacji.",
         "title": "Dla tego namespace nie ustawiono domyślnych pluginów."
@@ -740,6 +746,8 @@
     "last execution state": "Ostatni stan",
     "last execution status": "Ostatni status wykonania",
     "last modified": "Ostatnia modyfikacja",
+    "last trigger date": "Data ostatniego triggera",
+    "last trigger date tooltip": "Kiedy trigger został ostatnio wykonany. Może być w przeszłości podczas uruchamiania backfill.",
     "launch execution": "Wykonaj",
     "learn_more": "Dowiedz się więcej",
     "light_background": "To jest preferowana opcja podczas pracy z jasnym tłem.",
@@ -767,6 +775,7 @@
     "monogram": "Monogram",
     "months": "Miesiące",
     "multi_panel_editor": {
+      "close_all_panels": "Zamknij wszystkie panele",
       "close_all_tabs": "Zamknij wszystkie karty",
       "move_left": "Przesuń w lewo",
       "move_right": "Przesuń w prawo"
@@ -854,6 +863,8 @@
     "neutral trend": "Stabilny",
     "new": "Nowy",
     "new version": "Nowa wersja {version} dostępna!",
+    "next evaluation date": "Data następnej oceny",
+    "next evaluation date tooltip": "Gdy trigger zostanie ponownie oceniony, na podstawie jego interwału. Nie zawsze jest to samo co następna data wykonania, jeśli warunki nie są spełnione.",
     "next execution date": "Data następnego wykonania",
     "next_execution": "Następne wykonanie",
     "no data current task": "Brak dostępnych danych dla bieżącego taska",

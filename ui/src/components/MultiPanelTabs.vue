@@ -1,145 +1,153 @@
 <template>
     <el-splitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
-        <el-splitter-panel
-            v-for="(panel, panelIndex) in panels"
-            min="10%"
-            :key="panelIndex"
-            :size="panelSizes[panelIndex] ?? panel.size"
-            @dragover.prevent="(e:DragEvent) => panelDragOver(e, panelIndex)"
-            @dragleave.prevent="panelDragLeave"
-            @drop.prevent="(e:DragEvent) => panelDrop(e, panelIndex)"
-            :class="{'panel-dragover': panel.dragover}"
-        >
-            <div class="editor-tabs-container">
-                <el-button
-                    :icon="DragVertical"
-                    link
-                    class="tab-icon drag-handle"
-                    draggable="true"
-                    @dragstart="(e:DragEvent) => panelDragStart(e, panelIndex)"
-                />
-                <div
-                    class="editor-tabs"
-                    role="tablist"
-                    @dragover.prevent="dragover"
-                    @dragleave.prevent="throttle(removeAllPotentialTabs, 300)"
-                    @drop="drop"
-                    :data-panel-index="panelIndex"
-                    :class="{dragover: panel.dragover}"
-                    ref="tabContainerRefs"
-                >
-                    <template
-                        v-for="tab in panel.tabs"
-                        :key="tab.value"
-                    >
-                        <button
-                            v-if="!tab.potential"
-                            class="editor-tab"
-                            role="tab"
-                            :class="{active: tab.value === panel.activeTab?.value}"
-                            draggable="true"
-                            @dragstart="(e) => {
-                                if(e.dataTransfer){
-                                    e.dataTransfer.effectAllowed = 'move';
-                                }
-                                dragstart(panelIndex, tab.value);
-                            }"
-                            @dragleave.prevent
-                            :data-tab-id="tab.value"
-                            @click="handleTabClick(panel, tab)"
-                            @mouseup="middleMouseClose($event, panelIndex, tab)"
-                        >
-                            <component :is="tab.button.icon" class="tab-icon" />
-                            {{ tab.button.label }}
-                            <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" />
-                            <CloseIcon @click.stop="destroyTab(panelIndex, tab)" class="tab-icon" />
-                        </button>
-                        <div v-else class="potential-container">
-                            <div class="potential" />
-                        </div>
-                    </template>
-                </div>
-                <div class="buttons-container">
-                    <button
-                        v-if="panel.tabs.filter(t => !t.potential).length > 1"
-                        @click="splitPanel(panelIndex)"
-                        class="split_right"
-                        title="Split panel"
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                fill-rule="evenodd"
-                                clip-rule="evenodd"
-                                d="M22.038 20.5599C22.0402 21.35 21.4014 21.9924 20.6112 21.9946L3.47196 22.0424C2.6818 22.0446 2.03946 21.4058 2.03725 20.6157L1.98939 3.45824C1.98718 2.66808 2.62595 2.02574 3.41611 2.02353L20.5554 1.97571C21.3455 1.97351 21.9879 2.61228 21.9901 3.40244L22.038 20.5599ZM20.626 20.5807L10.5998 20.6086L10.5517 3.37297L20.5779 3.345L20.626 20.5807ZM9.10343 20.611L3.38734 20.6269L3.33925 3.39126L9.05535 3.37531L9.10343 20.611Z"
-                                fill="currentColor"
-                            />
-                        </svg>
-                    </button>
-
-                    <el-dropdown trigger="click" placement="bottom-end">
-                        <el-button :icon="DotsVertical" link class="me-2 tab-icon" />
-                        <template #dropdown>
-                            <el-dropdown-menu class="m-2">
-                                <el-dropdown-item
-                                    :icon="DockRight"
-                                    :disabled="panelIndex === panels.length - 1"
-                                    @click="movePanel(panelIndex, 'right')"
-                                >
-                                    <span class="small-text">
-                                        {{ t("multi_panel_editor.move_right") }}
-                                    </span>
-                                </el-dropdown-item>
-                                <el-dropdown-item
-                                    :icon="DockLeft"
-                                    :disabled="panelIndex === 0"
-                                    @click="movePanel(panelIndex, 'left')"
-                                >
-                                    <span class="small-text">
-                                        {{ t("multi_panel_editor.move_left") }}
-                                    </span>
-                                </el-dropdown-item>
-                                <el-dropdown-item :icon="Close" @click="closeAllTabs(panelIndex)">
-                                    <span class="small-text">
-                                        {{ t("multi_panel_editor.close_all_tabs") }}
-                                    </span>
-                                </el-dropdown-item>
-                                <el-dropdown-item
-                                    v-if="panel.activeTab?.value === 'code'"
-                                    :icon="Keyboard"
-                                    @click="showKeyShortcuts()"
-                                >
-                                    <span class="small-text">
-                                        {{ t("editor_shortcuts.label") }}
-                                    </span>
-                                </el-dropdown-item>
-                            </el-dropdown-menu>
-                        </template>
-                    </el-dropdown>
-                </div>
-            </div>
-            <div
-                class="content-panel"
-                :data-panel-index="panelIndex"
-                @drop="drop"
-                @dragover.prevent="dragover"
-                @dragleave.prevent="removeAllPotentialTabs"
-                @dragenter.prevent
+        <Empty v-if="!panels.length" type="panels" />
+        <template v-else>
+            <el-splitter-panel
+                v-for="(panel, panelIndex) in panels"
+                min="10%"
+                :key="panelIndex"
+                :size="panelSizes[panelIndex] ?? panel.size"
+                @dragover.prevent="(e:DragEvent) => panelDragOver(e, panelIndex)"
+                @dragleave.prevent="panelDragLeave"
+                @drop.prevent="(e:DragEvent) => panelDrop(e, panelIndex)"
+                :class="{'panel-dragover': panel.dragover}"
             >
-                <KeepAlive v-if="panel.activeTab">
-                    <component
-                        :key="panel.activeTab.value"
-                        :is="panel.activeTab.component"
-                        :panelIndex="panelIndex"
-                        :tabIndex="panel.tabs.findIndex(t => t.value === panel.activeTab.value)"
+                <div class="editor-tabs-container">
+                    <el-button
+                        :icon="DragVertical"
+                        link
+                        class="tab-icon drag-handle"
+                        draggable="true"
+                        @dragstart="(e:DragEvent) => panelDragStart(e, panelIndex)"
                     />
-                </KeepAlive>
+                    <div
+                        class="editor-tabs"
+                        role="tablist"
+                        @dragover.prevent="dragover"
+                        @dragleave.prevent="throttle(removeAllPotentialTabs, 300)"
+                        @drop="drop"
+                        :data-panel-index="panelIndex"
+                        :class="{dragover: panel.dragover}"
+                        ref="tabContainerRefs"
+                    >
+                        <template
+                            v-for="tab in panel.tabs"
+                            :key="tab.value"
+                        >
+                            <button
+                                v-if="!tab.potential"
+                                class="editor-tab"
+                                role="tab"
+                                :class="{active: tab.value === panel.activeTab?.value}"
+                                draggable="true"
+                                @dragstart="(e) => {
+                                    if(e.dataTransfer){
+                                        e.dataTransfer.effectAllowed = 'move';
+                                    }
+                                    dragstart(panelIndex, tab.value);
+                                }"
+                                @dragleave.prevent
+                                :data-tab-id="tab.value"
+                                @click="handleTabClick(panel, tab)"
+                                @mouseup="middleMouseClose($event, panelIndex, tab)"
+                            >
+                                <component :is="tab.button.icon" class="tab-icon" />
+                                {{ tab.button.label }}
+                                <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" />
+                                <CloseIcon @click.stop="destroyTab(panelIndex, tab)" class="tab-icon" />
+                            </button>
+                            <div v-else class="potential-container">
+                                <div class="potential" />
+                            </div>
+                        </template>
+                    </div>
+                    <div class="buttons-container">
+                        <button
+                            v-if="panel.tabs.filter(t => !t.potential).length > 1"
+                            @click="splitPanel(panelIndex)"
+                            class="split_right"
+                            title="Split panel"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    fill-rule="evenodd"
+                                    clip-rule="evenodd"
+                                    d="M22.038 20.5599C22.0402 21.35 21.4014 21.9924 20.6112 21.9946L3.47196 22.0424C2.6818 22.0446 2.03946 21.4058 2.03725 20.6157L1.98939 3.45824C1.98718 2.66808 2.62595 2.02574 3.41611 2.02353L20.5554 1.97571C21.3455 1.97351 21.9879 2.61228 21.9901 3.40244L22.038 20.5599ZM20.626 20.5807L10.5998 20.6086L10.5517 3.37297L20.5779 3.345L20.626 20.5807ZM9.10343 20.611L3.38734 20.6269L3.33925 3.39126L9.05535 3.37531L9.10343 20.611Z"
+                                    fill="currentColor"
+                                />
+                            </svg>
+                        </button>
+
+                        <el-dropdown trigger="click" placement="bottom-end">
+                            <el-button :icon="DotsVertical" link class="me-2 tab-icon" />
+                            <template #dropdown>
+                                <el-dropdown-menu class="m-2">
+                                    <el-dropdown-item
+                                        :icon="DockRight"
+                                        :disabled="panelIndex === panels.length - 1"
+                                        @click="movePanel(panelIndex, 'right')"
+                                    >
+                                        <span class="small-text">
+                                            {{ t("multi_panel_editor.move_right") }}
+                                        </span>
+                                    </el-dropdown-item>
+                                    <el-dropdown-item
+                                        :icon="DockLeft"
+                                        :disabled="panelIndex === 0"
+                                        @click="movePanel(panelIndex, 'left')"
+                                    >
+                                        <span class="small-text">
+                                            {{ t("multi_panel_editor.move_left") }}
+                                        </span>
+                                    </el-dropdown-item>
+                                    <el-dropdown-item :icon="Close" @click="closeAllTabs(panelIndex)">
+                                        <span class="small-text">
+                                            {{ t("multi_panel_editor.close_all_tabs") }}
+                                        </span>
+                                    </el-dropdown-item>
+                                    <el-dropdown-item :icon="Close" @click="closeAllPanels()">
+                                        <span class="small-text">
+                                            {{ t("multi_panel_editor.close_all_panels") }}
+                                        </span>
+                                    </el-dropdown-item>
+                                    <el-dropdown-item
+                                        v-if="panel.activeTab?.value === 'code'"
+                                        :icon="Keyboard"
+                                        @click="showKeyShortcuts()"
+                                    >
+                                        <span class="small-text">
+                                            {{ t("editor_shortcuts.label") }}
+                                        </span>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                    </div>
+                </div>
                 <div
-                    v-if="dragging"
-                    class="editor-content-overlay"
-                    :class="{dragover: panel.dragover}"
-                />
-            </div>
-        </el-splitter-panel>
+                    class="content-panel"
+                    :data-panel-index="panelIndex"
+                    @drop="drop"
+                    @dragover.prevent="dragover"
+                    @dragleave.prevent="removeAllPotentialTabs"
+                    @dragenter.prevent
+                >
+                    <KeepAlive v-if="panel.activeTab">
+                        <component
+                            :key="panel.activeTab.value"
+                            :is="panel.activeTab.component"
+                            :panelIndex="panelIndex"
+                            :tabIndex="panel.tabs.findIndex(t => t.value === panel.activeTab.value)"
+                        />
+                    </KeepAlive>
+                    <div
+                        v-if="dragging"
+                        class="editor-content-overlay"
+                        :class="{dragover: panel.dragover}"
+                    />
+                </div>
+            </el-splitter-panel>
+        </template>
     </el-splitter>
 
     <div
@@ -172,6 +180,8 @@
     import {CODE_PREFIX} from "./flows/useCodePanels";
     import {useKeyShortcuts} from "../utils/useKeyShortcuts";
 
+    import Empty from "./layout/empty/Empty.vue";
+
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
     import DragVertical from "vue-material-design-icons/DragVertical.vue";
@@ -180,6 +190,7 @@
     import DockRight from "vue-material-design-icons/DockRight.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import Keyboard from "vue-material-design-icons/Keyboard.vue";
+
     import {useEditorStore} from "../stores/editor";
     import {trackTabOpen, trackTabClose} from "../utils/tabTracking";
 
@@ -516,6 +527,10 @@
         });
 
         panels.value[panelIndex].tabs = [];
+    }
+
+    function closeAllPanels(){
+        panels.value = [];
     }
 
     function destroyTab(panelIndex:number, tab: Tab){

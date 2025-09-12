@@ -3,17 +3,13 @@
         <template #content>
             <code>{{ value }}</code>
         </template>
-        <a href="#">
-            <code :id="uuid" @click="emit('click')" class="text-nowrap" :class="{'link': hasClickListener}">
-                {{ transformValue }}
-            </code>
-        </a>
-    </el-tooltip>
-    <a v-else href="#">
-        <code :id="uuid" class="text-nowrap" @click="onClick">
+        <code :id="uuid" @click="emit('click')" class="text-nowrap" :class="{'link': hasClickListener}">
             {{ transformValue }}
         </code>
-    </a>
+    </el-tooltip>
+    <code v-else :id="uuid" class="text-nowrap" @click="onClick">
+        {{ transformValue }}
+    </code>
 </template>
 
 <script setup lang="ts">
@@ -64,16 +60,10 @@
 </script>
 
 <style lang="scss" scoped>
-a code {
-    font-size: 0.875em;
-    color: var(--bs-code-color);
-    word-wrap: break-word;
-}
-
-code.link {
-    cursor: pointer;
-    &:hover {
-        color: rgba(var(--bs-link-color-rgb), var(--bs-link-opacity, 1));
+    code.link {
+        cursor: pointer;
+        &:hover {
+            color: rgba(var(--bs-link-color-rgb), var(--bs-link-opacity, 1));
+        }
     }
-}
 </style>

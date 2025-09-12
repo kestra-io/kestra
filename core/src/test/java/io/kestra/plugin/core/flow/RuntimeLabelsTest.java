@@ -160,4 +160,25 @@ class RuntimeLabelsTest {
             new Label("fromListKey", "value2")
         );
     }
+
+    @Test
+    @LoadFlows({"flows/valids/labels-update-task-empty.yml"})
+    void updateIgnoresEmpty() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "labels-update-task-empty",
+            null,
+            (flow, createdExecution) -> Map.of(),
+            null,
+            List.of()
+        );
+
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        assertThat(execution.getLabels()).containsExactly(
+            new Label(Label.CORRELATION_ID, execution.getId())
+        );
+    }
 }

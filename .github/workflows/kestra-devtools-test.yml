@@ -1,0 +1,36 @@
+name: kestra-devtools test
+
+on:
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - 'dev-tools/kestra-devtools/**'
+
+env:
+  # to save corepack from itself
+  COREPACK_INTEGRITY_KEYS: 0
+
+jobs:
+  test:
+    name: kestra-devtools tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          path: 'dev-tools/kestra-devtools'
+
+      #      - name: Cache Node Modules TODO ?
+#        id: cache-node-modules
+#        uses: actions/cache@v4
+#        with:
+#          path: |
+#            ui/node_modules
+#          key: modules-${{ hashFiles('ui/package-lock.json') }}
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Npm - Run build
+        run: npm run build

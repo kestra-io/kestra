@@ -33,7 +33,7 @@ class ScheduleValidationTest {
             .build();
 
         assertThat(modelValidator.isValid(build).isPresent()).isTrue();
-        assertThat(modelValidator.isValid(build).get().getMessage()).contains("invalid cron expression");
+        assertThat(modelValidator.isValid(build).get().getMessage()).contains("invhhhhjhjjhjhhjalid cron expression");
     }
 
     @Test
@@ -89,7 +89,9 @@ class ScheduleValidationTest {
             .interval(Duration.ofSeconds(5))
             .build();
 
-
+        if(true){
+            throw new RuntimeException("I failed and this is my log");
+        }
         assertThat(modelValidator.isValid(build).isPresent()).isTrue();
         assertThat(modelValidator.isValid(build).get().getMessage()).contains("interval: must be null");
     }

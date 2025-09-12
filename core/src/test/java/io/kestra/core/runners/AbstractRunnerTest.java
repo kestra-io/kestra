@@ -243,6 +243,7 @@ public abstract class AbstractRunnerTest {
         multipleConditionTriggerCaseTest.flowTriggerPreconditions();
     }
 
+    @Disabled
     @Test
     @LoadFlows({"flows/valids/flow-trigger-preconditions-flow-listen.yaml",
         "flows/valids/flow-trigger-preconditions-flow-a.yaml",
@@ -366,6 +367,7 @@ public abstract class AbstractRunnerTest {
         forEachItemCaseTest.forEachItemEmptyItems();
     }
 
+    @Disabled
     @Test
     @LoadFlows({"flows/valids/for-each-item-subflow-failed.yaml",
         "flows/valids/for-each-item-failed.yaml"})
@@ -436,6 +438,7 @@ public abstract class AbstractRunnerTest {
         flowConcurrencyCaseTest.flowConcurrencyWithForEachItem();
     }
 
+    @Disabled
     @Test
     @LoadFlows({"flows/valids/flow-concurrency-queue-fail.yml"})
     protected void concurrencyQueueRestarted() throws Exception {

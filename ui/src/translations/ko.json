@@ -463,6 +463,10 @@
           "title": "현재 종속성이 없습니다."
         }
       },
+      "panels": {
+        "content": "Flow Code 또는 No-Code를 열어 flow 편집을 시작하거나, 관련 기능을 위해 다른 패널(Topology, Documentation, Files, Blueprints, Namespace Context)을 선택하세요.",
+        "title": "현재 열려 있는 패널이 없습니다."
+      },
       "plugins": {
         "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
         "title": "이 Namespace에 대한 플러그인 기본값이 설정되지 않았습니다."
@@ -771,6 +775,7 @@
     "monogram": "모노그램",
     "months": "개월",
     "multi_panel_editor": {
+      "close_all_panels": "모든 패널 닫기",
       "close_all_tabs": "모든 탭 닫기",
       "move_left": "왼쪽으로 이동",
       "move_right": "오른쪽으로 이동"

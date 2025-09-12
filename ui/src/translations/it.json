@@ -463,6 +463,10 @@
           "title": "Attualmente non ci sono dipendenze."
         }
       },
+      "panels": {
+        "content": "Apri Flow Code o No-Code per iniziare a modificare i tuoi flow, oppure seleziona un altro pannello (Topology, Documentation, Files, Blueprints, Namespace Context) per funzionalità correlate.",
+        "title": "Nessun pannello è attualmente aperto."
+      },
       "plugins": {
         "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">limiti di Concurrency</a></strong> nella nostra documentazione.",
         "title": "Nessun valore predefinito del plugin è impostato per questo Namespace."
@@ -771,6 +775,7 @@
     "monogram": "Monogramma",
     "months": "Mesi",
     "multi_panel_editor": {
+      "close_all_panels": "Chiudi tutti i pannelli",
       "close_all_tabs": "Chiudi tutte le tab",
       "move_left": "Sposta a sinistra",
       "move_right": "Sposta a destra"

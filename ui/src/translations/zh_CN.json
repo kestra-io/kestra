@@ -463,6 +463,10 @@
           "title": "当前没有依赖项。"
         }
       },
+      "panels": {
+        "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、文件、Blueprints、Namespace Context）以获取相关功能。",
+        "title": "当前没有打开的面板。"
+      },
       "plugins": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
         "title": "此Namespace未设置插件默认值。"
@@ -771,6 +775,7 @@
     "monogram": "字母组合",
     "months": "月份",
     "multi_panel_editor": {
+      "close_all_panels": "关闭所有面板",
       "close_all_tabs": "关闭所有标签页",
       "move_left": "向左移动",
       "move_right": "向右移动"

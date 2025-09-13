@@ -2,8 +2,8 @@
     <TopNavBar :title="header.title" :breadcrumb="header.breadcrumb" />
     <section class="full-container">
         <Editor
-            v-if="dashboard.sourceCode"
-            :initial-source="dashboard.sourceCode"
+            v-if="dashboard?.sourceCode"
+            :initialSource="dashboard.sourceCode"
             @save="save"
         />
     </section>
@@ -13,6 +13,7 @@
     import {onMounted, computed, ref} from "vue";
 
     import {useRoute} from "vue-router";
+
     const route = useRoute();
 
     import {useCoreStore} from "../../../stores/core";

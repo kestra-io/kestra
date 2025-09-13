@@ -2,7 +2,7 @@ import axios from "axios";
 import posthog from "posthog-js";
 import cloneDeep from "lodash/cloneDeep";
 import {defineStore} from "pinia";
-import {useMiscStore} from "../stores/misc";
+import {useMiscStore} from "override/stores/misc";
 
 export const API_URL = "https://api.kestra.io";
 

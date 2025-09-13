@@ -60,7 +60,7 @@
                             :is="TYPES[chart.type as keyof typeof TYPES]"
                             :chart
                             :filters
-                            :show-default="props.showDefault"
+                            :showDefault="props.showDefault"
                         />
                     </div>
                 </div>

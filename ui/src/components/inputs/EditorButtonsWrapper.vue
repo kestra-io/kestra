@@ -4,19 +4,19 @@
 
         <ValidationError
             class="validation"
-            tooltip-placement="bottom-start"
+            tooltipPlacement="bottom-start"
             :errors="flowErrors"
             :warnings="flowWarnings"
             :infos="flowInfos"
         />
 
         <EditorButtons
-            :is-creating="isCreating"
-            :is-read-only="isReadOnly"
-            :can-delete="true"
-            :is-allowed-edit="isAllowedEdit"
-            :have-change="flowStore.haveChange || tabs.some(t => t.dirty === true)"
-            :flow-have-tasks="Boolean(flowHaveTasks)"
+            :isCreating="isCreating"
+            :isReadOnly="isReadOnly"
+            :canDelete="true"
+            :isAllowedEdit="isAllowedEdit"
+            :haveChange="flowStore.haveChange || tabs.some(t => t.dirty === true)"
+            :flowHaveTasks="Boolean(flowHaveTasks)"
             :errors="flowErrors"
             :warnings="flowWarnings"
             @save="save"
@@ -31,7 +31,7 @@
             "
             @export="exportYaml"
             @delete-flow="deleteFlow"
-            :is-namespace="false"
+            :isNamespace="false"
         />
     </div>
 </template>
@@ -68,7 +68,9 @@
 
     const {translateError, translateErrorWithKey} = useFlowOutdatedErrors();
 
-    const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "true");
+    // If playground is not defined, enable it by default
+    const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "false" ? false : true);
+
     const isCreating = computed(() => flowStore.isCreating === true)
     const isReadOnly = computed(() => flowStore.isReadOnly)
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit)

@@ -43,4 +43,11 @@ public class Output implements Data {
     Type type;
 
     String displayName;
+    
+    /**
+     * Specifies whether the output is required or not.
+     * <p>
+     * By default, an output is always required.
+     */
+    Boolean required;
 }

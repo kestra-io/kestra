@@ -8,7 +8,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.core.storages.StorageInterface;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -26,6 +25,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Objects;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
@@ -38,9 +38,6 @@ public abstract class AbstractExecutionServiceTest {
 
     @Inject
     LogRepositoryInterface logRepository;
-
-    @Inject
-    StorageInterface storageInterface;
 
     @Inject
     RunContextFactory runContextFactory;
@@ -56,12 +53,14 @@ public abstract class AbstractExecutionServiceTest {
         Flow flow = Flow.builder()
             .namespace("io.kestra.test")
             .id("abc")
+            .tenantId(MAIN_TENANT)
             .revision(1)
             .build();
 
         Execution execution = Execution
             .builder()
             .id(IdUtils.create())
+            .tenantId(MAIN_TENANT)
             .state(state)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
@@ -74,6 +73,7 @@ public abstract class AbstractExecutionServiceTest {
             .builder()
             .namespace(flow.getNamespace())
             .id(IdUtils.create())
+            .tenantId(MAIN_TENANT)
             .executionId(execution.getId())
             .flowId(flow.getId())
             .taskId(task.getId())
@@ -94,6 +94,7 @@ public abstract class AbstractExecutionServiceTest {
         for (int i = 0; i < 10; i++) {
             logRepository.save(LogEntry.builder()
                 .executionId(execution.getId())
+                .tenantId(MAIN_TENANT)
                 .timestamp(Instant.now())
                 .message("Message " + i)
                 .flowId(flow.getId())
@@ -108,7 +109,7 @@ public abstract class AbstractExecutionServiceTest {
             true,
             true,
             true,
-            null,
+            MAIN_TENANT,
             flow.getNamespace(),
             flow.getId(),
             null,
@@ -126,7 +127,7 @@ public abstract class AbstractExecutionServiceTest {
             true,
             true,
             true,
-            null,
+            MAIN_TENANT,
             flow.getNamespace(),
             flow.getId(),
             null,

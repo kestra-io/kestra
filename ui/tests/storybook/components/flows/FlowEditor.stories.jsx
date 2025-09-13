@@ -1,79 +1,83 @@
-import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import FlowEditor from "../../../../src/components/flows/FlowEditor.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json";
 import flowSchema from "../../../../src/stores/flow-schema.json";
+import {useAxios} from "../../../../src/utils/axios";
+import {useFlowStore} from "../../../../src/stores/flow";
+import {useEditorStore} from "../../../../src/stores/editor";
 
 
 export default {
-  title: "Components/FlowEditor",
-  component: FlowEditor,
-  decorators: [
-    vueRouter([
-        {
-            path: "/",
-            name: "home",
-            component: {template: "<div>home</div>"}
-        },
-        {
-            path: "/flows/edit/:namespace/",
-            name: "flows/edit",
-            component: {template: "<div>update flows</div>"}
-        }
-    ])
-  ]
+    title: "Components/FlowEditor",
+    component: FlowEditor,
+    decorators: [
+        vueRouter([
+            {
+                path: "/",
+                name: "home",
+                component: {template: "<div>home</div>"}
+            },
+            {
+                path: "/flows/edit/:namespace/",
+                name: "flows/edit",
+                component: {template: "<div>update flows</div>"}
+            }
+        ])
+    ]
 };
 
 const Template = (args) => ({
-  setup() {
-    const store = useStore()
-    store.$http = {
-        get: async (uri) => {
-            if(uri.endsWith("/plugins")) {
+    setup() {
+        const axios = useAxios()
+        const flowStore = useFlowStore()
+        const editorStore = useEditorStore()
+        axios.get = async (uri) => {
+            if (uri.endsWith("/plugins")) {
                 return {data: []}
             }
-            if(uri.endsWith("/flow")) {
+            if (uri.endsWith("/flow")) {
                 return {data: flowSchema}
             }
-            if(uri.endsWith("/distinct-namespaces")) {
+            if (uri.endsWith("/distinct-namespaces")) {
                 return {data: ["sanitychecks.flows.blueprints", "tutorial"]}
             }
             console.log("get request", uri)
             return {data: {}}
-        },
-        post: async (uri) => {
-            if(uri.endsWith("/graph")) {
+        }
+        axios.post = async (uri) => {
+            if (uri.endsWith("/graph")) {
                 return {data: allowFailureDemo}
             }
-            if(uri.endsWith("/validate")) {
+            if (uri.endsWith("/validate")) {
                 return {data: {}}
             }
             console.log("post request", uri)
             return {data: {}}
         }
-    }
-    const flow = YAML_UTILS.parse(args.flow)
-    flow.source = args.flow
-    store.commit("flow/setFlow", flow)
-    store.commit("flow/setFlowYaml", args.flow)
-    store.dispatch("editor/openTab", {
-        flow: true,
-        name: "Flow",
-        path: "Flow.yaml",
-        persistent: true,
-    })
 
-    return () =>
-        <div style="height: 100vh">
-            <FlowEditor />
-        </div>
-  }
+        const flow = YAML_UTILS.parse(args.flow)
+        flow.source = args.flow
+        flowStore.flow = flow
+        flowStore.flowYaml = args.flow
+
+        editorStore.openTab({
+            flow: true,
+            name: "Flow",
+            path: "Flow.yaml",
+            persistent: true,
+        })
+
+        return () =>
+            <div style="height: 100vh">
+                <FlowEditor />
+            </div>
+    }
 });
 
 export const Default = Template.bind({});
 Default.args = {
-  flow: `
+    flow: `
 id: allow-failure-demo
 namespace: sanitychecks.flows.blueprints
 tasks:
@@ -97,7 +101,7 @@ tasks:
 
 export const EmptyFlow = Template.bind({});
 EmptyFlow.args = {
-  flow: `
+    flow: `
 id: empty
 namespace: sanitychecks.flows.blueprints
 `.trim(),
@@ -105,7 +109,7 @@ namespace: sanitychecks.flows.blueprints
 
 export const ComplexFlow = Template.bind({});
 ComplexFlow.args = {
-  flow: `
+    flow: `
 id: hello-world
 namespace: tutorial
 description: Hello World

@@ -16,7 +16,6 @@
     "Per page": "na stronę",
     "Previous step": "Poprzedni krok",
     "Reset guided tour": "Restartuj przewodnik",
-    "Select namespace": "Namespace",
     "Set default page": "Ustaw domyślną stronę",
     "Set labels": "Ustaw etykiety",
     "Set labels done": "Pomyślnie ustawiono etykiety wykonania",
@@ -49,6 +48,10 @@
     "aggregation": "Agregacja",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "Uwaga: Obecnie jako dostawca AI obsługiwany jest tylko Gemini.\n\nUruchom ponownie instancję Kestra po zapisaniu konfiguracji.",
+          "header": "<b>AI Copilot nie został jeszcze skonfigurowany.</b>\n\nAby włączyć AI Copilot, dodaj poniższy fragment do pliku konfiguracyjnego instancji Kestra (np. <code>application.yml</code>), zastępując <code>geminiApiKey</code> swoim rzeczywistym kluczem:"
+        },
         "generating": "Generowanie YAML dla flow...",
         "prompt_placeholder": "Wprowadź instrukcje, aby utworzyć swój flow w Kestra. Przykładowa podpowiedź: Utwórz flow, który uruchamia się w każdy poniedziałek o 9:00.",
         "title": "Agent AI"
@@ -171,13 +174,15 @@
     "confirm": "Potwierdź",
     "confirm password": "Potwierdź hasło",
     "confirmation": "Potwierdzenie",
+    "context updated date": "Data aktualizacji kontekstu",
+    "context updated date tooltip": "Kiedy kontekst triggera został ostatnio zaktualizowany. Dzieje się to, gdy wykonanie jest uruchamiane, kończy się (blokada zwolniona) lub po ocenie (nawet jeśli nie dochodzi do wykonania).",
     "contextBar": {
-      "demo": "Uzyskaj demo",
+      "demo": "Demo",
       "docs": "Dokumentacja",
       "help": "Pomoc",
-      "issue": "Otwórz Issue",
+      "issue": "Problem",
       "news": "Wiadomości",
-      "star": "Dodaj gwiazdkę repozytorium"
+      "star": "Oceń nas gwiazdkami"
     },
     "continue backfill": "Kontynuuj backfill",
     "continue backfills": "Kontynuuj backfills",
@@ -214,6 +219,7 @@
       "edition": {
         "chart": "Edytuj ten wykres",
         "confirmation": "Zmiany w dashboardzie <code>{title}</code> zostały zapisane.",
+        "id readonly": "Właściwość `id` nie może być zmieniona — jest teraz ustawiona na swoje początkowe wartości. Jeśli chcesz ją zmienić, możesz utworzyć nowy dashboard i usunąć stary.",
         "label": "Edytuj Dashboard"
       },
       "empty": "Brak wyników do wyświetlenia.",
@@ -444,8 +450,22 @@
         "title": "Dla tego flow nie ustawiono żadnych limitów."
       },
       "dependencies": {
-        "content": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> w naszej dokumentacji.",
-        "title": "Dla tego flow nie ustawiono żadnych zależności."
+        "EXECUTION": {
+          "content": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">zależnościach wykonania</a> w naszej dokumentacji.",
+          "title": "Obecnie brak zależności."
+        },
+        "FLOW": {
+          "content": "Dowiedz się więcej o <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> w naszej dokumentacji.",
+          "title": "Obecnie brak zależności."
+        },
+        "NAMESPACE": {
+          "content": "Dowiedz się więcej o <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">zależnościach Namespace</a> w naszej dokumentacji.",
+          "title": "Obecnie nie ma zależności."
+        }
+      },
+      "panels": {
+        "content": "Otwórz Flow Code lub No-Code, aby rozpocząć edycję swoich flows, lub wybierz inny panel (Topology, Documentation, Files, Blueprints, Namespace Context) dla powiązanych funkcji.",
+        "title": "Obecnie żadne panele nie są otwarte."
       },
       "plugins": {
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Limitach Concurrency</a></strong> w naszej dokumentacji.",
@@ -458,6 +478,10 @@
       "triggers": {
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> w naszej dokumentacji.",
         "title": "Twój flow nie ma żadnych Triggerów."
+      },
+      "versionPlugin": {
+        "content": "Tutaj możesz zarządzać wszystkimi pluginami zainstalowanymi na Twojej instancji Kestra. Nowo zainstalowane pluginy mogą nie być od razu dostępne we wszystkich usługach Kestra, w zależności od konfiguracji Twojej instancji.",
+        "title": "Nie masz jeszcze wersjonowanego pluginu!"
       }
     },
     "empty search": "Wyniki wyszukiwania są puste",
@@ -708,6 +732,7 @@
         "warning": "Nie masz uprawnień do tych namespace, więc zostaną pominięte: <code>{namespaces}</code>"
       },
       "duplicate": "Ten key już istnieje",
+      "inherited": "Odziedziczone pary KV",
       "name": "KV Store",
       "type": "Typ",
       "update": "Zaktualizuj value dla key '{key}'"
@@ -721,6 +746,8 @@
     "last execution state": "Ostatni stan",
     "last execution status": "Ostatni status wykonania",
     "last modified": "Ostatnia modyfikacja",
+    "last trigger date": "Data ostatniego triggera",
+    "last trigger date tooltip": "Kiedy trigger został ostatnio wykonany. Może być w przeszłości podczas uruchamiania backfill.",
     "launch execution": "Wykonaj",
     "learn_more": "Dowiedz się więcej",
     "light_background": "To jest preferowana opcja podczas pracy z jasnym tłem.",
@@ -748,6 +775,7 @@
     "monogram": "Monogram",
     "months": "Miesiące",
     "multi_panel_editor": {
+      "close_all_panels": "Zamknij wszystkie panele",
       "close_all_tabs": "Zamknij wszystkie karty",
       "move_left": "Przesuń w lewo",
       "move_right": "Przesuń w prawo"
@@ -835,6 +863,8 @@
     "neutral trend": "Stabilny",
     "new": "Nowy",
     "new version": "Nowa wersja {version} dostępna!",
+    "next evaluation date": "Data następnej oceny",
+    "next evaluation date tooltip": "Gdy trigger zostanie ponownie oceniony, na podstawie jego interwału. Nie zawsze jest to samo co następna data wykonania, jeśli warunki nie są spełnione.",
     "next execution date": "Data następnego wykonania",
     "next_execution": "Następne wykonanie",
     "no data current task": "Brak dostępnych danych dla bieżącego taska",
@@ -1028,6 +1058,7 @@
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
     "playground": {
+      "clear_history": "Wyczyść historię",
       "confirm_create": "Nie można uruchomić playground podczas tworzenia flow. Uruchomienie playground run utworzy flow.",
       "history": "Ostatnie 10 uruchomień",
       "play_icon_info": "Możesz również kliknąć ikonę Play w widokach No-Code lub Topology.",
@@ -1037,7 +1068,8 @@
       "run_task_info": "Najedź kursorem na dowolne zadanie w edytorze Flow Code i kliknij przycisk \"Run task\", aby przetestować swoje zadanie.",
       "run_this_task": "Uruchom ten task",
       "title": "Plac zabaw",
-      "toggle": "Plac zabaw"
+      "toggle": "Plac zabaw",
+      "tooltip_persistence": "Jeśli wyłączysz i ponownie włączysz Playground, informacje pozostaną, dopóki pozostaniesz na stronie."
     },
     "pluginDefaults": "Domyślne ustawienia pluginu",
     "pluginPage": {
@@ -1055,7 +1087,12 @@
     "port": "Port",
     "prefill inputs": "Wypełnij",
     "prev_execution": "Poprzednia wykonanie",
-    "preview": "Podgląd",
+    "preview": {
+      "auto-view": "Widok automatyczny",
+      "force-editor": "Wymuś widok edytora",
+      "label": "Podgląd",
+      "view": "Zobacz"
+    },
     "properties": {
       "hidden": "Ukryte w tabeli",
       "hint": "Wybierz widoczne kolumny",
@@ -1077,6 +1114,8 @@
     "replay from beginning tooltip": "Utwórz podobne wykonanie zaczynając od początku",
     "replay from task tooltip": "Utwórz podobne wykonanie zaczynając od task <code>{taskId}</code>",
     "replay latest revision": "Odtwórz używając najnowszej wersji",
+    "replay the execution": "Odtwórz wykonanie <code>{executionId}</code> dla flow <code>{flowId}</code>",
+    "replay with inputs": "Odtwórz z inputami",
     "replayed": "Wykonanie zostało odtworzone",
     "required field": "Wymagane pole",
     "reset": "Restartuj",

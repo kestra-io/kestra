@@ -44,10 +44,10 @@ public class TaskWithAllowFailureTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/task-allow-failure-executable-flow.yml",
-        "flows/valids/for-each-item-subflow-failed.yaml"})
+    @LoadFlows(value = {"flows/valids/task-allow-failure-executable-flow.yml",
+        "flows/valids/for-each-item-subflow-failed.yaml"}, tenantId = "tenant1")
     void executableTask_Flow() throws QueueException, TimeoutException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "task-allow-failure-executable-flow");
+        Execution execution = runnerUtils.runOne("tenant1", "io.kestra.tests", "task-allow-failure-executable-flow");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
         assertThat(execution.getTaskRunList()).hasSize(2);
     }

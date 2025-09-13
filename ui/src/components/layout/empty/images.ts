@@ -6,6 +6,7 @@ import concurrency_limit from "./assets/visuals/concurrency_limit.png";
 import dependencies from "./assets/visuals/dependencies.png";
 import plugins from "./assets/visuals/plugins.png";
 import triggers from "./assets/visuals/triggers.png";
+import versionPlugin from "./assets/visuals/versionPlugin.png";
 
 export const images: Record<string, string> = {
     announcements,
@@ -13,7 +14,11 @@ export const images: Record<string, string> = {
     testSuites,
     concurrency_executions,
     concurrency_limit,
-    dependencies,
+    "dependencies.FLOW": dependencies,
+    "dependencies.EXECUTION": dependencies,
+    "dependencies.NAMESPACE": dependencies,
     plugins,
     triggers,
+    versionPlugin,
+    panels: triggers // TODO: Replace once https://github.com/kestra-io/kestra/issues/11244 is done
 };

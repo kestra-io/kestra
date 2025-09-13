@@ -3,8 +3,8 @@
     <section class="full-container">
         <Editor
             v-if="dashboard.sourceCode"
-            :initial-source="dashboard.sourceCode"
-            allow-save-unchanged
+            :initialSource="dashboard.sourceCode"
+            allowSaveUnchanged
             @save="save"
         />
     </section>
@@ -38,6 +38,8 @@
     import type {Dashboard} from "../../../components/dashboard/composables/useDashboards";
     import {getDashboard, processFlowYaml} from "../../../components/dashboard/composables/useDashboards";
 
+    import {getRandomID} from "../../../../scripts/id";
+
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const save = async (source: string) => {
         const response = await dashboardStore.create(source)
@@ -62,6 +64,9 @@
 
         if (blueprintId) {
             dashboard.value.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId});
+            if (!/^id:.*$/m.test(dashboard.value.sourceCode)) {
+                dashboard.value.sourceCode = "id: " + blueprintId + "\n" + dashboard.value.sourceCode;
+            }
         } else {
             if (name === "flows/update") {
                 const {namespace, id} = JSON.parse(params);
@@ -69,6 +74,8 @@
             } else {
                 dashboard.value.sourceCode = name === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN;
             }
+
+            dashboard.value.sourceCode = "id: " + getRandomID() + "\n" + dashboard.value.sourceCode;
         }
     });
 

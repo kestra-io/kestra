@@ -1,10 +1,11 @@
 package io.kestra.plugin.core.storage;
 
 import com.google.common.io.CharStreams;
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Rethrow;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -28,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @KestraTest
 class SplitTest {
     @Inject
-    RunContextFactory runContextFactory;
+    TestRunContextFactory runContextFactory;
 
     @Inject
     StorageInterface storageInterface;
@@ -105,7 +106,7 @@ class SplitTest {
         return storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/file/storage/get.yml"),
+            new URI("/file/storage/%s/get.yml".formatted(IdUtils.create())),
             new FileInputStream(tempFile)
         );
     }

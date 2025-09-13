@@ -1,5 +1,7 @@
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
+import {ref} from "vue";
+import {useAxios} from "../utils/axios";
 
 interface GuidedProperties {
     tourStarted: boolean;
@@ -16,34 +18,34 @@ interface Message {
     content?: any;
 }
 
-interface State {
-    message: Message | undefined;
-    error: any;
-    unsavedChange: boolean;
-    guidedProperties: GuidedProperties;
-    monacoYamlConfigured: boolean;
-    tutorialFlows: any[];
-}
+export const useCoreStore = defineStore("core", () => {
 
-export const useCoreStore = defineStore("core", {
-    state: (): State => ({
-        message: undefined,
-        error: undefined,
-        unsavedChange: false,
-        guidedProperties: {
-            tourStarted: false,
-            manuallyContinue: false,
-            template: undefined,
-        },
-        monacoYamlConfigured: false,
-        tutorialFlows: [],
-    }),
+    const message = ref<Message>()
+    const error = ref<any>()
+    const unsavedChange = ref(false)
+    const guidedProperties = ref<GuidedProperties>({
+        tourStarted: false,
+        manuallyContinue: false,
+        template: undefined,
+    })
+    const monacoYamlConfigured = ref(false)
+    const tutorialFlows = ref<any[]>([])
 
-    actions: {
-        async readTutorialFlows() {
-            const response = await this.$http.get(`${apiUrl(this.vuexStore)}/flows/tutorial`);
-            this.tutorialFlows = response.data;
-            return response.data;
-        },
-    },
+    const axios = useAxios();
+
+    async function readTutorialFlows() {
+        const response = await axios.get(`${apiUrl()}/flows/tutorial`);
+        tutorialFlows.value = response.data;
+        return response.data;
+    }
+
+    return {
+        message,
+        error,
+        unsavedChange,
+        guidedProperties,
+        monacoYamlConfigured,
+        tutorialFlows,
+        readTutorialFlows,
+    }
 });

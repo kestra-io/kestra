@@ -1,6 +1,6 @@
-import {Store} from "vuex";
 import {EntityIterator} from "./entityIterator.ts";
 import {useNamespacesStore} from "override/stores/namespaces.ts";
+import {storageKeys} from "../utils/constants.ts";
 
 export interface Namespace {
     id: string;
@@ -9,11 +9,8 @@ export interface Namespace {
 }
 
 export class NamespaceIterator extends EntityIterator<Namespace>{
-    private readonly store: Store<any>;
-
-    constructor(store: Store<any>, fetchSize: number, options?: any) {
+    constructor(fetchSize: number, options?: any) {
         super(fetchSize, options);
-        this.store = store;
     }
 
     fetchCall(): Promise<{ total: number; results: Namespace[] }> {
@@ -22,6 +19,10 @@ export class NamespaceIterator extends EntityIterator<Namespace>{
     }
 }
 
-export default function useNamespaces(store: Store<any>, fetchSize: number, options?: any): NamespaceIterator {
-    return new NamespaceIterator(store, fetchSize, options);
+export function defaultNamespace() {
+    return localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
+}
+
+export default function useNamespaces(fetchSize: number, options?: any): NamespaceIterator {
+    return new NamespaceIterator(fetchSize, options);
 }

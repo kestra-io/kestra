@@ -165,8 +165,10 @@
                 .filter(key => key !== column);
 
             return array.reduce((acc, {...params}) => {
-                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.map(agg => agg[0] + " = " + (isDuration(agg[1].field) ? Utils.humanDuration(params[agg[0]]) : params[agg[0]])).join(", ")}`;
-
+                const stack = `${fields.map(field => params[field]).join(" ")}: ${aggregator.map(([key, meta]) => {
+                    const value = isDuration(meta.field) ? Utils.humanDuration(params[key]) : params[key];
+                    return key === "duration" ? `total duration: ${value}` : `${value}`;
+                }).join(", ")}`;
                 if (!acc[stack]) {
                     acc[stack] = {
                         type: "bar",

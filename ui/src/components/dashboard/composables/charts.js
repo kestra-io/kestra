@@ -19,8 +19,16 @@ export function tooltip(tooltipModel) {
                 let colors = tooltipModel.labelColors[i];
                 let style = "background:" + colors.backgroundColor;
                 style += "; border-color:" + colors.borderColor;
-                let span = "<span class=\"square\" style=\"" + style + "\"></span>";
-                innerHtml += span + body + "<br />";
+                let span = `<span class="square" style="${style}"></span>`;
+
+                // Clean up the body string
+                const cleaned = body[0]
+                    .replace(/^\((.*?)\):\s*/, (_, status) => `${status}: `) // remove brackets
+                    .replace(/total\s*=\s*(\d+)/, (_, count) => `${count}`) // remove 'total =' and keep count
+                    .replace(/duration\s*=\s*/, "total duration: ") // replace duration label
+                    .replace(/,\s*/, " "); // remove comma between hours and minutes
+
+                innerHtml += span + cleaned + "<br />";
             }
         });
 

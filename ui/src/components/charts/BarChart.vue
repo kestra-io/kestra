@@ -100,28 +100,12 @@
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: {
-                display: false
-            },
-            tooltip: {
-                enabled: false
-            }
+            legend: {display: false},
+            tooltip: {enabled: false}
         },
         scales: {
-            x: {
-                display: false,
-                grid: {
-                    display: false
-                }
-            },
-            y: {
-                display: false,
-                grid: {
-                    display: false
-                },
-                min: 0,
-                max: 100
-            }
+            x: {display: false, grid: {display: false}},
+            y: {display: false, grid: {display: false}, min: 0, max: 100}
         }
     }));
 
@@ -141,7 +125,6 @@
                         data: [],
                     };
                 }
-
                 accumulator[state].data.push(value.executionCounts[state]);
             });
 
@@ -186,16 +169,24 @@
             borderColor: "transparent",
             borderWidth: 2,
             plugins: {
-                barLegend: {
-                    containerID: "executions",
-                },
+                barLegend: {containerID: "executions"},
                 tooltip: {
                     enabled: !props.externalTooltip,
                     filter: (value: any) => value.raw,
                     callbacks: {
-                        label: function (value: any) {
-                            const {label, yAxisID} = value.dataset;
-                            return `${label.toLowerCase().capitalize()}: ${value.raw}${yAxisID === "yB" ? "s" : ""}`;
+                        label: function (tooltipItem: any) {
+                            const index = tooltipItem.dataIndex;
+                            const datasets = parsedData.value.datasets;
+                            const labels: string[] = [];
+
+                            datasets.forEach(ds => {
+                                // Only show bar datasets (ignore duration line)
+                                if (ds.yAxisID !== "yB" && ds.data[index] > 0) {
+                                    labels.push(`${ds.label.toLowerCase().capitalize()}: ${ds.data[index]}`);
+                                }
+                            });
+
+                            return labels.join("\n"); // Single string for tooltip
                         },
                     },
                     external: props.externalTooltip ? function (context: any) {
@@ -207,13 +198,8 @@
             scales: {
                 x: {
                     display: props.scales,
-                    title: {
-                        display: true,
-                        text: t("date"),
-                    },
-                    grid: {
-                        display: false,
-                    },
+                    title: {display: true, text: t("date")},
+                    grid: {display: false},
                     position: "bottom",
                     stacked: true,
                     ticks: {
@@ -221,51 +207,28 @@
                         callback: function (value: any) {
                             const label = this.getLabelForValue(value);
 
-                            if (
-                                moment(label, ["h:mm A", "HH:mm"], true).isValid()
-                            ) {
-                                // Handle time strings like "1:15 PM" or "13:15"
-                                return moment(label, ["h:mm A", "HH:mm"]).format(
-                                    "h:mm A",
-                                );
+                            if (moment(label, ["h:mm A", "HH:mm"], true).isValid()) {
+                                return moment(label, ["h:mm A", "HH:mm"]).format("h:mm A");
                             } else if (moment(new Date(label)).isValid()) {
-                                // Handle date strings
                                 const date = moment(new Date(label));
-                                const isCurrentYear =
-                                    date.year() === moment().year();
-                                return date.format(
-                                    isCurrentYear ? "MM/DD" : "MM/DD/YY",
-                                );
+                                const isCurrentYear = date.year() === moment().year();
+                                return date.format(isCurrentYear ? "MM/DD" : "MM/DD/YY");
                             }
-
-                            // Return the label as-is if it's neither a valid date nor time
                             return label;
                         },
                     },
                 },
                 y: {
                     display: props.scales,
-                    title: {
-                        display: !props.small,
-                        text: t("executions"),
-                    },
-                    grid: {
-                        display: false,
-                    },
+                    title: {display: !props.small, text: t("executions")},
+                    grid: {display: false},
                     position: "left",
                     stacked: true,
-                    ticks: {
-                        maxTicksLimit: props.small ? 5 : 8,
-                    },
+                    ticks: {maxTicksLimit: props.small ? 5 : 8},
                 },
                 yB: {
-                    title: {
-                        display: props.duration && !props.small,
-                        text: t("duration"),
-                    },
-                    grid: {
-                        display: false,
-                    },
+                    title: {display: props.duration && !props.small, text: t("duration")},
+                    grid: {display: false},
                     display: props.duration,
                     position: "right",
                     ticks: {
@@ -282,6 +245,7 @@
         }, theme.value),
     );
 </script>
+
 
 <style lang="scss" scoped>
 .small {

@@ -37,6 +37,7 @@
             :plugins="[barLegend]"
             :small="isSmallScreen"
             :loading="loading"
+            :external-tooltip="true"
             class="tall"
         />
 

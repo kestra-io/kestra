@@ -262,6 +262,7 @@ public class FileChangedEventListener {
     }
 
     private String getTenantIdFromPath(Path path) {
+        // FIXME this is probably a bug
         return path.getFileName().toString().split("_")[0];
     }
 }

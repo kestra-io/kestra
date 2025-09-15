@@ -21,6 +21,7 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
@@ -42,6 +43,7 @@ import java.util.stream.Stream;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
+@Slf4j
 abstract public class TestsUtils {
     private static final ObjectMapper mapper = JacksonMapper.ofYaml();
 
@@ -257,5 +259,14 @@ abstract public class TestsUtils {
 
     public static <T> Property<List<T>> propertyFromList(List<T> list) throws JsonProcessingException {
         return Property.ofExpression(JacksonMapper.ofJson().writeValueAsString(list));
+    }
+
+    public static String stringify(Object object) {
+        try {
+            return JacksonMapper.ofJson().writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            log.error("failed to serialize object to json string", e);
+            return object !=null ?  object.toString() : "null";
+        }
     }
 }

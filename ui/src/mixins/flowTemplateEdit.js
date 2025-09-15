@@ -7,7 +7,7 @@ import RouteContext from "./routeContext";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import action from "../models/action";
 import permission from "../models/permission";
-import {pageFromRoute} from "../utils/eventsRouter.ts";
+import {pageFromRoute} from "../utils/eventsRouter";
 import {apiUrl} from "override/utils/route";
 import {mapStores} from "pinia";
 import {useApiStore} from "../stores/api";

@@ -1,13 +1,14 @@
 package io.kestra.core.serializers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.DefaultTimeZone;
-import org.junitpioneer.jupiter.RetryingTest;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -86,6 +87,36 @@ class JacksonMapperTest {
         assertThat(deserialize.getZonedDateTime().toEpochSecond()).isEqualTo(original.getZonedDateTime().toEpochSecond());
         assertThat(deserialize.getZonedDateTime().getOffset()).isEqualTo(original.getZonedDateTime().getOffset());
     }
+    
+    @Test
+    void shouldComputeDiffGivenCreatedObject() {
+        Pair<JsonNode, JsonNode> value = JacksonMapper.getBiDirectionalDiffs(null, new DummyObject("value"));
+        // patch
+        assertThat(value.getLeft().toString()).isEqualTo("[{\"op\":\"replace\",\"path\":\"\",\"value\":{\"value\":\"value\"}}]");
+        // Revert
+        assertThat(value.getRight().toString()).isEqualTo("[{\"op\":\"replace\",\"path\":\"\",\"value\":null}]");
+    }
+    
+    @Test
+    void shouldComputeDiffGivenUpdatedObject() {
+        Pair<JsonNode, JsonNode> value = JacksonMapper.getBiDirectionalDiffs(new DummyObject("before"), new DummyObject("after"));
+        // patch
+        assertThat(value.getLeft().toString()).isEqualTo("[{\"op\":\"replace\",\"path\":\"/value\",\"value\":\"after\"}]");
+        // Revert
+        assertThat(value.getRight().toString()).isEqualTo("[{\"op\":\"replace\",\"path\":\"/value\",\"value\":\"before\"}]");
+    }
+    
+    @Test
+    void shouldComputeDiffGivenDeletedObject() {
+        Pair<JsonNode, JsonNode> value = JacksonMapper.getBiDirectionalDiffs(new DummyObject("value"), null);
+        // Patch
+        assertThat(value.getLeft().toString()).isEqualTo("[{\"op\":\"replace\",\"path\":\"\",\"value\":null}]");
+        // Revert
+        assertThat(value.getRight().toString()).isEqualTo("[{\"op\":\"replace\",\"path\":\"\",\"value\":{\"value\":\"value\"}}]");
+    }
+    
+    private record DummyObject(String value){}
+    
 
     @Getter
     @NoArgsConstructor

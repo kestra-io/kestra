@@ -75,7 +75,7 @@ jobs:
         with:
           name: Java Tests Report
           reporter: java-junit
-          path: '**/build/test-results/test/TEST-*.xml'
+          path: '**/build/test-results/junit/TEST-*.xml'
           list-suites: 'failed'
           list-tests: 'failed'
           fail-on-error: 'false'

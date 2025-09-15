@@ -18,7 +18,6 @@ import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.condition.Expression;
 import io.kestra.plugin.core.log.Log;
@@ -30,7 +29,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
@@ -44,7 +42,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 
-@Slf4j
 @KestraTest
 class PluginDefaultServiceTest {
     private static final Map<String, Object> TEST_FLOW_AS_MAP = Map.of(
@@ -171,7 +168,6 @@ class PluginDefaultServiceTest {
 
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getValue(), is(1));
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(666));
-        log.warn(JacksonMapper.ofJson().writeValueAsString((DefaultTester) injected.getTasks().getFirst()));
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getDoubleValue(), is(19D));
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getArrays().size(), is(2));
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getArrays(), containsInAnyOrder(1, 2));

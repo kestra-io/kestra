@@ -73,4 +73,13 @@ class LabelTest {
             new Label(Label.CORRELATION_ID, "id")
         );
     }
+    @Test
+void shouldRejectEmptyLabelValue() {
+    Exception exception = org.junit.jupiter.api.Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> new Label(Label.USERNAME, "")
+    );
+
+    assertThat(exception.getMessage()).contains("Label value cannot be empty");
+}
 }

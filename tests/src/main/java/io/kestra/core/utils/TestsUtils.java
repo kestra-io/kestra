@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -44,6 +45,11 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 abstract public class TestsUtils {
     private static final ObjectMapper mapper = JacksonMapper.ofYaml();
 
+    /**
+     * there is at least one bug in {@link io.kestra.cli.services.FileChangedEventListener#getTenantIdFromPath(Path)} forbidding use to use '_' character
+     * @param prefix
+     * @return
+     */
     public static String randomTenant(String... prefix) {
         var list = List.of(prefix);
         if (list.isEmpty()) {
@@ -61,7 +67,7 @@ abstract public class TestsUtils {
         String[] parts = Stream
             .concat(validTenantPrefixes.stream(), Stream.of(IdUtils.create().toLowerCase()))
             .toArray(String[]::new);
-        return IdUtils.fromParts(parts);
+        return IdUtils.fromPartsAndSeparator('-',parts);
     }
 
     public static <T> T map(String path, Class<T> cls) throws IOException {

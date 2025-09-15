@@ -58,7 +58,7 @@ class FileChangedEventListenerTest {
 
     @Test
     void test() throws IOException, TimeoutException {
-        var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getCanonicalName(), "test");
+        var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getSimpleName()+"-test");
         // remove the flow if it already exists
         flowRepository.findByIdWithSource(tenant, "io.kestra.tests.watch", "myflow").ifPresent(flow -> flowRepository.delete(flow));
 

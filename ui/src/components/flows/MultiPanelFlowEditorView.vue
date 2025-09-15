@@ -165,7 +165,7 @@
     const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, tempActions)
 
     const panels = useStorage<Panel[]>(
-        `el-fl-${flowStore.flow?.namespace}-${flowStore.flow?.id}`,
+        `el-fl-${flowStore.flow?.namespace ?? "creation"}${flowStore.flow?.id ? `-${flowStore.flow.id}` : ""}`,
         DEFAULT_ACTIVE_TABS
             .map((t) => ({
                 ...staticGetPanelFromValue(t).panel,

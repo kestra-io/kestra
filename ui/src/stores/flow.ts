@@ -482,6 +482,10 @@ export const useFlowStore = defineStore("flow", () => {
 
     function createFlow(options: { flow: string }) {
         return axios.post(`${apiUrl()}/flows`, options.flow, textYamlHeader).then(response => {
+
+            const creationPanels = localStorage.getItem("el-fl-creation") ?? YAML_UTILS.stringify([]);
+            localStorage.setItem(`el-fl-${flow.value!.namespace}-${flow.value!.id}`, creationPanels);
+
             flow.value = response.data;
 
             return response.data;

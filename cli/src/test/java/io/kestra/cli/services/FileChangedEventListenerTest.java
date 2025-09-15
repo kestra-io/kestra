@@ -1,10 +1,8 @@
 package io.kestra.cli.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -61,6 +59,8 @@ class FileChangedEventListenerTest {
     @Test
     void test() throws IOException, TimeoutException {
         var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getCanonicalName(), "test");
+        // remove the flow if it already exists
+        flowRepository.findByIdWithSource(tenant, "io.kestra.tests.watch", "myflow").ifPresent(flow -> flowRepository.delete(flow));
 
         // create a basic flow
         String flow = """
@@ -76,20 +76,7 @@ class FileChangedEventListenerTest {
         GenericFlow genericFlow = GenericFlow.fromYaml(tenant, flow);
         Files.write(Path.of(FILE_WATCH + "/" + genericFlow.uidWithoutRevision() + ".yaml"), flow.getBytes());
         Await.until(
-            () -> {
-                try {
-                    System.out.println(JacksonMapper.ofJson().writeValueAsString(flowRepository.findAllForAllTenants()));
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
-                System.out.println("----");
-                try {
-                    System.out.println(JacksonMapper.ofJson().writeValueAsString(flowRepository.findAll(tenant)));
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
-                return flowRepository.findById(tenant, "io.kestra.tests.watch", "myflow").isPresent();
-            },
+            () -> flowRepository.findById(tenant, "io.kestra.tests.watch", "myflow").isPresent(),
             Duration.ofMillis(100),
             Duration.ofSeconds(10)
         );

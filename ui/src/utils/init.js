@@ -38,7 +38,7 @@ import Toast from "./toast";
 import filters from "./filters";
 import ElementPlus from "element-plus";
 import createUnsavedChanged from "./unsavedChange";
-import createEventsRouter from "./eventsRouter";
+import createEventsRouter from "./eventsRouter.ts";
 import "./global"
 import {useDocStore} from "../stores/doc";
 

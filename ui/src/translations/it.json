@@ -50,7 +50,7 @@
       "flow": {
         "enable_instructions": {
           "footer": "Nota: Al momento, solo Gemini è supportato come provider AI.\n\nRiavvia la tua istanza di Kestra dopo aver salvato la configurazione.",
-          "header": "<b>AI Copilot non è stato ancora configurato.</b>\n\nPer abilitare AI Copilot, aggiungi il seguente snippet al file di configurazione della tua istanza di Kestra (ad esempio, <code>application.yml</code>), sostituendo <code>geminiApiKey</code> con il tuo key effettivo:"
+          "header": "<b>AI Copilot non è stato ancora configurato.</b>\n\nPer abilitare AI Copilot, aggiungi il seguente snippet al file di configurazione della tua istanza di Kestra (ad esempio <code>application.yml</code>), sostituendo <code>geminiApiKey</code> con la tua chiave effettiva:"
         },
         "generating": "Generazione del Flow YAML per te...",
         "prompt_placeholder": "Inserisci le istruzioni per creare il tuo flow di Kestra. Esempio di prompt: Crea un flow che si esegue ogni lunedì alle 9 AM.",
@@ -174,13 +174,15 @@
     "confirm": "Conferma",
     "confirm password": "Conferma password",
     "confirmation": "Conferma",
+    "context updated date": "Data di aggiornamento del contesto",
+    "context updated date tooltip": "Quando il contesto del trigger è stato aggiornato l'ultima volta. Questo avviene quando l'esecuzione è attivata, termina (blocco rilasciato) o dopo una valutazione (anche se non avviene alcuna esecuzione).",
     "contextBar": {
-      "demo": "Ottieni una demo",
+      "demo": "Demo",
       "docs": "Documenti",
       "help": "Aiuto",
-      "issue": "Apri un'Issue",
+      "issue": "Problema",
       "news": "Notizie",
-      "star": "Aggiungi una stella al repository"
+      "star": "Metti una stella"
     },
     "continue backfill": "Continua il backfill",
     "continue backfills": "Continua i backfills",
@@ -461,6 +463,10 @@
           "title": "Attualmente non ci sono dipendenze."
         }
       },
+      "panels": {
+        "content": "Apri Flow Code o No-Code per iniziare a modificare i tuoi flow, oppure seleziona un altro pannello (Topology, Documentation, Files, Blueprints, Namespace Context) per funzionalità correlate.",
+        "title": "Nessun pannello è attualmente aperto."
+      },
       "plugins": {
         "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">limiti di Concurrency</a></strong> nella nostra documentazione.",
         "title": "Nessun valore predefinito del plugin è impostato per questo Namespace."
@@ -740,6 +746,8 @@
     "last execution state": "Ultimo stato",
     "last execution status": "Ultimo stato di esecuzione",
     "last modified": "Ultima modifica",
+    "last trigger date": "Data ultimo trigger",
+    "last trigger date tooltip": "Quando il trigger è stato eseguito l'ultima volta. Potrebbe essere nel passato quando si esegue un backfill.",
     "launch execution": "Esegui",
     "learn_more": "Scopri di più",
     "light_background": "Questa è l'opzione preferita quando si lavora con uno sfondo chiaro.",
@@ -767,6 +775,7 @@
     "monogram": "Monogramma",
     "months": "Mesi",
     "multi_panel_editor": {
+      "close_all_panels": "Chiudi tutti i pannelli",
       "close_all_tabs": "Chiudi tutte le tab",
       "move_left": "Sposta a sinistra",
       "move_right": "Sposta a destra"
@@ -854,6 +863,8 @@
     "neutral trend": "Stabile",
     "new": "Nuovo",
     "new version": "Nuova versione {version} disponibile!",
+    "next evaluation date": "Prossima data di valutazione",
+    "next evaluation date tooltip": "Quando il trigger verrà valutato nuovamente, in base al suo intervallo. Non sempre coincide con la prossima data di esecuzione se le condizioni non sono soddisfatte.",
     "next execution date": "Data della prossima esecuzione",
     "next_execution": "Prossima esecuzione",
     "no data current task": "Non ci sono dati disponibili per il task corrente",
@@ -1103,6 +1114,8 @@
     "replay from beginning tooltip": "Crea un'esecuzione simile a partire dall'inizio",
     "replay from task tooltip": "Crea un'esecuzione simile a partire dal task <code>{taskId}</code>",
     "replay latest revision": "Ripeti utilizzando l'ultima revisione",
+    "replay the execution": "Ripeti l'esecuzione <code>{executionId}</code> per il flow <code>{flowId}</code>",
+    "replay with inputs": "Riesegui con input",
     "replayed": "L'esecuzione è stata ripetuta",
     "required field": "Campo obbligatorio",
     "reset": "Riavvia",
@@ -1220,6 +1233,7 @@
           "label": "Lingua e Regione",
           "note": "Nota che questa impostazione viene utilizzata per visualizzare le proprietà di data e ora nell'interfaccia utente. Per pianificare i tuoi flows in un fuso orario diverso da UTC, assicurati di impostare la proprietà del fuso orario nel trigger Schedule nel codice del tuo flow o nei tuoi plugin defaults."
         },
+        "reset_section_to_defaults": "Ripristina i valori predefiniti di questa sezione",
         "save": {
           "discard": "Scarta",
           "label": "Salva Preferenze",

@@ -1,5 +1,5 @@
 <template>
-    <el-table :data="store.inheritedKVs" table-layout="auto">
+    <el-table :data="store.inheritedKVs" tableLayout="auto">
         <el-table-column prop="key" :label="$t('key')">
             <template #default="scope">
                 <code>{{ scope.row.key }}</code>

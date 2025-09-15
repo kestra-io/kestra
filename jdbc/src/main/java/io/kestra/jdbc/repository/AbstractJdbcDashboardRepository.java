@@ -150,13 +150,8 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
         fields.put(field("source_code"), source);
 
         this.jdbcRepository.persist(dashboard, fields);
-
-        if (previousDashboard == null) {
-            eventPublisher.publishEvent(new CrudEvent<>(dashboard, CrudEventType.CREATE));
-        } else {
-            eventPublisher.publishEvent(new CrudEvent<>(dashboard, previousDashboard, CrudEventType.UPDATE));
-        }
-
+        this.eventPublisher.publishEvent(CrudEvent.of(previousDashboard, dashboard));
+        
         return dashboard;
     }
 
@@ -174,8 +169,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
         fields.put(field("source_code"), deleted.getSourceCode());
 
         this.jdbcRepository.persist(deleted, fields);
-
-        eventPublisher.publishEvent(new CrudEvent<>(dashboard.get(), CrudEventType.DELETE));
+        this.eventPublisher.publishEvent(CrudEvent.delete(dashboard.get()));
 
         return deleted;
     }

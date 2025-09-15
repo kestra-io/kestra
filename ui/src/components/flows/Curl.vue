@@ -2,9 +2,9 @@
     <div class="position-relative">
         <pre><code>{{ curlCommand }}</code></pre>
 
-        <copy-to-clipboard :text="curlCommand" />
+        <CopyToClipboard :text="curlCommand" />
 
-        <el-alert class="mt-3" type="info" show-icon :closable="false">
+        <el-alert class="mt-3" type="info" showIcon :closable="false">
             {{ $t('curl.note') }}
         </el-alert>
     </div>
@@ -107,7 +107,7 @@
                     .filter((label) => label.key !== null && label.value !== null && label.key !== "" && label.value !== "")
                     .map((label) => this.generateExecutionLabel(label.key, label.value));
 
-                const origin = baseUrl ? apiUrl(this.$store) : `${location.origin}${basePath(this.$store)}`;
+                const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`;
 
                 var url = `${origin}/executions/${this.flow.namespace}/${this.flow.id}`;
 

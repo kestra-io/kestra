@@ -27,7 +27,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to exclude others conditions."
+    title = "Condition to exclude other conditions."
 )
 @Plugin(
     examples = {
@@ -62,7 +62,7 @@ public class Not extends Condition implements ScheduleCondition {
     @NotEmpty
     @Schema(
         title = "The list of conditions to exclude.",
-        description = "If any conditions is true, it will prevent the event's execution."
+        description = "If any condition is true, it will prevent the event's execution."
     )
     @PluginProperty
     private List<Condition> conditions;

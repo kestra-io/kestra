@@ -4,15 +4,15 @@
             id="editorWrapper"
             ref="editorRefElement"
             class="flex-1"
-            :model-value="draftSource === undefined ? source : draftSource"
-            :schema-type="isCurrentTabFlow ? 'flow': undefined"
+            :modelValue="draftSource === undefined ? source : draftSource"
+            :schemaType="isCurrentTabFlow ? 'flow': undefined"
             :lang="extension === undefined ? 'yaml' : undefined"
             :extension="extension"
             :navbar="false"
-            :read-only="isReadOnly"
+            :readOnly="isReadOnly"
             :creating="isCreating"
             :path="props.path"
-            :diff-overview-bar="false"
+            :diffOverviewBar="false"
             @update:model-value="editorUpdate"
             @cursor="updatePluginDocumentation"
             @save="isCurrentTabFlow ? save(): saveFileContent()"
@@ -20,27 +20,28 @@
             @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
             @mouse-leave="() => highlightHoveredTask(-1)"
             :original="draftSource === undefined ? undefined : source"
-            :diff-side-by-side="false"
+            :diffSideBySide="false"
         >
             <template #absolute>
                 <AITriggerButton
                     :show="isCurrentTabFlow"
-                    :opened="aiAgentOpened"
-                    @click="draftSource = undefined; aiAgentOpened = true"
+                    :opened="aiCopilotOpened"
+                    @click="draftSource = undefined; aiCopilotOpened = true"
                 />
                 <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
             </template>
             <template v-if="playgroundStore.enabled" #widget-content>
-                <PlaygroundRunTaskButton :task-id="highlightedLines?.taskId" />
+                <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
             </template>
         </Editor>
         <Transition name="el-zoom-in-center">
-            <AiAgent
-                v-if="aiAgentOpened"
+            <AiCopilot
+                v-if="aiCopilotOpened"
                 class="position-absolute prompt"
-                @close="aiAgentOpened = false"
+                @close="aiCopilotOpened = false"
                 :flow="editorContent"
-                @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
+                :conversationId="conversationId"
+                @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
             />
         </Transition>
         <AcceptDecline
@@ -55,21 +56,23 @@
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useRoute, useRouter} from "vue-router";
 
-    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
+    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys.ts";
     import {usePluginsStore} from "../../stores/plugins";
     import {EditorTabProps, useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {useNamespacesStore} from "override/stores/namespaces";
+    import {useMiscStore} from "override/stores/misc";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
 
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import Editor from "./Editor.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import AiAgent from "../ai/AiAgent.vue";
+    import AiCopilot from "../ai/AiCopilot.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
+    import Utils from "../../utils/utils.ts";
 
     const route = useRoute();
     const router = useRouter();
@@ -85,10 +88,10 @@
             event.stopPropagation();
             event.stopImmediatePropagation();
             draftSource.value = undefined;
-            aiAgentOpened.value = !aiAgentOpened.value;
+            aiCopilotOpened.value = !aiCopilotOpened.value;
         }
     };
-    const aiAgentOpened = ref(false);
+    const aiCopilotOpened = ref(false);
     const draftSource = ref<string | undefined>(undefined);
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
@@ -118,7 +121,9 @@
         editorStore.setTabContent({path: props.path, content})
     }
 
+
     onMounted(() => {
+        loadPluginsHash();
         loadFile();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
@@ -142,6 +147,7 @@
     const isReadOnly = computed(() => flowStore.flow?.deleted || !flowStore.isAllowedEdit || flowStore.readOnlySystemLabel);
 
     const timeout = ref<any>(null);
+    const hash = ref<any>(null);
 
     const editorContent = computed(() => {
         return draftSource.value ?? source.value;
@@ -149,6 +155,13 @@
 
     const pluginsStore = usePluginsStore();
     const namespacesStore = useNamespacesStore();
+    const miscStore = useMiscStore();
+
+    function loadPluginsHash() {
+        miscStore.loadConfigs().then(config => {
+            hash.value = config.pluginsHash;
+        });
+    }
 
     function editorUpdate(newValue: string){
         if (editorContent.value === newValue) {
@@ -186,28 +199,29 @@
     function updatePluginDocumentation(event: any) {
         const source = event.model.getValue();
         const cursorOffset = event.model.getOffsetAt(event.position);
-        
+
         const isPlugin = (type: string) => pluginsStore.allTypes.includes(type);
-        const isInRange = (range: [number, number, number]) => 
+        const isInRange = (range: [number, number, number]) =>
             cursorOffset >= range[0] && cursorOffset <= range[2];
         const getRangeSize = (range: [number, number, number]) => range[2] - range[0];
 
         const getElementFromRange = (typeElement: any) => {
             const wrapper = YAML_UTILS.localizeElementAtIndex(source, typeElement.range[0]);
             return wrapper?.value?.type && isPlugin(wrapper.value.type)
-                ? wrapper.value 
+                ? wrapper.value
                 : {type: typeElement.type};
         };
 
         const selectedElement = YAML_UTILS.extractFieldFromMaps(source, "type", () => true, isPlugin)
             .filter(el => el.range && isInRange(el.range))
-            .reduce((closest, current) => 
+            .reduce((closest, current) =>
                         !closest || getRangeSize(current.range) < getRangeSize(closest.range)
                             ? current
                             : closest
                     , null as any);
 
-        const result = selectedElement ? getElementFromRange(selectedElement) : undefined;
+        let result = selectedElement ? getElementFromRange(selectedElement) : undefined;
+        result = {...result, hash: hash.value};
         pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
     };
 
@@ -237,6 +251,7 @@
 
     const saveFileContent = async () => {
         clearTimeout(timeout.value);
+        if(!namespace.value || !props.path) return
         await namespacesStore.createFile({
             namespace: namespace.value,
             path: props.path,
@@ -263,15 +278,18 @@
         flowStore.executeFlow = true;
     };
 
+    const conversationId = ref<string>(Utils.uid());
+
     function acceptDraft() {
         const accepted = draftSource.value;
         draftSource.value = undefined;
+        conversationId.value = Utils.uid();
         editorUpdate(accepted!);
     }
 
     function declineDraft() {
         draftSource.value = undefined;
-        aiAgentOpened.value = true;
+        aiCopilotOpened.value = true;
     }
 
     const {

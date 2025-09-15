@@ -12,7 +12,7 @@
     <el-row class="p-5">
         <KestraFilter
             :placeholder="t('search')"
-            legacy-query
+            legacyQuery
         />
 
         <el-col v-if="namespaces.length === 0" class="p-3 namespaces">
@@ -27,7 +27,7 @@
         >
             <el-tree
                 :data="[namespace]"
-                default-expand-all
+                defaultExpandAll
                 :props="{class: 'tree'}"
                 class="h-auto p-2 rounded-full"
             >
@@ -68,8 +68,7 @@
 
     import {useRoute} from "vue-router";
     import useRouteContext from "../../../mixins/useRouteContext.ts";
-    import {useStore} from "vuex";
-    import useNamespaces, {Namespace} from "../../../composables/useNamespaces.ts";
+    import useNamespaces, {Namespace} from "../../../composables/useNamespaces";
     import {useI18n} from "vue-i18n";
     import {useMiscStore} from "override/stores/misc";
 
@@ -100,7 +99,6 @@
     const details = computed(() => ({title: t("namespaces")}));
     useRouteContext(details);
 
-    const store = useStore();
 
     const authStore = useAuthStore();
     const canCreate = computed(() => {
@@ -110,7 +108,6 @@
     const namespaces = ref([]) as Ref<Namespace[]>;
     const loadData = async () => {
         namespaces.value = await useNamespaces(
-            store,
             1000,
             route.query?.q === undefined ? undefined : {q: route.query.q},
         ).all();

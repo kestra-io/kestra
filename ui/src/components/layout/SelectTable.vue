@@ -8,11 +8,11 @@
             ref="table"
             v-bind="$attrs"
             :data="data"
-            :empty-text="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
+            :emptyText="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
             @selection-change="selectionChanged"
             v-el-table-infinite-scroll="infiniteScrollLoadWithDisableHandling"
-            :infinite-scroll-disabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
-            :infinite-scroll-delay="0"
+            :infiniteScrollDisabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
+            :infiniteScrollDelay="0"
             :height="data.length === 0 && infiniteScrollLoad === undefined ? '100px' : tableHeight"
         >
             <el-table-column type="selection" v-if="selectable && showSelection" />
@@ -122,9 +122,9 @@
                 return this.stillHaveDataToFetch || this.tableView === undefined ? "100%" : `min(${this.tableView.scrollHeight}px, 100%)`;
             },
             async infiniteScrollLoadWithDisableHandling() {
-                let load = await this.infiniteScrollLoad();
+                let load = await this.infiniteScrollLoad?.();
                 while (load !== undefined && load.length === 0) {
-                    load = await this.infiniteScrollLoad();
+                    load = await this.infiniteScrollLoad?.();
                 }
 
                 this.infiniteScrollDisabled = load === undefined;

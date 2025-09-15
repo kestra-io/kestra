@@ -1,5 +1,5 @@
 <template>
-    <sidebar-menu
+    <SidebarMenu
         ref="sideBarRef"
         data-component="FILENAME_PLACEHOLDER"
         id="side-menu"
@@ -7,13 +7,13 @@
         @update:collapsed="onToggleCollapse"
         width="268px"
         :collapsed="collapsed"
-        link-component-name="LeftMenuLink"
-        hide-toggle
+        linkComponentName="LeftMenuLink"
+        hideToggle
     >
         <template #header>
             <el-button @click="collapsed = onToggleCollapse(!collapsed)" class="collapseButton" :size="collapsed ? 'small':undefined">
-                <chevron-right v-if="collapsed" />
-                <chevron-left v-else />
+                <ChevronRight v-if="collapsed" />
+                <ChevronLeft v-else />
             </el-button>
             <div class="logo">
                 <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
@@ -26,7 +26,7 @@
         <template #footer>
             <slot name="footer" />
         </template>
-    </sidebar-menu>
+    </SidebarMenu>
 </template>
 
 <script setup>
@@ -238,6 +238,7 @@
             background-color: transparent !important;
             padding-bottom: 15px;
             width: 30px !important;
+            z-index: 1;
 
             svg {
                 position: relative;
@@ -268,7 +269,7 @@
             box-shadow: none;
 
             &_active, body &_active:hover {
-                background-color: var(--ks-button-background-primary);
+                background-color: var(--ks-button-background-primary) !important;
                 color: var(--ks-button-content-primary);
                 font-weight: normal;
             }
@@ -336,6 +337,12 @@
 
         .vsm--title span:first-child{
             flex-grow: 0;
+        }
+
+        .vsm--link_open.vsm--link_active {
+            .vsm--title, .vsm--icon {
+                color: var(--ks-button-content-primary);
+            }
         }
 
         .vsm--arrow_default{
@@ -406,6 +413,21 @@
             bottom: 0 !important;
             margin-left: 5px;
         }
-    }
 
+        .vsm--item {
+            position: relative;
+
+            &::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 1.25rem;
+                z-index: 5;
+                background: linear-gradient(to top, var(--ks-background-left-menu), transparent);
+                opacity: 0.18;
+            }
+        }
+    }
 </style>

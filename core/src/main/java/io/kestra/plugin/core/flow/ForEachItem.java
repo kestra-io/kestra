@@ -57,7 +57,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Schema(
     title = "Execute a subflow for each batch of items",
     description = """
-        The `items` value must be Kestra's internal storage URI e.g. an output file from a previous task, or a file from inputs of FILE type.
+        The `items` value must be Kestra's internal storage URI (e.g. an output file from a previous task, or a file from inputs of FILE type).
         Two special variables are available to pass as inputs to the subflow:
         - `taskrun.items` which is the URI of internal storage file containing the batch of items to process
         - `taskrun.iteration` which is the iteration or batch number
@@ -235,13 +235,13 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public class ForEachItem extends Task implements FlowableTask<VoidOutput>, ChildFlowInterface {
     @NotEmpty
     @PluginProperty(dynamic = true)
-    @Schema(title = "The items to be split into batches and processed. Make sure to set it to Kestra's internal storage URI. This can be either the output from a previous task, formatted as `{{ outputs.task_id.uri }}`, or a FILE type input parameter, like `{{ inputs.myfile }}`. This task is optimized for files where each line represents a single item. Suitable file types include Amazon ION-type files (commonly produced by Query tasks), newline-separated JSON files, or CSV files formatted with one row per line and without a header. For files in other formats such as Excel, CSV, Avro, Parquet, XML, or JSON, it's recommended to first convert them to the ION format. This can be done using the conversion tasks available in the `io.kestra.plugin.serdes` module, which will transform files from their original format to ION.")
+    @Schema(title = "The items to be split into batches and processed – make sure to set it to Kestra's internal storage URI. This can be either the output from a previous task, formatted as `{{ outputs.task_id.uri }}`, or a FILE type input parameter, like `{{ inputs.myfile }}`. This task is optimized for files where each line represents a single item. Suitable file types include Amazon ION-type files (commonly produced by Query tasks), newline-separated JSON files, or CSV files formatted with one row per line and without a header. For files in other formats such as Excel, CSV, Avro, Parquet, XML, or JSON, it's recommended to first convert them to the ION format. This can be done using the conversion tasks available in the `io.kestra.plugin.serdes` module, which will transform files from their original format to ION.")
     private String items;
 
     @NotNull
     @PluginProperty
     @Builder.Default
-    @Schema(title = "How to split the items into batches.")
+    @Schema(title = "How to split the items into batches")
     private ForEachItem.Batch batch = Batch.builder().build();
 
     @NotEmpty
@@ -272,7 +272,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     private Map<String, Object> inputs;
 
     @Schema(
-        title = "The labels to pass to the subflow to be executed.",
+        title = "The labels to pass to the subflow to be executed",
         implementation = Object.class, oneOf = {List.class, Map.class}
     )
     @PluginProperty(dynamic = true)
@@ -282,22 +282,22 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
 
     @Builder.Default
     @Schema(
-        title = "Whether to wait for the subflows execution to finish before continuing the current execution."
+        title = "Flag specifying whether to wait for the subflows execution to finish before continuing the current execution."
     )
     @PluginProperty
     private final Boolean wait = true;
 
     @Builder.Default
     @Schema(
-        title = "Whether to fail the current execution if the subflow execution fails or is killed.",
-        description = "Note that this option works only if `wait` is set to `true`."
+        title = "Flag specifying whether to fail the current execution if the subflow execution fails or is killed.",
+        description = "Note that this option only works if `wait` is set to `true`."
     )
     @PluginProperty
     private final Boolean transmitFailed = true;
 
     @Builder.Default
     @Schema(
-        title = "Whether the subflow should inherit labels from this execution that triggered it.",
+        title = "Flag specifying whether the subflow should inherit labels from the parent execution that triggered it.",
         description = "By default, labels are not passed to the subflow execution. If you set this option to `true`, the child flow execution will inherit all labels from the parent execution."
     )
     @PluginProperty
@@ -322,7 +322,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     }
 
     @Schema(
-        title = "What to do when a failed execution is restarting.",
+        title = "What action to take when a failed execution is restarting",
         description = """
             - RETRY_FAILED (default): will restart the each subflow executions that are failed.
             - NEW_EXECUTION: will create a new subflow execution for each batch of items.""
@@ -654,18 +654,18 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The counter of iterations for each subflow execution state.",
+            title = "The counter of iterations for each subflow execution state",
             description = "This output will be updated in real-time based on the state of subflow executions.\n It will contain one counter by subflow execution state."
         )
         private final Map<State.Type, Integer> iterations;
 
         @Schema(
-            title = "The number of batches."
+            title = "The number of batches"
         )
         private final Integer numberOfBatches;
 
         @Schema(
-            title = "The URI of the file gathering outputs from each subflow execution."
+            title = "The URI of the file gathering outputs from each subflow execution"
         )
         private final URI uri;
     }

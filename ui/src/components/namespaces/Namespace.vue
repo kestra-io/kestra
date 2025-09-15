@@ -4,7 +4,7 @@
             <Actions />
         </template>
     </TopNavBar>
-    <Tabs :tabs :route-name="namespace ? 'namespaces/update' : ''" :namespace />
+    <Tabs :tabs :routeName="namespace ? 'namespaces/update' : ''" :namespace />
 </template>
 
 <script setup lang="ts">
@@ -37,6 +37,9 @@
     });
 
     onMounted(() => {
+        const main = document.querySelector("main");
+        if(main) main.scrollTop = 0;
+
         if (namespace.value) {
             namespacesStore.load(namespace.value);
         }

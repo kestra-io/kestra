@@ -22,7 +22,7 @@
             effect="light"
             :persistent="false"
             transition=""
-            :hide-after="0"
+            :hideAfter="0"
             :disabled="!miscStore.configs.commitId"
         >
             <template #content>

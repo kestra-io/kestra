@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
@@ -22,10 +23,12 @@ import jakarta.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
-import javax.print.attribute.standard.MediaSize.NA;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
+@Execution(ExecutionMode.SAME_THREAD)
 @KestraTest
 public class PurgeKVTest {
 
@@ -34,6 +37,8 @@ public class PurgeKVTest {
     public static final String NAMESPACE = "io.kestra.tests";
     public static final String KEY_EXPIRED = "key_expired";
     public static final String KEY = "key";
+    public static final String KEY2_NEVER_EXPIRING = "key2_never_expired";
+    public static final String KEY3_NEVER_EXPIRING = "key3_never_expired";
 
     @Inject
     TestRunContextFactory runContextFactory;
@@ -125,6 +130,8 @@ public class PurgeKVTest {
         KVStore kvStore2 = runContext.namespaceKv(namespace2);
         kvStore2.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
         kvStore2.put(KEY, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMinutes(1L)), "unused"));
+        kvStore2.put(KEY2_NEVER_EXPIRING, new KVValueAndMetadata(new KVMetadata("unused", null), "unused"));
+        kvStore2.put(KEY3_NEVER_EXPIRING, new KVValueAndMetadata(null, "unused"));
 
         PurgeKV purgeKV = PurgeKV.builder()
             .type(PurgeKV.class.getName())
@@ -136,6 +143,8 @@ public class PurgeKVTest {
         assertThat(kvStore1.get(KEY)).isPresent();
         assertThat(kvStore2.get(KEY_EXPIRED)).isEmpty();
         assertThat(kvStore2.get(KEY)).isPresent();
+        assertThat(kvStore2.get(KEY2_NEVER_EXPIRING)).isPresent();
+        assertThat(kvStore2.get(KEY3_NEVER_EXPIRING)).isPresent();
     }
 
     @Test
@@ -147,6 +156,8 @@ public class PurgeKVTest {
         KVStore kvStore1 = runContext.namespaceKv(namespace);
         kvStore1.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
         kvStore1.put(KEY, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMinutes(1L)), "unused"));
+        kvStore1.put(KEY2_NEVER_EXPIRING, new KVValueAndMetadata(new KVMetadata("unused", null), "unused"));
+        kvStore1.put(KEY3_NEVER_EXPIRING, new KVValueAndMetadata(null, "unused"));
 
         PurgeKV purgeKV = PurgeKV.builder()
             .type(PurgeKV.class.getName())
@@ -154,9 +165,11 @@ public class PurgeKVTest {
             .build();
         Output output = purgeKV.run(runContext);
 
-        assertThat(output.getSize()).isEqualTo(2L);
+        assertThat(output.getSize()).isEqualTo(4L);
         assertThat(kvStore1.get(KEY_EXPIRED)).isEmpty();
         assertThat(kvStore1.get(KEY)).isEmpty();
+        assertThat(kvStore1.get(KEY2_NEVER_EXPIRING)).isEmpty();
+        assertThat(kvStore1.get(KEY3_NEVER_EXPIRING)).isEmpty();
     }
 
     @Test
@@ -178,9 +191,9 @@ public class PurgeKVTest {
         Output output = purgeKV.run(runContext);
 
         assertThat(output.getSize()).isEqualTo(2L);
-        assertThat(kvStore1.get("key_1")).isEmpty();
-        assertThat(kvStore1.get("key_2")).isEmpty();
-        assertThat(kvStore1.get("not_found")).isEmpty();
+        List<KVEntry> kvEntries = kvStore1.listAll();
+        assertThat(kvEntries.size()).isEqualTo(1);
+        assertThat(kvEntries.getFirst().key()).isEqualTo("not_found");
     }
 
     private void addNamespaces() {

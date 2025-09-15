@@ -62,6 +62,10 @@
         }
     }
 
+    .main-container {
+        max-width: 100%;
+    }
+
     .content {
         margin: $spacer;
 

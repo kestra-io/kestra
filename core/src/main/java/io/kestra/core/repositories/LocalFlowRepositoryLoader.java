@@ -83,7 +83,9 @@ public class LocalFlowRepositoryLoader {
     }
 
     public void load(String tenantId, File basePath) throws IOException {
-        Map<String, FlowInterface> flowByUidInRepository = flowRepository.findAllForAllTenants().stream()
+        Map<String, FlowInterface> flowByUidInRepository = flowRepository.findAllForAllTenants()
+            .stream()
+            .filter(flow -> tenantId.equals(flow.getTenantId()))
             .collect(Collectors.toMap(FlowId::uidWithoutRevision, Function.identity()));
 
         try (Stream<Path> pathStream = Files.walk(basePath.toPath())) {

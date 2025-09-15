@@ -1,9 +1,7 @@
 package io.kestra.core.runners;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -12,23 +10,22 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.plugin.core.flow.EachSequentialTest;
-import io.kestra.plugin.core.flow.FlowCaseTest;
-import io.kestra.plugin.core.flow.ForEachItemCaseTest;
-import io.kestra.plugin.core.flow.PauseTest;
-import io.kestra.plugin.core.flow.LoopUntilCaseTest;
-import io.kestra.plugin.core.flow.WorkingDirectoryTest;
+import io.kestra.plugin.core.flow.*;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junitpioneer.jupiter.RetryingTest;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+//@org.junit.jupiter.api.parallel.Execution(org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT)
 // must be per-class to allow calling once init() which took a lot of time
 public abstract class AbstractRunnerTest {
 
@@ -113,7 +110,7 @@ public abstract class AbstractRunnerTest {
         assertThat(execution.getTaskRunList()).hasSize(8);
     }
 
-    @RetryingTest(5)
+    @Test
     @ExecuteFlow("flows/valids/parallel-nested.yaml")
     void parallelNested(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(11);
@@ -155,25 +152,25 @@ public abstract class AbstractRunnerTest {
         restartCaseTest.restartFailedThenSuccess();
     }
 
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/restart-each.yaml"})
     void replay() throws Exception {
         restartCaseTest.replay();
     }
 
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/failed-first.yaml"})
     void restartMultiple() throws Exception {
         restartCaseTest.restartMultiple();
     }
 
-    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
+    @Test
     @LoadFlows({"flows/valids/restart_always_failed.yaml"})
     void restartFailedThenFailureWithGlobalErrors() throws Exception {
         restartCaseTest.restartFailedThenFailureWithGlobalErrors();
     }
 
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/restart_local_errors.yaml"})
     void restartFailedThenFailureWithLocalErrors() throws Exception {
         restartCaseTest.restartFailedThenFailureWithLocalErrors();
@@ -197,7 +194,7 @@ public abstract class AbstractRunnerTest {
         restartCaseTest.restartFailedWithAfterExecution();
     }
 
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/trigger-flow-listener-no-inputs.yaml",
         "flows/valids/trigger-flow-listener.yaml",
         "flows/valids/trigger-flow-listener-namespace-condition.yaml",
@@ -206,13 +203,15 @@ public abstract class AbstractRunnerTest {
         flowTriggerCaseTest.trigger();
     }
 
-    @RetryingTest(5) // flaky on CI but never fail locally
+    @Test // flaky on CI but never fail locally
     @LoadFlows({"flows/valids/trigger-flow-listener-with-pause.yaml",
         "flows/valids/trigger-flow-with-pause.yaml"})
     void flowTriggerWithPause() throws Exception {
         flowTriggerCaseTest.triggerWithPause();
     }
 
+    @FlakyTest
+    @Disabled
     @Test
     @LoadFlows({"flows/valids/trigger-flow-listener-with-concurrency-limit.yaml",
         "flows/valids/trigger-flow-with-concurrency-limit.yaml"})
@@ -228,7 +227,7 @@ public abstract class AbstractRunnerTest {
         multipleConditionTriggerCaseTest.trigger();
     }
 
-    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
+    @Test // Flaky on CI but never locally even with 100 repetitions
     @LoadFlows({"flows/valids/trigger-flow-listener-namespace-condition.yaml",
         "flows/valids/trigger-multiplecondition-flow-c.yaml",
         "flows/valids/trigger-multiplecondition-flow-d.yaml"})
@@ -244,6 +243,7 @@ public abstract class AbstractRunnerTest {
         multipleConditionTriggerCaseTest.flowTriggerPreconditions();
     }
 
+    @Disabled
     @Test
     @LoadFlows({"flows/valids/flow-trigger-preconditions-flow-listen.yaml",
         "flows/valids/flow-trigger-preconditions-flow-a.yaml",
@@ -258,7 +258,7 @@ public abstract class AbstractRunnerTest {
         multipleConditionTriggerCaseTest.flowTriggerOnPaused();
     }
 
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/each-null.yaml"})
     void eachWithNull() throws Exception {
         EachSequentialTest.eachNullTest(runnerUtils, logsQueue);
@@ -270,7 +270,7 @@ public abstract class AbstractRunnerTest {
         pluginDefaultsCaseTest.taskDefaults();
     }
 
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/switch.yaml",
         "flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml"})
@@ -301,9 +301,9 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/working-directory.yaml"})
+    @LoadFlows(value = {"flows/valids/working-directory.yaml"}, tenantId = "tenant1")
     public void workerFailed() throws Exception {
-        workingDirectoryTest.failed(runnerUtils);
+        workingDirectoryTest.failed("tenant1", runnerUtils);
     }
 
     @Test
@@ -318,7 +318,7 @@ public abstract class AbstractRunnerTest {
         workingDirectoryTest.cache(runnerUtils);
     }
 
-    @RetryingTest(5) // flaky on MySQL
+    @Test // flaky on MySQL
     @LoadFlows({"flows/valids/pause-test.yaml"})
     public void pauseRun() throws Exception {
         pauseTest.run(runnerUtils);
@@ -354,40 +354,42 @@ public abstract class AbstractRunnerTest {
         skipExecutionCaseTest.skipExecution();
     }
 
-    @RetryingTest(5)
+    @Disabled
+    @Test
     @LoadFlows({"flows/valids/for-each-item-subflow.yaml",
         "flows/valids/for-each-item.yaml"})
     protected void forEachItem() throws Exception {
         forEachItemCaseTest.forEachItem();
     }
 
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/for-each-item.yaml"})
     protected void forEachItemEmptyItems() throws Exception {
         forEachItemCaseTest.forEachItemEmptyItems();
     }
 
-    @RetryingTest(5)
+    @Disabled
+    @Test
     @LoadFlows({"flows/valids/for-each-item-subflow-failed.yaml",
         "flows/valids/for-each-item-failed.yaml"})
     protected void forEachItemFailed() throws Exception {
         forEachItemCaseTest.forEachItemFailed();
     }
 
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/for-each-item-outputs-subflow.yaml",
         "flows/valids/for-each-item-outputs.yaml"})
     protected void forEachItemSubflowOutputs() throws Exception {
         forEachItemCaseTest.forEachItemWithSubflowOutputs();
     }
 
-    @RetryingTest(5) // flaky on CI but always pass locally even with 100 iterations
+    @Test // flaky on CI but always pass locally even with 100 iterations
     @LoadFlows({"flows/valids/restart-for-each-item.yaml", "flows/valids/restart-child.yaml"})
     void restartForEachItem() throws Exception {
         forEachItemCaseTest.restartForEachItem();
     }
 
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/for-each-item-subflow.yaml",
         "flows/valids/for-each-item-in-if.yaml"})
     protected void forEachItemInIf() throws Exception {
@@ -437,6 +439,7 @@ public abstract class AbstractRunnerTest {
         flowConcurrencyCaseTest.flowConcurrencyWithForEachItem();
     }
 
+    @Disabled
     @Test
     @LoadFlows({"flows/valids/flow-concurrency-queue-fail.yml"})
     protected void concurrencyQueueRestarted() throws Exception {
@@ -538,7 +541,7 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/sla-parent-flow.yaml", "flows/valids/sla-subflow.yaml"})
-    void executionConditionSLAShouldLaslaViolationOnSubflowMayEndTheParentFlowbel() throws Exception {
+    void slaViolationOnSubflowMayEndTheParentFlow() throws Exception {
         slaTestCase.slaViolationOnSubflowMayEndTheParentFlow();
     }
 

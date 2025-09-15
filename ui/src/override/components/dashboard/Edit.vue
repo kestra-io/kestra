@@ -3,7 +3,7 @@
     <section class="full-container">
         <Editor
             v-if="dashboard?.sourceCode"
-            :initial-source="dashboard.sourceCode"
+            :initialSource="dashboard.sourceCode"
             @save="save"
         />
     </section>

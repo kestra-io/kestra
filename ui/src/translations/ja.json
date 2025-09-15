@@ -1233,6 +1233,7 @@
           "label": "言語と地域",
           "note": "この設定はUIでの日付と時刻のプロパティを表示するために使用されます。UTC以外のタイムゾーンでflowをスケジュールするには、flowコードやプラグインのデフォルトでSchedule triggerのtimezoneプロパティを設定してください。"
         },
+        "reset_section_to_defaults": "このセクションのデフォルト値を復元する",
         "save": {
           "discard": "破棄",
           "label": "設定を保存",

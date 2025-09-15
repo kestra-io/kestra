@@ -6,7 +6,13 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 class VersionTest {
-
+    
+    @Test
+    void shouldCreateVersionFromIntegerGivenMajorVersion() {
+        Version version = Version.of(1);
+        Assertions.assertEquals(1, version.majorVersion());
+    }
+    
     @Test
     void shouldCreateVersionFromStringGivenMajorVersion() {
         Version version = Version.of("1");
@@ -135,14 +141,24 @@ class VersionTest {
     }
 
     @Test
-    public void shouldGetStableVersionGivenMajorMinorVersions() {
-        Version result = Version.getStable(Version.of("1.2.0"), List.of(Version.of("1.2.1"), Version.of("1.2.2"), Version.of("0.99.0")));
-        Assertions.assertEquals(Version.of("1.2.2"), result);
+    public void shouldGetStableVersionGivenMajorMinorPatchVersion() {
+        Assertions.assertEquals(Version.of("1.2.1"), Version.getStable(Version.of("1.2.1"), List.of(Version.of("1.2.1"), Version.of("1.2.3"), Version.of("0.99.0"))));
+        Assertions.assertEquals(Version.of("1.2.3"), Version.getStable(Version.of("1.2.0"), List.of(Version.of("1.2.1"), Version.of("1.2.3"), Version.of("0.99.0"))));
+    }
+    
+    @Test
+    public void shouldGetStableVersionGivenMajorMinorVersion() {
+        Assertions.assertEquals(Version.of("1.2.3"), Version.getStable(Version.of("1.2"), List.of(Version.of("1.2.1"), Version.of("1.2.3"), Version.of("0.99.0"))));
+    }
+    
+    @Test
+    public void shouldGetStableVersionGivenMajorVersion() {
+        Assertions.assertEquals(Version.of("1.2.3"), Version.getStable(Version.of("1"), List.of(Version.of("1.2.1"), Version.of("1.2.3"), Version.of("0.99.0"))));
     }
 
     @Test
     public void shouldGetNullForStableVersionGivenNoCompatibleVersions() {
-        Version result = Version.getStable(Version.of("1.2.0"), List.of(Version.of("1.3.0"), Version.of("2.0.0"), Version.of("0.99.0")));
-        Assertions.assertNull(result);
+        Assertions.assertNull(Version.getStable(Version.of("3.0"), List.of(Version.of("1.3.0"), Version.of("2.0.0"), Version.of("0.99.0"))));
+        Assertions.assertNull(Version.getStable(Version.of("0.1"), List.of(Version.of("1.3.0"), Version.of("2.0.0"), Version.of("0.99.0"))));
     }
 }

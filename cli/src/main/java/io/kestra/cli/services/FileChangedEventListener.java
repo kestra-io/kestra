@@ -262,6 +262,8 @@ public class FileChangedEventListener {
     }
 
     private String getTenantIdFromPath(Path path) {
+        // FIXME there is probably a bug here when a tenant has '_' in its name,
+        //  a valid tenant name is defined with following regex: "^[a-z0-9][a-z0-9_-]*"
         return path.getFileName().toString().split("_")[0];
     }
 }

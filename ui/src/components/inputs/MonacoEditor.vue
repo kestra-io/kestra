@@ -702,7 +702,7 @@
 
                         modifiedBackspaceTimeout = window.setTimeout(() => {
                             modifiedEditor.trigger("keyboard", "editor.action.triggerSuggest", {});
-                        }, 150); 
+                        }, 250); 
                     }
                 });
             }
@@ -748,7 +748,7 @@
 
                         localBackspaceTimeout = window.setTimeout(() => {
                             localEditor.value!.trigger("keyboard", "editor.action.triggerSuggest", {});
-                        }, 150);
+                        }, 250);
                     }
                 });
                 if (props.suggestionsOnFocus) {

@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@org.junit.jupiter.api.parallel.Execution(org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT)
+//@org.junit.jupiter.api.parallel.Execution(org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT)
 // must be per-class to allow calling once init() which took a lot of time
 public abstract class AbstractRunnerTest {
 

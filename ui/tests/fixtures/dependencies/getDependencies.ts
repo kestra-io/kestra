@@ -10,7 +10,7 @@ type DependencyOptions = {
     subtype?: typeof FLOW | typeof EXECUTION | typeof NAMESPACE;
 };
 
-import {getRandomFlowID} from "../../../scripts/product/flow";
+import {getRandomID} from "../../../scripts/id";
 
 const namespaces = ["company", "team", "github", "qa", "system", "dev", "test", "data", "infra", "cloud", "backend", "frontend", "api", "services", "database", "mobile", "security"];
 
@@ -54,7 +54,7 @@ function createNode(subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE):
     return {
         id: uuid(),
         type: NODE,
-        flow: getRandomFlowID(),
+        flow: getRandomID(),
         namespace: getRandomNamespace(),
         metadata: subtype === FLOW || subtype === NAMESPACE ? {subtype} : {subtype: EXECUTION, state: states[getRandomNumber(0, states.length - 1)]},
     };

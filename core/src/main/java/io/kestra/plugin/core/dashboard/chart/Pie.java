@@ -25,7 +25,7 @@ import lombok.experimental.SuperBuilder;
 @Plugin(
     examples = {
         @Example(
-            title = "Display a pie chart with with Executions per State.",
+            title = "Display a pie chart with Executions per State.",
             full = true,
             code = { """
                 charts:

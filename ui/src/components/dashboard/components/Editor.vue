@@ -33,7 +33,7 @@
 
         <ValidationErrors
             class="mx-3"
-            tooltip-placement="bottom-start"
+            tooltipPlacement="bottom-start"
             :errors="errors"
         />
 
@@ -47,7 +47,7 @@
         </el-button>
     </div>
     <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
-        <Sections :dashboard="{id: 'default'}" :charts="charts.map(chart => chart.data)" show-default />
+        <Sections :dashboard="{id: 'default'}" :charts="charts.map(chart => chart.data)" showDefault />
     </div>
     <div class="main-editor" v-else>
         <div
@@ -55,15 +55,15 @@
             class="editor-combined"
             style="flex: 1;"
         >
-            <editor
+            <Editor
                 @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
                 v-model="source"
-                schema-type="dashboard"
+                schemaType="dashboard"
                 lang="yaml"
                 @update:model-value="source = $event"
                 @cursor="updatePluginDocumentation"
                 :creating="true"
-                :read-only="false"
+                :readOnly="false"
                 :navbar="false"
             />
         </div>
@@ -76,7 +76,7 @@
             <PluginDocumentation
                 v-if="currentView === views.DOC"
                 class="combined-right-view enhance-readability"
-                :override-intro="intro"
+                :overrideIntro="intro"
                 absolute
             />
             <div
@@ -84,13 +84,13 @@
                 v-else-if="currentView === views.CHART"
             >
                 <div v-if="selectedChart.length" class="w-100">
-                    <Sections :dashboard="{id: 'default'}" :charts="selectedChart" show-default />
+                    <Sections :dashboard="{id: 'default'}" :charts="selectedChart" showDefault />
                 </div>
                 <div v-else-if="chartError" class="text-container">
                     <span>{{ chartError }}</span>
                 </div>
                 <div v-else>
-                    <el-empty :image="EmptyVisualDashboard" :image-size="200">
+                    <el-empty :image="EmptyVisualDashboard" :imageSize="200">
                         <template #description>
                             <h5>
                                 {{ $t("dashboards.chart_preview") }}
@@ -103,8 +103,6 @@
     </div>
 </template>
 <script setup>
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
     import Sections from "../sections/Sections.vue";
     import ValidationErrors from "../../flows/ValidationError.vue"
@@ -125,6 +123,8 @@
     import yaml from "yaml";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {useCoreStore} from "../../../stores/core.js";
 
     export default {
         computed: {
@@ -144,6 +144,9 @@
             displaySide() {
                 return this.currentView !== this.views.NONE && this.currentView !== this.views.DASHBOARD;
             },
+            dashboardId() {
+                return this.$route.params.dashboard
+            }
         },
         props: {
             allowSaveUnchanged: {
@@ -151,6 +154,10 @@
                 default: false
             },
             initialSource: {
+                type: String,
+                default: undefined
+            },
+            modelValue: {
                 type: String,
                 default: undefined
             }
@@ -164,7 +171,7 @@
         methods: {
             async updatePluginDocumentation(event) {
                 if (this.currentView === this.views.DOC) {
-                    const type = YAML_UTILS.getTaskType(event.model.getValue(), event.position, this.plugins)
+                    const type = YAML_UTILS.getTypeAtPosition(event.model.getValue(), event.position, this.plugins);
                     if (type) {
 
                         this.pluginsStore.load({cls: type})
@@ -280,6 +287,23 @@
                             this.errors = undefined;
                         }
                     });
+
+                if (this.dashboardId !== undefined && YAML_UTILS.parse(this.source).id !== this.dashboardId) {
+                    const coreStore = useCoreStore();
+                    coreStore.message = {
+                        variant: "error",
+                        title: this.$t("readonly property"),
+                        message: this.$t("dashboards.edition.id readonly"),
+                    };
+
+                    this.$nextTick(() => {
+                        this.source = YAML_UTILS.replaceBlockWithPath({
+                            source: this.source,
+                            path: "id",
+                            newContent: this.dashboardId
+                        });
+                    })
+                }
             }
         },
         beforeUnmount() {

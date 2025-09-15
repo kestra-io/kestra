@@ -20,6 +20,7 @@ permissions:
   contents: write
   checks: write
   actions: read
+  pull-requests: write
 
 jobs:
   test:
@@ -59,6 +60,14 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
           ./gradlew check javadoc --parallel
 
+      - name: comment PR with test report
+        if: always() && github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
+        run: |
+          export KESTRA_PWD=$(pwd) && sh -c 'cd dev-tools/kestra-devtools && npm ci && npm run build && node dist/kestra-devtools-cli.cjs generateTestReportSummary --only-errors --ci $KESTRA_PWD' > report.md
+          cat report.md
+
       # report test
       - name: Test - Publish Test Results
         uses: dorny/test-reporter@v2
@@ -66,7 +75,7 @@ jobs:
         with:
           name: Java Tests Report
           reporter: java-junit
-          path: '**/build/test-results/test/TEST-*.xml'
+          path: '**/build/test-results/junit/TEST-*.xml'
           list-suites: 'failed'
           list-tests: 'failed'
           fail-on-error: 'false'
@@ -86,13 +95,13 @@ jobs:
         id: auth
         if: always() && env.GOOGLE_SERVICE_ACCOUNT != ''
         continue-on-error: true
-        uses: "google-github-actions/auth@v2"
+        uses: "google-github-actions/auth@v3"
         with:
           credentials_json: "${{ secrets.GOOGLE_SERVICE_ACCOUNT }}"
 
       - name: GCP - Setup Cloud SDK
         if: env.GOOGLE_SERVICE_ACCOUNT != ''
-        uses: "google-github-actions/setup-gcloud@v2"
+        uses: "google-github-actions/setup-gcloud@v3"
 
         # Allure check
       - uses: rlespinasse/github-slug-action@v5

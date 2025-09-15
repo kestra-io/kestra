@@ -49,8 +49,8 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Nota: En este momento, solo se admite Gemini como proveedor de AI.\n\nReinicie su instancia de Kestra después de guardar la configuración.",
-          "header": "<b>AI Copilot no ha sido configurado aún.</b>\n\nPara habilitar AI Copilot, añade el siguiente fragmento a tu archivo de configuración de la instancia de Kestra (por ejemplo, <code>application.yml</code>), reemplazando <code>geminiApiKey</code> con tu key real:"
+          "footer": "Nota: En este momento, solo se admite Gemini como proveedor de AI.\n\nReinicia tu instancia de Kestra después de guardar la configuración.",
+          "header": "<b>AI Copilot aún no ha sido configurado.</b>\n\nPara habilitar AI Copilot, añade el siguiente fragmento a tu archivo de configuración de la instancia de Kestra (por ejemplo, <code>application.yml</code>), reemplazando <code>geminiApiKey</code> con tu key real:"
         },
         "generating": "Generando YAML de Flow para ti...",
         "prompt_placeholder": "Ingrese instrucciones para crear su flow de Kestra. Ejemplo de solicitud: Crear un flow que se ejecute todos los lunes a las 9 AM.",
@@ -174,13 +174,15 @@
     "confirm": "Confirmar",
     "confirm password": "Confirmar contraseña",
     "confirmation": "Confirmación",
+    "context updated date": "Fecha de actualización del contexto",
+    "context updated date tooltip": "Cuando se actualizó por última vez el contexto del trigger. Esto ocurre cuando se inicia la ejecución, finaliza (se libera el bloqueo) o después de una evaluación (incluso si no ocurre ninguna ejecución).",
     "contextBar": {
-      "demo": "Obtener una demostración",
+      "demo": "Demo",
       "docs": "Documentos",
       "help": "Ayuda",
-      "issue": "Abrir un Issue",
+      "issue": "Problema",
       "news": "Noticias",
-      "star": "Marca el repositorio"
+      "star": "Danos una estrella"
     },
     "continue backfill": "Continuar el backfill",
     "continue backfills": "Continuar backfills",
@@ -217,6 +219,7 @@
       "edition": {
         "chart": "Editar este gráfico",
         "confirmation": "Los cambios en el dashboard <code>{title}</code> se han guardado.",
+        "id readonly": "La propiedad `id` no se puede cambiar — ahora está establecida en sus valores iniciales. Si deseas cambiarla, puedes crear un nuevo dashboard y eliminar el antiguo.",
         "label": "Editar Dashboard"
       },
       "empty": "No hay resultados para mostrar.",
@@ -459,6 +462,10 @@
           "content": "Lea más sobre <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> en nuestra documentación.",
           "title": "Actualmente no hay dependencias."
         }
+      },
+      "panels": {
+        "content": "Abre Flow Code o No-Code para comenzar a editar tus flows, o selecciona otro panel (Topology, Documentation, Files, Blueprints, Namespace Context) para funciones relacionadas.",
+        "title": "Actualmente no hay paneles abiertos."
       },
       "plugins": {
         "content": "Lee más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> en nuestra documentación.",
@@ -725,6 +732,7 @@
         "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>"
       },
       "duplicate": "Esta key ya existe",
+      "inherited": "Pares KV heredados",
       "name": "KV Store",
       "type": "Tipo",
       "update": "Actualizar value para key '{key}'"
@@ -738,6 +746,8 @@
     "last execution state": "Último estado",
     "last execution status": "Último estado de ejecución",
     "last modified": "Última modificación",
+    "last trigger date": "Fecha de último trigger",
+    "last trigger date tooltip": "Cuando el trigger se ejecutó por última vez. Puede estar en el pasado al ejecutar un backfill.",
     "launch execution": "Ejecutar",
     "learn_more": "Aprender más",
     "light_background": "Esta es la opción preferida al trabajar con un fondo claro.",
@@ -765,6 +775,7 @@
     "monogram": "Monograma",
     "months": "Meses",
     "multi_panel_editor": {
+      "close_all_panels": "Cerrar todos los paneles",
       "close_all_tabs": "Cerrar todas las pestañas",
       "move_left": "Mover a la izquierda",
       "move_right": "Mover a la derecha"
@@ -852,6 +863,8 @@
     "neutral trend": "Estable",
     "new": "Nuevo",
     "new version": "¡Nueva versión {version} disponible!",
+    "next evaluation date": "Próxima fecha de evaluación",
+    "next evaluation date tooltip": "Cuando el trigger se evaluará la próxima vez, basado en su intervalo. No siempre es lo mismo que la próxima fecha de ejecución si no se cumplen las condiciones.",
     "next execution date": "Fecha de próxima ejecución",
     "next_execution": "Próxima ejecución",
     "no data current task": "No hay datos disponibles para el task actual.",
@@ -1101,6 +1114,8 @@
     "replay from beginning tooltip": "Crear una ejecución similar comenzando desde el principio",
     "replay from task tooltip": "Crear una ejecución similar comenzando desde la tarea <code>{taskId}</code>",
     "replay latest revision": "Repetir usando la última revisión",
+    "replay the execution": "Repetir la ejecución <code>{executionId}</code> para el flow <code>{flowId}</code>",
+    "replay with inputs": "Repetir con inputs",
     "replayed": "La ejecución se ha repetido",
     "required field": "Campo requerido",
     "reset": "Reiniciar",
@@ -1218,6 +1233,7 @@
           "label": "Idioma y Región",
           "note": "Ten en cuenta que esta configuración se usa para mostrar las propiedades de fecha y hora en la UI. Para programar tus flows en una zona horaria diferente a UTC, asegúrate de configurar la propiedad de zona horaria en el trigger de Schedule en tu código de flow o en los predeterminados de tu plugin."
         },
+        "reset_section_to_defaults": "Restaurar los valores predeterminados de esta sección",
         "save": {
           "discard": "Descartar",
           "label": "Guardar preferencias",

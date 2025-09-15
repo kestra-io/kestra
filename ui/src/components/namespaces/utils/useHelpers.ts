@@ -7,7 +7,7 @@ import Dashboard from "../../../components/dashboard/Dashboard.vue";
 import Flows from "../../../components/flows/Flows.vue";
 import Executions from "../../../components/executions/Executions.vue";
 import Dependencies from "../../../components/dependencies/Dependencies.vue";
-import EditorView from "../../../components/inputs/EditorView.vue";
+import NamespaceFilesEditorView from "../../../components/namespaces/components/NamespaceFilesEditorView.vue";
 
 export interface Tab {
     locked?: boolean;
@@ -110,7 +110,7 @@ export function useHelpers() {
             maximized: true,
             name: "files",
             title: t("files"),
-            component: EditorView,
+            component: NamespaceFilesEditorView,
             props: {
                 namespace: namespace.value,
                 isNamespace: true,

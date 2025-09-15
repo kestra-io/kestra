@@ -19,8 +19,6 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
-import io.kestra.core.runners.ExecutorService;
-import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 import io.kestra.core.server.*;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
@@ -28,6 +26,10 @@ import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.*;
+import io.kestra.executor.ExecutorService;
+import io.kestra.executor.FlowTriggerService;
+import io.kestra.executor.SLAService;
+import io.kestra.executor.SkipExecutionService;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
@@ -68,7 +70,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Singleton
 @JdbcRunnerEnabled
 @Slf4j
-public class JdbcExecutor implements ExecutorInterface, Service {
+public class JdbcExecutor implements ExecutorInterface {
     private static final ObjectMapper MAPPER = JdbcMapper.of();
 
     private final ScheduledExecutorService scheduledDelay = Executors.newSingleThreadScheduledExecutor();
@@ -399,7 +401,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             .toList()
                     );
                 } catch (Exception e) {
-                    log.error("Unable to save flow topology", e);
+                    log.error("Unable to save flow topology for flow " + flow.uid(), e);
                 }
 
             }
@@ -1002,6 +1004,10 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
         try {
             executionQueue.emit(processed.getExecution());
+
+            // process flow triggers to allow listening on QUEUED and RUNNING state for concurrency limit
+            flowTriggerService.computeExecutionsFromFlowTriggers(processed.getExecution(), allFlows, Optional.of(multipleConditionStorage))
+                .forEach(throwConsumer(executionFromFlowTrigger -> this.executionQueue.emit(executionFromFlowTrigger)));
         } catch (QueueException e) {
             try {
                 this.executionQueue.emit(
@@ -1053,7 +1059,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 }
 
                 // purge the trigger: reset scheduler trigger at end
-                // IMPORTANT: this is to cover an edge case, execution created for failed trigger didn't have any taskrun so they will arrives directly here.
+                // IMPORTANT: this is to cover an edge case, execution created for failed trigger didn't have any taskrun so they will arrive directly here.
                 // We need to detect that and reset them as they will never reach the reset code later on this method.
                 if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
                     FlowWithSource flow = executor.getFlow();
@@ -1141,6 +1147,10 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             executionRunningStorage.save(executionRunning);
                             executionQueue.emit(newExecution);
                             metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+
+                            // process flow triggers to allow listening on RUNNING state after a QUEUED state
+                            flowTriggerService.computeExecutionsFromFlowTriggers(newExecution, allFlows, Optional.of(multipleConditionStorage))
+                                .forEach(throwConsumer(executionFromFlowTrigger -> this.executionQueue.emit(executionFromFlowTrigger)));
                         })
                     );
                 }

@@ -969,7 +969,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         executionQueue().emit(deleted);
 
-        eventPublisher.publishEvent(new CrudEvent<>(deleted, CrudEventType.DELETE));
+        eventPublisher.publishEvent(CrudEvent.delete(deleted));
 
         return deleted;
     }

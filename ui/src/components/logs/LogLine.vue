@@ -193,6 +193,7 @@
 </script>
 <style scoped lang="scss">
 div.line {
+    position: relative;
     cursor: text;
     white-space: pre-wrap;
     word-break: break-all;
@@ -273,6 +274,17 @@ div.line {
         padding: 0.25rem;
         border: 1px solid var(--ks-border-primary);
         user-select: none;
+    }
+
+    :deep(.clipboard) {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease-in-out;
+    }
+
+    &:hover :deep(.clipboard) {
+        opacity: 1;
+        pointer-events: auto;
     }
 }
 </style>

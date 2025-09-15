@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Remarque : Actuellement, seul Gemini est pris en charge comme fournisseur d'IA.\n\nRedémarrez votre instance Kestra après avoir enregistré la configuration.",
+          "footer": "Remarque : Pour le moment, seul Gemini est pris en charge comme fournisseur d'IA.\n\nRedémarrez votre instance Kestra après avoir enregistré la configuration.",
           "header": "<b>AI Copilot n'a pas encore été configuré.</b>\n\nPour activer AI Copilot, ajoutez l'extrait suivant à votre fichier de configuration de l'instance Kestra (par exemple, <code>application.yml</code>), en remplaçant <code>geminiApiKey</code> par votre clé réelle :"
         },
         "generating": "Génération du YAML de flow pour vous...",
@@ -174,13 +174,15 @@
     "confirm": "Confirmer",
     "confirm password": "Confirmer le mot de passe",
     "confirmation": "Confirmation",
+    "context updated date": "Date de mise à jour du contexte",
+    "context updated date tooltip": "Dernière mise à jour du contexte du trigger. Cela se produit lorsque l'exécution est déclenchée, se termine (verrou libéré), ou après une évaluation (même si aucune exécution n'a lieu).",
     "contextBar": {
-      "demo": "Obtenez une démo",
+      "demo": "Démo",
       "docs": "Docs",
       "help": "Aide",
-      "issue": "Ouvrir un Issue",
+      "issue": "Problème",
       "news": "Nouvelles",
-      "star": "Ajoutez une étoile au repo"
+      "star": "Ajoutez-nous aux favoris"
     },
     "continue backfill": "Continuer le backfill",
     "continue backfills": "Continuer les backfills",
@@ -217,6 +219,7 @@
       "edition": {
         "chart": "Modifier ce graphique",
         "confirmation": "Les modifications dans le tableau de bord <code>{title}</code> sont enregistrées.",
+        "id readonly": "La propriété `id` ne peut pas être modifiée — elle est maintenant définie sur ses valeurs initiales. Si vous souhaitez la changer, vous pouvez créer un nouveau tableau de bord et supprimer l'ancien.",
         "label": "Modifier le tableau de bord"
       },
       "empty": "Il n'y a aucun résultat à afficher.",
@@ -459,6 +462,10 @@
           "content": "En savoir plus sur les <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">dépendances de namespace</a> dans notre documentation.",
           "title": "Il n'y a actuellement aucune dépendance."
         }
+      },
+      "panels": {
+        "content": "Ouvrez Flow Code ou No-Code pour commencer à éditer vos flows, ou sélectionnez un autre panneau (Topology, Documentation, Files, Blueprints, Namespace Context) pour des fonctionnalités associées.",
+        "title": "Aucun panneau n'est actuellement ouvert."
       },
       "plugins": {
         "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">limites de Concurrency</a></strong> dans notre documentation.",
@@ -725,6 +732,7 @@
         "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
       },
       "duplicate": "Cette clé existe déjà",
+      "inherited": "Paires KV héritées",
       "name": "Stockage de clés/valeurs",
       "type": "Type",
       "update": "Mettre à jour la valeur pour la clé '{key}'"
@@ -738,6 +746,8 @@
     "last execution state": "Dernier état",
     "last execution status": "Statut de la dernière exécution",
     "last modified": "Dernière modification",
+    "last trigger date": "Dernière date de trigger",
+    "last trigger date tooltip": "Dernière exécution du trigger. Peut être dans le passé lors de l'exécution d'un backfill.",
     "launch execution": "Déclencher",
     "learn_more": "En savoir plus",
     "light_background": "C'est l'option préférée lorsque vous travaillez avec un fond clair.",
@@ -765,6 +775,7 @@
     "monogram": "Monogramme",
     "months": "Mois",
     "multi_panel_editor": {
+      "close_all_panels": "Fermer tous les panneaux",
       "close_all_tabs": "Fermer tous les onglets",
       "move_left": "Déplacer à gauche",
       "move_right": "Déplacer vers la droite"
@@ -852,6 +863,8 @@
     "neutral trend": "Stable",
     "new": "Nouveau",
     "new version": "Nouvelle version {version} disponible!",
+    "next evaluation date": "Prochaine date d'évaluation",
+    "next evaluation date tooltip": "Quand le trigger sera évalué la prochaine fois, en fonction de son intervalle. Pas toujours identique à la prochaine date d'exécution si les conditions ne sont pas remplies.",
     "next execution date": "Prochaine date d'exécution",
     "next_execution": "Prochaine exécution",
     "no data current task": "Il n'y a pas de données disponibles pour la tâche actuelle.",
@@ -1101,6 +1114,8 @@
     "replay from beginning tooltip": "Créer une nouvelle exécution similaire depuis le début",
     "replay from task tooltip": "Créer une nouvelle exécution similaire démarrant de la tâche <code>{taskId}</code>",
     "replay latest revision": "Rejouer avec la dernière révision",
+    "replay the execution": "Rejouer l'exécution <code>{executionId}</code> pour le flow <code>{flowId}</code>",
+    "replay with inputs": "Rejouer avec inputs",
     "replayed": "Exécution rejouée",
     "required field": "Champ requis",
     "reset": "Recommencer",
@@ -1218,6 +1233,7 @@
           "label": "Langue et région",
           "note": "Remarque ce paramètre est utilisé pour afficher les propriétés de date et d'heure dans l'interface utilisateur. Pour planifier vos flux dans un fuseau horaire différent de l'UTC, assurez-vous de définir la propriété de fuseau horaire sur le déclencheur de planification dans le code de votre"
         },
+        "reset_section_to_defaults": "Restaurer les valeurs par défaut de cette section",
         "save": {
           "discard": "Jeter",
           "label": "Enregistrer les préférences",

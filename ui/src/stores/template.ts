@@ -16,25 +16,25 @@ export const useTemplateStore = defineStore("template", {
             const sortString = options.sort ? `?sort=${options.sort}` : "";
             const searchOptions = {...options};
             delete searchOptions.sort;
-            
-            const response = await this.$http.get(`${apiUrl(this.vuexStore)}/templates/search${sortString}`, {
+
+            const response = await this.$http.get(`${apiUrl()}/templates/search${sortString}`, {
                 params: searchOptions
             });
-            
+
             this.templates = response.data.results;
             this.total = response.data.total;
-            
+
             return response.data;
         },
 
         async loadTemplate(options: { namespace: string; id: string }) {
-            const response = await this.$http.get(`${apiUrl(this.vuexStore)}/templates/${options.namespace}/${options.id}`);
-            
+            const response = await this.$http.get(`${apiUrl()}/templates/${options.namespace}/${options.id}`);
+
             if (response.data.exception) {
                 const coreStore = useCoreStore();
                 coreStore.message = {
-                    title: "Invalid source code", 
-                    message: response.data.exception, 
+                    title: "Invalid source code",
+                    message: response.data.exception,
                     variant: "error"
                 };
                 delete response.data.exception;
@@ -48,51 +48,51 @@ export const useTemplateStore = defineStore("template", {
 
         async saveTemplate(options: { template: string }) {
             const template = YAML_UTILS.parse(options.template);
-            const response = await this.$http.put(`${apiUrl(this.vuexStore)}/templates/${template.namespace}/${template.id}`, template);
-            
+            const response = await this.$http.put(`${apiUrl()}/templates/${template.namespace}/${template.id}`, template);
+
             if (response.status >= 300) {
                 throw new Error("Server error on template save");
             }
-            
+
             this.template = response.data;
             return response.data;
         },
 
         async createTemplate(options: { template: string }) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/templates`, YAML_UTILS.parse(options.template));
+            const response = await this.$http.post(`${apiUrl()}/templates`, YAML_UTILS.parse(options.template));
             this.template = response.data;
             return response.data;
         },
 
         async deleteTemplate(template: any) {
-            await this.$http.delete(`${apiUrl(this.vuexStore)}/templates/${template.namespace}/${template.id}`);
+            await this.$http.delete(`${apiUrl()}/templates/${template.namespace}/${template.id}`);
             this.template = undefined;
         },
 
         async exportTemplateByIds(options: { ids: string[] }) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/templates/export/by-ids`, options.ids, {responseType: "blob"});
+            const response = await this.$http.post(`${apiUrl()}/templates/export/by-ids`, options.ids, {responseType: "blob"});
             const blob = new Blob([response.data], {type: "application/octet-stream"});
             const url = window.URL.createObjectURL(blob);
             Utils.downloadUrl(url, "templates.zip");
         },
 
         async exportTemplateByQuery(options: any) {
-            const response = await this.$http.get(`${apiUrl(this.vuexStore)}/templates/export/by-query`, {params: options});
+            const response = await this.$http.get(`${apiUrl()}/templates/export/by-query`, {params: options});
             Utils.downloadUrl(response.request.responseURL, "templates.zip");
         },
 
         async importTemplates(options: any) {
-            return await this.$http.post(`${apiUrl(this.vuexStore)}/templates/import`, Utils.toFormData(options), {
+            return await this.$http.post(`${apiUrl()}/templates/import`, Utils.toFormData(options), {
                 headers: {"Content-Type": "multipart/form-data"}
             });
         },
 
         async deleteTemplateByIds(options: { ids: string[] }) {
-            return await this.$http.delete(`${apiUrl(this.vuexStore)}/templates/delete/by-ids`, {data: options.ids});
+            return await this.$http.delete(`${apiUrl()}/templates/delete/by-ids`, {data: options.ids});
         },
 
         async deleteTemplateByQuery(options: any) {
-            return await this.$http.delete(`${apiUrl(this.vuexStore)}/templates/delete/by-query`, options, {params: options});
+            return await this.$http.delete(`${apiUrl()}/templates/delete/by-query`, options, {params: options});
         },
     },
 });

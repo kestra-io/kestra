@@ -1,26 +1,40 @@
 <template>
-    <top-nav-bar :title="routeInfo.title">
+    <TopNavBar :title="routeInfo.title">
         <template #additional-right>
             <el-button @click="saveAllSettings()" type="primary" :disabled="!hasUnsavedChanges">
                 {{ $t("settings.blocks.save.label") }}
             </el-button>
         </template>
-    </top-nav-bar>
+    </TopNavBar>
 
     <Wrapper>
         <Block :heading="$t('settings.blocks.configuration.label')">
+            <template #actions>
+                <el-tooltip 
+                    :content="$t('settings.blocks.reset_section_to_defaults')" 
+                    placement="top"
+                >
+                    <el-button
+                        v-if="!hasDefaultMainConfig"
+                        type="secondary"
+                        :icon="Reload"
+                        circle
+                        @click="restoreDefaultConfigurations"
+                    />
+                </el-tooltip>
+            </template>
             <template #content>
                 <Row>
                     <Column v-if="allowDefaultNamespace" :label="$t('settings.blocks.configuration.fields.default_namespace')">
-                        <namespace-select :value="pendingSettings.defaultNamespace" @update:model-value="onNamespaceSelect" />
+                        <NamespaceSelect :value="pendingSettings.defaultNamespace" @update:model-value="onNamespaceSelect" />
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.log_level')">
-                        <log-level-selector clearable :value="pendingSettings.defaultLogLevel" @update:model-value="onLevelChange" />
+                        <LogLevelSelector clearable :value="pendingSettings.defaultLogLevel" @update:model-value="onLevelChange" />
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.log_display')">
-                        <el-select :model-value="pendingSettings.logDisplay" @update:model-value="onLogDisplayChange">
+                        <el-select :modelValue="pendingSettings.logDisplay" @update:model-value="onLogDisplayChange">
                             <el-option
                                 v-for="item in logDisplayOptions"
                                 :key="item.value"
@@ -31,7 +45,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.editor_type')">
-                        <el-select :model-value="pendingSettings.editorType" @update:model-value="onEditorTypeChange">
+                        <el-select :modelValue="pendingSettings.editorType" @update:model-value="onEditorTypeChange">
                             <el-option
                                 v-for="item in [
                                     {
@@ -51,7 +65,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.execute_flow')">
-                        <el-select :model-value="pendingSettings.executeFlowBehaviour" @update:model-value="onExecuteFlowBehaviourChange">
+                        <el-select :modelValue="pendingSettings.executeFlowBehaviour" @update:model-value="onExecuteFlowBehaviourChange">
                             <el-option
                                 v-for="item in Object.values(executeFlowBehaviours)"
                                 :key="item"
@@ -62,7 +76,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.execute_default_tab')">
-                        <el-select :model-value="pendingSettings.executeDefaultTab" @update:model-value="onExecuteDefaultTabChange">
+                        <el-select :modelValue="pendingSettings.executeDefaultTab" @update:model-value="onExecuteDefaultTabChange">
                             <el-option
                                 v-for="item in executeDefaultTabOptions"
                                 :key="item.value"
@@ -73,7 +87,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.flow_default_tab')">
-                        <el-select :model-value="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
+                        <el-select :modelValue="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
                             <el-option
                                 v-for="item in flowDefaultTabOptions"
                                 :key="item.value"
@@ -83,15 +97,15 @@
                         </el-select>
                     </Column>
                     <Column :label="$t('settings.blocks.configuration.fields.playground')">
-                        <el-switch :model-value="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
+                        <el-switch :modelValue="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
                     </Column>
                 </Row>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')">
                         <el-input-number
-                            :model-value="pendingSettings.autoRefreshInterval"
+                            :modelValue="pendingSettings.autoRefreshInterval"
                             @update:model-value="onAutoRefreshInterval"
-                            controls-position="right"
+                            controlsPosition="right"
                             :min="2"
                             :max="120"
                         >
@@ -105,10 +119,24 @@
         </Block>
 
         <Block :heading="$t('settings.blocks.theme.label')">
+            <template #actions>
+                <el-tooltip 
+                    :content="$t('settings.blocks.reset_section_to_defaults')" 
+                    placement="top"
+                >
+                    <el-button
+                        v-if="!hasDefaultPreferences"
+                        type="secondary"
+                        :icon="Reload"
+                        circle
+                        @click="restoreDefaultPreferences"
+                    />
+                </el-tooltip>
+            </template>
             <template #content>
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.theme')">
-                        <el-select :model-value="pendingSettings.theme" @update:model-value="onTheme">
+                        <el-select :modelValue="pendingSettings.theme" @update:model-value="onTheme">
                             <el-option
                                 v-for="item in themesOptions"
                                 :key="item.value"
@@ -120,16 +148,16 @@
 
                     <Column :label="$t('settings.blocks.theme.fields.logs_font_size')">
                         <el-input-number
-                            :model-value="pendingSettings.logsFontSize"
+                            :modelValue="pendingSettings.logsFontSize"
                             @update:model-value="onLogsFontSize"
-                            controls-position="right"
+                            controlsPosition="right"
                             :min="1"
                             :max="50"
                         />
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.editor_font_family')">
-                        <el-select :model-value="pendingSettings.editorFontFamily" @update:model-value="onFontFamily">
+                        <el-select :modelValue="pendingSettings.editorFontFamily" @update:model-value="onFontFamily">
                             <el-option
                                 v-for="item in fontFamilyOptions"
                                 :key="item.value"
@@ -141,9 +169,9 @@
 
                     <Column :label="$t('settings.blocks.theme.fields.editor_font_size')">
                         <el-input-number
-                            :model-value="pendingSettings.editorFontSize"
+                            :modelValue="pendingSettings.editorFontSize"
                             @update:model-value="onFontSize"
-                            controls-position="right"
+                            controlsPosition="right"
                             :min="1"
                             :max="50"
                         />
@@ -152,10 +180,10 @@
 
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.editor_folding_stratgy')">
-                        <el-switch :aria-label="$t('Fold auto')" :model-value="pendingSettings.autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
+                        <el-switch :aria-label="$t('Fold auto')" :modelValue="pendingSettings.autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
                     </Column>
                     <Column :label="$t('settings.blocks.theme.fields.editor_hover_description')">
-                        <el-switch :aria-label="$t('Hover description')" :model-value="pendingSettings.hoverTextEditor" @update:model-value="onHoverTextEditor" />
+                        <el-switch :aria-label="$t('Hover description')" :modelValue="pendingSettings.hoverTextEditor" @update:model-value="onHoverTextEditor" />
                     </Column>
                 </Row>
 
@@ -187,7 +215,7 @@
                         <el-color-picker
                             v-model="pendingSettings.envColor"
                             @change="onEnvColorChange"
-                            show-alpha
+                            showAlpha
                         />
                     </Column>
                 </Row>
@@ -195,10 +223,24 @@
         </Block>
 
         <Block :heading="$t('settings.blocks.localization.label')" :note="$t('settings.blocks.localization.note')">
+            <template #actions>
+                <el-tooltip 
+                    :content="$t('settings.blocks.reset_section_to_defaults')" 
+                    placement="top"
+                >
+                    <el-button
+                        v-if="!hasDefaultLocalization"
+                        type="secondary"
+                        :icon="Reload"
+                        circle
+                        @click="restoreDefaultLocalization"
+                    />
+                </el-tooltip>
+            </template>
             <template #content>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.language')">
-                        <el-select :model-value="pendingSettings.lang" @update:model-value="onLang">
+                        <el-select :modelValue="pendingSettings.lang" @update:model-value="onLang">
                             <el-option
                                 v-for="item in langOptions"
                                 :key="item.value"
@@ -209,7 +251,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.localization.fields.time_zone')">
-                        <el-select :model-value="pendingSettings.timezone" @update:model-value="onTimezone" filterable>
+                        <el-select :modelValue="pendingSettings.timezone" @update:model-value="onTimezone" filterable>
                             <el-option
                                 v-for="item in zonesWithOffset"
                                 :key="item.zone"
@@ -220,7 +262,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.localization.fields.date_format')">
-                        <el-select :model-value="pendingSettings.dateFormat" @update:model-value="onDateFormat" :key="localeKey">
+                        <el-select :modelValue="pendingSettings.dateFormat" @update:model-value="onDateFormat" :key="localeKey">
                             <el-option
                                 v-for="item in dateFormats"
                                 :key="pendingSettings.timezone + item.value"
@@ -253,6 +295,7 @@
 </template>
 
 <script setup>
+    import Reload from "vue-material-design-icons/Reload.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import {executeFlowBehaviours} from "../../utils/constants";
 </script>
@@ -276,6 +319,8 @@
     import Row from "./components/block/Row.vue"
     import Column from "./components/block/Column.vue"
     import {useAuthStore} from "override/stores/auth"
+    import {useFlowStore} from "../../stores/flow"
+    import {defaultNamespace} from "../../composables/useNamespaces";
 
     export const DATE_FORMAT_STORAGE_KEY = "dateFormat";
     export const TIMEZONE_STORAGE_KEY = "timezone";
@@ -285,7 +330,6 @@
             NamespaceSelect,
             LogLevelSelector,
             TopNavBar,
-
             Wrapper,
             Block,
             Row,
@@ -300,6 +344,35 @@
         data() {
             return {
                 hasUnsavedChanges: false,
+                hasDefaultMainConfig: undefined,
+                hasDefaultPreferences: undefined,
+                hasDefaultLocalization: undefined,
+                defaultMainConfig: {
+                    defaultNamespace: undefined,
+                    defaultLogLevel: "INFO",
+                    logDisplay: logDisplayTypes.DEFAULT,
+                    editorType: "YAML",
+                    executeFlowBehaviour: "same tab",
+                    executeDefaultTab: "gantt",
+                    flowDefaultTab: "overview",
+                    editorPlayground: true,
+                    autoRefreshInterval: 10
+                },
+                defaultPreferences: {
+                    theme: "light",
+                    logsFontSize: 12,
+                    editorFontFamily: "'Source Code Pro', monospace",
+                    editorFontSize: 12,
+                    autofoldTextEditor: false,
+                    hoverTextEditor: false,
+                    envName: undefined,
+                    envColor: undefined
+                },
+                defaultLocalization:{
+                    lang: "en",
+                    timezone: this.$moment.tz.guess(),
+                    dateFormat: "llll"
+                },
                 originalSettings: {},
                 pendingSettings: {
                     defaultNamespace: undefined,
@@ -341,7 +414,7 @@
             };
         },
         created() {
-            this.pendingSettings.defaultNamespace = localStorage.getItem("defaultNamespace") || "company.team";
+            this.pendingSettings.defaultNamespace = defaultNamespace();
             this.pendingSettings.editorType = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.pendingSettings.lang = Utils.getLang();
@@ -364,10 +437,13 @@
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
             this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10;
             this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
+
+            this.checkDefaultStates();
         },
         methods: {
             checkForChanges() {
                 this.hasUnsavedChanges = JSON.stringify(this.pendingSettings) !== JSON.stringify(this.originalSettings);
+                this.checkDefaultStates();
             },
             async confirmNavigation() {
                 if (!this.hasUnsavedChanges) return true;
@@ -392,6 +468,57 @@
                     this.hasUnsavedChanges = false;
                     return true;
                 }
+            },
+            isObjectEqual(obj1, obj2, keys) {
+                return keys.every(key => {
+                    const val1 = obj1[key];
+                    const val2 = obj2[key];
+
+                    if (val1 == null && val2 == null) return true;
+                    if (val1 == null || val2 == null) return false;
+
+                    return String(val1) === String(val2);
+                });
+            },
+            checkDefaultStates() {
+                this.hasDefaultMainConfig = this.isObjectEqual(
+                    this.pendingSettings, 
+                    this.defaultMainConfig, 
+                    Object.keys(this.defaultMainConfig)
+                );
+                
+                this.hasDefaultPreferences = this.isObjectEqual(
+                    this.pendingSettings, 
+                    this.defaultPreferences, 
+                    Object.keys(this.defaultPreferences)
+                );
+
+                this.hasDefaultLocalization=this.isObjectEqual(
+                    this.pendingSettings,
+                    this.defaultLocalization,
+                    Object.keys(this.defaultLocalization)
+                );
+            },
+            restoreDefaultLocalization(){
+                Object.keys(this.defaultLocalization).forEach(key => {
+                    this.pendingSettings[key] = this.defaultLocalization[key];
+                });
+                
+                this.saveAllSettings();
+            },
+            restoreDefaultConfigurations(){
+                Object.keys(this.defaultMainConfig).forEach(key => {
+                    this.pendingSettings[key] = this.defaultMainConfig[key];
+                });
+                
+                this.saveAllSettings();
+            },
+            restoreDefaultPreferences(){
+                Object.keys(this.defaultPreferences).forEach(key => {
+                    this.pendingSettings[key] = this.defaultPreferences[key];
+                });
+                
+                this.saveAllSettings();
             },
             handleBeforeUnload(e) {
                 if (this.hasUnsavedChanges) {
@@ -546,7 +673,7 @@
                         }
                         break
                     case "theme":
-                        Utils.switchTheme(this.$store, this.pendingSettings[key]);
+                        Utils.switchTheme(this.miscStore, this.pendingSettings[key]);
                         localStorage.setItem(key, Utils.getTheme())
                         break
                     case "lang":
@@ -582,7 +709,7 @@
 
                 this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
                 this.hasUnsavedChanges = false;
-
+                this.checkDefaultStates();
                 if(refreshWhenSaved){
                     document.location.assign(document.location.href)
                 }
@@ -590,7 +717,7 @@
             },
             updateThemeBasedOnSystem() {
                 if (this.theme === "syncWithSystem") {
-                    Utils.switchTheme(this.$store, "syncWithSystem");
+                    Utils.switchTheme(this.miscStore, "syncWithSystem");
                 }
             },
         },
@@ -606,7 +733,7 @@
             document.removeEventListener("click", this.handleNavigationClick, true);
         },
         computed: {
-            ...mapStores(useLayoutStore, useMiscStore, useTemplateStore, useAuthStore),
+            ...mapStores(useLayoutStore, useMiscStore, useTemplateStore, useAuthStore, useFlowStore),
             mappedTheme() {
                 return this.miscStore.theme;
             },
@@ -639,10 +766,18 @@
                 ]
             },
             dateFormats() {
-                return  [
+                return [
                     {value: "YYYY-MM-DDTHH:mm:ssZ"},
                     {value: "YYYY-MM-DD hh:mm:ss A"},
                     {value: "DD/MM/YYYY HH:mm:ss"},
+                    {value: "MM/DD/YYYY HH:mm:ss"},
+                    {value: "YYYY.MM.DD HH:mm:ss"},
+                    {value: "DD.MM.YYYY HH:mm:ss"},
+                    {value: "YYYY-MM-DD HH:mm:ss.SSS"},
+                    {value: "HH:mm:ss DD/MM/YYYY"},
+                    {value: "HH:mm:ss MM/DD/YYYY"},
+                    {value: "ddd, DD MMM YYYY HH:mm:ss"},
+                    {value: "dddd, MMMM Do YYYY, h:mm:ss a"},
                     {value: "lll"},
                     {value: "llll"},
                     {value: "LLL"},

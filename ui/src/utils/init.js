@@ -1,6 +1,5 @@
-import {createStore} from "vuex";
 import {createRouter, createWebHistory} from "vue-router";
-import VueGtag from "vue-gtag";
+import {configure} from "vue-gtag";
 import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n";
 import moment from "moment-timezone";
 import "moment/dist/locale/de"
@@ -49,7 +48,7 @@ import RouterMd from "../components/utils/RouterMd.vue";
 import Utils from "./utils";
 
 
-export default async (app, routes, stores, translations, additionalTranslations = {}) => {
+export default async (app, routes, _stores, translations, additionalTranslations = {}) => {
     // charts
     Chart.register(
         CategoryScale,
@@ -69,37 +68,12 @@ export default async (app, routes, stores, translations, additionalTranslations 
     );
 
     // router
-    let router = createRouter({
+    const router = createRouter({
         history: createWebHistory(window.KESTRA_UI_PATH),
         routes
     });
 
-    // store
-    let store = createStore(stores);
-    app.use(store);
-
-    let piniaStore = createPinia();
-    piniaStore.use(({store:piniaStoreLocal}) => {
-        piniaStoreLocal.vuexStore = store;
-        piniaStoreLocal.$http = {
-            get: (url, config) => {
-                return store.$http.get(url, config);
-            },
-            post: (url, data, config) => {
-                return store.$http.post(url, data, config);
-            },
-            put: (url, data, config) => {
-                return store.$http.put(url, data, config);
-            },
-            delete: (url, config) => {
-                return store.$http.delete(url, config);
-            },
-            patch: (url, data, config) => {
-                return store.$http.patch(url, data, config);
-            }
-        };
-        piniaStoreLocal.$router = router;
-    });
+    const piniaStore = createPinia();
     app.use(piniaStore);
 
     /**
@@ -110,7 +84,7 @@ export default async (app, routes, stores, translations, additionalTranslations 
         // so it has a default
         const pathArray = to.path.split("/");
         const docId = pathArray[pathArray.length-1];
-        
+
         const docStore = useDocStore();
         docStore.docId = docId;
 
@@ -135,16 +109,10 @@ export default async (app, routes, stores, translations, additionalTranslations 
 
     // Google Analytics
     if (window.KESTRA_GOOGLE_ANALYTICS !== null) {
-        app.use(
-            VueGtag,
-            {
-                config: {id: window.KESTRA_GOOGLE_ANALYTICS}
-            },
-            router
-        );
+        configure({
+            tagId: window.KESTRA_GOOGLE_ANALYTICS
+        })
     }
-
-
 
     // l18n
     let locale = Utils.getLang();
@@ -162,7 +130,6 @@ export default async (app, routes, stores, translations, additionalTranslations 
         await setI18nLanguage(i18n, locale);
     }
     app.use(i18n);
-    store.$i18n = i18n.global;
 
     // moment
     moment.locale(locale);
@@ -175,9 +142,6 @@ export default async (app, routes, stores, translations, additionalTranslations 
     app.use(Vue3Tour)
     app.use(VueVirtualScroller)
 
-    // Passing toast to VUEX store to be used in modules
-    store.$toast = app.config.globalProperties.$toast;
-
     // filters
     app.config.globalProperties.$filters = filters;
 
@@ -185,8 +149,8 @@ export default async (app, routes, stores, translations, additionalTranslations 
     app.use(ElementPlus)
 
     // navigation guard
-    createUnsavedChanged(app, store, router);
-    createEventsRouter(app, store, router);
+    createUnsavedChanged(app, router);
+    createEventsRouter(app, router);
 
     app.component("LeftMenuLink", LeftMenuLink);
     app.component("RouterMd", RouterMd);
@@ -203,5 +167,5 @@ export default async (app, routes, stores, translations, additionalTranslations 
 
     app.config.globalProperties.append = (path, pathToAppend) => path + (path.endsWith("/") ? "" : "/") + pathToAppend
 
-    return {store, router, piniaStore};
+    return {router, piniaStore};
 }

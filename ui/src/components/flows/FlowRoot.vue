@@ -1,11 +1,11 @@
 <template>
     <template v-if="ready">
         <FlowRootTopBar
-            :route-info="routeInfo"
-            :active-tab-name="activeTabName()"
+            :routeInfo="routeInfo"
+            :activeTabName="activeTabName()"
         />
         <Tabs
-            route-name="flows/update"
+            routeName="flows/update"
             ref="currentTab"
             :tabs="tabs"
             @expand-subflow="updateExpandedSubflows"
@@ -75,7 +75,7 @@
                         setTimeout(() => {
                             this.flowStore
                                 .loadDependencies({namespace: flow.namespace, id: flow.id}, true)
-                                .then(({count}) => this.dependenciesCount = count);
+                                .then(({count}) => this.dependenciesCount = count > 0 ? (count - 1) : 0);
                         }, 1000);
                     }
                 },

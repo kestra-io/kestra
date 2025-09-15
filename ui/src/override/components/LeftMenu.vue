@@ -1,9 +1,9 @@
 <template>
-    <side-bar :generate-menu="generateMenu" :show-link="showLink" @menu-collapse="onCollapse">
+    <SideBar :generateMenu="generateMenu" :showLink="showLink" @menu-collapse="onCollapse">
         <template #footer>
-            <auth />    
+            <Auth />    
         </template>
-    </side-bar>
+    </SideBar>
 </template>
 
 <script setup>

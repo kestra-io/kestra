@@ -50,7 +50,7 @@ class TestSuiteTest {
     void withoutAnyTaskFixture() throws QueueException, TimeoutException {
         var fixtures = List.<TaskFixture>of();
 
-        var executionResult = runReturnFlow(fixtures);
+        var executionResult = runReturnFlow(fixtures, MAIN_TENANT);
 
         assertThat(executionResult.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertOutputForTask(executionResult, "task-id")
@@ -65,7 +65,7 @@ class TestSuiteTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/return.yaml"})
+    @LoadFlows(value = {"flows/valids/return.yaml"}, tenantId = "tenant1")
     void taskFixture() throws TimeoutException, QueueException {
         var fixtures = List.of(
             TaskFixture.builder()
@@ -73,7 +73,7 @@ class TestSuiteTest {
                 .build()
         );
 
-        var executionResult = runReturnFlow(fixtures);
+        var executionResult = runReturnFlow(fixtures, "tenant1");
 
         assertThat(executionResult.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertOutputForTask(executionResult, "task-id")
@@ -85,7 +85,7 @@ class TestSuiteTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/return.yaml"})
+    @LoadFlows(value = {"flows/valids/return.yaml"}, tenantId = "tenant2")
     void twoTaskFixturesOverridingOutput() throws QueueException, TimeoutException {
         var fixtures = List.of(
             TaskFixture.builder()
@@ -98,7 +98,7 @@ class TestSuiteTest {
                 .build()
         );
 
-        var executionResult = runReturnFlow(fixtures);
+        var executionResult = runReturnFlow(fixtures, "tenant2");
 
         assertThat(executionResult.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertOutputForTask(executionResult, "task-id")
@@ -110,7 +110,7 @@ class TestSuiteTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/return.yaml"})
+    @LoadFlows(value = {"flows/valids/return.yaml"}, tenantId = "tenant3")
     void taskFixturesWithWarningState() throws QueueException, TimeoutException {
         var fixtures = List.of(
             TaskFixture.builder()
@@ -119,7 +119,7 @@ class TestSuiteTest {
                 .build()
         );
 
-        var executionResult = runReturnFlow(fixtures);
+        var executionResult = runReturnFlow(fixtures, "tenant3");
 
         assertThat(executionResult.getState().getCurrent()).isEqualTo(State.Type.WARNING);
         assertTask(executionResult, "task-id")
@@ -133,8 +133,8 @@ class TestSuiteTest {
             .isEqualTo(State.Type.WARNING);
     }
 
-    private Execution runReturnFlow(List<TaskFixture> fixtures) throws TimeoutException, QueueException {
-        var flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "return", Optional.empty()).orElseThrow();
+    private Execution runReturnFlow(List<TaskFixture> fixtures, String tenantId) throws TimeoutException, QueueException {
+        var flow = flowRepository.findById(tenantId, "io.kestra.tests", "return", Optional.empty()).orElseThrow();
 
         var execution = Execution.builder()
             .id(IdUtils.create())

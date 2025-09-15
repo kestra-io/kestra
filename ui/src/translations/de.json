@@ -50,7 +50,7 @@
       "flow": {
         "enable_instructions": {
           "footer": "Hinweis: Derzeit wird nur Gemini als KI-Anbieter unterstützt.\n\nStarten Sie Ihre Kestra-Instanz neu, nachdem Sie die Konfiguration gespeichert haben.",
-          "header": "<b>AI Copilot wurde noch nicht konfiguriert.</b>\n\nUm AI Copilot zu aktivieren, fügen Sie das folgende Snippet zu Ihrer Kestra-Instanz-Konfigurationsdatei hinzu (z. B. <code>application.yml</code>), wobei Sie <code>geminiApiKey</code> durch Ihren tatsächlichen Schlüssel ersetzen:"
+          "header": "<b>AI Copilot wurde noch nicht konfiguriert.</b>\n\nUm AI Copilot zu aktivieren, fügen Sie den folgenden Ausschnitt in die Konfigurationsdatei Ihrer Kestra-Instanz ein (z. B. <code>application.yml</code>) und ersetzen Sie <code>geminiApiKey</code> durch Ihren tatsächlichen Schlüssel:"
         },
         "generating": "Erzeuge Flow YAML für Sie...",
         "prompt_placeholder": "Geben Sie Anweisungen ein, um Ihren Kestra flow zu erstellen. Beispielaufforderung: Erstellen Sie einen flow, der jeden Montag um 9 Uhr ausgeführt wird.",
@@ -174,13 +174,15 @@
     "confirm": "Bestätigen",
     "confirm password": "Passwort bestätigen",
     "confirmation": "Bestätigung",
+    "context updated date": "Aktualisierungsdatum des Kontexts",
+    "context updated date tooltip": "Wann der Kontext des Triggers zuletzt aktualisiert wurde. Dies tritt auf, wenn die Ausführung ausgelöst wird, abgeschlossen ist (Sperre freigegeben) oder nach einer Bewertung (auch wenn keine Ausführung stattfindet).",
     "contextBar": {
-      "demo": "Demo anfordern",
+      "demo": "Demo",
       "docs": "Dokumentation",
       "help": "Hilfe",
-      "issue": "Ein Issue öffnen",
+      "issue": "Problem",
       "news": "Nachrichten",
-      "star": "Das Repository mit einem Stern versehen"
+      "star": "Geben Sie uns einen Stern"
     },
     "continue backfill": "Backfill fortsetzen",
     "continue backfills": "Backfills fortsetzen",
@@ -217,6 +219,7 @@
       "edition": {
         "chart": "Bearbeiten Sie dieses Diagramm",
         "confirmation": "Änderungen im Dashboard <code>{title}</code> werden gespeichert.",
+        "id readonly": "Die Eigenschaft `id` kann nicht geändert werden — sie ist jetzt auf ihre Anfangswerte festgelegt. Wenn Sie sie ändern möchten, können Sie ein neues Dashboard erstellen und das alte entfernen.",
         "label": "Dashboard bearbeiten"
       },
       "empty": "Es gibt keine Ergebnisse anzuzeigen.",
@@ -459,6 +462,10 @@
           "content": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> in unserer Dokumentation.",
           "title": "Derzeit gibt es keine Abhängigkeiten."
         }
+      },
+      "panels": {
+        "content": "Öffnen Sie Flow Code oder No-Code, um mit der Bearbeitung Ihrer flows zu beginnen, oder wählen Sie ein anderes Panel (Topologie, Dokumentation, Dateien, Blueprints, Namespace-Kontext) für verwandte Funktionen aus.",
+        "title": "Derzeit sind keine Panels geöffnet."
       },
       "plugins": {
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
@@ -725,6 +732,7 @@
         "warning": "Du hast keine Berechtigungen für diese namespaces, daher werden sie ausgelassen: <code>{namespaces}</code>"
       },
       "duplicate": "Dieser Key existiert bereits",
+      "inherited": "Geerbte KV-Paare",
       "name": "KV Store",
       "type": "Typ",
       "update": "Wert für Key '{key}' aktualisieren"
@@ -738,6 +746,8 @@
     "last execution state": "Letzter Zustand",
     "last execution status": "Letzter Ausführungsstatus",
     "last modified": "Zuletzt geändert",
+    "last trigger date": "Letztes Trigger-Datum",
+    "last trigger date tooltip": "Wann der Trigger zuletzt ausgeführt wurde. Kann in der Vergangenheit liegen, wenn ein Backfill ausgeführt wird.",
     "launch execution": "Ausführen",
     "learn_more": "Erfahren Sie mehr",
     "light_background": "Dies ist die bevorzugte Option bei der Arbeit mit einem hellen Hintergrund.",
@@ -765,6 +775,7 @@
     "monogram": "Monogramm",
     "months": "Monate",
     "multi_panel_editor": {
+      "close_all_panels": "Alle Panels schließen",
       "close_all_tabs": "Alle Registerkarten schließen",
       "move_left": "Nach links verschieben",
       "move_right": "Nach rechts verschieben"
@@ -852,6 +863,8 @@
     "neutral trend": "Stabil",
     "new": "Neu",
     "new version": "Neue Version {version} verfügbar!",
+    "next evaluation date": "Nächstes Bewertungsdatum",
+    "next evaluation date tooltip": "Wann der Trigger das nächste Mal basierend auf seinem Intervall ausgewertet wird. Nicht immer dasselbe wie das nächste Ausführungsdatum, wenn Bedingungen nicht erfüllt sind.",
     "next execution date": "Nächstes Ausführungsdatum",
     "next_execution": "Nächste Ausführung",
     "no data current task": "Für die aktuelle Task sind keine Daten verfügbar.",
@@ -1101,6 +1114,8 @@
     "replay from beginning tooltip": "Eine ähnliche Ausführung von Anfang an erstellen",
     "replay from task tooltip": "Eine ähnliche Ausführung ab Task <code>{taskId}</code> erstellen",
     "replay latest revision": "Wiederholen mit neuester Revision",
+    "replay the execution": "Führen Sie die Ausführung <code>{executionId}</code> für den flow <code>{flowId}</code> erneut aus.",
+    "replay with inputs": "Wiedergabe mit Inputs",
     "replayed": "Ausführung ist wiederholt",
     "required field": "Erforderliches Feld",
     "reset": "Neustarten",
@@ -1218,6 +1233,7 @@
           "label": "Sprache und Region",
           "note": "Beachten Sie, dass diese Einstellung für die Anzeige von Datums- und Uhrzeiteigenschaften in der Benutzeroberfläche verwendet wird. Um Ihre Flows in einer anderen Zeitzone als UTC zu konfigurieren, stellen Sie sicher, dass Sie die Zeitzoneneigenschaft im Schedule-Trigger in Ihrem Flow-Code oder in Ihren Plugin-Standardeinstellungen festlegen."
         },
+        "reset_section_to_defaults": "Stellen Sie die Standardwerte dieses Abschnitts wieder her",
         "save": {
           "discard": "Verwerfen",
           "label": "Präferenzen speichern",

@@ -49,8 +49,8 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "ध्यान दें: इस समय, केवल Gemini को AI प्रदाता के रूप में समर्थन दिया जाता है।\n\nकॉन्फ़िगरेशन सहेजने के बाद अपने Kestra instance को पुनः प्रारंभ करें।",
-          "header": "<b>AI Copilot अभी तक कॉन्फ़िगर नहीं किया गया है।</b>\n\nAI Copilot को सक्षम करने के लिए, अपने Kestra instance configuration फ़ाइल (जैसे <code>application.yml</code>) में निम्नलिखित स्निपेट जोड़ें, और <code>geminiApiKey</code> को अपने वास्तविक key से बदलें:"
+          "footer": "ध्यान दें: इस समय, केवल Gemini को AI प्रदाता के रूप में समर्थन प्राप्त है।\n\nकॉन्फ़िगरेशन सहेजने के बाद अपने Kestra instance को पुनः प्रारंभ करें।",
+          "header": "<b>AI Copilot अभी तक कॉन्फ़िगर नहीं किया गया है।</b>\n\nAI Copilot को सक्षम करने के लिए, अपने Kestra instance configuration file (जैसे <code>application.yml</code>) में निम्नलिखित स्निपेट जोड़ें, <code>geminiApiKey</code> को अपनी वास्तविक key से बदलें:"
         },
         "generating": "आपके लिए Flow YAML उत्पन्न किया जा रहा है...",
         "prompt_placeholder": "अपने Kestra flow बनाने के लिए निर्देश दर्ज करें। उदाहरण प्रॉम्प्ट: एक flow बनाएं जो हर सोमवार को सुबह 9 बजे चलता है।",
@@ -174,13 +174,15 @@
     "confirm": "पुष्टि करें",
     "confirm password": "पासवर्ड की पुष्टि करें",
     "confirmation": "पुष्टि",
+    "context updated date": "संदर्भ अद्यतन तिथि",
+    "context updated date tooltip": "ट्रिगर के संदर्भ को आखिरी बार कब अपडेट किया गया था। यह तब होता है जब execution ट्रिगर होता है, समाप्त होता है (लॉक रिलीज़ होता है), या एक मूल्यांकन के बाद (भले ही कोई execution न हो)।",
     "contextBar": {
-      "demo": "डेमो प्राप्त करें",
+      "demo": "डेमो",
       "docs": "डॉक्स",
       "help": "मदद",
-      "issue": "समस्या खोलें",
+      "issue": "समस्या",
       "news": "समाचार",
-      "star": "रेपो को स्टार करें"
+      "star": "हमें स्टार दें"
     },
     "continue backfill": "Backfill जारी रखें",
     "continue backfills": "Backfills जारी रखें",
@@ -217,6 +219,7 @@
       "edition": {
         "chart": "इस चार्ट को संपादित करें",
         "confirmation": "डैशबोर्ड <code>{title}</code> में परिवर्तन सहेजे गए हैं।",
+        "id readonly": "संपत्ति `id` को बदला नहीं जा सकता — यह अब अपनी प्रारंभिक मानों पर सेट है। यदि आप इसे बदलना चाहते हैं, तो आप एक नया डैशबोर्ड बना सकते हैं और पुराने को हटा सकते हैं।",
         "label": "डैशबोर्ड संपादित करें"
       },
       "empty": "कोई परिणाम नहीं दिखाया जा सकता।",
@@ -459,6 +462,10 @@
           "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> के बारे में अधिक पढ़ें।",
           "title": "वर्तमान में कोई निर्भरता नहीं है।"
         }
+      },
+      "panels": {
+        "content": "Flow Code या No-Code खोलें ताकि आप अपने flows को संपादित करना शुरू कर सकें, या संबंधित सुविधाओं के लिए कोई अन्य पैनल चुनें (Topology, Documentation, Files, Blueprints, Namespace Context)।",
+        "title": "कोई पैनल वर्तमान में खुला नहीं है।"
       },
       "plugins": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
@@ -725,6 +732,7 @@
         "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>"
       },
       "duplicate": "यह key पहले से मौजूद है",
+      "inherited": "विरासत में मिले KV जोड़े",
       "name": "KV Store",
       "type": "प्रकार",
       "update": "key '{key}' के लिए value अपडेट करें"
@@ -738,6 +746,8 @@
     "last execution state": "अंतिम स्थिति",
     "last execution status": "अंतिम निष्पादन स्थिति",
     "last modified": "अंतिम संशोधित",
+    "last trigger date": "अंतिम ट्रिगर की तारीख",
+    "last trigger date tooltip": "ट्रिगर ने आखिरी बार कब निष्पादित किया था। जब एक backfill चल रहा हो तो यह अतीत में हो सकता है।",
     "launch execution": "निष्पादित करें",
     "learn_more": "और जानें",
     "light_background": "यह हल्की पृष्ठभूमि के साथ काम करते समय पसंदीदा विकल्प है।",
@@ -765,6 +775,7 @@
     "monogram": "मोनोग्राम",
     "months": "महीने",
     "multi_panel_editor": {
+      "close_all_panels": "सभी पैनल बंद करें",
       "close_all_tabs": "सभी टैब बंद करें",
       "move_left": "बाएँ ले जाएँ",
       "move_right": "दाईं ओर ले जाएँ"
@@ -852,6 +863,8 @@
     "neutral trend": "स्थिर",
     "new": "नया",
     "new version": "नया संस्करण {version} उपलब्ध है!",
+    "next evaluation date": "अगली मूल्यांकन तिथि",
+    "next evaluation date tooltip": "ट्रिगर का अगला मूल्यांकन कब होगा, यह उसके अंतराल पर आधारित है। यदि शर्तें पूरी नहीं होती हैं, तो यह हमेशा अगले निष्पादन तिथि के समान नहीं होता।",
     "next execution date": "अगली निष्पादन तिथि",
     "next_execution": "अगली निष्पादन",
     "no data current task": "वर्तमान task के लिए कोई डेटा उपलब्ध नहीं है।",
@@ -1101,6 +1114,8 @@
     "replay from beginning tooltip": "शुरुआत से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay from task tooltip": "Task <code>{taskId}</code> से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay latest revision": "नवीनतम पुनरीक्षण का उपयोग करके पुनः चलाएँ",
+    "replay the execution": "फ्लो <code>{flowId}</code> के लिए निष्पादन <code>{executionId}</code> को पुनः चलाएं",
+    "replay with inputs": "इनपुट्स के साथ पुनः चलाएं",
     "replayed": "निष्पादन पुनः चलाया गया है",
     "required field": "आवश्यक फ़ील्ड",
     "reset": "पुनः प्रारंभ करें",
@@ -1218,6 +1233,7 @@
           "label": "भाषा और क्षेत्र",
           "note": "ध्यान दें कि यह सेटिंग UI में दिनांक और समय गुणों को प्रदर्शित करने के लिए उपयोग की जाती है। अपने flows को UTC से अलग समय क्षेत्र में शेड्यूल करने के लिए, सुनिश्चित करें कि आपने अपने flow कोड में या अपने प्लगइन डिफ़ॉल्ट्स में Schedule Trigger पर समय क्षेत्र गुण सेट किया है।"
         },
+        "reset_section_to_defaults": "इस अनुभाग के डिफ़ॉल्ट मान पुनर्स्थापित करें",
         "save": {
           "discard": "रद्द करें",
           "label": "प्राथमिकताएँ सहेजें",

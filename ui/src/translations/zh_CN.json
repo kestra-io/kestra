@@ -49,8 +49,8 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "注意：目前，仅支持 Gemini 作为 AI 提供商。\n\n保存配置后，重启您的 Kestra 实例。",
-          "header": "<b>AI Copilot 尚未配置。</b>\n\n要启用 AI Copilot，请将以下代码片段添加到您的 Kestra 实例配置文件（例如 <code>application.yml</code>），并将 <code>geminiApiKey</code> 替换为您的实际 key："
+          "footer": "注意：目前，仅支持 Gemini 作为 AI 提供商。\n\n保存配置后重启您的 Kestra 实例。",
+          "header": "<b>AI Copilot 尚未配置。</b>\n\n要启用 AI Copilot，请将以下代码片段添加到您的 Kestra 实例配置文件中（例如 <code>application.yml</code>），并将 <code>geminiApiKey</code> 替换为您的实际 key："
         },
         "generating": "正在为您生成Flow YAML...",
         "prompt_placeholder": "输入指令以创建您的Kestra flow。示例提示：创建一个每周一上午9点运行的flow。",
@@ -174,13 +174,15 @@
     "confirm": "确认",
     "confirm password": "确认密码",
     "confirmation": "确认",
+    "context updated date": "上下文更新日期",
+    "context updated date tooltip": "触发器的上下文上次更新的时间。这发生在执行被触发、完成（锁释放）或评估后（即使没有执行发生）。",
     "contextBar": {
-      "demo": "获取演示",
+      "demo": "演示",
       "docs": "文档",
       "help": "帮助",
-      "issue": "打开问题",
+      "issue": "问题",
       "news": "新闻",
-      "star": "为仓库加星"
+      "star": "点赞我们"
     },
     "continue backfill": "继续回填",
     "continue backfills": "继续回填",
@@ -217,6 +219,7 @@
       "edition": {
         "chart": "编辑此图表",
         "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
+        "id readonly": "属性 `id` 不能更改——它现在设置为初始值。如果您想更改它，可以创建一个新的仪表板并删除旧的。",
         "label": "编辑仪表板"
       },
       "empty": "没有结果显示。",
@@ -459,6 +462,10 @@
           "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a>的信息，请参阅我们的文档。",
           "title": "当前没有依赖项。"
         }
+      },
+      "panels": {
+        "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、文件、Blueprints、Namespace Context）以获取相关功能。",
+        "title": "当前没有打开的面板。"
       },
       "plugins": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
@@ -725,6 +732,7 @@
         "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
       },
       "duplicate": "此键已存在",
+      "inherited": "继承的KV对",
       "name": "键值存储",
       "type": "类型",
       "update": "更新键 '{key}' 的值"
@@ -738,6 +746,8 @@
     "last execution state": "上一次状态",
     "last execution status": "上次执行状态",
     "last modified": "上次修改",
+    "last trigger date": "上次触发日期",
+    "last trigger date tooltip": "触发器上次执行的时间。在运行backfill时可能是过去的时间。",
     "launch execution": "执行",
     "learn_more": "了解更多",
     "light_background": "这是在使用浅色背景时的首选选项。",
@@ -765,6 +775,7 @@
     "monogram": "字母组合",
     "months": "月份",
     "multi_panel_editor": {
+      "close_all_panels": "关闭所有面板",
       "close_all_tabs": "关闭所有标签页",
       "move_left": "向左移动",
       "move_right": "向右移动"
@@ -852,6 +863,8 @@
     "neutral trend": "稳定",
     "new": "新建",
     "new version": "新版本 {version} 可用！",
+    "next evaluation date": "下次评估日期",
+    "next evaluation date tooltip": "根据其间隔，下一次评估trigger的时间。如果条件不满足，可能与下一次执行日期不同。",
     "next execution date": "下次执行日期",
     "next_execution": "下一次执行",
     "no data current task": "当前task没有可用数据",
@@ -1101,6 +1114,8 @@
     "replay from beginning tooltip": "从头开始创建相似的执行",
     "replay from task tooltip": "从任务 <code>{taskId}</code> 创建相似的执行",
     "replay latest revision": "使用最新修订版重放",
+    "replay the execution": "重放 flow <code>{flowId}</code> 的执行 <code>{executionId}</code>",
+    "replay with inputs": "使用输入重放",
     "replayed": "执行已重放",
     "required field": "必填字段",
     "reset": "重置",
@@ -1218,6 +1233,7 @@
           "label": "语言和地区",
           "note": "请注意，此设置用于在UI中显示日期和时间属性。要在UTC以外的时区安排你的流程，请确保在流程代码或插件默认值中的Schedule触发器上设置时区属性。"
         },
+        "reset_section_to_defaults": "恢复此部分的默认值",
         "save": {
           "discard": "丢弃",
           "label": "保存偏好设置",

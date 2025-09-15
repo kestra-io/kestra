@@ -1,8 +1,8 @@
 import {ref, Ref, provide, watch} from "vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
-import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
-import {TopologyClickParams} from "../code/utils/types";
+import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys";
+import {TopologyClickParams} from "../no-code/utils/types";
 import {Panel} from "../MultiPanelTabs.vue";
 import {useFlowStore} from "../../stores/flow";
 

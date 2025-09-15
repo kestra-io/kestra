@@ -12,7 +12,6 @@ import io.kestra.core.utils.Network;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -226,7 +225,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
             serviceInstanceFor(Service.ServiceState.NOT_RUNNING);
 
         public static final ServiceInstance EmptyServiceInstance =
-            serviceInstanceFor(Service.ServiceState.EMPTY);
+            serviceInstanceFor(Service.ServiceState.INACTIVE);
 
         public static ServiceInstance serviceInstanceFor(final Service.ServiceState state) {
             ServerConfig config = new ServerConfig(

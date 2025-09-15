@@ -49,8 +49,8 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "참고: 현재 AI 제공자로는 Gemini만 지원됩니다.\n\n구성을 저장한 후 Kestra 인스턴스를 재시작하세요.",
-          "header": "<b>AI Copilot이 아직 구성되지 않았습니다.</b>\n\nAI Copilot을 활성화하려면 다음 스니펫을 Kestra 인스턴스 구성 파일(예: <code>application.yml</code>)에 추가하고 <code>geminiApiKey</code>를 실제 key로 교체하십시오:"
+          "footer": "참고: 현재 AI 제공자로는 Gemini만 지원됩니다.\n\n구성을 저장한 후 Kestra 인스턴스를 재시작하십시오.",
+          "header": "<b>AI Copilot이 아직 구성되지 않았습니다.</b>\n\nAI Copilot을 활성화하려면, 다음 코드 조각을 Kestra 인스턴스 구성 파일(예: <code>application.yml</code>)에 추가하고 <code>geminiApiKey</code>를 실제 key로 교체하십시오:"
         },
         "generating": "Flow YAML을 생성 중입니다...",
         "prompt_placeholder": "Kestra flow를 생성하기 위한 지침을 입력하세요. 예시 프롬프트: 매주 월요일 오전 9시에 실행되는 flow를 생성하세요.",
@@ -174,13 +174,15 @@
     "confirm": "확인",
     "confirm password": "비밀번호 확인",
     "confirmation": "확인",
+    "context updated date": "컨텍스트 업데이트 날짜",
+    "context updated date tooltip": "트리거의 컨텍스트가 마지막으로 업데이트된 시점입니다. 이는 실행이 트리거되거나, 완료되었을 때(잠금 해제), 또는 평가 후(실행이 발생하지 않더라도) 발생합니다.",
     "contextBar": {
-      "demo": "데모 받기",
+      "demo": "데모",
       "docs": "문서",
       "help": "도움말",
-      "issue": "이슈 열기",
+      "issue": "문제",
       "news": "뉴스",
-      "star": "레포에 별표 추가"
+      "star": "우리를 Star 하세요"
     },
     "continue backfill": "backfill 계속",
     "continue backfills": "backfill 계속",
@@ -217,6 +219,7 @@
       "edition": {
         "chart": "이 차트 편집",
         "confirmation": "대시보드 <code>{title}</code>의 변경 사항이 저장되었습니다.",
+        "id readonly": "`id` 속성은 변경할 수 없습니다 — 현재 초기 값으로 설정되어 있습니다. 변경하려면 새 대시보드를 생성하고 기존 것을 제거할 수 있습니다.",
         "label": "대시보드 편집"
       },
       "empty": "결과가 표시되지 않습니다.",
@@ -459,6 +462,10 @@
           "content": "<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
           "title": "현재 종속성이 없습니다."
         }
+      },
+      "panels": {
+        "content": "Flow Code 또는 No-Code를 열어 flow 편집을 시작하거나, 관련 기능을 위해 다른 패널(Topology, Documentation, Files, Blueprints, Namespace Context)을 선택하세요.",
+        "title": "현재 열려 있는 패널이 없습니다."
       },
       "plugins": {
         "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
@@ -725,6 +732,7 @@
         "warning": "해당 namespace에 대한 권한이 없으므로 생략됩니다: <code>{namespaces}</code>"
       },
       "duplicate": "이 키는 이미 존재합니다",
+      "inherited": "상속된 KV 쌍",
       "name": "KV Store",
       "type": "유형",
       "update": "키 '{key}'의 값을 업데이트하세요"
@@ -738,6 +746,8 @@
     "last execution state": "마지막 상태",
     "last execution status": "마지막 실행 상태",
     "last modified": "마지막 수정",
+    "last trigger date": "마지막 trigger 날짜",
+    "last trigger date tooltip": "트리거가 마지막으로 실행된 시점입니다. 백필을 실행할 때 과거일 수 있습니다.",
     "launch execution": "실행",
     "learn_more": "자세히 알아보기",
     "light_background": "밝은 배경에서 작업할 때 선호되는 옵션입니다.",
@@ -765,6 +775,7 @@
     "monogram": "모노그램",
     "months": "개월",
     "multi_panel_editor": {
+      "close_all_panels": "모든 패널 닫기",
       "close_all_tabs": "모든 탭 닫기",
       "move_left": "왼쪽으로 이동",
       "move_right": "오른쪽으로 이동"
@@ -852,6 +863,8 @@
     "neutral trend": "안정적",
     "new": "새로 만들기",
     "new version": "새 버전 {version} 사용 가능!",
+    "next evaluation date": "다음 평가 날짜",
+    "next evaluation date tooltip": "트리거가 다음으로 평가될 시점은 간격을 기준으로 합니다. 조건이 충족되지 않으면 다음 실행 날짜와 항상 같지 않을 수 있습니다.",
     "next execution date": "다음 실행 날짜",
     "next_execution": "다음 실행",
     "no data current task": "현재 task에 대한 데이터가 없습니다.",
@@ -1101,6 +1114,8 @@
     "replay from beginning tooltip": "처음부터 재실행",
     "replay from task tooltip": "<code>{taskId}</code> Task에서 재실행",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
+    "replay the execution": "flow <code>{flowId}</code>의 실행 <code>{executionId}</code>을(를) 다시 실행합니다.",
+    "replay with inputs": "입력과 함께 재실행",
     "replayed": "재실행되었습니다.",
     "required field": "필수 필드",
     "reset": "재시작",
@@ -1218,6 +1233,7 @@
           "label": "언어 및 지역",
           "note": "이 설정은 UI에서 날짜 및 시간 속성을 표시하는 데 사용됩니다. UTC와 다른 시간대에 flow를 예약하려면 flow 코드 또는 플러그인 기본값에서 Schedule trigger의 시간대 속성을 설정하세요."
         },
+        "reset_section_to_defaults": "이 섹션의 기본 값을 복원",
         "save": {
           "discard": "버리기",
           "label": "환경 설정 저장",

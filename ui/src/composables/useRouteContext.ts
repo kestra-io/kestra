@@ -1,14 +1,11 @@
-import {ref, onMounted, watch, Ref} from "vue";
+import {Ref, watch} from "vue";
 import {useRoute} from "vue-router";
 
-export default (routeInfo: Ref<{title:string}>) => {
-
-    const embed = ref(false);
-
+export default function useRouteContext(routeInfoTitle: Ref<string>, embed: boolean = false) {
     const route = useRoute();
 
-    const handleTitle = () => {
-        if(!embed.value) {
+    function handleTitle(){
+        if(!embed) {
             let baseTitle;
 
             if (document.title.lastIndexOf("|") > 0) {
@@ -17,19 +14,11 @@ export default (routeInfo: Ref<{title:string}>) => {
                 baseTitle = document.title;
             }
 
-            document.title = routeInfo.value?.title + " | " + baseTitle;
+            document.title = routeInfoTitle.value + " | " + baseTitle;
         }
     }
 
-    onMounted(() => {
-        handleTitle();
-    })
-
-    watch(route, () => {
-        handleTitle();
-    })
-
-    return {
-        embed
-    }
+    watch(() => route, () => {
+        handleTitle()
+    }, {immediate: true})
 }

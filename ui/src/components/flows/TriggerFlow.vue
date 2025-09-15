@@ -60,7 +60,7 @@
     import Flash from "vue-material-design-icons/Flash.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import {shallowRef} from "vue";
-    import {pageFromRoute} from "../../utils/eventsRouter.ts";
+    import {pageFromRoute} from "../../utils/eventsRouter";
     import FlowWarningDialog from "./FlowWarningDialog.vue";
     import {mapStores} from "pinia";
     import {useApiStore} from "../../stores/api";

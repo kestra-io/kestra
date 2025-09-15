@@ -1,6 +1,6 @@
 <script>
     import {ElNotification} from "element-plus";
-    import {pageFromRoute} from "../utils/eventsRouter.ts";
+    import {pageFromRoute} from "../utils/eventsRouter";
     import {h} from "vue"
     import ErrorToastContainer from "./ErrorToastContainer.vue";
     import {mapStores} from "pinia";

@@ -58,7 +58,7 @@ class FileChangedEventListenerTest {
 
     @Test
     void test() throws IOException, TimeoutException {
-        var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getSimpleName()+"-test");
+        var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getSimpleName(), "test");
         // remove the flow if it already exists
         flowRepository.findByIdWithSource(tenant, "io.kestra.tests.watch", "myflow").ifPresent(flow -> flowRepository.delete(flow));
 
@@ -96,7 +96,7 @@ class FileChangedEventListenerTest {
 
     @Test
     void testWithPluginDefault() throws IOException, TimeoutException {
-        var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getName(), "test");
+        var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getName(), "testWithPluginDefault");
         // remove the flow if it already exists
         flowRepository.findByIdWithSource(tenant, "io.kestra.tests.watch", "pluginDefault").ifPresent(flow -> flowRepository.delete(flow));
 

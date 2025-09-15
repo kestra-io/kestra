@@ -32,17 +32,23 @@ public class Version implements Comparable<Version> {
      * @param version   the version.
      * @return          a new {@link Version} instance.
      */
-    public static Version of(String version) {
+    public static Version of(final Object version) {
 
-        if (version.startsWith("v")) {
-            version = version.substring(1);
+        if (Objects.isNull(version)) {
+            throw new IllegalArgumentException("Invalid version, cannot parse null version");
+        }
+        
+        String strVersion = version.toString();
+        
+        if (strVersion.startsWith("v")) {
+            strVersion = strVersion.substring(1);
         }
 
-        int qualifier = version.indexOf("-");
+        int qualifier = strVersion.indexOf("-");
 
         final String[] versions = qualifier > 0 ?
-            version.substring(0, qualifier).split("\\.") :
-            version.split("\\.");
+            strVersion.substring(0, qualifier).split("\\.") :
+            strVersion.split("\\.");
         try {
             final int majorVersion = Integer.parseInt(versions[0]);
             final int minorVersion = versions.length > 1 ? Integer.parseInt(versions[1]) : 0;
@@ -52,28 +58,54 @@ public class Version implements Comparable<Version> {
                 majorVersion,
                 minorVersion,
                 incrementalVersion,
-                qualifier > 0 ? version.substring(qualifier + 1) : null,
-                version
+                qualifier > 0 ? strVersion.substring(qualifier + 1) : null,
+                strVersion
             );
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid version, cannot parse '" + version + "'");
         }
     }
-
+    
     /**
-     * Static helper method for returning the most recent stable version for a current {@link Version}.
+     * Returns the most recent stable version compatible with the given {@link Version}.
      *
-     * @param from     the current version.
-     * @param versions the list of version.
+     * <p>Resolution strategy:</p>
+     * <ol>
+     *   <li>If {@code from} is present in {@code versions}, return it directly.</li>
+     *   <li>Otherwise, return the latest version with the same major and minor.</li>
+     *   <li>If none found and {@code from.majorVersion() > 0}, return the latest with the same major.</li>
+     *   <li>Return {@code null} if no compatible version is found.</li>
+     * </ol>
      *
-     * @return the last stable version.
+     * @param from     the current version
+     * @param versions available versions
+     * @return the most recent compatible stable version, or {@code null} if none
      */
     public static Version getStable(final Version from, final Collection<Version> versions) {
-        List<Version> compatibleVersions = versions.stream()
+        if (versions.contains(from)) {
+            return from;
+        }
+        
+        // Prefer same major+minor stable versions
+        List<Version> sameMinorStable = versions.stream()
             .filter(v -> v.majorVersion() == from.majorVersion() && v.minorVersion() == from.minorVersion())
             .toList();
-        if (compatibleVersions.isEmpty()) return null;
-        return Version.getLatest(compatibleVersions);
+        
+        if (!sameMinorStable.isEmpty()) {
+            return Version.getLatest(sameMinorStable);
+        }
+        
+        if (from.majorVersion() > 0) {
+            // Fallback: any stable version with the same major
+            List<Version> sameMajorStable = versions.stream()
+                .filter(v -> v.majorVersion() == from.majorVersion())
+                .toList();
+            
+            if (!sameMajorStable.isEmpty()) {
+                return Version.getLatest(sameMajorStable);
+            }
+        }
+        return null;
     }
 
     /**

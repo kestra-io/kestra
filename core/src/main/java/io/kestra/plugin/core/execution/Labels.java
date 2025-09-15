@@ -127,24 +127,9 @@ public class Labels extends Task implements ExecutionUpdatableTask {
         }
 
         // check for system labels: none can be passed at runtime
-        Optional<Map.Entry<String, String>> systemLabel = labelsAsMap.entrySet().stream()
-            .filter(entry -> entry.getKey().startsWith(SYSTEM_PREFIX))
-            .findFirst();
-        if (systemLabel.isPresent()) {
-            throw new IllegalArgumentException(
-                "System labels can only be set by Kestra itself, offending label: " +
-                systemLabel.get().getKey() + "=" + systemLabel.get().getValue()
-            );
-        }
-
-        // check for empty label values
-        Optional<Map.Entry<String, String>> emptyValue = labelsAsMap.entrySet().stream()
-            .filter(entry -> entry.getValue().isEmpty())
-            .findFirst();
-        if (emptyValue.isPresent()) {
-            throw new IllegalArgumentException(
-                "Label values cannot be empty, offending label: " + emptyValue.get().getKey()
-            );
+        Optional<Map.Entry<String, String>> first = labelsAsMap.entrySet().stream().filter(entry -> entry.getKey().startsWith(SYSTEM_PREFIX)).findFirst();
+        if (first.isPresent()) {
+            throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().getKey() + "=" + first.get().getValue());
         }
 
         Map<String, String> newLabels = ListUtils.emptyOnNull(execution.getLabels()).stream()

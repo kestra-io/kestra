@@ -33,9 +33,9 @@ public class FailTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/fail-on-condition.yaml"})
+    @LoadFlows(value = {"flows/valids/fail-on-condition.yaml"}, tenantId = "fail")
     void failOnCondition() throws TimeoutException, QueueException{
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "fail-on-condition", null,
+        Execution execution = runnerUtils.runOne("fail", "io.kestra.tests", "fail-on-condition", null,
             (f, e) -> Map.of("param", "fail") , Duration.ofSeconds(20));
 
         assertThat(execution.getTaskRunList()).hasSize(2);
@@ -44,9 +44,9 @@ public class FailTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/fail-on-condition.yaml"})
+    @LoadFlows(value = {"flows/valids/fail-on-condition.yaml"}, tenantId = "success")
     void dontFailOnCondition() throws TimeoutException, QueueException{
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "fail-on-condition", null,
+        Execution execution = runnerUtils.runOne("success", "io.kestra.tests", "fail-on-condition", null,
             (f, e) -> Map.of("param", "success") , Duration.ofSeconds(20));
 
         assertThat(execution.getTaskRunList()).hasSize(3);

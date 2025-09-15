@@ -8,7 +8,7 @@
     import {mapStores} from "pinia";
     import {cssVariable} from "@kestra-io/ui-libs";
     import {useLayoutStore} from "../../stores/layout";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     export default {
         computed: {

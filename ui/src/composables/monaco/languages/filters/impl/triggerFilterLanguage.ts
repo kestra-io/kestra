@@ -7,17 +7,17 @@ import {
 import {FilterLanguage} from "../filterLanguage.ts";
 import permission from "../../../../../models/permission.ts";
 import action from "../../../../../models/action.ts";
-import {Me} from "../../../../../stores/auth.ts";
+import {useAuthStore} from "override/stores/auth";
 import {useNamespacesStore} from "override/stores/namespaces.ts";
 
 const triggerFilterKeys: Record<string, FilterKeyCompletions> = {
     namespace: new FilterKeyCompletions(
         [Comparators.PREFIX, Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.CONTAINS, Comparators.STARTS_WITH, Comparators.ENDS_WITH, Comparators.REGEX],
-        async (store) => {
-            const user = store.getters["auth/user"] as Me;
+        async (_) => {
+            const user = useAuthStore().user;
             if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
                 const namespacesStore = useNamespacesStore();
-                return [...new Set(((await namespacesStore.loadNamespacesForDatatype({dataType: "flow"})) as string[])
+                return [...new Set(((await namespacesStore.loadAutocomplete()) as string[])
                     .flatMap(namespace => {
                         return namespace.split(".").reduce((current: string[], part: string) => {
                             const previousCombination = current?.[current.length - 1];

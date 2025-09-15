@@ -4,7 +4,7 @@
             class="d-flex flex-column left"
             :style="{width: leftWidth + '%'}"
         >
-            <el-cascader-panel
+            <ElCascaderPanel
                 ref="cascader"
                 v-model="selected"
                 :options="options"
@@ -27,7 +27,7 @@
                         </code>
                     </div>
                 </template>
-            </el-cascader-panel>
+            </ElCascaderPanel>
         </div>
         <div class="right wrapper fixed-right" :style="{width: 100 - leftWidth + '%'}">
             <div class="w-100 overflow-auto debug-wrapper">
@@ -39,11 +39,11 @@
                     <div class="d-flex flex-column p-3 debug">
                         <Editor
                             ref="debugEditor"
-                            :full-height="false"
-                            :custom-height="20"
+                            :fullHeight="false"
+                            :customHeight="20"
                             :input="true"
                             :navbar="false"
-                            :model-value="computedDebugValue"
+                            :modelValue="computedDebugValue"
                             @update:model-value="editorValue = $event"
                             @confirm="onDebugExpression($event)"
                             class="w-100"
@@ -64,12 +64,12 @@
 
                         <Editor
                             v-if="debugExpression"
-                            :read-only="true"
+                            :readOnly="true"
                             :input="true"
-                            :full-height="false"
-                            :custom-height="20"
+                            :fullHeight="false"
+                            :customHeight="20"
                             :navbar="false"
-                            :model-value="debugExpression"
+                            :modelValue="debugExpression"
                             :lang="isJSON ? 'json' : ''"
                             class="mt-3"
                         />
@@ -324,24 +324,24 @@
     overflow-x: auto;
 }
 
-.el-cascader-panel {
+:deep(.el-cascader-panel) {
     min-height: 197px;
     border: 1px solid var(--ks-border-primary);
     border-radius: 0;
     overflow-x: auto !important;
     overflow-y: hidden !important;
 
-    :deep(.el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child) {
+    .el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child {
         pointer-events: auto !important;
         margin: 0 !important;
     }
 
-    :deep(.el-cascader-node) {
+    .el-cascader-node {
         pointer-events: auto !important;
         cursor: pointer !important;
     }
 
-    :deep(.el-cascader-panel__wrap) {
+    .el-cascader-panel__wrap {
         overflow-x: auto !important;
         display: flex !important;
         min-width: max-content !important;
@@ -360,7 +360,7 @@
             height: 100%;
         }
 
-        & .el-cascader-node {
+        .el-cascader-node {
             height: 36px;
             line-height: 36px;
             font-size: var(--el-font-size-small);

@@ -5,14 +5,12 @@ import de.focus_shift.jollyday.core.ManagerParameters;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.utils.DateUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -31,7 +29,7 @@ import java.time.LocalDate;
     examples = {
         @Example(
             full = true,
-            title = "Trigger condition to excute the flow only on public holidays.",
+            title = "Trigger condition to execute the flow only on public holidays.",
             code = """
                 id: schedule_condition_public-holiday
                 namespace: company.team
@@ -52,7 +50,7 @@ import java.time.LocalDate;
         ),
         @Example(
             full = true,
-            title = "Trigger condition to excute the flow only on work days in France.",
+            title = "Trigger condition to execute the flow only on work days in France.",
             code = """
                 id: schedule-condition-work-days
                 namespace: company.team

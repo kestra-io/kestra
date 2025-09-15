@@ -87,7 +87,7 @@ jobs:
 
       # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy-action
       - name: Docker Vulnerabilities Check
-        uses: aquasecurity/trivy-action@0.32.0
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           image-ref: kestra/kestra:develop
           format: 'template'
@@ -132,7 +132,7 @@ jobs:
 
       # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy-action
       - name: Docker Vulnerabilities Check
-        uses: aquasecurity/trivy-action@0.32.0
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           image-ref: kestra/kestra:latest
           format: table

@@ -14,7 +14,7 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.core.schedulers.ScheduleContextInterface;
+import io.kestra.core.runners.ScheduleContextInterface;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.runner.JdbcQueueIndexerInterface;
@@ -301,7 +301,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     private SelectConditionStep<?> generateSelect(DSLContext context, String tenantId, List<QueryFilter> filters){
         SelectConditionStep<?> select = context
             .select(field("value"))
-            .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId));
 
@@ -317,7 +316,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.fullTextCondition(query))
                     .and(this.defaultFilter(tenantId));

@@ -19,8 +19,8 @@
                 >
                     <el-switch
                         v-model="duration"
-                        :active-icon="CheckIcon"
-                        inline-prompt
+                        :activeIcon="CheckIcon"
+                        inlinePrompt
                         :disabled="loading"
                     />
                     <span class="d-flex align-items-center ps-2 fw-light small">{{ t("duration") }}</span>

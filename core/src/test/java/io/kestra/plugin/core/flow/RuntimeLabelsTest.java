@@ -105,10 +105,10 @@ class RuntimeLabelsTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/primitive-labels-flow.yml"})
+    @LoadFlows(value = {"flows/valids/primitive-labels-flow.yml"}, tenantId = "tenant1")
     void primitiveTypeLabelsOverrideExistingLabels() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            "tenant1",
             "io.kestra.tests",
             "primitive-labels-flow",
             null,

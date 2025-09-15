@@ -73,12 +73,12 @@ public class Get extends AbstractState implements RunnableTask<Get.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The count of properties found in the state."
+            title = "The count of properties found in the state"
         )
         private final int count;
 
         @Schema(
-            title = "The data extracted from the state."
+            title = "The data extracted from the state"
         )
         private final Map<String, Object> data;
     }

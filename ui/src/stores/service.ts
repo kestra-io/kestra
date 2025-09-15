@@ -16,7 +16,7 @@ export const useServiceStore = defineStore("service", {
 
     actions: {
         async findServiceById(options: {id: string}): Promise<Service> {
-            const response = await this.$http.get<Service>(`${apiUrl(this.vuexStore)}/cluster/services/${options.id}`);
+            const response = await this.$http.get<Service>(`${apiUrl()}/cluster/services/${options.id}`);
             this.service = response.data;
             return response.data;
         }

@@ -164,12 +164,14 @@
 
     const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, tempActions)
 
+    const TABS = isTourRunning.value ? DEFAULT_TOUR_TABS.flatMap(t => t.tabs) : DEFAULT_ACTIVE_TABS;
+
     const panels = useStorage<Panel[]>(
         `el-fl-${flowStore.flow?.namespace}-${flowStore.flow?.id}`,
-        DEFAULT_ACTIVE_TABS
+        TABS
             .map((t) => ({
                 ...staticGetPanelFromValue(t).panel,
-                size: 100 / DEFAULT_ACTIVE_TABS.length
+                size: 100 / TABS.length
             })),
         undefined,
         {

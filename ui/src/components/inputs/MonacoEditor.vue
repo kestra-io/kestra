@@ -693,6 +693,18 @@
                     original: originalModel,
                     modified: modifiedModel
                 });
+                let modifiedBackspaceTimeout: number | null = null;
+
+                const modifiedEditor = localDiffEditor.value.getModifiedEditor();
+                modifiedEditor.onKeyDown((e) => {
+                    if (e.keyCode === monaco.KeyCode.Backspace) {
+                        if (modifiedBackspaceTimeout) clearTimeout(modifiedBackspaceTimeout);
+
+                        modifiedBackspaceTimeout = window.setTimeout(() => {
+                            modifiedEditor.trigger("keyboard", "editor.action.triggerSuggest", {});
+                        }, 250); 
+                    }
+                });
             }
         } else {
             monaco.editor.addKeybindingRule({
@@ -728,7 +740,17 @@
                     ...options,
                     fixedOverflowWidgets: true // Helps suggestion widget render above other elements
                 });
+                let localBackspaceTimeout: number | null = null;
+                
+                localEditor.value.onKeyDown((e) => {
+                    if (e.keyCode === monaco.KeyCode.Backspace) {
+                        if (localBackspaceTimeout) clearTimeout(localBackspaceTimeout);
 
+                        localBackspaceTimeout = window.setTimeout(() => {
+                            localEditor.value!.trigger("keyboard", "editor.action.triggerSuggest", {});
+                        }, 250);
+                    }
+                });
                 if (props.suggestionsOnFocus) {
                     localEditor.value.onMouseDown(() => {
                         localEditor.value!.trigger("click", "editor.action.triggerSuggest", {});

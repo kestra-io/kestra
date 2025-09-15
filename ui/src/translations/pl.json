@@ -1233,6 +1233,7 @@
           "label": "Język i region",
           "note": "Zauważ, że to ustawienie jest używane do wyświetlania właściwości daty i czasu w UI. Aby zaplanować swoje flows w strefie czasowej innej niż UTC, upewnij się, że ustawisz właściwość strefy czasowej w trigger harmonogramu w kodzie flow lub w domyślnych ustawieniach pluginów."
         },
+        "reset_section_to_defaults": "Przywróć domyślne wartości tej sekcji",
         "save": {
           "discard": "Odrzuć",
           "label": "Zapisz preferencje",

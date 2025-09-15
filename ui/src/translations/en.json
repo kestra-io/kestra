@@ -825,7 +825,8 @@
           "discard": "Discard",
           "unsaved_title": "Unsaved Changes",
           "unsaved_warning": "You have unsaved changes. Do you want to save them before leaving?"
-        }
+        },
+        "reset_section_to_defaults": "Restore this section's default values"
       }
     },
     "apps": "Apps",

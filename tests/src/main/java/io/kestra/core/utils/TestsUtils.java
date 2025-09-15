@@ -37,11 +37,32 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 abstract public class TestsUtils {
     private static final ObjectMapper mapper = JacksonMapper.ofYaml();
+
+    public static String randomTenant(String... prefix) {
+        var list = List.of(prefix);
+        if (list.isEmpty()) {
+            throw new IllegalArgumentException("tenant prefix must not be empty");
+        }
+        var tenantRegex = "^[a-z0-9][a-z0-9_-]*";
+        var validTenantPrefixes = list.stream()
+            .map(s -> s.replace(".", "-"))
+            .map(String::toLowerCase)
+            .peek(p -> {
+                if (!p.matches(tenantRegex)) {
+                    throw new IllegalArgumentException("random tenant prefix %s should match tenant regex %s".formatted(p, tenantRegex));
+                }
+            }).toList();
+        String[] parts = Stream
+            .concat(validTenantPrefixes.stream(), Stream.of(IdUtils.create().toLowerCase()))
+            .toArray(String[]::new);
+        return IdUtils.fromParts(parts);
+    }
 
     public static <T> T map(String path, Class<T> cls) throws IOException {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);

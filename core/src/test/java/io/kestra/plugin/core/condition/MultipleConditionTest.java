@@ -34,7 +34,7 @@ class MultipleConditionTest {
             .conditions(
                 ImmutableMap.of(
                 "first", ExecutionStatus.builder()
-                    .in(Property.of(Collections.singletonList(State.Type.SUCCESS)))
+                    .in(Property.ofValue(Collections.singletonList(State.Type.SUCCESS)))
                     .build(),
                 "second", Expression.builder()
                     .expression(new Property<>("{{ flow.id }}"))
@@ -45,6 +45,6 @@ class MultipleConditionTest {
         boolean test = conditionService.isValid((Condition) build, flow, execution, multipleConditionStorage);
 
 
-        assertThat(test).isEqualTo(false);
+        assertThat(test).isFalse();
     }
 }

@@ -19,6 +19,6 @@ public class Sha512FilterTest {
     void out() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ \"hello\" | sha512 }}", Map.of());
 
-        assertThat(render.equals("hello")).isEqualTo(false);
+        assertThat(render.equals("hello")).isFalse();
     }
 }

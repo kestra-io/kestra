@@ -41,20 +41,20 @@ class HasRetryAttemptTest {
         ));
 
         HasRetryAttempt build = HasRetryAttempt.builder()
-            .in(Property.of(Collections.singletonList(State.Type.KILLED)))
+            .in(Property.ofValue(Collections.singletonList(State.Type.KILLED)))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(true);
+        assertThat(test).isTrue();
 
         build = HasRetryAttempt.builder()
-            .in(Property.of(Collections.singletonList(State.Type.FAILED)))
+            .in(Property.ofValue(Collections.singletonList(State.Type.FAILED)))
             .build();
 
         test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(false);
+        assertThat(test).isFalse();
     }
 
     @Test
@@ -76,6 +76,6 @@ class HasRetryAttemptTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(false);
+        assertThat(test).isFalse();
     }
 }

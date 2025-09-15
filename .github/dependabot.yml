@@ -1,26 +1,31 @@
 # See GitHub's docs for more information on this file:
 # https://docs.github.com/en/free-pro-team@latest/github/administering-a-repository/configuration-options-for-dependency-updates
+
 version: 2
 updates:
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      # Check for updates to GitHub Actions every week
       interval: "weekly"
+      day: "wednesday"
+      time: "08:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 50
     labels:
       - "dependency-upgrade"
-    open-pull-requests-limit: 50
 
   # Maintain dependencies for Gradle modules
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
-      # Check for updates to Gradle modules every week
       interval: "weekly"
+      day: "wednesday"
+      time: "08:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 50
     labels:
       - "dependency-upgrade"
-    open-pull-requests-limit: 50
 
   # Maintain dependencies for NPM modules
   - package-ecosystem: "npm"
@@ -31,8 +36,15 @@ updates:
       time: "08:00"
       timezone: "Europe/Paris"
     open-pull-requests-limit: 50
-    labels: ["dependency-upgrade"]
+    labels:
+      - "dependency-upgrade"
     ignore:
-      # Ignore updates of version 1.x, as we're using beta of 2.x
+      # Ignore updates of version 1.x, as we're using the beta of 2.x (still in beta)
       - dependency-name: "vue-virtual-scroller"
-        versions: ["1.x"]
+        versions:
+          - "1.x"
+
+      # Ignore updates to monaco-yaml, version is pinned to 5.3.1 due to patch-package script additions
+      - dependency-name: "monaco-yaml"
+        versions:
+          - ">=5.3.2"

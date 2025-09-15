@@ -1,6 +1,6 @@
 import {markRaw, ref, StyleValue} from "vue";
-import {within, userEvent, expect, fireEvent, waitFor} from "@storybook/test";
-import type {Meta, StoryObj} from "@storybook/vue3";
+import {within, userEvent, expect, fireEvent, waitFor} from "storybook/test";
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import FileTreeOutlineIcon from "vue-material-design-icons/FileTreeOutline.vue";
@@ -174,7 +174,7 @@ export const PanelResizeTest: Story = {
         await new Promise(resolve => setTimeout(resolve, 100));
 
         // Find the resize handle
-        const resizeHandle = canvasElement.querySelector(".splitpanes__splitter");
+        const resizeHandle = canvasElement.querySelector(".el-splitter__splitter");
 
         if (resizeHandle) {
             // Click on the tab to ensure it's visible

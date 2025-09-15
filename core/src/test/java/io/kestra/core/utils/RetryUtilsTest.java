@@ -21,7 +21,7 @@ class RetryUtilsTest {
     private <T, E extends Throwable> RetryUtils.Instance<T, E> instance() {
         return retryUtils.of(Constant.builder()
             .interval(Duration.ofMillis(10))
-            .maxAttempt(3)
+            .maxAttempts(3)
             .build());
     }
 
@@ -39,7 +39,7 @@ class RetryUtilsTest {
                 () -> true
             );
 
-            assertThat(inc.get()).isEqualTo(0);
+            assertThat(inc.get()).isZero();
         });
 
         assertThat(retryFailed.getAttemptCount()).isEqualTo(3);
@@ -55,8 +55,8 @@ class RetryUtilsTest {
             () -> inc.getAndDecrement() == 1
         );
 
-        assertThat(inc.get()).isEqualTo(0);
-        assertThat(retry).isEqualTo(true);
+        assertThat(inc.get()).isZero();
+        assertThat(retry).isTrue();
     }
 
     @Test
@@ -72,7 +72,7 @@ class RetryUtilsTest {
                 }
             );
 
-            assertThat(inc.get()).isEqualTo(0);
+            assertThat(inc.get()).isZero();
         });
 
         assertThat(retryFailed.getAttemptCount()).isEqualTo(3);
@@ -94,8 +94,8 @@ class RetryUtilsTest {
             }
         );
 
-        assertThat(inc.get()).isEqualTo(0);
-        assertThat(retry).isEqualTo(true);
+        assertThat(inc.get()).isZero();
+        assertThat(retry).isTrue();
     }
 
     @Test

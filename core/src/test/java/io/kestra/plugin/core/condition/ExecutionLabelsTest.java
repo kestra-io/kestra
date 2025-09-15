@@ -34,7 +34,7 @@ public class ExecutionLabelsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(true);
+        assertThat(test).isTrue();
     }
 
     @Test
@@ -52,7 +52,7 @@ public class ExecutionLabelsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(true);
+        assertThat(test).isTrue();
     }
 
     @Test
@@ -67,7 +67,7 @@ public class ExecutionLabelsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(false);
+        assertThat(test).isFalse();
     }
 
     @Test
@@ -85,6 +85,6 @@ public class ExecutionLabelsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(false);
+        assertThat(test).isFalse();
     }
 }

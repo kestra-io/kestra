@@ -22,7 +22,7 @@ class TaskRunControllerTest {
     void search() {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/taskruns/search"))
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/taskruns/search"))
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());

@@ -51,24 +51,25 @@ public class NamespaceFilesUtils {
         FileExistComportment fileExistComportment = runContext.render(namespaceFiles.getIfExists())
             .as(FileExistComportment.class).orElse(FileExistComportment.OVERWRITE);
         List<String> namespaces = runContext.render(namespaceFiles.getNamespaces()).asList(String.class);
+        Boolean folderPerNamespace = runContext.render(namespaceFiles.getFolderPerNamespace()).as(Boolean.class)
+            .orElse(false);
 
-        Map<String, NamespaceFile> namespaceFileMap = new HashMap<>();
+        List<NamespaceFile> matchedNamespaceFiles = new ArrayList<>();
         for (String namespace : namespaces) {
             List<NamespaceFile> files = runContext.storage()
                 .namespace(namespace)
                 .findAllFilesMatching(include, exclude);
 
-            for (NamespaceFile file : files) {
-                namespaceFileMap.put(file.storagePath().toFile().getName(), file);
-            }
+          matchedNamespaceFiles.addAll(files);
         }
 
-        List<NamespaceFile> matchedNamespaceFiles = new ArrayList<>(namespaceFileMap.values());
-
         Flux.fromIterable(matchedNamespaceFiles)
-            .doOnNext(throwConsumer(namespaceFile -> {
-                InputStream content = runContext.storage().getFile(namespaceFile.uri());
-                runContext.workingDir().putFile(Path.of(namespaceFile.path()), content, fileExistComportment);
+            .doOnNext(throwConsumer(nsFile -> {
+                InputStream content = runContext.storage().getFile(nsFile.uri());
+                Path path = folderPerNamespace ?
+                    Path.of(nsFile.namespace() + "/" + nsFile.path()) :
+                    Path.of(nsFile.path());
+                runContext.workingDir().putFile(path, content, fileExistComportment);
             }))
             .publishOn(Schedulers.fromExecutorService(executorService))
             .blockLast();

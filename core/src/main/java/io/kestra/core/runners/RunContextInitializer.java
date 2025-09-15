@@ -125,7 +125,10 @@ public class RunContextInitializer {
             enrichedVariables.put("taskrun", taskrun);
         }
 
-        final RunContextLogger runContextLogger = contextLoggerFactory.create(taskRun, task);
+        // rehydrate outputs
+        enrichedVariables.put("outputs", rehydrateOutputs((Map<String, Object>) enrichedVariables.get("outputs")));
+
+        final RunContextLogger runContextLogger = contextLoggerFactory.create(workerTask);
         enrichedVariables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
 
         enrichedVariables = variablesModifier.apply(enrichedVariables);
@@ -137,6 +140,14 @@ public class RunContextInitializer {
         runContext.setTask(task);
 
         return runContext;
+    }
+
+    /**
+     * Rehydrate outputs from internal storage if enabled.
+     * As outputs in internal storage is an EE feature, this is a no-op in OSS.
+     */
+    protected Map<String, Object> rehydrateOutputs(Map<String, Object> outputs) {
+        return outputs;
     }
 
     /**
@@ -202,7 +213,7 @@ public class RunContextInitializer {
         runContext.init(applicationContext);
 
         final String triggerExecutionId = IdUtils.create();
-        final RunContextLogger runContextLogger = contextLoggerFactory.create(triggerContext, trigger);
+        final RunContextLogger runContextLogger = contextLoggerFactory.create(triggerContext, trigger, null);
 
         final Map<String, Object> variables = new HashMap<>(runContext.getVariables());
         variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);

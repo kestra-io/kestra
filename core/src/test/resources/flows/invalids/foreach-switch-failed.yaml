@@ -1,0 +1,23 @@
+id: foreach-switch-failed
+namespace: io.kestra.tests
+
+tasks:
+  - id: foreach
+    type: io.kestra.plugin.core.flow.ForEach
+    values: [1,2]
+    tasks:
+      - id: switch
+        type: io.kestra.plugin.core.flow.Switch
+        value: "{{ taskrun.value  }}"
+        cases:
+          1:
+            - id: log
+              type: io.kestra.plugin.core.log.Log
+              message: "hello"
+          2:
+            - id: fail
+              type: io.kestra.plugin.core.execution.Fail
+    errors:
+      - id: errorforeach
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ tasksWithState('failed') }}"

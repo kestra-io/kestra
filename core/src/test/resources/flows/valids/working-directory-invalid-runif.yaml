@@ -1,0 +1,15 @@
+id: working-directory-invalid-runif
+namespace: io.kestra.tests
+
+tasks:
+  - id: workingDirectory
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+      - id: s1
+        type: io.kestra.plugin.core.debug.Return
+        format: 1
+
+      - id: s2
+        type: io.kestra.plugin.core.debug.Return
+        runIf: "{{ outputs.failed }}"
+        format: 2

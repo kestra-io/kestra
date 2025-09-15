@@ -13,7 +13,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TemplateValidateCommandTest {
+class TemplateValidateCommandTest {
     @Test
     void runLocal()  {
         URL directory = TemplateValidateCommandTest.class.getClassLoader().getResource("invalidsTemplates/template.yml");

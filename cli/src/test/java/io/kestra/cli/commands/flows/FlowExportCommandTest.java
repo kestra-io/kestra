@@ -55,7 +55,7 @@ class FlowExportCommandTest {
             };
             PicocliRunner.call(FlowExportCommand.class, ctx, exportArgs);
             File file = new File("/tmp/flows.zip");
-            assertThat(file.exists()).isEqualTo(true);
+            assertThat(file.exists()).isTrue();
             ZipFile zipFile = new ZipFile(file);
 
             // When launching the test in a suite, there is 4 flows but when lauching individualy there is only 3

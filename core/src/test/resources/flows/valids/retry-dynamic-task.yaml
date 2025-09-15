@@ -6,5 +6,5 @@ tasks:
     fail: true
     retry:
       type: constant
-      maxAttempt: 2
+      maxAttempts: 2
       interval: PT0.5S

@@ -1,6 +1,7 @@
 package io.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.Counter;
@@ -26,20 +27,22 @@ public abstract class AbstractMetricRepositoryTest {
     void all() {
         String executionId = FriendlyId.createFriendlyId();
         TaskRun taskRun1 = taskRun(executionId, "task");
-        MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"));
+        MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
+        MetricEntry testCounter = MetricEntry.of(taskRun1, counter("test"), ExecutionKind.TEST);
         TaskRun taskRun2 = taskRun(executionId, "task");
-        MetricEntry timer = MetricEntry.of(taskRun2, timer());
+        MetricEntry timer = MetricEntry.of(taskRun2, timer(), null);
         metricRepository.save(counter);
+        metricRepository.save(testCounter); // should only be retrieved by execution id
         metricRepository.save(timer);
 
         List<MetricEntry> results = metricRepository.findByExecutionId(null, executionId, Pageable.from(1, 10));
-        assertThat(results.size()).isEqualTo(2);
+        assertThat(results.size()).isEqualTo(3);
 
         results = metricRepository.findByExecutionIdAndTaskId(null, executionId, taskRun1.getTaskId(), Pageable.from(1, 10));
-        assertThat(results.size()).isEqualTo(2);
+        assertThat(results.size()).isEqualTo(3);
 
         results = metricRepository.findByExecutionIdAndTaskRunId(null, executionId, taskRun1.getId(), Pageable.from(1, 10));
-        assertThat(results.size()).isEqualTo(1);
+        assertThat(results.size()).isEqualTo(2);
 
         MetricAggregations aggregationResults = metricRepository.aggregateByFlowId(
             null,
@@ -75,13 +78,16 @@ public abstract class AbstractMetricRepositoryTest {
      void names() {
          String executionId = FriendlyId.createFriendlyId();
          TaskRun taskRun1 = taskRun(executionId, "task");
-         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"));
+         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
 
          TaskRun taskRun2 = taskRun(executionId, "task2");
-         MetricEntry counter2 = MetricEntry.of(taskRun2, counter("counter2"));
+         MetricEntry counter2 = MetricEntry.of(taskRun2, counter("counter2"), null);
+
+         MetricEntry test = MetricEntry.of(taskRun2, counter("test"), ExecutionKind.TEST);
 
          metricRepository.save(counter);
          metricRepository.save(counter2);
+         metricRepository.save(test); // should only be retrieved by execution id
 
 
          List<String> flowMetricsNames = metricRepository.flowMetrics(null, "namespace", "flow");
@@ -97,14 +103,16 @@ public abstract class AbstractMetricRepositoryTest {
     void findAllAsync() {
         String executionId = FriendlyId.createFriendlyId();
         TaskRun taskRun1 = taskRun(executionId, "task");
-        MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"));
+        MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
         TaskRun taskRun2 = taskRun(executionId, "task");
-        MetricEntry timer = MetricEntry.of(taskRun2, timer());
+        MetricEntry timer = MetricEntry.of(taskRun2, timer(), null);
+        MetricEntry test = MetricEntry.of(taskRun2, counter("test"), ExecutionKind.TEST);
         metricRepository.save(counter);
         metricRepository.save(timer);
+        metricRepository.save(test); // should be retrieved as findAllAsync is used for backup
 
         List<MetricEntry> results = metricRepository.findAllAsync(null).collectList().block();
-        assertThat(results).hasSize(2);
+        assertThat(results).hasSize(3);
     }
 
     private Counter counter(String metricName) {

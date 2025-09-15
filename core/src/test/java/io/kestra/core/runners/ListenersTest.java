@@ -14,9 +14,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
 @KestraTest(startRunner = true)
 class ListenersTest {
 
@@ -38,7 +41,7 @@ class ListenersTest {
     @Test
     void success() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners",
             null,
@@ -53,7 +56,7 @@ class ListenersTest {
     @Test
     void failed() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners",
             null,
@@ -68,7 +71,7 @@ class ListenersTest {
     @Test
     void flowableExecution() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners-flowable",
             null,
@@ -84,7 +87,7 @@ class ListenersTest {
     @Test
     void multipleListeners() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners-multiple"
         );
@@ -97,7 +100,7 @@ class ListenersTest {
     @Test
     void failedListeners() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners-failed"
         );
@@ -111,7 +114,7 @@ class ListenersTest {
     @Test
     void failedMultipleListeners() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners-multiple-failed"
         );

@@ -24,7 +24,7 @@ class FlowDotCommandTest {
             };
             Integer call = PicocliRunner.call(FlowDotCommand.class, ctx, args);
 
-            assertThat(call).isEqualTo(0);
+            assertThat(call).isZero();
             assertThat(out.toString()).contains("\"root.date\"[shape=box];");
         }
     }

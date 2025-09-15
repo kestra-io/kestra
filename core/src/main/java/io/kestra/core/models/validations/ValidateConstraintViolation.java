@@ -3,6 +3,7 @@ package io.kestra.core.models.validations;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Introspected;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -22,6 +23,7 @@ import java.util.List;
 @Introspected
 @ToString
 @Slf4j
+@EqualsAndHashCode
 public class ValidateConstraintViolation {
     private String flow;
 

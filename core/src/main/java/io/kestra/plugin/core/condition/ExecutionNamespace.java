@@ -2,7 +2,6 @@ package io.kestra.plugin.core.condition;
 
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,7 +13,7 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 
 import jakarta.validation.constraints.NotNull;
-import java.util.Optional;
+
 import java.util.function.BiPredicate;
 
 @SuperBuilder
@@ -38,7 +37,7 @@ import java.util.function.BiPredicate;
                   - id: hello
                     type: io.kestra.plugin.core.log.Log
                     message: "This flow will execute when any flow within `company.engineering` namespace enters RUNNING state."
-                
+
                 triggers:
                   - id: flow_trigger
                     type: io.kestra.plugin.core.trigger.Flow
@@ -47,7 +46,7 @@ import java.util.function.BiPredicate;
                         namespace: company.engineering
                         comparison: PREFIX
                     states:
-                      - RUNNING 
+                      - RUNNING
                 """
         )
     },
@@ -70,7 +69,7 @@ public class ExecutionNamespace extends Condition {
         description = "Only used when `comparison` is not set"
     )
     @Builder.Default
-    private Property<Boolean> prefix = Property.of(false);
+    private Property<Boolean> prefix = Property.ofValue(false);
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {

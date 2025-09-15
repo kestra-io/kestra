@@ -21,6 +21,6 @@ class StartsWithFilterTest {
             variableRenderer.render("{{ \"Hello World\" | startsWith(\"Hello\") }}", Map.of())
         );
 
-        assertThat(render).isEqualTo(true);
+        assertThat(render).isTrue();
     }
 }

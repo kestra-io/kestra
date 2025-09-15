@@ -19,6 +19,13 @@ class FlowOutputTest {
         assertThat(execution.getOutputs().get("key")).isEqualTo("{\"value\":\"flow-with-outputs\"}");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
+    
+    @Test
+    @ExecuteFlow("flows/valids/flow-with-optional-outputs.yml")
+    void shouldGetSuccessExecutionForFlowWithOptionalOutputs(Execution execution) {
+        assertThat(execution.getOutputs()).isNull();
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
 
     @SuppressWarnings("unchecked")
     @Test

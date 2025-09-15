@@ -48,6 +48,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
         }
 
         ExecuteFlow executeFlow = getExecuteFlow(extensionContext);
+        String tenantId = executeFlow.tenantId();
 
         String path = executeFlow.value();
         URL url = getClass().getClassLoader().getResource(path);
@@ -55,11 +56,11 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
             throw new IllegalArgumentException("Unable to load flow: " + path);
         }
         LocalFlowRepositoryLoader repositoryLoader = context.getBean(LocalFlowRepositoryLoader.class);
-        TestsUtils.loads(repositoryLoader, Objects.requireNonNull(url));
+        TestsUtils.loads(tenantId, repositoryLoader, Objects.requireNonNull(url));
 
         Flow flow = YamlParser.parse(Paths.get(url.toURI()).toFile(), Flow.class);
         RunnerUtils runnerUtils = context.getBean(RunnerUtils.class);
-        return runnerUtils.runOne(null, flow.getNamespace(), flow.getId(), Duration.parse(executeFlow.timeout()));
+        return runnerUtils.runOne(tenantId, flow.getNamespace(), flow.getId(), Duration.parse(executeFlow.timeout()));
     }
 
     @Override
@@ -72,6 +73,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
         Flow loadedFlow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
         flowRepository.findAllForAllTenants().stream()
             .filter(flow -> Objects.equals(flow.getId(), loadedFlow.getId()))
+            .filter(flow -> Objects.equals(flow.getTenantId(), executeFlow.tenantId()))
             .forEach(flow -> flowRepository.delete(FlowWithSource.of(flow, "unused")));
     }
 

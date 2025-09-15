@@ -39,30 +39,6 @@ import java.util.Optional;
 @NoArgsConstructor
 @JsonDeserialize
 public class GenericFlow extends AbstractFlow implements HasUID {
-
-    private String id;
-
-    private String namespace;
-
-    private Integer revision;
-
-    private List<Input<?>> inputs;
-
-    private Map<String, Object> variables;
-
-    @Builder.Default
-    private boolean disabled = false;
-
-    @Builder.Default
-    private boolean deleted = false;
-
-    @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
-    @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
-    @Schema(implementation = Object.class, oneOf = {List.class, Map.class})
-    private List<Label> labels;
-
-    private String tenantId;
-
     private String source;
 
     private List<SLA> sla;
@@ -84,7 +60,6 @@ public class GenericFlow extends AbstractFlow implements HasUID {
      * @return a new {@link GenericFlow}
      * @throws DeserializationException if source cannot be deserialized.
      */
-    @VisibleForTesting
     public static GenericFlow of(final FlowInterface flow) throws DeserializationException {
         return fromYaml(flow.getTenantId(), flow.sourceOrGenerateIfNull());
     }

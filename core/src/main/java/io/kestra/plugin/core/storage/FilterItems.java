@@ -59,14 +59,14 @@ import java.util.Map;
 public class FilterItems extends Task implements RunnableTask<FilterItems.Output> {
 
     @Schema(
-        title = "The file to be filtered."
+        title = "The file to be filtered"
     )
     @NotNull
     @PluginProperty(internalStorageURI = true)
     private Property<String> from;
 
     @Schema(
-        title = "The 'pebble' expression used to match items to be included or excluded.",
+        title = "The 'pebble' expression used to match items to be included or excluded",
         description = "The 'pebble' expression should return a BOOLEAN value (i.e. `true` or `false`). Values `0`, `-0`, and `\"\"` are interpreted as `false`. " +
             "Otherwise, any non empty value will be interpreted as `true`."
     )
@@ -79,14 +79,14 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
         description = "Use `INCLUDE` to pass the item through, or `EXCLUDE` to drop the items."
     )
     @Builder.Default
-    private Property<FilterType> filterType = Property.of(FilterType.INCLUDE);
+    private Property<FilterType> filterType = Property.ofValue(FilterType.INCLUDE);
 
     @Schema(
-        title = "Specifies the behavior when the expression fail to be evaluated on an item or return `null`.",
+        title = "Specifies the behavior when the expression fails to be evaluated on an item or returns `null`.",
         description = "Use `FAIL` to throw the exception and fail the task, `INCLUDE` to pass the item through, or `EXCLUDE` to drop the item."
     )
     @Builder.Default
-    private Property<ErrorOrNullBehavior> errorOrNullBehavior = Property.of(ErrorOrNullBehavior.FAIL);
+    private Property<ErrorOrNullBehavior> errorOrNullBehavior = Property.ofValue(ErrorOrNullBehavior.FAIL);
 
     /**
      * {@inheritDoc}
@@ -170,17 +170,17 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The filtered file URI."
+            title = "The filtered file URI"
         )
         private final URI uri;
 
         @Schema(
-            title = "The total number of items that was processed by the task."
+            title = "The total number of items that were processed by the task"
         )
         private final Long processedItemsTotal;
 
         @Schema(
-            title = "The total number of items that was dropped by the task."
+            title = "The total number of items that were dropped by the task"
         )
         private final Long droppedItemsTotal;
     }

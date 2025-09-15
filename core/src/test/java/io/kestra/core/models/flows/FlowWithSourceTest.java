@@ -28,7 +28,7 @@ class FlowWithSourceTest {
                 Return.builder()
                     .id(IdUtils.create())
                     .type(Return.class.getName())
-                    .format(Property.of("123456789 \n123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789\n" +
+                    .format(Property.ofValue("123456789 \n123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789\n" +
                         "123456789 \n" +
                         "123456789 \n" +
                         "123456789     \n"))
@@ -109,7 +109,7 @@ class FlowWithSourceTest {
             ))
             .listeners(List.of(
                 Listener.builder()
-                    .conditions(List.of(Expression.builder().expression(Property.of("true")).build()))
+                    .conditions(List.of(Expression.builder().expression(Property.ofValue("true")).build()))
                     .build()
             ))
             .triggers(List.of(
@@ -134,7 +134,7 @@ class FlowWithSourceTest {
         String expectedSource = flow.sourceOrGenerateIfNull() + " # additional comment";
         FlowWithSource of = FlowWithSource.of(flow, expectedSource);
 
-        assertThat(of.equalsWithoutRevision(flow)).isEqualTo(true);
+        assertThat(of.equalsWithoutRevision(flow)).isTrue();
         assertThat(of.getSource()).isEqualTo(expectedSource);
     }
 }

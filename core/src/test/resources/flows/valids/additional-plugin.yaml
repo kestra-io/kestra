@@ -1,0 +1,13 @@
+id: additional-plugin
+namespace: io.kestra.tests
+
+tasks:
+  - id: additional-plugin-1
+    type: io.kestra.core.plugins.AdditionalPluginTest$AdditionalPluginTestTask
+    additionalPlugin:
+      type: io.kestra.core.plugins.AdditionalPluginTest$AdditionalPluginTest1
+      baseMessage: Hello
+  - id: additional-plugin-2
+    type: io.kestra.core.plugins.AdditionalPluginTest$AdditionalPluginTestTask
+    additionalPlugin:
+      type: io.kestra.core.plugins.AdditionalPluginTest$AdditionalPluginTest2

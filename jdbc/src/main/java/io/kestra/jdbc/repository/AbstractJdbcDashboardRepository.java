@@ -5,10 +5,13 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.DataChart;
+import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
+import io.kestra.plugin.core.dashboard.chart.kpis.KpiOption;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import jakarta.validation.ConstraintViolationException;
@@ -25,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.kestra.core.utils.MathUtils.roundDouble;
+
 @Slf4j
 @AllArgsConstructor
 public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcRepository implements DashboardRepositoryInterface {
@@ -32,7 +37,16 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     private final ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher;
 
     List<QueryBuilderInterface<?>> queryBuilders;
-
+    
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public long count() {
+        return jdbcRepository.count(this.defaultFilter());
+    }
+    
+    
     @Override
     public Optional<Dashboard> get(String tenantId, String id) {
         return jdbcRepository
@@ -73,7 +87,6 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
                     .select(
                         field("value")
                     )
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
@@ -94,9 +107,26 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
                     .select(
                         field("value")
                     )
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
+
+                return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    @Override
+    public List<Dashboard> findAllWithNoAcl(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = context
+                    .select(
+                        field("value")
+                    )
+                    .from(jdbcRepository.getTable())
+                    .where(this.defaultFilterWithNoACL(tenantId));
 
                 return this.jdbcRepository.fetch(select);
             });
@@ -120,13 +150,8 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
         fields.put(field("source_code"), source);
 
         this.jdbcRepository.persist(dashboard, fields);
-
-        if (previousDashboard == null) {
-            eventPublisher.publishEvent(new CrudEvent<>(dashboard, CrudEventType.CREATE));
-        } else {
-            eventPublisher.publishEvent(new CrudEvent<>(dashboard, previousDashboard, CrudEventType.UPDATE));
-        }
-
+        this.eventPublisher.publishEvent(CrudEvent.of(previousDashboard, dashboard));
+        
         return dashboard;
     }
 
@@ -141,13 +166,12 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted);
         fields.remove(field("sourceCode"));
-        fields.put(field("source_code"), dashboard.get().getSourceCode());
+        fields.put(field("source_code"), deleted.getSourceCode());
 
         this.jdbcRepository.persist(deleted, fields);
+        this.eventPublisher.publishEvent(CrudEvent.delete(dashboard.get()));
 
-        eventPublisher.publishEvent(new CrudEvent<>(dashboard.get(), CrudEventType.DELETE));
-
-        return dashboard.get().toDeleted();
+        return deleted;
     }
 
     @Override
@@ -165,6 +189,32 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
         );
 
         return queryBuilder.fetchData(tenantId, dataChart.getData(), startDate, endDate, pageable);
+    }
+
+    @Override
+    public <F extends Enum<F>> List<Map<String, Object>> generateKPI(String tenantId, DataChartKPI<?, DataFilterKPI<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+        Map<Class<? extends QueryBuilderInterface<?>>, QueryBuilderInterface<?>> queryBuilderByHandledFields = new HashMap<>();
+
+        @SuppressWarnings("unchecked")
+        QueryBuilderInterface<F> queryBuilder = (QueryBuilderInterface<F>) queryBuilderByHandledFields.computeIfAbsent(
+            dataChart.getData().repositoryClass(),
+            clazz -> queryBuilders
+                .stream()
+                .filter(b -> clazz.isAssignableFrom(b.getClass()))
+                .findFirst()
+                .orElseThrow(() -> new UnsupportedOperationException("No query builder found for " + clazz))
+        );
+
+        Double filteredValue = queryBuilder.fetchValue(tenantId, dataChart.getData(), startDate, endDate, true);
+
+        if (dataChart.getChartOptions() != null && dataChart.getChartOptions().getNumberType().equals(KpiOption.NumberType.PERCENTAGE)) {
+            Double totalValue = queryBuilder.fetchValue(tenantId, dataChart.getData(), startDate, endDate, false);
+            if (totalValue == null || totalValue == 0) return List.of(Map.of("value", 0.0));
+            Double percentageValue = (filteredValue / totalValue) * 100;
+            return List.of(Map.of("value", roundDouble(percentageValue, 2)));
+        }
+
+        return List.of(Map.of("value", roundDouble(filteredValue, 2)));
     }
 
     @Override

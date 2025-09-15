@@ -19,7 +19,7 @@ class NamespaceCommandTest {
             String[] args = {};
             Integer call = PicocliRunner.call(NamespaceCommand.class, ctx, args);
 
-            assertThat(call).isEqualTo(0);
+            assertThat(call).isZero();
             assertThat(out.toString()).contains("Usage: kestra namespace");
         }
     }

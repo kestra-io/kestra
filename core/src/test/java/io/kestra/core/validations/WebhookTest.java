@@ -29,7 +29,7 @@ public class WebhookTest {
             )
             .build();
 
-        assertThat(modelValidator.isValid(webhook).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(webhook).isPresent()).isTrue();
         assertThat(modelValidator.isValid(webhook).get().getMessage()).contains("invalid webhook: conditions of type MultipleCondition are not supported");
     }
 }

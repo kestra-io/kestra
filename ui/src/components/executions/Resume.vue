@@ -1,7 +1,7 @@
 <template>
     <component
         :is="component"
-        :icon="PlayBox"
+        :icon="Play"
         @click="click"
         v-if="enabled"
         class="ms-0 me-1"
@@ -9,18 +9,15 @@
         {{ $t('resume') }}
     </component>
 
-    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('resumed title', {id: execution.id})" />
         </template>
-        <el-form :model="inputs" label-position="top" ref="form" @submit.prevent="false">
-            <inputs-form :initial-inputs="inputsList" :execution="execution" v-model="inputs" />
+        <el-form :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
+            <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
         </el-form>
         <template #footer>
-            <el-button @click="cancel()">
-                {{ $t('cancel') }}
-            </el-button>
-            <el-button :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" native-type="submit">
+            <el-button :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" nativeType="submit">
                 {{ $t('resume') }}
             </el-button>
         </template>
@@ -28,18 +25,20 @@
 </template>
 
 <script setup>
-    import PlayBox from "vue-material-design-icons/PlayBox.vue";
+    import Play from "vue-material-design-icons/Play.vue";
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
     import FlowUtils from "../../utils/flowUtils";
-    import ExecutionUtils from "../../utils/executionUtils";
+    import * as ExecutionUtils from "../../utils/executionUtils";
     import InputsForm from "../../components/inputs/InputsForm.vue";
-    import {inputsToFormDate} from "../../utils/submitTask";
+    import {inputsToFormData} from "../../utils/submitTask";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {InputsForm},
@@ -74,7 +73,7 @@
                 this.$toast()
                     .confirm(this.$t("resumed confirm", {id: this.execution.id}), () => {
                         return this.resume();
-                    });
+                    }, () => {}, false);
             },
             resumeWithInputs(formRef) {
                 if (formRef) {
@@ -83,15 +82,15 @@
                             return false;
                         }
 
-                        const formData = inputsToFormDate(this, this.inputsList, this.inputs);
+                        const formData = inputsToFormData(this, this.inputsList, this.inputs);
                         this.resume(formData);
                     });
                 }
 
             },
             resume(formData) {
-                this.$store
-                    .dispatch("execution/resume", {
+                this.executionsStore
+                    .resume({
                         id: this.execution.id,
                         formData: formData
                     })
@@ -100,28 +99,18 @@
                         this.$toast().success(this.$t("resumed done"));
                     });
             },
-            cancel() {
-                this.$store
-                    .dispatch("execution/kill", {
-                        id: this.execution.id,
-                    })
-                    .then(() => {
-                        this.isDrawerOpen = false;
-                        this.$toast().success(this.$t("killed done"));
-                    });
-            },
             loadDefinition() {
-                this.$store.dispatch("execution/loadFlowForExecution", {
+                this.executionsStore.loadFlowForExecution({
                     flowId: this.execution.flowId,
-                    namespace: this.execution.namespace
+                    namespace: this.execution.namespace,
+                    store: true
                 });
             },
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapState("execution", ["flow"]),
+            ...mapStores(useExecutionsStore, useAuthStore),
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 
@@ -133,7 +122,7 @@
                     return [];
                 }
 
-                const findTaskById = FlowUtils.findTaskById(this.flow, findTaskRunByState[0].taskId);
+                const findTaskById = FlowUtils.findTaskById(this.executionsStore.flow, findTaskRunByState[0].taskId);
 
                 return findTaskById && findTaskById.inputs !== null ? findTaskById.inputs : [];
             },
@@ -147,5 +136,7 @@
 <style lang="scss" scoped>
     button.el-button {
         cursor: pointer !important;
+        border-color: var(--ks-border-success);
+        color: var(--ks-content-success);
     }
 </style>

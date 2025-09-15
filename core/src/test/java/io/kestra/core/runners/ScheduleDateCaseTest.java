@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -32,7 +33,7 @@ public class ScheduleDateCaseTest {
 
     public void shouldScheduleOnDate() throws QueueException, InterruptedException {
         ZonedDateTime scheduleOn = ZonedDateTime.now().plusSeconds(1);
-        Flow flow = flowRepository.findById(null, "io.kestra.tests", "minimal").orElseThrow();
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
         Execution execution = Execution.newExecution(flow, null, null, Optional.of(scheduleOn));
         this.executionQueue.emit(execution);
 

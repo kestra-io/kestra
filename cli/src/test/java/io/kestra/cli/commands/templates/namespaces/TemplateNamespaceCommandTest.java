@@ -19,7 +19,7 @@ class TemplateNamespaceCommandTest {
             String[] args = {};
             Integer call = PicocliRunner.call(TemplateNamespaceCommand.class, ctx, args);
 
-            assertThat(call).isEqualTo(0);
+            assertThat(call).isZero();
             assertThat(out.toString()).contains("Usage: kestra template namespace");
         }
     }

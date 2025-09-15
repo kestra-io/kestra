@@ -3,9 +3,9 @@
         effect="light"
         :persistent="false"
         transition=""
-        :hide-after="0"
+        :hideAfter="0"
         :content="$t('force run tooltip')"
-        raw-content
+        rawContent
     >
         <component
             :is="component"
@@ -18,12 +18,12 @@
         </component>
     </el-tooltip>
 
-    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('force run title', {id: execution.id})" />
         </template>
         <template #footer>
-            <el-button :icon="QueueFirstInLastOut" type="primary" @click="forceRun()" native-type="submit">
+            <el-button :icon="QueueFirstInLastOut" type="primary" @click="forceRun()" nativeType="submit">
                 {{ $t('force run') }}
             </el-button>
         </template>
@@ -35,10 +35,12 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
     import {State} from "@kestra-io/ui-libs";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         props: {
@@ -64,10 +66,9 @@
                     });
             },
             forceRun() {
-                this.$store
-                    .dispatch("execution/forceRun", {
-                        id: this.execution.id
-                    })
+                this.executionsStore.forceRun({
+                    id: this.execution.id
+                })
                     .then(() => {
                         this.isDrawerOpen = false;
                         this.$toast().success(this.$t("force run done"));
@@ -75,10 +76,9 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapState("execution", ["flow"]),
+            ...mapStores(useExecutionsStore, useAuthStore),
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 

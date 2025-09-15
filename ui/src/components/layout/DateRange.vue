@@ -1,12 +1,12 @@
 <template>
     <el-date-picker
         data-component="FILENAME_PLACEHOLDER"
-        :model-value="date"
+        :modelValue="date"
         @update:model-value="onDate"
         type="datetimerange"
         :shortcuts="shortcuts"
-        :start-placeholder="$t('start date')"
-        :end-placeholder="$t('end date')"
+        :startPlaceholder="$t('start date')"
+        :endPlaceholder="$t('end date')"
     />
 </template>
 <script>

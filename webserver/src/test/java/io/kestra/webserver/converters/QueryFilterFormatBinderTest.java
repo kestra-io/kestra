@@ -71,7 +71,7 @@ class QueryFilterFormatBinderTest {
         // THEN
         assertEquals(1, filters.size());
         assertEquals(QueryFilter.Field.SCOPE, filters.getFirst().field());
-        assertEquals(RequestUtils.toFlowScopes(List.of("USER,SYSTEM")), filters.getFirst().value());
+        assertEquals(RequestUtils.toFlowScopes("USER,SYSTEM"), filters.getFirst().value());
     }
 
     @Test

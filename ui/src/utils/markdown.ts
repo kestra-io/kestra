@@ -19,8 +19,8 @@ async function getHighlighter(
 }
 
 export async function render(markdown: string, options: {onlyLink?: boolean, permalink?: boolean, html?: boolean} = {}) {
-    const {createHighlighterCore, githubDark, githubLight, markdownIt, mark, meta, anchor, container, fromHighlighter, linkTag, langs, onigurumaEngine} = await import( "./markdownDeps")
-    const highlighter = await getHighlighter(createHighlighterCore as any, langs, onigurumaEngine, githubDark, githubLight);
+    const {createHighlighterCore, githubDark, githubLight, markdownIt, mark, meta, mila, anchor, container, fromHighlighter, linkTag, langs, onigurumaEngine} = await import( "./markdownDeps")
+    const highlighter = await getHighlighter(createHighlighterCore as any, Object.values(langs), onigurumaEngine, githubDark, githubLight);
 
     if(githubDark["colors"] && githubLight["colors"]) {
         githubDark["colors"]["editor.background"] = "var(--bs-gray-500)";
@@ -39,6 +39,7 @@ export async function render(markdown: string, options: {onlyLink?: boolean, per
 
     md.use(mark)
         .use(meta)
+        .use(mila, {matcher: (href) => href.match(/^https?:\/\//), attrs: {target: "_blank", rel: "noopener noreferrer"}})
         .use(anchor, {permalink: options.permalink ? anchor.permalink.ariaHidden({placement: "before"}) : undefined})
         .use(container, "warning")
         .use(container, "info")

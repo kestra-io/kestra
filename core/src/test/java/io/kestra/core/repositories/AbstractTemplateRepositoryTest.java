@@ -41,7 +41,7 @@ public abstract class AbstractTemplateRepositoryTest {
         return Template.builder()
             .id(IdUtils.create())
             .namespace(namespace == null ? "kestra.test" : namespace)
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()));
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()));
     }
 
     @Test
@@ -50,11 +50,11 @@ public abstract class AbstractTemplateRepositoryTest {
         templateRepository.create(template);
 
         Optional<Template> full = templateRepository.findById(null, template.getNamespace(), template.getId());
-        assertThat(full.isPresent()).isEqualTo(true);
+        assertThat(full.isPresent()).isTrue();
         assertThat(full.get().getId()).isEqualTo(template.getId());
 
         full = templateRepository.findById(null, template.getNamespace(), template.getId());
-        assertThat(full.isPresent()).isEqualTo(true);
+        assertThat(full.isPresent()).isTrue();
         assertThat(full.get().getId()).isEqualTo(template.getId());
     }
 
@@ -133,7 +133,7 @@ public abstract class AbstractTemplateRepositoryTest {
         Template save = templateRepository.create(template);
         templateRepository.delete(save);
 
-        assertThat(templateRepository.findById(null, template.getNamespace(), template.getId()).isPresent()).isEqualTo(false);
+        assertThat(templateRepository.findById(null, template.getNamespace(), template.getId()).isPresent()).isFalse();
 
         assertThat(TemplateListener.getEmits().size()).isEqualTo(2);
         assertThat(TemplateListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count()).isEqualTo(1L);

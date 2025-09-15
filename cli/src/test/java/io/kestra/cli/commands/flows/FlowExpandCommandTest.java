@@ -22,7 +22,7 @@ class FlowExpandCommandTest {
             };
             Integer call = PicocliRunner.call(FlowExpandCommand.class, ctx, args);
 
-            assertThat(call).isEqualTo(0);
+            assertThat(call).isZero();
             assertThat(out.toString()).isEqualTo("id: include\n" +
                 "namespace: io.kestra.cli\n" +
                 "\n" +

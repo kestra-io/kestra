@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
@@ -20,10 +21,10 @@ class SwitchTest {
     private RunnerUtils runnerUtils;
 
     @Test
-    @LoadFlows({"flows/valids/switch.yaml"})
+    @LoadFlows(value = {"flows/valids/switch.yaml"}, tenantId = "switch")
     void switchFirst() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            "switch",
             "io.kestra.tests",
             "switch",
             null,
@@ -32,14 +33,14 @@ class SwitchTest {
 
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("t1");
         assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("value")).isEqualTo("FIRST");
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isEqualTo(false);
+        assertThat((Boolean) execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isEqualTo(false);
     }
 
     @Test
-    @LoadFlows({"flows/valids/switch.yaml"})
+    @LoadFlows(value = {"flows/valids/switch.yaml"}, tenantId = "second")
     void switchSecond() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            "second",
             "io.kestra.tests",
             "switch",
             null,
@@ -48,15 +49,15 @@ class SwitchTest {
 
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("t2");
         assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("value")).isEqualTo("SECOND");
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isEqualTo(false);
+        assertThat((Boolean) execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isFalse();
         assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("t2_sub");
     }
 
     @Test
-    @LoadFlows({"flows/valids/switch.yaml"})
+    @LoadFlows(value = {"flows/valids/switch.yaml"}, tenantId = "third")
     void switchThird() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            "third",
             "io.kestra.tests",
             "switch",
             null,
@@ -65,7 +66,7 @@ class SwitchTest {
 
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("t3");
         assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("value")).isEqualTo("THIRD");
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isEqualTo(false);
+        assertThat((Boolean) execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isFalse();
         assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("failed");
         assertThat(execution.getTaskRunList().get(3).getTaskId()).isEqualTo("error-t1");
     }
@@ -74,7 +75,7 @@ class SwitchTest {
     @LoadFlows({"flows/valids/switch.yaml"})
     void switchDefault() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "switch",
             null,
@@ -83,14 +84,14 @@ class SwitchTest {
 
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("default");
         assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("value")).isEqualTo("DEFAULT");
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isEqualTo(true);
+        assertThat((Boolean)execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isTrue();
     }
 
     @Test
     @LoadFlows({"flows/valids/switch-impossible.yaml"})
     void switchImpossible() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "switch-impossible",
             null,

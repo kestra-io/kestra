@@ -1,13 +1,14 @@
 package io.kestra.cli.commands.flows;
 
 import com.google.common.collect.ImmutableMap;
-import io.kestra.cli.AbstractCommand;
+import io.kestra.cli.AbstractApiCommand;
+import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunnerUtils;
-import io.kestra.core.runners.StandAloneRunner;
+import io.kestra.cli.StandAloneRunner;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeoutException;
     description = "Test a flow"
 )
 @Slf4j
-public class FlowTestCommand extends AbstractCommand {
+public class FlowTestCommand extends AbstractApiCommand {
     @Inject
     private ApplicationContext applicationContext;
 
@@ -71,11 +72,11 @@ public class FlowTestCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        StandAloneRunner runner = applicationContext.getBean(StandAloneRunner.class);
         LocalFlowRepositoryLoader repositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         FlowInputOutput flowInputOutput = applicationContext.getBean(FlowInputOutput.class);
         RunnerUtils runnerUtils = applicationContext.getBean(RunnerUtils.class);
+        TenantIdSelectorService tenantService =  applicationContext.getBean(TenantIdSelectorService.class);
 
         Map<String, Object> inputs = new HashMap<>();
 
@@ -87,9 +88,9 @@ public class FlowTestCommand extends AbstractCommand {
             inputs.put(this.inputs.get(i), this.inputs.get(i+1));
         }
 
-        try {
+        try (StandAloneRunner runner = applicationContext.createBean(StandAloneRunner.class);){
             runner.run();
-            repositoryLoader.load(file.toFile());
+            repositoryLoader.load(tenantService.getTenantId(tenantId), file.toFile());
 
             List<Flow> all = flowRepository.findAllForAllTenants();
             if (all.size() != 1) {
@@ -101,8 +102,6 @@ public class FlowTestCommand extends AbstractCommand {
                 (flow, execution) -> flowInputOutput.readExecutionInputs(flow, execution, inputs),
                 Duration.ofHours(1)
             );
-
-            runner.close();
         } catch (ConstraintViolationException e) {
             throw new CommandLine.ParameterException(this.spec.commandLine(), e.getMessage());
         } catch (IOException | TimeoutException e) {

@@ -24,17 +24,15 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @SuperBuilder
 @ToString
@@ -49,7 +47,7 @@ import java.util.stream.Stream;
 @Plugin(
     examples = {
         @Example(
-            title = "Pause the execution and wait for a manual approval",
+            title = "Pause the execution and wait for a manual approval.",
             full = true,
             code = """
                 id: human_in_the_loop
@@ -133,7 +131,7 @@ import java.util.stream.Stream;
                 """
         ),
         @Example(
-            title = "Pause the execution and set the execution in WARNING if it has not been resumed after 5 minutes",
+            title = "Pause the execution and set the execution to WARNING if it has not been resumed after 5 minutes.",
             full = true,
             code = """
                 id: pause_warn
@@ -169,30 +167,37 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
     }
 
     @Schema(
-        title = "Duration of the pause. If not set the task will wait forever to be manually resumed except if a timeout is set, in this case, the timeout will be honored.",
-        description = "The duration is a string in the [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no pauseDuration and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
+        title = "Duration of the pause - if not set, the task will wait forever to be manually resumed except if a timeout is set, in this case, the timeout will be honored.",
+        description = "The duration is a string in [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no pauseDuration and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
         implementation = Duration.class
     )
     private Property<Duration> pauseDuration;
 
     @Schema(
-        title = "Pause behavior, by default RESUME. What happens when a pause task reach its duration.",
+        title = "Pause behavior, by default set to RESUME. This property controls happens when a pause task reach its duration.",
         description = """
-            Tasks that are resumed before the duration (for example, from the UI) will not use the behavior property but will always success.
+            Tasks that are resumed before the duration (for example, from the UI) will not use the behavior property but will always succeed.
             Possible values are:
-            - RESUME: continue with the execution
-            - WARN: ends the Pause task in WARNING and continue with the execution
-            - FAIL: fail the Pause task
-            - CANCEL: cancel the execution"""
+            - RESUME: continues with the execution
+            - WARN: ends the Pause task in WARNING and continues with the execution
+            - FAIL: fails the Pause task
+            - CANCEL: cancels the execution"""
     )
     @NotNull
     @Builder.Default
-    private Property<Behavior> behavior = Property.of(Behavior.RESUME);
+    private Property<Behavior> behavior = Property.ofValue(Behavior.RESUME);
 
     @Valid
     @Schema(
-        title = "Inputs to be passed to the execution when it's resumed.",
-        description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task.")
+        title = "A runnable task that will be executed when it's paused"
+    )
+    @PluginProperty
+    private Task onPause;
+
+    @Valid
+    @Schema(
+        title = "Inputs to be passed to the execution when it's resumed",
+        description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution, which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task.")
     @PluginProperty
     private List<Input<?>> onResume;
 
@@ -215,7 +220,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
     @Override
     public AbstractGraph tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
-        if (this.tasks == null || this.tasks.isEmpty()) {
+        if (ListUtils.isEmpty(tasks) && ListUtils.isEmpty(errors) && ListUtils.isEmpty(_finally)) {
             return new GraphTask(this, taskRun, parentValues, RelationType.SEQUENTIAL);
         }
 
@@ -223,7 +228,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
         GraphUtils.sequential(
             subGraph,
-            this.tasks,
+            this.getOnPause() != null ? ListUtils.concat(List.of(this.getOnPause()), this.tasks) : ListUtils.emptyOnNull(this.tasks),
             this.errors,
             this._finally,
             taskRun,
@@ -235,35 +240,45 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
     @Override
     public List<Task> allChildTasks() {
-        return Stream
-            .concat(
-                this.getTasks() != null ? this.getTasks().stream() : Stream.empty(),
-                Stream.concat(
-                    this.getErrors() != null ? this.getErrors().stream() : Stream.empty(),
-                    this.getFinally() != null ? this.getFinally().stream() : Stream.empty()
-                )
-            )
-            .toList();
+        return ListUtils.concat(
+            this.getTasks(),
+            this.getOnPause() != null ? List.of(this.getOnPause()) : null,
+            this.getErrors(),
+            this.getFinally()
+        );
     }
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveTasks(this.getTasks(), parentTaskRun);
+        List<Task> childTasks = new ArrayList<>(ListUtils.emptyOnNull(this.getTasks()));
+        if (onPause != null) {
+            childTasks.addFirst(onPause);
+        }
+        return FlowableUtils.resolveTasks(childTasks, parentTaskRun);
     }
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        if (this.needPause(parentTaskRun) || parentTaskRun.getState().getCurrent() == State.Type.PAUSED) {
-            return new ArrayList<>();
+        if (this.needPause(parentTaskRun) || (parentTaskRun.getState().getCurrent() == State.Type.PAUSED)) {
+            return Collections.emptyList();
         }
 
+        // get back the original state of the Pause task
+        State.Type terminalState = findTerminalState(parentTaskRun);
         return FlowableUtils.resolveSequentialNexts(
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
-            parentTaskRun
+            parentTaskRun,
+            terminalState
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    private static State.Type findTerminalState(TaskRun parentTaskRun) {
+        Map<String, Object> resumed = (Map<String, Object>) parentTaskRun.getOutputs().get("resumed");
+        return resumed.isEmpty() || !resumed.containsKey("to") ? State.Type.SUCCESS : State.Type.valueOf((String) resumed.get("to"));
     }
 
     private boolean needPause(TaskRun parentTaskRun) {
@@ -278,32 +293,25 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
             return Optional.of(State.Type.PAUSED);
         }
 
-        Behavior behavior  = runContext.render(this.behavior).as(Behavior.class).orElse(Behavior.RESUME);
-        return switch (behavior) {
-            case Behavior.RESUME -> {
-                // yield SUCCESS or the final flowable task state
-                if (ListUtils.isEmpty(this.tasks)) {
-                    yield Optional.of(State.Type.SUCCESS);
-                } else {
-                    yield FlowableTask.super.resolveState(runContext, execution, parentTaskRun);
-                }
-            }
-            case Behavior.WARN -> {
-                // yield WARNING or the final flowable task state, if the flowable ends in SUCCESS, yield WARNING
-                if (ListUtils.isEmpty(this.tasks)) {
-                    yield Optional.of(State.Type.WARNING);
-                } else {
-                    Optional<State.Type> finalState = FlowableTask.super.resolveState(runContext, execution, parentTaskRun);
-                    yield finalState.map(state -> state == State.Type.SUCCESS ? State.Type.WARNING : state);
-                }
-            }
-            case Behavior.CANCEL ,Behavior.FAIL -> throw new IllegalArgumentException("The " + behavior + " cannot be handled at this stage, this is certainly a bug!");
-        };
+        // get back the original state of the Pause task
+        State.Type terminalState = findTerminalState(parentTaskRun);
+        return FlowableUtils.resolveState(
+            execution,
+            this.childTasks(runContext, parentTaskRun),
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
+            parentTaskRun,
+            runContext,
+            isAllowFailure(),
+            isAllowWarning(),
+            terminalState
+        );
     }
 
-    public Map<String, Object> generateOutputs(Map<String, Object> inputs) {
+    public Map<String, Object> generateOutputs(Map<String, Object> inputs, Resumed resumed) {
         Output build = Output.builder()
             .onResume(inputs)
+            .resumed(resumed)
             .build();
 
         return JacksonMapper.toMap(build);
@@ -313,6 +321,27 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         private Map<String, Object> onResume;
+
+        @Schema(title = "Resumed information: when and by who the execution was resumed")
+        private Resumed resumed;
+    }
+
+    public record Resumed(@Nullable String by, LocalDateTime on, State.Type to) {
+        public static Resumed now() {
+            return new Resumed(null, LocalDateTime.now(), State.Type.SUCCESS);
+        }
+
+        public static Resumed now(State.Type to) {
+            return new Resumed(null, LocalDateTime.now(), to);
+        }
+
+        public static Resumed now(String by) {
+            return new Resumed(by, LocalDateTime.now(), State.Type.SUCCESS);
+        }
+
+        public static Resumed now(String by, State.Type to) {
+            return new Resumed(by, LocalDateTime.now(), to);
+        }
     }
 
     public enum Behavior {

@@ -1,0 +1,11 @@
+id: pause_on_pause
+namespace: io.kestra.tests
+
+tasks:
+  - id: pause
+    type: io.kestra.plugin.core.flow.Pause
+    pauseDuration: PT0.5S
+    onPause:
+      id: hello
+      type: io.kestra.plugin.core.log.Log
+      message: Hello World! 🚀

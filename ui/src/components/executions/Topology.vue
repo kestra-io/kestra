@@ -1,18 +1,18 @@
 <template>
     <el-card>
         <div class="vueflow">
-            <low-code-editor
+            <LowCodeEditor
                 :key="execution.id"
                 v-if="execution && flowGraph"
-                :flow-id="execution.flowId"
+                :flowId="execution.flowId"
                 :namespace="execution.namespace"
-                :flow-graph="flowGraph"
-                :source="flow?.source"
+                :flowGraph="flowGraph"
+                :source="flowStore.flow?.source"
                 :execution="execution"
-                :expanded-subflows="expandedSubflows"
-                is-read-only
-                @follow="forwardEvent('follow', $event)"
-                view-type="topology"
+                :expandedSubflows="expandedSubflows"
+                isReadOnly
+                @follow="$emit('follow', $event)"
+                viewType="topology"
                 @expand-subflow="onExpandSubflow"
             />
             <el-loading v-else-if="loading" />
@@ -23,19 +23,25 @@
     </el-card>
 </template>
 <script>
-    import LowCodeEditor from "../inputs/LowCodeEditor.vue";
-    import {mapGetters, mapState} from "vuex";
-    import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants.ts";
-    import {Utils, State} from "@kestra-io/ui-libs";
     import throttle from "lodash/throttle";
+    import {mapStores} from "pinia";
+    import {Utils, State} from "@kestra-io/ui-libs";
+    import LowCodeEditor from "../inputs/LowCodeEditor.vue";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {useFlowStore} from "../../stores/flow";
     export default {
+        emits: ["follow"],
         components: {
             LowCodeEditor
         },
         computed: {
-            ...mapState("flow", ["flow"]),
-            ...mapState("execution", ["execution", "flowGraph"]),
-            ...mapGetters("execution", ["subflowsExecutions"])
+            ...mapStores(useExecutionsStore, useFlowStore),
+            execution() {
+                return this.executionsStore.execution;
+            },
+            flowGraph() {
+                return this.executionsStore.flowGraph;
+            }
         },
         data() {
             return {
@@ -45,8 +51,11 @@
                 previousExpandedSubflows: [],
                 sseBySubflow: {},
                 throttledExecutionUpdate: throttle(function (subflow, executionEvent) {
-                    const previousExecution = this.subflowsExecutions[subflow];
-                    this.$store.commit("execution/addSubflowExecution", {subflow, execution: JSON.parse(executionEvent.data)});
+                    const previousExecution = this.executionsStore.subflowsExecutions[subflow];
+                    this.executionsStore.addSubflowExecution({
+                        subflow,
+                        execution: JSON.parse(executionEvent.data)
+                    });
 
                     // add subflow execution id to graph
                     if(previousExecution === undefined) {
@@ -70,94 +79,21 @@
             closeSSE(subflow) {
                 this.sseBySubflow[subflow].close();
                 delete this.sseBySubflow[subflow];
-                this.$store.commit("execution/removeSubflowExecution", subflow)
-            },
-            forwardEvent(type, event) {
-                this.$emit(type, event);
+                this.executionsStore.removeSubflowExecution(subflow)
             },
             loadData() {
                 this.loadGraph();
-            },
-            isUnused: function (nodeByUid, nodeUid) {
-                let nodeToCheck = nodeByUid[nodeUid];
-
-                if(!nodeToCheck) {
-                    return false;
-                }
-
-                if(!nodeToCheck.task) {
-                    // check if parent is unused (current node is probably a cluster root or end)
-                    const splitUid = nodeToCheck.uid.split(".");
-                    splitUid.pop();
-                    return this.isUnused(nodeByUid, splitUid.join("."));
-                }
-
-                if (!nodeToCheck.executionId) {
-                    return true;
-                }
-
-                const nodeExecution = nodeToCheck.executionId === this.execution?.id ? this.execution
-                    : Object.values(this.subflowsExecutions).filter(execution => execution.id === nodeToCheck.executionId)?.[0];
-
-                if (!nodeExecution) {
-                    return true;
-                }
-
-                return !nodeExecution.taskRunList.some(taskRun => taskRun.taskId === nodeToCheck.task?.id);
-
-
             },
             loadGraph(force) {
                 this.loading = true;
 
                 if (this.execution && (force || (this.flowGraph === undefined || this.previousExecutionId !== this.execution.id))) {
                     this.previousExecutionId = this.execution.id;
-                    this.$store.dispatch("execution/loadGraph", {
+                    this.executionsStore.loadAugmentedGraph({
                         id: this.execution.id,
                         params: {
                             subflows: this.expandedSubflows
                         }
-                    }).then(() => {
-                        const subflowPaths = this.flowGraph.clusters
-                            ?.map(c => c.cluster)
-                            ?.filter(cluster => cluster.type.endsWith("SubflowGraphCluster"))
-                            ?.map(cluster => cluster.uid.replace(CLUSTER_PREFIX, ""))
-                            ?? [];
-                        const nodeByUid = {};
-
-                        this.flowGraph.nodes
-                            // lowest depth first to be available in nodeByUid map for child-to-parent unused check
-                            .sort((a, b) => a.uid.length - b.uid.length)
-                            .forEach(node => {
-                                nodeByUid[node.uid] = node;
-
-                                const parentSubflow = subflowPaths.filter(subflowPath => node.uid.startsWith(subflowPath + "."))
-                                    .sort((a, b) => b.length - a.length)?.[0]
-
-                                if(parentSubflow) {
-                                    if(parentSubflow in this.subflowsExecutions) {
-                                        node.executionId = this.subflowsExecutions[parentSubflow].id;
-                                    }
-
-                                    return;
-                                }
-
-                                node.executionId = this.execution.id;
-
-                                // reduce opacity for cluster root & end
-                                if(!node.task && this.isUnused(nodeByUid, node.uid)) {
-                                    node.unused = true;
-                                }
-                            });
-
-                        this.flowGraph.edges
-                            // keep only unused (or skipped) paths
-                            .filter(edge => {
-                                return this.isUnused(nodeByUid, edge.target) || this.isUnused(nodeByUid, edge.source);
-                            }).forEach(edge => edge.unused = true);
-
-                        // force refresh
-                        this.$store.commit("execution/setFlowGraph", Object.assign({}, this.flowGraph));
                     }).catch(() => {
                         this.expandedSubflows = this.previousExpandedSubflows;
 
@@ -201,7 +137,7 @@
                     .sort((s1, s2) => s2.length - s1.length);
 
                 if(parentSubflows.length > 0) {
-                    parentExecution = this.subflowsExecutions[parentSubflows[0]];
+                    parentExecution = this.executionsStore.subflowsExecutions[parentSubflows[0]];
                 }
 
                 if(!parentExecution) {
@@ -224,7 +160,7 @@
                     return;
                 }
 
-                this.$store.dispatch("execution/followExecution", {id: executionId})
+                this.executionsStore.followExecution({id: executionId}, this.$t)
                     .then(sse => {
                         this.sseBySubflow[subflow] = sse;
                         sse.onmessage = (executionEvent) => {

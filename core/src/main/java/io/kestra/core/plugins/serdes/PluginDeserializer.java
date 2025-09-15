@@ -86,7 +86,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
                              DeserializationContext context) throws IOException {
         Class<? extends Plugin> pluginType = null;
 
-        final String identifier = extractPluginRawIdentifier(node);
+        final String identifier = extractPluginRawIdentifier(node, pluginRegistry.isVersioningSupported());
         if (identifier != null) {
             log.trace("Looking for Plugin for: {}",
                 identifier
@@ -103,7 +103,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             );
 
             if (DataChart.class.isAssignableFrom(pluginType)) {
-                final Class<? extends Plugin> dataFilterClass = pluginRegistry.findClassByIdentifier(extractPluginRawIdentifier(node.get("data")));
+                final Class<? extends Plugin> dataFilterClass = pluginRegistry.findClassByIdentifier(extractPluginRawIdentifier(node.get("data"), pluginRegistry.isVersioningSupported()));
                 ParameterizedType genericDataFilterClass = (ParameterizedType) dataFilterClass.getGenericSuperclass();
                 Type dataFieldsEnum = genericDataFilterClass.getActualTypeArguments()[0];
                 TypeFactory typeFactory = JacksonMapper.ofJson().getTypeFactory();
@@ -142,7 +142,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
         );
     }
 
-    static String extractPluginRawIdentifier(final JsonNode node) {
+    static String extractPluginRawIdentifier(final JsonNode node, final boolean isVersioningSupported) {
         String type = Optional.ofNullable(node.get(TYPE)).map(JsonNode::textValue).orElse(null);
         String version = Optional.ofNullable(node.get(VERSION)).map(JsonNode::textValue).orElse(null);
 
@@ -150,6 +150,6 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             return null;
         }
 
-        return version != null && !version.isEmpty() ? type + ":" + version : type;
+        return isVersioningSupported && version != null && !version.isEmpty() ? type + ":" + version : type;
     }
 }

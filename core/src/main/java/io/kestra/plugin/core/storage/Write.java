@@ -45,11 +45,11 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
     }
 )
 public class Write extends Task implements RunnableTask<Write.Output> {
-    @Schema(title = "The file content.")
+    @Schema(title = "The file content")
     @NotNull
     private Property<String> content;
 
-    @Schema(title = "The file extension.")
+    @Schema(title = "The file extension")
     private Property<String> extension;
 
 
@@ -69,7 +69,7 @@ public class Write extends Task implements RunnableTask<Write.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The created file URI."
+            title = "The created file URI"
         )
         private final URI uri;
     }

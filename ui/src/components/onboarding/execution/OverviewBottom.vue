@@ -11,7 +11,6 @@
     </div>
 </template>
 <script>
-    import {mapGetters} from "vuex";
     import OverviewCard from "../execution/OverviewCard.vue";
 
     export default {
@@ -35,9 +34,6 @@
                     }
                 ]
             }
-        },
-        computed: {
-            ...mapGetters("core", ["guidedProperties"])
         }
     }
 </script>

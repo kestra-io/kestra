@@ -1,6 +1,7 @@
 package io.kestra.core.plugins;
 
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.utils.Version;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
@@ -170,11 +171,11 @@ public class MavenPluginDownloader implements Closeable {
                     try {
                         FileUtils.deleteDirectory(new File(tmpDir));
                     } catch (IOException e) {
-                        throw new RuntimeException(e);
+                        throw new KestraRuntimeException(e);
                     }
                 }));
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new KestraRuntimeException(e);
             }
         }
 
@@ -207,7 +208,7 @@ public class MavenPluginDownloader implements Closeable {
                 result.getArtifact().getFile().toPath().toUri()
             );
         } catch (VersionRangeResolutionException | ArtifactResolutionException e) {
-            throw new RuntimeException("Failed to resolve dependency: '" + dependency + "'", e);
+            throw new KestraRuntimeException("Failed to resolve dependency: '" + dependency + "'", e);
         }
     }
 

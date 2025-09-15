@@ -42,7 +42,7 @@ class ReindexCommandTest {
                "flow",
             };
             Integer call = PicocliRunner.call(ReindexCommand.class, ctx, reindexArgs);
-            assertThat(call).isEqualTo(0);
+            assertThat(call).isZero();
             // in local it reindex 3 flows and in CI 4 for an unknown reason
             assertThat(out.toString()).contains("Successfully reindex");
         }

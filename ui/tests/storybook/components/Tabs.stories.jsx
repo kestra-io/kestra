@@ -24,7 +24,7 @@ const tabs = [
 ]
 
 /**
- * @type {import('@storybook/vue3').StoryObj<typeof ShowCase>}
+ * @type {import('@storybook/vue3-vite').StoryObj<typeof ShowCase>}
  */
 export const Default = {
     render: () => ({

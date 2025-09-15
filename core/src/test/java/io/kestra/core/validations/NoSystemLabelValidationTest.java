@@ -32,7 +32,7 @@ class NoSystemLabelValidationTest {
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
 
-        assertThat(valid.isPresent()).isEqualTo(true);
+        assertThat(valid.isPresent()).isTrue();
         assertThat(valid.get().getMessage()).isEqualTo("labels[0].<list element>: System labels can only be set by Kestra itself, offending label: system.sla=violated.\n");
     }
 
@@ -48,6 +48,6 @@ class NoSystemLabelValidationTest {
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
 
-        assertThat(valid.isEmpty()).isEqualTo(true);
+        assertThat(valid.isEmpty()).isTrue();
     }
 }

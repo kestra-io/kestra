@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -53,7 +54,7 @@ class CorrelationIdTest {
             }
         });
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "subflow-parent");
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-parent");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         assertTrue(countDownLatch.await(1, TimeUnit.MINUTES));
@@ -62,13 +63,13 @@ class CorrelationIdTest {
         assertThat(child.get()).isNotNull();
         assertThat(child.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         Optional<Label> correlationId = child.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
-        assertThat(correlationId.isPresent()).isEqualTo(true);
+        assertThat(correlationId.isPresent()).isTrue();
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
 
         assertThat(grandChild.get()).isNotNull();
         assertThat(grandChild.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         correlationId = grandChild.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
-        assertThat(correlationId.isPresent()).isEqualTo(true);
+        assertThat(correlationId.isPresent()).isTrue();
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 }

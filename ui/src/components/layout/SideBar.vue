@@ -1,5 +1,5 @@
 <template>
-    <sidebar-menu
+    <SidebarMenu
         ref="sideBarRef"
         data-component="FILENAME_PLACEHOLDER"
         id="side-menu"
@@ -7,18 +7,18 @@
         @update:collapsed="onToggleCollapse"
         width="268px"
         :collapsed="collapsed"
-        link-component-name="LeftMenuLink"
-        hide-toggle
+        linkComponentName="LeftMenuLink"
+        hideToggle
     >
         <template #header>
             <el-button @click="collapsed = onToggleCollapse(!collapsed)" class="collapseButton" :size="collapsed ? 'small':undefined">
-                <chevron-right v-if="collapsed" />
-                <chevron-left v-else />
+                <ChevronRight v-if="collapsed" />
+                <ChevronLeft v-else />
             </el-button>
             <div class="logo">
-                <router-link :to="{name: 'home'}">
+                <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
                     <span class="img" />
-                </router-link>
+                </component>
             </div>
             <Environment />
         </template>
@@ -26,7 +26,7 @@
         <template #footer>
             <slot name="footer" />
         </template>
-    </sidebar-menu>
+    </SidebarMenu>
 </template>
 
 <script setup>
@@ -38,7 +38,6 @@
         computed,
         shallowRef, h
     } from "vue";
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
 
@@ -50,12 +49,17 @@
 
     import Environment from "./Environment.vue";
     import BookmarkLinkList from "./BookmarkLinkList.vue";
+    import {useBookmarksStore} from "../../stores/bookmarks";
 
 
     const props = defineProps({
         generateMenu: {
             type: Function,
             required: true
+        },
+        showLink: {
+            type: Boolean,
+            default: true
         }
     })
 
@@ -63,7 +67,6 @@
 
     const $route = useRoute()
     const {locale, t} = useI18n({useScope: "global"});
-    const store = useStore()
 
     function flattenMenu(menu) {
         return menu.reduce((acc, item) => {
@@ -87,7 +90,7 @@
     function disabledCurrentRoute(items) {
         return items
             .map(r => {
-                if (r.href === $route.path) {
+                if (r.href?.path === $route.path) {
                     r.disabled = true;
                 }
 
@@ -117,9 +120,11 @@
         expandParentIfNeeded();
     })
 
+    const bookmarksStore = useBookmarksStore();
+
     const menu = computed(() => {
         return [
-            ...(store.state.bookmarks.pages?.length ? [{
+            ...(bookmarksStore.pages?.length ? [{
                 title: t("bookmark"),
                 icon: {
                     element: shallowRef(StarOutline),
@@ -128,7 +133,7 @@
                 child: [{
                     // here we use only one component for all bookmarks
                     // so when one edits the bookmark, it will be updated without closing the section
-                    component: () => h(BookmarkLinkList, {pages: store.state.bookmarks.pages}),
+                    component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
                 }]
             }] : []),
             ...disabledCurrentRoute(props.generateMenu())
@@ -204,7 +209,7 @@
             height: 112px;
             position: relative;
 
-            a {
+            > * {
                 transition: 0.2s all;
                 position: absolute;
                 left: 37px;
@@ -233,6 +238,7 @@
             background-color: transparent !important;
             padding-bottom: 15px;
             width: 30px !important;
+            z-index: 1;
 
             svg {
                 position: relative;
@@ -248,6 +254,9 @@
         .vsm--child {
             .vsm--item {
                 padding: 0;
+                .vsm--title {
+                    padding-left: 10px;
+                }
             }
         }
 
@@ -260,7 +269,7 @@
             box-shadow: none;
 
             &_active, body &_active:hover {
-                background-color: var(--ks-button-background-primary);
+                background-color: var(--ks-button-background-primary) !important;
                 color: var(--ks-button-content-primary);
                 font-weight: normal;
             }
@@ -272,6 +281,7 @@
 
             &_disabled {
                 pointer-events: auto;
+                opacity: 1;
             }
 
             &:hover, body &_hover {
@@ -329,6 +339,12 @@
             flex-grow: 0;
         }
 
+        .vsm--link_open.vsm--link_active {
+            .vsm--title, .vsm--icon {
+                color: var(--ks-button-content-primary);
+            }
+        }
+
         .vsm--arrow_default{
             width: 8px;
             &:before{
@@ -367,8 +383,8 @@
 
         &.vsm_collapsed {
             .logo {
-                a {
-                    left: 8px;
+                > * {
+                    left: 10px;
 
                     span.img {
                         background-size: 207px 55px;
@@ -397,6 +413,21 @@
             bottom: 0 !important;
             margin-left: 5px;
         }
-    }
 
+        .vsm--item {
+            position: relative;
+
+            &::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 1.25rem;
+                z-index: 5;
+                background: linear-gradient(to top, var(--ks-background-left-menu), transparent);
+                opacity: 0.18;
+            }
+        }
+    }
 </style>

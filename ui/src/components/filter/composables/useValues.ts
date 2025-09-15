@@ -17,18 +17,20 @@ const buildFromArray = (values: string[], isCapitalized = false): Value[] =>
         value,
     }));
 
-const bulidFromObject = (object: object): Value[] =>
+const buildFromObject = (object: object): Value[] =>
     Object.entries(object).map(([key, value]) => ({
         label: key,
         value,
     }));
 
-export function useValues(label: string) {
-    const {t} = useI18n({useScope: "global"});
+export function useValues(label: string | undefined, t?: ReturnType<typeof useI18n>["t"]) {
+    if (t === undefined) {
+        t = useI18n({useScope: "global"}).t;
+    }
 
     // Override for the scope labels on the dashboard
     const DASHBOARDS = ["dashboard", "custom_dashboard"];
-    const SCOPE_LABEL = DASHBOARDS.includes(label) ? t("executions") : label;
+    const SCOPE_LABEL = label === undefined || DASHBOARDS.includes(label) ? t("executions") : label;
 
     const VALUES = {
         EXECUTION_STATES: buildFromArray(
@@ -46,14 +48,13 @@ export function useValues(label: string) {
             },
         ],
         CHILDS: [
-            {label: t("trigger filter.options.ALL"), value: "ALL"},
             {label: t("trigger filter.options.CHILD"), value: "CHILD"},
             {label: t("trigger filter.options.MAIN"), value: "MAIN"},
         ],
         LEVELS: buildFromArray(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]),
         TYPES: auditLogTypes,
-        PERMISSIONS: bulidFromObject(permission),
-        ACTIONS: bulidFromObject({
+        PERMISSIONS: buildFromObject(permission),
+        ACTIONS: buildFromObject({
             ...action,
             LOGIN: "LOGIN",
             LOGOUT: "LOGOUT",

@@ -38,7 +38,7 @@ class ClassPluginDocumentationTest {
             assertThat(scan.getFirst().getTasks().size()).isEqualTo(1);
 
             PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class, null);
-            ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
+            ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.getFirst().version(), false);
 
             assertThat(doc.getDocExamples().size()).isEqualTo(2);
             assertThat(doc.getIcon()).isNotNull();
@@ -71,7 +71,7 @@ class ClassPluginDocumentationTest {
             // map
             Map<String, Object> childInputMap = (Map<String, Object>) childInput.get("map");
             assertThat((String) (childInputMap).get("type")).isEqualTo("object");
-            assertThat((Boolean) (childInputMap).get("$dynamic")).isEqualTo(true);
+            assertThat((Boolean) (childInputMap).get("$dynamic")).isTrue();
             assertThat(((Map<String, String>) (childInputMap).get("additionalProperties")).get("type")).isEqualTo("number");
 
             // output
@@ -101,9 +101,9 @@ class ClassPluginDocumentationTest {
             RegisteredPlugin scan = pluginScanner.scan();
 
             PluginClassAndMetadata<AbstractTrigger> metadata = PluginClassAndMetadata.create(scan, Schedule.class, AbstractTrigger.class, null);
-            ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, true);
+            ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), true);
 
-            assertThat(doc.getDefs().size()).isEqualTo(1);
+            assertThat(doc.getDefs().size()).isEqualTo(20);
             assertThat(doc.getDocLicense()).isNull();
 
             assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("type")).isEqualTo("object");
@@ -120,7 +120,7 @@ class ClassPluginDocumentationTest {
             RegisteredPlugin scan = pluginScanner.scan();
 
             PluginClassAndMetadata<? extends TaskRunner<?>> metadata = PluginClassAndMetadata.create(scan, Process.class, Process.class, null);
-            ClassPluginDocumentation<? extends TaskRunner<?>> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
+            ClassPluginDocumentation<? extends TaskRunner<?>> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), false);
 
             assertThat(((Map<?, ?>) doc.getPropertiesSchema().get("properties")).get("version")).isNotNull();
             assertThat(doc.getCls()).isEqualTo("io.kestra.plugin.core.runner.Process");
@@ -139,7 +139,7 @@ class ClassPluginDocumentationTest {
             RegisteredPlugin scan = pluginScanner.scan();
 
             PluginClassAndMetadata<DynamicPropertyExampleTask> metadata = PluginClassAndMetadata.create(scan, DynamicPropertyExampleTask.class, DynamicPropertyExampleTask.class, null);
-            ClassPluginDocumentation<? extends DynamicPropertyExampleTask> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, true);
+            ClassPluginDocumentation<? extends DynamicPropertyExampleTask> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), true);
 
             assertThat(doc.getCls()).isEqualTo("io.kestra.core.models.property.DynamicPropertyExampleTask");
             assertThat(doc.getDefs()).hasSize(6);
@@ -151,18 +151,14 @@ class ClassPluginDocumentationTest {
             List<Map<String, Object>> anyOf = (List<Map<String, Object>>) number.get("anyOf");
             assertThat(anyOf).hasSize(2);
             assertThat(anyOf.getFirst().get("type")).isEqualTo("integer");
-            assertThat(anyOf.getFirst().get("$dynamic")).isEqualTo(true);
+            assertThat((Boolean) anyOf.getFirst().get("$dynamic")).isTrue();
             assertThat(anyOf.get(1).get("type")).isEqualTo("string");
 //            assertThat(anyOf.get(1).get("pattern"), is(".*{{.*}}.*"));
 
             Map<String, Object> withDefault = (Map<String, Object>) properties.get("withDefault");
             assertThat(withDefault.get("type")).isEqualTo("string");
             assertThat(withDefault.get("default")).isEqualTo("Default Value");
-            assertThat(withDefault.get("$dynamic")).isEqualTo(true);
-
-            Map<String, Object> internalStorageURI = (Map<String, Object>) properties.get("uri");
-            assertThat(internalStorageURI.get("type")).isEqualTo("string");
-            assertThat(internalStorageURI.get("$internalStorageURI")).isEqualTo(true);
+            assertThat((Boolean) withDefault.get("$dynamic")).isTrue();
         }));
     }
 }

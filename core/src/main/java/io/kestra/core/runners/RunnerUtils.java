@@ -85,6 +85,10 @@ public class RunnerUtils {
 
         Execution execution = Execution.newExecution(flow, inputs, labels, Optional.empty());
 
+        return runOne(execution, flow, duration);
+    }
+
+    public Execution runOne(Execution execution, Flow flow, Duration duration) throws TimeoutException, QueueException {
         return this.awaitExecution(isTerminatedExecution(execution, flow), throwRunnable(() -> {
             this.executionQueue.emit(execution);
         }), duration);

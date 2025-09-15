@@ -49,7 +49,7 @@ class DeduplicateItemsTest {
 
         DeduplicateItems task = DeduplicateItems
             .builder()
-            .from(Property.of(generateKeyValueFile(values, runContext).toString()))
+            .from(Property.ofValue(generateKeyValueFile(values, runContext).toString()))
             .expr(" {{ key }} ")
             .build();
 
@@ -88,7 +88,7 @@ class DeduplicateItemsTest {
 
         DeduplicateItems task = DeduplicateItems
             .builder()
-            .from(Property.of(generateKeyValueFile(values, runContext).toString()))
+            .from(Property.ofValue(generateKeyValueFile(values, runContext).toString()))
             .expr(" {{ key }}-{{ v1 }}")
             .build();
 

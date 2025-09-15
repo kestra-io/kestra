@@ -15,3 +15,9 @@ declare module "markdown-it-meta" {
     const mark: PluginSimple;
     export default mark
   }
+
+  declare module "markdown-it-link-attributes" {
+    import {PluginSimple} from "markdown-it";
+    const mark: PluginSimple;
+    export default mark
+  }

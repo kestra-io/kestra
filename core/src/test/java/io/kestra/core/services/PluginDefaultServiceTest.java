@@ -31,6 +31,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -43,6 +44,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
@@ -70,7 +72,7 @@ class PluginDefaultServiceTest {
     @Test
     void shouldInjectGivenFlowWithNullSource() throws FlowProcessingException {
         // Given
-        FlowInterface flow = GenericFlow.fromYaml(null, TEST_LOG_FLOW_SOURCE);
+        FlowInterface flow = GenericFlow.fromYaml(MAIN_TENANT, TEST_LOG_FLOW_SOURCE);
 
         // When
         FlowWithSource result = pluginDefaultService.injectAllDefaults(flow, true);
@@ -130,6 +132,7 @@ class PluginDefaultServiceTest {
         ), result);
     }
 
+    @org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
     @ParameterizedTest
     @MethodSource
     void flowDefaultsOverrideGlobalDefaults(boolean flowDefaultForced, boolean globalDefaultForced, String fooValue, String barValue, String bazValue) throws FlowProcessingException {
@@ -193,7 +196,7 @@ class PluginDefaultServiceTest {
             - id: test
               type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               set: 666
-              
+
             pluginDefaults:
             - type: "%s"
               forced: false
@@ -236,12 +239,12 @@ class PluginDefaultServiceTest {
         String source = """
             id: default-test
             namespace: io.kestra.tests
-    
+
             tasks:
             - id: test
               type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               set: 1
-                  
+
             pluginDefaults:
             - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               forced: true
@@ -283,7 +286,7 @@ class PluginDefaultServiceTest {
             - id: test
               type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               set: 666
-              
+
             pluginDefaults:
             - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               values:
@@ -308,7 +311,7 @@ class PluginDefaultServiceTest {
     @Test
     void shouldInjectFlowDefaultsGivenAlias() throws FlowProcessingException {
         // Given
-        GenericFlow flow = GenericFlow.fromYaml(null, """
+        GenericFlow flow = GenericFlow.fromYaml(MAIN_TENANT, """
               id: default-test
               namespace: io.kestra.tests
 
@@ -316,7 +319,7 @@ class PluginDefaultServiceTest {
               - id: test
                 type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
                 set: 666
-                
+
               pluginDefaults:
                  - type: io.kestra.core.services.DefaultTesterAlias
                    values:
@@ -332,7 +335,7 @@ class PluginDefaultServiceTest {
 
     @Test
     void shouldInjectFlowDefaultsGivenType() throws FlowProcessingException {
-        GenericFlow flow = GenericFlow.fromYaml(null, """
+        GenericFlow flow = GenericFlow.fromYaml(MAIN_TENANT, """
                   id: default-test
                   namespace: io.kestra.tests
 
@@ -340,7 +343,7 @@ class PluginDefaultServiceTest {
                   - id: test
                     type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
                     set: 666
-                    
+
                   pluginDefaults:
                      - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
                        values:
@@ -355,7 +358,7 @@ class PluginDefaultServiceTest {
     @Test
     public void shouldNotInjectDefaultsGivenExistingTaskValue() throws FlowProcessingException {
         // Given
-        GenericFlow flow = GenericFlow.fromYaml(null, """
+        GenericFlow flow = GenericFlow.fromYaml(MAIN_TENANT, """
             id: default-test
             namespace: io.kestra.tests
 
@@ -364,7 +367,7 @@ class PluginDefaultServiceTest {
               type: io.kestra.plugin.core.log.Log
               message: testing
               level: INFO
-              
+
             pluginDefaults:
              - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
                values:

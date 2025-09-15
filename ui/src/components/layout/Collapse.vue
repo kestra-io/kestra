@@ -2,7 +2,7 @@
     <div data-component="FILENAME_PLACEHOLDER" class="collapse mb-sm-4 mb-md-0">
         <div class="button mb-2">
             <el-button @click="isNavbarVisible = !isNavbarVisible">
-                <menu-icon />
+                <MenuIcon />
             </el-button>
         </div>
         <el-form :inline="true" @submit="prevent" :class="{'d-block': isNavbarVisible}">

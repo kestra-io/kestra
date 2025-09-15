@@ -5,6 +5,7 @@ import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
@@ -32,6 +33,20 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @EqualsAndHashCode
 @Builder
 public class RegisteredPlugin {
+    public static final String TASKS_GROUP_NAME = "tasks";
+    public static final String TRIGGERS_GROUP_NAME = "triggers";
+    public static final String CONDITIONS_GROUP_NAME = "conditions";
+    public static final String STORAGES_GROUP_NAME = "storages";
+    public static final String SECRETS_GROUP_NAME = "secrets";
+    public static final String TASK_RUNNERS_GROUP_NAME = "task-runners";
+    public static final String APPS_GROUP_NAME = "apps";
+    public static final String APP_BLOCKS_GROUP_NAME = "app-blocks";
+    public static final String CHARTS_GROUP_NAME = "charts";
+    public static final String DATA_FILTERS_GROUP_NAME = "data-filters";
+    public static final String DATA_FILTERS_KPI_GROUP_NAME = "data-filters-kpi";
+    public static final String LOG_EXPORTERS_GROUP_NAME = "log-exporters";
+    public static final String ADDITIONAL_PLUGINS_GROUP_NAME = "additional-plugins";
+
     private final ExternalPlugin externalPlugin;
     private final Manifest manifest;
     private final ClassLoader classLoader;
@@ -45,8 +60,10 @@ public class RegisteredPlugin {
     private final List<Class<? extends AppBlockInterface>> appBlocks;
     private final List<Class<? extends Chart<?>>> charts;
     private final List<Class<? extends DataFilter<?, ?>>> dataFilters;
-    private final List<String> guides;
+    private final List<Class<? extends DataFilterKPI<?, ?>>> dataFiltersKPI;
     private final List<Class<? extends LogExporter<?>>> logExporters;
+    private final List<Class<? extends AdditionalPlugin>> additionalPlugins;
+    private final List<String> guides;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
 
@@ -61,7 +78,9 @@ public class RegisteredPlugin {
             !appBlocks.isEmpty() ||
             !charts.isEmpty() ||
             !dataFilters.isEmpty() ||
-            !logExporters.isEmpty()
+            !dataFiltersKPI.isEmpty() ||
+            !logExporters.isEmpty() ||
+            !additionalPlugins.isEmpty()
         ;
     }
 
@@ -114,6 +133,10 @@ public class RegisteredPlugin {
             return DataFilter.class;
         }
 
+        if (this.getDataFiltersKPI().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return DataFilterKPI.class;
+        }
+
         if (this.getAppBlocks().stream().anyMatch(r -> r.getName().equals(cls))) {
             return AppBlockInterface.class;
         }
@@ -124,6 +147,10 @@ public class RegisteredPlugin {
 
         if (this.getLogExporters().stream().anyMatch(r -> r.getName().equals(cls))) {
             return LogExporter.class;
+        }
+
+        if (this.getAdditionalPlugins().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return AdditionalPlugin.class;
         }
 
         if (this.getAliases().containsKey(cls.toLowerCase())) {
@@ -147,24 +174,22 @@ public class RegisteredPlugin {
     public Map<String, List<Class>> allClassGrouped() {
         Map<String, List<Class>> result = new HashMap<>();
 
-        result.put("tasks", Arrays.asList(this.getTasks().toArray(Class[]::new)));
-        result.put("triggers", Arrays.asList(this.getTriggers().toArray(Class[]::new)));
-        result.put("conditions", Arrays.asList(this.getConditions().toArray(Class[]::new)));
-        result.put("storages", Arrays.asList(this.getStorages().toArray(Class[]::new)));
-        result.put("secrets", Arrays.asList(this.getSecrets().toArray(Class[]::new)));
-        result.put("task-runners", Arrays.asList(this.getTaskRunners().toArray(Class[]::new)));
-        result.put("apps", Arrays.asList(this.getApps().toArray(Class[]::new)));
-        result.put("app-blocks", Arrays.asList(this.getAppBlocks().toArray(Class[]::new)));
-        result.put("charts", Arrays.asList(this.getCharts().toArray(Class[]::new)));
-        result.put("data-filters", Arrays.asList(this.getDataFilters().toArray(Class[]::new)));
-        result.put("log-exporters", Arrays.asList(this.getLogExporters().toArray(Class[]::new)));
+        result.put(TASKS_GROUP_NAME, Arrays.asList(this.getTasks().toArray(Class[]::new)));
+        result.put(TRIGGERS_GROUP_NAME, Arrays.asList(this.getTriggers().toArray(Class[]::new)));
+        result.put(CONDITIONS_GROUP_NAME, Arrays.asList(this.getConditions().toArray(Class[]::new)));
+        result.put(STORAGES_GROUP_NAME, Arrays.asList(this.getStorages().toArray(Class[]::new)));
+        result.put(SECRETS_GROUP_NAME, Arrays.asList(this.getSecrets().toArray(Class[]::new)));
+        result.put(TASK_RUNNERS_GROUP_NAME, Arrays.asList(this.getTaskRunners().toArray(Class[]::new)));
+        result.put(APPS_GROUP_NAME, Arrays.asList(this.getApps().toArray(Class[]::new)));
+        result.put(APP_BLOCKS_GROUP_NAME, Arrays.asList(this.getAppBlocks().toArray(Class[]::new)));
+        result.put(CHARTS_GROUP_NAME, Arrays.asList(this.getCharts().toArray(Class[]::new)));
+        result.put(DATA_FILTERS_GROUP_NAME, Arrays.asList(this.getDataFilters().toArray(Class[]::new)));
+        result.put(DATA_FILTERS_KPI_GROUP_NAME, Arrays.asList(this.getDataFiltersKPI().toArray(Class[]::new)));
+        result.put(LOG_EXPORTERS_GROUP_NAME, Arrays.asList(this.getLogExporters().toArray(Class[]::new)));
+        result.put(ADDITIONAL_PLUGINS_GROUP_NAME, Arrays.asList(this.getAdditionalPlugins().toArray(Class[]::new)));
 
         return result;
     }
-
-//    public Map<String, Map<String,List<Class>>> allClassGroupedBySubGroup() {
-//
-//    }
 
     public Set<String> subGroupNames() {
         return allClass()
@@ -283,6 +308,10 @@ public class RegisteredPlugin {
         }
         return null;
     }
+    
+    public long crc32() {
+        return Optional.ofNullable(externalPlugin).map(ExternalPlugin::getCrc32).orElse(-1L);
+    }
 
     @Override
     public String toString() {
@@ -354,9 +383,21 @@ public class RegisteredPlugin {
             b.append("] ");
         }
 
+        if (!this.getDataFiltersKPI().isEmpty()) {
+            b.append("[DataFiltersKPI: ");
+            b.append(this.getDataFiltersKPI().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
         if (!this.getLogExporters().isEmpty()) {
             b.append("[Log Exporters: ");
             b.append(this.getLogExporters().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
+        if (!this.getAdditionalPlugins().isEmpty()) {
+            b.append("[Additional Plugins: ");
+            b.append(this.getAdditionalPlugins().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

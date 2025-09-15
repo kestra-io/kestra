@@ -6,14 +6,14 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.runners.TaskRunnerDetailResult;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
 import lombok.Getter;
 
 import java.net.URI;
 import java.util.Map;
 import jakarta.validation.constraints.NotNull;
+import lombok.experimental.SuperBuilder;
 
-@Builder
+@SuperBuilder
 @Getter
 public class ScriptOutput implements Output {
     @Schema(

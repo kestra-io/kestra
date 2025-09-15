@@ -3,6 +3,7 @@ import mark from "markdown-it-mark";
 import meta from "markdown-it-meta";
 import anchor from "markdown-it-anchor";
 import container from "markdown-it-container";
+import mila from "markdown-it-link-attributes";
 import {fromHighlighter} from "@shikijs/markdown-it/core";
 import {createHighlighterCore} from "shiki/core";
 import githubDark from "shiki/themes/github-dark.mjs";
@@ -13,7 +14,7 @@ import python from "shiki/langs/python.mjs";
 import javascript from "shiki/langs/javascript.mjs";
 import {createOnigurumaEngine} from "shiki/engine-oniguruma.mjs";
 
-const langs = [yaml, python, javascript]
+const langs = {yaml, python, javascript}
 const onigurumaEngine = createOnigurumaEngine(() => import("shiki/wasm"));
 
 export {
@@ -22,6 +23,7 @@ export {
     meta,
     anchor,
     container,
+    mila,
     fromHighlighter,
     createHighlighterCore,
     githubDark,

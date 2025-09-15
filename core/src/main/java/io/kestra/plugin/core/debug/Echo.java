@@ -49,7 +49,7 @@ public class Echo extends Task implements RunnableTask<VoidOutput> {
     private Property<String> format;
 
     @Builder.Default
-    private Property<Level> level = Property.of(Level.INFO);
+    private Property<Level> level = Property.ofValue(Level.INFO);
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {

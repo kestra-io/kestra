@@ -8,15 +8,15 @@
                     :title="`${$t('trigger details')}: ${trigger ? trigger.id : ''}`"
                     :width="500"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                 >
                     <template #reference>
                         <el-button @click="copyLink(trigger)" size="small">
-                            <task-icon :only-icon="true" :cls="trigger?.type" :icons="icons" />
+                            <TaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
                         </el-button>
                     </template>
                     <template #default>
-                        <trigger-vars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
+                        <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
                     </template>
                 </el-popover>
             </template>
@@ -25,8 +25,10 @@
 </template>
 <script>
     import TriggerVars from "./TriggerVars.vue";
-    import {mapState} from "vuex";
     import {TaskIcon} from "@kestra-io/ui-libs";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {mapStores} from "pinia";
+    import Utils from "../../utils/utils";
 
     export default {
         props: {
@@ -56,21 +58,24 @@
 
                 return split[split.length - 1].substr(0, 1).toUpperCase();
             },
-            copyLink(trigger) {
+            async copyLink(trigger) {
                 if (trigger?.type === "io.kestra.plugin.core.trigger.Webhook" && this.flow) {
                     const url = new URL(window.location.href).origin + `/api/v1/${this.$route.params.tenant ? this.$route.params.tenant +"/" : ""}executions/webhook/${this.flow.namespace}/${this.flow.id}/${trigger.key}`;
 
-                    navigator.clipboard.writeText(url).then(() => {
+                    try {
+                        await Utils.copy(url);
                         this.$message({
                             message: this.$t("webhook link copied"),
                             type: "success"
                         });
-                    });
+                    } catch (error) {
+                        console.error(error);
+                    }
                 }
             }
         },
         computed: {
-            ...mapState("plugin", ["icons"]),
+            ...mapStores(usePluginsStore),
             triggers() {
                 if (this.flow && this.flow.triggers) {
                     return this.flow.triggers.filter(trigger => this.triggerId === null || this.triggerId === trigger.id)

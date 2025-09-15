@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ListUtilsTest {
 
@@ -22,9 +23,9 @@ class ListUtilsTest {
 
     @Test
     void isEmpty() {
-        assertThat(ListUtils.isEmpty(null)).isEqualTo(true);
-        assertThat(ListUtils.isEmpty(Collections.emptyList())).isEqualTo(true);
-        assertThat(ListUtils.isEmpty(List.of("1"))).isEqualTo(false);
+        assertThat(ListUtils.isEmpty(null)).isTrue();
+        assertThat(ListUtils.isEmpty(Collections.emptyList())).isTrue();
+        assertThat(ListUtils.isEmpty(List.of("1"))).isFalse();
     }
 
     @Test
@@ -35,5 +36,20 @@ class ListUtilsTest {
         assertThat(ListUtils.concat(list1, list2)).isEqualTo(List.of("1", "2", "3", "4"));
         assertThat(ListUtils.concat(list1, null)).isEqualTo(List.of("1", "2"));
         assertThat(ListUtils.concat(null, list2)).isEqualTo(List.of("3", "4"));
+    }
+
+    @Test
+    void convertToList(){
+        assertThat(ListUtils.convertToList(List.of(1, 2, 3))).isEqualTo(List.of(1, 2, 3));
+        assertThrows(IllegalArgumentException.class, () -> ListUtils.convertToList("not a list"));
+    }
+
+    @Test
+    void convertToListString(){
+        assertThat(ListUtils.convertToListString(List.of("string1", "string2"))).isEqualTo(List.of("string1", "string2"));
+        assertThat(ListUtils.convertToListString(List.of())).isEqualTo(List.of());
+
+        assertThrows(IllegalArgumentException.class, () -> ListUtils.convertToListString("not a list"));
+        assertThrows(IllegalArgumentException.class, () -> ListUtils.convertToListString(List.of(1, 2, 3)));
     }
 }

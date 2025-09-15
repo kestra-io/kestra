@@ -1,8 +1,11 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" v-if="!isFullScreen()" />
+    <TopNavBar :title="routeInfo.title" v-if="!isFullScreen()" />
     <Layout
         :title="$t('demos.IAM.title')"
         :image="{source: sourceImg, alt: t('demos.IAM.title')}"
+        :video="{
+            source: 'https://www.youtube.com/embed/9I87QZJPl1Y',
+        }"
     >
         <template #message>
             {{ $t('demos.IAM.message') }}

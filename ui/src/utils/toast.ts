@@ -5,7 +5,7 @@ import {useI18n} from "vue-i18n"
 import Markdown from "../components/layout/Markdown.vue"
 
 
-const makeToast = (t: (t:string, options?: Record<string, string>) => string) => ({
+export const makeToast = (t: (t:string, options?: Record<string, string>) => string) => ({
     _wrap: function(message:string) {
         if(Array.isArray(message) && message.length > 0){
             return h(
@@ -29,10 +29,13 @@ const makeToast = (t: (t:string, options?: Record<string, string>) => string) =>
     _MarkdownWrap: function(message:string) {
         return h(Markdown, {source: message})
     },
-    confirm: function(message:string, callback: () => Promise<any>, type = "warning" as const) {
-        ElMessageBox
-            .confirm(typeof message === "string" ? this._MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type})
+    confirm: function(message:string, callback: () => Promise<any>, type = "warning" as const, showCancelButton = true) {
+        return ElMessageBox
+            .confirm(typeof message === "string" ? this._MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type, showCancelButton})
             .then(() => callback())
+            .catch(() => {
+                // User cancelled
+            });
     },
     saved: function(name:string, title?:string, options?: Record<string, any>) {
         ElNotification.closeAll();
@@ -40,69 +43,62 @@ const makeToast = (t: (t:string, options?: Record<string, string>) => string) =>
             ? t("multiple saved done", {name})
             : t("saved done", {name: name});
         ElNotification({
-            ...{
+
                 title: title || t("saved"),
                 message: this._wrap(message),
                 position: "bottom-right",
                 type: "success",
-            },
-            ...(options || {})
+            ...options
         });
     },
     deleted: function(name:string, title?:string, options?: Record<string, any>) {
         ElNotification({
-            ...{
+
                 title: title || t("deleted"),
                 message: this._wrap(t("deleted confirm", {name: name})),
                 position: "bottom-right",
                 type: "success",
-            },
-            ...(options || {})
+            ...options
         })
     },
     success: function(message:string, title?:string, options?: Record<string, any>) {
         ElNotification({
-            ...{
+
                 title: title || t("success"),
                 message: this._wrap(message),
                 position: "bottom-right",
                 type: "success",
-            },
-            ...(options || {})
+            ...options
         })
     },
     warning: function(message:string, title?:string, options?: Record<string, any>) {
         ElNotification({
-            ...{
+
                 title: title || t("warning"),
                 message: this._wrap(message),
                 position: "bottom-right",
                 type: "warning",
-            },
-            ...(options || {})
+            ...options
         })
     },
     error: function(message:string, title:string, options?: Record<string, any>) {
         ElNotification({
-            ...{
+
                 title: title || t("error"),
                 message: this._wrap(message),
                 position: "bottom-right",
                 type: "error",
                 duration: 0,
-                customClass: "large"
-            },
-            ...(options || {})
+                customClass: "large",
+            ...options
         })
     }
 })
 
 export default {
     install(app: App) {
-        app.config.globalProperties.$toast = function() {
-            const self = this;
-
-            return makeToast(self.$t);
+        app.config.globalProperties.$toast = () => {
+            return makeToast(app.config.globalProperties.$t);
         }
     }
 }

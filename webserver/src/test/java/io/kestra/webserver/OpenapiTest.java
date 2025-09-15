@@ -14,6 +14,6 @@ class OpenapiTest {
     void generatedOpenapiSpecFile() {
         Optional<URL> openapiSpec = new ResourceResolver().getResource("classpath:META-INF/swagger/kestra.yml");
 
-        assertThat(openapiSpec.isPresent()).isEqualTo(true);
+        assertThat(openapiSpec.isPresent()).isTrue();
     }
 }

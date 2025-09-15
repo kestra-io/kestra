@@ -1,9 +1,9 @@
 package io.kestra.plugin.core.templating;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TemplatedTaskTest {
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void templatedType() throws Exception {
@@ -44,7 +44,7 @@ class TemplatedTaskTest {
         TemplatedTask templatedTask = TemplatedTask.builder()
             .id("template")
             .type(TemplatedTask.class.getName())
-            .spec(Property.of("""
+            .spec(Property.ofValue("""
                 type: io.kestra.plugin.core.flow.Pause
                 delay: PT10S"""))
             .build();
@@ -59,7 +59,7 @@ class TemplatedTaskTest {
         TemplatedTask templatedTask = TemplatedTask.builder()
             .id("template")
             .type(TemplatedTask.class.getName())
-            .spec(Property.of("""
+            .spec(Property.ofValue("""
                 type: io.kestra.plugin.core.templating.TemplatedTask
                 spec: whatever"""))
             .build();

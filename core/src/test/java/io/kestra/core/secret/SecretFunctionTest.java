@@ -1,5 +1,6 @@
 package io.kestra.core.secret;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -56,7 +57,7 @@ public class SecretFunctionTest {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "secrets");
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "secrets");
         assertThat(execution.getTaskRunList().getFirst().getOutputs().get("value")).isEqualTo("secretValue");
         assertThat(execution.getTaskRunList().get(2).getOutputs().get("value")).isEqualTo("passwordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlong");
         assertThat(execution.getTaskRunList().get(3).getOutputs().get("value")).isEqualTo("secretValue");
@@ -122,7 +123,7 @@ public class SecretFunctionTest {
     public static class TestSecretService extends SecretService {
 
         private static final Map<String, String> SECRETS = Map.of(
-            "io.kestra.unittest.json-secret", """ 
+            "io.kestra.unittest.json-secret", """
                 {
                 "string": "value",
                 "number": 42,

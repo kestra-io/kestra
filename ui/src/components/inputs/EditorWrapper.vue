@@ -1,164 +1,184 @@
 <template>
-    <editor
-        ref="editorDomElement"
-        :model-value="source"
-        :schema-type="isCurrentTabFlow ? 'flow': undefined"
-        :lang="extension === undefined ? 'yaml' : undefined"
-        :extension="extension"
-        :navbar="false"
-        :read-only="isReadOnly"
-        :creating="isCreating"
-        :path="props.path"
-        @update:model-value="editorUpdate"
-        @cursor="updatePluginDocumentation"
-        @save="save"
-        @execute="execute"
-    >
-        <KeyShortcuts />
-    </editor>
+    <div class="h-100 d-flex flex-column">
+        <Editor
+            id="editorWrapper"
+            ref="editorRefElement"
+            class="flex-1"
+            :modelValue="draftSource === undefined ? source : draftSource"
+            :schemaType="isCurrentTabFlow ? 'flow': undefined"
+            :lang="extension === undefined ? 'yaml' : undefined"
+            :extension="extension"
+            :navbar="false"
+            :readOnly="isReadOnly"
+            :creating="isCreating"
+            :path="props.path"
+            :diffOverviewBar="false"
+            @update:model-value="editorUpdate"
+            @cursor="updatePluginDocumentation"
+            @save="isCurrentTabFlow ? save(): saveFileContent()"
+            @execute="execute"
+            @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
+            @mouse-leave="() => highlightHoveredTask(-1)"
+            :original="draftSource === undefined ? undefined : source"
+            :diffSideBySide="false"
+        >
+            <template #absolute>
+                <AITriggerButton
+                    :show="isCurrentTabFlow"
+                    :opened="aiCopilotOpened"
+                    @click="draftSource = undefined; aiCopilotOpened = true"
+                />
+                <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
+            </template>
+            <template v-if="playgroundStore.enabled" #widget-content>
+                <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
+            </template>
+        </Editor>
+        <Transition name="el-zoom-in-center">
+            <AiCopilot
+                v-if="aiCopilotOpened"
+                class="position-absolute prompt"
+                @close="aiCopilotOpened = false"
+                :flow="editorContent"
+                :conversationId="conversationId"
+                @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
+            />
+        </Transition>
+        <AcceptDecline
+            v-if="draftSource !== undefined"
+            @accept="acceptDraft"
+            @reject="declineDraft"
+        />
+    </div>
 </template>
 
 <script lang="ts" setup>
-    import {computed, onActivated, onMounted, ref, inject, provide, watch, nextTick} from "vue";
-    import {useStore} from "vuex";
+    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
+    import {useRoute, useRouter} from "vue-router";
+
+    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys.ts";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {EditorTabProps, useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
+    import {useNamespacesStore} from "override/stores/namespaces";
+    import {useMiscStore} from "override/stores/misc";
+    import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
+
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+
     import Editor from "./Editor.vue";
-    import KeyShortcuts from "./KeyShortcuts.vue";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import AiCopilot from "../ai/AiCopilot.vue";
+    import AITriggerButton from "../ai/AITriggerButton.vue";
+    import AcceptDecline from "./AcceptDecline.vue";
+    import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
+    import Utils from "../../utils/utils.ts";
 
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    const route = useRoute();
+    const router = useRouter();
 
-    import {TOPOLOGY_CLICK_INJECTION_KEY, VISIBLE_PANELS_INJECTION_KEY, EDITOR_CURSOR_INJECTION_KEY, EDITOR_HIGHLIGHT_INJECTION_KEY} from "../code/injectionKeys";
-    import {TopologyClickParams} from "../code/utils/types";
-    import {Panel, Tab} from "../MultiPanelTabs.vue";
-
-    const store = useStore();
-
-    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
-    const panels = inject(VISIBLE_PANELS_INJECTION_KEY, ref());
+    const editorStore = useEditorStore();
+    const flowStore = useFlowStore();
 
     const cursor = ref();
+
+    const toggleAiShortcut = (event: KeyboardEvent) => {
+        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            draftSource.value = undefined;
+            aiCopilotOpened.value = !aiCopilotOpened.value;
+        }
+    };
+    const aiCopilotOpened = ref(false);
+    const draftSource = ref<string | undefined>(undefined);
+
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
-
-    const highlight = ref();
-    provide(EDITOR_HIGHLIGHT_INJECTION_KEY, highlight);
-
-    watch(topologyClick, (event: TopologyClickParams | undefined) => {
-        if (!event) return;
-
-        const visible = panels.value?.map((p: Panel) => p.tabs.map((t: Tab) => t.value)).flat();
-        if(visible?.includes("nocode")) return;
-
-        const findLineNumber = (section: string, task: string, flow?: string): number | undefined => {
-            const lines = (flow ?? source.value).split("\n");
-
-            let inSection = false;
-
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-
-                // Check for section entry
-                if (!inSection && line.startsWith(`${section}:`)) {
-                    inSection = true;
-                    continue;
-                }
-
-                // If in section, check for key-value match
-                if (inSection && line.trim().startsWith("- id:") && line.includes(task)) {
-                    return i + 1; // Line numbers are 1-based
-                }
-            }
-
-            return undefined; // Not found
-        }
-
-        if(visible?.includes("code")){
-            const {section, id} = event.params;
-
-            if (event.action === "create") {
-                const {position, target} = event.params;
-
-                const ID = "NEW_TASK";
-
-                const task = YAML_UTILS.stringify({id: ID, type: ""});
-                const result = YAML_UTILS.insertTask(source.value, target, task, position);
-
-                // Add the new task
-                editorUpdate(result);
-
-                nextTick(() => {
-                    // Focus the newly created task
-                    highlight.value = findLineNumber(section, ID, result)
-                });
-            }
-            else if(event.action === "edit"){
-                highlight.value = findLineNumber(section, id)
-            }
-        }
-    }, {deep: true});
-
-    export interface EditorTabProps{
-        name: string,
-        path: string,
-        extension?: string,
-        flow?: boolean,
-        dirty?: boolean,
-    }
 
     const props = withDefaults(defineProps<EditorTabProps>(), {
         extension: undefined,
         dirty: false,
-        flow: true
+        flow: true,
     });
 
-    const source = computed(() => {
-        return props.flow
-            ? store.getters["flow/flowYaml"]
-            : store.state.editor.tabs.find((t:any) => t.path === props.path)?.content;
+    provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
+
+    const source = computed<string>(() => {
+        return (props.flow
+            ? flowStore.flowYaml
+            : editorStore.tabs.find((t: any) => t.path === props.path)?.content) ?? "";
     })
 
-    async function loadFile(){
-        if(props.dirty || props.flow){
-            return;
-        }
-        const content = await store.dispatch("namespace/readFile", {
-            namespace: namespace.value,
-            path: props.path
-        })
-        store.commit("editor/setTabContent", {
-            path: props.path,
-            content
-        })
+    async function loadFile() {
+        if (props.dirty || props.flow) return;
+
+        const fileNamespace = namespace.value ?? route.params?.namespace;
+
+        if (!fileNamespace) return;
+
+        const content = await namespacesStore.readFile({namespace: fileNamespace.toString(), path: props.path ?? ""})
+        editorStore.setTabContent({path: props.path, content})
     }
 
+
     onMounted(() => {
-        loadFile()
+        loadPluginsHash();
+        loadFile();
+        window.addEventListener("keydown", handleGlobalSave);
+        window.addEventListener("keydown", toggleAiShortcut);
     });
 
     onActivated(() => {
-        loadFile()
+        loadFile();
     });
 
-    const editorDomElement = ref<any>(null);
+    onBeforeUnmount(() => {
+        window.removeEventListener("keydown", handleGlobalSave);
+        window.removeEventListener("keydown", toggleAiShortcut);
+        pluginsStore.editorPlugin = undefined;
+    });
 
-    const namespace = computed(() => store.getters["flow/namespace"]);
-    const flowStore = computed(() => store.getters["flow/flow"]);
-    const isCreating = computed(() => store.state.flow.isCreating);
+    const editorRefElement = ref<InstanceType<typeof Editor>>();
+
+    const namespace = computed(() => flowStore.flow?.namespace);
+    const isCreating = computed(() => flowStore.isCreating);
     const isCurrentTabFlow = computed(() => props.flow)
-    const isReadOnly = computed(() => flowStore.value?.deleted || !store.getters["flow/isAllowedEdit"] || store.getters["flow/readOnlySystemLabel"])
+    const isReadOnly = computed(() => flowStore.flow?.deleted || !flowStore.isAllowedEdit || flowStore.readOnlySystemLabel);
 
     const timeout = ref<any>(null);
+    const hash = ref<any>(null);
+
+    const editorContent = computed(() => {
+        return draftSource.value ?? source.value;
+    });
+
+    const pluginsStore = usePluginsStore();
+    const namespacesStore = useNamespacesStore();
+    const miscStore = useMiscStore();
+
+    function loadPluginsHash() {
+        miscStore.loadConfigs().then(config => {
+            hash.value = config.pluginsHash;
+        });
+    }
 
     function editorUpdate(newValue: string){
-        if(store.state.editor.tabs.find((t:any) => t.path === props.path)?.content === newValue){
+        if (editorContent.value === newValue) {
             return;
         }
-        if(isCurrentTabFlow.value){
-            store.commit("flow/setFlowYaml", newValue);
+        if (isCurrentTabFlow.value) {
+            if (draftSource.value !== undefined) {
+                draftSource.value = newValue;
+            } else {
+                flowStore.flowYaml = newValue;
+            }
         }
-        store.commit("editor/setTabContent", {
+        editorStore.setTabContent({
             content: newValue,
             path: props.path
         });
-        store.commit("editor/setTabDirty", {
+        editorStore.setTabDirty({
             path: props.path,
             dirty: true
         });
@@ -166,28 +186,126 @@
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {
-            store.dispatch("flow/onEdit", {
+            flowStore.onEdit({
                 source: newValue,
                 currentIsFlow: isCurrentTabFlow.value,
                 editorViewType: "YAML", // this is to be opposed to the no-code editor
                 topologyVisible: true,
             });
-        }, 2000);
+        }, 1000);
     }
 
 
-    function updatePluginDocumentation(event: string | undefined, task: any){
-        store.dispatch("plugin/updateDocumentation", {event,task});
+    function updatePluginDocumentation(event: any) {
+        const source = event.model.getValue();
+        const cursorOffset = event.model.getOffsetAt(event.position);
+
+        const isPlugin = (type: string) => pluginsStore.allTypes.includes(type);
+        const isInRange = (range: [number, number, number]) =>
+            cursorOffset >= range[0] && cursorOffset <= range[2];
+        const getRangeSize = (range: [number, number, number]) => range[2] - range[0];
+
+        const getElementFromRange = (typeElement: any) => {
+            const wrapper = YAML_UTILS.localizeElementAtIndex(source, typeElement.range[0]);
+            return wrapper?.value?.type && isPlugin(wrapper.value.type)
+                ? wrapper.value
+                : {type: typeElement.type};
+        };
+
+        const selectedElement = YAML_UTILS.extractFieldFromMaps(source, "type", () => true, isPlugin)
+            .filter(el => el.range && isInRange(el.range))
+            .reduce((closest, current) =>
+                        !closest || getRangeSize(current.range) < getRangeSize(closest.range)
+                            ? current
+                            : closest
+                    , null as any);
+
+        let result = selectedElement ? getElementFromRange(selectedElement) : undefined;
+        result = {...result, hash: hash.value};
+        pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
     };
 
-    function save(){
-        store.commit("editor/setCurrentTab", store.state.editor.tabs.find((t:any) => t.path === props.path));
-        return store.dispatch("flow/save", {
-            content: editorDomElement.value.$refs.monacoEditor.value,
-        })
+    const save = async () => {
+        clearTimeout(timeout.value);
+        const editorRef = editorRefElement.value
+        if(!editorRef?.$refs.monacoEditor) return
+        const result = await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
+
+        editorStore.setTabDirty({
+            path: props.path,
+            dirty: false
+        });
+
+        if (result === "redirect_to_update") {
+            await router.push({
+                name: "flows/update",
+                params: {
+                    id: flowStore.flow?.id,
+                    namespace: flowStore.flow?.namespace,
+                    tab: "edit",
+                    tenant: route.params?.tenant,
+                },
+            });
+        }
+    };
+
+    const saveFileContent = async () => {
+        clearTimeout(timeout.value);
+        if(!namespace.value || !props.path) return
+        await namespacesStore.createFile({
+            namespace: namespace.value,
+            path: props.path,
+            content: editorContent.value || "",
+        });
+        editorStore.setTabDirty({
+            path: props.path,
+            dirty: false
+        });
     }
+
+    const handleGlobalSave = (event: KeyboardEvent) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === "s") {
+            event.preventDefault();
+            if (isCurrentTabFlow.value) {
+                save();
+            } else {
+                saveFileContent();
+            }
+        }
+    };
 
     const execute = () => {
-        store.commit("flow/executeFlow", true);
+        flowStore.executeFlow = true;
     };
+
+    const conversationId = ref<string>(Utils.uid());
+
+    function acceptDraft() {
+        const accepted = draftSource.value;
+        draftSource.value = undefined;
+        conversationId.value = Utils.uid();
+        editorUpdate(accepted!);
+    }
+
+    function declineDraft() {
+        draftSource.value = undefined;
+        aiCopilotOpened.value = true;
+    }
+
+    const {
+        playgroundStore,
+        highlightHoveredTask,
+        highlightedLines,
+    } = useFlowEditorRunTaskButton(isCurrentTabFlow, editorRefElement, source);
 </script>
+
+<style scoped lang="scss">
+    .prompt {
+        bottom: 10%;
+        width: calc(100% - 5rem);
+        left: 3rem;
+        max-width: 700px;
+        background-color: var(--ks-background-panel);
+        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+    }
+</style>

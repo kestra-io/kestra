@@ -1,5 +1,5 @@
-export const encodeParams = (route, filters, OPTIONS, isDefaultDashboard) => {
-    if(isSearchPath(route) && !isDefaultDashboard) { return encodeSearchParams(filters, OPTIONS); }
+export const encodeParams = (route, filters, OPTIONS) => {
+    if(isSearchPath(route)) { return encodeSearchParams(filters, OPTIONS); }
 
     const encode = (values, key) => {
         return values
@@ -44,9 +44,8 @@ export const encodeParams = (route, filters, OPTIONS, isDefaultDashboard) => {
     }, {});
 };
 
-export const decodeParams = (route, query, include, OPTIONS, isDefaultDashboard) => {
-    if(isSearchPath(route) && !isDefaultDashboard) {return decodeSearchParams(query, include, OPTIONS); }
-
+export const decodeParams = (route, query, include, OPTIONS) => {
+    if(isSearchPath(route)) {return decodeSearchParams(query, include, OPTIONS); }
 
     let params = Object.entries(query)
         .filter(
@@ -145,11 +144,11 @@ export const encodeSearchParams = (filters, OPTIONS) => {
     }, {});
 };
 
-export const decodeSearchParams = (query, include, OPTIONS) => {
+export const decodeSearchParams = (query, include, OPTIONS): any[] => {
     const params = Object.entries(query)
         .filter(([key]) => (key.startsWith("filters[") || key === "q"))
         .map(([key, value]) => {
-            const match = key.match(/filters\[(.*?)\]\[(.*?)\](?:\[(.*?)\])?/);
+            const match = key.match(/filters\[(.*?)]\[(.*?)](?:\[(.*?)])?/);
 
             if (!match) return null;
 
@@ -159,7 +158,7 @@ export const decodeSearchParams = (query, include, OPTIONS) => {
                 return {field: field, value: `${subKey}:${decodeURIComponent(value)}`, operation};
             }
 
-            const label = field === "q" ? "text" : OPTIONS.find(o => o.key === field)?.value.label || field;
+            const label = OPTIONS.find(o => o.key === field)?.value.label || field;
             const comparator = OPTIONS.find(o => o.key === field)?.comparators?.find(c => c.value === operation) || {value: operation};
 
             return {field: label, value: decodeURIComponent(value), operation: comparator.value};

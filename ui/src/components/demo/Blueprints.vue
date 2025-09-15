@@ -1,4 +1,5 @@
 <template>
+    <TopNavBar :title="routeInfo.title" />
     <Layout
         :title="t(`demos.blueprints.title`)"
         :image="{source: sourceImg, alt: t(`demos.blueprints.title`)}"
@@ -15,11 +16,21 @@
 
 <script setup lang="ts">
     import Layout from "./Layout.vue";
+    import {ref} from "vue";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
 
     import sourceImg from "../../assets/demo/blueprints.png";
 
     import {useI18n} from "vue-i18n";
+    import useRouteContext from "../../mixins/useRouteContext";
+
     const {t} = useI18n();
+
+    const routeInfo = ref({
+        title: t("demos.blueprints.title"),
+    });
+
+    useRouteContext(routeInfo);
 
     const props = defineProps({embed: {type: Boolean, default: false}});
 </script>

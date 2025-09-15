@@ -10,6 +10,7 @@ import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -30,6 +31,7 @@ import java.nio.file.Files;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static io.kestra.core.models.flows.State.Type.FAILED;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -78,7 +81,7 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item", null,
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
@@ -112,7 +115,7 @@ public class ForEachItemCaseTest {
     public void forEachItemEmptyItems() throws TimeoutException, URISyntaxException, IOException, QueueException {
         URI file = emptyItems();
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item", null,
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
@@ -140,7 +143,7 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-no-wait", null,
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-no-wait", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
@@ -187,7 +190,7 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-failed", null,
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-failed", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(60));
 
@@ -230,7 +233,7 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-outputs", null,
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-outputs", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
@@ -261,7 +264,7 @@ public class ForEachItemCaseTest {
         // asserts for subflow merged outputs
         Map<String, Object> mergeTaskOutputs = execution.getTaskRunList().get(3).getOutputs();
         assertThat(mergeTaskOutputs.get("subflowOutputs")).isNotNull();
-        InputStream stream = storageInterface.get(null, execution.getNamespace(), URI.create((String) mergeTaskOutputs.get("subflowOutputs")));
+        InputStream stream = storageInterface.get(MAIN_TENANT, execution.getNamespace(), URI.create((String) mergeTaskOutputs.get("subflowOutputs")));
 
         try (var br = new BufferedReader(new InputStreamReader(stream))) {
             // one line per sub-flows
@@ -280,15 +283,24 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 20);
-        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "restart-for-each-item", null,
+        final Execution failedExecution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "restart-for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
-        assertThat(execution.getTaskRunList()).hasSize(3);
-        assertThat(execution.getState().getCurrent()).isEqualTo(FAILED);
+        assertThat(failedExecution.getTaskRunList()).hasSize(3);
+        assertThat(failedExecution.getState().getCurrent()).isEqualTo(FAILED);
 
         // here we must have 1 failed subflows
-        assertTrue(countDownLatch.await(1, TimeUnit.MINUTES));
+        assertTrue(countDownLatch.await(1, TimeUnit.MINUTES), "first run of flow should have FAILED");
         receiveSubflows.blockLast();
+
+        Await.until(
+            () -> "first FAILED run of flow should have been persisted",
+            () -> getPersistedExecution(MAIN_TENANT, failedExecution.getId())
+                .map(exec -> exec.getState().getCurrent() == FAILED)
+                .orElse(false),
+            Duration.of(100, TimeUnit.MILLISECONDS.toChronoUnit()),
+            Duration.of(10, TimeUnit.SECONDS.toChronoUnit())
+        );
 
         CountDownLatch successLatch = new CountDownLatch(6);
         receiveSubflows = TestsUtils.receive(executionQueue, either -> {
@@ -298,18 +310,23 @@ public class ForEachItemCaseTest {
             }
         });
 
-        //Wait before restarting until the failed execution tasks are persisted.
-        Thread.sleep(1000L);
-
-        Execution restarted = executionService.restart(execution, null);
-        execution = runnerUtils.awaitExecution(
+        Execution restarted = executionService.restart(failedExecution, null);
+        final Execution successExecution = runnerUtils.awaitExecution(
             e -> e.getState().getCurrent() == State.Type.SUCCESS && e.getFlowId().equals("restart-for-each-item"),
             throwRunnable(() -> executionQueue.emit(restarted)),
             Duration.ofSeconds(20)
         );
-        assertThat(execution.getTaskRunList()).hasSize(4);
-        assertTrue(successLatch.await(1, TimeUnit.MINUTES));
+        assertThat(successExecution.getTaskRunList()).hasSize(4);
+        assertTrue(successLatch.await(1, TimeUnit.MINUTES), "second run of flow should have SUCCESS");
         receiveSubflows.blockLast();
+    }
+
+    private Optional<Execution> getPersistedExecution(String tenant, String executionId) {
+        try {
+            return Optional.of(executionService.getExecution(tenant, executionId, false));
+        } catch (NoSuchElementException e) {
+            return Optional.empty();
+        }
     }
 
     public void forEachItemInIf() throws TimeoutException, InterruptedException, URISyntaxException, IOException, QueueException {
@@ -326,7 +343,7 @@ public class ForEachItemCaseTest {
 
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-in-if", null,
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-in-if", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
@@ -355,13 +372,58 @@ public class ForEachItemCaseTest {
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 
+    public void forEachItemWithAfterExecution() throws TimeoutException, InterruptedException, URISyntaxException, IOException, QueueException {
+        CountDownLatch countDownLatch = new CountDownLatch(26);
+        AtomicReference<Execution> triggered = new AtomicReference<>();
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Execution execution = either.getLeft();
+            if (execution.getFlowId().equals("for-each-item-subflow-after-execution") && execution.getState().getCurrent().isTerminated()) {
+                triggered.set(execution);
+                countDownLatch.countDown();
+            }
+        });
+
+        URI file = storageUpload();
+        Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-after-execution", null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
+            Duration.ofSeconds(30));
+
+        // we should have triggered 26 subflows
+        assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isTrue();
+        receive.blockLast();
+
+        // assert on the main flow execution
+        assertThat(execution.getTaskRunList()).hasSize(5);
+        assertThat(execution.getTaskRunList().get(2).getAttempts()).hasSize(1);
+        assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
+        assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
+        assertThat(outputs.get("iterations")).isNotNull();
+        Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
+        assertThat(iterations.get("CREATED")).isZero();
+        assertThat(iterations.get("RUNNING")).isZero();
+        assertThat(iterations.get("SUCCESS")).isEqualTo(26);
+
+        // assert on the last subflow execution
+        assertThat(triggered.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(triggered.get().getFlowId()).isEqualTo("for-each-item-subflow-after-execution");
+        assertThat((String) triggered.get().getInputs().get("items")).matches("kestra:///io/kestra/tests/for-each-item-after-execution/executions/.*/tasks/each-split/.*\\.txt");
+        assertThat(triggered.get().getTaskRunList()).hasSize(2);
+        Optional<Label> correlationId = triggered.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
+        assertThat(correlationId.isPresent()).isTrue();
+        assertThat(correlationId.get().value()).isEqualTo(execution.getId());
+    }
+
     private URI storageUpload() throws URISyntaxException, IOException {
         File tempFile = File.createTempFile("file", ".txt");
 
         Files.write(tempFile.toPath(), content());
 
         return storageInterface.put(
-            null,
+            MAIN_TENANT,
             null,
             new URI("/file/storage/file.txt"),
             new FileInputStream(tempFile)
@@ -372,7 +434,7 @@ public class ForEachItemCaseTest {
         File tempFile = File.createTempFile("file", ".txt");
 
         return storageInterface.put(
-            null,
+            MAIN_TENANT,
             null,
             new URI("/file/storage/file.txt"),
             new FileInputStream(tempFile)

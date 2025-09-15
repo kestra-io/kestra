@@ -2,6 +2,7 @@ package io.kestra.cli;
 
 import io.kestra.cli.commands.configs.sys.ConfigCommand;
 import io.kestra.cli.commands.flows.FlowCommand;
+import io.kestra.cli.commands.migrations.MigrationCommand;
 import io.kestra.cli.commands.namespaces.NamespaceCommand;
 import io.kestra.cli.commands.plugins.PluginCommand;
 import io.kestra.cli.commands.servers.ServerCommand;
@@ -42,6 +43,7 @@ import java.util.concurrent.Callable;
         SysCommand.class,
         ConfigCommand.class,
         NamespaceCommand.class,
+        MigrationCommand.class,
     }
 )
 @Introspected
@@ -64,8 +66,14 @@ public class App implements Callable<Integer> {
         ApplicationContext applicationContext = App.applicationContext(cls, args);
 
         // Call Picocli command
-        int exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
-
+        int exitCode = 0;
+        try {
+             exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
+        } catch (CommandLine.InitializationException e){
+            System.err.println("Could not initialize picoli ComandLine, err: " + e.getMessage());
+            e.printStackTrace();
+            exitCode = 1;
+        }
         applicationContext.close();
 
         // exit code

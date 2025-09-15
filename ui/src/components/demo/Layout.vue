@@ -170,7 +170,7 @@
             border-radius: 8px;
             border: 1px solid var(--ks-border-primary);
             overflow: hidden;
-            margin-top: 1rem;
+            margin: 1rem auto;
 
             iframe {
                 position: absolute;

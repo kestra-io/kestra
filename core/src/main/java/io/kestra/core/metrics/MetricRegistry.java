@@ -2,12 +2,10 @@ package io.kestra.core.metrics;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.*;
-import io.kestra.core.schedulers.SchedulerExecutionWithTrigger;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.search.Search;
@@ -52,12 +50,16 @@ public class MetricRegistry {
     public static final String METRIC_WORKER_KILLED_COUNT = "worker.killed.count";
     public static final String METRIC_WORKER_KILLED_COUNT_DESCRIPTION = "The total number of executions killed events received the Executor";
 
+    public static final String METRIC_EXECUTOR_THREAD_COUNT = "executor.thread.count";
+    public static final String METRIC_EXECUTOR_THREAD_COUNT_DESCRIPTION = "The number of executor threads";
     public static final String METRIC_EXECUTOR_TASKRUN_CREATED_COUNT = "executor.taskrun.created.count";
     public static final String METRIC_EXECUTOR_TASKRUN_CREATED_COUNT_DESCRIPTION = "The total number of tasks created by the Executor";
     public static final String METRIC_EXECUTOR_TASKRUN_ENDED_COUNT = "executor.taskrun.ended.count";
     public static final String METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION = "The total number of tasks ended by the Executor";
     public static final String METRIC_EXECUTOR_TASKRUN_ENDED_DURATION = "executor.taskrun.ended.duration";
     public static final String METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION = "Task duration inside the Executor";
+    public static final String METRIC_EXECUTOR_FLOWABLE_EXECUTION_COUNT = "executor.flowable.execution.count";
+    public static final String METRIC_EXECUTOR_FLOWABLE_EXECUTION_COUNT_DESCRIPTION = "The total number of flowable tasks executed by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_STARTED_COUNT = "executor.execution.started.count";
     public static final String METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION = "The total number of executions started by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_END_COUNT = "executor.execution.end.count";
@@ -78,7 +80,10 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION = "The total number of execution delays ended (resumed) by the Executor";
     public static final String METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT = "executor.worker.job.resubmit.count";
     public static final String METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT_DESCRIPTION = "The total number of worker jobs resubmitted to the Worker by the Executor";
-
+    public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT = "executor.execution.queued.count";
+    public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT_DESCRIPTION = "The total number of executions queued by the Executor";
+    public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT = "executor.execution.popped.count";
+    public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION = "The total number of executions popped by the Executor";
 
     public static final String METRIC_INDEXER_REQUEST_COUNT = "indexer.request.count";
     public static final String METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION = "Total number of batches of records received by the Indexer";
@@ -120,6 +125,12 @@ public class MetricRegistry {
 
     public static final String METRIC_QUEUE_BIG_MESSAGE_COUNT = "queue.big_message.count";
     public static final String METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION = "Total number of big messages";
+    public static final String METRIC_QUEUE_PRODUCE_COUNT = "queue.produce.count";
+    public static final String METRIC_QUEUE_PRODUCE_COUNT_DESCRIPTION = "Total number of produced messages";
+    public static final String METRIC_QUEUE_RECEIVE_DURATION = "queue.receive.duration";
+    public static final String METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION = "Queue duration to receive and consume a batch of messages";
+    public static final String METRIC_QUEUE_POLL_SIZE = "queue.poll.size";
+    public static final String METRIC_QUEUE_POLL_SIZE_DESCRIPTION = "Size of a poll to the queue (message batch size)";
 
     public static final String TAG_TASK_TYPE = "task_type";
     public static final String TAG_TRIGGER_TYPE = "trigger_type";
@@ -131,6 +142,9 @@ public class MetricRegistry {
     public static final String TAG_TENANT_ID = "tenant_id";
     public static final String TAG_CLASS_NAME = "class_name";
     public static final String TAG_EXECUTION_KILLED_TYPE = "execution_killed_type";
+    public static final String TAG_QUEUE_CONSUMER = "consumer";
+    public static final String TAG_QUEUE_CONSUMER_GROUP = "consumer_group";
+    public static final String TAG_QUEUE_TYPE = "queue_type";
 
     @Inject
     private MeterRegistry meterRegistry;
@@ -378,19 +392,6 @@ public class MetricRegistry {
             TAG_NAMESPACE_ID, triggerContext.getNamespace()
         };
         return triggerContext.getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, triggerContext.getTenantId());
-    }
-
-    /**
-     * Return tags for current {@link SchedulerExecutionWithTrigger}.
-     *
-     * @param schedulerExecutionWithTrigger the current SchedulerExecutionWithTrigger
-     * @return tags to apply to metrics
-     */
-    public String[] tags(SchedulerExecutionWithTrigger schedulerExecutionWithTrigger, String... tags) {
-        return ArrayUtils.addAll(
-            this.tags(schedulerExecutionWithTrigger.getExecution()),
-            tags
-        );
     }
 
     /**

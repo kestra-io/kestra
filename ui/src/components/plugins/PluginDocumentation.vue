@@ -1,37 +1,57 @@
 <template>
     <div class="plugin-doc">
-        <template v-if="editorPlugin">
+        <template v-if="fetchPluginDocumentation && pluginsStore.editorPlugin">
             <div class="d-flex gap-3 mb-3 align-items-center">
-                <task-icon
+                <TaskIcon
                     class="plugin-icon"
-                    :cls="editorPlugin.cls"
-                    only-icon
-                    :icons="icons"
+                    :cls="pluginsStore.editorPlugin.cls"
+                    onlyIcon
+                    :icons="pluginsStore.icons"
                 />
-                <h4 class="mb-0">
+                <h4 class="mb-0 plugin-title text-truncate">
                     {{ pluginName }}
                 </h4>
+                <el-button
+                    v-if="releaseNotesUrl"
+                    size="small"
+                    class="release-notes-btn"
+                    :icon="GitHub"
+                    @click="openReleaseNotes"
+                >
+                    {{ $t('plugins.release') }}
+                </el-button>
             </div>
             <Suspense>
-                <schema-to-html class="plugin-schema" :dark-mode="theme === 'dark'" :schema="editorPlugin.schema" :plugin-type="editorPlugin.cls">
+                <SchemaToHtml
+                    class="plugin-schema"
+                    :darkMode="miscStore.theme === 'dark'"
+                    :schema="pluginsStore.editorPlugin.schema"
+                    :pluginType="pluginsStore.editorPlugin.cls"
+                    :forceIncludeProperties="pluginsStore.forceIncludeProperties"
+                    noUrlChange
+                >
                     <template #markdown="{content}">
-                        <markdown font-size-var="font-size-base" :source="content" />
+                        <Markdown font-size-var="font-size-base" :source="content" />
                     </template>
-                </schema-to-html>
+                </SchemaToHtml>
             </Suspense>
         </template>
-        <markdown v-else :source="introContent" :class="{'position-absolute': absolute}" />
+        <Markdown v-else :source="introContent" :class="{'position-absolute': absolute}" />
     </div>
 </template>
 
 <script setup>
     import Markdown from "../layout/Markdown.vue";
     import {SchemaToHtml, TaskIcon} from "@kestra-io/ui-libs";
+    import GitHub from "vue-material-design-icons/Github.vue";
 </script>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
-    import intro from "../../assets/docs/basic.md?raw"
+    import intro from "../../assets/docs/basic.md?raw";
+    import {getPluginReleaseUrl} from "../../utils/pluginUtils";
+    import {mapStores} from "pinia";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {useMiscStore} from "override/stores/misc";
 
     export default {
         props: {
@@ -42,21 +62,34 @@
             absolute: {
                 type: Boolean,
                 default: false
+            },
+            fetchPluginDocumentation: {
+                type: Boolean,
+                default: true
             }
         },
         computed: {
-            ...mapState("plugin", ["editorPlugin", "icons"]),
-            ...mapGetters("misc", ["theme"]),
+            ...mapStores(usePluginsStore, useMiscStore),
             introContent () {
                 return this.overrideIntro ?? intro
             },
             pluginName() {
-                const split = this.editorPlugin.cls.split(".");
+                const split = this.pluginsStore.editorPlugin.cls.split(".");
                 return split[split.length - 1];
+            },
+            releaseNotesUrl() {
+                return getPluginReleaseUrl(this.pluginsStore.editorPlugin.cls);
             }
         },
         created() {
-            this.$store.dispatch("plugin/list");
+            this.pluginsStore.list();
+        },
+        methods: {
+            openReleaseNotes() {
+                if (this.releaseNotesUrl) {
+                    window.open(this.releaseNotesUrl, "_blank");
+                }
+            }
         }
     }
 </script>

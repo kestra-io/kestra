@@ -3,12 +3,12 @@
         ref="search"
         class="flex-shrink-0"
         v-model="query"
-        :fetch-suggestions="search"
-        popper-class="doc-toc-search-popper"
+        :fetchSuggestions="search"
+        popperClass="doc-toc-search-popper"
         :placeholder="$t('search')"
     >
         <template #prefix>
-            <magnify />
+            <Magnify />
         </template>
         <template #default="{item}">
             <router-link
@@ -16,7 +16,7 @@
                 class="d-flex gap-2"
             >
                 {{ item.title }}
-                <arrow-right class="is-justify-end" />
+                <ArrowRight class="is-justify-end" />
             </router-link>
         </template>
     </el-autocomplete>
@@ -25,12 +25,14 @@
             <span class="text-secondary">
                 {{ sectionName.toUpperCase() }}
             </span>
-            <recursive-toc :parent="{children}" />
+            <RecursiveToc :parent="{children}" />
         </li>
     </ul>
 </template>
 
 <script setup>
+    import {mapStores} from "pinia";
+    import {useDocStore} from "../../stores/doc";
     import RecursiveToc from "./RecursiveToc.vue";
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
@@ -74,6 +76,7 @@
             }
         },
         computed: {
+            ...mapStores(useDocStore),
             toc() {
                 if (this.rawStructure === undefined) {
                     return undefined;
@@ -107,11 +110,11 @@
             }
         },
         async mounted() {
-            this.rawStructure = await this.$store.dispatch("doc/children");
+            this.rawStructure = await this.docStore.children();
         },
         methods: {
             async search(query, cb) {
-                cb(await this.$store.dispatch("doc/search", {q: query}));
+                cb(await this.docStore.search({q: query}));
             }
         }
     };

@@ -11,6 +11,7 @@ import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.sla.SLA;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.serializers.JacksonMapper;
 
 import java.util.AbstractMap;
@@ -30,6 +31,8 @@ public interface FlowInterface extends FlowId, DeletedInterface, TenantInterface
 
     Pattern YAML_REVISION_MATCHER = Pattern.compile("(?m)^revision: \\d+\n?");
 
+    String getDescription();
+
     boolean isDisabled();
 
     boolean isDeleted();
@@ -41,6 +44,8 @@ public interface FlowInterface extends FlowId, DeletedInterface, TenantInterface
     List<Output> getOutputs();
 
     Map<String, Object> getVariables();
+
+    WorkerGroup getWorkerGroup();
 
     default Concurrency getConcurrency() {
         return null;

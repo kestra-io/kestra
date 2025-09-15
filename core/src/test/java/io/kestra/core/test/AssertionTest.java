@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-import static io.kestra.core.test.flow.Assertion.Operator.EQUALS_TO;
+import static io.kestra.core.test.flow.Assertion.Operator.EQUAL_TO;
 import static io.kestra.core.test.flow.Assertion.Operator.IS_NOT_NULL;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,14 +22,14 @@ class AssertionTest {
     RunContextFactory runContextFactory;
 
     @Test
-    void shouldAssertSuccess_equalsTo() {
+    void shouldAssertSuccess_equalTo() {
         var assertion = Assertion.builder()
-            .value(Property.of("value1"))
-            .equalsTo(Property.of("value1"))
-            .description(Property.of("my description"))
+            .value(Property.ofValue("value1"))
+            .equalTo(Property.ofValue("value1"))
+            .description(Property.ofValue("my description"))
             .build();
 
-        assertThat(assertion.run(runContextFactory.of()))
+        assertThat(assertion.run(runContextFactory.of()).results())
             .hasSize(1)
             .first()
             .satisfies(result -> {
@@ -40,14 +40,14 @@ class AssertionTest {
     }
 
     @Test
-    void shouldAssertFail_equalsTo() {
+    void shouldAssertFail_equalTo() {
         var assertion = Assertion.builder()
-            .value(Property.of("value1"))
-            .equalsTo(Property.of("different-value"))
-            .errorMessage(Property.of("error message"))
+            .value(Property.ofValue("value1"))
+            .equalTo(Property.ofValue("different-value"))
+            .errorMessage(Property.ofValue("error message"))
             .build();
 
-        assertThat(assertion.run(runContextFactory.of()))
+        assertThat(assertion.run(runContextFactory.of()).results())
             .hasSize(1)
             .first()
             .satisfies(result -> {
@@ -57,14 +57,33 @@ class AssertionTest {
     }
 
     @Test
+    void shouldBrokenAssert_returnError() {
+        var assertion = Assertion.builder()
+            .value(new Property<>("{{ invalid-pebble-expression() }}"))
+            .equalTo(Property.ofValue("value"))
+            .build();
+
+        assertThat(assertion.run(runContextFactory.of()).results())
+            .hasSize(0);
+        assertThat(assertion.run(runContextFactory.of()).errors())
+            .hasSize(1)
+            .first()
+            .satisfies(result -> {
+                assertThat(result.message()).contains("Could not evaluate assertion");
+                assertThat(result.details()).contains("invalid-pebble-expression()");
+                assertThat(result.details()).contains("io.pebbletemplates.pebble.error.PebbleException");
+            });
+    }
+
+    @Test
     void shouldRender_values_fromTaskOutputs() {
         var assertion = Assertion.builder()
             .value(new Property<>("{{ outputs.my_task.res }}"))
-            .equalsTo(Property.of("value1"))
+            .equalTo(Property.ofValue("value1"))
             .build();
         var runContext = runContextFactory.of(Map.of("outputs", Map.of("my_task", Map.of("res", "value1"))));
 
-        assertThat(assertion.run(runContext))
+        assertThat(assertion.run(runContext).results())
             .hasSize(1)
             .first()
             .extracting(AssertionResult::isSuccess).isEqualTo(true);
@@ -74,11 +93,11 @@ class AssertionTest {
     void shouldRender_values_fromTaskOutputs_and_produce_defaultErrorMessage() {
         var assertion = Assertion.builder()
             .value(new Property<>("{{ outputs.my_task.res }}"))
-            .equalsTo(Property.of("expectedValue2"))
+            .equalTo(Property.ofValue("expectedValue2"))
             .build();
         var runContext = runContextFactory.of(Map.of("outputs", Map.of("my_task", Map.of("res", "actualValue1"))));
 
-        assertThat(assertion.run(runContext))
+        assertThat(assertion.run(runContext).results())
             .hasSize(1)
             .first()
             .satisfies(result -> {
@@ -92,18 +111,18 @@ class AssertionTest {
     void endsWith_success_number() {
         testAssertionResultSuccess(
             Assertion.builder()
-                .value(Property.of(1))
-                .equalsTo(Property.of(1))
+                .value(Property.ofValue(1))
+                .equalTo(Property.ofValue(1))
                 .build()
         );
     }
 
     @Test
-    void equalsTo_failure_number() {
+    void equalTo_failure_number() {
         testAssertionResultFails(
             Assertion.builder()
-                .value(Property.of(1))
-                .equalsTo(Property.of(2))
+                .value(Property.ofValue(1))
+                .equalTo(Property.ofValue(2))
                 .build()
         );
     }
@@ -112,8 +131,8 @@ class AssertionTest {
     void endsWith_success() {
         testAssertionResultSuccess(
             Assertion.builder()
-                .value(Property.of("mystring"))
-                .endsWith(Property.of("ing"))
+                .value(Property.ofValue("mystring"))
+                .endsWith(Property.ofValue("ing"))
                 .build()
         );
     }
@@ -122,8 +141,8 @@ class AssertionTest {
     void endsWith_failure() {
         testAssertionResultFails(
             Assertion.builder()
-                .value(Property.of("mystring"))
-                .endsWith(Property.of("mys"))
+                .value(Property.ofValue("mystring"))
+                .endsWith(Property.ofValue("mys"))
                 .build()
         );
     }
@@ -132,8 +151,8 @@ class AssertionTest {
     void startsWith_success() {
         testAssertionResultSuccess(
             Assertion.builder()
-                .value(Property.of("mystring"))
-                .startsWith(Property.of("mys"))
+                .value(Property.ofValue("mystring"))
+                .startsWith(Property.ofValue("mys"))
                 .build()
         );
     }
@@ -142,8 +161,8 @@ class AssertionTest {
     void startsWith_failure() {
         testAssertionResultFails(
             Assertion.builder()
-                .value(Property.of("mystring"))
-                .startsWith(Property.of("ing"))
+                .value(Property.ofValue("mystring"))
+                .startsWith(Property.ofValue("ing"))
                 .build()
         );
     }
@@ -152,8 +171,8 @@ class AssertionTest {
     void contains_success() {
         testAssertionResultSuccess(
             Assertion.builder()
-                .value(Property.of("mystring"))
-                .contains(Property.of("str"))
+                .value(Property.ofValue("mystring"))
+                .contains(Property.ofValue("str"))
                 .build()
         );
     }
@@ -162,28 +181,28 @@ class AssertionTest {
     void contains_failure() {
         testAssertionResultFails(
             Assertion.builder()
-                .value(Property.of("mystring"))
-                .contains(Property.of("toto"))
+                .value(Property.ofValue("mystring"))
+                .contains(Property.ofValue("toto"))
                 .build()
         );
     }
 
     @Test
-    void notEqualsTo_success() {
+    void notEqualTo_success() {
         testAssertionResultSuccess(
             Assertion.builder()
-                .value(Property.of("value1"))
-                .notEqualsTo(Property.of("value2222"))
+                .value(Property.ofValue("value1"))
+                .notEqualTo(Property.ofValue("value2222"))
                 .build()
         );
     }
 
     @Test
-    void notEqualsTo_failure() {
+    void notEqualTo_failure() {
         testAssertionResultFails(
             Assertion.builder()
-                .value(Property.of("value1"))
-                .notEqualsTo(Property.of("value1"))
+                .value(Property.ofValue("value1"))
+                .notEqualTo(Property.ofValue("value1"))
                 .build()
         );
     }
@@ -192,8 +211,8 @@ class AssertionTest {
     void greaterThan_success() {
         testAssertionResultSuccess(
             Assertion.builder()
-                .value(Property.of(333d))
-                .greaterThan(Property.of(2d))
+                .value(Property.ofValue(333d))
+                .greaterThan(Property.ofValue(2d))
                 .build()
         );
     }
@@ -202,8 +221,8 @@ class AssertionTest {
     void greaterThan_failure() {
         testAssertionResultFails(
             Assertion.builder()
-                .value(Property.of(2d))
-                .greaterThan(Property.of(333d))
+                .value(Property.ofValue(2d))
+                .greaterThan(Property.ofValue(333d))
                 .build()
         );
     }
@@ -212,8 +231,8 @@ class AssertionTest {
     void greaterThanOrEqualTo_success() {
         testAssertionResultSuccess(
             Assertion.builder()
-                .value(Property.of(333d))
-                .greaterThanOrEqualTo(Property.of(333d))
+                .value(Property.ofValue(333d))
+                .greaterThanOrEqualTo(Property.ofValue(333d))
                 .build()
         );
     }
@@ -222,8 +241,8 @@ class AssertionTest {
     void greaterThanOrEqualTo_failure() {
         testAssertionResultFails(
             Assertion.builder()
-                .value(Property.of(2d))
-                .greaterThanOrEqualTo(Property.of(333d))
+                .value(Property.ofValue(2d))
+                .greaterThanOrEqualTo(Property.ofValue(333d))
                 .build()
         );
     }
@@ -232,8 +251,8 @@ class AssertionTest {
     void lessThan_success() {
         testAssertionResultSuccess(
             Assertion.builder()
-                .value(Property.of(2d))
-                .lessThan(Property.of(444d))
+                .value(Property.ofValue(2d))
+                .lessThan(Property.ofValue(444d))
                 .build()
         );
     }
@@ -242,8 +261,8 @@ class AssertionTest {
     void lessThan_failure() {
         testAssertionResultFails(
             Assertion.builder()
-                .value(Property.of(444d))
-                .lessThan(Property.of(2d))
+                .value(Property.ofValue(444d))
+                .lessThan(Property.ofValue(2d))
                 .build()
         );
     }
@@ -252,8 +271,8 @@ class AssertionTest {
     void lessThanOrEqualTo_success() {
         testAssertionResultSuccess(
             Assertion.builder()
-                .value(Property.of(444d))
-                .lessThanOrEqualTo(Property.of(444d))
+                .value(Property.ofValue(444d))
+                .lessThanOrEqualTo(Property.ofValue(444d))
                 .build()
         );
     }
@@ -262,8 +281,8 @@ class AssertionTest {
     void lessThanOrEqualTo_failure() {
         testAssertionResultFails(
             Assertion.builder()
-                .value(Property.of(444d))
-                .lessThanOrEqualTo(Property.of(2d))
+                .value(Property.ofValue(444d))
+                .lessThanOrEqualTo(Property.ofValue(2d))
                 .build()
         );
     }
@@ -272,8 +291,8 @@ class AssertionTest {
     void in_success() {
         testAssertionResultSuccess(
             Assertion.builder()
-                .value(Property.of("a"))
-                .in(Property.of(List.of("a", "b")))
+                .value(Property.ofValue("a"))
+                .in(Property.ofValue(List.of("a", "b")))
                 .build()
         );
     }
@@ -282,8 +301,8 @@ class AssertionTest {
     void in_failure() {
         testAssertionResultFails(
             Assertion.builder()
-                .value(Property.of("x"))
-                .in(Property.of(List.of("a", "b")))
+                .value(Property.ofValue("x"))
+                .in(Property.ofValue(List.of("a", "b")))
                 .build()
         );
     }
@@ -292,8 +311,8 @@ class AssertionTest {
     void notIn_success() {
         testAssertionResultSuccess(
             Assertion.builder()
-                .value(Property.of("a"))
-                .notIn(Property.of(List.of("d", "e")))
+                .value(Property.ofValue("a"))
+                .notIn(Property.ofValue(List.of("d", "e")))
                 .build()
         );
     }
@@ -302,8 +321,8 @@ class AssertionTest {
     void notIn_failure() {
         testAssertionResultFails(
             Assertion.builder()
-                .value(Property.of("a"))
-                .notIn(Property.of(List.of("a", "b")))
+                .value(Property.ofValue("a"))
+                .notIn(Property.ofValue(List.of("a", "b")))
                 .build()
         );
     }
@@ -312,8 +331,8 @@ class AssertionTest {
     void isNull_success() {
         testAssertionResultSuccess(
             Assertion.builder()
-                .value(Property.of(null))
-                .isNull(Property.of(true))
+                .value(Property.ofValue(null))
+                .isNull(Property.ofValue(true))
                 .build()
         );
     }
@@ -321,10 +340,10 @@ class AssertionTest {
     @Test
     void isNull_failure() {
         var testedAssertion = Assertion.builder()
-            .value(Property.of("value1"))
-            .isNull(Property.of(true))
+            .value(Property.ofValue("value1"))
+            .isNull(Property.ofValue(true))
             .build();
-        assertThat(testedAssertion.run(runContextFactory.of()))
+        assertThat(testedAssertion.run(runContextFactory.of()).results())
             .first()
             .satisfies(result -> {
                     assertThat(result).extracting(AssertionResult::isSuccess).isEqualTo(false);
@@ -337,8 +356,8 @@ class AssertionTest {
     void isNotNull_success() {
         testAssertionResultSuccess(
             Assertion.builder()
-                .value(Property.of("value1"))
-                .isNotNull(Property.of(true))
+                .value(Property.ofValue("value1"))
+                .isNotNull(Property.ofValue(true))
                 .build()
         );
     }
@@ -346,10 +365,10 @@ class AssertionTest {
     @Test
     void isNotNull_failure() {
         var testedAssertion = Assertion.builder()
-            .value(Property.of(null))
-            .isNotNull(Property.of(true))
+            .value(Property.ofValue(null))
+            .isNotNull(Property.ofValue(true))
             .build();
-        assertThat(testedAssertion.run(runContextFactory.of()))
+        assertThat(testedAssertion.run(runContextFactory.of()).results())
             .first()
             .satisfies(result -> {
                     assertThat(result).extracting(AssertionResult::isSuccess).isEqualTo(false);
@@ -361,12 +380,12 @@ class AssertionTest {
     @Test
     void isNotNull_and_isEqualTo_failure() {
         var testedAssertion = Assertion.builder()
-            .value(Property.of("value1"))
-            .isNotNull(Property.of(true))
-            .equalsTo(Property.of("value222"))
+            .value(Property.ofValue("value1"))
+            .isNotNull(Property.ofValue(true))
+            .equalTo(Property.ofValue("value222"))
             .build();
 
-        var testResults = testedAssertion.run(runContextFactory.of());
+        var testResults = testedAssertion.run(runContextFactory.of()).results();
         assertThat(testResults)
             .hasSize(2);
         assertThat(testResults)
@@ -374,20 +393,20 @@ class AssertionTest {
             .first()
             .extracting(AssertionResult::isSuccess).isEqualTo(true);
         assertThat(testResults)
-            .filteredOn(res -> res.operator().equals(EQUALS_TO.toString()))
+            .filteredOn(res -> res.operator().equals(EQUAL_TO.toString()))
             .first()
             .extracting(AssertionResult::isSuccess).isEqualTo(false);
     }
 
     void testAssertionResultSuccess(Assertion testedAssertion) {
-        assertThat(testedAssertion.run(runContextFactory.of()))
+        assertThat(testedAssertion.run(runContextFactory.of()).results())
             .hasSize(1)
             .first()
             .extracting(AssertionResult::isSuccess).isEqualTo(true);
     }
 
     void testAssertionResultFails(Assertion testedAssertion) {
-        assertThat(testedAssertion.run(runContextFactory.of()))
+        assertThat(testedAssertion.run(runContextFactory.of()).results())
             .hasSize(1)
             .first()
             .extracting(AssertionResult::isSuccess).isEqualTo(false);

@@ -77,7 +77,7 @@ install-plugins:
         else \
 		${KESTRA_BASEDIR}/bin/kestra plugins install $$CURRENT_PLUGIN \
 		--plugins ${KESTRA_BASEDIR}/plugins \
-		--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots || exit 1; \
+		--repositories=https://central.sonatype.com/repository/maven-snapshots || exit 1; \
 		fi \
     done < $$PLUGIN_LIST
 
@@ -89,7 +89,7 @@ build-docker: build-exec
 		--compress \
 		--rm \
 		-f ./Dockerfile \
-		--build-arg="APT_PACKAGES=python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip jattach" \
+		--build-arg="APT_PACKAGES=python3 python-is-python3 python3-pip curl jattach" \
 		--build-arg="PYTHON_LIBRARIES=kestra" \
 		-t ${DOCKER_IMAGE}:${VERSION} ${DOCKER_PATH} || exit 1 ;
 
@@ -130,9 +130,6 @@ datasources:
     username: kestra
     password: k3str4
 kestra:
-  server:
-    basic-auth:
-    enabled: false
   encryption:
     secret-key: 3ywuDa/Ec61VHkOX3RlI9gYq7CaD0mv0Pf3DHtAXA6U=
   repository:

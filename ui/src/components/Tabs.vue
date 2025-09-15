@@ -13,19 +13,18 @@
                     <el-tooltip v-if="tab.disabled && tab.props && tab.props.showTooltip" :content="$t('add-trigger-in-editor')" placement="top">
                         <span><strong>{{ tab.title }}</strong></span>
                     </el-tooltip>
-                    <enterprise-badge :enable="tab.locked">
+                    <EnterpriseBadge :enable="tab.locked">
                         {{ tab.title }}
                         <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
-                    </enterprise-badge>
+                    </EnterpriseBadge>
                 </component>
             </template>
         </el-tab-pane>
     </el-tabs>
-
-    <section v-if="isEditorActiveTab || activeTab.component" data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab, 'maximized': activeTab.maximized}">
-        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${explorerWidth}% - 11px);`" :current-n-s="namespace" v-show="explorerVisible" />
-        <div v-if="isEditorActiveTab && explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
-        <div v-if="isEditorActiveTab" :style="`flex: 1 1 ${100 - (isEditorActiveTab && explorerVisible ? explorerWidth : 0)}%;`">
+    <section v-if="isEditorActiveTab || activeTab.component" data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
+        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${editorStore.explorerWidth}% - 11px);`" :currentNS="namespace" v-show="editorStore.explorerVisible" />
+        <div v-if="isEditorActiveTab && editorStore.explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
+        <div v-if="isEditorActiveTab" :style="`flex: 1 1 ${100 - (isEditorActiveTab && editorStore.explorerVisible ? editorStore.explorerWidth : 0)}%;`">
             <component
                 v-bind="{...activeTab.props, ...attrsWithoutClass}"
                 v-on="activeTab['v-on'] ?? {}"
@@ -34,25 +33,37 @@
                 embed
             />
         </div>
+        <BlueprintDetail
+            v-else-if="selectedBlueprintId"
+            :blueprintId="selectedBlueprintId"
+            blueprintType="community"
+            @back="selectedBlueprintId = undefined"
+            combinedView="true"
+            :kind="activeTab.props.blueprintKind"
+            :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
+        />
         <component
             v-else
             v-bind="{...activeTab.props, ...attrsWithoutClass}"
             v-on="activeTab['v-on'] ?? {}"
             ref="tabContent"
             :is="activeTab.component"
+            :namespace="namespaceToForward"
+            @go-to-detail="blueprintId => selectedBlueprintId = blueprintId"
             :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
         />
     </section>
 </template>
 
 <script>
-    import {mapState, mapMutations} from "vuex";
-
     import EditorSidebar from "./inputs/EditorSidebar.vue";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
+    import BlueprintDetail from "./flows/blueprints/BlueprintDetail.vue";
+    import {useEditorStore} from "../stores/editor";
+    import {mapStores} from "pinia";
 
     export default {
-        components: {EditorSidebar, EnterpriseBadge},
+        components: {EditorSidebar, EnterpriseBadge,BlueprintDetail},
         props: {
             tabs: {
                 type: Array,
@@ -93,6 +104,7 @@
         data() {
             return {
                 activeName: undefined,
+                selectedBlueprintId : undefined
             }
         },
         watch: {
@@ -109,7 +121,6 @@
             this.setActiveName();
         },
         methods: {
-            ...mapMutations("editor", ["changeExplorerWidth", "closeExplorer"]),
             dragSidebar(e){
                 const SELF = this;
 
@@ -122,7 +133,7 @@
 
                 document.onmousemove = function onMouseMove(e) {
                     let percent = blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100;
-                    SELF.changeExplorerWidth(percent)
+                    SELF.editorStore.changeExplorerWidth(percent)
                 };
 
                 document.onmouseup = () => {
@@ -145,28 +156,23 @@
                 } else {
                     return {
                         name: this.routeName || this.$route.name,
-                        params: {...this.$route.params, ...{tab: tab.name}},
-                        query: {...(tab.query || {})}
+                        params: {...this.$route.params, tab: tab.name},
+                        query: {...tab.query}
                     };
                 }
             },
             getTabClasses(tab) {
                 const isEnterpriseTab = tab.locked;
-                const isGanttTab = tab.name === "gantt";
-                const ROUTES = ["/flows/edit/", "/namespaces/edit/"];
-                const EDIT_ROUTES = ROUTES.some(route => this.$route.path.startsWith(route));
-                const isOverviewTab = EDIT_ROUTES && tab.title === "Overview";
 
                 return {
-                    "container": !isEnterpriseTab && !isOverviewTab,
-                    "mt-4": !isEnterpriseTab && !isOverviewTab,
-                    "px-0": isEnterpriseTab && isOverviewTab,
-                    "gantt-container": isGanttTab
+                    "container": !isEnterpriseTab,
+                    "mt-4": !isEnterpriseTab,
+                    "px-0": isEnterpriseTab,
                 };
             },
         },
         computed: {
-            ...mapState("editor", ["explorerVisible", "explorerWidth"]),
+            ...mapStores(useEditorStore),
             containerClass() {
                 return this.getTabClasses(this.activeTab);
             },
@@ -185,7 +191,7 @@
                 ) {
                     if (TAB === "files") return true;
 
-                    this.closeExplorer();
+                    this.editorStore.closeExplorer();
                     return false;
                 }
 
@@ -198,6 +204,11 @@
                     Object.entries(this.$attrs)
                         .filter(([key]) => key !== "class")
                 );
+            },
+            namespaceToForward(){
+                return this.activeTab.props?.namespace ?? this.namespace;
+                // in the special case of Namespace creation on Namespaces page, the tabs are loaded before the namespace creation
+                // in this case this.props.namespace will be used
             }
         }
     };
@@ -246,7 +257,6 @@
         padding: 0;
         display: flex;
         flex-grow: 1;
-        flex-direction: column;
     }
 
     :deep(.el-tabs__nav-next),

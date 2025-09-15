@@ -24,8 +24,10 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
+import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.models.property.Data;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Output;
@@ -51,11 +53,14 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static io.kestra.core.docs.AbstractClassDocumentation.flattenWithoutType;
+import static io.kestra.core.docs.AbstractClassDocumentation.required;
 import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
 
 @Singleton
 public class JsonSchemaGenerator {
     private static final List<Class<?>> TYPES_RESOLVED_AS_STRING = List.of(Duration.class, LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, OffsetDateTime.class, OffsetTime.class);
+    private static final List<Class<?>> SUBTYPE_RESOLUTION_EXCLUSION_FOR_PLUGIN_SCHEMA = List.of(Task.class, AbstractTrigger.class);
 
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
         .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
@@ -85,12 +90,20 @@ public class JsonSchemaGenerator {
     }
 
     public <T> Map<String, Object> schemas(Class<? extends T> cls, boolean arrayOf) {
+        return this.schemas(cls, arrayOf, Collections.emptyList());
+    }
+
+    public <T> Map<String, Object> schemas(Class<? extends T> cls, boolean arrayOf, List<String> allowedPluginTypes) {
+        return this.schemas(cls, arrayOf, allowedPluginTypes, false);
+    }
+
+    public <T> Map<String, Object> schemas(Class<? extends T> cls, boolean arrayOf, List<String> allowedPluginTypes, boolean withOutputs) {
         SchemaGeneratorConfigBuilder builder = new SchemaGeneratorConfigBuilder(
             SchemaVersion.DRAFT_7,
             OptionPreset.PLAIN_JSON
         );
 
-        this.build(builder, true);
+        this.build(builder, true, allowedPluginTypes, withOutputs);
 
         SchemaGeneratorConfig schemaGeneratorConfig = builder.build();
 
@@ -115,12 +128,13 @@ public class JsonSchemaGenerator {
             if (jsonNode instanceof ObjectNode clazzSchema && clazzSchema.get("required") instanceof ArrayNode requiredPropsNode && clazzSchema.get("properties") instanceof ObjectNode properties) {
                 List<String> requiredFieldValues = StreamSupport.stream(requiredPropsNode.spliterator(), false)
                     .map(JsonNode::asText)
-                    .toList();
+                    .collect(Collectors.toList());
 
                 properties.fields().forEachRemaining(e -> {
                     int indexInRequiredArray = requiredFieldValues.indexOf(e.getKey());
                     if (indexInRequiredArray != -1 && e.getValue() instanceof ObjectNode valueNode && valueNode.has("default")) {
                         requiredPropsNode.remove(indexInRequiredArray);
+                        requiredFieldValues.remove(indexInRequiredArray);
                     }
                 });
 
@@ -129,6 +143,15 @@ public class JsonSchemaGenerator {
                 }
             }
         });
+
+        // do the same for all definitions
+        if (objectNode.get("definitions") instanceof ObjectNode definitions) {
+            definitions.forEach(jsonNode -> {
+                if (jsonNode instanceof ObjectNode definition) {
+                    removeRequiredOnPropsWithDefaults(definition);
+                }
+            });
+        }
     }
 
     // This hack exists because for Property we generate a anyOf for properties that are not strings.
@@ -228,6 +251,14 @@ public class JsonSchemaGenerator {
     }
 
     protected void build(SchemaGeneratorConfigBuilder builder, boolean draft7) {
+        this.build(builder, draft7, Collections.emptyList());
+    }
+
+    protected void build(SchemaGeneratorConfigBuilder builder, boolean draft7, List<String> allowedPluginTypes) {
+        this.build(builder, draft7, allowedPluginTypes, false);
+    }
+
+    protected void build(SchemaGeneratorConfigBuilder builder, boolean draft7, List<String> allowedPluginTypes, boolean withOutputs) {
 //        builder.withObjectMapper(builder.getObjectMapper().configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false));
         builder
             .with(new JakartaValidationModule(
@@ -239,15 +270,12 @@ public class JsonSchemaGenerator {
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)
             .with(Option.DEFINITION_FOR_MAIN_SCHEMA)
             .with(Option.PLAIN_DEFINITION_KEYS)
-            .with(Option.ALLOF_CLEANUP_AT_THE_END);
+            .with(Option.ALLOF_CLEANUP_AT_THE_END);;
 
         if (!draft7) {
-            builder
-                .with(new JacksonModule(JacksonOption.IGNORE_TYPE_INFO_TRANSFORM))
-                .with(Option.MAP_VALUES_AS_ADDITIONAL_PROPERTIES);
+            builder.with(new JacksonModule(JacksonOption.IGNORE_TYPE_INFO_TRANSFORM));
         } else {
-            builder
-                .with(new JacksonModule());
+            builder.with(new JacksonModule());
         }
 
         // default value
@@ -347,6 +375,9 @@ public class JsonSchemaGenerator {
                 if (pluginPropertyAnnotation.internalStorageURI()) {
                     memberAttributes.put("$internalStorageURI", true);
                 }
+                if (!pluginPropertyAnnotation.group().isEmpty()) {
+                    memberAttributes.put("$group", pluginPropertyAnnotation.group());
+                }
             }
 
             Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
@@ -409,6 +440,13 @@ public class JsonSchemaGenerator {
                     if (pluginAnnotation.beta()) {
                         collectedTypeAttributes.put("$beta", true);
                     }
+
+                    if (withOutputs) {
+                        Map<String, Object> outputsSchema = this.outputs(null, scope.getType().getErasedType());
+                        collectedTypeAttributes.set("outputs", context.getGeneratorConfig().createObjectNode().pojoNode(
+                            flattenWithoutType(AbstractClassDocumentation.properties(outputsSchema), required(outputsSchema))
+                        ));
+                    }
                 }
 
                 // handle deprecated tasks
@@ -438,13 +476,13 @@ public class JsonSchemaGenerator {
             return Object.class;
         });
 
-        // Subtype resolver for all plugins
         if (builder.build().getSchemaVersion() != SchemaVersion.DRAFT_2019_09) {
+            // Subtype resolver for all plugins
             builder.forTypesInGeneral()
                 .withSubtypeResolver((declaredType, context) -> {
                     TypeContext typeContext = context.getTypeContext();
 
-                    return this.subtypeResolver(declaredType, typeContext);
+                    return this.subtypeResolver(declaredType, typeContext, allowedPluginTypes);
                 });
 
             // description as Markdown
@@ -512,23 +550,34 @@ public class JsonSchemaGenerator {
                     collectedTypeAttributes.remove("$examples");
                 }
             });
-
-            // Ensure that `type` is defined as a constant in JSON Schema.
-            // The `const` property is used by editors for auto-completion based on that schema.
-            builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
-                final Class<?> pluginType = scope.getType().getErasedType();
-                if (pluginType.getAnnotation(Plugin.class) != null) {
-                    ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
-                    if (properties != null) {
-                        properties.set("type", context.getGeneratorConfig().createObjectNode()
-                            .put("const", pluginType.getName())
-                        );
-                    }
-                }
-            });
         } else {
-            typeDefiningPropertiesToConst(builder);
+            builder.forTypesInGeneral()
+                .withSubtypeResolver((declaredType, context) -> {
+                    TypeContext typeContext = context.getTypeContext();
+
+                    if (SUBTYPE_RESOLUTION_EXCLUSION_FOR_PLUGIN_SCHEMA.contains(declaredType.getErasedType())) {
+                        return null;
+                    }
+
+                    return this.subtypeResolver(declaredType, typeContext, allowedPluginTypes);
+                });
         }
+
+        // Ensure that `type` is defined as a constant in JSON Schema.
+        // The `const` property is used by editors for auto-completion based on that schema.
+        builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
+            final Class<?> pluginType = scope.getType().getErasedType();
+            if (pluginType.getAnnotation(Plugin.class) != null) {
+                ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
+                if (properties != null) {
+                    properties.set("type", context.getGeneratorConfig().createObjectNode()
+                        .put("const", pluginType.getName())
+                    );
+                }
+            }
+        });
+
+        typeDefiningPropertiesToConst(builder);
     }
 
     /**
@@ -593,11 +642,12 @@ public class JsonSchemaGenerator {
         return false;
     }
 
-    protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext) {
+    protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext, List<String> allowedPluginTypes) {
         if (declaredType.getErasedType() == Task.class) {
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getTasks().stream())
+                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
                 .toList();
@@ -605,6 +655,7 @@ public class JsonSchemaGenerator {
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream())
+                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
                 .toList();
@@ -612,6 +663,7 @@ public class JsonSchemaGenerator {
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
+                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
                 .toList();
@@ -620,6 +672,7 @@ public class JsonSchemaGenerator {
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
                 .filter(ScheduleCondition.class::isAssignableFrom)
+                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
                 .toList();
@@ -627,6 +680,7 @@ public class JsonSchemaGenerator {
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getTaskRunners().stream())
+                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .map(typeContext::resolve)
                 .toList();
@@ -634,13 +688,18 @@ public class JsonSchemaGenerator {
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getLogExporters().stream())
+                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .map(typeContext::resolve)
                 .toList();
-        } else if (declaredType.getErasedType() == AdditionalPlugin.class) {
+        } else if (AdditionalPlugin.class.isAssignableFrom(declaredType.getErasedType())) { // base type for addition plugin is not AdditionalPlugin but a subtype of AdditionalPlugin.
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getAdditionalPlugins().stream())
+                // for additional plugins, we have one subtype by type of additional plugins (for ex: embedding store for Langchain4J), so we need to filter on the correct subtype
+                .filter(cls -> declaredType.getErasedType().isAssignableFrom(cls))
+                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
+                .filter(cls -> cls != declaredType.getErasedType())
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .map(typeContext::resolve)
                 .toList();
@@ -648,6 +707,7 @@ public class JsonSchemaGenerator {
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getCharts().stream())
+                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .<ResolvedType>mapMulti((clz, consumer) -> {
                     if (DataChart.class.isAssignableFrom(clz)) {
@@ -659,9 +719,24 @@ public class JsonSchemaGenerator {
 
                         TypeVariable<? extends Class<? extends Chart<?>>> dataFilterType = clz.getTypeParameters()[1];
                         ParameterizedType chartAwareColumnDescriptor = ((ParameterizedType) ((WildcardType) ((ParameterizedType) dataFilterType.getBounds()[0]).getActualTypeArguments()[1]).getUpperBounds()[0]);
+
                         dataFilters.forEach(dataFilter -> {
                             Type fieldsEnum = ((ParameterizedType) dataFilter.getGenericSuperclass()).getActualTypeArguments()[0];
                             consumer.accept(typeContext.resolve(clz, fieldsEnum, typeContext.resolve(dataFilter, typeContext.resolve(chartAwareColumnDescriptor, fieldsEnum))));
+                        });
+                    } else if (DataChartKPI.class.isAssignableFrom(clz)) {
+                        List<Class<? extends DataFilterKPI<?, ?>>> dataFilterKPIs = getRegisteredPlugins()
+                            .stream()
+                            .flatMap(registeredPlugin -> registeredPlugin.getDataFiltersKPI().stream())
+                            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                            .toList();
+
+                        TypeVariable<? extends Class<? extends Chart<?>>> dataFilterType = clz.getTypeParameters()[1];
+                        ParameterizedType chartAwareColumnDescriptor = ((ParameterizedType) ((WildcardType) ((ParameterizedType) dataFilterType.getBounds()[0]).getActualTypeArguments()[1]).getUpperBounds()[0]);
+
+                        dataFilterKPIs.forEach(dataFilterKPI -> {
+                            Type fieldsEnum = ((ParameterizedType) dataFilterKPI.getGenericSuperclass()).getActualTypeArguments()[0];
+                            consumer.accept(typeContext.resolve(clz, fieldsEnum, typeContext.resolve(dataFilterKPI, typeContext.resolve(chartAwareColumnDescriptor, fieldsEnum))));
                         });
                     } else {
                         consumer.accept(typeContext.resolve(clz));
@@ -699,17 +774,24 @@ public class JsonSchemaGenerator {
     }
 
     protected <T> Map<String, Object> generate(Class<? extends T> cls, @Nullable Class<T> base) {
+        return this.generate(cls, base, Collections.emptyList());
+    }
+
+    protected <T> Map<String, Object> generate(Class<? extends T> cls, @Nullable Class<T> base, List<String> allowedPluginTypes) {
         SchemaGeneratorConfigBuilder builder = new SchemaGeneratorConfigBuilder(
             SchemaVersion.DRAFT_2019_09,
             OptionPreset.PLAIN_JSON
         );
 
-        this.build(builder, false);
+        this.build(builder, false, allowedPluginTypes);
 
-        // we don't return base properties unless specified with @PluginProperty
+        // we don't return base properties unless specified with @PluginProperty and hidden is false
         builder
             .forFields()
-            .withIgnoreCheck(fieldScope -> base != null && fieldScope.getAnnotation(PluginProperty.class) == null && fieldScope.getDeclaringType().getTypeName().equals(base.getName()));
+            .withIgnoreCheck(fieldScope -> base != null &&
+                (fieldScope.getAnnotation(PluginProperty.class) == null || fieldScope.getAnnotation(PluginProperty.class).hidden()) &&
+                fieldScope.getDeclaringType().getTypeName().equals(base.getName())
+            );
 
         SchemaGeneratorConfig schemaGeneratorConfig = builder.build();
 

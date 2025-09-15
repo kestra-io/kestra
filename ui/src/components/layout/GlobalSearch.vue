@@ -1,19 +1,20 @@
 <template>
     <div data-component="FILENAME_PLACEHOLDER">
         <el-autocomplete
+            ref="searchInput"
             class="flex-shrink-0"
             v-model="filter"
             @select="goTo"
-            :fetch-suggestions="search"
-            highlight-first-item
-            popper-class="global-search-popper"
+            :fetchSuggestions="search"
+            highlightFirstItem
+            popperClass="global-search-popper"
             :placeholder="$t('jump to...')"
         >
             <template #prefix>
-                <magnify />
+                <Magnify />
             </template>
             <template #suffix>
-                <keyboard title="Ctrl/Cmd + K" />
+                <Keyboard title="Ctrl/Cmd + K" />
                 <span class="d-none d-xl-block">Ctrl/Cmd + K</span>
             </template>
             <template #default="{item}">
@@ -22,16 +23,16 @@
                     class="d-flex gap-2"
                 >
                     <div class="d-flex gap-2 nav-item-title">
-                        <component :is="{...item.icon.element}" class="align-middle" /> {{ item.title }}
+                        <component v-if="item.icon?.element" :is="{...item.icon.element}" class="align-middle" /> {{ item.title }}
                     </div>
-                    <arrow-right class="is-justify-end" />
+                    <ArrowRight class="is-justify-end" />
                 </router-link>
             </template>
         </el-autocomplete>
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted} from "vue";
     import {useRouter} from "vue-router";
     import {useLeftMenu} from "override/components/useLeftMenu";
@@ -50,17 +51,23 @@
                 return [];
             }
             if(item.child) {
-                return item.child.filter(c => !c.hidden);
+                return item.child.filter(c => !c.hidden).map(c => {
+                    if (!c.icon?.element) {
+                        c.icon = item.icon;
+                    }
+
+                    return c;
+                });
             }
 
             return item;
         }).filter(item => item.href);
     });
 
-    const keyDown = (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+    const keyDown = (e: KeyboardEvent) => {
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === "k") {
             e.preventDefault();
-            searchInput.value.click();
+            searchInput.value.focus();
         }
     };
 

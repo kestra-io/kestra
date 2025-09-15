@@ -58,7 +58,7 @@ public class DayWeek extends Condition implements ScheduleCondition {
         description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
-    private final Property<String> date = new Property<>("{{ trigger.date }}");
+    private final Property<String> date = Property.ofExpression("{{ trigger.date }}");
 
     @NotNull
     @Schema(title = "The day of week.")

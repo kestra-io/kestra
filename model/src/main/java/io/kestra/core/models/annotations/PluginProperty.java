@@ -9,6 +9,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface PluginProperty {
+    String CORE_GROUP = "core";
+
     /**
      * @return whether the property is renderer
      */
@@ -28,4 +30,14 @@ public @interface PluginProperty {
      * @return whether the property is an internal storage URI
      */
     boolean internalStorageURI() default false;
+
+    /**
+     * @return the group of the property (for the NoCode editor properties grouping).
+     */
+    String group()  default "";
+
+    /**
+     * @return true if this property needs to be hidden from the documentation.
+     */
+    boolean hidden() default false;
 }

@@ -1,7 +1,10 @@
 package io.kestra.repository.postgres;
 
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
+import io.kestra.core.models.dashboards.filters.In;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Logs;
@@ -10,6 +13,8 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.Record;
+import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
 
@@ -23,26 +28,13 @@ import java.util.stream.Collectors;
 @Singleton
 @PostgresRepositoryEnabled
 public class PostgresLogRepository extends AbstractJdbcLogRepository {
+    private final JdbcFilterService filterService;
     @Inject
     public PostgresLogRepository(@Named("logs") PostgresRepository<LogEntry> repository,
                                  JdbcFilterService filterService) {
         super(repository, filterService);
-    }
 
-    @Override
-    protected Map<Logs.Fields, String> getWhereMapping() {
-        return Map.of(
-            Logs.Fields.DATE, "timestamp",
-            Logs.Fields.NAMESPACE, "namespace",
-            Logs.Fields.FLOW_ID, "flow_id",
-            Logs.Fields.TASK_ID, "task_id",
-            Logs.Fields.EXECUTION_ID, "execution_id",
-            Logs.Fields.TASK_RUN_ID, "taskrun_id",
-            Logs.Fields.ATTEMPT_NUMBER, "attempt_number",
-            Logs.Fields.TRIGGER_ID, "trigger_id",
-            Logs.Fields.LEVEL, "level::TEXT",
-            Logs.Fields.MESSAGE, "message"
-        );
+        this.filterService = filterService;
     }
 
     @Override
@@ -76,5 +68,40 @@ public class PostgresLogRepository extends AbstractJdbcLogRepository {
             default:
                 throw new IllegalArgumentException("Unsupported GroupType: " + groupType);
         }
+    }
+
+    @Override
+    protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters, Map<F, String> fieldsMapping) {
+        if (!ListUtils.isEmpty(filters)) {
+            // Check if descriptors contain a filter of type Logs.Fields.LEVEL and apply the custom filter "statesFilter" if present
+            List<In<Logs.Fields>> levelFilters = filters.stream()
+                .filter(descriptor -> descriptor.getField().equals(Logs.Fields.LEVEL) && descriptor instanceof In)
+                .map(descriptor -> (In<Logs.Fields>) descriptor)
+                .toList();
+
+            if (!levelFilters.isEmpty()) {
+                selectConditionStep = selectConditionStep.and(
+                    levelFilter(levelFilters.stream()
+                        .flatMap(levelFilter -> levelFilter.getValues().stream())
+                        .map(value -> Level.valueOf(value.toString()))
+                        .toList())
+                );
+            }
+
+            // Remove the state filters from descriptors
+            List<AbstractFilter<F>> remainingFilters = filters.stream()
+                .filter(descriptor -> !descriptor.getField().equals(Logs.Fields.LEVEL) || !(descriptor instanceof In))
+                .toList();
+
+            // Use the generic method addFilters with the remaining filters
+            return filterService.addFilters(selectConditionStep, fieldsMapping, remainingFilters);
+        } else {
+            return selectConditionStep;
+        }
+    }
+
+    private Condition levelFilter(List<Level> state) {
+        return DSL.cast(field("level"), String.class)
+            .in(state.stream().map(Enum::name).toList());
     }
 }

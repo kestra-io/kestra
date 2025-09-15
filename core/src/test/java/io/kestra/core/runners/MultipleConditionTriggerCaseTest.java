@@ -24,6 +24,7 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,7 +61,7 @@ public class MultipleConditionTriggerCaseTest {
         });
 
         // first one
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger",
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger",
             "trigger-multiplecondition-flow-a", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -70,7 +71,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(ended.size()).isEqualTo(1);
 
         // second one
-        execution = runnerUtils.runOne(null, "io.kestra.tests.trigger",
+        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger",
             "trigger-multiplecondition-flow-b", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -80,7 +81,7 @@ public class MultipleConditionTriggerCaseTest {
         receive.blockLast();
         assertThat(ended.size()).isEqualTo(3);
 
-        Flow flow = flowRepository.findById(null, "io.kestra.tests.trigger",
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests.trigger",
             "trigger-multiplecondition-listener").orElseThrow();
         Execution triggerExecution = ended.entrySet()
             .stream()
@@ -110,7 +111,7 @@ public class MultipleConditionTriggerCaseTest {
         });
 
         // first one
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger",
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger",
             "trigger-multiplecondition-flow-c", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
@@ -120,7 +121,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(listener.get()).isNull();
 
         // second one
-        execution = runnerUtils.runOne(null, "io.kestra.tests.trigger",
+        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger",
             "trigger-multiplecondition-flow-d", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -147,17 +148,17 @@ public class MultipleConditionTriggerCaseTest {
         });
 
         // flowA
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.preconditions",
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.preconditions",
             "flow-trigger-preconditions-flow-a", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // flowB: we trigger it two times, as flow-trigger-flow-preconditions-flow-listen is configured with resetOnSuccess: false it should be triggered two times
-        execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.preconditions",
+        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.preconditions",
             "flow-trigger-preconditions-flow-a", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.preconditions",
+        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.preconditions",
             "flow-trigger-preconditions-flow-b", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -189,13 +190,13 @@ public class MultipleConditionTriggerCaseTest {
         });
 
         // flowB
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.preconditions",
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.preconditions",
             "flow-trigger-preconditions-flow-b", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // flowA
-        execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.preconditions",
+        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.preconditions",
             "flow-trigger-preconditions-flow-a", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -226,7 +227,7 @@ public class MultipleConditionTriggerCaseTest {
             }
         });
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.paused",
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.paused",
             "flow-trigger-paused-flow", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size()).isEqualTo(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

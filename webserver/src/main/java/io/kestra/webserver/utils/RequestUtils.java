@@ -11,32 +11,101 @@ import org.slf4j.event.Level;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class RequestUtils {
+    private static final String QUERY_STRING_SEPARATOR = ":";
+
+    /**
+     * Transform colon-separated items to a {@link Map}.
+     *
+     * @param queryString the list of {@code key:value} parameters
+     * @return the map of split pairs
+     * @throws HttpStatusException when items can't be reliably split by the separator or there are duplicate keys
+     */
     public static Map<String, String> toMap(List<String> queryString) {
-        return queryString == null ? null : queryString
+        if (queryString == null) return Map.of();
+
+        Stream<AbstractMap.SimpleEntry<String, String>> entryStream = queryString
             .stream()
             .map(s -> {
-                String[] split = s.split("[: ]+");
+                String[] split = s.split(QUERY_STRING_SEPARATOR, 2);
                 if (split.length < 2 || split[0] == null || split[0].isEmpty()) {
-                    throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid queryString parameter");
+                    throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Can't split the queryString parameter by ':'");
                 }
 
-                return new AbstractMap.SimpleEntry<>(
-                    split[0],
-                    s.substring(s.indexOf(":") + 1).trim()
-                );
-            })
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                final String key = split[0].trim();
+                final String value = split[1].trim();
+
+                if (key.isEmpty() || value.isEmpty()) {
+                    throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Can't have an empty part of queryString");
+                }
+
+                if (key.matches(".*\\s.*")) {
+                    throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Key of queryString can't contain a whitespace character");
+                }
+
+                return new AbstractMap.SimpleEntry<>(key, value);
+            });
+
+        try {
+            return entryStream.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        } catch (IllegalStateException e) {
+            throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "The queryString parameter keys contains duplicities: " + e.getMessage());
+        }
     }
 
-    public static List<QueryFilter> mapLegacyParamsToFilters(
+    /**
+     * if filters is defined, use that, otherwise map all legacy params to the new filter API
+     * if you are manipulating an entity queryable by date, use {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, ZonedDateTime, ZonedDateTime, List, List, Duration, ExecutionRepositoryInterface.ChildFilter, List, String, String)} instead
+     *
+     * @return the new filter list
+     */
+    public static List<QueryFilter> getFiltersOrDefaultToLegacyMapping(
+        List<QueryFilter> filters,
+        String query,
+        String namespace,
+        String flowId,
+        String triggerId,
+        Level minLevel,
+        List<FlowScope> scope,
+        List<String> labels,
+        ExecutionRepositoryInterface.ChildFilter childFilter,
+        List<State.Type> state,
+        String workerId,
+        String triggerExecutionId
+    ) {
+        if (filters != null && !filters.isEmpty()) {
+            return filters;
+        }
+        return mapLegacyParamsToFilters(
+            query,
+            namespace,
+            flowId,
+            triggerId,
+            minLevel,
+            null,
+            null,
+            scope,
+            labels,
+            null,
+            childFilter,
+            state,
+            workerId,
+            triggerExecutionId
+        );
+    }
+
+    /**
+     * same as {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, List, List, ExecutionRepositoryInterface.ChildFilter, List, String, String)}
+     * , it additionally adds an Entity queryable by date, do date validation, and potentially add startDate filter
+     *
+     * @return the new filter list with dates handled, and a potential default startDate filter
+     */
+    public static List<QueryFilter> getFiltersOrDefaultToLegacyMapping(
+        List<QueryFilter> filters,
         String query,
         String namespace,
         String flowId,
@@ -52,7 +121,45 @@ public class RequestUtils {
         String workerId,
         String triggerExecutionId
     ) {
+        if (filters != null && !filters.isEmpty()) {
+            return QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters);
+        }
+        return QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(
+            mapLegacyParamsToFilters(
+                query,
+                namespace,
+                flowId,
+                triggerId,
+                minLevel,
+                startDate,
+                endDate,
+                scope,
+                labels,
+                timeRange,
+                childFilter,
+                state,
+                workerId,
+                triggerExecutionId
+            )
+        );
+    }
 
+    private static List<QueryFilter> mapLegacyParamsToFilters(
+        String query,
+        String namespace,
+        String flowId,
+        String triggerId,
+        Level minLevel,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        List<FlowScope> scope,
+        List<String> labels,
+        Duration timeRange,
+        ExecutionRepositoryInterface.ChildFilter childFilter,
+        List<State.Type> state,
+        String workerId,
+        String triggerExecutionId
+    ) {
         List<QueryFilter> filters = new ArrayList<>();
 
         if (query != null) {
@@ -66,7 +173,7 @@ public class RequestUtils {
         if (namespace != null) {
             filters.add(QueryFilter.builder()
                 .field(QueryFilter.Field.NAMESPACE)
-                .operation(QueryFilter.Op.STARTS_WITH)
+                .operation(QueryFilter.Op.PREFIX)
                 .value(namespace)
                 .build());
         }
@@ -163,8 +270,8 @@ public class RequestUtils {
         return filters;
     }
 
-    public static List<FlowScope> toFlowScopes(List<String> values) {
-        return Arrays.stream(values.getFirst().split(","))
+    public static List<FlowScope> toFlowScopes(String value) {
+        return Arrays.stream(value.split(","))
             .map(valueStr -> {
                 try {
                     return FlowScope.valueOf(valueStr.toUpperCase());

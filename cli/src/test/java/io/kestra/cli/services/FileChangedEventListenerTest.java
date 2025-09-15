@@ -1,13 +1,14 @@
 package io.kestra.cli.services;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.*;
-import org.junitpioneer.jupiter.RetryingTest;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,6 +44,7 @@ class FileChangedEventListenerTest {
     @AfterAll
     static void tearDown() throws IOException {
         if (Files.exists(Path.of(FILE_WATCH))) {
+            FileUtils.cleanDirectory(Path.of(FILE_WATCH).toFile());
             FileUtils.deleteDirectory(Path.of(FILE_WATCH).toFile());
         }
     }
@@ -54,10 +56,11 @@ class FileChangedEventListenerTest {
         }
     }
 
-    @RetryingTest(5) // Flaky on CI but always pass locally
+    @Test
     void test() throws IOException, TimeoutException {
+        var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getSimpleName(), "test");
         // remove the flow if it already exists
-        flowRepository.findByIdWithSource(null, "io.kestra.tests.watch", "myflow").ifPresent(flow -> flowRepository.delete(flow));
+        flowRepository.findByIdWithSource(tenant, "io.kestra.tests.watch", "myflow").ifPresent(flow -> flowRepository.delete(flow));
 
         // create a basic flow
         String flow = """
@@ -69,30 +72,33 @@ class FileChangedEventListenerTest {
                 type: io.kestra.plugin.core.log.Log
                 message: Hello World! 🚀
             """;
-        Files.write(Path.of(FILE_WATCH + "/myflow.yaml"), flow.getBytes());
+
+        GenericFlow genericFlow = GenericFlow.fromYaml(tenant, flow);
+        Files.write(Path.of(FILE_WATCH + "/" + genericFlow.uidWithoutRevision() + ".yaml"), flow.getBytes());
         Await.until(
-            () -> flowRepository.findById(null, "io.kestra.tests.watch", "myflow").isPresent(),
+            () -> flowRepository.findById(tenant, "io.kestra.tests.watch", "myflow").isPresent(),
             Duration.ofMillis(100),
             Duration.ofSeconds(10)
         );
-        Flow myflow = flowRepository.findById(null, "io.kestra.tests.watch", "myflow").orElseThrow();
+        Flow myflow = flowRepository.findById(tenant, "io.kestra.tests.watch", "myflow").orElseThrow();
         assertThat(myflow.getTasks()).hasSize(1);
         assertThat(myflow.getTasks().getFirst().getId()).isEqualTo("hello");
         assertThat(myflow.getTasks().getFirst().getType()).isEqualTo("io.kestra.plugin.core.log.Log");
 
         // delete the flow
-        Files.delete(Path.of(FILE_WATCH + "/myflow.yaml"));
+        Files.delete(Path.of(FILE_WATCH + "/" + genericFlow.uidWithoutRevision() + ".yaml"));
         Await.until(
-            () -> flowRepository.findById(null, "io.kestra.tests.watch", "myflow").isEmpty(),
+            () -> flowRepository.findById(tenant, "io.kestra.tests.watch", "myflow").isEmpty(),
             Duration.ofMillis(100),
             Duration.ofSeconds(10)
         );
     }
 
-    @RetryingTest(5) // Flaky on CI but always pass locally
+    @Test
     void testWithPluginDefault() throws IOException, TimeoutException {
+        var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getName(), "testWithPluginDefault");
         // remove the flow if it already exists
-        flowRepository.findByIdWithSource(null, "io.kestra.tests.watch", "pluginDefault").ifPresent(flow -> flowRepository.delete(flow));
+        flowRepository.findByIdWithSource(tenant, "io.kestra.tests.watch", "pluginDefault").ifPresent(flow -> flowRepository.delete(flow));
 
         // create a flow with plugin default
         String pluginDefault = """
@@ -108,21 +114,22 @@ class FileChangedEventListenerTest {
                 values:
                   message: Hello World!
             """;
-        Files.write(Path.of(FILE_WATCH + "/plugin-default.yaml"), pluginDefault.getBytes());
+        GenericFlow genericFlow = GenericFlow.fromYaml(tenant, pluginDefault);
+        Files.write(Path.of(FILE_WATCH + "/" + genericFlow.uidWithoutRevision() + ".yaml"), pluginDefault.getBytes());
         Await.until(
-            () -> flowRepository.findById(null, "io.kestra.tests.watch", "pluginDefault").isPresent(),
+            () -> flowRepository.findById(tenant, "io.kestra.tests.watch", "pluginDefault").isPresent(),
             Duration.ofMillis(100),
             Duration.ofSeconds(10)
         );
-        Flow pluginDefaultFlow = flowRepository.findById(null, "io.kestra.tests.watch", "pluginDefault").orElseThrow();
+        Flow pluginDefaultFlow = flowRepository.findById(tenant, "io.kestra.tests.watch", "pluginDefault").orElseThrow();
         assertThat(pluginDefaultFlow.getTasks()).hasSize(1);
         assertThat(pluginDefaultFlow.getTasks().getFirst().getId()).isEqualTo("helloWithDefault");
         assertThat(pluginDefaultFlow.getTasks().getFirst().getType()).isEqualTo("io.kestra.plugin.core.log.Log");
 
         // delete both files
-        Files.delete(Path.of(FILE_WATCH + "/plugin-default.yaml"));
+        Files.delete(Path.of(FILE_WATCH + "/" + genericFlow.uidWithoutRevision() + ".yaml"));
         Await.until(
-            () -> flowRepository.findById(null, "io.kestra.tests.watch", "pluginDefault").isEmpty(),
+            () -> flowRepository.findById(tenant, "io.kestra.tests.watch", "pluginDefault").isEmpty(),
             Duration.ofMillis(100),
             Duration.ofSeconds(10)
         );

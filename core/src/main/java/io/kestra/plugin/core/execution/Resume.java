@@ -17,6 +17,7 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.models.tasks.runners.PluginUtilsService;
+import io.kestra.plugin.core.flow.Pause;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,6 +27,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @SuperBuilder
@@ -62,14 +64,14 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
         description = """
             If you explicitly define an `executionId`, Kestra will use that specific ID.
 
-            If another `namespace` and `flowId` properties are set, Kestra will look for a paused execution for that corresponding flow.
+            If `executionId` is not set and `namespace` and `flowId` properties are set, Kestra will look for a paused execution for that corresponding flow.
 
             If `executionId` is not set, the task will use the ID of the current execution."""
     )
     private Property<String> executionId;
 
     @Schema(
-        title = "Inputs to be passed to the execution when it's resumed."
+        title = "Inputs to be passed to the execution when it's resumed"
     )
     private Property<Map<String, Object>> inputs;
 
@@ -91,11 +93,11 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
 
         Execution execution = executionRepository.findById(executionInfo.tenantId(), executionInfo.id())
             .orElseThrow(() -> new IllegalArgumentException("No execution found for execution id " + executionInfo.id()));
-        FlowInterface flow = flowExecutor.findByExecution(execution).orElseThrow(() -> new IllegalArgumentException("Flow not found for execution id " + executionInfo.id()));
+        FlowInterface flow = flowExecutor.findByExecution(execution).orElseThrow(() -> new IllegalArgumentException("Flow not found for execution ID " + executionInfo.id()));
 
         Map<String, Object> renderedInputs = runContext.render(this.inputs).asMap(String.class, Object.class);
         renderedInputs = !renderedInputs.isEmpty() ? renderedInputs : null;
-        Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, renderedInputs);
+        Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, renderedInputs, Pause.Resumed.now());
         executionQueue.emit(resumed);
 
         return null;

@@ -11,7 +11,10 @@
             <h1 class="h5 fw-semibold m-0 d-inline-flex">
                 <slot name="title">
                     {{ title }}
-                    <BetaBadge v-if="beta" />
+                    <el-tooltip v-if="description" :content="description">
+                        <Information class="ms-2" />
+                    </el-tooltip>
+                    <Badge v-if="beta" label="Beta" />
                 </slot>
                 <el-button
                     class="star-button"
@@ -24,42 +27,52 @@
         </div>
         <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
             <div class="d-none d-lg-flex align-items-center">
-                <global-search class="trigger-flow-guided-step" />
+                <GlobalSearch class="trigger-flow-guided-step" />
             </div>
             <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
-                <el-button v-if="shouldDisplayDeleteButton && logs !== undefined && logs.length > 0" @click="deleteLogs()">
+                <el-button v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" @click="deleteLogs()">
                     <TrashCan class="me-2" />
                     <span>{{ $t("delete logs") }}</span>
                 </el-button>
             </div>
             <slot name="additional-right" />
             <div class="d-flex fixed-buttons icons">
-                <impersonating />
+                <Impersonating />
             </div>
         </div>
     </nav>
 </template>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
+    import {mapStores} from "pinia";
+    import {useLogsStore} from "../../stores/logs";
+    import {useBookmarksStore} from "../../stores/bookmarks";
+    import {useCoreStore} from "../../stores/core";
     import Impersonating from "override/components/auth/Impersonating.vue";
     import GlobalSearch from "./GlobalSearch.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
     import StarIcon from "vue-material-design-icons/Star.vue";
-    import BetaBadge from "../global/BetaBadge.vue";
+    import Information from "vue-material-design-icons/Information.vue"
+    import Badge from "../global/Badge.vue";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {
             GlobalSearch,
             TrashCan,
             Impersonating,
-            BetaBadge
+            Information,
+            Badge
         },
         props: {
             title: {
                 type: String,
                 required: true
+            },
+            description: {
+                type: String,
+                default: undefined
             },
             breadcrumb: {
                 type: Array,
@@ -71,15 +84,10 @@
             },
         },
         computed: {
-            ...mapState("api", ["version"]),
-            ...mapState("core", ["tutorialFlows"]),
-            ...mapState("log", ["logs"]),
-            ...mapState("bookmarks", ["pages"]),
-            ...mapGetters("core", ["guidedProperties"]),
-            ...mapGetters("auth", ["user"]),
+            ...mapStores(useLogsStore, useBookmarksStore, useCoreStore, useAuthStore),
             tourEnabled(){
                 // Temporary solution to not showing the tour menu item for EE
-                return this.tutorialFlows?.length && !Object.keys(this.user).length
+                return this.coreStore.tutorialFlows?.length && !Object.keys(this.authStore.user).length
             },
             shouldDisplayDeleteButton() {
                 return this.$route.name === "flows/update" && this.$route.params?.tab === "logs"
@@ -88,7 +96,7 @@
                 return this.bookmarked ? StarIcon : StarOutlineIcon
             },
             bookmarked() {
-                return this.pages.some(page => page.path === this.currentFavURI)
+                return this.bookmarksStore.pages.some(page => page.path === this.currentFavURI)
             },
             currentFavURI() {
                 // make sure the value changes when the route changes
@@ -108,24 +116,24 @@
         methods: {
             restartGuidedTour() {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
+                this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, tourStarted: true};
 
                 this.$tours["guidedTour"]?.start();
             },
             deleteLogs() {
                 this.$toast().confirm(
                     this.$t("delete_all_logs"),
-                    () => this.$store.dispatch("log/deleteLogs", {namespace: this.namespace, flowId: this.flowId}),
+                    () => this.logsStore.deleteLogs({namespace: this.namespace, flowId: this.flowId}),
                     () => {}
                 )
             },
             onStarClick() {
                 if (this.bookmarked) {
-                    this.$store.dispatch("bookmarks/remove", {
+                    this.bookmarksStore.remove({
                         path: this.currentFavURI
                     })
                 } else {
-                    this.$store.dispatch("bookmarks/add", {
+                    this.bookmarksStore.add({
                         path: this.currentFavURI,
                         label: this.breadcrumb?.length ? `${this.breadcrumb[this.breadcrumb.length-1].label}: ${this.title}` : this.title,
                     })

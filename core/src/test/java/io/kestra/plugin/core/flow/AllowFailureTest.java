@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.State;
 
 import java.util.concurrent.TimeoutException;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
@@ -34,10 +35,10 @@ class AllowFailureTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/allow-failure.yaml"})
+    @LoadFlows(value = {"flows/valids/allow-failure.yaml"}, tenantId = "fail")
     void failed() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            "fail",
             "io.kestra.tests",
             "allow-failure",
             null,

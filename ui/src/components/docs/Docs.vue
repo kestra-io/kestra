@@ -1,6 +1,6 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
-    <docs-layout>
+    <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
+    <DocsLayout>
         <template #menu>
             <Toc />
         </template>
@@ -10,13 +10,14 @@
                 <MDCRenderer :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
             </template>
         </template>
-    </docs-layout>
+    </DocsLayout>
 </template>
 
 <script>
     import {MDCRenderer, getMDCParser} from "@kestra-io/ui-libs";
     import TopNavBar from "../layout/TopNavBar.vue";
-    import {mapGetters} from "vuex";
+    import {mapStores} from "pinia";
+    import {useDocStore} from "../../stores/doc";
     import DocsLayout from "./DocsLayout.vue";
     import Toc from "./Toc.vue";
     import {getCurrentInstance} from "vue";
@@ -24,7 +25,10 @@
 
     export default {
         computed: {
-            ...mapGetters("doc", ["pageMetadata"]),
+            ...mapStores(useDocStore),
+            pageMetadata() {
+                return this.docStore.pageMetadata;
+            },
             path() {
                 let routePath = this.$route.params.path;
                 return routePath && routePath.length > 0 ? routePath.replaceAll(/(^|\/)\.\//g, "$1") : undefined;
@@ -71,8 +75,8 @@
         watch: {
             "$route.params.path": {
                 async handler() {
-                    const response = await this.$store.dispatch("doc/fetchResource", `docs${this.path === undefined ? "" : `/${this.path}`}`);
-                    await this.$store.commit("doc/setPageMetadata", response.metadata);
+                    const response = await this.docStore.fetchResource(`docs${this.path === undefined ? "" : `/${this.path}`}`);
+                    this.docStore.pageMetadata = response.metadata;
                     let content = response.content;
                     if (!("canShare" in navigator)) {
                         content = content.replaceAll(/\s*web-share\s*/g, "");

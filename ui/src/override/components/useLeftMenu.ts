@@ -1,7 +1,9 @@
-import {computed, shallowRef} from "vue";
-import {useStore} from "vuex";
-import {useRouter} from "vue-router";
+import {shallowRef} from "vue";
+import {useRoute, useRouter} from "vue-router";
 import {useI18n} from "vue-i18n";
+import {useMiscStore} from "override/stores/misc";
+
+import {getDashboard} from "../../components/dashboard/composables/useDashboards";
 
 import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
 import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
@@ -16,11 +18,13 @@ import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
 import FormatListGroupPlus from "vue-material-design-icons/FormatListGroupPlus.vue";
 import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue";
 import ShieldKeyOutline from "vue-material-design-icons/ShieldKeyOutline.vue";
+import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue";
 
 export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"});
+    const $route = useRoute();
     const $router = useRouter();
-    const store = useStore();
+    const miscStore = useMiscStore();
 
     /**
      * Returns all route names that start with the given route
@@ -36,16 +40,17 @@ export function useLeftMenu() {
             .map((r) => r.name);
     }
 
-    const configs = computed(() => store.state.misc.configs);
-
     // This object seems to be a good candidate for a computed value
     // but cannot be. When it becomes a computed, the hack to set current
     // route as active in the blueprints activates pages forever.
     const generateMenu = () => {
         return [
             {
-                href: {name: "home"},
-                title: t("homeDashboard.title"),
+                href: {
+                    name: "home",
+                    params: {dashboard: getDashboard($route, "id")},
+                },
+                title: t("dashboards.labels.plural"),
                 icon: {
                     element: shallowRef(ViewDashboardVariantOutline),
                     class: "menu-icon",
@@ -81,7 +86,7 @@ export function useLeftMenu() {
                     element: shallowRef(ContentCopy),
                     class: "menu-icon",
                 },
-                hidden: !configs.value.isTemplateEnabled,
+                hidden: !miscStore.configs?.isTemplateEnabled,
             },
             {
                 href: {name: "executions/list"},
@@ -100,7 +105,7 @@ export function useLeftMenu() {
                     element: shallowRef(ChartTimeline),
                     class: "menu-icon",
                 },
-                hidden: !configs.value.isTaskRunEnabled,
+                hidden: !miscStore.configs?.isTaskRunEnabled,
             },
             {
                 href: {name: "logs/list"},
@@ -109,6 +114,18 @@ export function useLeftMenu() {
                 icon: {
                     element: shallowRef(TimelineTextOutline),
                     class: "menu-icon",
+                },
+            },
+            {
+                href: {name: "tests/list"},
+                routes: routeStartWith("tests"),
+                title: t("demos.tests.label"),
+                icon: {
+                    element: shallowRef(FlaskOutline),
+                    class: "menu-icon"
+                },
+                attributes: {
+                    locked: true,
                 },
             },
             {
@@ -149,6 +166,17 @@ export function useLeftMenu() {
                     class: "menu-icon",
                 },
                 child: [
+                    {
+                        title: t("blueprints.custom"),
+                        routes: routeStartWith("blueprints/flow"),
+                        attributes: {
+                            locked: true,
+                        },
+                        href: {
+                            name: "blueprints",
+                            params: {kind: "flow", tab: "custom"},
+                        },
+                    },
                     {
                         title: t("blueprints.flows"),
                         routes: routeStartWith("blueprints/flow"),
@@ -224,12 +252,15 @@ export function useLeftMenu() {
                     {
                         href: {name: "admin/stats"},
                         routes: routeStartWith("admin/stats"),
-                        title: t("stats"),
+                        title: t("system overview"),
                     },
                 ],
             }
         ];
     };
 
-    return {generateMenu};
+    return {
+        routeStartWith,
+        generateMenu
+    };
 }

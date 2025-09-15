@@ -100,7 +100,7 @@ abstract public class PluginUtilsService {
     @SuppressWarnings("unchecked")
     public static Map<String, String> transformInputFiles(RunContext runContext, Map<String, Object> additionalVars, @NotNull Object inputFiles) throws IllegalVariableEvaluationException, JsonProcessingException {
         if (inputFiles instanceof Map) {
-            Map<String, String> castedInputFiles = (Map<String, String>) ((Map<?, ?>) inputFiles);
+            Map<String, String> castedInputFiles = (Map<String, String>) inputFiles;
             Map<String, String> nullFilteredInputFiles = new HashMap<>();
             castedInputFiles.forEach((key, val) -> {
                 if (val != null) {
@@ -109,7 +109,6 @@ abstract public class PluginUtilsService {
             });
             return runContext.renderMap(nullFilteredInputFiles, additionalVars);
         } else if (inputFiles instanceof String inputFileString) {
-
 
             return JacksonMapper.ofJson(false).readValue(
                 runContext.render(inputFileString, additionalVars),

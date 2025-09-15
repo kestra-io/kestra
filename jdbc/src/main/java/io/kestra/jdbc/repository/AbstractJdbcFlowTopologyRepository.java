@@ -79,6 +79,29 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
             });
     }
 
+    @Override
+    public List<FlowTopology> findAll(String tenantId) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                List<Condition> ors = new ArrayList<>();
+                ors.add(
+                    DSL.and(
+                        buildTenantCondition("destination", tenantId),
+                        buildTenantCondition("source", tenantId)
+                    )
+                );
+
+                Select<Record1<Object>> from = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(DSL.or(ors));
+
+                return this.jdbcRepository.fetch(from);
+            });
+    }
+
     public void save(FlowInterface flow, List<FlowTopology> flowTopologies) {
         jdbcRepository
             .getDslContextWrapper()

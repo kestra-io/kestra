@@ -38,7 +38,7 @@ class BlueprintControllerTest {
     // GET "/v1/blueprints/kinds/{kind}/{id}/versions/{version}/graph"
     private static final String API_BLUEPRINT_GET_TAGS = "/v1/blueprints/kinds/%s/versions/%s/tags?q=%s";
     private static final String KIND_FLOW = BlueprintController.Kind.FLOW.val();
-    public static final String API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH = "/api/v1/blueprints/community/flow";
+    public static final String API_V1_BLUEPRINT_COMMUNITY_FLOW_PATH = "/api/v1/main/blueprints/community/flow";
 
     @Inject
     @Client("/")

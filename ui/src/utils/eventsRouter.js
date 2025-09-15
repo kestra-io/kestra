@@ -1,5 +1,6 @@
 import {nextTick} from "vue";
 import _isEqual from "lodash/isEqual";
+import {useApiStore} from "../stores/api";
 
 export const pageFromRoute = (route) => {
     return {
@@ -16,13 +17,14 @@ export const pageFromRoute = (route) => {
     }
 }
 
-export default (app, store, router) => {
+export default (_app, router) => {
+    const apiStore = useApiStore();
     router.afterEach((to, from) => {
         nextTick().then(() => {
             if (_isEqual(from, to)) {
                 return;
             }
-            store.dispatch("api/events", {
+            apiStore.events({
                 type: "PAGE",
                 page: pageFromRoute(to)
             });

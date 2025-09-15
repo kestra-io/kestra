@@ -75,7 +75,7 @@ public class Exit extends Task implements ExecutionUpdatableTask {
         description = "Using `KILLED` will end existing running tasks, and any other execution with a different state will continue to run."
     )
     @Builder.Default
-    private Property<ExitState> state = Property.of(ExitState.SUCCESS);
+    private Property<ExitState> state = Property.ofValue(ExitState.SUCCESS);
 
     @Override
     public Execution update(Execution execution, RunContext runContext) throws Exception {

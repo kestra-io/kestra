@@ -9,18 +9,18 @@
                     <span class="text-secondary">
                         {{ sectionName.toUpperCase() }}
                     </span>
-                    <recursive-toc :parent="{children}">
+                    <RecursiveToc :parent="{children}">
                         <template #default="{path, title}">
-                            <context-docs-link 
-                                @click="menuOpen = false" 
-                                :href="path.slice(5)" 
-                                use-raw
+                            <ContextDocsLink
+                                @click="menuOpen = false"
+                                :href="path.slice(5)"
+                                useRaw
                                 :class="{'active-page': isCurrentPage(path)}"
                             >
                                 {{ title.capitalize() }}
-                            </context-docs-link>
+                            </ContextDocsLink>
                         </template>
-                    </recursive-toc>
+                    </RecursiveToc>
                 </li>
             </template>
             <li v-else>
@@ -32,7 +32,7 @@
 
 <script setup>
     import {ref, computed, watch} from "vue";
-    import {useStore} from "vuex";
+    import {useDocStore} from "../../stores/doc";
     import {useI18n} from "vue-i18n";
 
     const {t} = useI18n({useScope: "global"});
@@ -42,7 +42,7 @@
     import RecursiveToc from "./RecursiveToc.vue";
     import ContextDocsLink from "./ContextDocsLink.vue";
 
-    const store = useStore();
+    const docStore = useDocStore();
 
     const menuOpen = ref(false);
 
@@ -57,27 +57,30 @@
         "Build with Kestra": [
             "Concepts",
             "Workflow Components",
-            "Expressions",
+            "Multi-Language Script Tasks",
             "Version Control & CI/CD",
             "Plugin Developer Guide",
             "How-to Guides"
         ],
         "Scale with Kestra": [
-            "Enterprise Edition",
+            "Cloud & Enterprise Edition",
             "Task Runners",
             "Best Practices"
         ],
         "Manage Kestra": [
             "Administrator Guide",
-            "Configuration Guide",
-            "Migration Guide",
+            "Migration Guide"
+        ],
+        "Reference Docs": [
+            "Configuration",
+            "Expressions",
+            "API Reference",
             "Terraform Provider",
-            "API Reference"
         ]
     }
 
     const rawStructure = ref(undefined);
-    const currentDocPath = computed(() => store.getters["doc/docPath"]);
+    const currentDocPath = computed(() => docStore.docPath);
 
     const normalizePath = (path) => {
         if (!path) return "";
@@ -88,11 +91,11 @@
         if (!currentDocPath.value || !path) return false;
         const normalizedCurrent = normalizePath(currentDocPath.value);
         const normalizedPath = normalizePath(path);
-        
+
         if (normalizedCurrent === normalizedPath) return true;
-        
+
         if (normalizedCurrent.startsWith(normalizedPath + "/")) return true;
-        
+
         return false;
     };
 
@@ -104,7 +107,7 @@
 
     watch(menuOpen, async (val) => {
         if(!val || rawStructure.value !== undefined) return;
-        rawStructure.value = await store.dispatch("doc/children");
+        rawStructure.value = await docStore.children();
     });
 
     const toc = computed(() => {

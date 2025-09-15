@@ -1,6 +1,8 @@
-import {useStore} from "vuex";
+import {provide, ref} from "vue";
+import {TOPOLOGY_CLICK_INJECTION_KEY} from "../../../../src/components/no-code/injectionKeys";
 import {vueRouter} from "storybook-vue3-router";
 import LowCodeEditor from "../../../../src/components/inputs/LowCodeEditor.vue";
+import {useAxios} from "../../../../src/utils/axios";
 
 export default {
     title: "Components/Inputs/LowCodeEditor",
@@ -16,12 +18,12 @@ export default {
 
 const Template= (args) => ({
     setup() {
-        const store = useStore()
-        store.$http = {
-            get(){
-                return  Promise.resolve({data: {}})
-            }
+        const axios = useAxios()
+        provide(TOPOLOGY_CLICK_INJECTION_KEY, ref())
+        axios.get = () => {
+            return  Promise.resolve({data: {}})
         }
+
         return () => <div style="width:600px; height:600px;"><LowCodeEditor {...args} /></div>;
     }
 });

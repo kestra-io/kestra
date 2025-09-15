@@ -1,36 +1,35 @@
 <template>
     <span ref="rootContainer">
         <!-- Valid -->
-        <el-button v-if="!errors && !warnings &&!infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success">
-            <check-circle class="text-success" />
+        <el-button v-if="!errors && !warnings &&!infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square">
+            <CheckBoldIcon class="text-success" />
         </el-button>
 
         <!-- Errors -->
         <el-tooltip
             effect="light"
             v-if="errors"
-            popper-class="p-0 bg-transparent"
+            popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
-            :show-arrow="false"
-            raw-content
+            :showArrow="false"
+            rawContent
             transition=""
             :persistent="true"
-            :hide-after="0"
+            :hideAfter="0"
         >
             <template #content>
                 <el-container class="validation-tooltip">
                     <el-header>
-                        <alert-circle class="align-middle text-danger" />
+                        <AlertCircle class="align-middle text-danger" />
                         <span class="align-middle">
-                            {{ $t("error detected") }}
+                            {{ t("error detected") }}
                         </span>
                     </el-header>
                     <el-main v-for="error in errors" :key="error">{{ error }}</el-main>
                 </el-container>
             </template>
-            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="error">
-                <alert-circle class="text-danger" />
-                <span class="text-danger label">{{ $t("error detected") }}</span>
+            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="error square">
+                <AlertCircle class="text-danger" />
             </el-button>
         </el-tooltip>
 
@@ -38,20 +37,20 @@
         <el-tooltip
             effect="light"
             v-if="warnings"
-            popper-class="p-0 bg-transparent"
+            popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
-            :show-arrow="false"
-            raw-content
+            :showArrow="false"
+            rawContent
             transition=""
             :persistent="true"
-            :hide-after="0"
+            :hideAfter="0"
         >
             <template #content>
                 <el-container class="validation-tooltip">
                     <el-header>
-                        <alert class="align-middle text-warning" />
+                        <Alert class="align-middle text-warning" />
                         <span class="align-middle">
-                            {{ $t("warning detected") }}
+                            {{ t("warning detected") }}
                         </span>
                     </el-header>
                     <el-main>
@@ -65,9 +64,8 @@
                     </el-main>
                 </el-container>
             </template>
-            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="warning">
-                <alert class="text-warning" />
-                <span class="text-warning label">{{ $t("warning detected") }}</span>
+            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="warning square">
+                <Alert class="text-warning" />
             </el-button>
         </el-tooltip>
 
@@ -75,28 +73,28 @@
         <el-tooltip
             effect="light"
             v-if="infos && !warnings"
-            popper-class="p-0 bg-transparent"
+            popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
-            :show-arrow="false"
-            raw-content
+            :showArrow="false"
+            rawContent
             transition=""
             :persistent="true"
-            :hide-after="0"
+            :hideAfter="0"
         >
             <template #content>
                 <el-container class="validation-tooltip">
                     <el-header>
-                        <alert class="align-middle text-info" />
+                        <Alert class="align-middle text-info" />
                         <span class="align-middle">
-                            {{ $t("informative notice") }}
+                            {{ t("informative notice") }}
                         </span>
                     </el-header>
                     <el-main>{{ infos.join("<\n") }}</el-main>
                 </el-container>
             </template>
             <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="info">
-                <alert class="text-info" />
-                <span class="text-info label">{{ $t("informative notice") }}</span>
+                <Alert class="text-info" />
+                <span class="text-info label">{{ t("informative notice") }}</span>
             </el-button>
         </el-tooltip>
     </span>
@@ -104,9 +102,12 @@
 
 <script setup lang="ts">
     import {nextTick, ref} from "vue";
-    import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
+    import CheckBoldIcon from "vue-material-design-icons/CheckBold.vue";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
+    import {useI18n} from "vue-i18n";
+
+    const {t} = useI18n();
 
     defineOptions({
         inheritAttrs: false,
@@ -159,7 +160,7 @@
         }
 
         &.success {
-            border-color: rgb(var(--bs-success-rgb));
+            border-color: var(--ks-border-success);
         }
 
         &:not(.success) span:not(.material-design-icon) {
@@ -181,12 +182,10 @@
         width: fit-content;
         min-width: 20vw;
         max-width: 50vw;
+        max-height: 500px;
         border-radius: $border-radius-lg;
-        color: $black;
-
-        html.dark & {
-            color: white;
-        }
+        color: var(--ks-content-primary);
+        overflow-y: auto;
 
         > * {
             height: fit-content;
@@ -207,18 +206,19 @@
         }
 
         .el-main {
-            padding: 2rem 1rem !important;
+            padding: 1.5rem 1rem !important;
             font-family: $font-family-monospace;
-            background-color: white;
+            background-color: var(--ks-background-card);
             white-space: normal;
-            border-top: 1px solid var(--bs-gray-300);
+            border-top: 1px solid var(--ks-border-primary);
             text-wrap: wrap;
-
-            html.dark & {
-                color: white;
-                background-color: var(--bs-gray-400);
-                border-top: 1px solid var(--bs-gray-600);
-            }
+            min-height: fit-content;
+            color: var(--ks-content-primary);
         }
+    }
+
+    .square {
+        width: 32px;
+        height: 32px;
     }
 </style>

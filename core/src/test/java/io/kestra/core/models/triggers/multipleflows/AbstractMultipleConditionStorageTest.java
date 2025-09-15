@@ -234,12 +234,12 @@ public abstract class AbstractMultipleConditionStorageTest {
             .id("condition-multiple")
             .conditions(ImmutableMap.of(
                 "flow-a", ExecutionFlow.builder()
-                    .flowId(Property.of("flow-a"))
-                    .namespace(Property.of(NAMESPACE))
+                    .flowId(Property.ofValue("flow-a"))
+                    .namespace(Property.ofValue(NAMESPACE))
                     .build(),
                 "flow-b", ExecutionFlow.builder()
-                    .flowId(Property.of("flow-b"))
-                    .namespace(Property.of(NAMESPACE))
+                    .flowId(Property.ofValue("flow-b"))
+                    .namespace(Property.ofValue(NAMESPACE))
                     .build()
             ))
             .timeWindow(sla)

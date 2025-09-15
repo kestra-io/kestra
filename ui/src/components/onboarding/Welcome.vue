@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar v-if="topbar" :title="routeInfo.title">
+    <TopNavBar v-if="topbar" :title="routeInfo.title">
         <template #additional-right>
             <ul>
                 <li>
@@ -9,7 +9,7 @@
                 </li>
             </ul>
         </template>
-    </top-nav-bar>
+    </TopNavBar>
     <div class="main">
         <div class="section-1">
             <div class="section-1-main">
@@ -21,10 +21,10 @@
                         width="180px"
                     >
                     <h2 class="section-1-title">
-                        {{ $t("homeDashboard.wel_text") }}
+                        {{ $t("welcome_page.wel_text") }}
                     </h2>
                     <p class="section-1-desc">
-                        {{ $t("homeDashboard.start") }}
+                        {{ $t("welcome_page.start") }}
                     </p>
                     <el-button
                         @click="startTour"
@@ -46,68 +46,62 @@
                     </el-button>
                 </div>
                 <el-divider>
-                    {{ $t("homeDashboard.guide") }}
+                    {{ $t("welcome_page.guide") }}
                 </el-divider>
-                <onboarding-bottom />
+                <OnboardingBottom />
             </div>
         </div>
     </div>
 </template>
 
 
-<script setup>
+<script setup lang="ts">
+    import {computed, getCurrentInstance} from "vue";
+    import {useCoreStore} from "../../stores/core";
+    import {useI18n} from "vue-i18n";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Play from "vue-material-design-icons/Play.vue";
-</script>
-
-<script>
-    import {mapGetters, mapState} from "vuex";
-    import OnboardingBottom from "./OnboardingBottom.vue";
+    import OnboardingBottom from "override/components/OnboardingBottom.vue";
     import kestraWelcome from "../../assets/onboarding/kestra_welcome.svg";
+    // @ts-expect-error - Component not typed
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import RouteContext from "../../mixins/routeContext";
-    import RestoreUrl from "../../mixins/restoreUrl";
+    import useRouteContext from "../../mixins/useRouteContext";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {useAuthStore} from "override/stores/auth";
 
+    const {topbar = true} = defineProps<{topbar?: boolean}>();
 
-    export default {
-        name: "CreateFlow",
-        mixins: [RouteContext, RestoreUrl],
-        components: {
-            OnboardingBottom,
-            TopNavBar
-        },
-        props: {
-            topbar: {
-                type: Boolean,
-                default: true
-            }
-        },
-        computed: {
-            ...mapGetters("core", ["guidedProperties"]),
-            ...mapState("auth", ["user"]),
-            logo() {
-                // get theme
-                return (localStorage.getItem("theme") || "light") === "light" ? kestraWelcome : kestraWelcome;
-            },
-            routeInfo() {
-                return {
-                    title: this.$t("homeDashboard.welcome")
-                };
-            },
-            canCreate() {
-                return this.user && this.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
-            }
-        },
-        methods: {
-            startTour() {
-                localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
-                this.$tours["guidedTour"]?.start();
-            },
-        }
-    }
+    const coreStore = useCoreStore();
+    const {t} = useI18n();
+    const instance = getCurrentInstance();
+
+    const logo = computed(() => {
+        return (localStorage.getItem("theme") || "light") === "light" ? kestraWelcome : kestraWelcome;
+    });
+
+    const routeInfo = computed(() => ({
+        title: t("welcome_page.welcome")
+    }));
+
+    const authStore = useAuthStore();
+
+    const canCreate = computed(() => {
+        return authStore.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
+    });
+
+    useRouteContext(routeInfo);
+    useRestoreUrl();
+
+    const startTour = () => {
+        localStorage.setItem("tourDoneOrSkip", "undefined");
+        coreStore.guidedProperties = {
+            ...coreStore.guidedProperties,
+            tourStarted: true
+        };
+        (instance?.proxy as any)?.$tours["guidedTour"]?.start();
+    };
 </script>
 
 <style scoped lang="scss">

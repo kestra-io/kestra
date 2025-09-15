@@ -10,14 +10,9 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.SearchResult;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowForExecution;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowScope;
-import io.kestra.core.models.flows.FlowWithException;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
@@ -38,28 +33,12 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.Condition;
-import org.jooq.DSLContext;
-import org.jooq.Field;
+import org.jooq.*;
 import org.jooq.Record;
-import org.jooq.Record1;
-import org.jooq.Record3;
-import org.jooq.Record4;
-import org.jooq.SQLDialect;
-import org.jooq.Select;
-import org.jooq.SelectConditionStep;
-import org.jooq.Table;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -307,24 +286,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public int countForNamespace(String tenantId, @Nullable String namespace) {
-        if (namespace == null) return count(tenantId);
-
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> DSL
-                .using(configuration)
-                .selectCount()
-                .from(fromLastRevision(true))
-                .where(this.defaultFilter(tenantId))
-                .and(DSL.or(
-                    NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%"),
-                    NAMESPACE_FIELD.eq(namespace)
-                ))
-                .fetchOne(0, int.class));
-    }
-
-    @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public List<Flow> findAll(String tenantId) {
         return this.jdbcRepository
@@ -391,6 +352,29 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     )
                     .from(fromLastRevision(true))
                     .where(this.defaultFilter(tenantId));
+
+                return select.fetch().map(record -> FlowWithSource.of(
+                    (Flow)jdbcRepository.map(record),
+                    record.get(SOURCE_FIELD)
+                ));
+            });
+    }
+
+    @Override
+    public List<FlowWithSource> findAllWithSourceWithNoAcl(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .select(
+                        field("value"),
+                        field("source_code"),
+                        field("namespace"),
+                        field("tenant_id")
+                    )
+                    .from(fromLastRevision(true))
+                    .where(this.noAclDefaultFilter(tenantId));
 
                 return select.fetch().map(record -> FlowWithSource.of(
                     (Flow)jdbcRepository.map(record),
@@ -513,6 +497,30 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             });
     }
 
+    @Override
+    public List<FlowWithSource> findByNamespacePrefixWithSource(String tenantId, String namespacePrefix) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                SelectConditionStep<Record4<String, String, String, String>> select = DSL
+                    .using(configuration)
+                    .select(
+                        SOURCE_FIELD,
+                        VALUE_FIELD,
+                        NAMESPACE_FIELD,
+                        TENANT_FIELD
+                    )
+                    .from(fromLastRevision(true))
+                    .where(DSL.or(NAMESPACE_FIELD.eq(namespacePrefix), NAMESPACE_FIELD.likeIgnoreCase(namespacePrefix + ".%")))
+                    .and(this.defaultFilter(tenantId));
+
+                return select.fetch().map(record -> FlowWithSource.of(
+                    (Flow)jdbcRepository.map(record),
+                    record.get(SOURCE_FIELD)
+                ));
+            });
+    }
+
     @SuppressWarnings("unchecked")
     private <R extends Record, E> SelectConditionStep<R> fullTextSelect(String tenantId, DSLContext context, List<Field<Object>> field) {
         ArrayList<Field<Object>> fields = new ArrayList<>();
@@ -527,7 +535,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         return (SelectConditionStep<R>) context
             .select(fields)
-            .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(fromLastRevision(false))
             .join(jdbcRepository.getTable().as("ft"))
             .on(
@@ -538,7 +545,17 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     abstract protected Condition findCondition(String query, Map<String, String> labels);
+
+    protected Condition findQueryCondition(String query) {
+        return findCondition(query, Map.of());
+    }
+
     abstract protected Condition findCondition(Object value, QueryFilter.Op operation);
+
+    @Override
+    protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
+        return findCondition(value, operation);
+    }
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -548,94 +565,39 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
-                SelectConditionStep<Record1<Object>> select = this.fullTextSelect(tenantId, context, List.of());
+                SelectConditionStep<Record1<Object>> select = getFindFlowSelect(tenantId, filters, context, null);
 
-                if (filters != null)
-                    for (QueryFilter filter : filters) {
-                        QueryFilter.Field field = filter.field();
-                        QueryFilter.Op operation = filter.operation();
-                        Object value = filter.value();
-                        if (field.equals(QueryFilter.Field.QUERY)) {
-                            select = select.and(this.findCondition(filter.value().toString(), Map.of()));
-                        } else if (field.equals(QueryFilter.Field.LABELS) && value instanceof Map<?, ?> labels)
-                            select = select.and(findCondition(labels, operation));
-                        else
-                            select = getConditionOnField(select, field, value, operation, null);
-                    }
-                return (ArrayListTotal)this.jdbcRepository.fetchPage(context, select, pageable);
+                return (ArrayListTotal) this.jdbcRepository.fetchPage(context, select, pageable);
             });
     }
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ArrayListTotal<Flow> find(
-        Pageable pageable,
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable Map<String, String> labels
-    ) {
+    public ArrayListTotal<FlowWithSource> findWithSource(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
+                SelectConditionStep<Record> select = getFindFlowSelect(tenantId, filters, context, List.of(field("source_code")));
 
-                SelectConditionStep<Record1<Object>> select = this.fullTextSelect(tenantId, context, Collections.emptyList());
-
-                select.and(this.findCondition(query, labels));
-
-                if (scope != null && !scope.containsAll(Arrays.stream(FlowScope.values()).toList())) {
-                    if (scope.contains(FlowScope.USER)) {
-                        select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
-                    } else if (scope.contains(FlowScope.SYSTEM)) {
-                        select = select.and(field("namespace").eq(namespaceUtils.getSystemFlowNamespace()));
-                    }
-                }
-
-                if (namespace != null) {
-                    select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
-                }
-
-                return (ArrayListTotal)this.jdbcRepository.fetchPage(context, select, pageable);
+                return (ArrayListTotal) this.jdbcRepository.fetchPage(
+                    context,
+                    select,
+                    pageable,
+                    record ->FlowWithSource.of(
+                        (Flow)jdbcRepository.map(record),
+                        record.get("source_code", String.class)
+                    )
+                );
             });
     }
 
-    @Override
-    public List<FlowWithSource> findWithSource(
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable Map<String, String> labels
-    ) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-                SelectConditionStep<Record> select = this.fullTextSelect(tenantId, context, List.of(field("source_code")));
-
-                select.and(this.findCondition(query, labels));
-
-                if (scope != null && !new HashSet<>(scope).containsAll(Arrays.stream(FlowScope.values()).toList())) {
-                    if (scope.contains(FlowScope.USER)) {
-                        select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
-                    } else if (scope.contains(FlowScope.SYSTEM)) {
-                        select = select.and(field("namespace").eq(namespaceUtils.getSystemFlowNamespace()));
-                    }
-                }
-
-                if (namespace != null) {
-                    select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
-                }
-
-                return select.fetch().map(record -> FlowWithSource.of(
-                    (Flow)jdbcRepository.map(record),
-                    record.get("source_code", String.class)
-                ));
-            });
+    @SuppressWarnings("unchecked")
+    private <R extends Record> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect) {
+        var select = this.fullTextSelect(tenantId, context, additionalFieldsToSelect != null ? additionalFieldsToSelect : List.of());
+        select = select.and(this.filter(filters, null, Resource.FLOW));
+        return (SelectConditionStep<R>) select;
     }
-
 
     abstract protected Condition findSourceCodeCondition(String query);
 
@@ -738,12 +700,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         this.jdbcRepository.persist(flow, fields);
 
         flowQueue.emit(flow);
-
-        if (nullOrExisting != null) {
-            eventPublisher.publishEvent(new CrudEvent<>(flow, nullOrExisting, crudEventType));
-        } else {
-            eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
-        }
+        eventPublisher.publishEvent(new CrudEvent<>(flow, nullOrExisting, crudEventType));
 
         return flowWithSource.toBuilder().revision(revision).build();
     }
@@ -773,8 +730,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         this.jdbcRepository.persist(deleted, fields);
 
         flowQueue.emit(deleted);
-
-        eventPublisher.publishEvent(new CrudEvent<>(flow, CrudEventType.DELETE));
+        eventPublisher.publishEvent(CrudEvent.delete(flow));
 
         return deleted;
     }

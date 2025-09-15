@@ -1,44 +1,67 @@
 <template>
     <el-select
         placement="right-end"
-        :popper-offset="20"
-        :show-arrow="false"
-        :suffix-icon="ChevronRight"
-        :placeholder="$t('kestra')"
-        popper-class="user-select border border-0"
+        :popperOffset="20"
+        :showArrow="false"
+        :suffixIcon="ChevronRight"
+        :placeholder="t('kestra')"
+        popperClass="user-select border border-0"
     >
         <template #prefix>
-            <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra">
+            <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra" class="user-avatar">
         </template>
         <template #header>
             <el-option :value="{}" class=" list-unstyled">
                 <div class="menu-item">
                     <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra">
-                    {{ $t("kestra") }}
+                    {{ t("kestra") }}
                 </div>
             </el-option>
         </template>
         <el-option label="Settings" value="settings">
             <RouterLink :to="{name: 'settings'}" class="menu-item">
                 <CogOutline class="menu-icon" />
-                {{ $t("settings.label") }}
+                {{ t("settings.label") }}
             </RouterLink>
         </el-option>
         <el-option label="slack" value="slack">
             <a href="https://kestra.io/slack" target="_blank" class="menu-item">
                 <Slack class="menu-icon" />
-                {{ $t("join_slack") }}
+                {{ t("join_slack") }}
             </a>
         </el-option>
+        <template #footer>
+            <el-option class="list-unstyled" :value="'logout'" @click="logout">
+                <div class="menu-item">
+                    <Logout class="menu-icon" />
+                    {{ t("setup.logout") }}
+                </div>
+            </el-option>
+        </template>
     </el-select>
 </template>
 
-<script setup>
-    import {RouterLink} from "vue-router";
+<script setup lang="ts">
+    import {RouterLink, useRouter} from "vue-router";
+    import {useI18n} from "vue-i18n";
 
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
     import Slack from "vue-material-design-icons/Slack.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import Logout from "vue-material-design-icons/Logout.vue";
+
+    import * as BasicAuth from "../../../utils/basicAuth";
+    import {useAxios} from "../../../utils/axios";
+
+    const router = useRouter();
+    const axios = useAxios();
+    const {t} = useI18n();
+
+    const logout = () => {
+        BasicAuth.logout();
+        delete axios.defaults.headers.common["Authorization"];
+        router.push({name: "login"});
+    };
 </script>
 
 <style lang="scss" scoped>
@@ -85,6 +108,13 @@
                 }
             }
         }
+
+        .el-select-dropdown__footer {
+            padding: 5px 0;
+            .el-select-dropdown__item {
+                margin: 0 !important;
+            }
+        }
     }
 }
 
@@ -99,5 +129,11 @@ html.menu-collapsed {
     .el-select__suffix {
         display: none;
     }
+}
+
+.user-avatar {
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+
 }
 </style>

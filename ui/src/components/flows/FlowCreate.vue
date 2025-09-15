@@ -1,94 +1,74 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" />
+    <TopNavBar :title="routeInfo.title" />
     <section class="full-container">
-        <template v-if="multiPanelEditor">
-            <MultiPanelEditorView v-if="flow" />
-        </template>
-        <template v-else>
-            <editor-view
-                v-if="flow"
-                :flow-id="flow?.id"
-                :namespace="flow?.namespace"
-                :flow-validation="flowValidation"
-                :flow-graph="flowGraph"
-                :is-read-only="false"
-                is-creating
-                is-dirty
-                :flow="flow"
-                :next-revision="1"
-            />
-        </template>
+        <MultiPanelFlowEditorView v-if="flowStore.flow" />
     </section>
 </template>
 
 <script>
-    import {mapGetters, mapMutations, mapState} from "vuex";
-    import {useStorage} from "@vueuse/core";
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import {mapStores} from "pinia";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import EditorView from "../inputs/EditorView.vue";
-    import MultiPanelEditorView from "./MultiPanelEditorView.vue";
+    import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
+    import {useBlueprintsStore} from "../../stores/blueprints";
+    import {useCoreStore} from "../../stores/core";
+    import {editorViewTypes} from "../../utils/constants";
 
-    import {getRandomFlowID} from "../../../scripts/product/flow";
+    import {getRandomID} from "../../../scripts/id";
+    import {useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
+    import {defaultNamespace} from "../../composables/useNamespaces";
 
     export default {
         mixins: [RouteContext],
         components: {
-            MultiPanelEditorView,
-            EditorView,
+            MultiPanelFlowEditorView,
             TopNavBar
         },
 
-        setup() {
-            return {
-                multiPanelEditor: useStorage("multiPanelEditor", false)
-            }
-        },
         created() {
-            this.$store.commit("flow/setIsCreating", true);
+            this.flowStore.isCreating = true;
             if (this.$route.query.reset) {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
+                this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, tourStarted: true};
                 this.$tours["guidedTour"]?.start();
             }
             this.setupFlow()
-            this.closeAllTabs()
+            this.editorStore.closeAllTabs()
         },
         beforeUnmount() {
-            this.$store.commit("flow/setFlowValidation", undefined);
+            this.flowStore.flowValidation = undefined;
         },
         methods: {
-            ...mapMutations("editor", ["closeAllTabs"]),
-
             async setupFlow() {
                 const blueprintId = this.$route.query.blueprintId;
                 const blueprintSource = this.$route.query.blueprintSource;
-                if (this.$route.query.copy && this.flow){
-                    this.$store.commit("flow/setFlowYaml", this.flow.source);
+                let flowYaml = ""
+                if (this.$route.query.copy && this.flowStore.flow){
+                    flowYaml = this.flowStore.flow.source;
                 } else if (blueprintId && blueprintSource) {
-                    this.$store.commit("flow/setFlowYaml", await this.$store.dispatch("blueprints/getBlueprintSource", {type: blueprintSource, kind: "flow", id: blueprintId}));
+                    flowYaml = await this.blueprintsStore.getBlueprintSource({type: blueprintSource, kind: "flow", id: blueprintId});
                 } else {
-                    const selectedNamespace = this.$route.query.namespace || "company.team";
-                    this.$store.commit("flow/setFlowYaml", `id: ${getRandomFlowID()}
+                    const selectedNamespace = this.$route.query.namespace || defaultNamespace() || "company.team";
+                    flowYaml = `id: ${getRandomID()}
 namespace: ${selectedNamespace}
 
 tasks:
   - id: hello
     type: io.kestra.plugin.core.log.Log
-    message: Hello World! 🚀`);
+    message: Hello World! 🚀`;
                 }
 
-                this.$store.commit("flow/setFlow", {...YAML_UTILS.parse(this.flowYaml), source: this.flowYaml});
-                this.$store.dispatch("flow/initYamlSource", {});
+                this.flowStore.flowYaml = flowYaml;
+                this.flowStore.flowYamlBeforeAdd = flowYaml;
+
+                this.flowStore.flow = {...YAML_UTILS.parse(this.flowYaml), source: this.flowStore.flowYaml};
+                this.flowStore.initYamlSource({viewTypes: editorViewTypes.SOURCE_DOC});
             }
         },
         computed: {
-            ...mapState("flow", ["flowGraph"]),
-            ...mapState("auth", ["user"]),
-            ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
-            ...mapGetters("core", ["guidedProperties"]),
-            ...mapGetters("flow", ["flow", "flowValidation", "flowYaml"]),
+            ...mapStores(useBlueprintsStore, useCoreStore, useEditorStore, useFlowStore),
             routeInfo() {
                 return {
                     title: this.$t("flows")
@@ -99,7 +79,7 @@ tasks:
             }
         },
         beforeRouteLeave(to, from, next) {
-            this.$store.commit("flow/setFlow", null);
+            this.flowStore.flow = undefined;
             next();
         }
     };

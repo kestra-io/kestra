@@ -3,7 +3,7 @@
         <template #content>
             <code>{{ value }}</code>
         </template>
-        <code :id="uuid" @click="onClick" class="text-nowrap" :class="{'link': hasClickListener}">
+        <code :id="uuid" @click="emit('click')" class="text-nowrap" :class="{'link': hasClickListener}">
             {{ transformValue }}
         </code>
     </el-tooltip>
@@ -12,57 +12,51 @@
     </code>
 </template>
 
-<script>
+<script setup lang="ts">
+    import {computed, useAttrs} from "vue";
     import Utils from "../utils/utils";
 
-    export default {
-        props: {
-            value: {
-                type: String,
-                default: undefined
-            },
-            shrink: {
-                type: Boolean,
-                default: true
-            },
-            size: {
-                type: Number,
-                default: 8
-            },
+    const props = defineProps({
+        value: {
+            type: String,
+            default: undefined
         },
-        data() {
-            return {
-                uuid: Utils.uid(),
-            };
+        shrink: {
+            type: Boolean,
+            default: true
         },
-        methods: {
-            onClick() {
-                if (this.hasClickListener) {
-                    this.$attrs.onClick();
-                }
-            }
-        },
-        computed: {
-            hasClickListener() {
-                return (this.$attrs && this.$attrs.onClick)
-            },
-            hasTooltip() {
-                return this.shrink && this.value && this.value.length > this.size;
-            },
-            transformValue() {
-                if (!this.value) {
-                    return "";
-                }
-
-                if (!this.shrink) {
-                    return this.value;
-                }
-
-                return this.value.toString().substr(0, this.size) +
-                    (this.value.length > this.size && this.size !== 8 ? "…" : "");
-            },
+        size: {
+            type: Number,
+            default: 8
         }
-    };
+    })
+
+    const uuid = Utils.uid();
+
+    const emit = defineEmits(["click"]);
+
+    const hasTooltip = computed(() => {
+        return props.shrink && props.value && props.value.length > props.size;
+    })
+
+    const attrs = useAttrs();
+
+    const hasClickListener = computed(() => {
+        return Boolean(attrs.onClick);
+    })
+
+    const transformValue = computed(() => {
+        if (!props.value) {
+            return "";
+        }
+
+        if (!props.shrink) {
+            return props.value;
+        }
+
+        return props.value.toString().substr(0, props.size) +
+            (props.value.length > props.size && props.size !== 8 ? "…" : "");
+    })
 </script>
 
 <style lang="scss" scoped>

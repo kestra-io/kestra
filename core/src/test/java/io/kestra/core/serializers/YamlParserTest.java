@@ -22,7 +22,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
@@ -48,7 +47,7 @@ class YamlParserTest {
         Task optionals = flow.getTasks().get(2);
         assertThat(optionals.getTimeout()).isEqualTo(Property.builder().expression("PT60M").build());
         assertThat(optionals.getRetry().getType()).isEqualTo("constant");
-        assertThat(optionals.getRetry().getMaxAttempt()).isEqualTo(5);
+        assertThat(optionals.getRetry().getMaxAttempts()).isEqualTo(5);
         assertThat(((Constant) optionals.getRetry()).getInterval().getSeconds()).isEqualTo(900L);
     }
 
@@ -64,7 +63,7 @@ class YamlParserTest {
         Task optionals = flow.getTasks().get(2);
         assertThat(optionals.getTimeout()).isEqualTo(Property.builder().expression("PT60M").build());
         assertThat(optionals.getRetry().getType()).isEqualTo("constant");
-        assertThat(optionals.getRetry().getMaxAttempt()).isEqualTo(5);
+        assertThat(optionals.getRetry().getMaxAttempts()).isEqualTo(5);
         assertThat(((Constant) optionals.getRetry()).getInterval().getSeconds()).isEqualTo(900L);
     }
 
@@ -165,7 +164,7 @@ class YamlParserTest {
         Flow flow = this.parse("flows/valids/minimal.yaml");
 
         String s = MAPPER.writeValueAsString(flow);
-        assertThat(s).isEqualTo("{\"id\":\"minimal\",\"namespace\":\"io.kestra.tests\",\"revision\":2,\"disabled\":false,\"deleted\":false,\"labels\":[{\"key\":\"system.readOnly\",\"value\":\"true\"}],\"tasks\":[{\"id\":\"date\",\"type\":\"io.kestra.plugin.core.debug.Return\",\"format\":\"{{taskrun.startDate}}\"}]}");
+        assertThat(s).isEqualTo("{\"id\":\"minimal\",\"namespace\":\"io.kestra.tests\",\"revision\":2,\"disabled\":false,\"deleted\":false,\"labels\":[{\"key\":\"system.readOnly\",\"value\":\"true\"},{\"key\":\"existing\",\"value\":\"label\"}],\"tasks\":[{\"id\":\"date\",\"type\":\"io.kestra.plugin.core.debug.Return\",\"format\":\"{{taskrun.startDate}}\"}]}");
     }
 
     @Test
@@ -195,7 +194,7 @@ class YamlParserTest {
             () -> this.parse("flows/invalids/invalid-property.yaml")
         );
 
-        assertThat(exception.getMessage()).isEqualTo("Unrecognized field \"invalid\" (class io.kestra.plugin.core.debug.Return), not marked as ignorable (14 known properties: \"logLevel\", \"timeout\", \"retry\", \"allowWarning\", \"format\", \"version\", \"type\", \"id\", \"description\", \"workerGroup\", \"runIf\", \"logToFile\", \"disabled\", \"allowFailure\"])");
+        assertThat(exception.getMessage()).startsWith("Unrecognized field \"invalid\" (class io.kestra.plugin.core.debug.Return), not marked as ignorable");
         assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
         assertThat(exception.getConstraintViolations().iterator().next().getPropertyPath().toString()).isEqualTo("io.kestra.core.models.flows.Flow[\"tasks\"]->java.util.ArrayList[0]->io.kestra.plugin.core.debug.Return[\"invalid\"]");
     }

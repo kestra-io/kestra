@@ -102,11 +102,11 @@ class FlowTopologyServiceTest {
                     .type(io.kestra.plugin.core.trigger.Flow.class.getName())
                     .conditions(List.of(
                         ExecutionFlow.builder()
-                            .namespace(Property.of("io.kestra.ee"))
-                            .flowId(Property.of("parent"))
+                            .namespace(Property.ofValue("io.kestra.ee"))
+                            .flowId(Property.ofValue("parent"))
                             .build(),
                         ExecutionStatus.builder()
-                            .in(Property.of(List.of(State.Type.SUCCESS)))
+                            .in(Property.ofValue(List.of(State.Type.SUCCESS)))
                             .build()
                     ))
                     .build()
@@ -142,22 +142,22 @@ class FlowTopologyServiceTest {
                     .type(io.kestra.plugin.core.trigger.Flow.class.getName())
                     .conditions(List.of(
                         ExecutionStatus.builder()
-                            .in(Property.of(List.of(State.Type.SUCCESS)))
+                            .in(Property.ofValue(List.of(State.Type.SUCCESS)))
                             .type(ExecutionStatus.class.getName())
                             .build(),
                         MultipleCondition.builder()
                             .type(MultipleCondition.class.getName())
                             .conditions(Map.of(
                                 "first", ExecutionFlow.builder()
-                                    .namespace(Property.of("io.kestra.ee"))
-                                    .flowId(Property.of("parent"))
+                                    .namespace(Property.ofValue("io.kestra.ee"))
+                                    .flowId(Property.ofValue("parent"))
                                     .build(),
                                 "second", ExecutionFlow.builder()
-                                    .namespace(Property.of("io.kestra.others"))
-                                    .flowId(Property.of("invalid"))
+                                    .namespace(Property.ofValue("io.kestra.others"))
+                                    .flowId(Property.ofValue("invalid"))
                                     .build(),
                                 "filtered", ExecutionStatus.builder()
-                                    .in(Property.of(List.of(State.Type.SUCCESS)))
+                                    .in(Property.ofValue(List.of(State.Type.SUCCESS)))
                                     .build(),
                                 "variables", Expression.builder()
                                     .expression(new Property<>("{{ true }}"))
@@ -232,7 +232,7 @@ class FlowTopologyServiceTest {
         return Return.builder()
             .id("return")
             .type(Return.class.getName())
-            .format(Property.of("ok"))
+            .format(Property.ofValue("ok"))
             .build();
     }
 

@@ -3,9 +3,9 @@
         effect="light"
         :persistent="false"
         transition=""
-        :hide-after="0"
+        :hideAfter="0"
         :content="$t('Set labels tooltip')"
-        raw-content
+        rawContent
         :placement="tooltipPosition"
     >
         <component
@@ -17,7 +17,7 @@
             {{ $t("Set labels") }}
         </component>
     </el-tooltip>
-    <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="isOpen" v-model="isOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <h5>{{ $t("Set labels") }}</h5>
         </template>
@@ -35,9 +35,9 @@
 
         <el-form>
             <el-form-item :label="$t('execution labels')">
-                <label-input
+                <LabelInput
                     v-model:labels="executionLabels"
-                    :existing-labels="execution.labels"
+                    :existingLabels="execution.labels"
                 />
             </el-form-item>
         </el-form>
@@ -49,13 +49,16 @@
 </script>
 
 <script>
-    import {mapState, mapGetters} from "vuex";
+    import {mapStores} from "pinia";
+    import {useMiscStore} from "override/stores/misc";
+    import {useExecutionsStore} from "../../stores/executions";
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {State} from "@kestra-io/ui-libs"
 
     import {filterLabels} from "./utils"
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {LabelInput},
@@ -82,20 +85,19 @@
                 }
 
                 this.isOpen = false;
-                this.$store.dispatch("execution/setLabels", {
+                this.executionsStore.setLabels({
                     labels: filtered.labels,
                     executionId: this.execution.id
                 }).then(response => {
-                    this.$store.commit("execution/setExecution", response.data)
+                    this.executionsStore.execution = response.data
                     this.$toast().success(this.$t("Set labels done"));
                 })
             },
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapGetters("misc", ["configs"]),
+            ...mapStores(useMiscStore, useExecutionsStore, useAuthStore),
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 
@@ -112,7 +114,7 @@
             isOpen() {
                 this.executionLabels = [];
 
-                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
 
                 if (this.execution.labels) {
                     this.executionLabels = this.execution.labels.filter(label => !toIgnore.some(prefix => label.key?.startsWith(prefix)));

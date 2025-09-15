@@ -241,7 +241,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         even if an image with the same tag already exists."""
     )
     @Builder.Default
-    protected Property<PullPolicy> pullPolicy = Property.of(PullPolicy.IF_NOT_PRESENT);
+    protected Property<PullPolicy> pullPolicy = Property.ofValue(PullPolicy.IF_NOT_PRESENT);
 
     @Schema(
         title = "A list of device requests to be sent to device drivers."
@@ -289,21 +289,21 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     )
     @NotNull
     @Builder.Default
-    private Property<FileHandlingStrategy> fileHandlingStrategy = Property.of(FileHandlingStrategy.VOLUME);
+    private Property<FileHandlingStrategy> fileHandlingStrategy = Property.ofValue(FileHandlingStrategy.VOLUME);
 
     @Schema(
         title = "Whether the container should be deleted upon completion."
     )
     @NotNull
     @Builder.Default
-    private Property<Boolean> delete = Property.of(true);
+    private Property<Boolean> delete = Property.ofValue(true);
 
     @Builder.Default
     @Schema(
         title = "Whether to wait for the container to exit."
     )
     @NotNull
-    private Property<Boolean> wait = Property.of(true);
+    private Property<Boolean> wait = Property.ofValue(true);
 
     @Builder.Default
     @NotNull
@@ -398,7 +398,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 String remotePath = windowsToUnixPath(taskCommands.getWorkingDirectory().toString());
 
                 // first, create an archive
-                Path fileArchive = runContext.workingDir().createFile("inputFiles.tart");
+                Path fileArchive = runContext.workingDir().createFile("inputFiles.tar");
                 try (FileOutputStream fos = new FileOutputStream(fileArchive.toString());
                      TarArchiveOutputStream out = new TarArchiveOutputStream(fos)) {
                     out.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX); // allow long file name
@@ -765,7 +765,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         }
 
         if (this.getCpu() != null && this.getCpu().getCpus() != null) {
-            hostConfig.withCpuQuota(runContext.render(this.getCpu().getCpus()).as(Long.class).orElseThrow() * 10000L);
+            Double cpuValue = runContext.render(this.getCpu().getCpus()).as(Double.class).orElseThrow();
+            hostConfig.withNanoCPUs((long)(cpuValue * 1_000_000_000L));
         }
 
         if (this.getMemory() != null) {
@@ -827,8 +828,23 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             .longValue();
     }
 
+    private String getImageNameWithoutTag(String fullImageName) {
+        if (fullImageName == null || fullImageName.isEmpty()) {
+            return fullImageName;
+        }
+
+        int lastColonIndex = fullImageName.lastIndexOf(':');
+        int firstSlashIndex = fullImageName.indexOf('/');
+        if (lastColonIndex > -1 && (firstSlashIndex == -1 || lastColonIndex > firstSlashIndex)) {
+            return fullImageName.substring(0, lastColonIndex);
+        } else {
+            return fullImageName; // No tag found or the colon is part of the registry host
+        }
+    }
+
     private void pullImage(DockerClient dockerClient, String image, PullPolicy policy, Logger logger) {
-        NameParser.ReposTag imageParse = NameParser.parseRepositoryTag(image);
+        var imageNameWithoutTag = getImageNameWithoutTag(image);
+        var parsedTagFromImage = NameParser.parseRepositoryTag(image);
 
         if (policy.equals(PullPolicy.IF_NOT_PRESENT)) {
             try {
@@ -839,20 +855,22 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             }
         }
 
-        try (PullImageCmd pull = dockerClient.pullImageCmd(image)) {
+        // pullImageCmd without the tag (= repository) to avoid being redundant with withTag below
+        // and prevent errors with Podman trying to pull "image:tag:tag"
+        try (var pull = dockerClient.pullImageCmd(imageNameWithoutTag)) {
             new RetryUtils().<Boolean, InternalServerErrorException>of(
                 Exponential.builder()
                     .delayFactor(2.0)
                     .interval(Duration.ofSeconds(5))
                     .maxInterval(Duration.ofSeconds(120))
-                    .maxAttempt(5)
+                    .maxAttempts(5)
                     .build()
             ).run(
                 (bool, throwable) -> throwable instanceof InternalServerErrorException ||
                     throwable.getCause() instanceof ConnectionClosedException,
                 () -> {
-                    String tag = !imageParse.tag.isEmpty() ? imageParse.tag : "latest";
-                    String repository = pull.getRepository().contains(":") ? pull.getRepository().split(":")[0] : pull.getRepository();
+                    var tag = !parsedTagFromImage.tag.isEmpty() ? parsedTagFromImage.tag : "latest";
+                    var repository = pull.getRepository().contains(":") ? pull.getRepository().split(":")[0] : pull.getRepository();
                     pull
                         .withTag(tag)
                         .exec(new PullImageResultCallback())

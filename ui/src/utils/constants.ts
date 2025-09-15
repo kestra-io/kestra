@@ -1,9 +1,3 @@
-export const SECTIONS = {
-    TASKS: "TASKS",
-    TRIGGERS: "TRIGGERS",
-    TASK_RUNNERS: "TASK_RUNNERS",
-}
-
 export const stateGlobalChartTypes = {
     EXECUTIONS: "executions",
     TASKRUNS: "taskruns"
@@ -38,8 +32,7 @@ export const storageKeys = {
     PAGINATION_SIZE: "paginationSize",
     IMPERSONATE: "impersonate",
     EDITOR_VIEW_TYPE: "editorViewType",
-    DASHBORD_SELECTED: "dashboardSelected",
-    AUTO_REFRESH_INTERVAL: "autoRefreshInterval"
+    AUTO_REFRESH_INTERVAL: "autoRefreshInterval",
 }
 
 export const executeFlowBehaviours = {
@@ -52,4 +45,13 @@ export const stateDisplayValues = {
 }
 
 export const PLUGIN_DEFAULTS_SECTION = "plugin defaults"
+
+export const SECTIONS_MAP = {
+        tasks: "tasks",
+        triggers: "triggers",
+        "error handlers": "errors",
+        finally: "finally",
+        "after execution": "afterExecution",
+        [PLUGIN_DEFAULTS_SECTION]: "pluginDefaults",
+} as const;
 

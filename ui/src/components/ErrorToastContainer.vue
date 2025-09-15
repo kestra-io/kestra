@@ -49,6 +49,9 @@
         components: {Slack},
         methods: {
             async renderMarkdown() {
+                if (this.message.response && this.message.response.status === 503) {
+                    return await Markdown.render("Server is temporarily unavailable. Please try again later.", {html: true});
+                }
                 return await Markdown.render(this.message.message || this.message.content.message, {html: true});
             },
         },
@@ -57,9 +60,9 @@
 
 <style lang="scss" scoped>
     ul {
-        margin-top: 1rem;
-        margin-bottom: 0;
-        margin-left: -3rem;
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style-type: none;
     }
 
     li {

@@ -37,8 +37,8 @@ class DayWeekTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         DayWeek build = DayWeek.builder()
-            .date(Property.of(date))
-            .dayOfWeek(Property.of(dayOfWeek))
+            .date(Property.ofValue(date))
+            .dayOfWeek(Property.ofValue(dayOfWeek))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

@@ -48,7 +48,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
         }
 
         ExecuteFlow executeFlow = getExecuteFlow(extensionContext);
-        String tenantId = ExecuteFlow.DEFAULT_TENANT_ID.equals(executeFlow.tenantId()) ? null : executeFlow.tenantId();
+        String tenantId = executeFlow.tenantId();
 
         String path = executeFlow.value();
         URL url = getClass().getClassLoader().getResource(path);
@@ -73,6 +73,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
         Flow loadedFlow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
         flowRepository.findAllForAllTenants().stream()
             .filter(flow -> Objects.equals(flow.getId(), loadedFlow.getId()))
+            .filter(flow -> Objects.equals(flow.getTenantId(), executeFlow.tenantId()))
             .forEach(flow -> flowRepository.delete(FlowWithSource.of(flow, "unused")));
     }
 

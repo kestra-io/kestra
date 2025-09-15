@@ -11,8 +11,7 @@ const getNestedKeys = (obj, prefix = "") =>
         keys.push(fullKey);
         if (
             typeof obj[key] === "object" &&
-            obj[key] &&
-            !Array.isArray(obj[key])
+            obj[key]
         ) {
             keys.push(...getNestedKeys(obj[key], fullKey));
         }
@@ -25,6 +24,9 @@ const content = getNestedKeys(readJSON(getPath("en"))["en"]);
 const languages = ["de", "es", "fr", "hi", "it", "ja", "ko", "pl", "pt", "ru", "zh_CN"];
 const paths = languages.map((lang) => getPath(lang));
 
+const globalMissing = {}
+const globalExtra = {};
+
 languages.forEach((lang, i) => {
     const current = getNestedKeys(readJSON(paths[i])[lang]);
 
@@ -35,4 +37,20 @@ languages.forEach((lang, i) => {
     console.log(missing.length ? `Missing keys: \x1b[31m${missing.join(", ")}\x1b[0m` : "No missing keys.");
     console.log(extra.length ? `Extra keys: \x1b[32m${extra.join(", ")}\x1b[0m` : "No extra keys.");
     console.log("---\n");
+
+    if(missing.length) globalMissing[lang] = missing;
+    if(extra.length) globalExtra[lang] = extra;
 });
+
+let errorString = ""
+if(Object.keys(globalMissing).length) {
+    errorString += "\nMissing keys in translations"
+}
+
+if(Object.keys(globalExtra).length) {
+    errorString += "\nExtra keys in translations"
+}
+
+if(errorString.length){
+    throw new Error(errorString);
+}

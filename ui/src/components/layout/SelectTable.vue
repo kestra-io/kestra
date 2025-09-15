@@ -4,32 +4,27 @@
             <slot name="select-actions" />
         </div>
 
-        <NoData v-if="data.length === 0 && infiniteScrollLoad === undefined" />
-
-        <template v-else>
-            <el-table
-                ref="table"
-                v-bind="$attrs"
-                :data="data"
-                @selection-change="selectionChanged"
-                v-el-table-infinite-scroll="infiniteScrollLoadWithDisableHandling"
-                :infinite-scroll-disabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
-                :infinite-scroll-delay="0"
-                :height="tableHeight"
-            >
-                <el-table-column type="selection" v-if="selectable" />
-                <slot name="default" />
-            </el-table>
-        </template>
+        <el-table
+            ref="table"
+            v-bind="$attrs"
+            :data="data"
+            :emptyText="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
+            @selection-change="selectionChanged"
+            v-el-table-infinite-scroll="infiniteScrollLoadWithDisableHandling"
+            :infiniteScrollDisabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
+            :infiniteScrollDelay="0"
+            :height="data.length === 0 && infiniteScrollLoad === undefined ? '100px' : tableHeight"
+        >
+            <el-table-column type="selection" v-if="selectable && showSelection" />
+            <slot name="default" />
+        </el-table>
     </div>
 </template>
 
 <script>
-    import NoData from "./NoData.vue";
     import elTableInfiniteScroll from "el-table-infinite-scroll";
 
     export default {
-        components: {NoData},
         data() {
             return {
                 hasSelection: false,
@@ -37,7 +32,7 @@
                 tableHeight: this.infiniteScrollLoad === undefined ? "auto" : "100%"
             }
         },
-        expose: ["resetInfiniteScroll", "toggleRowExpansion"],
+        expose: ["resetInfiniteScroll", "setSelection", "waitTableRender", "toggleRowExpansion"],
         computed: {
             scrollWrapper() {
                 if (this.data) {
@@ -55,7 +50,7 @@
             },
             stillHaveDataToFetch() {
                 return this.infiniteScrollDisabled === false;
-            }
+            },
         },
         directives: {
             elTableInfiniteScroll
@@ -93,6 +88,18 @@
                 this.hasSelection = selection.length > 0;
                 this.$emit("selection-change", selection);
             },
+            setSelection(selection) {
+                this.$refs.table.clearSelection();
+                if (Array.isArray(selection)) {
+                    selection.forEach(sel => {
+                        const row = this.data.find(r => r.id === sel.id);
+                        if (row) {
+                            this.$refs.table.toggleRowSelection(row, true);
+                        }
+                    });
+                }
+                this.selectionChanged(selection);
+            },
             computeHeaderSize() {
                 const tableElement = this.$refs.table?.$el;
 
@@ -115,9 +122,9 @@
                 return this.stillHaveDataToFetch || this.tableView === undefined ? "100%" : `min(${this.tableView.scrollHeight}px, 100%)`;
             },
             async infiniteScrollLoadWithDisableHandling() {
-                let load = await this.infiniteScrollLoad();
+                let load = await this.infiniteScrollLoad?.();
                 while (load !== undefined && load.length === 0) {
-                    load = await this.infiniteScrollLoad();
+                    load = await this.infiniteScrollLoad?.();
                 }
 
                 this.infiniteScrollDisabled = load === undefined;
@@ -126,22 +133,12 @@
             }
         },
         props: {
-            selectable: {
-                type: Boolean,
-                default: true
-            },
-            expandable: {
-                type: Boolean,
-                default: false
-            },
-            data: {
-                type: Array,
-                default: () => []
-            },
-            infiniteScrollLoad: {
-                type: Function,
-                default: undefined
-            }
+            showSelection: {type: Boolean, default: true},
+            selectable: {type: Boolean, default: true},
+            expandable: {type: Boolean, default: false},
+            data: {type: Array, default: () => []},
+            noDataText: {type: String, default: undefined},
+            infiniteScrollLoad: {type: Function, default: undefined}
         },
         emits: [
             "selection-change"

@@ -11,7 +11,7 @@
             :loading="loading"
         >
             <template #prefix>
-                <magnify class="search-icon" />
+                <Magnify class="search-icon" />
             </template>
         </el-input>
         <div v-if="loading" class="loading-indicator">
@@ -19,13 +19,13 @@
         </div>
         <div v-if="showResults" class="search-results">
             <template v-if="searchResults.length > 0">
-                <context-docs-link
+                <ContextDocsLink
                     v-for="(result, index) in searchResults"
                     :key="result.url"
                     class="search-result"
                     :class="{'selected': index === selectedIndex}"
                     :href="result.parsedUrl.replace(/^docs\//, '')"
-                    use-raw
+                    useRaw
                     :data-index="index"
                     @click="resetSearch"
                 >
@@ -35,7 +35,7 @@
                     <p class="result-preview">
                         {{ result.preview }}
                     </p>
-                </context-docs-link>
+                </ContextDocsLink>
             </template>
             <div v-else class="no-results">
                 {{ t("no_results_found") }}
@@ -46,14 +46,14 @@
 
 <script setup>
     import {ref, computed, onMounted, onUnmounted} from "vue";
-    import {useStore} from "vuex";
+    import {useDocStore} from "../../stores/doc";
     import {useI18n} from "vue-i18n";
     import Magnify from "vue-material-design-icons/Magnify.vue";
     import ContextDocsLink from "./ContextDocsLink.vue";
     import {debounce} from "lodash-es";
 
     const {t} = useI18n({useScope: "global"});
-    const store = useStore();
+    const docStore = useDocStore();
 
     const searchQuery = ref("");
     const searchResults = ref([]);
@@ -103,7 +103,7 @@
 
         try {
             loading.value = true;
-            const results = await store.dispatch("doc/search", {q: query, scoredSearch: true});
+            const results = await docStore.search({q: query, scoredSearch: true});
 
             const processedResults = (results || []).slice(0, 10);
             searchResults.value = processedResults;

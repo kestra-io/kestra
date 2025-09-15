@@ -9,12 +9,12 @@
         {{ $t('pause') }}
     </component>
 
-    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('pause title', {id: execution.id})" />
         </template>
         <template #footer>
-            <el-button :icon="PauseBox" type="primary" @click="pause()" native-type="submit">
+            <el-button :icon="PauseBox" type="primary" @click="pause()" nativeType="submit">
                 {{ $t('pause') }}
             </el-button>
         </template>
@@ -26,10 +26,12 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         props: {
@@ -55,8 +57,8 @@
                     });
             },
             pause() {
-                this.$store
-                    .dispatch("execution/pause", {
+                this.executionsStore
+                    .pause({
                         id: this.execution.id
                     })
                     .then(() => {
@@ -66,10 +68,9 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapState("execution", ["flow"]),
+            ...mapStores(useExecutionsStore, useAuthStore),
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 

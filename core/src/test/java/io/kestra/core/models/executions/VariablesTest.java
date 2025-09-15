@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.net.URI;
 import java.util.Map;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
@@ -37,9 +38,9 @@ class VariablesTest {
     @Test
     @SuppressWarnings("unchecked")
     void inStorage() {
-        var storageContext = StorageContext.forTask(null, "namespace", "flow", "execution", "task", "taskRun", null);
+        var storageContext = StorageContext.forTask(MAIN_TENANT, "namespace", "flow", "execution", "task", "taskRun", null);
         var internalStorage = new InternalStorage(storageContext, storageInterface);
-        Variables.StorageContext variablesContext = new Variables.StorageContext(null, "namespace");
+        Variables.StorageContext variablesContext = new Variables.StorageContext(MAIN_TENANT, "namespace");
 
         // simple
         Map<String, Object> outputs = Map.of("key", "value");

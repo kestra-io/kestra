@@ -21,6 +21,7 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Singleton
@@ -61,7 +62,7 @@ public class FlowCaseTest {
         });
 
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "subflow-old-task-name"
         );
@@ -92,7 +93,7 @@ public class FlowCaseTest {
         });
 
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             testInherited ? "task-flow" : "task-flow-inherited-labels",
             null,

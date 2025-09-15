@@ -1,5 +1,9 @@
 <template>
-    <top-nav-bar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
+    <TopNavBar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
+        <template #title>
+            {{ routeInfo?.title }}
+            <Badge v-if="isATestExecution" :label="$t('test-badge-text')" :tooltip="$t('test-badge-tooltip')" />
+        </template>
         <template #additional-right v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul id="list">
                 <li v-if="isAllowedEdit">
@@ -20,22 +24,24 @@
                     </el-button>
                 </li>
                 <li v-if="isAllowedTrigger">
-                    <trigger-flow type="primary" :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
+                    <TriggerFlow type="primary" :flowId="$route.params.flowId" :namespace="$route.params.namespace" />
                 </li>
             </ul>
         </template>
-    </top-nav-bar>
+    </TopNavBar>
 </template>
 
 <script setup>
     import Api from "vue-material-design-icons/Api.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
+    import Badge from "../global/Badge.vue";
 </script>
 
 <script>
     import {h, ref} from "vue"
     import {ElCheckbox, ElMessageBox} from "element-plus"
+    import {mapStores} from "pinia";
 
     import TriggerFlow from "../flows/TriggerFlow.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
@@ -43,7 +49,8 @@
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
     import {apiUrl} from "override/utils/route";
-    import {mapState} from "vuex";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {
@@ -57,20 +64,25 @@
             }
         },
         computed: {
-            ...mapState("execution", ["execution"]),
-            ...mapState("auth", ["user"]),
+            ...mapStores(useExecutionsStore, useAuthStore),
+            execution() {
+                return this.executionsStore.execution;
+            },
             finalApiUrl() {
-                return apiUrl(this.$store);
+                return apiUrl();
             },
             canDelete() {
-                return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace);
+                return this.execution && this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace);
             },
             isAllowedEdit() {
-                return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
+                return this.execution && this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
             },
             isAllowedTrigger() {
-                return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
+                return this.execution && this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
             },
+            isATestExecution() {
+                return this.execution && this.execution.labels && this.execution.labels.some(label => label.key === "system.test" && label.value === "true");
+            }
         },
         methods: {
             editFlow() {
@@ -103,11 +115,11 @@
                         customStyle: "min-width: 600px",
                         callback: (value) => {
                             if(value === "confirm") {
-                                return this.$store
-                                    .dispatch("execution/deleteExecution", {
-                                        ...item, 
+                                return this.executionsStore
+                                    .deleteExecution({
+                                        ...item,
                                         deleteLogs: deleteLogs.value,
-                                        deleteMetrics: deleteMetrics.value, 
+                                        deleteMetrics: deleteMetrics.value,
                                         deleteStorage: deleteStorage.value
                                     })
                                     .then(() => {
@@ -149,8 +161,8 @@
 </script>
 <style>
 @media (max-width: 768px) {
-           
-       
+
+
            #list {
                 display:contents;
                 background-color: blue;
@@ -158,8 +170,8 @@
             #list  li:first-child {
                 grid-row:1;
                 grid-column:1;
-            } 
-          
+            }
+
             #list  li:nth-child(2){
                 grid-row:1;
                 grid-column:2;
@@ -171,7 +183,7 @@
             #list li:nth-child(4){
                 grid-row:2;
                 grid-column:1;
-            }   
+            }
         }
 
 </style>

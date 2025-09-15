@@ -32,7 +32,7 @@ class MetricControllerTest {
         assertThat(result).isNotNull();
 
         PagedResults<MetricEntry> metrics = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/metrics/" + result.getId()),
+            HttpRequest.GET("/api/v1/main/metrics/" + result.getId()),
             Argument.of(PagedResults.class, MetricEntry.class)
         );
         assertThat(metrics.getTotal()).isEqualTo(2L);
@@ -41,7 +41,7 @@ class MetricControllerTest {
     private Execution triggerExecution(String namespace, String flowId, MultipartBody requestBody, Boolean wait) {
         return client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/" + namespace + "/" + flowId + (wait ? "?wait=true" : ""), requestBody)
+                .POST("/api/v1/main/executions/" + namespace + "/" + flowId + (wait ? "?wait=true" : ""), requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );

@@ -7,19 +7,19 @@ import com.google.common.collect.Iterables;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.queues.QueueService;
+import io.kestra.core.queues.*;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTableConfigs;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +39,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 @Slf4j
@@ -65,8 +66,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final JdbcQueueIndexer jdbcQueueIndexer;
 
+    private final boolean immediateRepoll;
+
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
+
+    private final Counter bigMessageCounter;
 
     public JdbcQueue(Class<T> cls, ApplicationContext applicationContext) {
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
@@ -85,6 +90,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.table = DSL.table(jdbcTableConfigs.tableConfig("queues").table());
 
         this.jdbcQueueIndexer = applicationContext.getBean(JdbcQueueIndexer.class);
+
+        this.immediateRepoll = applicationContext.getProperty("kestra.jdbc.queues.immediate-repoll", Boolean.class).orElse(true);
+
+        // init metrics we can at post construct to avoid costly Metric.Id computation
+        this.bigMessageCounter = metricRegistry
+            .counter(MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, queueType());
     }
 
     protected Map<Field<Object>, Object> produceFields(String consumerGroup, String key, T message) throws QueueException {
@@ -96,9 +107,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         }
 
         if (messageProtectionConfiguration.enabled && bytes.length >= messageProtectionConfiguration.limit) {
-            metricRegistry
-                .counter(MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, queueType())
-                .increment();
+            this.bigMessageCounter.increment();
 
             // we let terminated execution messages to go through anyway
             if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
@@ -140,8 +149,19 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                     .execute();
             });
         } catch (DataException e) { // The exception is from the data itself, not the database/network/driver so instead of fail fast, we throw a recoverable QueueException
+            // Postgres refuses to store JSONB with the '\0000' codepoint as it has no textual representation.
+            // We try to detect that and fail with a specific exception so the Worker can recover from it.
+            if (e.getMessage() != null && e.getMessage().contains("ERROR: unsupported Unicode escape sequence")) {
+                throw new UnsupportedMessageException(e.getMessage(), e);
+            }
             throw new QueueException("Unable to emit a message to the queue", e);
         }
+
+        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType() } :
+            new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
+        metricRegistry
+            .counter(MetricRegistry.METRIC_QUEUE_PRODUCE_COUNT, MetricRegistry.METRIC_QUEUE_PRODUCE_COUNT_DESCRIPTION, tags)
+            .increment();
     }
 
     public void emitOnly(String consumerGroup, T message) throws QueueException{
@@ -154,8 +174,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     }
 
     @Override
-    public void emitAsync(String consumerGroup, T message) throws QueueException {
-        this.asyncPoolExecutor.submit(throwRunnable(() -> this.emit(consumerGroup, message)));
+    public void emitAsync(String consumerGroup, List<T> messages) throws QueueException {
+        this.asyncPoolExecutor.submit(throwRunnable(() -> messages.forEach(throwConsumer(message -> this.emit(consumerGroup, message)))));
     }
 
     @Override
@@ -252,6 +272,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate) {
+        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType() } :
+            new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
+        AtomicInteger pollSize = new AtomicInteger();
+        this.metricRegistry
+            .gauge(MetricRegistry.METRIC_QUEUE_POLL_SIZE, MetricRegistry.METRIC_QUEUE_POLL_SIZE_DESCRIPTION, pollSize, tags);
+
         AtomicInteger maxOffset = new AtomicInteger();
 
         // fetch max offset
@@ -273,7 +299,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             }
         });
 
-        return this.poll(() -> {
+        Timer timer = this.metricRegistry
+            .timer(MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION, MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION, tags);
+        return this.poll(() -> timer.record(() -> {
             Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
                 DSLContext ctx = DSL.using(configuration);
 
@@ -290,8 +318,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
             this.send(fetch, consumer);
 
+            pollSize.set(fetch.size());
             return fetch.size();
-        });
+        }));
     }
 
     @Override
@@ -345,18 +374,22 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         boolean forUpdate
     ) {
         String queueName = queueName(queueType);
+        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER, queueName } :
+            new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER, queueName, MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
+        AtomicInteger pollSize = new AtomicInteger();
+        this.metricRegistry
+            .gauge(MetricRegistry.METRIC_QUEUE_POLL_SIZE, MetricRegistry.METRIC_QUEUE_POLL_SIZE_DESCRIPTION, pollSize, tags);
 
-        return this.poll(() -> {
+        Timer timer = this.metricRegistry
+            .timer(MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION, MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION, tags);
+        return this.poll(() -> timer.record(() -> {
             Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
                 DSLContext ctx = DSL.using(configuration);
 
                 Result<Record> result = this.receiveFetch(ctx, consumerGroup, queueName, forUpdate);
 
-                if (!result.isEmpty()) {
-                    if (inTransaction) {
-                        consumer.accept(ctx, this.map(result));
-                    }
-
+                if (!result.isEmpty() && inTransaction) {
+                    consumer.accept(ctx, this.map(result));
                     this.updateGroupOffsets(
                         ctx,
                         consumerGroup,
@@ -370,10 +403,18 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
             if (!inTransaction) {
                 consumer.accept(null, this.map(fetch));
+                dslContextWrapper.transaction(configuration ->
+                    this.updateGroupOffsets(
+                        DSL.using(configuration),
+                        consumerGroup,
+                        queueName,
+                        fetch.map(record -> record.get("offset", Integer.class))
+                    ));
             }
 
+            pollSize.set(fetch.size());
             return fetch.size();
-        });
+        }));
     }
 
     protected String queueName(Class<?> queueType) {
@@ -389,7 +430,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         poolExecutor.execute(() -> {
             List<Configuration.Step> steps = configuration.computeSteps();
-            Duration sleep = steps.getFirst().pollInterval();
+            Duration sleep = configuration.minPollInterval;
             ZonedDateTime lastPoll = ZonedDateTime.now();
             while (running.get() && !this.isClosed.get()) {
                 if (!this.isPaused.get()) {
@@ -398,14 +439,24 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                         if (count > 0) {
                             lastPoll = ZonedDateTime.now();
                             sleep = configuration.minPollInterval;
+                            if (immediateRepoll) {
+                                continue;
+                            } else if (count.equals(configuration.pollSize)) {
+                                // Note: this provides better latency on high throughput: when Kestra is a top capacity,
+                                // it will not do a sleep and immediately poll again.
+                                // We can even have better latency at even higher latency by continuing for positive count,
+                                // but at higher database cost.
+                                // Current impl balance database cost with latency.
+                                continue;
+                            }
                         } else {
                             ZonedDateTime finalLastPoll = lastPoll;
                             // get all poll steps which duration is less than the duration between last poll and now
                             List<Configuration.Step> selectedSteps = steps.stream()
                                 .takeWhile(step -> finalLastPoll.plus(step.switchInterval()).compareTo(ZonedDateTime.now()) < 0)
                                 .toList();
-                            // then select the last one (longest) or maxPoll if all are beyond
-                            sleep = selectedSteps.isEmpty() ? configuration.maxPollInterval : selectedSteps.getLast().pollInterval();
+                            // then select the last one (longest) or minPoll if all are beyond while means we are under the first interval
+                            sleep = selectedSteps.isEmpty() ? configuration.minPollInterval : selectedSteps.getLast().pollInterval();
                         }
                     } catch (CannotCreateTransactionException e) {
                         if (log.isDebugEnabled()) {

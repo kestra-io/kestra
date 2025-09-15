@@ -2,22 +2,24 @@
     <KestraFilter
         v-if="triggersWithType.length"
         prefix="flow_triggers"
+        readOnly
         :buttons="{
             refresh: {shown: true, callback: loadData},
             settings: {shown: false}
         }"
+        legacyQuery
     />
 
     <el-table
         v-if="triggersWithType.length"
         v-bind="$attrs"
         :data="triggersWithType"
-        table-layout="auto"
-        default-expand-all
+        tableLayout="auto"
+        defaultExpandAll
     >
         <el-table-column type="expand">
             <template #default="props">
-                <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purge-filters :charts="false" embed />
+                <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purgeFilters :withCharts="false" embed />
             </template>
         </el-table-column>
         <el-table-column prop="id" :label="$t('id')">
@@ -32,7 +34,7 @@
 
         <el-table-column prop="workerId" :label="$t('workerId')">
             <template #default="scope">
-                <id
+                <Id
                     :value="scope.row.workerId"
                     :shrink="true"
                 />
@@ -41,11 +43,11 @@
 
         <el-table-column prop="nextExecutionDate" :label="$t('next execution date')">
             <template #default="scope">
-                <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
+                <DateAgo :inverted="true" :date="scope.row.nextExecutionDate" />
             </template>
         </el-table-column>
 
-        <el-table-column column-key="backfill" v-if="userCan(action.UPDATE) || userCan(action.CREATE)">
+        <el-table-column columnKey="backfill" v-if="userCan(action.UPDATE) || userCan(action.CREATE)">
             <template #header>
                 {{ $t("backfill") }}
             </template>
@@ -54,7 +56,7 @@
                     :icon="CalendarCollapseHorizontalOutline"
                     v-if="isSchedule(scope.row.type) && !scope.row.backfill && userCan(action.CREATE)"
                     @click="setBackfillModal(scope.row, true)"
-                    :disabled="scope.row.disabled"
+                    :disabled="scope.row.disabled || scope.row.sourceDisabled"
                     size="small"
                     type="primary"
                 >
@@ -67,29 +69,29 @@
                                 :percentage="backfillProgression(scope.row.backfill)"
                                 :status="scope.row.backfill.paused ? 'warning' : ''"
                                 :stroke-width="12"
-                                :show-text="!scope.row.backfill.paused"
+                                :showText="!scope.row.backfill.paused"
                                 :striped="!scope.row.backfill.paused"
-                                striped-flow
+                                stripedFlow
                             />
                         </div>
                         <template v-if="!scope.row.backfill.paused">
                             <el-button size="small" @click="pauseBackfill(scope.row)">
-                                <kicon :tooltip="$t('pause backfill')">
+                                <Kicon :tooltip="$t('pause backfill')">
                                     <Pause />
-                                </kicon>
+                                </Kicon>
                             </el-button>
                         </template>
                         <template v-else-if="userCan(action.UPDATE)">
                             <el-button size="small" @click="unpauseBackfill(scope.row)">
-                                <kicon :tooltip="$t('continue backfill')">
+                                <Kicon :tooltip="$t('continue backfill')">
                                     <Play />
-                                </kicon>
+                                </Kicon>
                             </el-button>
 
                             <el-button size="small" @click="deleteBackfill(scope.row)">
-                                <kicon :tooltip="$t('delete backfill')">
+                                <Kicon :tooltip="$t('delete backfill')">
                                     <Delete />
-                                </kicon>
+                                </Kicon>
                             </el-button>
                         </template>
                     </div>
@@ -97,52 +99,52 @@
             </template>
         </el-table-column>
 
-        <el-table-column column-key="disable" class-name="row-action" v-if="userCan(action.UPDATE)">
+        <el-table-column columnKey="disable" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <el-switch
                     v-if="canBeDisabled(scope.row)"
                     size="small"
-                    :active-text="$t('enabled')"
-                    :model-value="!scope.row.disabled"
+                    :activeText="$t('enabled')"
+                    :modelValue="!scope.row.disabled"
                     @change="setDisabled(scope.row, $event)"
                     class="switch-text"
-                    :active-action-icon="Check"
+                    :activeActionIcon="Check"
                 />
             </template>
         </el-table-column>
 
-        <el-table-column column-key="restart" class-name="row-action" v-if="userCan(action.UPDATE)">
+        <el-table-column columnKey="restart" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <el-button size="small" v-if="scope.row.evaluateRunningDate" @click="restart(scope.row)">
-                    <kicon :tooltip="$t('restart trigger.button')">
+                    <Kicon :tooltip="$t('restart trigger.button')">
                         <Restart />
-                    </kicon>
+                    </Kicon>
                 </el-button>
             </template>
         </el-table-column>
 
-        <el-table-column column-key="unlock" class-name="row-action" v-if="userCan(action.UPDATE)">
+        <el-table-column columnKey="unlock" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <el-button size="small" v-if="scope.row.executionId" @click="unlock(scope.row)">
-                    <kicon :tooltip="$t('unlock trigger.button')">
-                        <lock-off />
-                    </kicon>
+                    <Kicon :tooltip="$t('unlock trigger.button')">
+                        <LockOff />
+                    </Kicon>
                 </el-button>
             </template>
         </el-table-column>
 
         <el-table-column>
             <template #default="scope">
-                <trigger-avatar :flow="flow" :trigger-id="scope.row.id" />
+                <TriggerAvatar :flow="flowStore.flow" :triggerId="scope.row.id" />
             </template>
         </el-table-column>
 
-        <el-table-column column-key="action" class-name="row-action">
+        <el-table-column columnKey="action" className="row-action">
             <template #default="scope">
                 <el-button size="small" @click="triggerId = scope.row.id; isOpen = true">
-                    <kicon :tooltip="$t('details')" placement="left">
+                    <Kicon :tooltip="$t('details')" placement="left">
                         <TextSearch />
-                    </kicon>
+                    </Kicon>
                 </el-button>
             </template>
         </el-table-column>
@@ -174,11 +176,11 @@
         </template>
     </Empty>
 
-    <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true">
+    <el-dialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('backfill executions')" />
         </template>
-        <el-form :model="backfill" label-position="top">
+        <el-form :model="backfill" labelPosition="top">
             <div class="pickers">
                 <div class="small-picker">
                     <el-form-item label="Start">
@@ -186,7 +188,7 @@
                             v-model="backfill.start"
                             type="datetime"
                             placeholder="Start"
-                            :disabled-date="time => new Date() < time || backfill.end ? time > backfill.end : false"
+                            :disabledDate="time => new Date() < time || backfill.end ? time > backfill.end : false"
                         />
                     </el-form-item>
                 </div>
@@ -196,16 +198,16 @@
                             v-model="backfill.end"
                             type="datetime"
                             placeholder="End"
-                            :disabled-date="time => new Date() < time || backfill?.start > time"
+                            :disabledDate="time => new Date() < time || backfill?.start > time"
                         />
                     </el-form-item>
                 </div>
             </div>
         </el-form>
-        <flow-run
+        <FlowRun
             @update-inputs="backfill.inputs = $event"
             @update-labels="backfill.labels = $event"
-            :selected-trigger="selectedTrigger"
+            :selectedTrigger="selectedTrigger"
             :redirect="false"
             :embed="true"
         />
@@ -235,7 +237,7 @@
         </template>
     </el-dialog>
 
-    <drawer
+    <Drawer
         v-if="isOpen"
         v-model="isOpen"
     >
@@ -243,9 +245,9 @@
             <code>{{ triggerId }}</code>
         </template>
 
-        <markdown v-if="triggerDefinition && triggerDefinition.description" :source="triggerDefinition.description" />
-        <vars :data="modalData" />
-    </drawer>
+        <Markdown v-if="triggerDefinition && triggerDefinition.description" :source="triggerDefinition.description" />
+        <Vars :data="modalData" />
+    </Drawer>
 </template>
 
 <script setup>
@@ -264,24 +266,27 @@
 
     import KestraFilter from "../filter/KestraFilter.vue";
     import Empty from "../layout/empty/Empty.vue";
-</script>
-
-<script>
     import Markdown from "../layout/Markdown.vue";
-    import {mapGetters, mapState} from "vuex";
     import Kicon from "../Kicon.vue"
     import DateAgo from "../layout/DateAgo.vue";
     import Vars from "../executions/Vars.vue";
     import Drawer from "../Drawer.vue";
+</script>
+
+<script>
     import permission from "../../models/permission";
     import action from "../../models/action";
     import moment from "moment";
     import LogsWrapper from "../logs/LogsWrapper.vue";
     import _isEqual from "lodash/isEqual";
     import {storageKeys} from "../../utils/constants.js";
+    import {mapStores} from "pinia";
+    import {useTriggerStore} from "../../stores/trigger";
+    import {useAuthStore} from "override/stores/auth";
+    import {useFlowStore} from "../../stores/flow";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper, Empty},
+        inheritAttrs: false,
         props:{
             embed: {
                 type: Boolean,
@@ -314,8 +319,7 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapGetters("flow", ["flow"]),
+            ...mapStores(useTriggerStore, useFlowStore, useAuthStore),
             query() {
                 return Array.isArray(this.$route.query.q) ? this.$route.query.q[0] : this.$route.query.q;
             },
@@ -332,18 +336,18 @@
                     );
             },
             triggerDefinition() {
-                return this.flow.triggers.find(trigger => trigger.id === this.triggerId);
+                return this.flowStore.flow.triggers.find(trigger => trigger.id === this.triggerId);
             },
             triggersWithType() {
-                if(!this.flow.triggers) return [];
+                if(!this.flowStore.flow.triggers) return [];
 
-                let flowTriggers = this.flow.triggers.map(trigger => {
+                let flowTriggers = this.flowStore.flow.triggers.map(trigger => {
                     return {...trigger, sourceDisabled: trigger.disabled ?? false}
                 })
                 if (flowTriggers) {
                     const triggers = flowTriggers.map(flowTrigger => {
                         let pollingTrigger = this.triggers.find(trigger => trigger.triggerId === flowTrigger.id)
-                        return {...flowTrigger, ...(pollingTrigger || {})}
+                        return {...flowTrigger, ...pollingTrigger}
                     })
 
                     return !this.query ? triggers : triggers.filter(trigger => trigger.id.includes(this.query))
@@ -360,8 +364,8 @@
                 if (this.backfill.end && this.backfill.start > this.backfill.end) {
                     return true
                 }
-                if (this.flow.inputs) {
-                    const requiredInputs = this.flow.inputs.map(input => input.required !== false ? input.id : null).filter(i => i !== null)
+                if (this.flowStore.flow.inputs) {
+                    const requiredInputs = this.flowStore.flow.inputs.map(input => input.required !== false ? input.id : null).filter(i => i !== null)
 
                     if (requiredInputs.length > 0) {
                         if (!this.backfill.inputs) {
@@ -385,16 +389,19 @@
             editorViewType() {
                 return localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE";
             },
+            triggerStore() {
+                return useTriggerStore();
+            },
         },
         methods: {
             userCan(action) {
-                return this.user.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flow.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flowStore.flow.namespace);
             },
             loadData() {
                 if(!this.triggersWithType.length) return;
 
-                this.$store
-                    .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id, size: this.triggersWithType.length, q: this.query})
+                this.triggerStore
+                    .find({namespace: this.flowStore.flow.namespace, flowId: this.flowStore.flow.id, size: this.triggersWithType.length, q: this.query})
                     .then(triggers => this.triggers = triggers.results);
             },
             setBackfillModal(trigger, bool) {
@@ -402,7 +409,7 @@
                 this.selectedTrigger = trigger
             },
             postBackfill() {
-                this.$store.dispatch("trigger/update", {
+                this.triggerStore.update({
                     ...this.selectedTrigger,
                     backfill: this.cleanBackfill
                 })
@@ -425,7 +432,7 @@
 
             },
             pauseBackfill(trigger) {
-                this.$store.dispatch("trigger/pauseBackfill", trigger)
+                this.triggerStore.pauseBackfill(trigger)
                     .then(newTrigger => {
                         this.$toast().saved(newTrigger.id);
                         this.triggers = this.triggers.map(t => {
@@ -437,7 +444,7 @@
                     })
             },
             unpauseBackfill(trigger) {
-                this.$store.dispatch("trigger/unpauseBackfill", trigger)
+                this.triggerStore.unpauseBackfill(trigger)
                     .then(newTrigger => {
                         this.$toast().saved(newTrigger.id);
                         this.triggers = this.triggers.map(t => {
@@ -449,7 +456,7 @@
                     })
             },
             deleteBackfill(trigger) {
-                this.$store.dispatch("trigger/deleteBackfill", trigger)
+                this.triggerStore.deleteBackfill(trigger)
                     .then(newTrigger => {
                         this.$toast().saved(newTrigger.id);
                         this.triggers = this.triggers.map(t => {
@@ -461,7 +468,7 @@
                     })
             },
             setDisabled(trigger, value) {
-                this.$store.dispatch("trigger/update", {...trigger, disabled: !value})
+                this.triggerStore.update({...trigger, disabled: !value})
                     .then(newTrigger => {
                         this.$toast().saved(newTrigger.id);
                         this.triggers = this.triggers.map(t => {
@@ -473,7 +480,7 @@
                     })
             },
             unlock(trigger) {
-                this.$store.dispatch("trigger/unlock", {
+                this.triggerStore.unlock({
                     namespace: trigger.namespace,
                     flowId: trigger.flowId,
                     triggerId: trigger.triggerId
@@ -488,7 +495,7 @@
                 })
             },
             restart(trigger) {
-                this.$store.dispatch("trigger/restart", {
+                this.triggerStore.restart({
                     namespace: trigger.namespace,
                     flowId: trigger.flowId,
                     triggerId: trigger.triggerId
@@ -525,8 +532,8 @@
                     name: "flows/update",
                     params: {
                         tenant: this.$route.params.tenant,
-                        namespace: this.flow.namespace,
-                        id: this.flow.id,
+                        namespace: this.flowStore.flow.namespace,
+                        id: this.flowStore.flow.id,
                         tab: "edit"
                     }
                 };

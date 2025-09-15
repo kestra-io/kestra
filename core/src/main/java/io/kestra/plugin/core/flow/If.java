@@ -83,7 +83,7 @@ public class If extends Task implements FlowableTask<If.Output> {
     @Valid
     @PluginProperty
     @Schema(
-        title = "List of tasks to execute if the condition is true."
+        title = "List of tasks to execute if the condition is true"
     )
     @NotEmpty
     private List<Task> then;
@@ -91,7 +91,7 @@ public class If extends Task implements FlowableTask<If.Output> {
     @Valid
     @PluginProperty
     @Schema(
-        title = "List of tasks to execute if the condition is false."
+        title = "List of tasks to execute if the condition is false"
     )
     @JsonProperty("else")
     private List<Task> _else;
@@ -99,7 +99,7 @@ public class If extends Task implements FlowableTask<If.Output> {
     @Valid
     @PluginProperty
     @Schema(
-        title = "List of tasks to execute in case of errors of a child task."
+        title = "List of tasks to execute in case of errors of a child task"
     )
     private List<Task> errors;
 
@@ -216,7 +216,7 @@ public class If extends Task implements FlowableTask<If.Output> {
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "Condition evaluation result.")
+        @Schema(title = "Condition evaluation result")
         public Boolean evaluationResult;
     }
 }

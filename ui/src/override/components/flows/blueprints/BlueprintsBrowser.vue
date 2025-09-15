@@ -1,9 +1,9 @@
 <template>
-    <errors code="404" v-if="error && embed" />
+    <Errors code="404" v-if="error && embed" />
     <div v-else>
         <slot name="nav" />
         <slot name="content">
-            <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" hide-top-pagination divider>
+            <DataTable class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" hideTopPagination divider>
                 <template #navbar>
                     <el-radio-group v-if="ready && !system && !embed" v-model="selectedTag" class="tags-selection">
                         <el-radio-button
@@ -33,7 +33,16 @@
                     </nav>
                 </template>
                 <template #top>
-                    <KestraFilter :prefix="`blueprintsBrowser${blueprintType}`" :placeholder="$t('search')" :decode="false" />
+                    <el-row class="mb-3 px-3" justify="center">
+                        <el-col :xs="24" :sm="18" :md="12" :lg="10" :xl="8">
+                            <el-input
+                                v-model="searchText"
+                                :placeholder="$t('search')"
+                                clearable
+                                @input="updateSearch"
+                            />
+                        </el-col>
+                    </el-row>     
                 </template>
                 <template #table>
                     <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
@@ -53,8 +62,8 @@
                         >
                             <div class="left">
                                 <div class="blueprint">
-                                    <div 
-                                        class="ps-0 title" 
+                                    <div
+                                        class="ps-0 title"
                                         :class="{'embed-title': embed, 'text-truncate': embed}"
                                     >
                                         {{ blueprint.title ?? blueprint.id }}
@@ -67,8 +76,8 @@
                                                 </el-tag>
                                             </div>
                                             <div class="tasks-container">
-                                                <task-icon
-                                                    :icons="icons"
+                                                <TaskIcon
+                                                    :icons="pluginsStore.icons"
                                                     :cls="task"
                                                     :key="task"
                                                     v-for="task in [...new Set(blueprint.includedTasks)]"
@@ -85,8 +94,8 @@
                                     </div>
                                 </div>
                                 <div v-if="!embed" class="tasks-container">
-                                    <task-icon
-                                        :icons="icons"
+                                    <TaskIcon
+                                        :icons="pluginsStore.icons"
                                         :cls="task"
                                         :key="task"
                                         v-for="task in [...new Set(blueprint.includedTasks)]"
@@ -95,7 +104,7 @@
                             </div>
                             <div class="side buttons ms-auto">
                                 <slot name="buttons" :blueprint="blueprint" />
-                                <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :auto-close="2000" effect="light">
+                                <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
                                     <el-button
                                         type="primary"
                                         size="default"
@@ -104,37 +113,40 @@
                                         class="copy-button p-2"
                                     />
                                 </el-tooltip>
-                                <el-button v-else type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                                <el-button v-else-if="userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                     {{ $t('use') }}
                                 </el-button>
                             </div>
                         </component>
                     </el-card>
                 </template>
-            </data-table>
+            </DataTable>
             <slot name="bottom-bar" />
         </slot>
     </div>
 </template>
 
 <script>
-    import DataTable from "../../../../components/layout/DataTable.vue";
-    import {TaskIcon} from "@kestra-io/ui-libs";
-    import DataTableActions from "../../../../mixins/dataTableActions";
     import {shallowRef} from "vue";
+    import {mapStores} from "pinia";
+    import {TaskIcon} from "@kestra-io/ui-libs";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import DataTableActions from "../../../../mixins/dataTableActions";
+    import DataTable from "../../../../components/layout/DataTable.vue";
     import RestoreUrl from "../../../../mixins/restoreUrl";
-    import permission from "../../../../models/permission";
-    import action from "../../../../models/action";
-    import {mapState} from "vuex";
     import Utils from "../../../../utils/utils";
     import Errors from "../../../../components/errors/Errors.vue";
     import {editorViewTypes} from "../../../../utils/constants";
-    import KestraFilter from "../../../../components/filter/KestraFilter.vue";
+    import {usePluginsStore} from "../../../../stores/plugins";
+    import {useBlueprintsStore} from "../../../../stores/blueprints";
+    import {useCoreStore} from "../../../../stores/core";
+    import {useDocStore} from "../../../../stores/doc";
+    import {useAuthStore} from "override/stores/auth";
+    import {canCreate} from "override/composables/blueprintsPermissions.js";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
-        components: {TaskIcon, DataTable, Errors, KestraFilter},
+        components: {TaskIcon, DataTable, Errors},
         emits: ["goToDetail", "loaded"],
         props: {
             blueprintType: {
@@ -159,11 +171,11 @@
             }
         },
         mounted() {
-            this.$store.commit("doc/setDocId", `blueprints.${this.blueprintType}`);
+            this.docStore.docId = `blueprints.${this.blueprintType}`;
         },
         data() {
             return {
-                q: undefined,
+                searchText: "",
                 selectedTag: this.initSelectedTag(),
                 tags: undefined,
                 total: 0,
@@ -174,27 +186,27 @@
                 error: false
             }
         },
+        created() {
+            this.searchText = this.$route.query?.q || "";
+        },
         methods: {
             initSelectedTag() {
                 return this.$route?.query?.selectedTag ?? 0
             },
+            updateSearch(value) {
+                this.$router.push({
+                    query: {...this.$route.query, q: value || undefined}
+                });
+            },
             async copy(id) {
                 await Utils.copy(
-                    (await this.$store.dispatch("blueprints/getBlueprintSource", {type: this.blueprintType, kind: this.blueprintKind, id: id}))
+                    (await this.blueprintsStore.getBlueprintSource({type: this.blueprintType, kind: this.blueprintKind, id: id}))
                 );
             },
             async blueprintToEditor(blueprintId) {
                 localStorage.setItem(editorViewTypes.STORAGE_KEY, editorViewTypes.SOURCE_TOPOLOGY);
-                const query = this.blueprintKind === "flow" ?
-                    {blueprintId: blueprintId, blueprintSource: this.blueprintType} :
-                    {blueprintId: blueprintId};
-                this.$router.push({
-                    name: `${this.blueprintKind}s/create`,
-                    params: {
-                        tenant: this.$route.params.tenant
-                    },
-                    query: query
-                });
+
+                this.$router.push(this.editorRoute(blueprintId));
             },
             goToDetail(blueprintId) {
                 if (this.embed) {
@@ -203,12 +215,11 @@
             },
             loadTags(beforeLoadBlueprintType) {
                 const query = {}
-                if (this.$route.query.q || this.q) {
-                    query.q = this.$route.query.q || this.q;
+                if (this.$route.query.q || this.searchText) {
+                    query.q = this.$route.query.q || this.searchText;
                 }
-                return this.$store.dispatch("blueprints/getBlueprintTagsForQuery", {type: this.blueprintType, kind: this.blueprintKind, ...query})
+                return this.blueprintsStore.getBlueprintTagsForQuery({type: this.blueprintType, kind: this.blueprintKind, ...query})
                     .then(data => {
-                        // Handle switch tab while fetching data
                         if (this.blueprintType === beforeLoadBlueprintType) {
                             this.tags = this.tagsResponseMapper(data);
                         }
@@ -225,8 +236,8 @@
                     query.size = parseInt(this.$route.query.size || this.internalPageSize);
                 }
 
-                if (this.$route.query.q || this.q) {
-                    query.q = this.$route.query.q || this.q;
+                if (this.$route.query.q || this.searchText) {
+                    query.q = this.$route.query.q || this.searchText;
                 }
 
                 if (this.system) {
@@ -235,8 +246,7 @@
                     query.tags = this.$route.query.selectedTag || this.selectedTag;
                 }
 
-                return this.$store
-                    .dispatch("blueprints/getBlueprintsForQuery", {type: this.blueprintType, kind: this.blueprintKind, params: query})
+                return this.blueprintsStore.getBlueprintsForQuery({type: this.blueprintType, kind: this.blueprintKind, params: query})
                     .then(data => {
                         // Handle switch tab while fetching data
                         if (this.blueprintType === beforeLoadBlueprintType) {
@@ -257,7 +267,7 @@
                     if(this.embed) {
                         this.error = true;
                     } else {
-                        this.$store.dispatch("core/showError", 404);
+                        this.coreStore.error = 404;
                     }
                 }).finally(() => {
                     // Handle switch tab while fetching data
@@ -270,22 +280,35 @@
                 this.ready = false;
                 this.selectedTag = 0;
                 this.load(this.onDataLoaded);
+            },
+            editorRoute(blueprintId) {
+                let additionalQuery = {};
+                if (this.blueprintKind === "flow") {
+                    additionalQuery.blueprintSource = this.blueprintType;
+                } else if (this.blueprintKind === "dashboard") {
+                    additionalQuery = {
+                        name: "home",
+                        params: this.$route.params.tenant === undefined ? undefined : JSON.stringify({tenant: this.$route.params.tenant}),
+                    };
+                }
+
+                return {name: `${this.blueprintKind}s/create`, params: {tenant: this.$route.params.tenant}, query: {blueprintId, ...additionalQuery}};
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapState("plugin", ["icons"]),
-            userCanCreateFlow() {
-                return this.user.hasAnyAction(permission.FLOW, action.CREATE);
-            },
+            ...mapStores(usePluginsStore, useBlueprintsStore, useCoreStore, useDocStore, useAuthStore),
+            userCanCreate() {
+                return canCreate(this.blueprintKind);
+            }
         },
         watch: {
             $route(newValue, oldValue) {
                 if (oldValue.name === newValue.name) {
                     this.selectedTag = this.initSelectedTag();
+                    this.searchText = newValue.query?.q || "";
                 }
             },
-            q() {
+            searchText() {
                 this.load(this.onDataLoaded);
             },
             selectedTag(newSelectedTag) {
@@ -353,12 +376,6 @@
                 padding: .5rem 0;
             }
         }
-    }
-
-    .blueprints-search {
-        width: 300px;
-        height: 24px;
-        font-size: 12px;
     }
 
     .blueprints {
@@ -440,7 +457,7 @@
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
-                        
+                        font-weight: 400;
                     }
 
                     .tags {

@@ -1,11 +1,18 @@
 package io.kestra.core.test.flow;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.validations.TestSuiteAssertionValidation;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +22,10 @@ import static io.kestra.core.test.flow.Assertion.Operator.*;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@TestSuiteAssertionValidation
 public class Assertion {
     @NotNull
     private Property<Object> value;
@@ -28,8 +39,8 @@ public class Assertion {
     private Property<String> endsWith;
     private Property<String> startsWith;
     private Property<String> contains;
-    private Property<Object> equalsTo;
-    private Property<Object> notEqualsTo;
+    private Property<Object> equalTo;
+    private Property<Object> notEqualTo;
     private Property<Double> greaterThan;
     private Property<Double> greaterThanOrEqualTo;
     private Property<Double> lessThan;
@@ -39,12 +50,19 @@ public class Assertion {
     private Property<Boolean> isNull;
     private Property<Boolean> isNotNull;
 
+    public boolean hasAtLeastOneAssertion() {
+        return !(endsWith == null && startsWith == null && contains == null &&
+            equalTo == null && notEqualTo == null && greaterThan == null && greaterThanOrEqualTo == null
+            && lessThan == null && lessThanOrEqualTo == null && in == null && notIn == null
+            && isNull == null && isNotNull == null);
+    }
+
     public enum Operator{
         ENDS_WITH("endsWith"),
         STARTS_WITH("startsWith"),
         CONTAINS("contains"),
-        EQUALS_TO("equalsTo"),
-        NOT_EQUALS_TO("notEqualsTo"),
+        EQUAL_TO("equalTo"),
+        NOT_EQUAL_TO("notEqualTo"),
         GREATER_THAN("greaterThan"),
         GREATER_THAN_OR_EQUAL_TO("greaterThanOrEqualTo"),
         LESS_THAN("lessThan"),
@@ -65,7 +83,13 @@ public class Assertion {
         }
     }
 
-    public List<AssertionResult> run(RunContext runContext) {
+    public record AssertionRunResult(List<AssertionResult> results, List<AssertionRunError> errors) {
+    }
+
+    public AssertionRunResult run(RunContext runContext) {
+        var results = new ArrayList<AssertionResult>();
+        var errors = new ArrayList<AssertionRunError>();
+
         try {
             var actualValueQuery = this.getValue().toString();
             var actualValue = runContext.render(this.getValue()).as(Object.class).orElse(null);
@@ -73,7 +97,6 @@ public class Assertion {
             var description = runContext.render(this.getDescription()).as(String.class);
             var taskId = Optional.ofNullable(this.getTaskId());
 
-            var results = new ArrayList<AssertionResult>();
 
             runContext.render(this.getIsNull()).as(Boolean.class)
                 .ifPresent(isNullExpected ->
@@ -93,17 +116,17 @@ public class Assertion {
                 .ifPresent(expectedValue -> results.add(
                     startsWith(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
                 ));
-            runContext.render(this.getEqualsTo()).as(Object.class)
+            runContext.render(this.getEqualTo()).as(Object.class)
                 .ifPresent(expectedValue -> results.add(
-                    equalsTo(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
+                    equalTo(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
                 ));
             runContext.render(this.getContains()).as(String.class)
                 .ifPresent(expectedValue -> results.add(
                     contains(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
                 ));
-            runContext.render(this.getNotEqualsTo()).as(Object.class)
+            runContext.render(this.getNotEqualTo()).as(Object.class)
                 .ifPresent(expectedValue -> results.add(
-                    notEqualsTo(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
+                    notEqualTo(expectedValue, actualValueQuery, actualValue, taskId, description, errorMessage)
                 ));
             var expectedGreaterThanValue = runContext.render(this.getGreaterThan()).as(Double.class);
             if (expectedGreaterThanValue.isPresent()) {
@@ -142,10 +165,21 @@ public class Assertion {
             }
 
             if (results.isEmpty()) {
-                throw new IllegalArgumentException("no assertion to run found");
+                errors.add(new AssertionRunError("no assertions found", null));
             }
-            return results;
         } catch (IllegalVariableEvaluationException e) {
+            errors.add(new AssertionRunError(
+                "Could not evaluate assertion: `%s`".formatted(getDisplayableAssertion()),
+                "error was: %s".formatted(e.getMessage())
+            ));
+        }
+        return new AssertionRunResult(results, errors);
+    }
+
+    private String getDisplayableAssertion() {
+        try {
+            return JacksonMapper.ofJson().writeValueAsString(this);
+        } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
@@ -175,10 +209,10 @@ public class Assertion {
         );
     }
 
-    private AssertionResult equalsTo(Object expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) {
+    private AssertionResult equalTo(Object expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) {
         var isSuccess = expectedValue.equals(actualValue);
         return new AssertionResult(
-            EQUALS_TO.toString(),
+            EQUAL_TO.toString(),
             expectedValue,
             actualValue,
             isSuccess,
@@ -189,10 +223,10 @@ public class Assertion {
         );
     }
 
-    private AssertionResult notEqualsTo(Object expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) {
+    private AssertionResult notEqualTo(Object expectedValue, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) {
         var isSuccess = !expectedValue.equals(actualValue);
         return new AssertionResult(
-            NOT_EQUALS_TO.toString(),
+            NOT_EQUAL_TO.toString(),
             expectedValue,
             actualValue,
             isSuccess,

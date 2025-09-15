@@ -92,7 +92,7 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
 
     @NotNull
     @Schema(
-        title = "The condition expression that should evaluate to `true` or `false`.",
+        title = "The condition expression that should evaluate to `true` or `false`",
         description = "Boolean coercion allows 0, -0, null and '' to evaluate to false; all other values will evaluate to true."
     )
     private Property<String> condition;
@@ -101,10 +101,10 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
         title = "If set to `true`, the task run will end in a failed state once the `maxIterations` or `maxDuration` are reached."
     )
     @Builder.Default
-    private Property<Boolean> failOnMaxReached = Property.of(false);
+    private Property<Boolean> failOnMaxReached = Property.ofValue(false);
 
     @Schema(
-        title = "Check the frequency configuration."
+        title = "Check the frequency configuration"
     )
     @Builder.Default
     @PluginProperty
@@ -146,7 +146,6 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-
         return FlowableUtils.resolveWaitForNext(
             execution,
             this.childTasks(runContext, parentTaskRun),
@@ -177,17 +176,17 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
         Integer iterationCount = Optional.ofNullable(parentTaskRun.getOutputs())
             .map(outputs -> (Integer) outputs.get("iterationCount"))
             .orElse(0);
-        
+
         Optional<Integer> maxIterations = runContext.render(this.getCheckFrequency().getMaxIterations()).as(Integer.class);
-        if (maxIterations.isPresent() && iterationCount != null && iterationCount > maxIterations.get()) {
+        if (maxIterations.isPresent() && iterationCount > maxIterations.get()) {
             if (printLog) {logger.warn("Max iterations reached");}
             return true;
         }
 
         Instant creationDate = parentTaskRun.getState().getHistories().getFirst().getDate();
         Optional<Duration> maxDuration = runContext.render(this.getCheckFrequency().getMaxDuration()).as(Duration.class);
-        if (maxDuration.isPresent() 
-            && creationDate != null 
+        if (maxDuration.isPresent()
+            && creationDate != null
             && creationDate.plus(maxDuration.get()).isBefore(Instant.now())) {
             if (printLog) {logger.warn("Max duration reached");}
 
@@ -204,8 +203,8 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
             return Optional.empty();
         }
 
-        if (childTaskExecuted 
-            && this.reachedMaximums(runContext, execution, parentTaskRun, true) 
+        if (childTaskExecuted
+            && this.reachedMaximums(runContext, execution, parentTaskRun, true)
             && Boolean.TRUE.equals(runContext.render(this.failOnMaxReached).as(Boolean.class).orElseThrow())
         ) {
             return Optional.of(State.Type.FAILED);
@@ -272,21 +271,22 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
     @NoArgsConstructor
     public static class CheckFrequency {
         @Schema(
-            title = "Maximum count of iterations."
+            title = "Maximum count of iterations",
+            description = "If not set, defines an unlimited number of iterations."
         )
-        @Builder.Default
-        private Property<Integer> maxIterations = Property.of(100);
+        private Property<Integer> maxIterations;
 
         @Schema(
-            title = "Maximum duration of the task."
+            title = "Maximum duration of the task",
+            description = "If not set, defines an unlimited maximum duration of iterations."
         )
-        @Builder.Default
-        private Property<Duration> maxDuration = Property.of(Duration.ofHours(1));
+        private Property<Duration> maxDuration;
 
         @Schema(
-            title = "Interval between each iteration."
+            title = "Interval between each iteration"
         )
+        @NotNull
         @Builder.Default
-        private Property<Duration> interval = Property.of(Duration.ofSeconds(1));
+        private Property<Duration> interval = Property.ofValue(Duration.ofMinutes(1));
     }
 }

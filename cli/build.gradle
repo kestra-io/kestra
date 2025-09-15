@@ -40,5 +40,6 @@ dependencies {
     implementation project(":worker")
 
     //test
+    testImplementation project(':tests')
     testImplementation "org.wiremock:wiremock-jetty12"
 }

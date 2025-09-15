@@ -16,7 +16,6 @@
                 >
                     <el-button
                         v-if="!hasDefaultMainConfig"
-                        type="secondary"
                         :icon="Reload"
                         circle
                         @click="restoreDefaultConfigurations"
@@ -126,7 +125,6 @@
                 >
                     <el-button
                         v-if="!hasDefaultPreferences"
-                        type="secondary"
                         :icon="Reload"
                         circle
                         @click="restoreDefaultPreferences"
@@ -230,7 +228,6 @@
                 >
                     <el-button
                         v-if="!hasDefaultLocalization"
-                        type="secondary"
                         :icon="Reload"
                         circle
                         @click="restoreDefaultLocalization"

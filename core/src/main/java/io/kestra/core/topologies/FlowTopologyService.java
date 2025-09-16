@@ -18,6 +18,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.condition.*;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -175,9 +176,6 @@ public class FlowTopologyService {
     protected boolean isTriggerChild(Flow parent, Flow child) {
         List<AbstractTrigger> triggers = ListUtils.emptyOnNull(child.getTriggers());
 
-        // simulated execution: we add a "simulated" label so conditions can know that the evaluation is for a simulated execution
-        Execution execution = Execution.newExecution(parent, (f, e) -> null, List.of(SIMULATED_EXECUTION), Optional.empty());
-
         // keep only flow trigger
         List<io.kestra.plugin.core.trigger.Flow> flowTriggers = triggers
             .stream()
@@ -189,13 +187,16 @@ public class FlowTopologyService {
             return false;
         }
 
+        // simulated execution: we add a "simulated" label so conditions can know that the evaluation is for a simulated execution
+        Execution execution = Execution.newExecution(parent, (f, e) -> null, List.of(SIMULATED_EXECUTION), Optional.empty());
+
         boolean conditionMatch =  flowTriggers
             .stream()
             .flatMap(flow -> ListUtils.emptyOnNull(flow.getConditions()).stream())
             .allMatch(condition -> validateCondition(condition, parent, execution));
 
         boolean preconditionMatch = flowTriggers.stream()
-            .anyMatch(flow -> flow.getPreconditions() == null || validateMultipleConditions(flow.getPreconditions().getConditions(), parent, execution));
+            .anyMatch(flow -> flow.getPreconditions() == null || validatePreconditions(flow.getPreconditions(), parent, execution));
 
         return conditionMatch && preconditionMatch;
     }
@@ -239,11 +240,24 @@ public class FlowTopologyService {
     }
 
     private boolean isMandatoryMultipleCondition(Condition condition) {
-        return Stream
-            .of(
-                Expression.class
-            )
-            .anyMatch(aClass -> condition.getClass().isAssignableFrom(aClass));
+        return condition.getClass().isAssignableFrom(Expression.class);
+    }
+
+    private boolean validatePreconditions(io.kestra.plugin.core.trigger.Flow.Preconditions preconditions, FlowInterface child, Execution execution) {
+        boolean  upstreamFlowMatched = MapUtils.emptyOnNull(preconditions.getUpstreamFlowsConditions())
+            .values()
+            .stream()
+            .filter(c -> !isFilterCondition(c))
+            .anyMatch(c -> validateCondition(c, child, execution));
+
+        boolean  whereMatched = MapUtils.emptyOnNull(preconditions.getWhereConditions())
+            .values()
+            .stream()
+            .filter(c -> !isFilterCondition(c))
+            .allMatch(c -> validateCondition(c, child, execution));
+
+        // to be a dependency, if upstream flow is set it must be either inside it so it's a AND between upstream flow and where
+        return upstreamFlowMatched && whereMatched;
     }
 
     private boolean isFilterCondition(Condition condition) {

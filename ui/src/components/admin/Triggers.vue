@@ -616,6 +616,16 @@
     max-width: 400px;
     white-space: normal;
     word-break: break-word;
+    // Ensure light theme in light mode:
+    background: #fff !important;
+    color: #2c2c2c !important; // Or use var(--ks-content-primary)
+    border: 1px solid #e5e5e5 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+// For dark mode, preserve existing variable usage
+html.dark .wide-tooltip {
+    background: #232323 !important;
     color: var(--ks-content-primary) !important;
+    border: 1px solid #444 !important;
 }
 </style>

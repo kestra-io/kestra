@@ -40,7 +40,7 @@ jobs:
     name: Frontend - Tests
     needs: [file-changes]
     if: "needs.file-changes.outputs.ui == 'true'"
-    uses: ./.github/workflows/workflow-frontend-test.yml
+    uses: kestra-io/kestra/.github/workflows/workflow-frontend-test.yml@develop
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -49,7 +49,7 @@ jobs:
     name: Backend - Tests
     needs: file-changes
     if: "needs.file-changes.outputs.backend == 'true'"
-    uses: ./.github/workflows/workflow-backend-test.yml
+    uses: kestra-io/kestra/.github/workflows/workflow-backend-test.yml@develop
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

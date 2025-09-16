@@ -9,7 +9,7 @@ jobs:
   build-artifacts:
     name: Build Artifacts
     if: github.repository == github.event.pull_request.head.repo.full_name # prevent running on forks
-    uses: ./.github/workflows/workflow-build-artifacts.yml
+    uses: kestra-io/kestra/.github/workflows/workflow-build-artifacts.yml@develop
 
   publish:
     name: Publish Docker

@@ -89,11 +89,24 @@ public class App implements Callable<Integer> {
      */
     protected static ApplicationContext applicationContext(Class<?> mainClass,
                                                            String[] args) {
+        return applicationContext(mainClass, new String [] { Environment.CLI }, args);
+    }
+
+    /**
+     * Create an {@link ApplicationContext} with additional properties based on configuration files (--config) and
+     * forced Properties from current command.
+     *
+     * @param args args passed to java app
+     * @return the application context created
+     */
+    protected static ApplicationContext applicationContext(Class<?> mainClass,
+                                                           String[] environments,
+                                                           String[] args) {
 
         ApplicationContextBuilder builder = ApplicationContext
             .builder()
             .mainClass(mainClass)
-            .environments(Environment.CLI);
+            .environments(environments);
 
         CommandLine cmd = new CommandLine(mainClass, CommandLine.defaultFactory());
         continueOnParsingErrors(cmd);

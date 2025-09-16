@@ -35,3 +35,10 @@ export type Edge = {
 };
 
 export type Element = { data: Node } | { data: Edge };
+
+export type States = {
+    default: string;
+    faded: string;
+    selected: string;
+    hovered: string;
+};

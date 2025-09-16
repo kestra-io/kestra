@@ -7,16 +7,16 @@ import {States} from "./types";
 const VARIABLES: {node: { background: States; border: States }; edge: States;} = {
     node: {
         background: {
-            default: "--ks-dependencies-edge-default",
-            faded: "--ks-dependencies-edge-faded",
-            selected: "--ks-dependencies-edge-selected",
-            hovered: "--ks-dependencies-edge-hovered",
+            default: "--ks-dependencies-node-background-default",
+            faded: "--ks-dependencies-node-background-faded",
+            selected: "--ks-dependencies-node-background-selected",
+            hovered: "--ks-dependencies-node-background-hovered",
         },
         border: {
-            default: "--ks-dependencies-edge-default",
-            faded: "--ks-dependencies-edge-faded",
-            selected: "--ks-dependencies-edge-selected",
-            hovered: "--ks-dependencies-edge-hovered",
+            default: "--ks-dependencies-node-border-default",
+            faded: "--ks-dependencies-node-border-faded",
+            selected: "--ks-dependencies-node-border-selected",
+            hovered: "--ks-dependencies-node-border-hovered",
         },
     },
     edge: {

@@ -213,7 +213,7 @@ subprojects {subProj ->
                 junitXml.outputPerTestCase = true
                 junitXml.mergeReruns = true
                 junitXml.includeSystemErrLog = true;
-                junitXml.outputLocation = layout.buildDirectory.dir("test-results/junit")
+                junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
             }
 
             // set Xmx for test workers

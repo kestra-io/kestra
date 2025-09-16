@@ -84,14 +84,12 @@ jobs:
     name: Notify - Slack
     runs-on: ubuntu-latest
     needs: [ frontend, backend ]
-    if: github.event_name == 'schedule'
     steps:
       - name: Notify failed CI
-        id: send-ci-failed
         if: |
-          always() && (needs.frontend.result != 'success' ||
-          needs.backend.result != 'success')
-        uses: kestra-io/actions/.github/actions/send-ci-failed@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          always() &&
+            (needs.frontend.result != 'success' || needs.backend.result != 'success') &&
+            (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        uses: kestra-io/actions/composite/slack-status@main
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}

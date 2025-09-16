@@ -1,0 +1,67 @@
+name: 'Load Kestra Plugin List'
+description: 'Composite action to load list of plugins'
+inputs:
+  plugin-version:
+    description: "Kestra version"
+    default: 'LATEST'
+    required: true
+  plugin-file:
+    description: "File of the plugins"
+    default: './.plugins'
+    required: true
+outputs:
+  plugins:
+    description: "List of Kestra plugins"
+    value: ${{ steps.plugins.outputs.plugins }}
+  repositories:
+    description: "List of Kestra plugins repositories"
+    value: ${{ steps.plugins.outputs.repositories }}
+runs:
+  using: composite
+  steps:
+    - name: Get Plugins List
+      id: plugins
+      shell: bash
+      run: |
+        set -e
+
+        PLUGIN_FILE="${{ inputs.plugin-file }}"
+        PLUGIN_VERSION="${{ inputs.plugin-version }}"
+
+        REPOS=""
+        PLUGINS=""
+        WORKDIR="/tmp/kestra-plugins-check"
+
+        mkdir -p "$WORKDIR"
+        cd "$WORKDIR"
+
+        for REPO in $(cat "$PLUGIN_FILE" | grep "io\\.kestra\\." | sed -e '/#/s/^.//' | cut -d':' -f1 | uniq | sort); do
+          echo "Checking $REPO..."
+
+          git clone --quiet https://github.com/kestra-io/$REPO.git > /dev/null
+          cd $REPO
+
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [[ "$LAST_TAG" != "" ]]; then
+            COMMITS=$(git log ${LAST_TAG}..HEAD --oneline || true)
+            if [[ -z "$COMMITS" ]]; then
+              echo "❌ No changes since $LAST_TAG in $REPO"
+              cd "$WORKDIR"
+              rm -rf "$REPO"
+              continue
+            else
+              echo "✅ Changes detected in $REPO since $LAST_TAG"
+            fi
+          else
+            echo "⚠️ No previous tag found, include $REPO by default"
+          fi
+
+          REPOS="$REPOS $REPO"
+          VERSION=$(cat "$PLUGIN_FILE" | grep "$REPO" | cut -d':' -f3 | sed -e "s/LATEST/$PLUGIN_VERSION/")
+          PLUGINS="$PLUGINS ${REPO}:${VERSION}"
+          cd "$WORKDIR"
+        done
+
+        echo "plugins=${PLUGINS}" >> $GITHUB_OUTPUT
+        echo "repositories=${REPOS}" >> $GITHUB_OUTPUT

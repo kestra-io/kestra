@@ -3,104 +3,47 @@
 # SCRIPT: release-plugins.sh
 #
 # DESCRIPTION:
-#   This script can be used to run a ./gradlew release command on each kestra plugin repository.
-#   By default, if no `GITHUB_PAT` environment variable exist, the script will attempt to clone GitHub repositories using SSH_KEY.
-#
-# USAGE: ./release-plugins.sh [options]
-# OPTIONS:
-#   --release-version <version>  Specify the release version (required)
-#   --next-version    <version>  Specify the next version (required)
-#   --dry-run                    Specify to run in DRY_RUN.
-#   -y, --yes                    Automatically confirm prompts (non-interactive).
-#   -h, --help                   Show the help message and exit
-
-# EXAMPLES:
-# To release all plugins:
-#   ./release-plugins.sh --release-version=0.20.0 --next-version=0.21.0-SNAPSHOT
-# To release a specific plugin:
-#   ./release-plugins.sh --release-version=0.20.0 --next-version=0.21.0-SNAPSHOT plugin-kubernetes
-# To release specific plugins from file:
-#   ./release-plugins.sh --release-version=0.20.0 --plugin-file .plugins
+#   This script releases modified Kestra plugins using the Gradle release plugin.
+#   It supports version bumping, tag creation, and release branch management.
+#   Supports auto-detecting bump type (major, minor, patch) per plugin.
 #===============================================================================
 
-set -e;
+set -e
 
-###############################################################
-# Global vars
-###############################################################
 BASEDIR=$(dirname "$(readlink -f $0)")
-WORKING_DIR=/tmp/kestra-release-plugins-$(date +%s);
-PLUGIN_FILE="$BASEDIR/../.plugins"
-GIT_BRANCH=master
+WORKING_DIR=/tmp/kestra-release-plugins-$(date +%s)
+GIT_BRANCH=main
 
-###############################################################
-# Functions
-###############################################################
-
-# Function to display the help message
-usage() {
-    echo "Usage: $0 --release-version <version> --next-version [plugin-repositories...]"
-    echo
-    echo "Options:"
-    echo "  --release-version <version>  Specify the release version (required)."
-    echo "  --next-version    <version>  Specify the next version (required)."
-    echo "  --plugin-file                File containing the plugin list (default: .plugins)"
-    echo "  --dry-run                    Specify to run in DRY_RUN."
-    echo "  -y, --yes                    Automatically confirm prompts (non-interactive)."
-    echo "  -h, --help                   Show this help message and exit."
-    exit 1
+# Bump Detection Function
+detect_bump_type() {
+  COMMITS=$(git log -10 --pretty=%B)
+  if echo "$COMMITS" | grep -Eq 'BREAKING CHANGE|^feat!|feat\([^)]+\)!'; then
+    echo "major"
+  elif echo "$COMMITS" | grep -Eq '^feat'; then
+    echo "minor"
+  else
+    echo "invalid"
+  fi
 }
 
-# Function to ask to continue
-function askToContinue() {
-  read -p "Are you sure you want to continue? [y/N] " confirm
-  [[ "$confirm" =~ ^[Yy]$ ]] || { echo "Operation cancelled."; exit 1; }
-}
-
-###############################################################
-# Options
-###############################################################
-
+# Parse Arguments
 PLUGINS_ARGS=()
-AUTO_YES=false
 DRY_RUN=false
-# Get the options
+KESTRA_VERSION=""
+
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
-        --release-version)
-            RELEASE_VERSION="$2"
+        --kestra-version)
+            KESTRA_VERSION="$2"
             shift 2
             ;;
-        --release-version=*)
-            RELEASE_VERSION="${1#*=}"
-            shift
-            ;;
-        --next-version)
-            NEXT_VERSION="$2"
-            shift 2
-            ;;
-        --next-version=*)
-            NEXT_VERSION="${1#*=}"
-            shift
-            ;;
-        --plugin-file)
-            PLUGIN_FILE="$2"
-            shift 2
-            ;;
-        --plugin-file=*)
-            PLUGIN_FILE="${1#*=}"
+        --kestra-version=*)
+            KESTRA_VERSION="${1#*=}"
             shift
             ;;
         --dry-run)
             DRY_RUN=true
             shift
-            ;;
-        -y|--yes)
-            AUTO_YES=true
-            shift
-            ;;
-        -h|--help)
-            usage
             ;;
         *)
             PLUGINS_ARGS+=("$1")
@@ -109,131 +52,93 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-## Check options
-if [[ -z "$RELEASE_VERSION" ]]; then
-   echo -e "Missing required argument: --release-version\n";
-   usage
-fi
+# Load Plugins List
+PLUGINS_ARRAY=("${PLUGINS_ARGS[@]}")
+PLUGINS_COUNT="${#PLUGINS_ARRAY[@]}"
 
-if [[ -z "$NEXT_VERSION" ]]; then
-    echo -e "Missing required argument: --next-version\n";
-    usage
-fi
+echo "Found ($PLUGINS_COUNT) plugin repositories:"
+for PLUGIN in "${PLUGINS_ARRAY[@]}"; do echo "$PLUGIN"; done
 
-## Get plugin list
-if [[ "${#PLUGINS_ARGS[@]}" -eq 0 ]]; then
-  if [ -f "$PLUGIN_FILE" ]; then
-  	PLUGINS=$(cat "$PLUGIN_FILE" | grep "io\\.kestra\\." | sed -e '/#/s/^.//' | cut -d':' -f1 | uniq | sort);
-  	PLUGINS_COUNT=$(echo "$PLUGINS" | wc -l);
-  	PLUGINS_ARRAY=$(echo "$PLUGINS" | xargs || echo '');
-  	PLUGINS_ARRAY=($PLUGINS_ARRAY);
-  fi
-else
-  PLUGINS_ARRAY=("${PLUGINS_ARGS[@]}")
-  PLUGINS_COUNT="${#PLUGINS_ARGS[@]}"
-fi
-
-# Extract the major and minor versions
-BASE_VERSION=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+)\..*/\1/')
-PUSH_RELEASE_BRANCH="releases/v${BASE_VERSION}.x"
-
-## Get plugin list
-echo "RELEASE_VERSION=$RELEASE_VERSION"
-echo "NEXT_VERSION=$NEXT_VERSION"
-echo "PUSH_RELEASE_BRANCH=$PUSH_RELEASE_BRANCH"
-echo "GIT_BRANCH=$GIT_BRANCH"
-echo "DRY_RUN=$DRY_RUN"
-echo "Found ($PLUGINS_COUNT) plugin repositories:";
+mkdir -p "$WORKING_DIR"
+COUNTER=1
 
 for PLUGIN in "${PLUGINS_ARRAY[@]}"; do
-    echo "$PLUGIN"
-done
-
-if [[ "$AUTO_YES" == false ]]; then
-  askToContinue
-fi
-
-###############################################################
-# Main
-###############################################################
-mkdir -p $WORKING_DIR
-
-COUNTER=1;
-for PLUGIN in "${PLUGINS_ARRAY[@]}"
-do
-  cd $WORKING_DIR;
+  cd "$WORKING_DIR"
 
   echo "---------------------------------------------------------------------------------------"
-  echo "[$COUNTER/$PLUGINS_COUNT] Release Plugin: $PLUGIN"
+  echo "[$COUNTER/$PLUGINS_COUNT] Releasing Plugin: $PLUGIN"
   echo "---------------------------------------------------------------------------------------"
+
   if [[ -z "${GITHUB_PAT}" ]]; then
     git clone git@github.com:kestra-io/$PLUGIN
   else
     echo "Clone git repository using GITHUB PAT"
     git clone https://${GITHUB_PAT}@github.com/kestra-io/$PLUGIN.git
   fi
-  cd "$PLUGIN";
 
-  if [[ "$PLUGIN" == "plugin-transform" ]] && [[ "$GIT_BRANCH" == "master" ]]; then # quickfix
-    git checkout main;
-  else
-    git checkout "$GIT_BRANCH";
-  fi
+  cd $PLUGIN
 
-  # Check if tag already exists on remote
-  TAG_EXISTS=$(git ls-remote --tags origin "refs/tags/v${RELEASE_VERSION}" | wc -l)
-  if [[ "$TAG_EXISTS" -ne 0 ]]; then
-    echo "Tag ${RELEASE_VERSION} already exists for $PLUGIN. Skipping..."
+  # Per Plugin Version Calculation
+  PLUGIN_LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+  BUMP_TYPE=$(detect_bump_type)
+  if [[ "$BUMP_TYPE" == "invalid" ]]; then
+    echo "No valid bump type (major/minor) found for $PLUGIN. Skipping..."
     continue
   fi
-    
+  IFS='.' read -r MAJOR MINOR PATCH <<< "${PLUGIN_LAST_TAG#v}"
+  case "$BUMP_TYPE" in
+    major) ((MAJOR++)); MINOR=0; PATCH=0 ;;
+    minor) ((MINOR++)); PATCH=0 ;;
+  esac
+  PLUGIN_RELEASE_VERSION="$MAJOR.$MINOR.$PATCH"
+  PLUGIN_NEXT_VERSION="$MAJOR.$((MINOR + 1)).$PATCH-SNAPSHOT"
+
+  BASE_VERSION=$(echo "$PLUGIN_RELEASE_VERSION" | sed -E 's/^([0-9]+\\.[0-9]+)\\..*/\\1/')
+  PUSH_RELEASE_BRANCH="releases/v${BASE_VERSION}.x"
+
+  echo "Plugin $PLUGIN → RELEASE_VERSION=$PLUGIN_RELEASE_VERSION, NEXT_VERSION=$PLUGIN_NEXT_VERSION"
+
+  TAG_EXISTS=$(git ls-remote --tags origin "refs/tags/v${PLUGIN_RELEASE_VERSION}" | wc -l)
+  if [[ "$TAG_EXISTS" -ne 0 ]]; then
+    echo "Tag v${PLUGIN_RELEASE_VERSION} already exists for $PLUGIN. Skipping..."
+    continue
+  fi
+
   if [[ "$DRY_RUN" == false ]]; then
-    CURRENT_BRANCH=$(git branch --show-current);
+    git checkout -b "$PUSH_RELEASE_BRANCH"
+    git push -u origin "$PUSH_RELEASE_BRANCH"
+    git checkout "$GIT_BRANCH"
 
-    echo "Run gradle release for plugin: $PLUGIN";
-    echo "Branch: $CURRENT_BRANCH";
-
-    if [[ "$AUTO_YES" == false ]]; then
-      askToContinue
-    fi
-
-    # Create and push release branch
-    git checkout -b "$PUSH_RELEASE_BRANCH";
-    git push -u origin "$PUSH_RELEASE_BRANCH";
-
-    # Run gradle release
-    git checkout "$CURRENT_BRANCH";
-
-    if [[ "$RELEASE_VERSION" == *"-SNAPSHOT" ]]; then
-      # -SNAPSHOT qualifier maybe used to test release-candidates
+    if [[ "$PLUGIN_RELEASE_VERSION" == *"-SNAPSHOT" ]]; then
       ./gradlew release -Prelease.useAutomaticVersion=true \
-        -Prelease.releaseVersion="${RELEASE_VERSION}" \
-        -Prelease.newVersion="${NEXT_VERSION}" \
-        -Prelease.pushReleaseVersionBranch="${PUSH_RELEASE_BRANCH}" \
+        -Prelease.releaseVersion="$PLUGIN_RELEASE_VERSION" \
+        -Prelease.newVersion="$PLUGIN_NEXT_VERSION" \
+        -Prelease.pushReleaseVersionBranch="$PUSH_RELEASE_BRANCH" \
         -Prelease.failOnSnapshotDependencies=false
     else
       ./gradlew release -Prelease.useAutomaticVersion=true \
-        -Prelease.releaseVersion="${RELEASE_VERSION}" \
-        -Prelease.newVersion="${NEXT_VERSION}" \
-        -Prelease.pushReleaseVersionBranch="${PUSH_RELEASE_BRANCH}"
+        -Prelease.releaseVersion="$PLUGIN_RELEASE_VERSION" \
+        -Prelease.newVersion="$PLUGIN_NEXT_VERSION" \
+        -Prelease.pushReleaseVersionBranch="$PUSH_RELEASE_BRANCH"
     fi
 
-    git push;
-    # Update the upper bound version of kestra
-    PLUGIN_KESTRA_VERSION="[${BASE_VERSION},)"
-    git checkout "$PUSH_RELEASE_BRANCH" && git pull;
-    sed -i "s/^kestraVersion=.*/kestraVersion=${PLUGIN_KESTRA_VERSION}/" ./gradle.properties
-    git add ./gradle.properties
-    # Check if there are staged changes
-    if ! git diff --cached --quiet; then
-      git commit -m"chore(deps): update kestraVersion to ${PLUGIN_KESTRA_VERSION}."
-      git push
+    git push
+
+    if [[ -n "$KESTRA_VERSION" && "$BUMP_TYPE" == "major" ]]; then
+      PLUGIN_KESTRA_VERSION="$KESTRA_VERSION"
+      git checkout "$PUSH_RELEASE_BRANCH" && git pull
+      sed -i "s/^kestraVersion=.*/kestraVersion=${PLUGIN_KESTRA_VERSION}/" ./gradle.properties
+      git add ./gradle.properties
+      if ! git diff --cached --quiet; then
+        git commit -m "chore(deps): update kestraVersion to ${PLUGIN_KESTRA_VERSION}."
+        git push
+      fi
     fi
-    sleep 5; # add a short delay to not spam Maven Central
+    sleep 5
   else
-    echo "Skip gradle release [DRY_RUN=true]";
+    echo "Dry run: skipping release for $PLUGIN"
   fi
-  COUNTER=$(( COUNTER + 1 ));
-done;
+  COUNTER=$(( COUNTER + 1 ))
+done
 
-exit 0;
+exit 0

@@ -8,6 +8,19 @@ import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
 
+function maybeAddTimeRangeFilter(to) {
+    const dateTimeKeys = ["startDate", "endDate", "timeRange"];
+
+    // Default to the last 7 days if no time range is set
+    if (!Object.keys(to.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
+        to.query["filters[timeRange][EQUALS]"] = "PT168H";
+
+        return true;
+    }
+
+    return false;
+}
+
 export default [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}}},
@@ -19,6 +32,15 @@ export default [
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
         beforeEnter: (to, from, next) => {
+            if (maybeAddTimeRangeFilter(to)) {
+                next({
+                    name: to.name,
+                    params: to.params,
+                    query: to.query,
+                });
+                return;
+            }
+
             if (!to.params.dashboard) {
                 next({
                     name: "home",
@@ -43,7 +65,23 @@ export default [
     {name: "flows/update", path: "/:tenant?/flows/edit/:namespace/:id/:tab?", component: () => import("../components/flows/FlowRoot.vue")},
 
     //Executions
-    {name: "executions/list", path: "/:tenant?/executions", component: () => import("../components/executions/Executions.vue")},
+    {
+        name: "executions/list",
+        path: "/:tenant?/executions",
+        component: () => import("../components/executions/Executions.vue"),
+        beforeEnter: (to, from, next) => {
+            if (maybeAddTimeRangeFilter(to)) {
+                next({
+                    name: to.name,
+                    params: to.params,
+                    query: to.query,
+                });
+                return;
+            }
+
+            next();
+        }
+    },
     {name: "executions/update", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: () => import("../components/executions/ExecutionRoot.vue")},
 
     //TaskRuns
@@ -69,7 +107,23 @@ export default [
     {name: "templates/update", path: "/:tenant?/templates/edit/:namespace/:id", component: () => import("../components/templates/TemplateEdit.vue")},
 
     //Logs
-    {name: "logs/list", path: "/:tenant?/logs", component: () => import("../components/logs/LogsWrapper.vue")},
+    {
+        name: "logs/list",
+        path: "/:tenant?/logs",
+        component: () => import("../components/logs/LogsWrapper.vue"),
+        beforeEnter: (to, from, next) => {
+            if (maybeAddTimeRangeFilter(to)) {
+                next({
+                    name: to.name,
+                    params: to.params,
+                    query: to.query,
+                });
+                return;
+            }
+
+            next();
+        }
+    },
 
     //Namespaces
     {name: "namespaces/list", path: "/:tenant?/namespaces", component: () => import("override/components/namespaces/Namespaces.vue")},

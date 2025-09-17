@@ -1,6 +1,5 @@
 package io.kestra.jdbc.repository;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.models.SearchResult;
@@ -15,7 +14,7 @@ public abstract class AbstractJdbcLoadedFlowRepositoryTest extends AbstractLoade
 
     @Test
     public void findSourceCode() {
-        List<SearchResult<Flow>> search = flowRepository.findSourceCode(Pageable.from(1, 10, Sort.UNSORTED), "io.kestra.plugin.core.condition.MultipleCondition", MAIN_TENANT, null);
+        List<SearchResult<Flow>> search = flowRepository.findSourceCode(Pageable.from(1, 10, Sort.UNSORTED), "io.kestra.plugin.core.condition.MultipleCondition", TENANT, null);
 
         assertThat((long) search.size()).isEqualTo(2L);
 

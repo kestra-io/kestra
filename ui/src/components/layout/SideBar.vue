@@ -356,6 +356,11 @@
                 padding: 0 5px;
             }
 
+            /* Remove shadow/gradient overlay when sidebar is collapsed */
+            .vsm--item::after {
+                display: none;
+            }
+
             .el-button {
                 margin-right: 0;
             }

@@ -45,7 +45,7 @@ export function summarizeJunitReport(
 
                         testReportErrorLogs.push(
                             `${escapePipe(project)} > ${escapePipe(testsuite.name)} > ${escapePipe(name)} ${mapStatusToEmoji(testcase.status)} in ${duration}:
-                                    \n${codeBlock(message + details)}`,
+                                    \n${spoilerBlock('logs:', codeBlock(message + details))}`,
                         );
                     }
                 } else {
@@ -158,6 +158,15 @@ export function summarizeJunitReport(
     function codeBlock(s: string | number | undefined): string {
         const str = s == null ? "" : String(s);
         return `\`\`\`\n${str}\n\`\`\`\n`;
+    }
+
+    function spoilerBlock(summary: string, content: string): string {
+        return `
+<details>
+    <summary>${summary}</summary>
+
+    ${content}
+</details>`;
     }
 
     function truncate(s: string, max: number): string {

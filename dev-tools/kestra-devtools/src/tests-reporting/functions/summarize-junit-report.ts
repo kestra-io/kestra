@@ -43,9 +43,9 @@ export function summarizeJunitReport(
                         const message = testcase.message ?? "";
                         const details = testcase.details ? "\n\n" + testcase.details : "";
 
+                        const errorSummary= `${escapePipe(project)} > ${escapePipe(testsuite.name)} > ${escapePipe(name)} ${mapStatusToEmoji(testcase.status)} in ${duration}`;
                         testReportErrorLogs.push(
-                            `${escapePipe(project)} > ${escapePipe(testsuite.name)} > ${escapePipe(name)} ${mapStatusToEmoji(testcase.status)} in ${duration}:
-                                    \n${spoilerBlock('logs:', codeBlock(message + details))}`,
+                            `${spoilerBlock(errorSummary, codeBlock(message + details))}\n`,
                         );
                     }
                 } else {
@@ -161,11 +161,10 @@ export function summarizeJunitReport(
     }
 
     function spoilerBlock(summary: string, content: string): string {
-        return `
-<details>
-    <summary>${summary}</summary>
+        return `<details>
+<summary>${summary}</summary>
 
-    ${content}
+${content}
 </details>`;
     }
 

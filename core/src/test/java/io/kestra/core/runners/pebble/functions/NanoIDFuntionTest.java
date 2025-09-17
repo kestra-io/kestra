@@ -39,12 +39,12 @@ public class NanoIDFuntionTest {
     void checkDifferentAlphabet() throws Exception {
         String rendered =
             variableRenderer.render(
-                "{{ nanoId(length,alphabet) }}", Map.of("length", 21, "alphabet", "abcdefghijklmnopqrstuvwxyz"));
+                "{{ nanoId(length,alphabet) }}", Map.of("length", 21, "alphabet", ":;<=>?@"));
         assertThat(!rendered.isEmpty()).as(rendered).isTrue();
         assertThat(rendered.length()).isEqualTo(21);
         for (char c : rendered.toCharArray()) {
-            assertThat(c).isGreaterThanOrEqualTo('a');
-            assertThat(c).isLessThanOrEqualTo('z');
+            assertThat(c).isGreaterThanOrEqualTo(':');
+            assertThat(c).isLessThanOrEqualTo('@');
         }
     }
 

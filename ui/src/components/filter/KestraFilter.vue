@@ -436,6 +436,13 @@
 
     const monacoEditor = ref<typeof MonacoEditor>();
 
+    let initialRouteName = ref();
+    watch(() => route.name, (newVal) => {
+        if (initialRouteName.value === undefined) {
+            initialRouteName.value = newVal;
+        }
+    })
+
     const updateQuery = () => {
         const newQuery = {
             ...Object.fromEntries(queryParamsToKeep.value.map(key => {
@@ -451,9 +458,11 @@
             return; // Skip if the query hasn't changed
         }
         skipRouteWatcherOnce.value = true;
-        router.push({ 
-            query: newQuery 
-        });
+        if (route.name === initialRouteName.value) {
+            router.push({
+                query: newQuery
+            });
+        }
     };
 
     const editorDidMount = (mountedEditor: monaco.editor.IStandaloneCodeEditor) => {

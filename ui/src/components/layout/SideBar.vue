@@ -120,7 +120,7 @@
                     component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
                 }]
             }] : []),
-            ...disabledCurrentRoute(props.menu)
+            ...(props.menu ? disabledCurrentRoute(props.menu) : [])
         ];
     });
 

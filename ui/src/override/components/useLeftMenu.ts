@@ -1,4 +1,4 @@
-import {shallowRef} from "vue";
+import {computed} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {useI18n} from "vue-i18n";
 import {useMiscStore} from "override/stores/misc";
@@ -20,6 +20,8 @@ import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue";
 import ShieldKeyOutline from "vue-material-design-icons/ShieldKeyOutline.vue";
 import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue";
 
+export type MenuItem = {href?: {name: string, params?: Record<string, any>, query?: Record<string, any>}, child?: MenuItem[]};
+
 export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"});
     const $route = useRoute();
@@ -40,11 +42,12 @@ export function useLeftMenu() {
             .map((r) => r.name);
     }
 
-    // This object seems to be a good candidate for a computed value
-    // but cannot be. When it becomes a computed, the hack to set current
-    // route as active in the blueprints activates pages forever.
-    const generateMenu = () => {
-        return [
+    const flatMenuItems = (items: MenuItem[]): MenuItem[] => {
+        return items.flatMap(item => item.child ? [item, ...flatMenuItems(item.child)] : [item])
+    }
+
+    const menu = computed(() => {
+        const generatedMenu = [
             {
                 href: {
                     name: "home",
@@ -52,7 +55,7 @@ export function useLeftMenu() {
                 },
                 title: t("dashboards.labels.plural"),
                 icon: {
-                    element: shallowRef(ViewDashboardVariantOutline),
+                    element: ViewDashboardVariantOutline,
                     class: "menu-icon",
                 },
             },
@@ -61,7 +64,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("flows"),
                 title: t("flows"),
                 icon: {
-                    element: shallowRef(FileTreeOutline),
+                    element: FileTreeOutline,
                     class: "menu-icon",
                 },
                 exact: false,
@@ -71,7 +74,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("apps"),
                 title: t("apps"),
                 icon: {
-                    element: shallowRef(FormatListGroupPlus),
+                    element: FormatListGroupPlus,
                     class: "menu-icon",
                 },
                 attributes: {
@@ -83,7 +86,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("templates"),
                 title: t("templates"),
                 icon: {
-                    element: shallowRef(ContentCopy),
+                    element: ContentCopy,
                     class: "menu-icon",
                 },
                 hidden: !miscStore.configs?.isTemplateEnabled,
@@ -93,7 +96,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("executions"),
                 title: t("executions"),
                 icon: {
-                    element: shallowRef(TimelineClockOutline),
+                    element: TimelineClockOutline,
                     class: "menu-icon",
                 },
             },
@@ -102,7 +105,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("taskruns"),
                 title: t("taskruns"),
                 icon: {
-                    element: shallowRef(ChartTimeline),
+                    element: ChartTimeline,
                     class: "menu-icon",
                 },
                 hidden: !miscStore.configs?.isTaskRunEnabled,
@@ -112,7 +115,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("logs"),
                 title: t("logs"),
                 icon: {
-                    element: shallowRef(TimelineTextOutline),
+                    element: TimelineTextOutline,
                     class: "menu-icon",
                 },
             },
@@ -121,7 +124,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("tests"),
                 title: t("demos.tests.label"),
                 icon: {
-                    element: shallowRef(FlaskOutline),
+                    element: FlaskOutline,
                     class: "menu-icon"
                 },
                 attributes: {
@@ -133,7 +136,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("namespaces"),
                 title: t("namespaces"),
                 icon: {
-                    element: shallowRef(DotsSquare),
+                    element: DotsSquare,
                     class: "menu-icon",
                 },
             },
@@ -142,7 +145,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("kv"),
                 title: t("kv.name"),
                 icon: {
-                    element: shallowRef(DatabaseOutline),
+                    element: DatabaseOutline,
                     class: "menu-icon",
                 },
             },
@@ -151,7 +154,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("secrets"),
                 title: t("secret.names"),
                 icon: {
-                    element: shallowRef(ShieldKeyOutline),
+                    element: ShieldKeyOutline,
                     class: "menu-icon",
                 },
                 attributes: {
@@ -162,7 +165,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("blueprints"),
                 title: t("blueprints.title"),
                 icon: {
-                    element: shallowRef(BallotOutline),
+                    element: BallotOutline,
                     class: "menu-icon",
                 },
                 child: [
@@ -200,7 +203,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("plugins"),
                 title: t("plugins.names"),
                 icon: {
-                    element: shallowRef(Connection),
+                    element: Connection,
                     class: "menu-icon",
                 },
             },
@@ -208,7 +211,7 @@ export function useLeftMenu() {
                 title: t("administration"),
                 routes: routeStartWith("admin"),
                 icon: {
-                    element: shallowRef(ShieldAccountVariantOutline),
+                    element: ShieldAccountVariantOutline,
                     class: "menu-icon",
                 },
                 child: [
@@ -257,10 +260,18 @@ export function useLeftMenu() {
                 ],
             }
         ];
-    };
+
+        flatMenuItems(generatedMenu).forEach(menuItem => {
+            if (menuItem.href !== undefined && menuItem.href?.name === $route.name) {
+                menuItem.href.query = {...$route.query, ...menuItem.href?.query};
+            }
+        });
+
+        return generatedMenu;
+    });
 
     return {
         routeStartWith,
-        generateMenu
+        menu
     };
 }

@@ -108,7 +108,7 @@ jobs:
         name: Allure - Generate slug variables
 
       - name: Allure - Publish report
-        uses: andrcuns/allure-publish-action@v2.9.0
+        uses: andrcuns/allure-publish-action@v2.10.0
         if: always() && env.GOOGLE_SERVICE_ACCOUNT != ''
         continue-on-error: true
         env:

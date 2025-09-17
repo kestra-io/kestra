@@ -7,6 +7,7 @@ interface GuidedProperties {
     tourStarted: boolean;
     manuallyContinue: boolean;
     template: any;
+    saveFlow?: boolean;
 }
 
 interface Message {

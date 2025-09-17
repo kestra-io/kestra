@@ -3,7 +3,7 @@
     <Bar
         v-if="generated !== undefined"
         :data="parsedData"
-        :options
+        :options="options"
         :plugins="chartOptions?.legend?.enabled ? [customBarLegend] : []"
         class="chart"
         :class="chartOptions?.legend?.enabled ? 'with-legend' : ''"
@@ -15,13 +15,11 @@
     import {PropType, computed, watch} from "vue";
 
     import NoData from "../../layout/NoData.vue";
-
     import {Bar} from "vue-chartjs";
 
     import {Chart, getDashboard} from "../composables/useDashboards";
     import {useChartGenerator} from "../composables/useDashboards";
 
-    
     import {customBarLegend} from "../composables/useLegend";
     import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts.js";
 
@@ -41,9 +39,7 @@
         showDefault: {type: Boolean, default: false},
     });
 
-
     const containerID = `${props.chart.id}__${Math.random()}`;
-
     const {data, chartOptions} = props.chart;
 
     const aggregator = Object.entries(data.columns)
@@ -59,6 +55,7 @@
         ticks: {maxTicksLimit: 8, stepSize:1},
         grid: {display: false},
     };
+
     const options = computed(() => {
         return defaultConfig({
             skipNull: true,
@@ -132,11 +129,11 @@
         }, theme.value);
     });
 
-    function isDuration(field) {
+    function isDuration(field: string) {
         return field === "DURATION";
     }
 
-    const parseValue = (value) => {
+    const parseValue = (value: any) => {
         const date = moment(value, moment.ISO_8601, true);
         return date.isValid() ? date.format(KestraUtils.getDateFormat(route.query.startDate, route.query.endDate)) : value;
     };
@@ -144,7 +141,7 @@
     const parsedData = computed(() => {
         const rawData = generated.value.results;
         const xAxis = (() => {
-            const values = rawData.map((v) => {
+            const values = rawData.map((v: any) => {
                 return parseValue(v[chartOptions.column]);
             });
 
@@ -153,19 +150,34 @@
 
         const aggregatorKeys = aggregator.map(([key]) => key);
 
-        const reducer = (array, field, yAxisID) => {
+        const reducer = (array: any[], field: string, yAxisID: string) => {
             if (!array.length) return;
 
             const {columns} = data;
             const {column, colorByColumn} = chartOptions;
 
-            // Get the fields for stacks (columns without `agg` and not the xAxis column)
             const fields = Object.keys(columns)
                 .filter(key => !aggregatorKeys.includes(key))
                 .filter(key => key !== column);
 
-            return array.reduce((acc, {...params}) => {
-                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.map(agg => agg[0] + " = " + (isDuration(agg[1].field) ? Utils.humanDuration(params[agg[0]]) : params[agg[0]])).join(", ")}`;
+            return array.reduce((acc: any, {...params}) => {
+                const left = fields.map((f) => params[f]).join(", ");
+                const countEntry = aggregator.find(([_aggKey, aggDef]: any) => !isDuration(aggDef.field));
+                const durationEntry = aggregator.find(([_aggKey, aggDef]: any) => isDuration(aggDef.field));
+
+
+                const parts: string[] = [];
+                if (countEntry) {
+                    const [k] = countEntry;
+                    parts.push(`${params[k]}`);
+                }
+                if (durationEntry) {
+                    const [k] = durationEntry;
+                    parts.push(`total duration: ${Utils.humanDuration(params[k])}`);
+                }
+
+                const right = parts.join(", ");
+                const stack = `${left}: ${right}`;
 
                 if (!acc[stack]) {
                     acc[stack] = {
@@ -185,7 +197,6 @@
                 const current = acc[stack];
                 const parsedDate = parseValue(params[column]);
 
-                // Check if the date is already processed
                 if (!current.unique.has(parsedDate)) {
                     current.unique.add(parsedDate);
                     current.data.push({
@@ -193,8 +204,7 @@
                         y: params[field],
                     });
                 } else {
-                    // Update existing stack value for the same date
-                    const existing = current.data.find((v) => v.x === parsedDate);
+                    const existing = current.data.find((v: any) => v.x === parsedDate);
                     if (existing) existing.y += params[field];
                 }
 
@@ -202,10 +212,10 @@
             }, {});
         };
 
-        const getData = (field, object = {}) => {
-            return Object.values(object).map((dataset) => {
+        const getData = (field: string, object: Record<string, any> = {}) => {
+            return Object.values(object).map((dataset: any) => {
                 const data = xAxis.map((xAxisLabel) => {
-                    const temp = dataset.data.find((v) => v.x === xAxisLabel);
+                    const temp = dataset.data.find((v: any) => v.x === xAxisLabel);
                     return temp ? temp.y : 0;
                 });
 
@@ -213,36 +223,30 @@
             });
         };
 
-        const yDataset = reducer(rawData, aggregator[0][0], "y");
+        const yDataset = reducer(rawData, aggregator[0][0] as string, "y");
 
-        // Sorts the dataset array by the descending sum of 'data' values.
-        // If two datasets have the same sum, it sorts them alphabetically by 'label'.
-        const yDatasetData = Object.values(getData(aggregator[0][0], yDataset)).sort((a, b) => {
-            const sumA = a.data.reduce((sum, val) => sum + val, 0);
-            const sumB = b.data.reduce((sum, val) => sum + val, 0);
+        const yDatasetData = Object
+            .values(getData(aggregator[0][0] as string, yDataset))
+            .sort((a: any, b: any) => {
+                const sumA = a.data.reduce((sum: number, val: number) => sum + val, 0);
+                const sumB = b.data.reduce((sum: number, val: number) => sum + val, 0);
+                if (sumB !== sumA) return sumB - sumA;
+                return a.label.localeCompare(b.label);
+            });
 
-            if (sumB !== sumA) {
-                return sumB - sumA; // Descending by sum
-            }
-
-            return a.label.localeCompare(b.label); // Ascending alphabetically by label
-        });
-
-        const label = aggregator?.[1]?.[1]?.displayName ?? aggregator?.[1]?.[1]?.field;
+        const label = (aggregator?.[1]?.[1] as any)?.displayName ?? (aggregator?.[1]?.[1] as any)?.field;
 
         let duration: number[] = [];
-        if(yBShown){
-            const helper = Array.from(new Set(rawData.map((v) => parseValue(v.date)))).sort();
+        if (yBShown) {
+            const helper = Array.from(new Set(rawData.map((v: any) => parseValue(v.date)))).sort();
 
-            // Step 1: Group durations by formatted date
-            const groupedDurations = {};
-            rawData.forEach(item => {
+            const groupedDurations: Record<string, number> = {};
+            rawData.forEach((item: any) => {
                 const formattedDate = parseValue(item.date);
                 groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item.duration;
             });
 
-            // Step 2: Map to target dates
-            duration = helper.map(date => groupedDurations[date] || 0);
+            duration = helper.map((date: string) => groupedDurations[date] || 0);
         }
 
         return {
@@ -264,6 +268,7 @@
                 : yDatasetData,
         };
     });
+
     const {data: generated, generate} = useChartGenerator(props);
 
     function refresh() {

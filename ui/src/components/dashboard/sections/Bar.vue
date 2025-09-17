@@ -6,6 +6,7 @@
         :options="options"
         :plugins="chartOptions?.legend?.enabled ? [customBarLegend] : []"
         :class="props.short ? 'short-chart' : 'chart'"
+        :external-tooltip="true"
     />
     <NoData v-else />
 </template>
@@ -152,7 +153,9 @@
                 label: subSectionsEntry[0],
                 data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0),
                 backgroundColor: getConsistentHEXColor(theme.value, subSectionsEntry[0]),
-                tooltip: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
+                tooltip: `${subSectionsEntry[0]}: ${(isDurationAgg() 
+                    ? `total duration: ${Utils.humanDuration(subSectionsEntry[1]).replace(", ", " ")}`
+                    : subSectionsEntry[1])}`,
             }));
         });
 

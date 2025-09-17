@@ -3,7 +3,10 @@
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <el-breadcrumb v-if="breadcrumb">
                 <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
-                    <router-link :to="!item.disabled ? item.link : {}">
+                    <a v-if="item.disabled || !item.link">
+                        {{ item.label }}
+                    </a>
+                    <router-link v-else :to="item.link">
                         {{ item.label }}
                     </router-link>
                 </el-breadcrumb-item>
@@ -19,7 +22,7 @@
                 <el-button
                     class="star-button"
                     :class="{'star-active': bookmarked}"
-                    :icon="StarOutlineIcon"
+                    :icon="bookmarked ? StarIcon : StarOutlineIcon"
                     circle
                     @click="onStarClick"
                 />
@@ -43,103 +46,87 @@
     </nav>
 </template>
 
-<script>
-    import {mapStores} from "pinia";
-    import {useLogsStore} from "../../stores/logs";
-    import {useBookmarksStore} from "../../stores/bookmarks";
-    import {useCoreStore} from "../../stores/core";
-    import Impersonating from "override/components/auth/Impersonating.vue";
+<script setup lang="ts">
+    import {computed} from "vue";
+    import {useI18n} from "vue-i18n";
+    import {useRoute} from "vue-router";
     import GlobalSearch from "./GlobalSearch.vue";
+    import Impersonating from "override/components/auth/Impersonating.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
     import StarIcon from "vue-material-design-icons/Star.vue";
-    import Information from "vue-material-design-icons/Information.vue"
+    import Information from "vue-material-design-icons/Information.vue";
     import Badge from "../global/Badge.vue";
-    import {useAuthStore} from "override/stores/auth"
+    import {useLogsStore} from "../../stores/logs";
+    import {useBookmarksStore} from "../../stores/bookmarks";
+    import {useToast} from "../../utils/toast";
+    import {useFlowStore} from "../../stores/flow";
 
-    export default {
-        components: {
-            GlobalSearch,
-            TrashCan,
-            Impersonating,
-            Information,
-            Badge
-        },
-        props: {
-            title: {
-                type: String,
-                required: true
-            },
-            description: {
-                type: String,
-                default: undefined
-            },
-            breadcrumb: {
-                type: Array,
-                default: undefined
-            },
-            beta: {
-                type: Boolean,
-                required: false
-            },
-        },
-        computed: {
-            ...mapStores(useLogsStore, useBookmarksStore, useCoreStore, useAuthStore),
-            tourEnabled(){
-                // Temporary solution to not showing the tour menu item for EE
-                return this.coreStore.tutorialFlows?.length && !Object.keys(this.authStore.user).length
-            },
-            shouldDisplayDeleteButton() {
-                return this.$route.name === "flows/update" && this.$route.params?.tab === "logs"
-            },
-            StarOutlineIcon() {
-                return this.bookmarked ? StarIcon : StarOutlineIcon
-            },
-            bookmarked() {
-                return this.bookmarksStore.pages.some(page => page.path === this.currentFavURI)
-            },
-            currentFavURI() {
-                // make sure the value changes when the route changes
-                // by mentionning the route in the computed properties
-                // we create a hook into vues reactivity system to update when it updates
-                if(this.$route) {
-                    return window.location.pathname
-                        + window.location.search
-                            // remove the parameters that are permanently changing
-                            .replace(/&?page=[^&]*/ig, "")
-                            // fix if this resulted in a "?&" url
-                            .replace(/\?&/, "?")
-                }
-                return ""
-            }
-        },
-        methods: {
-            restartGuidedTour() {
-                localStorage.setItem("tourDoneOrSkip", undefined);
-                this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, tourStarted: true};
+    const props = defineProps<{
+        title: string;
+        description?: string;
+        breadcrumb?: { label: string; link?: string; disabled?: boolean }[];
+        beta?: boolean;
+    }>();
 
-                this.$tours["guidedTour"]?.start();
-            },
-            deleteLogs() {
-                this.$toast().confirm(
-                    this.$t("delete_all_logs"),
-                    () => this.logsStore.deleteLogs({namespace: this.namespace, flowId: this.flowId}),
-                    () => {}
-                )
-            },
-            onStarClick() {
-                if (this.bookmarked) {
-                    this.bookmarksStore.remove({
-                        path: this.currentFavURI
-                    })
-                } else {
-                    this.bookmarksStore.add({
-                        path: this.currentFavURI,
-                        label: this.breadcrumb?.length ? `${this.breadcrumb[this.breadcrumb.length-1].label}: ${this.title}` : this.title,
-                    })
+    const logsStore = useLogsStore();
+    const bookmarksStore = useBookmarksStore();
+    const flowStore = useFlowStore();
+    const route = useRoute();
+
+
+    const shouldDisplayDeleteButton = computed(() => {
+        return route.name === "flows/update" && route.params?.tab === "logs";
+    });
+
+    const bookmarked = computed(() => {
+        return bookmarksStore.pages.some((page) => page.path === currentFavURI.value);
+    });
+
+    const currentFavURI = computed(() => {
+        if (route) {
+            return (
+                window.location.pathname +
+                window.location.search
+                    .replace(/&?page=[^&]*/gi, "")
+                    .replace(/\?&/, "?")
+            );
+        }
+        return "";
+    });
+
+    const toast = useToast();
+    const {t} = useI18n();
+
+    const deleteLogs = () => {
+        if(!flowStore.flow){
+            throw new Error("No flow selected");
+        }
+        toast.confirm(
+            t("delete_all_logs"),
+            async () => {
+                if(!flowStore.flow){
+                    return;
                 }
-            }
-        },
+                return logsStore.deleteLogs({
+                    namespace: flowStore.flow?.namespace,
+                    flowId: flowStore.flow?.id
+                })
+            },
+        );
+    };
+
+    const onStarClick = () => {
+        if (bookmarked.value) {
+            bookmarksStore.remove({path: currentFavURI.value});
+        } else {
+            bookmarksStore.add({
+                path: currentFavURI.value,
+                label: props.breadcrumb?.length
+                    ? `${props.breadcrumb[props.breadcrumb.length - 1].label}: ${props.title}`
+                    : props.title,
+            });
+        }
     };
 </script>
 
@@ -165,7 +152,7 @@
             align-items: center;
         }
 
-        .star-button{
+        .star-button {
             margin-left: 1rem;
             border: none;
         }
@@ -177,7 +164,6 @@
         :deep(.el-breadcrumb__item) {
             display: inline-block;
         }
-
 
         :deep(.el-breadcrumb__inner) {
             white-space: nowrap;
@@ -207,30 +193,26 @@
             }
         }
         @media (max-width: 768px) {
-            .mycontainer{
-                display:grid;
-                grid-template-columns:repeat(3, minmax(0,auto));
+            .mycontainer {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, auto));
                 grid-template-rows: repeat(2, auto);
-                gap:10px;
+                gap: 10px;
                 overflow: hidden;
-
-
             }
-            .icons{
-                grid-row:2;
-                grid-column:2;
+            .icons {
+                grid-row: 2;
+                grid-column: 2;
                 display: contents;
             }
-
         }
-        @media (max-width: 664px){
-            .mycontainer{
-                display:grid;
-                grid-template-columns:repeat(2, minmax(0,auto));
+        @media (max-width: 664px) {
+            .mycontainer {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, auto));
                 grid-template-rows: repeat(2, auto);
-                gap:10px;
+                gap: 10px;
                 overflow: hidden;
-
             }
         }
     }

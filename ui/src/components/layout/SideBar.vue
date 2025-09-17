@@ -3,7 +3,7 @@
         ref="sideBarRef"
         data-component="FILENAME_PLACEHOLDER"
         id="side-menu"
-        :menu="localMenu"
+        :menu
         @update:collapsed="onToggleCollapse"
         width="268px"
         :collapsed="collapsed"
@@ -29,11 +29,9 @@
     </SidebarMenu>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {
-        watch,
         onUpdated,
-        onMounted,
         ref,
         computed,
         shallowRef, h
@@ -50,34 +48,20 @@
     import Environment from "./Environment.vue";
     import BookmarkLinkList from "./BookmarkLinkList.vue";
     import {useBookmarksStore} from "../../stores/bookmarks";
+    import type {MenuItem} from "override/components/useLeftMenu.js";
 
 
-    const props = defineProps({
-        generateMenu: {
-            type: Function,
-            required: true
-        },
-        showLink: {
-            type: Boolean,
-            default: true
-        }
+    const props = withDefaults(defineProps<{
+        menu: MenuItem[],
+        showLink: boolean
+    }>(), {
+        showLink: true
     })
 
     const $emit = defineEmits(["menu-collapse"])
 
     const $route = useRoute()
-    const {locale, t} = useI18n({useScope: "global"});
-
-    function flattenMenu(menu) {
-        return menu.reduce((acc, item) => {
-            if (item.child) {
-                acc.push(...flattenMenu(item.child));
-            }
-
-            acc.push(item);
-            return acc;
-        }, []);
-    }
+    const {t} = useI18n({useScope: "global"});
 
     function onToggleCollapse(folded) {
         collapsed.value = folded;
@@ -136,43 +120,11 @@
                     component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
                 }]
             }] : []),
-            ...disabledCurrentRoute(props.generateMenu())
+            ...disabledCurrentRoute(props.menu)
         ];
     });
 
-
-    watch(locale, () => {
-        localMenu.value = menu.value;
-    }, {deep: true});
-
-    /**
-     * @type {import("vue").Ref<typeof import('vue-sidebar-menu').SidebarMenu>}
-     */
-    const sideBarRef = ref(null);
-
-    watch(menu, (newVal, oldVal) => {
-              // Check if the active menu item has changed, if yes then update the menu
-              if (JSON.stringify(flattenMenu(newVal).map(e => e.class?.includes("vsm--link_active") ?? false)) !==
-                  JSON.stringify(flattenMenu(oldVal).map(e => e.class?.includes("vsm--link_active") ?? false))) {
-                  localMenu.value = newVal;
-                  sideBarRef.value?.$el.querySelectorAll(".vsm--item span").forEach(e => {
-                      //empty icon name on mouseover
-                      e.setAttribute("title", "")
-                  });
-              }
-          },
-          {
-              flush: "post",
-              deep: true
-          });
-
     const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
-    const localMenu = ref([])
-
-
-    onMounted(() => {
-        localMenu.value = menu.value;
-    })
 </script>
 
 <style lang="scss">

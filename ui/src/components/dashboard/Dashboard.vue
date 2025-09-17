@@ -74,7 +74,7 @@
     const dashboardComponent = useTemplateRef("dashboardComponent");
 
     const refreshCharts = () => {
-        dashboardComponent.value!.refreshCharts();
+        dashboardComponent.value?.refreshCharts?.();
     };
 
     const load = async (id = "default", defaultYAML = YAML_MAIN) => {

@@ -9,8 +9,6 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractRunnerTest;
 import io.kestra.core.runners.InputsTest;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.jdbc.JdbcTestUtils;
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import org.slf4j.event.Level;
@@ -30,8 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public abstract class JdbcRunnerTest extends AbstractRunnerTest {
 
     public static final String NAMESPACE = "io.kestra.tests";
-    @Inject
-    private JdbcTestUtils jdbcTestUtils;
 
     @Test
     @LoadFlows({"flows/valids/waitfor-child-task-warning.yaml"})

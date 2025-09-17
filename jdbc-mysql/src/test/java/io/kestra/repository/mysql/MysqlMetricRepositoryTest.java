@@ -1,6 +1,6 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.jdbc.repository.AbstractJdbcMetricRepositoryTest;
+import io.kestra.core.repositories.AbstractMetricRepositoryTest;
 
-public class MysqlMetricRepositoryTest extends AbstractJdbcMetricRepositoryTest {
+public class MysqlMetricRepositoryTest extends AbstractMetricRepositoryTest {
 }

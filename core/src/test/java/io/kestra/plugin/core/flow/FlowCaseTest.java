@@ -98,7 +98,7 @@ public class FlowCaseTest {
             testInherited ? "task-flow" : "task-flow-inherited-labels",
             null,
             (f, e) -> ImmutableMap.of("string", input),
-            Duration.ofMinutes(1),
+            Duration.ofSeconds(15),
             testInherited ? List.of(new Label("mainFlowExecutionLabel", "execFoo")) : List.of()
         );
 

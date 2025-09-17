@@ -231,8 +231,45 @@ subprojects {subProj ->
             environment 'ENV_TEST1', "true"
             environment 'ENV_TEST2', "Pass by env"
 
+            // === Test Timeline Trace (Chrome trace format) ===
+            // Produces per-JVM ndjson under build/test-timelines/*.jsonl and a merged array via :mergeTestTimeline
+            // Each event has: start time (ts, µs since epoch), end via dur, and absolute duration (dur, µs)
+            doFirst {
+                file("${buildDir}/test-results/test-timelines").mkdirs()
+            }
 
-            if (subProj.name == 'core') {
+            def jvmName = java.lang.management.ManagementFactory.runtimeMXBean.name
+            def pid = jvmName.tokenize('@')[0]
+            def traceDir = file("${buildDir}/test-results/test-timelines")
+            def traceFile = new File(traceDir, "${project.name}-${name}-${pid}.jsonl")
+            def starts = new java.util.concurrent.ConcurrentHashMap<Object, Long>()
+
+            beforeTest { org.gradle.api.tasks.testing.TestDescriptor d ->
+                // epoch millis to allow cross-JVM merge
+                starts.put(d, System.currentTimeMillis())
+            }
+            afterTest { org.gradle.api.tasks.testing.TestDescriptor d, org.gradle.api.tasks.testing.TestResult r ->
+                def st = starts.remove(d)
+                if (st != null) {
+                    def en = System.currentTimeMillis()
+                    long tsMicros  = st * 1000L          // start time (µs since epoch)
+                    long durMicros = (en - st) * 1000L   // duration (µs)
+                    def ev = [
+                        name: (d.className ? d.className + '.' + d.name : d.name),
+                        cat : 'test',
+                        ph  : 'X',              // Complete event with duration
+                        ts  : tsMicros,
+                        dur : durMicros,
+                        pid : project.name,     // group by project/module
+                        tid : "${name}-worker-${pid}",
+                        args: [result: r.resultType.toString()]
+                    ]
+                    synchronized (traceFile.absolutePath.intern()) {
+                        traceFile << (groovy.json.JsonOutput.toJson(ev) + System.lineSeparator())
+                    }
+                }
+            }
+            if (subProj.name == 'core' || subProj.name == 'jdbc-h2') {
                 // JUnit 5 parallel settings
                 systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
                 systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
@@ -253,7 +290,53 @@ subprojects {subProj ->
         }
     }
 }
+// Root-level aggregator: merge timelines from ALL modules into one Chrome trace
+if (project == rootProject) {
+    tasks.register('mergeTestTimeline') {
+        group = 'verification'
+        description = 'Merge per-worker test timeline ndjson from all modules into a single Chrome Trace JSON array.'
+        doLast {
+            def collectedFiles = [] as List<File>
 
+            // Collect *.jsonl files from every subproject
+            rootProject.subprojects.each { p ->
+                def dir = p.file("${p.buildDir}/test-results/test-timelines")
+                if (dir.exists()) {
+                    collectedFiles.addAll(p.fileTree(dir: dir, include: '*.jsonl').files)
+                }
+            }
+
+            if (collectedFiles.isEmpty()) {
+                logger.lifecycle("No timeline files found in any subproject. Run tests first (e.g., './gradlew test --parallel').")
+                return
+            }
+
+            collectedFiles = collectedFiles.sort { it.name }
+
+            def outDir = rootProject.file("${rootProject.buildDir}/reports/test-timelines-report")
+            outDir.mkdirs()
+            def out = new File(outDir, "all-test-timelines.json")
+
+            out.withWriter('UTF-8') { w ->
+                w << '['
+                boolean first = true
+                collectedFiles.each { f ->
+                    f.eachLine { line ->
+                        def trimmed = line?.trim()
+                        if (trimmed) {
+                            if (!first) w << ','
+                            w << trimmed
+                            first = false
+                        }
+                    }
+                }
+                w << ']'
+            }
+
+            logger.lifecycle("Merged ${collectedFiles.size()} files into ${out} — open it in chrome://tracing or Perfetto UI.")
+        }
+    }
+}
 /**********************************************************************************************************************\
  * End-to-End Tests
  **********************************************************************************************************************/

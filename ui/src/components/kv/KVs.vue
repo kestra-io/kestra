@@ -19,7 +19,7 @@
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
     import {useNamespacesStore} from "override/stores/namespaces.js";
-    import useRouteContext from "../../mixins/useRouteContext.js";
+    import useRouteContext from "../../composables/useRouteContext";
     import Plus from "vue-material-design-icons/Plus.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
     import KVTable from "./KVTable.vue";

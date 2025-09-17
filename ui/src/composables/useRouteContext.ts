@@ -1,7 +1,7 @@
 import {Ref, watch} from "vue";
 import {useRoute} from "vue-router";
 
-export default function useRouteContext(routeInfoTitle: Ref<string>, embed: boolean = false) {
+export default function useRouteContext(routeInfo: Ref<{title: string}>, embed: boolean = false) {
     const route = useRoute();
 
     function handleTitle(){
@@ -14,7 +14,7 @@ export default function useRouteContext(routeInfoTitle: Ref<string>, embed: bool
                 baseTitle = document.title;
             }
 
-            document.title = routeInfoTitle.value + " | " + baseTitle;
+            document.title = routeInfo.value?.title + " | " + baseTitle;
         }
     }
 

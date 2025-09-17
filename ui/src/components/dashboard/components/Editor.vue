@@ -50,11 +50,50 @@
         <Sections :dashboard="{id: 'default'}" :charts="charts.map(chart => chart.data)" showDefault />
     </div>
     <div class="main-editor" v-else>
-        <div
-            id="editorWrapper"
-            class="editor-combined"
-            style="flex: 1;"
-        >
+        <el-splitter v-if="displaySide" class="dashboard-edit" @resize="onSplitterResize">
+            <el-splitter-panel :size="editorWidth" min="25%" max="75%">
+                <Editor
+                    @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
+                    v-model="source"
+                    schemaType="dashboard"
+                    lang="yaml"
+                    @update:model-value="source = $event"
+                    @cursor="updatePluginDocumentation"
+                    :creating="true"
+                    :readOnly="false"
+                    :navbar="false"
+                />
+            </el-splitter-panel>
+            <el-splitter-panel :size="100 - editorWidth">
+                <PluginDocumentation
+                    v-if="currentView === views.DOC"
+                    class="combined-right-view enhance-readability"
+                    :overrideIntro="intro"
+                    absolute
+                />
+                <div
+                    class="chart-view"
+                    v-else-if="currentView === views.CHART"
+                >
+                    <div v-if="selectedChart.length" class="w-100">
+                        <Sections :dashboard="{id: 'default'}" :charts="selectedChart" showDefault />
+                    </div>
+                    <div v-else-if="chartError" class="text-container">
+                        <span>{{ chartError }}</span>
+                    </div>
+                    <div v-else>
+                        <el-empty :image="EmptyVisualDashboard" :imageSize="200">
+                            <template #description>
+                                <h5>
+                                    {{ $t("dashboards.chart_preview") }}
+                                </h5>
+                            </template>
+                        </el-empty>
+                    </div>
+                </div>
+            </el-splitter-panel>
+        </el-splitter>
+        <div v-else class="editor-only">
             <Editor
                 @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
                 v-model="source"
@@ -66,39 +105,6 @@
                 :readOnly="false"
                 :navbar="false"
             />
-        </div>
-        <div v-if="displaySide" class="slider" @mousedown.prevent.stop="dragEditor" />
-        <div
-            v-if="displaySide"
-            :class="{'d-flex': displaySide}"
-            :style="displaySide ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : 'flex: 1 0 0%'"
-        >
-            <PluginDocumentation
-                v-if="currentView === views.DOC"
-                class="combined-right-view enhance-readability"
-                :overrideIntro="intro"
-                absolute
-            />
-            <div
-                class="d-flex justify-content-center align-items-center w-100 p-3"
-                v-else-if="currentView === views.CHART"
-            >
-                <div v-if="selectedChart.length" class="w-100">
-                    <Sections :dashboard="{id: 'default'}" :charts="selectedChart" showDefault />
-                </div>
-                <div v-else-if="chartError" class="text-container">
-                    <span>{{ chartError }}</span>
-                </div>
-                <div v-else>
-                    <el-empty :image="EmptyVisualDashboard" :imageSize="200">
-                        <template #description>
-                            <h5>
-                                {{ $t("dashboards.chart_preview") }}
-                            </h5>
-                        </template>
-                    </el-empty>
-                </div>
-            </div>
         </div>
     </div>
 </template>
@@ -198,22 +204,11 @@
                     }
                 }
             },
-            dragEditor(e) {
-                let dragX = e.clientX;
-
-                const {offsetWidth, parentNode} = document.getElementById("editorWrapper");
-                let blockWidthPercent = (offsetWidth / parentNode.offsetWidth) * 100;
-
-                const onMouseMove = (e) => {
-                    let percent = blockWidthPercent + ((e.clientX - dragX) / parentNode.offsetWidth) * 100;
+            onSplitterResize(sizes) {
+                if (sizes && sizes.length >= 1) {
+                    const percent = sizes[0];
                     this.editorWidth = percent > 75 ? 75 : percent < 25 ? 25 : percent;
-
-                };
-                document.onmousemove = onMouseMove.bind(this);
-
-                document.onmouseup = () => {
-                    document.onmousemove = document.onmouseup = null;
-                };
+                }
             },
             loadPlugins() {
                 this.pluginsStore.list({...this.$route.params})
@@ -386,19 +381,19 @@
         }
     }
 
-    .slider {
-        flex: 0 0 3px;
-        border-radius: 0.15rem;
-        margin: 0 4px;
-        background-color: var(--bs-border-color);
-        border: none;
-        cursor: col-resize;
-        user-select: none; /* disable selection */
-        padding: 0;
+    .chart-view {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
+    }
 
-        &:hover {
-            background-color: var(--bs-secondary);
-        }
+    .editor-only {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
     }
 
     .text-container {

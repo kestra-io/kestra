@@ -14,11 +14,11 @@ export async function generateTestReportSummary(
     workingDir: WorkingDir,
     options?: {
         onlyErrors?: boolean;
-        testReportsLocationPattern?: "**/build/test-results/junit/*.xml";
+        testReportsLocationPattern?: "**/build/test-results/test/*.xml";
     },
 ): Promise<MarkdownString> {
     const onlyErrors = options?.onlyErrors ?? false;
-    const pattern = options?.testReportsLocationPattern ?? "**/build/test-results/junit/*.xml";
+    const pattern = options?.testReportsLocationPattern ?? "**/build/test-results/test/*.xml";
 
     // Find matching report files under the provided working directory
     const junitXmlReportsFilenames = await fg.async(pattern, {

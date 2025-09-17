@@ -2,29 +2,27 @@ import type cytoscape from "cytoscape";
 
 import {cssVariable} from "@kestra-io/ui-libs";
 
-const VARIABLES = {
+import {States} from "./types";
+
+const VARIABLES: {node: { background: States; border: States }; edge: States;} = {
     node: {
-        default: {
-            background: "--ks-dependencies-node-background-default",
-            border: "--ks-dependencies-node-border-default",
+        background: {
+            default: "--ks-dependencies-node-background-default",
+            faded: "--ks-dependencies-node-background-faded",
+            selected: "--ks-dependencies-node-background-selected",
+            hovered: "--ks-dependencies-node-background-hovered",
         },
-        faded: {
-            background: "--ks-dependencies-node-background-faded",
-            border: "--ks-dependencies-node-border-faded",
-        },
-        selected: {
-            background: "--ks-dependencies-node-background-selected",
-            border: "--ks-dependencies-node-border-selected",
-        },
-        hovered: {
-            background: "--ks-dependencies-node-background-hovered",
-            border: "--ks-dependencies-node-border-hovered",
+        border: {
+            default: "--ks-dependencies-node-border-default",
+            faded: "--ks-dependencies-node-border-faded",
+            selected: "--ks-dependencies-node-border-selected",
+            hovered: "--ks-dependencies-node-border-hovered",
         },
     },
     edge: {
         default: "--ks-dependencies-edge-default",
         faded: "--ks-dependencies-edge-faded",
-        selected: "--ks-dependencies-node-background-selected",
+        selected: "--ks-dependencies-edge-selected",
         hovered: "--ks-dependencies-edge-hovered",
     },
 };
@@ -51,14 +49,14 @@ const edgeAnimated: cytoscape.Css.Edge = {
     "line-dash-pattern": [3, 5],
 };
 
-function nodeColors(type: keyof typeof VARIABLES.node = "default"): Partial<cytoscape.Css.Node> {
+function nodeColors(type: keyof States = "default"): Partial<cytoscape.Css.Node> {
     return {
-        "background-color": cssVariable(VARIABLES.node[type].background)!,
-        "border-color": cssVariable(VARIABLES.node[type].border)!,
+        "background-color": cssVariable(VARIABLES.node.background[type])!,
+        "border-color": cssVariable(VARIABLES.node.border[type])!,
     };
 }
 
-export function edgeColors(type: keyof typeof VARIABLES.edge = "default"): Partial<cytoscape.Css.Edge> {
+export function edgeColors(type: keyof States = "default"): Partial<cytoscape.Css.Edge> {
     return {
         "line-color": cssVariable(VARIABLES.edge[type])!,
         "target-arrow-color": cssVariable(VARIABLES.edge[type])!,

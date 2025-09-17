@@ -38,7 +38,7 @@
     import BlueprintDetail from "../../../../components/flows/blueprints/BlueprintDetail.vue";
     import BlueprintsBrowser from "./BlueprintsBrowser.vue";
     import DemoBlueprints from "../../../../components/demo/Blueprints.vue";
-    import useRouteContext from "../../../../mixins/useRouteContext";
+    import useRouteContext from "../../../../composables/useRouteContext";
 
     import headerImage from "../../../../assets/icons/blueprint.svg";
     import headerImageDark from "../../../../assets/icons/blueprint-dark.svg";

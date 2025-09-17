@@ -53,6 +53,6 @@
 
     const routeInfo = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
 
-    import useRouteContext from "../../../mixins/useRouteContext";
+    import useRouteContext from "../../../composables/useRouteContext";
     useRouteContext(routeInfo);
 </script>

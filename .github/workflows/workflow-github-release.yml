@@ -25,15 +25,6 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      # Checkout GitHub Actions
-      - name: Checkout - Actions
-        uses: actions/checkout@v5
-        with:
-          repository: kestra-io/actions
-          sparse-checkout-cone-mode: true
-          path: actions
-          sparse-checkout: |
-            .github/actions
 
       # Download Exec
       # Must be done after checkout actions
@@ -59,7 +50,7 @@ jobs:
 
       # GitHub Release
       - name: Create GitHub release
-        uses: ./actions/.github/actions/github-release
+        uses: kestra-io/actions/composite/github-release@main
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         env:
           MAKE_LATEST: ${{ steps.is_latest.outputs.latest }}
@@ -82,7 +73,7 @@ jobs:
 
       - name: Merge Release Notes
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        uses: ./actions/.github/actions/github-release-note-merge
+        uses: kestra-io/actions/composite/github-release-note-merge@main
         env:
             GITHUB_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
             RELEASE_TAG: ${{ github.ref_name }}

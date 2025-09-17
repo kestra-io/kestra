@@ -36,7 +36,7 @@ jobs:
           fetch-depth: 0
 
       # Setup build
-      - uses: kestra-io/actions/.github/actions/setup-build@main
+      - uses: kestra-io/actions/composite/setup-build@main
         name: Setup - Build
         id: build
         with:
@@ -75,7 +75,7 @@ jobs:
         with:
           name: Java Tests Report
           reporter: java-junit
-          path: '**/build/test-results/junit/TEST-*.xml'
+          path: '**/build/test-results/test/TEST-*.xml'
           list-suites: 'failed'
           list-tests: 'failed'
           fail-on-error: 'false'
@@ -108,7 +108,7 @@ jobs:
         name: Allure - Generate slug variables
 
       - name: Allure - Publish report
-        uses: andrcuns/allure-publish-action@v2.9.0
+        uses: andrcuns/allure-publish-action@v2.10.0
         if: always() && env.GOOGLE_SERVICE_ACCOUNT != ''
         continue-on-error: true
         env:

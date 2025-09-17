@@ -86,9 +86,13 @@ charts:
       description: Executions duration and count per date
       legend:
         enabled: true
+        orient: horizontal  # legend items side by side
+        bottom: 0           # move legend below the chart
+        type: scroll        # scroll if two many items
+        itemGap: 20         # space between items 
       column: date
       colorByColumn: state
-      width: 9
+      width: 3
     data:
       type: io.kestra.plugin.core.dashboard.data.Executions
       columns:
@@ -189,6 +193,10 @@ charts:
       description: Executions count per namespace
       legend:
         enabled: true
+        orient: horizontal
+        bottom: 0
+        type: scroll
+        itemGap: 20
       column: namespace
       width: 12
     data:
@@ -209,6 +217,10 @@ charts:
       description: Logs count per date grouped by level
       legend:
         enabled: true
+        orient: horizontal
+        bottom: 0
+        type: scroll
+        itemGap: 20
       column: date
       colorByColumn: level
       width: 12

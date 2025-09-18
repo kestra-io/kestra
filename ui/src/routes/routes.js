@@ -21,6 +21,15 @@ function maybeAddTimeRangeFilter(to) {
     return false;
 }
 
+// Cache for welcome redirect checks to prevent multiple rapid checks
+const welcomeRedirectCache = new Map();
+
+// Function to clear the welcome redirect cache (can be called when flows/executions are created)
+export function clearWelcomeRedirectCache(tenant = 'default') {
+    const cacheKey = `welcome-check-${tenant}`;
+    welcomeRedirectCache.delete(cacheKey);
+}
+
 export default [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}}},
@@ -31,7 +40,7 @@ export default [
         name: "home",
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
-        beforeEnter: (to, from, next) => {
+        beforeEnter: async (to, from, next) => {
             if (maybeAddTimeRangeFilter(to)) {
                 next({
                     name: to.name,
@@ -50,9 +59,58 @@ export default [
                     },
                     query: to.query,
                 });
-            } else {
-                next();
+                return;
             }
+
+            // Check if we should redirect to welcome page for fresh instances
+            const cacheKey = `welcome-check-${to.params.tenant || 'default'}`;
+            
+            // Check cache first to prevent multiple rapid checks
+            if (welcomeRedirectCache.has(cacheKey)) {
+                const shouldRedirect = welcomeRedirectCache.get(cacheKey);
+                if (shouldRedirect) {
+                    next({
+                        name: "welcome",
+                        params: {tenant: to.params.tenant}
+                    });
+                    return;
+                }
+            } else {
+                try {
+                    const { useFlowStore } = await import("../stores/flow");
+                    const { useExecutionsStore } = await import("../stores/executions");
+                    const { useApiStore } = await import("../stores/api");
+                    
+                    const flowStore = useFlowStore();
+                    const executionsStore = useExecutionsStore();
+                    const apiStore = useApiStore();
+                    
+                    // Only check for OSS instances
+                    if (apiStore.isOSS) {
+                        await flowStore.findFlows({size: 10, sort: "id:asc"});
+                        const executionsResponse = await executionsStore.findExecutions({size: 10});
+                        const executions = executionsResponse?.total ?? 0;
+                        
+                        const shouldRedirect = !executions && !flowStore.overallTotal;
+                        welcomeRedirectCache.set(cacheKey, shouldRedirect);
+                        
+                        if (shouldRedirect) {
+                            next({
+                                name: "welcome",
+                                params: {tenant: to.params.tenant}
+                            });
+                            return;
+                        }
+                    } else {
+                        welcomeRedirectCache.set(cacheKey, false);
+                    }
+                } catch (error) {
+                    console.warn("Failed to check welcome redirect:", error);
+                    welcomeRedirectCache.set(cacheKey, false);
+                }
+            }
+            
+            next();
         },
     },
     {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/Create.vue")},

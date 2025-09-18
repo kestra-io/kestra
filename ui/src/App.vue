@@ -44,7 +44,6 @@
                 fullPage: false,
                 created: false,
                 loaded: false,
-                executions: 0,
             };
         },
         computed: {
@@ -122,20 +121,6 @@
             },
         },
         watch: {
-            $route: {
-                async handler(route) {
-                    if(route.name === "home" && this.isOSS) {
-                        await this.flowStore.findFlows({size: 10, sort: "id:asc"})
-                        await this.executionsStore.findExecutions({size: 10}).then(response => {
-                            this.executions = response?.total ?? 0;
-                        })
-
-                        if (!this.executions && !this.flowStore.overallTotal) {
-                            this.$router.push({name: "welcome", params: {tenant: this.$route.params.tenant}});
-                        }
-                    }
-                }
-            },
             envName() {
                 this.setTitleEnvSuffix();
             }

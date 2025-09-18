@@ -59,6 +59,7 @@ public abstract class AbstractFlow implements FlowInterface {
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
 
+    @Valid
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
     @Schema(implementation = Object.class, oneOf = {List.class, Map.class})

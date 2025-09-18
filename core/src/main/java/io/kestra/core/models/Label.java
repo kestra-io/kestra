@@ -3,11 +3,22 @@ package io.kestra.core.models;
 import io.kestra.core.utils.MapUtils;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public record Label(@NotNull String key, @NotNull String value) {
+public record Label(
+    @NotNull
+    @Pattern(
+        regexp = "^[a-z][a-z0-9_-]*$",
+        message = "Label keys must start with a lowercase letter and contain only lowercase letters, numbers, hyphens, or underscores."
+    )
+    String key,
+
+    @NotNull
+    String value
+) {
     public static final String SYSTEM_PREFIX = "system.";
 
     // system labels
@@ -21,38 +32,18 @@ public record Label(@NotNull String key, @NotNull String value) {
     public static final String SIMULATED_EXECUTION = SYSTEM_PREFIX + "simulatedExecution";
     public static final String TEST = SYSTEM_PREFIX + "test";
 
-    /**
-     * Static helper method for converting a list of labels to a nested map.
-     *
-     * @param labels The list of {@link Label} to be converted.
-     * @return the nested {@link Map}.
-     */
+    // --- static helper methods stay the same ---
     public static Map<String, Object> toNestedMap(List<Label> labels) {
         return MapUtils.flattenToNestedMap(toMap(labels));
     }
 
-    /**
-     * Static helper method for converting a list of labels to a flat map.
-     * Key order is kept.
-     *
-     * @param labels The list of {@link Label} to be converted.
-     * @return the flat {@link Map}.
-     */
     public static Map<String, String> toMap(@Nullable List<Label> labels) {
         if (labels == null || labels.isEmpty()) return Collections.emptyMap();
         return labels.stream()
             .filter(label -> label.value() != null && label.key() != null)
-            // using an accumulator in case labels with the same key exists: the second is kept
             .collect(Collectors.toMap(Label::key, Label::value, (first, second) -> second, LinkedHashMap::new));
     }
 
-    /**
-     * Static helper method for deduplicating a list of labels by their key.
-     * Value of the last key occurrence is kept.
-     *
-     * @param labels The list of {@link Label} to be deduplicated.
-     * @return the deduplicated {@link List}.
-     */
     public static List<Label> deduplicate(@Nullable List<Label> labels) {
         if (labels == null || labels.isEmpty()) return Collections.emptyList();
         return toMap(labels).entrySet().stream()
@@ -60,12 +51,6 @@ public record Label(@NotNull String key, @NotNull String value) {
             .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    /**
-     * Static helper method for converting a map to a list of labels.
-     *
-     * @param map The map of key/value labels.
-     * @return The list of {@link Label labels}.
-     */
     public static List<Label> from(final Map<String, String> map) {
         if (map == null || map.isEmpty()) return List.of();
         return map.entrySet()
@@ -74,12 +59,6 @@ public record Label(@NotNull String key, @NotNull String value) {
             .toList();
     }
 
-    /**
-     * Static helper method for converting a label string to a map.
-     *
-     * @param label The label string.
-     * @return The map of key/value labels.
-     */
     public static Map<String, String> from(String label) {
         Map<String, String> map = new HashMap<>();
         String[] keyValueArray = label.split(":");

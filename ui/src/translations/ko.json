@@ -1387,7 +1387,6 @@
     "task_id_exists": "Task ID가 이미 존재합니다.",
     "task_id_message": "Flow에 Task Id ${existingTask}가 이미 존재합니다.",
     "taskid column details": "마지막으로 실행된 task 및 시도 횟수.",
-    "taskruns": "Task 실행들",
     "tasks": "Tasks",
     "template": "템플릿",
     "template creation": "템플릿 생성",

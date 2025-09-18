@@ -1387,7 +1387,6 @@
     "task_id_exists": "Id задачи уже существует",
     "task_id_message": "Id задачи ${existingTask} уже существует в flow.",
     "taskid column details": "Последний task выполняется и количество его попыток.",
-    "taskruns": "Запуски задач",
     "tasks": "Задачи",
     "template": "Шаблон",
     "template creation": "Создание шаблона",

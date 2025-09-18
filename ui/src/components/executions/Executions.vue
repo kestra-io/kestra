@@ -39,6 +39,16 @@
             :embed="embed"
         >
             <template #navbar v-if="isDisplayedTop">
+                <ExecutionFilters
+                    :namespaces="[]"
+                    @update:search="handleSearchUpdate"
+                    @update:time-range="handleTimeRangeUpdate"
+                    @update:namespace="handleNamespaceUpdate"
+                    @update:state="handleStateUpdate"
+                    @save-filter="handleSaveFilter"
+                    @load-saved-filter="handleLoadSavedFilter"
+                    @table-options="handleTableOptions"
+                />
                 <KestraFilter
                     prefix="executions"
                     :language="namespace === undefined || flowId === undefined ? ExecutionFilterLanguage : FlowExecutionFilterLanguage"
@@ -450,6 +460,7 @@
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
     import KestraFilter from "../filter/KestraFilter.vue"
+    import ExecutionFilters from "./ExecutionFilters.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import RunFast from "vue-material-design-icons/RunFast.vue";
     import ExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/executionFilterLanguage.ts";
@@ -767,6 +778,35 @@
             },
             updateDisplayColumns(newColumns) {
                 this.displayColumns = newColumns;
+            },
+            // ExecutionFilters event handlers
+            handleSearchUpdate(_value) {
+                // Handle search update
+                // TODO: Implement search functionality
+            },
+            handleTimeRangeUpdate(_value) {
+                // Handle time range update
+                // TODO: Implement time range filtering
+            },
+            handleNamespaceUpdate(_value) {
+                // Handle namespace update
+                // TODO: Implement namespace filtering
+            },
+            handleStateUpdate(_value) {
+                // Handle state update
+                // TODO: Implement state filtering
+            },
+            handleSaveFilter() {
+                // Handle save filter
+                // TODO: Implement save filter functionality
+            },
+            handleLoadSavedFilter() {
+                // Handle load saved filter
+                // TODO: Implement load saved filter functionality
+            },
+            handleTableOptions() {
+                // Handle table options
+                // TODO: Implement table options functionality
             },
             onShowChartChange(value) {
                 this.showChart = value;

@@ -1387,7 +1387,6 @@
     "task_id_exists": "タスクIDは既に存在します",
     "task_id_message": "フロー内にTask Id ${existingTask}は既に存在します。",
     "taskid column details": "最後に実行されたtaskとその試行回数。",
-    "taskruns": "Task Runs",
     "tasks": "Tasks",
     "template": "テンプレート",
     "template creation": "テンプレート作成",

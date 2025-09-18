@@ -163,6 +163,7 @@
     "choose file": "选择文件或拖放到此处...",
     "close": "关闭",
     "close sidebar": "关闭侧边栏",
+    "codeDisabled": "在Flow中禁用",
     "collapse": "折叠",
     "collapse all": "折叠所有",
     "common": {
@@ -1400,6 +1401,7 @@
       "name": "租户",
       "names": "租户"
     },
+    "tenantId": "租户 ID",
     "test-badge-text": "测试",
     "test-badge-tooltip": "此执行由测试创建",
     "theme": "主题",
@@ -1437,6 +1439,7 @@
       "title": "过滤子执行"
     },
     "trigger refresh": "触发刷新",
+    "triggerId": "触发器 ID",
     "trigger_check_warning": "使用 trigger 变量无法与手动 flow 执行一起工作。添加 `??` 合并运算符来解决此问题。例如，不要使用 `trigger.date`，而是使用 `trigger.date ?? execution.startDate`。",
     "trigger_id_exists": "Trigger Id 已经存在",
     "trigger_id_message": "触发器 Id ${existingTrigger} 已经存在于 flow 中。",

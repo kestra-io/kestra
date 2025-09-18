@@ -163,6 +163,7 @@
     "choose file": "Wählen Sie eine Datei oder ziehen Sie sie hierher...",
     "close": "Schließen",
     "close sidebar": "Seitenleiste schließen",
+    "codeDisabled": "In Flow deaktiviert",
     "collapse": "Einklappen",
     "collapse all": "Alle einklappen",
     "common": {
@@ -1400,6 +1401,7 @@
       "name": "Mandant",
       "names": "Mandanten"
     },
+    "tenantId": "Mandanten-ID",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Diese Ausführung wurde durch einen Test erstellt",
     "theme": "Modus",
@@ -1437,6 +1439,7 @@
       "title": "Kinder-Ausführungen filtern"
     },
     "trigger refresh": "Aktualisierung auslösen",
+    "triggerId": "Trigger-ID",
     "trigger_check_warning": "Die Verwendung von Trigger-Variablen funktioniert nicht bei manueller Flow-Ausführung. Fügen Sie den `??`-Koaleszenz-Operator hinzu, um das Problem zu lösen. Verwenden Sie zum Beispiel anstelle von `trigger.date` den Ausdruck `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "Trigger-ID existiert bereits",
     "trigger_id_message": "Trigger-ID ${existingTrigger} existiert bereits im Flow.",

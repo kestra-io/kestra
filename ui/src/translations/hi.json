@@ -163,6 +163,7 @@
     "choose file": "एक फ़ाइल चुनें या इसे यहां छोड़ें...",
     "close": "बंद करें",
     "close sidebar": "साइडबार बंद करें",
+    "codeDisabled": "Flow में अक्षम",
     "collapse": "संक्षिप्त करें",
     "collapse all": "सभी संक्षिप्त करें",
     "common": {
@@ -1400,6 +1401,7 @@
       "name": "मंडल",
       "names": "मंडल"
     },
+    "tenantId": "टेनेंट ID",
     "test-badge-text": "परीक्षण",
     "test-badge-tooltip": "यह execution एक Test द्वारा बनाया गया था",
     "theme": "थीम",
@@ -1437,6 +1439,7 @@
       "title": "बाल निष्पादन फ़िल्टर करें"
     },
     "trigger refresh": "ताज़ा करें",
+    "triggerId": "ट्रिगर ID",
     "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",
     "trigger_id_exists": "ट्रिगर Id पहले से मौजूद है",
     "trigger_id_message": "ट्रिगर Id ${existingTrigger} पहले से ही flow में मौजूद है।",

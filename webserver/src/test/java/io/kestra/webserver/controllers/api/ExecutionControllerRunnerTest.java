@@ -264,7 +264,7 @@ class ExecutionControllerRunnerTest {
     @SuppressWarnings("unchecked")
     @Test
     @LoadFlows({"flows/valids/minimal-bis.yaml"})
-    void searchExecutionsByFlowId() {
+    void searchExecutionsByFlowId() throws TimeoutException {
         String namespace = "io.kestra.tests.minimal.bis";
         String flowId = "minimal-bis";
 
@@ -278,7 +278,7 @@ class ExecutionControllerRunnerTest {
         triggerExecutionExecution(namespace, flowId, MultipartBody.builder().addPart("string", "myString").build(), false);
 
         // Wait for execution indexation
-        Await.until(() -> executionRepositoryInterface.findByFlowId(TENANT_ID, namespace, flowId, Pageable.from(1)).size() == 1);
+        Await.until(() -> executionRepositoryInterface.findByFlowId(TENANT_ID, namespace, flowId, Pageable.from(1)).size() == 1, Duration.ofMillis(100), Duration.ofMillis(10));
         PagedResults<Execution> executionsAfter = client.toBlocking().retrieve(
             GET("/api/v1/main/executions?namespace=" + namespace + "&flowId=" + flowId),
             Argument.of(PagedResults.class, Execution.class)

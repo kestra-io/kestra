@@ -1240,7 +1240,6 @@
 
     .filename {
         font-size: var(--el-font-size-small);
-        color: var(--ks-content-primary);
 
         &:hover {
             color: var(--ks-content-link-hover);
@@ -1288,7 +1287,7 @@
             }
 
             &:hover{
-                background-color: var(--ks-button-background-primary);
+                background: none;
                 border: 1px solid var(--ks-border-active);
             }
         }
@@ -1303,7 +1302,12 @@
 
         .el-tree-node.is-current > .el-tree-node__content {
             min-width: fit-content;
-            border: 1px solid var(--ks-border-active)
+            border: 1px solid var(--ks-border-active);
+            background: var(--ks-button-background-primary);
+
+            .filename {
+                color: var(--ks-button-content-primary);
+            }
         }
         .el-tree-node.selected-tree-node > .el-tree-node__content {
             background-color: var(--ks-button-background-primary);

@@ -36,7 +36,7 @@ jobs:
           fetch-depth: 0
 
       # Setup build
-      - uses: kestra-io/actions/.github/actions/setup-build@main
+      - uses: kestra-io/actions/composite/setup-build@main
         name: Setup - Build
         id: build
         with:
@@ -61,7 +61,7 @@ jobs:
           ./gradlew check javadoc --parallel
 
       - name: comment PR with test report
-        if: always() && github.event_name == 'pull_request'
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
         run: |
@@ -108,7 +108,7 @@ jobs:
         name: Allure - Generate slug variables
 
       - name: Allure - Publish report
-        uses: andrcuns/allure-publish-action@v2.9.0
+        uses: andrcuns/allure-publish-action@v2.10.0
         if: always() && env.GOOGLE_SERVICE_ACCOUNT != ''
         continue-on-error: true
         env:

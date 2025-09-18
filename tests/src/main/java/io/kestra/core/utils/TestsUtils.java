@@ -21,6 +21,7 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -37,11 +39,38 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
+@Slf4j
 abstract public class TestsUtils {
     private static final ObjectMapper mapper = JacksonMapper.ofYaml();
+
+    /**
+     * there is at least one bug in {@link io.kestra.cli.services.FileChangedEventListener#getTenantIdFromPath(Path)} forbidding use to use '_' character
+     * @param prefix
+     * @return
+     */
+    public static String randomTenant(String... prefix) {
+        var list = List.of(prefix);
+        if (list.isEmpty()) {
+            throw new IllegalArgumentException("tenant prefix must not be empty");
+        }
+        var tenantRegex = "^[a-z0-9][a-z0-9_-]*";
+        var validTenantPrefixes = list.stream()
+            .map(s -> s.replace(".", "-"))
+            .map(String::toLowerCase)
+            .peek(p -> {
+                if (!p.matches(tenantRegex)) {
+                    throw new IllegalArgumentException("random tenant prefix %s should match tenant regex %s".formatted(p, tenantRegex));
+                }
+            }).toList();
+        String[] parts = Stream
+            .concat(validTenantPrefixes.stream(), Stream.of(IdUtils.create().toLowerCase()))
+            .toArray(String[]::new);
+        return IdUtils.fromPartsAndSeparator('-',parts);
+    }
 
     public static <T> T map(String path, Class<T> cls) throws IOException {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
@@ -230,5 +259,14 @@ abstract public class TestsUtils {
 
     public static <T> Property<List<T>> propertyFromList(List<T> list) throws JsonProcessingException {
         return Property.ofExpression(JacksonMapper.ofJson().writeValueAsString(list));
+    }
+
+    public static String stringify(Object object) {
+        try {
+            return JacksonMapper.ofJson().writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            log.error("failed to serialize object to json string", e);
+            return object !=null ?  object.toString() : "null";
+        }
     }
 }

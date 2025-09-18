@@ -349,7 +349,7 @@ class FinallyTest {
             TENANT_ID,
             NAMESPACE, "finally-flow-error", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", true)),
-            Duration.ofSeconds(60)
+            Duration.ofSeconds(20)
         );
 
         assertThat(execution.getTaskRunList()).hasSize(6);

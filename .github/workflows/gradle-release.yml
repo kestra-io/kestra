@@ -38,15 +38,8 @@ jobs:
           fetch-depth: 0
           path: kestra
 
-      # Checkout GitHub Actions
-      - uses: actions/checkout@v5
-        with:
-          repository: kestra-io/actions
-          path: actions
-          ref: main
-
       # Setup build
-      - uses: ./actions/.github/actions/setup-build
+      - uses: kestra-io/actions/composite/setup-build@main
         id: build
         with:
           java-enabled: true

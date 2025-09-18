@@ -80,7 +80,7 @@ class FileChangedEventListenerTest {
             Duration.ofMillis(100),
             Duration.ofSeconds(10)
         );
-        Flow myflow = flowRepository.findById(tenant, "io.kestra.tests.watchfdsfdsf", "myflofdsfdsw").orElseThrow();
+        Flow myflow = flowRepository.findById(tenant, "io.kestra.tests.watch", "myflow").orElseThrow();
         assertThat(myflow.getTasks()).hasSize(1);
         assertThat(myflow.getTasks().getFirst().getId()).isEqualTo("hello");
         assertThat(myflow.getTasks().getFirst().getType()).isEqualTo("io.kestra.plugin.core.log.Log");

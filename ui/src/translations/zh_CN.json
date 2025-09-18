@@ -1387,7 +1387,6 @@
     "task_id_exists": "任务ID已存在",
     "task_id_message": "任务ID ${existingTask} 已经存在于flow中。",
     "taskid column details": "最后执行的任务及其尝试次数。",
-    "taskruns": "任务运行",
     "tasks": "任务",
     "template": "模板",
     "template creation": "模板创建",

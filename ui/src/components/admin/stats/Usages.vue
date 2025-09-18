@@ -5,7 +5,7 @@
             <slot name="button" />
         </div>
         <div class="usage-card-body">
-            <div v-for="item in filteredUsageItems" :key="item.key" class="usage-row">
+            <div v-for="item in usageItems" :key="item.key" class="usage-row">
                 <component :is="item.icon" class="usage-icon" />
                 <el-text size="small" class="usage-label">
                     {{ $t(item.labelKey) }}
@@ -27,7 +27,6 @@
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
-    import ChartTimeline from "vue-material-design-icons/ChartTimeline.vue";
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
@@ -116,13 +115,6 @@
                         route: "executions/list"
                     },
                     {
-                        key: "taskruns",
-                        icon: ChartTimeline,
-                        labelKey: "taskruns",
-                        value: `${this.taskrunsOverTwoDays} (${this.$t("last 48 hours")})`,
-                        route: "taskruns/list"
-                    },
-                    {
                         key: "executionsDuration",
                         icon: CalendarMonth,
                         labelKey: "executions duration (in minutes)",
@@ -130,14 +122,6 @@
                         route: "executions/list"
                     }
                 ];
-            },
-            filteredUsageItems() {
-                return this.usageItems.filter(item => {
-                    if (item.key === "taskruns") {
-                        return !!this.taskrunsOverTwoDays;
-                    }
-                    return true;
-                });
             },
             namespaces() {
                 return this.usages.flows?.namespacesCount ?? 0;
@@ -165,16 +149,6 @@
             },
             executionsOverTwoDays() {
                 return this.aggregateValuesFromListWithGetter(this.executionsPerDay, item => item.duration.count ?? 0);
-            },
-            taskrunsPerDay() {
-                return this.usages.executions?.dailyTaskrunsCount?.filter(item => item.groupBy === "day");
-            },
-            taskrunsOverTwoDays() {
-                if (!this.miscStore.configs?.isTaskRunEnabled) {
-                    return undefined;
-                }
-
-                return this.aggregateValuesFromListWithGetter(this.taskrunsPerDay, item => item.duration.count ?? 0);
             },
             executionsDurationOverTwoDays() {
                 return this.aggregateValuesFromListWithGetterAndAggFunction(

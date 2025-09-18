@@ -1387,7 +1387,6 @@
     "task_id_exists": "L'ID del task esiste già",
     "task_id_message": "L'ID del Task ${existingTask} esiste già nel flow.",
     "taskid column details": "Ultimo task in esecuzione e il numero di tentativi.",
-    "taskruns": "Esecuzioni dei tasks",
     "tasks": "Tasks",
     "template": "Template",
     "template creation": "Creazione del template",

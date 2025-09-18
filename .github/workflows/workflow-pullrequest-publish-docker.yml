@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - develop
+      - releases/*
 
 jobs:
   build-artifacts:

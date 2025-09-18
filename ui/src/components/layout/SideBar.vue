@@ -190,7 +190,7 @@
             background-color: transparent !important;
             padding-bottom: 15px;
             width: 30px !important;
-            z-index: 1;
+            z-index: 20; // in collapsed menu, keep the icon above the opening menu
 
             svg {
                 position: relative;

@@ -177,7 +177,7 @@ public final class JacksonMapper {
         for (JsonNode patch : patches) {
             try {
                 // Required for ES
-                if (patch.findValue("value") == null) {
+                if (patch.findValue("value") == null && !patch.isEmpty()) {
                     ((ObjectNode) patch.get(0)).set("value", null);
                 }
                 jsonObject = JsonPatch.fromJson(patch).apply(jsonObject);

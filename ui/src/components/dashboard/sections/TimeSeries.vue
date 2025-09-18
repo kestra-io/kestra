@@ -38,7 +38,6 @@
                 class="chart"
             />
         </div>
-    </el-tooltip>
     <NoData v-else-if="!props.short" />
 </template>
 

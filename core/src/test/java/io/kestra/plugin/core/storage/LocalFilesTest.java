@@ -1,11 +1,13 @@
 package io.kestra.plugin.core.storage;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.repositories.AbstractLoadedFlowRepositoryTest;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -27,16 +28,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @KestraTest
 class LocalFilesTest {
     @Inject
-    RunContextFactory runContextFactory;
+    TestRunContextFactory runContextFactory;
 
     @Inject
     StorageInterface storageInterface;
 
-    private URI internalFiles() throws IOException, URISyntaxException {
+    private URI internalFiles(String tenantId) throws IOException, URISyntaxException {
         var resource = ConcatTest.class.getClassLoader().getResource("application-test.yml");
 
         return storageInterface.put(
-            MAIN_TENANT,
+            tenantId,
             null,
             new URI("/file/storage/get.yml"),
             new FileInputStream(Objects.requireNonNull(resource).getFile())
@@ -46,8 +47,9 @@ class LocalFilesTest {
 
     @Test
     void run() throws Exception {
-        var runContext = runContextFactory.of(Map.of("toto", "tata"));
-        var storageFile = internalFiles();
+        String tenant = TestsUtils.randomTenant(AbstractLoadedFlowRepositoryTest.class.getSimpleName());
+        var runContext = runContextFactory.of("namesapce", tenant, Map.of("toto", "tata"));
+        var storageFile = internalFiles(tenant);
 
         var task = LocalFiles.builder()
             .id(IdUtils.create())
@@ -64,18 +66,19 @@ class LocalFilesTest {
         assertThat(outputs).isNotNull();
         assertThat(outputs.getUris()).isNotNull();
         assertThat(outputs.getUris().size()).isEqualTo(1);
-        assertThat(new String(storageInterface.get(MAIN_TENANT, null, outputs.getUris().get("hello-input.txt")).readAllBytes())).isEqualTo("Hello Input");
+        assertThat(new String(storageInterface.get(tenant, null, outputs.getUris().get("hello-input.txt")).readAllBytes())).isEqualTo("Hello Input");
         assertThat(runContext.workingDir().path().toFile().list().length).isEqualTo(2);
         assertThat(Files.readString(runContext.workingDir().path().resolve("execution.txt"))).isEqualTo("tata");
-        assertThat(Files.readString(runContext.workingDir().path().resolve("application-test.yml"))).isEqualTo(new String(storageInterface.get(MAIN_TENANT, null, storageFile).readAllBytes()));
+        assertThat(Files.readString(runContext.workingDir().path().resolve("application-test.yml"))).isEqualTo(new String(storageInterface.get(tenant, null, storageFile).readAllBytes()));
 
         runContext.cleanup();
     }
 
     @Test
     void recursive() throws Exception {
-        var runContext = runContextFactory.of(Map.of("toto", "tata"));
-        var storageFile = internalFiles();
+        String tenant = TestsUtils.randomTenant(AbstractLoadedFlowRepositoryTest.class.getSimpleName());
+        var runContext = runContextFactory.of("namesapce", tenant, Map.of("toto", "tata"));
+        var storageFile = internalFiles(tenant);
 
         var task = LocalFiles.builder()
             .id(IdUtils.create())
@@ -92,11 +95,11 @@ class LocalFilesTest {
         assertThat(outputs).isNotNull();
         assertThat(outputs.getUris()).isNotNull();
         assertThat(outputs.getUris().size()).isEqualTo(3);
-        assertThat(new String(storageInterface.get(MAIN_TENANT, null, outputs.getUris().get("test/hello-input.txt")).readAllBytes())).isEqualTo("Hello Input");
-        assertThat(new String(storageInterface.get(MAIN_TENANT, null, outputs.getUris().get("test/sub/dir/2/execution.txt"))
+        assertThat(new String(storageInterface.get(tenant, null, outputs.getUris().get("test/hello-input.txt")).readAllBytes())).isEqualTo("Hello Input");
+        assertThat(new String(storageInterface.get(tenant, null, outputs.getUris().get("test/sub/dir/2/execution.txt"))
             .readAllBytes())).isEqualTo("tata");
-        assertThat(new String(storageInterface.get(MAIN_TENANT, null, outputs.getUris().get("test/sub/dir/3/application-test.yml"))
-            .readAllBytes())).isEqualTo(new String(storageInterface.get(MAIN_TENANT, null, storageFile).readAllBytes()));
+        assertThat(new String(storageInterface.get(tenant, null, outputs.getUris().get("test/sub/dir/3/application-test.yml"))
+            .readAllBytes())).isEqualTo(new String(storageInterface.get(tenant, null, storageFile).readAllBytes()));
         runContext.cleanup();
     }
 

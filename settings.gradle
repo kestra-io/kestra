@@ -25,6 +25,7 @@ include 'ui'
 include 'model'
 include 'processor'
 include 'script'
+include 'flink'
 include 'e2e-tests'
 
 include 'jmh-benchmarks'

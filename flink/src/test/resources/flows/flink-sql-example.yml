@@ -1,0 +1,93 @@
+id: flink-sql-analytics
+namespace: flink.sql
+
+description: |
+  Example of using Flink SQL Gateway for real-time analytics
+  
+tasks:
+  - id: create-tables
+    type: io.kestra.plugin.flink.SubmitSql
+    gatewayConnection:
+      url: "http://flink-sql-gateway:8083"
+    statement: |
+      CREATE TABLE IF NOT EXISTS orders (
+        order_id STRING,
+        customer_id STRING,
+        amount DECIMAL(10,2),
+        order_time TIMESTAMP(3),
+        WATERMARK FOR order_time AS order_time - INTERVAL '5' SECOND
+      ) WITH (
+        'connector' = 'kafka',
+        'topic' = 'orders',
+        'properties.bootstrap.servers' = 'kafka:9092',
+        'format' = 'json'
+      );
+      
+      CREATE TABLE IF NOT EXISTS customers (
+        customer_id STRING,
+        name STRING,
+        email STRING,
+        PRIMARY KEY (customer_id) NOT ENFORCED
+      ) WITH (
+        'connector' = 'jdbc',
+        'url' = 'jdbc:mysql://mysql:3306/customers',
+        'table-name' = 'customers'
+      );
+      
+      CREATE TABLE IF NOT EXISTS enriched_orders (
+        order_id STRING,
+        customer_id STRING,
+        customer_name STRING,
+        customer_email STRING,
+        amount DECIMAL(10,2),
+        order_time TIMESTAMP(3)
+      ) WITH (
+        'connector' = 'kafka',
+        'topic' = 'enriched-orders',
+        'properties.bootstrap.servers' = 'kafka:9092',
+        'format' = 'json'
+      );
+    sessionConfig:
+      catalog: "default_catalog"
+      database: "default_database"
+      configuration:
+        execution.runtime-mode: "streaming"
+    waitForCompletion: true
+
+  - id: start-enrichment-job
+    type: io.kestra.plugin.flink.SubmitSql
+    gatewayConnection:
+      url: "http://flink-sql-gateway:8083"
+    statement: |
+      INSERT INTO enriched_orders
+      SELECT 
+        o.order_id,
+        o.customer_id,
+        c.name as customer_name,
+        c.email as customer_email,
+        o.amount,
+        o.order_time
+      FROM orders o
+      JOIN customers c ON o.customer_id = c.customer_id
+    sessionConfig:
+      configuration:
+        execution.runtime-mode: "streaming"
+        execution.checkpointing.interval: "30s"
+    waitForCompletion: false # This is a streaming job
+
+  - id: daily-revenue-query
+    type: io.kestra.plugin.flink.SubmitSql
+    gatewayConnection:
+      url: "http://flink-sql-gateway:8083"
+    statement: |
+      SELECT 
+        DATE_FORMAT(order_time, 'yyyy-MM-dd') as order_date,
+        COUNT(*) as total_orders,
+        SUM(amount) as total_revenue,
+        AVG(amount) as avg_order_value
+      FROM orders
+      WHERE order_time >= CURRENT_DATE - INTERVAL '7' DAY
+      GROUP BY DATE_FORMAT(order_time, 'yyyy-MM-dd')
+      ORDER BY order_date DESC
+    fetchResult: true
+    maxRows: 100

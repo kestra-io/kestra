@@ -1,0 +1,30 @@
+dependencies {
+    // Kestra
+    implementation project(':core')
+    annotationProcessor project(':processor')
+
+    implementation 'io.micronaut:micronaut-context'
+
+    // Apache Flink dependencies
+    implementation 'org.apache.flink:flink-clients:1.18.0'
+    implementation 'org.apache.flink:flink-runtime-web:1.18.0'
+    implementation 'org.apache.flink:flink-table-api-java:1.18.0'
+    implementation 'org.apache.flink:flink-sql-gateway-api:1.18.0'
+    
+    // Kubernetes client for Flink operator integration
+    implementation 'io.fabric8:kubernetes-client:6.9.2'
+    
+    // HTTP client for REST API
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    
+    // JSON processing
+    implementation 'com.fasterxml.jackson.core:jackson-core'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+
+    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(':tests')
+    testImplementation project(':storage-local')
+    testImplementation project(':repository-memory')
+    testImplementation project(':runner-memory')
+}

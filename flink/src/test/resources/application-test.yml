@@ -1,0 +1,26 @@
+micronaut:
+  application:
+    name: kestra-flink-test
+
+kestra:
+  plugins:
+    repositories:
+      central:
+        url: https://repo.maven.apache.org/maven2/
+
+datasources:
+  postgres:
+    url: jdbc:h2:mem:default;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: ""
+    driverClassName: org.h2.Driver
+
+kestra:
+  repository:
+    type: memory
+  queue:
+    type: memory
+  storage:
+    type: local
+    local:
+      base-path: "/tmp/kestra-flink-test"

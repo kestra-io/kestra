@@ -1,0 +1,57 @@
+id: flink-etl-pipeline
+namespace: kestra.flink
+
+description: |
+  Complete Flink ETL pipeline example showing job submission, monitoring, and cleanup.
+  
+tasks:
+  - id: submit-job
+    type: io.kestra.plugin.flink.Submit
+    connection:
+      url: "http://flink-jobmanager:8081"
+    jarUri: "s3://flink/jars/my-etl-job.jar"
+    entryClass: "com.example.etl.FlinkETLJob"
+    args:
+      - "--input"
+      - "kafka://input-topic"
+      - "--output"
+      - "kafka://output-topic"
+      - "--checkpoint-interval"
+      - "30000"
+    parallelism: 4
+    restoreFromSavepoint: "{{ inputs.savepointPath | default('') }}"
+
+  - id: monitor
+    type: io.kestra.plugin.flink.MonitorJob
+    connection:
+      url: "http://flink-jobmanager:8081"
+    jobId: "{{ outputs.submit-job.jobId }}"
+    waitTimeout: PT30M
+    pollInterval: PT10S
+
+  - id: savepoint-on-timeout
+    type: io.kestra.plugin.flink.TriggerSavepoint
+    if: "{{ outputs.monitor.exitCode == 'TIMEOUT' }}"
+    connection:
+      url: "http://flink-jobmanager:8081"
+    jobId: "{{ outputs.submit-job.jobId }}"
+    targetDirectory: "s3://flink/savepoints/timeout/{{ execution.id }}"
+
+  - id: cancel-on-timeout
+    type: io.kestra.plugin.flink.Cancel
+    if: "{{ outputs.monitor.exitCode == 'TIMEOUT' }}"
+    connection:
+      url: "http://flink-jobmanager:8081"
+    jobId: "{{ outputs.submit-job.jobId }}"
+    withSavepoint: false # Already created above
+
+inputs:
+  - id: savepointPath
+    type: STRING
+    description: "Optional savepoint path to restore from"
+    required: false
+
+triggers:
+  - id: schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 2 * * *" # Run daily at 2 AM

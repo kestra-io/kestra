@@ -1,7 +1,7 @@
 <template>
     <div data-component="FILENAME_PLACEHOLDER" class="bulk-select">
         <el-checkbox
-            :model-value="selections.length > 0"
+            :modelValue="selections.length > 0"
             @change="toggle"
             :indeterminate="partialCheck"
         >

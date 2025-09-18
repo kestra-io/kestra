@@ -1,96 +1,97 @@
 <template>
-    <Editor
-        id="editorWrapper"
-        ref="editorRefElement"
-        :model-value="draftSource === undefined ? source : draftSource"
-        :schema-type="isCurrentTabFlow ? 'flow': undefined"
-        :lang="extension === undefined ? 'yaml' : undefined"
-        :extension="extension"
-        :navbar="false"
-        :read-only="isReadOnly"
-        :creating="isCreating"
-        :path="props.path"
-        :diff-overview-bar="false"
-        @update:model-value="editorUpdate"
-        @cursor="updatePluginDocumentation"
-        @save="isCurrentTabFlow ? save(): saveFileContent()"
-        @execute="execute"
-        @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
-        @mouse-leave="() => highlightHoveredTask(-1)"
-        :original="draftSource === undefined ? undefined : source"
-        :diff-side-by-side="false"
-    >
-        <template #absolute>
-            <AITriggerButton
-                :show="isCurrentTabFlow"
-                :enabled="aiEnabled"
-                :opened="aiAgentOpened"
-                @click="draftSource = undefined; aiAgentOpened = true"
+    <div class="h-100 d-flex flex-column">
+        <Editor
+            id="editorWrapper"
+            ref="editorRefElement"
+            class="flex-1"
+            :modelValue="draftSource === undefined ? source : draftSource"
+            :schemaType="isCurrentTabFlow ? 'flow': undefined"
+            :lang="extension === undefined ? 'yaml' : undefined"
+            :extension="extension"
+            :navbar="false"
+            :readOnly="isReadOnly"
+            :creating="isCreating"
+            :path="props.path"
+            :diffOverviewBar="false"
+            @update:model-value="editorUpdate"
+            @cursor="updatePluginDocumentation"
+            @save="isCurrentTabFlow ? save(): saveFileContent()"
+            @execute="execute"
+            @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
+            @mouse-leave="() => highlightHoveredTask(-1)"
+            :original="draftSource === undefined ? undefined : source"
+            :diffSideBySide="false"
+        >
+            <template #absolute>
+                <AITriggerButton
+                    :show="isCurrentTabFlow"
+                    :opened="aiCopilotOpened"
+                    @click="draftSource = undefined; aiCopilotOpened = true"
+                />
+                <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
+            </template>
+            <template v-if="playgroundStore.enabled" #widget-content>
+                <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
+            </template>
+        </Editor>
+        <Transition name="el-zoom-in-center">
+            <AiCopilot
+                v-if="aiCopilotOpened"
+                class="position-absolute prompt"
+                @close="aiCopilotOpened = false"
+                :flow="editorContent"
+                :conversationId="conversationId"
+                @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
             />
-            <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
-        </template>
-        <template v-if="playgroundStore.enabled" #widget-content>
-            <PlaygroundRunTaskButton :task-id="highlightedLines?.taskId" />
-        </template>
-    </Editor>
-    <Transition name="el-zoom-in-center">
-        <AiAgent
-            v-if="aiAgentOpened"
-            class="position-absolute prompt"
-            @close="aiAgentOpened = false"
-            :flow="flowContent"
-            @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
+        </Transition>
+        <AcceptDecline
+            v-if="draftSource !== undefined"
+            @accept="acceptDraft"
+            @reject="declineDraft"
         />
-    </Transition>
-    <AcceptDecline
-        v-if="draftSource !== undefined"
-        class="position-absolute actions"
-        @accept="acceptDraft"
-        @reject="declineDraft"
-    />
+    </div>
 </template>
 
 <script lang="ts" setup>
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useRoute, useRouter} from "vue-router";
 
-    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
+    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys.ts";
     import {usePluginsStore} from "../../stores/plugins";
-    import {useMiscStore} from "../../stores/misc";
     import {EditorTabProps, useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {useNamespacesStore} from "override/stores/namespaces";
+    import {useMiscStore} from "override/stores/misc";
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
 
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import Editor from "./Editor.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import AiAgent from "../ai/AiAgent.vue";
+    import AiCopilot from "../ai/AiCopilot.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
+    import Utils from "../../utils/utils.ts";
 
     const route = useRoute();
     const router = useRouter();
 
-    const miscStore = useMiscStore();
     const editorStore = useEditorStore();
     const flowStore = useFlowStore();
 
-    const aiEnabled = computed(() => miscStore.configs?.isAiEnabled);
     const cursor = ref();
 
     const toggleAiShortcut = (event: KeyboardEvent) => {
-        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value && aiEnabled.value) {
+        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value) {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
             draftSource.value = undefined;
-            aiAgentOpened.value = !aiAgentOpened.value;
+            aiCopilotOpened.value = !aiCopilotOpened.value;
         }
     };
-    const aiAgentOpened = ref(false);
+    const aiCopilotOpened = ref(false);
     const draftSource = ref<string | undefined>(undefined);
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
@@ -120,7 +121,9 @@
         editorStore.setTabContent({path: props.path, content})
     }
 
+
     onMounted(() => {
+        loadPluginsHash();
         loadFile();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
@@ -144,16 +147,24 @@
     const isReadOnly = computed(() => flowStore.flow?.deleted || !flowStore.isAllowedEdit || flowStore.readOnlySystemLabel);
 
     const timeout = ref<any>(null);
+    const hash = ref<any>(null);
 
-    const flowContent = computed(() => {
+    const editorContent = computed(() => {
         return draftSource.value ?? source.value;
     });
 
     const pluginsStore = usePluginsStore();
     const namespacesStore = useNamespacesStore();
+    const miscStore = useMiscStore();
+
+    function loadPluginsHash() {
+        miscStore.loadConfigs().then(config => {
+            hash.value = config.pluginsHash;
+        });
+    }
 
     function editorUpdate(newValue: string){
-        if (flowContent.value === newValue) {
+        if (editorContent.value === newValue) {
             return;
         }
         if (isCurrentTabFlow.value) {
@@ -186,9 +197,32 @@
 
 
     function updatePluginDocumentation(event: any) {
-        const elementWrapper = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.model.getOffsetAt(event.position));
-        let element = (elementWrapper?.value?.type !== undefined ? elementWrapper.value : elementWrapper?.parents?.findLast(p => p.type !== undefined)) as Parameters<typeof pluginsStore.updateDocumentation>[0];
-        pluginsStore.updateDocumentation(element);
+        const source = event.model.getValue();
+        const cursorOffset = event.model.getOffsetAt(event.position);
+
+        const isPlugin = (type: string) => pluginsStore.allTypes.includes(type);
+        const isInRange = (range: [number, number, number]) =>
+            cursorOffset >= range[0] && cursorOffset <= range[2];
+        const getRangeSize = (range: [number, number, number]) => range[2] - range[0];
+
+        const getElementFromRange = (typeElement: any) => {
+            const wrapper = YAML_UTILS.localizeElementAtIndex(source, typeElement.range[0]);
+            return wrapper?.value?.type && isPlugin(wrapper.value.type)
+                ? wrapper.value
+                : {type: typeElement.type};
+        };
+
+        const selectedElement = YAML_UTILS.extractFieldFromMaps(source, "type", () => true, isPlugin)
+            .filter(el => el.range && isInRange(el.range))
+            .reduce((closest, current) =>
+                        !closest || getRangeSize(current.range) < getRangeSize(closest.range)
+                            ? current
+                            : closest
+                    , null as any);
+
+        let result = selectedElement ? getElementFromRange(selectedElement) : undefined;
+        result = {...result, hash: hash.value};
+        pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
     };
 
     const save = async () => {
@@ -217,10 +251,11 @@
 
     const saveFileContent = async () => {
         clearTimeout(timeout.value);
+        if(!namespace.value || !props.path) return
         await namespacesStore.createFile({
             namespace: namespace.value,
             path: props.path,
-            content: editorRefElement.value?.modelValue || "",
+            content: editorContent.value || "",
         });
         editorStore.setTabDirty({
             path: props.path,
@@ -243,15 +278,18 @@
         flowStore.executeFlow = true;
     };
 
+    const conversationId = ref<string>(Utils.uid());
+
     function acceptDraft() {
         const accepted = draftSource.value;
         draftSource.value = undefined;
+        conversationId.value = Utils.uid();
         editorUpdate(accepted!);
     }
 
     function declineDraft() {
         draftSource.value = undefined;
-        aiAgentOpened.value = true;
+        aiCopilotOpened.value = true;
     }
 
     const {
@@ -262,16 +300,12 @@
 </script>
 
 <style scoped lang="scss">
-.prompt {
-    bottom: 10%;
-    width: calc(100% - 5rem);
-    left: 3rem;
-    max-width: 700px;
-    background-color: var(--ks-background-panel);
-    box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
-}
-
-.actions {
-    bottom: 10%;
-}
+    .prompt {
+        bottom: 10%;
+        width: calc(100% - 5rem);
+        left: 3rem;
+        max-width: 700px;
+        background-color: var(--ks-background-panel);
+        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+    }
 </style>

@@ -29,7 +29,7 @@
                     id="input-password"
                     :placeholder="t('password')"
                     type="password"
-                    show-password
+                    showPassword
                     required
                     prop="password"
                 >
@@ -43,7 +43,7 @@
                     type="primary"
                     class="w-100"
                     size="large"
-                    native-type="submit"
+                    nativeType="submit"
                     @click="handleSubmit"
                     :disabled="isLoginDisabled"
                     :loading="isLoading"
@@ -68,7 +68,6 @@
 <script setup lang="ts">
     import {ref, computed} from "vue"
     import {useRouter, useRoute} from "vue-router"
-    import {useStore} from "vuex"
     import {useI18n} from "vue-i18n"
     import {ElMessage} from "element-plus"
     import type {FormInstance} from "element-plus"
@@ -79,7 +78,7 @@
     import Logo from "../home/Logo.vue"
 
     import {useCoreStore} from "../../stores/core"
-    import {useMiscStore} from "../../stores/misc"
+    import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
     import * as BasicAuth from "../../utils/basicAuth";
@@ -91,7 +90,6 @@
 
     const router = useRouter()
     const route = useRoute()
-    const store = useStore()
     const {t} = useI18n()
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
@@ -115,7 +113,7 @@
     const validateCredentials = async (auth: string) => {
         try {
             document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`;
-            await axios.get(`${apiUrl(store)}/usages/all`, {
+            await axios.get(`${apiUrl()}/usages/all`, {
                 timeout: 10000,
                 withCredentials: true
             })

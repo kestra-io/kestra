@@ -1058,6 +1058,32 @@ public class ExecutionController {
         return innerReplay(execution.get(), taskRunId, revision, breakpoints);
     }
 
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/replay-with-inputs", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Operation(tags = {"Executions"}, summary = "Create a new execution from an old one and start it from a specified task run id")
+    public Mono<Execution> replayExecutionWithinputs(
+        @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
+        @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
+        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision,
+        @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints,
+        @RequestBody(description = "The inputs") @Body MultipartBody inputs
+    ) {
+        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+        if (execution.isEmpty()) {
+            return null;
+        }
+        Execution current = execution.get();
+
+        this.controlRevision(current, revision);
+
+        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
+
+        return flowInputOutput.readExecutionInputs(flow, current, inputs)
+            .flatMap(newInputs -> Mono.fromCallable(() ->
+                innerReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
+
+    }
+
     private Execution innerReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
         Execution replay = executionService.replay(execution, taskRunId, revision)
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
@@ -1107,7 +1133,7 @@ public class ExecutionController {
 
         Flow flow = flowRepository.findByExecution(execution.get());
 
-        Execution replay = executionService.markAs(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
+        Execution replay = executionService.changeTaskRunState(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
         List<Label> newLabels = new ArrayList<>(replay.getLabels());
         if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
             newLabels.add(new Label(Label.RESTARTED, "true"));
@@ -2439,6 +2465,8 @@ public class ExecutionController {
             Object value,
             @Parameter(description = "Specifies whether the input is enabled")
             boolean enabled,
+            @Parameter(description = "Specifies whether the input value is the default")
+            boolean isDefault,
             @Parameter(description = "The validation errors")
             List<ApiInputError> errors
         ) {
@@ -2460,6 +2488,7 @@ public class ExecutionController {
                     it.input(),
                     it.value(),
                     it.enabled(),
+                    it.isDefault(),
                     Optional.ofNullable(it.exception()).map(exception ->
                         exception.getConstraintViolations()
                             .stream()

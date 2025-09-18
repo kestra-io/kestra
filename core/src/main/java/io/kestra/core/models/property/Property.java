@@ -68,6 +68,19 @@ public class Property<T> {
     String getExpression() {
         return expression;
     }
+    
+    /**
+     * Returns a new {@link Property} with no cached rendered value,
+     * so that the next render will evaluate its original Pebble expression.
+     * <p>
+     * The returned property will still cache its rendered result.
+     * To re-evaluate on a subsequent render, call {@code skipCache()} again.
+     *
+     * @return a new {@link Property} without a pre-rendered value
+     */
+    public Property<T> skipCache() {
+        return Property.ofExpression(expression);
+    }
 
     /**
      * Build a new Property object with a value already set.<br>
@@ -132,8 +145,8 @@ public class Property<T> {
      *
      * @see io.kestra.core.runners.RunContextProperty#as(Class)
      */
-    public static <T> T as(Property<T> property, RunContext runContext, Class<T> clazz) throws IllegalVariableEvaluationException {
-        return as(property, runContext, clazz, Map.of());
+    public static <T> T as(Property<T> property, PropertyContext context, Class<T> clazz) throws IllegalVariableEvaluationException {
+        return as(property, context, clazz, Map.of());
     }
 
     /**
@@ -143,9 +156,9 @@ public class Property<T> {
      *
      * @see io.kestra.core.runners.RunContextProperty#as(Class, Map)
      */
-    public static <T> T as(Property<T> property, RunContext runContext, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    public static <T> T as(Property<T> property, PropertyContext context, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (property.value == null) {
-            String rendered =  runContext.render(property.expression, variables);
+            String rendered =  context.render(property.expression, variables);
             property.value = MAPPER.convertValue(rendered, clazz);
         }
 
@@ -159,8 +172,8 @@ public class Property<T> {
      *
      * @see io.kestra.core.runners.RunContextProperty#asList(Class)
      */
-    public static <T, I> T asList(Property<T> property, RunContext runContext, Class<I> itemClazz) throws IllegalVariableEvaluationException {
-        return asList(property, runContext, itemClazz, Map.of());
+    public static <T, I> T asList(Property<T> property, PropertyContext context, Class<I> itemClazz) throws IllegalVariableEvaluationException {
+        return asList(property, context, itemClazz, Map.of());
     }
 
     /**
@@ -171,7 +184,7 @@ public class Property<T> {
      * @see io.kestra.core.runners.RunContextProperty#asList(Class, Map)
      */
     @SuppressWarnings("unchecked")
-    public static <T, I> T asList(Property<T> property, RunContext runContext, Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    public static <T, I> T asList(Property<T> property, PropertyContext context, Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (property.value == null) {
             JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz);
             try {
@@ -179,7 +192,7 @@ public class Property<T> {
                 // We need to detect if the expression is already a list or if it's a pebble expression (for eg. referencing a variable containing a list).
                 // Doing that allows us to, if it's an expression, first render then read it as a list.
                 if (trimmedExpression.startsWith("{{") && trimmedExpression.endsWith("}}")) {
-                    property.value = MAPPER.readValue(runContext.render(property.expression, variables), type);
+                    property.value = MAPPER.readValue(context.render(property.expression, variables), type);
                 }
                 // Otherwise, if it's already a list, we read it as a list first then render it from run context which handle list rendering by rendering each item of the list
                 else {
@@ -187,9 +200,9 @@ public class Property<T> {
                     property.value = (T) asRawList.stream()
                         .map(throwFunction(item -> {
                             if (item instanceof String str) {
-                                return MAPPER.convertValue(runContext.render(str, variables), itemClazz);
+                                return MAPPER.convertValue(context.render(str, variables), itemClazz);
                             } else if (item instanceof Map map) {
-                                return MAPPER.convertValue(runContext.render(map, variables), itemClazz);
+                                return MAPPER.convertValue(context.render(map, variables), itemClazz);
                             }
                             return item;
                         }))

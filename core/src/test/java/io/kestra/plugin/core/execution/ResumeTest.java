@@ -26,10 +26,10 @@ class ResumeTest {
     private ExecutionRepositoryInterface executionRepository;
 
     @Test
-    @LoadFlows({"flows/valids/pause.yaml",
+    @LoadFlows({"flows/valids/pause-test.yaml",
         "flows/valids/resume-execution.yaml"})
     void resume() throws Exception {
-        Execution pause = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause");
+        Execution pause = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test");
         String pauseId = pause.getId();
 
         Execution resume = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "resume-execution", null, (flow, execution) -> Map.of("executionId", pauseId));

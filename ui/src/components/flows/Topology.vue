@@ -3,12 +3,12 @@
         <div class="vueflow">
             <LowCodeEditor
                 v-if="flowStore.flow && flowStore.flowGraph"
-                :flow-id="flowStore.flow.id"
+                :flowId="flowStore.flow.id"
                 :namespace="flowStore.flow.namespace"
-                :flow-graph="flowStore.flowGraph"
+                :flowGraph="flowStore.flowGraph"
                 :source="flowStore.flow.source"
-                :is-read-only="isReadOnly"
-                :expanded-subflows="expandedSubflows"
+                :isReadOnly="isReadOnly"
+                :expandedSubflows="expandedSubflows"
                 @expand-subflow="onExpandSubflow($event)"
                 @on-edit="(event) => emit('on-edit', event, true)"
             />

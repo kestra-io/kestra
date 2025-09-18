@@ -18,13 +18,12 @@ import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.RouteMatchUtils;
 import jakarta.inject.Inject;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Optional;
-
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 //We want to authenticate only Kestra endpoints
 @Filter("/api/v1/**")
@@ -48,7 +47,7 @@ public class AuthenticationFilter implements HttpServerFilter {
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
         return Mono.fromCallable(() -> {
                 SaltedBasicAuthConfiguration configuration = basicAuthService.configuration();
-                if (configuration == null ){
+                if (configuration == null) {
                     configuration = new SaltedBasicAuthConfiguration();
                 }
                 return configuration;
@@ -57,8 +56,10 @@ public class AuthenticationFilter implements HttpServerFilter {
             .flux()
             .flatMap(basicAuthConfiguration -> {
                 boolean isConfigEndpoint = request.getPath().endsWith("/configs")
-                    || request.getPath().endsWith("/basicAuth")
-                    || request.getPath().endsWith("/basicAuthValidationErrors");
+                    || (
+                    (request.getPath().endsWith("/basicAuth") || request.getPath().endsWith("/basicAuthValidationErrors"))
+                        && !basicAuthService.isBasicAuthInitialized()
+                );
 
                 boolean isOpenUrl = Optional.ofNullable(basicAuthConfiguration.getOpenUrls())
                     .map(Collection::stream)

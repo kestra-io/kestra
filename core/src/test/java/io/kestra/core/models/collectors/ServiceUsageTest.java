@@ -33,7 +33,7 @@ class ServiceUsageTest {
             ServiceInstance instance = new ServiceInstance(
                 IdUtils.create(),
                 ServiceType.WORKER,
-                Service.ServiceState.EMPTY,
+                Service.ServiceState.INACTIVE,
                 null,
                 createAt,
                 updatedAt,

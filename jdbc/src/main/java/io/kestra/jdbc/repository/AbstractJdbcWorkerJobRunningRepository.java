@@ -3,7 +3,7 @@ package io.kestra.jdbc.repository;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.repositories.WorkerJobRunningRepositoryInterface;
 import io.kestra.core.runners.WorkerJobRunning;
-import io.kestra.core.runners.WorkerJobRunningStateStore;
+import io.kestra.executor.WorkerJobRunningStateStore;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.jooq.Record1;

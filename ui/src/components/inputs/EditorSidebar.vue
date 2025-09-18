@@ -10,7 +10,7 @@
                 :placeholder="$t('namespace files.filter')"
                 filterable
                 remote
-                :remote-method="searchFilesList"
+                :remoteMethod="searchFilesList"
                 class="filter"
             >
                 <template #prefix>
@@ -29,9 +29,9 @@
                     effect="light"
                     :content="$t('namespace files.create.file')"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                     :persistent="false"
-                    popper-class="text-base"
+                    popperClass="text-base"
                 >
                     <el-button class="px-2" @click="toggleDialog(true, 'file')">
                         <FilePlus />
@@ -41,9 +41,9 @@
                     effect="light"
                     :content="$t('namespace files.create.folder')"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                     :persistent="false"
-                    popper-class="text-base"
+                    popperClass="text-base"
                 >
                     <el-button
                         class="px-2"
@@ -91,9 +91,9 @@
                     effect="light"
                     :content="$t('namespace files.export')"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                     :persistent="false"
-                    popper-class="text-base"
+                    popperClass="text-base"
                 >
                     <el-button class="px-2" @click="exportFiles()">
                         <FolderDownloadOutline />
@@ -107,12 +107,12 @@
             lazy
             :load="loadNodes"
             :data="items"
-            highlight-current
-            :allow-drop="
+            highlightCurrent
+            :allowDrop="
                 (_, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'
             "
             draggable
-            node-key="id"
+            nodeKey="id"
             v-loading="items === undefined"
             :props="{class: 'nodeClass', isLeaf: 'leaf'}"
             class="mt-3"
@@ -1240,7 +1240,6 @@
 
     .filename {
         font-size: var(--el-font-size-small);
-        color: var(--ks-content-primary);
 
         &:hover {
             color: var(--ks-content-link-hover);
@@ -1288,7 +1287,7 @@
             }
 
             &:hover{
-                background-color: var(--ks-button-background-primary);
+                background: none;
                 border: 1px solid var(--ks-border-active);
             }
         }
@@ -1303,7 +1302,12 @@
 
         .el-tree-node.is-current > .el-tree-node__content {
             min-width: fit-content;
-            border: 1px solid var(--ks-border-active)
+            border: 1px solid var(--ks-border-active);
+            background: var(--ks-button-background-primary);
+
+            .filename {
+                color: var(--ks-button-content-primary);
+            }
         }
         .el-tree-node.selected-tree-node > .el-tree-node__content {
             background-color: var(--ks-button-background-primary);

@@ -4,6 +4,9 @@ configurations {
 
 dependencies {
     implementation project(":core")
+    implementation project(":scheduler")
+    implementation project(":executor")
+    implementation project(":worker")
 
     implementation("io.micronaut.data:micronaut-data-jdbc")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
@@ -11,7 +14,7 @@ dependencies {
     implementation("io.micronaut.flyway:micronaut-flyway")
 
     // see https://github.com/jOOQ/jOOQ/issues/14865
-    compileOnly ("jakarta.xml.bind:jakarta.xml.bind-api:4.0.2")
+    compileOnly ("jakarta.xml.bind:jakarta.xml.bind-api:4.0.4")
 
     testImplementation project(':tests')
     testImplementation project(':core').sourceSets.test.output

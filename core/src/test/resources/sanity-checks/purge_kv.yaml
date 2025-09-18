@@ -1,0 +1,39 @@
+id: purge_kv
+namespace: sanitychecks.core
+
+tasks:
+  - id: set_expired_key
+    type: io.kestra.plugin.core.kv.Set
+    key: KV_expired_key
+    value: "my expired key"
+    kvType: STRING
+    ttl: PT0.001S
+
+  - id: set_key
+    type: io.kestra.plugin.core.kv.Set
+    key: KV_key
+    value: "my key"
+    kvType: STRING
+
+  - id: purge_kv
+    type: io.kestra.plugin.core.kv.PurgeKV
+    namespaces:
+      - sanitychecks.core
+    expiredOnly: false
+    keyPattern: KV_*
+
+  - id: kv_getkeys
+    type: io.kestra.plugin.core.kv.GetKeys
+    prefix: KV_
+
+  - id: assert_purge_output
+    type: io.kestra.plugin.core.execution.Assert
+    errorMessage: "Invalid number of deleted keys {{ outputs.purge_kv.size }}"
+    conditions:
+      - "{{ outputs.purge_kv.size == 2 }}"
+
+  - id: assert_key_found_output
+    type: io.kestra.plugin.core.execution.Assert
+    errorMessage: "Invalid number of deleted keys {{ outputs.kv_getkeys.keys }}"
+    conditions:
+      - "{{ outputs.kv_getkeys.keys.size() == 0 }}"

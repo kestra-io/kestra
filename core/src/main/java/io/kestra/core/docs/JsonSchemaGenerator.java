@@ -53,6 +53,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static io.kestra.core.docs.AbstractClassDocumentation.flattenWithoutType;
+import static io.kestra.core.docs.AbstractClassDocumentation.required;
 import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
 
 @Singleton
@@ -92,12 +94,16 @@ public class JsonSchemaGenerator {
     }
 
     public <T> Map<String, Object> schemas(Class<? extends T> cls, boolean arrayOf, List<String> allowedPluginTypes) {
+        return this.schemas(cls, arrayOf, allowedPluginTypes, false);
+    }
+
+    public <T> Map<String, Object> schemas(Class<? extends T> cls, boolean arrayOf, List<String> allowedPluginTypes, boolean withOutputs) {
         SchemaGeneratorConfigBuilder builder = new SchemaGeneratorConfigBuilder(
             SchemaVersion.DRAFT_7,
             OptionPreset.PLAIN_JSON
         );
 
-        this.build(builder, true, allowedPluginTypes);
+        this.build(builder, true, allowedPluginTypes, withOutputs);
 
         SchemaGeneratorConfig schemaGeneratorConfig = builder.build();
 
@@ -249,6 +255,10 @@ public class JsonSchemaGenerator {
     }
 
     protected void build(SchemaGeneratorConfigBuilder builder, boolean draft7, List<String> allowedPluginTypes) {
+        this.build(builder, draft7, allowedPluginTypes, false);
+    }
+
+    protected void build(SchemaGeneratorConfigBuilder builder, boolean draft7, List<String> allowedPluginTypes, boolean withOutputs) {
 //        builder.withObjectMapper(builder.getObjectMapper().configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false));
         builder
             .with(new JakartaValidationModule(
@@ -429,6 +439,13 @@ public class JsonSchemaGenerator {
 
                     if (pluginAnnotation.beta()) {
                         collectedTypeAttributes.put("$beta", true);
+                    }
+
+                    if (withOutputs) {
+                        Map<String, Object> outputsSchema = this.outputs(null, scope.getType().getErasedType());
+                        collectedTypeAttributes.set("outputs", context.getGeneratorConfig().createObjectNode().pojoNode(
+                            flattenWithoutType(AbstractClassDocumentation.properties(outputsSchema), required(outputsSchema))
+                        ));
                     }
                 }
 

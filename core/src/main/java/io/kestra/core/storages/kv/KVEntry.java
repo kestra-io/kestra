@@ -1,13 +1,14 @@
 package io.kestra.core.storages.kv;
 
 import io.kestra.core.storages.FileAttributes;
+import jakarta.annotation.Nullable;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
-public record KVEntry(String key, String description, Instant creationDate, Instant updateDate, Instant expirationDate) {
+public record KVEntry(String key, @Nullable String description, Instant creationDate, Instant updateDate, @Nullable Instant expirationDate) {
     public static KVEntry from(FileAttributes fileAttributes) throws IOException {
         Optional<KVMetadata> kvMetadata = Optional.ofNullable(fileAttributes.getMetadata()).map(KVMetadata::new);
         return new KVEntry(

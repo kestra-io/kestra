@@ -2,18 +2,18 @@
     <div class="d-flex flex-column fill-height">
         <KestraFilter
             :placeholder="$t('search')"
-            legacy-query
+            legacyQuery
         />
 
         <SelectTable
             :data="filteredSecrets"
             ref="selectTable"
-            :default-sort="{prop: 'key', order: 'ascending'}"
-            table-layout="auto"
+            :defaultSort="{prop: 'key', order: 'ascending'}"
+            tableLayout="auto"
             fixed
             :selectable="false"
             @sort-change="handleSort"
-            :infinite-scroll-load="namespace === undefined ? fetchSecrets : undefined"
+            :infiniteScrollLoad="namespace === undefined ? fetchSecrets : undefined"
             :no-data-text="$t('no_results.secrets')"
             class="fill-height"
         >
@@ -21,10 +21,20 @@
                 v-if="namespace === undefined || namespaceColumn"
                 prop="namespace"
                 sortable="custom"
-                :sort-orders="['ascending', 'descending']"
+                :sortOrders="['ascending', 'descending']"
                 :label="$t('namespace')"
-            />
-            <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="keyOnly ? $t('secret.names') : $t('key')">
+            >
+                <template #default="scope">
+                    <el-tag
+                        type="info"
+                        class="namespace-tag"
+                    >
+                        <DotsSquare />
+                        {{ scope.row.namespace }}
+                    </el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column prop="key" sortable="custom" :sortOrders="['ascending', 'descending']" :label="keyOnly ? $t('secret.names') : $t('key')">
                 <template #default="scope">
                     <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
                 </template>
@@ -38,13 +48,13 @@
 
             <el-table-column v-if="!keyOnly && !paneView" prop="tags" :label="$t('tags')">
                 <template #default="scope">
-                    <Labels v-if="scope.row.tags !== undefined" :labels="scope.row.tags" read-only />
+                    <Labels v-if="scope.row.tags !== undefined" :labels="scope.row.tags" readOnly />
                 </template>
             </el-table-column>
 
-            <el-table-column column-key="locked" class-name="row-action">
+            <el-table-column columnKey="locked" className="row-action">
                 <template #default="scope">
-                    <el-tooltip v-if="scope.row.namespace !== undefined && areNamespaceSecretsReadOnly?.[scope.row.namespace]" transition="" :hide-after="0" :persistent="false" effect="light">
+                    <el-tooltip v-if="scope.row.namespace !== undefined && areNamespaceSecretsReadOnly?.[scope.row.namespace]" transition="" :hideAfter="0" :persistent="false" effect="light">
                         <template #content>
                             <span v-html="$t('secret.isReadOnly')" />
                         </template>
@@ -55,7 +65,7 @@
                 </template>
             </el-table-column>
 
-            <el-table-column column-key="copy" class-name="row-action">
+            <el-table-column columnKey="copy" className="row-action">
                 <template #default="scope">
                     <el-tooltip :content="$t('copy_to_clipboard')">
                         <el-button :icon="ContentCopy" link @click="Utils.copy(`\{\{ secret('${scope.row.key}') \}\}`)" />
@@ -63,13 +73,13 @@
                 </template>
             </el-table-column>
 
-            <el-table-column v-if="!keyOnly && !paneView" column-key="update" class-name="row-action">
+            <el-table-column v-if="!keyOnly && !paneView" columnKey="update" className="row-action">
                 <template #default="scope">
                     <el-button v-if="canUpdate(scope.row)" :icon="FileDocumentEdit" link @click="updateSecretModal(scope.row)" />
                 </template>
             </el-table-column>
 
-            <el-table-column v-if="!keyOnly && !paneView" column-key="delete" class-name="row-action">
+            <el-table-column v-if="!keyOnly && !paneView" columnKey="delete" className="row-action">
                 <template #default="scope">
                     <el-button v-if="canDelete(scope.row)" :icon="Delete" link @click="removeSecret(scope.row)" />
                 </template>
@@ -91,7 +101,7 @@
                     <NamespaceSelect
                         v-model="secret.namespace"
                         :readonly="secret.update"
-                        :include-system-namespace="true"
+                        :includeSystemNamespace="true"
                         all
                     />
                 </el-form-item>
@@ -108,10 +118,10 @@
                     <el-col class="px-2" :span="4">
                         <el-switch
                             size="large"
-                            inline-prompt
+                            inlinePrompt
                             v-model="secret.updateValue"
-                            :active-icon="PencilOutline"
-                            :inactive-icon="PencilOff"
+                            :activeIcon="PencilOutline"
+                            :inactiveIcon="PencilOff"
                         />
                     </el-col>
                 </el-form-item>
@@ -155,6 +165,7 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
+    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
 
     import Utils from "../../utils/utils";
@@ -165,10 +176,10 @@
 </script>
 
 <script lang="ts">
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useNamespaceSecrets, useAllSecrets, SecretIterator} from "../../composables/useSecrets";
     import {useNamespacesStore} from "override/stores/namespaces";
+    import {useAuthStore} from "override/stores/auth";
     import action from "../../models/action";
     import permission from "../../models/permission";
     import SelectTableActions from "../../mixins/selectTableActions";
@@ -182,8 +193,7 @@
             Drawer
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useNamespacesStore),
+            ...mapStores(useNamespacesStore, useAuthStore),
             searchQuery() {
                 return this.$route.query.q;
             },
@@ -302,14 +312,14 @@
         },
         methods: {
             canUpdate(secret) {
-                return secret.namespace !== undefined && this.user.isAllowed(permission.SECRET, action.UPDATE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
+                return secret.namespace !== undefined && this.authStore.user.isAllowed(permission.SECRET, action.UPDATE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
             },
             canDelete(secret) {
-                return secret.namespace !== undefined && this.user.isAllowed(permission.SECRET, action.DELETE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
+                return secret.namespace !== undefined && this.authStore.user.isAllowed(permission.SECRET, action.DELETE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
             },
             async fetchSecrets() {
                 if (this.secretsIterator === undefined) {
-                    this.secretsIterator = this.namespace === undefined ? useAllSecrets(this.$store, 20) : useNamespaceSecrets(this.$store, this.namespace, 20, {
+                    this.secretsIterator = this.namespace === undefined ? useAllSecrets(this.authStore.user, 20) : useNamespaceSecrets(this.namespace, 20, {
                         sort: this.$route.query.sort || "key:asc",
                         ...(this.searchQuery === undefined ? {} : {filters: {
                             q: {
@@ -428,7 +438,7 @@
                         secret.value = this.secret.value;
                     }
 
-                    const action = this.isSecretValueUpdated() ? this.namespacesStore.createSecrets : this.namespacesStore.patchSecret;
+                    const action = this.isSecretValueUpdated() ? this.namespacesStore?.createSecrets : this.namespacesStore?.patchSecret;
                     return action({namespace: this.secret.namespace, secret: secret})
                         .then(() => {
                             this.secret.update = true;
@@ -468,3 +478,17 @@
         },
     };
 </script>
+<style lang="scss" scoped>
+.namespace-tag {
+    background-color: var(--ks-log-background-debug) !important;
+    color: var(--ks-log-content-debug);
+    border: 1px solid var(--ks-log-border-debug);
+    padding: 0 6px;
+
+    :deep(.el-tag__content) {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+}
+</style>

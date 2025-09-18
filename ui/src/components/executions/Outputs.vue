@@ -7,18 +7,18 @@
         {{ $t('outputs') }}
     </el-dropdown-item>
 
-    <drawer
+    <Drawer
         data-component="FILENAME_PLACEHOLDER"
         v-if="isOpen"
         v-model="isOpen"
         :title="$t('outputs')"
     >
-        <vars
+        <Vars
             :execution="execution"
             class="table-unrounded mt-1"
             :data="outputs"
         />
-    </drawer>
+    </Drawer>
 </template>
 
 <script setup>

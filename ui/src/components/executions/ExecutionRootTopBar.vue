@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
+    <TopNavBar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
         <template #title>
             {{ routeInfo?.title }}
             <Badge v-if="isATestExecution" :label="$t('test-badge-text')" :tooltip="$t('test-badge-tooltip')" />
@@ -24,11 +24,11 @@
                     </el-button>
                 </li>
                 <li v-if="isAllowedTrigger">
-                    <trigger-flow type="primary" :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
+                    <TriggerFlow type="primary" :flowId="$route.params.flowId" :namespace="$route.params.namespace" />
                 </li>
             </ul>
         </template>
-    </top-nav-bar>
+    </TopNavBar>
 </template>
 
 <script setup>
@@ -41,7 +41,6 @@
 <script>
     import {h, ref} from "vue"
     import {ElCheckbox, ElMessageBox} from "element-plus"
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
 
     import TriggerFlow from "../flows/TriggerFlow.vue";
@@ -51,6 +50,7 @@
     import {State} from "@kestra-io/ui-libs"
     import {apiUrl} from "override/utils/route";
     import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {
@@ -64,22 +64,21 @@
             }
         },
         computed: {
-            ...mapStores(useExecutionsStore),
-            ...mapState("auth", ["user"]),
+            ...mapStores(useExecutionsStore, useAuthStore),
             execution() {
                 return this.executionsStore.execution;
             },
             finalApiUrl() {
-                return apiUrl(this.$store);
+                return apiUrl();
             },
             canDelete() {
-                return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace);
+                return this.execution && this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace);
             },
             isAllowedEdit() {
-                return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
+                return this.execution && this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
             },
             isAllowedTrigger() {
-                return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
+                return this.execution && this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
             },
             isATestExecution() {
                 return this.execution && this.execution.labels && this.execution.labels.some(label => label.key === "system.test" && label.value === "true");

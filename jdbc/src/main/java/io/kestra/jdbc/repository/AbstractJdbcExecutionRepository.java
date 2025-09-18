@@ -298,7 +298,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .select(
                 field("value")
             )
-            .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId, false))
             .and(NORMAL_KIND_CONDITION);
@@ -327,7 +326,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .select(
                 field("value")
             )
-            .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId, deleted));
 
@@ -357,7 +355,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
@@ -972,14 +969,16 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         executionQueue().emit(deleted);
 
-        eventPublisher.publishEvent(new CrudEvent<>(deleted, CrudEventType.DELETE));
+        eventPublisher.publishEvent(CrudEvent.delete(deleted));
 
         return deleted;
     }
 
     @Override
     public Integer purge(Execution execution) {
-        return this.jdbcRepository.delete(execution);
+        int delete = this.jdbcRepository.delete(execution);
+        eventPublisher.publishEvent(CrudEvent.delete(execution));
+        return delete;
     }
 
     public Executor lock(String executionId, Function<Pair<Execution, ExecutorState>, Pair<Executor, ExecutorState>> function) {

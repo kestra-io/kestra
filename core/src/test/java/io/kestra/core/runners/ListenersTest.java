@@ -14,10 +14,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
 @KestraTest(startRunner = true)
 class ListenersTest {
 

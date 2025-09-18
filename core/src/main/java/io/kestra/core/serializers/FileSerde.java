@@ -180,23 +180,13 @@ public final class FileSerde {
     }
 
     private static <T> MappingIterator<T> createMappingIterator(ObjectMapper objectMapper, Reader reader, TypeReference<T> type) throws IOException {
-        // See https://github.com/FasterXML/jackson-dataformats-binary/issues/493
-        // There is a limitation with the MappingIterator that cannot differentiate between an array of things (of whatever shape)
-        // and a sequence/stream of things (of Array shape).
-        // To work around that, we need to create a JsonParser and advance to the first token.
         try (var parser = objectMapper.createParser(reader)) {
-            parser.nextToken();
             return objectMapper.readerFor(type).readValues(parser);
         }
     }
 
     private static <T> MappingIterator<T> createMappingIterator(ObjectMapper objectMapper, Reader reader, Class<T> type) throws IOException {
-        // See https://github.com/FasterXML/jackson-dataformats-binary/issues/493
-        // There is a limitation with the MappingIterator that cannot differentiate between an array of things (of whatever shape)
-        // and a sequence/stream of things (of Array shape).
-        // To work around that, we need to create a JsonParser and advance to the first token.
         try (var parser = objectMapper.createParser(reader)) {
-            parser.nextToken();
             return objectMapper.readerFor(type).readValues(parser);
         }
     }

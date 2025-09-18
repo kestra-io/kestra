@@ -4,7 +4,7 @@ namespace: io.kestra.tests
 inputs:
   - id: behavior
     type: STRING
-    defaults: CONTINUE
+    defaults: RESUME
 
 tasks:
   - id: pause

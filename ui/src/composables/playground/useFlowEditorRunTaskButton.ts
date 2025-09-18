@@ -118,7 +118,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
 
 
     function highlightHoveredTask(lineNumber?:number){
-        if(!playgroundStore.enabled || !playgroundStore.enabled || !isCurrentTabFlow.value){
+        if(!playgroundStore.enabled || !isCurrentTabFlow.value){
             ln.value = -1;
             return;
         }

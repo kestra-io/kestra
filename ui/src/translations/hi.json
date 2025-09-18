@@ -1387,7 +1387,6 @@
     "task_id_exists": "टास्क Id पहले से मौजूद है",
     "task_id_message": "टास्क Id ${existingTask} पहले से ही flow में मौजूद है।",
     "taskid column details": "निष्पादित होने वाला अंतिम Task और इसके प्रयासों की संख्या।",
-    "taskruns": "Task रन",
     "tasks": "Tasks",
     "template": "template",
     "template creation": "template निर्माण",

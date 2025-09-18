@@ -43,9 +43,9 @@ export function summarizeJunitReport(
                         const message = testcase.message ?? "";
                         const details = testcase.details ? "\n\n" + testcase.details : "";
 
+                        const errorSummary= `${escapePipe(project)} > ${escapePipe(testsuite.name)} > ${escapePipe(name)} ${mapStatusToEmoji(testcase.status)} in ${duration}`;
                         testReportErrorLogs.push(
-                            `${escapePipe(project)} > ${escapePipe(testsuite.name)} > ${escapePipe(name)} ${mapStatusToEmoji(testcase.status)} in ${duration}:
-                                    \n${codeBlock(message + details)}`,
+                            `${spoilerBlock(errorSummary, codeBlock(message + details))}\n`,
                         );
                     }
                 } else {
@@ -158,6 +158,14 @@ export function summarizeJunitReport(
     function codeBlock(s: string | number | undefined): string {
         const str = s == null ? "" : String(s);
         return `\`\`\`\n${str}\n\`\`\`\n`;
+    }
+
+    function spoilerBlock(summary: string, content: string): string {
+        return `<details>
+<summary>${summary}</summary>
+
+${content}
+</details>`;
     }
 
     function truncate(s: string, max: number): string {

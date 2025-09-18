@@ -64,6 +64,7 @@
         short: {type: Boolean, default: false},
     });
 
+
     const containerID = `${props.chart.id}__${Math.random()}`;
 
     const tooltipContent = ref("");
@@ -90,7 +91,6 @@
         ticks: {maxTicksLimit: 8},
         grid: {display: false},
     };
-
     const options = computed(() => {
         return defaultConfig({
             skipNull: true,
@@ -172,11 +172,11 @@
         }, theme.value);
     });
 
-    function isDuration(field: string) {
+    function isDuration(field) {
         return field === "DURATION";
     }
 
-    const parseValue = (value: any) => {
+    const parseValue = (value) => {
         const date = moment(value, moment.ISO_8601, true);
         return date.isValid() ? date.format(KestraUtils.getDateFormat(route.query.startDate, route.query.endDate)) : value;
     };
@@ -193,12 +193,13 @@
 
         const aggregatorKeys = aggregator.value.map(([key]) => key);
 
-        const reducer = (array: any[], field: string, yAxisID: string) => {
+        const reducer = (array, field, yAxisID) => {
             if (!array.length) return;
 
             const {columns} = data;
             const {column, colorByColumn} = chartOptions;
 
+            // Get the fields for stacks (columns without `agg` and not the xAxis column)
             const fields = Object.keys(columns)
                 .filter(key => !aggregatorKeys.includes(key))
                 .filter(key => key !== column);
@@ -242,6 +243,7 @@
                 const current = acc[stack];
                 const parsedDate = parseValue(params[column]);
 
+                // Check if the date is already processed
                 if (!current.unique.has(parsedDate)) {
                     current.unique.add(parsedDate);
                     current.data.push({
@@ -249,7 +251,8 @@
                         y: params[field],
                     });
                 } else {
-                    const existing = current.data.find((v: any) => v.x === parsedDate);
+                    // Update existing stack value for the same date
+                    const existing = current.data.find((v) => v.x === parsedDate);
                     if (existing) existing.y += params[field];
                 }
 
@@ -257,10 +260,10 @@
             }, {});
         };
 
-        const getData = (field: string, object: Record<string, any> = {}) => {
-            return Object.values(object).map((dataset: any) => {
+        const getData = (field, object = {}) => {
+            return Object.values(object).map((dataset) => {
                 const data = xAxis.map((xAxisLabel) => {
-                    const temp = dataset.data.find((v: any) => v.x === xAxisLabel);
+                    const temp = dataset.data.find((v) => v.x === xAxisLabel);
                     return temp ? temp.y : 0;
                 });
 
@@ -287,7 +290,7 @@
                 return a.label.localeCompare(b.label);
             });
 
-        const label = (aggregator?.[1]?.[1] as any)?.displayName ?? (aggregator?.[1]?.[1] as any)?.field;
+        const label = aggregator.value?.[1]?.[1]?.displayName ?? aggregator.value?.[1]?.[1]?.field;
 
         let duration: number[] = [];
         if (yBShown) {
@@ -327,7 +330,6 @@
                 : yDatasetData,
         };
     });
-
     const {data: generated, generate} = useChartGenerator(props);
 
     function refresh() {

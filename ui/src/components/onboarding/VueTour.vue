@@ -132,45 +132,33 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, getCurrentInstance, onMounted, ref, watch} from "vue";
-
-    import {useRouter} from "vue-router";
-    import {useI18n} from "vue-i18n";
-
+    import { computed, getCurrentInstance, onMounted, ref, watch } from "vue";
+    import { useRouter } from "vue-router";
+    import { useI18n } from "vue-i18n";
     import Wrapper from "./components/buttons/Wrapper.vue";
-
     import Secondary from "./components/buttons/Secondary.vue";
     import Primary from "./components/buttons/Primary.vue";
-
     import Skip from "./components/buttons/Skip.vue";
-
     import Previous from "./components/buttons/Previous.vue";
-
     import Finish from "./components/buttons/Finish.vue";
-
-    import {pageFromRoute} from "../../utils/eventsRouter";
-
-    import {TaskIcon} from "@kestra-io/ui-libs";
+    import { pageFromRoute } from "../../utils/eventsRouter";
+    import { TaskIcon } from "@kestra-io/ui-libs";
     import Animation from "../../assets/onboarding/animation.gif";
-
     import LightningBolt from "../../assets/onboarding/icons/lightning-bolt.svg";
     import ArrowLeft from "../../assets/onboarding/icons/arrow-left.svg";
     import ArrowTop from "../../assets/onboarding/icons/arrow-top.svg";
     import ArrowRight from "../../assets/onboarding/icons/arrow-right.svg";
-
-    import {useApiStore} from "../../stores/api";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {useCoreStore} from "../../stores/core";
-    import {useEditorStore} from "../../stores/editor";
+    import { useApiStore } from "../../stores/api";
+    import { usePluginsStore } from "../../stores/plugins";
+    import { useCoreStore } from "../../stores/core";
+    import { useEditorStore } from "../../stores/editor";
 
     const router = useRouter();
-
     const coreStore = useCoreStore();
     const apiStore = useApiStore();
     const pluginsStore = usePluginsStore();
-    const editorStore = useEditorStore()
-
-    const {t} = useI18n({useScope: "global"});
+    const editorStore = useEditorStore();
+    const { t } = useI18n({ useScope: "global" });
 
     const updateStatus = () => localStorage.setItem("tourDoneOrSkip", "true");
     const dispatchEvent = (step, action) =>
@@ -185,7 +173,7 @@
         });
 
     const TOUR_NAME = "guidedTour";
-    const TOUR_OPTIONS = {highlight: true, useKeyboardNavigation: false};
+    const TOUR_OPTIONS = { highlight: true, useKeyboardNavigation: false };
     const TOURS = getCurrentInstance()?.appContext.config.globalProperties.$tours;
 
     const ICON_COLOR = computed(() => {
@@ -197,16 +185,16 @@
             {
                 name: "offset",
                 options: {
-                    offset: ({placement}: { placement: string }) => {
+                    offset: ({ placement }: { placement: string }) => {
                         switch (placement) {
-                        case "right":
-                            return [0, -175];
-                        case "left":
-                            return [0, -154];
-                        case "bottom":
-                            return [-30, 30];
-                        default:
-                            return [0, 0];
+                            case "right":
+                                return [0, -175];
+                            case "left":
+                                return [0, -154];
+                            case "bottom":
+                                return [-30, 30];
+                            default:
+                                return [0, 0];
                         }
                     },
                 },
@@ -224,7 +212,7 @@
 
         const collectTypes = (task) => {
             if (task && typeof task === "object") {
-                const {type} = task;
+                const { type } = task;
                 if (type) {
                     if (
                         (type === dockerBuild && uniqueTypes.has(dockerRun)) ||
@@ -240,21 +228,21 @@
         };
 
         tasks.forEach(collectTypes);
-
         return Array.from(uniqueTypes).filter(type => type);
     };
+
     const offset = computed(() => {
-        switch (flows.value[activeFlow.value].id) {
-        case "business_processes":
-        case "data_engineering_pipeline":
-            return 94;
-        case "dwh_and_analytics":
-        case "file_processing":
-        case "infrastructure_automation":
-        case "microservices_and_apis":
-            return 174;
-        default:
-            return 134;
+        switch (flows.value[activeFlow.value]?.id) {
+            case "business_processes":
+            case "data_engineering_pipeline":
+                return 94;
+            case "dwh_and_analytics":
+            case "file_processing":
+            case "infrastructure_automation":
+            case "microservices_and_apis":
+                return 174;
+            default:
+                return 134;
         }
     });
 
@@ -267,18 +255,19 @@
 
     const properties = (step, c = true, p = true, s = false) => ({
         title: t(`onboarding.steps.${step}.title`),
-        ...(c ? {content: t(`onboarding.steps.${step}.content`)} : {}),
-        ...(p ? {primary: t(`onboarding.steps.${step}.primary`)} : {}),
-        ...(s ? {secondary: t(`onboarding.steps.${step}.secondary`)} : {}),
+        ...(c ? { content: t(`onboarding.steps.${step}.content`) } : {}),
+        ...(p ? { primary: t(`onboarding.steps.${step}.primary`) } : {}),
+        ...(s ? { secondary: t(`onboarding.steps.${step}.secondary`) } : {}),
     });
+
     const wait = (time = 200) =>
         new Promise((resolve) => setTimeout(() => resolve(true), time));
 
     const toggleScroll = (enabled = true) => {
         const wrapper = document.getElementById("app");
-        if(enabled){
-            wrapper?.classList.remove("no-scroll")
-        }else{
+        if (enabled) {
+            wrapper?.classList.remove("no-scroll");
+        } else {
             wrapper?.classList.add("no-scroll");
         }
     };
@@ -290,12 +279,10 @@
             keepDark: true,
             before: () => {
                 toggleScroll(false);
-
                 coreStore.guidedProperties = {
                     ...coreStore.guidedProperties,
                     tourStarted: true,
                 };
-
                 return wait();
             },
         },
@@ -318,14 +305,12 @@
                 };
             },
             before: () => {
-                editorStore.updateOnboarding()
-
+                editorStore.updateOnboarding();
                 coreStore.guidedProperties = {
                     ...coreStore.guidedProperties,
                     tourStarted: true,
                     template: flows.value[activeFlow.value]?.id,
                 };
-
                 return wait();
             },
         },
@@ -334,7 +319,7 @@
             icon: ArrowLeft,
             target: "#editorWrapper",
             highlightElement: "#editorWrapper",
-            params: {...STEP_OPTIONS, placement: "right"},
+            params: { ...STEP_OPTIONS, placement: "right" },
             before: () => {
                 toggleScroll();
                 return wait();
@@ -345,10 +330,10 @@
             icon: ArrowRight,
             target: "#topologyWrapper",
             highlightElement: "#topologyWrapper",
-            params: {...STEP_OPTIONS, placement: "left"},
+            params: { ...STEP_OPTIONS, placement: "left" },
             before: () => {
                 // editorStore.changeView(editorViewTypes.SOURCE_TOPOLOGY)
-            }
+            },
         },
         {
             ...properties(4, true, false),
@@ -358,7 +343,7 @@
             jump: true,
             target: "#execute-button",
             highlightElement: ".top-bar",
-            params: {...STEP_OPTIONS, placement: "bottom"},
+            params: { ...STEP_OPTIONS, placement: "bottom" },
             before: () => {
                 return wait();
             },
@@ -372,11 +357,11 @@
             target: ".flow-run-trigger-button",
             highlightElement: "#execute-flow-dialog",
             params: {
-                modifiers: [{name: "offset", options: {offset: () => [0, 70]}}],
+                modifiers: [{ name: "offset", options: { offset: () => [0, 70] } }],
                 placement: "bottom",
             },
             before: () => {
-                return wait()
+                return wait();
             },
         },
         {
@@ -388,7 +373,7 @@
                 modifiers: [
                     {
                         name: "offset",
-                        options: {offset: () => [0, offset.value]},
+                        options: { offset: () => [0, offset.value] },
                     },
                 ],
                 placement: "bottom",
@@ -400,12 +385,11 @@
     const currentStep = (tour) => tour.steps[tour.currentStep];
     const nextStep = (tour) => {
         dispatchEvent(tour.currentStep, "next");
-
         const nextStep = currentStep(tour).nextStep;
-        if(nextStep) {
-            nextStep()
+        if (nextStep) {
+            nextStep();
         } else {
-            TOURS[TOUR_NAME].nextStep()
+            TOURS[TOUR_NAME].nextStep();
         }
     };
     const previousStep = (current) => {
@@ -414,38 +398,31 @@
     };
     const skipTour = (current) => {
         toggleScroll();
-
         updateStatus();
         dispatchEvent(current, "skip");
-
         coreStore.guidedProperties = {
             ...coreStore.guidedProperties,
             tourStarted: false,
         };
-
         TOURS[TOUR_NAME].stop();
-        router.push({name: "flows/create"});
+        router.push({ name: "flows/create" });
     };
     const finishTour = (current, push = true) => {
         toggleScroll();
-
         updateStatus();
         dispatchEvent(current, "finish");
         dispatchEvent(current, "executed");
-
         coreStore.guidedProperties = {
             ...coreStore.guidedProperties,
             tourStarted: false,
         };
-
         TOURS[TOUR_NAME].finish();
-
-        if (push) router.push({name: "flows/create"});
+        if (push) router.push({ name: "flows/create" });
     };
     const exploreOther = (current) => {
         finishTour(current);
         dispatchEvent(current, "explore");
-        router.push({name: "flows/list", query: {namespace: "tutorial"}});
+        router.push({ name: "flows/list", query: { namespace: "tutorial" } });
     };
 
     onMounted(() => {
@@ -456,13 +433,11 @@
 <style lang="scss">
 $background: var(--card-bg);
 $color: var(--bs-heading-color);
-
 $background-primary: #1c1e27;
 $background-secondary: #2f3342;
 $border-color: #404559;
 $border-color-active: #8405ff;
 $white: #ffffff;
-
 $step-max-width: 380px;
 $last-step-max-width: 460px;
 $animation-width: 415px;
@@ -552,22 +527,6 @@ $flow-image-size-container: 36px;
             padding: 1rem;
         }
 
-        @keyframes jump {
-            0% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
-            100% {
-                transform: translateY(0);
-            }
-        }
-
-        & img.jump {
-            animation: jump 2s infinite;
-        }
-
         margin-bottom: 2rem;
         text-align: center;
         line-height: 2.5rem;
@@ -583,6 +542,22 @@ $flow-image-size-container: 36px;
         & div {
             height: 2rem;
             margin-bottom: 1rem;
+        }
+
+        @keyframes jump {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        & img.jump {
+            animation: jump 2s infinite;
         }
     }
 
@@ -665,7 +640,7 @@ body.v-tour--active .right.buttons * {
 }
 
 .v-tour__target--highlighted {
-    z-index: 1040 !important; // To go over side menu
+    z-index: 1040 !important;
     box-shadow: 0 0 0 99999px rgba(0, 0, 0, 0.75) !important;
     border: 1px solid $border-color-active;
 }

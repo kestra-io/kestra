@@ -138,7 +138,7 @@
                                 <DateAgo :inverted="true" :date="scope.row.date" />
                             </template>
                         </el-table-column>
-                        <el-table-column v-if="visibleColumns.updatedDate">
+                        <el-table-column>
                             <template #header>
                                 <el-tooltip :content="$t('context updated date tooltip')" placement="top" popperClass="wide-tooltip">
                                     <span>{{ $t('context updated date') }}</span>
@@ -220,7 +220,7 @@
                         </el-table-column>
 
 
-                        <el-table-column :label="$t('actions')" columnKey="disable" className="row-action">
+                        <el-table-column :label="$t('enabled')" columnKey="disable" className="row-action">
                             <template #default="scope">
                                 <el-tooltip
                                     v-if="!scope.row.missingSource"
@@ -229,8 +229,6 @@
                                     effect="light"
                                 >
                                     <el-switch
-                                        :activeText="$t('enabled')"
-                                        :inactiveText="$t('disabled')"
                                         :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
                                         @change="setDisabled(scope.row, $event)"
                                         inlinePrompt

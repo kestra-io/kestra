@@ -213,7 +213,7 @@ subprojects {subProj ->
                 junitXml.outputPerTestCase = true
                 junitXml.mergeReruns = true
                 junitXml.includeSystemErrLog = true;
-                junitXml.outputLocation = layout.buildDirectory.dir("test-results/junit")
+                junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
             }
 
             // set Xmx for test workers
@@ -232,7 +232,7 @@ subprojects {subProj ->
             environment 'ENV_TEST2', "Pass by env"
 
 
-            if (subProj.name == 'core') {
+            if (subProj.name == 'core' || subProj.name == 'jdbc-h2' || subProj.name == 'jdbc-mysql' || subProj.name == 'jdbc-postgres') {
                 // JUnit 5 parallel settings
                 systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
                 systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'

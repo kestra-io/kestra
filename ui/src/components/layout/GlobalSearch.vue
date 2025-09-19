@@ -41,12 +41,12 @@
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
 
     const router = useRouter();
-    const {generateMenu} = useLeftMenu()
+    const {menu} = useLeftMenu()
 
     const filter = ref("");
 
     const navItems = computed(() => {
-        return generateMenu().flatMap(item => {
+        return menu.value.flatMap(item => {
             if(item.hidden) {
                 return [];
             }

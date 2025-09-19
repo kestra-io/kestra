@@ -167,6 +167,8 @@ kestra:
       open-urls:
         - "/ping"
         - "/api/v1/executions/webhook/"
+        - "/api/v1/main/executions/webhook/"
+        - "/api/v1/*/executions/webhook/"
 
     preview:
       initial-rows: 100

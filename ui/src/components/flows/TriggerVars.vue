@@ -1,8 +1,8 @@
 <template>
-    <el-table stripe tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
+    <el-table tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
         <el-table-column prop="key" rowspan="3" :label="$t('name')">
             <template #default="scope">
-                <code>{{ scope.row.key }}</code>
+                {{ getHumanizeLabel(scope.row.key) }}
             </template>
         </el-table-column>
 
@@ -46,5 +46,9 @@
         p {
             margin-bottom: auto;
         }
+    }
+
+    :deep(.el-table__cell:nth-child(2) span) {
+        color: var(--ks-content-secondary);
     }
 </style>

@@ -75,9 +75,8 @@
     import type {Dashboard, Chart} from "../composables/useDashboards";
     import {TYPES, isKPIChart, isTableChart, getChartTitle} from "../composables/useDashboards";
 
-    import {useRoute, useRouter} from "vue-router";
+    import {useRoute} from "vue-router";
     const route = useRoute();
-    const router = useRouter();
 
     import {useDashboardStore} from "../../../stores/dashboard";
     const dashboardStore = useDashboardStore();
@@ -116,13 +115,6 @@
 
     const filters = ref<{ field: string; operation: string; value: string | string[] }[]>([]);
     onMounted(() => {
-        const dateTimeKeys = ["startDate", "endDate", "timeRange"];
-
-        // Default to the last 7 days if no time range is set
-        if (route.name !== "flows/list" && !Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-            router.push({query: {...route.query, "filters[timeRange][EQUALS]": "PT168H"}});
-        }
-
         if (route.name === "flows/update") {
             filters.value.push({field: "namespace", operation: "EQUALS", value: route.params.namespace});
             filters.value.push({field: "flowId", operation: "EQUALS", value: route.params.id});

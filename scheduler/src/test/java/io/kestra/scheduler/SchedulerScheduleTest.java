@@ -27,6 +27,8 @@ import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -40,6 +42,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+@TestInstance(Lifecycle.PER_CLASS)
 public class SchedulerScheduleTest extends AbstractSchedulerTest {
     @Inject
     protected FlowListeners flowListenersService;
@@ -160,8 +163,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             });
 
             scheduler.run();
-            queueCount.await(1, TimeUnit.MINUTES);
-            invalidLogCount.await(1, TimeUnit.MINUTES);
+            queueCount.await(20, TimeUnit.SECONDS);
+            invalidLogCount.await(20, TimeUnit.SECONDS);
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
             receiveExecutions.blockLast();
             receiveLogs.blockLast();

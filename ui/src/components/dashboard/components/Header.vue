@@ -51,8 +51,8 @@
     const user = computed(() => authStore.user);
     const isAllowed = computed(() => user.value.isAllowedGlobal(permission.FLOW, action.CREATE));
 
-    const routeInfoTitle = computed(() => props.dashboard?.title ?? t("overview"));
+    const routeInfo = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
 
     import useRouteContext from "../../../composables/useRouteContext";
-    useRouteContext(routeInfoTitle);
+    useRouteContext(routeInfo);
 </script>

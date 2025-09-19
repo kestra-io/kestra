@@ -7,6 +7,7 @@ import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.reporter.model.Count;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
@@ -389,6 +390,52 @@ public class FlowConcurrencyCaseTest {
         assertThat(executionResult2.get().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
         assertThat(executionResult2.get().getState().getHistories().get(1).getState()).isEqualTo(State.Type.QUEUED);
         assertThat(executionResult2.get().getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
+    }
+
+    public void flowConcurrencySubflow() throws TimeoutException, QueueException, InterruptedException {
+        CountDownLatch successLatch = new CountDownLatch(1);
+        CountDownLatch canceledLatch = new CountDownLatch(1);
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, e -> {
+            if (e.getLeft().getFlowId().equals("flow-concurrency-cancel")) {
+                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
+                    successLatch.countDown();
+                }
+                if (e.getLeft().getState().getCurrent() == Type.CANCELLED) {
+                    canceledLatch.countDown();
+                }
+            }
+
+            // FIXME we should fail if we receive the cancel execution again but on Kafka it happens
+        });
+
+        Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-subflow", null, null, Duration.ofSeconds(30));
+        Execution execution2 = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-subflow");
+
+        assertThat(execution1.getState().isRunning()).isTrue();
+        assertThat(execution2.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+
+        // assert we have one canceled subflow and one in success
+        assertTrue(canceledLatch.await(1, TimeUnit.MINUTES));
+        assertTrue(successLatch.await(1, TimeUnit.MINUTES));
+        receive.blockLast();
+
+        // run another execution to be sure that everything work (purge is correctly done)
+        CountDownLatch newSuccessLatch = new CountDownLatch(1);
+        Flux<Execution> secondReceive = TestsUtils.receive(executionQueue, e -> {
+            if (e.getLeft().getFlowId().equals("flow-concurrency-cancel")) {
+                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
+                    newSuccessLatch.countDown();
+                }
+            }
+
+            // FIXME we should fail if we receive the cancel execution again but on Kafka it happens
+        });
+        Execution execution3 = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "flow-concurrency-subflow");
+        assertThat(execution3.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+
+        // assert we have two successful subflow
+        assertTrue(newSuccessLatch.await(1, TimeUnit.MINUTES));
+        secondReceive.blockLast();
     }
 
     private URI storageUpload() throws URISyntaxException, IOException {

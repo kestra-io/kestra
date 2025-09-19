@@ -12,6 +12,7 @@ import NamespaceFilesEditorView from "../../../components/namespaces/components/
 
 export interface Tab {
     locked?: boolean;
+    disabled?: boolean;
     maximized?: boolean;
 
     name: string;

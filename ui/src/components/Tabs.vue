@@ -22,17 +22,20 @@
         </el-tab-pane>
     </el-tabs>
     <section v-if="isEditorActiveTab || activeTab.component" data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
-        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${editorStore.explorerWidth}% - 11px);`" :currentNS="namespace" v-show="editorStore.explorerVisible" />
-        <div v-if="isEditorActiveTab && editorStore.explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
-        <div v-if="isEditorActiveTab" :style="`flex: 1 1 ${100 - (isEditorActiveTab && editorStore.explorerVisible ? editorStore.explorerWidth : 0)}%;`">
-            <component
-                v-bind="{...activeTab.props, ...attrsWithoutClass}"
-                v-on="activeTab['v-on'] ?? {}"
-                ref="tabContent"
-                :is="activeTab.component"
-                embed
-            />
-        </div>
+        <el-splitter v-if="isEditorActiveTab" class="editor-splitter" @resize="onSplitterResize">
+            <el-splitter-panel v-if="editorStore.explorerVisible" :size="editorStore.explorerWidth" min="15%" max="30%">
+                <EditorSidebar ref="sidebar" :currentNS="namespace" class="sidebar" />
+            </el-splitter-panel>
+            <el-splitter-panel :size="editorStore.explorerVisible ? 100 - editorStore.explorerWidth : 100">
+                <component
+                    v-bind="{...activeTab.props, ...attrsWithoutClass}"
+                    v-on="activeTab['v-on'] ?? {}"
+                    ref="tabContent"
+                    :is="activeTab.component"
+                    embed
+                />
+            </el-splitter-panel>
+        </el-splitter>
         <BlueprintDetail
             v-else-if="selectedBlueprintId"
             :blueprintId="selectedBlueprintId"
@@ -121,24 +124,10 @@
             this.setActiveName();
         },
         methods: {
-            dragSidebar(e){
-                const SELF = this;
-
-                let dragX = e.clientX;
-
-                let blockWidth = this.$refs.sidebar.$el.offsetWidth;
-                let parentWidth = this.$refs.container.offsetWidth;
-
-                let blockWidthPercent = (blockWidth / parentWidth) * 100;
-
-                document.onmousemove = function onMouseMove(e) {
-                    let percent = blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100;
-                    SELF.editorStore.changeExplorerWidth(percent)
-                };
-
-                document.onmouseup = () => {
-                    document.onmousemove = document.onmouseup = null;
-                };
+            onSplitterResize(sizes) {
+                if (sizes?.length >= 1) {
+                    this.editorStore.changeExplorerWidth(sizes[0]);
+                }
             },
             embeddedTabChange(tab) {
                 this.$emit("changed", tab);
@@ -215,54 +204,54 @@
 </script>
 
 <style lang="scss" scoped>
-    section.container.mt-4:has(> section.empty){
-        margin: 0 !important;
-        padding: 0 !important;
-    }
+section.container.mt-4:has(> section.empty) {
+    margin: 0 !important;
+    padding: 0 !important;
+}
 
-    :deep(.el-tabs) {
-        .el-tabs__item.is-disabled {
-            &:after {
-                top: 0;
-                content: "";
-                position: absolute;
-                display: block;
-                width: 100%;
-                height: 100%;
-                z-index: 1000;
-            }
+:deep(.el-tabs) {
+    .el-tabs__item.is-disabled {
+        &:after {
+            top: 0;
+            content: "";
+            position: absolute;
+            display: block;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+        }
 
-            a {
-                color: var(--ks-content-inactive);
-            }
+        a {
+            color: var(--ks-content-inactive);
         }
     }
+}
 
-    .slider {
-        flex: 0 0 3px;
-        border-radius: 0.15rem;
-        margin: 0 4px;
-        background-color: var(--ks-border-primary);
-        border: none;
-        cursor: col-resize;
-        user-select: none; /* disable selection */
+.maximized {
+    margin: 0 !important;
+    padding: 0;
+    display: flex;
+    flex-grow: 1;
+}
 
-        &:hover {
-            background-color: var(--ks-border-active);
-        }
-    }
+.editor-splitter {
+    height: 100%;
 
-    .maximized {
-        margin: 0 !important;
-        padding: 0;
+    :deep(.el-splitter-panel) {
         display: flex;
-        flex-grow: 1;
+        flex-direction: column;
     }
+}
 
-    :deep(.el-tabs__nav-next),
-    :deep(.el-tabs__nav-prev) {
-        &.is-disabled {
-            display: none;
-        }
+.sidebar {
+    height: 100%;
+    width: 100%;
+}
+
+:deep(.el-tabs__nav-next),
+:deep(.el-tabs__nav-prev) {
+    &.is-disabled {
+        display: none;
     }
+}
 </style>

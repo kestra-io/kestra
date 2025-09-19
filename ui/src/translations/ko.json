@@ -163,13 +163,14 @@
     "choose file": "파일을 선택하거나 여기에 드롭하세요...",
     "close": "닫기",
     "close sidebar": "사이드바 닫기",
+    "codeDisabled": "Flow에서 비활성화됨",
     "collapse": "축소",
     "collapse all": "모두 축소",
     "common": {
       "back": "뒤로"
     },
     "concurrency": "동시성",
-    "conditions": "조건들",
+    "conditions": "조건",
     "configure basic auth": "기본 인증 구성",
     "confirm": "확인",
     "confirm password": "비밀번호 확인",
@@ -1400,6 +1401,7 @@
       "name": "테넌트",
       "names": "테넌트"
     },
+    "tenantId": "테넌트 ID",
     "test-badge-text": "테스트",
     "test-badge-tooltip": "이 실행은 테스트에 의해 생성되었습니다.",
     "theme": "테마",
@@ -1437,6 +1439,7 @@
       "title": "자식 실행 필터링"
     },
     "trigger refresh": "새로 고침 trigger",
+    "triggerId": "트리거 ID",
     "trigger_check_warning": "트리거 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 `??` 병합 연산자를 추가하세요. 예를 들어, `trigger.date` 대신 `trigger.date ?? execution.startDate`를 사용하세요.",
     "trigger_id_exists": "트리거 ID가 이미 존재합니다.",
     "trigger_id_message": "Flow에 Trigger Id ${existingTrigger}가 이미 존재합니다.",

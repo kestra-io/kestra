@@ -163,6 +163,7 @@
     "choose file": "ファイルを選択するか、ここにドロップしてください...",
     "close": "閉じる",
     "close sidebar": "サイドバーを閉じる",
+    "codeDisabled": "Flowで無効化",
     "collapse": "折りたたむ",
     "collapse all": "すべて折りたたむ",
     "common": {
@@ -1400,6 +1401,7 @@
       "name": "テナント",
       "names": "テナント"
     },
+    "tenantId": "テナントID",
     "test-badge-text": "テスト",
     "test-badge-tooltip": "この実行はテストによって作成されました",
     "theme": "テーマ",
@@ -1437,6 +1439,7 @@
       "title": "子実行をフィルタリング"
     },
     "trigger refresh": "更新をトリガー",
+    "triggerId": "トリガーID",
     "trigger_check_warning": "トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するために`??`コアレス演算子を追加してください。例えば、`trigger.date`の代わりに`trigger.date ?? execution.startDate`を使用してください。",
     "trigger_id_exists": "トリガーIDはすでに存在します。",
     "trigger_id_message": "フロー内に既存のTrigger Id ${existingTrigger}が既に存在します。",

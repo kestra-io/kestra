@@ -976,7 +976,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     @Override
     public Integer purge(Execution execution) {
-        return this.jdbcRepository.delete(execution);
+        int delete = this.jdbcRepository.delete(execution);
+        eventPublisher.publishEvent(CrudEvent.delete(execution));
+        return delete;
     }
 
     public Executor lock(String executionId, Function<Pair<Execution, ExecutorState>, Pair<Executor, ExecutorState>> function) {

@@ -56,6 +56,6 @@
 
     const context = ref({title: t("dashboards.edition.label")});
 
-    import useRouteContext from "../../../mixins/useRouteContext";
+    import useRouteContext from "../../../composables/useRouteContext";
     useRouteContext(context);
 </script>

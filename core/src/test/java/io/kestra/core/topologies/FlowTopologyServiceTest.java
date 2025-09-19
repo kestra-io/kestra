@@ -204,6 +204,10 @@ class FlowTopologyServiceTest {
                             io.kestra.plugin.core.trigger.Flow.UpstreamFlow.builder().namespace("io.kestra.ee").flowId("parent").build(),
                             io.kestra.plugin.core.trigger.Flow.UpstreamFlow.builder().namespace("io.kestra.others").flowId("invalid").build()
                         ))
+                        // add an always true condition to validate that it's an AND between 'flows' and 'where'
+                        .where(List.of(io.kestra.plugin.core.trigger.Flow.ExecutionFilter.builder()
+                                .filters(List.of(io.kestra.plugin.core.trigger.Flow.Filter.builder().field(io.kestra.plugin.core.trigger.Flow.Field.EXPRESSION).type(io.kestra.plugin.core.trigger.Flow.Type.IS_NOT_NULL).value("something").build()))
+                            .build()))
                         .build()
                     )
                     .build()

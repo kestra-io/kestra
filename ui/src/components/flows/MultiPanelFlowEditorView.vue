@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
     import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue";
+    import Utils from "../../utils/utils";
     import {useStorage} from "@vueuse/core";
     import {useI18n} from "vue-i18n";
     import {useCoreStore} from "../../stores/core";
@@ -164,12 +165,16 @@
 
     const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, tempActions)
 
+    const TABS = isTourRunning.value ? DEFAULT_TOUR_TABS.flatMap(t => t.tabs) : DEFAULT_ACTIVE_TABS;
+
+    flowStore.creationId = flowStore.creationId ?? Utils.uid()
+
     const panels = useStorage<Panel[]>(
-        `el-fl-${flowStore.flow?.namespace}-${flowStore.flow?.id}`,
-        DEFAULT_ACTIVE_TABS
+        `el-fl-${flowStore.flow?.namespace ?? `creation-${flowStore.creationId}`}${flowStore.flow?.id ? `-${flowStore.flow.id}` : ""}`,
+        TABS
             .map((t) => ({
                 ...staticGetPanelFromValue(t).panel,
-                size: 100 / DEFAULT_ACTIVE_TABS.length
+                size: 100 / TABS.length
             })),
         undefined,
         {

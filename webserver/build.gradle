@@ -26,7 +26,7 @@ dependencies {
 
     // ai
     implementation("dev.langchain4j:langchain4j")
-    implementation("dev.langchain4j:langchain4j-google-ai-gemini:1.4.0")
+    implementation("dev.langchain4j:langchain4j-google-ai-gemini")
 
     implementation("de.siegmar:fastcsv")
 

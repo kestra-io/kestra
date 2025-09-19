@@ -34,6 +34,7 @@ import org.junit.jupiter.api.TestInstance;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -142,7 +143,9 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
         worker.run();
 
+        var workerTaskResultQueueAppendLog = new ArrayList<WorkerTaskResult>();// to debug flaky test
         Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
+            workerTaskResultQueueAppendLog.add(either.getLeft());
             if (either.getLeft().getTaskRun().getState().getCurrent() == Type.SUCCESS) {
                 resubmitLatch.countDown();
             }
@@ -161,7 +164,9 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
         newWorker.run();
         boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
-        assertThat(resubmitLatchAwait).isTrue();
+        assertThat(resubmitLatchAwait)
+            .withFailMessage(() -> "shouldReEmitTasksToTheSameWorkerGroup: resubmitLatchAwait was not OK, workerTaskResultQueue content: " + TestsUtils.stringify(workerTaskResultQueueAppendLog))
+            .isTrue();
         WorkerTaskResult workerTaskResult = receive.blockLast();
         assertThat(workerTaskResult).isNotNull();
         assertThat(workerTaskResult.getTaskRun().getState().getCurrent()).isEqualTo(Type.SUCCESS);

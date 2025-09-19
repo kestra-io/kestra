@@ -18,6 +18,7 @@ import org.assertj.core.api.AbstractObjectAssert;
 import org.assertj.core.api.ObjectAssert;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -146,7 +147,7 @@ class TestSuiteTest {
             .state(new State())
             .build();
 
-        return runnerUtils.runOne(execution, flow, null);
+        return runnerUtils.runOne(execution, flow, Duration.ofSeconds(10));
     }
 
     private static AbstractObjectAssert<?, Object> assertOutputForTask(Execution executionResult, String taskId) {

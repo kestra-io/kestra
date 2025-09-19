@@ -11,36 +11,41 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, computed, ref} from "vue";
+    import {onMounted, computed, ref} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import {useDashboardStore} from "../../../stores/dashboard"
+    import {useCoreStore} from "../../../stores/core"
+    import {useBlueprintsStore} from "../../../stores/blueprints"
+    import {useToast} from "../../../utils/toast"
+    import {getRandomID} from "../../../../scripts/id"
+    import type {Dashboard} from "../../../components/dashboard/composables/useDashboards"
+    import {getDashboard, processFlowYaml} from "../../../components/dashboard/composables/useDashboards"
+    import TopNavBar from "../../../components/layout/TopNavBar.vue"
+    import Editor from "../../../components/dashboard/components/Editor.vue"
+    import useRouteContext from "../../../composables/useRouteContext"
 
-    import {useRoute, useRouter} from "vue-router";
-    const route = useRoute();
-    const router = useRouter();
+    import YAML_MAIN from "../assets/default_main_definition.yaml?raw"
+    import YAML_FLOW from "../assets/default_flow_definition.yaml?raw"
+    import YAML_NAMESPACE from "../assets/default_namespace_definition.yaml?raw"
 
-    import {useDashboardStore} from "../../../stores/dashboard";
-    const dashboardStore = useDashboardStore();
+    const route = useRoute()
+    const router = useRouter()
+    const {t} = useI18n({useScope: "global"})
 
-    import {useCoreStore} from "../../../stores/core";
-    const coreStore = useCoreStore();
+    const toast = useToast()
+    const coreStore = useCoreStore()
+    const dashboardStore = useDashboardStore()
+    const blueprintsStore = useBlueprintsStore()
 
-    import {useBlueprintsStore} from "../../../stores/blueprints";
-    const blueprintsStore = useBlueprintsStore();
+    const dashboard = ref<Dashboard>({id: "", charts: []})
+    const context = ref({title: t("dashboards.creation.label")})
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
+    const header = computed(() => ({
+        title: t("dashboards.labels.singular"),
+        breadcrumb: [{label: t("dashboards.creation.label"), link: {}}],
+    }))
 
-    import {useToast} from "../../../utils/toast";
-    const toast = useToast();
-
-    import TopNavBar from "../../../components/layout/TopNavBar.vue";
-    import Editor from "../../../components/dashboard/components/Editor.vue";
-
-    import type {Dashboard} from "../../../components/dashboard/composables/useDashboards";
-    import {getDashboard, processFlowYaml} from "../../../components/dashboard/composables/useDashboards";
-
-    import {getRandomID} from "../../../../scripts/id";
-
-    const dashboard = ref<Dashboard>({id: "", charts: []});
     const save = async (source: string) => {
         const response = await dashboardStore.create(source)
 
@@ -52,12 +57,8 @@
         const key = getDashboard({name, params: JSON.parse(params)}, "key")
         localStorage.setItem(key, response.id)
 
-        router.push({name, params: {...JSON.parse(params), ...(name === "home" ? {dashboard: response.id} : {})}, query: {created: String(true)}});
-    };
-
-    import YAML_MAIN from "../assets/default_main_definition.yaml?raw";
-    import YAML_FLOW from "../assets/default_flow_definition.yaml?raw";
-    import YAML_NAMESPACE from "../assets/default_namespace_definition.yaml?raw";
+        router.push({name, params: {...JSON.parse(params), ...(name === "home" ? {dashboard: response.id!} : {})}, query: {created: String(true)}})
+    }
 
     onMounted(async () => {
         const {blueprintId, name, params} = route.query;
@@ -69,7 +70,7 @@
             }
         } else {
             if (name === "flows/update") {
-                const {namespace, id} = JSON.parse(params);
+                const {namespace, id} = JSON.parse(params)
                 dashboard.value.sourceCode = processFlowYaml(YAML_FLOW, namespace, id);
             } else {
                 dashboard.value.sourceCode = name === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN;
@@ -77,15 +78,7 @@
 
             dashboard.value.sourceCode = "id: " + getRandomID() + "\n" + dashboard.value.sourceCode;
         }
-    });
+    })
 
-    const header = computed(() => ({
-        title: t("dashboards.labels.singular"),
-        breadcrumb: [{label: t("dashboards.creation.label"), link: {}}],
-    }));
-
-    const context = ref({title: t("dashboards.creation.label")});
-
-    import useRouteContext from "../../../mixins/useRouteContext";
-    useRouteContext(context);
+    useRouteContext(context)
 </script>

@@ -138,7 +138,7 @@
                                 <DateAgo :inverted="true" :date="scope.row.date" />
                             </template>
                         </el-table-column>
-                        <el-table-column v-if="visibleColumns.updatedDate">
+                        <el-table-column>
                             <template #header>
                                 <el-tooltip :content="$t('context updated date tooltip')" placement="top" popperClass="wide-tooltip">
                                     <span>{{ $t('context updated date') }}</span>

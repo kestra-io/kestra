@@ -1,8 +1,8 @@
 <template>
-    <el-table tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
+    <el-table stripe tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
         <el-table-column prop="key" rowspan="3" :label="$t('name')">
             <template #default="scope">
-                {{ getHumanizeLabel(scope.row.key) }}
+                <code>{{ scope.row.key }}</code>
             </template>
         </el-table-column>
 
@@ -29,7 +29,6 @@
 </template>
 
 <script setup lang="ts">
-    import {defineProps, defineEmits} from "vue";
     import VarValue from "../executions/VarValue.vue";
     import Markdown from "../layout/Markdown.vue";
     import Cron from "../layout/Cron.vue";

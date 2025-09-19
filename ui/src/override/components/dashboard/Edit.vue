@@ -56,8 +56,8 @@
         breadcrumb: [{label: t("dashboards.edition.label")} satisfies Breadcrumb],
     }));
 
-    const context = computed(() => t("dashboards.edition.label"));
+    const routeInfo = computed(() => ({title: t("dashboards.edition.label")}));
 
     import useRouteContext from "../../../composables/useRouteContext";
-    useRouteContext(context);
+    useRouteContext(routeInfo);
 </script>

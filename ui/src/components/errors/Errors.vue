@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfoTitle" v-if="!isFullScreen()" />
+    <TopNavBar :title="routeInfo.title" v-if="!isFullScreen()" />
     <EmptyTemplate>
         <img :src="sourceImg" :alt="$t('errors.' + code + '.title')" class="img">
         <h2>{{ $t("errors." + code + ".title") }}</h2>
@@ -33,9 +33,9 @@
     const coreStore = useCoreStore();
     const route = useRoute();
 
-    const routeInfoTitle = computed(() => t("errors." + props.code + ".title"));
+    const routeInfo = computed(() => ({title: t("errors." + props.code + ".title")}));
 
-    useRouteContext(routeInfoTitle);
+    useRouteContext(routeInfo);
 
     const isFullScreen = () => {
         return document.getElementsByTagName("html")[0].classList.contains("full-screen");

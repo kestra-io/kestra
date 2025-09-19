@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar v-if="topbar" :title="routeInfoTitle">
+    <TopNavBar v-if="topbar" :title="routeInfo.title">
         <template #additional-right>
             <ul>
                 <li>
@@ -80,7 +80,7 @@
         return (localStorage.getItem("theme") || "light") === "light" ? kestraWelcome : kestraWelcome;
     });
 
-    const routeInfoTitle = computed(() =>  t("welcome_page.welcome"))
+    const routeInfo = computed(() =>  ({title: t("welcome_page.welcome")}));
 
     const authStore = useAuthStore();
 
@@ -88,7 +88,7 @@
         return authStore.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
     });
 
-    useRouteContext(routeInfoTitle);
+    useRouteContext(routeInfo);
     useRestoreUrl();
 
     const startTour = () => {

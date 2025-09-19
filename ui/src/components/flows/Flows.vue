@@ -273,7 +273,6 @@
     import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
     import TimeSeries from "../dashboard/sections/TimeSeries.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
-    // @ts-expect-error top-nav-bar is not typed yet
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     // @ts-expect-error data-table is too big for ts conversion yet
     import DataTable from "../layout/DataTable.vue";

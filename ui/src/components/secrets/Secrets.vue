@@ -1,5 +1,5 @@
 <template>
-    <Navbar :title="routeInfoTitle">
+    <Navbar :title="routeInfo.title">
         <template #additional-right v-if="miscStore.configs?.secretsEnabled">
             <ul>
                 <li>
@@ -77,7 +77,7 @@
     </section>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     import SecretsTable from "./SecretsTable.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Navbar from "../layout/TopNavBar.vue";
@@ -102,9 +102,9 @@
     const hasData = ref(undefined);
 
     const {t} = useI18n({useScope: "global"});
-    const routeInfoTitle = computed(() => t("secret.names"));
+    const routeInfo = computed(() => ({title: t("secret.names")}));
 
-    useRouteContext(routeInfoTitle);
+    useRouteContext(routeInfo);
 </script>
 
 <style lang="scss" scoped>

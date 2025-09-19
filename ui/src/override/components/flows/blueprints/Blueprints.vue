@@ -1,7 +1,7 @@
 <template>
     <DemoBlueprints v-if="props.tab === 'custom'" />
     <template v-else>
-        <TopNavBar v-if="!props.embed" :title="routeInfoTitle" />
+        <TopNavBar v-if="!props.embed" :title="routeInfo.title" />
         <DottedLayout
             :embed="props.embed"
             :phrase="$t('blueprints.header.catch phrase.2', {kind: props.kind})"
@@ -65,12 +65,12 @@
 
     const selectedBlueprintId = ref<string | undefined>(undefined);
 
-    const routeInfoTitle = computed(() => props.kind === "flow" ? t("blueprints.flows") :
+    const routeInfo = computed(() => ({title: props.kind === "flow" ? t("blueprints.flows") :
         props.kind === "dashboard" ? t("blueprints.dashboards") :
         t("blueprints.title")
-    );
+    }));
 
-    useRouteContext(routeInfoTitle);
+    useRouteContext(routeInfo);
 </script>
 <style scoped lang="scss">
     .main-container {

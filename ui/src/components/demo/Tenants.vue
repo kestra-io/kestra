@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfoTitle" v-if="!isFullScreen()" />
+    <TopNavBar :title="routeInfo.title" v-if="!isFullScreen()" />
     <Layout
         :title="t('demos.tenants.title')"
         :image="{source: sourceImg, alt: t('demos.tenants.title')}"
@@ -23,9 +23,9 @@
 
     const {t} = useI18n();
 
-    const routeInfoTitle = computed(() => t("demos.tenants.title"));
+    const routeInfo = computed(() => ({title: t("demos.tenants.title")}));
 
-    useRouteContext(routeInfoTitle);
+    useRouteContext(routeInfo);
 
     function isFullScreen() {
         return document.getElementsByTagName("html")[0].classList.contains("full-screen");

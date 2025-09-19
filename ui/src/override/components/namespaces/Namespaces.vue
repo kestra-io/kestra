@@ -1,5 +1,5 @@
 <template>
-    <Navbar :title="routeInfoTitle">
+    <Navbar :title="routeInfo.title">
         <template #additional-right>
             <Action
                 v-if="canCreate"
@@ -96,8 +96,8 @@
 
     const {t} = useI18n({useScope: "global"});
 
-    const routeInfoTitle = computed(() => t("namespaces"));
-    useRouteContext(routeInfoTitle);
+    const routeInfo = computed(() => ({title: t("namespaces")}));
+    useRouteContext(routeInfo);
 
 
     const authStore = useAuthStore();
@@ -135,7 +135,7 @@
             const parts = item.id.split(".");
             let currentLevel = map;
 
-            parts.forEach((part, index) => {
+            parts.forEach((_part, index) => {
                 const label = parts.slice(0, index + 1).join(".");
                 const isLeaf = index === parts.length - 1;
 

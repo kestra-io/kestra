@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfoTitle" />
+    <TopNavBar :title="routeInfo.title" />
     <Layout
         :title="t(`demos.tests.title`)"
         :image="{source: sourceImg, alt: t(`demos.tests.title`)}"
@@ -23,7 +23,7 @@
 
     const {t} = useI18n();
 
-    const routeInfoTitle = computed(() => t("demos.tests.header"));
+    const routeInfo = computed(() => ({title: t("demos.tests.header")}));
 
-    useRouteContext(routeInfoTitle);
+    useRouteContext(routeInfo);
 </script>

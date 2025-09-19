@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfoTitle" />
+    <TopNavBar :title="routeInfo.title" />
     <Layout
         :title="t(`demos.blueprints.title`)"
         :image="{source: sourceImg, alt: t(`demos.blueprints.title`)}"
@@ -26,9 +26,9 @@
 
     const {t} = useI18n();
 
-    const routeInfoTitle = computed(() => t("demos.blueprints.title"));
+    const routeInfo = computed(() => ({title: t("demos.blueprints.title")}));
 
-    useRouteContext(routeInfoTitle);
+    useRouteContext(routeInfo);
 
     const props = defineProps({embed: {type: Boolean, default: false}});
 </script>

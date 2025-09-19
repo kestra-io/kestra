@@ -70,7 +70,7 @@
         const {blueprintId, name, params} = route.query;
 
         if (blueprintId) {
-            dashboard.value.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId});
+            dashboard.value.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId as string});
             if (!/^id:.*$/m.test(dashboard.value.sourceCode ?? "")) {
                 dashboard.value.sourceCode = "id: " + blueprintId + "\n" + dashboard.value.sourceCode;
             }

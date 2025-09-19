@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfoTitle">
+    <TopNavBar :title="routeInfo.title">
         <template #additional-right>
             <ul>
                 <li>
@@ -15,10 +15,10 @@
     </section>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
-    import {useNamespacesStore} from "override/stores/namespaces.js";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import useRouteContext from "../../composables/useRouteContext";
     import Plus from "vue-material-design-icons/Plus.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
@@ -27,6 +27,6 @@
     const namespacesStore = useNamespacesStore();
 
     const {t} = useI18n({useScope: "global"});
-    const routeInfoTitle = computed(() => t("kv.name"));
-    useRouteContext(routeInfoTitle);
+    const routeInfo = computed(() => ({title: t("kv.name")}));
+    useRouteContext(routeInfo);
 </script>

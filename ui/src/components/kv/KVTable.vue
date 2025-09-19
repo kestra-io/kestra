@@ -76,7 +76,7 @@
                     v-if="canUpdate(scope.row)"
                     :icon="FileDocumentEdit"
                     link
-                    @click="updateKvModal(scope.row.namespace, scope.row.key)"
+                    @click="updateKvModal(scope.row)"
                 />
             </template>
         </el-table-column>
@@ -297,7 +297,8 @@
                     type: "STRING",
                     value: undefined,
                     ttl: undefined,
-                    update: undefined
+                    update: undefined,
+                    description: undefined
                 },
                 kvs: undefined,
                 namespaceIterator: undefined,
@@ -399,10 +400,10 @@
                     callback();
                 }
             },
-            async updateKvModal(namespace, key) {
-                this.kv.namespace = namespace;
-                this.kv.key = key;
-                const {type, value} = await this.namespacesStore.kv({namespace, key});
+            async updateKvModal(entry) {
+                this.kv.namespace = entry.namespace;
+                this.kv.key = entry.key;
+                const {type, value} = await this.namespacesStore.kv({entry.namespace, entry.key});
                 this.kv.type = type;
                 if (type === "JSON") {
                     this.kv.value = JSON.stringify(value);
@@ -412,6 +413,7 @@
                     this.kv.value = value.toString();
                 }
                 this.kv.update = true;
+                this.kv.description = entry.description;
                 this.addKvDrawerVisible = true;
             },
             removeKv(namespace, key) {

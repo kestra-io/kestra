@@ -163,13 +163,14 @@
     "choose file": "Choisir un fichier ou le glisser le ici...",
     "close": "Fermer",
     "close sidebar": "fermer la barre latérale",
+    "codeDisabled": "Désactivé dans le flow",
     "collapse": "Masquer",
     "collapse all": "Masquer tout",
     "common": {
       "back": "Retour"
     },
     "concurrency": "Concurrence",
-    "conditions": "conditions",
+    "conditions": "Conditions",
     "configure basic auth": "Configurer l'authentification basique",
     "confirm": "Confirmer",
     "confirm password": "Confirmer le mot de passe",
@@ -1057,6 +1058,7 @@
     "pause confirm": "Êtes-vous sûr de vouloir mettre en pause l'exécution <code>{id}</code> ?",
     "pause done": "L'exécution est en PAUSE",
     "pause title": "Mettre en pause l'exécution <code>{id}</code>.<br/>Notez que les tasks actuellement en cours d'exécution seront toujours traitées, et l'exécution devra être reprise manuellement.",
+    "paused": "PAUSED",
     "playground": {
       "clear_history": "Effacer l'historique",
       "confirm_create": "Vous ne pouvez pas exécuter le playground lors de la création d'un flow. Lancer une exécution de playground créera le flow.",
@@ -1400,6 +1402,7 @@
       "name": "Mandant",
       "names": "Mandants"
     },
+    "tenantId": "ID du mandant",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Cette exécution a été créée par un Test",
     "theme": "Thème",
@@ -1437,6 +1440,7 @@
       "title": "Filtrer les enfants"
     },
     "trigger refresh": "Déclencher le rafraîchissement",
+    "triggerId": "ID de trigger",
     "trigger_check_warning": "L'utilisation des variables de trigger ne fonctionnera pas avec l'exécution manuelle du flow. Ajoutez l'opérateur de coalescence `??` pour résoudre le problème. Par exemple, au lieu de `trigger.date`, utilisez `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "L'identifiant de trigger existe déjà",
     "trigger_id_message": "L'ID de trigger ${existingTrigger} existe déjà dans le flow.",

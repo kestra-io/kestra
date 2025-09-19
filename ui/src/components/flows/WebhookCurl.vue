@@ -35,7 +35,7 @@
     import {useI18n} from "vue-i18n";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
     import Editor from "../inputs/Editor.vue";
-    import {baseUrl, basePath, apiUrl, basePathWithoutTenant, apiUrlWithoutTenants} from "../../override/utils/route";
+    import {baseUrl, basePath, apiUrl} from "../../override/utils/route";
     import {useFlowStore} from "../../stores/flow";
 
     interface Flow {

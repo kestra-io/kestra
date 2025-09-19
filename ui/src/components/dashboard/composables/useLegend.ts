@@ -28,7 +28,7 @@ const getOrCreateLegendList = (chart, id, direction = "row", width = "100%") => 
 };
 
 export const barLegend = {
-    id: "barLegend",
+    id: "barLe legend",
     afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);
 

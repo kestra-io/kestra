@@ -1,7 +1,7 @@
 <template>
     <TopNavBar
-        :title="routeInfoTitle"
-        :breadcrumb="[{label: t('dashboards.labels.singular'), link: {}}]"
+        :title="routeInfo.title"
+        :breadcrumb="[{label: t('dashboards.labels.singular'), link: undefined}]"
         :description="props.dashboard?.description"
     >
         <template v-if="isAllowed" #additional-right>

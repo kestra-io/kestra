@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue"
-    import {useRoute, useRouter} from "vue-router"
+    import {RouteLocationGeneric, useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useDashboardStore} from "../../../stores/dashboard"
     import {useCoreStore} from "../../../stores/core"
@@ -43,7 +43,7 @@
 
     const header = computed(() => ({
         title: t("dashboards.labels.singular"),
-        breadcrumb: [{label: t("dashboards.creation.label"), link: {}}],
+        breadcrumb: [{label: t("dashboards.creation.label"), link: undefined}],
     }))
 
     const save = async (source: string) => {
@@ -52,10 +52,16 @@
         toast.success(t("dashboards.creation.confirmation", {title: response.title}));
         coreStore.unsavedChange = false;
 
-        const {name, params} = route.query;
+        const name = route.query.name as string
+        const params = route.query.params as string;
 
-        const key = getDashboard({name, params: JSON.parse(params)}, "key")
-        localStorage.setItem(key, response.id)
+        const key = getDashboard({
+            name,
+            params: JSON.parse(params)
+        } as RouteLocationGeneric, "key")
+        if(key){
+            localStorage.setItem(key, response.id)
+        }
 
         router.push({name, params: {...JSON.parse(params), ...(name === "home" ? {dashboard: response.id!} : {})}, query: {created: String(true)}})
     }
@@ -65,12 +71,12 @@
 
         if (blueprintId) {
             dashboard.value.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId});
-            if (!/^id:.*$/m.test(dashboard.value.sourceCode)) {
+            if (!/^id:.*$/m.test(dashboard.value.sourceCode ?? "")) {
                 dashboard.value.sourceCode = "id: " + blueprintId + "\n" + dashboard.value.sourceCode;
             }
         } else {
             if (name === "flows/update") {
-                const {namespace, id} = JSON.parse(params)
+                const {namespace, id} = JSON.parse(params as string);
                 dashboard.value.sourceCode = processFlowYaml(YAML_FLOW, namespace, id);
             } else {
                 dashboard.value.sourceCode = name === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN;

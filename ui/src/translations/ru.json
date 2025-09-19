@@ -163,13 +163,14 @@
     "choose file": "Выберите файл или перетащите его сюда...",
     "close": "Закрыть",
     "close sidebar": "закрыть боковую панель",
+    "codeDisabled": "Отключено в flow",
     "collapse": "Свернуть",
     "collapse all": "Свернуть все",
     "common": {
       "back": "Назад"
     },
     "concurrency": "Конкурентность",
-    "conditions": "условия",
+    "conditions": "Условия",
     "configure basic auth": "Настроить базовую аутентификацию",
     "confirm": "Подтвердить",
     "confirm password": "Подтвердить пароль",
@@ -1400,6 +1401,7 @@
       "name": "Мандант",
       "names": "Арендаторы"
     },
+    "tenantId": "ID арендатора",
     "test-badge-text": "Тест",
     "test-badge-tooltip": "Это выполнение было создано тестом",
     "theme": "Тема",
@@ -1437,6 +1439,7 @@
       "title": "Фильтровать дочерние выполнения"
     },
     "trigger refresh": "Обновить",
+    "triggerId": "Идентификатор Trigger",
     "trigger_check_warning": "Использование переменных trigger не будет работать с ручным выполнением flow. Добавьте оператор объединения `??`, чтобы решить проблему. Например, вместо `trigger.date` используйте `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "Идентификатор Trigger уже существует",
     "trigger_id_message": "Идентификатор Trigger ${existingTrigger} уже существует в flow.",

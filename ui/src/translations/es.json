@@ -163,13 +163,14 @@
     "choose file": "Elige un archivo o suéltalo aquí...",
     "close": "Cerrar",
     "close sidebar": "cerrar barra lateral",
+    "codeDisabled": "Desactivado en Flow",
     "collapse": "Colapsar",
     "collapse all": "Colapsar todo",
     "common": {
       "back": "Atrás"
     },
     "concurrency": "Concurrente",
-    "conditions": "condiciones",
+    "conditions": "Condiciones",
     "configure basic auth": "Configurar autenticación básica",
     "confirm": "Confirmar",
     "confirm password": "Confirmar contraseña",
@@ -1400,6 +1401,7 @@
       "name": "Mandante",
       "names": "Arrendatarios"
     },
+    "tenantId": "ID de Mandante",
     "test-badge-text": "Prueba",
     "test-badge-tooltip": "Esta ejecución fue creada por una prueba",
     "theme": "Tema",
@@ -1437,6 +1439,7 @@
       "title": "Filtrar ejecuciones hijas"
     },
     "trigger refresh": "Actualizar trigger",
+    "triggerId": "ID del Trigger",
     "trigger_check_warning": "Al usar variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia `??` para resolver el problema. Por ejemplo, en lugar de `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "El Trigger Id ya existe",
     "trigger_id_message": "El Trigger Id ${existingTrigger} ya existe en el flow.",

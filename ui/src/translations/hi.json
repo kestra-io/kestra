@@ -1058,6 +1058,7 @@
     "pause confirm": "क्या आप वाकई <code>{id}</code> की execution को PAUSE करना चाहते हैं?",
     "pause done": "निष्पादन PAUSED है",
     "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
+    "paused": "PAUSED",
     "playground": {
       "clear_history": "इतिहास साफ़ करें",
       "confirm_create": "आप एक flow बनाते समय playground नहीं चला सकते। एक playground रन शुरू करने से flow बन जाएगा।",

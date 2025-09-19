@@ -1058,6 +1058,7 @@
     "pause confirm": "Czy na pewno chcesz wstrzymać wykonanie <code>{id}</code>?",
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
+    "paused": "Wstrzymano",
     "playground": {
       "clear_history": "Wyczyść historię",
       "confirm_create": "Nie można uruchomić playground podczas tworzenia flow. Uruchomienie playground run utworzy flow.",

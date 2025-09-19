@@ -1058,6 +1058,7 @@
     "pause confirm": "Tem certeza de que deseja pausar a execução <code>{id}</code>?",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
+    "paused": "PAUSED",
     "playground": {
       "clear_history": "Limpar histórico",
       "confirm_create": "Você não pode executar o playground enquanto cria um flow. Iniciar uma execução do playground criará o flow.",

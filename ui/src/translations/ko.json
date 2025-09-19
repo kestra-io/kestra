@@ -1058,6 +1058,7 @@
     "pause confirm": "실행 <code>{id}</code>을(를) 일시 중지하시겠습니까?",
     "pause done": "실행이 PAUSED 상태입니다.",
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
+    "paused": "일시 중지됨",
     "playground": {
       "clear_history": "기록 지우기",
       "confirm_create": "flow를 생성하는 동안에는 playground를 실행할 수 없습니다. playground 실행을 시작하면 flow가 생성됩니다.",

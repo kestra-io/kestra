@@ -354,11 +354,23 @@ public class ExecutionService {
                     }
                 }
 
-                if (originalTaskRun.getAttempts() != null && !originalTaskRun.getAttempts().isEmpty()) {
-                    ArrayList<TaskRunAttempt> attempts = new ArrayList<>(originalTaskRun.getAttempts());
-                    attempts.set(attempts.size() - 1, attempts.getLast().withState(newState));
-                    newTaskRun = newTaskRun.withAttempts(attempts);
+                List<TaskRunAttempt> attempts = new ArrayList<>(originalTaskRun.getAttempts() != null ? originalTaskRun.getAttempts() : List.of());
+
+                if (attempts.isEmpty()) {
+                    // First attempt
+                    attempts.add(TaskRunAttempt.builder()
+                        .id(IdUtils.create())
+                        .state(newState)
+                        .date(Instant.now())
+                        .build()
+                    );
+                } else {
+                    // Update last attempt state
+                    attempts.set(attempts.size() - 1, attempts.get(attempts.size() - 1).withState(newState));
                 }
+                
+                newTaskRun = newTaskRun.withAttempts(attempts);
+                
 
                 newExecution = newExecution.withTaskRun(newTaskRun);
             } else {

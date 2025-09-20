@@ -304,6 +304,18 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
             .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId));
+            // filter for locked triggers
+                if (filters.stream().anyMatch(f -> f.getField().equals("locked"))) {
+                    Boolean locked = (Boolean) filters.stream().filter(f -> f.getField().equals("locked")).findFirst().get().getValue();
+                    select = select.and(field("locked").eq(locked));
+                }
+
+                // filter for triggers with missing source
+                if (filters.stream().anyMatch(f -> f.getField().equals("missingSource"))) {
+                    Boolean missingSource = (Boolean) filters.stream().filter(f -> f.getField().equals("missingSource")).findFirst().get().getValue();
+                    select = select.and(field("missing_source").eq(missingSource));
+                }
+
 
         return select.and(filter(filters, "next_execution_date", Resource.TRIGGER));
     }

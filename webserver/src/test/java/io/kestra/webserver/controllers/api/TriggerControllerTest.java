@@ -433,6 +433,40 @@ class TriggerControllerTest {
             ))
             .build();
     }
+    @Test
+        void searchWithLockedAndMissingSource() {
+            String flowId = "flow-for-locked-missing";
+            Flow flow = generateFlow(flowId);
+            jdbcFlowRepository.create(GenericFlow.of(flow));
+
+            // Create triggers
+            Trigger lockedTrigger = Trigger.builder()
+                .flowId(flowId)
+                .namespace(flow.getNamespace())
+                .tenantId(TENANT_ID)
+                .triggerId("locked-trigger")
+                .executionId(IdUtils.create())
+                .build();
+
+            Trigger unlockedTrigger = lockedTrigger.toBuilder()
+                .triggerId("unlocked-trigger")
+                .executionId(null)
+                .build();
+
+            jdbcTriggerRepository.save(lockedTrigger);
+            jdbcTriggerRepository.save(unlockedTrigger);
+
+            // Call search endpoint with filters
+            PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
+                HttpRequest.GET(TRIGGER_PATH + "/search?locked=true&missingSource=true"),
+                Argument.of(PagedResults.class, TriggerController.Triggers.class)
+            );
+
+            assertThat(triggers.getResults().stream()
+                .map(t -> t.getTriggerContext().getTriggerId()))
+                .containsExactly("unlocked-trigger");
+        }
+
 
 
 }

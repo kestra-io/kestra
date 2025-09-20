@@ -26,7 +26,9 @@ import java.util.Optional;
 public class Trigger extends TriggerContext implements HasUID {
     @Nullable
     private String executionId;
-
+    private boolean locked;
+    @Transient
+    private boolean missingSource;
     @Nullable
     private Instant updatedDate;
 

@@ -15,6 +15,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.plugin.core.dashboard.data.Triggers;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
@@ -87,7 +88,9 @@ public class TriggerController {
         @Parameter(description = "A string filter",deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
         @Parameter(description = "The identifier of the worker currently evaluating the trigger", deprecated = true) @Nullable @QueryValue String workerId,
-        @Parameter(description = "The flow identifier",deprecated = true) @Nullable @QueryValue String flowId
+        @Parameter(description = "The flow identifier",deprecated = true) @Nullable @QueryValue String flowId,
+        @Parameter(description = "Filter by locked state") @Nullable @QueryValue Boolean locked,
+        @Parameter(description = "Filter by missing source") @Nullable @QueryValue Boolean missingSource
 
 
     ) throws HttpStatusException {
@@ -104,6 +107,15 @@ public class TriggerController {
             null,
             workerId,
             null);
+            
+        if (locked != null) {
+    filters.add(QueryFilter.of("locked", locked));
+    }
+
+    if (missingSource != null) {
+        filters.add(QueryFilter.of("missingSource", missingSource));
+    }
+
 
         ArrayListTotal<Trigger> triggerContexts = triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),

@@ -1,5 +1,4 @@
 import {canSaveFlowTemplate, saveFlowTemplate} from "../utils/flowTemplate";
-import {mapGetters, mapState} from "vuex";
 
 import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
@@ -14,6 +13,9 @@ import {mapStores} from "pinia";
 import {useApiStore} from "../stores/api";
 import {usePluginsStore} from "../stores/plugins";
 import {useCoreStore} from "../stores/core";
+import {useTemplateStore} from "../stores/template";
+import {useAuthStore} from "override/stores/auth";
+import {useFlowStore} from "../stores/flow";
 
 export default {
     mixins: [RouteContext],
@@ -32,10 +34,7 @@ export default {
         };
     },
     computed: {
-        ...mapState("auth", ["user"]),
-        ...mapGetters("flow", ["flow"]),
-        ...mapGetters("template", ["template"]),
-        ...mapStores(useApiStore, usePluginsStore, useCoreStore),
+        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore, useFlowStore, useAuthStore),
         guidedProperties() {
             return this.coreStore.guidedProperties;
         },
@@ -46,13 +45,13 @@ export default {
             );
         },
         canSave() {
-            return canSaveFlowTemplate(true, this.user, this.item, this.dataType);
+            return canSaveFlowTemplate(true, this.authStore.user, this.item, this.dataType);
         },
         canCreate() {
-            return this.dataType === "flow" && this.user.isAllowed(permission.FLOW, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user.isAllowed(permission.FLOW, action.CREATE, this.item.namespace)
         },
         canExecute() {
-            return this.dataType === "flow" && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
         },
         routeInfo() {
             let route = {
@@ -90,8 +89,7 @@ export default {
             return (
                 this.item &&
                 this.isEdit &&
-                this.user &&
-                this.user.isAllowed(
+                this.authStore.user?.isAllowed(
                     permission[this.dataType.toUpperCase()],
                     action.DELETE,
                     this.item.namespace
@@ -108,11 +106,11 @@ export default {
             }
 
             if (this.dataType === "template") {
-                this.content = YAML_UTILS.stringify(this.template);
+                this.content = YAML_UTILS.stringify(this.templateStore.template);
                 this.previousContent = this.content;
             } else {
-                if (this.flow) {
-                    this.content = this.flow.source;
+                if (this.flowStore.flow) {
+                    this.content = this.flowStore.flow.source;
                     this.previousContent = this.content;
                 } else {
                     this.content = "";
@@ -134,13 +132,13 @@ export default {
             }
 
             return this.$http
-                .get(`${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`, {params: {destinationOnly: true}})
+                .get(`${apiUrl()}/flows/${this.flowStore.flow.namespace}/${this.flowStore.flow.id}/dependencies`, {params: {destinationOnly: true}})
                 .then(response => {
                     let warning = "";
 
                     if (response.data && response.data.nodes) {
                         const deps = response.data.nodes
-                            .filter(n => !(n.namespace === this.flow.namespace && n.id  === this.flow.id))
+                            .filter(n => !(n.namespace === this.flowStore.flow.namespace && n.id  === this.flowStore.flow.id))
                             .map(n => "<li>" + n.namespace + ".<code>" + n.id  + "</code></li>")
                             .join("\n");
 
@@ -167,9 +165,14 @@ export default {
                     .then(message => {
                         this.$toast()
                             .confirm(message, () => {
-                                return this.$store
-                                    .dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item)
-                                    .then(() => {
+                                const deletePromise = this.dataType === "template"
+                                    ? this.templateStore.deleteTemplate(item)
+                                    : this.dataType === "flow"
+                                        ? this.flowStore.deleteFlow(item)
+                                        : undefined;
+
+                                return deletePromise
+                                    ?.then(() => {
                                         this.content = ""
                                         this.previousContent = ""
                                         return this.$router.push({
@@ -244,9 +247,14 @@ export default {
                     return;
                 }
                 this.previousContent = YAML_UTILS.stringify(this.item);
-                this.$store
-                    .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content})
-                    .then((data) => {
+                const createPromise = this.dataType === "template"
+                    ? this.templateStore.createTemplate({template: this.content})
+                    : this.dataType === "flow"
+                        ? this.flowStore.createFlow({flow: this.content})
+                        : undefined;
+
+                createPromise
+                    ?.then((data) => {
                         this.previousContent = data.source ? data.source : YAML_UTILS.stringify(data);
                         this.content = data.source ? data.source : YAML_UTILS.stringify(data);
                         this.onChange();

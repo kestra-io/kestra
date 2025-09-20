@@ -49,7 +49,7 @@ import java.util.concurrent.Callable;
 @Introspected
 public class App implements Callable<Integer> {
     public static void main(String[] args) {
-        execute(App.class, args);
+        execute(App.class, new String [] { Environment.CLI }, args);
     }
 
     @Override
@@ -57,22 +57,29 @@ public class App implements Callable<Integer> {
         return PicocliRunner.call(App.class, "--help");
     }
 
-    protected static void execute(Class<?> cls, String... args) {
+    protected static void execute(Class<?> cls, String[] environments, String... args) {
         // Log Bridge
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
 
         // Init ApplicationContext
-        ApplicationContext applicationContext = App.applicationContext(cls, args);
+        ApplicationContext applicationContext = App.applicationContext(cls, environments, args);
 
         // Call Picocli command
-        int exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
-
+        int exitCode = 0;
+        try {
+             exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
+        } catch (CommandLine.InitializationException e){
+            System.err.println("Could not initialize picoli ComandLine, err: " + e.getMessage());
+            e.printStackTrace();
+            exitCode = 1;
+        }
         applicationContext.close();
 
         // exit code
         System.exit(Objects.requireNonNullElse(exitCode, 0));
     }
+
 
     /**
      * Create an {@link ApplicationContext} with additional properties based on configuration files (--config) and
@@ -82,12 +89,13 @@ public class App implements Callable<Integer> {
      * @return the application context created
      */
     protected static ApplicationContext applicationContext(Class<?> mainClass,
+                                                           String[] environments,
                                                            String[] args) {
 
         ApplicationContextBuilder builder = ApplicationContext
             .builder()
             .mainClass(mainClass)
-            .environments(Environment.CLI);
+            .environments(environments);
 
         CommandLine cmd = new CommandLine(mainClass, CommandLine.defaultFactory());
         continueOnParsingErrors(cmd);

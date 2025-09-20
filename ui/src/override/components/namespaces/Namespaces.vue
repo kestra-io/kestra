@@ -12,7 +12,7 @@
     <el-row class="p-5">
         <KestraFilter
             :placeholder="t('search')"
-            legacy-query
+            legacyQuery
         />
 
         <el-col v-if="namespaces.length === 0" class="p-3 namespaces">
@@ -27,7 +27,7 @@
         >
             <el-tree
                 :data="[namespace]"
-                default-expand-all
+                defaultExpandAll
                 :props="{class: 'tree'}"
                 class="h-auto p-2 rounded-full"
             >
@@ -67,11 +67,10 @@
     import {computed, onMounted, Ref, ref, watch} from "vue";
 
     import {useRoute} from "vue-router";
-    import useRouteContext from "../../../mixins/useRouteContext.ts";
-    import {useStore} from "vuex";
-    import useNamespaces, {Namespace} from "../../../composables/useNamespaces.ts";
+    import useRouteContext from "../../../composables/useRouteContext";
+    import useNamespaces, {Namespace} from "../../../composables/useNamespaces";
     import {useI18n} from "vue-i18n";
-    import {useMiscStore} from "../../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     import Navbar from "../../../components/layout/TopNavBar.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
@@ -82,6 +81,7 @@
 
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
+    import {useAuthStore} from "override/stores/auth";
 
     interface Node {
         id: string;
@@ -99,18 +99,15 @@
     const details = computed(() => ({title: t("namespaces")}));
     useRouteContext(details);
 
-    const store = useStore();
 
-    const user = computed(() => store.state.auth.user);
+    const authStore = useAuthStore();
     const canCreate = computed(() => {
-        if (Object.keys(user.value).length === 0) return false;
-        return user.value.hasAnyAction(permission.NAMESPACE, action.CREATE);
+        return authStore.user?.hasAnyAction(permission.NAMESPACE, action.CREATE);
     });
 
     const namespaces = ref([]) as Ref<Namespace[]>;
     const loadData = async () => {
         namespaces.value = await useNamespaces(
-            store,
             1000,
             route.query?.q === undefined ? undefined : {q: route.query.q},
         ).all();
@@ -146,7 +143,6 @@
                     currentLevel[label] = {
                         id: label,
                         label,
-                        disabled: item.disabled,
                         description: isLeaf ? item.description : undefined,
                         children: [],
                     };
@@ -159,7 +155,6 @@
                 const result: Node = {
                     id: node.id,
                     label: node.label,
-                    disabled: node.disabled,
                     description: node.description,
                     children: node.children ? build(node.children) : undefined,
                 };

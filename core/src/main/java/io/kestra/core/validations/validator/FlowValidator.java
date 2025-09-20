@@ -36,6 +36,19 @@ import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 @Singleton
 @Introspected
 public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> {
+    public static List<String> RESERVED_FLOW_IDS = List.of(
+        "pause",
+        "resume",
+        "force-run",
+        "change-status",
+        "kill",
+        "executions",
+        "search",
+        "source",
+        "disable",
+        "enable"
+    );
+
     @Inject
     private FlowService flowService;
 
@@ -50,13 +63,18 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
         List<String> violations = new ArrayList<>();
 
+        if (RESERVED_FLOW_IDS.contains(value.getId())) {
+            violations.add("Flow id is a reserved keyword: " + value.getId() + ". List of reserved keywords: " + String.join(", ", RESERVED_FLOW_IDS));
+        }
+
         if (flowService.requireExistingNamespace(value.getTenantId(), value.getNamespace())) {
             violations.add("Namespace '" + value.getNamespace() + "' does not exist but is required to exist before a flow can be created in it.");
         }
 
+        List<Task> allTasks = value.allTasksWithChilds();
+
         // tasks unique id
-        List<String> taskIds = value.allTasksWithChilds()
-            .stream()
+        List<String> taskIds = allTasks.stream()
             .map(Task::getId)
             .toList();
 
@@ -72,8 +90,8 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             violations.add("Duplicate trigger id with name [" + String.join(", ", duplicateIds) + "]");
         }
 
-        value.allTasksWithChilds()
-            .stream().filter(task -> task instanceof ExecutableTask<?> executableTask
+        allTasks.stream()
+            .filter(task -> task instanceof ExecutableTask<?> executableTask
                 && value.getId().equals(executableTask.subflowId().flowId())
                 && value.getNamespace().equals(executableTask.subflowId().namespace()))
             .forEach(task -> violations.add("Recursive call to flow [" + value.getNamespace() + "." + value.getId() + "]"));
@@ -102,7 +120,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             .map(input -> Pattern.compile("\\{\\{\\s*inputs." + input.getId() + "\\s*\\}\\}"))
             .collect(Collectors.toList());
 
-        List<String> invalidTasks = value.allTasks()
+        List<String> invalidTasks = allTasks.stream()
             .filter(task -> checkObjectFieldsWithPatterns(task, inputsWithMinusPatterns))
             .map(task -> task.getId())
             .collect(Collectors.toList());
@@ -112,12 +130,12 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
                 " [" + String.join(", ", invalidTasks) + "]");
         }
 
-        List<Pattern> outputsWithMinusPattern = value.allTasks()
+        List<Pattern> outputsWithMinusPattern = allTasks.stream()
             .filter(output -> Optional.ofNullable(output.getId()).orElse("").contains("-"))
             .map(output -> Pattern.compile("\\{\\{\\s*outputs\\." + output.getId() + "\\.[^}]+\\s*\\}\\}"))
             .collect(Collectors.toList());
 
-        invalidTasks = value.allTasks()
+        invalidTasks = allTasks.stream()
             .filter(task -> checkObjectFieldsWithPatterns(task, outputsWithMinusPattern))
             .map(task -> task.getId())
             .collect(Collectors.toList());

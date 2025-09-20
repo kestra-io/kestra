@@ -1,7 +1,7 @@
 <template>
     <el-dropdown v-if="enabled" placement="bottom-end">
         <el-button type="default" :icon="Circle" @click="kill(true)">
-            {{ $t("kill") }}
+            {{ t("kill") }}
         </el-button>
         <template #dropdown>
             <el-dropdown-menu class="m-dropdown-menu">
@@ -10,65 +10,67 @@
                     size="large"
                     @click="kill(true)"
                 >
-                    {{ $t('kill parents and subflow') }}
+                    {{ t('kill parents and subflow') }}
                 </el-dropdown-item>
                 <el-dropdown-item
                     :icon="StopCircleOutline"
                     size="large"
                     @click="kill(false)"
                 >
-                    {{ $t('kill only parents') }}
+                    {{ t('kill only parents') }}
                 </el-dropdown-item>
             </el-dropdown-menu>
         </template>
     </el-dropdown>
 </template>
-<script setup>
-    import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
+<script setup lang="ts">
+    import {computed} from "vue";
+    import {useI18n} from "vue-i18n";
     import Circle from "vue-material-design-icons/Circle.vue";
-</script>
-<script>
-    import {mapState} from "vuex";
-    import {mapStores} from "pinia";
+    import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
+
+    import {State} from "@kestra-io/ui-libs";
+
     import {useExecutionsStore} from "../../stores/executions";
-    import permission from "../../models/permission";
+    import {useAuthStore} from "override/stores/auth";
+    import {useToast} from "../../utils/toast";
     import action from "../../models/action";
-    import {State} from "@kestra-io/ui-libs"
+    import permission from "../../models/permission";
 
-    export default {
-        props: {
-            execution: {
-                type: Object,
-                required: true
-            },
-        },
-        methods: {
-            kill(isOnKillCascade) {
-                this.$toast()
-                    .confirm(this.$t("killed confirm", {id: this.execution.id}), () => {
-                        return this.executionsStore
-                            .kill({
-                                id: this.execution.id,
-                                isOnKillCascade: isOnKillCascade
-                            })
-                            .then(() => {
-                                this.$toast().success(this.$t("killed done"));
-                            })
-                    });
-            }
-        },
-        computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
-            enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace))) {
-                    return false;
-                }
-
-                return State.isKillable(this.execution.state.current);
-            }
+    const props = defineProps({
+        execution: {
+            type: Object,
+            required: true
         }
-    };
+    });
+
+    const {t} = useI18n();
+    const authStore = useAuthStore();
+    const executionsStore = useExecutionsStore();
+    const toast = useToast();
+
+    const user = computed(() => authStore.user);
+
+    const enabled = computed(() => {
+        if (!(user.value && user.value.isAllowed(permission.EXECUTION, action.DELETE, props.execution.namespace))) {
+            return false;
+        }
+
+        return State.isKillable(props.execution.state.current);
+    });
+
+    function kill(isOnKillCascade: boolean) {
+        toast.confirm(t("killed confirm", {id: props.execution.id}), () => {
+            return executionsStore
+                .kill({
+                    id: props.execution.id,
+                    isOnKillCascade: isOnKillCascade
+                })
+                .then(() => {
+                    toast.success(t("killed done"));
+                });
+        });
+    }
 </script>
 
 <style lang="scss" scoped>
@@ -79,7 +81,7 @@
     }
     .m-dropdown-menu {
         width: fit-content !important;
-        
+
         :deep(.el-dropdown-menu__item:hover) {
             background-color: var(--ks-log-background-error) !important;
             color: var(--ks-content-error) !important;

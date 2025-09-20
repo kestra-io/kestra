@@ -5,18 +5,18 @@
         :data="parsedData"
         :options="options"
         :plugins="chartOptions?.legend?.enabled ? [customBarLegend] : []"
-        class="chart"
+        :class="props.short ? 'short-chart' : 'chart'"
     />
     <NoData v-else />
 </template>
 
 <script lang="ts" setup>
-    import {PropType, computed} from "vue";
+    import {PropType, computed, watch} from "vue";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
 
     import NoData from "../../layout/NoData.vue";
-    import type {Chart} from "../composables/useDashboards";
+    import {Chart, getDashboard} from "../composables/useDashboards";
     import {useChartGenerator} from "../composables/useDashboards";
 
 
@@ -38,6 +38,7 @@
         chart: {type: Object as PropType<Chart>, required: true},
         filters: {type: Array as PropType<string[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
+        short: {type: Boolean, default: false},
     });
 
     const {data, chartOptions} = props.chart;
@@ -47,7 +48,7 @@
     const DEFAULTS = {
         display: true,
         stacked: true,
-        ticks: {maxTicksLimit: 8 , stepSize: 1},
+        ticks: {maxTicksLimit: 8},
         grid: {display: false},
     };
 
@@ -72,7 +73,7 @@
                     }
                     : {}),
                 tooltip: {
-                    enabled: true,
+                    enabled: props.short ? false : true,
                     filter: (value) => value.raw,
                     callbacks: {
                         label: (value) => {
@@ -85,20 +86,22 @@
             scales: {
                 x: {
                     title: {
-                        display: true,
+                        display: props.short ? false : true,
                         text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
                     },
                     position: "bottom",
                     ...DEFAULTS,
+                    display: props.short ? false : true,
                 },
                 y: {
                     title: {
-                        display: true,
+                        display: props.short ? false : true,
                         text: aggregator[0][1].displayName ?? aggregator[0][0],
                     },
                     beginAtZero: true,
                     position: "left",
                     ...DEFAULTS,
+                    display: props.short ? false : true,
                     ticks: {
                         ...DEFAULTS.ticks,
                         callback: value => isDurationAgg() ? Utils.humanDuration(value) : value
@@ -156,7 +159,19 @@
         return {labels, datasets};
     });
 
-    const {data: generated} = useChartGenerator(props);
+    const {data: generated, generate} = useChartGenerator(props);
+
+    function refresh() {
+        return generate(getDashboard(route, "id")!);
+    }
+
+    defineExpose({
+        refresh
+    });
+
+    watch(() => route.params.filters, () => {
+        refresh();
+    }, {deep: true});
 </script>
 
 <style lang="scss" scoped>
@@ -165,6 +180,15 @@
 
         &:not(.with-legend) {
             #{--chart-height}: 231px;
+        }
+
+        min-height: var(--chart-height);
+        max-height: var(--chart-height);
+    }
+
+    .short-chart {
+        &:not(.with-legend) {
+            #{--chart-height}: 40px;
         }
 
         min-height: var(--chart-height);

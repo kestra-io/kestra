@@ -16,7 +16,6 @@
     "Per page": "प्रति पृष्ठ",
     "Previous step": "पिछला चरण",
     "Reset guided tour": "पुनः Guided Tour प्रारंभ करें",
-    "Select namespace": "Namespace",
     "Set default page": "पूर्व-निर्धारित पृष्ठ सेट करें",
     "Set labels": "लेबल्स सेट करें",
     "Set labels done": "निष्पादन के लेबल्स सफलतापूर्वक सेट किए गए",
@@ -49,8 +48,12 @@
     "aggregation": "एकत्रीकरण",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "ध्यान दें: इस समय, केवल Gemini को AI प्रदाता के रूप में समर्थन प्राप्त है।\n\nकॉन्फ़िगरेशन सहेजने के बाद अपने Kestra instance को पुनः प्रारंभ करें।",
+          "header": "<b>AI Copilot अभी तक कॉन्फ़िगर नहीं किया गया है।</b>\n\nAI Copilot को सक्षम करने के लिए, अपने Kestra instance configuration file (जैसे <code>application.yml</code>) में निम्नलिखित स्निपेट जोड़ें, <code>geminiApiKey</code> को अपनी वास्तविक key से बदलें:"
+        },
         "generating": "आपके लिए Flow YAML उत्पन्न किया जा रहा है...",
-        "prompt_placeholder": "अपने Kestra flow बनाने के लिए निर्देश दर्ज करें।",
+        "prompt_placeholder": "अपने Kestra flow बनाने के लिए निर्देश दर्ज करें। उदाहरण प्रॉम्प्ट: एक flow बनाएं जो हर सोमवार को सुबह 9 बजे चलता है।",
         "title": "एआई एजेंट"
       }
     },
@@ -91,6 +94,7 @@
       "title": "Blueprints"
     },
     "bookmark": "बुकमार्क्स",
+    "bulk action async warning": "यह कुछ क्षणों का समय ले सकता है।",
     "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
     "bulk delete": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को हटाना चाहते हैं?",
     "bulk delete backfills": "{count} backfill को हटाएं",
@@ -159,6 +163,7 @@
     "choose file": "एक फ़ाइल चुनें या इसे यहां छोड़ें...",
     "close": "बंद करें",
     "close sidebar": "साइडबार बंद करें",
+    "codeDisabled": "Flow में अक्षम",
     "collapse": "संक्षिप्त करें",
     "collapse all": "सभी संक्षिप्त करें",
     "common": {
@@ -170,13 +175,15 @@
     "confirm": "पुष्टि करें",
     "confirm password": "पासवर्ड की पुष्टि करें",
     "confirmation": "पुष्टि",
+    "context updated date": "संदर्भ अद्यतन तिथि",
+    "context updated date tooltip": "ट्रिगर के संदर्भ को आखिरी बार कब अपडेट किया गया था। यह तब होता है जब execution ट्रिगर होता है, समाप्त होता है (लॉक रिलीज़ होता है), या एक मूल्यांकन के बाद (भले ही कोई execution न हो)।",
     "contextBar": {
-      "demo": "डेमो प्राप्त करें",
+      "demo": "डेमो",
       "docs": "डॉक्स",
       "help": "मदद",
-      "issue": "समस्या खोलें",
+      "issue": "समस्या",
       "news": "समाचार",
-      "star": "रेपो को स्टार करें"
+      "star": "हमें स्टार दें"
     },
     "continue backfill": "Backfill जारी रखें",
     "continue backfills": "Backfills जारी रखें",
@@ -213,6 +220,7 @@
       "edition": {
         "chart": "इस चार्ट को संपादित करें",
         "confirmation": "डैशबोर्ड <code>{title}</code> में परिवर्तन सहेजे गए हैं।",
+        "id readonly": "संपत्ति `id` को बदला नहीं जा सकता — यह अब अपनी प्रारंभिक मानों पर सेट है। यदि आप इसे बदलना चाहते हैं, तो आप एक नया डैशबोर्ड बना सकते हैं और पुराने को हटा सकते हैं।",
         "label": "डैशबोर्ड संपादित करें"
       },
       "empty": "कोई परिणाम नहीं दिखाया जा सकता।",
@@ -271,6 +279,7 @@
     "days": "दिन",
     "debug": "डिबग",
     "default": "डिफ़ॉल्ट",
+    "defaultsToNamespaceFile": "डिफ़ॉल्ट रूप से namespace फ़ाइल: <code>{name}</code>",
     "delete": "हटाएं",
     "delete backfill": "Backfill हटाएं",
     "delete backfills": "Backfills हटाएं",
@@ -360,6 +369,18 @@
     "dependencies delete flow": "इस flow में निर्भरताएँ हैं। इसे हटाने से उनकी निर्भरताओं को निष्पादित करने से रोका जाएगा।<br /><br /> यहाँ प्रभावित flows की सूची है:",
     "dependencies loaded": "निर्भरताएँ लोड की गईं",
     "dependencies missing acls": "इस flow पर कोई अनुमतियाँ नहीं हैं",
+    "dependency": {
+      "controls": {
+        "clear_selection": "चयन साफ़ करें",
+        "fit_view": "स्क्रीन के अनुसार फिट करें",
+        "zoom_in": "ज़ूम इन करें",
+        "zoom_out": "ज़ूम आउट"
+      },
+      "search": {
+        "no_results": "{term} के लिए कोई परिणाम नहीं मिला",
+        "placeholder": "flow या namespace द्वारा खोजें..."
+      }
+    },
     "dependency task": "Task {taskId} किसी अन्य Task की निर्भरता है",
     "description": "विवरण",
     "details": "विवरण",
@@ -430,8 +451,22 @@
         "title": "इस Flow के लिए कोई सीमाएँ निर्धारित नहीं हैं।"
       },
       "dependencies": {
-        "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।",
-        "title": "इस Flow के लिए कोई dependencies सेट नहीं हैं।"
+        "EXECUTION": {
+          "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Execution Dependencies</a> के बारे में अधिक पढ़ें।",
+          "title": "वर्तमान में कोई निर्भरता नहीं है।"
+        },
+        "FLOW": {
+          "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।",
+          "title": "वर्तमान में कोई dependencies नहीं हैं।"
+        },
+        "NAMESPACE": {
+          "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> के बारे में अधिक पढ़ें।",
+          "title": "वर्तमान में कोई निर्भरता नहीं है।"
+        }
+      },
+      "panels": {
+        "content": "Flow Code या No-Code खोलें ताकि आप अपने flows को संपादित करना शुरू कर सकें, या संबंधित सुविधाओं के लिए कोई अन्य पैनल चुनें (Topology, Documentation, Files, Blueprints, Namespace Context)।",
+        "title": "कोई पैनल वर्तमान में खुला नहीं है।"
       },
       "plugins": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
@@ -444,6 +479,10 @@
       "triggers": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> के बारे में और पढ़ें।",
         "title": "आपके flow में कोई Triggers नहीं हैं।"
+      },
+      "versionPlugin": {
+        "content": "यहां आप अपने Kestra instance पर इंस्टॉल किए गए सभी प्लगइन्स का प्रबंधन कर सकते हैं। नए इंस्टॉल किए गए प्लगइन्स आपके instance की कॉन्फ़िगरेशन के आधार पर सभी Kestra सेवाओं में तुरंत उपलब्ध नहीं हो सकते हैं।",
+        "title": "आपके पास अभी तक कोई संस्करणित प्लगइन नहीं है!"
       }
     },
     "empty search": "खोज परिणाम खाली हैं",
@@ -475,6 +514,7 @@
       }
     },
     "eval": {
+      "render": "एक्सप्रेशन रेंडर करें",
       "title": "डिबग अभिव्यक्ति",
       "tooltip": "किसी भी Pebble अभिव्यक्ति को प्रस्तुत करें और निष्पादन संदर्भ का निरीक्षण करें।"
     },
@@ -693,6 +733,7 @@
         "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>"
       },
       "duplicate": "यह key पहले से मौजूद है",
+      "inherited": "विरासत में मिले KV जोड़े",
       "name": "KV Store",
       "type": "प्रकार",
       "update": "key '{key}' के लिए value अपडेट करें"
@@ -706,6 +747,8 @@
     "last execution state": "अंतिम स्थिति",
     "last execution status": "अंतिम निष्पादन स्थिति",
     "last modified": "अंतिम संशोधित",
+    "last trigger date": "अंतिम ट्रिगर की तारीख",
+    "last trigger date tooltip": "ट्रिगर ने आखिरी बार कब निष्पादित किया था। जब एक backfill चल रहा हो तो यह अतीत में हो सकता है।",
     "launch execution": "निष्पादित करें",
     "learn_more": "और जानें",
     "light_background": "यह हल्की पृष्ठभूमि के साथ काम करते समय पसंदीदा विकल्प है।",
@@ -733,6 +776,7 @@
     "monogram": "मोनोग्राम",
     "months": "महीने",
     "multi_panel_editor": {
+      "close_all_panels": "सभी पैनल बंद करें",
       "close_all_tabs": "सभी टैब बंद करें",
       "move_left": "बाएँ ले जाएँ",
       "move_right": "दाईं ओर ले जाएँ"
@@ -820,6 +864,8 @@
     "neutral trend": "स्थिर",
     "new": "नया",
     "new version": "नया संस्करण {version} उपलब्ध है!",
+    "next evaluation date": "अगली मूल्यांकन तिथि",
+    "next evaluation date tooltip": "ट्रिगर का अगला मूल्यांकन कब होगा, यह उसके अंतराल पर आधारित है। यदि शर्तें पूरी नहीं होती हैं, तो यह हमेशा अगले निष्पादन तिथि के समान नहीं होता।",
     "next execution date": "अगली निष्पादन तिथि",
     "next_execution": "अगली निष्पादन",
     "no data current task": "वर्तमान task के लिए कोई डेटा उपलब्ध नहीं है।",
@@ -902,6 +948,7 @@
         "finally": "एक task चुनें",
         "inputs": "इनपुट फ़ील्ड प्रकार चुनें",
         "pluginDefaults": "एक प्लगइन चुनें",
+        "task": "किसी task का चयन करें",
         "tasks": "कार्य चुनें",
         "triggers": "ट्रिगर चुनें"
       },
@@ -910,6 +957,7 @@
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें"
     },
     "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
+    "no_file_choosen": "कोई फ़ाइल चयनित नहीं",
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
@@ -1010,6 +1058,21 @@
     "pause confirm": "क्या आप वाकई <code>{id}</code> की execution को PAUSE करना चाहते हैं?",
     "pause done": "निष्पादन PAUSED है",
     "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
+    "paused": "PAUSED",
+    "playground": {
+      "clear_history": "इतिहास साफ़ करें",
+      "confirm_create": "आप एक flow बनाते समय playground नहीं चला सकते। एक playground रन शुरू करने से flow बन जाएगा।",
+      "history": "पिछले 10 रन",
+      "play_icon_info": "आप No-Code या Topology दृश्य में Play आइकन पर भी क्लिक कर सकते हैं।",
+      "run_all_tasks": "सभी Tasks चलाएं",
+      "run_task": "टास्क चलाएं",
+      "run_task_and_downstream": "टास्क चलाएं और डाउनस्ट्रीम",
+      "run_task_info": "Flow Code संपादक में किसी भी task पर होवर करें और अपने task का परीक्षण करने के लिए \"Run task\" बटन पर क्लिक करें।",
+      "run_this_task": "इस task को चलाएं",
+      "title": "प्लेग्राउंड",
+      "toggle": "प्लेग्राउंड",
+      "tooltip_persistence": "यदि आप Playground को बंद करके फिर से चालू करते हैं, तो जानकारी तब तक बनी रहती है जब तक आप पृष्ठ पर रहते हैं।"
+    },
     "pluginDefaults": "प्लगइन डिफॉल्ट्स",
     "pluginPage": {
       "alt": "प्लगइन्स आइकन",
@@ -1026,7 +1089,12 @@
     "port": "पोर्ट",
     "prefill inputs": "पूर्व-भरण",
     "prev_execution": "पिछला निष्पादन",
-    "preview": "पूर्वावलोकन",
+    "preview": {
+      "auto-view": "स्वचालित दृश्य",
+      "force-editor": "संपादक दृश्य लागू करें",
+      "label": "पूर्वावलोकन",
+      "view": "देखें"
+    },
     "properties": {
       "hidden": "टेबल में छिपा हुआ",
       "hint": "दृश्य स्तंभ चुनें",
@@ -1048,6 +1116,8 @@
     "replay from beginning tooltip": "शुरुआत से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay from task tooltip": "Task <code>{taskId}</code> से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay latest revision": "नवीनतम पुनरीक्षण का उपयोग करके पुनः चलाएँ",
+    "replay the execution": "फ्लो <code>{flowId}</code> के लिए निष्पादन <code>{executionId}</code> को पुनः चलाएं",
+    "replay with inputs": "इनपुट्स के साथ पुनः चलाएं",
     "replayed": "निष्पादन पुनः चलाया गया है",
     "required field": "आवश्यक फ़ील्ड",
     "reset": "पुनः प्रारंभ करें",
@@ -1071,6 +1141,7 @@
     "revision": "संशोधन",
     "revisions": "पुनरीक्षण",
     "row count": "पंक्ति संख्या",
+    "run task in playground": "प्लेग्राउंड में task चलाएं",
     "runners": "धावक",
     "running duration": "चलने की अवधि",
     "save": "सहेजें",
@@ -1144,7 +1215,8 @@
             "language": "भाषा",
             "log_display": "Log प्रदर्शन",
             "log_level": "Log स्तर",
-            "multi_panel_editor": "मल्टी पैनल एडिटर"
+            "multi_panel_editor": "मल्टी पैनल एडिटर",
+            "playground": "प्लेग्राउंड"
           },
           "label": "मुख्य कॉन्फ़िगरेशन"
         },
@@ -1163,6 +1235,7 @@
           "label": "भाषा और क्षेत्र",
           "note": "ध्यान दें कि यह सेटिंग UI में दिनांक और समय गुणों को प्रदर्शित करने के लिए उपयोग की जाती है। अपने flows को UTC से अलग समय क्षेत्र में शेड्यूल करने के लिए, सुनिश्चित करें कि आपने अपने flow कोड में या अपने प्लगइन डिफ़ॉल्ट्स में Schedule Trigger पर समय क्षेत्र गुण सेट किया है।"
         },
+        "reset_section_to_defaults": "इस अनुभाग के डिफ़ॉल्ट मान पुनर्स्थापित करें",
         "save": {
           "discard": "रद्द करें",
           "label": "प्राथमिकताएँ सहेजें",
@@ -1182,6 +1255,7 @@
             "editor_hover_description": "प्रॉपर्टी पर होवर करें विवरण देखने के लिए",
             "environment_color": "पर्यावरण रंग",
             "environment_name": "पर्यावरण नाम",
+            "environment_name_tooltip": "इस environment नाम को config से सेट किया गया है लेकिन इसे बदला जा सकता है।",
             "logs_font_size": "लॉग्स फ़ॉन्ट आकार",
             "theme": "मोडस"
           },
@@ -1250,10 +1324,12 @@
       },
       "troubleshooting": "पासवर्ड भूल गए?",
       "validation": {
+        "config_message": "अपने configuration को अपडेट करना सुनिश्चित करें ताकि इस त्रुटि संदेश को ठीक किया जा सके।",
         "email_invalid": "अमान्य ईमेल",
         "email_required": "ईमेल आवश्यक है",
         "email_temporary_not_allowed": "अस्थायी या डिस्पोजेबल ईमेल पते की अनुमति नहीं है",
         "firstName_required": "पहला नाम आवश्यक है",
+        "incorrect_creds": "अमान्य उपयोगकर्ता नाम या पासवर्ड। सुनिश्चित करें कि आपके प्रमाण-पत्र सही हैं।",
         "lastName_required": "अंतिम नाम आवश्यक है",
         "password_invalid": "अमान्य पासवर्ड"
       }
@@ -1294,20 +1370,25 @@
     "success": "सफलता",
     "sum": "योग",
     "switch-view": "दृश्य स्विच करें",
+    "system overview": "सिस्टम अवलोकन",
     "system_namespace": "अपने प्लेटफ़ॉर्म को सिस्टम flows के साथ नियंत्रण में रखें।",
     "system_namespace_description": "रखरखाव के tasks को स्वचालित करें, failure alerts से लेकर automated cleanups तक।",
     "tags": "टैग्स",
     "task": "Task",
+    "task failed": "टास्क FAILED",
     "task id": "Task ID",
     "task id already exists": "Task Id पहले से मौजूद है",
+    "task is running": "टास्क RUNNING है",
     "task logs": "Task Logs",
     "task run id": "टास्करन ID",
+    "task sent a warning": "टास्क ने एक WARNING भेजा",
+    "task was skipped": "टास्क को छोड़ दिया गया था",
+    "task was successful": "टास्क सफल रहा",
     "taskDefaults": "taskDefaults",
     "taskRunners": "टास्क Runners",
     "task_id_exists": "टास्क Id पहले से मौजूद है",
     "task_id_message": "टास्क Id ${existingTask} पहले से ही flow में मौजूद है।",
     "taskid column details": "निष्पादित होने वाला अंतिम Task और इसके प्रयासों की संख्या।",
-    "taskruns": "Task रन",
     "tasks": "Tasks",
     "template": "template",
     "template creation": "template निर्माण",
@@ -1321,6 +1402,7 @@
       "name": "मंडल",
       "names": "मंडल"
     },
+    "tenantId": "टेनेंट ID",
     "test-badge-text": "परीक्षण",
     "test-badge-tooltip": "यह execution एक Test द्वारा बनाया गया था",
     "theme": "थीम",
@@ -1337,6 +1419,8 @@
     "topology": "टोपोलॉजी",
     "topology-graph": {
       "graph-orientation": "ग्राफ़ अभिविन्यास",
+      "invalid": "ग्राफ़ त्रुटि",
+      "invalid_description": "ग्राफ़ लोड करते समय एक त्रुटि हुई। कृपया त्रुटियों के लिए स्रोत कोड की जाँच करें।",
       "zoom-fit": "फिट",
       "zoom-in": "ज़ूम इन करें",
       "zoom-out": "ज़ूम आउट करें",
@@ -1356,6 +1440,7 @@
       "title": "बाल निष्पादन फ़िल्टर करें"
     },
     "trigger refresh": "ताज़ा करें",
+    "triggerId": "ट्रिगर ID",
     "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",
     "trigger_id_exists": "ट्रिगर Id पहले से मौजूद है",
     "trigger_id_message": "ट्रिगर Id ${existingTrigger} पहले से ही flow में मौजूद है।",
@@ -1408,6 +1493,12 @@
     "warning flow with triggers": "इस flow में triggers शामिल हैं और यदि यह flow trigger अभिव्यक्तियों पर निर्भर करता है तो मैन्युअल निष्पादन विफल हो जाएगा।",
     "watch": "देखें",
     "watch_video": "वीडियो देखें",
+    "webhook": {
+      "curl_command": "Webhook cURL कमांड",
+      "curl_note": "इस cURL कमांड का उपयोग कस्टम JSON payload के साथ webhook के माध्यम से flow को trigger करने के लिए करें।",
+      "no_triggers": "इस flow में कोई सक्षम वेबहुक triggers नहीं हैं",
+      "payload": "Webhook Payload (JSON)"
+    },
     "webhook link copied": "Webhook लिंक कॉपी किया गया।",
     "weeks": "सप्ताह",
     "welcome": {

@@ -3,6 +3,7 @@ package io.kestra.cli.commands.flows.namespaces;
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
 import io.kestra.cli.commands.flows.IncludeHelperExpander;
+import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.serializers.YamlParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -10,6 +11,7 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
+import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -29,6 +31,9 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
 
     @CommandLine.Option(names = {"--override-namespaces"}, negatable = true, description = "Replace namespace of all flows by the one provided")
     public boolean override = false;
+
+    @Inject
+    private TenantIdSelectorService tenantService;
 
     @SuppressWarnings("deprecation")
     @Override
@@ -59,7 +64,7 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
             }
             try(DefaultHttpClient client = client()) {
                 MutableHttpRequest<String> request = HttpRequest
-                    .POST(apiUri("/flows/") + namespace + "?delete=" + delete, body).contentType(MediaType.APPLICATION_YAML);
+                    .POST(apiUri("/flows/", tenantService.getTenantId(tenantId)) + namespace + "?delete=" + delete, body).contentType(MediaType.APPLICATION_YAML);
 
                 List<UpdateResult> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),

@@ -11,6 +11,10 @@ import lombok.Getter;
 import java.util.ArrayList;
 import java.util.List;
 
+// TODO for 2.0: this class is used as a queue consumer (which should have been the ExecutorInterface instead),
+//  a queue message (only in Kafka) and an execution context.
+//  At some point, we should rename it to ExecutorContext and move it to the executor module,
+//  then rename the ExecutorInterface to just Executor (to be used as a queue consumer)
 @Getter
 @AllArgsConstructor
 public class Executor {
@@ -86,7 +90,7 @@ public class Executor {
 
     public Boolean canBeProcessed() {
         return !(this.getException() != null || this.getFlow() == null || this.getFlow() instanceof FlowWithException || this.getFlow().getTasks() == null ||
-            this.getExecution().isDeleted() || this.getExecution().getState().isPaused() || this.getExecution().getState().isBreakpoint());
+            this.getExecution().isDeleted() || this.getExecution().getState().isPaused() || this.getExecution().getState().isBreakpoint() || this.getExecution().getState().isQueued());
     }
 
     public Executor withFlow(FlowWithSource flow) {

@@ -37,7 +37,16 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     private final ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher;
 
     List<QueryBuilderInterface<?>> queryBuilders;
-
+    
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public long count() {
+        return jdbcRepository.count(this.defaultFilter());
+    }
+    
+    
     @Override
     public Optional<Dashboard> get(String tenantId, String id) {
         return jdbcRepository
@@ -78,7 +87,6 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
                     .select(
                         field("value")
                     )
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
@@ -99,7 +107,6 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
                     .select(
                         field("value")
                     )
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
@@ -118,7 +125,6 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
                     .select(
                         field("value")
                     )
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(jdbcRepository.getTable())
                     .where(this.defaultFilterWithNoACL(tenantId));
 
@@ -144,13 +150,8 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
         fields.put(field("source_code"), source);
 
         this.jdbcRepository.persist(dashboard, fields);
-
-        if (previousDashboard == null) {
-            eventPublisher.publishEvent(new CrudEvent<>(dashboard, CrudEventType.CREATE));
-        } else {
-            eventPublisher.publishEvent(new CrudEvent<>(dashboard, previousDashboard, CrudEventType.UPDATE));
-        }
-
+        this.eventPublisher.publishEvent(CrudEvent.of(previousDashboard, dashboard));
+        
         return dashboard;
     }
 
@@ -168,8 +169,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
         fields.put(field("source_code"), deleted.getSourceCode());
 
         this.jdbcRepository.persist(deleted, fields);
-
-        eventPublisher.publishEvent(new CrudEvent<>(dashboard.get(), CrudEventType.DELETE));
+        this.eventPublisher.publishEvent(CrudEvent.delete(dashboard.get()));
 
         return deleted;
     }

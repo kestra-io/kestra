@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar v-if="topbar" :title="routeInfo.title">
+    <TopNavBar v-if="topbar" :title="routeInfo.title">
         <template #additional-right>
             <ul>
                 <li>
@@ -36,18 +36,18 @@
                 </li>
             </ul>
         </template>
-    </top-nav-bar>
+    </TopNavBar>
     <section
         data-component="FILENAME_PLACEHOLDER"
         :class="{container: topbar}"
         v-if="ready"
     >
         <div>
-            <data-table
+            <DataTable
                 @page-changed="onPageChanged"
                 ref="dataTable"
-                :total="total"
-                :hide-top-pagination="!!namespace"
+                :total="flowStore.total"
+                :hideTopPagination="!!namespace"
             >
                 <template #navbar>
                     <KestraFilter
@@ -55,14 +55,7 @@
                         :language="FlowFilterLanguage"
                         :buttons="{
                             refresh: {shown: false},
-                            settings: {
-                                shown: true,
-                                charts: {
-                                    shown: true,
-                                    value: showChart,
-                                    callback: onShowChartChange,
-                                },
-                            },
+                            settings: {shown: false}
                         }"
                         :properties="{
                             shown: true,
@@ -74,30 +67,26 @@
                     />
                 </template>
 
-                <template v-if="showStatChart()" #top>
-                    <Sections :dashboard="{id: 'default'}" :charts show-default />
-                </template>
-
                 <template #table>
-                    <select-table
+                    <SelectTable
                         ref="selectTable"
-                        :data="flows"
-                        :default-sort="{prop: 'id', order: 'ascending'}"
-                        table-layout="auto"
+                        :data="flowStore.flows"
+                        :defaultSort="{prop: 'id', order: 'ascending'}"
+                        tableLayout="auto"
                         fixed
                         @row-dblclick="onRowDoubleClick"
                         @sort-change="onSort"
-                        :row-class-name="rowClasses"
+                        :rowClassName="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
                         :no-data-text="$t('no_results.flows')"
                         class="flows-table"
                     >
                         <template #select-actions>
-                            <bulk-select
-                                :select-all="queryBulkAction"
+                            <BulkSelect
+                                :selectAll="queryBulkAction"
                                 :selections="selection"
-                                :total="total"
+                                :total="flowStore.total"
                                 @update:select-all="toggleAllSelection"
                                 @unselect="toggleAllUnselected"
                             >
@@ -129,13 +118,13 @@
                                 >
                                     {{ $t("disable") }}
                                 </el-button>
-                            </bulk-select>
+                            </BulkSelect>
                         </template>
                         <template #default>
                             <el-table-column
                                 prop="id"
                                 sortable="custom"
-                                :sort-orders="['ascending', 'descending']"
+                                :sortOrders="['ascending', 'descending']"
                                 :label="$t('id')"
                             >
                                 <template #default="scope">
@@ -157,7 +146,7 @@
                                                 )
                                             }}
                                         </router-link>
-                                        <markdown-tooltip
+                                        <MarkdownTooltip
                                             :id="
                                                 scope.row.namespace +
                                                     '-' +
@@ -179,7 +168,7 @@
                                 :label="$t('labels')"
                             >
                                 <template #default="scope">
-                                    <labels :labels="scope.row.labels" />
+                                    <Labels :labels="scope.row.labels" />
                                 </template>
                             </el-table-column>
 
@@ -187,7 +176,7 @@
                                 prop="namespace"
                                 v-if="displayColumn('namespace')"
                                 sortable="custom"
-                                :sort-orders="['ascending', 'descending']"
+                                :sortOrders="['ascending', 'descending']"
                                 :label="$t('namespace')"
                                 :formatter="
                                     (_, __, cellValue) =>
@@ -204,7 +193,7 @@
                                 :label="$t('last execution date')"
                             >
                                 <template #default="scope">
-                                    <date-ago
+                                    <DateAgo
                                         v-if="lastExecutionByFlowReady"
                                         :inverted="true"
                                         :date="
@@ -224,34 +213,40 @@
                                 :label="$t('last execution status')"
                             >
                                 <template #default="scope">
-                                    <status
-                                        v-if="
-                                            lastExecutionByFlowReady &&
-                                                getLastExecution(scope.row)
-                                                    ?.status
-                                        "
-                                        :status="
-                                            getLastExecution(scope.row)
-                                                ?.status
-                                        "
-                                        size="small"
-                                    />
+                                    <div
+                                        v-if="lastExecutionByFlowReady && getLastExecution(scope.row)?.status"
+                                        class="d-flex justify-content-between align-items-center"
+                                    >
+                                        <Status :status="getLastExecution(scope.row)?.status" size="small" />
+                                    </div>
+                                </template>
+                            </el-table-column>
+
+                            <el-table-column
+                                prop="state"
+                                v-if="displayColumn('state') &&
+                                    user.hasAny(permission.EXECUTION)"
+                                :label="$t('execution statistics')"
+                                className="row-graph"
+                            >
+                                <template #default="scope">
+                                    <TimeSeries :chart="mappedChart(scope.row.id, scope.row.namespace)" showDefault short />
                                 </template>
                             </el-table-column>
 
                             <el-table-column
                                 v-if="displayColumn('triggers')"
                                 :label="$t('triggers')"
-                                class-name="row-action"
+                                className="row-action"
                             >
                                 <template #default="scope">
-                                    <trigger-avatar :flow="scope.row" />
+                                    <TriggerAvatar :flow="scope.row" />
                                 </template>
                             </el-table-column>
 
                             <el-table-column
-                                column-key="action"
-                                class-name="row-action"
+                                columnKey="action"
+                                className="row-action"
                                 :label="$t('actions')"
                             >
                                 <template #default="scope">
@@ -264,19 +259,19 @@
                                             },
                                         }"
                                     >
-                                        <kicon
+                                        <Kicon
                                             :tooltip="$t('details')"
                                             placement="left"
                                         >
                                             <TextSearch />
-                                        </kicon>
+                                        </Kicon>
                                     </router-link>
                                 </template>
                             </el-table-column>
                         </template>
-                    </select-table>
+                    </SelectTable>
                 </template>
-            </data-table>
+            </DataTable>
         </div>
     </section>
 </template>
@@ -285,7 +280,6 @@
     import {ref} from "vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import Plus from "vue-material-design-icons/Plus.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import Download from "vue-material-design-icons/Download.vue";
@@ -295,14 +289,12 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
     import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
-    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
-    import Sections from "../dashboard/sections/Sections.vue";
+    import TimeSeries from "../dashboard/sections/TimeSeries.vue";
 
     const file = ref(null);
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import _merge from "lodash/merge";
@@ -321,7 +313,47 @@
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import Kicon from "../Kicon.vue";
     import Labels from "../layout/Labels.vue";
-    import {storageKeys} from "../../utils/constants";
+    import {defaultNamespace} from "../../composables/useNamespaces";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import {useAuthStore} from "override/stores/auth.ts";
+    import {useFlowStore} from "../../stores/flow.ts";
+
+    const CHART_DEFINITION = {
+        id: "total_executions_timeseries",
+        type: "io.kestra.plugin.core.dashboard.chart.TimeSeries",
+        chartOptions: {
+            displayName: "Total Executions",
+            description: "Executions duration and count per date",
+            legend: {enabled: false},
+            column: "date",
+            colorByColumn: "state",
+            width: 12,
+        },
+        data: {
+            type: "io.kestra.plugin.core.dashboard.data.Executions",
+            columns: {
+                date: {field: "START_DATE", displayName: "Date"},
+                state: {field: "STATE"},
+                total: {displayName: "Executions", agg: "COUNT"},
+                duration: {field: "DURATION", displayName: "Duration", agg: "SUM"},
+            },
+            where: [
+                {
+                    field: "NAMESPACE",
+                    type: "EQUAL_TO",
+                    value: "${namespace}",
+                },
+                {
+                    field: "FLOW_ID",
+                    type: "EQUAL_TO",
+                    value: "${flow_id}",
+                }
+            ]
+        },
+    };
+
+    CHART_DEFINITION.content = YAML_UTILS.stringify(CHART_DEFINITION);
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -391,36 +423,28 @@
                 permission: permission,
                 action: action,
                 file: undefined,
-                showChart: ["true", null].includes(
-                    localStorage.getItem(storageKeys.SHOW_FLOWS_CHART),
-                ),
                 loading: false,
                 lastExecutionByFlowReady: false,
-                latestExecutions: []
+                latestExecutions: [],
+                dblClickRouteName: "flows/update"
             };
         },
         computed: {
-            ...mapState("flow", ["flows", "total"]),
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useFlowStore, useAuthStore),
+            user() {
+                return this.authStore.user;
+            },
             routeInfo() {
                 return {
                     title: this.$t("flows"),
                 };
-            },
-            endDate() {
-                return new Date();
-            },
-            startDate() {
-                return this.$moment(this.endDate).add(-30, "days").toDate();
             },
             canCheck() {
                 return this.canRead || this.canDelete || this.canUpdate;
             },
             canCreate() {
                 return (
-                    this.user &&
-                    this.user.hasAnyActionOnAnyNamespace(
+                    this.user?.hasAnyActionOnAnyNamespace(
                         permission.FLOW,
                         action.CREATE,
                     )
@@ -428,8 +452,7 @@
             },
             canRead() {
                 return (
-                    this.user &&
-                    this.user.isAllowed(
+                    this.user?.isAllowed(
                         permission.FLOW,
                         action.READ,
                         this.$route.query.namespace,
@@ -438,8 +461,7 @@
             },
             canDelete() {
                 return (
-                    this.user &&
-                    this.user.isAllowed(
+                    this.user?.isAllowed(
                         permission.FLOW,
                         action.DELETE,
                         this.$route.query.namespace,
@@ -448,8 +470,7 @@
             },
             canUpdate() {
                 return (
-                    this.user &&
-                    this.user.isAllowed(
+                    this.user?.isAllowed(
                         permission.FLOW,
                         action.UPDATE,
                         this.$route.query.namespace,
@@ -463,15 +484,11 @@
             }
         },
         beforeRouteEnter(to, _, next) {
-            const defaultNamespace = localStorage.getItem(
-                storageKeys.DEFAULT_NAMESPACE,
-            );
             const query = {...to.query};
             let queryHasChanged = false;
-
             const queryKeys = Object.keys(query);
-            if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][PREFIX]"] = defaultNamespace;
+            if (defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+                query["filters[namespace][PREFIX]"] = defaultNamespace();
                 queryHasChanged = true;
             }
 
@@ -518,31 +535,22 @@
             updateDisplayColumns(newColumns) {
                 this.displayColumns = newColumns;
             },
-            showStatChart() {
-                return this.showChart;
-            },
-            onShowChartChange(value) {
-                this.showChart = value;
-                localStorage.setItem(storageKeys.SHOW_FLOWS_CHART, value);
-            },
             exportFlows() {
                 this.$toast().confirm(
                     this.$t("flow export", {
                         flowCount: this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length,
                     }),
                     () => {
                         const flowCount = this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length;
 
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch(
-                                    "flow/exportFlowByQuery",
-                                    this.loadQuery(),
-                                )
+                            return this.flowStore.exportFlowByQuery(
+                                this.loadQuery(),
+                            )
                                 .then(() => {
                                     this.$toast().success(
                                         this.$t("flows exported", {
@@ -551,10 +559,9 @@
                                     );
                                 });
                         } else {
-                            return this.$store
-                                .dispatch("flow/exportFlowByIds", {
-                                    ids: this.selection,
-                                })
+                            return this.flowStore.exportFlowByIds({
+                                ids: this.selection,
+                            })
                                 .then(() => {
                                     this.$toast().success(
                                         this.$t("flows exported", {
@@ -571,16 +578,14 @@
                 this.$toast().confirm(
                     this.$t("flow disable", {
                         flowCount: this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length,
                     }),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch(
-                                    "flow/disableFlowByQuery",
-                                    this.loadQuery(),
-                                )
+                            return this.flowStore.disableFlowByQuery(
+                                this.loadQuery(),
+                            )
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows disabled", {
@@ -590,10 +595,9 @@
                                     this.loadData(() => {});
                                 });
                         } else {
-                            return this.$store
-                                .dispatch("flow/disableFlowByIds", {
-                                    ids: this.selection,
-                                })
+                            return this.flowStore.disableFlowByIds({
+                                ids: this.selection,
+                            })
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows disabled", {
@@ -617,16 +621,14 @@
                 this.$toast().confirm(
                     this.$t("flow enable", {
                         flowCount: this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length,
                     }),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch(
-                                    "flow/enableFlowByQuery",
-                                    this.loadQuery(),
-                                )
+                            return this.flowStore.enableFlowByQuery(
+                                this.loadQuery(),
+                            )
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows enabled", {
@@ -636,10 +638,9 @@
                                     this.loadData(() => {});
                                 });
                         } else {
-                            return this.$store
-                                .dispatch("flow/enableFlowByIds", {
-                                    ids: this.selection,
-                                })
+                            return this.flowStore.enableFlowByIds({
+                                ids: this.selection,
+                            })
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows enabled", {
@@ -657,16 +658,14 @@
                 this.$toast().confirm(
                     this.$t("flow delete", {
                         flowCount: this.queryBulkAction
-                            ? this.total
+                            ? this.flowStore.total
                             : this.selection.length,
                     }),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch(
-                                    "flow/deleteFlowByQuery",
-                                    this.loadQuery(),
-                                )
+                            return this.flowStore.deleteFlowByQuery(
+                                this.loadQuery(),
+                            )
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows deleted", {
@@ -676,10 +675,9 @@
                                     this.loadData(() => {});
                                 });
                         } else {
-                            return this.$store
-                                .dispatch("flow/deleteFlowByIds", {
-                                    ids: this.selection,
-                                })
+                            return this.flowStore.deleteFlowByIds({
+                                ids: this.selection,
+                            })
                                 .then((r) => {
                                     this.$toast().success(
                                         this.$t("flows deleted", {
@@ -696,7 +694,7 @@
             importFlows() {
                 const formData = new FormData();
                 formData.append("fileUpload", this.$refs.file.files[0]);
-                this.$store.dispatch("flow/importFlows", formData)
+                this.flowStore.importFlows(formData)
                     .then((res) => {
                         if (res.data.length > 0) {
                             this.$toast().warning(
@@ -717,10 +715,10 @@
                     e => e.flowId === row.id && e.namespace === row.namespace
                 ) ?? null;
             },
-            loadQuery(base, ignoreDateFilters = true) {
+            loadQuery(base) {
                 let queryFilter = this.queryWithFilter(
                     undefined,
-                    ignoreDateFilters ? ["startDate", "endDate", "timeRange"] : []
+                    []
                 );
 
                 if (this.namespace) {
@@ -732,9 +730,8 @@
             loadData(callback) {
                 const q = this.$route.query;
 
-                this.$store
-                    .dispatch(
-                        "flow/findFlows",
+                this.flowStore
+                    .findFlows(
                         this.loadQuery({
                             size: parseInt(this.namespace ? this.internalPageSize : q.size ?? 25),
                             page: parseInt(this.namespace ? this.internalPageNumber : q.page ?? 1),
@@ -766,7 +763,14 @@
             rowClasses(row) {
                 return row && row.row && row.row.disabled ? "disabled" : "";
             },
-        },
+            mappedChart(id, namespace) {
+                let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION));
+
+                MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id);
+
+                return MAPPED_CHARTS;
+            }
+        }
     };
 </script>
 
@@ -786,5 +790,9 @@
 
 .flows-table .el-table__cell {
     vertical-align: middle;
+}
+
+:deep(.flows-table) .el-scrollbar__thumb {
+    background-color: var(--ks-border-active) !important;
 }
 </style>

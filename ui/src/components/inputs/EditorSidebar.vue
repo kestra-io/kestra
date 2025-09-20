@@ -10,7 +10,7 @@
                 :placeholder="$t('namespace files.filter')"
                 filterable
                 remote
-                :remote-method="searchFilesList"
+                :remoteMethod="searchFilesList"
                 class="filter"
             >
                 <template #prefix>
@@ -29,9 +29,9 @@
                     effect="light"
                     :content="$t('namespace files.create.file')"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                     :persistent="false"
-                    popper-class="text-base"
+                    popperClass="text-base"
                 >
                     <el-button class="px-2" @click="toggleDialog(true, 'file')">
                         <FilePlus />
@@ -41,9 +41,9 @@
                     effect="light"
                     :content="$t('namespace files.create.folder')"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                     :persistent="false"
-                    popper-class="text-base"
+                    popperClass="text-base"
                 >
                     <el-button
                         class="px-2"
@@ -91,9 +91,9 @@
                     effect="light"
                     :content="$t('namespace files.export')"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                     :persistent="false"
-                    popper-class="text-base"
+                    popperClass="text-base"
                 >
                     <el-button class="px-2" @click="exportFiles()">
                         <FolderDownloadOutline />
@@ -107,14 +107,14 @@
             lazy
             :load="loadNodes"
             :data="items"
-            highlight-current
-            :allow-drop="
+            highlightCurrent
+            :allowDrop="
                 (_, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'
             "
             draggable
-            node-key="id"
+            nodeKey="id"
             v-loading="items === undefined"
-            :props="{class: 'node', isLeaf: 'leaf'}"
+            :props="{class: 'nodeClass', isLeaf: 'leaf'}"
             class="mt-3"
             @node-click="handleNodeClick"
             @node-drag-start="
@@ -149,7 +149,6 @@
                     <el-row
                         justify="space-between"
                         class="w-100"
-                        :class="{'selected-node': selectedNodes.includes(data.id)}"
                         @click="(event) => handleNodeClick(data, node)"
                     >
                         <el-col class="w-100">
@@ -400,10 +399,12 @@
 </template>
 
 <script>
-    import {mapActions, mapMutations, mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useNamespacesStore} from "override/stores/namespaces";
+    import {useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
 
     import Utils from "../../utils/utils";
-
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
@@ -411,8 +412,8 @@
     import FolderPlus from "vue-material-design-icons/FolderPlus.vue";
     import PlusBox from "vue-material-design-icons/PlusBox.vue";
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue";
-
     import TypeIcon from "../utils/icons/Type.vue";
+
 
     const DIALOG_DEFAULTS = {
         visible: false,
@@ -474,11 +475,7 @@
             };
         },
         computed: {
-            ...mapState({
-                flow: (state) => state.flow.flow,
-                explorerVisible: (state) => state.editor.explorerVisible,
-                treeRefresh: (state) => state.editor.treeRefresh,
-            }),
+            ...mapStores(useEditorStore, useFlowStore, useNamespacesStore),
             namespaceId() {
                 return this.currentNS ?? this.$route.params.namespace;
             },
@@ -546,6 +543,12 @@
 
             isMac() {
                 return navigator.userAgent.includes("Mac");
+
+            nodeClass(data) {
+                if (this.selectedNodes.includes(data.id)) {
+                    return "node selected-tree-node";
+                }
+                return "node";
             },
             flattenTree(items, parentPath = "") {
                 const result = [];
@@ -591,7 +594,7 @@
                     this.selectedNodes = [node.data.id];
                     this.lastClickedIndex = currentIndex;
                     if (data.leaf) {
-                        this.openTab({
+                        this.editorStore.openTab({
                             name: data.fileName,
                             path: path,
                             extension: data.fileName.split(".").pop(),
@@ -673,11 +676,11 @@
                     const payload = {
                         namespace: this.namespaceId,
                     };
-                    const items = await this.readDirectory(payload);
+                    const items = await this.namespacesStore.readDirectory(payload);
 
                     this.renderNodes(items);
                     this.items = this.sorted(this.items);
-                    this.$store.commit("editor/setTreeData", this.items);
+                    this.editorStore.treeData = this.items;
                     resolve(this.items);
                 } else if (node.level >= 1) {
                     const payload = {
@@ -685,7 +688,7 @@
                         path: this.getPath(node),
                     };
 
-                    let children = await this.readDirectory(payload);
+                    let children = await this.namespacesStore.readDirectory(payload);
                     children = this.sorted(
                         children.map((item) => ({
                             ...item,
@@ -719,7 +722,7 @@
             async searchFilesList(value) {
                 if (!value) return;
 
-                const results = await this.searchFiles({
+                const results = await this.namespacesStore.searchFiles({
                     namespace: this.namespaceId,
                     query: value,
                 });
@@ -729,7 +732,7 @@
                 return this.searchResults;
             },
             chooseSearchResults(item) {
-                this.openTab({
+                this.editorStore.openTab({
                     name: item.split("/").pop(),
                     extension: item.split(".").pop(),
                     path: item,
@@ -792,7 +795,7 @@
                 const path = this.getPath(this.renameDialog.node);
                 const start = path.substring(0, path.lastIndexOf("/") + 1);
 
-                this.renameFileDirectory({
+                this.namespacesStore.renameFileDirectory({
                     namespace: this.namespaceId,
                     old: `${start}${this.renameDialog.old}`,
                     new: `${start}${this.renameDialog.name}`,
@@ -877,7 +880,7 @@
             },
             async nodeMoved(draggedNode) {
                 try {
-                    await this.moveFileDirectory({
+                    await this.namespacesStore.moveFileDirectory({
                         namespace: this.namespaceId,
                         old: this.nodeBeforeDrag.path,
                         new: this.getPath(draggedNode.data.id),
@@ -958,7 +961,7 @@
                             // Read file content
                             const content = await this.readFile(file);
 
-                            this.importFileDirectory({
+                            this.namespacesStore.importFileDirectory({
                                 namespace:
                                     this.namespaceId,
                                 content,
@@ -981,7 +984,7 @@
                                 file.name,
                             );
 
-                            this.importFileDirectory({
+                            this.namespacesStore.importFileDirectory({
                                 namespace:
                                     this.namespaceId,
                                 content,
@@ -1012,7 +1015,7 @@
                 }
             },
             exportFiles() {
-                this.exportFileDirectory({
+                this.namespacesStore.exportFileDirectory({
                     namespace: this.namespaceId,
                 });
             },
@@ -1048,7 +1051,7 @@
                         );
                         return;
                     }
-                    await this.createFile({
+                    await this.namespacesStore.createFile({
                         namespace: this.namespaceId,
                         path,
                         content,
@@ -1056,7 +1059,7 @@
                         creation: true,
                     });
 
-                    this.openTab({
+                    this.editorStore.openTab({
                         name: NAME,
                         path,
                         extension: extension,
@@ -1146,14 +1149,14 @@
             async removeItems() {
                 for (const node of this.confirmation.nodes) {
                     try {
-                        await this.deleteFileDirectory({
+                        await this.namespacesStore.deleteFileDirectory({
                             namespace: this.currentNS ?? this.$route.params.namespace,
                             path: this.getPath(node),
                             name: node.fileName,
                             type: node.type,
                         });
                         this.$refs.tree.remove(node.id);
-                        this.closeTab({
+                        this.editorStore.closeTab({
                             name: node.fileName,
                         });
                     } catch (error) {
@@ -1180,7 +1183,7 @@
                         this.dialog.folder ? `${this.dialog.folder}/` : ""
                     }${fileName}`;
 
-                    await this.createDirectory({
+                    await this.namespacesStore.createDirectory({
                         namespace: this.namespaceId,
                         path,
                         name: fileName,
@@ -1275,7 +1278,7 @@
                 }
             },
             async exportFile(node, data){
-                const content = await  this.$store.dispatch("namespace/readFile", {
+                const content = await this.namespacesStore.readFile({
                     path: this.getPath(node),
                     namespace: this.namespaceId,
                 })
@@ -1309,10 +1312,10 @@
             document.removeEventListener("click", this.clearSelection);
         },
         watch: {
-            flow: {
+            "flowStore.flow": {
                 handler(flow) {
                     if (flow) {
-                        this.openTab({
+                        this.editorStore.openTab({
                             name: "Flow",
                             path: "Flow.yaml",
                             persistent: true,
@@ -1323,11 +1326,11 @@
                 immediate: true,
                 deep: true,
             },
-            treeRefresh: {
+            "editorStore.treeRefresh": {
                 async handler() {
                     if (this.$refs.tree) {
                         this.items = undefined;
-                        const items = await this.readDirectory({
+                        const items = await this.namespacesStore.readDirectory({
                             namespace: this.namespaceId
                         });
                         this.renderNodes(items);
@@ -1397,7 +1400,6 @@
 
     .filename {
         font-size: var(--el-font-size-small);
-        color: var(--ks-content-primary);
 
         &:hover {
             color: var(--ks-content-link-hover);
@@ -1445,6 +1447,7 @@
             }
 
             &:hover{
+                background: none;
                 border: 1px solid var(--ks-border-active);
             }
         }
@@ -1459,9 +1462,14 @@
 
         .el-tree-node.is-current > .el-tree-node__content {
             min-width: fit-content;
-            border: 1px solid var(--ks-border-active)
+            border: 1px solid var(--ks-border-active);
+            background: var(--ks-button-background-primary);
+
+            .filename {
+                color: var(--ks-button-content-primary);
+            }
         }
-        .el-tree-node:has(.selected-node) > .el-tree-node__content {
+        .el-tree-node.selected-tree-node > .el-tree-node__content {
             background-color: var(--ks-button-background-primary);
             min-width: fit-content;
         }

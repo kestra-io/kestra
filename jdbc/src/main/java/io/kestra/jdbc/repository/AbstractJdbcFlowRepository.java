@@ -535,7 +535,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         return (SelectConditionStep<R>) context
             .select(fields)
-            .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(fromLastRevision(false))
             .join(jdbcRepository.getTable().as("ft"))
             .on(
@@ -594,9 +593,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @SuppressWarnings("unchecked")
-    private <R extends Record, E> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect) {
+    private <R extends Record> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect) {
         var select = this.fullTextSelect(tenantId, context, additionalFieldsToSelect != null ? additionalFieldsToSelect : List.of());
-        select = this.filter(select, filters, null, Resource.FLOW);
+        select = select.and(this.filter(filters, null, Resource.FLOW));
         return (SelectConditionStep<R>) select;
     }
 
@@ -701,12 +700,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         this.jdbcRepository.persist(flow, fields);
 
         flowQueue.emit(flow);
-
-        if (nullOrExisting != null) {
-            eventPublisher.publishEvent(new CrudEvent<>(flow, nullOrExisting, crudEventType));
-        } else {
-            eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
-        }
+        eventPublisher.publishEvent(new CrudEvent<>(flow, nullOrExisting, crudEventType));
 
         return flowWithSource.toBuilder().revision(revision).build();
     }
@@ -736,8 +730,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         this.jdbcRepository.persist(deleted, fields);
 
         flowQueue.emit(deleted);
-
-        eventPublisher.publishEvent(new CrudEvent<>(flow, CrudEventType.DELETE));
+        eventPublisher.publishEvent(CrudEvent.delete(flow));
 
         return deleted;
     }

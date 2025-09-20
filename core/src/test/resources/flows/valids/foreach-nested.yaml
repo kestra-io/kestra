@@ -1,0 +1,21 @@
+id: foreach-nested
+namespace: io.kestra.tests
+tasks:
+  - id: each0
+    type: io.kestra.plugin.core.flow.ForEach
+    values: ["l1", "l2"]
+    tasks:
+      - id: each1
+        type: io.kestra.plugin.core.flow.ForEach
+        concurrencyLimit: 0
+        values: ["d1", "d2", "d3"]
+        tasks:
+            - id: p1
+              type: io.kestra.plugin.core.debug.Return
+              format: "{{ parent.taskrun.value }}-{{ taskrun.value }}"
+            - id: p2
+              type: io.kestra.plugin.core.debug.Return
+              format: "{{ outputs.p1[parent.taskrun.value][taskrun.value].value }}"
+  - id: test
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.p1 }}"

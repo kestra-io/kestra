@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
+    <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
         <template #additional-right v-if="canSave || canDelete">
             <ul>
                 <li>
@@ -15,10 +15,10 @@
                 </li>
             </ul>
         </template>
-    </top-nav-bar>
-    <templates-deprecated />
+    </TopNavBar>
+    <TemplatesDeprecated />
     <section class="container d-flex flex-fill">
-        <editor @save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange" @cursor="updatePluginDocumentation" class="w-100 h-auto" />
+        <editor @save="save" v-model="content" schemaType="template" lang="yaml" @update:model-value="onChange" @cursor="updatePluginDocumentation" class="w-100 h-auto" />
     </section>
 </template>
 
@@ -31,7 +31,8 @@
 
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
-    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useTemplateStore} from "../../stores/template";
 
     export default {
         mixins: [flowTemplateEdit],
@@ -41,7 +42,7 @@
             };
         },
         computed: {
-            ...mapState("template", ["template"]),
+            ...mapStores(useTemplateStore),
         },
         watch: {
             "$route.params"() {
@@ -52,13 +53,13 @@
             this.reload()
         },
         unmounted() {
-            this.$store.commit("template/setTemplate", undefined);
+            this.templateStore.template = undefined;
         },
         methods: {
             reload() {
                 if (this.$route.name === "templates/update") {
-                    this.$store
-                        .dispatch("template/loadTemplate", this.$route.params)
+                    this.templateStore
+                        .loadTemplate(this.$route.params)
                         .then(this.loadFile);
                 }
             },

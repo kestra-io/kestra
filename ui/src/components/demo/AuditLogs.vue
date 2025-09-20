@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" v-if="!isFullScreen() && !embed" />
+    <TopNavBar :title="routeInfo.title" v-if="!isFullScreen() && !embed" />
     <Layout
         :title="t('demos.audit-logs.title')"
         :image="{source: sourceImg, alt: t('demos.audit-logs.title')}"
@@ -8,7 +8,7 @@
         }"
     >
         <template #message>
-            {{ $t('demos.audit-logs.message') }}
+            {{ t('demos.audit-logs.message') }}
         </template>
     </Layout>
 </template>
@@ -20,7 +20,7 @@
     // @ts-expect-error no types in TopNavBar yet
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import sourceImg from "../../assets/demo/audit-logs.png";
-    import useRouteContext from "../../mixins/useRouteContext";
+    import useRouteContext from "../../composables/useRouteContext";
 
     const {t} = useI18n();
 
@@ -29,6 +29,11 @@
             type:Boolean,
             default: false
         }
+    });
+
+    defineOptions({
+        name: "AuditLogsDemo",
+        inheritAttrs: false,
     });
 
     const routeInfo = ref({

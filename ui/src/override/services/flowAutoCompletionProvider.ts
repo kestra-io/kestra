@@ -1,4 +1,4 @@
-import type {Store} from "vuex";
+import {ComputedRef} from "vue";
 import type {JSONSchema} from "@kestra-io/ui-libs";
 import {YamlElement} from "@kestra-io/ui-libs";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -6,22 +6,30 @@ import {QUOTE, YamlAutoCompletion} from "../../services/autoCompletionProvider";
 import RegexProvider from "../../utils/regex";
 import {State} from "@kestra-io/ui-libs";
 import {usePluginsStore} from "../../stores/plugins";
-import {ComputedRef} from "vue";
+import {useFlowStore} from "../../stores/flow";
+import {useNamespacesStore} from "override/stores/namespaces";
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []));
 }
 
 export class FlowAutoCompletion extends YamlAutoCompletion {
-    store: Store<Record<string, any>>;
     flowsInputsCache: Record<string, string[]> = {};
     pluginsStore: ReturnType<typeof usePluginsStore>;
+    flowStore: ReturnType<typeof useFlowStore>;
+    namespacesStore: ReturnType<typeof useNamespacesStore>;
     private readonly completionSource: ComputedRef<string | undefined> | undefined;
 
-    constructor(store: Store<Record<string, any>>, pluginsStore: ReturnType<typeof usePluginsStore>, completionSource?: ComputedRef<string | undefined>) {
+    constructor(
+        flowStore: ReturnType<typeof useFlowStore>,
+        pluginsStore: ReturnType<typeof usePluginsStore>,
+        namespacesStore: ReturnType<typeof useNamespacesStore>,
+        completionSource?: ComputedRef<string | undefined>
+    ) {
         super();
-        this.store = store;
+        this.flowStore = flowStore;
         this.pluginsStore = pluginsStore;
+        this.namespacesStore = namespacesStore;
         this.completionSource = completionSource;
     }
 
@@ -64,6 +72,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             "randomInt(lower=${1:0}, upper=${2:10})",
             "randomPort()",
             "tasksWithState(state=${1:'FAILED'})",
+            "http(uri=${1:'https://example.com'}, method=${2:'GET'})",
         ]);
     }
 
@@ -149,8 +158,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         const subflowUid = namespace + "." + flowId + (revision === undefined ? "" : `:${revision}`) ;
         if (this.flowsInputsCache?.[subflowUid] === undefined) {
             try {
-                const {inputs} = (await this.store.dispatch(
-                    "flow/loadFlow",
+                const {inputs} = (await this.flowStore.loadFlow(
                     {
                         namespace,
                         id: flowId,
@@ -179,14 +187,14 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
 
         switch(yamlElement.key) {
             case "namespace": {
-                const datatypeNamespaces = this.store.state["namespace"].datatypeNamespaces;
-                return datatypeNamespaces === undefined
-                    ? await this.store.dispatch("namespace/loadNamespacesForDatatype", {dataType: "flow"})
-                    : Promise.resolve(datatypeNamespaces);
+                const availableNamespaces = this.namespacesStore.autocomplete;
+                return availableNamespaces === undefined
+                    ? await this.namespacesStore.loadAutocomplete()
+                    : Promise.resolve(availableNamespaces);
             }
             case "flowId": {
                 if (parentTask !== undefined && parentTask.namespace !== undefined) {
-                    let flowIds: string[] = (await this.store.dispatch("flow/flowsByNamespace", parentTask.namespace))
+                    let flowIds: string[] = (await this.flowStore.flowsByNamespace(parentTask.namespace))
                         .map((flow: {id: string}) => flow.id)
                     if (parsed?.id !== undefined && parsed?.namespace === parentTask.namespace) {
                         flowIds = flowIds.filter(flowId => flowId !== parsed?.id);
@@ -230,17 +238,14 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([]);
                 }
-                return Array.from(Object.entries<string[]>(await this.store.dispatch("namespace/inheritedSecrets", {id: namespace})).reduce((acc: Set<string>, [_, nsSecrets]: [string, string[]]) => {
-                    nsSecrets.forEach(secret => acc.add(QUOTE + secret + QUOTE));
-                    return acc;
-                }, new Set<string>()));
+                return Array.from(new Set<string>((await (this.namespacesStore as any).usableSecrets(namespace)).map((secret: string) => QUOTE + secret + QUOTE)));
             }
             case "kv": {
                 const namespace = this.extractArgValue(namespaceArg);
                 if (namespace === undefined) {
                     return Promise.resolve([]);
                 }
-                return (await this.store.dispatch("namespace/kvsList", {id: namespace})).map((kv: {key: string}) => QUOTE + kv.key + QUOTE);
+                return (await this.namespacesStore.kvsList({id: namespace})).map((kv: {key: string}) => QUOTE + kv.key + QUOTE);
             }
             case "tasksWithState": {
                 return State.arrayAllStates().map(({name}) => QUOTE + name + QUOTE);

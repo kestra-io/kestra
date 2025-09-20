@@ -5,6 +5,7 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.QueueException;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -77,8 +79,12 @@ public class TaskCacheTest {
     @Plugin
     public static class CounterTask extends Task implements RunnableTask<CounterTask.Output> {
 
+        private String workingDir;
+
         @Override
         public Output run(RunContext runContext) throws Exception {
+            Map<String, Object> variables = Map.of("workingDir", runContext.workingDir().path().toString());
+            runContext.render(this.workingDir, variables);
             return Output.builder()
                 .counter(COUNTER.incrementAndGet())
                 .build();

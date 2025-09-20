@@ -4,26 +4,12 @@ import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
-public class NullOutputTest {
-    @Inject
-    protected StandAloneRunner runner;
-
-    @BeforeEach
-    protected void init() throws IOException, URISyntaxException {
-        if (!runner.isRunning()) {
-            runner.run();
-        }
-    }
+@KestraTest(startRunner = true)
+class NullOutputTest {
 
     @Test
     @ExecuteFlow("flows/valids/null-output.yaml")

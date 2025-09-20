@@ -194,4 +194,26 @@ class MapUtilsTest {
         assertThat(results).hasSize(1);
         // due to ordering change on each JVM restart, the result map would be different as different entries will be skipped
     }
+
+    @Test
+    void shouldFlattenANestedMap() {
+        Map<String, Object> results = MapUtils.nestedToFlattenMap(Map.of("k1",Map.of("k2", Map.of("k3", "v1")), "k4", "v2"));
+
+        assertThat(results).hasSize(2);
+        assertThat(results).containsAllEntriesOf(Map.of(
+            "k1.k2.k3", "v1",
+            "k4", "v2"
+        ));
+    }
+
+    @Test
+    void shouldFlattenANestedMapWithDuplicateKeys() {
+        Map<String, Object> results =  MapUtils.nestedToFlattenMap(Map.of("k1",  Map.of("k2", Map.of("k3", "v1"), "k4", "v2")));
+
+        assertThat(results).hasSize(2);
+        assertThat(results).containsAllEntriesOf(Map.of(
+            "k1.k2.k3", "v1",
+            "k1.k4", "v2"
+        ));
+    }
 }

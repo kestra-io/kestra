@@ -58,7 +58,7 @@ public class FlowTriggerCaseTest {
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        assertTrue(countDownLatch.await(15, TimeUnit.SECONDS));
+        assertTrue(countDownLatch.await(15, TimeUnit.SECONDS), "remaining countdown: %s".formatted(countDownLatch.getCount()));
         receive.blockLast();
 
         assertThat(flowListener.get().getTaskRunList().size()).isEqualTo(1);
@@ -110,5 +110,31 @@ public class FlowTriggerCaseTest {
         assertThat(flowListeners.get(1).getOutputs().get("status")).isEqualTo("PAUSED");
         assertThat(flowListeners.get(2).getOutputs().get("status")).isEqualTo("RUNNING");
         assertThat(flowListeners.get(3).getOutputs().get("status")).isEqualTo("SUCCESS");
+    }
+
+    public void triggerWithConcurrencyLimit() throws QueueException, TimeoutException, InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(5);
+        List<Execution> flowListeners = new ArrayList<>();
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Execution execution = either.getLeft();
+            if (execution.getState().getCurrent() == State.Type.SUCCESS && execution.getFlowId().equals("trigger-flow-listener-with-concurrency-limit")) {
+                flowListeners.add(execution);
+                countDownLatch.countDown();
+            }
+        });
+
+        Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, "io.kestra.tests.trigger.concurrency", "trigger-flow-with-concurrency-limit");
+        Execution execution2 = runnerUtils.runOneUntilRunning(MAIN_TENANT, "io.kestra.tests.trigger.concurrency", "trigger-flow-with-concurrency-limit");
+
+        assertTrue(countDownLatch.await(15, TimeUnit.SECONDS));
+        receive.blockLast();
+
+        assertThat(flowListeners.size()).isEqualTo(5);
+        assertThat(flowListeners.stream().anyMatch(e -> e.getOutputs().get("status").equals("RUNNING") && e.getOutputs().get("executionId").equals(execution1.getId()))).isTrue();
+        assertThat(flowListeners.stream().anyMatch(e -> e.getOutputs().get("status").equals("SUCCESS") && e.getOutputs().get("executionId").equals(execution1.getId()))).isTrue();
+        assertThat(flowListeners.stream().anyMatch(e -> e.getOutputs().get("status").equals("QUEUED") && e.getOutputs().get("executionId").equals(execution2.getId()))).isTrue();
+        assertThat(flowListeners.stream().anyMatch(e -> e.getOutputs().get("status").equals("RUNNING") && e.getOutputs().get("executionId").equals(execution2.getId()))).isTrue();
+        assertThat(flowListeners.stream().anyMatch(e -> e.getOutputs().get("status").equals("SUCCESS") && e.getOutputs().get("executionId").equals(execution2.getId()))).isTrue();
     }
 }

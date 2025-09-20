@@ -65,6 +65,7 @@ public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallbac
         }
         flowRepository.findAllForAllTenants().stream()
             .filter(flow -> flowIds.contains(flow.getId()))
+            .filter(flow -> loadFlows.tenantId().equals(flow.getTenantId()))
             .forEach(flow -> flowRepository.delete(FlowWithSource.of(flow, "unused")));
     }
 

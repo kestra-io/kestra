@@ -1,11 +1,11 @@
 <template>
-    <top-nav-bar v-if="topbar" :title="routeInfo.title">
+    <TopNavBar v-if="topbar" :title="routeInfo.title">
         <template #additional-right v-if="displayButtons">
             <ul>
                 <template v-if="$route.name === 'executions/list'">
                     <li>
                         <template v-if="hasAnyExecute">
-                            <trigger-flow />
+                            <TriggerFlow />
                         </template>
                     </li>
                 </template>
@@ -18,19 +18,19 @@
                         </template>
                     </li>
                     <li>
-                        <trigger-flow
-                            v-if="flow"
-                            :disabled="flow.disabled || isReadOnly"
-                            :flow-id="flow.id"
-                            :namespace="flow.namespace"
+                        <TriggerFlow
+                            v-if="flowStore.flow"
+                            :disabled="flowStore.flow.disabled || isReadOnly"
+                            :flowId="flowStore.flow.id"
+                            :namespace="flowStore.flow.namespace"
                         />
                     </li>
                 </template>
             </ul>
         </template>
-    </top-nav-bar>
+    </TopNavBar>
     <section data-component="FILENAME_PLACEHOLDER" :class="{'container padding-bottom': topbar}" v-if="ready">
-        <data-table
+        <DataTable
             @page-changed="onPageChanged"
             ref="dataTable"
             :total="executionsStore.total"
@@ -46,7 +46,7 @@
                         refresh: {shown: true, callback: refresh},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
                     }"
-                    :properties-width="182"
+                    :propertiesWidth="182"
                     :properties="{
                         shown: true,
                         columns: optionalColumns,
@@ -58,15 +58,15 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections :dashboard="{id: 'default'}" :charts show-default />
+                <Sections ref="dashboardComponent" :dashboard="{id: 'default'}" :charts showDefault />
             </template>
 
             <template #table>
-                <select-table
+                <SelectTable
                     ref="selectTable"
                     :data="executionsStore.executions"
-                    :default-sort="{prop: 'state.startDate', order: 'descending'}"
-                    table-layout="auto"
+                    :defaultSort="{prop: 'state.startDate', order: 'descending'}"
+                    tableLayout="auto"
                     fixed
                     @row-dblclick="row => onRowDoubleClick(executionParams(row))"
                     @sort-change="onSort"
@@ -75,8 +75,8 @@
                     :no-data-text="$t('no_results.executions')"
                 >
                     <template #select-actions>
-                        <bulk-select
-                            :select-all="queryBulkAction"
+                        <BulkSelect
+                            :selectAll="queryBulkAction"
                             :selections="selection"
                             :total="executionsStore.total"
                             @update:select-all="toggleAllSelection"
@@ -124,13 +124,13 @@
                                     </el-dropdown-menu>
                                 </template>
                             </el-dropdown>
-                        </bulk-select>
+                        </BulkSelect>
                         <el-dialog
                             v-if="isOpenLabelsModal"
                             v-model="isOpenLabelsModal"
-                            destroy-on-close
-                            :append-to-body="true"
-                            align-center
+                            destroyOnClose
+                            :appendToBody="true"
+                            alignCenter
                         >
                             <template #header>
                                 <h5>{{ $t("Set labels") }}</h5>
@@ -146,12 +146,12 @@
                             </template>
 
                             <el-form>
-                                <el-form-item :label="$t('execution labels')">
-                                    <label-input
+                                <ElFormItem :label="$t('execution labels')">
+                                    <LabelInput
                                         :key="executionLabels"
                                         v-model:labels="executionLabels"
                                     />
-                                </el-form-item>
+                                </ElFormItem>
                             </el-form>
                         </el-dialog>
                     </template>
@@ -159,15 +159,23 @@
                         <el-table-column
                             prop="id"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('id')"
                         >
                             <template #default="scope">
-                                <id
-                                    :value="scope.row.id"
-                                    :shrink="true"
-                                    @click="onRowDoubleClick(executionParams(scope.row))"
-                                />
+                                <RouterLink
+                                    :to="{
+                                        name: 'executions/update',
+                                        params: {
+                                            namespace: scope.row.namespace,
+                                            flowId: scope.row.flowId,
+                                            id: scope.row.id
+                                        }
+                                    }"
+                                    class="execution-id"
+                                >
+                                    <Id :value="scope.row.id" :shrink="true" />
+                                </RouterLink>
                             </template>
                         </el-table-column>
 
@@ -175,11 +183,11 @@
                             prop="state.startDate"
                             v-if="displayColumn('state.startDate')"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('start date')"
                         >
                             <template #default="scope">
-                                <date-ago :inverted="true" :date="scope.row.state.startDate" />
+                                <DateAgo :inverted="true" :date="scope.row.state.startDate" />
                             </template>
                         </el-table-column>
 
@@ -187,11 +195,11 @@
                             prop="state.endDate"
                             v-if="displayColumn('state.endDate')"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('end date')"
                         >
                             <template #default="scope">
-                                <date-ago :inverted="true" :date="scope.row.state.endDate" />
+                                <DateAgo :inverted="true" :date="scope.row.state.endDate" />
                             </template>
                         </el-table-column>
 
@@ -199,7 +207,7 @@
                             prop="state.duration"
                             v-if="displayColumn('state.duration')"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('duration')"
                         >
                             <template #default="scope">
@@ -214,7 +222,7 @@
                             v-if="$route.name !== 'flows/update' && displayColumn('namespace')"
                             prop="namespace"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('namespace')"
                             :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)"
                         />
@@ -223,7 +231,7 @@
                             v-if="$route.name !== 'flows/update' && displayColumn('flowId')"
                             prop="flowId"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('flow')"
                         >
                             <template #default="scope">
@@ -237,7 +245,7 @@
 
                         <el-table-column v-if="displayColumn('labels')" :label="$t('labels')">
                             <template #default="scope">
-                                <labels :labels="filteredLabels(scope.row.labels)" />
+                                <Labels :labels="filteredLabels(scope.row.labels)" />
                             </template>
                         </el-table-column>
 
@@ -245,11 +253,11 @@
                             prop="state.current"
                             v-if="displayColumn('state.current')"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('state')"
                         >
                             <template #default="scope">
-                                <status :status="scope.row.state.current" size="small" />
+                                <Status :status="scope.row.state.current" size="small" />
                             </template>
                         </el-table-column>
 
@@ -257,10 +265,10 @@
                             prop="flowRevision"
                             v-if="displayColumn('flowRevision')"
                             :label="$t('revision')"
-                            class-name="shrink"
+                            className="shrink"
                         >
                             <template #default="scope">
-                                <code>{{ scope.row.flowRevision }}</code>
+                                <code class="code-text">{{ scope.row.flowRevision }}</code>
                             </template>
                         </el-table-column>
 
@@ -293,7 +301,7 @@
                                 </el-tooltip>
                             </template>
                             <template #default="scope">
-                                <code>
+                                <code class="code-text">
                                     {{ scope.row.taskRunList?.slice(-1)[0].taskId }}
                                     {{
                                         scope.row.taskRunList?.slice(-1)[0].attempts?.length > 1 ? `(${scope.row.taskRunList?.slice(-1)[0].attempts.length})` : ""
@@ -303,27 +311,27 @@
                         </el-table-column>
 
                         <el-table-column
-                            column-key="action"
-                            class-name="row-action"
+                            columnKey="action"
+                            className="row-action"
                             :label="$t('actions')"
                         >
                             <template #default="scope">
                                 <router-link
                                     :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}, query: {revision: scope.row.flowRevision}}"
                                 >
-                                    <kicon :tooltip="$t('details')" placement="left">
+                                    <Kicon :tooltip="$t('details')" placement="left">
                                         <TextSearch />
-                                    </kicon>
+                                    </Kicon>
                                 </router-link>
                             </template>
                         </el-table-column>
                     </template>
-                </select-table>
+                </SelectTable>
             </template>
-        </data-table>
+        </DataTable>
     </section>
 
-    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -342,7 +350,7 @@
                     :value="item.code"
                 >
                     <template #default>
-                        <status size="small" :label="false" class="me-1" :status="item.code" />
+                        <Status size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </el-option>
@@ -362,7 +370,7 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroyOnClose :appendToBody="true">
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -381,7 +389,7 @@
                     :value="item.code"
                 >
                     <template #default>
-                        <status size="small" :label="false" class="me-1" :status="item.code" />
+                        <Status size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </el-option>
@@ -401,7 +409,7 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -450,9 +458,8 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc.ts";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -480,6 +487,10 @@
 
     import {filterLabels} from "./utils"
     import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth.ts";
+    import {useFlowStore} from "../../stores/flow.ts";
+
+    import {defaultNamespace} from "../../composables/useNamespaces";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -625,14 +636,9 @@
             }
             this.displayColumns = localStorage.getItem("columns_executions")?.split(",")
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
-            if (this.isConcurrency) {
-                this.emitStateCount([State.RUNNING, State.PAUSED])
-            }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapState("flow", ["flow"]),
-            ...mapStores(useMiscStore, useExecutionsStore),
+            ...mapStores(useMiscStore, useExecutionsStore, useFlowStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -662,19 +668,19 @@
                 return this.canDelete || this.canUpdate;
             },
             canCreate() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
             },
             canUpdate() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.namespace);
             },
             canDelete() {
-                return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
+                return this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.namespace);
             },
             isAllowedEdit() {
-                return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.flowStore.flow.namespace);
             },
             hasAnyExecute() {
-                return this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
+                return this.authStore.user?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
             },
             isDisplayedTop() {
                 if(this.visibleCharts) return true;
@@ -709,15 +715,12 @@
             }
         },
         beforeRouteEnter(to, _, next) {
-            const defaultNamespace = localStorage.getItem(
-                storageKeys.DEFAULT_NAMESPACE,
-            );
             const query = {...to.query};
             let queryHasChanged = false;
 
             const queryKeys = Object.keys(query);
-            if (this?.namespace === undefined && defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][PREFIX]"] = defaultNamespace;
+            if (this?.namespace === undefined && defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+                query["filters[namespace][PREFIX]"] = defaultNamespace();
                 queryHasChanged = true;
             }
 
@@ -774,6 +777,7 @@
             },
             refresh() {
                 this.recomputeInterval = !this.recomputeInterval;
+                this.$refs.dashboardComponent.refreshCharts();
                 this.load();
             },
             selectionMapper(execution) {
@@ -796,6 +800,11 @@
                     queryFilter["filters[flowId][EQUALS]"] = this.flowId;
                 }
 
+                const hasStateFilters = Object.keys(queryFilter).some(key => key.startsWith("filters[state]")) || queryFilter.state;
+                if (!hasStateFilters && this.statuses?.length > 0) {
+                    queryFilter["filters[state][IN]"] = this.statuses.join(",");
+                }
+
                 return _merge(base, queryFilter)
             },
             loadData(callback) {
@@ -806,7 +815,11 @@
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                })).finally(callback);
+                })).then(() => {
+                    if (this.isConcurrency) {
+                        this.emitStateCount();
+                    }
+                }).finally(callback);
             },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
@@ -820,6 +833,27 @@
                 );
             },
             genericConfirmCallback(queryAction, byIdAction, success, params) {
+                const actionMap = {
+                    "queryResumeExecution": () => this.executionsStore.queryResumeExecution,
+                    "bulkResumeExecution": () => this.executionsStore.bulkResumeExecution,
+                    "queryPauseExecution": () => this.executionsStore.queryPauseExecution,
+                    "bulkPauseExecution": () => this.executionsStore.bulkPauseExecution,
+                    "queryUnqueueExecution": () => this.executionsStore.queryUnqueueExecution,
+                    "bulkUnqueueExecution": () => this.executionsStore.bulkUnqueueExecution,
+                    "queryForceRunExecution": () => this.executionsStore.queryForceRunExecution,
+                    "bulkForceRunExecution": () => this.executionsStore.bulkForceRunExecution,
+                    "queryRestartExecution": () => this.executionsStore.queryRestartExecution,
+                    "bulkRestartExecution": () => this.executionsStore.bulkRestartExecution,
+                    "queryReplayExecution": () => this.executionsStore.queryReplayExecution,
+                    "bulkReplayExecution": () => this.executionsStore.bulkReplayExecution,
+                    "queryChangeExecutionStatus": () => this.executionsStore.queryChangeExecutionStatus,
+                    "bulkChangeExecutionStatus": () => this.executionsStore.bulkChangeExecutionStatus,
+                    "queryDeleteExecution": () => this.executionsStore.queryDeleteExecution,
+                    "bulkDeleteExecution": () => this.executionsStore.bulkDeleteExecution,
+                    "queryKill": () => this.executionsStore.queryKill,
+                    "bulkKill": () => this.executionsStore.bulkKill,
+                };
+
                 if (this.queryBulkAction) {
                     const query = this.loadQuery({
                         sort: this.$route.query.sort || "state.startDate:desc",
@@ -829,8 +863,9 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    return this.$store
-                        .dispatch(queryAction, options)
+
+                    const action = actionMap[queryAction]();
+                    return action(options)
                         .then(r => {
                             this.$toast().success(this.$t(success, {executionCount: r.data.count}));
                             this.loadData();
@@ -841,8 +876,9 @@
                     if (params) {
                         options = {...options, ...params}
                     }
-                    return this.$store
-                        .dispatch(byIdAction, options)
+
+                    const action = actionMap[byIdAction]();
+                    return action(options)
                         .then(r => {
                             this.$toast().success(this.$t(success, {executionCount: r.data.count}));
                             this.loadData();
@@ -856,8 +892,8 @@
             resumeExecutions() {
                 this.genericConfirmAction(
                     "bulk resume",
-                    "execution/queryResumeExecution",
-                    "execution/bulkResumeExecution",
+                    "queryResumeExecution",
+                    "bulkResumeExecution",
                     "executions resumed",
                     false
                 );
@@ -865,8 +901,8 @@
             pauseExecutions() {
                 this.genericConfirmAction(
                     "bulk pause",
-                    "execution/queryPauseExecution",
-                    "execution/bulkPauseExecution",
+                    "queryPauseExecution",
+                    "bulkPauseExecution",
                     "executions paused"
                 );
             },
@@ -875,24 +911,24 @@
                 this.actionOptions.newStatus = this.selectedStatus;
 
                 this.genericConfirmCallback(
-                    "execution/queryUnqueueExecution",
-                    "execution/bulkUnqueueExecution",
+                    "queryUnqueueExecution",
+                    "bulkUnqueueExecution",
                     "executions unqueue"
                 );
             },
             forceRunExecutions() {
                 this.genericConfirmAction(
                     "bulk force run",
-                    "execution/queryForceRunExecution",
-                    "execution/bulkForceRunExecution",
+                    "queryForceRunExecution",
+                    "bulkForceRunExecution",
                     "executions force run"
                 );
             },
             restartExecutions() {
                 this.genericConfirmAction(
                     "bulk restart",
-                    "execution/queryRestartExecution",
-                    "execution/bulkRestartExecution",
+                    "queryRestartExecution",
+                    "bulkRestartExecution",
                     "executions restarted"
                 );
             },
@@ -900,8 +936,8 @@
                 this.isOpenReplayModal = false;
 
                 this.genericConfirmCallback(
-                    "execution/queryReplayExecution",
-                    "execution/bulkReplayExecution",
+                    "queryReplayExecution",
+                    "bulkReplayExecution",
                     "executions replayed",
                     {latestRevision: latestRevision}
                 );
@@ -914,8 +950,8 @@
                 this.actionOptions.newStatus = this.selectedStatus;
 
                 this.genericConfirmCallback(
-                    "execution/queryChangeExecutionStatus",
-                    "execution/bulkChangeExecutionStatus",
+                    "queryChangeExecutionStatus",
+                    "bulkChangeExecutionStatus",
                     "executions state changed"
                 );
             },
@@ -980,8 +1016,8 @@
                     this.actionOptions.deleteStorage = deleteStorage.value;
 
                     this.genericConfirmCallback(
-                        "execution/queryDeleteExecution",
-                        "execution/bulkDeleteExecution",
+                        "queryDeleteExecution",
+                        "bulkDeleteExecution",
                         "executions deleted"
                     );
                 });
@@ -989,8 +1025,8 @@
             killExecutions() {
                 this.genericConfirmAction(
                     "bulk kill",
-                    "execution/queryKill",
-                    "execution/bulkKill",
+                    "queryKill",
+                    "bulkKill",
                     "executions killed"
                 );
             },
@@ -1040,22 +1076,19 @@
             editFlow() {
                 this.$router.push({
                     name: "flows/update", params: {
-                        namespace: this.flow.namespace,
-                        id: this.flow.id,
+                        namespace: this.flowStore.flow.namespace,
+                        id: this.flowStore.flow.id,
                         tab: "edit",
                         tenant: this.$route.params.tenant
                     }
                 })
             },
-            emitStateCount(states) {
-                this.executionsStore.findExecutions(this.loadQuery({
-                    size: parseInt(this.$route.query.size || this.internalPageSize),
-                    page: parseInt(this.$route.query.page || this.internalPageNumber),
-                    sort: this.$route.query.sort || "state.startDate:desc",
-                    state: states
-                })).then(() => {
-                    this.$emit("state-count", this.executionsStore.total);
-                });
+            emitStateCount() {
+                const runningCount = this.executionsStore.executions.filter(execution =>
+                    execution.state.current === State.RUNNING
+                )?.length;
+                const totalCount = this.executionsStore.total;
+                this.$emit("state-count", {runningCount, totalCount});
             }
         },
         watch: {
@@ -1096,16 +1129,11 @@
             color: #ffb703;
         }
     }
-</style>
+    .code-text {
+        color: var(--ks-content-primary);
+    }
 
-<style lang="scss">
-    .el-message-box {
-        padding: 2rem;
-        max-width: initial;
-        width: 500px;
-
-        .custom-warning {
-            margin: 1rem 0;
-        }
+    :deep(a.execution-id) code {
+        color: var(--bs-code-color) !important;
     }
 </style>

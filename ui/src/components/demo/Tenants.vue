@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" v-if="!isFullScreen()" />
+    <TopNavBar :title="routeInfo.title" v-if="!isFullScreen()" />
     <Layout
         :title="t('demos.tenants.title')"
         :image="{source: sourceImg, alt: t('demos.tenants.title')}"
@@ -20,7 +20,7 @@
     // @ts-expect-error no types in TopNavBar yet
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import sourceImg from "../../assets/demo/tenants.png";
-    import useRouteContext from "../../mixins/useRouteContext";
+    import useRouteContext from "../../composables/useRouteContext";
 
     const {t} = useI18n();
 

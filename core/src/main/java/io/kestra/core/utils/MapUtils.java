@@ -169,7 +169,7 @@ public class MapUtils {
     }
 
     /**
-     * Utility method nested a flattened map.
+     * Utility method that nests a flattened map.
      *
      * @param flatMap the flattened map.
      * @return the nested map.
@@ -201,6 +201,42 @@ public class MapUtils {
             }
             currentMap.put(lastKey, entry.getValue());
         }
+        return result;
+    }
+
+    /**
+     * Utility method that flatten a nested map.
+     *
+     * @param nestedMap the nested map.
+     * @return the flattened map.
+     */
+    public static Map<String, Object> nestedToFlattenMap(@NotNull Map<String, Object> nestedMap) {
+        Map<String, Object> result = new TreeMap<>();
+
+        for (Map.Entry<String, Object> entry : nestedMap.entrySet()) {
+            if (entry.getValue() instanceof Map<?, ?> map) {
+                Map<String, Object> flatten = flattenEntry(entry.getKey(), (Map<String, Object>) map);
+                result.putAll(flatten);
+            } else {
+                result.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return result;
+    }
+
+    private static Map<String, Object> flattenEntry(String key, Map<String, Object> value) {
+        Map<String, Object> result = new TreeMap<>();
+
+        for (Map.Entry<String, Object> entry : value.entrySet()) {
+            String newKey = key + "." + entry.getKey();
+            Object newValue = entry.getValue();
+            if (newValue instanceof Map<?, ?> map) {
+                result.putAll(flattenEntry(newKey, (Map<String, Object>) map));
+            } else {
+                result.put(newKey, newValue);
+            }
+        }
+
         return result;
     }
 }

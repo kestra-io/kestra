@@ -22,9 +22,9 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed,PropType} from "vue";
+    import {computed, PropType, watch} from "vue";
 
-    import type {Chart} from "../composables/useDashboards";
+    import {Chart, getDashboard} from "../composables/useDashboards";
     import {useChartGenerator} from "../composables/useDashboards";
 
     
@@ -183,7 +183,19 @@
         };
     });
 
-    const {data: generated} = useChartGenerator(props);
+    const {data: generated, generate} = useChartGenerator(props);
+
+    function refresh() {
+        return generate(getDashboard(route, "id")!);
+    }
+
+    defineExpose({
+        refresh
+    });
+
+    watch(() => route.params.filters, () => {
+        refresh();
+    }, {deep: true});
 </script>
 
 <style lang="scss" scoped>

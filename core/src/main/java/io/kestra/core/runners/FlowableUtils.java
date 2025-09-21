@@ -502,13 +502,14 @@ public class FlowableUtils {
 
         int index = 0;
         for (Object current : distinctValue) {
+            index++;
             try {
                 String resolvedValue = current instanceof String stringValue ? stringValue : MAPPER.writeValueAsString(current);
                 for (Task task : tasks) {
                     result.add(ResolvedTask.builder()
                         .task(task)
                         .value(resolvedValue)
-                        .iteration(index++)
+                        .iteration(index)
                         .parentId(parentTaskRun.getId())
                         .build()
                     );

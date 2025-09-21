@@ -19,6 +19,11 @@
     --el-text-color-placeholder: var(--ks-content-secondary);
     --el-text-color-disabled: var(--ks-content-inactive);
 
+    // Tooltip theming
+    --el-tooltip-bg-color: var(--ks-background-card);
+    --el-tooltip-text-color: var(--ks-content-primary);
+    --el-tooltip-border-color: var(--ks-border-primary);
+
     --el-border-color: var(--ks-border-primary);
     --el-border-color-light: var(--ks-border-primary);
     --el-border-color-lighter: var(--ks-border-primary);

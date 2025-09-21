@@ -59,8 +59,6 @@ jobs:
     needs:
       - release
     if: always()
-    env:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       - name: Trigger EE Workflow
         uses: peter-evans/repository-dispatch@v3
@@ -70,14 +68,9 @@ jobs:
           repository: kestra-io/kestra-ee
           event-type: "oss-updated"
 
-
       # Slack
       - name: Slack - Notification
-        uses: Gamesight/slack-workflow-status@master
-        if: ${{ always() && env.SLACK_WEBHOOK_URL != 0 }}
+        if: ${{ failure() && env.SLACK_WEBHOOK_URL != 0 && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
+        uses: kestra-io/actions/composite/slack-status@main
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          name: GitHub Actions
-          icon_emoji: ":github-actions:"
-          channel: "C02DQ1A7JLR" # _int_git channel
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}

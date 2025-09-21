@@ -348,7 +348,7 @@ public class ForEachItemCaseTest {
             Duration.ofSeconds(30));
 
         // we should have triggered 26 subflows
-        assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isTrue();
+        assertTrue(countDownLatch.await(20, TimeUnit.SECONDS), "Remaining countdown: %s".formatted(countDownLatch.getCount()));
         receive.blockLast();
 
         // assert on the main flow execution

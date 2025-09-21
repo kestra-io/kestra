@@ -200,14 +200,9 @@ jobs:
     env:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
-
-      # Slack
       - name: Slack notification
-        uses: Gamesight/slack-workflow-status@master
-        if: ${{ always() && env.SLACK_WEBHOOK_URL != 0 }}
+        if: ${{ failure() && env.SLACK_WEBHOOK_URL != 0 }}
+        uses: kestra-io/actions/composite/slack-status@main
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          name: GitHub Actions
-          icon_emoji: ':github-actions:'
-          channel: 'C02DQ1A7JLR' # _int_git channel
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+

@@ -67,7 +67,7 @@
     import {computed, onMounted, Ref, ref, watch} from "vue";
 
     import {useRoute} from "vue-router";
-    import useRouteContext from "../../../mixins/useRouteContext.ts";
+    import useRouteContext from "../../../composables/useRouteContext";
     import useNamespaces, {Namespace} from "../../../composables/useNamespaces";
     import {useI18n} from "vue-i18n";
     import {useMiscStore} from "override/stores/misc";

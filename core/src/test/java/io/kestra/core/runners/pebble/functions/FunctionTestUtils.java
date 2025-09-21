@@ -14,10 +14,14 @@ public class FunctionTestUtils {
     }
 
     public static Map<String, Object> getVariables(String namespace) {
+        return getVariables(MAIN_TENANT, namespace);
+    }
+
+    public static Map<String, Object> getVariables(String tenantId, String namespace) {
         return Map.of(
             "flow", Map.of(
                 "id", "kv",
-                "tenantId", MAIN_TENANT,
+                "tenantId", tenantId,
                 "namespace", namespace)
         );
     }

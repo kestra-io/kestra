@@ -58,7 +58,7 @@ public class FlowTriggerCaseTest {
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        assertTrue(countDownLatch.await(15, TimeUnit.SECONDS));
+        assertTrue(countDownLatch.await(15, TimeUnit.SECONDS), "remaining countdown: %s".formatted(countDownLatch.getCount()));
         receive.blockLast();
 
         assertThat(flowListener.get().getTaskRunList().size()).isEqualTo(1);

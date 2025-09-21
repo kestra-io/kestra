@@ -5,7 +5,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, defineProps} from "vue";
+    import {computed} from "vue";
     import * as FILTERS from "../utils/filters";
 
     const props = defineProps<{

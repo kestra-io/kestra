@@ -22,7 +22,7 @@
     import sourceImg from "../../assets/demo/blueprints.png";
 
     import {useI18n} from "vue-i18n";
-    import useRouteContext from "../../mixins/useRouteContext";
+    import useRouteContext from "../../composables/useRouteContext";
 
     const {t} = useI18n();
 

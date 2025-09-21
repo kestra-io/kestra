@@ -8,7 +8,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.services.SkipExecutionService;
+import io.kestra.executor.SkipExecutionService;
 import io.kestra.core.utils.Await;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;

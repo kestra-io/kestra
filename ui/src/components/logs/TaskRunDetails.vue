@@ -3,8 +3,8 @@
         v-if="followedExecution"
         ref="taskRunScroller"
         :items="currentTaskRuns"
-        :min-item-size="50"
-        key-field="id"
+        :minItemSize="50"
+        keyField="id"
         class="log-wrapper"
     >
         <template #default="{item: currentTaskRun, index: currentTaskRunIndex, active: isTaskRunActive}">
@@ -16,13 +16,13 @@
             >
                 <el-card class="attempt-wrapper">
                     <TaskRunLine
-                        :current-task-run="currentTaskRun"
-                        :followed-execution="followedExecution"
+                        :currentTaskRun="currentTaskRun"
+                        :followedExecution="followedExecution"
                         :flow="flow"
-                        :forced-attempt-number="forcedAttemptNumber"
-                        :task-run-id="taskRunId"
-                        :selected-attempt-number-by-task-run-id="selectedAttemptNumberByTaskRunId"
-                        :shown-attempts-uid="shownAttemptsUid"
+                        :forcedAttemptNumber="forcedAttemptNumber"
+                        :taskRunId="taskRunId"
+                        :selectedAttemptNumberByTaskRunId="selectedAttemptNumberByTaskRunId"
+                        :shownAttemptsUid="shownAttemptsUid"
                         :logs="filteredLogs"
                         @toggle-show-attempt="toggleShowAttempt"
                         @swap-displayed-attempt="swapDisplayedAttempt"
@@ -32,17 +32,17 @@
                             <div id="buttons" />
                         </template>
                     </TaskRunLine>
-                    <for-each-status
+                    <ForEachStatus
                         v-if="shouldDisplayProgressBar(currentTaskRun)"
-                        :execution-id="currentTaskRun.executionId"
-                        :subflows-status="forEachItemExecutableByRootTaskId[currentTaskRun.taskId].outputs.iterations"
+                        :executionId="currentTaskRun.executionId"
+                        :subflowsStatus="forEachItemExecutableByRootTaskId[currentTaskRun.taskId].outputs.iterations"
                         :max="forEachItemExecutableByRootTaskId[currentTaskRun.taskId].outputs.numberOfBatches"
                     />
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"
                         :items="logsWithIndexByAttemptUid[attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])] ?? []"
-                        :min-item-size="1"
-                        key-field="index"
+                        :minItemSize="1"
+                        keyField="index"
                         class="log-lines"
                         :class="{'single-line': currentTaskRuns.length === 1}"
                         :ref="el => logsScrollerRef(el, currentTaskRunIndex, attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
@@ -52,46 +52,53 @@
                             <DynamicScrollerItem
                                 :item="item"
                                 :active="active"
-                                :size-dependencies="[item.message, item.image]"
+                                :sizeDependencies="[item.message, item.image]"
                                 :data-index="index"
                             >
                                 <Teleport v-if="item.logFile" to="#buttons">
                                     <el-button-group class="line">
-                                        <a class="el-button el-button--small el-button--primary" :href="fileUrl(item.logFile)" target="_blank">
-                                            <Download />
+                                        <el-button
+                                            type="primary"
+                                            tag="a"
+                                            :href="fileUrl(item.logFile)"
+                                            target="_blank"
+                                            size="small"
+                                            :icon="Download"
+                                            rel="noopener noreferrer"
+                                        >
                                             {{ $t('download') }}
-                                        </a>
-                                        <FilePreview :value="item.logFile" :execution-id="followedExecution.id" />
+                                        </el-button>
+                                        <FilePreview :value="item.logFile" :executionId="followedExecution.id" />
                                         <el-button disabled size="small" type="primary" v-if="logFileSizeByPath[item.logFile]">
                                             ({{ logFileSizeByPath[item.logFile] }})
                                         </el-button>
                                     </el-button-group>
                                 </Teleport>
-                                <log-line
+                                <LogLine
                                     class="line"
                                     :cursor="logCursor === `${currentTaskRunIndex}/${index}`"
                                     :class="{['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === item.level, 'opacity-40': levelToHighlight && levelToHighlight !== item.level}"
                                     :key="index"
                                     :level="level"
                                     :log="item"
-                                    :exclude-metas="excludeMetas"
-                                    v-else-if="filter === '' || item.message?.toLowerCase().includes(filter)"
+                                    :excludeMetas="excludeMetas"
+                                    v-else-if="filter === '' || item.message?.toLowerCase().includes(filter.toLowerCase())"
                                 />
                                 <TaskRunDetails
                                     v-if="!taskRunId && isSubflow(currentTaskRun) && shouldDisplaySubflow(index, currentTaskRun) && currentTaskRun.outputs?.executionId"
                                     :ref="el => subflowTaskRunDetailsRef(el, currentTaskRunIndex + '/' + index)"
-                                    :log-cursor="logCursor?.split('/')?.slice(2).join('/')"
+                                    :logCursor="logCursor?.split('/')?.slice(2).join('/')"
                                     @log-cursor="emitLogCursor(currentTaskRunIndex + '/' + index + '/' + $event)"
                                     @log-indices-by-level="childLogIndicesByLevel(currentTaskRunIndex, index, $event)"
-                                    :level-to-highlight="levelToHighlight"
+                                    :levelToHighlight="levelToHighlight"
                                     :level="level"
-                                    :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                                    :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
                                     :filter="filter"
-                                    :allow-auto-expand-subflows="false"
-                                    :target-execution-id="currentTaskRun.outputs.executionId"
+                                    :allowAutoExpandSubflows="false"
+                                    :targetExecutionId="currentTaskRun.outputs.executionId"
                                     :class="$el.classList.contains('even') ? '' : 'even'"
-                                    :show-progress-bar="showProgressBar"
-                                    :show-logs="showLogs"
+                                    :showProgressBar="showProgressBar"
+                                    :showLogs="showLogs"
                                 />
                             </DynamicScrollerItem>
                         </template>
@@ -102,6 +109,10 @@
     </DynamicScroller>
 </template>
 
+<script setup>
+    import Download from "vue-material-design-icons/Download.vue";
+</script>
+
 <script>
     import LogLine from "./LogLine.vue";
     import {State} from "@kestra-io/ui-libs"
@@ -110,9 +121,7 @@
     import moment from "moment";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {logDisplayTypes} from "../../utils/constants";
-    import Download from "vue-material-design-icons/Download.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
     import {useExecutionsStore} from "../../stores/executions";
@@ -123,6 +132,7 @@
     import {apiUrl} from "override/utils/route";
     import Utils from "../../utils/utils";
     import LogUtils from "../../utils/logs.js";
+    import throttle from "lodash/throttle";
 
     export default {
         name: "TaskRunDetails",
@@ -133,7 +143,6 @@
             LogLine,
             DynamicScroller,
             DynamicScrollerItem,
-            Download,
         },
         emits: ["opened-taskruns-count", "follow", "reset-expand-collapse-all-switch", "log-cursor", "log-indices-by-level"],
         props: {
@@ -208,7 +217,9 @@
                 selectedLogLevel: undefined,
                 childrenLogIndicesByLevelByChildUid: {},
                 logsScrollerRefs: {},
-                subflowTaskRunDetailsRefs: {}
+                subflowTaskRunDetailsRefs: {},
+                throttledExecutionUpdate: undefined,
+                targetExecution: undefined
             };
         },
         watch: {
@@ -236,14 +247,6 @@
                 },
                 immediate: true
             },
-            "followedExecution.id": {
-                handler: function (executionId, oldExecutionId) {
-                    if (executionId && executionId !== oldExecutionId) {
-                        this.followExecution(executionId);
-                    }
-                },
-                immediate: true
-            },
             followedExecution: {
                 handler: async function (newExecution, oldExecution) {
                     if (!newExecution) {
@@ -265,7 +268,8 @@
                             {
                                 namespace: newExecution.namespace,
                                 flowId: newExecution.flowId,
-                                revision: newExecution.flowRevision
+                                revision: newExecution.flowRevision,
+                                store: false
                             }
                         );
                     }
@@ -273,7 +277,6 @@
                     if (!State.isRunning(this.followedExecution.state.current)) {
                         // wait a bit to make sure we don't miss logs as log indexer is asynchronous
                         setTimeout(() => {
-                            this.closeExecutionSSE()
                             this.closeLogsSSE()
                         }, 2000);
 
@@ -301,13 +304,20 @@
             }
         },
         mounted() {
+            this.throttledExecutionUpdate = throttle((executionEvent) => {
+                this.targetExecution = JSON.parse(executionEvent.data);
+            }, 500);
+
+            if (this.targetExecutionId) {
+                this.followExecution(this.targetExecutionId);
+            }
+
             this.autoExpandBasedOnSettings();
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useCoreStore, useExecutionsStore),
             followedExecution() {
-                return this.executionsStore.execution;
+                return this.targetExecutionId === undefined ? this.executionsStore.execution : this.targetExecution;
             },
             Download() {
                 return Download
@@ -341,7 +351,7 @@
                 logFilesWrappers.forEach(logFileWrapper => this.fetchAndStoreLogFileSize(logFileWrapper.logFile))
 
                 const indexedLogs = [...this.filteredLogs, ...logFilesWrappers]
-                    .filter(logLine => logLine.logFile !== undefined || (this.filter === "" || logLine?.message.toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId])))
+                    .filter(logLine => logLine.logFile !== undefined || (this.filter === "" || logLine?.message.toLowerCase().includes(this.filter.toLowerCase()) || this.isSubflow(this.taskRunById[logLine.taskRunId])))
                     .map((logLine, index) => ({...logLine, index}));
 
                 return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));
@@ -399,20 +409,17 @@
         },
         methods: {
             fileUrl(path) {
-                return `${apiUrl(this.$store)}/executions/${this.followedExecution.id}/file?path=${path}`;
+                return `${apiUrl()}/executions/${this.followedExecution.id}/file?path=${path}`;
             },
             async fetchAndStoreLogFileSize(path){
                 if (this.logFileSizeByPath[path] !== undefined) {
                     return;
                 }
 
-                const axiosResponse = await this.$http(`${apiUrl(this.$store)}/executions/${this.followedExecution.id}/file/metas?path=${path}`, {
+                const axiosResponse = await this.$http(`${apiUrl()}/executions/${this.followedExecution.id}/file/metas?path=${path}`, {
                     validateStatus: (status) => status === 200 || status === 404 || status === 422
                 });
                 this.logFileSizeByPath[path] = Utils.humanFileSize(axiosResponse.data.size);
-            },
-            closeExecutionSSE() {
-                this.executionsStore.closeSSE();
             },
             closeLogsSSE() {
                 if (this.logsSSE) {
@@ -458,10 +465,30 @@
                         this.logsWithIndexByAttemptUid[this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id])])) &&
                     this.showLogs
             },
+            closeTargetExecutionSSE() {
+                if (this.executionSSE) {
+                    this.executionSSE.close();
+                    this.executionSSE = undefined;
+                }
+            },
             followExecution(executionId) {
-                this.closeExecutionSSE();
+                this.closeTargetExecutionSSE();
                 this.executionsStore
-                    .followExecution({id: executionId}, this.$t)
+                    .followExecution({id: executionId, rawSSE: true})
+                    .then(sse => {
+                        this.executionSSE = sse;
+                        this.executionSSE.onmessage = executionEvent => {
+                            const isEnd = executionEvent && executionEvent.lastEventId === "end";
+                            // we are receiving a first "fake" event to force initializing the connection: ignoring it
+                            if (executionEvent.lastEventId !== "start") {
+                                this.throttledExecutionUpdate(executionEvent);
+                            }
+                            if (isEnd) {
+                                this.closeTargetExecutionSSE();
+                                this.throttledExecutionUpdate.flush();
+                            }
+                        }
+                    });
             },
             followLogs(executionId) {
                 this.executionsStore
@@ -550,7 +577,7 @@
                 return `${taskRunId}-${attemptNumber}`
             },
             scrollToBottomFailedTask() {
-                if (this.autoExpandTaskRunStates.includes(this.followedExecution.state.current)) {
+                if (this.autoExpandTaskRunStates.includes(this.followedExecution?.state?.current)) {
                     this.currentTaskRuns.forEach((taskRun) => {
                         if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
                             const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : (this.forcedAttemptNumber ?? 0)
@@ -634,7 +661,6 @@
             }
         },
         beforeUnmount() {
-            this.closeExecutionSSE();
             this.closeLogsSSE()
         },
     };

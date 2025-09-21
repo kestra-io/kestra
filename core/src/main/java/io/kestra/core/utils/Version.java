@@ -32,48 +32,84 @@ public class Version implements Comparable<Version> {
      * @param version   the version.
      * @return          a new {@link Version} instance.
      */
-    public static Version of(String version) {
+    public static Version of(final Object version) {
 
-        if (version.startsWith("v")) {
-            version = version.substring(1);
+        if (Objects.isNull(version)) {
+            throw new IllegalArgumentException("Invalid version, cannot parse null version");
+        }
+        
+        String strVersion = version.toString();
+        
+        if (strVersion.startsWith("v")) {
+            strVersion = strVersion.substring(1);
         }
 
-        int qualifier = version.indexOf("-");
+        int qualifier = strVersion.indexOf("-");
 
         final String[] versions = qualifier > 0 ?
-            version.substring(0, qualifier).split("\\.") :
-            version.split("\\.");
+            strVersion.substring(0, qualifier).split("\\.") :
+            strVersion.split("\\.");
         try {
             final int majorVersion = Integer.parseInt(versions[0]);
-            final int minorVersion = versions.length > 1 ? Integer.parseInt(versions[1]) : 0;
-            final int incrementalVersion = versions.length > 2 ? Integer.parseInt(versions[2]) : 0;
+            final Integer minorVersion = versions.length > 1 ? Integer.parseInt(versions[1]) : null;
+            final Integer incrementalVersion = versions.length > 2 ? Integer.parseInt(versions[2]) : null;
 
             return new Version(
                 majorVersion,
                 minorVersion,
                 incrementalVersion,
-                qualifier > 0 ? version.substring(qualifier + 1) : null,
-                version
+                qualifier > 0 ? strVersion.substring(qualifier + 1) : null,
+                strVersion
             );
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid version, cannot parse '" + version + "'");
         }
     }
-
+    
     /**
-     * Static helper method for returning the most recent stable version for a current {@link Version}.
+     * Resolves the most appropriate stable version from a collection, based on a given input version.
+     * <p>
+     * The matching rules are:
+     * <ul>
+     *   <li>If {@code from} specifies only a major version (e.g. {@code 1}), return the latest stable version
+     *       with the same major (e.g. {@code 1.2.3}).</li>
+     *   <li>If {@code from} specifies a major and minor version only (e.g. {@code 1.2}), return the latest
+     *       stable version with the same major and minor (e.g. {@code 1.2.3}).</li>
+     *   <li>If {@code from} specifies a full version with major, minor, and patch (e.g. {@code 1.2.2}),
+     *       then only return it if it is exactly present (and stable) in {@code versions}.
+     *       No "upgrade" is performed in this case.</li>
+     *   <li>If no suitable version is found, returns {@code null}.</li>
+     * </ul>
      *
-     * @param from     the current version.
-     * @param versions the list of version.
-     *
-     * @return the last stable version.
+     * @param from     the reference version (may specify only major, or major+minor, or major+minor+patch).
+     * @param versions the collection of candidate versions to resolve against.
+     * @return the best matching stable version, or {@code null} if none match.
      */
     public static Version getStable(final Version from, final Collection<Version> versions) {
-        List<Version> compatibleVersions = versions.stream()
-            .filter(v -> v.majorVersion() == from.majorVersion() && v.minorVersion() == from.minorVersion())
-            .toList();
-        if (compatibleVersions.isEmpty()) return null;
-        return Version.getLatest(compatibleVersions);
+        // Case 1: "from" is only a major (e.g. 1)
+        if (from.hasOnlyMajor()) {
+            List<Version> sameMajor = versions.stream()
+                .filter(v -> v.majorVersion() == from.majorVersion())
+                .toList();
+            return sameMajor.isEmpty() ? null : Version.getLatest(sameMajor);
+        }
+        
+        // Case 2: "from" is major+minor only (e.g. 1.2)
+        if (from.hasMajorAndMinorOnly()) {
+            List<Version> sameMinor = versions.stream()
+                .filter(v -> v.majorVersion() == from.majorVersion()
+                    && v.minorVersion() == from.minorVersion())
+                .toList();
+            return sameMinor.isEmpty() ? null : Version.getLatest(sameMinor);
+        }
+        
+        // Case 3: "from" is full version (major+minor+patch)
+        if (versions.contains(from)) {
+            return from;
+        }
+        
+        // No match
+        return null;
     }
 
     /**
@@ -123,8 +159,8 @@ public class Version implements Comparable<Version> {
     }
 
     private final int majorVersion;
-    private final int minorVersion;
-    private final int incrementalVersion;
+    private final Integer minorVersion;
+    private final Integer patchVersion;
     private final Qualifier qualifier;
 
     private final String originalVersion;
@@ -134,14 +170,14 @@ public class Version implements Comparable<Version> {
      *
      * @param majorVersion          the major version (must be superior or equal to 0).
      * @param minorVersion          the minor version (must be superior or equal to 0).
-     * @param incrementalVersion    the incremental version (must be superior or equal to 0).
+     * @param patchVersion    the incremental version (must be superior or equal to 0).
      * @param qualifier             the qualifier.
      */
     public Version(final int majorVersion,
                    final int minorVersion,
-                   final int incrementalVersion,
+                   final int patchVersion,
                    final String qualifier) {
-        this(majorVersion, minorVersion, incrementalVersion, qualifier, null);
+        this(majorVersion, minorVersion, patchVersion, qualifier, null);
     }
 
     /**
@@ -149,25 +185,25 @@ public class Version implements Comparable<Version> {
      *
      * @param majorVersion          the major version (must be superior or equal to 0).
      * @param minorVersion          the minor version (must be superior or equal to 0).
-     * @param incrementalVersion    the incremental version (must be superior or equal to 0).
+     * @param patchVersion    the incremental version (must be superior or equal to 0).
      * @param qualifier             the qualifier.
      * @param originalVersion       the original string version.
      */
-    private Version(final int majorVersion,
-                    final int minorVersion,
-                    final int incrementalVersion,
+    private Version(final Integer majorVersion,
+                    final Integer minorVersion,
+                    final Integer patchVersion,
                     final String qualifier,
                     final String originalVersion) {
         this.majorVersion =  requirePositive(majorVersion, "major");
         this.minorVersion = requirePositive(minorVersion, "minor");
-        this.incrementalVersion = requirePositive(incrementalVersion, "incremental");
+        this.patchVersion = requirePositive(patchVersion, "incremental");
         this.qualifier = qualifier != null ? new Qualifier(qualifier) : null;
         this.originalVersion = originalVersion;
     }
 
 
-    private static int requirePositive(int version, final String message) {
-        if (version < 0) {
+    private static Integer requirePositive(Integer version, final String message) {
+        if (version != null && version < 0) {
             throw new IllegalArgumentException(String.format("The '%s' version must super or equal to 0", message));
         }
         return version;
@@ -178,11 +214,11 @@ public class Version implements Comparable<Version> {
     }
 
     public int minorVersion() {
-        return minorVersion;
+        return minorVersion != null ? minorVersion : 0;
     }
 
-    public int incrementalVersion() {
-        return incrementalVersion;
+    public int patchVersion() {
+        return patchVersion != null ? patchVersion : 0;
     }
 
     public Qualifier qualifier() {
@@ -197,9 +233,9 @@ public class Version implements Comparable<Version> {
         if (this == o) return true;
         if (!(o instanceof Version)) return false;
         Version version = (Version) o;
-        return majorVersion == version.majorVersion &&
-            minorVersion == version.minorVersion &&
-            incrementalVersion == version.incrementalVersion &&
+        return Objects.equals(majorVersion,version.majorVersion) &&
+            Objects.equals(minorVersion, version.minorVersion) &&
+            Objects.equals(patchVersion,version.patchVersion) &&
             Objects.equals(qualifier, version.qualifier);
     }
 
@@ -208,7 +244,7 @@ public class Version implements Comparable<Version> {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(majorVersion, minorVersion, incrementalVersion, qualifier);
+        return Objects.hash(majorVersion, minorVersion, patchVersion, qualifier);
     }
 
     /**
@@ -218,7 +254,7 @@ public class Version implements Comparable<Version> {
     public String toString() {
         if (originalVersion != null) return originalVersion;
 
-        String version =  majorVersion + "." + minorVersion + "." + incrementalVersion;
+        String version =  majorVersion + "." + minorVersion + "." + patchVersion;
         return (qualifier != null) ? version +"-" + qualifier : version;
     }
 
@@ -238,7 +274,7 @@ public class Version implements Comparable<Version> {
             return compareMinor;
         }
 
-        int compareIncremental = Integer.compare(that.incrementalVersion, this.incrementalVersion);
+        int compareIncremental = Integer.compare(that.patchVersion, this.patchVersion);
         if (compareIncremental != 0) {
             return compareIncremental;
         }
@@ -252,6 +288,21 @@ public class Version implements Comparable<Version> {
         }
 
         return this.qualifier.compareTo(that.qualifier);
+    }
+    
+    
+    /**
+     * @return true if only major is specified (e.g. "1")
+     */
+    private boolean hasOnlyMajor() {
+        return minorVersion == null && patchVersion == null;
+    }
+    
+    /**
+     * @return true if major+minor are specified, but no patch (e.g. "1.2")
+     */
+    private boolean hasMajorAndMinorOnly() {
+        return minorVersion != null && patchVersion == null;
     }
 
     /**

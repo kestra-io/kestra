@@ -16,7 +16,6 @@
     "Per page": "на страницу",
     "Previous step": "Предыдущий шаг",
     "Reset guided tour": "Перезапустить Руководство",
-    "Select namespace": "Namespace",
     "Set default page": "Установить страницу по умолчанию",
     "Set labels": "Установить метки",
     "Set labels done": "Метки выполнения успешно установлены",
@@ -49,8 +48,12 @@
     "aggregation": "Агрегация",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "Примечание: В настоящее время поддерживается только Gemini в качестве AI-провайдера.\n\nПерезапустите ваш Kestra instance после сохранения конфигурации.",
+          "header": "<b>AI Copilot еще не настроен.</b>\n\nЧтобы включить AI Copilot, добавьте следующий фрагмент в файл конфигурации вашего экземпляра Kestra (например, <code>application.yml</code>), заменив <code>geminiApiKey</code> на ваш фактический ключ:"
+        },
         "generating": "Генерация YAML для flow...",
-        "prompt_placeholder": "Введите инструкции для создания вашего Kestra flow.",
+        "prompt_placeholder": "Введите инструкции для создания вашего Kestra flow. Пример запроса: Создайте flow, который запускается каждый понедельник в 9 утра.",
         "title": "AI Агент"
       }
     },
@@ -160,24 +163,27 @@
     "choose file": "Выберите файл или перетащите его сюда...",
     "close": "Закрыть",
     "close sidebar": "закрыть боковую панель",
+    "codeDisabled": "Отключено в flow",
     "collapse": "Свернуть",
     "collapse all": "Свернуть все",
     "common": {
       "back": "Назад"
     },
     "concurrency": "Конкурентность",
-    "conditions": "условия",
+    "conditions": "Условия",
     "configure basic auth": "Настроить базовую аутентификацию",
     "confirm": "Подтвердить",
     "confirm password": "Подтвердить пароль",
     "confirmation": "Подтверждение",
+    "context updated date": "Дата обновления контекста",
+    "context updated date tooltip": "Когда контекст trigger был обновлен в последний раз. Это происходит, когда выполняется execution, завершается (блокировка снята) или после оценки (даже если execution не происходит).",
     "contextBar": {
-      "demo": "Получить демонстрацию",
+      "demo": "Демо",
       "docs": "Документация",
       "help": "Помощь",
-      "issue": "Открыть Issue",
+      "issue": "Проблема",
       "news": "Новости",
-      "star": "Отметить репозиторий звёздочкой"
+      "star": "Добавьте нас в избранное"
     },
     "continue backfill": "Продолжить заполнение",
     "continue backfills": "Продолжить заполнения",
@@ -214,6 +220,7 @@
       "edition": {
         "chart": "Редактировать этот график",
         "confirmation": "Изменения в панели <code>{title}</code> сохранены.",
+        "id readonly": "Свойство `id` не может быть изменено — оно установлено на начальные значения. Если вы хотите его изменить, вы можете создать новую панель и удалить старую.",
         "label": "Редактировать Dashboard"
       },
       "empty": "Нет результатов для отображения.",
@@ -362,6 +369,18 @@
     "dependencies delete flow": "Этот flow имеет зависимости. Удаление его предотвратит выполнение их зависимостей.<br /><br /> Вот список затронутых flows:",
     "dependencies loaded": "Зависимости загружены",
     "dependencies missing acls": "Нет разрешений на этот flow",
+    "dependency": {
+      "controls": {
+        "clear_selection": "Очистить выбор",
+        "fit_view": "По размеру экрана",
+        "zoom_in": "Увеличить",
+        "zoom_out": "Уменьшить масштаб"
+      },
+      "search": {
+        "no_results": "Результаты для {term} не найдены",
+        "placeholder": "Поиск по flow или namespace..."
+      }
+    },
     "dependency task": "Задача {taskId} является зависимостью другого задачи",
     "description": "Описание",
     "details": "Детали",
@@ -432,8 +451,22 @@
         "title": "Для этого flow не установлены ограничения."
       },
       "dependencies": {
-        "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации.",
-        "title": "Для этого flow зависимости не установлены."
+        "EXECUTION": {
+          "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">зависимостях выполнения</a> в нашей документации.",
+          "title": "В настоящее время зависимости отсутствуют."
+        },
+        "FLOW": {
+          "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации.",
+          "title": "В настоящее время зависимости отсутствуют."
+        },
+        "NAMESPACE": {
+          "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> в нашей документации.",
+          "title": "В настоящее время зависимости отсутствуют."
+        }
+      },
+      "panels": {
+        "content": "Откройте Flow Code или No-Code, чтобы начать редактирование ваших flow, или выберите другую панель (Topology, Documentation, Files, Blueprints, Namespace Context) для связанных функций.",
+        "title": "В настоящее время панели не открыты."
       },
       "plugins": {
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> в нашей документации.",
@@ -446,6 +479,10 @@
       "triggers": {
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> в нашей документации.",
         "title": "Ваш flow не имеет никаких Triggers."
+      },
+      "versionPlugin": {
+        "content": "Здесь вы можете управлять всеми плагинами, установленными на вашем экземпляре Kestra. Недавно установленные плагины могут быть не сразу доступны во всех службах Kestra в зависимости от конфигурации вашего экземпляра.",
+        "title": "У вас еще нет версионированного плагина!"
       }
     },
     "empty search": "Результаты поиска пусты",
@@ -696,6 +733,7 @@
         "warning": "У вас нет разрешений для этих namespaces, поэтому они будут пропущены: <code>{namespaces}</code>"
       },
       "duplicate": "Этот key уже существует",
+      "inherited": "Наследуемые KV пары",
       "name": "KV Store",
       "type": "Тип",
       "update": "Обновить значение для key '{key}'"
@@ -709,6 +747,8 @@
     "last execution state": "Последнее состояние",
     "last execution status": "Последний статус выполнения",
     "last modified": "Последнее изменение",
+    "last trigger date": "Дата последнего срабатывания",
+    "last trigger date tooltip": "Когда trigger выполнялся в последний раз. Может быть в прошлом при запуске backfill.",
     "launch execution": "Выполнить",
     "learn_more": "Узнать больше",
     "light_background": "Это предпочтительный вариант при работе со светлым фоном.",
@@ -736,6 +776,7 @@
     "monogram": "Монограмма",
     "months": "Месяцы",
     "multi_panel_editor": {
+      "close_all_panels": "Закрыть все панели",
       "close_all_tabs": "Закрыть все вкладки",
       "move_left": "Переместить влево",
       "move_right": "Переместить вправо"
@@ -823,6 +864,8 @@
     "neutral trend": "Стабильно",
     "new": "Новый",
     "new version": "Доступна новая версия {version}!",
+    "next evaluation date": "Следующая дата оценки",
+    "next evaluation date tooltip": "Когда trigger будет оцениваться в следующий раз, на основе его интервала. Не всегда совпадает с датой следующей Ausführung, если условия не выполнены.",
     "next execution date": "Дата следующего выполнения",
     "next_execution": "Следующее выполнение",
     "no data current task": "Для текущего task нет доступных данных",
@@ -1015,7 +1058,9 @@
     "pause confirm": "Вы уверены, что хотите приостановить выполнение <code>{id}</code>?",
     "pause done": "Выполнение приостановлено",
     "pause title": "Приостановить выполнение <code>{id}</code>.<br/>Обратите внимание, что текущие RUNNING задачи все равно будут обрабатываться, и выполнение придется возобновить вручную.",
+    "paused": "Пауза",
     "playground": {
+      "clear_history": "Очистить историю",
       "confirm_create": "Вы не можете запустить playground во время создания flow. Запуск playground создаст flow.",
       "history": "Последние 10 запусков",
       "play_icon_info": "Вы также можете нажать на значок Play в представлениях No-Code или Topology.",
@@ -1025,7 +1070,8 @@
       "run_task_info": "Наведите курсор на любую task в редакторе Flow Code и нажмите кнопку \"Run task\", чтобы протестировать вашу task.",
       "run_this_task": "Запустить этот task",
       "title": "Песочница",
-      "toggle": "Песочница"
+      "toggle": "Песочница",
+      "tooltip_persistence": "Если вы выключите и снова включите Playground, информация останется, пока вы находитесь на странице."
     },
     "pluginDefaults": "Настройки плагина по умолчанию",
     "pluginPage": {
@@ -1043,7 +1089,12 @@
     "port": "Порт",
     "prefill inputs": "Предзаполнение",
     "prev_execution": "Предыдущее выполнение",
-    "preview": "Предварительный просмотр",
+    "preview": {
+      "auto-view": "Автоматический просмотр",
+      "force-editor": "Принудительный просмотр редактора",
+      "label": "Предварительный просмотр",
+      "view": "Просмотр"
+    },
     "properties": {
       "hidden": "Скрыто в таблице",
       "hint": "Выберите видимые столбцы",
@@ -1065,6 +1116,8 @@
     "replay from beginning tooltip": "Создать аналогичное выполнение, начиная с начала",
     "replay from task tooltip": "Создать аналогичное выполнение, начиная с задачи <code>{taskId}</code>",
     "replay latest revision": "Повтор с использованием последней редакции",
+    "replay the execution": "Повторить выполнение <code>{executionId}</code> для flow <code>{flowId}</code>",
+    "replay with inputs": "Воспроизвести с inputами",
     "replayed": "Выполнение повторено",
     "required field": "Обязательное поле",
     "reset": "Перезапустить",
@@ -1182,6 +1235,7 @@
           "label": "Язык и регион",
           "note": "Обратите внимание, что эта настройка используется для отображения свойств даты и времени в интерфейсе. Чтобы запланировать ваши flows в часовом поясе, отличном от UTC, убедитесь, что вы установили свойство timezone в trigger расписания в вашем коде flow или в настройках плагина по умолчанию."
         },
+        "reset_section_to_defaults": "Восстановить значения по умолчанию для этого раздела",
         "save": {
           "discard": "Отменить",
           "label": "Сохранить настройки",
@@ -1335,7 +1389,6 @@
     "task_id_exists": "Id задачи уже существует",
     "task_id_message": "Id задачи ${existingTask} уже существует в flow.",
     "taskid column details": "Последний task выполняется и количество его попыток.",
-    "taskruns": "Запуски задач",
     "tasks": "Задачи",
     "template": "Шаблон",
     "template creation": "Создание шаблона",
@@ -1349,6 +1402,7 @@
       "name": "Мандант",
       "names": "Арендаторы"
     },
+    "tenantId": "ID арендатора",
     "test-badge-text": "Тест",
     "test-badge-tooltip": "Это выполнение было создано тестом",
     "theme": "Тема",
@@ -1386,6 +1440,7 @@
       "title": "Фильтровать дочерние выполнения"
     },
     "trigger refresh": "Обновить",
+    "triggerId": "Идентификатор Trigger",
     "trigger_check_warning": "Использование переменных trigger не будет работать с ручным выполнением flow. Добавьте оператор объединения `??`, чтобы решить проблему. Например, вместо `trigger.date` используйте `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "Идентификатор Trigger уже существует",
     "trigger_id_message": "Идентификатор Trigger ${existingTrigger} уже существует в flow.",

@@ -33,10 +33,10 @@
 
 <p align="center">
     <a href="https://go.kestra.io/video/product-overview" target="_blank">
-        <img src="https://kestra.io/startvideo.png" alt="Get started in 4 minutes with Kestra" width="640px" />
+        <img src="https://kestra.io/startvideo.png" alt="Get started in 3 minutes with Kestra" width="640px" />
     </a>
 </p>
-<p align="center" style="color:grey;"><i>Click on the image to learn how to get started with Kestra in 4 minutes.</i></p>
+<p align="center" style="color:grey;"><i>Click on the image to learn how to get started with Kestra in 3 minutes.</i></p>
 
 
 ## 🌟 What is Kestra?
@@ -64,10 +64,6 @@ Kestra is an open-source, event-driven orchestration platform that makes both **
 ---
 
 ## 🚀 Quick Start
-
-### Try the Live Demo
-
-Try Kestra with our [**Live Demo**](https://demo.kestra.io/ui/login?auto). No installation required!
 
 ### Get Started Locally in 5 Minutes
 

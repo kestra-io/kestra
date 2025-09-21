@@ -16,12 +16,12 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "8.3.8"
+    id "com.gradleup.shadow" version "8.3.9"
     id "application"
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "6.2.0.5505"
+    id "org.sonarqube" version "6.3.1.5724"
     id 'jacoco-report-aggregation'
 
     // helper
@@ -32,7 +32,7 @@ plugins {
 
     // release
     id 'net.researchgate.release' version '3.1.0'
-    id "com.gorylenko.gradle-git-properties" version "2.5.2"
+    id "com.gorylenko.gradle-git-properties" version "2.5.3"
     id 'signing'
     id "com.vanniktech.maven.publish" version "0.34.0"
 
@@ -168,8 +168,9 @@ allprojects {
 /**********************************************************************************************************************\
  * Test
  **********************************************************************************************************************/
-subprojects {
-    if (it.name != 'platform' && it.name != 'jmh-benchmarks') {
+subprojects {subProj ->
+
+    if (subProj.name != 'platform' && subProj.name != 'jmh-benchmarks') {
         apply plugin: "com.adarshr.test-logger"
 
         java {
@@ -207,6 +208,13 @@ subprojects {
 
         test {
             useJUnitPlatform()
+            reports {
+                junitXml.required = true
+                junitXml.outputPerTestCase = true
+                junitXml.mergeReruns = true
+                junitXml.includeSystemErrLog = true;
+                junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
+            }
 
             // set Xmx for test workers
             maxHeapSize = '4g'
@@ -222,6 +230,15 @@ subprojects {
             environment 'SECRET_PASSWORD', "cGFzc3dvcmQ="
             environment 'ENV_TEST1', "true"
             environment 'ENV_TEST2', "Pass by env"
+
+
+            if (subProj.name == 'core' || subProj.name == 'jdbc-h2' || subProj.name == 'jdbc-mysql' || subProj.name == 'jdbc-postgres') {
+                // JUnit 5 parallel settings
+                systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
+                systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+                systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
+                systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
+            }
         }
 
         testlogger {
@@ -617,6 +634,28 @@ subprojects {subProject ->
                 tasks.matching { it.name.startsWith("publish") }.configureEach {
                     dependsOn rootProject.tasks.named("shadowJar")
                     dependsOn rootProject.tasks.named("executableJar")
+                }
+            }
+        }
+
+        if (subProject.name != 'platform' && subProject.name != 'cli') {
+            // only if a test source set actually exists (avoids empty artifacts)
+            def hasTests = subProject.extensions.findByName('sourceSets')?.findByName('test') != null
+
+            if (hasTests) {
+                // wire the artifact onto every Maven publication of this subproject
+                publishing {
+                    publications {
+                        withType(MavenPublication).configureEach { pub ->
+                            // keep the normal java component + sources/javadoc already configured
+                            pub.artifact(subProject.tasks.named('testsJar').get())
+                        }
+                    }
+                }
+
+                // make sure publish tasks build the tests jar first
+                tasks.matching { it.name.startsWith('publish') }.configureEach {
+                    dependsOn subProject.tasks.named('testsJar')
                 }
             }
         }

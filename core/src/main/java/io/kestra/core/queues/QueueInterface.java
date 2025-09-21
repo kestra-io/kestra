@@ -5,6 +5,7 @@ import io.kestra.core.models.Pauseable;
 import io.kestra.core.utils.Either;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.function.Consumer;
 
 public interface QueueInterface<T> extends Closeable, Pauseable {
@@ -18,7 +19,15 @@ public interface QueueInterface<T> extends Closeable, Pauseable {
         emitAsync(null, message);
     }
 
-    void emitAsync(String consumerGroup, T message) throws QueueException;
+    default void emitAsync(String consumerGroup, T message) throws QueueException {
+        emitAsync(consumerGroup, List.of(message));
+    }
+
+    default void emitAsync(List<T> messages) throws QueueException {
+        emitAsync(null, messages);
+    }
+
+    void emitAsync(String consumerGroup, List<T> messages) throws QueueException;
 
     default void delete(T message) throws QueueException {
         delete(null, message);
@@ -27,7 +36,7 @@ public interface QueueInterface<T> extends Closeable, Pauseable {
     void delete(String consumerGroup, T message) throws QueueException;
 
     default Runnable receive(Consumer<Either<T, DeserializationException>> consumer) {
-        return receive((String) null, consumer);
+        return receive(null, consumer, false);
     }
 
     default Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer) {

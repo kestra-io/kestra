@@ -1,18 +1,18 @@
 <template>
-    <el-table stripe table-layout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
+    <el-table tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
         <el-table-column prop="key" rowspan="3" :label="$t('name')">
             <template #default="scope">
-                <code>{{ scope.row.key }}</code>
+                {{ getHumanizeLabel(scope.row.key) }}
             </template>
         </el-table-column>
 
         <el-table-column prop="value" :label="$t('value')">
             <template #default="scope">
                 <template v-if="scope.row.key === 'description'">
-                    <markdown :source="scope.row.value" />
+                    <Markdown :source="scope.row.value" />
                 </template>
                 <template v-else-if="scope.row.key === 'cron'">
-                    <cron :cron-expression="scope.row.value" />
+                    <Cron :cronExpression="scope.row.value" />
                 </template>
                 <template v-else-if="scope.row.key === 'key'">
                     {{ scope.row.value }}
@@ -21,7 +21,7 @@
                     </el-button>
                 </template>
                 <template v-else>
-                    <var-value :value="scope.row.value" :execution="execution" :restrict-uri="true" />
+                    <VarValue :value="scope.row.value" :execution="execution" :restrictUri="true" />
                 </template>
             </template>
         </el-table-column>
@@ -54,7 +54,33 @@
         methods: {
             emit(type, event) {
                 this.$emit(type, event);
-            }
+            },
+            getHumanizeLabel(key) {
+                const keyMappings = {
+                    "id": this.$t("id"),
+                    "triggerId": this.$t("triggerId"), 
+                    "flowId": this.$t("flow"),
+                    "namespace": this.$t("namespace"),
+                    "type": this.$t("type"),
+                    "workerId": this.$t("workerId"),
+                    "executionId": this.$t("current execution"),
+                    "nextExecutionDate": this.$t("next evaluation date"),
+                    "date": this.$t("last trigger date"),
+                    "updatedDate": this.$t("context updated date"),
+                    "evaluateRunningDate": this.$t("evaluation lock date"),
+                    "description": this.$t("description"),
+                    "cron": this.$t("cron"),
+                    "key": this.$t("key"),
+                    "backfill": this.$t("backfill"),
+                    "state": this.$t("state"),
+                    "enabled": this.$t("enabled"),
+                    "codeDisabled": this.$t("codeDisabled"),
+                    "paused": this.$t("paused"),
+                    "tenantId": this.$t("tenantId"),
+                    "conditions": this.$t("conditions"),
+                };
+                return keyMappings[key] || key.charAt(0).toUpperCase() + key.slice(1);
+            },
         }
     };
 </script>
@@ -64,5 +90,9 @@
         p {
             margin-bottom: auto;
         }
+    }
+
+    :deep(.el-table__cell:nth-child(2) span) {
+        color: var(--ks-content-secondary);
     }
 </style>

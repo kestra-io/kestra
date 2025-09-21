@@ -35,10 +35,10 @@ class AllowFailureTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/allow-failure.yaml"})
+    @LoadFlows(value = {"flows/valids/allow-failure.yaml"}, tenantId = "fail")
     void failed() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            "fail",
             "io.kestra.tests",
             "allow-failure",
             null,

@@ -12,9 +12,9 @@
                 <Title :text="t('filters.settings.label')" />
                 <template v-if="settings.charts.shown">
                     <el-switch
-                        :model-value="settings.charts.value"
+                        :modelValue="settings.charts.value"
                         @update:model-value="settings.charts.callback"
-                        :active-text="t('filters.settings.show_chart')"
+                        :activeText="t('filters.settings.show_chart')"
                         class="p-3"
                     />
                 </template>

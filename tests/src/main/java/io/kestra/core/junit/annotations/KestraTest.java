@@ -24,6 +24,8 @@ public @interface KestraTest {
 
     boolean startScheduler() default false;
 
+    boolean startWorker() default true;
+
     Class<?> application() default void.class;
 
     String[] environments() default {};

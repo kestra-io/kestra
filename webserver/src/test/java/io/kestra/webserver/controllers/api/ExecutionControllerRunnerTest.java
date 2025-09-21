@@ -13,6 +13,7 @@ import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -263,7 +264,7 @@ class ExecutionControllerRunnerTest {
     @SuppressWarnings("unchecked")
     @Test
     @LoadFlows({"flows/valids/minimal-bis.yaml"})
-    void searchExecutionsByFlowId() {
+    void searchExecutionsByFlowId() throws TimeoutException {
         String namespace = "io.kestra.tests.minimal.bis";
         String flowId = "minimal-bis";
 
@@ -277,7 +278,7 @@ class ExecutionControllerRunnerTest {
         triggerExecutionExecution(namespace, flowId, MultipartBody.builder().addPart("string", "myString").build(), false);
 
         // Wait for execution indexation
-        Await.until(() -> executionRepositoryInterface.findByFlowId(TENANT_ID, namespace, flowId, Pageable.from(1)).size() == 1);
+        Await.until(() -> executionRepositoryInterface.findByFlowId(TENANT_ID, namespace, flowId, Pageable.from(1)).size() == 1, Duration.ofMillis(100), Duration.ofMillis(10));
         PagedResults<Execution> executionsAfter = client.toBlocking().retrieve(
             GET("/api/v1/main/executions?namespace=" + namespace + "&flowId=" + flowId),
             Argument.of(PagedResults.class, Execution.class)
@@ -445,6 +446,106 @@ class ExecutionControllerRunnerTest {
             .stream()
             .map(TaskRun::getState)
             .forEach(state -> assertThat(state.getCurrent()).isEqualTo(State.Type.SUCCESS));
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/condition_with_input.yaml"})
+    void restartExecutionWithNewInputs() throws Exception {
+        final String flowId = "condition_with_input";
+
+        // Run execution until it ends
+        Execution parentExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("condition", "fail")));
+
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(Type.FAILED);
+
+        Optional<Flow> flow = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, flowId);
+
+        assertThat(flow.isPresent()).isTrue();
+
+        // Run child execution starting from a specific task and wait until it finishes
+        Execution finishedChildExecution = runnerUtils.awaitChildExecution(
+            flow.get(),
+            parentExecution, throwRunnable(() -> {
+                Thread.sleep(100);
+
+                MultipartBody multipartBody = MultipartBody.builder()
+                    .addPart("condition", "success")
+                    .build();
+
+                Execution replay = client.toBlocking().retrieve(
+                    HttpRequest
+                        .POST("/api/v1/main/executions/" + parentExecution.getId() + "/replay-with-inputs", multipartBody)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                    Execution.class
+                );
+
+                assertThat(replay).isNotNull();
+                assertThat(replay.getParentId()).isEqualTo(parentExecution.getId());
+                assertThat(replay.getState().getCurrent()).isEqualTo(Type.CREATED);
+            }),
+            Duration.ofSeconds(15));
+
+        assertThat(finishedChildExecution).isNotNull();
+        assertThat(finishedChildExecution.getParentId()).isEqualTo(parentExecution.getId());
+        assertThat(finishedChildExecution.getTaskRunList().size()).isEqualTo(2);
+
+        finishedChildExecution
+            .getTaskRunList()
+            .stream()
+            .map(TaskRun::getState)
+            .forEach(state -> assertThat(state.getCurrent()).isIn(State.Type.SUCCESS, State.Type.SKIPPED));
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/condition_with_input.yaml"})
+    void restartExecutionFromTaskIdWithInputs() throws Exception {
+        final String flowId = "condition_with_input";
+        final String referenceTaskId = "fail";
+
+        // Run execution until it ends
+        Execution parentExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, flowId, null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("condition", "fail")));
+
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(Type.FAILED);
+
+        Optional<Flow> flow = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, flowId);
+
+        assertThat(flow.isPresent()).isTrue();
+
+        // Run child execution starting from a specific task and wait until it finishes
+        Execution finishedChildExecution = runnerUtils.awaitChildExecution(
+            flow.get(),
+            parentExecution, throwRunnable(() -> {
+                Thread.sleep(100);
+
+                MultipartBody multipartBody = MultipartBody.builder()
+                    .addPart("condition", "success")
+                    .build();
+
+                Execution replay = client.toBlocking().retrieve(
+                    HttpRequest
+                        .POST("/api/v1/main/executions/" + parentExecution.getId() + "/replay-with-inputs?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(), multipartBody)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                    Execution.class
+                );
+
+                assertThat(replay).isNotNull();
+                assertThat(replay.getParentId()).isEqualTo(parentExecution.getId());
+                assertThat(replay.getTaskRunList().size()).isEqualTo(2);
+                assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+            }),
+            Duration.ofSeconds(15));
+
+        assertThat(finishedChildExecution).isNotNull();
+        assertThat(finishedChildExecution.getParentId()).isEqualTo(parentExecution.getId());
+        assertThat(finishedChildExecution.getTaskRunList().size()).isEqualTo(2);
+
+        finishedChildExecution
+            .getTaskRunList()
+            .stream()
+            .map(TaskRun::getState)
+            .forEach(state -> assertThat(state.getCurrent()).isIn(State.Type.SUCCESS, State.Type.SKIPPED));
     }
 
     @Test
@@ -866,11 +967,11 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause.yaml"})
+    @LoadFlows({"flows/valids/pause-test.yaml"})
     @SuppressWarnings("unchecked")
     void resumeExecutionPaused() throws TimeoutException, InterruptedException, QueueException, InternalException {
         // Run execution until it is paused
-        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause");
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
 
         // resume the execution
@@ -915,11 +1016,33 @@ class ExecutionControllerRunnerTest {
         assertThat((String) outputs.get("data")).startsWith("kestra://");
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    @LoadFlows({"flows/valids/pause.yaml"})
+    @LoadFlows({"flows/valids/pause_on_resume.yaml"})
+    void resumeExecutionPausedWithWrongInputs() throws TimeoutException, QueueException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause_on_resume");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        MultipartBody multipartBody = MultipartBody.builder()
+            .addPart("wrong", "input")
+            .build();
+
+        // resume the execution
+        HttpClientResponseException exception =  assertThrows (HttpClientResponseException.class, () ->
+            client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", multipartBody)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        ));
+        assertThat(exception.getStatus().getCode()).isEqualTo(422);
+        assertThat(exception.getMessage()).isEqualTo("Invalid entity: asked: Invalid input for `asked`, missing required input, but received `null`");
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/pause-test.yaml"})
     void resumeExecutionByIds() throws TimeoutException, InterruptedException, QueueException {
-        Execution pausedExecution1 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause");
-        Execution pausedExecution2 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause");
+        Execution pausedExecution1 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
+        Execution pausedExecution2 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
 
         assertThat(pausedExecution1.getState().isPaused()).isTrue();
         assertThat(pausedExecution2.getState().isPaused()).isTrue();
@@ -950,10 +1073,10 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause.yaml"})
+    @LoadFlows({"flows/valids/pause-test.yaml"})
     void resumeExecutionByQuery() throws TimeoutException, InterruptedException, QueueException {
-        Execution pausedExecution1 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause");
-        Execution pausedExecution2 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause");
+        Execution pausedExecution1 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
+        Execution pausedExecution2 = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
 
         assertThat(pausedExecution1.getState().isPaused()).isTrue();
         assertThat(pausedExecution2.getState().isPaused()).isTrue();
@@ -1142,10 +1265,10 @@ class ExecutionControllerRunnerTest {
     }
 
     @RetryingTest(5)
-    @LoadFlows({"flows/valids/pause.yaml"})
+    @LoadFlows({"flows/valids/pause-test.yaml"})
     void killExecutionPaused() throws TimeoutException, InterruptedException, QueueException {
         // Run execution until it is paused
-        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause");
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
 
         // resume the execution
@@ -1704,10 +1827,10 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause.yaml"})
+    @LoadFlows({"flows/valids/pause-test.yaml"})
     void shouldForceRunExecutionAPausedFlow() throws QueueException, TimeoutException {
         // Run execution until it is paused
-        Execution result = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause");
+        Execution result = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
 
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());

@@ -6,8 +6,8 @@ import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.runners.StandAloneRunner;
-import io.kestra.core.services.SkipExecutionService;
+import io.kestra.cli.StandAloneRunner;
+import io.kestra.executor.SkipExecutionService;
 import io.kestra.core.services.StartExecutorService;
 import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
@@ -48,7 +48,7 @@ public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Option(names = "--tenant", description = "Tenant identifier, Required to load flows from path with the enterprise edition")
     private String tenantId;
 
-    @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker threads, defaults to four times the number of available processors. Set it to 0 to avoid starting a worker.")
+    @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker threads, defaults to eight times the number of available processors. Set it to 0 to avoid starting a worker.")
     private int workerThread = defaultWorkerThread();
 
     @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "a list of execution identifiers to skip, separated by a coma; for troubleshooting purpose only")
@@ -109,25 +109,26 @@ public class StandAloneCommand extends AbstractServerCommand {
             }
         }
 
-        StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class);
+        try (StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class)) {
 
-        if (this.workerThread == 0) {
-            standAloneRunner.setWorkerEnabled(false);
-        } else {
-            standAloneRunner.setWorkerThread(this.workerThread);
+            if (this.workerThread == 0) {
+                standAloneRunner.setWorkerEnabled(false);
+            } else {
+                standAloneRunner.setWorkerThread(this.workerThread);
+            }
+
+            if (this.indexerDisabled) {
+                standAloneRunner.setIndexerEnabled(false);
+            }
+
+            standAloneRunner.run();
+
+            if (fileWatcher != null) {
+                fileWatcher.startListeningFromConfig();
+            }
+
+            Await.until(() -> !this.applicationContext.isRunning());
         }
-
-        if (this.indexerDisabled) {
-            standAloneRunner.setIndexerEnabled(false);
-        }
-
-        standAloneRunner.run();
-
-        if (fileWatcher != null) {
-            fileWatcher.startListeningFromConfig();
-        }
-
-        Await.until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

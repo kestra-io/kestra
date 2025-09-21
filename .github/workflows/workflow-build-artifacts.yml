@@ -15,7 +15,7 @@ jobs:
       PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
     steps:
       - name: Checkout - Current ref
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -26,7 +26,7 @@ jobs:
         run: npm ci
 
       # Setup build
-      - uses: kestra-io/actions/.github/actions/setup-build@main
+      - uses: kestra-io/actions/composite/setup-build@main
         name: Setup - Build
         id: build
         with:

@@ -58,4 +58,15 @@ class ParallelTest {
         assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getStartDate().isAfter(execution.findTaskRunsByTaskId("a1").getFirst().getState().getEndDate().orElseThrow())).isTrue();
         assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getStartDate().isAfter(execution.findTaskRunsByTaskId("e1").getFirst().getState().getEndDate().orElseThrow())).isTrue();
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/parallel-fail-with-flowable.yaml")
+    void parallelFailWithFlowable(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList()).hasSize(5);
+        // all tasks must be terminated except the Sleep that will ends later as everything is concurrent
+        execution.getTaskRunList().stream()
+            .filter(taskRun -> !"sleep".equals(taskRun.getTaskId()))
+            .forEach(run -> assertThat(run.getState().isTerminated()).isTrue());
+    }
 }

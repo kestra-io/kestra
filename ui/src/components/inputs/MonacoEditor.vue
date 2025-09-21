@@ -2,12 +2,12 @@
     <div>
         <div data-testid="monaco-editor" class="ks-monaco-editor" ref="editorRef" />
         <div ref="datePickerWrapper" v-show="datePickerShown">
-            <el-date-picker
+            <ElDatePicker
                 ref="datePicker"
                 type="datetime"
                 v-model="selectedDate"
                 :teleported="false"
-                :default-value="nowMoment.toDate()"
+                :defaultValue="nowMoment.toDate()"
                 @change="datePickerCallback"
                 @keydown.esc.prevent="editorResolved?.focus()"
                 @keydown.enter.prevent="datePickerCallback"
@@ -39,7 +39,6 @@
         VNode,
         watch
     } from "vue";
-    import {useStore} from "vuex";
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
     import "monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.js";
@@ -53,7 +52,7 @@
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import configureLanguage from "../../composables/monaco/languages/languagesConfigurator";
 
-    import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
+    import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys.ts";
 
     import YamlWorker from "./yaml.worker.js?worker";
     import Utils from "../../utils/utils";
@@ -67,9 +66,9 @@
     import ICodeEditor = editor.ICodeEditor;
     import debounce from "lodash/debounce";
     import {usePluginsStore} from "../../stores/plugins.ts";
+    import {useFlowStore} from "../../stores/flow.ts";
     import EditorType = editor.EditorType;
 
-    const store = useStore();
     const currentInstance = getCurrentInstance()!;
     const {t} = useI18n();
 
@@ -100,6 +99,7 @@
     });
 
     import {useRoute} from "vue-router";
+    import {useEditorStore} from "../../stores/editor";
     const route = useRoute();
 
     const highlightLine = () => {
@@ -502,6 +502,7 @@
     const disposeCompletions = ref<() => void>();
 
     const pluginsStore = usePluginsStore();
+    const flowStore = useFlowStore();
 
     const prefix = computed(() => props.schemaType ? `${props.schemaType}-` : "");
     onMounted(async function () {
@@ -510,7 +511,7 @@
 
         if (props.language !== undefined) {
             await configureLanguage(
-                store,
+                flowStore,
                 pluginsStore,
                 t,
                 props.diffEditor ? undefined : editorResolved.value as ICodeEditor,
@@ -653,6 +654,8 @@
         }
     }
 
+    const editorStore = useEditorStore();
+
     async function initMonaco() {
         let options: EditorOptions = {
             value: props.value,
@@ -690,6 +693,18 @@
                     original: originalModel,
                     modified: modifiedModel
                 });
+                let modifiedBackspaceTimeout: number | null = null;
+
+                const modifiedEditor = localDiffEditor.value.getModifiedEditor();
+                modifiedEditor.onKeyDown((e) => {
+                    if (e.keyCode === monaco.KeyCode.Backspace) {
+                        if (modifiedBackspaceTimeout) clearTimeout(modifiedBackspaceTimeout);
+
+                        modifiedBackspaceTimeout = window.setTimeout(() => {
+                            modifiedEditor.trigger("keyboard", "editor.action.triggerSuggest", {});
+                        }, 250); 
+                    }
+                });
             }
         } else {
             monaco.editor.addKeybindingRule({
@@ -721,8 +736,21 @@
             });
 
             if (editorRef.value) {
-                localEditor.value = monaco.editor.create(editorRef.value, options);
+                localEditor.value = monaco.editor.create(editorRef.value, {
+                    ...options,
+                    fixedOverflowWidgets: true // Helps suggestion widget render above other elements
+                });
+                let localBackspaceTimeout: number | null = null;
+                
+                localEditor.value.onKeyDown((e) => {
+                    if (e.keyCode === monaco.KeyCode.Backspace) {
+                        if (localBackspaceTimeout) clearTimeout(localBackspaceTimeout);
 
+                        localBackspaceTimeout = window.setTimeout(() => {
+                            localEditor.value!.trigger("keyboard", "editor.action.triggerSuggest", {});
+                        }, 250);
+                    }
+                });
                 if (props.suggestionsOnFocus) {
                     localEditor.value.onMouseDown(() => {
                         localEditor.value!.trigger("click", "editor.action.triggerSuggest", {});
@@ -773,9 +801,9 @@
             if (props.value !== value) {
                 emit("change", value, event);
 
-                if (!props.input && current.value && current.value.name) {
-                    store.commit("editor/setTabDirty", {
-                        ...current.value,
+                if (!props.input && editorStore.current?.name) {
+                    editorStore.setTabDirty({
+                        ...editorStore.current,
                         dirty: true,
                     });
                 }
@@ -789,10 +817,6 @@
 
         highlightLine();
     }
-
-    const current = computed(() => {
-        return store.state.editor.current;
-    });
 
     async function changeTab(pathOrName: string, valueSupplier: () => Promise<string>, useModelCache = true) {
         let model;

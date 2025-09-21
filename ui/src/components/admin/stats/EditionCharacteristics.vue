@@ -11,7 +11,7 @@
             </div>
         </template>
         <div class="features-container">
-            <div 
+            <div
                 v-for="feature in features"
                 :key="feature"
                 class="feature-row"
@@ -140,6 +140,9 @@
     .action-button {
         margin-top: auto;
         width: 100%;
+        white-space: normal;
+        height: auto;
+        box-sizing: border-box;
     }
 }
 </style>

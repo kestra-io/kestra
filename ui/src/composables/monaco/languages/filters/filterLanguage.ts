@@ -1,6 +1,5 @@
 import {Comparators, Completion, FilterKeyCompletions, keyOfComparator, ValueCompletions} from "./filterCompletion";
 import {useValues} from "../../../../components/filter/composables/useValues";
-import {Store} from "vuex";
 
 type FilterKeyCompletionEntries = [
     ({ key: string, regex: RegExp }),
@@ -23,15 +22,13 @@ export abstract class FilterLanguage {
 
     protected constructor(domain: string | undefined, filterKeyCompletions: Record<string, FilterKeyCompletions>, textFilterSupported: boolean = true) {
         this._domain = domain;
-        this._filterKeyCompletions = [
-            ...(Object.entries(filterKeyCompletions).map(([key, filterKeyCompletion]) => [
+        this._filterKeyCompletions = (Object.entries(filterKeyCompletions).map(([key, filterKeyCompletion]) => [
                 {
                     key: key,
                     regex: new RegExp("^" + key.replaceAll(".", "\\.").replaceAll(/\$?\{([^}]*)}/g, ".*") + "$")
                 },
                 filterKeyCompletion
-            ]) as FilterKeyCompletionEntries)
-        ];
+            ]) as FilterKeyCompletionEntries);
         this._textFilterSupported = textFilterSupported;
 
         if (textFilterSupported) {
@@ -86,13 +83,13 @@ export abstract class FilterLanguage {
         return completion.comparators.map(comparator => new Completion(keyOfComparator(comparator), comparator));
     }
 
-    async valueCompletion(store: Store<Record<string, any>>, hardcodedValues: ReturnType<typeof useValues>["VALUES"], key: string): Promise<ValueCompletions> {
+    async valueCompletion(hardcodedValues: ReturnType<typeof useValues>["VALUES"], key: string): Promise<ValueCompletions> {
         const completion = this.completionForKey(key);
         if (completion === undefined) {
             return [];
         }
 
-        return completion.valuesFetcher(store, hardcodedValues);
+        return completion.valuesFetcher(hardcodedValues);
     }
 
     multipleValuesAllowed(key: string): boolean {

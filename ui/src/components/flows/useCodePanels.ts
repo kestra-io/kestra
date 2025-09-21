@@ -1,8 +1,8 @@
 import {computed, h, markRaw, Ref, watch} from "vue"
-import {useStore} from "vuex"
 import type {Panel} from "../MultiPanelTabs.vue";
-import EditorWrapper, {EditorTabProps} from "../inputs/EditorWrapper.vue";
+import EditorWrapper from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
+import {EditorTabProps, useEditorStore} from "../../stores/editor";
 
 export const CODE_PREFIX = "code"
 
@@ -19,7 +19,7 @@ export function getTabFromCodeTab(tab: EditorTabProps){
 }
 
 export function useInitialCodeTabs(){
-    const store = useStore()
+    const editorStore = useEditorStore()
 
     function setupInitialCodeTab(tab: string){
         if(!tab.startsWith(`${CODE_PREFIX}-`)){
@@ -33,7 +33,7 @@ export function useInitialCodeTabs(){
             flow: false,
             dirty: false
         }
-        store.dispatch("editor/openTab", editorTab)
+        editorStore.openTab(editorTab)
         return getTabFromCodeTab(editorTab)
     }
 
@@ -41,14 +41,14 @@ export function useInitialCodeTabs(){
 }
 
 export function useCodePanels(panels: Ref<Panel[]>) {
-    const store = useStore()
+    const editorStore = useEditorStore()
 
-    const codeEditorTabs = computed<EditorTabProps[]>(() => store.state.editor.tabs.filter((t:any) => !t.flow))
+    const codeEditorTabs = computed(() => editorStore.tabs.filter((t) => !t.flow))
     /**
      * If the flow tab has recorded changes, show all representations as dirty
      */
-    const isFlowDirty = computed(() => store.state.editor.tabs.some((t:any) => t.flow && t.dirty))
-    const currentTab = computed(() => store.state.editor.current?.path)
+    const isFlowDirty = computed(() => editorStore.tabs.some((t:any) => t.flow && t.dirty))
+    const currentTab = computed(() => editorStore.current?.path)
 
     function getPanelsFromCodeEditorTabs(codeTabs: EditorTabProps[]){
         const tabs = codeTabs.map(getTabFromCodeTab)
@@ -127,8 +127,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
 
     function onRemoveTab(tabId: string){
         if(tabId.startsWith(`${CODE_PREFIX}-`)){
-            store.dispatch("editor/closeTab", {
-                action: "close",
+            editorStore.closeTab({
                 path: tabId.substring(5),
             });
         }

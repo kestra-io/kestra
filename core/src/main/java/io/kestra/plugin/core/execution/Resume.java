@@ -64,14 +64,14 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
         description = """
             If you explicitly define an `executionId`, Kestra will use that specific ID.
 
-            If another `namespace` and `flowId` properties are set, Kestra will look for a paused execution for that corresponding flow.
+            If `executionId` is not set and `namespace` and `flowId` properties are set, Kestra will look for a paused execution for that corresponding flow.
 
             If `executionId` is not set, the task will use the ID of the current execution."""
     )
     private Property<String> executionId;
 
     @Schema(
-        title = "Inputs to be passed to the execution when it's resumed."
+        title = "Inputs to be passed to the execution when it's resumed"
     )
     private Property<Map<String, Object>> inputs;
 
@@ -93,7 +93,7 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
 
         Execution execution = executionRepository.findById(executionInfo.tenantId(), executionInfo.id())
             .orElseThrow(() -> new IllegalArgumentException("No execution found for execution id " + executionInfo.id()));
-        FlowInterface flow = flowExecutor.findByExecution(execution).orElseThrow(() -> new IllegalArgumentException("Flow not found for execution id " + executionInfo.id()));
+        FlowInterface flow = flowExecutor.findByExecution(execution).orElseThrow(() -> new IllegalArgumentException("Flow not found for execution ID " + executionInfo.id()));
 
         Map<String, Object> renderedInputs = runContext.render(this.inputs).asMap(String.class, Object.class);
         renderedInputs = !renderedInputs.isEmpty() ? renderedInputs : null;

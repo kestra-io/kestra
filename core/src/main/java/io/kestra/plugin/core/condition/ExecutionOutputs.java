@@ -90,7 +90,7 @@ public class ExecutionOutputs extends Condition implements ScheduleCondition {
     private static final String OUTPUTS_VAR = "outputs";
 
     @NotNull
-    private Property<String> expression;
+    private Property<Boolean> expression;
 
     /** {@inheritDoc} **/
     @SuppressWarnings("unchecked")
@@ -106,8 +106,7 @@ public class ExecutionOutputs extends Condition implements ScheduleCondition {
             Map.of(TRIGGER_VAR, Map.of(OUTPUTS_VAR, conditionContext.getExecution().getOutputs()))
         );
 
-        String render = conditionContext.getRunContext().render(expression).as(String.class, variables).orElseThrow();
-        return !(render.isBlank() || render.trim().equals("false"));
+        return conditionContext.getRunContext().render(expression).skipCache().as(Boolean.class, variables).orElseThrow();
     }
 
     private boolean hasNoOutputs(final Execution execution) {

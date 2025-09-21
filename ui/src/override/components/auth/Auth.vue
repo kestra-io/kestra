@@ -1,14 +1,14 @@
 <template>
     <el-select
         placement="right-end"
-        :popper-offset="20"
-        :show-arrow="false"
-        :suffix-icon="ChevronRight"
+        :popperOffset="20"
+        :showArrow="false"
+        :suffixIcon="ChevronRight"
         :placeholder="t('kestra')"
-        popper-class="user-select border border-0"
+        popperClass="user-select border border-0"
     >
         <template #prefix>
-            <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra">
+            <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra" class="user-avatar">
         </template>
         <template #header>
             <el-option :value="{}" class=" list-unstyled">
@@ -43,7 +43,6 @@
 
 <script setup lang="ts">
     import {RouterLink, useRouter} from "vue-router";
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
@@ -52,14 +51,15 @@
     import Logout from "vue-material-design-icons/Logout.vue";
 
     import * as BasicAuth from "../../../utils/basicAuth";
+    import {useAxios} from "../../../utils/axios";
 
     const router = useRouter();
-    const store = useStore() as any;
+    const axios = useAxios();
     const {t} = useI18n();
 
     const logout = () => {
         BasicAuth.logout();
-        delete store.$http?.defaults?.headers?.common?.["Authorization"];
+        delete axios.defaults.headers.common["Authorization"];
         router.push({name: "login"});
     };
 </script>
@@ -129,5 +129,11 @@ html.menu-collapsed {
     .el-select__suffix {
         display: none;
     }
+}
+
+.user-avatar {
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+
 }
 </style>

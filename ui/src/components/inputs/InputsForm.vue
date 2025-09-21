@@ -7,13 +7,13 @@
             :rules="requiredRules(input)"
             :prop="input.id"
             :error="inputError(input.id)"
-            :inline-message="true"
+            :inlineMessage="true"
         >
             <template #label>
-                <markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
+                <Markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
             </template>
-            <editor
-                :full-height="false"
+            <Editor
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
@@ -23,14 +23,14 @@
                 @confirm="onSubmit"
             />
             <el-select
-                :full-height="false"
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
                 :data-testid="`input-form-${input.id}`"
                 v-model="selectedTriggerLocal[input.id]"
                 @update:model-value="onChange(input)"
-                :allow-create="input.allowCustomValue"
+                :allowCreate="input.allowCustomValue"
                 filterable
                 clearable
             >
@@ -40,7 +40,7 @@
                     :label="item"
                     :value="item"
                 >
-                    <markdown :source="item" />
+                    <Markdown :source="item" />
                 </el-option>
             </el-select>
             <el-radio-group
@@ -58,7 +58,7 @@
                 />
             </el-radio-group>
             <el-select
-                :full-height="false"
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'MULTISELECT'"
@@ -68,7 +68,7 @@
                 multiple
                 filterable
                 clearable
-                :allow-create="input.allowCustomValue"
+                :allowCreate="input.allowCustomValue"
             >
                 <el-option
                     v-for="item in (input.values ?? input.options)"
@@ -76,7 +76,7 @@
                     :label="item"
                     :value="item"
                 >
-                    <markdown :source="item" />
+                    <Markdown :source="item" />
                 </el-option>
             </el-select>
             <el-input
@@ -85,7 +85,7 @@
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
-                show-password
+                showPassword
             />
             <span v-if="input.type === 'INT'">
                 <el-input-number
@@ -216,33 +216,33 @@
                     </div>
                 </div>
             </div>
-            <editor
-                :full-height="false"
+            <Editor
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'JSON'"
-                :show-scroll="inputsValues[input.id]?.length > 530 ? true : false"
+                :showScroll="inputsValues[input.id]?.length > 530 ? true : false"
                 :data-testid="`input-form-${input.id}`"
                 lang="json"
                 v-model="inputsValues[input.id]"
             />
-            <editor
-                :full-height="false"
+            <Editor
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'YAML'"
                 :data-testid="`input-form-${input.id}`"
                 lang="yaml"
-                :model-value="inputsValues[input.id]"
+                :modelValue="inputsValues[input.id]"
                 @change="onYamlChange(input, $event)"
             />
-            <duration-picker
+            <DurationPicker
                 v-if="input.type === 'DURATION'"
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             />
-            <markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
+            <Markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
             <template v-if="executeClicked">
                 <template v-for="err in input.errors ?? []" :key="err">
                     <el-text type="warning">
@@ -256,7 +256,7 @@
         </div>
     </template>
 
-    <el-alert type="info" :show-icon="true" :closable="false" class="mb-3" v-else>
+    <el-alert type="info" :showIcon="true" :closable="false" class="mb-3" v-else>
         {{ $t("no inputs") }}
     </el-alert>
 </template>
@@ -265,7 +265,6 @@
 </script>
 <script>
     import {toRaw} from "vue";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import debounce from "lodash/debounce";
@@ -284,7 +283,6 @@
 
     export default {
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useExecutionsStore),
             inputErrors() {
                 // we only keep errors that don't target an input directly
@@ -404,12 +402,12 @@
             },
             updateDefaults() {
                 for (const input of this.inputsMetaData || []) {
-                    if (this.inputsValues[input.id] === undefined || this.inputsValues[input.id] === null) {
-                        const {type, defaults} = input;
+                    const {type, id, value} = input;
+                    if (this.inputsValues[id] === undefined || this.inputsValues[id] === null || input.isDefault) {
                         if (type === "MULTISELECT") {
-                            this.multiSelectInputs[input.id] = input.defaults;
+                            this.multiSelectInputs[id] = value;
                         }
-                        this.inputsValues[input.id] = Inputs.normalize(type, defaults);
+                        this.inputsValues[id] = Inputs.normalize(type, value);
                     }
                 }
             },
@@ -419,6 +417,7 @@
                 setTimeout(() => {
                     this.inputsValidated.add(input.id);
                 }, 2000);
+                input.isDefault = false;
                 this.$emit("update:modelValue", this.inputsValues);
             },
             onSubmit() {
@@ -462,13 +461,18 @@
                 if (this.inputsMetaData === undefined || this.inputsMetaData.length === 0) {
                     return;
                 }
-
-                const formData = inputsToFormData(this, this.inputsMetaData, this.inputsValues);
+              
+                const inputsValuesWithNoDefault = this.inputsMetaData.reduce((acc, input) => {
+                    acc[input.id] = input.isDefault ? undefined : this.inputsValues[input.id];
+                    return acc;
+                }, {});
+                
+                const formData = inputsToFormData(this, this.inputsMetaData, inputsValuesWithNoDefault);
 
                 const metadataCallback = (response) => {
                     this.inputsMetaData = response.inputs.reduce((acc,it) => {
                         if(it.enabled){
-                            acc.push({...it.input, errors: it.errors});
+                            acc.push({...it.input, errors: it.errors, value: it.value, isDefault: it.isDefault});
                         }
                         return acc;
                     }, [])
@@ -590,7 +594,6 @@
         watch: {
             flow () {
                 this.validateInputs();
-
             },
             execution () {
                 this.validateInputs();

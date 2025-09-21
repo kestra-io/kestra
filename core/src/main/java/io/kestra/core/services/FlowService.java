@@ -3,12 +3,8 @@ package io.kestra.core.services;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithException;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.*;
+import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ModelValidator;
@@ -18,6 +14,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.flow.Pause;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
@@ -28,16 +25,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -51,7 +39,6 @@ import java.util.stream.StreamSupport;
 @Singleton
 @Slf4j
 public class FlowService {
-
     @Inject
     Optional<FlowRepositoryInterface> flowRepository;
 
@@ -236,6 +223,7 @@ public class FlowService {
         }
 
         List<String> warnings = new ArrayList<>(checkValidSubflows(flow, tenantId));
+
         List<io.kestra.plugin.core.trigger.Flow> flowTriggers = ListUtils.emptyOnNull(flow.getTriggers()).stream()
             .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
             .map(io.kestra.plugin.core.trigger.Flow.class::cast)
@@ -243,6 +231,21 @@ public class FlowService {
         flowTriggers.forEach(flowTrigger -> {
             if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null) {
                 warnings.add("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId() + "'.");
+            }
+        });
+
+        // add warning for runnable properties (timeout, workerGroup, taskCache) when used not in a runnable
+        flow.allTasksWithChilds().forEach(task -> {
+            if (!(task instanceof RunnableTask<?>)) {
+                if (task.getTimeout() != null && !(task instanceof Pause)) {
+                    warnings.add("The task '" + task.getId() + "' cannot use the 'timeout' property as it's only relevant for runnable tasks.");
+                }
+                if (task.getTaskCache() != null) {
+                    warnings.add("The task '" + task.getId() + "' cannot use the 'taskCache' property as it's only relevant for runnable tasks.");
+                }
+                if (task.getWorkerGroup() != null) {
+                    warnings.add("The task '" + task.getId() + "' cannot use the 'workerGroup' property as it's only relevant for runnable tasks.");
+                }
             }
         });
 
@@ -391,7 +394,7 @@ public class FlowService {
         return latestFlows.values().stream().filter(flow -> !flow.isDeleted());
     }
 
-    protected boolean removeUnwanted(Flow f, Execution execution) {
+    public boolean removeUnwanted(Flow f, Execution execution) {
         // we don't allow recursive
         return !f.uidWithoutRevision().equals(FlowId.uidWithoutRevision(execution));
     }
@@ -531,29 +534,27 @@ public class FlowService {
             throw noRepositoryException();
         }
 
-        List<FlowTopology> flowTopologies = flowTopologyRepository.get().findByFlow(tenant, namespace, id, destinationOnly);
-        return expandAll ? recursiveFlowTopology(tenant, namespace, id, destinationOnly) : flowTopologies.stream();
+        return expandAll ? recursiveFlowTopology(new ArrayList<>(), tenant, namespace, id, destinationOnly) : flowTopologyRepository.get().findByFlow(tenant, namespace, id, destinationOnly).stream();
     }
 
-    private Stream<FlowTopology> recursiveFlowTopology(String tenantId, String namespace, String flowId, boolean destinationOnly) {
+    private Stream<FlowTopology> recursiveFlowTopology(List<String> visitedTopologies, String tenantId, String namespace, String id, boolean destinationOnly) {
         if (flowTopologyRepository.isEmpty()) {
             throw noRepositoryException();
         }
 
-        List<FlowTopology> flowTopologies = flowTopologyRepository.get().findByFlow(tenantId, namespace, flowId, destinationOnly);
-        List<FlowTopology> subTopologies = flowTopologies.stream()
-            // filter on destination is not the current node to avoid an infinite loop
-            .filter(topology -> !(topology.getDestination().getTenantId().equals(tenantId) && topology.getDestination().getNamespace().equals(namespace) && topology.getDestination().getId().equals(flowId)))
-            .toList();
+        var flowTopologies = flowTopologyRepository.get().findByFlow(tenantId, namespace, id, destinationOnly);
 
-        if (subTopologies.isEmpty()) {
-            return flowTopologies.stream();
-        } else {
-            return Stream.concat(flowTopologies.stream(), subTopologies.stream()
-                .map(topology -> topology.getDestination())
-                // recursively fetch child nodes
-                .flatMap(destination -> recursiveFlowTopology(destination.getTenantId(), destination.getNamespace(), destination.getId(), destinationOnly)));
-        }
+        return flowTopologies.stream()
+            // ignore already visited topologies
+            .filter(x -> !visitedTopologies.contains(x.uid()))
+            .flatMap(topology -> {
+                visitedTopologies.add(topology.uid());
+                Stream<FlowTopology> subTopologies = Stream
+                    .of(topology.getDestination(), topology.getSource())
+                    // recursively visit children and parents nodes
+                    .flatMap(relationNode -> recursiveFlowTopology(visitedTopologies, relationNode.getTenantId(), relationNode.getNamespace(), relationNode.getId(), destinationOnly));
+                return Stream.concat(Stream.of(topology), subTopologies);
+            });
     }
 
     private IllegalStateException noRepositoryException() {

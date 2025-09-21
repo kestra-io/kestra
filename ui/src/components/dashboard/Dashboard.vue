@@ -50,6 +50,14 @@
     import {useDashboardStore} from "../../stores/dashboard";
     const dashboardStore = useDashboardStore();
 
+    import {useFlowStore} from "../../stores/flow";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {useApiStore} from "../../stores/api";
+    
+    const flowStore = useFlowStore();
+    const executionsStore = useExecutionsStore();
+    const apiStore = useApiStore();
+
     defineOptions({inheritAttrs: false});
 
     const props = defineProps({
@@ -62,6 +70,7 @@
 
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const charts = ref<Chart[]>([]);
+    const isLoading = ref(false);
 
     const loadCharts = async (allCharts: Chart[] = []) => {
         charts.value = [];
@@ -77,20 +86,45 @@
         dashboardComponent.value?.refreshCharts?.();
     };
 
+    const checkWelcomeRedirect = async () => {
+        // Only check for OSS instances and when not loading
+        if (apiStore.isOSS && !isLoading.value) {
+            try {
+                await flowStore.findFlows({size: 10, sort: "id:asc"});
+                const executionsResponse = await executionsStore.findExecutions({size: 10});
+                const executions = executionsResponse?.total ?? 0;
+                
+                if (!executions && !flowStore.overallTotal) {
+                    router.push({name: "welcome", params: {tenant: route.params.tenant}});
+                }
+            } catch (error) {
+                console.warn("Failed to check welcome redirect:", error);
+            }
+        }
+    };
+
     const load = async (id = "default", defaultYAML = YAML_MAIN) => {
         if (!ALLOWED_CREATION_ROUTES.includes(String(route.name))) {
             return;
         }
 
-        if (!props.isFlow && !props.isNamespace) {
-            router.replace({
-                params: {...route.params, dashboard: id},
-                query: route.params.dashboard !== id ? {} : {...route.query},
-            });
-        }
+        isLoading.value = true;
 
-        dashboard.value = id === "default" ? {id, ...parse(defaultYAML)} : await dashboardStore.load(id);
-        loadCharts(dashboard.value.charts);
+        try {
+            if (!props.isFlow && !props.isNamespace) {
+                router.replace({
+                    params: {...route.params, dashboard: id},
+                    query: route.params.dashboard !== id ? {} : {...route.query},
+                });
+            }
+
+            dashboard.value = id === "default" ? {id, ...parse(defaultYAML)} : await dashboardStore.load(id);
+            loadCharts(dashboard.value.charts);
+        } finally {
+            isLoading.value = false;
+            // Check for welcome redirect after loading is complete
+            await checkWelcomeRedirect();
+        }
     };
 
     onBeforeMount(() => {
@@ -98,6 +132,11 @@
 
         if (props.isFlow && ID === "default") load("default", processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string));
         else if (props.isNamespace && ID === "default") load("default", YAML_NAMESPACE);
+    });
+
+    // Expose loading state for parent components
+    defineExpose({
+        isLoading
     });
 </script>
 

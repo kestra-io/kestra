@@ -130,7 +130,7 @@ public class PurgeKVTest {
         KVStore kvStore2 = runContext.namespaceKv(namespace2);
         kvStore2.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
         kvStore2.put(KEY, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMinutes(1L)), "unused"));
-        kvStore2.put(KEY2_NEVER_EXPIRING, new KVValueAndMetadata(new KVMetadata("unused", null), "unused"));
+        kvStore2.put(KEY2_NEVER_EXPIRING, new KVValueAndMetadata(new KVMetadata("unused", (Duration) null), "unused"));
         kvStore2.put(KEY3_NEVER_EXPIRING, new KVValueAndMetadata(null, "unused"));
 
         PurgeKV purgeKV = PurgeKV.builder()
@@ -156,7 +156,7 @@ public class PurgeKVTest {
         KVStore kvStore1 = runContext.namespaceKv(namespace);
         kvStore1.put(KEY_EXPIRED, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
         kvStore1.put(KEY, new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMinutes(1L)), "unused"));
-        kvStore1.put(KEY2_NEVER_EXPIRING, new KVValueAndMetadata(new KVMetadata("unused", null), "unused"));
+        kvStore1.put(KEY2_NEVER_EXPIRING, new KVValueAndMetadata(new KVMetadata("unused",(Duration) null), "unused"));
         kvStore1.put(KEY3_NEVER_EXPIRING, new KVValueAndMetadata(null, "unused"));
 
         PurgeKV purgeKV = PurgeKV.builder()

@@ -251,6 +251,7 @@
     "metrics": "Metrics",
     "no data current task": "There's no data available for the current task",
     "outputs": "Outputs",
+    "flow_outputs": "Flow Outputs",
     "output": "Output",
     "eval": {
       "title": "Debug Expression",

@@ -668,6 +668,7 @@
     "flow-no-dependencies": "Ihr Flow hat keine Abhängigkeiten.",
     "flow_export": "Flow exportieren",
     "flow_only": "Nur auf der Flow-Registerkarte verfügbar.",
+    "flow_outputs": "Flow Outputs",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) gelöscht",
     "flows disabled": "<code>{count}</code> Flow(s) deaktiviert",

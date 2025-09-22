@@ -376,17 +376,22 @@
                 const attemptNumber = this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0;
                 const attemptUid = this.attemptUid(taskRun.id, attemptNumber);
                 const logs = this.logsWithIndexByAttemptUid[attemptUid] ?? [];
-                const errorLine = (() => {
-                    const lastError = [...logs].reverse().find(l => (l.level || "").toString().toUpperCase() === "ERROR");
-                    if (lastError?.message) return lastError.message;
-                    const last = [...logs].reverse().find(l => (l.message ?? "").length > 0);
-                    return last?.message ?? "";
-                })();
-                const prompt = `Fix the task ${taskRun.taskId} as it generated the following error:\n${errorLine}`;
-                try {
-                    window.sessionStorage.setItem("kestra-ai-prompt", prompt);
-                } catch (err) {
-                    console.warn("AI prompt not persisted to sessionStorage:", err);
+                
+                // Find error message: first try ERROR level logs, then any non-empty log
+                const reversedLogs = [...logs].reverse();
+                const errorLog = reversedLogs.find(l => l.level?.toUpperCase() === "ERROR") 
+                    || reversedLogs.find(l => l.message?.length > 0);
+                const errorMessage = errorLog?.message || "Task failed";
+                
+                const prompt = `Fix the task ${taskRun.taskId} as it generated the following error:\n${errorMessage}`;
+                
+                // Store prompt for AI copilot
+                if (window.sessionStorage) {
+                    try {
+                        window.sessionStorage.setItem("kestra-ai-prompt", prompt);
+                    } catch (err) {
+                        console.warn("Failed to save AI prompt:", err);
+                    }
                 }
 
                 this.$router.push({

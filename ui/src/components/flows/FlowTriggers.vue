@@ -398,10 +398,21 @@
                 return this.authStore.user?.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flowStore.flow.namespace);
             },
             loadData() {
-                if(!this.triggersWithType.length) return;
+                const flowTriggers = this.flowStore.flow.triggers || [];
+
+                // If the flow has no triggers, clear any previously loaded data and stop here
+                if (flowTriggers.length === 0) {
+                    this.triggers = [];
+                    return;
+                }
 
                 this.triggerStore
-                    .find({namespace: this.flowStore.flow.namespace, flowId: this.flowStore.flow.id, size: this.triggersWithType.length, q: this.query})
+                    .find({
+                        namespace: this.flowStore.flow.namespace,
+                        flowId: this.flowStore.flow.id,
+                        size: flowTriggers.length,
+                        q: this.query
+                    })
                     .then(triggers => this.triggers = triggers.results);
             },
             setBackfillModal(trigger, bool) {

@@ -127,7 +127,7 @@
         loadFile();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
-        if(route.query.ai === "open") {
+        if (route.query.ai === "open") {
             draftSource.value = undefined;
             aiCopilotOpened.value = true;
         }

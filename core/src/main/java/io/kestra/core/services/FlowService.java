@@ -3,12 +3,7 @@ package io.kestra.core.services;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithException;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -30,16 +25,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -551,23 +537,24 @@ public class FlowService {
         return expandAll ? recursiveFlowTopology(new ArrayList<>(), tenant, namespace, id, destinationOnly) : flowTopologyRepository.get().findByFlow(tenant, namespace, id, destinationOnly).stream();
     }
 
-    private Stream<FlowTopology> recursiveFlowTopology(List<FlowId> flowIds, String tenantId, String namespace, String id, boolean destinationOnly) {
+    private Stream<FlowTopology> recursiveFlowTopology(List<String> visitedTopologies, String tenantId, String namespace, String id, boolean destinationOnly) {
         if (flowTopologyRepository.isEmpty()) {
             throw noRepositoryException();
         }
 
-        List<FlowTopology> flowTopologies = flowTopologyRepository.get().findByFlow(tenantId, namespace, id, destinationOnly);
-
-        FlowId flowId = FlowId.of(tenantId, namespace, id, null);
-        if (flowIds.contains(flowId)) {
-            return flowTopologies.stream();
-        }
-        flowIds.add(flowId);
+        var flowTopologies = flowTopologyRepository.get().findByFlow(tenantId, namespace, id, destinationOnly);
 
         return flowTopologies.stream()
-            .flatMap(topology -> Stream.of(topology.getDestination(), topology.getSource()))
-            // recursively fetch child nodes
-            .flatMap(node -> recursiveFlowTopology(flowIds, node.getTenantId(), node.getNamespace(), node.getId(), destinationOnly));
+            // ignore already visited topologies
+            .filter(x -> !visitedTopologies.contains(x.uid()))
+            .flatMap(topology -> {
+                visitedTopologies.add(topology.uid());
+                Stream<FlowTopology> subTopologies = Stream
+                    .of(topology.getDestination(), topology.getSource())
+                    // recursively visit children and parents nodes
+                    .flatMap(relationNode -> recursiveFlowTopology(visitedTopologies, relationNode.getTenantId(), relationNode.getNamespace(), relationNode.getId(), destinationOnly));
+                return Stream.concat(Stream.of(topology), subTopologies);
+            });
     }
 
     private IllegalStateException noRepositoryException() {

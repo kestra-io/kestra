@@ -1,6 +1,6 @@
 <template>
     <div class="multi-panel-editor-wrapper">
-        <MultiPanelEditorTabs :class="{playgroundMode}" :tabs="EDITOR_ELEMENTS" @update:tabs="setTabValue" :open-tabs="openTabs">
+        <MultiPanelEditorTabs :class="{playgroundMode}" :tabs="EDITOR_ELEMENTS" @update:tabs="setTabValue" :openTabs="openTabs">
             <EditorButtonsWrapper />
         </MultiPanelEditorTabs>
         <div class="editor-wrapper">
@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
     import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue";
+    import Utils from "../../utils/utils";
     import {useStorage} from "@vueuse/core";
     import {useI18n} from "vue-i18n";
     import {useCoreStore} from "../../stores/core";
@@ -30,7 +31,7 @@
     import FlowPlayground from "./FlowPlayground.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import KeyShortcuts from "../inputs/KeyShortcuts.vue";
-    import NoCode from "../code/NoCode.vue";
+    import NoCode from "../no-code/NoCode.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
     import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
     import {useTopologyPanels} from "./useTopologyPanels";
@@ -164,12 +165,16 @@
 
     const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, tempActions)
 
+    const TABS = isTourRunning.value ? DEFAULT_TOUR_TABS.flatMap(t => t.tabs) : DEFAULT_ACTIVE_TABS;
+
+    flowStore.creationId = flowStore.creationId ?? Utils.uid()
+
     const panels = useStorage<Panel[]>(
-        `el-fl-${flowStore.flow?.namespace}-${flowStore.flow?.id}`,
-        DEFAULT_ACTIVE_TABS
+        `el-fl-${flowStore.flow?.namespace ?? `creation-${flowStore.creationId}`}${flowStore.flow?.id ? `-${flowStore.flow.id}` : ""}`,
+        TABS
             .map((t) => ({
                 ...staticGetPanelFromValue(t).panel,
-                size: 100 / DEFAULT_ACTIVE_TABS.length
+                size: 100 / TABS.length
             })),
         undefined,
         {

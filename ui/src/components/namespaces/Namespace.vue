@@ -4,7 +4,7 @@
             <Actions />
         </template>
     </TopNavBar>
-    <Tabs :tabs :route-name="namespace ? 'namespaces/update' : ''" :namespace />
+    <Tabs :tabs :routeName="namespace ? 'namespaces/update' : ''" :namespace />
 </template>
 
 <script setup lang="ts">
@@ -12,7 +12,7 @@
     import {useRoute} from "vue-router";
     import {useTabs} from "override/components/namespaces/useTabs";
     import {useHelpers} from "./utils/useHelpers";
-    import useRouteContext from "../../mixins/useRouteContext";
+    import useRouteContext from "../../composables/useRouteContext";
     import {useNamespacesStore} from "override/stores/namespaces";
     import TopNavBar from "../layout/TopNavBar.vue";
     import Actions from "override/components/namespaces/Actions.vue";
@@ -37,6 +37,9 @@
     });
 
     onMounted(() => {
+        const main = document.querySelector("main");
+        if(main) main.scrollTop = 0;
+
         if (namespace.value) {
             namespacesStore.load(namespace.value);
         }

@@ -1,15 +1,18 @@
 package io.kestra.webserver.filter;
 
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.webserver.controllers.api.MiscController;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
@@ -25,6 +28,9 @@ class AuthenticationFilterTest {
     private ReactorHttpClient client;
 
     @Inject
+    private BasicAuthService basicAuthService;
+
+    @Inject
     private BasicAuthService.BasicAuthConfiguration basicAuthConfiguration;
 
     @Inject
@@ -35,19 +41,69 @@ class AuthenticationFilterTest {
 
     @Test
     void testConfigEndpointAlwaysOpen() {
-        var response =  client.toBlocking()
+        var response = client.toBlocking()
             .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+    }
 
-        response =  client.toBlocking()
-            .exchange(HttpRequest.GET("/api/v1/basicAuthValidationErrors").basicAuth("anonymous", "hacker"));
+    @Test
+    void testBasicAuthOpenedBeforeSetupOnly() {
+        TestAuthFilter.ENABLED = false;
+
+        HttpClientResponseException httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/basicAuthValidationErrors")));
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+
+        httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
+            .exchange(HttpRequest.POST("/api/v1/basicAuth", new MiscController.BasicAuthCredentials(
+                IdUtils.create(),
+                "anonymous",
+                "hacker"
+            ))));
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+
+        HttpResponse<?> response = client.toBlocking()
+            .exchange(HttpRequest.POST("/api/v1/basicAuth", new MiscController.BasicAuthCredentials(
+                IdUtils.create(),
+                "anonymous@hacker",
+                "hackerPassword1"
+            )).basicAuth(basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+
+        response = client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/basicAuthValidationErrors").basicAuth("anonymous@hacker", "hackerPassword1"));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // Only 1 basic auth user is allowed so the previous one is overridden
+        httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/basicAuthValidationErrors").basicAuth(basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword())));
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+
+        assertThat(basicAuthService.isBasicAuthInitialized()).isTrue();
+        settingRepository.delete(Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build());
+        assertThat(basicAuthService.isBasicAuthInitialized()).isFalse();
+
+        response = client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/basicAuthValidationErrors"));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        response = client.toBlocking()
+            .exchange(HttpRequest.POST("/api/v1/basicAuth",  new MiscController.BasicAuthCredentials(
+                IdUtils.create(),
+                basicAuthConfiguration.getUsername(),
+                basicAuthConfiguration.getPassword()
+            )));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+
+        assertThat(basicAuthService.isBasicAuthInitialized()).isTrue();
+
+        TestAuthFilter.ENABLED = true;
     }
 
     @Test
     void shouldWorkWithoutPersistedConfiguration() {
         settingRepository.delete(Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build());
-        var response =  client.toBlocking()
+        var response = client.toBlocking()
             .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
     }
@@ -117,7 +173,7 @@ class AuthenticationFilterTest {
     }
 
     @Test
-    void should_unauthorized_without_token(){
+    void should_unauthorized_without_token() {
         MutableHttpResponse<?> response = Mono.from(filter.doFilter(
             HttpRequest.GET("/api/v1/main/dashboards"), null)).block();
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());

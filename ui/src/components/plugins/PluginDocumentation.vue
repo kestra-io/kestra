@@ -2,10 +2,10 @@
     <div class="plugin-doc">
         <template v-if="fetchPluginDocumentation && pluginsStore.editorPlugin">
             <div class="d-flex gap-3 mb-3 align-items-center">
-                <task-icon
+                <TaskIcon
                     class="plugin-icon"
                     :cls="pluginsStore.editorPlugin.cls"
-                    only-icon
+                    onlyIcon
                     :icons="pluginsStore.icons"
                 />
                 <h4 class="mb-0 plugin-title text-truncate">
@@ -22,21 +22,21 @@
                 </el-button>
             </div>
             <Suspense>
-                <schema-to-html
+                <SchemaToHtml
                     class="plugin-schema"
-                    :dark-mode="miscStore.theme === 'dark'"
+                    :darkMode="miscStore.theme === 'dark'"
                     :schema="pluginsStore.editorPlugin.schema"
-                    :plugin-type="pluginsStore.editorPlugin.cls"
-                    :force-include-properties="pluginsStore.forceIncludeProperties"
-                    no-url-change
+                    :pluginType="pluginsStore.editorPlugin.cls"
+                    :forceIncludeProperties="pluginsStore.forceIncludeProperties"
+                    noUrlChange
                 >
                     <template #markdown="{content}">
-                        <markdown font-size-var="font-size-base" :source="content" />
+                        <Markdown font-size-var="font-size-base" :source="content" />
                     </template>
-                </schema-to-html>
+                </SchemaToHtml>
             </Suspense>
         </template>
-        <markdown v-else :source="introContent" :class="{'position-absolute': absolute}" />
+        <Markdown v-else :source="introContent" :class="{'position-absolute': absolute}" />
     </div>
 </template>
 

@@ -4,7 +4,6 @@ import AbstractLanguageConfigurator from "./abstractLanguageConfigurator";
 import {QUOTE, PebbleAutoCompletion} from "../../../services/autoCompletionProvider.ts";
 import RegexProvider from "../../../utils/regex";
 import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
-import {Store} from "vuex";
 import {useI18n} from "vue-i18n";
 import {ComputedRef} from "vue";
 import IPosition = monaco.IPosition;
@@ -169,7 +168,7 @@ export class PebbleLanguageConfigurator extends AbstractLanguageConfigurator {
         this._completionSource = completionSource;
     }
 
-    configureAutoCompletion(_: ReturnType<typeof useI18n>["t"], __: Store<Record<string, any>>, ___: monaco.editor.ICodeEditor | undefined) {
+    configureAutoCompletion(_: ReturnType<typeof useI18n>["t"], ___: monaco.editor.ICodeEditor | undefined) {
 
 
         const autoCompletionProviders: IDisposable[] = [];

@@ -16,7 +16,7 @@ public record GeminiConfiguration (
     Double topP,
     @Nullable
     Integer topK,
-    @Bindable(defaultValue = "4000")
+    @Bindable(defaultValue = "8000")
     int maxOutputTokens,
     @Bindable(defaultValue = "false")
     boolean logRequests,

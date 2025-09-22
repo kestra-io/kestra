@@ -163,17 +163,20 @@
     "choose file": "Choisir un fichier ou le glisser le ici...",
     "close": "Fermer",
     "close sidebar": "fermer la barre latérale",
+    "codeDisabled": "Désactivé dans le flow",
     "collapse": "Masquer",
     "collapse all": "Masquer tout",
     "common": {
       "back": "Retour"
     },
     "concurrency": "Concurrence",
-    "conditions": "conditions",
+    "conditions": "Conditions",
     "configure basic auth": "Configurer l'authentification basique",
     "confirm": "Confirmer",
     "confirm password": "Confirmer le mot de passe",
     "confirmation": "Confirmation",
+    "context updated date": "Date de mise à jour du contexte",
+    "context updated date tooltip": "Dernière mise à jour du contexte du trigger. Cela se produit lorsque l'exécution est déclenchée, se termine (verrou libéré), ou après une évaluation (même si aucune exécution n'a lieu).",
     "contextBar": {
       "demo": "Démo",
       "docs": "Docs",
@@ -461,6 +464,10 @@
           "title": "Il n'y a actuellement aucune dépendance."
         }
       },
+      "panels": {
+        "content": "Ouvrez Flow Code ou No-Code pour commencer à éditer vos flows, ou sélectionnez un autre panneau (Topology, Documentation, Files, Blueprints, Namespace Context) pour des fonctionnalités associées.",
+        "title": "Aucun panneau n'est actuellement ouvert."
+      },
       "plugins": {
         "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">limites de Concurrency</a></strong> dans notre documentation.",
         "title": "Aucun paramètre par défaut de plugin n'est défini pour ce namespace."
@@ -740,6 +747,8 @@
     "last execution state": "Dernier état",
     "last execution status": "Statut de la dernière exécution",
     "last modified": "Dernière modification",
+    "last trigger date": "Dernière date de trigger",
+    "last trigger date tooltip": "Dernière exécution du trigger. Peut être dans le passé lors de l'exécution d'un backfill.",
     "launch execution": "Déclencher",
     "learn_more": "En savoir plus",
     "light_background": "C'est l'option préférée lorsque vous travaillez avec un fond clair.",
@@ -767,6 +776,7 @@
     "monogram": "Monogramme",
     "months": "Mois",
     "multi_panel_editor": {
+      "close_all_panels": "Fermer tous les panneaux",
       "close_all_tabs": "Fermer tous les onglets",
       "move_left": "Déplacer à gauche",
       "move_right": "Déplacer vers la droite"
@@ -854,6 +864,8 @@
     "neutral trend": "Stable",
     "new": "Nouveau",
     "new version": "Nouvelle version {version} disponible!",
+    "next evaluation date": "Prochaine date d'évaluation",
+    "next evaluation date tooltip": "Quand le trigger sera évalué la prochaine fois, en fonction de son intervalle. Pas toujours identique à la prochaine date d'exécution si les conditions ne sont pas remplies.",
     "next execution date": "Prochaine date d'exécution",
     "next_execution": "Prochaine exécution",
     "no data current task": "Il n'y a pas de données disponibles pour la tâche actuelle.",
@@ -1046,6 +1058,7 @@
     "pause confirm": "Êtes-vous sûr de vouloir mettre en pause l'exécution <code>{id}</code> ?",
     "pause done": "L'exécution est en PAUSE",
     "pause title": "Mettre en pause l'exécution <code>{id}</code>.<br/>Notez que les tasks actuellement en cours d'exécution seront toujours traitées, et l'exécution devra être reprise manuellement.",
+    "paused": "PAUSED",
     "playground": {
       "clear_history": "Effacer l'historique",
       "confirm_create": "Vous ne pouvez pas exécuter le playground lors de la création d'un flow. Lancer une exécution de playground créera le flow.",
@@ -1222,6 +1235,7 @@
           "label": "Langue et région",
           "note": "Remarque ce paramètre est utilisé pour afficher les propriétés de date et d'heure dans l'interface utilisateur. Pour planifier vos flux dans un fuseau horaire différent de l'UTC, assurez-vous de définir la propriété de fuseau horaire sur le déclencheur de planification dans le code de votre"
         },
+        "reset_section_to_defaults": "Restaurer les valeurs par défaut de cette section",
         "save": {
           "discard": "Jeter",
           "label": "Enregistrer les préférences",
@@ -1375,7 +1389,6 @@
     "task_id_exists": "L'ID de la tâche existe déjà",
     "task_id_message": "L'Id de la tâche ${existingTask} existe déjà dans le flow.",
     "taskid column details": "ID de la dernière tâche exécuté ainsi que son nombre de tentatives.",
-    "taskruns": "Exécution de tâches",
     "tasks": "Tâches",
     "template": "Template",
     "template creation": "Création de template",
@@ -1389,6 +1402,7 @@
       "name": "Mandant",
       "names": "Mandants"
     },
+    "tenantId": "ID du mandant",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Cette exécution a été créée par un Test",
     "theme": "Thème",
@@ -1426,6 +1440,7 @@
       "title": "Filtrer les enfants"
     },
     "trigger refresh": "Déclencher le rafraîchissement",
+    "triggerId": "ID de trigger",
     "trigger_check_warning": "L'utilisation des variables de trigger ne fonctionnera pas avec l'exécution manuelle du flow. Ajoutez l'opérateur de coalescence `??` pour résoudre le problème. Par exemple, au lieu de `trigger.date`, utilisez `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "L'identifiant de trigger existe déjà",
     "trigger_id_message": "L'ID de trigger ${existingTrigger} existe déjà dans le flow.",

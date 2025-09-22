@@ -4,15 +4,15 @@
             id="editorWrapper"
             ref="editorRefElement"
             class="flex-1"
-            :model-value="draftSource === undefined ? source : draftSource"
-            :schema-type="isCurrentTabFlow ? 'flow': undefined"
+            :modelValue="draftSource === undefined ? source : draftSource"
+            :schemaType="isCurrentTabFlow ? 'flow': undefined"
             :lang="extension === undefined ? 'yaml' : undefined"
             :extension="extension"
             :navbar="false"
-            :read-only="isReadOnly"
+            :readOnly="isReadOnly"
             :creating="isCreating"
             :path="props.path"
-            :diff-overview-bar="false"
+            :diffOverviewBar="false"
             @update:model-value="editorUpdate"
             @cursor="updatePluginDocumentation"
             @save="isCurrentTabFlow ? save(): saveFileContent()"
@@ -20,28 +20,28 @@
             @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
             @mouse-leave="() => highlightHoveredTask(-1)"
             :original="draftSource === undefined ? undefined : source"
-            :diff-side-by-side="false"
+            :diffSideBySide="false"
         >
             <template #absolute>
                 <AITriggerButton
                     :show="isCurrentTabFlow"
-                    :opened="aiAgentOpened"
-                    @click="draftSource = undefined; aiAgentOpened = true"
+                    :opened="aiCopilotOpened"
+                    @click="draftSource = undefined; aiCopilotOpened = true"
                 />
                 <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
             </template>
             <template v-if="playgroundStore.enabled" #widget-content>
-                <PlaygroundRunTaskButton :task-id="highlightedLines?.taskId" />
+                <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
             </template>
         </Editor>
         <Transition name="el-zoom-in-center">
-            <AiAgent
-                v-if="aiAgentOpened"
+            <AiCopilot
+                v-if="aiCopilotOpened"
                 class="position-absolute prompt"
-                @close="aiAgentOpened = false"
+                @close="aiCopilotOpened = false"
                 :flow="editorContent"
-                :conversation-id="conversationId"
-                @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
+                :conversationId="conversationId"
+                @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
             />
         </Transition>
         <AcceptDecline
@@ -56,7 +56,7 @@
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useRoute, useRouter} from "vue-router";
 
-    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../code/injectionKeys";
+    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys.ts";
     import {usePluginsStore} from "../../stores/plugins";
     import {EditorTabProps, useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
@@ -68,7 +68,7 @@
 
     import Editor from "./Editor.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import AiAgent from "../ai/AiAgent.vue";
+    import AiCopilot from "../ai/AiCopilot.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
@@ -88,10 +88,10 @@
             event.stopPropagation();
             event.stopImmediatePropagation();
             draftSource.value = undefined;
-            aiAgentOpened.value = !aiAgentOpened.value;
+            aiCopilotOpened.value = !aiCopilotOpened.value;
         }
     };
-    const aiAgentOpened = ref(false);
+    const aiCopilotOpened = ref(false);
     const draftSource = ref<string | undefined>(undefined);
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
@@ -120,7 +120,7 @@
         const content = await namespacesStore.readFile({namespace: fileNamespace.toString(), path: props.path ?? ""})
         editorStore.setTabContent({path: props.path, content})
     }
-    
+
 
     onMounted(() => {
         loadPluginsHash();
@@ -162,7 +162,7 @@
             hash.value = config.pluginsHash;
         });
     }
-    
+
     function editorUpdate(newValue: string){
         if (editorContent.value === newValue) {
             return;
@@ -289,7 +289,7 @@
 
     function declineDraft() {
         draftSource.value = undefined;
-        aiAgentOpened.value = true;
+        aiCopilotOpened.value = true;
     }
 
     const {

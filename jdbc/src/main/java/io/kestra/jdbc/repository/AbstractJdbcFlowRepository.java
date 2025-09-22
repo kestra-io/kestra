@@ -700,12 +700,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         this.jdbcRepository.persist(flow, fields);
 
         flowQueue.emit(flow);
-
-        if (nullOrExisting != null) {
-            eventPublisher.publishEvent(new CrudEvent<>(flow, nullOrExisting, crudEventType));
-        } else {
-            eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
-        }
+        eventPublisher.publishEvent(new CrudEvent<>(flow, nullOrExisting, crudEventType));
 
         return flowWithSource.toBuilder().revision(revision).build();
     }
@@ -735,8 +730,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         this.jdbcRepository.persist(deleted, fields);
 
         flowQueue.emit(deleted);
-
-        eventPublisher.publishEvent(new CrudEvent<>(flow, CrudEventType.DELETE));
+        eventPublisher.publishEvent(CrudEvent.delete(flow));
 
         return deleted;
     }

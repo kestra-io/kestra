@@ -59,9 +59,9 @@
                 <SecretsTable
                     v-show="hasData === true"
                     :filterable="false"
-                    key-only
+                    keyOnly
                     :namespace="miscStore.configs?.systemNamespace ?? 'system'"
-                    :add-secret-modal-visible="addSecretModalVisible"
+                    :addSecretModalVisible="addSecretModalVisible"
                     @update:add-secret-modal-visible="addSecretModalVisible = $event"
                     @has-data="hasData = $event"
                 />
@@ -70,7 +70,7 @@
         <SecretsTable
             v-else
             filterable
-            :add-secret-modal-visible="addSecretModalVisible"
+            :addSecretModalVisible="addSecretModalVisible"
             :namespace="props.namespace"
             @update:add-secret-modal-visible="addSecretModalVisible = $event"
         />
@@ -83,7 +83,7 @@
     import Navbar from "../layout/TopNavBar.vue";
     import {useI18n} from "vue-i18n";
     import {computed, ref} from "vue";
-    import useRouteContext from "../../mixins/useRouteContext.js";
+    import useRouteContext from "../../composables/useRouteContext";
     import {useMiscStore} from "override/stores/misc.js";
     import sourceImg from "../../assets/demo/secrets.png";
     import DemoButtons from "../demo/DemoButtons.vue";

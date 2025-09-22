@@ -4,6 +4,7 @@ import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.FlowListenersTest;
 import io.kestra.jdbc.JdbcTestUtils;
 import jakarta.inject.Inject;
+import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,7 @@ class MysqlFlowListenersTest extends FlowListenersTest {
     JdbcTestUtils jdbcTestUtils;
 
     @Test
-    public void all() {
+    public void all() throws TimeoutException {
         this.suite(flowListenersService);
     }
 

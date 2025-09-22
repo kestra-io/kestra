@@ -1,4 +1,3 @@
-import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import Executions from "../../../../src/components/executions/Executions.vue";
 import {useMiscStore} from "override/stores/misc";
@@ -13,13 +12,26 @@ import {
     isColoredAsError,
     refreshMonacoFilter
 } from "../../utils/monacoUtils.js";
+import {useAxios} from "../../../../src/utils/axios.js";
+
+function maybeAddTimeRangeFilter(to) {
+    const dateTimeKeys = ["startDate", "endDate", "timeRange"];
+
+    // Default to the last 7 days if no time range is set
+    if (!Object.keys(to.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
+        to.query["filters[timeRange][EQUALS]"] = "PT168H";
+
+        return true;
+    }
+
+    return false;
+}
 
 function getDecorators(executionsSearchData) {
     return [
         () => {
             return {
                 setup() {
-                    const store = useStore();
                     const authStore = useAuthStore()
                     const miscStore = useMiscStore();
                     authStore.user = {
@@ -33,8 +45,9 @@ function getDecorators(executionsSearchData) {
                     miscStore.configs = {
                         hiddenLabelsPrefixes: ["system_"],
                     };
-                    store.$http = {
-                        get: async (uri, _params) => {
+                    const axios = useAxios();
+                    axios.get = async function(uri, _params) {
+
                             if (uri.endsWith("executions/search")) {
                                 // query params are available here if we want to make tests with them
                                 // console.log("params", params);
@@ -46,8 +59,8 @@ function getDecorators(executionsSearchData) {
                             throw new Error(
                                 "Unhandled fixture Request GET: " + uri,
                             );
-                        },
-                        post: async (uri) => {
+                        }
+                    axios.post = async (uri) => {
 
                             if (uri.includes("/dashboards/charts/preview")) {
                                 return Promise.resolve({}); // empty chart
@@ -55,8 +68,7 @@ function getDecorators(executionsSearchData) {
 
                             throw new Error(
                                 "Unhandled fixture Request POST: " + uri,
-                            );
-                        },
+                            )
                     };
                 },
                 template: "<div style='margin:2rem'><story /></div>",
@@ -88,6 +100,18 @@ function getDecorators(executionsSearchData) {
                     path: "/executions/:id?/:flowId?",
                     name: "executions/list",
                     component: {template: "<div>executions</div>"},
+                    beforeEnter: (to, from, next) => {
+                        if (maybeAddTimeRangeFilter(to)) {
+                            next({
+                                name: to.name,
+                                params: to.params,
+                                query: to.query,
+                            });
+                            return;
+                        }
+
+                        next();
+                    }
                 },
             ],
             {

@@ -3,7 +3,7 @@
     <section class="full-container">
         <Editor
             v-if="dashboard?.sourceCode"
-            :initial-source="dashboard.sourceCode"
+            :initialSource="dashboard.sourceCode"
             @save="save"
         />
     </section>
@@ -56,6 +56,6 @@
 
     const context = ref({title: t("dashboards.edition.label")});
 
-    import useRouteContext from "../../../mixins/useRouteContext";
+    import useRouteContext from "../../../composables/useRouteContext";
     useRouteContext(context);
 </script>

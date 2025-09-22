@@ -95,7 +95,9 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
 
         // wait for execution
         Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, either -> {
-            executionQueueCount.countDown();
+            if (either.getLeft().getFlowId().equals(SchedulerTriggerChangeTest.class.getSimpleName())) {
+                executionQueueCount.countDown();
+            }
         });
 
         // wait for killed
@@ -141,7 +143,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
             flowQueue.emit(flow);
 
             // wait for the killed
-            assertThat(executionKilledCount.await(1, TimeUnit.MINUTES), is(true));
+            assertThat(executionKilledCount.await(20, TimeUnit.SECONDS), is(true));
             assertThat(((ExecutionKilledTrigger) receiveKilled.blockLast()).getTriggerId(), is("sleep"));
 
             // the trigger is restarted

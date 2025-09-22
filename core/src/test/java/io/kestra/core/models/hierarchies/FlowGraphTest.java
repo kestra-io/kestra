@@ -261,10 +261,10 @@ class FlowGraphTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/task-flow.yaml",
-        "flows/valids/switch.yaml"})
+    @LoadFlows(value = {"flows/valids/task-flow.yaml",
+        "flows/valids/switch.yaml"}, tenantId = "tenant1")
     void subflow() throws IllegalVariableEvaluationException, IOException, FlowProcessingException {
-        FlowWithSource flow = this.parse("flows/valids/task-flow.yaml");
+        FlowWithSource flow = this.parse("flows/valids/task-flow.yaml", "tenant1");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
         assertThat(flowGraph.getNodes().size()).isEqualTo(6);
@@ -293,15 +293,15 @@ class FlowGraphTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/task-flow-dynamic.yaml",
-        "flows/valids/switch.yaml"})
+    @LoadFlows(value = {"flows/valids/task-flow-dynamic.yaml",
+        "flows/valids/switch.yaml"}, tenantId = "tenant2")
     void dynamicIdSubflow() throws IllegalVariableEvaluationException, TimeoutException, QueueException, IOException, FlowProcessingException {
-        FlowWithSource flow = this.parse("flows/valids/task-flow-dynamic.yaml").toBuilder().revision(1).build();
+        FlowWithSource flow = this.parse("flows/valids/task-flow-dynamic.yaml", "tenant2").toBuilder().revision(1).build();
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> graphService.flowGraph(flow, Collections.singletonList("root.launch")));
         assertThat(illegalArgumentException.getMessage()).isEqualTo("Can't expand subflow task 'launch' because namespace and/or flowId contains dynamic values. This can only be viewed on an execution.");
 
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "task-flow-dynamic", 1, (f, e) -> Map.of(
+        Execution execution = runnerUtils.runOne("tenant2", "io.kestra.tests", "task-flow-dynamic", 1, (f, e) -> Map.of(
             "namespace", f.getNamespace(),
             "flowId", "switch"
         ));
@@ -373,13 +373,17 @@ class FlowGraphTest {
     }
 
     private FlowWithSource parse(String path) throws IOException {
+        return parse(path, MAIN_TENANT);
+    }
+
+    private FlowWithSource parse(String path, String tenantId) throws IOException {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
         assert resource != null;
 
         File file = new File(resource.getFile());
 
         return YamlParser.parse(file, FlowWithSource.class).toBuilder()
-            .tenantId(MAIN_TENANT)
+            .tenantId(tenantId)
             .source(Files.readString(file.toPath()))
             .build();
     }

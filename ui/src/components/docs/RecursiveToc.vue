@@ -37,11 +37,7 @@
 </template>
 
 <script lang="ts" setup>
-    import path from "path-browserify";
-    import {ref, watch} from "vue";
-    import {useRoute} from "vue-router";
-
-    const route = useRoute();
+    import {ref} from "vue";
 
     const disabledPages = [
         "docs/api-reference",
@@ -50,7 +46,7 @@
         "docs/terraform/resources"
     ]
 
-    const props = defineProps({
+    defineProps({
         parent: {
             type: Object as () => {children?: {path: string, title: string, children?: any[]}[]},
             required: true
@@ -60,14 +56,6 @@
             default: true
         }
     })
-
-    watch(() => route.path, () => {
-              const normalizedPath = path.normalize(route.path);
-              openedDocs.value = props.parent.children?.filter(child => normalizedPath.includes(child.path)).map(child => child.path) ?? [];
-          },
-          {
-              immediate: true
-          })
 
     const openedDocs = ref<string[]>([]);
 

@@ -36,42 +36,41 @@
     </el-collapse>
 </template>
 
-<script>
+<script lang="ts" setup>
     import path from "path-browserify";
+    import {ref, watch} from "vue";
+    import {useRoute} from "vue-router";
 
-    export default {
-        name: "RecursiveToc",
-        props: {
-            parent: {
-                type: Object,
-                required: true
-            },
-            makeIndexNavigable: {
-                type: Boolean,
-                default: true
-            }
+    const route = useRoute();
+
+    const disabledPages = [
+        "docs/api-reference",
+        "docs/terraform/data-sources",
+        "docs/terraform/guides",
+        "docs/terraform/resources"
+    ]
+
+    const props = defineProps({
+        parent: {
+            type: Object as () => {children?: {path: string, title: string, children?: any[]}[]},
+            required: true
         },
-        watch: {
-            "$route.path": {
-                handler() {
-                    const normalizedPath = path.normalize(this.$route.path);
-                    this.openedDocs = this.parent.children.filter(child => normalizedPath.includes(child.path)).map(child => child.path);
-                },
-                immediate: true
-            }
-        },
-        data() {
-            return {
-                openedDocs: undefined,
-                disabledPages: [
-                    "docs/api-reference",
-                    "docs/terraform/data-sources",
-                    "docs/terraform/guides",
-                    "docs/terraform/resources"
-                ]
-            }
+        makeIndexNavigable: {
+            type: Boolean,
+            default: true
         }
-    }
+    })
+
+    watch(() => route.path, () => {
+              const normalizedPath = path.normalize(route.path);
+              openedDocs.value = props.parent.children?.filter(child => normalizedPath.includes(child.path)).map(child => child.path) ?? [];
+          },
+          {
+              immediate: true
+          })
+
+    const openedDocs = ref<string[]>([]);
+
 </script>
 
 <style lang="scss" scoped>

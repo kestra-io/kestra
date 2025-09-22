@@ -22,6 +22,7 @@
     import type {Dashboard} from "../../../components/dashboard/composables/useDashboards"
     import {getDashboard, processFlowYaml} from "../../../components/dashboard/composables/useDashboards"
     import TopNavBar from "../../../components/layout/TopNavBar.vue"
+    // @ts-expect-error need types for editor
     import Editor from "../../../components/dashboard/components/Editor.vue"
     import useRouteContext from "../../../composables/useRouteContext"
 

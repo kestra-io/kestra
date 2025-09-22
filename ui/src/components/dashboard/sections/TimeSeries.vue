@@ -31,7 +31,7 @@
     import NoData from "../../layout/NoData.vue";
     import {Chart, getDashboard, useChartGenerator} from "../composables/useDashboards";
     import {customBarLegend} from "../composables/useLegend";
-    import {defaultConfig, getConsistentHEXColor, chartClick, tooltip} from "../composables/charts.js";
+    import {defaultConfig, getConsistentHEXColor, chartClick, tooltip} from "../composables/charts";
     import {cssVariable, Utils} from "@kestra-io/ui-libs";
     import KestraUtils, {useTheme} from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";

@@ -1,9 +1,9 @@
-import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion.ts";
-import {FilterLanguage} from "../filterLanguage.ts";
-import permission from "../../../../../models/permission.ts";
-import action from "../../../../../models/action.ts";
+import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion";
+import {FilterLanguage} from "../filterLanguage";
+import permission from "../../../../../models/permission";
+import action from "../../../../../models/action";
 import {useAuthStore} from "override/stores/auth";
-import {useNamespacesStore} from "override/stores/namespaces.ts";
+import {useNamespacesStore} from "override/stores/namespaces";
 
 const dashboardFilterKeys: Record<string, FilterKeyCompletions> = {
     namespace: new FilterKeyCompletions(

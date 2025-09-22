@@ -23,7 +23,7 @@
 
     import {customBarLegend} from "../composables/useLegend";
     import {useTheme} from "../../../utils/utils";
-    import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts.js";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts";
 
 
     import {useRoute, useRouter} from "vue-router";

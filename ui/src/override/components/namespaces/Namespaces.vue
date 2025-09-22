@@ -76,8 +76,8 @@
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
     import KestraFilter from "../../../components/filter/KestraFilter.vue";
 
-    import permission from "../../../models/permission.ts";
-    import action from "../../../models/action.ts";
+    import permission from "../../../models/permission";
+    import action from "../../../models/action";
 
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";

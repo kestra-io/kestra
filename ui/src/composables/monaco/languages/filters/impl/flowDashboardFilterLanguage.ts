@@ -1,5 +1,5 @@
-import {Comparators, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion.ts";
-import {FilterLanguage} from "../filterLanguage.ts";
+import {Comparators, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion";
+import {FilterLanguage} from "../filterLanguage";
 
 const flowDashboardFilterKeys: Record<string, FilterKeyCompletions> = {
     timeRange: new FilterKeyCompletions(

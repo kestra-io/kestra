@@ -140,7 +140,7 @@
     import {useBlueprintsStore} from "../../../../stores/blueprints";
     import {useCoreStore} from "../../../../stores/core";
     import {useDocStore} from "../../../../stores/doc";
-    import {canCreate} from "override/composables/blueprintsPermissions.js";
+    import {canCreate} from "override/composables/blueprintsPermissions";
     import {useDataTableActions} from "../../../../composables/useDataTableActions";
     import useRestoreUrl from "../../../../composables/useRestoreUrl";
 

@@ -1,4 +1,4 @@
-import {Comparators} from "../../../composables/monaco/languages/filters/filterCompletion.ts";
+import {Comparators} from "../../../composables/monaco/languages/filters/filterCompletion";
 
 export type Shown = {
     shown: boolean;

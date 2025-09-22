@@ -7,7 +7,7 @@ import {useDashboardStore} from "../../../stores/dashboard";
 
 import {useI18n} from "vue-i18n";
 
-import {decodeSearchParams} from "../../filter/utils/helpers.ts";
+import {decodeSearchParams} from "../../filter/utils/helpers";
 
 export type Dashboard = {
     id: string;
@@ -101,7 +101,7 @@ import Markdown from "../sections/Markdown.vue";
 import Pie from "../sections/Pie.vue";
 import Table from "../sections/Table.vue";
 import TimeSeries from "../sections/TimeSeries.vue";
-import {FilterObject} from "../../../utils/filters.ts";
+import {FilterObject} from "../../../utils/filters";
 
 export const TYPES: Record<string, any> = {
     "io.kestra.plugin.core.dashboard.chart.Bar": Bar,

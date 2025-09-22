@@ -11,8 +11,8 @@ import {
     getMonacoFilterInput,
     isColoredAsError,
     refreshMonacoFilter
-} from "../../utils/monacoUtils.js";
-import {useAxios} from "../../../../src/utils/axios.js";
+} from "../../utils/monacoUtils";
+import {useAxios} from "../../../../src/utils/axios";
 
 function maybeAddTimeRangeFilter(to) {
     const dateTimeKeys = ["startDate", "endDate", "timeRange"];

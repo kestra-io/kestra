@@ -48,7 +48,7 @@
     import Environment from "./Environment.vue";
     import BookmarkLinkList from "./BookmarkLinkList.vue";
     import {useBookmarksStore} from "../../stores/bookmarks";
-    import type {MenuItem} from "override/components/useLeftMenu.js";
+    import type {MenuItem} from "override/components/useLeftMenu";
 
 
     const props = withDefaults(defineProps<{

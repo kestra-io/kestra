@@ -471,14 +471,14 @@
     import KestraFilter from "../filter/KestraFilter.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import RunFast from "vue-material-design-icons/RunFast.vue";
-    import ExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/executionFilterLanguage.ts";
-    import FlowExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/flowExecutionFilterLanguage.js";
+    import ExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/executionFilterLanguage";
+    import FlowExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/flowExecutionFilterLanguage";
     import Sections from "../dashboard/sections/Sections.vue";
 </script>
 
 <script>
     import {mapStores} from "pinia";
-    import {useMiscStore} from "override/stores/misc.ts";
+    import {useMiscStore} from "override/stores/misc";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -506,8 +506,8 @@
 
     import {filterLabels} from "./utils"
     import {useExecutionsStore} from "../../stores/executions";
-    import {useAuthStore} from "override/stores/auth.ts";
-    import {useFlowStore} from "../../stores/flow.ts";
+    import {useAuthStore} from "override/stores/auth";
+    import {useFlowStore} from "../../stores/flow";
 
     import {defaultNamespace} from "../../composables/useNamespaces";
 

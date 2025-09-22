@@ -272,7 +272,7 @@
     import BulkSelect from "../layout/BulkSelect.vue";
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
-    import TriggerFilterLanguage from "../../composables/monaco/languages/filters/impl/triggerFilterLanguage.ts";
+    import TriggerFilterLanguage from "../../composables/monaco/languages/filters/impl/triggerFilterLanguage";
 </script>
 <script>
     import RouteContext from "../../mixins/routeContext";

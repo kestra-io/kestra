@@ -89,7 +89,7 @@
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     // @ts-expect-error no clean way to have focus on inputs
-    import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
+    import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus";
     import MonacoEditor from "./MonacoEditor.vue";
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 

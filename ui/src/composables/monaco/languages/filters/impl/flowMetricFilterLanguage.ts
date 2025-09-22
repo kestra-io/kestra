@@ -1,6 +1,6 @@
-import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion.ts";
-import {FilterLanguage} from "../filterLanguage.ts";
-import {useFlowStore} from "../../../../../stores/flow.ts";
+import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion";
+import {FilterLanguage} from "../filterLanguage";
+import {useFlowStore} from "../../../../../stores/flow";
 
 const flowMetricFilterKeys: Record<string, FilterKeyCompletions> = {
     task: new FilterKeyCompletions(

@@ -270,7 +270,7 @@
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import Upload from "vue-material-design-icons/Upload.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
-    import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
+    import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage";
     import TimeSeries from "../dashboard/sections/TimeSeries.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";

@@ -163,13 +163,14 @@
     "choose file": "Scegli un file o trascinalo qui...",
     "close": "Chiudi",
     "close sidebar": "chiudi barra laterale",
+    "codeDisabled": "Disabilitato nel Flow",
     "collapse": "Comprimi",
     "collapse all": "Comprimi tutto",
     "common": {
       "back": "Indietro"
     },
     "concurrency": "Concurrency",
-    "conditions": "condizioni",
+    "conditions": "Condizioni",
     "configure basic auth": "Configura Autenticazione di Base",
     "confirm": "Conferma",
     "confirm password": "Conferma password",
@@ -667,6 +668,7 @@
     "flow-no-dependencies": "Il tuo flow non ha dipendenze",
     "flow_export": "Esporta flow",
     "flow_only": "Disponibile solo nella scheda Flow.",
+    "flow_outputs": "Output del Flow",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow eliminati",
     "flows disabled": "<code>{count}</code> Flow disabilitati",
@@ -1057,6 +1059,7 @@
     "pause confirm": "Sei sicuro di mettere in pausa l'esecuzione <code>{id}</code>?",
     "pause done": "L'esecuzione è PAUSED",
     "pause title": "Metti in pausa l'esecuzione <code>{id}</code>.<br/>Nota che i task attualmente in esecuzione verranno comunque elaborati e l'esecuzione dovrà essere ripresa manualmente.",
+    "paused": "PAUSED",
     "playground": {
       "clear_history": "Cancella cronologia",
       "confirm_create": "Non puoi eseguire il playground mentre crei un flow. Avviare un'esecuzione del playground creerà il flow.",
@@ -1387,7 +1390,6 @@
     "task_id_exists": "L'ID del task esiste già",
     "task_id_message": "L'ID del Task ${existingTask} esiste già nel flow.",
     "taskid column details": "Ultimo task in esecuzione e il numero di tentativi.",
-    "taskruns": "Esecuzioni dei tasks",
     "tasks": "Tasks",
     "template": "Template",
     "template creation": "Creazione del template",
@@ -1401,6 +1403,7 @@
       "name": "Mandante",
       "names": "Mandanti"
     },
+    "tenantId": "ID del Mandante",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Questa esecuzione è stata creata da un Test",
     "theme": "Tema",
@@ -1438,6 +1441,7 @@
       "title": "Filtra esecuzioni figlie"
     },
     "trigger refresh": "Aggiorna",
+    "triggerId": "ID del trigger",
     "trigger_check_warning": "Utilizzare le variabili trigger non funzionerà con l'esecuzione manuale del flow. Aggiungi l'operatore di coalescenza `??` per risolvere il problema. Ad esempio, invece di `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "L'ID del trigger esiste già",
     "trigger_id_message": "L'ID del trigger ${existingTrigger} esiste già nel flow.",

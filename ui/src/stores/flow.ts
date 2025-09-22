@@ -91,6 +91,7 @@ export const useFlowStore = defineStore("flow", () => {
     const haveChange = ref<boolean>(false)
     const expandedSubflows = ref<string[]>([])
     const metadata = ref<Record<string, any>>()
+    const creationId = ref<string>();
 
     const axios = useAxios();
 
@@ -482,7 +483,15 @@ export const useFlowStore = defineStore("flow", () => {
 
     function createFlow(options: { flow: string }) {
         return axios.post(`${apiUrl()}/flows`, options.flow, textYamlHeader).then(response => {
+
+            const creationPanels = localStorage.getItem(`el-fl-creation-${creationId.value}`) ?? YAML_UTILS.stringify([]);
+            localStorage.setItem(`el-fl-${flow.value!.namespace}-${flow.value!.id}`, creationPanels);
+
             flow.value = response.data;
+
+            // clean-up
+            localStorage.removeItem(`el-fl-creation-${creationId.value}`);
+            creationId.value = undefined;
 
             return response.data;
         })
@@ -855,6 +864,7 @@ function deleteFlowAndDependencies() {
     })
 
     return {
+        creationId,
         isFlow,
         isAllowedEdit,
         readOnlySystemLabel,

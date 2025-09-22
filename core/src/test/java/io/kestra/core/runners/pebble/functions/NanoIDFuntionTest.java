@@ -1,6 +1,5 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
 import jakarta.inject.Inject;
@@ -23,25 +22,25 @@ public class NanoIDFuntionTest {
             variableRenderer.render(
                 "{{ nanoId() }}", Collections.emptyMap());
         assertThat(!rendered.isEmpty()).as(rendered).isTrue();
-        assertThat(rendered.length()).isEqualTo(21);
+        assertThat(rendered.length()).isEqualTo(21L);
     }
 
     @Test
     void checkDifferentLength() throws Exception {
         String rendered =
             variableRenderer.render(
-                "{{ nanoId(length) }}", Map.of("length", 8));
+                "{{ nanoId(length) }}", Map.of("length", 8L));
         assertThat(!rendered.isEmpty()).as(rendered).isTrue();
-        assertThat(rendered.length()).isEqualTo(8);
+        assertThat(rendered.length()).isEqualTo(8L);
     }
 
     @Test
     void checkDifferentAlphabet() throws Exception {
         String rendered =
             variableRenderer.render(
-                "{{ nanoId(length,alphabet) }}", Map.of("length", 21, "alphabet", ":;<=>?@"));
+                "{{ nanoId(length,alphabet) }}", Map.of("length", 21L, "alphabet", ":;<=>?@"));
         assertThat(!rendered.isEmpty()).as(rendered).isTrue();
-        assertThat(rendered.length()).isEqualTo(21);
+        assertThat(rendered.length()).isEqualTo(21L);
         for (char c : rendered.toCharArray()) {
             assertThat(c).isGreaterThanOrEqualTo(':');
             assertThat(c).isLessThanOrEqualTo('@');

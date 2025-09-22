@@ -1,5 +1,6 @@
 package io.kestra.core.runners.pebble.functions;
 
+import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
@@ -17,18 +18,32 @@ public class NanoIDFunction implements Function {
     private static final String LENGTH = "length";
     private static final String ALPHABET = "alphabet";
 
+    private static final int MAX_LENGTH = 1000;
+
     @Override
     public Object execute(
         Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         int length = DEFAULT_LENGTH;
-        if (args.containsKey(LENGTH) && (args.get(LENGTH) instanceof Integer)) {
-            length = (int) args.get(LENGTH);
+        if (args.containsKey(LENGTH) && (args.get(LENGTH) instanceof Long)) {
+            length = parseLength(args, self, lineNumber);
         }
         char[] alphabet = DEFAULT_ALPHABET;
         if (args.containsKey(ALPHABET) && (args.get(ALPHABET) instanceof String)) {
             alphabet = ((String) args.get(ALPHABET)).toCharArray();
         }
         return createNanoID(length, alphabet);
+    }
+
+    private static int parseLength(Map<String, Object> args, PebbleTemplate self, int lineNumber) {
+        var value = (Long) args.get(LENGTH);
+        if(value > MAX_LENGTH) {
+            throw new PebbleException(
+                null,
+                "The 'nanoId()' function field 'length' must be lower than: " + MAX_LENGTH,
+                lineNumber,
+                self.getName());
+        }
+        return Math.toIntExact(value);
     }
 
     @Override

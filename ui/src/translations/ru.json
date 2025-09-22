@@ -668,6 +668,7 @@
     "flow-no-dependencies": "Ваш flow не имеет зависимостей",
     "flow_export": "Экспорт flow",
     "flow_only": "Доступно только на вкладке Flow.",
+    "flow_outputs": "Выходы Flow",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(ы) удалены",
     "flows disabled": "<code>{count}</code> Flow(ы) отключены",

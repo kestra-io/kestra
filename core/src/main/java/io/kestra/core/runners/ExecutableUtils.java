@@ -160,7 +160,8 @@ public final class ExecutableUtils {
             if (flow instanceof FlowWithException fwe) {
                 throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
             }
-                List<Label> newLabels = inheritLabels ? new ArrayList<>(filterLabels(currentExecution.getLabels(), flow)) : new ArrayList<>(systemLabels(currentExecution));
+
+            List<Label> newLabels = inheritLabels ? new ArrayList<>(filterLabels(currentExecution.getLabels(), flow)) : new ArrayList<>(systemLabels(currentExecution));
             if (labels != null) {
                 labels.forEach(throwConsumer(label -> newLabels.add(new Label(runContext.render(label.key()), runContext.render(label.value())))));
             }

@@ -668,6 +668,7 @@
     "flow-no-dependencies": "Seu flow não possui dependências",
     "flow_export": "Exportar flow",
     "flow_only": "Disponível apenas na aba Flow.",
+    "flow_outputs": "Saídas do Flow",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) deletado(s)",
     "flows disabled": "<code>{count}</code> Flow(s) desativado(s)",

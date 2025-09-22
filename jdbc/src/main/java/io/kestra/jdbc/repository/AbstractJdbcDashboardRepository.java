@@ -1,7 +1,6 @@
 package io.kestra.jdbc.repository;
 
 import io.kestra.core.events.CrudEvent;
-import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -37,7 +36,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     private final ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher;
 
     List<QueryBuilderInterface<?>> queryBuilders;
-    
+
     /**
      * {@inheritDoc}
      **/
@@ -45,8 +44,8 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     public long count() {
         return jdbcRepository.count(this.defaultFilter());
     }
-    
-    
+
+
     @Override
     public Optional<Dashboard> get(String tenantId, String id) {
         return jdbcRepository
@@ -151,7 +150,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
 
         this.jdbcRepository.persist(dashboard, fields);
         this.eventPublisher.publishEvent(CrudEvent.of(previousDashboard, dashboard));
-        
+
         return dashboard;
     }
 

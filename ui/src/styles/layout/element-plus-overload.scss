@@ -740,6 +740,7 @@ form.ks-horizontal {
 
     &.is-dark {
         color: var(--bs-gray-100);
+
         background: var(--bs-gray-900);
         border: 1px solid var(--ks-border-primary);
 
@@ -747,17 +748,14 @@ form.ks-horizontal {
             border: 1px solid var(--ks-border-primary);
             background-color: var(--bs-gray-900);
         }
-    }
 
-    // Light theme tooltips should have light background
-    &.is-light {
-        color: var(--ks-content-primary);
-        background: var(--ks-background-card);
-        border: 1px solid var(--ks-border-primary);
+        html.dark & {
+            color: var(--bs-gray-900);
+            background: var(--bs-gray-100);
 
         .el-popper__arrow::before {
-            border: 1px solid var(--ks-border-primary);
-            background-color: var(--ks-background-card);
+                background-color: var(--bs-gray-100);
+            }
         }
     }
 

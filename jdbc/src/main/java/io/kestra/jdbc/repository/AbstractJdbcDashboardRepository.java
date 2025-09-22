@@ -205,7 +205,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
                 .orElseThrow(() -> new UnsupportedOperationException("No query builder found for " + clazz))
         );
 
-        Double filteredValue = queryBuilder.fetchValue(tenantId, dataChart.getData(), startDate, endDate, true);
+        Double filteredValue = queryBuilder.fetchValue(tenantId, dataChart.getData(), startDate, endDate, dataChart.getData().getNumerator() != null);
 
         if (dataChart.getChartOptions() != null && dataChart.getChartOptions().getNumberType().equals(KpiOption.NumberType.PERCENTAGE)) {
             Double totalValue = queryBuilder.fetchValue(tenantId, dataChart.getData(), startDate, endDate, false);

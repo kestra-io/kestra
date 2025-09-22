@@ -54,7 +54,7 @@
     const {data, chartOptions} = props.chart;
 
     const aggregator = computed(() => {
-        return Object.entries(data.columns)
+        return Object.entries(data?.columns ?? {})
             .filter(([_, v]) => v.agg)
             .sort((a, b) => {
                 const aStyle = a[1].graphStyle || "";

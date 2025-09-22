@@ -28,6 +28,10 @@ export type Chart = {
             enabled?: boolean;
             [key: string]: unknown;
         };
+        legend?:{
+            enabled?: boolean;
+        };
+        column: string;
         [key: string]: unknown;
     };
     data?: {
@@ -42,6 +46,7 @@ export type Chart = {
         content?: string;
         [key: string]: unknown;
     };
+
     [key: string]: unknown;
 };
 
@@ -78,7 +83,7 @@ const KEY_MAP: Record<string, keyof ReturnType<typeof STORAGE_KEYS>> = {
     "namespaces/update": "DASHBOARD_NAMESPACE"
 };
 
-export const getDashboard = (route: RouteLocation, type: "key" | "id"): string | undefined => {
+export function getDashboard(route: RouteLocation, type: "key" | "id"): string | undefined {
     if (!ALLOWED_CREATION_ROUTES.includes(route.name as string)) return;
 
     const key = KEY_MAP[route.name as string];
@@ -130,7 +135,7 @@ export function useChartGenerator(props: {chart: Chart; filters: FilterObject[];
     const EMPTY_TEXT = t("dashboards.empty");
 
     const data = ref();
-    const generate = async (id: string, pagination?: { pageNumber: number; pageSize: number }) => {
+    async function generate(id: string, pagination?: { pageNumber: number; pageSize: number }) {
         const filters = props.filters.concat(decodeSearchParams(route.query) ?? []);
         const parameters: Parameters = {...pagination, filters: (filters ?? {})};
 

@@ -53,11 +53,11 @@
         grid: {display: false},
     };
 
-    const aggregator = Object.entries(data.columns).filter(([_, v]) => v.agg);
+    const aggregator = Object.entries(data?.columns ?? {}).filter(([_, v]) => v.agg);
 
     const theme = useTheme();
 
-    const options = computed(() => {
+    const options = computed<any>(() => {
         return defaultConfig({
             skipNull: true,
             barThickness: 12,
@@ -75,9 +75,9 @@
                     : {}),
                 tooltip: {
                     enabled: props.short ? false : true,
-                    filter: (value) => value.raw,
+                    filter: (value: any) => value.raw,
                     callbacks: {
-                        label: (value) => {
+                        label: (value: any) => {
                             if (!value.dataset.tooltip) return "";
                             return `${value.dataset.tooltip}`;
                         },
@@ -88,7 +88,7 @@
                 x: {
                     title: {
                         display: props.short ? false : true,
-                        text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
+                        text: chartOptions?.column ? (data?.columns?.[chartOptions.column]?.displayName ?? chartOptions.column) : "",
                     },
                     position: "bottom",
                     ...DEFAULTS,
@@ -151,7 +151,7 @@
         const datasets = xLabels.flatMap((xLabel) => {
             return Object.entries(grouped[xLabel]).map(subSectionsEntry => ({
                 label: subSectionsEntry[0],
-                data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0),
+                data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0) as any[],
                 backgroundColor: getConsistentHEXColor(theme.value, subSectionsEntry[0]),
                 tooltip: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
             }));

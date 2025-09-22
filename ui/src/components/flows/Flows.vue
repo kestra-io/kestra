@@ -560,6 +560,9 @@
     // Lifecycle
     onMounted(() => {
         displayColumns.value = loadDisplayColumns();
+        loadData(() => {
+            ready.value = true;
+        });
     });
 
     watch(route, (newRoute) => {

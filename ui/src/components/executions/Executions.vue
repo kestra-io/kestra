@@ -291,6 +291,24 @@
                         </el-table-column>
 
                         <el-table-column
+                            prop="outputs"
+                            v-if="displayColumn('outputs')"
+                            :label="$t('outputs')"
+                            align="center"
+                        >
+                            <template #default="scope">
+                                <el-tooltip effect="light">
+                                    <template #content>
+                                        <pre class="mb-0">{{ JSON.stringify(scope.row.outputs, null, "\t") }}</pre>
+                                    </template>
+                                    <div>
+                                        <Export v-if="scope.row.outputs" class="fs-5" />
+                                    </div>
+                                </el-tooltip>
+                            </template>
+                        </el-table-column>
+
+                        <el-table-column
                             prop="taskRunList.taskId"
                             v-if="displayColumn('taskRunList.taskId')"
                             :label="$t('task id')"
@@ -446,6 +464,7 @@
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Import from "vue-material-design-icons/Import.vue";
+    import Export from "vue-material-design-icons/Export.vue";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
@@ -607,6 +626,11 @@
                     {
                         label: this.$t("inputs"),
                         prop: "inputs",
+                        default: false
+                    },
+                    {
+                        label: this.$t("outputs"),
+                        prop: "outputs",
                         default: false
                     },
                     {

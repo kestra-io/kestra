@@ -91,7 +91,7 @@
         docStore.docPath = docHistory.value[currentHistoryIndex.value];
     };
 
-    async function setDocPageFromResponse(response){
+    async function setDocPageFromResponse(response: {metadata?: any, content:string}) {
         docStore.pageMetadata = response.metadata;
         let content = response.content;
         if (!("canShare" in navigator)) {

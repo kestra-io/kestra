@@ -400,10 +400,10 @@
                     callback();
                 }
             },
-            async updateKvModal(entry) {
+            async updateKvModal(entry: any) {
                 this.kv.namespace = entry.namespace;
                 this.kv.key = entry.key;
-                const {type, value} = await this.namespacesStore.kv({entry.namespace, entry.key});
+                const {type, value} = await this.namespacesStore.kv({namespace: entry.namespace, key: entry.key});
                 this.kv.type = type;
                 if (type === "JSON") {
                     this.kv.value = JSON.stringify(value);

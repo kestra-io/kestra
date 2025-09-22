@@ -363,8 +363,32 @@
 
     const selectionIds = computed(() => selection.value.map((flow) => flow.id));
 
+    interface ChartDefinition {
+        id: string;
+        type: string;
+        chartOptions: {
+            displayName: string;
+            description: string;
+            legend: {enabled: boolean};
+            column: string;
+            colorByColumn: string;
+            width: number;
+        };
+        data: {
+            type: string;
+            columns: {
+                date: {field: string; displayName: string};
+                state: {field: string};
+                total: {displayName: string; agg: string};
+                duration: {field: string; displayName: string; agg: string};
+            };
+            where: {field: string; type: string; value: string}[];
+        };
+        content?: string;
+    }
+
     // Chart definition for mappedChart
-    const CHART_DEFINITION = {
+    const CHART_DEFINITION: ChartDefinition = {
         id: "total_executions_timeseries",
         type: "io.kestra.plugin.core.dashboard.chart.TimeSeries",
         chartOptions: {
@@ -388,7 +412,6 @@
                 {field: "FLOW_ID", type: "EQUAL_TO", value: "${flow_id}"},
             ],
         },
-        content: ""
     };
     CHART_DEFINITION.content = YAML_UTILS.stringify(CHART_DEFINITION);
 

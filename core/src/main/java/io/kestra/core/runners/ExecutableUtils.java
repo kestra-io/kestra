@@ -5,10 +5,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithException;
-import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
@@ -29,6 +26,7 @@ import org.apache.commons.lang3.stream.Streams;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.kestra.core.trace.Tracer.throwCallable;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -163,6 +161,19 @@ public final class ExecutableUtils {
                 throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
             }
 
+                Set<String> declaredInputs = flow.getInputs().stream().map(Input::getId).collect(Collectors.toSet());
+                for (var inputKey : inputs.keySet()) {
+                    if (!declaredInputs.contains(inputKey)) {
+                        String log = String.format(
+                            "Input %s was provided by parent execution %s for subflow %s.%s but isn't declared at the subflow inputs",
+                            inputKey,
+                            currentExecution.getId(),
+                            currentTask.subflowId().namespace(),
+                            currentTask.subflowId().flowId()
+                        );
+                        runContext.logger().warn(log);
+                    }
+                }
             List<Label> newLabels = inheritLabels ? new ArrayList<>(filterLabels(currentExecution.getLabels(), flow)) : new ArrayList<>(systemLabels(currentExecution));
             if (labels != null) {
                 labels.forEach(throwConsumer(label -> newLabels.add(new Label(runContext.render(label.key()), runContext.render(label.value())))));

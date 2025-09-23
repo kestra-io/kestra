@@ -44,7 +44,7 @@
     </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     import {ref, computed, onMounted, onUnmounted} from "vue";
     import {useDocStore} from "../../stores/doc";
     import {useI18n} from "vue-i18n";
@@ -56,33 +56,33 @@
     const docStore = useDocStore();
 
     const searchQuery = ref("");
-    const searchResults = ref([]);
+    const searchResults = ref<Array<{ title: string; preview: string; url: string; parsedUrl: string }>>([]);
     const loading = ref(false);
     const selectedIndex = ref(0);
-    const searchContainer = ref(null);
+    const searchContainer = ref<HTMLDivElement | null>(null);
 
     const showResults = computed(() => {
         return searchQuery.value.trim().length > 0;
     });
 
-    const handleKeyUp = (e) => {
+    const handleKeyUp = (e: KeyboardEvent) => {
         e.preventDefault();
         if (searchResults.value.length > 0) {
             selectedIndex.value = Math.max(0, selectedIndex.value - 1);
         }
     };
 
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
         e.preventDefault();
         if (searchResults.value.length > 0) {
             selectedIndex.value = Math.min(searchResults.value.length - 1, selectedIndex.value + 1);
         }
     };
 
-    const handleEnterKey = (e) => {
+    const handleEnterKey = (e: KeyboardEvent) => {
         e.preventDefault();
         if (searchResults.value.length > 0) {
-            const selectedResult = document.querySelector(`.search-result[data-index="${selectedIndex.value}"]`);
+            const selectedResult = document.querySelector(`.search-result[data-index="${selectedIndex.value}"]`) as HTMLElement;
             if (selectedResult) {
                 selectedResult.click();
             }
@@ -94,7 +94,7 @@
         searchResults.value = [];
     };
 
-    const performSearch = async (query) => {
+    const performSearch = async (query: string) => {
         if (!query) {
             searchResults.value = [];
             selectedIndex.value = 0;
@@ -123,8 +123,8 @@
         debouncedSearch(searchQuery.value.trim());
     };
 
-    const handleClickOutside = (event) => {
-        if (searchContainer.value && !searchContainer.value.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+        if (searchContainer.value && !searchContainer.value.contains(event.target as Node)) {
             resetSearch();
         }
     };

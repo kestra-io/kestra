@@ -291,6 +291,24 @@
                         </el-table-column>
 
                         <el-table-column
+                            prop="outputs"
+                            v-if="displayColumn('outputs')"
+                            :label="$t('outputs')"
+                            align="center"
+                        >
+                            <template #default="scope">
+                                <el-tooltip effect="light">
+                                    <template #content>
+                                        <pre class="mb-0">{{ JSON.stringify(scope.row.outputs, null, "\t") }}</pre>
+                                    </template>
+                                    <div>
+                                        <Export v-if="scope.row.outputs" class="fs-5" />
+                                    </div>
+                                </el-tooltip>
+                            </template>
+                        </el-table-column>
+
+                        <el-table-column
                             prop="taskRunList.taskId"
                             v-if="displayColumn('taskRunList.taskId')"
                             :label="$t('task id')"
@@ -446,20 +464,21 @@
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Import from "vue-material-design-icons/Import.vue";
+    import Export from "vue-material-design-icons/Export.vue";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
     import KestraFilter from "../filter/KestraFilter.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import RunFast from "vue-material-design-icons/RunFast.vue";
-    import ExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/executionFilterLanguage.ts";
-    import FlowExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/flowExecutionFilterLanguage.js";
+    import ExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/executionFilterLanguage";
+    import FlowExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/flowExecutionFilterLanguage";
     import Sections from "../dashboard/sections/Sections.vue";
 </script>
 
 <script>
     import {mapStores} from "pinia";
-    import {useMiscStore} from "override/stores/misc.ts";
+    import {useMiscStore} from "override/stores/misc";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -487,8 +506,8 @@
 
     import {filterLabels} from "./utils"
     import {useExecutionsStore} from "../../stores/executions";
-    import {useAuthStore} from "override/stores/auth.ts";
-    import {useFlowStore} from "../../stores/flow.ts";
+    import {useAuthStore} from "override/stores/auth";
+    import {useFlowStore} from "../../stores/flow";
 
     import {defaultNamespace} from "../../composables/useNamespaces";
 
@@ -607,6 +626,11 @@
                     {
                         label: this.$t("inputs"),
                         prop: "inputs",
+                        default: false
+                    },
+                    {
+                        label: this.$t("outputs"),
+                        prop: "outputs",
                         default: false
                     },
                     {

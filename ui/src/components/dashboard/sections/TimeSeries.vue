@@ -31,9 +31,10 @@
     import NoData from "../../layout/NoData.vue";
     import {Chart, getDashboard, useChartGenerator} from "../composables/useDashboards";
     import {customBarLegend} from "../composables/useLegend";
-    import {defaultConfig, getConsistentHEXColor, chartClick, tooltip} from "../composables/charts.js";
+    import {defaultConfig, getConsistentHEXColor, chartClick, tooltip} from "../composables/charts";
     import {cssVariable, Utils} from "@kestra-io/ui-libs";
     import KestraUtils, {useTheme} from "../../../utils/utils";
+    import {FilterObject} from "../../../utils/filters";
 
     const route = useRoute();
     const router = useRouter();
@@ -41,7 +42,7 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({
         chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<string[]>, default: () => []},
+        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
         short: {type: Boolean, default: false},
     });
@@ -53,7 +54,7 @@
     const {data, chartOptions} = props.chart;
 
     const aggregator = computed(() => {
-        return Object.entries(data.columns)
+        return Object.entries(data?.columns ?? {})
             .filter(([_, v]) => v.agg)
             .sort((a, b) => {
                 const aStyle = a[1].graphStyle || "";

@@ -163,21 +163,21 @@ public final class JacksonMapper {
             .build();
     }
 
-    public static Pair<JsonNode, JsonNode> getBiDirectionalDiffs(Object previous, Object current)  {
-        JsonNode previousJson = MAPPER.valueToTree(previous);
-        JsonNode newJson = MAPPER.valueToTree(current);
+    public static Pair<JsonNode, JsonNode> getBiDirectionalDiffs(Object before, Object after)  {
+        JsonNode beforeNode = MAPPER.valueToTree(before);
+        JsonNode afterNode = MAPPER.valueToTree(after);
 
-        JsonNode patchPrevToNew = JsonDiff.asJson(previousJson, newJson);
-        JsonNode patchNewToPrev = JsonDiff.asJson(newJson, previousJson);
+        JsonNode patch = JsonDiff.asJson(beforeNode, afterNode);
+        JsonNode revert = JsonDiff.asJson(afterNode, beforeNode);
 
-        return Pair.of(patchPrevToNew, patchNewToPrev);
+        return Pair.of(patch, revert);
     }
     
     public static JsonNode applyPatchesOnJsonNode(JsonNode jsonObject, List<JsonNode> patches) {
         for (JsonNode patch : patches) {
             try {
                 // Required for ES
-                if (patch.findValue("value") == null) {
+                if (patch.findValue("value") == null && !patch.isEmpty()) {
                     ((ObjectNode) patch.get(0)).set("value", null);
                 }
                 jsonObject = JsonPatch.fromJson(patch).apply(jsonObject);

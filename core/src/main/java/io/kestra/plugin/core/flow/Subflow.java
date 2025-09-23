@@ -216,49 +216,46 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
         VariablesService variablesService = ((DefaultRunContext) runContext).getApplicationContext().getBean(VariablesService.class);
         if (this.wait) { // we only compute outputs if we wait for the subflow
-            boolean isOutputsAllowed = runContext
-                .<Boolean>pluginConfiguration(PLUGIN_FLOW_OUTPUTS_ENABLED)
-                .orElse(true);
-
             List<io.kestra.core.models.flows.Output> subflowOutputs = flow.getOutputs();
-            
+
             // region [deprecated] Subflow outputs feature
-            if (subflowOutputs == null && isOutputsAllowed && this.getOutputs() != null) {
-                subflowOutputs = this.getOutputs().entrySet().stream()
-                    .<io.kestra.core.models.flows.Output>map(entry -> io.kestra.core.models.flows.Output
-                        .builder()
-                        .id(entry.getKey())
-                        .value(entry.getValue())
-                        .required(true)
-                        .build()
-                    )
-                    .toList();
+            if (subflowOutputs == null && this.getOutputs() != null) {
+                boolean isOutputsAllowed = runContext
+                    .<Boolean>pluginConfiguration(PLUGIN_FLOW_OUTPUTS_ENABLED)
+                    .orElse(true);
+                if (isOutputsAllowed) {
+                    try {
+                        subflowOutputs = this.getOutputs().entrySet().stream()
+                            .<io.kestra.core.models.flows.Output>map(entry -> io.kestra.core.models.flows.Output
+                                .builder()
+                                .id(entry.getKey())
+                                .value(entry.getValue())
+                                .required(true)
+                                .build()
+                            )
+                            .toList();
+                    } catch (Exception e) {
+                        Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
+                        return failSubflowDueToOutput(runContext, taskRun, execution, e, variables);
+                    }
+                } else {
+                    runContext.logger().warn("Defining outputs inside the Subflow task is not allowed.");
+                }
             }
             //endregion
 
             if (subflowOutputs != null && !subflowOutputs.isEmpty()) {
                 try {
-                    Map<String, Object> outputs = FlowInputOutput.renderFlowOutputs(subflowOutputs, runContext);
-                    
+                    Map<String, Object> rOutputs = FlowInputOutput.renderFlowOutputs(subflowOutputs, runContext);
+
                     FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class); // this is hacking
                     if (flow.getOutputs() != null && flowInputOutput != null) {
-                        outputs = flowInputOutput.typedOutputs(flow, execution, outputs);
+                        rOutputs = flowInputOutput.typedOutputs(flow, execution, rOutputs);
                     }
-                    builder.outputs(outputs);
+                    builder.outputs(rOutputs);
                 } catch (Exception e) {
-                    runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
-                    var state = State.Type.fail(this);
                     Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
-                    taskRun = taskRun
-                        .withState(state)
-                        .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
-                        .withOutputs(variables);
-
-                    return Optional.of(SubflowExecutionResult.builder()
-                        .executionId(execution.getId())
-                        .state(State.Type.FAILED)
-                        .parentTaskRun(taskRun)
-                        .build());
+                    return failSubflowDueToOutput(runContext, taskRun, execution, e, variables);
                 }
             }
         }
@@ -280,6 +277,21 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         }
 
         return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, execution));
+    }
+
+    private Optional<SubflowExecutionResult> failSubflowDueToOutput(RunContext runContext, TaskRun taskRun, Execution execution, Exception e, Variables outputs) {
+        runContext.logger().error("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
+        var state = State.Type.fail(this);
+        taskRun = taskRun
+            .withState(state)
+            .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
+            .withOutputs(outputs);
+
+        return Optional.of(SubflowExecutionResult.builder()
+            .executionId(execution.getId())
+            .state(State.Type.FAILED)
+            .parentTaskRun(taskRun)
+            .build());
     }
 
     @Override

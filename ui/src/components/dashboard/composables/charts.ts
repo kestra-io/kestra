@@ -3,7 +3,14 @@ import Utils from "../../../utils/utils";
 import {cssVariable, State} from "@kestra-io/ui-libs";
 import {getSchemeValue} from "../../../utils/scheme";
 
-export function tooltip(tooltipModel) {
+export function tooltip(tooltipModel: {
+    title?: string[];
+    body?: { lines: string[] }[];
+    labelColors: {
+        backgroundColor: string;
+        borderColor: string
+    }[];
+}) {
     const titleLines = tooltipModel.title || [];
     const bodyLines = (tooltipModel.body || []).map((r) => r.lines);
 
@@ -16,10 +23,10 @@ export function tooltip(tooltipModel) {
 
         bodyLines.forEach(function (body, i) {
             if (body.length > 0) {
-                let colors = tooltipModel.labelColors[i];
+                const colors = tooltipModel.labelColors[i];
                 let style = "background:" + colors.backgroundColor;
                 style += "; border-color:" + colors.borderColor;
-                let span = "<span class=\"square\" style=\"" + style + "\"></span>";
+                const span = "<span class=\"square\" style=\"" + style + "\"></span>";
                 innerHtml += span + body + "<br />";
             }
         });
@@ -30,7 +37,9 @@ export function tooltip(tooltipModel) {
     return undefined;
 }
 
-export function defaultConfig(override, theme) {
+export function defaultConfig(override: {
+    [key: string]: any;
+}, theme?: "dark" | "light") {
     const protectedTheme = theme ?? Utils.getTheme();
     const color = protectedTheme === "dark" ? "#FFFFFF" : cssVariable("--bs-gray-700");
 
@@ -92,9 +101,9 @@ export function defaultConfig(override, theme) {
     );
 }
 
-export function extractState(value) {
+export function extractState(value: any) {
     if (!value || typeof value !== "string") return value;
-    
+
     if (value.includes(",")) {
         const stateNames = State.arrayAllStates().map(state => state.name);
         const matchedState = value.split(",")
@@ -102,12 +111,12 @@ export function extractState(value) {
             .find(part => stateNames.includes(part.toUpperCase()));
         return matchedState || value;
     }
-    
+
     return value;
 }
 
-export function chartClick(moment, router, route, event, parsedData, elements, type = "label") {
-    const query = {};
+export function chartClick(moment: any, router: any, route: any, event: any, parsedData: any, elements: any, type = "label") {
+    const query: Record<string, any> = {};
 
     if (elements && parsedData) {
         if (elements.length > 0) {
@@ -188,30 +197,30 @@ export function chartClick(moment, router, route, event, parsedData, elements, t
     }
 }
 
-export function backgroundFromState(state, alpha = 1) {
+export function backgroundFromState(state: string, alpha = 1) {
     const hex = State.color()[state];
     if (!hex) {
         return null;
     }
 
-    const [r, g, b] = hex.match(/\w\w/g).map((x) => parseInt(x, 16));
+    const [r, g, b] = hex.match(/\w\w/g)?.map((x) => parseInt(x, 16)) ?? [0, 0, 0];
     return `rgba(${r},${g},${b},${alpha})`;
 }
 
-export function getConsistentHEXColor(theme, value) {
+export function getConsistentHEXColor(_theme: "light" | "dark", value: string) {
     // TODO: This was added as part of https://github.com/kestra-io/kestra/issues/10055
     // Idea is to separate the value to parts and only use the status
     // Needs to be made more generic and robust as part of the https://github.com/kestra-io/kestra/issues/9149#issuecomment-2969506266
-    const result = value.includes(",") ? value.split(",").pop().trim() : value;
-    
+    const result = value.includes(",") ? value.split(",").pop()?.trim() : value;
+
     let hex;
 
-    hex = getSchemeValue(result, "executions");
+    hex = getSchemeValue(result as any, "executions");
     if (hex && hex !== "transparent") {
         return hex;
     }
 
-    hex = getSchemeValue(result, "logs");
+    hex = getSchemeValue(result as any, "logs");
     if (hex) {
         return hex;
     }
@@ -236,11 +245,11 @@ export function getConsistentHEXColor(theme, value) {
     return `#${((hash >>> 0) & 0xffffff).toString(16).padStart(6, "0")}`;
 }
 
-export function getStateColor(state) {
+export function getStateColor(state: string) {
     return State.getStateColor(state);
 }
 
-export function getFormat(groupBy) {
+export function getFormat(groupBy?: string) {
     switch (groupBy) {
         case "minute":
             return "LT";

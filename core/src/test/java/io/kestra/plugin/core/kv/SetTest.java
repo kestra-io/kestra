@@ -185,7 +185,7 @@ class SetTest {
 
         // When - Then
         //set key a first:
-        runContext.namespaceKv(runContext.flowInfo().namespace()).put("existing_key", new KVValueAndMetadata(new KVMetadata("unused", null), value));
+        runContext.namespaceKv(runContext.flowInfo().namespace()).put("existing_key", new KVValueAndMetadata(new KVMetadata("unused", (Instant)null), value));
         //fail because key is already set
         KVStoreException exception = Assertions.assertThrows(KVStoreException.class, () -> set.run(runContext));
         assertThat(exception.getMessage()).isEqualTo("Cannot set value for key 'existing_key'. Key already exists and `overwrite` is set to `false`.");

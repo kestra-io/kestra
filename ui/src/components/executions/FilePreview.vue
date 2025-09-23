@@ -100,124 +100,137 @@
     </Drawer>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {ref, computed, onMounted} from "vue";
     import EyeOutline from "vue-material-design-icons/EyeOutline.vue";
     import Wrap from "vue-material-design-icons/Wrap.vue";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
-</script>
-
-<script>
     import Editor from "../inputs/Editor.vue";
     import ListPreview from "../ListPreview.vue";
     import PdfPreview from "../PdfPreview.vue";
-    import {mapStores} from "pinia";
     import Markdown from "../layout/Markdown.vue";
     import Drawer from "../Drawer.vue";
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
 
-    export default {
-        components: {Markdown, ListPreview, PdfPreview, Editor, Drawer},
-        props: {
-            value: {
-                type: String,
-                required: true
-            },
-            executionId: {
-                type: String,
-                required: false,
-                default: undefined
-            }
-        },
-        data() {
-            return {
-                isPreviewOpen: false,
-                selectedPreview: null,
-                maxPreview: undefined,
-                encoding: undefined,
-                encodingOptions: [
-                    {value: "UTF-8", label: "UTF-8"},
-                    {value: "ISO-8859-1", label: "ISO-8859-1/Latin-1"},
-                    {value: "Cp1250", label: "Windows 1250"},
-                    {value: "Cp1251", label: "Windows 1251"},
-                    {value: "Cp1252", label: "Windows 1252"},
-                    {value: "UTF-16", label: "UTF-16"},
-                    {value: "Cp500", label: "EBCDIC IBM-500"},
-                ],
-                preview: undefined,
-                wordWrap: false,
-                forceEditor: false
-            }
-        },
-        mounted() {
-            this.maxPreview = this.configPreviewInitialRows();
-            this.encoding = this.encodingOptions[0].value;
-        },
-        computed: {
-            ...mapStores(useMiscStore, useExecutionsStore),
-            extensionToMonacoLang() {
-                switch (this.preview.extension) {
-                case "json":
-                    return "json";
-                case "jsonl":
-                    return "jsonl";
-                case "yaml":
-                case "yml":
-                case "ion":
-                    // little hack to get ion colored with monaco
-                    return "yaml";
-                case "csv":
-                    return "csv";
-                case "py":
-                    return "python"
-                default:
-                    return this.preview.extension;
-                }
-            },
-            imageContent() {
-                return "data:image/" + this.extension + ";base64," + this.preview.content;
-            },
-            maxPreviewOptions() {
-                return [10, 25, 50, 100, 500, 1000, 5000, 10000, 25000, 50000].filter(value => value <= this.configPreviewMaxRows())
-            },
-            isZipFile() {
-                // Checks if the file extension is .zip (case-insensitive)
-                return this.value?.toLowerCase().endsWith(".zip");
-            },
-        },
-        emits: ["preview"],
-        methods: {
-            configPreviewInitialRows() {
-                return this.miscStore.configs?.preview.initial || 50
-            },
-            configPreviewMaxRows() {
-                return this.miscStore.configs?.preview.max || 5000
-            },
-            getFilePreview() {
-                const data = {
-                    path: this.value,
-                    maxRows: this.maxPreview,
-                    encoding: this.encoding
-                };
-                this.selectedPreview = this.value;
-                if (this.executionId !== undefined) {
-                    this.executionsStore.filePreview({
-                        executionId: this.executionId,
-                        ...data
-                    }).then(response => {
-                        this.preview = response;
-                        this.isPreviewOpen = true;
-                    });
-                } else {
-                    this.$emit("preview", {
-                        data: data,
-                        callback: (response) => {
-                            this.preview = response;
-                            this.isPreviewOpen = true;
-                        }
-                    });
-                }
-            },
-        }
+    interface EncodingOption {
+        value: string;
+        label: string;
     }
+
+    interface Preview {
+        truncated?: boolean;
+        type?: string;
+        content?: any;
+        extension?: string;
+    }
+
+    const props = defineProps({
+        value: {
+            type: String,
+            required: true
+        },
+        executionId: {
+            type: String,
+            required: false,
+            default: undefined
+        }
+    });
+
+    const emits = defineEmits(["preview"]);
+
+    const isPreviewOpen = ref(false);
+    const selectedPreview = ref<string | null>(null);
+    const maxPreview = ref<number>();
+    const encoding = ref<string>();
+    const preview = ref<Preview>();
+    const wordWrap = ref(false);
+    const forceEditor = ref(false);
+
+    const miscStore = useMiscStore();
+    const executionsStore = useExecutionsStore();
+
+    const encodingOptions: EncodingOption[] = [
+        {value: "UTF-8", label: "UTF-8"},
+        {value: "ISO-8859-1", label: "ISO-8859-1/Latin-1"},
+        {value: "Cp1250", label: "Windows 1250"},
+        {value: "Cp1251", label: "Windows 1251"},
+        {value: "Cp1252", label: "Windows 1252"},
+        {value: "UTF-16", label: "UTF-16"},
+        {value: "Cp500", label: "EBCDIC IBM-500"}
+    ];
+
+    const configPreviewInitialRows = (): number => {
+        return miscStore.configs?.preview.initial || 50;
+    };
+
+    const configPreviewMaxRows = (): number => {
+        return miscStore.configs?.preview.max || 5000;
+    };
+
+    const maxPreviewOptions = computed(() => {
+        return [10, 25, 50, 100, 500, 1000, 5000, 10000, 25000, 50000].filter(
+            value => value <= configPreviewMaxRows()
+        );
+    });
+
+    const extensionToMonacoLang = computed(() => {
+        switch (preview.value?.extension) {
+        case "json":
+            return "json";
+        case "jsonl":
+            return "jsonl";
+        case "yaml":
+        case "yml":
+        case "ion":
+            return "yaml";
+        case "csv":
+            return "csv";
+        case "py":
+            return "python";
+        default:
+            return preview.value?.extension;
+        }
+    });
+
+    const imageContent = computed(() => {
+        return `data:image/${preview.value?.extension};base64,${preview.value?.content}`;
+    });
+
+    const isZipFile = computed(() => {
+        return props.value?.toLowerCase().endsWith(".zip");
+    });
+
+    const getFilePreview = (): void => {
+        const data = {
+            path: props.value,
+            maxRows: maxPreview.value,
+            encoding: encoding.value
+        };
+        selectedPreview.value = props.value;
+        if (props.executionId !== undefined) {
+            executionsStore
+                .filePreview({
+                    executionId: props.executionId,
+                    ...data
+                })
+                .then(response => {
+                    preview.value = response;
+                    isPreviewOpen.value = true;
+                });
+        } else {
+            emits("preview", {
+                data: data,
+                callback: (response: Preview) => {
+                    preview.value = response;
+                    isPreviewOpen.value = true;
+                }
+            });
+        }
+    };
+
+    onMounted(() => {
+        maxPreview.value = configPreviewInitialRows();
+        encoding.value = encodingOptions[0].value;
+    });
 </script>

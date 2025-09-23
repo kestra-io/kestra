@@ -865,20 +865,18 @@ public class Execution implements DeletedInterface, TenantInterface {
      * @param e the exception raise
      * @return new taskRun with updated attempt with logs
      */
-    private FailedTaskRunWithLog lastAttemptsTaskRunForFailedExecution(TaskRun taskRun,
-        TaskRunAttempt lastAttempt, Exception e) {
+    private FailedTaskRunWithLog lastAttemptsTaskRunForFailedExecution(TaskRun taskRun, TaskRunAttempt lastAttempt, Exception e) {
+        TaskRun failed = taskRun
+            .withAttempts(
+                Stream
+                    .concat(
+                        taskRun.getAttempts().stream().limit(taskRun.getAttempts().size() - 1),
+                        Stream.of(lastAttempt.getState().isFailed() ? lastAttempt : lastAttempt.withState(State.Type.FAILED))
+                    )
+                    .toList()
+            );
         return new FailedTaskRunWithLog(
-            taskRun
-                .withAttempts(
-                    Stream
-                        .concat(
-                            taskRun.getAttempts().stream().limit(taskRun.getAttempts().size() - 1),
-                            Stream.of(lastAttempt
-                                .withState(State.Type.FAILED))
-                        )
-                        .toList()
-                )
-                .withState(State.Type.FAILED),
+            failed.getState().isFailed() ? failed : failed.withState(State.Type.FAILED),
             RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(taskRun, kind))
         );
     }

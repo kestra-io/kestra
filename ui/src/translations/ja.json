@@ -652,6 +652,7 @@
       },
       "text_search": "このテキストを検索"
     },
+    "fix_with_ai": "AIで修正",
     "flow": "Flow",
     "flow already exists": "Flowはすでに存在します",
     "flow creation": "Flow作成",

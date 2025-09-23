@@ -15,7 +15,7 @@
     "lint": "eslint --fix",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test:storybook": "test-storybook",
+    "test:storybook": "./test-storybook.sh",
     "prepare": "cd .. && husky ui/.husky && rm -f .git/hooks/*",
     "notes": "node ./scripts/ci/generateReleaseNotes"
   },

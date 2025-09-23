@@ -913,11 +913,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             );
 
             Record result = selectConditionStep.fetchOne();
-            if (result != null) {
-                return result.getValue(field, Double.class);
-            } else {
-                return null;
-            }
+
+            return result != null ? result.getValue(field, Double.class) : null;
         });
     }
 }

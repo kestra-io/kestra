@@ -187,7 +187,7 @@
                 .filter(key => key !== column);
 
             return array.reduce((acc: any, {...params}) => {
-                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.value.map(agg => agg[0] + " = " + (isDuration(agg[1].field) ? Utils.humanDuration(params[agg[0]]) : params[agg[0]])).join(", ")}`;
+                const stack = [fields.map(field => params[field]).join(", "), aggregator.value.map(agg => isDuration(agg[1].field) ? `total duration: ${Utils.humanDuration(params[agg[0]])}`: params[agg[0]]).join(", ")].join(": ");
 
                 if (!acc[stack]) {
                     acc[stack] = {
@@ -224,6 +224,8 @@
             }, {});
         };
 
+       
+
         const getData = (field, object = {}) => {
             return Object.values(object).map((dataset) => {
                 const data = xAxis.map((xAxisLabel) => {
@@ -236,6 +238,7 @@
         };
 
         const yDataset = reducer(rawData, aggregator.value[0][0], "y");
+
 
         // Sorts the dataset array by the descending sum of 'data' values.
         // If two datasets have the same sum, it sorts them alphabetically by 'label'.
@@ -250,7 +253,11 @@
             return a.label.localeCompare(b.label); // Ascending alphabetically by label
         });
 
+       
+
         const label = aggregator.value?.[1]?.[1]?.displayName ?? aggregator.value?.[1]?.[1]?.field;
+
+      
 
         let duration: number[] = [];
         if(yBShown.value){
@@ -287,6 +294,7 @@
         };
     });
     const {data: generated, generate} = useChartGenerator(props);
+
 
     function refresh() {
         return generate(getDashboard(route, "id")!);

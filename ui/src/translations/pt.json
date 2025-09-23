@@ -652,6 +652,7 @@
       },
       "text_search": "Pesquisar por este texto"
     },
+    "fix_with_ai": "Corrigir com AI",
     "flow": "Flow",
     "flow already exists": "Flow já existe",
     "flow creation": "Criação de flow",

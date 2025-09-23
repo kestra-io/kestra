@@ -652,6 +652,7 @@
       },
       "text_search": "이 텍스트 검색"
     },
+    "fix_with_ai": "AI로 수정",
     "flow": "Flow",
     "flow already exists": "Flow가 이미 존재합니다",
     "flow creation": "Flow 생성",

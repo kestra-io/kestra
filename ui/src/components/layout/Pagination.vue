@@ -106,23 +106,27 @@
     });
 
     watch(
-        () => route,
-        (newValue, oldValue) => {
-            if (oldValue?.name === newValue?.name) {
-                internalSize.value = parseInt(
-                    localStorage.getItem(storageKeys.PAGINATION_SIZE) as string ||
-                        (route.query.size as string) ||
-                        props.size?.toString() ||
-                        "25"
-                );
-                internalPage.value = parseInt((route.query.page as string) || props.page?.toString() || "1");
-                emit("page-changed", {
-                    page: internalPage.value,
-                    size: internalSize.value,
-                });
-            }
-        }
+        () => route.query,
+        () => {
+            internalSize.value = parseInt(
+                localStorage.getItem(storageKeys.PAGINATION_SIZE) as string ||
+                    (route.query.size as string) ||
+                    props.size?.toString() ||
+                    "25"
+            );
+            internalPage.value = parseInt((route.query.page as string) || props.page?.toString() || "1");
+        },
+        {immediate: true}
     );
+
+    // Watch for prop changes to keep pagination controls synchronized
+    watch(() => props.page, (newPage) => {
+        internalPage.value = newPage;
+    });
+
+    watch(() => props.size, (newSize) => {
+        internalSize.value = newSize;
+    });
 </script>
 <style scoped lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;

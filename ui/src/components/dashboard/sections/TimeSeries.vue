@@ -239,7 +239,6 @@
 
         const yDataset = reducer(rawData, aggregator.value[0][0], "y");
 
-
         // Sorts the dataset array by the descending sum of 'data' values.
         // If two datasets have the same sum, it sorts them alphabetically by 'label'.
         const yDatasetData = Object.values(getData(aggregator.value[0][0], yDataset)).sort((a: any, b: any) => {
@@ -253,11 +252,7 @@
             return a.label.localeCompare(b.label); // Ascending alphabetically by label
         });
 
-       
-
         const label = aggregator.value?.[1]?.[1]?.displayName ?? aggregator.value?.[1]?.[1]?.field;
-
-      
 
         let duration: number[] = [];
         if(yBShown.value){
@@ -294,7 +289,6 @@
         };
     });
     const {data: generated, generate} = useChartGenerator(props);
-
 
     function refresh() {
         return generate(getDashboard(route, "id")!);

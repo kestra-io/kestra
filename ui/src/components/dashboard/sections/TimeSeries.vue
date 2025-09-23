@@ -224,8 +224,6 @@
             }, {});
         };
 
-       
-
         const getData = (field, object = {}) => {
             return Object.values(object).map((dataset) => {
                 const data = xAxis.map((xAxisLabel) => {

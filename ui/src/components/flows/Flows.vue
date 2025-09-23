@@ -37,6 +37,8 @@
                 @page-changed="onPageChanged"
                 ref="dataTable"
                 :total="flowStore.total"
+                :size="internalPageSize"
+                :page="internalPageNumber"
                 :hideTopPagination="!!namespace"
             >
                 <template #navbar>
@@ -587,6 +589,10 @@
             ready.value = true;
         });
     });
+
+    watch(() => route.query, async () => {
+        await loadData(() => {});
+    }, {deep: true});
 
     watch(route, (newRoute) => {
         if (typeof window !== "undefined") {

@@ -3,7 +3,7 @@ set -e
 
 # Default values
 KESTRA_DOCKER_IMAGE_TO_TEST="kestra/kestra:develop-no-plugins"
-E2E_TEST_CONFIG_DIR="./"
+E2E_TEST_CONFIG_DIR="$(dirname "${BASH_SOURCE[0]}")"
 KESTRA_BASE_URL="http://127.0.0.1:9011/ui/"
 
 # Parse arguments
@@ -34,20 +34,25 @@ docker compose -f "docker-compose-postgres.yml" up -d
 
 # Wait for Kestra UI
 echo "Waiting for Kestra UI at $KESTRA_BASE_URL"
+
 START_TIME=$(date +%s)
 TIMEOUT_DURATION=$((2 * 60))
-while [ "$(curl -s -L -o /dev/null -w %{http_code} $KESTRA_BASE_URL)" != "200" ]; do
-  echo -e "$(date)\tKestra server HTTP state: $(curl -k -L -s -o /dev/null -w %{http_code} $KESTRA_BASE_URL) (waiting for 200)"
+
+while [ "$(curl -s -L -o /dev/null -w '%{http_code}' $KESTRA_BASE_URL)" != "200" ]; do
+  echo -e "$(date)\tKestra server HTTP state: $(curl -k -L -s -o /dev/null -w '%{http_code}' $KESTRA_BASE_URL) (waiting for 200)"
   CURRENT_TIME=$(date +%s)
   ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+
   if [ $ELAPSED_TIME -ge $TIMEOUT_DURATION ]; then
     echo "Timeout reached: Exiting after 5 minutes."
     echo "printing 'docker logs kestra-e2e-backend'"
     docker logs kestra-e2e-backend
     exit 1
   fi
+
   sleep 2
 done
+
 echo "Kestra is running: $KESTRA_BASE_URL 🚀"
 
 exit 0

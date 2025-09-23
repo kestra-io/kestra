@@ -652,6 +652,7 @@
       },
       "text_search": "Искать этот текст"
     },
+    "fix_with_ai": "Исправить с помощью AI",
     "flow": "Flow",
     "flow already exists": "Flow уже существует",
     "flow creation": "Создание flow",
@@ -774,6 +775,7 @@
     "metrics": "Метрики",
     "min": "Мин",
     "minutes": "Минуты",
+    "missingSource": "Отсутствует источник",
     "monogram": "Монограмма",
     "months": "Месяцы",
     "multi_panel_editor": {

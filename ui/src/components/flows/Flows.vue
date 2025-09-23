@@ -348,7 +348,11 @@
 
     const dataTableRef = useTemplateRef<typeof DataTable>("dataTable");
 
-    const {queryWithFilter, onPageChanged, onRowDoubleClick, onSort} = useDataTableActions({dblClickRouteName: "flows/update"});
+    const {queryWithFilter, onPageChanged, onRowDoubleClick, onSort, load} = useDataTableActions({
+        dblClickRouteName: "flows/update",
+        dataTableRef,
+        loadData,
+    });
     function selectionMapper(element: {id: string; namespace: string; disabled: boolean}): {id: string; namespace: string; enabled: boolean} {
         return {
             id: element.id,
@@ -360,7 +364,12 @@
         dataTableRef,
         selectionMapper
     });
-
+    // Guarded refresh on filter (query) changes to ensure table updates without duplicate loads
+    watch(() => route.query, () => {
+        if (!dataTableRef.value || !dataTableRef.value.isLoading) {
+            load();
+        }
+    }, {deep: true});
     const selectionIds = computed(() => selection.value.map((flow) => flow.id));
 
     interface ChartDefinition {
@@ -606,6 +615,7 @@
             }
         }
     }, {immediate: true, deep: true});
+
 
 </script>
 

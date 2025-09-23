@@ -4,7 +4,7 @@
             id="editorWrapper"
             ref="editorRefElement"
             class="flex-1"
-            :modelValue="draftSource === undefined ? source : draftSource"
+            :modelValue="hasDraft ? draftSource : source"
             :schemaType="isCurrentTabFlow ? 'flow': undefined"
             :lang="extension === undefined ? 'yaml' : undefined"
             :extension="extension"
@@ -19,7 +19,7 @@
             @execute="execute"
             @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
             @mouse-leave="() => highlightHoveredTask(-1)"
-            :original="draftSource === undefined ? undefined : source"
+            :original="hasDraft ? source : undefined"
             :diffSideBySide="false"
         >
             <template #absolute>
@@ -45,7 +45,7 @@
             />
         </Transition>
         <AcceptDecline
-            v-if="draftSource !== undefined"
+            v-if="hasDraft"
             @accept="acceptDraft"
             @reject="declineDraft"
         />
@@ -172,7 +172,7 @@
             return;
         }
         if (isCurrentTabFlow.value) {
-            if (draftSource.value !== undefined) {
+            if (hasDraft.value) {
                 draftSource.value = newValue;
             } else {
                 flowStore.flowYaml = newValue;
@@ -295,6 +295,8 @@
         draftSource.value = undefined;
         aiCopilotOpened.value = true;
     }
+
+    const hasDraft = computed(() => draftSource.value !== undefined);
 
     const {
         playgroundStore,

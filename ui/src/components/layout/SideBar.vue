@@ -12,8 +12,42 @@
     >
         <template #header>
             <el-button @click="collapsed = onToggleCollapse(!collapsed)" class="collapseButton" :size="collapsed ? 'small':undefined">
-                <ChevronRight v-if="collapsed" />
-                <ChevronLeft v-else />
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    role="img"
+                    aria-hidden="true"
+                >
+                    <rect
+                        v-if="!collapsed"
+                        x="3"
+                        y="3"
+                        width="6"
+                        height="18"
+                        fill="currentColor"
+                    />
+                    <rect
+                        width="18"
+                        height="18"
+                        x="3"
+                        y="3"
+                        rx="2"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    />
+                    <path
+                        d="M9 3.5v17"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                </svg>
             </el-button>
             <div class="logo">
                 <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
@@ -41,8 +75,6 @@
 
     import {SidebarMenu} from "vue-sidebar-menu";
 
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import StarOutline from "vue-material-design-icons/StarOutline.vue";
 
     import Environment from "./Environment.vue";

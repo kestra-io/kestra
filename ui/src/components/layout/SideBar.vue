@@ -11,44 +11,11 @@
         hideToggle
     >
         <template #header>
-            <el-button @click="collapsed = onToggleCollapse(!collapsed)" class="collapseButton" :size="collapsed ? 'small':undefined">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    role="img"
-                    aria-hidden="true"
-                >
-                    <rect
-                        v-if="!collapsed"
-                        x="3"
-                        y="3"
-                        width="6"
-                        height="18"
-                        fill="currentColor"
-                    />
-                    <rect
-                        width="18"
-                        height="18"
-                        x="3"
-                        y="3"
-                        rx="2"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    />
-                    <path
-                        d="M9 3.5v17"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    />
-                </svg>
-            </el-button>
+            <SidebarToggleButton
+                :size="collapsed ? 'small' : undefined"
+                :filledLeft="!collapsed"
+                @toggle="collapsed = onToggleCollapse(!collapsed)"
+            />
             <div class="logo">
                 <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
                     <span class="img" />
@@ -81,6 +48,8 @@
     import BookmarkLinkList from "./BookmarkLinkList.vue";
     import {useBookmarksStore} from "../../stores/bookmarks";
     import type {MenuItem} from "override/components/useLeftMenu";
+    import {useLayoutStore} from "../../stores/layout";
+    import SidebarToggleButton from "./SidebarToggleButton.vue";
 
 
     const props = withDefaults(defineProps<{
@@ -95,9 +64,11 @@
     const $route = useRoute()
     const {t} = useI18n({useScope: "global"});
 
+    const layoutStore = useLayoutStore();
+
     function onToggleCollapse(folded) {
         collapsed.value = folded;
-        localStorage.setItem("menuCollapsed", folded ? "true" : "false");
+        layoutStore.setSideMenuCollapsed(folded);
         $emit("menu-collapse", folded);
 
         return folded;

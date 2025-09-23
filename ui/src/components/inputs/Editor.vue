@@ -1,6 +1,6 @@
 <template>
     <div class="ks-editor edit-flow-editor">
-        <nav v-if="original === undefined && navbar" class="top-nav">
+        <nav v-if="!isDiff && navbar" class="top-nav">
             <slot name="nav">
                 <div class="text-nowrap">
                     <el-button-group>
@@ -43,11 +43,12 @@
             <div ref="editorContainer" class="editor-wrapper position-relative">
                 <MonacoEditor
                     ref="monacoEditor"
+                    :key="isDiff.toString()"
                     :path="path"
                     :theme="themeComputed"
                     :value="modelValue"
                     :options="options"
-                    :diffEditor="original !== undefined"
+                    :diffEditor="isDiff"
                     :original="original"
                     :language="lang"
                     :extension="extension"
@@ -230,8 +231,8 @@
 
         } else {
             options.scrollbar = {
-                vertical: props.original !== undefined ? "hidden" : "auto",
-                verticalScrollbarSize: props.original !== undefined ? 0 : 10,
+                vertical: isDiff.value ? "hidden" : "auto",
+                verticalScrollbarSize: isDiff.value ? 0 : 10,
                 alwaysConsumeMouseWheel: false,
             };
             options.renderSideBySide = props.diffSideBySide;
@@ -281,6 +282,7 @@
     let lastTimeout: number | undefined = undefined
     let decorations: monaco.editor.IEditorDecorationsCollection | undefined = undefined
 
+    const isDiff = computed(() => props.original !== undefined);
 
     function isCodeEditor(editor?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor): editor is monaco.editor.IStandaloneCodeEditor{
         return editor?.getEditorType() === monacoEditor.value?.monaco.editor.EditorType.ICodeEditor
@@ -309,7 +311,7 @@
             return
         }
 
-        if (!props.original) {
+        if (!isDiff.value) {
             editor.onDidBlurEditorWidget?.(() => {
                 emit("focusout", isCodeEditor(editor)
                     ? editor.getValue()
@@ -395,7 +397,7 @@
             }
         }
 
-        if (props.original === undefined && props.navbar && props.fullHeight) {
+        if (!isDiff.value && props.navbar && props.fullHeight) {
             editor.addAction({
                 id: "fold-multiline",
                 label: t("fold_all_multi_lines"),
@@ -444,7 +446,7 @@
             });
         }
 
-        if (!props.original) {
+        if (!isDiff.value) {
             editor.onDidContentSizeChange((_) => {
                 highlightPebble();
             });

@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
     import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue";
+    import {useRoute} from "vue-router";
     import Utils from "../../utils/utils";
     import {useStorage} from "@vueuse/core";
     import {useI18n} from "vue-i18n";
@@ -53,8 +54,18 @@
     const flowStore = useFlowStore()
     const {showKeyShortcuts} = useKeyShortcuts()
 
+    const route = useRoute();
+
     onMounted(() => {
         useEditorStore().explorerVisible = false
+        // Ensure the Flow Code panel is open and focused when arriving with ai=open
+        if(route.query.ai === "open"){
+            if(!openTabs.value.includes("code")){
+                setTabValue("code")
+            } else {
+                focusTab("code")
+            }
+        }
     })
 
     const playgroundStore = usePlaygroundStore()

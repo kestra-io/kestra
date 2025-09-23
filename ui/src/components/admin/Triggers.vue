@@ -195,27 +195,21 @@
                         </el-table-column>
                         <el-table-column :label="$t('backfill')" columnKey="backfill">
                             <template #default="scope">
-                                <div class="backfillContainer items-center gap-2">
-                                    <span v-if="scope.row.backfill" class="statusIcon">
-                                        <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
-                                            <PlayBox font />
-                                        </el-tooltip>
-                                        <el-tooltip v-else :content="$t('backfill paused')">
-                                            <PauseBox />
-                                        </el-tooltip>
-                                    </span>
-
-                                    <el-button
-                                        :icon="CalendarCollapseHorizontalOutline"
-                                        v-if="authStore.user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
-                                        @click="restart(scope.row)"
-                                        size="small"
-                                        type="primary"
-                                        :disabled="scope.row.disabled || scope.row.codeDisabled"
-                                    >
-                                        {{ $t("backfill executions") }}
-                                    </el-button>
-                                </div>
+                                <BackfillCell
+                                    :trigger="scope.row"
+                                    :canCreate="authStore.user.hasAnyAction(permission.EXECUTION, action.CREATE)"
+                                    :canUpdate="authStore.user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                                    @open-backfill="openBackfill(scope.row)"
+                                    @updated="(newTrigger) => { 
+                                        $toast().saved(newTrigger.id);
+                                        triggers = triggers.map(t => {
+                                            return t.id === newTrigger.id 
+                                                ? {abstractTrigger: t.abstractTrigger, triggerContext: newTrigger}
+                                                : t;
+                                        });
+                                        triggerLoadDataAfterBulkEditAction();
+                                    }"
+                                />
                             </template>
                         </el-table-column>
 
@@ -245,6 +239,25 @@
                 </template>
             </DataTable>
 
+            <BackfillDialog
+                v-model="isBackfillOpen"
+                v-if="selectedTrigger"
+                :namespace="selectedTrigger.namespace"
+                :flowId="selectedTrigger.flowId"
+                :trigger="selectedTrigger"
+                :backfillRouteName="null"
+                @updated="(newTrigger) => { 
+                    triggers = triggers.map(t => {
+                        return t.id === newTrigger.id 
+                            ? {abstractTrigger: t.abstractTrigger, triggerContext: newTrigger}
+                            : t;
+                    });
+                    isBackfillOpen = false; 
+                    selectedTrigger = null; 
+                    triggerLoadDataAfterBulkEditAction();
+                }"
+            />
+
             <el-dialog v-model="triggerToUnlock" destroyOnClose :appendToBody="true">
                 <template #header>
                     <span v-html="$t('unlock trigger.confirmation')" />
@@ -259,10 +272,8 @@
         </div>
     </section>
 </template>
-<script setup>
+<script lang="ts" setup>
     import LockOff from "vue-material-design-icons/LockOff.vue";
-    import PlayBox from "vue-material-design-icons/PlayBox.vue";
-    import PauseBox from "vue-material-design-icons/PauseBox.vue";
     import Kicon from "../Kicon.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -271,10 +282,11 @@
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
-    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
     import TriggerFilterLanguage from "../../composables/monaco/languages/filters/impl/triggerFilterLanguage";
+    import BackfillCell from "../flows/BackfillCell.vue";
+    import BackfillDialog from "../flows/BackfillDialog.vue";
 </script>
-<script>
+<script lang="ts">
     import RouteContext from "../../mixins/routeContext";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable.vue";
@@ -299,13 +311,17 @@
             DataTable,
             DateAgo,
             Id,
-            LogsWrapper
+            LogsWrapper,
+            BackfillCell,
+            BackfillDialog
         },
         data() {
             return {
                 triggers: undefined,
                 total: undefined,
                 triggerToUnlock: undefined,
+                isBackfillOpen: false,
+                selectedTrigger: null,
                 states: [
                     {label: this.$t("triggers_state.options.enabled"), value: "ENABLED"},
                     {label: this.$t("triggers_state.options.disabled"), value: "DISABLED"}
@@ -314,6 +330,10 @@
             };
         },
         methods: {
+            openBackfill(trigger) {
+                this.selectedTrigger = trigger;
+                this.isBackfillOpen = true;
+            },
             hasLogsContent(row) {
                 return row.logs && row.logs.length > 0;
             },
@@ -609,7 +629,7 @@
         }
     }
 </style>
-<style lang="scss">
+<style lang="scss" scoped>
 .wide-tooltip {
     max-width: 400px;
     white-space: normal;

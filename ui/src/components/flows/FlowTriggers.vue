@@ -52,50 +52,13 @@
                 {{ $t("backfill") }}
             </template>
             <template #default="scope">
-                <el-button
-                    :icon="CalendarCollapseHorizontalOutline"
-                    v-if="isSchedule(scope.row.type) && !scope.row.backfill && userCan(action.CREATE)"
-                    @click="setBackfillModal(scope.row, true)"
-                    :disabled="scope.row.disabled || scope.row.sourceDisabled"
-                    size="small"
-                    type="primary"
-                >
-                    {{ $t("backfill executions") }}
-                </el-button>
-                <template v-else-if="isSchedule(scope.row.type) && userCan(action.UPDATE)">
-                    <div class="backfill-cell">
-                        <div class="progress-cell">
-                            <el-progress
-                                :percentage="backfillProgression(scope.row.backfill)"
-                                :status="scope.row.backfill.paused ? 'warning' : ''"
-                                :stroke-width="12"
-                                :showText="!scope.row.backfill.paused"
-                                :striped="!scope.row.backfill.paused"
-                                stripedFlow
-                            />
-                        </div>
-                        <template v-if="!scope.row.backfill.paused">
-                            <el-button size="small" @click="pauseBackfill(scope.row)">
-                                <Kicon :tooltip="$t('pause backfill')">
-                                    <Pause />
-                                </Kicon>
-                            </el-button>
-                        </template>
-                        <template v-else-if="userCan(action.UPDATE)">
-                            <el-button size="small" @click="unpauseBackfill(scope.row)">
-                                <Kicon :tooltip="$t('continue backfill')">
-                                    <Play />
-                                </Kicon>
-                            </el-button>
-
-                            <el-button size="small" @click="deleteBackfill(scope.row)">
-                                <Kicon :tooltip="$t('delete backfill')">
-                                    <Delete />
-                                </Kicon>
-                            </el-button>
-                        </template>
-                    </div>
-                </template>
+                <BackfillCell
+                    :trigger="scope.row"
+                    :canCreate="userCan(action.CREATE)"
+                    :canUpdate="userCan(action.UPDATE)"
+                    @open-backfill="openBackfill(scope.row)"
+                    @updated="(newTrigger) => { $toast().saved(newTrigger.id); triggers = triggers.map(t => t.id === newTrigger.id ? newTrigger : t) }"
+                />
             </template>
         </el-table-column>
 
@@ -176,66 +139,14 @@
         </template>
     </Empty>
 
-    <el-dialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
-        <template #header>
-            <span v-html="$t('backfill executions')" />
-        </template>
-        <el-form :model="backfill" labelPosition="top">
-            <div class="pickers">
-                <div class="small-picker">
-                    <el-form-item label="Start">
-                        <el-date-picker
-                            v-model="backfill.start"
-                            type="datetime"
-                            placeholder="Start"
-                            :disabledDate="time => new Date() < time || backfill.end ? time > backfill.end : false"
-                        />
-                    </el-form-item>
-                </div>
-                <div class="small-picker">
-                    <el-form-item label="End">
-                        <el-date-picker
-                            v-model="backfill.end"
-                            type="datetime"
-                            placeholder="End"
-                            :disabledDate="time => new Date() < time || backfill?.start > time"
-                        />
-                    </el-form-item>
-                </div>
-            </div>
-        </el-form>
-        <FlowRun
-            @update-inputs="backfill.inputs = $event"
-            @update-labels="backfill.labels = $event"
-            :selectedTrigger="selectedTrigger"
-            :redirect="false"
-            :embed="true"
-        />
-        <template #footer>
-            <router-link
-                v-if="isSchedule(selectedTrigger.type)"
-                :to="{
-                    name: 'admin/triggers',
-                    query: {
-                        namespace: selectedTrigger.namespace,
-                        flowId: selectedTrigger.flowId,
-                        q: selectedTrigger.triggerId
-                    }
-                }"
-            >
-                <el-button class="me-2">
-                    {{ $t("backfill") }}
-                </el-button>
-            </router-link>
-            <el-button
-                type="primary"
-                @click="postBackfill()"
-                :disabled="checkBackfill"
-            >
-                {{ $t("execute backfill") }}
-            </el-button>
-        </template>
-    </el-dialog>
+    <BackfillDialog
+        v-model="isBackfillOpen"
+        v-if="selectedTrigger"
+        :namespace="flowStore.flow.namespace"
+        :flowId="flowStore.flow.id"
+        :trigger="selectedTrigger"
+        @updated="(newTrigger) => { $toast().saved(newTrigger.id); triggers = triggers.map(t => t.id === newTrigger.id ? newTrigger : t) }"
+    />
 
     <Drawer
         v-if="isOpen"
@@ -250,17 +161,12 @@
     </Drawer>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
-    import Pause from "vue-material-design-icons/Pause.vue";
-    import Play from "vue-material-design-icons/Play.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
     import LockOff from "vue-material-design-icons/LockOff.vue";
     import Check from "vue-material-design-icons/Check.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
-    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
     import Plus from "vue-material-design-icons/Plus.vue";
-    import FlowRun from "./FlowRun.vue";
     import Id from "../Id.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
 
@@ -271,12 +177,13 @@
     import DateAgo from "../layout/DateAgo.vue";
     import Vars from "../executions/Vars.vue";
     import Drawer from "../Drawer.vue";
+    import BackfillCell from "./BackfillCell.vue";
+    import BackfillDialog from "./BackfillDialog.vue";
 </script>
 
-<script>
+<script lang="ts">
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import moment from "moment";
     import LogsWrapper from "../logs/LogsWrapper.vue";
     import _isEqual from "lodash/isEqual";
     import {storageKeys} from "../../utils/constants";
@@ -291,7 +198,8 @@
             embed: {
                 type: Boolean,
                 default: false
-            }
+            },
+            backfillRouteName: {type: String, default: "admin/triggers"}
         },
         data() {
             return {
@@ -300,12 +208,6 @@
                 isBackfillOpen: false,
                 triggers: [],
                 selectedTrigger: null,
-                backfill: {
-                    start: null,
-                    end: null,
-                    inputs: null,
-                    labels: []
-                }
             }
         },
         created() {
@@ -354,38 +256,6 @@
                 }
                 return this.triggers
             },
-            cleanBackfill() {
-                return {...this.backfill, labels: this.backfill.labels.filter(label => label.key && label.value)}
-            },
-            checkBackfill() {
-                if (!this.backfill.start) {
-                    return true
-                }
-                if (this.backfill.end && this.backfill.start > this.backfill.end) {
-                    return true
-                }
-                if (this.flowStore.flow.inputs) {
-                    const requiredInputs = this.flowStore.flow.inputs.map(input => input.required !== false ? input.id : null).filter(i => i !== null)
-
-                    if (requiredInputs.length > 0) {
-                        if (!this.backfill.inputs) {
-                            return true
-                        }
-                        const fillInputs = Object.keys(this.backfill.inputs).filter(i => this.backfill.inputs[i] !== null && this.backfill.inputs[i] !== undefined);
-                        if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
-                            return true
-                        }
-                    }
-                }
-                if (this.backfill.labels.length > 0) {
-                    for (let label of this.backfill.labels) {
-                        if ((label.key && !label.value) || (!label.key && label.value)) {
-                            return true
-                        }
-                    }
-                }
-                return false
-            },
             editorViewType() {
                 return localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE";
             },
@@ -404,32 +274,9 @@
                     .find({namespace: this.flowStore.flow.namespace, flowId: this.flowStore.flow.id, size: this.triggersWithType.length, q: this.query})
                     .then(triggers => this.triggers = triggers.results);
             },
-            setBackfillModal(trigger, bool) {
-                this.isBackfillOpen = bool
-                this.selectedTrigger = trigger
-            },
-            postBackfill() {
-                this.triggerStore.update({
-                    ...this.selectedTrigger,
-                    backfill: this.cleanBackfill
-                })
-                    .then(newTrigger => {
-                        this.$toast().saved(newTrigger.id);
-                        this.triggers = this.triggers.map(t => {
-                            if (t.id === newTrigger.id) {
-                                return newTrigger
-                            }
-                            return t
-                        })
-                        this.setBackfillModal(null, false);
-                        this.backfill = {
-                            start: null,
-                            end: null,
-                            inputs: null,
-                            labels: []
-                        }
-                    })
-
+            openBackfill(trigger) {
+                this.selectedTrigger = trigger;
+                this.isBackfillOpen = true;
             },
             pauseBackfill(trigger) {
                 this.triggerStore.pauseBackfill(trigger)
@@ -508,18 +355,6 @@
                         return t
                     })
                 })
-            },
-            backfillProgression(backfill) {
-                const startMoment = moment(backfill.start);
-                const endMoment = moment(backfill.end);
-                const currentMoment = moment(backfill.currentDate);
-
-                const totalDuration = endMoment.diff(startMoment);
-                const elapsedDuration = currentMoment.diff(startMoment);
-                return Math.round((elapsedDuration / totalDuration) * 100);
-            },
-            isSchedule(type) {
-                return type === "io.kestra.plugin.core.trigger.Schedule" || type === "io.kestra.core.models.triggers.types.Schedule";
             },
             canBeDisabled(trigger) {
                 return this.triggers.map(trigg => trigg.triggerId).includes(trigger.id)

@@ -1,5 +1,5 @@
-id: loop
-namespace: company.team
+id: foreach-iteration
+namespace: io.kestra.tests
 
 tasks:
   - id: foreach

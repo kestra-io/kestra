@@ -1429,6 +1429,7 @@
       "zoom-out": "ズームアウト",
       "zoom-reset": "ズームリセット"
     },
+    "total_duration": "合計時間",
     "total_executions": "実行の合計",
     "trigger": "Trigger",
     "trigger details": "Triggerの詳細",

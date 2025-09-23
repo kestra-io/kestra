@@ -1429,6 +1429,7 @@
       "zoom-out": "Pomniejsz",
       "zoom-reset": "Zresetuj powiększenie"
     },
+    "total_duration": "Całkowity czas trwania",
     "total_executions": "Całkowita liczba wykonanych",
     "trigger": "Trigger",
     "trigger details": "Szczegóły trigger",

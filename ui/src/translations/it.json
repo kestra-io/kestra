@@ -1429,6 +1429,7 @@
       "zoom-out": "Zoom indietro",
       "zoom-reset": "Reimposta zoom"
     },
+    "total_duration": "Durata totale",
     "total_executions": "Esecuzioni Totali",
     "trigger": "Trigger",
     "trigger details": "Dettagli del trigger",

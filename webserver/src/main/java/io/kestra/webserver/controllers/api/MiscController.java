@@ -124,7 +124,6 @@ public class MiscController {
             .isAiEnabled(applicationContext.containsBean(AiController.class))
             .isBasicAuthInitialized(basicAuthService.isBasicAuthInitialized())
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
-            .resourceToFilters(QueryFilter.Resource.asResourceList())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
             .pluginsHash(pluginRegistry.hash());
@@ -210,8 +209,6 @@ public class MiscController {
         String systemNamespace;
 
         List<String> hiddenLabelsPrefixes;
-        // List of filter by component
-        List<QueryFilter.ResourceField> resourceToFilters;
 
         Boolean isAiEnabled;
 

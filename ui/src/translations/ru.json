@@ -1429,6 +1429,7 @@
       "zoom-out": "Уменьшить",
       "zoom-reset": "Сбросить масштаб"
     },
+    "total_duration": "Общая продолжительность",
     "total_executions": "Общее количество выполнений",
     "trigger": "Trigger",
     "trigger details": "Подробности trigger",

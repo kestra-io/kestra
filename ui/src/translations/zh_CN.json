@@ -1429,6 +1429,7 @@
       "zoom-out": "缩小",
       "zoom-reset": "重置缩放"
     },
+    "total_duration": "总持续时间",
     "total_executions": "总执行次数",
     "trigger": "触发器",
     "trigger details": "触发器详情",

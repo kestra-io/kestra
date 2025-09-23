@@ -1429,6 +1429,7 @@
       "zoom-out": "Dézoomer",
       "zoom-reset": "Zoom par défaut"
     },
+    "total_duration": "Durée totale",
     "total_executions": "Total des exécutions",
     "trigger": "Déclencheur",
     "trigger details": "Détails du déclencheur",

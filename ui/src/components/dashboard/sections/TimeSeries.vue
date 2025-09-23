@@ -36,6 +36,9 @@
     import KestraUtils, {useTheme} from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
 
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n();
+
     const route = useRoute();
     const router = useRouter();
 
@@ -187,7 +190,10 @@
                 .filter(key => key !== column);
 
             return array.reduce((acc: any, {...params}) => {
-                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.value.map(agg => agg[0] + " = " + (isDuration(agg[1].field) ? Utils.humanDuration(params[agg[0]]) : params[agg[0]])).join(", ")}`;
+                const stack = [
+                    fields.map((field) => params[field]).join(", "),
+                    aggregator.value.map((agg) => isDuration(agg[1].field) ? `${t("total_duration")}: ${Utils.humanDuration(params[agg[0]])}` : params[agg[0]]).join(", "),
+                ].join(": ");
 
                 if (!acc[stack]) {
                     acc[stack] = {

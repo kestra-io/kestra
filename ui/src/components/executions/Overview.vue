@@ -603,12 +603,13 @@
         }
 
         .toggle-icon {
-            position:absolute;
-            top:0.75rem;
-            right:2.5rem;
-            font-size:1.25rem;
+            position: absolute;
             color: var(--ks-content-alert);
-            cursor:pointer;
+            right: 1.5rem;
+            width: 1rem;
+            height: 1rem;
+            font-size: 1.75rem;
+            top: 10%;
         }
 
     }

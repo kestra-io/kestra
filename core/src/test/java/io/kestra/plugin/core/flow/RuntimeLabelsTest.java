@@ -174,8 +174,8 @@ class RuntimeLabelsTest {
             List.of()
         );
 
-        assertThat(execution.getTaskRunList()).hasSize(2);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         assertThat(execution.getLabels()).containsExactly(
             new Label(Label.CORRELATION_ID, execution.getId())

@@ -129,10 +129,6 @@
                         await this.executionsStore.findExecutions({size: 10}).then(response => {
                             this.executions = response?.total ?? 0;
                         })
-
-                        if (!this.executions && !this.flowStore.overallTotal) {
-                            this.$router.push({name: "welcome", params: {tenant: this.$route.params.tenant}});
-                        }
                     }
                 }
             },

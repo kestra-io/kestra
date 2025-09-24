@@ -98,7 +98,7 @@ class RunContextTest {
     private FlowInputOutput flowIO;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Inject
     protected LocalFlowRepositoryLoader repositoryLoader;

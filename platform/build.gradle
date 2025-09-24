@@ -126,7 +126,7 @@ dependencies {
         api "org.xhtmlrenderer:flying-saucer-pdf:$flyingSaucerVersion"
         api group: 'jakarta.mail', name: 'jakarta.mail-api', version: '2.1.4'
         api group: 'jakarta.annotation', name: 'jakarta.annotation-api', version: '3.0.0'
-        api group: 'org.eclipse.angus', name: 'jakarta.mail', version: '2.0.4'
+        api group: 'org.eclipse.angus', name: 'jakarta.mail', version: '2.0.5'
         api group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '3.2.2'
         api group: 'de.siegmar', name: 'fastcsv', version: '4.0.0'
         // Json Diff

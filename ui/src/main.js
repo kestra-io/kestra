@@ -9,7 +9,7 @@ import en from "./translations/en.json";
 import {setupTenantRouter} from "./composables/useTenant";
 import * as BasicAuth from "./utils/basicAuth";
 import {useMiscStore} from "override/stores/misc";
-import {shouldShowWelcome, isAllowedRoute} from "./utils/tourGuard";
+import {shouldShowWelcome, isDashboardRoute} from "./utils/tourGuard";
 
 
 const app = createApp(App)
@@ -66,12 +66,12 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
             }
 
             // If welcome tour is not completed, redirect to welcome page
-            if (shouldShowWelcome() && !isAllowedRoute(to.name)) {
+            if (await shouldShowWelcome() && isDashboardRoute(to.name)) {
                 return next({
                     name: "welcome",
                     params: {tenant: to.params.tenant}
                 });
-            }
+            } 
 
             return next();
         } catch (error) {

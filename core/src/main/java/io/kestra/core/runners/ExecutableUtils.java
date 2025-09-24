@@ -160,19 +160,6 @@ public final class ExecutableUtils {
             if (flow instanceof FlowWithException fwe) {
                 throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
             }
-
-                Set<String> declaredInputs = flow.getInputs().stream().map(Input::getId).collect(Collectors.toSet());
-                for (var inputKey : inputs.keySet()) {
-                    if (!declaredInputs.contains(inputKey)) {
-                        runContext.logger().warn(
-                            "Input {} was provided by parent execution {} for subflow {}.{} but isn't declared at the subflow inputs",
-                            inputKey,
-                            currentExecution.getId(),
-                            currentTask.subflowId().namespace(),
-                            currentTask.subflowId().flowId()
-                        );
-                    }
-                }
                 List<Label> newLabels = inheritLabels ? new ArrayList<>(filterLabels(currentExecution.getLabels(), flow)) : new ArrayList<>(systemLabels(currentExecution));
             if (labels != null) {
                 labels.forEach(throwConsumer(label -> newLabels.add(new Label(runContext.render(label.key()), runContext.render(label.value())))));
@@ -211,7 +198,20 @@ public final class ExecutableUtils {
                     .build()
                 )
                 .withScheduleDate(scheduleOnDate);
-
+                if(execution.getInputs().size()<inputs.size()) {
+                    Map<String,Object>resolvedInputs=execution.getInputs();
+                    for (var inputKey : inputs.keySet()) {
+                        if (!resolvedInputs.containsKey(inputKey)) {
+                            runContext.logger().warn(
+                                "Input {} was provided by parent execution {} for subflow {}.{} but isn't declared at the subflow inputs",
+                                inputKey,
+                                currentExecution.getId(),
+                                currentTask.subflowId().namespace(),
+                                currentTask.subflowId().flowId()
+                            );
+                        }
+                    }
+                }
             // inject the traceparent into the new execution
             propagator.ifPresent(pg -> pg.inject(Context.current(), execution, ExecutionTextMapSetter.INSTANCE));
 

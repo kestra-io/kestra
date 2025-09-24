@@ -144,7 +144,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
 
     static String extractPluginRawIdentifier(final JsonNode node, final boolean isVersioningSupported) {
         String type = Optional.ofNullable(node.get(TYPE)).map(JsonNode::textValue).orElse(null);
-        String version = Optional.ofNullable(node.get(VERSION)).map(JsonNode::textValue).orElse(null);
+        String version = Optional.ofNullable(node.get(VERSION)).map(JsonNode::asText).orElse(null);
 
         if (type == null || type.isEmpty()) {
             return null;

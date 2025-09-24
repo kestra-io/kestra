@@ -23,10 +23,10 @@
             :persistent="false"
             transition=""
             :hideAfter="0"
-            :disabled="!miscStore.configs.commitId"
+            :disabled="!miscStore.configs?.commitId"
         >
             <template #content>
-                <code>{{ miscStore.configs.commitId }}</code> <DateAgo v-if="miscStore.configs.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
+                <code>{{ miscStore.configs?.commitId }}</code> <DateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
             </template>
             <span class="versionNumber">{{ miscStore.configs?.version }}</span>
         </el-tooltip>
@@ -245,7 +245,7 @@
         font-size: var(--font-size-sm);
         overflow-y: auto;
         &::-webkit-scrollbar {
-            width: 0; 
+            width: 0;
         }
         scrollbar-width: none;
 
@@ -312,7 +312,7 @@
         position: relative;
         overflow-y: auto;
         &::-webkit-scrollbar {
-            width: 0px; 
+            width: 0px;
         }
         scrollbar-width: none;
 

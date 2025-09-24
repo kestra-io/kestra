@@ -163,13 +163,14 @@
     "choose file": "Elige un archivo o suéltalo aquí...",
     "close": "Cerrar",
     "close sidebar": "cerrar barra lateral",
+    "codeDisabled": "Desactivado en Flow",
     "collapse": "Colapsar",
     "collapse all": "Colapsar todo",
     "common": {
       "back": "Atrás"
     },
     "concurrency": "Concurrente",
-    "conditions": "condiciones",
+    "conditions": "Condiciones",
     "configure basic auth": "Configurar autenticación básica",
     "confirm": "Confirmar",
     "confirm password": "Confirmar contraseña",
@@ -651,6 +652,7 @@
       },
       "text_search": "Buscar este texto"
     },
+    "fix_with_ai": "Solucionar con IA",
     "flow": "Flujo",
     "flow already exists": "Flow ya existe",
     "flow creation": "Creación de flujo",
@@ -667,6 +669,7 @@
     "flow-no-dependencies": "Tu flow no tiene dependencias.",
     "flow_export": "Exportar flow",
     "flow_only": "Solo disponible en la pestaña Flow.",
+    "flow_outputs": "Salidas del Flow",
     "flows": "Flujos",
     "flows deleted": "<code>{count}</code> Flow(s) eliminados",
     "flows disabled": "<code>{count}</code> Flow(s) deshabilitados",
@@ -772,6 +775,7 @@
     "metrics": "Métricas",
     "min": "Min",
     "minutes": "Minutos",
+    "missingSource": "Fuente faltante",
     "monogram": "Monograma",
     "months": "Meses",
     "multi_panel_editor": {
@@ -1057,6 +1061,7 @@
     "pause confirm": "¿Está seguro de pausar la ejecución <code>{id}</code>?",
     "pause done": "La ejecución está PAUSED",
     "pause title": "Pausar la ejecución <code>{id}</code>.<br/>Tenga en cuenta que las tasks que se están ejecutando actualmente seguirán siendo procesadas, y la ejecución tendrá que reanudarse manualmente.",
+    "paused": "Pausado",
     "playground": {
       "clear_history": "Borrar historial",
       "confirm_create": "No puedes ejecutar el playground mientras creas un flow. Iniciar una ejecución de playground creará el flow.",
@@ -1387,7 +1392,6 @@
     "task_id_exists": "El Id de Task ya existe",
     "task_id_message": "El Task Id ${existingTask} ya existe en el flow.",
     "taskid column details": "Última task siendo ejecutada y su número de intentos.",
-    "taskruns": "Ejecuciones de tareas",
     "tasks": "Tareas",
     "template": "Plantilla",
     "template creation": "Creación de plantilla",
@@ -1401,6 +1405,7 @@
       "name": "Mandante",
       "names": "Arrendatarios"
     },
+    "tenantId": "ID de Mandante",
     "test-badge-text": "Prueba",
     "test-badge-tooltip": "Esta ejecución fue creada por una prueba",
     "theme": "Tema",
@@ -1424,6 +1429,7 @@
       "zoom-out": "Alejar",
       "zoom-reset": "Restablecer zoom"
     },
+    "total_duration": "Duración total",
     "total_executions": "Total de Ejecuciones",
     "trigger": "Trigger",
     "trigger details": "Detalles del trigger",
@@ -1438,6 +1444,7 @@
       "title": "Filtrar ejecuciones hijas"
     },
     "trigger refresh": "Actualizar trigger",
+    "triggerId": "ID del Trigger",
     "trigger_check_warning": "Al usar variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia `??` para resolver el problema. Por ejemplo, en lugar de `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "El Trigger Id ya existe",
     "trigger_id_message": "El Trigger Id ${existingTrigger} ya existe en el flow.",

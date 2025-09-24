@@ -1,7 +1,7 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import {languages} from "monaco-editor/esm/vs/editor/editor.api";
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator";
-import {QUOTE, PebbleAutoCompletion} from "../../../services/autoCompletionProvider.ts";
+import {QUOTE, PebbleAutoCompletion} from "../../../services/autoCompletionProvider";
 import RegexProvider from "../../../utils/regex";
 import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import {useI18n} from "vue-i18n";

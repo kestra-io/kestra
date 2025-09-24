@@ -39,7 +39,7 @@ export async function render(markdown: string, options: {onlyLink?: boolean, per
 
     md.use(mark)
         .use(meta)
-        .use(mila, {matcher: (href) => href.match(/^https?:\/\//), attrs: {target: "_blank", rel: "noopener noreferrer"}})
+        .use(mila, {matcher: (href: string) => href.match(/^https?:\/\//), attrs: {target: "_blank", rel: "noopener noreferrer"}})
         .use(anchor, {permalink: options.permalink ? anchor.permalink.ariaHidden({placement: "before"}) : undefined})
         .use(container, "warning")
         .use(container, "info")

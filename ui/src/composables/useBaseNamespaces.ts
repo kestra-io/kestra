@@ -13,7 +13,7 @@ const slashPrefix = (path: string) => (path.startsWith("/") ? path : `/${path}`)
 const safePath = (path: string) => encodeURIComponent(path).replace(/%2C|%2F/g, "/");
 export const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 404};
 
-export function useBaseNamespacesStore() {
+export const useBaseNamespacesStore = () => {
     const namespace = ref<any>(undefined);
     const namespaces = ref<any[] | undefined>(undefined);
     const secrets = ref<any[] | undefined>(undefined);

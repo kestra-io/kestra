@@ -64,88 +64,11 @@ jobs:
         if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
-        run: |
-          export KESTRA_PWD=$(pwd) && sh -c 'cd dev-tools/kestra-devtools && npm ci && npm run build && node dist/kestra-devtools-cli.cjs generateTestReportSummary --only-errors --ci $KESTRA_PWD' > report.md
-          cat report.md
+        run: npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors --ci $(pwd)
 
-      # report test
-      - name: Test - Publish Test Results
-        uses: dorny/test-reporter@v2
-        if: always()
-        with:
-          name: Java Tests Report
-          reporter: java-junit
-          path: '**/build/test-results/test/TEST-*.xml'
-          list-suites: 'failed'
-          list-tests: 'failed'
-          fail-on-error: 'false'
-          token: ${{ secrets.GITHUB_AUTH_TOKEN }}
-
-      # Sonar
-      - name: Test - Analyze with Sonar
-        if: env.SONAR_TOKEN != ''
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        shell: bash
-        run: ./gradlew sonar --info
-
-      # GCP
-      - name: GCP - Auth with unit test account
-        id: auth
-        if: always() && env.GOOGLE_SERVICE_ACCOUNT != ''
-        continue-on-error: true
-        uses: "google-github-actions/auth@v3"
-        with:
-          credentials_json: "${{ secrets.GOOGLE_SERVICE_ACCOUNT }}"
-
-      - name: GCP - Setup Cloud SDK
-        if: env.GOOGLE_SERVICE_ACCOUNT != ''
-        uses: "google-github-actions/setup-gcloud@v3"
-
-        # Allure check
-      - uses: rlespinasse/github-slug-action@v5
-        name: Allure - Generate slug variables
-
-      - name: Allure - Publish report
-        uses: andrcuns/allure-publish-action@v2.10.0
-        if: always() && env.GOOGLE_SERVICE_ACCOUNT != ''
-        continue-on-error: true
-        env:
-          GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
-          JAVA_HOME: /usr/lib/jvm/default-jvm/
-        with:
-          storageType: gcs
-          resultsGlob: "**/build/allure-results"
-          bucket: internal-kestra-host
-          baseUrl: "https://internal.dev.kestra.io"
-          prefix: ${{ format('{0}/{1}', github.repository, 'allure/java') }}
-          copyLatest: true
-          ignoreMissingResults: true
-
-      # Jacoco
-      - name: Jacoco - Copy reports
-        if: env.GOOGLE_SERVICE_ACCOUNT != ''
-        continue-on-error: true
-        shell: bash
-        run: |
-          mv build/reports/jacoco/testCodeCoverageReport build/reports/jacoco/test/
-          mv build/reports/jacoco/test/testCodeCoverageReport.xml build/reports/jacoco/test/jacocoTestReport.xml
-          gsutil -m rsync -d -r  build/reports/jacoco/test/ gs://internal-kestra-host/${{ format('{0}/{1}', github.repository, 'jacoco') }}
-
-      # Codecov
-      - name: Codecov - Upload coverage reports
-        uses: codecov/codecov-action@v5
+      # Report Java
+      - name: Report - Java
+        uses: kestra-io/actions/composite/report-java@main
         if: ${{ !cancelled() }}
-        continue-on-error: true
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: backend
-
-      - name: Codecov - Upload test results
-        uses: codecov/test-results-action@v1
-        if: ${{ !cancelled() }}
-        continue-on-error: true
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: backend
+          secrets: ${{ toJSON(secrets) }}

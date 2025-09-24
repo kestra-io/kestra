@@ -2,6 +2,7 @@ package io.kestra.core.junit.extensions;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.TestRunner;
+import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.annotation.MicronautTestValue;
 import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -54,5 +55,12 @@ public class KestraTestExtension extends MicronautJunit5Extension {
                 runner.run();
             }
         }
+    }
+
+    @Override
+    public void afterTestExecution(ExtensionContext context) throws Exception {
+        super.afterTestExecution(context);
+
+        TestsUtils.queueConsumersCleanup();
     }
 }

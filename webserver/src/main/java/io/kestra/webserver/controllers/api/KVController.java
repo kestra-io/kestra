@@ -180,11 +180,23 @@ public class KVController {
             return Optional.ofNullable(keys).orElse(List.of());
         }
     }
-
-    private KVStore kvStore(String namespace) {
+    
+    /**
+     * Create a new {@link KVStore} facade for the given namespace.
+     *
+     * @param namespace the namespace of the KV Store.
+     * @return a new {@link KVStore}.
+     */
+    protected KVStore kvStore(final String namespace) {
         return new InternalKVStore(tenantService.resolveTenant(), namespace, storageInterface);
     }
-
-    public record TypedValue(KVType type, Object value) {
+    
+    public record TypedValue(
+        @Parameter(description = "The type of the KV entry.")
+        KVType type,
+        
+        @Parameter(description = "The value of the KV entry.")
+        Object value
+    ) {
     }
 }

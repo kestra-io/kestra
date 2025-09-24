@@ -42,7 +42,7 @@
                                 @input="updateSearch"
                             />
                         </el-col>
-                    </el-row>     
+                    </el-row>
                 </template>
                 <template #table>
                     <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
@@ -126,225 +126,202 @@
     </div>
 </template>
 
-<script>
-    import {shallowRef} from "vue";
-    import {mapStores} from "pinia";
+<script setup lang="ts">
+    import {ref, computed, onMounted, watch} from "vue";
+    import {useRoute, useRouter} from "vue-router";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import DataTableActions from "../../../../mixins/dataTableActions";
+    // @ts-expect-error data-table does not have types yet
     import DataTable from "../../../../components/layout/DataTable.vue";
-    import RestoreUrl from "../../../../mixins/restoreUrl";
-    import Utils from "../../../../utils/utils";
     import Errors from "../../../../components/errors/Errors.vue";
     import {editorViewTypes} from "../../../../utils/constants";
+    import Utils from "../../../../utils/utils";
     import {usePluginsStore} from "../../../../stores/plugins";
     import {useBlueprintsStore} from "../../../../stores/blueprints";
     import {useCoreStore} from "../../../../stores/core";
     import {useDocStore} from "../../../../stores/doc";
-    import {useAuthStore} from "override/stores/auth";
-    import {canCreate} from "override/composables/blueprintsPermissions.js";
+    import {canCreate} from "override/composables/blueprintsPermissions";
+    import {useDataTableActions} from "../../../../composables/useDataTableActions";
+    import useRestoreUrl from "../../../../composables/useRestoreUrl";
 
-    export default {
-        mixins: [RestoreUrl, DataTableActions],
-        components: {TaskIcon, DataTable, Errors},
-        emits: ["goToDetail", "loaded"],
-        props: {
-            blueprintType: {
-                type: String,
-                default: "community"
-            },
-            blueprintKind: {
-                type: String,
-                default: "flow",
-            },
-            embed: {
-                type: Boolean,
-                default: false
-            },
-            system: {
-                type: Boolean,
-                default: false
-            },
-            tagsResponseMapper: {
-                type: Function,
-                default: tagsResponse => Object.fromEntries(tagsResponse.map(tag => [tag.id, tag]))
-            }
-        },
-        mounted() {
-            this.docStore.docId = `blueprints.${this.blueprintType}`;
-        },
-        data() {
-            return {
-                searchText: "",
-                selectedTag: this.initSelectedTag(),
-                tags: undefined,
-                total: 0,
-                blueprints: undefined,
-                icon: {
-                    ContentCopy: shallowRef(ContentCopy)
-                },
-                error: false
-            }
-        },
-        created() {
-            this.searchText = this.$route.query?.q || "";
-        },
-        methods: {
-            initSelectedTag() {
-                return this.$route?.query?.selectedTag ?? 0
-            },
-            updateSearch(value) {
-                this.$router.push({
-                    query: {...this.$route.query, q: value || undefined}
-                });
-            },
-            async copy(id) {
-                await Utils.copy(
-                    (await this.blueprintsStore.getBlueprintSource({type: this.blueprintType, kind: this.blueprintKind, id: id}))
-                );
-            },
-            async blueprintToEditor(blueprintId) {
-                localStorage.setItem(editorViewTypes.STORAGE_KEY, editorViewTypes.SOURCE_TOPOLOGY);
+    const props = withDefaults(defineProps<{
+        blueprintType?: "community" | "custom";
+        blueprintKind?: "flow" | "dashboard" | "app";
+        embed?: boolean;
+        system?: boolean;
+        tagsResponseMapper?: (tagsResponse: any[]) => Record<string, any>;
+    }>(), {
+        blueprintType: "community",
+        blueprintKind: "flow",
+        embed: false,
+        system: false,
+        tagsResponseMapper: (tagsResponse: any[]) =>  Object.fromEntries(tagsResponse.map(tag => [tag.id, tag]))
+    });
 
-                this.$router.push(this.editorRoute(blueprintId));
-            },
-            goToDetail(blueprintId) {
-                if (this.embed) {
-                    this.$emit("goToDetail", blueprintId);
-                }
-            },
-            loadTags(beforeLoadBlueprintType) {
-                const query = {}
-                if (this.$route.query.q || this.searchText) {
-                    query.q = this.$route.query.q || this.searchText;
-                }
-                return this.blueprintsStore.getBlueprintTagsForQuery({type: this.blueprintType, kind: this.blueprintKind, ...query})
-                    .then(data => {
-                        if (this.blueprintType === beforeLoadBlueprintType) {
-                            this.tags = this.tagsResponseMapper(data);
-                        }
-                    });
-            },
-            loadBlueprints(beforeLoadBlueprintType) {
-                const query = {}
+    const {onPageChanged, onDataLoaded, load, ready, internalPageNumber} = useDataTableActions();
+    useRestoreUrl();
 
-                if (this.$route.query.page || this.internalPageNumber) {
-                    query.page = parseInt(this.$route.query.page || this.internalPageNumber);
-                }
+    const emit = defineEmits(["goToDetail", "loaded"]);
 
-                if (this.$route.query.size || this.internalPageSize) {
-                    query.size = parseInt(this.$route.query.size || this.internalPageSize);
-                }
+    const route = useRoute();
+    const router = useRouter();
 
-                if (this.$route.query.q || this.searchText) {
-                    query.q = this.$route.query.q || this.searchText;
-                }
+    const initSelectedTag = () => route.query.selectedTag && typeof route.query.selectedTag === "string" ? route.query.selectedTag : 0;
 
-                if (this.system) {
-                    query.tags = "system";
-                } else if (this.$route.query.selectedTag || this.selectedTag) {
-                    query.tags = this.$route.query.selectedTag || this.selectedTag;
-                }
+    const searchText = ref(route.query.q || "");
+    const selectedTag = ref<number | string>(initSelectedTag());
+    const tags = ref<Record<string, any> | undefined>(undefined);
+    const total = ref(0);
+    const blueprints = ref<{
+        includedTasks: string[];
+        id: string;
+        tags: string[];
+        title?: string;
+    }[] | undefined>(undefined);
+    const error = ref(false);
+    const icon = {ContentCopy};
 
-                return this.blueprintsStore.getBlueprintsForQuery({type: this.blueprintType, kind: this.blueprintKind, params: query})
-                    .then(data => {
-                        // Handle switch tab while fetching data
-                        if (this.blueprintType === beforeLoadBlueprintType) {
-                            this.total = data.total;
-                            this.blueprints = data.results;
-                        }
-                    });
-            },
-            loadData(callback) {
-                const beforeLoadBlueprintType = this.blueprintType;
+    const pluginsStore = usePluginsStore();
+    const blueprintsStore = useBlueprintsStore();
+    const coreStore = useCoreStore();
+    const docStore = useDocStore();
 
-                Promise.all([
-                    this.loadTags(beforeLoadBlueprintType),
-                    this.loadBlueprints(beforeLoadBlueprintType)
-                ]).then(() => {
-                    this.$emit("loaded");
-                }).catch(() => {
-                    if(this.embed) {
-                        this.error = true;
-                    } else {
-                        this.coreStore.error = 404;
-                    }
-                }).finally(() => {
-                    // Handle switch tab while fetching data
-                    if (this.blueprintType === beforeLoadBlueprintType && callback) {
-                        callback();
-                    }
-                })
-            },
-            hardReload() {
-                this.ready = false;
-                this.selectedTag = 0;
-                this.load(this.onDataLoaded);
-            },
-            editorRoute(blueprintId) {
-                let additionalQuery = {};
-                if (this.blueprintKind === "flow") {
-                    additionalQuery.blueprintSource = this.blueprintType;
-                } else if (this.blueprintKind === "dashboard") {
-                    additionalQuery = {
-                        name: "home",
-                        params: this.$route.params.tenant === undefined ? undefined : JSON.stringify({tenant: this.$route.params.tenant}),
-                    };
-                }
+    const userCanCreate = computed(() => canCreate(props.blueprintKind));
 
-                return {name: `${this.blueprintKind}s/create`, params: {tenant: this.$route.params.tenant}, query: {blueprintId, ...additionalQuery}};
-            }
-        },
-        computed: {
-            ...mapStores(usePluginsStore, useBlueprintsStore, useCoreStore, useDocStore, useAuthStore),
-            userCanCreate() {
-                return canCreate(this.blueprintKind);
-            }
-        },
-        watch: {
-            $route(newValue, oldValue) {
-                if (oldValue.name === newValue.name) {
-                    this.selectedTag = this.initSelectedTag();
-                    this.searchText = newValue.query?.q || "";
-                }
-            },
-            searchText() {
-                this.load(this.onDataLoaded);
-            },
-            selectedTag(newSelectedTag) {
-                if (!this.embed) {
-                    if (newSelectedTag === 0) {
-                        newSelectedTag = undefined;
-                        this.$router.push({
-                            query: {
-                                ...this.$route.query,
-                            }
-                        });
-                    }
-                    this.$router.push({
-                        query: {
-                            ...this.$route.query,
-                            selectedTag: newSelectedTag
-                        }
-                    });
-                } else {
-                    this.load(this.onDataLoaded);
-                }
-            },
-            tags() {
-                if(!Object.prototype.hasOwnProperty.call(this.tags, this.selectedTag)) {
-                    this.selectedTag = 0;
-                }
-            },
-            blueprintType() {
-                this.loadData();
-            },
-            blueprintKind() {
-                this.loadData();
-            }
+    const updateSearch = (value: string) => {
+        router.push({query: {...route.query, q: value || undefined}});
+    };
+
+    async function copy(id: string) {
+        await Utils.copy(
+            await blueprintsStore.getBlueprintSource({
+                type: props.blueprintType,
+                kind: props.blueprintKind,
+                id,
+            })
+        );
+    };
+
+    async function blueprintToEditor (blueprintId: string) {
+        localStorage.setItem(editorViewTypes.STORAGE_KEY, editorViewTypes.SOURCE_TOPOLOGY);
+        router.push(editorRoute(blueprintId));
+    };
+
+    function goToDetail(blueprintId: string) {
+        if (props.embed) {
+            emit("goToDetail", blueprintId);
         }
     };
+
+    async function loadTags(beforeLoadBlueprintType: string) {
+        const query: Record<string, any> = {};
+        if (route.query.q || searchText.value) {
+            query.q = route.query.q || searchText.value;
+        }
+        const data = await blueprintsStore.getBlueprintTagsForQuery({
+            type: props.blueprintType,
+            kind: props.blueprintKind,
+            ...query,
+        });
+        if(props.blueprintType === beforeLoadBlueprintType){
+            tags.value = props.tagsResponseMapper(data);
+        }
+    };
+
+    async function loadBlueprints (beforeLoadBlueprintType: string) {
+        const query: Record<string, any> = {};
+        if (route.query.page || internalPageNumber) query.page = parseInt(route.query.page as string);
+        if (route.query.size || internalPageNumber) query.size = parseInt(route.query.size as string);
+        if (route.query.q || searchText.value) query.q = route.query.q || searchText.value;
+        if (props.system) query.tags = "system";
+        else if (route.query.selectedTag || selectedTag.value) query.tags = route.query.selectedTag || selectedTag.value;
+
+        const data = await blueprintsStore.getBlueprintsForQuery({
+            type: props.blueprintType,
+            kind: props.blueprintKind,
+            params: query,
+        });
+        if(props.blueprintType === beforeLoadBlueprintType){
+            total.value = data.total;
+            blueprints.value = data.results;
+        }
+    };
+
+    async function loadData() {
+        const beforeLoadBlueprintType = props.blueprintType;
+        try {
+            await Promise.all([
+                loadTags(beforeLoadBlueprintType),
+                loadBlueprints(beforeLoadBlueprintType)
+            ]);
+            emit("loaded");
+        } catch {
+            if (props.embed) error.value = true;
+            else coreStore.error = 404;
+        }
+    };
+
+    function editorRoute(blueprintId: string) {
+        const additionalQuery: Record<string, any> = {};
+        if (props.blueprintKind === "flow") {
+            additionalQuery.blueprintSource = props.blueprintType;
+        }
+        return {
+            name: `${props.blueprintKind}s/create`,
+            params: {tenant: route.params.tenant},
+            query: {blueprintId, ...additionalQuery},
+        };
+    };
+
+    onMounted(() => {
+        searchText.value = route.query?.q || "";
+        docStore.docId = `blueprints.${props.blueprintType}`;
+    });
+
+    watch(route,
+          (newValue, oldValue) =>{
+              if (oldValue.name === newValue.name) {
+                  selectedTag.value = initSelectedTag();
+                  searchText.value = route.query.q || "";
+              }
+          }
+    );
+
+    watch(searchText, () => {
+        load(onDataLoaded);
+    });
+
+    watch(selectedTag, (newSelectedTag) => {
+        if (!props.embed) {
+            if (newSelectedTag === 0) {
+                router.push({
+                    query: {
+                        ...route.query,
+                    }
+                });
+            }
+            router.push({
+                query: {
+                    ...route.query,
+                    selectedTag: newSelectedTag
+                }
+            });
+        } else {
+            load(onDataLoaded);
+        }
+    });
+
+    watch(tags, (val) => {
+        if(!Object.prototype.hasOwnProperty.call(val, selectedTag.value)) {
+            selectedTag.value = 0;
+        }
+    })
+
+    watch([() => props.blueprintType, () => props.blueprintKind], () => {
+        loadData();
+    });
 </script>
+
 <style scoped lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
     @import "@kestra-io/ui-libs/src/scss/variables";

@@ -210,8 +210,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         let execution;
         try {
-            const {data} = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph);
-            execution = data;
+            const response = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph);
+            execution = response?.data;
         } catch (error: any) {
             if (error?.response?.status === 422) {
                 // Invalid entity, most likely due to invalid inputs - allow triggering the task again
@@ -220,7 +220,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             }
 
             throw error;
-        }    
+        }
 
         // don't keep taskRunIds from previous executions
         // because of https://github.com/kestra-io/kestra/issues/10462
@@ -228,7 +228,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         executionsStore.execution = execution;
 
-        addExecution(execution, graph);
+        if(execution)
+            addExecution(execution, graph);
     }
 
     function updateExecution(execution: ExecutionWithGraph) {

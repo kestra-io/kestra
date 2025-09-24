@@ -49,13 +49,15 @@ export function useCodePanels(panels: Ref<Panel[]>) {
      */
     const isFlowDirty = computed(() => editorStore.tabs.some((t:any) => t.flow && t.dirty))
     const currentTab = computed(() => editorStore.current?.path)
+    const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, p) => acc + (p.size ?? 0), 0) * 100 / panels.value.length))
 
     function getPanelsFromCodeEditorTabs(codeTabs: EditorTabProps[]){
         const tabs = codeTabs.map(getTabFromCodeTab)
 
         return {
             activeTab: tabs[0],
-            tabs
+            tabs,
+            size: defaultSize.value,
         }
     }
 

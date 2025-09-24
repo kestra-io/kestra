@@ -55,6 +55,8 @@ import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Positive;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
@@ -190,9 +192,10 @@ public class FlowController {
     @Operation(tags = {"Flows"}, summary = "Get revisions for a flow")
     public List<FlowWithSource> listFlowRevisions(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
-        @Parameter(description = "The flow id") @PathVariable String id
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @QueryValue(defaultValue = "true") Boolean allowDelete
     ) {
-        return flowRepository.findRevisions(tenantService.resolveTenant(), namespace, id);
+        return flowRepository.findRevisions(tenantService.resolveTenant(), namespace, id, allowDelete);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -575,6 +578,23 @@ public class FlowController {
         Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(tenantService.resolveTenant(), namespace, id);
         if (flow.isPresent()) {
             flowRepository.delete(flow.get());
+            return HttpResponse.status(HttpStatus.NO_CONTENT);
+        } else {
+            return HttpResponse.status(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "{namespace}/{id}/revisions")
+    @Operation(tags = {"Flows"}, summary = "Get revisions for a flow")
+    public HttpResponse<Void> deleteRevisions(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @QueryValue @NotEmpty List<@Min(1) Integer> revisions
+    ) {
+        Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(tenantService.resolveTenant(), namespace, id);
+        if (flow.isPresent()) {
+            flowRepository.deleteRevisions(tenantService.resolveTenant(), namespace, id, revisions);
             return HttpResponse.status(HttpStatus.NO_CONTENT);
         } else {
             return HttpResponse.status(HttpStatus.NOT_FOUND);

@@ -120,10 +120,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return this.executionQueue;
     }
 
-    public Boolean isTaskRunEnabled() {
-        return false;
-    }
-
     /**
      * {@inheritDoc}
      **/
@@ -386,28 +382,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public ArrayListTotal<TaskRun> findTaskRun(
-        Pageable pageable,
-        @Nullable String tenantId,
-        List<QueryFilter> filters
-    ) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public List<DailyExecutionStatistics> dailyStatisticsForAllTenants(
         @Nullable String query,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy,
-        boolean isTaskRun
+        @Nullable DateUtils.GroupType groupBy
     ) {
-        if (isTaskRun) {
-            throw new UnsupportedOperationException();
-        }
-
         ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
         ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
 
@@ -445,13 +427,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         @Nullable DateUtils.GroupType groupBy,
-        @Nullable List<State.Type> states,
-        boolean isTaskRun
+        @Nullable List<State.Type> states
     ) {
-        if (isTaskRun) {
-            throw new UnsupportedOperationException();
-        }
-
         ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
         ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
 

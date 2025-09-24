@@ -8,7 +8,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
@@ -59,7 +59,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
         TestsUtils.loads(tenantId, repositoryLoader, Objects.requireNonNull(url));
 
         Flow flow = YamlParser.parse(Paths.get(url.toURI()).toFile(), Flow.class);
-        RunnerUtils runnerUtils = context.getBean(RunnerUtils.class);
+        TestRunnerUtils runnerUtils = context.getBean(TestRunnerUtils.class);
         return runnerUtils.runOne(tenantId, flow.getNamespace(), flow.getId(), Duration.parse(executeFlow.timeout()));
     }
 

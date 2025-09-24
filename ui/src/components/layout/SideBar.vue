@@ -12,8 +12,7 @@
     >
         <template #header>
             <SidebarToggleButton
-                :size="collapsed ? 'small' : undefined"
-                :filledLeft="!collapsed"
+                :title="$t('Collapse menu')"
                 @toggle="collapsed = onToggleCollapse(!collapsed)"
             />
             <div class="logo">

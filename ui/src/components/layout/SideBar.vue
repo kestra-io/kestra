@@ -33,7 +33,8 @@
     import {
         onUpdated,
         ref,
-        computed, h
+        computed,
+        shallowRef, h
     } from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
@@ -62,7 +63,7 @@
     const $route = useRoute()
     const {t} = useI18n({useScope: "global"});
 
-    function onToggleCollapse(folded: boolean) {
+    function onToggleCollapse(folded) {
         collapsed.value = folded;
         localStorage.setItem("menuCollapsed", folded ? "true" : "false");
         $emit("menu-collapse", folded);
@@ -70,19 +71,15 @@
         return folded;
     }
 
-    /**
-     * ⚠️ TODO: Review disabledCurrentRoute
-     */
     function disabledCurrentRoute(items) {
         return items
             .map(r => {
-             
                 if (r.href?.path === $route.path) {
                     r.disabled = true;
                 }
 
                 // route hack is still needed for blueprints
-                if (r.href !== "/" && ($route.path.startsWith(r.href?.name) || r.routes?.includes($route.name))) {
+                if (r.href !== "/" && ($route.path.startsWith(r.href) || r.routes?.includes($route.name))) {
                     r.class = "vsm--link_active";
                 }
 
@@ -114,13 +111,13 @@
             ...(bookmarksStore.pages?.length ? [{
                 title: t("bookmark"),
                 icon: {
-                    element: StarOutline,
+                    element: shallowRef(StarOutline),
                     class: "menu-icon",
                 },
                 child: [{
                     // here we use only one component for all bookmarks
                     // so when one edits the bookmark, it will be updated without closing the section
-                    component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages.filter((page): page is { path: string, label: string } => typeof page.label === "string")}),
+                    component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
                 }]
             }] : []),
             ...(props.menu ? disabledCurrentRoute(props.menu) : [])

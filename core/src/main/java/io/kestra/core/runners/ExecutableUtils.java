@@ -164,17 +164,16 @@ public final class ExecutableUtils {
                 Set<String> declaredInputs = flow.getInputs().stream().map(Input::getId).collect(Collectors.toSet());
                 for (var inputKey : inputs.keySet()) {
                     if (!declaredInputs.contains(inputKey)) {
-                        String log = String.format(
-                            "Input %s was provided by parent execution %s for subflow %s.%s but isn't declared at the subflow inputs",
+                        runContext.logger().warn(
+                            "Input {} was provided by parent execution {} for subflow {}.{} but isn't declared at the subflow inputs",
                             inputKey,
                             currentExecution.getId(),
                             currentTask.subflowId().namespace(),
                             currentTask.subflowId().flowId()
                         );
-                        runContext.logger().warn(log);
                     }
                 }
-            List<Label> newLabels = inheritLabels ? new ArrayList<>(filterLabels(currentExecution.getLabels(), flow)) : new ArrayList<>(systemLabels(currentExecution));
+                List<Label> newLabels = inheritLabels ? new ArrayList<>(filterLabels(currentExecution.getLabels(), flow)) : new ArrayList<>(systemLabels(currentExecution));
             if (labels != null) {
                 labels.forEach(throwConsumer(label -> newLabels.add(new Label(runContext.render(label.key()), runContext.render(label.value())))));
             }

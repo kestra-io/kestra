@@ -45,7 +45,7 @@ final class Secret {
         for (var entry: data.entrySet()) {
             if (entry.getValue() instanceof Map map) {
                 // if some value are of type EncryptedString we decode them and replace the object
-                if (EncryptedString.TYPE.equalsIgnoreCase((String)map.get("type"))) {
+                if (map.get("type") instanceof String typeStr && EncryptedString.TYPE.equalsIgnoreCase(typeStr)) {
                     try {
                         String decoded = decrypt((String) map.get("value"));
                         decryptedMap.put(entry.getKey(), decoded);

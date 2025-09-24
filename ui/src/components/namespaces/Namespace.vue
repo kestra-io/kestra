@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, Ref, watch, onMounted} from "vue";
+    import {computed, Ref, watch, onMounted} from "vue";
     import {useRoute} from "vue-router";
     import {useTabs} from "override/components/namespaces/useTabs";
     import {useHelpers} from "./utils/useHelpers";
@@ -16,6 +16,7 @@
     import {useNamespacesStore} from "override/stores/namespaces";
     import TopNavBar from "../layout/TopNavBar.vue";
     import Actions from "override/components/namespaces/Actions.vue";
+    // @ts-expect-error no types in Tabs yet
     import Tabs from "../Tabs.vue";
 
     const {tabs} = useTabs();
@@ -23,7 +24,7 @@
 
     const route = useRoute();
 
-    const context = ref({title: details.value.title});
+    const context = computed(() => details.value.title);
     useRouteContext(context);
 
     const namespace = computed(() => route.params?.id) as Ref<string>;

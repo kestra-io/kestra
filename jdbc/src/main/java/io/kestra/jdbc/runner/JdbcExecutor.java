@@ -991,32 +991,28 @@ public class JdbcExecutor implements ExecutorInterface {
         }
 
         ExecutionRunning executionRunning = either.getLeft();
-        FlowInterface flow = flowMetaStore.findByExecution(executionRunning.getExecution()).orElseThrow();
-        ExecutionRunning processed = executionRunningStorage.countThenProcess(flow, (dslContext, count) -> {
-            ExecutionRunning computed = executorService.processExecutionRunning(flow, count, executionRunning);
-            if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
-                executionRunningStorage.save(dslContext, computed);
-            } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
-                executionQueuedStorage.save(dslContext, ExecutionQueued.fromExecutionRunning(computed));
-            }
-            return computed;
-        });
+        // we need to update the execution after applying concurrency limit so we use the lock for that
+        Executor executor = executionRepository.lock(executionRunning.getExecution().getId(), pair -> {
+                Execution execution = pair.getLeft();
+                Executor newExecutor = new Executor(execution, null);
+                FlowInterface flow = flowMetaStore.findByExecution(execution).orElseThrow();
+                ExecutionRunning processed = executionRunningStorage.countThenProcess(flow, (dslContext, count) -> {
+                    ExecutionRunning computed = executorService.processExecutionRunning(flow, count, executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
+                    if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
+                        executionRunningStorage.save(dslContext, computed);
+                    } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                        executionQueuedStorage.save(dslContext, ExecutionQueued.fromExecutionRunning(computed));
+                    }
+                    return computed;
+                });
 
-        try {
-            executionQueue.emit(processed.getExecution());
-
-            // process flow triggers to allow listening on QUEUED and RUNNING state for concurrency limit
-            flowTriggerService.computeExecutionsFromFlowTriggers(processed.getExecution(), allFlows, Optional.of(multipleConditionStorage))
-                .forEach(throwConsumer(executionFromFlowTrigger -> this.executionQueue.emit(executionFromFlowTrigger)));
-        } catch (QueueException e) {
-            try {
-                this.executionQueue.emit(
-                    processed.getExecution().failedExecutionFromExecutor(e).getExecution().withState(State.Type.FAILED)
+                return Pair.of(
+                    newExecutor.withExecution(processed.getExecution(), "handleExecutionRunning"),
+                    pair.getRight()
                 );
-            } catch (QueueException ex) {
-                log.error("Unable to emit the execution {}", processed.getExecution().getId(), ex);
-            }
-        }
+            });
+
+        toExecution(executor);
     }
 
     private Executor killingOrAfterKillState(final String executionId, Optional<State.Type> afterKillState) {

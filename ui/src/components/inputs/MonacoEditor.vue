@@ -40,10 +40,10 @@
         watch
     } from "vue";
 
-    import "monaco-editor/esm/vs/editor/editor.all.js";
-    import "monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens.js";
-    import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js";
-    import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess.js";
+    import "monaco-editor/esm/vs/editor/editor.all";
+    import "monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens";
+    import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard";
+    import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess";
     import "monaco-editor/esm/vs/language/json/monaco.contribution";
     import "monaco-editor/esm/vs/basic-languages/monaco.contribution";
     import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
@@ -52,7 +52,7 @@
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import configureLanguage from "../../composables/monaco/languages/languagesConfigurator";
 
-    import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys.ts";
+    import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
 
     import YamlWorker from "./yaml.worker.js?worker";
     import Utils from "../../utils/utils";
@@ -61,12 +61,12 @@
     import {useI18n} from "vue-i18n";
     import {ElDatePicker} from "element-plus";
     import {Moment} from "moment";
-    import PlaceholderContentWidget from "../../composables/monaco/PlaceholderContentWidget.ts";
-    import {hashCode} from "../../utils/global.ts";
+    import PlaceholderContentWidget from "../../composables/monaco/PlaceholderContentWidget";
+    import {hashCode} from "../../utils/global";
     import ICodeEditor = editor.ICodeEditor;
     import debounce from "lodash/debounce";
-    import {usePluginsStore} from "../../stores/plugins.ts";
-    import {useFlowStore} from "../../stores/flow.ts";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {useFlowStore} from "../../stores/flow";
     import EditorType = editor.EditorType;
 
     const currentInstance = getCurrentInstance()!;

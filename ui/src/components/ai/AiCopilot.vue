@@ -60,8 +60,8 @@
     import KeyboardReturn from "vue-material-design-icons/KeyboardReturn.vue";
     import AiIcon from "./AiIcon.vue";
     import {useAiStore} from "../../stores/ai";
-    import Utils from "../../utils/utils.ts";
-    import {useMiscStore} from "override/stores/misc.ts";
+    import Utils from "../../utils/utils";
+    import {useMiscStore} from "override/stores/misc";
 
     const t = getCurrentInstance()!.appContext.config.globalProperties.$t;
     const aiStore = useAiStore();

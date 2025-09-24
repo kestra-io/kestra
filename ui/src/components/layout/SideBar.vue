@@ -33,8 +33,7 @@
     import {
         onUpdated,
         ref,
-        computed,
-        shallowRef, h
+        computed, h
     } from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
@@ -63,14 +62,16 @@
     const $route = useRoute()
     const {t} = useI18n({useScope: "global"});
 
-    function onToggleCollapse(folded) {
+    function onToggleCollapse(folded: boolean) {
         collapsed.value = folded;
         localStorage.setItem("menuCollapsed", folded ? "true" : "false");
         $emit("menu-collapse", folded);
 
         return folded;
     }
-
+    /**
+     * ⚠️ TODO: Review disabledCurrentRoute Parameter
+     */
     function disabledCurrentRoute(items) {
         return items
             .map(r => {
@@ -111,13 +112,13 @@
             ...(bookmarksStore.pages?.length ? [{
                 title: t("bookmark"),
                 icon: {
-                    element: shallowRef(StarOutline),
+                    element: StarOutline,
                     class: "menu-icon",
                 },
                 child: [{
                     // here we use only one component for all bookmarks
                     // so when one edits the bookmark, it will be updated without closing the section
-                    component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
+                    component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages.filter((page): page is { path: string, label: string } => typeof page.label === "string")}),
                 }]
             }] : []),
             ...(props.menu ? disabledCurrentRoute(props.menu) : [])

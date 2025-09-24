@@ -1,6 +1,6 @@
 <template>
     <div class="barWrapper" :class="{opened: activeTab?.length > 0}">
-        <el-splitter v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
+        <button v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
 
         <el-button
             v-for="(button, key) of {...buttonsList, ...props.additionalButtons}"

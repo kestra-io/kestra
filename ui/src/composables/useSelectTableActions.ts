@@ -1,10 +1,18 @@
-import {ref, computed} from "vue"
+import {ref, computed, Ref} from "vue"
 
-export function useSelectTableActions(selectTableRef: any) {
+export function useSelectTableActions({
+        dataTableRef,
+        selectionMapper
+    }: {
+        dataTableRef: Ref<any>
+        selectionMapper?: (element: any) => any
+    }) {
     const queryBulkAction = ref(false)
     const selection = ref<any[]>([])
 
-    const elTable = computed(() => selectTableRef.value?.$refs?.table)
+    const elTable = computed(() => dataTableRef.value?.$refs?.table)
+
+    selectionMapper = selectionMapper ?? ((element: any) => element)
 
     const handleSelectionChange = (value: any[]) => {
         selection.value = value.map(selectionMapper)
@@ -21,8 +29,6 @@ export function useSelectTableActions(selectTableRef: any) {
         }
         queryBulkAction.value = true
     }
-
-    const selectionMapper = (element: any) => element
 
     return {
         queryBulkAction,

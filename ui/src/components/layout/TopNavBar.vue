@@ -4,7 +4,6 @@
             <div class="d-flex align-items-end gap-2">
                 <SidebarToggleButton
                     v-if="layoutStore.sideMenuCollapsed"
-                    :title="$t('Expand menu')"
                     @toggle="layoutStore.setSideMenuCollapsed(false)"
                 />
                 <div class="d-flex flex-column gap-2">

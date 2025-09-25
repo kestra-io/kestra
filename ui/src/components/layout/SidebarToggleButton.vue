@@ -2,7 +2,6 @@
     <el-button
         class="collapseButton sidebar-toggle"
         @click="$emit('toggle')"
-        :title="title"
     >
         <svg 
             width="12" 
@@ -22,7 +21,9 @@
 </template>
 
 <script setup lang="ts">
-    let title:string = "Toggle sidebar";
+    defineEmits<{
+        (e: "toggle"): void;
+    }>();
 </script>
 
 

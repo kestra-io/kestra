@@ -3,7 +3,7 @@
         <el-button
             type="primary"
             tag="a"
-            :href="itemUrl(value)"
+            :href="itemUrl(value.toString())"
             target="_blank"
             size="small"
             :icon="Download"
@@ -11,7 +11,7 @@
         >
             {{ $t('download') }}
         </el-button>
-        <FilePreview v-if="isFile(value)" :value="value" :executionId="execution.id" />
+        <FilePreview v-if="isFile(value)" :value="value.toString()" :executionId="execution.id" />
         <el-button disabled size="small" type="primary" v-if="humanSize">
             ({{ humanSize }})
         </el-button>
@@ -37,74 +37,83 @@
     </span>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {ref, watch, onMounted} from "vue";
     import Download from "vue-material-design-icons/Download.vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import FilePreview from "./FilePreview.vue";
-</script>
-
-<script>
     import {apiUrl} from "override/utils/route";
     import Utils from "../../utils/utils";
 
-    export default {
-        data () {
-            return {
-                humanSize: ""
-            }
+    interface Execution {
+        id: string;
+    }
+
+    const props = defineProps({
+        value: {
+            type: [String, Object, Boolean, Number],
+            required: false,
+            default: undefined
         },
-        methods: {
-            isFile(value) {
-                return typeof(value) === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"))
-            },
-            isFileValid(value) {
-                // we don't want to display the file if it's not a file or if the size is 0
-                return this.isFile(value) && this.humanSize && this.humanSize !== "0B"
-            },
-            isURI(value) {
-                try {
-                    const url = new URL(value);
-                    if (this.restrictUri) { return ["http:", "https:"].includes(url.protocol); }
-                    return true;
-                } catch {
-                    return false;
-                }
-            },
-            itemUrl(value) {
-                return `${apiUrl()}/executions/${this.execution.id}/file?path=${encodeURI(value)}`;
-            },
-            getFileSize(){
-                if (this.isFile(this.value)) {
-                    this.$http(`${apiUrl()}/executions/${this?.execution?.id}/file/metas?path=${this.value}`, {
-                        validateStatus: (status) => status === 200 || status === 404 || status === 422
-                    }).then(r => this.humanSize = Utils.humanFileSize(r.data.size))
-                }
-            }
+        execution: {
+            type: Object as () => Execution,
+            required: false,
+            default: undefined
         },
-        watch: {
-            value(newValue) {
-                if(newValue) this.getFileSize()
+        restrictUri: {
+            type: Boolean,
+            required: false,
+            default: false
+        }
+    });
+
+    const humanSize = ref<string>("");
+
+    const isFile = (value: any): boolean => {
+        return typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
+    };
+
+    const isFileValid = (value: any): boolean => {
+        return isFile(value) && humanSize.value?.length > 0 && humanSize.value !== "0B";
+    };
+
+    const isURI = (value: any): boolean => {
+        try {
+            const url = new URL(value);
+            if (props.restrictUri) {
+                return ["http:", "https:"].includes(url.protocol);
             }
-        },
-        mounted() {
-            this.getFileSize()
-        },
-        props: {
-            value: {
-                type: [String, Object, Boolean, Number],
-                required: false,
-                default: undefined
-            },
-            execution: {
-                type: Object,
-                required: false,
-                default: undefined
-            },
-            restrictUri: {
-                type: Boolean,
-                required: false,
-                default: false
-            }
+            return true;
+        } catch {
+            return false;
         }
     };
+
+    const itemUrl = (value: string): string => {
+        return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`;
+    };
+
+    const getFileSize = (): void => {
+        if (isFile(props.value)) {
+            fetch(`${apiUrl()}/executions/${props.execution?.id}/file/metas?path=${props.value}`, {
+                method: "GET"
+            })
+                .then(async (response) => {
+                    if (response.ok) {
+                        const data = await response.json();
+                        humanSize.value = Utils.humanFileSize(data.size);
+                    }
+                });
+        }
+    };
+
+    watch(() => props.value, (newValue) => {
+        if (newValue) {
+            getFileSize();
+        }
+    });
+
+    onMounted(() => {
+        getFileSize();
+    });
 </script>

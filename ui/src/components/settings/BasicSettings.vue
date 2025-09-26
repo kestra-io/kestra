@@ -319,8 +319,7 @@
     import {useFlowStore} from "../../stores/flow"
     import {defaultNamespace} from "../../composables/useNamespaces";
 
-    export const DATE_FORMAT_STORAGE_KEY = "dateFormat";
-    export const TIMEZONE_STORAGE_KEY = "timezone";
+
     export default {
         mixins: [RouteContext],
         components: {
@@ -393,8 +392,8 @@
                     logsFontSize: undefined
                 },
                 settingsKeyMapping: {
-                    dateFormat: DATE_FORMAT_STORAGE_KEY,
-                    timezone: TIMEZONE_STORAGE_KEY,
+                    dateFormat: storageKeys.DATE_FORMAT_STORAGE_KEY,
+                    timezone: storageKeys.TIMEZONE_STORAGE_KEY,
                     executeFlowBehaviour: storageKeys.EXECUTE_FLOW_BEHAVIOUR,
                 },
                 zonesWithOffset: this.$moment.tz.names().map((zone) => {
@@ -417,8 +416,8 @@
             this.pendingSettings.lang = Utils.getLang();
             this.pendingSettings.theme = Utils.getTheme();
 
-            this.pendingSettings.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
-            this.pendingSettings.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
+            this.pendingSettings.dateFormat = localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) || "llll";
+            this.pendingSettings.timezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.pendingSettings.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
             this.pendingSettings.hoverTextEditor = localStorage.getItem("hoverTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";

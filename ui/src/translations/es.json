@@ -652,6 +652,7 @@
       },
       "text_search": "Buscar este texto"
     },
+    "fix_with_ai": "Solucionar con IA",
     "flow": "Flujo",
     "flow already exists": "Flow ya existe",
     "flow creation": "Creación de flujo",
@@ -774,6 +775,7 @@
     "metrics": "Métricas",
     "min": "Min",
     "minutes": "Minutos",
+    "missingSource": "Fuente faltante",
     "monogram": "Monograma",
     "months": "Meses",
     "multi_panel_editor": {
@@ -1427,6 +1429,7 @@
       "zoom-out": "Alejar",
       "zoom-reset": "Restablecer zoom"
     },
+    "total_duration": "Duración total",
     "total_executions": "Total de Ejecuciones",
     "trigger": "Trigger",
     "trigger details": "Detalles del trigger",

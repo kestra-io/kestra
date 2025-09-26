@@ -1,8 +1,9 @@
 import {defineStore} from "pinia";
-import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
+import {AxiosRequestConfig} from "axios";
 
 export const useTemplateStore = defineStore("template", {
     state: () => ({
@@ -91,8 +92,8 @@ export const useTemplateStore = defineStore("template", {
             return await this.$http.delete(`${apiUrl()}/templates/delete/by-ids`, {data: options.ids});
         },
 
-        async deleteTemplateByQuery(options: any) {
-            return await this.$http.delete(`${apiUrl()}/templates/delete/by-query`, options, {params: options});
+        async deleteTemplateByQuery(options: AxiosRequestConfig<any>) {
+            return await this.$http.delete(`${apiUrl()}/templates/delete/by-query`, options);
         },
     },
 });

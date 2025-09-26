@@ -8,7 +8,7 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.Map;
@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 public class FailTest {
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Test
     @LoadFlows({"flows/valids/fail-on-switch.yaml"})

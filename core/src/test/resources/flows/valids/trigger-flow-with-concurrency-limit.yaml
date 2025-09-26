@@ -9,3 +9,6 @@ tasks:
   - id: sleep
     type: io.kestra.plugin.core.flow.Sleep
     duration: PT0.5S
+  - id: sleep_1
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT0.5S

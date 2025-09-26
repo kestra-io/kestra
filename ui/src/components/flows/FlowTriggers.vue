@@ -279,7 +279,7 @@
     import moment from "moment";
     import LogsWrapper from "../logs/LogsWrapper.vue";
     import _isEqual from "lodash/isEqual";
-    import {storageKeys} from "../../utils/constants.js";
+    import {storageKeys} from "../../utils/constants";
     import {mapStores} from "pinia";
     import {useTriggerStore} from "../../stores/trigger";
     import {useAuthStore} from "override/stores/auth";

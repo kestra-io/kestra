@@ -7,9 +7,9 @@
     </a>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     import {useDocStore} from "../../stores/doc";
     import LinkVariant from "vue-material-design-icons/LinkVariant.vue";
-    
+
     const docStore = useDocStore();
 </script>

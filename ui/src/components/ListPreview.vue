@@ -20,41 +20,37 @@
         </el-table-column>
     </el-table>
 </template>
-<script>
-    export default {
-        name: "ListPreview",
-        props: {
-            value: {
-                type: Array,
-                required: true
-            }
-        },
-        data() {
-            return {
-                maxColumnLength: 100
-            }
-        },
-        computed: {
-            generateTableColumns() {
-                const allKeys = new Set();
-                this.value.forEach(item => {
-                    Object.keys(item).forEach(key => allKeys.add(key));
-                });
-                return Array.from(allKeys);
-            }
-        },
-        methods: {
-            isComplex(data) {
-                return data instanceof Array || data instanceof Object;
-            },
-            truncate(text) {
-                if (typeof text !== "string") return text;
-                return text.length > this.maxColumnLength
-                    ? text.slice(0, this.maxColumnLength) + "..."
-                    : text;
-            }
+
+<script setup lang="ts">
+    import {ref, computed} from "vue";
+
+    const props = defineProps({
+        value: {
+            type: Array as () => Record<string, any>[],
+            required: true
         }
-    }
+    });
+
+    const maxColumnLength = ref(100);
+
+    const generateTableColumns = computed(() => {
+        const allKeys = new Set<string>();
+        props.value.forEach(item => {
+            Object.keys(item).forEach(key => allKeys.add(key));
+        });
+        return Array.from(allKeys);
+    });
+
+    const isComplex = (data: any): boolean => {
+        return data instanceof Array || data instanceof Object;
+    };
+
+    const truncate = (text: any): string | any => {
+        if (typeof text !== "string") return text;
+        return text.length > maxColumnLength.value
+            ? text.slice(0, maxColumnLength.value) + "..."
+            : text;
+    };
 </script>
 
 <style scoped lang="scss">

@@ -23,71 +23,77 @@
         </span>
     </div>
 </template>
-<script>
+<script lang="ts" setup>
+    import {computed} from "vue";
+    import {useRoute} from "vue-router";
+    import {usePluginsStore} from "../../stores/plugins";
+    import Utils from "../../utils/utils";
     import TriggerVars from "./TriggerVars.vue";
     import {TaskIcon} from "@kestra-io/ui-libs";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {mapStores} from "pinia";
-    import Utils from "../../utils/utils";
+    import {useI18n} from "vue-i18n";
+    import {useToast} from "../../utils/toast";
 
-    export default {
-        props: {
-            flow: {
-                type: Object,
-                default: () => undefined,
-            },
-            execution: {
-                type: Object,
-                default: () => undefined,
-            },
-            triggerId: {
-                type: String,
-                default: null
-            }
-        },
-        components: {
-            TaskIcon,
-            TriggerVars
-        },
-        methods: {
-            uid(trigger) {
-                return (this.flow ? this.flow.namespace + "-" + this.flow.id : this.execution.id) + "-" + trigger.id
-            },
-            name(trigger) {
-                let split = trigger?.type.split(".");
+    interface Flow {
+        namespace: string;
+        id: string;
+        triggers?: Trigger[];
+    }
 
-                return split[split.length - 1].substr(0, 1).toUpperCase();
-            },
-            async copyLink(trigger) {
-                if (trigger?.type === "io.kestra.plugin.core.trigger.Webhook" && this.flow) {
-                    const url = new URL(window.location.href).origin + `/api/v1/${this.$route.params.tenant ? this.$route.params.tenant +"/" : ""}executions/webhook/${this.flow.namespace}/${this.flow.id}/${trigger.key}`;
+    interface Execution {
+        id: string;
+        trigger?: Trigger;
+    }
 
-                    try {
-                        await Utils.copy(url);
-                        this.$message({
-                            message: this.$t("webhook link copied"),
-                            type: "success"
-                        });
-                    } catch (error) {
-                        console.error(error);
-                    }
-                }
-            }
-        },
-        computed: {
-            ...mapStores(usePluginsStore),
-            triggers() {
-                if (this.flow && this.flow.triggers) {
-                    return this.flow.triggers.filter(trigger => this.triggerId === null || this.triggerId === trigger.id)
-                } else if (this.execution && this.execution.trigger) {
-                    return [this.execution.trigger]
-                } else {
-                    return []
-                }
+    interface Trigger {
+        id: string;
+        type: string;
+        key?: string;
+        disabled?: boolean;
+        [key: string]: any;
+    }
 
+    const props = defineProps<{
+        flow?: Flow;
+        execution?: Execution;
+        triggerId?: string;
+    }>();
+
+    const pluginsStore = usePluginsStore();
+    const route = useRoute();
+
+    const triggers = computed<Trigger[]>(() => {
+        if (props.flow && props.flow.triggers) {
+            return props.flow.triggers.filter(
+                (trigger) => props.triggerId === undefined || props.triggerId === trigger.id
+            );
+        } else if (props.execution && props.execution.trigger) {
+            return [props.execution.trigger];
+        } else {
+            return [];
+        }
+    });
+
+    function uid(trigger: Trigger): string {
+        return (props.flow ? props.flow.namespace + "-" + props.flow.id : props.execution?.id) + "-" + trigger.id;
+    }
+
+    const {t} = useI18n();
+    const toast = useToast();
+
+    async function copyLink(trigger: Trigger) {
+        if (trigger?.type === "io.kestra.plugin.core.trigger.Webhook" && props.flow) {
+            const tenant = route.params.tenant ? route.params.tenant + "/" : "";
+            const url =
+                new URL(window.location.href).origin +
+                `/api/v1/${tenant}executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`;
+            try {
+                await Utils.copy(url);
+                toast.success(t("webhook link copied"));
+            } catch (error) {
+                console.error(error);
             }
         }
-    };
+    }
 </script>
 
 <style lang="scss" scoped>

@@ -5,9 +5,7 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.TestInstance;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @KestraTest(startRunner = true)
 class FlowTest {
     @Inject
@@ -24,25 +22,25 @@ class FlowTest {
     @Test
     @LoadFlows(value = {"flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml",
-        "flows/valids/switch.yaml"})
+        "flows/valids/switch.yaml"}, tenantId = "tenant1")
     void waitFailed() throws Exception {
-        flowCaseTest.waitFailed();
+        flowCaseTest.waitFailed("tenant1");
     }
 
     @Test
-    @LoadFlows({"flows/valids/task-flow.yaml",
+    @LoadFlows(value = {"flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml",
-        "flows/valids/switch.yaml"})
+        "flows/valids/switch.yaml"}, tenantId = "tenant2")
     void invalidOutputs() throws Exception {
-        flowCaseTest.invalidOutputs();
+        flowCaseTest.invalidOutputs("tenant2");
     }
 
     @Test
-    @LoadFlows({"flows/valids/task-flow.yaml",
+    @LoadFlows(value = {"flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml",
-        "flows/valids/switch.yaml"})
+        "flows/valids/switch.yaml"}, tenantId = "tenant3")
     void noLabels() throws Exception {
-        flowCaseTest.noLabels();
+        flowCaseTest.noLabels("tenant3");
     }
 
     @Test

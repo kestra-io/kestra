@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Singleton
 public class SLATestCase {
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     public void maxDurationSLAShouldFail() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "sla-max-duration-fail");
@@ -36,14 +36,14 @@ public class SLATestCase {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
-    public void executionConditionSLAShouldCancel() throws QueueException, TimeoutException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "sla-execution-condition", null, (f, e) -> Map.of("string", "CANCEL"));
+    public void executionConditionSLAShouldCancel(String tenantId) throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests", "sla-execution-condition", null, (f, e) -> Map.of("string", "CANCEL"));
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
     }
 
-    public void executionConditionSLAShouldLabel() throws QueueException, TimeoutException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "sla-execution-condition", null, (f, e) -> Map.of("string", "LABEL"));
+    public void executionConditionSLAShouldLabel(String tenantId) throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests", "sla-execution-condition", null, (f, e) -> Map.of("string", "LABEL"));
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getLabels()).contains(new Label("sla", "violated"));

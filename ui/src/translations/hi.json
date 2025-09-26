@@ -652,6 +652,7 @@
       },
       "text_search": "इस पाठ के लिए खोजें"
     },
+    "fix_with_ai": "AI से ठीक करें",
     "flow": "Flow",
     "flow already exists": "Flow पहले से मौजूद है",
     "flow creation": "Flow निर्माण",
@@ -774,6 +775,7 @@
     "metrics": "मेट्रिक्स",
     "min": "न्यूनतम",
     "minutes": "मिनट्स",
+    "missingSource": "स्रोत अनुपलब्ध",
     "monogram": "मोनोग्राम",
     "months": "महीने",
     "multi_panel_editor": {
@@ -1427,6 +1429,7 @@
       "zoom-out": "ज़ूम आउट करें",
       "zoom-reset": "ज़ूम रीसेट करें"
     },
+    "total_duration": "कुल अवधि",
     "total_executions": "कुल Executions",
     "trigger": "Trigger",
     "trigger details": "Trigger विवरण",

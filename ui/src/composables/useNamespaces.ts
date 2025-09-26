@@ -1,6 +1,6 @@
-import {EntityIterator} from "./entityIterator.ts";
-import {useNamespacesStore} from "override/stores/namespaces.ts";
-import {storageKeys} from "../utils/constants.ts";
+import {EntityIterator} from "./entityIterator";
+import {useNamespacesStore} from "override/stores/namespaces";
+import {storageKeys} from "../utils/constants";
 
 export interface Namespace {
     id: string;

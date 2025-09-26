@@ -5,12 +5,15 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.runners.SkipExecutionService;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
@@ -28,11 +31,17 @@ public class WebServerCommand extends AbstractServerCommand {
     @Inject
     private ExecutorsUtils executorsUtils;
 
+    @Inject
+    private SkipExecutionService skipExecutionService;
+
     @Option(names = {"--no-tutorials"}, description = "Flag to disable auto-loading of tutorial flows.")
-    boolean tutorialsDisabled = false;
+    private boolean tutorialsDisabled = false;
 
     @Option(names = {"--no-indexer"}, description = "Flag to disable starting an embedded indexer.")
-    boolean indexerDisabled = false;
+    private boolean indexerDisabled = false;
+
+    @CommandLine.Option(names = {"--skip-indexer-records"}, split=",", description = "a list of indexer record keys, separated by a coma; for troubleshooting purpose only")
+    private List<String> skipIndexerRecords = Collections.emptyList();
 
     @Override
     public boolean isFlowAutoLoadEnabled() {
@@ -48,6 +57,8 @@ public class WebServerCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
+        this.skipExecutionService.setSkipIndexerRecords(skipIndexerRecords);
+
         super.call();
 
         // start the indexer

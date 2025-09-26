@@ -4,6 +4,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,6 +32,7 @@ public abstract class FlinkTask extends Task {
         title = "Connection timeout",
         description = "Timeout for connecting to the Flink REST API in seconds. Defaults to 30."
     )
+    @Builder.Default
     @PluginProperty
     protected Property<Integer> connectionTimeout = Property.of(30);
 
@@ -38,6 +40,7 @@ public abstract class FlinkTask extends Task {
         title = "Request timeout",
         description = "Timeout for REST API requests in seconds. Defaults to 120."
     )
+    @Builder.Default
     @PluginProperty
     protected Property<Integer> requestTimeout = Property.of(120);
 }

@@ -13,6 +13,10 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.net.URI;
@@ -80,6 +84,8 @@ import java.util.Map;
     }
 )
 public class SubmitSql extends Task implements RunnableTask<SubmitSql.Output> {
+
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     @Schema(
         title = "SQL Gateway URL",
@@ -189,48 +195,31 @@ public class SubmitSql extends Task implements RunnableTask<SubmitSql.Output> {
         }
 
         // Create new session
-        StringBuilder payload = new StringBuilder();
-        payload.append("{");
-
+        ObjectNode payload = JSON.createObjectNode();
         if (sessionName != null) {
-            payload.append("\"sessionName\":\"").append(sessionName).append("\"");
+            payload.put("sessionName", sessionName);
         }
 
         if (sessionConfig != null) {
             SessionConfig config = runContext.render(sessionConfig).as(SessionConfig.class).orElse(null);
             if (config != null) {
-                if (sessionName != null) payload.append(",");
-
                 if (config.getCatalog() != null) {
-                    payload.append("\"catalog\":\"").append(config.getCatalog()).append("\"");
+                    payload.put("catalog", config.getCatalog());
                 }
-
                 if (config.getDatabase() != null) {
-                    if (config.getCatalog() != null) payload.append(",");
-                    payload.append("\"database\":\"").append(config.getDatabase()).append("\"");
+                    payload.put("database", config.getDatabase());
                 }
-
                 if (config.getConfiguration() != null && !config.getConfiguration().isEmpty()) {
-                    if (config.getCatalog() != null || config.getDatabase() != null) payload.append(",");
-                    payload.append("\"properties\":{");
-                    boolean first = true;
-                    for (Map.Entry<String, String> entry : config.getConfiguration().entrySet()) {
-                        if (!first) payload.append(",");
-                        payload.append("\"").append(entry.getKey()).append("\":\"").append(entry.getValue()).append("\"");
-                        first = false;
-                    }
-                    payload.append("}");
+                    payload.set("properties", JSON.valueToTree(config.getConfiguration()));
                 }
             }
         }
-
-        payload.append("}");
 
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(gatewayUrl + "/v1/sessions"))
             .timeout(Duration.ofSeconds(30))
             .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
+            .POST(HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(payload)))
             .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -252,13 +241,13 @@ public class SubmitSql extends Task implements RunnableTask<SubmitSql.Output> {
             .connectTimeout(Duration.ofSeconds(30))
             .build();
 
-        String payload = "{\"statement\":\"" + statement.replace("\"", "\\\"").replace("\n", "\\n") + "\"}";
+        ObjectNode payload = JSON.createObjectNode().put("statement", statement);
 
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(gatewayUrl + "/v1/sessions/" + sessionHandle + "/statements"))
             .timeout(Duration.ofSeconds(runContext.render(statementTimeout).as(Integer.class).orElse(300)))
             .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(payload))
+            .POST(HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(payload)))
             .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -331,37 +320,52 @@ public class SubmitSql extends Task implements RunnableTask<SubmitSql.Output> {
         }
     }
 
-    // Simple JSON extraction methods
     private String extractSessionHandleFromResponse(String responseBody) {
-        String[] parts = responseBody.split("\"sessionHandle\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        try {
+            JsonNode identifier = JSON.readTree(responseBody).path("sessionHandle").path("identifier");
+            if (identifier.isTextual() && !identifier.asText().isEmpty()) {
+                return identifier.asText();
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not parse session handle from response: " + responseBody, e);
         }
         throw new RuntimeException("Could not extract session handle from response: " + responseBody);
     }
 
     private String extractOperationHandleFromResponse(String responseBody) {
-        String[] parts = responseBody.split("\"operationHandle\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        try {
+            JsonNode identifier = JSON.readTree(responseBody).path("operationHandle").path("identifier");
+            if (identifier.isTextual() && !identifier.asText().isEmpty()) {
+                return identifier.asText();
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not parse operation handle from response: " + responseBody, e);
         }
         throw new RuntimeException("Could not extract operation handle from response: " + responseBody);
     }
 
     private String extractStatusFromResponse(String responseBody) {
-        String[] parts = responseBody.split("\"status\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        try {
+            JsonNode status = JSON.readTree(responseBody).path("status");
+            if (status.isTextual()) {
+                return status.asText();
+            }
+            return status.path("id").asText("UNKNOWN");
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not parse operation status from response: " + responseBody, e);
         }
-        return "UNKNOWN";
     }
 
     private int extractRowCountFromResponse(String responseBody) {
-        String[] parts = responseBody.split("\"rowCount\":\\s*(\\d+)");
-        if (parts.length > 1) {
-            return Integer.parseInt(parts[1].split(",")[0].trim());
+        try {
+            JsonNode node = JSON.readTree(responseBody);
+            if (node.has("rowCount")) {
+                return node.path("rowCount").asInt(-1);
+            }
+            return node.path("result").path("rowCount").asInt(-1);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not parse row count from response: " + responseBody, e);
         }
-        return -1;
     }
 
     @Builder

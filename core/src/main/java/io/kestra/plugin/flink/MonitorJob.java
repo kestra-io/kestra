@@ -20,6 +20,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @SuperBuilder
 @ToString
@@ -232,9 +234,10 @@ public class MonitorJob extends Task implements RunnableTask<MonitorJob.Output> 
     }
 
     private String extractJsonValue(String json, String key) {
-        String[] parts = json.split("\"" + key + "\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        Matcher matcher = Pattern.compile("\"" + Pattern.quote(key) + "\"\\s*:\\s*\"([^\"]+)\"")
+            .matcher(json);
+        if (matcher.find()) {
+            return matcher.group(1);
         }
         return null;
     }

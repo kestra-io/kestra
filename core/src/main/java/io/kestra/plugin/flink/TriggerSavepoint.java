@@ -12,8 +12,10 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.constraints.NotNull;
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -45,7 +47,7 @@ import java.time.Duration;
                     restUrl: "http://flink-jobmanager:8081"
                     jobId: "{{ inputs.jobId }}"
                     targetDirectory: "s3://flink/savepoints/backup/{{ execution.id }}"
-                    timeout: 300
+                    savepointTimeout: 300
                 """
         ),
         @Example(
@@ -60,6 +62,8 @@ import java.time.Duration;
     }
 )
 public class TriggerSavepoint extends Task implements RunnableTask<TriggerSavepoint.Output> {
+
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     @Schema(
         title = "Flink REST API URL",
@@ -219,35 +223,61 @@ public class TriggerSavepoint extends Task implements RunnableTask<TriggerSavepo
         }
     }
 
-    // Simple JSON extraction methods
     private String extractRequestIdFromResponse(String responseBody) {
-        String[] parts = responseBody.split("\"request-id\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        try {
+            JsonNode root = JSON.readTree(responseBody);
+            JsonNode requestId = root.path("request-id");
+            if (requestId.isTextual()) {
+                return requestId.asText();
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse savepoint trigger response: " + responseBody, e);
         }
         throw new RuntimeException("Could not extract request ID from response: " + responseBody);
     }
 
     private String extractSavepointStatusFromResponse(String responseBody) {
-        String[] parts = responseBody.split("\"status\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        try {
+            JsonNode root = JSON.readTree(responseBody);
+            JsonNode status = root.path("status").path("id");
+            if (status.isTextual()) {
+                return status.asText();
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse savepoint status response: " + responseBody, e);
         }
         return "UNKNOWN";
     }
 
     private String extractSavepointPathFromResponse(String responseBody) {
-        String[] parts = responseBody.split("\"location\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        try {
+            JsonNode root = JSON.readTree(responseBody);
+            JsonNode location = root.path("operation").path("location");
+            if (location.isTextual()) {
+                return location.asText();
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse savepoint status response: " + responseBody, e);
         }
         throw new RuntimeException("Could not extract savepoint path from response: " + responseBody);
     }
 
     private String extractSavepointErrorFromResponse(String responseBody) {
-        String[] parts = responseBody.split("\"failure-cause\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        try {
+            JsonNode root = JSON.readTree(responseBody);
+            JsonNode failure = root.path("operation").path("failure-cause");
+            if (failure.isObject()) {
+                JsonNode message = failure.path("message");
+                if (message.isTextual()) {
+                    return message.asText();
+                }
+                JsonNode className = failure.path("class-name");
+                if (className.isTextual()) {
+                    return className.asText();
+                }
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse savepoint status response: " + responseBody, e);
         }
         return "Unknown error";
     }

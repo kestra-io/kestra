@@ -20,9 +20,12 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @SuperBuilder
 @ToString
@@ -172,11 +175,11 @@ public class Submit extends Task implements RunnableTask<Submit.Output> {
         }
 
         // For remote JARs, download to working directory
-        InputStream jarStream = runContext.storage().getFile(URI.create(jarUri));
-        // Save to temporary file and return its URI
-        java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("flink-job", ".jar");
-        java.nio.file.Files.copy(jarStream, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-        return tempFile.toUri();
+        try (InputStream jarStream = runContext.storage().getFile(URI.create(jarUri))) {
+            java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("flink-job", ".jar");
+            java.nio.file.Files.copy(jarStream, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            return tempFile.toUri();
+        }
     }
 
     private String uploadJarToFlink(RunContext runContext, String restUrl, URI jarLocation) throws IOException, InterruptedException {
@@ -190,10 +193,22 @@ public class Submit extends Task implements RunnableTask<Submit.Output> {
 
         // Create multipart request body for JAR upload
         String boundary = "----FlinkJarUpload" + System.currentTimeMillis();
+        java.nio.file.Path jarPath = java.nio.file.Path.of(jarLocation);
+        String fileName = jarPath.getFileName().toString();
+        String prefix = "--" + boundary + "\r\n"
+            + "Content-Disposition: form-data; name=\"jarfile\"; filename=\"" + fileName + "\"\r\n"
+            + "Content-Type: application/java-archive\r\n\r\n";
+        String suffix = "\r\n--" + boundary + "--\r\n";
+
+        HttpRequest.BodyPublisher bodyPublisher = HttpRequest.BodyPublishers.ofByteArrays(java.util.List.of(
+            prefix.getBytes(StandardCharsets.UTF_8),
+            java.nio.file.Files.readAllBytes(jarPath),
+            suffix.getBytes(StandardCharsets.UTF_8)
+        ));
 
         HttpRequest request = requestBuilder
             .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-            .POST(HttpRequest.BodyPublishers.ofFile(java.nio.file.Paths.get(jarLocation.getPath())))
+            .POST(bodyPublisher)
             .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -280,21 +295,19 @@ public class Submit extends Task implements RunnableTask<Submit.Output> {
     }
 
     private String extractJarIdFromResponse(String responseBody) {
-        // Simple JSON parsing to extract filename as JAR ID
-        // In production, would use a proper JSON parser
-        String[] parts = responseBody.split("\"filename\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        Matcher matcher = Pattern.compile("\"filename\"\\s*:\\s*\"([^\"]+)\"").matcher(responseBody);
+        if (matcher.find()) {
+            String filename = matcher.group(1);
+            int separator = filename.lastIndexOf('/');
+            return separator >= 0 ? filename.substring(separator + 1) : filename;
         }
         throw new RuntimeException("Could not extract JAR ID from response: " + responseBody);
     }
 
     private String extractJobIdFromResponse(String responseBody) {
-        // Simple JSON parsing to extract job ID
-        // In production, would use a proper JSON parser
-        String[] parts = responseBody.split("\"jobid\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        Matcher matcher = Pattern.compile("\"jobid\"\\s*:\\s*\"([^\"]+)\"").matcher(responseBody);
+        if (matcher.find()) {
+            return matcher.group(1);
         }
         throw new RuntimeException("Could not extract job ID from response: " + responseBody);
     }

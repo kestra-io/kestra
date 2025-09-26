@@ -57,5 +57,7 @@ class CancelTest {
             .build();
 
         assertThat(cancel.getId(), is("test-cancel-drain"));
+        assertThat(cancel.getDrainJob(), notNullValue());
+        assertThat(cancel.getWithSavepoint(), notNullValue());
     }
 }

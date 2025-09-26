@@ -12,6 +12,9 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.net.URI;
@@ -62,6 +65,8 @@ import java.time.Duration;
     }
 )
 public class Cancel extends Task implements RunnableTask<Cancel.Output> {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Schema(
         title = "Flink REST API URL",
@@ -285,45 +290,62 @@ public class Cancel extends Task implements RunnableTask<Cancel.Output> {
         }
     }
 
-    // Simple JSON extraction methods
     private String extractRequestIdFromResponse(String responseBody) {
-        String[] parts = responseBody.split("\"request-id\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        try {
+            JsonNode root = OBJECT_MAPPER.readTree(responseBody);
+            String requestId = root.path("request-id").asText(null);
+            if (requestId == null) {
+                throw new RuntimeException("Could not extract request ID from response: " + responseBody);
+            }
+            return requestId;
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not parse savepoint trigger response", e);
         }
-        throw new RuntimeException("Could not extract request ID from response: " + responseBody);
     }
 
     private String extractJobStateFromResponse(String responseBody) {
-        String[] parts = responseBody.split("\"state\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        try {
+            JsonNode root = OBJECT_MAPPER.readTree(responseBody);
+            return root.path("state").asText("UNKNOWN");
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not parse job status response", e);
         }
-        return "UNKNOWN";
     }
 
     private String extractSavepointStatusFromResponse(String responseBody) {
-        String[] parts = responseBody.split("\"status\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        try {
+            JsonNode root = OBJECT_MAPPER.readTree(responseBody);
+            return root.path("status").path("id").asText("UNKNOWN");
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not parse savepoint status response", e);
         }
-        return "UNKNOWN";
     }
 
     private String extractSavepointPathFromResponse(String responseBody) {
-        String[] parts = responseBody.split("\"location\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        try {
+            JsonNode root = OBJECT_MAPPER.readTree(responseBody);
+            JsonNode location = root.path("operation").path("location");
+            return location.isMissingNode() || location.isNull() ? null : location.asText();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not parse savepoint status response", e);
         }
-        return null;
     }
 
     private String extractSavepointErrorFromResponse(String responseBody) {
-        String[] parts = responseBody.split("\"failure-cause\":\\s*\"([^\"]+)\"");
-        if (parts.length > 1) {
-            return parts[1].split("\"")[0];
+        try {
+            JsonNode root = OBJECT_MAPPER.readTree(responseBody);
+            JsonNode failure = root.path("operation").path("failure-cause");
+            if (failure.isMissingNode() || failure.isNull()) {
+                return "Unknown error";
+            }
+            JsonNode message = failure.path("message");
+            if (message.isTextual()) {
+                return message.asText();
+            }
+            return failure.toString();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not parse savepoint failure response", e);
         }
-        return "Unknown error";
     }
 
     @Builder

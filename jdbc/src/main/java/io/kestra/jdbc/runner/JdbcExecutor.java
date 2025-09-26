@@ -1060,6 +1060,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 // IMPORTANT: it must be done here as it's when the execution arrives 'again' with a terminated state,
                 // so we are sure at this point that no new executions will be created otherwise the tate storage would be re-created by the execution queue.
                 if (executorService.canBePurged(executor)) {
+                    log.info("-----------> purge execution state storage");
                     executorStateStorage.delete(execution);
                 }
 

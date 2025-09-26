@@ -605,7 +605,7 @@
         .toggle-icon {
             position: absolute;
             color: var(--ks-content-alert);
-            right: 1rem;
+            right: 1.5rem;
             width: 1rem;
             height: 1rem;
             font-size: 1.75rem;

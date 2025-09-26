@@ -17,30 +17,11 @@ import java.util.List;
 @Introspected
 public class ExecutionUsage {
     private final List<DailyExecutionStatistics> dailyExecutionsCount;
-    private final List<DailyExecutionStatistics> dailyTaskRunsCount;
 
     public static ExecutionUsage of(final String tenantId,
                                     final ExecutionRepositoryInterface executionRepository,
                                     final ZonedDateTime from,
                                     final ZonedDateTime to) {
-
-        List<DailyExecutionStatistics> dailyTaskRunsCount = null;
-
-        try {
-            dailyTaskRunsCount = executionRepository.dailyStatistics(
-                null,
-                tenantId,
-                null,
-                null,
-                null,
-                from,
-                to,
-                DateUtils.GroupType.DAY,
-                null,
-                true);
-        } catch (UnsupportedOperationException ignored) {
-
-        }
 
         return ExecutionUsage.builder()
             .dailyExecutionsCount(executionRepository.dailyStatistics(
@@ -52,28 +33,13 @@ public class ExecutionUsage {
                 from,
                 to,
                 DateUtils.GroupType.DAY,
-                null,
-                false))
-            .dailyTaskRunsCount(dailyTaskRunsCount)
+                null))
             .build();
     }
 
     public static ExecutionUsage of(final ExecutionRepositoryInterface repository,
                                     final ZonedDateTime from,
                                     final ZonedDateTime to) {
-        List<DailyExecutionStatistics> dailyTaskRunsCount = null;
-        try {
-            dailyTaskRunsCount = repository.dailyStatisticsForAllTenants(
-                null,
-                null,
-                null,
-                from,
-                to,
-                DateUtils.GroupType.DAY,
-                true
-            );
-        } catch (UnsupportedOperationException ignored) {}
-
         return ExecutionUsage.builder()
             .dailyExecutionsCount(repository.dailyStatisticsForAllTenants(
                 null,
@@ -81,10 +47,8 @@ public class ExecutionUsage {
                 null,
                 from,
                 to,
-                DateUtils.GroupType.DAY,
-                false
+                DateUtils.GroupType.DAY
             ))
-            .dailyTaskRunsCount(dailyTaskRunsCount)
             .build();
     }
 }

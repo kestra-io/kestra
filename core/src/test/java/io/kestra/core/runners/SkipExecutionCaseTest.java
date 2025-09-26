@@ -32,7 +32,7 @@ public class SkipExecutionCaseTest {
     protected QueueInterface<Execution> executionQueue;
 
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     @Inject
     private ExecutionRepositoryInterface executionRepository;

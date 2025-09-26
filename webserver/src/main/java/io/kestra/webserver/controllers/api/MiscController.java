@@ -113,7 +113,6 @@ public class MiscController {
             .commitId(versionProvider.getRevision())
             .commitDate(versionProvider.getDate())
             .isCustomDashboardsEnabled(dashboardRepository.isEnabled())
-            .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
             .isTemplateEnabled(templateRepository.isPresent())
@@ -187,9 +186,6 @@ public class MiscController {
 
         @JsonInclude
         Boolean isCustomDashboardsEnabled;
-
-        @JsonInclude
-        Boolean isTaskRunEnabled;
 
         @JsonInclude
         Boolean isAnonymousUsageEnabled;

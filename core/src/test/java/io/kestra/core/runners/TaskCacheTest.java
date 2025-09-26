@@ -30,7 +30,7 @@ public class TaskCacheTest {
     static final AtomicInteger COUNTER = new AtomicInteger(0);
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @BeforeEach
     void resetCounter() {

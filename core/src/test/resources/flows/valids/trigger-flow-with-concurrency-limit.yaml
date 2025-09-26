@@ -9,6 +9,9 @@ tasks:
   - id: sleep
     type: io.kestra.plugin.core.flow.Sleep
     duration: PT0.5S
-  - id: sleep_1
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: "we are between sleeps"
+  - id: sleep_2
     type: io.kestra.plugin.core.flow.Sleep
     duration: PT0.5S

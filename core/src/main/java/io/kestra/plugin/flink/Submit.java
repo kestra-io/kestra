@@ -200,11 +200,11 @@ public class Submit extends Task implements RunnableTask<Submit.Output> {
             + "Content-Type: application/java-archive\r\n\r\n";
         String suffix = "\r\n--" + boundary + "--\r\n";
 
-        HttpRequest.BodyPublisher bodyPublisher = HttpRequest.BodyPublishers.ofByteArrays(java.util.List.of(
-            prefix.getBytes(StandardCharsets.UTF_8),
-            java.nio.file.Files.readAllBytes(jarPath),
-            suffix.getBytes(StandardCharsets.UTF_8)
-        ));
+        HttpRequest.BodyPublisher bodyPublisher = HttpRequest.BodyPublishers.concat(
+            HttpRequest.BodyPublishers.ofByteArray(prefix.getBytes(StandardCharsets.UTF_8)),
+            HttpRequest.BodyPublishers.ofFile(jarPath),
+            HttpRequest.BodyPublishers.ofByteArray(suffix.getBytes(StandardCharsets.UTF_8))
+        );
 
         HttpRequest request = requestBuilder
             .header("Content-Type", "multipart/form-data; boundary=" + boundary)

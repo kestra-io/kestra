@@ -234,7 +234,7 @@ public class MonitorJob extends Task implements RunnableTask<MonitorJob.Output> 
     }
 
     private String extractJsonValue(String json, String key) {
-        Matcher matcher = Pattern.compile("\"" + Pattern.quote(key) + "\"\\s*:\\s*\"([^\"]+)\"")
+        Matcher matcher = Pattern.compile("\"" + Pattern.quote(key) + "\"\\s*:\\s*\"([^\"]*)\"")
             .matcher(json);
         if (matcher.find()) {
             return matcher.group(1);

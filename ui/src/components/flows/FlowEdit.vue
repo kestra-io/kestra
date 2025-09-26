@@ -17,19 +17,47 @@
                 </li>
 
                 <li>
-                    <TriggerFlow v-if="flowStore.flow && canExecute" :disabled="flowStore.flow.disabled" :flowId="flowStore.flow.id" type="default" :namespace="flowStore.flow.namespace" />
+                    <TriggerFlow
+                        v-if="flowStore.flow && canExecute"
+                        :disabled="flowStore.flow.disabled"
+                        :flowId="flowStore.flow.id"
+                        type="default"
+                        :namespace="flowStore.flow.namespace"
+                    />
                 </li>
 
                 <li>
-                    <el-button class="edit-flow-save-button" :icon="icon.ContentSave" size="large" @click="save" v-if="canSave" type="primary">
+                    <el-button
+                        class="edit-flow-save-button"
+                        :icon="icon.ContentSave"
+                        size="large"
+                        @click="save"
+                        v-if="canSave"
+                        type="primary"
+                    >
                         {{ $t('save') }}
                     </el-button>
                 </li>
             </ul>
         </template>
     </TopNavBar>
+
     <div class="mt-3 edit-flow-div">
-        <editor @save="save" v-model="content" schemaType="flow" lang="yaml" @update:model-value="onChange" @cursor="updatePluginDocumentation" />
+        <!-- Show loader until content is ready -->
+        <div v-if="loading" class="p-4 text-gray-500">
+            {{ $t('loading') }}...
+        </div>
+
+        <!-- Render editor only when content is loaded -->
+        <editor
+            v-else
+            @save="save"
+            v-model="content"
+            schemaType="flow"
+            lang="yaml"
+            @update:model-value="onChange"
+            @cursor="updatePluginDocumentation"
+        />
     </div>
 </template>
 
@@ -41,19 +69,20 @@
     import Delete from "vue-material-design-icons/Delete.vue";
     import {useCoreStore} from "../../stores/core";
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
-    import TriggerFlow from "./TriggerFlow.vue"
-    import TopNavBar from "../layout/TopNavBar.vue"
+    import TriggerFlow from "./TriggerFlow.vue";
+    import TopNavBar from "../layout/TopNavBar.vue";
     import {useFlowStore} from "../../stores/flow";
 
     export default {
         components: {
             TriggerFlow,
-            TopNavBar
+            TopNavBar,
         },
         mixins: [flowTemplateEdit],
         data() {
             return {
                 dataType: "flow",
+                loading: true, // track loading state
                 icon: {
                     ContentCopy: shallowRef(ContentCopy),
                     ContentSave: shallowRef(ContentSave),
@@ -68,23 +97,35 @@
         methods: {
             stopTour() {
                 this.$tours["guidedTour"]?.stop();
-                this.coreStore.guidedProperties = {...this.coreStore.guidedProperties, tourStarted: false};
+                this.coreStore.guidedProperties = {
+                    ...this.coreStore.guidedProperties,
+                    tourStarted: false,
+                };
             },
         },
-        created() {
-            this.loadFile();
+        async created() {
+            try {
+                await this.loadFile();
+            } catch (err) {
+                console.error("Failed to load flow:", err);
+            } finally {
+                this.loading = false; // always stop loading
+            }
         },
         mounted() {
             setTimeout(() => {
-                if (!this.guidedProperties.tourStarted
-                    && localStorage.getItem("tourDoneOrSkip") !== "true"
-                    && this.flowStore.total === 0) {
+                if (
+                    !this.guidedProperties.tourStarted &&
+                    localStorage.getItem("tourDoneOrSkip") !== "true" &&
+                    this.flowStore.total === 0
+                ) {
                     this.$tours["guidedTour"]?.start();
                 }
-            }, 200)
+            }, 200);
+
             window.addEventListener("popstate", () => {
                 this.stopTour();
             });
-        }
+        },
     };
 </script>

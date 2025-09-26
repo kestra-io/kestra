@@ -1,5 +1,5 @@
 <template>
-    <template v-if="ready">
+    <div v-if="!loading && ready">
         <FlowRootTopBar
             :routeInfo="routeInfo"
             :activeTabName="activeTabName()"
@@ -10,8 +10,12 @@
             :tabs="tabs"
             @expand-subflow="updateExpandedSubflows"
         />
-    </template>
+    </div>
+    <div v-else class="loader">
+        Loading...
+    </div>
 </template>
+
 
 <script>
     import Topology from "./Topology.vue";
@@ -43,6 +47,7 @@
         },
         data() {
             return {
+                loading: true,
                 tabIndex: undefined,
                 previousFlow: undefined,
                 dependenciesCount: undefined,
@@ -97,11 +102,10 @@
         },
         methods: {
             load() {
-                if (
-                    this.flowStore.flow === undefined ||
-                    this.previousFlow !== this.flowKey()
-                ) {
+                if (!this.flowStore.flow || this.previousFlow !== this.flowKey()) {
+                    this.loading = true;  // START LOADING
                     const query = {...this.$route.query, allowDeleted: true};
+
                     return this.flowStore.loadFlow({
                         ...this.$route.params,
                         ...query,
@@ -110,11 +114,18 @@
                             if (this.flowStore.flow) {
                                 this.deleted = this.flowStore.flow.deleted;
                                 this.previousFlow = this.flowKey();
-                                this.flowStore.loadGraph({
-                                    flow: this.flowStore.flow,
+                                this.flowStore.loadGraph({flow: this.flowStore.flow});
+
+                                // Optional: wait for dependencies to load too
+                                return this.flowStore.loadDependencies({
+                                    namespace: this.flowStore.flow.namespace,
+                                    id: this.flowStore.flow.id
                                 });
                             }
                         })
+                        .finally(() => {
+                            this.loading = false;  // STOP LOADING
+                        });
                 }
             },
             flowKey() {

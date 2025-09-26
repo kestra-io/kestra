@@ -50,7 +50,7 @@ public abstract class AbstractRunnerTest {
     private PluginDefaultsCaseTest pluginDefaultsCaseTest;
 
     @Inject
-    private FlowCaseTest flowCaseTest;
+    protected FlowCaseTest flowCaseTest;
 
     @Inject
     private WorkingDirectoryTest.Suite workingDirectoryTest;

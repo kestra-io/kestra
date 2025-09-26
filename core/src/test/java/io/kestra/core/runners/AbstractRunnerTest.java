@@ -173,7 +173,7 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/restart_local_errors.yaml"})
-    void restartFailedThenFailureWithLocalErrors() throws Exception {
+    protected void restartFailedThenFailureWithLocalErrors() throws Exception {
         restartCaseTest.restartFailedThenFailureWithLocalErrors();
     }
 

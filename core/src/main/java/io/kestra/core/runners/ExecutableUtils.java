@@ -151,14 +151,22 @@ public final class ExecutableUtils {
                     currentFlow.getNamespace(),
                     currentFlow.getId()
                 )
-                .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + subflowNamespace + "'.'" + subflowId + "' with revision '" + subflowRevision.orElse(0) + "'"));
+                .orElseThrow(() -> {
+                    String msg = "Unable to find flow '" + subflowNamespace + "'.'" + subflowId + "' with revision '" + subflowRevision.orElse(0) + "'";
+                    runContext.logger().error(msg);
+                    return new IllegalStateException(msg);
+                });
 
             if (flow.isDisabled()) {
-                throw new IllegalStateException("Cannot execute a flow which is disabled");
+                String msg = "Cannot execute a flow which is disabled";
+                runContext.logger().error(msg);
+                throw new IllegalStateException(msg);
             }
 
             if (flow instanceof FlowWithException fwe) {
-                throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
+                String msg = "Cannot execute an invalid flow: " + fwe.getException();
+                runContext.logger().error(msg);
+                throw new IllegalStateException(msg);
             }
                 List<Label> newLabels = inheritLabels ? new ArrayList<>(filterLabels(currentExecution.getLabels(), flow)) : new ArrayList<>(systemLabels(currentExecution));
             if (labels != null) {

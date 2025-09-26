@@ -79,7 +79,6 @@
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
     import {executeTask} from "../../utils/submitTask"
-    import {TIMEZONE_STORAGE_KEY} from "../settings/BasicSettings.vue";
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
     import Inputs from "../../utils/inputs";
     import Curl from "./Curl.vue";
@@ -134,8 +133,8 @@
                 if (!this.flow?.triggers) {
                     return false;
                 }
-                return this.flow.triggers.some(trigger => 
-                    trigger.type === "io.kestra.plugin.core.trigger.Webhook" && 
+                return this.flow.triggers.some(trigger =>
+                    trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
                     (trigger.disabled === undefined || trigger.disabled === false)
                 );
             }
@@ -189,7 +188,7 @@
                                     this.executionLabels
                                         .filter(label => label.key && label.value)
                                         .map(label => `${label.key}:${label.value}`)
-                                )],                                
+                                )],
                                 scheduleDate: this.scheduleDate
                             });
                         } else {
@@ -203,7 +202,7 @@
                                         .filter(label => label.key && label.value)
                                         .map(label => `${label.key}:${label.value}`)
                                 )],
-                                scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
+                                scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
                                 nextStep: true,
                             });
                         }

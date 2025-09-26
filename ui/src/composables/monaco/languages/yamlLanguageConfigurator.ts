@@ -5,7 +5,7 @@ import {yamlSchemas} from "override/utils/yamlSchemas";
 import {StandaloneServices} from "monaco-editor/esm/vs/editor/standalone/browser/standaloneServices";
 import {ILanguageFeaturesService} from "monaco-editor/esm/vs/editor/common/services/languageFeatures";
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator";
-import {YamlAutoCompletion} from "../../../services/autoCompletionProvider.ts";
+import {YamlAutoCompletion} from "../../../services/autoCompletionProvider";
 import RegexProvider from "../../../utils/regex";
 import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import IPosition = monaco.IPosition;
@@ -19,8 +19,8 @@ import {
     registerFunctionParametersAutoCompletion,
     registerNestedValueAutoCompletion,
     registerPebbleAutocompletion
-} from "./pebbleLanguageConfigurator.ts";
-import {usePluginsStore} from "../../../stores/plugins.ts";
+} from "./pebbleLanguageConfigurator";
+import {usePluginsStore} from "../../../stores/plugins";
 import {languages} from "monaco-editor/esm/vs/editor/editor.api";
 import CompletionItem = languages.CompletionItem;
 

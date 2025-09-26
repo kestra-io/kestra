@@ -1,7 +1,7 @@
 import {defineStore} from "pinia";
 
 export class Me {
-    hasAny(_permission: any, _namespace: any) {
+    hasAny(_permission: any, _namespace?: any) {
         return true;
     }
 

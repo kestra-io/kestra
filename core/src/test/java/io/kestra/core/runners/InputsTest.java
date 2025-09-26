@@ -48,7 +48,7 @@ public class InputsTest {
     private QueueInterface<LogEntry> logQueue;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("string", "myString")

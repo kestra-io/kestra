@@ -14,6 +14,7 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithException;
@@ -37,6 +38,7 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -70,6 +72,7 @@ public abstract class AbstractScheduler implements Scheduler {
     private final QueueInterface<WorkerJob> workerJobQueue;
     private final QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
+    private final QueueInterface<LogEntry> logQueue;
     @SuppressWarnings("rawtypes")
     private final Optional<QueueInterface> clusterEventQueue;
     protected final FlowListenersInterface flowListeners;
@@ -124,6 +127,7 @@ public abstract class AbstractScheduler implements Scheduler {
         this.executionKilledQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
         this.workerTriggerResultQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED));
         this.clusterEventQueue = applicationContext.findBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.CLUSTER_EVENT_NAMED));
+        this.logQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED));
         this.flowListeners = flowListeners;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
         this.runContextInitializer = applicationContext.getBean(RunContextInitializer.class);
@@ -767,13 +771,23 @@ public abstract class AbstractScheduler implements Scheduler {
             this.executionEventPublisher.publishEvent(new CrudEvent<>(newExecution, CrudEventType.CREATE));
         } catch (QueueException e) {
             try {
-                Execution failedExecution = newExecution.failedExecutionFromExecutor(e).getExecution().withState(State.Type.FAILED);
+                Execution failedExecution = fail(newExecution, e);
                 this.executionQueue.emit(failedExecution);
                 this.executionEventPublisher.publishEvent(new CrudEvent<>(failedExecution, CrudEventType.CREATE));
             } catch (QueueException ex) {
                 log.error("Unable to emit the execution", ex);
             }
         }
+    }
+
+    private Execution fail(Execution message, Exception e) {
+        var failedExecution = message.failedExecutionFromExecutor(e);
+        try {
+            logQueue.emitAsync(failedExecution.getLogs());
+        } catch (QueueException ex) {
+            // fail silently
+        }
+        return failedExecution.getExecution().getState().isFailed() ? failedExecution.getExecution() :  failedExecution.getExecution().withState(State.Type.FAILED);
     }
 
     private void executionMonitor() {

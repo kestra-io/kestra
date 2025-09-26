@@ -351,13 +351,15 @@
     const dataTableRef = useTemplateRef<typeof DataTable>("dataTable");
 
     const {queryWithFilter, onPageChanged, onRowDoubleClick, onSort} = useDataTableActions({dblClickRouteName: "flows/update"});
-    function selectionMapper(element: {id: string; namespace: string; disabled: boolean}): {id: string; namespace: string; enabled: boolean} {
+
+    function selectionMapper({id, namespace, disabled}: {id: string; namespace: string; disabled: boolean}) {
         return {
-            id: element.id,
-            namespace: element.namespace,
-            enabled: !element.disabled,
+            id,
+            namespace,
+            enabled: !disabled,
         };
     }
+
     const {selection, queryBulkAction, handleSelectionChange, toggleAllUnselected, toggleAllSelection} = useSelectTableActions({
         dataTableRef,
         selectionMapper

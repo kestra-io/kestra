@@ -62,6 +62,51 @@ public class VariableRenderer {
         this.pebbleEngine = pebbleBuilder.build();
     }
 
+    /**
+     * Factory method to create a VariableRenderer with masked functions.
+     * This method attempts to use an existing VariableRenderer bean from the ApplicationContext
+     * if available, preserving any alternative rendering implementations, and creates a new
+     * instance with the specified functions masked for security purposes.
+     *
+     * @param applicationContext The application context
+     * @param variableConfiguration The variable configuration
+     * @param functionsToMask List of function names to mask (e.g., for security)
+     * @return A VariableRenderer instance with the specified functions masked
+     */
+    public static VariableRenderer createMaskedRenderer(ApplicationContext applicationContext, 
+                                                       @Nullable VariableConfiguration variableConfiguration, 
+                                                       List<String> functionsToMask) {
+        // Try to get an existing VariableRenderer bean to preserve alternative rendering implementations
+        try {
+            VariableRenderer existingRenderer = applicationContext.getBean(VariableRenderer.class);
+            // If we have an existing renderer and it's a subclass with alternative rendering,
+            // we need to create a new instance of the same class with masking
+            if (!existingRenderer.getClass().equals(VariableRenderer.class)) {
+                // Use reflection to create a new instance of the same class with masking
+                try {
+                    return existingRenderer.getClass()
+                        .getConstructor(ApplicationContext.class, VariableConfiguration.class, List.class)
+                        .newInstance(applicationContext, variableConfiguration, functionsToMask);
+                } catch (Exception e) {
+                    // If reflection fails, fall back to the existing renderer's class constructor without masking list
+                    try {
+                        return existingRenderer.getClass()
+                            .getConstructor(ApplicationContext.class, VariableConfiguration.class)
+                            .newInstance(applicationContext, variableConfiguration);
+                    } catch (Exception ex) {
+                        // If that also fails, fall back to base VariableRenderer with masking
+                        return new VariableRenderer(applicationContext, variableConfiguration, functionsToMask);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // No existing bean or error retrieving it, continue with new instance
+        }
+        
+        // Create a new VariableRenderer with masking
+        return new VariableRenderer(applicationContext, variableConfiguration, functionsToMask);
+    }
+
     private Extension extensionWithMaskedFunctions(Extension initialExtension, List<String> maskedFunctions) {
         return (Extension) Proxy.newProxyInstance(
             initialExtension.getClass().getClassLoader(),

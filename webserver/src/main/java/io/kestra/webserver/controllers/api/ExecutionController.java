@@ -330,7 +330,7 @@ public class ExecutionController {
             execution,
             taskRun,
             false,
-            new VariableRenderer(applicationContext, variableConfiguration, List.of(SecretFunction.NAME))
+            VariableRenderer.createMaskedRenderer(applicationContext, variableConfiguration, List.of(SecretFunction.NAME))
         ).render(expression);
     }
 

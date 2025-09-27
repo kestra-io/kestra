@@ -699,22 +699,49 @@ public class Execution implements DeletedInterface, TenantInterface {
     public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun,
                                       boolean allowFailure, boolean allowWarning, State.Type terminalState) {
         List<TaskRun> taskRuns = this.findTaskRunByTasks(currentTasks, parentTaskRun);
-        var state = this
-            .findLastByState(taskRuns, State.Type.KILLED)
-            .map(taskRun -> taskRun.getState().getCurrent())
-            .or(() -> this
-                .findLastByState(taskRuns, State.Type.FAILED)
-                .map(taskRun -> taskRun.getState().getCurrent())
-            )
-            .or(() -> this
-                .findLastByState(taskRuns, State.Type.WARNING)
-                .map(taskRun -> taskRun.getState().getCurrent())
-            )
-            .or(() -> this
-                .findLastByState(taskRuns, State.Type.PAUSED)
-                .map(taskRun -> taskRun.getState().getCurrent())
-            )
-            .orElse(terminalState);
+        // Check current state of all task runs, considering only final states (not intermediate failed states from retries)
+        boolean hasKilled = false;
+        boolean hasFailed = false;
+        boolean hasWarning = false;
+        boolean hasPaused = false;
+
+        for (TaskRun taskRun : taskRuns) {
+            State.Type currentState = taskRun.getState().getCurrent();
+            // Only consider terminal states and exclude retrying states
+            if (currentState.isTerminated() || currentState.isPaused()) {
+                switch (currentState) {
+                    case KILLED:
+                        hasKilled = true;
+                        break;
+                    case FAILED:
+                        hasFailed = true;
+                        break;
+                    case WARNING:
+                        hasWarning = true;
+                        break;
+                    case PAUSED:
+                        hasPaused = true;
+                        break;
+                    default:
+                        // SUCCESS or other terminal states
+                        break;
+                }
+            }
+        }
+
+        // Determine final state based on priority: KILLED > FAILED > WARNING > PAUSED > SUCCESS
+        State.Type state;
+        if (hasKilled) {
+            state = State.Type.KILLED;
+        } else if (hasFailed) {
+            state = State.Type.FAILED;
+        } else if (hasWarning) {
+            state = State.Type.WARNING;
+        } else if (hasPaused) {
+            state = State.Type.PAUSED;
+        } else {
+            state = terminalState;
+        }
 
         if (state == State.Type.FAILED && allowFailure) {
             if (allowWarning) {

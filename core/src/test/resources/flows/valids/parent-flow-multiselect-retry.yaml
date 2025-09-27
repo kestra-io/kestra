@@ -1,0 +1,39 @@
+id: parent-flow-multiselect-retry
+namespace: io.kestra.tests
+description: Test parent flow with multiselect input and subflow retries
+
+inputs:
+  - id: box
+    type: MULTISELECT
+    values:
+      - Inbox
+      - Sent
+
+tasks:
+  - id: foreach
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: inbox
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ inputs.box contains 'Inbox' }}"
+        then:
+          - id: subflow_inbox
+            type: io.kestra.plugin.core.flow.Subflow
+            namespace: "{{ flow.namespace }}"
+            flowId: subflow-with-retry
+            retry:
+              type: constant
+              maxAttempt: 5
+              interval: PT3S
+      - id: sent
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ inputs.box contains 'Sent' }}"
+        then:
+          - id: subflow_sent
+            type: io.kestra.plugin.core.flow.Subflow
+            namespace: "{{ flow.namespace }}"
+            flowId: subflow-with-retry
+            retry:
+              type: constant
+              maxAttempt: 5
+              interval: PT3S

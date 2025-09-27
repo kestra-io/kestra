@@ -275,6 +275,14 @@ public abstract class AbstractScheduler implements Scheduler {
                     return;
                 }
 
+                // Prevent race condition: wait for trigger initialization before processing worker trigger results
+                if (!isReady()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Scheduler is not ready, waiting before processing worker trigger result");
+                    }
+                    Await.until(this::isReady);
+                }
+
                 WorkerTriggerResult workerTriggerResult = either.getLeft();
                 if (workerTriggerResult.getTrigger() instanceof RealtimeTriggerInterface && workerTriggerResult.getExecution().isPresent()) {
                     this.emitExecution(workerTriggerResult.getExecution().get(), workerTriggerResult.getTriggerContext());
@@ -305,8 +313,7 @@ public abstract class AbstractScheduler implements Scheduler {
     // Initialized local trigger state,
     // and if some flows were created outside the box, for example from the CLI,
     // then we may have some triggers that are not created yet.
-    /* FIXME: There is a race between Kafka stream consumption & initializedTriggers: we can override a trigger update coming from a stream consumption with an old one because stream consumption is not waiting for trigger initialization
-    *   Example: we see a SUCCESS execution so we reset the trigger's executionId but then the initializedTriggers resubmits an old trigger state for some reasons (evaluationDate for eg.) */
+    // Race condition between queue consumption & initializedTriggers is now prevented by checking isReady() in queue listeners
     private void initializedTriggers(List<FlowWithSource> flows) {
         record FlowAndTrigger(FlowWithSource flow, AbstractTrigger trigger) {
             @Override

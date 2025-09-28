@@ -1538,6 +1538,9 @@
       "force-editor": "Enforce editor view",
       "auto-view": "Auto view",
       "view": "View"
-    }
+    },
+    "save_layout": "Save tabs as default layout",
+    "layout_saved": "Layout saved as default",
+    "no_layout_to_save": "No tabs are open to save the layout"
   }
 }

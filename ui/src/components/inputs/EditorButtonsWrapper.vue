@@ -31,13 +31,15 @@
             "
             @export="exportYaml"
             @delete-flow="deleteFlow"
+            @save-layout="saveCurrentLayout"
             :isNamespace="false"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, getCurrentInstance} from "vue";
+    import {computed, getCurrentInstance, inject} from "vue";
+    import type {Ref} from "vue"
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import EditorButtons from "./EditorButtons.vue";
@@ -67,6 +69,8 @@
     const routeParams = computed(() => route.params)
 
     const {translateError, translateErrorWithKey} = useFlowOutdatedErrors();
+
+    const openTabs = inject<Ref<string[]>>("openTabs");
 
     // If playground is not defined, enable it by default
     const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "false" ? false : true);
@@ -136,6 +140,16 @@
                 toast.error(`Failed to delete flow ${flowId}`);
             });
     };
+
+    const saveCurrentLayout = () => {
+        if (openTabs?.value.length) {
+            localStorage.setItem("flowCreateLayout", JSON.stringify(openTabs.value));
+            toast.success(t("layout_saved"));
+        }
+        else {
+            toast.error(t("no_layout_to_save"));
+        }
+    }
 </script>
 
 <style lang="scss" scoped>

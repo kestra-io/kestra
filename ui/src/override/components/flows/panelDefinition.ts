@@ -15,7 +15,10 @@ import PluginDocumentationWrapper from "../../../components/plugins/PluginDocume
 import BlueprintsWrapper from "../../../components/flows/blueprints/BlueprintsWrapper.vue";
 import {storageKeys} from "../../../utils/constants";
 
+
 export const DEFAULT_ACTIVE_TABS = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE" ? ["nocode", "doc"] : ["code", "doc"]
+
+export const OVERRIDE_DEFAULT_TABS = getFlowCreateLayout()
 
 export const EDITOR_ELEMENTS = [
     {
@@ -67,3 +70,18 @@ export const EDITOR_ELEMENTS = [
         component: markRaw(BlueprintsWrapper),
     }
 ]
+
+function getFlowCreateLayout() {
+    const stored = localStorage.getItem("flowCreateLayout")
+    if (!stored) {
+        return DEFAULT_ACTIVE_TABS
+    }
+
+    try {
+        return JSON.parse(stored)
+    } catch (error) {
+        console.warn("Failed to parse flowCreateLayout from localStorage:", error)
+
+        return DEFAULT_ACTIVE_TABS
+    }
+}

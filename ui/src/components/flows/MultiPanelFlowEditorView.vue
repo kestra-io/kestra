@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue";
+    import {computed, markRaw, onMounted, onUnmounted, ref, watch, provide} from "vue";
     import {useRoute} from "vue-router";
     import Utils from "../../utils/utils";
     import {useStorage} from "@vueuse/core";
@@ -33,7 +33,7 @@
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import KeyShortcuts from "../inputs/KeyShortcuts.vue";
     import NoCode from "../no-code/NoCode.vue";
-    import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
+    import {OVERRIDE_DEFAULT_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
     import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
     import {useTopologyPanels} from "./useTopologyPanels";
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts";
@@ -89,6 +89,8 @@
     }
 
     const openTabs = ref<string[]>([])
+
+    provide("openTabs", openTabs);
 
     const defaultPanelSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length));
 
@@ -176,7 +178,7 @@
 
     const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, tempActions)
 
-    const TABS = isTourRunning.value ? DEFAULT_TOUR_TABS.flatMap(t => t.tabs) : DEFAULT_ACTIVE_TABS;
+    const TABS = isTourRunning.value ? DEFAULT_TOUR_TABS.flatMap(t => t.tabs) : OVERRIDE_DEFAULT_TABS;
 
     flowStore.creationId = flowStore.creationId ?? Utils.uid()
 

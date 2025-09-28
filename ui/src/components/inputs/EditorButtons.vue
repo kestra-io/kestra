@@ -16,6 +16,13 @@
                         {{ t("flow_export") }}
                     </el-dropdown-item>
                     <el-dropdown-item
+                        :icon="ViewGrid"
+                        size="large"
+                        @click="forwardEvent('save-layout')"
+                    >
+                        {{ t("save_layout") }}
+                    </el-dropdown-item>
+                    <el-dropdown-item
                         v-if="!isCreating && canDelete"
                         :icon="Delete"
                         size="large"
@@ -60,6 +67,7 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Download from "vue-material-design-icons/Download.vue";
+    import ViewGrid from "vue-material-design-icons/ViewGrid.vue";
     import {usePlaygroundStore} from "../../stores/playground";
     import {useEditorStore} from "../../stores/editor";
 
@@ -84,7 +92,8 @@
         "delete-flow",
         "copy",
         "save",
-        "export"
+        "export",
+        "save-layout"
     ])
 
     const hasErrors = computed(() => props.errors && props.errors.length > 0);

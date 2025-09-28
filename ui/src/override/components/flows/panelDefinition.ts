@@ -78,7 +78,13 @@ function getFlowCreateLayout() {
     }
 
     try {
-        return JSON.parse(stored)
+        const tabs = JSON.parse(stored)
+
+        if (!tabs.length) {
+            return DEFAULT_ACTIVE_TABS
+        }
+
+        return tabs
     } catch (error) {
         console.warn("Failed to parse flowCreateLayout from localStorage:", error)
 

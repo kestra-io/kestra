@@ -45,6 +45,7 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.ExecutionStreamingService;
+import io.kestra.core.runners.SecureVariableRendererFactory;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.kestra.webserver.utils.filepreview.FileRender;
@@ -202,6 +203,9 @@ public class ExecutionController {
     @Inject
     private LocalPathFactory localPathFactory;
 
+    @Inject
+    private SecureVariableRendererFactory secureVariableRendererFactory;
+
     @Value("${" + LocalPath.ENABLE_PREVIEW_CONFIG + ":true}")
     private boolean enableLocalFilePreview;
 
@@ -331,7 +335,7 @@ public class ExecutionController {
             execution,
             taskRun,
             false,
-            new VariableRenderer(applicationContext, variableConfiguration, List.of(SecretFunction.NAME))
+            secureVariableRendererFactory.createDebugRenderer()
         ).render(expression);
     }
 

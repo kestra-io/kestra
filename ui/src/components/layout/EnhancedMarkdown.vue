@@ -384,14 +384,34 @@
         toggle.setAttribute("aria-controls", contentId);
 
         const setExpanded = (expanded: boolean) => {
-            wrapper.classList.toggle("is-open", expanded);
-            toggle.setAttribute("aria-expanded", String(expanded));
-            content.setAttribute("aria-hidden", String(!expanded));
             const action = expanded ? "Hide" : "Show";
             label.textContent = `${action} ${baseLabel}`;
+            toggle.setAttribute("aria-expanded", String(expanded));
+            content.setAttribute("aria-hidden", String(!expanded));
+
+            if (expanded) {
+                wrapper.classList.add("is-open");
+                content.style.maxHeight = `${content.scrollHeight}px`;
+                const onTransitionEnd = () => {
+                    if (wrapper.classList.contains("is-open")) {
+                        content.style.maxHeight = "none";
+                    }
+                    content.removeEventListener("transitionend", onTransitionEnd);
+                };
+                content.addEventListener("transitionend", onTransitionEnd, {once: true});
+            } else {
+                wrapper.classList.remove("is-open");
+                if (content.style.maxHeight === "none" || content.style.maxHeight === "") {
+                    content.style.maxHeight = `${content.scrollHeight}px`;
+                }
+                requestAnimationFrame(() => {
+                    content.style.maxHeight = "0px";
+                });
+            }
         };
 
         setExpanded(false);
+        content.style.maxHeight = "0px";
 
         const onToggle = () => {
             const expanded = toggle.getAttribute("aria-expanded") !== "true";
@@ -900,7 +920,6 @@
     }
 
     :deep(.doc-example.is-open .doc-example__content) {
-        max-height: 1200px;
         opacity: 1;
         padding: 1rem;
     }

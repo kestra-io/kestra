@@ -306,53 +306,72 @@ Kestra has a [Pebble templating engine](https://kestra.io/docs/concepts/pebble) 
 | Filter           | Example and Description                                                                                                          |
 |------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | `abs`            | `{{ -7 \| abs }}` — Returns the absolute value of -7, resulting in 7.                                                            |
-| `number`         | `{{ "123" \| number }}` — Parses the string "123" into the number 123.                                                           |
-| `numberFormat`   | `{{ 12345.6789 \| numberFormat("###,###.##") }}` — Formats the number 12345.6789 as "12,345.68".                                 |
-| `replace`        | `{{ "Hello world!" \| replace({'world': 'Kestra'}) }}` — Replaces "world" with "Kestra", resulting in "Hello, Kestra!".          |
-| `yaml`           | `{{ myObject \| yaml }}` — Converts `myObject` into a YAML string.                                                               |
-| `indent`         | `{{ "Hello\nworld" \| indent(4) }}` — Adds 4 spaces before each line except the first, resulting in "Hello\n    world".          |
-| `nindent`        | `{{ "Hello\nworld" \| nindent(4) }}` — Adds a newline and then 4 spaces before each line, resulting in "\n    Hello\n    world". |
-| `toJson`         | `{{ myObject \| toJson }}` — Converts `myObject` into a JSON string.                                                             |
-| `toIon`          | `{{ myObject \| toIon }}` — Converts `myObject` into a ION string.                                                               |
-| `jq`             | `{{ myObject \| jq(".foo") }}` — Applies JQ expression to extract the "foo" property from `myObject`.                            |
-| `length`         | `{{ "Hello" \| length }}` — Returns the length of "Hello", which is 5.                                                           |
-| `merge`          | `{{ [1, 2] \| merge([3, 4]) }}` — Merges two lists, resulting in [1, 2, 3, 4].                                                   |
-| `reverse`        | `{{ [1, 2, 3] \| reverse }}` — Reverses the list, resulting in [3, 2, 1].                                                        |
-| `rsort`          | `{{ [3, 1, 2] \| rsort }}` — Sorts the list in reverse order, resulting in [3, 2, 1].                                            |
-| `slice`          | `{{ "Hello, world!" \| slice(0, 5) }}` — Extracts a substring, resulting in "Hello".                                             |
-| `sort`           | `{{ [3, 1, 2] \| sort }}` — Sorts the list in ascending order, resulting in [1, 2, 3].                                           |
-| `split`          | `{{ "a,b,c" \| split(",") }}` — Splits the string into a list, resulting in ["a", "b", "c"].                                     |
+| `abbreviate`     | `{{ "this is a long sentence." \| abbreviate(7) }}` — Shortens a string using an ellipsis. The length includes the ellipsis. |
+| `base64Decode`   | `{{ "aGVsbG8=" \| base64Decode }}` — Decodes the base64 string, resulting in "hello".                                            |
+| `base64decode`   | `{{ "dGVzdA==" \| base64decode }}` — Decodes a base64-encoded string into UTF-8. |
+| `base64Encode`   | `{{ "hello" \| base64Encode }}` — Encodes the string in base64, resulting in "aGVsbG8=".                                         |
+| `base64encode`   | `{{ "test" \| base64encode }}` — Encodes a string to base64. |
 | `capitalize`     | `{{ "hello" \| capitalize }}` — Capitalizes the first letter, resulting in "Hello".                                              |
-| `join`           | `{{ ["a", "b", "c"] \| join(",") }}` — Joins the list into a string, resulting in "a,b,c".                                       |
-| `keys`           | `{{ {"a": 1, "b": 2} \| keys }}` — Returns the keys of the map, resulting in ["a", "b"].                                         |
+| `chunk`          | `{{ [1, 2, 3, 4] \| chunk(2) }}` — Splits the list into chunks of size 2, resulting in [[1, 2], [3, 4]].                         |
+| `className`      | `{{ "12.3" \| number \| className }}` — Returns the class name of an object. |
 | `date`           | `{{ execution.startDate \| date("yyyy-MM-dd") }}` — Formats the date as "yyyy-MM-dd".                                            |
 | `dateAdd`        | `{{ execution.startDate \| dateAdd(1, "DAYS") }}` — Adds 1 day to the date.                                                      |
+| `default`        | `{{ myVar \| default("default value") }}` — Returns "default value" if `myVar` is null or empty.                                 |
+| `distinct`       | `{{ ['1', '1', '2', '3'] \| distinct }}` — Returns a list of unique elements, resulting in [1, 2, 3].                            |
+| `escapeChar`     | `{{ "Can't be here" \| escapeChar('single') }}` — Escapes special characters in a string. |
+| `fileExists`     | `{{ fileExists(output.download.uri) }}` — Returns true if file is present at the given uri location.                             |
+| `fileSize`       | `{{ fileSize(output.download.uri) }}` — Returns the size of the file present at the given uri location.                          |
+| `first`          | `{{ [1, 2, 3] \| first }}` — Returns the first element of the list, resulting in 1.                                              |
+| `flatten`        | `{{ [[1, 2], [3, 4]] \| flatten }}` — Flattens a nested list, resulting in [1, 2, 3, 4].                                         |
+| `http`           | `{{ http(uri = 'https://dummyjson.com/products/categories') }}` — Fetches data from an external API directly. |
+| `indent`         | `{{ "Hello\nworld" \| indent(4) }}` — Adds 4 spaces before each line except the first, resulting in "Hello\n    world".          |
+| `isFileEmpty`    | `{{ isFileEmpty(output.download.uri) }}` — Returns true if file present at the given uri location is empty.                      |
+| `isIn`           | `{{ execution.state isIn ['SUCCESS', 'KILLED', 'CANCELLED'] }}` — Returns true if the value on the left is present in the list on the right. Useful for conditions such as `runIf`. |
+| `join`           | `{{ ["a", "b", "c"] \| join(",") }}` — Joins the list into a string, resulting in "a,b,c".                                       |
+| `jq`             | `{{ myObject \| jq(".foo") }}` — Applies JQ expression to extract the "foo" property from `myObject`.                            |
+| `keys`           | `{{ {"a": 1, "b": 2} \| keys }}` — Returns the keys of the map, resulting in ["a", "b"].                                         |
+| `last`           | `{{ [1, 2, 3] \| last }}` — Returns the last element of the list, resulting in 3.                                                |
+| `length`         | `{{ "Hello" \| length }}` — Returns the length of "Hello", which is 5.                                                           |
+| `lower`          | `{{ "HELLO" \| lower }}` — Converts the string to lowercase, resulting in "hello".                                               |
+| `md5`            | `{{ "hello" \| md5 }}` — Computes the MD5 hash of the string.                                                                    |
+| `merge`          | `{{ [1, 2] \| merge([3, 4]) }}` — Merges two lists, resulting in [1, 2, 3, 4].                                                   |
+| `nindent`        | `{{ "Hello\nworld" \| nindent(4) }}` — Adds a newline and then 4 spaces before each line, resulting in "\n    Hello\n    world". |
+| `number`         | `{{ "123" \| number }}` — Parses the string "123" into the number 123.                                                           |
+| `numberFormat`   | `{{ 12345.6789 \| numberFormat("###,###.##") }}` — Formats the number 12345.6789 as "12,345.68".                                 |
+| `randomInt`      | `{{ randomInt(1, 10) }}` — Generates a random integer from a specified range. |
+| `randomPort`     | `{{ randomPort() }}` — Generate a random available port. |
+| `replace`        | `{{ "Hello world!" \| replace({'world': 'Kestra'}) }}` — Replaces "world" with "Kestra", resulting in "Hello, Kestra!".          |
+| `reverse`        | `{{ [1, 2, 3] \| reverse }}` — Reverses the list, resulting in [3, 2, 1].                                                        |
+| `rsort`          | `{{ [3, 1, 2] \| rsort }}` — Sorts the list in reverse order, resulting in [3, 2, 1].                                            |
+| `sha1`           | `{{ "hello" \| sha1 }}` — Computes the SHA-1 hash of the string.                                                                 |
+| `sha256`         | `{{ "hello" \| sha256 }}` — Computes the SHA-256 hash of the string.                                                             |
+| `sha512`         | `{{ "hello" \| sha512 }}` — Computes the SHA-512 hash of the string.                                                             |
+| `slice`          | `{{ "Hello, world!" \| slice(0, 5) }}` — Extracts a substring, resulting in "Hello".                                             |
+| `slugify`        | `{{ "Hello World!" \| slugify }}` — Converts a string to a URL-friendly format. |
+| `sort`           | `{{ [3, 1, 2] \| sort }}` — Sorts the list in ascending order, resulting in [1, 2, 3].                                           |
+| `split`          | `{{ "a,b,c" \| split(",") }}` — Splits the string into a list, resulting in ["a", "b", "c"].                                     |
+| `startsWith`     | `{{ "hello world" \| startsWith("hello") }}` — Checks if a string starts with a given prefix. |
+| `string`         | `{{ 123 \| string }}` — Converts 123 into a string.                                                                              |
+| `substringAfter` | `{{ "a.b.c" \| substringAfter(".") }}` — Extracts the substring after the first occurrence of a separator. |
+| `substringAfterLast` | `{{ "a.b.c" \| substringAfterLast(".") }}` — Extracts the substring after the last occurrence of a separator. |
+| `substringBefore` | `{{ "a.b.c" \| substringBefore(".") }}` — Extracts the substring before the first occurrence of a separator. |
+| `substringBeforeLast` | `{{ "a.b.c" \| substringBeforeLast(".") }}` — Extracts the substring before the last occurrence of a separator. |
+| `tasksWithState` | `{{ tasksWithState('failed') }}` — Returns a map of tasks and their states. |
 | `timestamp`      | `{{ execution.startDate \| timestamp }}` — Converts the date to a Unix timestamp in seconds.                                     |
 | `timestampMicro` | `{{ execution.startDate \| timestampMicro }}` — Converts the date to a Unix timestamp in microseconds.                           |
 | `timestampMilli` | `{{ execution.startDate \| timestampMilli }}` — Converts the date to a Unix timestamp in milliseconds.                           |
 | `timestampNano`  | `{{ execution.startDate \| timestampNano }}` — Converts the date to a Unix timestamp in nanoseconds.                             |
-| `default`        | `{{ myVar \| default("default value") }}` — Returns "default value" if `myVar` is null or empty.                                 |
+| `title`          | `{{ "article title" \| title }}` — Capitalizes the first letter of each word. |
+| `toIon`          | `{{ myObject \| toIon }}` — Converts `myObject` into a ION string.                                                               |
+| `toJson`         | `{{ myObject \| toJson }}` — Converts `myObject` into a JSON string.                                                             |
 | `trim`           | `{{ " Hello " \| trim }}` — Trims leading and trailing whitespace, resulting in "Hello".                                         |
-| `lower`          | `{{ "HELLO" \| lower }}` — Converts the string to lowercase, resulting in "hello".                                               |
 | `upper`          | `{{ "hello" \| upper }}` — Converts the string to uppercase, resulting in "HELLO".                                               |
-| `first`          | `{{ [1, 2, 3] \| first }}` — Returns the first element of the list, resulting in 1.                                              |
-| `last`           | `{{ [1, 2, 3] \| last }}` — Returns the last element of the list, resulting in 3.                                                |
-| `distinct`       | `{{ ['1', '1', '2', '3'] \| distinct }}` — Returns a list of unique elements, resulting in [1, 2, 3].                            |
-| `urlEncode`      | `{{ "a b" \| urlEncode }}` — URL encodes the string, resulting in "a%20b".                                                       |
 | `urlDecode`      | `{{ "a%20b" \| urlDecode }}` — URL decodes the string, resulting in "a b".                                                       |
-| `base64Encode`   | `{{ "hello" \| base64Encode }}` — Encodes the string in base64, resulting in "aGVsbG8=".                                         |
-| `base64Decode`   | `{{ "aGVsbG8=" \| base64Decode }}` — Decodes the base64 string, resulting in "hello".                                            |
-| `md5`            | `{{ "hello" \| md5 }}` — Computes the MD5 hash of the string.                                                                    |
-| `sha1`           | `{{ "hello" \| sha1 }}` — Computes the SHA-1 hash of the string.                                                                 |
-| `sha256`         | `{{ "hello" \| sha256 }}` — Computes the SHA-256 hash of the string.                                                             |
-| `sha512`         | `{{ "hello" \| sha512 }}` — Computes the SHA-512 hash of the string.                                                             |
-| `flatten`        | `{{ [[1, 2], [3, 4]] \| flatten }}` — Flattens a nested list, resulting in [1, 2, 3, 4].                                         |
-| `chunk`          | `{{ [1, 2, 3, 4] \| chunk(2) }}` — Splits the list into chunks of size 2, resulting in [[1, 2], [3, 4]].                         |
-| `fileSize`       | `{{ fileSize(output.download.uri) }}` — Returns the size of the file present at the given uri location.                          |
-| `fileExists`     | `{{ fileExists(output.download.uri) }}` — Returns true if file is present at the given uri location.                             |
-| `isFileEmpty`    | `{{ isFileEmpty(output.download.uri) }}` — Returns true if file present at the given uri location is empty.                      |
-| `string`         | `{{ 123 \| string }}` — Converts 123 into a string.                                                                              |
-| `isIn`           | `{{ execution.state isIn ['SUCCESS', 'KILLED', 'CANCELLED'] }}` — Returns true if the value on the left is present in the list on the right. Useful for conditions such as `runIf`. |
+| `urlEncode`      | `{{ "a b" \| urlEncode }}` — URL encodes the string, resulting in "a%20b".                                                       |
+| `uuid`           | `{{ uuid() }}` — Generates a UUID in the Kestra format (i.e., a UUID encoded in Url62). |
+| `values`         | `{{ {'foo': 'bar', 'baz': 'qux'} \| values }}` — Retrieves the values from a map. |
+| `yaml`           | `{{ myObject \| yaml }}` — Converts `myObject` into a YAML string.                                                               |
+
 
 
 ### Links to learn more

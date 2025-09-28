@@ -52,18 +52,19 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     protected final JdbcFilterService filterService;
 
     protected Map<Logs.Fields, String> getFieldsMapping() {
-      return Map.of(
-          Logs.Fields.DATE, DATE_COLUMN,
-          Logs.Fields.NAMESPACE, "namespace",
-          Logs.Fields.FLOW_ID, "flow_id",
-          Logs.Fields.TASK_ID, "task_id",
-          Logs.Fields.EXECUTION_ID, "execution_id",
-          Logs.Fields.TASK_RUN_ID, "taskrun_id",
-          Logs.Fields.ATTEMPT_NUMBER, "attempt_number",
-          Logs.Fields.TRIGGER_ID, "trigger_id",
-          Logs.Fields.LEVEL, "level",
-          Logs.Fields.MESSAGE, "message"
-      );
+        Map<Logs.Fields, String> mapping = new HashMap<>();
+        mapping.put(Logs.Fields.DATE, DATE_COLUMN);
+        mapping.put(Logs.Fields.NAMESPACE, "namespace");
+        mapping.put(Logs.Fields.FLOW_ID, "flow_id");
+        mapping.put(Logs.Fields.TASK_ID, "task_id");
+        mapping.put(Logs.Fields.EXECUTION_ID, "execution_id");
+        mapping.put(Logs.Fields.TASK_RUN_ID, "taskrun_id");
+        mapping.put(Logs.Fields.ATTEMPT_NUMBER, "attempt_number");
+        mapping.put(Logs.Fields.TRIGGER_ID, "trigger_id");
+        mapping.put(Logs.Fields.LEVEL, "level");
+        mapping.put(Logs.Fields.MESSAGE, "message");
+        mapping.put(Logs.Fields.RESOURCES, "type");
+        return mapping;
     }
 
     protected Map<Logs.Fields, String> getWhereMapping() {

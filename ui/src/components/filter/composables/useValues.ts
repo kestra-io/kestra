@@ -53,6 +53,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         ],
         LEVELS: buildFromArray(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]),
         TYPES: auditLogTypes,
+        AUDIT_LOG_TYPES: auditLogTypes,
         PERMISSIONS: buildFromObject(permission),
         ACTIONS: buildFromObject({
             ...action,

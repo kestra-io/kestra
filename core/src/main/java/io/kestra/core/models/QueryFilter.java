@@ -168,6 +168,12 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS);
             }
+        },
+        RESOURCES("resources") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.IN, Op.NOT_IN);
+            }
         };
 
         private static final Map<String, Field> BY_VALUE = Arrays.stream(values())
@@ -219,7 +225,7 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.START_DATE,
-                    Field.END_DATE, Field.FLOW_ID, Field.TRIGGER_ID, Field.MIN_LEVEL, Field.EXECUTION_ID
+                    Field.END_DATE, Field.FLOW_ID, Field.TRIGGER_ID, Field.MIN_LEVEL, Field.EXECUTION_ID, Field.RESOURCES
                 );
             }
         },

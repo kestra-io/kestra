@@ -63,6 +63,11 @@ const logFilterKeys: Record<string, FilterKeyCompletions> = {
         undefined,
         true
     ),
+    resources: new FilterKeyCompletions(
+        [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.CONTAINS, Comparators.IN, Comparators.NOT_IN],
+        async (hardcodedValues) => hardcodedValues.AUDIT_LOG_TYPES,
+        true
+    ),
 };
 
 class LogFilterLanguage extends FilterLanguage {

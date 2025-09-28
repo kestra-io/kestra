@@ -31,6 +31,14 @@ public interface ILogs extends IData<ILogs.Fields> {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));
                 });
             }
+
+            List<QueryFilter> resourceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.RESOURCES)).toList();
+            if (!resourceFilters.isEmpty()) {
+                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.RESOURCES));
+                resourceFilters.forEach(f -> {
+                    updatedWhere.add(f.toDashboardFilterBuilder(Fields.RESOURCES, f.value()));
+                });
+            }
         }
 
         if (startDate != null || endDate != null) {
@@ -56,6 +64,7 @@ public interface ILogs extends IData<ILogs.Fields> {
         ATTEMPT_NUMBER,
         TRIGGER_ID,
         LEVEL,
-        MESSAGE
+        MESSAGE,
+        RESOURCES
     }
 }

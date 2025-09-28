@@ -13,6 +13,8 @@ export enum Comparators {
     CONTAINS = "*=",
     REGEX = "~=",
     PREFIX = "^.=",
+    IN = "IN",
+    NOT_IN = "NOT_IN",
 }
 
 export function keyOfComparator(comparator: Comparators): keyof typeof Comparators {

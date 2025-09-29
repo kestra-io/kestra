@@ -70,7 +70,7 @@
 
         return folded;
     }
-  
+
     function disabledCurrentRoute(items) {
         return items
             .map(r => {

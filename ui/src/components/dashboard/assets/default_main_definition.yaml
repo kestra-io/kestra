@@ -88,7 +88,7 @@ charts:
         enabled: true
       column: date
       colorByColumn: state
-      width: 3
+      width: 9
     data:
       type: io.kestra.plugin.core.dashboard.data.Executions
       columns:

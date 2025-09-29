@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
 class PollingTest {
@@ -17,10 +18,10 @@ class PollingTest {
             flow = "flows/tests/trigger-polling.yaml",
             triggerId = "polling-trigger-1"
     )
-    void testPollingTrigger(Optional<Execution> executionOptional) {
-        assertThat(executionOptional).isPresent();
-        Execution execution = executionOptional.get();
+    void pollingTriggerSuccess(Optional<Execution> optionalExecution) {
+        assertThat(optionalExecution).isPresent();
+        Execution execution = optionalExecution.get();
         assertThat(execution.getFlowId()).isEqualTo("polling-flow");
-        assertThat(execution.getState().getCurrent()).isNotNull();
+        assertTrue(execution.getState().getCurrent().isCreated());
     }
 }

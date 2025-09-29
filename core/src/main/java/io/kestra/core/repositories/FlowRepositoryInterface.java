@@ -163,5 +163,5 @@ public interface FlowRepositoryInterface {
 
     FlowWithSource delete(FlowInterface flow);
 
-    Boolean existForTenant(String tenantId);
+    Boolean existAnyNoAcl(String tenantId);
 }

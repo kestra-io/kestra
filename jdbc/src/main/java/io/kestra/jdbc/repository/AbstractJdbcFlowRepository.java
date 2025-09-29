@@ -783,7 +783,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public Boolean existForTenant(String tenantId){
+    public Boolean existAnyNoAcl(String tenantId){
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {

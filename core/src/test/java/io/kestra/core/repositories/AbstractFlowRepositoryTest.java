@@ -674,9 +674,9 @@ public abstract class AbstractFlowRepositoryTest {
         flowDeleted = flowRepository.create(GenericFlow.of(flowDeleted));
 
         try {
-            assertTrue(flowRepository.existForTenant(tenantFlowExist));
-            assertFalse(flowRepository.existForTenant("not_found"));
-            assertFalse(flowRepository.existForTenant(tenantFlowDeleted));
+            assertTrue(flowRepository.existAnyNoAcl(tenantFlowExist));
+            assertFalse(flowRepository.existAnyNoAcl("not_found"));
+            assertFalse(flowRepository.existAnyNoAcl(tenantFlowDeleted));
         } finally {
             deleteFlow(flowExist);
             deleteFlow(flowDeleted);

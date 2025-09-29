@@ -652,6 +652,7 @@
       },
       "text_search": "이 텍스트 검색"
     },
+    "fix_with_ai": "AI로 수정",
     "flow": "Flow",
     "flow already exists": "Flow가 이미 존재합니다",
     "flow creation": "Flow 생성",
@@ -668,6 +669,7 @@
     "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
     "flow_export": "flow 내보내기",
     "flow_only": "Flow 탭에서만 사용 가능합니다.",
+    "flow_outputs": "Flow Outputs",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> 개의 flow가 삭제되었습니다",
     "flows disabled": "<code>{count}</code> 개의 flow가 비활성화되었습니다",
@@ -773,6 +775,7 @@
     "metrics": "메트릭",
     "min": "Min",
     "minutes": "분",
+    "missingSource": "소스 누락",
     "monogram": "모노그램",
     "months": "개월",
     "multi_panel_editor": {
@@ -1058,6 +1061,7 @@
     "pause confirm": "실행 <code>{id}</code>을(를) 일시 중지하시겠습니까?",
     "pause done": "실행이 PAUSED 상태입니다.",
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
+    "paused": "일시 중지됨",
     "playground": {
       "clear_history": "기록 지우기",
       "confirm_create": "flow를 생성하는 동안에는 playground를 실행할 수 없습니다. playground 실행을 시작하면 flow가 생성됩니다.",
@@ -1425,6 +1429,7 @@
       "zoom-out": "축소",
       "zoom-reset": "확대/축소 재설정"
     },
+    "total_duration": "총 지속 시간",
     "total_executions": "총 실행 횟수",
     "trigger": "Trigger",
     "trigger details": "Trigger 세부 정보",

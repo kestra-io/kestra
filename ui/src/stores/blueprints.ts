@@ -9,7 +9,7 @@ interface Blueprint {
 interface BlueprintOptions {
     kind?: string;
     type: string;
-    id: string;
+    id?: string;
     params?: Record<string, any>;
 }
 

@@ -9,16 +9,4 @@ public class H2ExecutionRepositoryTest extends AbstractJdbcExecutionRepositoryTe
     protected void mappingConflict() {
 
     }
-
-    @Test
-    @Override
-    protected void findTaskRun() {
-
-    }
-
-    @Test
-    @Override
-    protected void taskRunsDailyStatistics() {
-
-    }
 }

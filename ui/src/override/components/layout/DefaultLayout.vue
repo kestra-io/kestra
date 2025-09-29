@@ -1,5 +1,5 @@
 <template>
-    <LeftMenu v-if="miscStore.configs" @menu-collapse="onMenuCollapse" />
+    <LeftMenu v-if="miscStore.configs && !layoutStore.sideMenuCollapsed" @menu-collapse="onMenuCollapse" />
     <main>
         <Errors v-if="coreStore.error" :code="coreStore.error" />
         <slot v-else />
@@ -17,20 +17,20 @@
     import Errors from "../../../components/errors/Errors.vue"
     import ContextInfoBar from "../../../components/ContextInfoBar.vue"
     import SurveyDialog from "../../../components/SurveyDialog.vue"
-    import {onMounted, ref} from "vue"
+    import {onMounted, ref, watch} from "vue"
     import {useSurveySkip} from "../../../composables/useSurveyData"
     import {useCoreStore} from "../../../stores/core"
     import {useMiscStore} from "override/stores/misc"
+    import {useLayoutStore} from "../../../stores/layout"
 
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
+    const layoutStore = useLayoutStore()
     const {markSurveyDialogShown} = useSurveySkip()
     const showSurveyDialog = ref(false)
 
     const onMenuCollapse = (collapse) => {
-        const htmlElement = document.documentElement
-        htmlElement.classList.toggle("menu-collapsed", collapse)
-        htmlElement.classList.toggle("menu-not-collapsed", !collapse)
+        layoutStore.setSideMenuCollapsed(collapse)
     }
 
     const handleSurveyDialogClose = () => {
@@ -49,8 +49,11 @@
     }
 
     onMounted(() => {
-        const isMenuCollapsed = localStorage.getItem("menuCollapsed") === "true"
-        onMenuCollapse(isMenuCollapsed)
+        onMenuCollapse(layoutStore.sideMenuCollapsed)
         checkForSurveyDialog()
+    })
+
+    watch(() => layoutStore.sideMenuCollapsed, (val) => {
+        onMenuCollapse(val)
     })
 </script>

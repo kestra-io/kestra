@@ -130,7 +130,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import {useCoreStore} from "../../../stores/core.js";
+    import {useCoreStore} from "../../../stores/core";
 
     export default {
         computed: {

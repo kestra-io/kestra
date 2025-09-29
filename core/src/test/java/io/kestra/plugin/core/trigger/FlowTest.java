@@ -168,12 +168,12 @@ class FlowTest {
         Optional<Execution> evaluate = flowTrigger.evaluate(multipleConditionStorage, runContextFactory.of(), flow, execution);
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getLabels()).hasSize(6);
+        assertThat(evaluate.get().getLabels()).hasSize(5);
         assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
         assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-2", "flow-label-2"));
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-1", "trigger-label-1"));
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-2", "trigger-label-2"));
-        assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-3", ""));
+        assertThat(evaluate.get().getLabels()).doesNotContain(new Label("trigger-label-3", ""));
         assertThat(evaluate.get().getLabels()).contains(new Label(Label.CORRELATION_ID, "correlationId"));
         assertThat(evaluate.get().getTrigger()).extracting(ExecutionTrigger::getVariables).hasFieldOrProperty("executionLabels");
         assertThat(evaluate.get().getTrigger().getVariables().get("executionLabels")).isEqualTo(Map.of("execution-label", "execution"));

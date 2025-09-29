@@ -7,7 +7,7 @@ import {useValues} from "../../../../components/filter/composables/useValues";
 import {Comparators, Completion, PICK_DATE_VALUE} from "./filterCompletion";
 import loadFilterLanguages from "override/services/filterLanguagesProvider";
 import IWordAtPosition = editor.IWordAtPosition;
-import {usePluginsStore} from "../../../../stores/plugins.ts";
+import {usePluginsStore} from "../../../../stores/plugins";
 
 const legacyFilterRegex = /.*((?<=.)-)?legacy-filter/;
 export const languages = [/.*((?<=.)-)?filter/, legacyFilterRegex];

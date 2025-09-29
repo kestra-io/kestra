@@ -652,6 +652,7 @@
       },
       "text_search": "Cerca questo testo"
     },
+    "fix_with_ai": "Correggi con AI",
     "flow": "Flow",
     "flow already exists": "Flow già esistente",
     "flow creation": "Creazione del flow",
@@ -668,6 +669,7 @@
     "flow-no-dependencies": "Il tuo flow non ha dipendenze",
     "flow_export": "Esporta flow",
     "flow_only": "Disponibile solo nella scheda Flow.",
+    "flow_outputs": "Output del Flow",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow eliminati",
     "flows disabled": "<code>{count}</code> Flow disabilitati",
@@ -773,6 +775,7 @@
     "metrics": "Metriche",
     "min": "Min",
     "minutes": "Minuti",
+    "missingSource": "Sorgente mancante",
     "monogram": "Monogramma",
     "months": "Mesi",
     "multi_panel_editor": {
@@ -1058,6 +1061,7 @@
     "pause confirm": "Sei sicuro di mettere in pausa l'esecuzione <code>{id}</code>?",
     "pause done": "L'esecuzione è PAUSED",
     "pause title": "Metti in pausa l'esecuzione <code>{id}</code>.<br/>Nota che i task attualmente in esecuzione verranno comunque elaborati e l'esecuzione dovrà essere ripresa manualmente.",
+    "paused": "PAUSED",
     "playground": {
       "clear_history": "Cancella cronologia",
       "confirm_create": "Non puoi eseguire il playground mentre crei un flow. Avviare un'esecuzione del playground creerà il flow.",
@@ -1425,6 +1429,7 @@
       "zoom-out": "Zoom indietro",
       "zoom-reset": "Reimposta zoom"
     },
+    "total_duration": "Durata totale",
     "total_executions": "Esecuzioni Totali",
     "trigger": "Trigger",
     "trigger details": "Dettagli del trigger",

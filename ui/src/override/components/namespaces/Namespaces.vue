@@ -1,5 +1,5 @@
 <template>
-    <Navbar :title="details.title">
+    <Navbar :title="routeInfo.title">
         <template #additional-right>
             <Action
                 v-if="canCreate"
@@ -76,8 +76,8 @@
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
     import KestraFilter from "../../../components/filter/KestraFilter.vue";
 
-    import permission from "../../../models/permission.ts";
-    import action from "../../../models/action.ts";
+    import permission from "../../../models/permission";
+    import action from "../../../models/action";
 
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
@@ -87,7 +87,7 @@
         id: string;
         label: string;
         description?: string;
-        disabled: boolean;
+        disabled?: boolean;
         children?: Node[];
         system?: boolean;
     }
@@ -96,8 +96,8 @@
 
     const {t} = useI18n({useScope: "global"});
 
-    const details = computed(() => ({title: t("namespaces")}));
-    useRouteContext(details);
+    const routeInfo = computed(() => ({title: t("namespaces")}));
+    useRouteContext(routeInfo);
 
 
     const authStore = useAuthStore();
@@ -135,7 +135,7 @@
             const parts = item.id.split(".");
             let currentLevel = map;
 
-            parts.forEach((part, index) => {
+            parts.forEach((_part, index) => {
                 const label = parts.slice(0, index + 1).join(".");
                 const isLeaf = index === parts.length - 1;
 

@@ -652,6 +652,7 @@
       },
       "text_search": "搜索此文本"
     },
+    "fix_with_ai": "使用 AI 修复",
     "flow": "流程",
     "flow already exists": "流程已存在",
     "flow creation": "流程创建",
@@ -668,6 +669,7 @@
     "flow-no-dependencies": "您的flow没有任何依赖项",
     "flow_export": "导出flow",
     "flow_only": "仅在流程标签中可用。",
+    "flow_outputs": "Flow Outputs",
     "flows": "流程",
     "flows deleted": "<code>{count}</code> 个流程已删除",
     "flows disabled": "<code>{count}</code> 个流程已禁用",
@@ -773,6 +775,7 @@
     "metrics": "指标",
     "min": "最小",
     "minutes": "分钟",
+    "missingSource": "缺少源",
     "monogram": "字母组合",
     "months": "月份",
     "multi_panel_editor": {
@@ -1058,6 +1061,7 @@
     "pause confirm": "您确定要暂停执行<code>{id}</code>吗？",
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
+    "paused": "暂停",
     "playground": {
       "clear_history": "清除历史记录",
       "confirm_create": "在创建flow时无法运行playground。启动playground运行将创建flow。",
@@ -1425,6 +1429,7 @@
       "zoom-out": "缩小",
       "zoom-reset": "重置缩放"
     },
+    "total_duration": "总持续时间",
     "total_executions": "总执行次数",
     "trigger": "触发器",
     "trigger details": "触发器详情",

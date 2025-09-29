@@ -183,7 +183,7 @@
         </div>
 
         <div v-if="execution.outputs" class="my-5">
-            <h5>{{ $t("outputs") }}</h5>
+            <h5>{{ $t("flow_outputs") }}</h5>
             <KestraCascader
                 id="outputs"
                 :options="transform(execution.outputs)"
@@ -605,7 +605,7 @@
         .toggle-icon {
             position: absolute;
             color: var(--ks-content-alert);
-            right: 1rem;
+            right: 1.5rem;
             width: 1rem;
             height: 1rem;
             font-size: 1.75rem;

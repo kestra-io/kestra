@@ -13,21 +13,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public abstract class AbstractFeatureUsageReportTest {
-    
+
     @Inject
     FeatureUsageReport featureUsageReport;
-    
+
     @Test
     public void shouldGetReport() {
         // When
         Instant now = Instant.now();
         FeatureUsageReport.UsageEvent event = featureUsageReport.report(
-            now, 
+            now,
             Reportable.TimeInterval.of(now.minus(Duration.ofDays(1)).atZone(ZoneId.systemDefault()), now.atZone(ZoneId.systemDefault()))
         );
-        
+
         // Then
         assertThat(event.getExecutions().getDailyExecutionsCount().size()).isGreaterThan(0);
-        assertThat(event.getExecutions().getDailyTaskRunsCount()).isNull();
     }
 }

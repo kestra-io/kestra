@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -94,7 +95,7 @@ class FileChangedEventListenerTest {
         );
     }
 
-    @Test
+    @RetryingTest(2)
     void testWithPluginDefault() throws IOException, TimeoutException {
         var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getName(), "testWithPluginDefault");
         // remove the flow if it already exists

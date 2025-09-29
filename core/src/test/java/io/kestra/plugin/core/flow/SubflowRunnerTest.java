@@ -9,7 +9,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SubflowRunnerTest {
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Inject
     private ExecutionRepositoryInterface executionRepository;

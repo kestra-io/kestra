@@ -652,6 +652,7 @@
       },
       "text_search": "Искать этот текст"
     },
+    "fix_with_ai": "Исправить с помощью AI",
     "flow": "Flow",
     "flow already exists": "Flow уже существует",
     "flow creation": "Создание flow",
@@ -668,6 +669,7 @@
     "flow-no-dependencies": "Ваш flow не имеет зависимостей",
     "flow_export": "Экспорт flow",
     "flow_only": "Доступно только на вкладке Flow.",
+    "flow_outputs": "Выходы Flow",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(ы) удалены",
     "flows disabled": "<code>{count}</code> Flow(ы) отключены",
@@ -773,6 +775,7 @@
     "metrics": "Метрики",
     "min": "Мин",
     "minutes": "Минуты",
+    "missingSource": "Отсутствует источник",
     "monogram": "Монограмма",
     "months": "Месяцы",
     "multi_panel_editor": {
@@ -1426,6 +1429,7 @@
       "zoom-out": "Уменьшить",
       "zoom-reset": "Сбросить масштаб"
     },
+    "total_duration": "Общая продолжительность",
     "total_executions": "Общее количество выполнений",
     "trigger": "Trigger",
     "trigger details": "Подробности trigger",

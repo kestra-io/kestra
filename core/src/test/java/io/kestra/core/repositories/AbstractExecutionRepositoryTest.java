@@ -345,27 +345,6 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
-    protected void findTaskRun() {
-        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-inject(tenant);
-
-        ArrayListTotal<TaskRun> taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), tenant, null);
-        assertThat(taskRuns.getTotal()).isEqualTo(74L);
-        assertThat(taskRuns.size()).isEqualTo(10);
-
-        var filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.LABELS)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(Map.of("key", "value"))
-            .build());
-
-        taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), tenant, filters);
-        assertThat(taskRuns.getTotal()).isEqualTo(1L);
-        assertThat(taskRuns.size()).isEqualTo(1);
-    }
-
-
-    @Test
     protected void findById() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         var execution1 = ExecutionFixture.EXECUTION_1(tenant);
@@ -463,8 +442,7 @@ inject(tenant);
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             null,
-            null,
-            false);
+            null);
 
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().size()).isEqualTo(11);
@@ -483,8 +461,7 @@ inject(tenant);
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             null,
-            null,
-            false);
+            null);
 
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(21L);
@@ -498,8 +475,7 @@ inject(tenant);
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             null,
-            null,
-            false);
+            null);
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(20L);
 
@@ -512,91 +488,9 @@ inject(tenant);
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             null,
-            null,
-            false);
+            null);
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
-    }
-
-    @Test
-    protected void taskRunsDailyStatistics() {
-        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        for (int i = 0; i < 28; i++) {
-            executionRepository.save(builder(
-                tenant,
-                i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
-                i < 15 ? null : "second"
-            ).build());
-        }
-
-        executionRepository.save(builder(
-            tenant,
-            State.Type.SUCCESS,
-            "second"
-        ).namespace(NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE).build());
-
-        List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
-            null,
-            tenant,
-            null,
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            null,
-            null,
-            true);
-
-        assertThat(result.size()).isEqualTo(11);
-        assertThat(result.get(10).getExecutionCounts().size()).isEqualTo(11);
-        assertThat(result.get(10).getDuration().getAvg().toMillis()).isGreaterThan(0L);
-
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED)).isEqualTo(3L * 2);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.RUNNING)).isEqualTo(5L * 2);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(57L);
-
-        result = executionRepository.dailyStatistics(
-            null,
-            tenant,
-            List.of(FlowScope.USER, FlowScope.SYSTEM),
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            null,
-            null,
-            true);
-
-        assertThat(result.size()).isEqualTo(11);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(57L);
-
-        result = executionRepository.dailyStatistics(
-            null,
-            tenant,
-            List.of(FlowScope.USER),
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            null,
-            null,
-            true);
-        assertThat(result.size()).isEqualTo(11);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(55L);
-
-        result = executionRepository.dailyStatistics(
-            null,
-            tenant,
-            List.of(FlowScope.SYSTEM),
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            null,
-            null,
-            true);
-        assertThat(result.size()).isEqualTo(11);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(2L);
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")

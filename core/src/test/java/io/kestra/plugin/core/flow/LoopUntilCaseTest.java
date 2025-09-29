@@ -3,10 +3,9 @@ package io.kestra.plugin.core.flow;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
 
-import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -16,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LoopUntilCaseTest {
 
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     public void waitfor() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "waitfor");

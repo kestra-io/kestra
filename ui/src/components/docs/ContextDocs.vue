@@ -1,10 +1,10 @@
 <template>
     <ContextInfoContent :title="routeInfo.title">
         <template #back-button>
-            <button 
-                class="back-button" 
+            <button
+                class="back-button"
                 type="button"
-                @click="goBack" 
+                @click="goBack"
                 :disabled="!canGoBack"
                 :class="{disabled: !canGoBack}"
                 :aria-label="t('common.back')"
@@ -71,13 +71,13 @@
     const addToHistory = (path: string) => {
         // Always store the path, even empty ones
         const pathToAdd = path || "";
-        
+
         if (docHistory.value.length === 0) {
             docHistory.value = [pathToAdd];
             currentHistoryIndex.value = 0;
             return;
         }
-        
+
         if (pathToAdd !== docHistory.value[currentHistoryIndex.value]) {
             docHistory.value = docHistory.value.slice(0, currentHistoryIndex.value + 1);
             docHistory.value.push(pathToAdd);
@@ -91,7 +91,7 @@
         docStore.docPath = docHistory.value[currentHistoryIndex.value];
     };
 
-    async function setDocPageFromResponse(response){
+    async function setDocPageFromResponse(response: {metadata?: any, content:string}) {
         docStore.pageMetadata = response.metadata;
         let content = response.content;
         if (!("canShare" in navigator)) {
@@ -104,7 +104,7 @@
         // since they are the only ones visible in the beginning
         const firstLinesOfContent = content.split("---\n")[2].split("\n").slice(0, 50).join("\n") + "\nLoading the rest...\n";
         ast.value = await parse(firstLinesOfContent);
-        
+
         setTimeout(async () => {
             ast.value = await parse(content);
         }, 50);
@@ -125,7 +125,7 @@
         }
     }
 
-    async function refreshPage(val) {
+    async function refreshPage(val?: string) {
         let response: {metadata?: any, content:string} | undefined = undefined;
         // if this fails to return a value, fetch the default doc
         // if nothing, fetch the home page
@@ -188,7 +188,7 @@
         transition: all 0.2s ease;
         padding: 0;
         flex-shrink: 0;
-        
+
         &:hover:not(.disabled),
         &:focus:not(.disabled) {
             background: var(--ks-background-hover);

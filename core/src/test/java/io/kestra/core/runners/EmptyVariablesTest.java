@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class EmptyVariablesTest {
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
     @Inject
     private FlowInputOutput flowIO;
 

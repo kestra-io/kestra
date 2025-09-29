@@ -17,10 +17,11 @@
 
     import NoData from "../../layout/NoData.vue";
     import {useRoute} from "vue-router";
+    import {FilterObject} from "../../../utils/filters";
 
     const props = defineProps({
         chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<string[]>, default: () => []},
+        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
     });
 

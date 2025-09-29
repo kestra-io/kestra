@@ -652,6 +652,7 @@
       },
       "text_search": "Rechercher ce texte"
     },
+    "fix_with_ai": "Corriger avec l'IA",
     "flow": "Flow",
     "flow already exists": "Flow déjà existant",
     "flow creation": "Création de flow",
@@ -668,6 +669,7 @@
     "flow-no-dependencies": "Votre flow n'a pas de dépendances.",
     "flow_export": "Exporter le flow",
     "flow_only": "Disponible uniquement sur l'onglet Flow.",
+    "flow_outputs": "Sorties du flow",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) supprimé(s)",
     "flows disabled": "<code>{count}</code> Flow(s) désactivé(s)",
@@ -773,6 +775,7 @@
     "metrics": "Mesures",
     "min": "Minimum",
     "minutes": "Minutes",
+    "missingSource": "Source manquant",
     "monogram": "Monogramme",
     "months": "Mois",
     "multi_panel_editor": {
@@ -1426,6 +1429,7 @@
       "zoom-out": "Dézoomer",
       "zoom-reset": "Zoom par défaut"
     },
+    "total_duration": "Durée totale",
     "total_executions": "Total des exécutions",
     "trigger": "Déclencheur",
     "trigger details": "Détails du déclencheur",

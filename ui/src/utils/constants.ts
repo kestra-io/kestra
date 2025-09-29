@@ -32,6 +32,8 @@ export const storageKeys = {
     IMPERSONATE: "impersonate",
     EDITOR_VIEW_TYPE: "editorViewType",
     AUTO_REFRESH_INTERVAL: "autoRefreshInterval",
+    DATE_FORMAT_STORAGE_KEY: "dateFormat",
+    TIMEZONE_STORAGE_KEY: "timezone",
 }
 
 export const executeFlowBehaviours = {

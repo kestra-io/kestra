@@ -70,7 +70,7 @@ jobs:
 
       # Get Plugins List
       - name: Get Plugins List
-        uses: ./.github/actions/plugins-list
+        uses: kestra-io/actions/composite/kestra-oss/kestra-oss-plugins-list@main
         id: plugins
         with: # remap LATEST-SNAPSHOT to LATEST
           plugin-version: ${{ env.PLUGIN_VERSION == 'LATEST-SNAPSHOT' && 'LATEST' || env.PLUGIN_VERSION }}

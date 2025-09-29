@@ -1,5 +1,5 @@
-name: Run Gradle Release
-run-name: "Releasing Kestra ${{ github.event.inputs.releaseVersion }} 🚀"
+name: Create new release branch
+run-name: "Create new release branch Kestra ${{ github.event.inputs.releaseVersion }} 🚀"
 on:
   workflow_dispatch:
     inputs:

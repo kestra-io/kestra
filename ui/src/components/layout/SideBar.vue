@@ -49,7 +49,7 @@
     import SidebarToggleButton from "./SidebarToggleButton.vue";
 
 
-     const props = withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         menu: MenuItem[],
         showLink: boolean
     }>(), {
@@ -61,17 +61,16 @@
     const $route = useRoute()
     const {t} = useI18n({useScope: "global"});
 
+    const layoutStore = useLayoutStore();
+
     function onToggleCollapse(folded: boolean) {
         collapsed.value = folded;
-        localStorage.setItem("menuCollapsed", folded ? "true" : "false");
+        layoutStore.setSideMenuCollapsed(folded);
         $emit("menu-collapse", folded);
 
         return folded;
     }
   
-    /**
-     * ⚠️ TODO: Review disabledCurrentRoute Parameter
-     */
     function disabledCurrentRoute(items) {
         return items
             .map(r => {

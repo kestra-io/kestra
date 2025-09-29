@@ -50,7 +50,7 @@ public abstract class AbstractRunnerTest {
     private PluginDefaultsCaseTest pluginDefaultsCaseTest;
 
     @Inject
-    private FlowCaseTest flowCaseTest;
+    protected FlowCaseTest flowCaseTest;
 
     @Inject
     private WorkingDirectoryTest.Suite workingDirectoryTest;
@@ -173,7 +173,7 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/restart_local_errors.yaml"})
-    void restartFailedThenFailureWithLocalErrors() throws Exception {
+    protected void restartFailedThenFailureWithLocalErrors() throws Exception {
         restartCaseTest.restartFailedThenFailureWithLocalErrors();
     }
 

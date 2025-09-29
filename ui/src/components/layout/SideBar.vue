@@ -32,8 +32,7 @@
     import {
         onUpdated,
         ref,
-        computed,
-        shallowRef, h
+        computed, h
     } from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
@@ -64,7 +63,7 @@
 
     const layoutStore = useLayoutStore();
 
-    function onToggleCollapse(folded) {
+    function onToggleCollapse(folded: boolean) {
         collapsed.value = folded;
         layoutStore.setSideMenuCollapsed(folded);
         $emit("menu-collapse", folded);
@@ -112,7 +111,7 @@
             ...(bookmarksStore.pages?.length ? [{
                 title: t("bookmark"),
                 icon: {
-                    element: shallowRef(StarOutline),
+                    element: StarOutline,
                     class: "menu-icon",
                 },
                 child: [{

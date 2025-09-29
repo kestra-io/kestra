@@ -1,6 +1,6 @@
 import {computed, nextTick, onMounted, ref} from "vue";
 import {useRoute, useRouter} from "vue-router";
-import {defaultNamespace} from "./useNamespaces.ts";
+import {defaultNamespace} from "./useNamespaces";
 
 interface UseRestoreUrlOptions {
     restoreUrl?: boolean;

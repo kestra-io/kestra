@@ -42,14 +42,14 @@
 </template>
 
 <script setup lang="ts">
-    import FlowMetricFilterLanguage from "../../composables/monaco/languages/filters/impl/flowMetricFilterLanguage.js";
+    import FlowMetricFilterLanguage from "../../composables/monaco/languages/filters/impl/flowMetricFilterLanguage";
 </script>
 
 <script lang="ts">
     import {defineComponent} from "vue";
     import {Bar} from "vue-chartjs";
     import {mapStores} from "pinia";
-    import {useMiscStore} from "override/stores/misc.js";
+    import {useMiscStore} from "override/stores/misc";
     import {useFlowStore} from "../../stores/flow";
     import moment from "moment";
     import {defaultConfig, getFormat, tooltip} from "../dashboard/composables/charts";

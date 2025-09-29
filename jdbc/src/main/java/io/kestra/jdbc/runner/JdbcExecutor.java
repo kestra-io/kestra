@@ -682,9 +682,8 @@ public class JdbcExecutor implements ExecutorInterface {
                         );
                     } catch (QueueException e) {
                         try {
-                            this.executionQueue.emit(
-                                message.failedExecutionFromExecutor(e).getExecution().withState(State.Type.FAILED)
-                            );
+                            Execution failedExecution = fail(message, e);
+                            this.executionQueue.emit(failedExecution);
                         } catch (QueueException ex) {
                             log.error("Unable to emit the execution {}", message.getId(), ex);
                         }
@@ -699,6 +698,16 @@ public class JdbcExecutor implements ExecutorInterface {
         if (result != null) {
             this.toExecution(result);
         }
+    }
+
+    private Execution fail(Execution message, Exception e) {
+        var failedExecution = message.failedExecutionFromExecutor(e);
+        try {
+            logQueue.emitAsync(failedExecution.getLogs());
+        } catch (QueueException ex) {
+            // fail silently
+        }
+        return failedExecution.getExecution().getState().isFailed() ? failedExecution.getExecution() :  failedExecution.getExecution().withState(State.Type.FAILED);
     }
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
@@ -1178,8 +1187,9 @@ public class JdbcExecutor implements ExecutorInterface {
                 // If we cannot add the new worker task result to the execution, we fail it
                 executionRepository.lock(executor.getExecution().getId(), pair -> {
                     Execution execution = pair.getLeft();
+                    Execution failedExecution = fail(execution, e);
                     try {
-                        this.executionQueue.emit(execution.failedExecutionFromExecutor(e).getExecution().withState(State.Type.FAILED));
+                        this.executionQueue.emit(failedExecution);
                     } catch (QueueException ex) {
                         log.error("Unable to emit the execution {}", execution.getId(), ex);
                     }

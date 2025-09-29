@@ -19,29 +19,32 @@
         </el-button-group>
     </div>
 </template>
-<script>
-    export default {
-        props: {
-            total: {type: Number, required: false, default: undefined},
-            selections: {type: Array, required: true},
-            selectAll: {type: Boolean, required: true},
-        },
-        emits: ["update:selectAll", "unselect"],
-        methods: {
-            toggle(value) {
-                if (!value) {
-                    this.$emit("unselect");
-                }
-            },
-            toggleAll() {
-                this.$emit("update:selectAll", !this.selectAll);
-            }
-        },
-        computed: {
-            partialCheck() {
-                return !this.selectAll && (this.total === undefined || this.selections.length < this.total);
-            },
+<script lang="ts" setup>
+    import {computed} from "vue";
+
+    const props = defineProps<{
+        total?: number;
+        selections: unknown[];
+        selectAll: boolean;
+    }>();
+
+    const emit = defineEmits<{
+        (e: "update:selectAll", value: boolean): void;
+        (e: "unselect"): void;
+    }>();
+
+    const partialCheck = computed(() => {
+        return !props.selectAll && (props.total === undefined || props.selections.length < (props.total ?? 0));
+    });
+
+    function toggle(value: boolean) {
+        if (!value) {
+            emit("unselect");
         }
+    }
+
+    function toggleAll() {
+        emit("update:selectAll", !props.selectAll);
     }
 </script>
 

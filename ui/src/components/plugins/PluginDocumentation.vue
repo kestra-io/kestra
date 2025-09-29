@@ -1,10 +1,10 @@
 <template>
     <div class="plugin-doc">
-        <template v-if="fetchPluginDocumentation && pluginsStore.editorPlugin">
+        <template v-if="fetchPluginDocumentation && currentPlugin">
             <div class="d-flex gap-3 mb-3 align-items-center">
                 <TaskIcon
                     class="plugin-icon"
-                    :cls="pluginsStore.editorPlugin.cls"
+                    :cls="currentPlugin.cls"
                     onlyIcon
                     :icons="pluginsStore.icons"
                 />
@@ -25,8 +25,8 @@
                 <SchemaToHtml
                     class="plugin-schema"
                     :darkMode="miscStore.theme === 'dark'"
-                    :schema="pluginsStore.editorPlugin.schema"
-                    :pluginType="pluginsStore.editorPlugin.cls"
+                    :schema="currentPlugin?.schema"
+                    :pluginType="currentPlugin?.cls"
                     :forceIncludeProperties="pluginsStore.forceIncludeProperties"
                     noUrlChange
                 >
@@ -40,58 +40,53 @@
     </div>
 </template>
 
-<script setup>
-    import Markdown from "../layout/Markdown.vue";
+<script setup lang="ts">
+    import {computed} from "vue";
     import {SchemaToHtml, TaskIcon} from "@kestra-io/ui-libs";
-    import GitHub from "vue-material-design-icons/Github.vue";
-</script>
-
-<script>
-    import intro from "../../assets/docs/basic.md?raw";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
-    import {mapStores} from "pinia";
-    import {usePluginsStore} from "../../stores/plugins";
     import {useMiscStore} from "override/stores/misc";
+    import {usePluginsStore} from "../../stores/plugins";
+    import GitHub from "vue-material-design-icons/Github.vue";
+    import intro from "../../assets/docs/basic.md?raw";
+    import Markdown from "../layout/Markdown.vue";
 
-    export default {
-        props: {
-            overrideIntro: {
-                type: String,
-                default: null
-            },
-            absolute: {
-                type: Boolean,
-                default: false
-            },
-            fetchPluginDocumentation: {
-                type: Boolean,
-                default: true
-            }
-        },
-        computed: {
-            ...mapStores(usePluginsStore, useMiscStore),
-            introContent () {
-                return this.overrideIntro ?? intro
-            },
-            pluginName() {
-                const split = this.pluginsStore.editorPlugin.cls.split(".");
-                return split[split.length - 1];
-            },
-            releaseNotesUrl() {
-                return getPluginReleaseUrl(this.pluginsStore.editorPlugin.cls);
-            }
-        },
-        created() {
-            this.pluginsStore.list();
-        },
-        methods: {
-            openReleaseNotes() {
-                if (this.releaseNotesUrl) {
-                    window.open(this.releaseNotesUrl, "_blank");
-                }
-            }
+    const props = withDefaults(defineProps<{
+        overrideIntro?: string | null;
+        absolute?: boolean;
+        fetchPluginDocumentation?: boolean;
+        plugin: any;
+    }>(), {
+        overrideIntro: null,
+        absolute: false,
+        fetchPluginDocumentation: true,
+        plugin: null
+    });
+
+    const miscStore = useMiscStore();
+    const pluginsStore = usePluginsStore();
+
+    const currentPlugin = computed(() => {
+        return props.plugin ?? pluginsStore.editorPlugin;
+    });
+
+    const introContent = computed(() => {
+        return props.overrideIntro ?? intro;
+    });
+
+    const pluginName = computed(() => {
+        const split = currentPlugin.value?.cls.split(".");
+        return split[split.length - 1];
+    });
+
+    const releaseNotesUrl = computed(() => {
+        return getPluginReleaseUrl(currentPlugin.value?.cls);
+    });
+
+    const openReleaseNotes = () => {
+        if (releaseNotesUrl.value) {
+            window.open(releaseNotesUrl.value, "_blank");
         }
-    }
+    };
 </script>
 
 <style scoped lang="scss">

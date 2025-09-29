@@ -12,7 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.annotation.MockBean;
@@ -41,7 +41,7 @@ public class SecretFunctionTest {
     QueueInterface<LogEntry> logQueue;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Inject
     private SecretService secretService;

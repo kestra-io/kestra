@@ -21,9 +21,11 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -91,7 +93,7 @@ class InternalKVStoreTest {
 
         String description = "myDescription";
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(description, Duration.ofMinutes(5)), complexValue));
-        kv.put("key-without-expiration", new KVValueAndMetadata(new KVMetadata(null, null), complexValue));
+        kv.put("key-without-expiration", new KVValueAndMetadata(new KVMetadata(null, (Duration) null), complexValue));
         kv.put("expired-key", new KVValueAndMetadata(new KVMetadata(null, Duration.ofMillis(1)), complexValue));
 
         List<KVEntry> list = kv.listAll();
@@ -212,6 +214,22 @@ class InternalKVStoreTest {
 
         // When
         Assertions.assertThrows(ResourceExpiredException.class, () -> kv.getValue(TEST_KV_KEY));
+    }
+    
+    @Test
+    void shouldGetKVValueAndMetadata() throws IOException {
+        // Given
+        final InternalKVStore kv = kv();
+        KVValueAndMetadata val = new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(5)), complexValue);
+        kv.put(TEST_KV_KEY, val);
+        
+        // When
+        Optional<KVValueAndMetadata> result = kv.findMetadataAndValue(TEST_KV_KEY);
+        
+        // Then
+        Assertions.assertEquals(val.value(), result.get().value());
+        Assertions.assertEquals(val.metadata().getDescription(), result.get().metadata().getDescription());
+        Assertions.assertEquals(val.metadata().getExpirationDate().truncatedTo(ChronoUnit.MILLIS), result.get().metadata().getExpirationDate().truncatedTo(ChronoUnit.MILLIS));
     }
 
     @Test

@@ -153,6 +153,7 @@
             ],
             colors: {
                 "minimap.background": "#161822",
+                "diffEditor.insertedLineBackground": "#029E734D",
             }
         },
         light: {

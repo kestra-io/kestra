@@ -40,58 +40,50 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {computed, onMounted} from "vue";
     import Markdown from "../layout/Markdown.vue";
     import {SchemaToHtml, TaskIcon} from "@kestra-io/ui-libs";
     import GitHub from "vue-material-design-icons/Github.vue";
-</script>
-
-<script>
     import intro from "../../assets/docs/basic.md?raw";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
-    import {mapStores} from "pinia";
     import {usePluginsStore} from "../../stores/plugins";
     import {useMiscStore} from "override/stores/misc";
 
-    export default {
-        props: {
-            overrideIntro: {
-                type: String,
-                default: null
-            },
-            absolute: {
-                type: Boolean,
-                default: false
-            },
-            fetchPluginDocumentation: {
-                type: Boolean,
-                default: true
-            }
-        },
-        computed: {
-            ...mapStores(usePluginsStore, useMiscStore),
-            introContent () {
-                return this.overrideIntro ?? intro
-            },
-            pluginName() {
-                const split = this.pluginsStore.editorPlugin.cls.split(".");
-                return split[split.length - 1];
-            },
-            releaseNotesUrl() {
-                return getPluginReleaseUrl(this.pluginsStore.editorPlugin.cls);
-            }
-        },
-        created() {
-            this.pluginsStore.list();
-        },
-        methods: {
-            openReleaseNotes() {
-                if (this.releaseNotesUrl) {
-                    window.open(this.releaseNotesUrl, "_blank");
-                }
-            }
+    const props = withDefaults(defineProps<{
+        overrideIntro?: string | null;
+        absolute?: boolean;
+        fetchPluginDocumentation?: boolean;
+    }>(), {
+        overrideIntro: null,
+        absolute: false,
+        fetchPluginDocumentation: true
+    });
+
+    const pluginsStore = usePluginsStore();
+    const miscStore = useMiscStore();
+
+    const introContent = computed(() => props.overrideIntro ?? intro);
+
+    const pluginName = computed(() => {
+        if (!pluginsStore.editorPlugin?.cls) return "";
+        const split = pluginsStore.editorPlugin.cls.split(".");
+        return split[split.length - 1];
+    });
+
+    const releaseNotesUrl = computed(() =>
+        pluginsStore.editorPlugin?.cls ? getPluginReleaseUrl(pluginsStore.editorPlugin.cls) : null
+    );
+
+    function openReleaseNotes() {
+        if (releaseNotesUrl.value) {
+            window.open(releaseNotesUrl.value, "_blank");
         }
     }
+
+    onMounted(() => {
+        pluginsStore.list();
+    });
 </script>
 
 <style scoped lang="scss">

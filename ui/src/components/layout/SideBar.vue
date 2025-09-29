@@ -64,7 +64,7 @@
 
     const layoutStore = useLayoutStore();
 
-    function onToggleCollapse(folded) {
+    function onToggleCollapse(folded: boolean) {
         collapsed.value = folded;
         layoutStore.setSideMenuCollapsed(folded);
         $emit("menu-collapse", folded);
@@ -72,7 +72,7 @@
         return folded;
     }
 
-    function disabledCurrentRoute(items) {
+    function disabledCurrentRoute(items: MenuItem[]) {
         return items
             .map(r => {
                 if (r.href?.path === $route.path) {
@@ -96,7 +96,7 @@
 
     function expandParentIfNeeded() {
         document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => {
-            e.click()
+            (e as HTMLElement).click()
         });
     }
 

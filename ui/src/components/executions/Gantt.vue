@@ -59,13 +59,13 @@
                                             </span>
                                         </template>
                                         <div
-                                            :style="{left: item.start + '%', width: item.width + '%'}"
+                                            :style="{left: item.start + '%', width: (item.width > 0 ? Math.max(item.width,1) : 0 ) + '%'}"
                                             class="task-progress"
                                         >
                                             <div class="progress">
                                                 <div
                                                     class="progress-bar"
-                                                    :style="{left: item.left + '%', width: (100-item.left) + '%'}"
+                                                    :style="{left: item.left + '%', width: ((100-item.left) > 0 ? Math.max(100-item.left,1) : 0) + '%'}"
                                                     :class="'bg-' + item.color + (item.running ? ' progress-bar-striped progress-bar-animated' : '')"
                                                     role="progressbar"
                                                 />
@@ -77,6 +77,7 @@
                             <div v-if="selectedTaskRuns.includes(item.id)" class="p-2">
                                 <TaskRunDetails
                                     :taskRunId="item.id"
+                                    h
                                     :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
                                     level="TRACE"
                                     @follow="forwardEvent('follow', $event)"

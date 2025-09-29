@@ -150,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, shallowRef, onMounted, watch} from "vue";
+    import {ref, computed, shallowRef, onMounted, nextTick, watch} from "vue";
     import {ElTree} from "element-plus";
     import {useExecutionsStore} from "../../../stores/executions";
     import {usePluginsStore} from "../../../stores/plugins";
@@ -295,26 +295,36 @@
     const selected = ref<string[]>([]);
 
     onMounted(() => {
-        const task = outputs.value?.[1];
-        if (!task) return;
+        const rootTask = outputs.value?.[1];
 
-        selected.value = [task.value];
-        expandedValue.value = task.value;
+        if (!rootTask) return;
 
-        const child = task.children?.[1];
-        if (child) {
-            selected.value.push(child.value);
-            expandedValue.value = child.path;
+        nextTick(() => {
+            expandTask(rootTask);
+            debugCollapse.value = "debug";
+        });
+    });
 
-            const grandChild = child.children?.[1];
-            if (grandChild) {
-                selected.value.push(grandChild.value);
-                expandedValue.value = grandChild.path;
+    const selectAndExpand = (task) => {
+        selected.value.push(task.value);
+        expandedValue.value = task.path;
+    };
+
+    const expandTask = (rootTask) => {
+        if (!rootTask) return;
+
+        selectAndExpand(rootTask);
+
+        const secondLevelTask = rootTask.children?.[1];
+        if (secondLevelTask) {
+            selectAndExpand(secondLevelTask);
+
+            const thirdLevelTask = secondLevelTask.children?.[1];
+            if (thirdLevelTask) {
+                selectAndExpand(thirdLevelTask);
             }
         }
-
-        debugCollapse.value = "debug";
-    });
+    };
 
     const selectedValue = computed(() => {
         if (selected.value?.length)

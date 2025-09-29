@@ -128,7 +128,7 @@
     }
 
     function staticGetPanelFromValue(value: string, tab?: Tab, dirtyFlow = false): {prepend: boolean, panel: Omit<Panel, "size">}{
-        const element: Tab = tab ?? EDITOR_ELEMENTS.find(e => e.value === value)!
+        const element: Tab = tab ?? EDITOR_ELEMENTS.find(e => e.value === value) ?? EDITOR_ELEMENTS[0]
 
         if(isTabFlowRelated(element)){
             element.dirty = dirtyFlow
@@ -202,7 +202,7 @@
                                 const tabs: Tab[] = p.tabs.map((tab) =>
                                     setupInitialCodeTab(tab)
                                     ?? setupInitialNoCodeTabIfExists(RawNoCode, tab, t, noCodeHandlers, flowStore.flowYaml ?? "")
-                                    ?? EDITOR_ELEMENTS.find(e => e.value === tab)!
+                                    ?? EDITOR_ELEMENTS.find(e => e.value === tab)
                                 )
                                     // filter out any tab that may have disappeared
                                     .filter(t => t !== undefined);

@@ -17,31 +17,17 @@
                 </li>
 
                 <li>
-                    <TriggerFlow
-                        v-if="flowStore.flow && canExecute"
-                        :disabled="flowStore.flow.disabled"
-                        :flowId="flowStore.flow.id"
-                        type="default"
-                        :namespace="flowStore.flow.namespace"
-                    />
+                    <TriggerFlow v-if="flowStore.flow && canExecute" :disabled="flowStore.flow.disabled" :flowId="flowStore.flow.id" type="default" :namespace="flowStore.flow.namespace" />
                 </li>
 
                 <li>
-                    <el-button
-                        class="edit-flow-save-button"
-                        :icon="icon.ContentSave"
-                        size="large"
-                        @click="save"
-                        v-if="canSave"
-                        type="primary"
-                    >
+                    <el-button class="edit-flow-save-button" :icon="icon.ContentSave" size="large" @click="save" v-if="canSave" type="primary">
                         {{ $t('save') }}
                     </el-button>
                 </li>
             </ul>
         </template>
     </TopNavBar>
-
     <div class="mt-3 edit-flow-div">
         <!-- Show loader until content is ready -->
         <div v-if="loading" class="p-4 text-gray-500">
@@ -49,15 +35,7 @@
         </div>
 
         <!-- Render editor only when content is loaded -->
-        <editor
-            v-else
-            @save="save"
-            v-model="content"
-            schemaType="flow"
-            lang="yaml"
-            @update:model-value="onChange"
-            @cursor="updatePluginDocumentation"
-        />
+        <editor v-else @save="save" v-model="content" schemaType="flow" lang="yaml" @update:model-value="onChange" @cursor="updatePluginDocumentation" />
     </div>
 </template>
 

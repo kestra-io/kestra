@@ -1,10 +1,10 @@
 <template>
     <div class="plugin-doc">
-        <template v-if="fetchPluginDocumentation && pluginsStore.editorPlugin">
+        <template v-if="fetchPluginDocumentation && currentPlugin">
             <div class="d-flex gap-3 mb-3 align-items-center">
                 <TaskIcon
                     class="plugin-icon"
-                    :cls="pluginsStore.editorPlugin.cls"
+                    :cls="currentPlugin.cls"
                     onlyIcon
                     :icons="pluginsStore.icons"
                 />
@@ -25,8 +25,8 @@
                 <SchemaToHtml
                     class="plugin-schema"
                     :darkMode="miscStore.theme === 'dark'"
-                    :schema="pluginsStore.editorPlugin.schema"
-                    :pluginType="pluginsStore.editorPlugin.cls"
+                    :schema="currentPlugin?.schema"
+                    :pluginType="currentPlugin?.cls"
                     :forceIncludeProperties="pluginsStore.forceIncludeProperties"
                     noUrlChange
                 >
@@ -41,49 +41,52 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted} from "vue";
-    import Markdown from "../layout/Markdown.vue";
+    import {computed} from "vue";
     import {SchemaToHtml, TaskIcon} from "@kestra-io/ui-libs";
+    import {getPluginReleaseUrl} from "../../utils/pluginUtils";
+    import {useMiscStore} from "override/stores/misc";
+    import {usePluginsStore} from "../../stores/plugins";
     import GitHub from "vue-material-design-icons/Github.vue";
     import intro from "../../assets/docs/basic.md?raw";
-    import {getPluginReleaseUrl} from "../../utils/pluginUtils";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {useMiscStore} from "override/stores/misc";
+    import Markdown from "../layout/Markdown.vue";
 
     const props = withDefaults(defineProps<{
         overrideIntro?: string | null;
         absolute?: boolean;
         fetchPluginDocumentation?: boolean;
+        plugin: any;
     }>(), {
         overrideIntro: null,
         absolute: false,
-        fetchPluginDocumentation: true
+        fetchPluginDocumentation: true,
+        plugin: null
     });
 
-    const pluginsStore = usePluginsStore();
     const miscStore = useMiscStore();
+    const pluginsStore = usePluginsStore();
 
-    const introContent = computed(() => props.overrideIntro ?? intro);
+    const currentPlugin = computed(() => {
+        return props.plugin ?? pluginsStore.editorPlugin;
+    });
+
+    const introContent = computed(() => {
+        return props.overrideIntro ?? intro;
+    });
 
     const pluginName = computed(() => {
-        if (!pluginsStore.editorPlugin?.cls) return "";
-        const split = pluginsStore.editorPlugin.cls.split(".");
+        const split = currentPlugin.value?.cls.split(".");
         return split[split.length - 1];
     });
 
-    const releaseNotesUrl = computed(() =>
-        pluginsStore.editorPlugin?.cls ? getPluginReleaseUrl(pluginsStore.editorPlugin.cls) : null
-    );
+    const releaseNotesUrl = computed(() => {
+        return getPluginReleaseUrl(currentPlugin.value?.cls);
+    });
 
-    function openReleaseNotes() {
+    const openReleaseNotes = () => {
         if (releaseNotesUrl.value) {
             window.open(releaseNotesUrl.value, "_blank");
         }
-    }
-
-    onMounted(() => {
-        pluginsStore.list();
-    });
+    };
 </script>
 
 <style scoped lang="scss">

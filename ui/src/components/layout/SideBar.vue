@@ -117,7 +117,7 @@
                 child: [{
                     // here we use only one component for all bookmarks
                     // so when one edits the bookmark, it will be updated without closing the section
-                    component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages.filter((page): page is { path: string, label: string } => typeof page.label === "string")}),
+                    component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
                 }]
             }] : []),
             ...(props.menu ? disabledCurrentRoute(props.menu) : [])

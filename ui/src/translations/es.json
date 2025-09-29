@@ -775,6 +775,7 @@
     "metrics": "Métricas",
     "min": "Min",
     "minutes": "Minutos",
+    "missingSource": "Fuente faltante",
     "monogram": "Monograma",
     "months": "Meses",
     "multi_panel_editor": {
@@ -1428,6 +1429,7 @@
       "zoom-out": "Alejar",
       "zoom-reset": "Restablecer zoom"
     },
+    "total_duration": "Duración total",
     "total_executions": "Total de Ejecuciones",
     "trigger": "Trigger",
     "trigger details": "Detalles del trigger",

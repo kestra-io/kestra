@@ -11,10 +11,9 @@
         hideToggle
     >
         <template #header>
-            <el-button @click="collapsed = onToggleCollapse(!collapsed)" class="collapseButton" :size="collapsed ? 'small':undefined">
-                <ChevronRight v-if="collapsed" />
-                <ChevronLeft v-else />
-            </el-button>
+            <SidebarToggleButton
+                @toggle="collapsed = onToggleCollapse(!collapsed)"
+            />
             <div class="logo">
                 <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
                     <span class="img" />
@@ -41,14 +40,14 @@
 
     import {SidebarMenu} from "vue-sidebar-menu";
 
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import StarOutline from "vue-material-design-icons/StarOutline.vue";
 
     import Environment from "./Environment.vue";
     import BookmarkLinkList from "./BookmarkLinkList.vue";
     import {useBookmarksStore} from "../../stores/bookmarks";
     import type {MenuItem} from "override/components/useLeftMenu";
+    import {useLayoutStore} from "../../stores/layout";
+    import SidebarToggleButton from "./SidebarToggleButton.vue";
 
 
     const props = withDefaults(defineProps<{
@@ -63,9 +62,11 @@
     const $route = useRoute()
     const {t} = useI18n({useScope: "global"});
 
+    const layoutStore = useLayoutStore();
+
     function onToggleCollapse(folded) {
         collapsed.value = folded;
-        localStorage.setItem("menuCollapsed", folded ? "true" : "false");
+        layoutStore.setSideMenuCollapsed(folded);
         $emit("menu-collapse", folded);
 
         return folded;

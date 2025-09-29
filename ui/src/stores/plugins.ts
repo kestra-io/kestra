@@ -52,7 +52,7 @@ interface State {
         type?: string;
         version?: string;
     };
-    forceIncludeProperties?: Record<string, any>;
+    forceIncludeProperties?: string[];
     _iconsPromise: Promise<Record<string, string>> | undefined;
 }
 

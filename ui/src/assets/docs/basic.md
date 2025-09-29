@@ -233,7 +233,7 @@ Kestra has a [Pebble templating engine](https://kestra.io/docs/concepts/pebble) 
 | `filter`         | `{% filter upper %}hello{% endfilter %}` — Applies a filter to a chunk of template content. |
 | `first`          | `{{ [1, 2, 3] \| first }}` — Returns the first element of the list, resulting in 1.                                              |
 | `flatten`        | `{{ [[1, 2], [3, 4]] \| flatten }}` — Flattens a nested list, resulting in [1, 2, 3, 4].                                         |
-| `fromIon`        | `{{ fromIon(read(someItem)).someField }}` — Converts a ION string to an object and accesses its properties. |
+| `fromIon`        | `{{ fromIon(read(someItem)).someField }}` — Converts an ION string to an object and accesses its properties. |
 | `fromJson`       | `{{ fromJson('{"foo": [666, 1, 2]}').foo[0] }}` — Converts a JSON string to an object and accesses its properties. |
 | `http`           | `{{ http(uri = 'https://dummyjson.com/products/categories') }}` — Fetches data from an external API directly. |
 | `indent`         | `{{ "Hello\nworld" \| indent(4) }}` — Adds 4 spaces before each line except the first, resulting in "Hello\n    world".          |
@@ -294,7 +294,7 @@ Kestra has a [Pebble templating engine](https://kestra.io/docs/concepts/pebble) 
 | `timestampMilli` | `{{ execution.startDate \| timestampMilli }}` — Converts the date to a Unix timestamp in milliseconds.                           |
 | `timestampNano`  | `{{ execution.startDate \| timestampNano }}` — Converts the date to a Unix timestamp in nanoseconds.                             |
 | `title`          | `{{ "article title" \| title }}` — Capitalizes the first letter of each word. |
-| `toIon`          | `{{ myObject \| toIon }}` — Converts `myObject` into a ION string.                                                               |
+| `toIon`          | `{{ myObject \| toIon }}` — Converts `myObject` into an ION string.                                                               |
 | `toJson`         | `{{ myObject \| toJson }}` — Converts `myObject` into a JSON string.                                                             |
 | `trim`           | `{{ " Hello " \| trim }}` — Trims leading and trailing whitespace, resulting in "Hello".                                         |
 | `upper`          | `{{ "hello" \| upper }}` — Converts the string to uppercase, resulting in "HELLO". Can be chained with other filters: `{{ "When life gives you lemons, make lemonade." \| upper \| abbreviate(13) }}`. |

@@ -30,6 +30,6 @@ public class TimestampMicroFilter extends AbstractDate implements Filter {
         ZoneId zoneId = zoneId(timeZone);
         ZonedDateTime date = convert(input, zoneId, existingFormat);
 
-        return String.valueOf(TimeUnit.SECONDS.toNanos(date.toEpochSecond()) + TimeUnit.NANOSECONDS.toMicros(date.getNano()));
+        return String.valueOf(TimeUnit.SECONDS.toMicros(date.toEpochSecond()) + TimeUnit.NANOSECONDS.toMicros(date.getNano()));
     }
 }

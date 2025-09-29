@@ -155,6 +155,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
         newLabels.putAll(labelsAsMap);
 
         return execution.withLabels(newLabels.entrySet().stream()
+            .filter(Label.getEntryNotEmptyPredicate())
             .map(entry -> new Label(
                 entry.getKey(),
                 entry.getValue()

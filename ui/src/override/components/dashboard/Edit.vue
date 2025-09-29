@@ -29,13 +29,14 @@
     const toast = useToast();
 
     import TopNavBar from "../../../components/layout/TopNavBar.vue";
+    // @ts-expect-error - Component not typed
     import Editor from "../../../components/dashboard/components/Editor.vue";
 
     import type {Dashboard} from "../../../components/dashboard/composables/useDashboards";
 
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const save = async (source: string) => {
-        const response = await dashboardStore.update({id: route.params.dashboard, source});
+        const response = await dashboardStore.update({id: route.params.dashboard.toString(), source});
 
         dashboard.value.sourceCode = source;
 
@@ -49,13 +50,14 @@
         });
     });
 
+    import type {Breadcrumb} from "../../../components/namespaces/utils/useHelpers";
     const header = computed(() => ({
-        title: dashboard.value?.title || route.params.dashboard,
-        breadcrumb: [{label: t("dashboards.edition.label"), link: {}}],
+        title: dashboard.value?.title || route.params.dashboard.toString(),
+        breadcrumb: [{label: t("dashboards.edition.label")} satisfies Breadcrumb],
     }));
 
-    const context = ref({title: t("dashboards.edition.label")});
+    const routeInfo = computed(() => ({title: t("dashboards.edition.label")}));
 
     import useRouteContext from "../../../composables/useRouteContext";
-    useRouteContext(context);
+    useRouteContext(routeInfo);
 </script>

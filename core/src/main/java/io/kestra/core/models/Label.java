@@ -2,12 +2,13 @@ package io.kestra.core.models;
 
 import io.kestra.core.utils.MapUtils;
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public record Label(@NotNull String key, @NotNull String value) {
+public record Label(@NotEmpty String key, @NotEmpty String value) {
     public static final String SYSTEM_PREFIX = "system.";
 
     // system labels
@@ -41,7 +42,7 @@ public record Label(@NotNull String key, @NotNull String value) {
     public static Map<String, String> toMap(@Nullable List<Label> labels) {
         if (labels == null || labels.isEmpty()) return Collections.emptyMap();
         return labels.stream()
-            .filter(label -> label.value() != null && label.key() != null)
+            .filter(label -> label.value() != null && !label.value().isEmpty() && label.key() != null && !label.key().isEmpty())
             // using an accumulator in case labels with the same key exists: the second is kept
             .collect(Collectors.toMap(Label::key, Label::value, (first, second) -> second, LinkedHashMap::new));
     }
@@ -56,6 +57,7 @@ public record Label(@NotNull String key, @NotNull String value) {
     public static List<Label> deduplicate(@Nullable List<Label> labels) {
         if (labels == null || labels.isEmpty()) return Collections.emptyList();
         return toMap(labels).entrySet().stream()
+            .filter(getEntryNotEmptyPredicate())
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .collect(Collectors.toCollection(ArrayList::new));
     }
@@ -70,6 +72,7 @@ public record Label(@NotNull String key, @NotNull String value) {
         if (map == null || map.isEmpty()) return List.of();
         return map.entrySet()
             .stream()
+            .filter(getEntryNotEmptyPredicate())
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .toList();
     }
@@ -87,5 +90,15 @@ public record Label(@NotNull String key, @NotNull String value) {
             map.put(keyValueArray[0], keyValueArray[1]);
         }
         return map;
+    }
+
+    /**
+     * Provides predicate for not empty entries.
+     *
+     * @return The non-empty filter
+     */
+    public static Predicate<Map.Entry<String, String>> getEntryNotEmptyPredicate() {
+        return entry -> entry.getKey() != null && !entry.getKey().isEmpty() &&
+            entry.getValue() != null && !entry.getValue().isEmpty();
     }
 }

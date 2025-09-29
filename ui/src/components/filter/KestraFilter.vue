@@ -81,11 +81,11 @@
     import RefreshButton from "../layout/RefreshButton.vue";
     import Dashboards from "../dashboard/components/selector/Selector.vue";
     import Properties from "./segments/Properties.vue";
-    import {COMPARATORS_REGEX} from "../../composables/monaco/languages/filters/filterLanguageConfigurator.ts";
-    import {Comparators, getComparator} from "../../composables/monaco/languages/filters/filterCompletion.ts";
+    import {COMPARATORS_REGEX} from "../../composables/monaco/languages/filters/filterLanguageConfigurator";
+    import {Comparators, getComparator} from "../../composables/monaco/languages/filters/filterCompletion";
     import {watchDebounced} from "@vueuse/core";
-    import {FilterLanguage} from "../../composables/monaco/languages/filters/filterLanguage.ts";
-    import DefaultFilterLanguage from "../../composables/monaco/languages/filters/impl/defaultFilterLanguage.ts";
+    import {FilterLanguage} from "../../composables/monaco/languages/filters/filterLanguage";
+    import DefaultFilterLanguage from "../../composables/monaco/languages/filters/impl/defaultFilterLanguage";
     import _isEqual from "lodash/isEqual";
 
     const router = useRouter();

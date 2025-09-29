@@ -1,4 +1,4 @@
-import {Comparators} from "../../../composables/monaco/languages/filters/filterCompletion.ts";
+import {Comparators} from "../../../composables/monaco/languages/filters/filterCompletion";
 
 export type Shown = {
     shown: boolean;
@@ -12,9 +12,12 @@ export type Property = {
 };
 
 export type Buttons = {
-    refresh: Shown & {
+    refresh: ({
+        shown: true,
         callback: () => void;
-    };
+    } | {
+        shown: false
+    }) & Shown;
     settings: Shown & {
         charts: Shown & {
             value: boolean;

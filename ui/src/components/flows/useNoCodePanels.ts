@@ -253,7 +253,7 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         const tab = getTabFromNoCodeTab(component, {
             action: "create",
             parentPath,
-            blockSchemaPath,
+            blockSchemaPath: "#/definitions/io.kestra.core.models.flows.Flow/properties/tasks/items",
             refPath,
             position,
             fieldName,
@@ -280,7 +280,7 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         const tab = getTabFromNoCodeTab(component, {
             action: "edit",
             parentPath,
-            blockSchemaPath,
+            blockSchemaPath: "#/definitions/io.kestra.core.models.flows.Flow/properties/tasks/items",
             refPath,
         }, t, handlers, flowStore.flowYaml ?? "", dirty)
 

@@ -45,8 +45,8 @@ public interface WorkerGroupMetaStore {
      */
     @Singleton
     @Requires(missingBeans = WorkerGroupMetaStore.class)
+    @Secondary
     class DefaultWorkerGroupMetaStore implements WorkerGroupMetaStore {
-
         @Override
         public boolean isWorkerGroupExistForKey(String key, String tenant) {
             return true;

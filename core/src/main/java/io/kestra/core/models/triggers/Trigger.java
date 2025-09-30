@@ -7,9 +7,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.plugin.core.trigger.Schedule;
 import io.micronaut.core.annotation.Nullable;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -18,6 +16,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+import java.util.Set;
 
 @SuperBuilder(toBuilder = true)
 @ToString
@@ -37,34 +36,28 @@ public class Trigger extends TriggerContext implements HasUID {
     @Nullable
     @Setter // it's unfortunate but neither toBuilder() not @With works so using @Setter here
     private String workerId;
-
+    
+    @Nullable
+    private Integer vnode;
+    
+    @Nullable
+    private Set<String> executions;
+    
+    @Nullable
+    private Boolean locked;
+    
     protected Trigger(TriggerBuilder<?, ?> b) {
         super(b);
         this.executionId = b.executionId;
         this.updatedDate = b.updatedDate;
         this.evaluateRunningDate = b.evaluateRunningDate;
+        this.vnode = b.vnode;
     }
 
     public static TriggerBuilder<?, ?> builder() {
         return new TriggerBuilderImpl();
     }
-
-
-    /** {@inheritDoc **/
-    @Override
-    public String uid() {
-        return uid(this);
-    }
-
-    public static String uid(Trigger trigger) {
-        return IdUtils.fromParts(
-            trigger.getTenantId(),
-            trigger.getNamespace(),
-            trigger.getFlowId(),
-            trigger.getTriggerId()
-        );
-    }
-
+    
     public static String uid(Execution execution) {
         return IdUtils.fromParts(
             execution.getTenantId(),
@@ -118,14 +111,6 @@ public class Trigger extends TriggerContext implements HasUID {
     public static Trigger of(TriggerContext triggerContext, Execution execution, ZonedDateTime nextExecutionDate) {
         return fromContext(triggerContext)
             .executionId(execution.getId())
-            .updatedDate(Instant.now())
-            .nextExecutionDate(nextExecutionDate)
-            .build();
-    }
-
-    public static Trigger fromEvaluateFailed(TriggerContext triggerContext, ZonedDateTime nextExecutionDate) {
-        return fromContext(triggerContext)
-            .executionId(null)
             .updatedDate(Instant.now())
             .nextExecutionDate(nextExecutionDate)
             .build();
@@ -190,109 +175,7 @@ public class Trigger extends TriggerContext implements HasUID {
             .backfill(null)
             .build();
     }
-
-    public Trigger resetExecution(Flow flow, Execution execution, ConditionContext conditionContext) {
-        boolean disabled = this.getStopAfter() != null ? this.getStopAfter().contains(execution.getState().getCurrent()) : this.getDisabled();
-        if (!disabled) {
-            AbstractTrigger abstractTrigger = flow.findTriggerByTriggerId(this.getTriggerId());
-            if (abstractTrigger == null) {
-                throw new IllegalArgumentException("Unable to find trigger with id '" + this.getTriggerId() + "'");
-            }
-            // If trigger is a schedule and execution ended after the next execution date
-            else if (abstractTrigger instanceof Schedule schedule &&
-                this.getNextExecutionDate() != null &&
-                execution.getState().getEndDate().get().isAfter(this.getNextExecutionDate().toInstant())
-            ) {
-                RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedule.getRecoverMissedSchedules())
-                    .orElseGet(() -> schedule.defaultRecoverMissedSchedules(conditionContext.getRunContext()));
-
-                ZonedDateTime previousDate = schedule.previousEvaluationDate(conditionContext);
-
-                if (recoverMissedSchedules.equals(RecoverMissedSchedules.LAST)) {
-                    return resetExecution(execution.getState().getCurrent(), previousDate);
-                } else if (recoverMissedSchedules.equals(RecoverMissedSchedules.NONE)) {
-                    return resetExecution(execution.getState().getCurrent(), schedule.nextEvaluationDate(conditionContext, Optional.empty()));
-                }
-            }
-        }
-        return resetExecution(execution.getState().getCurrent());
-    }
-
-    public Trigger resetExecution(State.Type executionEndState) {
-        return resetExecution(executionEndState, this.getNextExecutionDate());
-    }
-
-    public Trigger resetExecution(State.Type executionEndState, ZonedDateTime nextExecutionDate) {
-        // switch disabled automatically if the executionEndState is one of the stopAfter states
-        Boolean disabled = this.getStopAfter() != null ? this.getStopAfter().contains(executionEndState) : this.getDisabled();
-
-        return Trigger.builder()
-            .tenantId(this.getTenantId())
-            .namespace(this.getNamespace())
-            .flowId(this.getFlowId())
-            .triggerId(this.getTriggerId())
-            .date(this.getDate())
-            .nextExecutionDate(nextExecutionDate)
-            .stopAfter(this.getStopAfter())
-            .backfill(this.getBackfill())
-            .disabled(disabled)
-            .evaluateRunningDate(this.getEvaluateRunningDate())
-            .build();
-    }
-
-    public Trigger unlock() {
-        return Trigger.builder()
-            .tenantId(this.getTenantId())
-            .namespace(this.getNamespace())
-            .flowId(this.getFlowId())
-            .triggerId(this.getTriggerId())
-            .date(this.getDate())
-            .nextExecutionDate(this.getNextExecutionDate())
-            .backfill(this.getBackfill())
-            .stopAfter(this.getStopAfter())
-            .disabled(this.getDisabled())
-            .build();
-    }
-
-    public Trigger withBackfill(final Backfill backfill) {
-        Trigger updated = this;
-        // If a backfill is created, we update the trigger
-        // and set the nextExecutionDate() as the previous one
-        if (backfill != null) {
-            updated = this.toBuilder()
-                .backfill(
-                    backfill
-                        .toBuilder()
-                        .end(backfill.getEnd() != null ? backfill.getEnd() : ZonedDateTime.now())
-                        .currentDate(backfill.getStart())
-                        .previousNextExecutionDate(this.getNextExecutionDate())
-                        .build())
-                .build();
-        }
-        return updated;
-    }
-
-    // if the next date is after the backfill end, we remove the backfill
-    // if not, we update the backfill with the next Date
-    // which will be the base date to calculate the next one
-    public Trigger checkBackfill() {
-        if (this.getBackfill() != null && !this.getBackfill().getPaused()) {
-            Backfill backfill = this.getBackfill();
-            if (this.getNextExecutionDate().isAfter(backfill.getEnd())) {
-
-                return this.toBuilder().nextExecutionDate(backfill.getPreviousNextExecutionDate()).backfill(null).build();
-            } else {
-
-                return this.toBuilder()
-                    .backfill(
-                        backfill.toBuilder().currentDate(this.getNextExecutionDate()).build()
-                    )
-                    .build();
-            }
-        }
-        return this;
-    }
-
+    
     // Add this line and all is good
 
     private static TriggerBuilder<?, ?> fromContext(TriggerContext triggerContext) {

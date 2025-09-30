@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -56,13 +57,13 @@ public class LogService {
     /**
      * Log a trigger via the trigger logger named: 'trigger.{flowId}.{triggereId}'.
      */
-    public void logTrigger(TriggerContext triggerContext, Level level, String message, Object... args) {
-        Logger logger = logger(triggerContext);
-        logTrigger(triggerContext, logger, level, message, args);
+    public void logTrigger(TriggerId trigger, Level level, String message, Object... args) {
+        Logger logger = logger(trigger);
+        logTrigger(trigger, logger, level, message, args);
     }
 
-    public void logTrigger(TriggerContext triggerContext, Logger logger, Level level, String message, Object... args) {
-        Object[] executionArgs = new Object[] { triggerContext.getTenantId(), triggerContext.getNamespace(), triggerContext.getFlowId(), triggerContext.getTriggerId() };
+    public void logTrigger(TriggerId trigger, Logger logger, Level level, String message, Object... args) {
+        Object[] executionArgs = new Object[] { trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId() };
         Object[] finalArgs = ArrayUtils.addAll(executionArgs, args);
         logger.atLevel(level).log(TRIGGER_PREFIX_WITH_TENANT + message, finalArgs);
     }
@@ -100,9 +101,9 @@ public class LogService {
         );
     }
 
-    private Logger logger(TriggerContext triggerContext) {
+    private Logger logger(TriggerId trigger) {
         return LoggerFactory.getLogger(
-            "trigger." + triggerContext.getFlowId() + "." + triggerContext.getTriggerId()
+            "trigger." + trigger.getFlowId() + "." + trigger.getTriggerId()
         );
     }
 

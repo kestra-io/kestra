@@ -150,7 +150,7 @@ public class RunContextFactory {
             .build();
     }
 
-    public RunContext of(Flow flow, AbstractTrigger trigger) {
+    public RunContext of(FlowInterface flow, AbstractTrigger trigger) {
         RunContextLogger runContextLogger = runContextLoggerFactory.create(flow, trigger, null);
         return newBuilder()
             // Logger

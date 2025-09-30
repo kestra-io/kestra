@@ -11,15 +11,13 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.QueueIndexerRepository;
-import io.kestra.core.runners.ScheduleContextInterface;
 import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.jdbc.runner.JdbcSchedulerContext;
 import io.kestra.jdbc.runner.JdbcTransactionContext;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.ITriggers;
@@ -40,7 +38,10 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcRepository implements TriggerRepositoryInterface, QueueIndexerRepository<Trigger> {
     public static final Field<Object> NAMESPACE_FIELD = field("namespace");
-
+    private static final Field<Object> NEXT_EXECUTION_DATE_FIELD = field("next_execution_date");
+    private static final Field<Boolean> LOCKED_FIELD = field("locked", Boolean.class);
+    private static final Field<Integer> VNODE_FIELD = field("vnode", Integer.class);
+    
     protected io.kestra.jdbc.AbstractJdbcRepository<Trigger> jdbcRepository;
 
     private final JdbcFilterService filterService;
@@ -74,7 +75,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     }
 
     @Override
-    public Optional<Trigger> findLast(TriggerContext trigger) {
+    public Optional<Trigger> findLast(TriggerId trigger) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -145,73 +146,29 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 .where(this.defaultFilter(tenantId))
                 .fetchOne(0, int.class));
     }
-
-    public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
-        JdbcSchedulerContext jdbcSchedulerContext = (JdbcSchedulerContext) scheduleContextInterface;
-
-        return jdbcSchedulerContext.getContext()
-            .select(field("value"))
-            .from(this.jdbcRepository.getTable())
-            .where(
-                (field("next_execution_date").lessThan(now.toOffsetDateTime())
-                    // we check for null for backwards compatibility
-                    .or(field("next_execution_date").isNull()))
-                    .and(field("execution_id").isNull())
-            )
-            .orderBy(field("next_execution_date").asc())
-            .forUpdate()
-            .skipLocked()
-            .fetch()
-            .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)));
-    }
-
-    public List<Trigger> findByNextExecutionDateReadyButLockedTriggers(ZonedDateTime now) {
-        return this.jdbcRepository.getDslContextWrapper()
-            .transactionResult(configuration -> DSL.using(configuration)
-                .select(field("value"))
-                .from(this.jdbcRepository.getTable())
-                .where(
-                    (field("next_execution_date").lessThan(now.toOffsetDateTime())
-                        // we check for null for backwards compatibility
-                        .or(field("next_execution_date").isNull()))
-                        .and(field("execution_id").isNotNull())
-                )
-                .orderBy(field("next_execution_date").asc())
-                .fetch()
-                .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class))));
-    }
-
-    public Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface) {
-        JdbcSchedulerContext jdbcSchedulerContext = (JdbcSchedulerContext) scheduleContextInterface;
-
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(trigger);
-        this.jdbcRepository.persist(trigger, jdbcSchedulerContext.getContext(), fields);
-
-        return trigger;
-    }
-
+    
     @Override
     public Trigger save(Trigger trigger) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(trigger);
         this.jdbcRepository.persist(trigger, fields);
-
+        
         return trigger;
     }
-
+    
     @Override
     public Trigger save(TransactionContext txContext, Trigger trigger) {
         return save(txContext.unwrap(JdbcTransactionContext.class).getDslContext(), trigger);
     }
-
+    
     @Override
     public <TX extends TransactionContext> boolean supports(Class<TX> clazz) {
         return JdbcTransactionContext.class.isAssignableFrom(clazz);
     }
-
+    
     private Trigger save(DSLContext dslContext, Trigger trigger) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(trigger);
         this.jdbcRepository.persist(trigger, dslContext, fields);
-
+        
         return trigger;
     }
 
@@ -280,29 +237,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 return updatedTrigger;
             });
     }
-
-    @Override
-    public Trigger lock(String triggerUid, Function<Trigger, Trigger> function) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-                Optional<Trigger> optionalTrigger = this.jdbcRepository.fetchOne(context.select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(
-                        field("key").eq(triggerUid)
-                    ).forUpdate());
-
-                if (optionalTrigger.isPresent()) {
-                    Trigger trigger = function.apply(optionalTrigger.get());
-
-                    this.save(context, trigger);
-                    return trigger;
-                }
-
-                return null;
-            });
-    }
+    
     @Override
     public ArrayListTotal<Trigger> find(Pageable pageable, String tenantId, List<QueryFilter> filters) {
         return this.jdbcRepository
@@ -374,15 +309,17 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
         );
 
     }
-
+    
     protected Condition fullTextCondition(String query) {
         return query == null ? DSL.trueCondition() : jdbcRepository.fullTextCondition(List.of("fulltext"), query);
     }
-
+    
+    @Override
     protected Condition findQueryCondition(String query) {
         return fullTextCondition(query);
     }
-
+    
+    @Override
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
         return buildTenantCondition(tenantId);
     }
@@ -459,9 +396,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 return fetchSeekStep(selectSeekStep, pageable);
             });
     }
-
-
-
+    
+    @Override
     public Double fetchValue(String tenantId, DataFilterKPI<ITriggers.Fields, ? extends ColumnDescriptor<ITriggers.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
             DSLContext context = DSL.using(configuration);
@@ -497,7 +433,26 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
             }
         });
     }
-
-
+    
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public List<Trigger> findTriggersEligibleForScheduling(ZonedDateTime now, Set<Integer> vNodes, boolean locked) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> DSL.using(configuration)
+                .select(field("value"))
+                .from(this.jdbcRepository.getTable())
+                .where(NEXT_EXECUTION_DATE_FIELD.lessThan(now.toOffsetDateTime()).or(NEXT_EXECUTION_DATE_FIELD.isNull()))
+                .and(LOCKED_FIELD.isNull().or(LOCKED_FIELD.eq(locked)))
+                .and(VNODE_FIELD.in(vNodes))
+                .orderBy(NEXT_EXECUTION_DATE_FIELD.asc())
+                .fetch()
+            )
+            .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)));
+    }
+    
+    @Override
     abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
 }

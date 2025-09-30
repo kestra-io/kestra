@@ -59,7 +59,6 @@ kestra:
         initial-delay: 1h
         fixed-delay: 1d
         retention: 30d
-
   anonymous-usage-report:
     enabled: false
     uri: http://localhost:8080/

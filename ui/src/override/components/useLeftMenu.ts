@@ -19,7 +19,16 @@ import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue";
 import ShieldKeyOutline from "vue-material-design-icons/ShieldKeyOutline.vue";
 import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue";
 
-export type MenuItem = {href?: {name: string, params?: Record<string, any>, query?: Record<string, any>}, child?: MenuItem[]};
+export type MenuItem = {
+    href?: {
+        path?: string,
+        name: string,
+        params?: Record<string, any>,
+        query?: Record<string, any>
+    },
+    child?: MenuItem[],
+    disabled?: boolean,
+};
 
 export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"});

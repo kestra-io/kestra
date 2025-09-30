@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.repositories.SaveRepositoryInterface;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.kestra.core.runners.SkipExecutionService;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -50,6 +52,9 @@ public class JdbcIndexer implements Indexer {
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
+    private final SkipExecutionService skipExecutionService;
+    private final QueueService queueService;
+
     @Inject
     public JdbcIndexer(
         LogRepositoryInterface logRepository,
@@ -57,7 +62,9 @@ public class JdbcIndexer implements Indexer {
         MetricRepositoryInterface metricRepositor,
         @Named(QueueFactoryInterface.METRIC_QUEUE) QueueInterface<MetricEntry> metricQueue,
         MetricRegistry metricRegistry,
-        ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher
+        ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
+        SkipExecutionService skipExecutionService,
+        QueueService queueService
     ) {
         this.logRepository = logRepository;
         this.logQueue = (JdbcQueue<LogEntry>) logQueue;
@@ -65,6 +72,8 @@ public class JdbcIndexer implements Indexer {
         this.metricQueue = (JdbcQueue<MetricEntry>) metricQueue;
         this.metricRegistry = metricRegistry;
         this.eventPublisher = eventPublisher;
+        this.skipExecutionService = skipExecutionService;
+        this.queueService = queueService;
 
         setState(ServiceState.CREATED);
     }
@@ -88,7 +97,18 @@ public class JdbcIndexer implements Indexer {
             eithers.stream().filter(either -> either.isRight()).forEach(either -> log.error("unable to deserialize an item: {}", either.getRight().getMessage()));
 
             // then index all correctly deserialized items
-            List<T> items = eithers.stream().filter(either -> either.isLeft()).map(either -> either.getLeft()).toList();
+            List<T> items = eithers.stream()
+                .filter(either -> either.isLeft())
+                .map(either -> either.getLeft())
+                .filter(it -> {
+                    if (skipExecutionService.skipIndexerRecord(queueService.key(it))) {
+                        log.warn("Skipping indexer record for key: {}", queueService.key(it));
+                        return false;
+                    }
+                    return true;
+                })
+                .toList();
+
             if (!ListUtils.isEmpty(items)) {
                 String itemClassName = items.getFirst().getClass().getName();
                 this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_REQUEST_COUNT, MetricRegistry.METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION, "type", itemClassName).increment();

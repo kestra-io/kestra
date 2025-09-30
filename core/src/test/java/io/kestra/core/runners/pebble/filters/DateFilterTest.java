@@ -147,7 +147,7 @@ class DateFilterTest {
             )
         );
 
-        assertThat(render).isEqualTo("1378653552000123456");
+        assertThat(render).isEqualTo("1378653552123456");
     }
 
     @Test

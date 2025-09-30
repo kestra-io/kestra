@@ -68,10 +68,14 @@ public class ForEachItemCaseTest {
         // we should have triggered 26 subflows
         List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, MAIN_TENANT, TEST_NAMESPACE, "for-each-item-subflow");
 
-        // assert that the first iteration is 0
-        Execution firstTriggered = triggeredExecs.get(0);
-        Map<String, Object> taskrun = (Map<String, Object>) firstTriggered.getTrigger().getVariables().get("taskrun");
-        assertThat(taskrun.get("iteration")).isEqualTo(0);
+        // assert that iteration starts at 0
+        Execution firstTriggered = triggeredExecs.stream()
+            .filter(e -> e.getTrigger() != null && e.getTrigger().getVariables().get("taskRunIteration") != null)
+            .filter(e -> (Integer) e.getTrigger().getVariables().get("taskRunIteration") == 0)
+            .findFirst()
+            .orElse(null);
+        assertThat(firstTriggered).isNotNull();
+        assertThat(firstTriggered.getTrigger().getVariables().get("taskRunIteration")).isEqualTo(0);
 
         // assert on the main flow execution
         assertThat(execution.getTaskRunList()).hasSize(4);

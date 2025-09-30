@@ -116,7 +116,7 @@
         }
 
         mark {
-            background: var(--ks-background-additionLine);
+            background: var(--ks-background-success);
             color: var(--ks-content-success);
             font-size: var(--font-size-sm);
             padding: 2px 8px 2px 8px;

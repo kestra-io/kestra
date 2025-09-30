@@ -703,7 +703,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     ) {
         List<DailyExecutionStatistics> filledResult = new ArrayList<>();
         ZonedDateTime currentDate = startDate;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
+    // Use the timezone from the provided startDate to format intervals so grouping is consistent
+    // and not dependent on the host system timezone (fixes issues around midnight in Europe/Prague).
+    ZoneId zone = startDate != null ? startDate.getZone() : ZoneId.systemDefault();
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(zone);
 
         // Add one to the end date to include last intervals in the result
         String formattedEndDate = endDate.plus(1, unit).format(formatter);

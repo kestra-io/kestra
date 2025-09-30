@@ -499,6 +499,52 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void dailyStatisticsEuropePragueMidnight() throws InterruptedException {
+        // Prepare two executions around midnight Europe/Prague: one before midnight and one after
+        ZoneId prague = ZoneId.of("Europe/Prague");
+
+        ZonedDateTime dayBeforeMidnight = ZonedDateTime.of(2025, 10, 25, 23, 30, 0, 0, prague);
+        ZonedDateTime dayAfterMidnight = ZonedDateTime.of(2025, 10, 26, 0, 30, 0, 0, prague);
+
+        // Build executions with explicit start dates
+        Execution before = builder(State.Type.SUCCESS, null)
+            .state(new State(State.Type.SUCCESS, List.of(new State.History(State.Type.SUCCESS, dayBeforeMidnight.toInstant()))))
+            .build();
+
+        Execution after = builder(State.Type.SUCCESS, null)
+            .state(new State(State.Type.SUCCESS, List.of(new State.History(State.Type.SUCCESS, dayAfterMidnight.toInstant()))))
+            .build();
+
+        executionRepository.save(before);
+        executionRepository.save(after);
+
+        // Small pause for DB
+        Thread.sleep(200);
+
+        ZonedDateTime start = dayBeforeMidnight.truncatedTo(ChronoUnit.DAYS);
+        ZonedDateTime end = dayAfterMidnight.plusDays(1).truncatedTo(ChronoUnit.DAYS);
+
+        List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
+            null,
+            MAIN_TENANT,
+            null,
+            null,
+            null,
+            start,
+            end,
+            null,
+            null,
+            false
+        );
+
+        // Expect at least two days intervals covering both dates
+        assertThat(result.stream().map(r -> ZonedDateTime.ofInstant(r.getStartDate(), prague).toLocalDate())).contains(
+            dayBeforeMidnight.toLocalDate(),
+            dayAfterMidnight.toLocalDate()
+        );
+    }
+
+    @Test
     protected void taskRunsDailyStatistics() {
         for (int i = 0; i < 28; i++) {
             executionRepository.save(builder(

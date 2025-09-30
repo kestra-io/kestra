@@ -1,4 +1,4 @@
-package io.kestra.executor;
+package io.kestra.core.runners;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -22,6 +22,7 @@ class SkipExecutionServiceTest {
         skipExecutionService.setSkipFlows(null);
         skipExecutionService.setSkipNamespaces(null);
         skipExecutionService.setSkipTenants(null);
+        skipExecutionService.setSkipIndexerRecords(null);
     }
 
     @Test
@@ -93,5 +94,13 @@ class SkipExecutionServiceTest {
         assertThat(skipExecutionService.skipExecution("anotherTenant", "namespace", "someFlow", "someExecution")).isFalse();
         assertThat(skipExecutionService.skipExecution("tenant", "another.namespace", "someFlow", "someExecution")).isTrue();
         assertThat(skipExecutionService.skipExecution("anotherTenant", "another.namespace", "someFlow", "someExecution")).isFalse();
+    }
+
+    @Test
+    void skipIndexedRecords() {
+        skipExecutionService.setSkipIndexerRecords(List.of("indexed"));
+
+        assertThat(skipExecutionService.skipIndexerRecord("indexed")).isTrue();
+        assertThat(skipExecutionService.skipIndexerRecord("notindexed")).isFalse();
     }
 }

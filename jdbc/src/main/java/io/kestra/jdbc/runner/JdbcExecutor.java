@@ -29,7 +29,7 @@ import io.kestra.core.utils.*;
 import io.kestra.executor.ExecutorService;
 import io.kestra.executor.FlowTriggerService;
 import io.kestra.executor.SLAService;
-import io.kestra.executor.SkipExecutionService;
+import io.kestra.core.runners.SkipExecutionService;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;

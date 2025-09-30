@@ -32,7 +32,6 @@ import jakarta.validation.ConstraintViolationException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,7 +47,9 @@ import java.util.stream.Stream;
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.utils.NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
 public abstract class AbstractFlowRepositoryTest {
@@ -644,11 +645,41 @@ public abstract class AbstractFlowRepositoryTest {
             int count = flowRepository.count(tenant);
 
             // Then
-            Assertions.assertTrue(count > 0);
+            assertTrue(count > 0);
         } finally {
             Optional.ofNullable(toDelete).ifPresent(flow -> {
                 flowRepository.delete(flow);
             });
+        }
+    }
+
+    @Test
+    void should_exist_for_tenant(){
+        String tenantFlowExist = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        FlowWithSource flowExist = FlowWithSource.builder()
+            .id("flowExist")
+            .namespace(SYSTEM_FLOWS_DEFAULT_NAMESPACE)
+            .tenantId(tenantFlowExist)
+            .deleted(false)
+            .build();
+        flowExist = flowRepository.create(GenericFlow.of(flowExist));
+
+        String tenantFlowDeleted = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        FlowWithSource flowDeleted = FlowWithSource.builder()
+            .id("flowDeleted")
+            .namespace(SYSTEM_FLOWS_DEFAULT_NAMESPACE)
+            .tenantId(tenantFlowDeleted)
+            .deleted(true)
+            .build();
+        flowDeleted = flowRepository.create(GenericFlow.of(flowDeleted));
+
+        try {
+            assertTrue(flowRepository.existAnyNoAcl(tenantFlowExist));
+            assertFalse(flowRepository.existAnyNoAcl("not_found"));
+            assertFalse(flowRepository.existAnyNoAcl(tenantFlowDeleted));
+        } finally {
+            deleteFlow(flowExist);
+            deleteFlow(flowDeleted);
         }
     }
 

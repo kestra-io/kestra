@@ -6,6 +6,6 @@
     import BookmarkLink from "./BookmarkLink.vue"
 
     defineProps<{
-        pages: {label:string, path:string}[]
+        pages: {label?:string, path:string}[]
     }>()
 </script>

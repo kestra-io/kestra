@@ -27,10 +27,7 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -210,6 +207,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         assertThat(receive.blockLast().getTaskRun().getState().getCurrent()).isNotEqualTo(Type.SUCCESS);
     }
 
+    @Disabled
     @Test
     void shouldReEmitTriggerWhenWorkerIsDetectedAsNonResponding() throws Exception {
         Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);

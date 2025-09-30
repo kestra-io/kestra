@@ -1,15 +1,21 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.History;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 
@@ -45,6 +51,10 @@ public class FlowConcurrencyCaseTest {
 
     @Inject
     private ExecutionService executionService;
+
+    @Inject
+    @Named(QueueFactoryInterface.KILL_NAMED)
+    protected QueueInterface<ExecutionKilled> killQueue;
 
     public void flowConcurrencyCancel() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, NAMESPACE, "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));
@@ -196,6 +206,26 @@ public class FlowConcurrencyCaseTest {
         Execution execution3 = runnerUtils.runOne(tenantId, NAMESPACE, "flow-concurrency-subflow");
         assertThat(execution3.getState().getCurrent()).isEqualTo(Type.SUCCESS);
         runnerUtils.awaitFlowExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), tenantId, NAMESPACE, "flow-concurrency-cancel");
+    }
+
+    public void flowConcurrencyParallelSubflowKill() throws QueueException {
+        Execution parent = runnerUtils.runOneUntilRunning(MAIN_TENANT, NAMESPACE, "flow-concurrency-parallel-subflow-kill", null, null, Duration.ofSeconds(30));
+        Execution queued = runnerUtils.awaitFlowExecution(e -> e.getState().isQueued(), MAIN_TENANT, NAMESPACE, "flow-concurrency-parallel-subflow-kill-child");
+
+        // Kill the parent
+        killQueue.emit(ExecutionKilledExecution
+            .builder()
+            .state(ExecutionKilled.State.REQUESTED)
+            .executionId(parent.getId())
+            .isOnKillCascade(true)
+            .tenantId(MAIN_TENANT)
+            .build()
+        );
+
+        Execution terminated = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), queued);
+        assertThat(terminated.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(terminated.getState().getHistories().stream().noneMatch(h -> h.getState() == Type.RUNNING)).isTrue();
+        assertThat(terminated.getTaskRunList()).isNull();
     }
 
     private URI storageUpload(String tenantId) throws URISyntaxException, IOException {

@@ -1,0 +1,16 @@
+id: flow-concurrency-parallel-subflow-kill
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: flow1
+        type: io.kestra.plugin.core.flow.Subflow
+        flowId: flow-concurrency-parallel-subflow-kill-child
+        namespace: io.kestra.tests
+
+      - id: flow2
+        type: io.kestra.plugin.core.flow.Subflow
+        flowId: flow-concurrency-parallel-subflow-kill-child
+        namespace: io.kestra.tests

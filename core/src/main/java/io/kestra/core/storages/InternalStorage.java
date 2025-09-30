@@ -16,10 +16,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.net.URLEncoder;
 
 /**
  * The default {@link Storage} implementation acting as a facade to the {@link StorageInterface}.
@@ -175,11 +177,19 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public URI putFile(File file, String name) throws IOException {
+        string rawName = name!=null ? name:file.getName();
+        //URL-encode the filename component
+        // URLEncoder.encode converts space ' ' to '+'. For URI path segments, 
+        // '+' is incorrect and must be '%20'. We replace it manually.
+        // This is a common and necessary pattern for encoding path components.
+        // Manually remove the " " --> "+" --> "%20"
+        String encodedName = URLEncoder.encode(rawName, StandardCharsets.UTF_8.toString())
+        .replace("+", "%20");
         URI uri = context.getContextStorageURI();
-        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + (name != null ? name : file.getName()));
+        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + encodedName);
         try (InputStream is = new FileInputStream(file)) {
-            return putFile(is, resolved);
-        } finally {
+        return putFile(is, resolved);
+    } finally {
             try {
                 Files.delete(file.toPath());
             } catch (IOException e) {

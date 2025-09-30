@@ -2,6 +2,7 @@ package io.kestra.core.lock;
 
 import io.kestra.core.repositories.LockRepositoryInterface;
 import io.kestra.core.server.ServerInstance;
+import io.kestra.core.utils.Disposable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -72,7 +73,18 @@ public class LockService {
             unlock(category, id);
         }
     }
-
+    
+    /**
+     * Acquires the lock only if it is not held by another process at the time of invocation.
+     * 
+     * @param category the category of the lock, e.g., 'executions'
+     * @param id the identifier of the lock within the specified category, e.g., an execution ID
+     * @return an optional {@link Disposable} to release the lock.
+     */
+    public Optional<Disposable> tryLock(String category, String id) {
+        return lock(category, id, Duration.ZERO) ? Optional.of(Disposable.of(() -> this.unlock(category, id))) : Optional.empty();
+    }
+    
     /**
      * Attempts to execute the provided {@code runnable} within a lock.
      * If the lock is already held by another process, the execution is skipped.

@@ -4,9 +4,17 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.runners.*;
-import io.micrometer.core.instrument.*;
+import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.runners.WorkerTrigger;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.search.Search;
 import jakarta.inject.Inject;
@@ -379,19 +387,19 @@ public class MetricRegistry {
         };
         return execution.getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, execution.getTenantId());
     }
-
+    
     /**
-     * Return tags for current {@link TriggerContext}
+     * Return tags for current {@link TriggerId}
      *
-     * @param triggerContext the current TriggerContext
+     * @param triggerId the trigger
      * @return tags to apply to metrics
      */
-    public String[] tags(TriggerContext triggerContext) {
+    public String[] tags(TriggerId triggerId) {
         var baseTags = new String[]{
-            TAG_FLOW_ID, triggerContext.getFlowId(),
-            TAG_NAMESPACE_ID, triggerContext.getNamespace()
+            TAG_FLOW_ID, triggerId.getFlowId(),
+            TAG_NAMESPACE_ID, triggerId.getNamespace()
         };
-        return triggerContext.getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, triggerContext.getTenantId());
+        return triggerId.getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, triggerId.getTenantId());
     }
 
     /**

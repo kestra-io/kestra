@@ -75,32 +75,35 @@ Comece Localmente em 5 Minutos
 Inicie o Kestra com Docker
 Certifique-se de que o Docker está em execução. Em seguida, inicie o Kestra com um único comando:
 
-Bash
+```Bash
 
 docker run --pull=always --rm -it -p 8080:8080 --user=root \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v /tmp:/tmp kestra/kestra:latest server local
 Se você está no Windows e usa o PowerShell:
-
-PowerShell
+```
+```PowerShell
 
 docker run --pull=always --rm -it -p 8080:8080 --user=root `
     -v "/var/run/docker.sock:/var/run/docker.sock" `
     -v "C:/Temp:/tmp" kestra/kestra:latest server local
+```
 Se você está no Windows e usa o Prompt de Comando (CMD):
 
-DOS
+```CMD
 
 docker run --pull=always --rm -it -p 8080:8080 --user=root ^
     -v "/var/run/docker.sock:/var/run/docker.sock" ^
     -v "C:/Temp:/tmp" kestra/kestra:latest server local
+```
 Se você está no Windows e usa o WSL (ambiente baseado em Linux no Windows):
 
-Bash
+```Bash
 
 docker run --pull=always --rm -it -p 8080:8080 --user=root \
     -v "/var/run/docker.sock:/var/run/docker.sock" \
     -v "C:/Temp:/tmp" kestra/kestra:latest server local
+```
 Confira nosso Guia de Instalação para outras opções de implantação (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure e mais).
 
 Acesse a UI do Kestra em http://localhost:8080 e comece a construir seu primeiro flow!
@@ -108,7 +111,7 @@ Acesse a UI do Kestra em http://localhost:8080 e comece a construir seu primeiro
 Seu Primeiro Flow "Hello World"
 Crie um novo flow com o seguinte conteúdo:
 
-YAML
+```YAML
 
 id: hello_world
 namespace: dev
@@ -117,6 +120,7 @@ tasks:
   - id: say_hello
     type: io.kestra.plugin.core.log.Log
     message: "Hello, World!"
+```
 Execute o flow e veja a saída na UI!
 
 🧩 Ecossistema de Plugins

@@ -7,6 +7,7 @@ import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -22,6 +23,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.USER;
@@ -195,5 +197,74 @@ public abstract class AbstractTriggerRepositoryTest {
         long count = triggerRepository.countAll(tenant);
         // Then
         assertThat(count).isEqualTo(1);
+    }
+    
+    @Test
+    void shouldGetResultsForFindTriggersEligibleForSchedulingGivenNoExecutionDate() {
+        // GIVEN
+        String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        triggerRepository.save(trigger(tenant1).triggerId("A").locked(false).vnode(0).nextExecutionDate(null).build());
+        triggerRepository.save(trigger(tenant1).triggerId("B").locked(false).vnode(1).nextExecutionDate(null).build());
+        triggerRepository.save(trigger(tenant2).triggerId("C").locked(false).vnode(2).nextExecutionDate(null).build());
+        // WHEN
+        List<Trigger> results = triggerRepository.findTriggersEligibleForScheduling(ZonedDateTime.now(), Set.of(0, 1), false)
+            .stream().filter(it -> Set.of(tenant1, tenant2).contains(it.getTenantId())).toList();
+        
+        // THEN
+        assertThat(results.size()).isEqualTo(2);
+        assertThat(results.stream().map(TriggerContext::getTriggerId).toList()).containsExactlyInAnyOrder("A", "B");
+    }
+    
+    @Test
+    void shouldGetEmptyForFindTriggersEligibleForSchedulingGivenUnknownVNodes() {
+        // GIVEN
+        String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        triggerRepository.save(trigger(tenant1).triggerId("A").locked(false).vnode(0).nextExecutionDate(null).build());
+        triggerRepository.save(trigger(tenant2).triggerId("B").locked(false).vnode(1).nextExecutionDate(null).build());
+        triggerRepository.save(trigger(tenant2).triggerId("C").locked(false).vnode(2).nextExecutionDate(null).build());
+        // WHEN
+        List<Trigger> results = triggerRepository.findTriggersEligibleForScheduling(ZonedDateTime.now(), Set.of(3), false)
+            .stream().filter(it -> Set.of(tenant1, tenant2).contains(it.getTenantId())).toList();
+        
+        // THEN
+        assertThat(results.size()).isEqualTo(0);
+    }
+    
+    @Test
+    void shouldGetResultsForFindTriggersEligibleForSchedulingGivenLockedTrue() {
+        // GIVEN
+        String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        triggerRepository.save(trigger(tenant1).triggerId("A").locked(false).vnode(0).nextExecutionDate(null).build());
+        triggerRepository.save(trigger(tenant1).triggerId("B").locked(true).vnode(1).nextExecutionDate(null).build());
+        triggerRepository.save(trigger(tenant2).triggerId("C").locked(false).vnode(2).nextExecutionDate(null).build());
+        // WHEN
+        List<Trigger> results = triggerRepository.findTriggersEligibleForScheduling(ZonedDateTime.now(), Set.of(1), true)
+            .stream().filter(it -> Set.of(tenant1, tenant2).contains(it.getTenantId())).toList();
+        
+        // THEN
+        assertThat(results.size()).isEqualTo(1);
+        assertThat(results.stream().map(TriggerContext::getTriggerId).toList()).containsExactlyInAnyOrder("B");
+    }
+    
+    @Test
+    void shouldGetResultsForFindTriggersEligibleForSchedulingGivenExecutionDate() {
+        ZonedDateTime now = ZonedDateTime.now();
+        // GIVEN
+        String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        triggerRepository.save(trigger(tenant1).triggerId("A").locked(false).vnode(0).nextExecutionDate(now).build());
+        triggerRepository.save(trigger(tenant1).triggerId("B").locked(false).vnode(1).nextExecutionDate(now.plusMinutes(5)).build());
+        triggerRepository.save(trigger(tenant2).triggerId("C").locked(false).vnode(2).nextExecutionDate(now.minusMinutes(5)).build());
+        triggerRepository.save(trigger(tenant2).triggerId("D").locked(false).vnode(3).nextExecutionDate(null).build());
+        // WHEN
+        List<Trigger> results = triggerRepository.findTriggersEligibleForScheduling(now, Set.of(0, 1, 2, 3), false)
+            .stream().filter(it -> Set.of(tenant1, tenant2).contains(it.getTenantId())).toList();
+        
+        // THEN
+        assertThat(results.size()).isEqualTo(3);
+        assertThat(results.stream().map(TriggerContext::getTriggerId).toList()).containsExactlyInAnyOrder("A", "C", "D");
     }
 }

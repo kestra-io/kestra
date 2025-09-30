@@ -1,9 +1,9 @@
 package io.kestra.scheduler.endpoint;
 
-import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Trigger;
-import io.kestra.scheduler.AbstractScheduler;
+import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
+import io.kestra.scheduler.DefaultScheduler;
+import io.kestra.scheduler.models.TriggerEvaluationContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.management.endpoint.annotation.Endpoint;
 import io.micronaut.management.endpoint.annotation.Read;
@@ -14,32 +14,34 @@ import lombok.Getter;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Endpoint(id = "scheduler", defaultSensitive = false)
 @Requires(property = "kestra.server-type", pattern = "(SCHEDULER|STANDALONE)")
 public class SchedulerEndpoint {
+    
+    private final DefaultScheduler scheduler;
+    private final DefaultSchedulableTriggerFetcher schedulableTriggerFetcher;
+    
     @Inject
-    AbstractScheduler scheduler;
-
+    public SchedulerEndpoint(DefaultScheduler scheduler, DefaultSchedulableTriggerFetcher schedulableTriggerFetcher) {
+        this.scheduler = scheduler;
+        this.schedulableTriggerFetcher = schedulableTriggerFetcher;
+    }
+    
     @Read
     public SchedulerEndpointResult running() {
-        Map<String, AbstractScheduler.FlowWithWorkerTriggerNextDate> schedulableNextDate = scheduler.getSchedulableNextDate();
-
-        List<SchedulerEndpointSchedule> result = scheduler.schedulerTriggers()
+        ZonedDateTime zoneScheduleTime = ZonedDateTime.ofInstant(scheduler.clock().instant(), scheduler.clock().getZone());
+        List<TriggerEvaluationContext> schedulableTriggers = schedulableTriggerFetcher.getSchedulableTriggers(scheduler.clock(), zoneScheduleTime, scheduler.currentVNodesAssignment());
+        
+        List<SchedulerEndpointSchedule> result = schedulableTriggers
             .stream()
-            .filter(flowWithTriggers -> !(flowWithTriggers.getFlow() instanceof FlowWithException))
-            .map(flowWithTrigger -> {
-                String uid = Trigger.uid(flowWithTrigger.getFlow(), flowWithTrigger.getAbstractTrigger());
-
-                return new SchedulerEndpointSchedule(
-                    flowWithTrigger.getFlow().getId(),
-                    flowWithTrigger.getFlow().getNamespace(),
-                    flowWithTrigger.getFlow().getRevision(),
-                    flowWithTrigger.getAbstractTrigger(),
-                    schedulableNextDate.containsKey(uid) ? schedulableNextDate.get(uid).getNext() : null
-                );
-            })
+            .map(context -> new SchedulerEndpointSchedule(
+                context.flow().getId(),
+                context.flow().getNamespace(),
+                context.flow().getRevision(),
+                context.trigger(),
+                context.triggerState().getNextEvaluationDate()
+            ))
             .toList();
 
         return SchedulerEndpointResult.builder()

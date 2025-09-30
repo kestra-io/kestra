@@ -1,4 +1,4 @@
-package io.kestra.executor;
+package io.kestra.core.runners;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.executions.Execution;
@@ -18,6 +18,7 @@ public class SkipExecutionService {
     private volatile List<FlowId> skipFlows = Collections.emptyList();
     private volatile List<NamespaceId> skipNamespaces = Collections.emptyList();
     private volatile List<String> skipTenants = Collections.emptyList();
+    private volatile List<String> skipIndexerRecords = Collections.emptyList();
 
     public synchronized void setSkipExecutions(List<String> skipExecutions) {
         this.skipExecutions = skipExecutions == null ? Collections.emptyList() : skipExecutions;
@@ -35,6 +36,10 @@ public class SkipExecutionService {
         this.skipTenants = skipTenants == null ? Collections.emptyList() : skipTenants;
     }
 
+    public synchronized void setSkipIndexerRecords(List<String> skipIndexerRecords) {
+        this.skipIndexerRecords = skipIndexerRecords == null ? Collections.emptyList() : skipIndexerRecords;
+    }
+
     /**
      * Warning: this method didn't check the flow, so it must be used only when neither of the others can be used.
      */
@@ -48,6 +53,14 @@ public class SkipExecutionService {
 
     public boolean skipExecution(TaskRun taskRun) {
         return skipExecution(taskRun.getTenantId(), taskRun.getNamespace(), taskRun.getFlowId(), taskRun.getExecutionId());
+    }
+
+    /**
+     * Skip an indexer records based on its key.
+     * @param key the record key as computed by <code>QueueService.key(record)</code>, can be null
+     */
+    public boolean skipIndexerRecord(@Nullable String key) {
+        return key != null && skipIndexerRecords.contains(key);
     }
 
     @VisibleForTesting

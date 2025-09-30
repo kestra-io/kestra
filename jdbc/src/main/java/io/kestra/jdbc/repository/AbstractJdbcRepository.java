@@ -442,13 +442,15 @@ public abstract class AbstractJdbcRepository {
         Map<F, String> fieldsMapping,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
-        Set<F> dateFields
+        Set<F> dateFields,
+        @Nullable DateUtils.GroupType groupType
     ) {
         return descriptors.getColumns().entrySet().stream()
             .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
             .map(entry -> {
                 Duration duration = Duration.between(startDate, endDate == null ? ZonedDateTime.now() : endDate);
-                return formatDateField(fieldsMapping.get(entry.getValue().getField()), DateUtils.groupByType(duration)).as(entry.getKey());
+                DateUtils.GroupType effectiveGroupType = groupType != null ? groupType : DateUtils.groupByType(duration);
+                return formatDateField(fieldsMapping.get(entry.getValue().getField()), effectiveGroupType).as(entry.getKey());
             })
             .toList();
 

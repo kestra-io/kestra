@@ -201,7 +201,7 @@
             }
 
             if (error?.response?.status === 401) {
-                await loadAuthConfigErrors()
+                await loadAuthConfigErrors(true)
             } else if (error?.response?.status === 404) {
                 router.push({name: "setup"})
             } else {

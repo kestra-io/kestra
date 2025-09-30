@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
     import Layout from "./Layout.vue";
-    import {ref} from "vue";
+    import {computed} from "vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
 
     import sourceImg from "../../assets/demo/blueprints.png";
@@ -26,9 +26,7 @@
 
     const {t} = useI18n();
 
-    const routeInfo = ref({
-        title: t("demos.blueprints.title"),
-    });
+    const routeInfo = computed(() => ({title: t("demos.blueprints.title")}));
 
     useRouteContext(routeInfo);
 

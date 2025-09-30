@@ -18,7 +18,7 @@ import {useNamespacesStore} from "override/stores/namespaces";
 import {useAuthStore} from "override/stores/auth";
 import {useRoute} from "vue-router";
 import {useAxios} from "../utils/axios";
-import {defaultNamespace} from "../composables/useNamespaces.ts";
+import {defaultNamespace} from "../composables/useNamespaces";
 
 const textYamlHeader = {
     headers: {

@@ -652,6 +652,7 @@
       },
       "text_search": "このテキストを検索"
     },
+    "fix_with_ai": "AIで修正",
     "flow": "Flow",
     "flow already exists": "Flowはすでに存在します",
     "flow creation": "Flow作成",
@@ -668,6 +669,7 @@
     "flow-no-dependencies": "あなたのflowには依存関係がありません",
     "flow_export": "フローをエクスポート",
     "flow_only": "Flowタブでのみ利用可能です。",
+    "flow_outputs": "フロー出力",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code>件のflowが削除されました",
     "flows disabled": "<code>{count}</code>件のflowが無効化されました",
@@ -773,6 +775,7 @@
     "metrics": "メトリクス",
     "min": "Min",
     "minutes": "分",
+    "missingSource": "ソースが見つかりません",
     "monogram": "モノグラム",
     "months": "月",
     "multi_panel_editor": {
@@ -1426,6 +1429,7 @@
       "zoom-out": "ズームアウト",
       "zoom-reset": "ズームリセット"
     },
+    "total_duration": "合計時間",
     "total_executions": "実行の合計",
     "trigger": "Trigger",
     "trigger details": "Triggerの詳細",

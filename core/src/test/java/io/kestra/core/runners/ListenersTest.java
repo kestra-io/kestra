@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ListenersTest {
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Inject
     private LocalFlowRepositoryLoader repositoryLoader;

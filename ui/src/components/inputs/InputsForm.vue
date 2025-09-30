@@ -385,6 +385,21 @@
             document.removeEventListener("keydown", this._keyListener);
         },
         methods: {
+            normalizeJSON(value) {
+                try {
+                    // Step 1: Remove trailing commas in objects and arrays
+                    let cleaned = value.replace(/,\s*([}\]])/g, "$1");
+
+                    // Step 2: Quote unquoted keys (simple case: keys with letters, numbers, or _)
+                    cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, "$1\"$2\":");
+
+                    // Step 3: Parse into JS object
+                    return JSON.parse(cleaned);
+                } catch (e) {
+                    console.error("Failed to normalize JSON:", e.message);
+                    return null;
+                }
+            },
             inputError(id) {
                 // if this input has not been edited yet
                 // showing any error is annoying
@@ -406,8 +421,15 @@
                     if (this.inputsValues[id] === undefined || this.inputsValues[id] === null || input.isDefault) {
                         if (type === "MULTISELECT") {
                             this.multiSelectInputs[id] = value;
+                        } else if(type === "JSON" && value == undefined && input.isDefault) {
+                            /*
+                            * Handle multiline JSON default values
+                            * See https://github.com/kestra-io/kestra/issues/11449
+                            */
+                            this.inputsValues[id] = Inputs.normalize(type, this.normalizeJSON(input.defaults));
+                        } else {
+                            this.inputsValues[id] = Inputs.normalize(type, value);
                         }
-                        this.inputsValues[id] = Inputs.normalize(type, value);
                     }
                 }
             },

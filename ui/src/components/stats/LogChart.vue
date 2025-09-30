@@ -19,14 +19,14 @@
 <script>
     import {computed, defineComponent, ref, getCurrentInstance} from "vue";
     import {Bar} from "vue-chartjs";
-    import {useMiscStore} from "override/stores/misc.js";
+    import {useMiscStore} from "override/stores/misc";
     import Utils from "../../utils/utils";
     import {
         defaultConfig,
         tooltip,
         getFormat,
-    } from "../dashboard/composables/charts.js";
-    import Logs from "../../utils/logs.js";
+    } from "../dashboard/composables/charts";
+    import Logs from "../../utils/logs";
 
     export default defineComponent({
         components: {Bar},

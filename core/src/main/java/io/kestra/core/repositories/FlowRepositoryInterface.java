@@ -162,4 +162,6 @@ public interface FlowRepositoryInterface {
     FlowWithSource update(GenericFlow flow, FlowInterface previous) throws ConstraintViolationException;
 
     FlowWithSource delete(FlowInterface flow);
+
+    Boolean existAnyNoAcl(String tenantId);
 }

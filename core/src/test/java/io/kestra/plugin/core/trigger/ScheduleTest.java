@@ -169,7 +169,7 @@ class ScheduleTest {
         assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-1", "trigger-label-1"));
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-2", "trigger-label-2"));
-        assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-3", ""));
+        assertThat(evaluate.get().getLabels()).doesNotContain(new Label("trigger-label-3", ""));
     }
 
     @Test

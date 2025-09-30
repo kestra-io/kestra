@@ -1,5 +1,5 @@
-import {useValues} from "../../../../components/filter/composables/useValues.ts";
-import {Value} from "../../../../components/filter/utils/types.ts";
+import {useValues} from "../../../../components/filter/composables/useValues";
+import {Value} from "../../../../components/filter/utils/types";
 
 export enum Comparators {
     EQUALS = "=",

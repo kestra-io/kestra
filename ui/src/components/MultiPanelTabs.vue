@@ -474,7 +474,7 @@
         }
     }
 
-    const defaultSize = computed(() => panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length);
+    const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length));
 
     function newPanelDrop(_e: DragEvent, direction: "left" | "right") {
         if (!movedTabInfo.value) return;

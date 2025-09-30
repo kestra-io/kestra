@@ -5,7 +5,6 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
-import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
@@ -18,14 +17,11 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
-import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.GraphUtils;
@@ -86,12 +82,6 @@ public class ExecutionService {
 
     @Inject
     private ConcurrencyLimitService concurrencyLimitService;
-
-    @Inject
-    private ConditionService conditionService;
-
-    @Inject
-    private RunContextFactory runContextFactory;
 
     @Inject
     private PluginDefaultService pluginDefaultService;
@@ -940,20 +930,5 @@ public class ExecutionService {
         return flow.getAfterExecution().stream()
             .map(ResolvedTask::of)
             .toList();
-    }
-
-    /**
-     * Reset a trigger after an execution was terminated
-     */
-    public Trigger resetExecution(FlowWithSource flow, Execution execution, Trigger trigger) {
-        if (!execution.getState().isTerminated()) {
-            throw new IllegalArgumentException("Only terminated executions can be reset.");
-        }
-
-        FlowWithSource flowWithDefaults = pluginDefaultService.injectDefaults(flow, execution);
-        RunContext runContext = runContextFactory.of(flowWithDefaults, flowWithDefaults.findTriggerByTriggerId(trigger.getTriggerId()));
-        ConditionContext conditionContext = conditionService.conditionContext(runContext, flowWithDefaults, null);
-
-        return trigger.resetExecution(flowWithDefaults, execution, conditionContext);
     }
 }

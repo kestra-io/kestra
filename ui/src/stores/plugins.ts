@@ -291,23 +291,24 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
 
-        async updateDocumentation(pluginElement?: ({type: string, version?: string, hash?: number} & Record<string, any>) | undefined) {
+        async updateDocumentation(pluginElement?: ({type: string, version?: string, forceRefresh?: boolean} & Record<string, any>) | undefined) {
             if (!pluginElement?.type || !this.allTypes.includes(pluginElement.type)) {
                 this.editorPlugin = undefined;
                 this.currentlyLoading = undefined;
                 return;
             }
 
-            const {type, version} = pluginElement;
+            const {type, version, forceRefresh = false} = pluginElement;
 
             // Avoid rerunning the same request twice in a row
             if (this.currentlyLoading?.type === type &&
-                this.currentlyLoading?.version === version) {
+                this.currentlyLoading?.version === version &&
+                !forceRefresh) {
                 return
             }
 
-            // No need to reload if the plugin has not changed
-            if (this.editorPlugin?.cls === type &&
+            if (!forceRefresh &&
+                this.editorPlugin?.cls === type &&
                 this.editorPlugin?.version === version) {
                 return;
             }
@@ -342,7 +343,7 @@ export const usePluginsStore = defineStore("plugins", {
 
                 trackPluginDocumentationView(type);
 
-                this.forceIncludeProperties = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version");
+                this.forceIncludeProperties = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version" && k !== "forceRefresh");
             });
         }
     },

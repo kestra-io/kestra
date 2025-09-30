@@ -10,7 +10,6 @@ import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -23,25 +22,24 @@ import java.util.Set;
 
 @KestraTest
 public abstract class AbstractServiceUsageReportTest {
-    
+
     @Inject
     ServiceUsageReport serviceUsageReport;
-    
+
     @Inject
     ServiceInstanceRepositoryInterface serviceInstanceRepository;
-    
+
     @Test
-    @Disabled
     public void shouldGetReport() {
         // Given
-        final LocalDate start = LocalDate.now().withDayOfMonth(1);
+        final LocalDate start = LocalDate.of(2025, 1, 1);
         final LocalDate end = start.withDayOfMonth(start.getMonth().length(start.isLeapYear()));
         final ZoneId zoneId = ZoneId.systemDefault();
-        
+
         LocalDate from = start;
         int days = 0;
         // generate one month of service instance
-        
+
         while (from.toEpochDay() < end.toEpochDay()) {
             Instant createAt = from.atStartOfDay(zoneId).toInstant();
             Instant updatedAt = from.atStartOfDay(zoneId).plus(Duration.ofHours(10)).toInstant();
@@ -64,14 +62,14 @@ public abstract class AbstractServiceUsageReportTest {
             from = from.plusDays(1);
             days++;
         }
-        
-        
+
+
         // When
         Instant now = end.plusDays(1).atStartOfDay(zoneId).toInstant();
         ServiceUsageReport.ServiceUsageEvent event = serviceUsageReport.report(now,
             Reportable.TimeInterval.of(start.atStartOfDay(zoneId), end.plusDays(1).atStartOfDay(zoneId))
         );
-        
+
         // Then
         List<ServiceUsage.DailyServiceStatistics> statistics = event.services().dailyStatistics();
         Assertions.assertEquals(ServiceType.values().length - 1, statistics.size());

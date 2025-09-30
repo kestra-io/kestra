@@ -127,8 +127,15 @@
         return staticGetPanelFromValue(value, tab, dirtyFlow)
     }
 
+    function getTabFromValue(value: string): Tab {
+        return setupInitialNoCodeTabIfExists(RawNoCode, value, t, noCodeHandlers, flowStore.flowYaml ?? "")
+            ?? setupInitialCodeTab(value)
+            ?? EDITOR_ELEMENTS.find(e => e.value === value)
+            ?? EDITOR_ELEMENTS[0]
+    }
+
     function staticGetPanelFromValue(value: string, tab?: Tab, dirtyFlow = false): {prepend: boolean, panel: Omit<Panel, "size">}{
-        const element: Tab = tab ?? EDITOR_ELEMENTS.find(e => e.value === value) ?? EDITOR_ELEMENTS[0]
+        const element: Tab = tab ?? getTabFromValue(value)
 
         if(isTabFlowRelated(element)){
             element.dirty = dirtyFlow

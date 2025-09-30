@@ -214,7 +214,7 @@ public abstract class AbstractRunnerTest {
     @Test
     @LoadFlows(value = {"flows/valids/trigger-flow-listener-with-concurrency-limit.yaml",
         "flows/valids/trigger-flow-with-concurrency-limit.yaml"}, tenantId = "trigger-tenant")
-    void flowTriggerWithConcurrencyLimit() throws Exception {
+    protected void flowTriggerWithConcurrencyLimit() throws Exception {
         flowTriggerCaseTest.triggerWithConcurrencyLimit("trigger-tenant");
     }
 
@@ -273,7 +273,7 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({"flows/valids/switch.yaml",
         "flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml"})
-    void flowWaitSuccess() throws Exception {
+    protected void flowWaitSuccess() throws Exception {
         flowCaseTest.waitSuccess();
     }
 

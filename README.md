@@ -1,112 +1,115 @@
+Com certeza! Aqui está a tradução do texto para o português do Brasil.
+
 <p align="center">
-  <a href="https://www.kestra.io">
-    <img src="https://kestra.io/banner.png"  alt="Kestra workflow orchestrator" />
-  </a>
+<a href="https://www.kestra.io">
+<img src="https://kestra.io/banner.png"  alt="Orquestrador de workflows Kestra" />
+</a>
 </p>
 
 <h1 align="center" style="border-bottom: none">
-    Event-Driven Declarative Orchestration Platform
+Plataforma de Orquestração Declarativa e Orientada a Eventos
 </h1>
 
 <div align="center">
- <a href="https://github.com/kestra-io/kestra/releases"><img src="https://img.shields.io/github/tag-pre/kestra-io/kestra.svg?color=blueviolet" alt="Last Version" /></a>
-  <a href="https://github.com/kestra-io/kestra/blob/develop/LICENSE"><img src="https://img.shields.io/github/license/kestra-io/kestra?color=blueviolet" alt="License" /></a>
-  <a href="https://github.com/kestra-io/kestra/stargazers"><img src="https://img.shields.io/github/stars/kestra-io/kestra?color=blueviolet&logo=github" alt="Github star" /></a> <br>
-<a href="https://kestra.io"><img src="https://img.shields.io/badge/Website-kestra.io-192A4E?color=blueviolet" alt="Kestra infinitely scalable orchestration and scheduling platform"></a>
-<a href="https://kestra.io/slack"><img src="https://img.shields.io/badge/Slack-Join%20Community-blueviolet?logo=slack" alt="Slack"></a>
+<a href="https://github.com/kestra-io/kestra/releases"><img src="https://img.shields.io/github/tag-pre/kestra-io/kestra.svg?color=blueviolet" alt="Última Versão" /></a>
+<a href="https://github.com/kestra-io/kestra/blob/develop/LICENSE"><img src="https://img.shields.io/github/license/kestra-io/kestra?color=blueviolet" alt="Licença" /></a>
+<a href="https://github.com/kestra-io/kestra/stargazers"><img src="https://img.shields.io/github/stars/kestra-io/kestra?color=blueviolet&logo=github" alt="Estrela no Github" /></a> 
+
+
+
+<a href="https://kestra.io"><img src="https://img.shields.io/badge/Website-kestra.io-192A4E?color=blueviolet" alt="Plataforma de orquestração e agendamento infinitamente escalável Kestra"></a>
+<a href="https://kestra.io/slack"><img src="https://img.shields.io/badge/Slack-Junte-se%20à%20Comunidade-blueviolet?logo=slack" alt="Slack"></a>
 </div>
 
 <br />
 
 <p align="center">
-    <a href="https://x.com/kestra_io"><img height="25" src="https://kestra.io/twitter.svg" alt="X(formerly Twitter)" /></a> &nbsp;
-    <a href="https://www.linkedin.com/company/kestra/"><img height="25" src="https://kestra.io/linkedin.svg" alt="linkedin" /></a> &nbsp;
+<a href="https://x.com/kestra_io"><img height="25" src="https://kestra.io/twitter.svg" alt="X (antigo Twitter)" /></a> &nbsp;
+<a href="https://www.linkedin.com/company/kestra/"><img height="25" src="https://kestra.io/linkedin.svg" alt="linkedin" /></a> &nbsp;
 <a href="https://www.youtube.com/@kestra-io"><img height="25" src="https://kestra.io/youtube.svg" alt="youtube" /></a> &nbsp;
 </p>
 
 <p align="center">
-  <a href="https://trendshift.io/repositories/2714" target="_blank">
-    <img src="https://trendshift.io/api/badge/repositories/2714" alt="kestra-io%2Fkestra | Trendshift" width="250" height="55"/>
-  </a>
-  <a href="https://www.producthunt.com/posts/kestra?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-kestra" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=612077&theme=light&period=daily&t=1740737506162" alt="Kestra - All&#0045;in&#0045;one&#0032;automation&#0032;&#0038;&#0032;orchestration&#0032;platform | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+<a href="https://trendshift.io/repositories/2714" target="_blank">
+<img src="https://trendshift.io/api/badge/repositories/2714" alt="kestra-io%2Fkestra | Trendshift" width="250" height="55"/>
+</a>
+<a href="https://www.producthunt.com/posts/kestra?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-kestra" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=612077&theme=light&period=daily&t=1740737506162" alt="Kestra - Plataforma completa de automação e orquestração | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 </p>
 
 <p align="center">
-    <a href="https://go.kestra.io/video/product-overview" target="_blank">
-        <img src="https://kestra.io/startvideo.png" alt="Get started in 3 minutes with Kestra" width="640px" />
-    </a>
+<a href="https://go.kestra.io/video/product-overview" target="_blank">
+<img src="https://kestra.io/startvideo.png" alt="Comece em 3 minutos com Kestra" width="640px" />
+</a>
 </p>
-<p align="center" style="color:grey;"><i>Click on the image to learn how to get started with Kestra in 3 minutes.</i></p>
+<p align="center" style="color:grey;"><i>Clique na imagem para aprender como começar com Kestra em 3 minutos.</i></p>
 
+🌟 O que é Kestra?
+Kestra é uma plataforma de orquestração de código aberto e orientada a eventos que facilita tanto workflows agendados quanto orientados a eventos. Ao trazer as melhores práticas de Infraestrutura como Código para a orquestração de dados, processos e microsserviços, você pode construir workflows confiáveis diretamente da UI com apenas algumas linhas de YAML.
 
-## 🌟 What is Kestra?
+Principais Características:
 
-Kestra is an open-source, event-driven orchestration platform that makes both **scheduled** and **event-driven** workflows easy. By bringing **Infrastructure as Code** best practices to data, process, and microservice orchestration, you can build reliable [workflows](https://kestra.io/docs/getting-started) directly from the UI in just a few lines of YAML.
+Tudo como Código e a partir da UI: mantenha workflows como código com a integração de Controle de Versão com Git, mesmo ao construí-los pela UI.
 
-**Key Features:**
-- **Everything as Code and from the UI:** keep **workflows as code** with a **Git Version Control** integration, even when building them from the UI.
-- **Event-Driven & Scheduled Workflows:** automate both **scheduled** and **real-time** event-driven workflows via a simple `trigger` definition.
-- **Declarative YAML Interface:** define workflows using a simple configuration in the **built-in code editor**.
-- **Rich Plugin Ecosystem:** hundreds of plugins built in to extract data from any database, cloud storage, or API, and **run scripts in any language**.
-- **Intuitive UI & Code Editor:** build and visualize workflows directly from the UI with syntax highlighting, auto-completion and real-time syntax validation.
-- **Scalable:** designed to handle millions of workflows, with high availability and fault tolerance.
-- **Version Control Friendly:** write your workflows from the built-in code Editor and push them to your preferred Git branch directly from Kestra, enabling best practices with CI/CD pipelines and version control systems.
-- **Structure & Resilience**: tame chaos and bring resilience to your workflows with **namespaces**, **labels**, **subflows**, **retries**, **timeout**, **error handling**, **inputs**, **outputs** that generate artifacts in the UI, **variables**, **conditional branching**, **advanced scheduling**, **event triggers**, **backfills**, **dynamic tasks**, **sequential and parallel tasks**, and skip tasks or triggers when needed by setting the flag `disabled` to `true`.
+Workflows Agendados e Orientados a Eventos: automatize workflows agendados e em tempo real orientados a eventos através de uma simples definição de trigger (gatilho).
 
+Interface Declarativa em YAML: defina workflows usando uma configuração simples no editor de código embutido.
 
-🧑‍💻 The YAML definition gets automatically adjusted any time you make changes to a workflow from the UI or via an API call. Therefore, the orchestration logic is **always managed declaratively in code**, even if you modify your workflows in other ways (UI, CI/CD, Terraform, API calls).
+Rico Ecossistema de Plugins: centenas de plugins integrados para extrair dados de qualquer banco de dados, armazenamento em nuvem ou API, e executar scripts em qualquer linguagem.
 
+UI Intuitiva e Editor de Código: construa e visualize workflows diretamente da UI com destaque de sintaxe, autocompletar e validação de sintaxe em tempo real.
+
+Escalável: projetado para lidar com milhões de workflows, com alta disponibilidade e tolerância a falhas.
+
+Amigável ao Controle de Versão: escreva seus workflows no editor de código embutido e envie-os para seu branch Git preferido diretamente do Kestra, habilitando as melhores práticas com pipelines de CI/CD e sistemas de controle de versão.
+
+Estrutura e Resiliência: domine o caos e traga resiliência aos seus workflows com namespaces, rótulos (labels), subfluxos (subflows), tentativas (retries), tempo limite (timeout), tratamento de erros, entradas (inputs), saídas (outputs) que geram artefatos na UI, variáveis, ramificação condicional, agendamento avançado, gatilhos de eventos, preenchimentos retroativos (backfills), tarefas dinâmicas, tarefas sequenciais e paralelas, e pule tarefas ou gatilhos quando necessário definindo a flag disabled como true.
+
+🧑‍💻 A definição YAML é ajustada automaticamente sempre que você faz alterações em um workflow pela UI ou através de uma chamada de API. Portanto, a lógica de orquestração é sempre gerenciada declarativamente em código, mesmo se você modificar seus workflows de outras maneiras (UI, CI/CD, Terraform, chamadas de API).
 
 <p align="center">
-  <img src="https://kestra.io/adding-tasks.gif" alt="Adding new tasks in the UI">
+<img src="https://kestra.io/adding-tasks.gif" alt="Adicionando novas tarefas na UI">
 </p>
 
----
+🚀 Início Rápido
+Comece Localmente em 5 Minutos
+Inicie o Kestra com Docker
+Certifique-se de que o Docker está em execução. Em seguida, inicie o Kestra com um único comando:
 
-## 🚀 Quick Start
+Bash
 
-### Get Started Locally in 5 Minutes
-
-#### Launch Kestra in Docker
-
-Make sure that Docker is running. Then, start Kestra in a single command:
-
-```bash
 docker run --pull=always --rm -it -p 8080:8080 --user=root \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v /tmp:/tmp kestra/kestra:latest server local
-```
+Se você está no Windows e usa o PowerShell:
 
-If you're on Windows and use PowerShell:
-```powershell
+PowerShell
+
 docker run --pull=always --rm -it -p 8080:8080 --user=root `
     -v "/var/run/docker.sock:/var/run/docker.sock" `
     -v "C:/Temp:/tmp" kestra/kestra:latest server local
-```
+Se você está no Windows e usa o Prompt de Comando (CMD):
 
-If you're on Windows and use Command Prompt (CMD):
-```cmd
+DOS
+
 docker run --pull=always --rm -it -p 8080:8080 --user=root ^
     -v "/var/run/docker.sock:/var/run/docker.sock" ^
     -v "C:/Temp:/tmp" kestra/kestra:latest server local
-```
+Se você está no Windows e usa o WSL (ambiente baseado em Linux no Windows):
 
-If you're on Windows and use WSL (Linux-based environment in Windows):
-```bash
+Bash
+
 docker run --pull=always --rm -it -p 8080:8080 --user=root \
     -v "/var/run/docker.sock:/var/run/docker.sock" \
     -v "C:/Temp:/tmp" kestra/kestra:latest server local
-```
+Confira nosso Guia de Instalação para outras opções de implantação (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure e mais).
 
-Check our [Installation Guide](https://kestra.io/docs/installation) for other deployment options (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure, and more).
+Acesse a UI do Kestra em http://localhost:8080 e comece a construir seu primeiro flow!
 
-Access the Kestra UI at [http://localhost:8080](http://localhost:8080) and start building your first flow!
+Seu Primeiro Flow "Hello World"
+Crie um novo flow com o seguinte conteúdo:
 
-#### Your First Hello World Flow
+YAML
 
-Create a new flow with the following content:
-
-```yaml
 id: hello_world
 namespace: dev
 
@@ -114,113 +117,102 @@ tasks:
   - id: say_hello
     type: io.kestra.plugin.core.log.Log
     message: "Hello, World!"
-```
+Execute o flow e veja a saída na UI!
 
+🧩 Ecossistema de Plugins
+A funcionalidade do Kestra é estendida através de um rico ecossistema de plugins que permite que você execute tarefas em qualquer lugar e programe em qualquer linguagem, incluindo Python, Node.js, R, Go, Shell e mais. Veja como os plugins do Kestra aprimoram seus workflows:
 
-Run the flow and see the output in the UI!
+Execute em Qualquer Lugar:
 
----
+Execução Local ou Remota: Execute tarefas na sua máquina local, em servidores remotos via SSH, ou dimensione para contêineres serverless usando Task Runners.
 
-## 🧩 Plugin Ecosystem
+Suporte a Docker e Kubernetes: Execute contêineres Docker de forma transparente em seus workflows ou inicie jobs do Kubernetes para lidar com cargas de trabalho computacionalmente intensivas.
 
-Kestra's functionality is extended through a rich [ecosystem of plugins](https://kestra.io/plugins) that empower you to run tasks anywhere and code in any language, including Python, Node.js, R, Go, Shell, and more. Here's how Kestra plugins enhance your workflows:
+Programe em Qualquer Linguagem:
 
-- **Run Anywhere:**
-  - **Local or Remote Execution:** Execute tasks on your local machine, remote servers via SSH, or scale out to serverless containers using [Task Runners](https://kestra.io/docs/task-runners).
-  - **Docker and Kubernetes Support:** Seamlessly run Docker containers within your workflows or launch Kubernetes jobs to handle compute-intensive workloads.
+Suporte a Scripts: Escreva scripts em sua linguagem de programação preferida. O Kestra suporta Python, Node.js, R, Go, Shell e outras, permitindo que você integre bases de código e padrões de implantação existentes.
 
-- **Code in Any Language:**
-  - **Scripting Support:** Write scripts in your preferred programming language. Kestra supports Python, Node.js, R, Go, Shell, and others, allowing you to integrate existing codebases and deployment patterns.
-  - **Flexible Automation:** Execute shell commands, run SQL queries against various databases, and make HTTP requests to interact with APIs.
+Automação Flexível: Execute comandos shell, rode consultas SQL em vários bancos de dados e faça requisições HTTP para interagir com APIs.
 
-- **Event-Driven and Real-Time Processing:**
-  - **Real-Time Triggers:** React to events from external systems in real-time, such as file arrivals, new messages in message buses (Kafka, Redis, Pulsar, AMQP, MQTT, NATS, AWS SQS, Google Pub/Sub, Azure Event Hubs), and more.
-  - **Custom Events:** Define custom events to trigger flows based on specific conditions or external signals, enabling highly responsive workflows.
+Processamento em Tempo Real e Orientado a Eventos:
 
-- **Cloud Integrations:**
-  - **AWS, Google Cloud, Azure:** Integrate with a variety of cloud services to interact with storage solutions, messaging systems, compute resources, and more.
-  - **Big Data Processing:** Run big data processing tasks using tools like Apache Spark or interact with analytics platforms like Google BigQuery.
+Gatilhos em Tempo Real: Reaja a eventos de sistemas externos em tempo real, como a chegada de arquivos, novas mensagens em barramentos de mensagens (Kafka, Redis, Pulsar, AMQP, MQTT, NATS, AWS SQS, Google Pub/Sub, Azure Event Hubs) e mais.
 
-- **Monitoring and Notifications:**
-  - **Stay Informed:** Send messages to Slack channels, email notifications, or trigger alerts in PagerDuty to keep your team updated on workflow statuses.
+Eventos Personalizados: Defina eventos personalizados para acionar flows com base em condições específicas ou sinais externos, permitindo workflows altamente responsivos.
 
-Kestra's plugin ecosystem is continually expanding, allowing you to tailor the platform to your specific needs. Whether you're orchestrating complex data pipelines, automating scripts across multiple environments, or integrating with cloud services, there's likely a plugin to assist. And if not, you can always [build your own plugins](https://kestra.io/docs/plugin-developer-guide/) to extend Kestra's capabilities.
+Integrações com a Nuvem:
 
-🧑‍💻 **Note:** This is just a glimpse of what Kestra plugins can do. Explore the full list on our [Plugins Page](https://kestra.io/plugins).
+AWS, Google Cloud, Azure: Integre com uma variedade de serviços em nuvem para interagir com soluções de armazenamento, sistemas de mensagens, recursos de computação e muito mais.
 
----
+Processamento de Big Data: Execute tarefas de processamento de big data usando ferramentas como Apache Spark ou interaja com plataformas de análise como Google BigQuery.
 
-## 📚 Key Concepts
+Monitoramento e Notificações:
 
-- **Flows:** the core unit in Kestra, representing a workflow composed of tasks.
-- **Tasks:** individual units of work, such as running a script, moving data, or calling an API.
-- **Namespaces:** logical grouping of flows for organization and isolation.
-- **Triggers:** schedule or events that initiate the execution of flows.
-- **Inputs & Variables:** parameters and dynamic data passed into flows and tasks.
+Mantenha-se Informado: Envie mensagens para canais do Slack, notificações por e-mail ou acione alertas no PagerDuty para manter sua equipe atualizada sobre o status dos workflows.
 
----
+O ecossistema de plugins do Kestra está em contínua expansão, permitindo que você adapte a plataforma às suas necessidades específicas. Seja orquestrando pipelines de dados complexos, automatizando scripts em múltiplos ambientes ou integrando com serviços em nuvem, provavelmente existe um plugin para ajudar. E se não houver, você sempre pode construir seus próprios plugins para estender as capacidades do Kestra.
 
-## 🎨 Build Workflows Visually
+🧑‍💻 Nota: Isso é apenas uma amostra do que os plugins do Kestra podem fazer. Explore a lista completa em nossa Página de Plugins.
 
-Kestra provides an intuitive UI that allows you to interactively build and visualize your workflows:
+📚 Conceitos-Chave
+Flows: a unidade central no Kestra, representando um workflow composto por tarefas.
 
-- **Drag-and-Drop Interface:** add and rearrange tasks from the Topology Editor.
-- **Real-Time Validation:** instant feedback on your workflow's syntax and structure to catch errors early.
-- **Auto-Completion:** smart suggestions as you type to write flow code quickly and without syntax errors.
-- **Live Topology View:** see your workflow as a Directed Acyclic Graph (DAG) that updates in real-time.
+Tasks (Tarefas): unidades de trabalho individuais, como executar um script, mover dados ou chamar uma API.
 
----
+Namespaces: agrupamento lógico de flows para organização e isolamento.
 
+Triggers (Gatilhos): agendamentos ou eventos que iniciam a execução dos flows.
 
-## 🔧 Extensible and Developer-Friendly
+Inputs (Entradas) e Variáveis: parâmetros e dados dinâmicos passados para flows e tarefas.
 
-### Plugin Development
+🎨 Construa Workflows Visualmente
+Kestra fornece uma UI intuitiva que permite construir e visualizar interativamente seus workflows:
 
-Create custom plugins to extend Kestra's capabilities. Check out our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/) to get started.
+Interface de Arrastar e Soltar: adicione e reorganize tarefas no Editor de Topologia.
 
-### Infrastructure as Code
+Validação em Tempo Real: feedback instantâneo sobre a sintaxe e estrutura do seu workflow para detectar erros antecipadamente.
 
-- **Version Control:** store your flows in Git repositories.
-- **CI/CD Integration:** automate deployment of flows using CI/CD pipelines.
-- **Terraform Provider:** manage Kestra resources with the [official Terraform provider](https://kestra.io/docs/terraform/).
+Autocompletar: sugestões inteligentes enquanto você digita para escrever o código do flow rapidamente e sem erros de sintaxe.
 
----
+Visualização da Topologia ao Vivo: veja seu workflow como um Grafo Acíclico Dirigido (DAG) que se atualiza em tempo real.
 
-## 🌐 Join the Community
+🔧 Extensível e Amigável para Desenvolvedores
+Desenvolvimento de Plugins
+Crie plugins personalizados para estender as capacidades do Kestra. Confira nosso Guia do Desenvolvedor de Plugins para começar.
 
-Stay connected and get support:
+Infraestrutura como Código
+Controle de Versão: armazene seus flows em repositórios Git.
 
-- **Slack:** Join our [Slack community](https://kestra.io/slack) to ask questions and share ideas.
-- **LinkedIn:** Follow us on [LinkedIn](https://www.linkedin.com/company/kestra/) — next to Slack and GitHub, this is our main channel to share updates and product announcements.
-- **YouTube:** Subscribe to our [YouTube channel](https://www.youtube.com/@kestra-io) for educational video content. We publish new videos every week!
-- **X:** Follow us on [X](https://x.com/kestra_io) if you're still active there.
+Integração CI/CD: automatize a implantação de flows usando pipelines de CI/CD.
 
----
+Provedor Terraform: gerencie os recursos do Kestra com o provedor Terraform oficial.
 
-## 🤝 Contributing
+🌐 Junte-se à Comunidade
+Mantenha-se conectado e obtenha suporte:
 
-We welcome contributions of all kinds!
+Slack: Junte-se à nossa comunidade no Slack para fazer perguntas e compartilhar ideias.
 
-- **Report Issues:** Found a bug or have a feature request? Open an [issue on GitHub](https://github.com/kestra-io/kestra/issues).
-- **Contribute Code:** Check out our [Contributor Guide](https://kestra.io/docs/getting-started/contributing) for initial guidelines, and explore our [good first issues](https://go.kestra.io/contributing) for beginner-friendly tasks to tackle first.
-- **Develop Plugins:** Build and share plugins using our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/).
-- **Contribute to our Docs:** Contribute edits or updates to keep our [documentation](https://github.com/kestra-io/docs) top-notch.
+LinkedIn: Siga-nos no LinkedIn — ao lado do Slack e do GitHub, este é nosso principal canal para compartilhar atualizações e anúncios de produtos.
 
----
+YouTube: Inscreva-se em nosso canal do YouTube para conteúdo de vídeo educacional. Publicamos novos vídeos toda semana!
 
-## 📄 License
+X: Siga-nos no X se você ainda estiver ativo por lá.
 
-Kestra is licensed under the Apache 2.0 License © [Kestra Technologies](https://kestra.io).
+🤝 Contribuindo
+Agradecemos contribuições de todos os tipos!
 
----
+Relate Problemas (Issues): Encontrou um bug ou tem uma sugestão de funcionalidade? Abra uma issue no GitHub.
 
-## ⭐️ Stay Updated
+Contribua com Código: Confira nosso Guia do Contribuidor para diretrizes iniciais e explore nossas boas primeiras issues para tarefas amigáveis para iniciantes.
 
-Give our repository a star to stay informed about the latest features and updates!
+Desenvolva Plugins: Crie e compartilhe plugins usando nosso Guia do Desenvolvedor de Plugins.
 
-[![Star the Repo](https://kestra.io/star.gif)](https://github.com/kestra-io/kestra)
+Contribua com nossa Documentação: Contribua com edições ou atualizações para manter nossa documentação de primeira linha.
 
----
+📄 Licença
+Kestra é licenciado sob a Licença Apache 2.0 © Kestra Technologies.
 
-Thank you for considering Kestra for your workflow orchestration needs. We can't wait to see what you'll build!
+⭐️ Mantenha-se Atualizado
+Dê uma estrela ao nosso repositório para se manter informado sobre as últimas funcionalidades e atualizações!
 
+Obrigado por considerar o Kestra para suas necessidades de orquestração de workflows. Mal podemos esperar para ver o que você vai construir!

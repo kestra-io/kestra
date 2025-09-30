@@ -781,4 +781,17 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 )
             );
     }
+
+    @Override
+    public Boolean existAnyNoAcl(String tenantId){
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                return context.fetchExists(context
+                    .selectOne()
+                    .from(jdbcRepository.getTable())
+                    .where(defaultFilterWithNoACL(tenantId, false)));
+            });
+    }
 }

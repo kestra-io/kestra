@@ -45,7 +45,9 @@
 
     onMounted(() => {
         const nodes = document.querySelectorAll(`#${props.id} .el-cascader-node`);
-        if(nodes.length > 0) nodes[0].click();
+        if(nodes.length > 0) {
+            (nodes[0] as HTMLElement).click();
+        }
     });
 </script>
 

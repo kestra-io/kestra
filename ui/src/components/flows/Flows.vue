@@ -447,7 +447,7 @@
                         toast.success(t("flows exported", {count: flowCount}));
                     });
                 } else {
-                    return flowStore.exportFlowByIds({ids: selectionIds.value}).then(() => {
+                    return flowStore.exportFlowByIds({ids: selection.value}).then(() => {
                         toast.success(t("flows exported", {count: flowCount}));
                     });
                 }

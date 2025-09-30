@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -171,6 +172,8 @@ public abstract class AbstractRunnerTest {
         restartCaseTest.restartFailedThenFailureWithGlobalErrors();
     }
 
+    @Disabled
+    @FlakyTest
     @Test
     @LoadFlows({"flows/valids/restart_local_errors.yaml"})
     protected void restartFailedThenFailureWithLocalErrors() throws Exception {

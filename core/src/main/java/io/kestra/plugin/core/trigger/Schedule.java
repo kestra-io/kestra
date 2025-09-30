@@ -24,6 +24,7 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.validations.ScheduleValidation;
 import io.kestra.core.validations.TimezoneId;
+import io.kestra.scheduler.SchedulerClock;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
@@ -284,12 +285,12 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             // is after the end, then we calculate again the nextDate
             // based on now()
             if (backfill != null && nextDate != null && nextDate.isAfter(backfill.getEnd())) {
-                nextDate = computeNextEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(null);
+                nextDate = computeNextEvaluationDate(executionTime, convertDateTime(SchedulerClock.now())).orElse(null);
             }
         }
         // no previous present & no backfill or recover missed schedules, just provide now
         else {
-            nextDate = computeNextEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(null);
+            nextDate = computeNextEvaluationDate(executionTime, convertDateTime(SchedulerClock.now())).orElse(null);
         }
 
         // if max delay reached, we calculate a new date except if we are doing a backfill
@@ -310,7 +311,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     public ZonedDateTime nextEvaluationDate() {
         // it didn't take into account the schedule condition, but as they are taken into account inside eval() it's OK.
         ExecutionTime executionTime = this.executionTime();
-        return computeNextEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(convertDateTime(ZonedDateTime.now()));
+        return computeNextEvaluationDate(executionTime, convertDateTime(SchedulerClock.now())).orElse(convertDateTime(SchedulerClock.now()));
     }
 
     @Override
@@ -321,7 +322,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                 Optional<ZonedDateTime> previous = this.truePreviousNextDateWithCondition(
                     executionTime,
                     conditionContext,
-                    ZonedDateTime.now(),
+                    SchedulerClock.now(),
                     false
                 );
 
@@ -332,7 +333,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                 conditionContext.getRunContext().logger().warn("Unable to evaluate the conditions for the next evaluation date for trigger '{}', conditions will not be evaluated", this.getId());
             }
         }
-        return computePreviousEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(convertDateTime(ZonedDateTime.now()));
+        return computePreviousEvaluationDate(executionTime, convertDateTime(SchedulerClock.now())).orElse(convertDateTime(SchedulerClock.now()));
     }
 
     @Override
@@ -367,7 +368,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
 
         // we are in the future don't allow
         // No use case, just here for prevention but it should never happen
-        if (next.compareTo(ZonedDateTime.now().plus(Duration.ofSeconds(1))) > 0) {
+        if (next.compareTo(SchedulerClock.now().plus(Duration.ofSeconds(1))) > 0) {
             if (log.isTraceEnabled()) {
                 log.trace("Schedule is in the future, execution skipped, this behavior should never happen.");
             }
@@ -528,8 +529,8 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
 
     @VisibleForTesting
     Optional<ZonedDateTime> truePreviousNextDateWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime toTestDate, boolean next) throws InternalException {
-        int upperYearBound = ZonedDateTime.now().getYear() + 10;
-        int lowerYearBound = ZonedDateTime.now().getYear() - 10;
+        int upperYearBound = SchedulerClock.now().getYear() + 10;
+        int lowerYearBound = SchedulerClock.now().getYear() - 10;
         
         while ((next && toTestDate.getYear() < upperYearBound) || (!next && toTestDate.getYear() > lowerYearBound)) {
             
@@ -570,10 +571,10 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         }
 
         while (
-            (output.getDate().getYear() < ZonedDateTime.now().getYear() + 10) ||
-                (output.getDate().getYear() > ZonedDateTime.now().getYear() - 10)
+            (output.getDate().getYear() < SchedulerClock.now().getYear() + 10) ||
+                (output.getDate().getYear() > SchedulerClock.now().getYear() - 10)
         ) {
-            if (output.getDate().plus(this.lateMaximumDelay).compareTo(ZonedDateTime.now()) < 0) {
+            if (output.getDate().plus(this.lateMaximumDelay).compareTo(SchedulerClock.now()) < 0) {
                 output = this.scheduleDates(executionTime, output.getNext()).orElse(null);
                 if (output == null) {
                     return null;

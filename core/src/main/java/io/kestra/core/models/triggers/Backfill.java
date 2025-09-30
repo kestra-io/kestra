@@ -66,15 +66,4 @@ public class Backfill {
         title = "The nextExecutionDate before the backfill was created."
     )
     ZonedDateTime previousNextExecutionDate;
-
-    public Backfill(ZonedDateTime start, ZonedDateTime end, ZonedDateTime currentDate, Boolean paused, Map<String, Object> inputs, List<Label> labels, ZonedDateTime previousNextExecutionDate) {
-        this.start = start;
-        this.end = end;
-        this.currentDate = start;
-        this.paused = paused != null ? paused : false;
-        this.inputs = inputs;
-        this.labels = labels;
-        this.previousNextExecutionDate = previousNextExecutionDate;
-    }
-
 }

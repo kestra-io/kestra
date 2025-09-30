@@ -6,7 +6,6 @@ import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessStore;
-import io.kestra.core.server.ServiceLivenessUpdater;
 import io.kestra.core.server.ServiceStateTransition;
 import io.kestra.core.server.ServiceType;
 import io.kestra.jdbc.runner.JdbcTransactionContext;
@@ -21,8 +20,6 @@ import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
 import org.jooq.Table;
-import org.jooq.TransactionalCallable;
-import org.jooq.TransactionalRunnable;
 import org.jooq.impl.DSL;
 
 import java.time.Instant;
@@ -86,7 +83,10 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
         return this.jdbcRepository.getDslContextWrapper()
             .transactionResult(configuration -> findAllInstancesInStates(configuration, states, false));
     }
-
+    
+    /**
+     * {@inheritDoc}
+     **/
     @Override
     public List<ServiceInstance> findAllInstancesInState(final Service.ServiceState state) {
         return this.jdbcRepository.getDslContextWrapper()
@@ -184,7 +184,7 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             this.jdbcRepository.fetch(query.forUpdate().skipLocked()) :
             this.jdbcRepository.fetch(query);
     }
-
+    
     @Override
     public int purgeEmptyInstances(Instant until) {
         return jdbcRepository.getDslContextWrapper().transactionResult(

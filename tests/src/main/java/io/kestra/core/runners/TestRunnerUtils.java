@@ -166,6 +166,18 @@ public class TestRunnerUtils {
         return emitAndAwaitExecution(predicate, execution, Duration.ofSeconds(20));
     }
 
+    public Execution restartExecution(Predicate<Execution> predicate, Execution execution)
+        throws QueueException, InterruptedException {
+        return restartExecution(predicate, execution, Duration.ofSeconds(20));
+    }
+
+    public Execution restartExecution(Predicate<Execution> predicate, Execution execution, Duration duration)
+        throws QueueException, InterruptedException {
+        //We need to wait before restarting to make sure the execution is cleaned before we restart.
+        Thread.sleep(100L);
+        return emitAndAwaitExecution(predicate, execution, duration);
+    }
+
     public Execution emitAndAwaitExecution(Predicate<Execution> predicate, Execution execution, Duration duration)
         throws QueueException {
 

@@ -233,7 +233,7 @@ public class ForEachItemCaseTest {
         assertThat(triggeredExecs).extracting(e -> e.getState().getCurrent()).containsOnly(FAILED);
 
         Execution restarted = executionService.restart(failedExecution, null);
-        final Execution successExecution = runnerUtils.emitAndAwaitExecution(
+        final Execution successExecution = runnerUtils.restartExecution(
             e -> e.getState().getCurrent() == State.Type.SUCCESS && e.getFlowId().equals("restart-for-each-item"),
             restarted
         );

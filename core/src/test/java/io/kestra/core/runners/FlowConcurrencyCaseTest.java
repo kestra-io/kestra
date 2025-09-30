@@ -156,7 +156,7 @@ public class FlowConcurrencyCaseTest {
         // we restart the first one, it should be queued then fail again.
         Execution failedExecution = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.FAILED), execution1);
         Execution restarted = executionService.restart(failedExecution, null);
-        Execution executionResult1 = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.FAILED), restarted);
+        Execution executionResult1 = runnerUtils.restartExecution(e -> e.getState().getCurrent().equals(Type.FAILED), restarted);
         Execution executionResult2 = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.FAILED), execution2);
 
         assertThat(executionResult1.getState().getCurrent()).isEqualTo(Type.FAILED);

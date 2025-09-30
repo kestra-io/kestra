@@ -21,10 +21,10 @@ jobs:
       - name: Parse and Check Inputs
         id: parse-and-check-inputs
         run: |
-          CURRENT_BRANCH="$GITHUB_REF"
+          CURRENT_BRANCH="${{ github.ref_name }}"
           if ! [[ "$CURRENT_BRANCH" == "develop" ]]; then
-          echo "You can only run this workflow on develop, but you ran it on $CURRENT_BRANCH"
-          exit 1
+            echo "You can only run this workflow on develop, but you ran it on $CURRENT_BRANCH"
+            exit 1
           fi
 
           if ! [[ "$RELEASE_VERSION" =~ ^[0-9]+(\.[0-9]+)(\.[0-9]+)(-rc[0-9])?(-SNAPSHOT)?$ ]]; then

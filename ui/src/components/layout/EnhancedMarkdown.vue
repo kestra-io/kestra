@@ -3,11 +3,11 @@
         <div v-if="showSearch" class="doc-toolbar">
             <el-input
                 v-model="searchQuery"
-                :suffixIcon="Search"
+                :suffixIcon="Magnify"
                 :clearable="true"
                 class="doc-search"
                 size="small"
-                placeholder="Search"
+                :placeholder="$t('search_docs')"
             />
             <transition name="fade">
                 <span
@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
     import {ref, watch, nextTick, onBeforeUnmount, computed} from "vue";
-    import {Search} from "@element-plus/icons-vue";
+    import Magnify from "vue-material-design-icons/Magnify.vue";
     import * as Markdown from "../../utils/markdown";
 
     const props = withDefaults(defineProps<{
@@ -620,7 +620,7 @@
         gap: var(--spacer-sm, 0.75rem);
         background: var(--ks-background-panel);
         border-bottom: 1px solid var(--ks-border-primary);
-        padding: 1rem;
+        padding: 1rem 2rem;
         position: sticky;
         top: 0;
         z-index: 1;

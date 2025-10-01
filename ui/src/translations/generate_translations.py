@@ -27,7 +27,7 @@ def translate_text(text, target_language):
         - State Labels in English: Keep status labels that are in all caps (e.g. WARNING, FAILED, SUCCESS, PAUSED, RUNNING) in English and in their original uppercase format.
         - Preserve Variables: Do not translate or change any placeholders enclosed in double curly braces (e.g. `{{label}}`, `{{key}}`). Leave them exactly as they are. For example, "System {{label}}" should remain "System {{label}}" in the translated text (do not translate "label" or remove the braces).
 
-        If the loaded dictionary contains no key-value pairs, it means we're adding a new language, and we need to translate all to the last one the keys from English to {target_language}.
+        If the loaded dictionary has no key-value pairs to translate, it means we're adding a new language, and we need to translate all the keys from English to {target_language}.
 
         Here is the text to translate:
         ----------

@@ -151,9 +151,19 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public URI putFile(InputStream inputStream, String name) throws IOException {
+        //Replace spaces using encoder which give "+" and then replace it with standard "%20"
+        String encodedName = URLEncoder.encode(name, StandardCharsets.UTF_8.toString())
+        .replace("+", "%20");
+
         URI uri = context.getContextStorageURI();
-        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + name);
-        return this.storage.put(context.getTenantId(), context.getNamespace(), resolved, new BufferedInputStream(inputStream));
+        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + encodedName);
+
+        return this.storage.put(
+            context.getTenantId(),
+            context.getNamespace(),
+            resolved,
+            new BufferedInputStream(inputStream)
+        );
     }
 
     /**
@@ -177,19 +187,10 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public URI putFile(File file, String name) throws IOException {
-        string rawName = name!=null ? name:file.getName();
-        //URL-encode the filename component
-        // URLEncoder.encode converts space ' ' to '+'. For URI path segments, 
-        // '+' is incorrect and must be '%20'. We replace it manually.
-        // This is a common and necessary pattern for encoding path components.
-        // Manually remove the " " --> "+" --> "%20"
-        String encodedName = URLEncoder.encode(rawName, StandardCharsets.UTF_8.toString())
-        .replace("+", "%20");
-        URI uri = context.getContextStorageURI();
-        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + encodedName);
         try (InputStream is = new FileInputStream(file)) {
-        return putFile(is, resolved);
-    } finally {
+            //Call putFile(InputStream input,String name) function from here
+        return putFile(is, name != null ? name : file.getName());
+        } finally {
             try {
                 Files.delete(file.toPath());
             } catch (IOException e) {
@@ -197,6 +198,8 @@ public class InternalStorage implements Storage {
             }
         }
     }
+
+
 
     /**
      * {@inheritDoc}

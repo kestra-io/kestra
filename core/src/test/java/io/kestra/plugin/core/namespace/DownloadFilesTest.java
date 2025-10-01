@@ -31,13 +31,14 @@ public class DownloadFilesTest {
     void shouldDownloadNamespaceFile() throws Exception {
         String namespaceId = "io.kestra." + IdUtils.create();
         DownloadFiles downloadFiles = DownloadFiles.builder()
-            .id(DownloadFiles.class.getSimpleName())
-            .type(DownloadFiles.class.getName())
-            .files(List.of("**test1.txt"))
-            .namespace(new Property<>("{{ inputs.namespace }}"))
-            .build();
+                .id(DownloadFiles.class.getSimpleName())
+                .type(DownloadFiles.class.getName())
+                .files(List.of("**test1.txt"))
+                .namespace(new Property<>("{{ inputs.namespace }}"))
+                .build();
 
-        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, downloadFiles, Map.of("namespace", namespaceId));
+        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, downloadFiles,
+                Map.of("namespace", namespaceId));
         final Namespace namespace = runContext.storage().namespace(namespaceId);
 
         namespace.putFile(Path.of("/a/b/test1.txt"), new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8)));
@@ -49,4 +50,36 @@ public class DownloadFilesTest {
         assertThat(output.getFiles().get("/a/b/test1.txt")).isNotNull();
 
     }
+
+    @Test
+    void shouldHandleFileWithSpacesAfterDot() throws Exception {
+        String namespaceId = "io.kestra." + IdUtils.create();
+        DownloadFiles downloadFiles = DownloadFiles.builder()
+                .id(DownloadFiles.class.getSimpleName())
+                .type(DownloadFiles.class.getName())
+                .files(List.of("**weird*"))
+                .namespace(new Property<>("{{ inputs.namespace }}"))
+                .build();
+
+        final RunContext runContext = TestsUtils.mockRunContext(
+                this.runContextFactory,
+                downloadFiles,
+                Map.of("namespace", namespaceId));
+
+        final Namespace namespace = runContext.storage().namespace(namespaceId);
+
+        // Create a file with a space after a dot
+        String weirdFileName = "/a/b/sample.file with weird naming.txt";
+        namespace.putFile(
+                Path.of(weirdFileName),
+                new ByteArrayInputStream("test content".getBytes(StandardCharsets.UTF_8)));
+
+        // Run the task
+        DownloadFiles.Output output = downloadFiles.run(runContext);
+
+        // Verify the file was downloaded successfully
+        assertThat(output.getFiles()).containsKey(weirdFileName);
+        assertThat(output.getFiles().get(weirdFileName)).isNotNull();
+    }
+
 }

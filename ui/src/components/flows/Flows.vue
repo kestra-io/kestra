@@ -349,7 +349,6 @@
 
     const routeInfo = computed(() => ({title: t("flows")}));
 
-    // const dataTableRef = useTemplateRef<typeof DataTable>("dataTable");
     const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");
     const {queryWithFilter, onPageChanged, onRowDoubleClick, onSort} = useDataTableActions({dblClickRouteName: "flows/update"});
 

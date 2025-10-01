@@ -10,63 +10,63 @@ client = OpenAI()
 
 
 def translate_text(text, target_language):
- prompt = f"""Translate the text provided after "----------" to {target_language}.
-            The text is intended to be displayed within a software application,
-            so make sure to keep the translation consistent with the context of a software UI.
-            For example, translating from English to German, you should translate:
-            - "State" to "Zustand" rather than "Staat"
-            - "Execution" to "Ausführung" rather than "Hinrichtung"
-            - "Theme" to "Modus" rather than "Thema"
-            - "Concurrency" to "Nebenläufigkeit" rather than "Konkurrenz"
-            - "Tenant" to "Mandant" rather than "Mieter"
-            - "Expand" to "Ausklappen" rather than "Erweitern"
-            - "Tab" to "Registerkarte" rather than "Reiter"
-            - "Creation" to "Erstellung" rather than "Schöpfung".
+    prompt = f"""Translate the text provided after "----------" to {target_language}.
+                The text is intended to be displayed within a software application,
+                so make sure to keep the translation consistent with the context of a software UI.
+                For example, translating from English to German, you should translate:
+                - "State" to "Zustand" rather than "Staat"
+                - "Execution" to "Ausführung" rather than "Hinrichtung"
+                - "Theme" to "Modus" rather than "Thema"
+                - "Concurrency" to "Nebenläufigkeit" rather than "Konkurrenz"
+                - "Tenant" to "Mandant" rather than "Mieter"
+                - "Expand" to "Ausklappen" rather than "Erweitern"
+                - "Tab" to "Registerkarte" rather than "Reiter"
+                - "Creation" to "Erstellung" rather than "Schöpfung".
 
-            Keep the following technical terms in the original format in English without translating them to {target_language}
-                (you can adjust the case or pluralization as needed):
-            - "kv store"
-            - "tenant"
-            - "namespace"
-            - "flow"
-            - "subflow"
-            - "task"
-            - "log"
-            - "blueprint"
-            - "id"
-            - "trigger"
-            - "label"
-            - "key"
-            - "value"
-            - "input"
-            - "output"
-            - "port"
-            - "worker"
-            - "backfill"
-            - "healthcheck"
-            - "min"
-            - "max"
+                Keep the following technical terms in the original format in English without translating them to {target_language}
+                 (you can adjust the case or pluralization as needed):
+                - "kv store"
+                - "tenant"
+                - "namespace"
+                - "flow"
+                - "subflow"
+                - "task"
+                - "log"
+                - "blueprint"
+                - "id"
+                - "trigger"
+                - "label"
+                - "key"
+                - "value"
+                - "input"
+                - "output"
+                - "port"
+                - "worker"
+                - "backfill"
+                - "healthcheck"
+                - "min"
+                - "max"
 
-            Similarly, keep the states shown in capital letters like WARNING, FAILED, SUCCESS, PAUSED
-            and RUNNING in the original format in English without translating them to {target_language}.
+                Similarly, keep the states shown in capital letters like WARNING, FAILED, SUCCESS, PAUSED
+                and RUNNING in the original format in English without translating them to {target_language}.
 
-            It's essential that you keep the translation consistent with the context of a software UI
-            and that you keep the above-mentioned technical terms in English. For example, never translate "log"
-            to an equivalent word in {target_language} but keep it as "Log". This means:
-            - "Log level" and "log_level" should be translated to "Log-Ebene" in German, rather than "Protokoll-Ebene".
-            - "Task logs" should be translated to "Task Logs" in German, rather than "Aufgabenprotokolle".
+                It's essential that you keep the translation consistent with the context of a software UI
+                and that you keep the above-mentioned technical terms in English. For example, never translate "log"
+                to an equivalent word in {target_language} but keep it as "Log". This means:
+                - "Log level" and "log_level" should be translated to "Log-Ebene" in German, rather than "Protokoll-Ebene".
+                - "Task logs" should be translated to "Task Logs" in German, rather than "Aufgabenprotokolle".
 
-            Never translate variables provided within curly braces like {{label}} or {{key}}.
-            They should remain fully unchanged in the translation. For example, the string "System {{label}}"
-            should remain unchanged and be translated to "System {{label}}" in German,
-            rather than "System {{Etikett}}" or "System {{Label}}".
+                Never translate variables provided within curly braces like {{label}} or {{key}}.
+                They should remain fully unchanged in the translation. For example, the string "System {{label}}"
+                should remain unchanged and be translated to "System {{label}}" in German,
+                rather than "System {{Etikett}}" or "System {{Label}}".
 
-            If the loaded dictionary has no key-value pairs to translate, it means we're adding a new language, and we need to translate all the keys from English to {target_language}.
+                If the loaded dictionary has no key-value pairs to translate, it means we're adding a new language, and we need to translate all the keys from English to {target_language}.
 
-            Here is the text to translate:
-            ----------
-            \n\n{text}
-            """
+                Here is the text to translate:
+                ----------
+                \n\n{text}
+                """
 
     try:
         response = client.chat.completions.create(

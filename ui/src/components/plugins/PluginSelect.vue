@@ -5,8 +5,8 @@
         filterable
     >
         <el-option
-            v-for="(item, i) in taskModels.sort()"
-            :key="`${item}__${i}`"
+            v-for="item in taskModels.sort()"
+            :key="item"
             :label="item"
             :value="item"
         >

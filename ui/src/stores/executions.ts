@@ -313,6 +313,10 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     function closeSSE() {
         if (sse.value) {
+            // when closing SSE, the doc seems to say the onerror is called
+            // trying to prevent an unwanted error is displayed for the user
+            sse.value.onerror = () => {};
+
             sse.value.close();
             sse.value = undefined;
         }

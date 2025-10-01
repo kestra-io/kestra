@@ -68,7 +68,7 @@
                     return path + item.message;
                 }).join("\n");
 
-                const fullErrorMessage = errorItems || errorMessage;
+                const fullErrorMessage = [errorMessage, errorItems].filter(Boolean).join("\n\n");
                 const prompt = `Fix the following error in the flow:\n${fullErrorMessage}`;
 
                 try {

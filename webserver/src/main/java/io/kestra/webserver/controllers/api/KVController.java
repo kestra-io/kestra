@@ -46,7 +46,7 @@ public class KVController {
     @ExecuteOn(TaskExecutors.IO)
     @Get("/inheritance")
     @Operation(tags = {"KV"}, summary = "List all keys for ancestor namespaces")
-    public List<KVEntry> listInheritedKeys(
+    public List<KVEntry> listKeysWithInheritance(
         @Parameter(description = "The namespace id") @PathVariable String namespace
     ) throws IOException {
         int lastDotIndex = namespace.lastIndexOf('.');

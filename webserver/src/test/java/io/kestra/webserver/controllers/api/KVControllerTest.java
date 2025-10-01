@@ -99,8 +99,7 @@ class KVControllerTest {
         assertThat(res).hasSize(2);
         Map<String, String> keyDescriptions = res.stream()
             .collect(Collectors.toMap(KVEntry::key, KVEntry::description));
-        assertThat(keyDescriptions).isEqualTo(Map.of("shared-key", namespaceDescription,
-            "child-key", namespaceDescription,
+        assertThat(keyDescriptions).isEqualTo(Map.of("shared-key", namespaceParentDescription,
             "parent-key", namespaceParentDescription));
 
     }

@@ -1,5 +1,5 @@
 <template>
-    <el-cascader-panel :options :id>
+    <el-cascader-panel ref="panelRef" :options="options" :id="id">
         <template #default="{data}">
             <div v-if="isFile(data.value)">
                 <VarValue :value="data.value" :execution="execution" />
@@ -25,11 +25,10 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted} from "vue";
-
+    import {ref, onMounted, toRefs} from "vue";
     import VarValue from "../executions/VarValue.vue";
-
     import {useI18n} from "vue-i18n";
+
     const {t} = useI18n({useScope: "global"});
 
     const isFile = (data: any) =>
@@ -41,13 +40,31 @@
         children?: Options[];
     }
 
-    const props = defineProps<{ options: Options; execution: any, id: string }>();
+    const props = defineProps<{ options: Options; execution: any; id: string }>();
+    const {options, execution, id} = toRefs(props);
+
+    const panelRef = ref<any>(null);
+    let hasAutoExpanded = false;
+
+    const expandOutputsPanel = () => {
+        if (hasAutoExpanded) return;
+        if (!id?.value || !id.value.includes("outputs")) return;
+
+        const panelElement = panelRef.value?.$el ?? panelRef.value;
+        if (!panelElement) return;
+
+        const menus = panelElement.querySelectorAll(".el-cascader-menu");
+        if (!menus || menus.length === 0) return;
+
+        const firstNode = menus[0].querySelector(".el-cascader-node");
+        if (!firstNode) return;
+
+        (firstNode as HTMLElement).click();
+        hasAutoExpanded = true;
+    };
 
     onMounted(() => {
-        const nodes = document.querySelectorAll(`#${props.id} .el-cascader-node`);
-        if(nodes.length > 0) {
-            (nodes[0] as HTMLElement).click();
-        }
+        expandOutputsPanel();
     });
 </script>
 

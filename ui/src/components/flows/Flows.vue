@@ -366,7 +366,7 @@
         selectionMapper
     });
 
-    const selectionIds = computed(() => selection.value.map((flow) => flow.id));
+    const selectionIds = computed(() => selection.value.map((flow) => ({id: flow.id, namespace: flow.namespace})));
 
     interface ChartDefinition {
         id: string;

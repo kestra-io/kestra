@@ -1029,6 +1029,11 @@ public class JdbcExecutor implements ExecutorInterface {
             Execution currentExecution = pair.getLeft();
             FlowInterface flow = flowMetaStore.findByExecution(currentExecution).orElseThrow();
 
+            // remove it from the queued store if it was queued so it would not be restarted
+            if (currentExecution.getState().isQueued()) {
+                executionQueuedStorage.remove(currentExecution);
+            }
+
             Execution killing = executionService.kill(currentExecution, flow, afterKillState);
             Executor current = new Executor(currentExecution, null)
                 .withExecution(killing, "joinKillingExecution");
@@ -1130,34 +1135,36 @@ public class JdbcExecutor implements ExecutorInterface {
                     slaMonitorStorage.purge(executor.getExecution().getId());
                 }
 
-                // purge execution running
-                if (executor.getFlow().getConcurrency() != null) {
-                    executionRunningStorage.remove(execution);
-                }
-
                 // check if there exist a queued execution and submit it to the execution queue
-                if (executor.getFlow().getConcurrency() != null && executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
-                    executionQueuedStorage.pop(executor.getFlow().getTenantId(),
-                        executor.getFlow().getNamespace(),
-                        executor.getFlow().getId(),
-                        throwConsumer(queued -> {
-                            var newExecution = queued.withState(State.Type.RUNNING);
-                            ExecutionRunning executionRunning = ExecutionRunning.builder()
-                                .tenantId(newExecution.getTenantId())
-                                .namespace(newExecution.getNamespace())
-                                .flowId(newExecution.getFlowId())
-                                .execution(newExecution)
-                                .concurrencyState(ExecutionRunning.ConcurrencyState.RUNNING)
-                                .build();
-                            executionRunningStorage.save(executionRunning);
-                            executionQueue.emit(newExecution);
-                            metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+                if (executor.getFlow().getConcurrency() != null) {
 
-                            // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                            flowTriggerService.computeExecutionsFromFlowTriggers(newExecution, allFlows, Optional.of(multipleConditionStorage))
-                                .forEach(throwConsumer(executionFromFlowTrigger -> this.executionQueue.emit(executionFromFlowTrigger)));
-                        })
-                    );
+                    // purge execution running
+                    boolean hasExecutionRunning = executionRunningStorage.remove(execution);
+
+                    // some execution  may have concurrency limit but no execution running: for ex QUEUED -> KILLED, in this case we should not pop any execution
+                    if (hasExecutionRunning && executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
+                        executionQueuedStorage.pop(executor.getFlow().getTenantId(),
+                            executor.getFlow().getNamespace(),
+                            executor.getFlow().getId(),
+                            throwConsumer(queued -> {
+                                var newExecution = queued.withState(State.Type.RUNNING);
+                                ExecutionRunning executionRunning = ExecutionRunning.builder()
+                                    .tenantId(newExecution.getTenantId())
+                                    .namespace(newExecution.getNamespace())
+                                    .flowId(newExecution.getFlowId())
+                                    .execution(newExecution)
+                                    .concurrencyState(ExecutionRunning.ConcurrencyState.RUNNING)
+                                    .build();
+                                executionRunningStorage.save(executionRunning);
+                                executionQueue.emit(newExecution);
+                                metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+
+                                // process flow triggers to allow listening on RUNNING state after a QUEUED state
+                                flowTriggerService.computeExecutionsFromFlowTriggers(newExecution, allFlows, Optional.of(multipleConditionStorage))
+                                    .forEach(throwConsumer(executionFromFlowTrigger -> this.executionQueue.emit(executionFromFlowTrigger)));
+                            })
+                        );
+                    }
                 }
 
                 // purge the trigger: reset scheduler trigger at end

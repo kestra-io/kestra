@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 
-    import {computed, onMounted} from "vue";
+    import {computed} from "vue";
     import EnhancedMarkdown from "../layout/EnhancedMarkdown.vue";
     import {SchemaToHtml, TaskIcon} from "@kestra-io/ui-libs";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
@@ -56,7 +56,6 @@
     import {usePluginsStore} from "../../stores/plugins";
     import GitHub from "vue-material-design-icons/Github.vue";
     import intro from "../../assets/docs/basic.md?raw";
-    import Markdown from "../layout/Markdown.vue";
 
     const props = withDefaults(defineProps<{
         overrideIntro?: string | null;

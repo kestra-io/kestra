@@ -32,7 +32,7 @@
     import {Chart, getDashboard, useChartGenerator} from "../composables/useDashboards";
     import {customBarLegend} from "../composables/useLegend";
     import {defaultConfig, getConsistentHEXColor, chartClick, tooltip} from "../composables/charts";
-    import {cssVariable, Utils} from "@kestra-io/ui-libs";
+    import {cssVariable} from "@kestra-io/ui-libs";
     import KestraUtils, {useTheme} from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
 
@@ -129,7 +129,7 @@
                     display: props.short ? false : true,
                     ticks: {
                         ...DEFAULTS.ticks,
-                        callback: (value: any) => isDuration(aggregator.value[0]?.[1]?.field) ? Utils.humanDuration(value) : value
+                        callback: (value: any) => isDuration(aggregator.value[0]?.[1]?.field) ? KestraUtils.humanDuration(value) : value
                     }
                 },
                 ...(yBShown.value && {
@@ -143,7 +143,7 @@
                         display: props.short ? false : true,
                         ticks: {
                             ...DEFAULTS.ticks,
-                            callback: (value: any) => isDuration(aggregator.value[1]?.[1]?.field) ? Utils.humanDuration(value) : value
+                            callback: (value: any) => isDuration(aggregator.value[1]?.[1]?.field) ? KestraUtils.humanDuration(value) : value
                         }
                     },
                 }),
@@ -192,7 +192,7 @@
             return array.reduce((acc: any, {...params}) => {
                 const stack = [
                     fields.map((field) => params[field]).join(", "),
-                    aggregator.value.map((agg) => isDuration(agg[1].field) ? `${t("total_duration")}: ${Utils.humanDuration(params[agg[0]])}` : params[agg[0]]).join(", "),
+                    aggregator.value.map((agg) => isDuration(agg[1].field) ? `${t("total_duration")}: ${KestraUtils.humanDuration(params[agg[0]])}` : params[agg[0]]).join(", "),
                 ].join(": ");
 
                 if (!acc[stack]) {

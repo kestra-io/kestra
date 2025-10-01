@@ -20,8 +20,9 @@ const getOrCreateLegendList = (id: string, direction: "row" | "column" = "row", 
         listContainer = document.createElement("ul");
         listContainer.classList.add("w-100", "mb-3", "fw-light", "legend", direction === "row" ? "small" : "tall");
         listContainer.style.display = "flex";
-        listContainer.style.margin = 0;
-        listContainer.style.padding = 0;
+        listContainer.style.flexDirection = direction;
+        listContainer.style.margin = "0";
+        listContainer.style.padding = "0";
 
         listContainer.style.maxHeight = "196px"; // 4 visible items
         listContainer.style.overflow = "auto";

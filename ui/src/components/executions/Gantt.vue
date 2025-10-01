@@ -77,7 +77,6 @@
                             <div v-if="selectedTaskRuns.includes(item.id)" class="p-2">
                                 <TaskRunDetails
                                     :taskRunId="item.id"
-                                    h
                                     :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
                                     level="TRACE"
                                     @follow="forwardEvent('follow', $event)"

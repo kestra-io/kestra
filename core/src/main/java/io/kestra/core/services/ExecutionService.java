@@ -715,8 +715,9 @@ public class ExecutionService {
         } else {
             newExecution = execution.withState(killingOrAfterKillState);
         }
-
-        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
+        
+        // Because this method is expected to be called by the Executor we can return the Execution 
+        // immediately without publishing a CrudEvent like it's done on pause/resume method.
         return newExecution;
     }
     public Execution kill(Execution execution, FlowInterface flow) {

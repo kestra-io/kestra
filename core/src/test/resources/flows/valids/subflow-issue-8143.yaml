@@ -1,0 +1,22 @@
+id: subflow-issue-8143
+namespace: io.kestra.tests
+description: Subflow for testing issue #8143
+
+inputs:
+  - id: counter
+    type: INT
+
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: "Counter - {{ inputs.counter }}"
+  - id: check_counter
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ inputs.counter >= 2 }}"
+    then:
+      - id: pass
+        type: io.kestra.plugin.core.log.Log
+        message: "Done"
+    else:
+      - id: fail
+        type: io.kestra.plugin.core.execution.Fail

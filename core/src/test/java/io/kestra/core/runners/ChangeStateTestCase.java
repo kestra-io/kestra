@@ -62,7 +62,7 @@ public class ChangeStateTestCase {
             e.getTaskRunList().getFirst().getState().getCurrent().equals(Type.SUCCESS), tenantId, NAMESPACE, "subflow-parent-of-failed");
 
         // assert for the parent flow
-        assertThat(lastParentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS); // Fixed: now correctly shows SUCCESS when subflow succeeds after retry
+        assertThat(lastParentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(lastParentExecution.getTaskRunList()).hasSize(1);
         assertThat(lastParentExecution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }

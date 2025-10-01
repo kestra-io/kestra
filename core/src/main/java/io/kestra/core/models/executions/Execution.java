@@ -603,10 +603,73 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public boolean isTerminated(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
-        long terminatedCount = this
-            .findTaskRunByTasks(resolvedTasks, parentTaskRun)
-            .stream()
-            .filter(taskRun -> taskRun.getState().isTerminated())
+        List<TaskRun> taskRuns = this.findTaskRunByTasks(resolvedTasks, parentTaskRun);
+
+        // A task is truly terminated only if:
+        // 1. Its state is terminated AND
+        // 2. It's not going to be retried (no retry configured or retries exhausted)
+        long terminatedCount = taskRuns.stream()
+            .filter(taskRun -> {
+                State.Type currentState = taskRun.getState().getCurrent();
+
+                // Not terminated if currently retrying
+                if (currentState.isRetrying()) {
+                    return false;
+                }
+
+                // Check if state is terminated
+                if (!currentState.isTerminated()) {
+                    return false;
+                }
+
+                // For FAILED state, check if it's an intermediate failure that will be retried
+                if (currentState == State.Type.FAILED) {
+                    // Find the corresponding ResolvedTask to check retry configuration
+                    ResolvedTask resolvedTask = resolvedTasks.stream()
+                        .filter(rt -> rt.getTask().getId().equals(taskRun.getTaskId()) &&
+                                    java.util.Objects.equals(rt.getValue(), taskRun.getValue()))
+                        .findFirst()
+                        .orElse(null);
+
+                    if (resolvedTask != null && resolvedTask.getTask().getRetry() != null) {
+                        // Task has retry configured - check if retries are exhausted
+                        Integer maxAttempts = resolvedTask.getTask().getRetry().getMaxAttempts();
+
+                        // Count attempts - attempts list may be null or empty on first failure
+                        int currentAttempts = 0;
+                        if (taskRun.getAttempts() != null && !taskRun.getAttempts().isEmpty()) {
+                            currentAttempts = taskRun.getAttempts().size();
+                        }
+
+                        // If task has retry and hasn't exhausted retries, it's NOT terminated
+                        // Even if attempts is 0 (first failure), we should retry
+                        if (maxAttempts != null && maxAttempts > 0) {
+                            // Always return false for FAILED tasks with retry configured
+                            // until they've actually retried maxAttempts times
+                            if (currentAttempts < maxAttempts) {
+                                return false;
+                            }
+                        }
+                    }
+
+                    // Also check for retry indicators in state history (execution-level retry)
+                    boolean hasRetryInHistory = taskRun.getState().getHistories().stream()
+                        .anyMatch(history -> history.getState().isRetrying() ||
+                                           history.getState() == State.Type.RESTARTED);
+
+                    // Check for successful attempts
+                    boolean hasSuccessfulAttempt = taskRun.getAttempts() != null &&
+                        taskRun.getAttempts().stream()
+                            .anyMatch(attempt -> attempt.getState().isSuccess());
+
+                    // If there are retry indicators, this task is NOT truly terminated yet
+                    if (hasRetryInHistory || hasSuccessfulAttempt) {
+                        return false;
+                    }
+                }
+
+                return true;
+            })
             .count();
 
         return terminatedCount == resolvedTasks.size();
@@ -707,6 +770,12 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         for (TaskRun taskRun : taskRuns) {
             State.Type currentState = taskRun.getState().getCurrent();
+
+            // Skip tasks that are currently retrying - they're not in a final state yet
+            if (currentState.isRetrying()) {
+                continue;
+            }
+
             // Only consider terminal states and exclude retrying states
             if (currentState.isTerminated() || currentState.isPaused()) {
                 switch (currentState) {
@@ -714,7 +783,21 @@ public class Execution implements DeletedInterface, TenantInterface {
                         hasKilled = true;
                         break;
                     case FAILED:
-                        hasFailed = true;
+                        // For task-level retries, the TaskRun state might be FAILED while retries are in progress.
+                        // We need to check the state history and attempts to determine if this is a final failure.
+
+                        // Check if this task was retried at execution level (RETRYING/RETRIED in history) or manually restarted
+                        boolean hasRetryOrRestart = taskRun.getState().getHistories().stream()
+                            .anyMatch(history -> history.getState().isRetrying() || history.getState() == State.Type.RESTARTED);
+
+                        // For task-level retries, if there are multiple attempts and any succeeded, don't count as failed
+                        // This handles cases where a task has retry configuration and succeeded on a later attempt
+                        boolean hasSuccessfulAttempt = taskRun.getAttempts() != null &&
+                            taskRun.getAttempts().stream().anyMatch(attempt -> attempt.getState().isSuccess());
+
+                        if (!hasRetryOrRestart && !hasSuccessfulAttempt) {
+                            hasFailed = true;
+                        }
                         break;
                     case WARNING:
                         hasWarning = true;
@@ -729,12 +812,22 @@ public class Execution implements DeletedInterface, TenantInterface {
             }
         }
 
+        // Check if any tasks are in a non-final state (retrying, running, created)
+        // If so, we shouldn't finalize the execution state yet
+        boolean hasNonFinalTasks = taskRuns.stream()
+            .anyMatch(taskRun -> {
+                State.Type currentState = taskRun.getState().getCurrent();
+                return currentState.isRetrying() || currentState.isRunning() || currentState.isCreated();
+            });
+
         // Determine final state based on priority: KILLED > FAILED > WARNING > PAUSED > SUCCESS
         State.Type state;
         if (hasKilled) {
             state = State.Type.KILLED;
         } else if (hasFailed) {
-            state = State.Type.FAILED;
+            // If there are non-final tasks, don't finalize as FAILED yet - return RUNNING instead
+            // This prevents premature termination when retries are in progress
+            state = hasNonFinalTasks ? State.Type.RUNNING : State.Type.FAILED;
         } else if (hasWarning) {
             state = State.Type.WARNING;
         } else if (hasPaused) {

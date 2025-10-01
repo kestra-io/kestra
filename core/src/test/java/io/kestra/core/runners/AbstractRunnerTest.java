@@ -83,6 +83,9 @@ public abstract class AbstractRunnerTest {
     protected ChangeStateTestCase changeStateTestCase;
 
     @Inject
+    protected ParallelSubflowRetryCaseTest parallelSubflowRetryCaseTest;
+
+    @Inject
     private AfterExecutionTestCase afterExecutionTestCase;
 
     @Test
@@ -579,6 +582,24 @@ public abstract class AbstractRunnerTest {
     @LoadFlows(value = {"flows/valids/failed-first.yaml", "flows/valids/subflow-parent-of-failed.yaml"}, tenantId = TENANT_2)
     public void changeStateInSubflowShouldEndsParentFlowInSuccess() throws Exception {
         changeStateTestCase.changeStateInSubflowShouldEndsParentFlowInSuccess(TENANT_2);
+    }
+
+    @Test
+    @LoadFlows(value = {"flows/valids/mainflow-issue-8143.yaml", "flows/valids/subflow-issue-8143.yaml"}, tenantId = MAIN_TENANT)
+    public void parentFlowShouldSucceedWhenBothSubflowsSucceedAfterRetry() throws Exception {
+        parallelSubflowRetryCaseTest.parentFlowShouldSucceedWhenBothSubflowsSucceedAfterRetry(MAIN_TENANT);
+    }
+
+    @Test
+    @LoadFlows(value = {"flows/valids/mainflow-issue-8143.yaml", "flows/valids/subflow-issue-8143.yaml"}, tenantId = MAIN_TENANT)
+    public void parentFlowShouldSucceedWhenOnlyInboxSubflowSucceedsAfterRetry() throws Exception {
+        parallelSubflowRetryCaseTest.parentFlowShouldSucceedWhenOnlyInboxSubflowSucceedsAfterRetry(MAIN_TENANT);
+    }
+
+    @Test
+    @LoadFlows(value = {"flows/valids/mainflow-issue-8143.yaml", "flows/valids/subflow-issue-8143.yaml"}, tenantId = MAIN_TENANT)
+    public void parentFlowShouldSucceedWhenOnlySentSubflowSucceedsAfterRetry() throws Exception {
+        parallelSubflowRetryCaseTest.parentFlowShouldSucceedWhenOnlySentSubflowSucceedsAfterRetry(MAIN_TENANT);
     }
 
     @Test

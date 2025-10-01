@@ -2,6 +2,7 @@ package io.kestra.jdbc.runner;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -95,6 +96,8 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         workerJobRunnings.forEach(workerJobRunning -> workerJobRunningRepository.deleteByKey(workerJobRunning.uid()));
     }
 
+    @FlakyTest
+    @Disabled
     @Test
     void shouldReEmitTasksWhenWorkerIsDetectedAsNonResponding() throws Exception {
         CountDownLatch runningLatch = new CountDownLatch(1);

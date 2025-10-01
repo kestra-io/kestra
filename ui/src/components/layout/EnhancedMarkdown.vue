@@ -609,7 +609,6 @@
         display: flex;
         flex-direction: column;
         gap: var(--spacer, 1rem);
-        background: var(--ks-background-panel);
         border-radius: var(--el-border-radius-base);
         color: var(--ks-content-primary);
     }

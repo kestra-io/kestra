@@ -340,7 +340,6 @@
 
     // Permission helpers
     const user = computed(() => authStore.user);
-    const namespace = computed(() => props.namespace || route.query.namespace);
     const canRead = computed(() => user.value?.isAllowed(permission.FLOW, action.READ, route.query.namespace));
     const canDelete = computed(() => user.value?.isAllowed(permission.FLOW, action.DELETE, route.query.namespace));
     const canUpdate = computed(() => user.value?.isAllowed(permission.FLOW, action.UPDATE, route.query.namespace));

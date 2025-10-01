@@ -23,7 +23,7 @@ dependencies {
     def flyingSaucerVersion = "10.0.0"
     def jacksonVersion = "2.20.0"
     def jacksonAnnotationsVersion = "2.20"
-    def jugVersion = "5.1.0"
+    def jugVersion = "5.1.1"
     def langchain4jVersion = "1.6.0"
     def langchain4jCommunityVersion = "1.5.0-beta11"
 

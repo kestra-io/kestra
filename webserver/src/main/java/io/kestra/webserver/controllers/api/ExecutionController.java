@@ -188,6 +188,7 @@ public class ExecutionController {
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
+    
     @Inject
     private ExecutionStreamingService executionStreamingService;
 
@@ -1302,7 +1303,8 @@ public class ExecutionController {
         if (execution.getState().isTerminated() && !isOnKillCascade) {
             throw new IllegalStateException("Execution is already finished, can't kill it");
         }
-
+        
+        eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
         killQueue.emit(ExecutionKilledExecution
             .builder()
             .state(ExecutionKilled.State.REQUESTED)
@@ -1359,6 +1361,7 @@ public class ExecutionController {
         }
 
         executions.forEach(throwConsumer(execution -> {
+            eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
             killQueue.emit(ExecutionKilledExecution
                 .builder()
                 .state(ExecutionKilled.State.REQUESTED)

@@ -173,5 +173,6 @@ if __name__ == "__main__":
     main(language_code="ko", target_language="Korean", retranslate_modified_keys=bool_from_ci)
     main(language_code="pl", target_language="Polish", retranslate_modified_keys=bool_from_ci)
     main(language_code="pt", target_language="Portuguese", retranslate_modified_keys=bool_from_ci)
+    main(language_code="pt_BR", target_language="Portuguese (Brazil)", retranslate_modified_keys=bool_from_ci)
     main(language_code="ru", target_language="Russian", retranslate_modified_keys=bool_from_ci)
     main(language_code="zh_CN", target_language="Simplified Chinese (Mandarin)", retranslate_modified_keys=bool_from_ci)

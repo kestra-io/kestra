@@ -39,13 +39,13 @@ public class DownloadFilesTest {
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, downloadFiles,
             Map.of("namespace", namespaceId));
         final Namespace namespace = runContext.storage().namespace(namespaceId);
-            namespace.putFile(Path.of("/a/b/test1.txt"),
-                new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8)));
-            namespace.putFile(Path.of("/a/b/test2.txt"),
-                new ByteArrayInputStream("2".getBytes(StandardCharsets.UTF_8)));
-            DownloadFiles.Output output = downloadFiles.run(runContext);
-            assertThat(output.getFiles().size()).isEqualTo(1);
-            assertThat(output.getFiles().get("/a/b/test1.txt")).isNotNull();
+        namespace.putFile(Path.of("/a/b/test1.txt"),
+            new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8)));
+        namespace.putFile(Path.of("/a/b/test2.txt"),
+            new ByteArrayInputStream("2".getBytes(StandardCharsets.UTF_8)));
+        DownloadFiles.Output output = downloadFiles.run(runContext);
+        assertThat(output.getFiles().size()).isEqualTo(1);
+        assertThat(output.getFiles().get("/a/b/test1.txt")).isNotNull();
     }
 
     @Test
@@ -65,8 +65,8 @@ public class DownloadFilesTest {
         // Create a file with a space after a dot
         String weirdFileName = "/a/b/sample.file with weird naming.txt";
         namespace.putFile(
-            Path.of(weirdFileName),
-            new ByteArrayInputStream("test content".getBytes(StandardCharsets.UTF_8)));
+            new ByteArrayInputStream("test content".getBytes(StandardCharsets.UTF_8)),
+            weirdFileName);
         // Run the task
         DownloadFiles.Output output = downloadFiles.run(runContext);
         // Verify the file was downloaded successfully

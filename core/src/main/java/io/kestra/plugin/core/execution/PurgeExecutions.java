@@ -102,6 +102,14 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
     @Builder.Default
     private Property<Boolean> purgeStorage = Property.ofValue(true);
 
+    @Schema(
+        title = "The size of the bulk delete",
+        description = "For performance, deletion is made by batch of by default 500 executions/logs/metrics."
+    )
+    @Builder.Default
+    @NotNull
+    private Property<Integer> batchSize = Property.ofValue(500);
+
     @Override
     public PurgeExecutions.Output run(RunContext runContext) throws Exception {
         ExecutionService executionService = ((DefaultRunContext)runContext).getApplicationContext().getBean(ExecutionService.class);
@@ -124,9 +132,10 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
             flowInfo.tenantId(),
             renderedNamespace,
             runContext.render(flowId).as(String.class).orElse(null),
-            startDate != null ? ZonedDateTime.parse(runContext.render(startDate).as(String.class).orElseThrow()) : null,
+            runContext.render(startDate).as(String.class).map(ZonedDateTime::parse).orElse(null),
             ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow()),
-            this.states == null ? null : runContext.render(this.states).asList(State.Type.class)
+            this.states == null ? null : runContext.render(this.states).asList(State.Type.class),
+            runContext.render(this.batchSize).as(Integer.class).orElseThrow()
         );
 
         return Output.builder()

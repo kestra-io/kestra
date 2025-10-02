@@ -61,7 +61,11 @@ public abstract class AbstractFlow implements FlowInterface {
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
     @Schema(
-        description = "Labels as a list of Label which are key/value pairs."
+            description = "Labels as a list of Label (key/value pairs) or as a map of string to string.",
+            oneOf = {
+                    Label[].class,
+                    Map.class
+            }
     )
     @Valid
     List<Label> labels;
@@ -71,4 +75,5 @@ public abstract class AbstractFlow implements FlowInterface {
 
     @Valid
     private WorkerGroup workerGroup;
+
 }

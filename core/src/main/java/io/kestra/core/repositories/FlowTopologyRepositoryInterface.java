@@ -10,6 +10,8 @@ public interface FlowTopologyRepositoryInterface {
 
     List<FlowTopology> findByNamespace(String tenantId, String namespace);
 
+    List<FlowTopology> findByNamespacePrefix(String tenantId, String namespacePrefix);
+
     List<FlowTopology> findAll(String tenantId);
 
     FlowTopology save(FlowTopology flowTopology);

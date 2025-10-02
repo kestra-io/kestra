@@ -50,6 +50,32 @@ public abstract class AbstractFlowTopologyRepositoryTest {
     }
 
     @Test
+    void findByNamespacePrefix() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        flowTopologyRepository.save(
+            createSimpleFlowTopology(tenant, "flow-a", "flow-b", "io.kestra.tests")
+        );
+
+        flowTopologyRepository.save(
+            createSimpleFlowTopology(tenant, "flow-x", "flow-y", "io.kestra.tests.sub")
+        );
+
+        flowTopologyRepository.save(
+            createSimpleFlowTopology(tenant, "flow-p", "flow-q", "io.other.namespace")
+        );
+
+        List<FlowTopology> list = flowTopologyRepository.findByNamespacePrefix(tenant, "io.kestra.tests");
+
+        assertThat(list)
+            .extracting(ft -> ft.getSource().getNamespace())
+            .contains("io.kestra.tests", "io.kestra.tests.sub")
+            .doesNotContain("io.other.namespace");
+
+        assertThat(list.size()).isEqualTo(2);
+    }
+
+    @Test
     void findByNamespace() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         flowTopologyRepository.save(

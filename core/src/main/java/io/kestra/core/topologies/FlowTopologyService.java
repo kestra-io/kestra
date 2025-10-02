@@ -70,7 +70,7 @@ public class FlowTopologyService {
     }
 
     public FlowTopologyGraph namespaceGraph(String tenantId, String namespace) {
-        List<FlowTopology> flowTopologies = flowTopologyRepository.findByNamespace(tenantId, namespace);
+        List<FlowTopology> flowTopologies = flowTopologyRepository.findByNamespacePrefix(tenantId, namespace);
 
         FlowTopologyGraph graph = this.graph(flowTopologies.stream(), (flowNode -> flowNode));
 

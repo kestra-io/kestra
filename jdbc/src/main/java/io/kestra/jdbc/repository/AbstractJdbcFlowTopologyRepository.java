@@ -80,6 +80,28 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
     }
 
     @Override
+    public List<FlowTopology> findByNamespacePrefix(String tenantId, String namespacePrefix) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                // Match flows that originate from the namespace or its children
+                Condition sourceCondition = field("source_namespace").eq(namespacePrefix)
+                    .or(field("source_namespace").likeIgnoreCase(namespacePrefix + ".%"));
+
+                Condition tenantSource = buildTenantCondition("source", tenantId);
+                Condition tenantDest = buildTenantCondition("destination", tenantId);
+
+                Select<Record1<Object>> from = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(tenantSource.and(tenantDest).and(sourceCondition));
+
+                return this.jdbcRepository.fetch(from);
+            });
+    }
+
+    @Override
     public List<FlowTopology> findAll(String tenantId) {
         return jdbcRepository
             .getDslContextWrapper()

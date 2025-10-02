@@ -1,7 +1,7 @@
 <template>
     <span ref="rootContainer">
         <!-- Valid -->
-        <el-button v-if="!errors && !warnings &&!infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square" :disabled="isDisabled">
+        <el-button v-if="!errors && !warnings &&!infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square" disabled>
             <CheckBoldIcon class="text-success" />
         </el-button>
 
@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref, computed} from "vue";
+    import {nextTick, ref} from "vue";
     import CheckBoldIcon from "vue-material-design-icons/CheckBold.vue";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
@@ -113,7 +113,7 @@
         inheritAttrs: false,
     })
 
-    const props = defineProps<{
+    defineProps<{
         errors?: string[] | undefined;
         warnings?: string[] | undefined;
         infos?: string[] | undefined;
@@ -123,10 +123,6 @@
     }>()
 
     const rootContainer = ref<HTMLSpanElement>()
-
-    const isDisabled = computed(() =>
-        !(props.errors && props.errors.length > 0 || props.warnings && props.warnings.length > 0 || props.infos && props.infos.length > 0)
-    );
 
     function onResize(maxWidth: number) {
         if(rootContainer.value === undefined) {

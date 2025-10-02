@@ -55,7 +55,7 @@
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {State} from "@kestra-io/ui-libs"
 
-    import {filterLabels} from "./utils"
+    import {filterValidLabels} from "./utils"
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {useAuthStore} from "override/stores/auth"
@@ -78,10 +78,11 @@
         },
         methods: {
             setLabels() {
-                let filtered = filterLabels(this.executionLabels)
+                const filtered = filterValidLabels(this.executionLabels)
 
-                if(filtered.error) {
-                    filtered.labels = filtered.labels.filter(obj => !(obj.key === null && obj.value === null));
+                if (filtered.error) {
+                    this.$toast().error(this.$t("wrong labels"))
+                    return;
                 }
 
                 this.isOpen = false;

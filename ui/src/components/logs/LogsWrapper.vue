@@ -58,8 +58,9 @@
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw";
     import {useLogsStore} from "../../stores/logs";
     import {defaultNamespace} from "../../composables/useNamespaces";
+    import {defineComponent} from "vue";
 
-    export default {
+    export default defineComponent({
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         props: {
             logLevel: {
@@ -110,8 +111,8 @@
                 return this.$route.name === "namespaces/update"
             },
             selectedLogLevel() {
-                const decodedParams = decodeSearchParams(this.$route.query, ["level"], []);
-                const levelFilters = decodedParams.filter(item => item.label === "level");
+                const decodedParams = decodeSearchParams(this.$route.query);
+                const levelFilters = decodedParams.filter(item => item.field === "level");
                 const decoded = levelFilters.length > 0 ? levelFilters[0].value : "INFO";
                 return this.logLevel || decoded || localStorage.getItem("defaultLogLevel") || "INFO";
             },
@@ -147,7 +148,7 @@
                 ];
             }
         },
-        beforeRouteEnter(to, _, next) {
+        beforeRouteEnter(to: any, _: any, next: (route?: any) => void) {
             const query = {...to.query};
             let queryHasChanged = false;
 
@@ -171,9 +172,9 @@
             showStatChart() {
                 return this.showChart;
             },
-            onShowChartChange(value) {
+            onShowChartChange(value: boolean) {
                 this.showChart = value;
-                localStorage.setItem(storageKeys.SHOW_LOGS_CHART, value);
+                localStorage.setItem(storageKeys.SHOW_LOGS_CHART, value.toString());
                 if (this.showStatChart()) {
                     this.loadStats();
                 }
@@ -183,7 +184,7 @@
                 this.$refs.dashboard.refreshCharts();
                 this.load();
             },
-            loadQuery(base) {
+            loadQuery(base: any) {
                 let queryFilter = this.filters ?? this.queryWithFilter();
 
                 if (this.isFlowEdit) {
@@ -223,7 +224,7 @@
 
             },
         },
-    };
+    });
 </script>
 <style lang="scss" scoped>
     @import "@kestra-io/ui-libs/src/scss/variables";

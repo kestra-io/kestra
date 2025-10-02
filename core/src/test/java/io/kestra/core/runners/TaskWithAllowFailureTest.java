@@ -33,7 +33,7 @@ public class TaskWithAllowFailureTest {
     private FlowInputOutput flowIO;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Test
     @ExecuteFlow("flows/valids/task-allow-failure-runnable.yml")

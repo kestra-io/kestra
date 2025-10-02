@@ -31,7 +31,7 @@
     </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     import {computed, ref, onMounted} from "vue";
     import {useDocStore} from "../../stores/doc";
 
@@ -51,18 +51,18 @@
             return props.pageUrl.replace(/^\//, "").replace(/\/$/, "");
         } else {
             const p = docStore.docPath;
-            return p ? `docs/${p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/")}` : p;
+            return p ? `docs/${p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/")}` : "";
         }
     })
 
 
-    const resourcesWithMetadata = ref({});
+    const resourcesWithMetadata = ref<Record<string, any>>({});
     onMounted(async () => {
         resourcesWithMetadata.value = await docStore.children(currentPage.value);
     })
 
     const navigation = computed(() => {
-        let parentMetadata;
+        let parentMetadata: Record<string, any> = {};
         if (props.pageUrl) {
             parentMetadata = {...resourcesWithMetadata.value[currentPage.value]};
             delete parentMetadata.description;
@@ -78,7 +78,6 @@
                 ...metadata
             }))
     });
-
 </script>
 
 <style lang="scss" scoped>

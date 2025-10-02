@@ -140,7 +140,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }) => {
-        return axios.post(
+        return axios.post<Execution>(
             `${apiUrl()}/executions/${options.executionId}/replay`,
             null,
             {
@@ -276,7 +276,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         labels?: string[];
         scheduleDate?: string,
     }) => {
-        return axios.post(`${apiUrl()}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
+        return axios.post<Execution>(`${apiUrl()}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data"
@@ -313,6 +313,10 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     function closeSSE() {
         if (sse.value) {
+            // when closing SSE, the doc seems to say the onerror is called
+            // trying to prevent an unwanted error is displayed for the user
+            sse.value.onerror = () => {};
+
             sse.value.close();
             sse.value = undefined;
         }

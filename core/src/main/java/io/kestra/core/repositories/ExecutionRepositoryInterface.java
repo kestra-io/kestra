@@ -25,8 +25,6 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Execution>, QueryBuilderInterface<Executions.Fields> {
-    Boolean isTaskRunEnabled();
-
     default Optional<Execution> findById(String tenantId, String id) {
         return findById(tenantId, id, false);
     }
@@ -96,12 +94,6 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
 
     Flux<Execution> findAllAsync(@Nullable String tenantId);
 
-    ArrayListTotal<TaskRun> findTaskRun(
-        Pageable pageable,
-        @Nullable String tenantId,
-        List<QueryFilter> filters
-    );
-
     Execution delete(Execution execution);
 
     Integer purge(Execution execution);
@@ -112,8 +104,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy,
-        boolean isTaskRun
+        @Nullable DateUtils.GroupType groupBy
     );
 
     List<DailyExecutionStatistics> dailyStatistics(
@@ -125,8 +116,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         @Nullable DateUtils.GroupType groupBy,
-        List<State.Type> state,
-        boolean isTaskRun
+        List<State.Type> state
     );
 
     @Getter

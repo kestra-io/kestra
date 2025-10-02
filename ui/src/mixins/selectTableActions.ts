@@ -1,12 +1,14 @@
-export default {
+import {defineComponent} from "vue";
+
+export default defineComponent({
     data() {
         return {
             queryBulkAction: false,
-            selection: []
+            selection: [] as any[],
         };
     },
     methods: {
-        handleSelectionChange(value) {
+        handleSelectionChange(value: any[]) {
             this.selection = value.map(this.selectionMapper);
         },
         toggleAllUnselected() {
@@ -19,13 +21,13 @@ export default {
             }
             this.queryBulkAction = true;
         },
-        selectionMapper(element) {
+        selectionMapper(element: any) {
             return element;
         }
     },
     computed: {
         elTable() {
-            return this.$refs.selectTable.$refs.table;
+            return (this.$refs.selectTable as any).$refs.table;
         }
     }
-}
+})

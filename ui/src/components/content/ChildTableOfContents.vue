@@ -3,6 +3,9 @@
     import {useDocStore} from "../../stores/doc";
     import {RouterLink, useRoute} from "vue-router";
 
+    interface DataItem {children: any[], path: string}
+
+
     export default defineComponent({
         props: {
             pageUrl: {
@@ -29,7 +32,7 @@
             if (props.pageUrl) {
                 currentPage = props.pageUrl;
             } else {
-                currentPage = route.params.path;
+                currentPage = route.params.path.toString();
             }
 
             currentPage = currentPage?.endsWith("/") ? currentPage.slice(0, -1) : currentPage;
@@ -48,11 +51,11 @@
 
             const dir = Object.entries(childrenWithMetadata)[0]?.[1]?.children;
 
-            const renderLinks = (data, level) => {
+            const renderLinks = (data: DataItem[], level: number) => {
                 return h(
                     "ul",
                     level ? {"data-level": level} : null,
-                    (data || []).map((link) => {
+                    (data || []).map((link):any => {
                         if (link.children &&
                             (props.max === undefined || props.max <= level) &&
                             (link.children.length > 1 || link.children.length === 1 && link.children[0].path !== link.path)
@@ -65,7 +68,7 @@
                 );
             };
 
-            const defaultNode = (data) => renderLinks(data, 0);
+            const defaultNode = (data: DataItem[]) => renderLinks(data, 0);
 
             return () => ctx.slots?.default ? ctx.slots.default({dir, ...ctx.attrs}) : defaultNode(dir);
         },

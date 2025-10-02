@@ -1,9 +1,9 @@
-import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion.ts";
-import {FilterLanguage} from "../filterLanguage.ts";
-import permission from "../../../../../models/permission.ts";
-import action from "../../../../../models/action.ts";
-import {useNamespacesStore} from "override/stores/namespaces.ts";
-import {useAuthStore} from "override/stores/auth.ts";
+import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion";
+import {FilterLanguage} from "../filterLanguage";
+import permission from "../../../../../models/permission";
+import action from "../../../../../models/action";
+import {useNamespacesStore} from "override/stores/namespaces";
+import {useAuthStore} from "override/stores/auth";
 
 const executionFilterKeys: Record<string, FilterKeyCompletions> = {
     namespace: new FilterKeyCompletions(
@@ -32,22 +32,22 @@ const executionFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     state: new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.EXECUTION_STATES,
+        async (hardcodedValues) => hardcodedValues.EXECUTION_STATES,
         true
     ),
     scope: new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.SCOPES,
+        async (hardcodedValues) => hardcodedValues.SCOPES,
         undefined,
         ["scope"]
     ),
     childFilter: new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.CHILDS
+        async (hardcodedValues) => hardcodedValues.CHILDS
     ),
     timeRange: new FilterKeyCompletions(
         [Comparators.EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.RELATIVE_DATE,
+        async (hardcodedValues) => hardcodedValues.RELATIVE_DATE,
         false,
         ["timeRange", "startDate", "endDate"]
     ),

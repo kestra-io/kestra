@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
     import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue";
+    import {useRoute} from "vue-router";
     import Utils from "../../utils/utils";
     import {useStorage} from "@vueuse/core";
     import {useI18n} from "vue-i18n";
@@ -53,8 +54,18 @@
     const flowStore = useFlowStore()
     const {showKeyShortcuts} = useKeyShortcuts()
 
+    const route = useRoute();
+
     onMounted(() => {
         useEditorStore().explorerVisible = false
+        // Ensure the Flow Code panel is open and focused when arriving with ai=open
+        if(route.query.ai === "open"){
+            if(!openTabs.value.includes("code")){
+                setTabValue("code")
+            } else {
+                focusTab("code")
+            }
+        }
     })
 
     const playgroundStore = usePlaygroundStore()
@@ -79,7 +90,7 @@
 
     const openTabs = ref<string[]>([])
 
-    const defaultPanelSize = computed(() => panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length);
+    const defaultPanelSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length));
 
     function setTabValue(tabValue: string) {
         // Show dialog instead of creating panel
@@ -116,8 +127,15 @@
         return staticGetPanelFromValue(value, tab, dirtyFlow)
     }
 
+    function getTabFromValue(value: string): Tab {
+        return setupInitialNoCodeTabIfExists(RawNoCode, value, t, noCodeHandlers, flowStore.flowYaml ?? "")
+            ?? setupInitialCodeTab(value)
+            ?? EDITOR_ELEMENTS.find(e => e.value === value)
+            ?? EDITOR_ELEMENTS[0]
+    }
+
     function staticGetPanelFromValue(value: string, tab?: Tab, dirtyFlow = false): {prepend: boolean, panel: Omit<Panel, "size">}{
-        const element: Tab = tab ?? EDITOR_ELEMENTS.find(e => e.value === value)!
+        const element: Tab = tab ?? getTabFromValue(value)
 
         if(isTabFlowRelated(element)){
             element.dirty = dirtyFlow
@@ -188,11 +206,7 @@
                         return panels
                             .filter((p) => p.tabs.length)
                             .map((p): Panel => {
-                                const tabs: Tab[] = p.tabs.map((tab) =>
-                                    setupInitialCodeTab(tab)
-                                    ?? setupInitialNoCodeTabIfExists(RawNoCode, tab, t, noCodeHandlers, flowStore.flowYaml ?? "")
-                                    ?? EDITOR_ELEMENTS.find(e => e.value === tab)!
-                                )
+                                const tabs = p.tabs.map(getTabFromValue)
                                     // filter out any tab that may have disappeared
                                     .filter(t => t !== undefined);
                                 const activeTab = tabs.find(t => cleanupNoCodeTabKey(t.value) === p.activeTab) ?? tabs[0];

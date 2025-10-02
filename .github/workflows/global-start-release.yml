@@ -1,5 +1,5 @@
 name: Start release
-run-name: "Start release of Kestra EE ${{ github.event.inputs.releaseVersion }} 🚀"
+run-name: "Start release of Kestra ${{ github.event.inputs.releaseVersion }} 🚀"
 on:
   workflow_dispatch:
     inputs:
@@ -38,7 +38,7 @@ jobs:
           echo "release_branch=${RELEASE_BRANCH}" >> $GITHUB_OUTPUT
 
       # Checkout
-      - name: Checkout - EE
+      - name: Checkout
         uses: actions/checkout@v5
         with:
           fetch-depth: 0

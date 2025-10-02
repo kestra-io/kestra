@@ -1,6 +1,11 @@
 name: Main Workflow
 
 on:
+  push:
+    branches:
+      - releases/*
+      - develop
+
   workflow_dispatch:
     inputs:
       skip-test:
@@ -11,53 +16,56 @@ on:
         options:
           - "true"
           - "false"
-      plugin-version:
-          description: "plugins version"
-          required: false
-          type: string
-  push:
-    branches:
-      - master
-      - main
-      - releases/*
-      - develop
-    tags:
-      - v*
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-main
   cancel-in-progress: true
 
 jobs:
-  tests:
-    name: Execute tests
-    uses: ./.github/workflows/workflow-test.yml
+  backend-tests:
+    name: Backend tests
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-    with:
-      report-status: false
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  release:
-    name: Release
-    needs: [tests]
-    if: "!failure() && !cancelled() && !startsWith(github.ref, 'refs/heads/releases')"
-    uses: ./.github/workflows/workflow-release.yml
+  frontend-tests:
+    name: Frontend tests
+    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  publish-develop-docker:
+    name: Publish Docker
+    needs: [backend-tests, frontend-tests]
+    if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
     with:
-        plugin-version: ${{ inputs.plugin-version != '' && inputs.plugin-version || (github.ref == 'refs/heads/develop' && 'LATEST-SNAPSHOT' || 'LATEST') }}
+      plugin-version: 'LATEST-SNAPSHOT'
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+
+  publish-develop-maven:
+    name: Publish develop Maven
+    needs: [ backend-tests, frontend-tests ]
+    if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@main
+    secrets:
       SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
       SONATYPE_GPG_KEYID: ${{ secrets.SONATYPE_GPG_KEYID }}
       SONATYPE_GPG_PASSWORD: ${{ secrets.SONATYPE_GPG_PASSWORD }}
       SONATYPE_GPG_FILE: ${{ secrets.SONATYPE_GPG_FILE }}
-      GH_PERSONAL_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
-      SLACK_RELEASES_WEBHOOK_URL: ${{ secrets.SLACK_RELEASES_WEBHOOK_URL }}
 
   end:
     runs-on: ubuntu-latest
-    needs:
-      - release
+    needs: [publish-develop-docker, publish-develop-maven]
     if: always()
     steps:
       - name: Trigger EE Workflow

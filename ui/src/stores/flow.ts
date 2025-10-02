@@ -66,6 +66,12 @@ interface Flow {
     errors: { message: string; code?: string, id?: string }[];
 }
 
+interface FlowLog {
+    timestamp: string;
+    level: "INFO" | "WARN" | "ERROR";
+    message: string;
+}
+
 export const useFlowStore = defineStore("flow", () => {
     const flows = ref<Flow[]>()
     const flow = ref<Flow>()
@@ -80,6 +86,7 @@ export const useFlowStore = defineStore("flow", () => {
     const taskError = ref<string>()
     const metrics = ref<any[]>()
     const aggregatedMetrics = ref<any>()
+    const logs = ref<FlowLog[]>()
     const tasksWithMetrics = ref<any[]>()
     const executeFlow = ref<boolean>(false)
     const lastSaveFlow = ref<string>()
@@ -731,6 +738,25 @@ function deleteFlowAndDependencies() {
             })
     }
 
+    function loadFlowLogs(options: { namespace: string, id: string, startDate?: string, endDate?: string }) {
+        return axios.get(`${apiUrl()}/logs`, {
+            params: {
+                namespace: options.namespace,
+                flowId: options.id,
+                startDate: options.startDate,
+                endDate: options.endDate,
+                size: 1000 // or adjust as needed
+            }
+        }).then(response => {
+            logs.value = response.data.results?.map((log: any) => ({
+                timestamp: log.timestamp,
+                level: log.level,
+                message: log.message
+            })) || []
+            return logs.value
+        })
+    }
+
     function setTrigger({index, trigger}: { index: number, trigger: Trigger }) {
         const flowVar = flow.value ?? {} as Flow;
 
@@ -863,6 +889,46 @@ function deleteFlowAndDependencies() {
         return YAML_UTILS.getMetadata(flowYaml.value ?? "");
     })
 
+    const logHistogramData = computed(() => {
+        if (!logs.value || logs.value.length === 0) {
+            return {labels: [], datasets: []}
+        }
+
+        // Group logs by day and level
+        const buckets: Record<string, Record<string, number>> = {}
+
+        logs.value.forEach((log: FlowLog) => {
+            const day = moment(log.timestamp).format("YYYY-MM-DD")
+            if (!buckets[day]) {
+                buckets[day] = {INFO: 0, WARN: 0, ERROR: 0}
+            }
+            buckets[day][log.level] += 1
+        })
+
+        const labels = Object.keys(buckets).sort()
+        
+        return {
+            labels,
+            datasets: [
+                {
+                    label: "INFO",
+                    backgroundColor: "#67C23A",
+                    data: labels.map(label => buckets[label].INFO || 0)
+                },
+                {
+                    label: "WARN",
+                    backgroundColor: "#E6A23C",
+                    data: labels.map(label => buckets[label].WARN || 0)
+                },
+                {
+                    label: "ERROR",
+                    backgroundColor: "#F56C6C",
+                    data: labels.map(label => buckets[label].ERROR || 0)
+                }
+            ]
+        }
+    })
+
     return {
         creationId,
         isFlow,
@@ -941,6 +1007,9 @@ function deleteFlowAndDependencies() {
         loadFlowAggregatedMetrics,
         loadTaskAggregatedMetrics,
         loadTasksWithMetrics,
+        logs,
+        logHistogramData,
+        loadFlowLogs,
         getNamespace,
     }
 })

@@ -38,6 +38,39 @@
                 </el-alert>
             </span>
         </el-card>
+
+        <!-- Log Histogram Chart -->
+        <el-card class="mt-4">
+            <template #header>
+                <div class="d-flex align-items-center">
+                    <span>Log Histogram</span>
+                </div>
+            </template>
+            <el-tooltip
+                effect="light"
+                placement="bottom"
+                :persistent="false"
+                :hideAfter="0"
+                transition=""
+                :popperClass="
+                    tooltipContent === '' ? 'd-none' : 'tooltip-stats'
+                "
+                v-if="logChartData.labels && logChartData.labels.length > 0"
+            >
+                <template #content>
+                    <span v-html="tooltipContent" />
+                </template>
+                <Bar
+                    :data="logChartData"
+                    :options="options"
+                />
+            </el-tooltip>
+            <span v-else>
+                <el-alert type="info" :closable="false">
+                    No logs available for the selected time range
+                </el-alert>
+            </span>
+        </el-card>
     </div>
 </template>
 
@@ -105,6 +138,11 @@
                     ],
                 };
             },
+
+            logChartData() {
+                return this.flowStore.logHistogramData;
+            },
+
             options() {
                 const darken =
                     this.miscStore.theme === "light"
@@ -233,16 +271,29 @@
             load() {
                 if (!this.$route.query.metric) {
                     this.loadMetrics();
+                    this.loadLogs();
                 } else {
                     this.loadAggregatedMetrics();
                 }
             },
+            loadLogs() {
+                if (this.flow && this.flow.namespace && this.flow.id) {
+                    this.flowStore.loadFlowLogs({
+                        namespace: this.flow.namespace,
+                        id: this.flow.id,
+                        startDate: this.$route.query.startDate,
+                        endDate: this.$route.query.endDate
+                    })
+                }
+
+            }
         },
         watch: {
             "$route.query": {
                 handler(query) {
                     if (!query.metric) {
                         this.loadMetrics();
+                        this.loadLogs();
                     } else {
                         this.loadAggregatedMetrics();
                     }
@@ -252,7 +303,7 @@
     });
 </script>
 
-<style>
+<style scoped>
 .navbar-flow-metrics {
     display: flex;
     width: 100%;

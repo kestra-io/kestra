@@ -34,7 +34,7 @@
     import KeyShortcuts from "../inputs/KeyShortcuts.vue";
     import NoCode from "../no-code/NoCode.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
-    import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
+    import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels";
     import {useTopologyPanels} from "./useTopologyPanels";
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts";
 
@@ -143,7 +143,7 @@
         }
     }
 
-    const {setupInitialCodeTab} = useInitialCodeTabs()
+    const {setupInitialCodeTab} = useInitialFilesTabs()
 
     const isTourRunning = computed(() => coreStore.guidedProperties?.tourStarted)
     const DEFAULT_TOUR_TABS = [
@@ -241,7 +241,7 @@
         }
     }, {immediate: true});
 
-    const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useCodePanels(panels)
+    const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useFilesPanels(panels)
 
     const actions = useNoCodePanels(RawNoCode, panels, openTabs, focusTab)
 

@@ -1,8 +1,8 @@
-name: Main Workflow
+name: Pre Release
 
 on:
   push:
-    branches:
+    tags:
       - 'v*'
   workflow_dispatch:
 
@@ -12,7 +12,7 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
 
   backend-tests:
-    name: Backend - Tests
+    name: Backend tests
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -21,7 +21,7 @@ jobs:
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
 
   frontend-tests:
-    name: Frontend - Tests
+    name: Frontend tests
     uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -40,7 +40,7 @@ jobs:
       SONATYPE_GPG_FILE: ${{ secrets.SONATYPE_GPG_FILE }}
 
   publish-github:
-    name: Github Releaase
+    name: Github Release
     needs: [build-artifacts, backend-tests, frontend-tests]
     if: "!failure() && !cancelled()"
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-github.yml@main

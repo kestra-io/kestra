@@ -45,18 +45,14 @@ public class KVController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get("/inheritance")
-    @Operation(tags = {"KV"}, summary = "List all keys for ancestor namespaces")
+    @Operation(tags = {"KV"}, summary = "List all keys for inherited namespaces")
     public List<KVEntry> listKeysWithInheritance(
         @Parameter(description = "The namespace id") @PathVariable String namespace
     ) throws IOException {
-        int lastDotIndex = namespace.lastIndexOf('.');
-        if (lastDotIndex == -1) {
-            return Collections.emptyList();
-        }
-        String result = namespace.substring(0, lastDotIndex);
-
-        List<String> ancestorNamespaces = NamespaceUtils.asTree(result);
-        return getKvEntriesWithInheritance(ancestorNamespaces);
+        List<String> namespaces = NamespaceUtils.asTree(namespace).stream()
+            .filter(ns -> !ns.equals(namespace))
+            .toList();
+        return getKvEntriesWithInheritance(namespaces);
     }
 
     protected List<KVEntry> getKvEntriesWithInheritance(List<String> namespaces) throws IOException {

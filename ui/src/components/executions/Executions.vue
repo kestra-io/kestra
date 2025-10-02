@@ -1,11 +1,11 @@
 <template>
-    <top-nav-bar v-if="topbar" :title="routeInfo.title">
+    <TopNavBar v-if="topbar" :title="routeInfo.title">
         <template #additional-right v-if="displayButtons">
             <ul>
                 <template v-if="$route.name === 'executions/list'">
                     <li>
                         <template v-if="hasAnyExecute">
-                            <trigger-flow />
+                            <TriggerFlow />
                         </template>
                     </li>
                 </template>
@@ -18,19 +18,19 @@
                         </template>
                     </li>
                     <li>
-                        <trigger-flow
+                        <TriggerFlow
                             v-if="flowStore.flow"
                             :disabled="flowStore.flow.disabled || isReadOnly"
-                            :flow-id="flowStore.flow.id"
+                            :flowId="flowStore.flow.id"
                             :namespace="flowStore.flow.namespace"
                         />
                     </li>
                 </template>
             </ul>
         </template>
-    </top-nav-bar>
+    </TopNavBar>
     <section data-component="FILENAME_PLACEHOLDER" :class="{'container padding-bottom': topbar}" v-if="ready">
-        <data-table
+        <DataTable
             @page-changed="onPageChanged"
             ref="dataTable"
             :total="executionsStore.total"
@@ -46,7 +46,7 @@
                         refresh: {shown: true, callback: refresh},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
                     }"
-                    :properties-width="182"
+                    :propertiesWidth="182"
                     :properties="{
                         shown: true,
                         columns: optionalColumns,
@@ -58,15 +58,15 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections ref="dashboardComponent" :dashboard="{id: 'default'}" :charts show-default />
+                <Sections ref="dashboardComponent" :dashboard="{id: 'default'}" :charts showDefault />
             </template>
 
             <template #table>
-                <select-table
+                <SelectTable
                     ref="selectTable"
                     :data="executionsStore.executions"
-                    :default-sort="{prop: 'state.startDate', order: 'descending'}"
-                    table-layout="auto"
+                    :defaultSort="{prop: 'state.startDate', order: 'descending'}"
+                    tableLayout="auto"
                     fixed
                     @row-dblclick="row => onRowDoubleClick(executionParams(row))"
                     @sort-change="onSort"
@@ -75,8 +75,8 @@
                     :no-data-text="$t('no_results.executions')"
                 >
                     <template #select-actions>
-                        <bulk-select
-                            :select-all="queryBulkAction"
+                        <BulkSelect
+                            :selectAll="queryBulkAction"
                             :selections="selection"
                             :total="executionsStore.total"
                             @update:select-all="toggleAllSelection"
@@ -124,13 +124,13 @@
                                     </el-dropdown-menu>
                                 </template>
                             </el-dropdown>
-                        </bulk-select>
+                        </BulkSelect>
                         <el-dialog
                             v-if="isOpenLabelsModal"
                             v-model="isOpenLabelsModal"
-                            destroy-on-close
-                            :append-to-body="true"
-                            align-center
+                            destroyOnClose
+                            :appendToBody="true"
+                            alignCenter
                         >
                             <template #header>
                                 <h5>{{ $t("Set labels") }}</h5>
@@ -146,12 +146,12 @@
                             </template>
 
                             <el-form>
-                                <el-form-item :label="$t('execution labels')">
-                                    <label-input
+                                <ElFormItem :label="$t('execution labels')">
+                                    <LabelInput
                                         :key="executionLabels"
                                         v-model:labels="executionLabels"
                                     />
-                                </el-form-item>
+                                </ElFormItem>
                             </el-form>
                         </el-dialog>
                     </template>
@@ -159,15 +159,23 @@
                         <el-table-column
                             prop="id"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('id')"
                         >
                             <template #default="scope">
-                                <id
-                                    :value="scope.row.id"
-                                    :shrink="true"
-                                    @click="onRowDoubleClick(executionParams(scope.row))"
-                                />
+                                <RouterLink
+                                    :to="{
+                                        name: 'executions/update',
+                                        params: {
+                                            namespace: scope.row.namespace,
+                                            flowId: scope.row.flowId,
+                                            id: scope.row.id
+                                        }
+                                    }"
+                                    class="execution-id"
+                                >
+                                    <Id :value="scope.row.id" :shrink="true" />
+                                </RouterLink>
                             </template>
                         </el-table-column>
 
@@ -175,11 +183,11 @@
                             prop="state.startDate"
                             v-if="displayColumn('state.startDate')"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('start date')"
                         >
                             <template #default="scope">
-                                <date-ago :inverted="true" :date="scope.row.state.startDate" />
+                                <DateAgo :inverted="true" :date="scope.row.state.startDate" />
                             </template>
                         </el-table-column>
 
@@ -187,11 +195,11 @@
                             prop="state.endDate"
                             v-if="displayColumn('state.endDate')"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('end date')"
                         >
                             <template #default="scope">
-                                <date-ago :inverted="true" :date="scope.row.state.endDate" />
+                                <DateAgo :inverted="true" :date="scope.row.state.endDate" />
                             </template>
                         </el-table-column>
 
@@ -199,7 +207,7 @@
                             prop="state.duration"
                             v-if="displayColumn('state.duration')"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('duration')"
                         >
                             <template #default="scope">
@@ -214,7 +222,7 @@
                             v-if="$route.name !== 'flows/update' && displayColumn('namespace')"
                             prop="namespace"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('namespace')"
                             :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)"
                         />
@@ -223,7 +231,7 @@
                             v-if="$route.name !== 'flows/update' && displayColumn('flowId')"
                             prop="flowId"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('flow')"
                         >
                             <template #default="scope">
@@ -237,7 +245,7 @@
 
                         <el-table-column v-if="displayColumn('labels')" :label="$t('labels')">
                             <template #default="scope">
-                                <labels :labels="filteredLabels(scope.row.labels)" />
+                                <Labels :labels="filteredLabels(scope.row.labels)" />
                             </template>
                         </el-table-column>
 
@@ -245,11 +253,11 @@
                             prop="state.current"
                             v-if="displayColumn('state.current')"
                             sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
+                            :sortOrders="['ascending', 'descending']"
                             :label="$t('state')"
                         >
                             <template #default="scope">
-                                <status :status="scope.row.state.current" size="small" />
+                                <Status :status="scope.row.state.current" size="small" />
                             </template>
                         </el-table-column>
 
@@ -257,7 +265,7 @@
                             prop="flowRevision"
                             v-if="displayColumn('flowRevision')"
                             :label="$t('revision')"
-                            class-name="shrink"
+                            className="shrink"
                         >
                             <template #default="scope">
                                 <code class="code-text">{{ scope.row.flowRevision }}</code>
@@ -277,6 +285,24 @@
                                     </template>
                                     <div>
                                         <Import v-if="scope.row.inputs" class="fs-5" />
+                                    </div>
+                                </el-tooltip>
+                            </template>
+                        </el-table-column>
+
+                        <el-table-column
+                            prop="outputs"
+                            v-if="displayColumn('outputs')"
+                            :label="$t('outputs')"
+                            align="center"
+                        >
+                            <template #default="scope">
+                                <el-tooltip effect="light">
+                                    <template #content>
+                                        <pre class="mb-0">{{ JSON.stringify(scope.row.outputs, null, "\t") }}</pre>
+                                    </template>
+                                    <div>
+                                        <Export v-if="scope.row.outputs" class="fs-5" />
                                     </div>
                                 </el-tooltip>
                             </template>
@@ -303,27 +329,27 @@
                         </el-table-column>
 
                         <el-table-column
-                            column-key="action"
-                            class-name="row-action"
+                            columnKey="action"
+                            className="row-action"
                             :label="$t('actions')"
                         >
                             <template #default="scope">
                                 <router-link
                                     :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}, query: {revision: scope.row.flowRevision}}"
                                 >
-                                    <kicon :tooltip="$t('details')" placement="left">
+                                    <Kicon :tooltip="$t('details')" placement="left">
                                         <TextSearch />
-                                    </kicon>
+                                    </Kicon>
                                 </router-link>
                             </template>
                         </el-table-column>
                     </template>
-                </select-table>
+                </SelectTable>
             </template>
-        </data-table>
+        </DataTable>
     </section>
 
-    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -342,7 +368,7 @@
                     :value="item.code"
                 >
                     <template #default>
-                        <status size="small" :label="false" class="me-1" :status="item.code" />
+                        <Status size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </el-option>
@@ -362,7 +388,7 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroyOnClose :appendToBody="true">
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -381,7 +407,7 @@
                     :value="item.code"
                 >
                     <template #default>
-                        <status size="small" :label="false" class="me-1" :status="item.code" />
+                        <Status size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </el-option>
@@ -401,7 +427,7 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
+    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -438,20 +464,21 @@
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Import from "vue-material-design-icons/Import.vue";
+    import Export from "vue-material-design-icons/Export.vue";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
     import KestraFilter from "../filter/KestraFilter.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import RunFast from "vue-material-design-icons/RunFast.vue";
-    import ExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/executionFilterLanguage.ts";
-    import FlowExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/flowExecutionFilterLanguage.js";
+    import ExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/executionFilterLanguage";
+    import FlowExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/flowExecutionFilterLanguage";
     import Sections from "../dashboard/sections/Sections.vue";
 </script>
 
 <script>
     import {mapStores} from "pinia";
-    import {useMiscStore} from "override/stores/misc.ts";
+    import {useMiscStore} from "override/stores/misc";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -477,10 +504,12 @@
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
     import Utils from "../../utils/utils";
 
-    import {filterLabels} from "./utils"
+    import {filterValidLabels} from "./utils"
     import {useExecutionsStore} from "../../stores/executions";
-    import {useAuthStore} from "override/stores/auth.ts";
-    import {useFlowStore} from "../../stores/flow.ts";
+    import {useAuthStore} from "override/stores/auth";
+    import {useFlowStore} from "../../stores/flow";
+
+    import {defaultNamespace} from "../../composables/useNamespaces";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -600,6 +629,11 @@
                         default: false
                     },
                     {
+                        label: this.$t("outputs"),
+                        prop: "outputs",
+                        default: false
+                    },
+                    {
                         label: this.$t("task id"),
                         prop: "taskRunList.taskId",
                         default: false
@@ -705,15 +739,12 @@
             }
         },
         beforeRouteEnter(to, _, next) {
-            const defaultNamespace = localStorage.getItem(
-                storageKeys.DEFAULT_NAMESPACE,
-            );
             const query = {...to.query};
             let queryHasChanged = false;
 
             const queryKeys = Object.keys(query);
-            if (this?.namespace === undefined && defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][PREFIX]"] = defaultNamespace;
+            if (this?.namespace === undefined && defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+                query["filters[namespace][PREFIX]"] = defaultNamespace();
                 queryHasChanged = true;
             }
 
@@ -1024,9 +1055,9 @@
                 );
             },
             setLabels() {
-                const filtered = filterLabels(this.executionLabels)
+                const filtered = filterValidLabels(this.executionLabels)
 
-                if(filtered.error) {
+                if (filtered.error) {
                     this.$toast().error(this.$t("wrong labels"))
                     return;
                 }
@@ -1125,16 +1156,8 @@
     .code-text {
         color: var(--ks-content-primary);
     }
-</style>
 
-<style lang="scss">
-    .el-message-box {
-        padding: 2rem;
-        max-width: initial;
-        width: 500px;
-
-        .custom-warning {
-            margin: 1rem 0;
-        }
+    :deep(a.execution-id) code {
+        color: var(--bs-code-color) !important;
     }
 </style>

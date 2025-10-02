@@ -49,15 +49,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -231,6 +223,19 @@ public class FlowInputOutput {
                 return new AbstractMap.SimpleEntry<>(it.input().getId(), it.value());
             })
             .collect(HashMap::new, (m,v)-> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+        if (resolved.size() < data.size()) {
+            RunContext runContext = runContextFactory.of(flow, execution);
+            for (var inputKey : data.keySet()) {
+                if (!resolved.containsKey(inputKey)) {
+                    runContext.logger().warn(
+                        "Input {} was provided for workflow {}.{} but isn't declared in the workflow inputs",
+                        inputKey,
+                        flow.getNamespace(),
+                        flow.getId()
+                    );
+                }
+            }
+        }
         return MapUtils.flattenToNestedMap(resolved);
     }
 
@@ -313,15 +318,15 @@ public class FlowInputOutput {
             });
             resolvable.setInput(input);
 
-            
+
             Object value = resolvable.get().value();
-            
+
             // resolve default if needed
             if (value == null && input.getDefaults() != null) {
                 value = resolveDefaultValue(input, runContext);
                 resolvable.isDefault(true);
             }
-            
+
             // validate and parse input value
             if (value == null) {
                 if (input.getRequired()) {
@@ -350,7 +355,7 @@ public class FlowInputOutput {
 
         return resolvable.get();
     }
-    
+
     public static Object resolveDefaultValue(Input<?> input, PropertyContext renderer) throws IllegalVariableEvaluationException {
         return switch (input.getType()) {
             case STRING, ENUM, SELECT, SECRET, EMAIL -> resolveDefaultPropertyAs(input, renderer, String.class);
@@ -367,7 +372,7 @@ public class FlowInputOutput {
             case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
         };
     }
-    
+
     @SuppressWarnings("unchecked")
     private static <T> Object resolveDefaultPropertyAs(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
         return Property.as((Property<T>) input.getDefaults(), renderer, clazz);
@@ -376,7 +381,7 @@ public class FlowInputOutput {
     private static <T> Object resolveDefaultPropertyAsList(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
         return Property.asList((Property<List<T>>) input.getDefaults(), renderer, clazz);
     }
-    
+
     private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies) {
         Map<String, Object> flattenInputs = MapUtils.flattenToNestedMap(dependencies.entrySet()
             .stream()
@@ -453,7 +458,7 @@ public class FlowInputOutput {
         if (data.getType() == null) {
             return Optional.of(new AbstractMap.SimpleEntry<>(data.getId(), current));
         }
-        
+
         final Type elementType = data instanceof ItemTypeInterface itemTypeInterface ? itemTypeInterface.getItemType() : null;
 
         return Optional.of(new AbstractMap.SimpleEntry<>(
@@ -530,17 +535,17 @@ public class FlowInputOutput {
             throw new Exception("Expected `" + type + "` but received `" + current + "` with errors:\n```\n" + e.getMessage() + "\n```");
         }
     }
-    
+
     public static Map<String, Object> renderFlowOutputs(List<Output> outputs, RunContext runContext) throws IllegalVariableEvaluationException {
         if (outputs == null) return Map.of();
-        
+
         // render required outputs
         Map<String, Object> outputsById = outputs
             .stream()
             .filter(output -> output.getRequired() == null || output.getRequired())
             .collect(HashMap::new, (map, entry) -> map.put(entry.getId(), entry.getValue()), Map::putAll);
         outputsById = runContext.render(outputsById);
-        
+
         // render optional outputs one by one to catch, log, and skip any error.
         for (io.kestra.core.models.flows.Output output : outputs) {
             if (Boolean.FALSE.equals(output.getRequired())) {
@@ -583,9 +588,9 @@ public class FlowInputOutput {
         }
 
         public void isDefault(boolean isDefault) {
-            this.input = new InputAndValue(this.input.input(), this.input.value(), this.input.enabled(), isDefault, this.input.exception());  
+            this.input = new InputAndValue(this.input.input(), this.input.value(), this.input.enabled(), isDefault, this.input.exception());
         }
-        
+
         public void setInput(final Input<?> input) {
             this.input = new InputAndValue(input, this.input.value(), this.input.enabled(), this.input.isDefault(), this.input.exception());
         }

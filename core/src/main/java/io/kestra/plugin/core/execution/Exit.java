@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
 
@@ -68,6 +69,7 @@ import java.util.Optional;
         )
     }
 )
+@Slf4j
 public class Exit extends Task implements ExecutionUpdatableTask {
     @NotNull
     @Schema(
@@ -104,12 +106,13 @@ public class Exit extends Task implements ExecutionUpdatableTask {
                     // ends all parents
                     while (newTaskRun.getParentTaskRunId() != null) {
                         newTaskRun = newExecution.findTaskRunByTaskRunId(newTaskRun.getParentTaskRunId()).withState(exitState);
-                        newExecution = execution.withTaskRun(newTaskRun);
+                        newExecution = newExecution.withTaskRun(newTaskRun);
                     }
                     return newExecution;
                 } catch (InternalException e) {
                     // in case we cannot update the last not terminated task run, we ignore it
-                    return execution;
+                    log.warn("Unable to update the taskrun state", e);
+                    return execution.withState(exitState);
                 }
             })
             .orElse(execution)

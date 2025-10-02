@@ -1,6 +1,6 @@
 <template>
     <div class="button-top">
-        <el-tooltip
+        <ElTooltip
             effect="light"
             v-if="!isCreating"
             ref="toggleExplorer"
@@ -17,7 +17,7 @@
                 <MenuOpen v-if="explorerVisible" />
                 <MenuClose v-else />
             </el-button>
-        </el-tooltip>
+        </ElTooltip>
 
         <el-scrollbar v-if="!isCreating" always ref="tabsScrollRef" class="ms-1 tabs">
             <el-button
@@ -33,16 +33,16 @@
                 @contextmenu.prevent.stop="onTabContextMenu($event, tab, index)"
             >
                 <TypeIcon :name="tab.name" />
-                <el-tooltip
+                <ElTooltip
                     effect="light"
                     v-if="tab.path && !tab.persistent"
                     :content="tab.path"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                     :persistent="false"
                 >
                     <span class="tab-name px-2">{{ tab.name }}</span>
-                </el-tooltip>
+                </ElTooltip>
                 <span class="tab-name px-2" v-else>{{ tab.name }}</span>
                 <CircleMedium v-show="tab.dirty" />
                 <Close
@@ -75,12 +75,12 @@
         <div class="d-inline-flex align-items-center">
             <EditorButtons
                 v-if="isCreating || openedTabs.length"
-                :is-creating="props.isCreating"
-                :is-read-only="props.isReadOnly"
-                :can-delete="canDelete()"
-                :is-allowed-edit="isAllowedEdit"
-                :have-change="flowYaml !== flowYamlOrigin"
-                :flow-have-tasks="flowHaveTasks"
+                :isCreating="props.isCreating"
+                :isReadOnly="props.isReadOnly"
+                :canDelete="canDelete()"
+                :isAllowedEdit="isAllowedEdit"
+                :haveChange="flowYaml !== flowYamlOrigin"
+                :flowHaveTasks="flowHaveTasks"
                 :errors="flowErrors"
                 :warnings="flowWarnings"
                 @delete-flow="deleteFlow"
@@ -93,7 +93,7 @@
                             params: {tenant: routeParams.tenant},
                         })
                 "
-                :is-namespace="isNamespace"
+                :isNamespace="isNamespace"
             />
         </div>
     </div>
@@ -112,18 +112,18 @@
                         @save="save"
                         @execute="execute"
                         :path="currentTab?.path"
-                        :diff-overview-bar="false"
-                        :model-value="flowYaml"
-                        :schema-type="isCurrentTabFlow? 'flow': undefined"
+                        :diffOverviewBar="false"
+                        :modelValue="flowYaml"
+                        :schemaType="isCurrentTabFlow? 'flow': undefined"
                         :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
                         :extension="currentTab?.extension"
                         @update:model-value="editorUpdate"
                         :creating="isCreating"
                         @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
                         @tab-loaded="onTabLoaded"
-                        :read-only="isReadOnly"
+                        :readOnly="isReadOnly"
                         :navbar="false"
-                        :diff-side-by-side="false"
+                        :diffSideBySide="false"
                     />
                 </template>
                 <div v-else class="no-tabs-opened">

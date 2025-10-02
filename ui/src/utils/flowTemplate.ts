@@ -18,11 +18,11 @@ export function canSaveFlowTemplate(isEdit: boolean, user: any, item: any, dataT
 }
 
 export function saveFlowTemplate(self: {
-    $store: any,
+    templateStore: any,
+    flowStore: any,
     $toast: () => any,
 }, file: string, dataType: string) {
-    return self.$store
-        .dispatch(`${dataType}/save${dataType.capitalize()}`, {[dataType]: file})
+    return (dataType === "template" ? self.templateStore.saveTemplate({template: file}) : self.flowStore.saveFlow({flow: file}))
         .then((response: { id: string }) => {
             self.$toast().saved(response.id);
 

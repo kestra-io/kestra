@@ -18,6 +18,7 @@ import org.reactivestreams.Publisher;
 @Filter("/**")
 @Requires(env = Environment.TEST)
 public class TestAuthFilter implements HttpClientFilter {
+    public static boolean ENABLED = true;
 
     @Inject
     private BasicAuthConfiguration basicAuthConfiguration;
@@ -28,16 +29,18 @@ public class TestAuthFilter implements HttpClientFilter {
     @Override
     public Publisher<? extends HttpResponse<?>> doFilter(MutableHttpRequest<?> request,
         ClientFilterChain chain) {
-        //Basic auth may be removed from the database by jdbcTestUtils.drop(); / jdbcTestUtils.migrate();
-        //We need it back to be able to run the tests and avoid NPE while checking the basic authorization
-        if (basicAuthService.configuration() == null){
-            basicAuthService.save(basicAuthConfiguration);
-        }
-        //Add basic authorization header if no header are present in the query
-        if (request.getHeaders().getAuthorization().isEmpty()) {
-            String token = "Basic " + Base64.getEncoder().encodeToString(
-                (basicAuthConfiguration.getUsername() + ":" + basicAuthConfiguration.getPassword()).getBytes());
-            request.getHeaders().add(HttpHeaders.AUTHORIZATION, token);
+        if (ENABLED) {
+            //Basic auth may be removed from the database by jdbcTestUtils.drop(); / jdbcTestUtils.migrate();
+            //We need it back to be able to run the tests and avoid NPE while checking the basic authorization
+            if (basicAuthService.configuration() == null) {
+                basicAuthService.save(basicAuthConfiguration);
+            }
+            //Add basic authorization header if no header are present in the query
+            if (request.getHeaders().getAuthorization().isEmpty()) {
+                String token = "Basic " + Base64.getEncoder().encodeToString(
+                    (basicAuthConfiguration.getUsername() + ":" + basicAuthConfiguration.getPassword()).getBytes());
+                request.getHeaders().add(HttpHeaders.AUTHORIZATION, token);
+            }
         }
         return chain.proceed(request);
     }

@@ -127,10 +127,10 @@ export default class Utils {
         return moment.duration(isoString).asMilliseconds() / 1000
     }
 
-    static humanDuration(value: string | number, options: humanizeDuration.HumanizerOptions) {
+    static humanDuration(value: string | number, options?: humanizeDuration.HumanizerOptions) {
         options = options || {maxDecimalPoints: 2};
         options.spacer = "";
-        options.language = Utils.getLang();
+        options.language = Object.keys(humanizeDurationLanguages).includes(Utils.getLang()) ? Utils.getLang() : "en";
         options.languages = humanizeDurationLanguages;
         options.largest = 2;
 
@@ -234,7 +234,7 @@ export default class Utils {
         localStorage.setItem("theme", theme);
     }
 
-    static getTheme(): "light" | "dark" | undefined {
+    static getTheme(): "light" | "dark" {
         let theme = (localStorage.getItem("theme") as "syncWithSystem" | "dark" | "light" | null) ?? "light";
 
         if (theme === "syncWithSystem") {

@@ -183,22 +183,22 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The URL of the downloaded file on Kestra's internal storage."
+            title = "The URL of the downloaded file in Kestra's internal storage"
         )
         private final URI uri;
 
         @Schema(
-            title = "The status code of the response."
+            title = "The status code of the response"
         )
         private final Integer code;
 
         @Schema(
-                title = "The content-length of the response."
+                title = "The content-length of the response"
         )
         private final Long length;
 
         @Schema(
-            title = "The headers of the response."
+            title = "The headers of the response"
         )
         private final Map<String, List<String>> headers;
     }

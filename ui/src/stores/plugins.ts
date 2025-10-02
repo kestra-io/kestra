@@ -3,7 +3,7 @@ import {trackPluginDocumentationView} from "../utils/tabTracking";;
 import {apiUrlWithoutTenants} from "override/utils/route";
 import semver from "semver";
 import {useApiStore} from "./api";
-import {Schemas} from "../components/code/utils/types";
+import {Schemas} from "../components/no-code/utils/types";
 import InitialFlowSchema from "./flow-schema.json"
 import {toRaw} from "vue";
 import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
@@ -52,7 +52,7 @@ interface State {
         type?: string;
         version?: string;
     };
-    forceIncludeProperties?: Record<string, any>;
+    forceIncludeProperties?: string[];
     _iconsPromise: Promise<Record<string, string>> | undefined;
 }
 
@@ -189,7 +189,7 @@ export const usePluginsStore = defineStore("plugins", {
                 `${apiUrlWithoutTenants()}/plugins/${options.cls}`;
 
             const url = options.hash ? `${baseUrl}?hash=${options.hash}` : baseUrl;
-            
+
             const response = await this.$http.get<PluginComponent>(url);
 
             if (options.commit !== false) {
@@ -261,10 +261,9 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
         groupIcons() {
-            return Promise.all([
-                this.$http.get(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
-            ]).then(responses => {
-                return responses[0].data;
+            return this.$http.get(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
+            .then(response => {
+                return response.data;
             });
         },
 
@@ -292,23 +291,24 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
 
-        async updateDocumentation(pluginElement?: ({type: string, version?: string, hash?: number} & Record<string, any>) | undefined) {
+        async updateDocumentation(pluginElement?: ({type: string, version?: string, forceRefresh?: boolean} & Record<string, any>) | undefined) {
             if (!pluginElement?.type || !this.allTypes.includes(pluginElement.type)) {
                 this.editorPlugin = undefined;
                 this.currentlyLoading = undefined;
                 return;
             }
 
-            const {type, version} = pluginElement;
+            const {type, version, forceRefresh = false} = pluginElement;
 
             // Avoid rerunning the same request twice in a row
             if (this.currentlyLoading?.type === type &&
-                this.currentlyLoading?.version === version) {
+                this.currentlyLoading?.version === version &&
+                !forceRefresh) {
                 return
             }
 
-            // No need to reload if the plugin has not changed
-            if (this.editorPlugin?.cls === type &&
+            if (!forceRefresh &&
+                this.editorPlugin?.cls === type &&
                 this.editorPlugin?.version === version) {
                 return;
             }
@@ -343,7 +343,7 @@ export const usePluginsStore = defineStore("plugins", {
 
                 trackPluginDocumentationView(type);
 
-                this.forceIncludeProperties = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version");
+                this.forceIncludeProperties = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version" && k !== "forceRefresh");
             });
         }
     },

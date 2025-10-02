@@ -14,6 +14,7 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithException;
@@ -37,6 +38,7 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -70,6 +72,7 @@ public abstract class AbstractScheduler implements Scheduler {
     private final QueueInterface<WorkerJob> workerJobQueue;
     private final QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
+    private final QueueInterface<LogEntry> logQueue;
     @SuppressWarnings("rawtypes")
     private final Optional<QueueInterface> clusterEventQueue;
     protected final FlowListenersInterface flowListeners;
@@ -124,6 +127,7 @@ public abstract class AbstractScheduler implements Scheduler {
         this.executionKilledQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
         this.workerTriggerResultQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED));
         this.clusterEventQueue = applicationContext.findBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.CLUSTER_EVENT_NAMED));
+        this.logQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED));
         this.flowListeners = flowListeners;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
         this.runContextInitializer = applicationContext.getBean(RunContextInitializer.class);
@@ -301,6 +305,8 @@ public abstract class AbstractScheduler implements Scheduler {
     // Initialized local trigger state,
     // and if some flows were created outside the box, for example from the CLI,
     // then we may have some triggers that are not created yet.
+    /* FIXME: There is a race between Kafka stream consumption & initializedTriggers: we can override a trigger update coming from a stream consumption with an old one because stream consumption is not waiting for trigger initialization
+    *   Example: we see a SUCCESS execution so we reset the trigger's executionId but then the initializedTriggers resubmits an old trigger state for some reasons (evaluationDate for eg.) */
     private void initializedTriggers(List<FlowWithSource> flows) {
         record FlowAndTrigger(FlowWithSource flow, AbstractTrigger trigger) {
             @Override
@@ -371,10 +377,13 @@ public abstract class AbstractScheduler implements Scheduler {
 
                                     this.triggerState.update(lastUpdate);
                                 }
-                            } else if (recoverMissedSchedules == RecoverMissedSchedules.NONE) {
-                                lastUpdate = trigger.get().toBuilder().nextExecutionDate(schedule.nextEvaluationDate()).build();
+                            } else {
+                                ZonedDateTime nextEvaluationDate = schedule.nextEvaluationDate();
+                                if (recoverMissedSchedules == RecoverMissedSchedules.NONE && !Objects.equals(trigger.get().getNextExecutionDate(), nextEvaluationDate)) {
+                                    lastUpdate = trigger.get().toBuilder().nextExecutionDate(nextEvaluationDate).build();
 
-                                this.triggerState.update(lastUpdate);
+                                    this.triggerState.update(lastUpdate);
+                                }
                             }
                             // Used for schedulableNextDate
                             FlowWithWorkerTrigger flowWithWorkerTrigger = FlowWithWorkerTrigger.builder()
@@ -762,13 +771,23 @@ public abstract class AbstractScheduler implements Scheduler {
             this.executionEventPublisher.publishEvent(new CrudEvent<>(newExecution, CrudEventType.CREATE));
         } catch (QueueException e) {
             try {
-                Execution failedExecution = newExecution.failedExecutionFromExecutor(e).getExecution().withState(State.Type.FAILED);
+                Execution failedExecution = fail(newExecution, e);
                 this.executionQueue.emit(failedExecution);
                 this.executionEventPublisher.publishEvent(new CrudEvent<>(failedExecution, CrudEventType.CREATE));
             } catch (QueueException ex) {
                 log.error("Unable to emit the execution", ex);
             }
         }
+    }
+
+    private Execution fail(Execution message, Exception e) {
+        var failedExecution = message.failedExecutionFromExecutor(e);
+        try {
+            logQueue.emitAsync(failedExecution.getLogs());
+        } catch (QueueException ex) {
+            // fail silently
+        }
+        return failedExecution.getExecution().getState().isFailed() ? failedExecution.getExecution() :  failedExecution.getExecution().withState(State.Type.FAILED);
     }
 
     private void executionMonitor() {

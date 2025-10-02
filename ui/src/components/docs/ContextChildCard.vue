@@ -1,11 +1,11 @@
 <template>
     <div class="row row-cols-1 row-cols-xxl-2 g-3 card-group">
-        <context-docs-link
+        <ContextDocsLink
             :href="item.path"
             class="col"
             v-for="item in navigation"
             :key="item.path"
-            use-raw
+            useRaw
         >
             <div class="card h-100">
                 <div class="card-body d-flex align-items-center">
@@ -27,11 +27,11 @@
                     </div>
                 </div>
             </div>
-        </context-docs-link>
+        </ContextDocsLink>
     </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     import {computed, ref, onMounted} from "vue";
     import {useDocStore} from "../../stores/doc";
 
@@ -51,18 +51,18 @@
             return props.pageUrl.replace(/^\//, "").replace(/\/$/, "");
         } else {
             const p = docStore.docPath;
-            return p ? `docs/${p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/")}` : p;
+            return p ? `docs/${p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/")}` : "";
         }
     })
 
 
-    const resourcesWithMetadata = ref({});
+    const resourcesWithMetadata = ref<Record<string, any>>({});
     onMounted(async () => {
         resourcesWithMetadata.value = await docStore.children(currentPage.value);
     })
 
     const navigation = computed(() => {
-        let parentMetadata;
+        let parentMetadata: Record<string, any> = {};
         if (props.pageUrl) {
             parentMetadata = {...resourcesWithMetadata.value[currentPage.value]};
             delete parentMetadata.description;
@@ -78,7 +78,6 @@
                 ...metadata
             }))
     });
-
 </script>
 
 <style lang="scss" scoped>

@@ -163,6 +163,7 @@
     "choose file": "选择文件或拖放到此处...",
     "close": "关闭",
     "close sidebar": "关闭侧边栏",
+    "codeDisabled": "在Flow中禁用",
     "collapse": "折叠",
     "collapse all": "折叠所有",
     "common": {
@@ -174,6 +175,8 @@
     "confirm": "确认",
     "confirm password": "确认密码",
     "confirmation": "确认",
+    "context updated date": "上下文更新日期",
+    "context updated date tooltip": "触发器的上下文上次更新的时间。这发生在执行被触发、完成（锁释放）或评估后（即使没有执行发生）。",
     "contextBar": {
       "demo": "演示",
       "docs": "文档",
@@ -461,6 +464,10 @@
           "title": "当前没有依赖项。"
         }
       },
+      "panels": {
+        "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、文件、Blueprints、Namespace Context）以获取相关功能。",
+        "title": "当前没有打开的面板。"
+      },
       "plugins": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
         "title": "此Namespace未设置插件默认值。"
@@ -645,6 +652,7 @@
       },
       "text_search": "搜索此文本"
     },
+    "fix_with_ai": "使用 AI 修复",
     "flow": "流程",
     "flow already exists": "流程已存在",
     "flow creation": "流程创建",
@@ -661,6 +669,7 @@
     "flow-no-dependencies": "您的flow没有任何依赖项",
     "flow_export": "导出flow",
     "flow_only": "仅在流程标签中可用。",
+    "flow_outputs": "Flow Outputs",
     "flows": "流程",
     "flows deleted": "<code>{count}</code> 个流程已删除",
     "flows disabled": "<code>{count}</code> 个流程已禁用",
@@ -740,6 +749,8 @@
     "last execution state": "上一次状态",
     "last execution status": "上次执行状态",
     "last modified": "上次修改",
+    "last trigger date": "上次触发日期",
+    "last trigger date tooltip": "触发器上次执行的时间。在运行backfill时可能是过去的时间。",
     "launch execution": "执行",
     "learn_more": "了解更多",
     "light_background": "这是在使用浅色背景时的首选选项。",
@@ -764,9 +775,11 @@
     "metrics": "指标",
     "min": "最小",
     "minutes": "分钟",
+    "missingSource": "缺少源",
     "monogram": "字母组合",
     "months": "月份",
     "multi_panel_editor": {
+      "close_all_panels": "关闭所有面板",
       "close_all_tabs": "关闭所有标签页",
       "move_left": "向左移动",
       "move_right": "向右移动"
@@ -854,6 +867,8 @@
     "neutral trend": "稳定",
     "new": "新建",
     "new version": "新版本 {version} 可用！",
+    "next evaluation date": "下次评估日期",
+    "next evaluation date tooltip": "根据其间隔，下一次评估trigger的时间。如果条件不满足，可能与下一次执行日期不同。",
     "next execution date": "下次执行日期",
     "next_execution": "下一次执行",
     "no data current task": "当前task没有可用数据",
@@ -1046,6 +1061,7 @@
     "pause confirm": "您确定要暂停执行<code>{id}</code>吗？",
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
+    "paused": "暂停",
     "playground": {
       "clear_history": "清除历史记录",
       "confirm_create": "在创建flow时无法运行playground。启动playground运行将创建flow。",
@@ -1222,6 +1238,7 @@
           "label": "语言和地区",
           "note": "请注意，此设置用于在UI中显示日期和时间属性。要在UTC以外的时区安排你的流程，请确保在流程代码或插件默认值中的Schedule触发器上设置时区属性。"
         },
+        "reset_section_to_defaults": "恢复此部分的默认值",
         "save": {
           "discard": "丢弃",
           "label": "保存偏好设置",
@@ -1375,7 +1392,6 @@
     "task_id_exists": "任务ID已存在",
     "task_id_message": "任务ID ${existingTask} 已经存在于flow中。",
     "taskid column details": "最后执行的任务及其尝试次数。",
-    "taskruns": "任务运行",
     "tasks": "任务",
     "template": "模板",
     "template creation": "模板创建",
@@ -1389,6 +1405,7 @@
       "name": "租户",
       "names": "租户"
     },
+    "tenantId": "租户 ID",
     "test-badge-text": "测试",
     "test-badge-tooltip": "此执行由测试创建",
     "theme": "主题",
@@ -1412,6 +1429,7 @@
       "zoom-out": "缩小",
       "zoom-reset": "重置缩放"
     },
+    "total_duration": "总持续时间",
     "total_executions": "总执行次数",
     "trigger": "触发器",
     "trigger details": "触发器详情",
@@ -1426,6 +1444,7 @@
       "title": "过滤子执行"
     },
     "trigger refresh": "触发刷新",
+    "triggerId": "触发器 ID",
     "trigger_check_warning": "使用 trigger 变量无法与手动 flow 执行一起工作。添加 `??` 合并运算符来解决此问题。例如，不要使用 `trigger.date`，而是使用 `trigger.date ?? execution.startDate`。",
     "trigger_id_exists": "Trigger Id 已经存在",
     "trigger_id_message": "触发器 Id ${existingTrigger} 已经存在于 flow 中。",

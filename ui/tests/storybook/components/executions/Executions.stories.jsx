@@ -1,10 +1,10 @@
-import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import Executions from "../../../../src/components/executions/Executions.vue";
 import {useMiscStore} from "override/stores/misc";
 import {useAuthStore} from "override/stores/auth";
 import fixture from "./Executions.fixture.json"
 import fixtureS from "./Executions-s.fixture.json"
+import {useAxios} from "../../../../src/utils/axios";
 
 function getDecorators(data) {
     return [
@@ -13,7 +13,7 @@ function getDecorators(data) {
                 setup () {
                     const authStore = useAuthStore()
                     const miscStore = useMiscStore()
-                    const store = useStore()
+
                     authStore.user = {
                         id: "123",
                         firstName: "John",
@@ -25,15 +25,14 @@ function getDecorators(data) {
                     miscStore.configs = {
                         hiddenLabelsPrefixes: ["system_"]
                     }
-                    store.$http = {
-                        get(a) {
-                            if (a.endsWith("executions/search")) {
-                                return Promise.resolve({
-                                    data
-                                })
-                            }
-                            return Promise.resolve({data: []})
-                        },
+                    const axios = useAxios()
+                    axios.get = function(a) {
+                        if (a.endsWith("executions/search")) {
+                            return Promise.resolve({
+                                data
+                            })
+                        }
+                        return Promise.resolve({data: []})
                     }
                 },
                 template: "<div style='margin:2rem'><story /></div>"

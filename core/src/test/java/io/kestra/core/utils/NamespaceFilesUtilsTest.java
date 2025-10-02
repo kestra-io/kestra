@@ -17,6 +17,8 @@ import jakarta.inject.Named;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import reactor.core.publisher.Flux;
 
 import java.io.ByteArrayInputStream;
@@ -31,6 +33,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
+@Execution(ExecutionMode.SAME_THREAD)
 class NamespaceFilesUtilsTest {
     @Inject
     RunContextFactory runContextFactory;

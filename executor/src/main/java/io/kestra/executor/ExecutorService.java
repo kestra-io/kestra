@@ -1072,6 +1072,17 @@ public class ExecutorService {
                 var executionUpdatingTask = (ExecutionUpdatableTask) workerTask.getTask();
 
                 try {
+                    // handle runIf
+                    if (!TruthUtils.isTruthy(workerTask.getRunContext().render(workerTask.getTask().getRunIf()))) {
+                        executor.withExecution(
+                            executor
+                                .getExecution()
+                                .withTaskRun(workerTask.getTaskRun().withState(State.Type.SKIPPED)),
+                            "handleExecutionUpdatingTaskSkipped"
+                        );
+                        return false;
+                    }
+
                     executor.withExecution(
                         executionUpdatingTask.update(executor.getExecution(), workerTask.getRunContext())
                             .withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING)),
@@ -1171,7 +1182,7 @@ public class ExecutorService {
             }
         }
 
-        return taskRuns.size() > execution.getTaskRunList().size() ? execution.withTaskRunList(taskRuns) : null;
+        return taskRuns.size() > ListUtils.emptyOnNull(execution.getTaskRunList()).size() ? execution.withTaskRunList(taskRuns) : null;
     }
 
     public boolean canBePurged(final Executor executor) {

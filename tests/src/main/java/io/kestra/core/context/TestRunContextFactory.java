@@ -23,13 +23,23 @@ public class TestRunContextFactory extends RunContextFactory {
 
     @VisibleForTesting
     public RunContext of(String id, String namespace) {
-        return of(Map.of("flow", Map.of("id", id, "namespace", namespace, "tenantId", MAIN_TENANT)));
+        return of(id, namespace, MAIN_TENANT);
+    }
+
+    @VisibleForTesting
+    public RunContext of(String id, String namespace, String tenantId) {
+        return of(Map.of("flow", Map.of("id", id, "namespace", namespace, "tenantId", tenantId)));
     }
 
     @VisibleForTesting
     public RunContext of(String namespace, Map<String, Object> inputs) {
+        return of(namespace, MAIN_TENANT, inputs);
+    }
+
+    @VisibleForTesting
+    public RunContext of(String namespace, String tenantId, Map<String, Object> inputs) {
         Map<String, Object> variables = new java.util.HashMap<>(Map.of("flow",
-            Map.of("id", "id", "namespace", namespace, "tenantId", MAIN_TENANT)));
+            Map.of("id", "id", "namespace", namespace, "tenantId", tenantId)));
         variables.putAll(inputs);
         return of(variables);
     }

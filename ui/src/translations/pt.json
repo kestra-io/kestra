@@ -163,17 +163,20 @@
     "choose file": "Escolha um arquivo ou solte-o aqui...",
     "close": "Fechar",
     "close sidebar": "fechar barra lateral",
+    "codeDisabled": "Desativado no Flow",
     "collapse": "Colapsar",
     "collapse all": "Colapsar tudo",
     "common": {
       "back": "Voltar"
     },
     "concurrency": "Concorrência",
-    "conditions": "condições",
+    "conditions": "Condições",
     "configure basic auth": "Configurar Autenticação Básica",
     "confirm": "Confirmar",
     "confirm password": "Confirmar senha",
     "confirmation": "Confirmação",
+    "context updated date": "Data de atualização do contexto",
+    "context updated date tooltip": "Quando o contexto do trigger foi atualizado pela última vez. Isso ocorre quando a execução é acionada, termina (bloqueio liberado) ou após uma avaliação (mesmo que nenhuma execução ocorra).",
     "contextBar": {
       "demo": "Demonstração",
       "docs": "Documentos",
@@ -461,6 +464,10 @@
           "title": "Atualmente, não há dependências."
         }
       },
+      "panels": {
+        "content": "Abra o Flow Code ou No-Code para começar a editar seus flows, ou selecione outro painel (Topology, Documentation, Files, Blueprints, Namespace Context) para recursos relacionados.",
+        "title": "Atualmente, nenhum painel está aberto."
+      },
       "plugins": {
         "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
         "title": "Nenhum padrão de plugin está definido para este Namespace."
@@ -645,6 +652,7 @@
       },
       "text_search": "Pesquisar por este texto"
     },
+    "fix_with_ai": "Corrigir com AI",
     "flow": "Flow",
     "flow already exists": "Flow já existe",
     "flow creation": "Criação de flow",
@@ -661,6 +669,7 @@
     "flow-no-dependencies": "Seu flow não possui dependências",
     "flow_export": "Exportar flow",
     "flow_only": "Disponível apenas na aba Flow.",
+    "flow_outputs": "Saídas do Flow",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) deletado(s)",
     "flows disabled": "<code>{count}</code> Flow(s) desativado(s)",
@@ -740,6 +749,8 @@
     "last execution state": "Último estado",
     "last execution status": "Último status de execução",
     "last modified": "Última modificação",
+    "last trigger date": "Data da última trigger",
+    "last trigger date tooltip": "Quando o trigger foi executado pela última vez. Pode estar no passado ao executar um backfill.",
     "launch execution": "Executar",
     "learn_more": "Saiba mais",
     "light_background": "Esta é a opção preferida ao trabalhar com um fundo claro.",
@@ -764,9 +775,11 @@
     "metrics": "Métricas",
     "min": "Min",
     "minutes": "Minutos",
+    "missingSource": "Fonte ausente",
     "monogram": "Monograma",
     "months": "Meses",
     "multi_panel_editor": {
+      "close_all_panels": "Fechar todos os painéis",
       "close_all_tabs": "Fechar todas as abas",
       "move_left": "Mover para a esquerda",
       "move_right": "Mover para a direita"
@@ -854,6 +867,8 @@
     "neutral trend": "Estável",
     "new": "Novo",
     "new version": "Nova versão {version} disponível!",
+    "next evaluation date": "Próxima data de avaliação",
+    "next evaluation date tooltip": "Quando o trigger será avaliado novamente, com base em seu intervalo. Nem sempre é o mesmo que a próxima data de execução se as condições não forem atendidas.",
     "next execution date": "Próxima data de execução",
     "next_execution": "Próxima execução",
     "no data current task": "Não há dados disponíveis para a tarefa atual",
@@ -1046,6 +1061,7 @@
     "pause confirm": "Tem certeza de que deseja pausar a execução <code>{id}</code>?",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
+    "paused": "PAUSED",
     "playground": {
       "clear_history": "Limpar histórico",
       "confirm_create": "Você não pode executar o playground enquanto cria um flow. Iniciar uma execução do playground criará o flow.",
@@ -1222,6 +1238,7 @@
           "label": "Idioma e Região",
           "note": "Note que esta configuração é usada para exibir propriedades de data e hora na UI. Para agendar seus flows em um fuso horário diferente de UTC, certifique-se de definir a propriedade de fuso horário no trigger de Schedule no seu código de flow ou nos padrões do seu plugin."
         },
+        "reset_section_to_defaults": "Restaurar os valores padrão desta seção",
         "save": {
           "discard": "Descartar",
           "label": "Salvar Preferências",
@@ -1375,7 +1392,6 @@
     "task_id_exists": "Id da Task já existe",
     "task_id_message": "O Task Id ${existingTask} já existe no flow.",
     "taskid column details": "Última task sendo executada e seu número de tentativas.",
-    "taskruns": "Execuções de Tasks",
     "tasks": "Tasks",
     "template": "Template",
     "template creation": "Criação de template",
@@ -1389,6 +1405,7 @@
       "name": "Mandante",
       "names": "Mandantes"
     },
+    "tenantId": "ID do Mandante",
     "test-badge-text": "Teste",
     "test-badge-tooltip": "Esta execução foi criada por um Teste",
     "theme": "Tema",
@@ -1412,6 +1429,7 @@
       "zoom-out": "Diminuir zoom",
       "zoom-reset": "Redefinir zoom"
     },
+    "total_duration": "Duração total",
     "total_executions": "Total de Execuções",
     "trigger": "Trigger",
     "trigger details": "Detalhes do trigger",
@@ -1426,6 +1444,7 @@
       "title": "Filtrar execuções filhas"
     },
     "trigger refresh": "Atualizar trigger",
+    "triggerId": "ID do Trigger",
     "trigger_check_warning": "Usar variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência `??` para resolver o problema. Por exemplo, em vez de `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "Id de Trigger já existe",
     "trigger_id_message": "O Trigger Id ${existingTrigger} já existe no flow.",

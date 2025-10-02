@@ -1,7 +1,7 @@
 <template>
     <TopNavBar
         :title="routeInfo.title"
-        :breadcrumb="[{label: t('dashboards.labels.singular'), link: {}}]"
+        :breadcrumb="[{label: t('dashboards.labels.singular'), link: undefined}]"
         :description="props.dashboard?.description"
     >
         <template v-if="isAllowed" #additional-right>
@@ -53,6 +53,6 @@
 
     const routeInfo = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
 
-    import useRouteContext from "../../../mixins/useRouteContext";
+    import useRouteContext from "../../../composables/useRouteContext";
     useRouteContext(routeInfo);
 </script>

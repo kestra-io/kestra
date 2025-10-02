@@ -1,6 +1,6 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
-    <docs-layout>
+    <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
+    <DocsLayout>
         <template #menu>
             <Toc />
         </template>
@@ -10,7 +10,7 @@
                 <MDCRenderer :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
             </template>
         </template>
-    </docs-layout>
+    </DocsLayout>
 </template>
 
 <script>

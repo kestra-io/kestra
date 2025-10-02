@@ -1,0 +1,12 @@
+id: flow-concurrency-parallel-subflow-kill-child
+namespace: io.kestra.tests
+
+concurrency:
+  behavior: QUEUE
+  limit: 1
+
+tasks:
+  - id: flow1
+    type: io.kestra.plugin.core.flow.Subflow
+    flowId: flow-concurrency-parallel-subflow-kill-grandchild
+    namespace: io.kestra.tests

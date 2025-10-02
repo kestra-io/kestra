@@ -23,9 +23,9 @@ dependencies {
     def flyingSaucerVersion = "10.0.0"
     def jacksonVersion = "2.20.0"
     def jacksonAnnotationsVersion = "2.20"
-    def jugVersion = "5.1.0"
-    def langchain4jVersion = "1.5.0"
-    def langchain4jCommunityVersion = "1.5.0-beta11"
+    def jugVersion = "5.1.1"
+    def langchain4jVersion = "1.6.0"
+    def langchain4jCommunityVersion = "1.6.0-beta12"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
@@ -33,9 +33,9 @@ dependencies {
     api platform("io.micronaut.platform:micronaut-platform:4.9.3")
     api platform("io.qameta.allure:allure-bom:2.30.0")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.68.0')
+    api platform('com.google.cloud:libraries-bom:26.69.0')
     api platform("com.azure:azure-sdk-bom:1.2.38")
-    api platform('software.amazon.awssdk:bom:2.34.2')
+    api platform('software.amazon.awssdk:bom:2.34.7')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
 
@@ -64,7 +64,7 @@ dependencies {
         api("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion")
 
         // http5 client
-        api("org.apache.httpcomponents.client5:httpclient5:5.5")
+        api("org.apache.httpcomponents.client5:httpclient5:5.5.1")
         api("org.apache.httpcomponents.core5:httpcore5:5.3.6")
         api("org.apache.httpcomponents.core5:httpcore5-h2:5.3.6")
 
@@ -93,7 +93,7 @@ dependencies {
         api group: 'net.thisptr', name: 'jackson-jq', version: '1.6.0'
         api group: 'com.google.guava', name: 'guava', version: '33.4.8-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.20.0'
-        api group: 'org.apache.commons', name: 'commons-lang3', version: '3.18.0'
+        api group: 'org.apache.commons', name: 'commons-lang3', version: '3.19.0'
         api 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
         api 'ch.qos.logback.contrib:logback-jackson:0.1.5'
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-impl', version: mavenResolverVersion
@@ -113,7 +113,7 @@ dependencies {
         api group: 'com.github.victools', name: 'jsonschema-module-jakarta-validation', version: jsonschemaVersion
         api group: 'com.github.victools', name: 'jsonschema-module-jackson', version: jsonschemaVersion
         api group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: jsonschemaVersion
-        api 'com.h2database:h2:2.3.232'
+        api 'com.h2database:h2:2.4.240'
         api 'com.mysql:mysql-connector-j:9.4.0'
         api 'org.postgresql:postgresql:42.7.7'
         api 'com.github.docker-java:docker-java:3.6.0'

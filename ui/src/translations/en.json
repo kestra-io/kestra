@@ -675,7 +675,7 @@
         "file": "Create file",
         "folder": "Create folder",
         "already_exists": "A file with this name already exists",
-        "folder_already_exists": "A folder with this name already yyyyyyyyyyyyyyyy exists",
+        "folder_already_exists": "A folder with this name already exists",
         "folder_error": "Error occurred while creating the folder"
       },
       "rename": {

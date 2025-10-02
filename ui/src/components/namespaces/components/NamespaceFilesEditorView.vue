@@ -884,6 +884,19 @@
                     content: "",
                 });
             } else {
+                // Check if folder already exists before creating
+                try {
+                    await namespacesStore.readDirectory({
+                        namespace: props.namespace ?? route.params.namespace?.toString(),
+                        path: path,
+                    });
+                    // If we reach here, the directory already exists
+                    toast.error(t("namespace files.create.folder_already_exists"));
+                    return;
+                } catch {
+                    // Directory doesn't exist, proceed with creation
+                }
+
                 await namespacesStore.createDirectory({
                     namespace: props.namespace ?? route.params.namespace?.toString(),
                     path,
@@ -900,7 +913,11 @@
             }
         } catch (error) {
             console.error(error);
-            toast.error(t("namespace files.create.error"), "error");
+            if (dialog.value.type === "file") {
+                toast.error(t("namespace files.create.error"), "error");
+            } else {
+                toast.error(t("namespace files.create.folder_error"), "error");
+            }
         }
     };
 
@@ -1126,7 +1143,7 @@ ul.tabs-context {
 }
 </style>
 
-<style lang="scss">
+<style lang="scss" scoped>
     .tabs .el-scrollbar__bar.is-horizontal {
         height: 1px !important;
     }

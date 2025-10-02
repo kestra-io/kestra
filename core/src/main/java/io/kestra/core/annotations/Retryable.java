@@ -12,7 +12,7 @@ import java.lang.annotation.*;
 import jakarta.validation.constraints.Digits;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
+// FIXME remove trigger commit
 @Inherited
 @Documented
 @Retention(RUNTIME)

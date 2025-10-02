@@ -53,6 +53,16 @@
 
     const route = useRoute();
 
+    const keyBase = computed(() => {
+        const name = String(route.name ?? "");
+
+        if (name.startsWith("flows")) return storageKeys.PAGINATION_SIZE_FLOWS;
+        if (name.startsWith("executions")) return storageKeys.PAGINATION_SIZE_EXECUTIONS;
+        if (name.startsWith("logs")) return storageKeys.PAGINATION_SIZE_LOGS;
+
+        return storageKeys.PAGINATION_SIZE;
+    });
+
     const {t} = useI18n();
 
     const pageOptions = [
@@ -64,7 +74,7 @@
 
     const internalSize = ref<number>(
         parseInt(
-            localStorage.getItem(storageKeys.PAGINATION_SIZE) as string ||
+            localStorage.getItem(keyBase.value) as string ||
                 (route.query.size as string) ||
                 props.size?.toString() ||
                 "25"
@@ -83,7 +93,7 @@
     function pageSizeChange(value: number) {
         internalPage.value = 1;
         internalSize.value = value;
-        localStorage.setItem(storageKeys.PAGINATION_SIZE, value.toString());
+        localStorage.setItem(keyBase.value, value.toString());
         emit("page-changed", {
             page: 1,
             size: internalSize.value,
@@ -109,7 +119,7 @@
         () => route.query,
         () => {
             internalSize.value = parseInt(
-                localStorage.getItem(storageKeys.PAGINATION_SIZE) as string ||
+                localStorage.getItem(keyBase.value) as string ||
                     (route.query.size as string) ||
                     props.size?.toString() ||
                     "25"

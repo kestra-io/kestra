@@ -23,6 +23,7 @@ public class KvFunction implements Function {
     private static final String KEY_ARGS = "key";
     private static final String ERROR_ON_MISSING_ARG = "errorOnMissing";
     private static final String NAMESPACE_ARG = "namespace";
+    public static final String INSIDE_KV_TASK = "insideKvTask";
 
     @Inject
     private KVStoreService kvStoreService;
@@ -38,7 +39,9 @@ public class KvFunction implements Function {
         String key = getKey(args, self, lineNumber);
         String namespace = (String) args.get(NAMESPACE_ARG);
 
-        Boolean errorOnMissing = Optional.ofNullable((Boolean) args.get(ERROR_ON_MISSING_ARG)).orElse(true);
+        Boolean insideKvTask = (Boolean) context.getVariable(INSIDE_KV_TASK, false);
+        Boolean errorOnMissing = Optional.ofNullable((Boolean) args.get(ERROR_ON_MISSING_ARG))
+            .orElse(insideKvTask ? false : true);
 
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         String flowNamespace = flow.get(NAMESPACE_ARG);

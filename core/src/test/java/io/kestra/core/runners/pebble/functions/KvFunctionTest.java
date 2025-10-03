@@ -137,4 +137,22 @@ public class KvFunctionTest {
         assertThat(exception.getMessage()).isEqualTo("io.pebbletemplates.pebble.error.PebbleException: The key 'my-key' does not exist in the namespace 'io.kestra.tests'. ({{ kv('my-key') }}:1)");
     }
 
+    @Test
+    void shouldHandleNestedKvFunctionCalls() throws IllegalVariableEvaluationException, IOException {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        KVStore kv = new InternalKVStore(tenant, "io.kestra.tests", storageInterface);
+        kv.put("existing-key", new KVValueAndMetadata(null, "existing-value"));
+
+        Map<String, Object> variables = getVariables(tenant, "io.kestra.tests");
+        variables.put(KvFunction.INSIDE_KV_TASK, true);
+
+        String rendered = variableRenderer.render("{{ kv('existing-key') }}", variables);
+        
+        assertThat(rendered).isEqualTo("\"existing-value\"");
+
+        String renderedMissing = variableRenderer.render("{{ kv('non-existent-key') }}", variables);
+        
+        assertThat(renderedMissing).isEqualTo("");
+    }
+
 }

@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.kv;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -8,12 +9,15 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.pebble.functions.KvFunction;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import lombok.Builder;
 import lombok.Getter;
@@ -76,7 +80,20 @@ public class Get extends Task implements RunnableTask<Get.Output> {
     public Output run(RunContext runContext) throws Exception {
         String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
         String flowNamespace = runContext.flowInfo().namespace();
-        String renderedKey = runContext.render(this.key).as(String.class).orElse(null);
+        Map<String, Object> additionalVars = new HashMap<>();
+        additionalVars.put(KvFunction.INSIDE_KV_TASK, true);
+        
+        String renderedKey;
+        try {
+            renderedKey = runContext.render(this.key, additionalVars).as(String.class).orElse(null);
+        } catch (IllegalVariableEvaluationException e) {
+            Boolean errorOnMissing = runContext.render(this.errorOnMissing).as(Boolean.class).orElse(false);
+            if (!errorOnMissing) {
+                log.debug("Failed to render key but errorOnMissing is false, returning null value: {}", e.getMessage());
+                return Output.builder().value(null).build();
+            }
+            throw e;
+        }
 
         Optional<KVValue> value;
         if (Objects.equals(renderedNamespace, flowNamespace)) {
@@ -84,7 +101,7 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         } else {
             FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
             flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
-            value =  runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
+            value = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
         }
 
         if (Boolean.TRUE.equals(runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow()) && value.isEmpty()) {

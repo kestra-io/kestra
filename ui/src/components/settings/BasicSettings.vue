@@ -446,7 +446,7 @@
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
             this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10;
             this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
-            this.pendingSettings.executionStatistics = localStorage.getItem(storageKeys.EXECUTION_STATISTICS) || "last 7 days"
+            this.pendingSettings.executionStatistics = localStorage.getItem(storageKeys.EXECUTION_STATISTICS) || "last 14 days"
             this.checkDefaultStates();
         },
         methods: {

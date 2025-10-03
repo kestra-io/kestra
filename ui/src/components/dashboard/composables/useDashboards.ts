@@ -142,9 +142,10 @@ export function useChartGenerator(props: {chart: Chart; filters: FilterObject[];
         const parameters: Parameters = {...pagination, filters: (filters ?? {})};
         const execStatistics = localStorage.getItem(storageKeys.EXECUTION_STATISTICS)
         const {startDate, endDate}  = getStartAndEndDate(execStatistics ?? "")
+        Object.assign(parameters, {startDate, endDate});
+
 
         if (!props.showDefault) {
-            Object.assign(parameters, {startDate, endDate});
             data.value = await dashboardStore.generate(id, props.chart.id, parameters);
         } else {
             if (!props.chart.content){

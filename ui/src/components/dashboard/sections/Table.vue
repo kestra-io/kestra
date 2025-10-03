@@ -10,6 +10,7 @@
                 v-for="[key, value] in Object.entries( props.chart.data?.columns ?? {} )"
                 :label="value.displayName || key"
                 :key
+                :width="value.field === 'STATE' ? 140 : null"
             >
                 <template #default="scope">
                     <component :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)">

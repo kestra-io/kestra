@@ -1,6 +1,7 @@
 package io.kestra.core.models;
 
 import io.kestra.core.utils.MapUtils;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotEmpty;
 
@@ -8,6 +9,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+@Schema(description = "A key/value pair that can be attached to a Flow or Execution. Labels are often used to organize and categorize objects.")
 public record Label(@NotEmpty String key, @NotEmpty String value) {
     public static final String SYSTEM_PREFIX = "system.";
 

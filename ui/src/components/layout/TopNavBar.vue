@@ -1,39 +1,74 @@
 <template>
-    <nav data-component="FILENAME_PLACEHOLDER" class="d-flex w-100 gap-3 top-bar">
-        <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
-            <div class="d-flex align-items-end gap-2">
-                <SidebarToggleButton
-                    v-if="layoutStore.sideMenuCollapsed"
-                    @toggle="layoutStore.setSideMenuCollapsed(false)"
-                />
-                <div class="d-flex flex-column gap-2">
-                    <el-breadcrumb v-if="breadcrumb">
-                        <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
-                            <a v-if="item.disabled || !item.link">
-                                {{ item.label }}
-                            </a>
-                            <router-link v-else :to="item.link">
+    <nav data-component="TopBarNav" class="d-flex w-100 gap-3 top-bar">
+        <div class="d-flex flex-grow-1 flex-shrink-1 overflow-hidden top-title align-items-center gap-2">
+            <SidebarToggleButton 
+                v-if="layoutStore.sideMenuCollapsed"
+                @toggle="layoutStore.setSideMenuCollapsed(false)" 
+            />
+            <div class="breadcrumb-container d-flex align-items-center">
+                <template v-if="breadcrumb && breadcrumb.length > 0">
+                    <template v-if="breadcrumb.length <= 2">
+                        <template v-for="(item, x) in breadcrumb" :key="x">
+                            <router-link 
+                                v-if="!item.disabled && item.link" 
+                                :to="item.link" 
+                                class="breadcrumb-link"
+                            >
                                 {{ item.label }}
                             </router-link>
-                        </el-breadcrumb-item>
-                    </el-breadcrumb>
-                    <h1 class="h5 fw-semibold m-0 d-inline-flex">
-                        <slot name="title">
-                            {{ title }}
-                            <el-tooltip v-if="description" :content="description">
-                                <Information class="ms-2" />
-                            </el-tooltip>
-                            <Badge v-if="beta" label="Beta" />
-                        </slot>
-                        <el-button
-                            class="star-button"
-                            :class="{'star-active': bookmarked}"
-                            :icon="bookmarked ? StarIcon : StarOutlineIcon"
-                            circle
-                            @click="onStarClick"
-                        />
-                    </h1>
-                </div>
+                            <span 
+                                v-else 
+                                class="breadcrumb-link" 
+                                :class="{'disabled': item.disabled}"
+                            >
+                                {{ item.label }}
+                            </span>
+                            <span class="breadcrumb-separator">/</span>
+                        </template>
+                    </template>
+                    <template v-else>
+                        <router-link 
+                            v-if="!breadcrumb[0].disabled && breadcrumb[0].link" 
+                            :to="breadcrumb[0].link" 
+                            class="breadcrumb-link"
+                        >
+                            {{ breadcrumb[0].label }}
+                        </router-link>
+                        <span v-else class="breadcrumb-link">
+                            {{ breadcrumb[0].label }}
+                        </span>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-ellipsis">...</span>
+                        <span class="breadcrumb-separator">/</span>
+                        <router-link 
+                            v-if="!breadcrumb[breadcrumb.length - 1].disabled && breadcrumb[breadcrumb.length - 1].link" 
+                            :to="breadcrumb[breadcrumb.length - 1].link" 
+                            class="breadcrumb-link"
+                        >
+                            {{ breadcrumb[breadcrumb.length - 1].label }}
+                        </router-link>
+                        <span v-else class="breadcrumb-link">
+                            {{ breadcrumb[breadcrumb.length - 1].label }}
+                        </span>
+                        <span class="breadcrumb-separator">/</span>
+                    </template>
+                </template>
+                <h1 class="h5 fw-semibold m-0 d-inline-flex align-items-center">
+                    <slot name="title">
+                        {{ title }}
+                        <el-tooltip v-if="description" :content="description">
+                            <Information class="ms-2" />
+                        </el-tooltip>
+                        <Badge v-if="beta" label="Beta" />
+                    </slot>
+                    <el-button
+                        class="star-button"
+                        :class="{'star-active': bookmarked}"
+                        :icon="bookmarked ? StarIcon : StarOutlineIcon"
+                        circle
+                        @click="onStarClick"
+                    />
+                </h1>
             </div>
         </div>
         <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
@@ -41,7 +76,10 @@
                 <GlobalSearch class="trigger-flow-guided-step" />
             </div>
             <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
-                <el-button v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" @click="deleteLogs()">
+                <el-button 
+                    v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" 
+                    @click="deleteLogs"
+                >
                     <TrashCan class="me-2" />
                     <span>{{ $t("delete logs") }}</span>
                 </el-button>
@@ -85,7 +123,6 @@
     const route = useRoute();
     const layoutStore = useLayoutStore();
 
-
     const shouldDisplayDeleteButton = computed(() => {
         return route.name === "flows/update" && route.params?.tab === "logs";
     });
@@ -110,19 +147,20 @@
     const {t} = useI18n();
 
     const deleteLogs = () => {
-        if(!flowStore.flow){
+        if (!flowStore.flow) {
             throw new Error("No flow selected");
         }
+    
         toast.confirm(
             t("delete_all_logs"),
             async () => {
-                if(!flowStore.flow){
+                if (!flowStore.flow) {
                     return;
                 }
                 return logsStore.deleteLogs({
-                    namespace: flowStore.flow?.namespace,
-                    flowId: flowStore.flow?.id
-                })
+                    namespace: flowStore.flow.namespace,
+                    flowId: flowStore.flow.id
+                });
             },
         );
     };
@@ -142,89 +180,126 @@
 </script>
 
 <style lang="scss" scoped>
-    nav {
-        top: 0;
-        position: sticky;
-        z-index: 1000;
-        padding: 1rem 2rem;
-        border-bottom: 1px solid var(--ks-border-primary);
-        background: var(--ks-background-card);
+nav {
+    top: 0;
+    position: sticky;
+    z-index: 1000;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--ks-border-primary);
+    background: var(--ks-background-card);
 
-        .top-title, h1, .el-breadcrumb {
-            white-space: nowrap;
-            max-width: 100%;
-            text-overflow: ellipsis;
-            overflow: hidden;
+    .top-title {
+        white-space: nowrap;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .breadcrumb-container {
+        min-width: 0;
+        flex-shrink: 1;
+        overflow: hidden;
+    }
+
+    .breadcrumb-link {
+        color: var(--ks-text-secondary, #999);
+        text-decoration: none;
+        white-space: nowrap;
+        flex-shrink: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+
+        &:hover:not(.disabled) {
+            color: var(--ks-text-primary);
         }
 
-        h1 {
-            line-height: 1.6;
-            display: flex !important;
-            align-items: center;
-        }
-
-        .star-button {
-            margin-left: 1rem;
-            border: none;
-        }
-
-        .star-active {
-            color: #9470FF;
-        }
-
-        :deep(.el-breadcrumb__item) {
-            display: inline-block;
-        }
-
-        :deep(.el-breadcrumb__inner) {
-            white-space: nowrap;
-            max-width: 100%;
-            text-overflow: ellipsis;
-            overflow: hidden;
-        }
-
-        .side {
-            .fixed-buttons {
-                align-items: center;
-
-                button, :deep(button), a, :deep(a) {
-                    border: none;
-                    font-size: var(--font-size-lg);
-                    padding: .25rem;
-                }
-            }
-
-            :slotted(ul), :deep(ul) {
-                display: flex;
-                list-style: none;
-                padding: 0;
-                margin: 0;
-                gap: .5rem;
-                align-items: center;
-            }
-        }
-        @media (max-width: 768px) {
-            .mycontainer {
-                display: grid;
-                grid-template-columns: repeat(3, minmax(0, auto));
-                grid-template-rows: repeat(2, auto);
-                gap: 10px;
-                overflow: hidden;
-            }
-            .icons {
-                grid-row: 2;
-                grid-column: 2;
-                display: contents;
-            }
-        }
-        @media (max-width: 664px) {
-            .mycontainer {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, auto));
-                grid-template-rows: repeat(2, auto);
-                gap: 10px;
-                overflow: hidden;
-            }
+        &.disabled {
+            cursor: default;
+            color: var(--ks-text-secondary, #999);
         }
     }
+
+    .breadcrumb-separator {
+        color: var(--ks-text-secondary, #999);
+        margin: 0 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .breadcrumb-ellipsis {
+        color: var(--ks-text-secondary, #999);
+        flex-shrink: 0;
+    }
+
+    h1 {
+        line-height: 1.6;
+        display: flex !important;
+        align-items: center;
+        white-space: nowrap;
+        flex-shrink: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+    }
+
+    .star-button {
+        margin-left: 0.5rem;
+        border: none;
+        flex-shrink: 0;
+    }
+
+    .star-active {
+        color: #9470FF;
+    }
+
+    .side {
+        .fixed-buttons {
+            align-items: center;
+
+            button,
+            :deep(button),
+            a,
+            :deep(a) {
+                border: none;
+                font-size: var(--font-size-lg);
+                padding: 0.25rem;
+            }
+        }
+
+        :slotted(ul),
+        :deep(ul) {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            gap: 0.5rem;
+            align-items: center;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .mycontainer {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, auto));
+            grid-template-rows: repeat(2, auto);
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        .icons {
+            grid-row: 2;
+            grid-column: 2;
+            display: contents;
+        }
+    }
+
+    @media (max-width: 664px) {
+        .mycontainer {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, auto));
+            grid-template-rows: repeat(2, auto);
+            gap: 10px;
+            overflow: hidden;
+        }
+    }
+}
 </style>

@@ -790,9 +790,12 @@
     "namespace and id readonly": "Las propiedades `namespace` y `id` no se pueden cambiar — ahora están configuradas a sus valores iniciales. Si deseas renombrar un flow o cambiar su namespace, puedes crear un nuevo flow y eliminar el antiguo.",
     "namespace files": {
       "create": {
-        "already_exists": "Un archivo con este nombre ya existe",
         "file": "Crear archivo",
+        "file_already_exists": "Ya existe un archivo con este nombre",
+        "file_error": "Se produjo un error al crear el archivo",
         "folder": "Crear carpeta",
+        "folder_already_exists": "Ya existe una carpeta con este nombre",
+        "folder_error": "Se produjo un error al crear la carpeta",
         "label": "Crear"
       },
       "delete": {

@@ -167,8 +167,17 @@ export const useBaseNamespacesStore = () => {
 
     async function readDirectory(this: any, payload: {namespace: string; path?: string}) {
         const URL = `${base(payload.namespace)}/files/directory${payload.path ? `?path=${slashPrefix(safePath(payload.path))}` : ""}`;
-        const request = await axios.get(URL);
-        return request.data ?? [];
+        // Accept 200 or 404 so axios doesn't treat 404 as an error (which would set coreStore.error globally)
+        const response = await axios.get(URL, VALIDATE);
+
+        // If directory not found, mimic previous behavior (throw) without triggering global 404 page
+        if (response.status === 404) {
+            const notFoundError: any = new Error("Directory not found");
+            notFoundError.status = 404;
+            throw notFoundError;
+        }
+
+        return response.data ?? [];
     }
 
     async function createFile(this: any, payload: {namespace: string; path: string; content: string}) {

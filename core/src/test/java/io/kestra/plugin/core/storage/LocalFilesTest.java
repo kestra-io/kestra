@@ -3,7 +3,6 @@ package io.kestra.plugin.core.storage;
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.repositories.AbstractLoadedFlowRepositoryTest;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -47,7 +46,7 @@ class LocalFilesTest {
 
     @Test
     void run() throws Exception {
-        String tenant = TestsUtils.randomTenant(AbstractLoadedFlowRepositoryTest.class.getSimpleName());
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         var runContext = runContextFactory.of("namesapce", tenant, Map.of("toto", "tata"));
         var storageFile = internalFiles(tenant);
 
@@ -76,7 +75,7 @@ class LocalFilesTest {
 
     @Test
     void recursive() throws Exception {
-        String tenant = TestsUtils.randomTenant(AbstractLoadedFlowRepositoryTest.class.getSimpleName());
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         var runContext = runContextFactory.of("namesapce", tenant, Map.of("toto", "tata"));
         var storageFile = internalFiles(tenant);
 

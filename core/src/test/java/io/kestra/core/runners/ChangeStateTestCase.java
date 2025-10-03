@@ -3,25 +3,18 @@ package io.kestra.core.runners;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import reactor.core.publisher.Flux;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Singleton
 public class ChangeStateTestCase {
+
+    public static final String NAMESPACE = "io.kestra.tests";
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -29,11 +22,7 @@ public class ChangeStateTestCase {
     private ExecutionService executionService;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    private QueueInterface<Execution> executionQueue;
-
-    @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     public void changeStateShouldEndsInSuccess(Execution execution) throws Exception {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
@@ -41,73 +30,40 @@ public class ChangeStateTestCase {
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // await for the last execution
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<Execution> lastExecution = new AtomicReference<>();
-        Flux<Execution> receivedExecutions = TestsUtils.receive(executionQueue, either -> {
-            Execution exec = either.getLeft();
-            if (execution.getId().equals(exec.getId()) && exec.getState().getCurrent() == State.Type.SUCCESS) {
-                lastExecution.set(exec);
-                latch.countDown();
-            }
-        });
-
         Flow flow = flowRepository.findByExecution(execution);
         Execution markedAs = executionService.markAs(execution, flow, execution.getTaskRunList().getFirst().getId(), State.Type.SUCCESS);
-        executionQueue.emit(markedAs);
+        Execution lastExecution = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), markedAs);
 
-        assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-        receivedExecutions.blockLast();
-        assertThat(lastExecution.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(lastExecution.get().getTaskRunList()).hasSize(2);
-        assertThat(lastExecution.get().getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(lastExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(lastExecution.getTaskRunList()).hasSize(2);
+        assertThat(lastExecution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
-    public void changeStateInSubflowShouldEndsParentFlowInSuccess() throws Exception {
-        // await for the subflow execution
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<Execution> lastExecution = new AtomicReference<>();
-        Flux<Execution> receivedExecutions = TestsUtils.receive(executionQueue, either -> {
-            Execution exec = either.getLeft();
-            if ("failed-first".equals(exec.getFlowId()) && exec.getState().getCurrent() == State.Type.FAILED) {
-                lastExecution.set(exec);
-                latch.countDown();
-            }
-        });
-
+    public void changeStateInSubflowShouldEndsParentFlowInSuccess(String tenantId) throws Exception {
         // run the parent flow
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-parent-of-failed");
+        Execution execution = runnerUtils.runOne(tenantId, NAMESPACE, "subflow-parent-of-failed");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // assert on the subflow
-        assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-        receivedExecutions.blockLast();
-        assertThat(lastExecution.get().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(lastExecution.get().getTaskRunList()).hasSize(1);
-        assertThat(lastExecution.get().getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-
-        // await for the parent execution
-        CountDownLatch parentLatch = new CountDownLatch(1);
-        AtomicReference<Execution> lastParentExecution = new AtomicReference<>();
-        receivedExecutions = TestsUtils.receive(executionQueue, either -> {
-            Execution exec = either.getLeft();
-            if (execution.getId().equals(exec.getId()) && exec.getState().isTerminated()) {
-                lastParentExecution.set(exec);
-                parentLatch.countDown();
-            }
-        });
+        Execution lastExecution = runnerUtils.awaitFlowExecution(e -> e.getState().getCurrent().equals(Type.FAILED), tenantId, NAMESPACE, "failed-first");
+        assertThat(lastExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(lastExecution.getTaskRunList()).hasSize(1);
+        assertThat(lastExecution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // restart the subflow
-        Flow flow = flowRepository.findByExecution(lastExecution.get());
-        Execution markedAs = executionService.markAs(lastExecution.get(), flow, lastExecution.get().getTaskRunList().getFirst().getId(), State.Type.SUCCESS);
-        executionQueue.emit(markedAs);
+        Flow flow = flowRepository.findByExecution(lastExecution);
+        Execution markedAs = executionService.markAs(lastExecution, flow, lastExecution.getTaskRunList().getFirst().getId(), State.Type.SUCCESS);
+        runnerUtils.emitAndAwaitExecution(e -> e.getState().isTerminated(), markedAs);
+
+        //We wait for the subflow execution to pass from failed to success
+        Execution lastParentExecution = runnerUtils.awaitFlowExecution(e ->
+            e.getTaskRunList().getFirst().getState().getCurrent().equals(Type.SUCCESS), tenantId, NAMESPACE, "subflow-parent-of-failed");
 
         // assert for the parent flow
-        assertThat(parentLatch.await(10, TimeUnit.SECONDS)).isTrue();
-        receivedExecutions.blockLast();
-        assertThat(lastParentExecution.get().getState().getCurrent()).isEqualTo(State.Type.FAILED); // FIXME should be success but it's FAILED on unit tests
-        assertThat(lastParentExecution.get().getTaskRunList()).hasSize(1);
-        assertThat(lastParentExecution.get().getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(lastParentExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED); // FIXME should be success but it's FAILED on unit tests
+        assertThat(lastParentExecution.getTaskRunList()).hasSize(1);
+        assertThat(lastParentExecution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 }

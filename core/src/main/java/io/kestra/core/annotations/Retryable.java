@@ -12,6 +12,7 @@ import java.lang.annotation.*;
 import jakarta.validation.constraints.Digits;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 @Inherited
 @Documented
 @Retention(RUNTIME)

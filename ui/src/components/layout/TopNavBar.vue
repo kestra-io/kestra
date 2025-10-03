@@ -158,8 +158,8 @@
                     return;
                 }
                 return logsStore.deleteLogs({
-                    namespace: flowStore.flow.namespace,
-                    flowId: flowStore.flow.id
+                    namespace: flowStore.flow?.namespace,
+                    flowId: flowStore.flow?.id
                 });
             },
         );

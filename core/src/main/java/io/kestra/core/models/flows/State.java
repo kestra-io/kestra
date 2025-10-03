@@ -86,10 +86,11 @@ public class State {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Duration getDuration() {
-        return Duration.between(
-            this.histories.getFirst().getDate(),
-            this.histories.size() > 1 ? this.histories.get(this.histories.size() - 1).getDate() : Instant.now()
-        );
+        if(this.getEndDate().isPresent()){
+            return Duration.between(this.getStartDate(), this.getEndDate().get());
+        } else {
+            return Duration.between(this.getStartDate(), Instant.now());
+        }
     }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)

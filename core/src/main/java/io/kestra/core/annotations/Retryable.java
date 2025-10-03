@@ -65,4 +65,5 @@ public @interface Retryable {
      * (defaults to none)
      */
     Class<? extends RetryPredicate> predicate() default DefaultRetryPredicate.class;
+
 }

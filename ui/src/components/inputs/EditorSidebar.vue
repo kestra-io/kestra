@@ -1042,34 +1042,23 @@
 
                     // Check if folder already exists (similar to file validation pattern)
                     try {
-                        await this.namespacesStore.readDirectory({
-                            namespace: this.namespaceId,
-                            path: path,
-                        });
+                        await this.namespacesStore.readDirectory({namespace: this.namespaceId, path: path});
+
                         // If we reach here, the directory already exists
-                        this.$toast().error(
-                            this.$t("namespace files.create.folder_already_exists"),
-                        );
+                        this.$toast().error(this.$t("namespace files.create.folder_already_exists"));
                         return;
-                    } catch {
-                        // Directory doesn't exist, proceed with creation
-                    }
+                    } catch {/* Directory doesn't exist, proceed with creation */}
 
                     try {
-                        await this.namespacesStore.createDirectory({
-                            namespace: this.namespaceId,
-                            path,
-                            name: fileName,
-                        });
+                        await this.namespacesStore.createDirectory({namespace: this.namespaceId, path, name: fileName});
                         
                         // Reset dialog and return early (like file creation does)
                         this.dialog = {...DIALOG_DEFAULTS};
                         return;
                     } catch (error) {
                         console.error(`Failed to create folder: ${fileName}`, error);
-                        this.$toast().error(
-                            this.$t("namespace files.create.folder_error"),
-                        );
+
+                        this.$toast().error(this.$t("namespace files.create.folder_error"));
                         return;
                     }
                 }

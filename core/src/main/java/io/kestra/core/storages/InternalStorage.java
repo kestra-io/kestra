@@ -16,10 +16,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.net.URLEncoder;
 
 /**
  * The default {@link Storage} implementation acting as a facade to the {@link StorageInterface}.
@@ -149,9 +151,19 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public URI putFile(InputStream inputStream, String name) throws IOException {
+        //Replace spaces using encoder which give "+" and then replace it with standard "%20"
+        String encodedName = URLEncoder.encode(name, StandardCharsets.UTF_8.toString())
+        .replace("+", "%20");
+
         URI uri = context.getContextStorageURI();
-        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + name);
-        return this.storage.put(context.getTenantId(), context.getNamespace(), resolved, new BufferedInputStream(inputStream));
+        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + encodedName);
+
+        return this.storage.put(
+            context.getTenantId(),
+            context.getNamespace(),
+            resolved,
+            new BufferedInputStream(inputStream)
+        );
     }
 
     /**
@@ -175,10 +187,9 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public URI putFile(File file, String name) throws IOException {
-        URI uri = context.getContextStorageURI();
-        URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + (name != null ? name : file.getName()));
         try (InputStream is = new FileInputStream(file)) {
-            return putFile(is, resolved);
+            //Call putFile(InputStream input,String name) function from here
+        return putFile(is, name != null ? name : file.getName());
         } finally {
             try {
                 Files.delete(file.toPath());
@@ -187,6 +198,8 @@ public class InternalStorage implements Storage {
             }
         }
     }
+
+
 
     /**
      * {@inheritDoc}

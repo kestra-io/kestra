@@ -790,9 +790,12 @@
     "namespace and id readonly": "`namespace`와 `id` 속성은 변경할 수 없습니다 — 초기 값으로 설정되었습니다. flow의 이름을 변경하거나 namespace를 변경하려면 새 flow를 만들고 기존 flow를 삭제하세요.",
     "namespace files": {
       "create": {
-        "already_exists": "파일 이름이 이미 존재합니다",
         "file": "파일 생성",
+        "file_already_exists": "이 이름의 파일이 이미 존재합니다",
+        "file_error": "파일 생성 중 오류 발생",
         "folder": "폴더 생성",
+        "folder_already_exists": "이 이름의 폴더가 이미 존재합니다",
+        "folder_error": "폴더 생성 중 오류가 발생했습니다",
         "label": "생성"
       },
       "delete": {

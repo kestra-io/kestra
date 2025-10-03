@@ -904,7 +904,7 @@
                 if (creation) {
                     if ((await this.searchFilesList(path)).includes(path)) {
                         this.$toast().error(
-                            this.$t("namespace files.create.already_exists"),
+                            this.$t("namespace files.create.file_already_exists"),
                         );
                         return;
                     }
@@ -1040,11 +1040,27 @@
                         this.dialog.folder ? `${this.dialog.folder}/` : ""
                     }${fileName}`;
 
-                    await this.namespacesStore.createDirectory({
-                        namespace: this.namespaceId,
-                        path,
-                        name: fileName,
-                    });
+                    // Check if folder already exists (similar to file validation pattern)
+                    try {
+                        await this.namespacesStore.readDirectory({namespace: this.namespaceId, path: path});
+
+                        // If we reach here, the directory already exists
+                        this.$toast().error(this.$t("namespace files.create.folder_already_exists"));
+                        return;
+                    } catch {/* Directory doesn't exist, proceed with creation */}
+
+                    try {
+                        await this.namespacesStore.createDirectory({namespace: this.namespaceId, path, name: fileName});
+                        
+                        // Reset dialog and return early (like file creation does)
+                        this.dialog = {...DIALOG_DEFAULTS};
+                        return;
+                    } catch (error) {
+                        console.error(`Failed to create folder: ${fileName}`, error);
+
+                        this.$toast().error(this.$t("namespace files.create.folder_error"));
+                        return;
+                    }
                 }
 
                 if (!this.dialog.folder) {

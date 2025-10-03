@@ -339,7 +339,7 @@
                 editableItems: {},
             };
         },
-        emits: ["update:modelValue", "confirm", "validation"],
+        emits: ["update:modelValue", "update:modelValueNoDefault", "confirm", "validation"],
         created() {
             this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
             this.debouncedValidation = debounce(this.validateInputs, 500)
@@ -356,6 +356,7 @@
                             // to avoid too many calls to the server
                             this.debouncedValidation();
                             this.$emit("update:modelValue", this.inputsValues);
+                            this.$emit("update:modelValueNoDefault", this.inputsValuesWithNoDefault());
                         }
                         this.previousInputsValues = JSON.parse(JSON.stringify(val))
                     },
@@ -419,6 +420,7 @@
                 }, 2000);
                 input.isDefault = false;
                 this.$emit("update:modelValue", this.inputsValues);
+                this.$emit("update:modelValueNoDefault", this.inputsValuesWithNoDefault());
             },
             onSubmit() {
                 this.$emit("confirm");
@@ -445,6 +447,12 @@
                 this.inputsValues[input.id] = e.target.value;
                 this.onChange(input);
             },
+            inputsValuesWithNoDefault() {
+                return this.inputsMetaData.reduce((acc, input) => {
+                    acc[input.id] = input.isDefault ? undefined : this.inputsValues[input.id];
+                    return acc;
+                }, {});
+            },
             numberHint(input){
                 const {min, max} = input;
 
@@ -462,10 +470,7 @@
                     return;
                 }
               
-                const inputsValuesWithNoDefault = this.inputsMetaData.reduce((acc, input) => {
-                    acc[input.id] = input.isDefault ? undefined : this.inputsValues[input.id];
-                    return acc;
-                }, {});
+                const inputsValuesWithNoDefault = this.inputsValuesWithNoDefault();
                 
                 const formData = inputsToFormData(this, this.inputsMetaData, inputsValuesWithNoDefault);
 

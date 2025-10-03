@@ -63,10 +63,11 @@ public class DownloadFilesTest {
             Map.of("namespace", namespaceId));
         final Namespace namespace = runContext.storage().namespace(namespaceId);
         // Create a file with a space after a dot
-        String weirdFileName = "/a/b/sample.file with weird naming.txt";
+        Path weirdPath = Path.of("a", "b", "sample.file with weird naming.txt");
         namespace.putFile(
-            new ByteArrayInputStream("test content".getBytes(StandardCharsets.UTF_8)),
-            weirdFileName);
+            weirdPath,
+            new ByteArrayInputStream("test content".getBytes(StandardCharsets.UTF_8))
+        );
         // Run the task
         DownloadFiles.Output output = downloadFiles.run(runContext);
         // Verify the file was downloaded successfully

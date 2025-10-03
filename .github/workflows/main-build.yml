@@ -39,6 +39,7 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-develop-docker:
     name: Publish Docker

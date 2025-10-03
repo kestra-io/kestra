@@ -11,7 +11,7 @@
                 <el-collapse-item
                     v-if="isVisible(plugin)"
                     :name="plugin.group"
-                    :title="plugin.title.capitalize()"
+                    :title="plugin.title?.capitalize()"
                     :key="plugin.group"
                     :ref="`plugin-${plugin.group}`"
                 >

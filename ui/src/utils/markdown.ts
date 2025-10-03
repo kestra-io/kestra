@@ -18,7 +18,16 @@ async function getHighlighter(
     return highlighter;
 }
 
-export async function render(markdown: string, options: {onlyLink?: boolean, permalink?: boolean, html?: boolean} = {}) {
+type RenderVariant = "default" | "enhanced";
+
+interface RenderOptions {
+    onlyLink?: boolean;
+    permalink?: boolean;
+    html?: boolean;
+    variant?: RenderVariant;
+}
+
+export async function render(markdown: string, options: RenderOptions = {}) {
     const {createHighlighterCore, githubDark, githubLight, markdownIt, mark, meta, mila, anchor, container, fromHighlighter, linkTag, langs, onigurumaEngine} = await import( "./markdownDeps")
     const highlighter = await getHighlighter(createHighlighterCore as any, Object.values(langs), onigurumaEngine, githubDark, githubLight);
 
@@ -28,6 +37,8 @@ export async function render(markdown: string, options: {onlyLink?: boolean, per
     }
 
     const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
+
+    const variant: RenderVariant = options.variant ?? "default";
 
     let md;
     if (options.onlyLink) {
@@ -56,7 +67,57 @@ export async function render(markdown: string, options: {onlyLink?: boolean, per
         quotes: "“”‘’",
     });
 
-    md.renderer.rules.table_open = () => "<table class=\"table\">\n";
+    if (variant === "enhanced") {
+        applyEnhancedRenderers(md);
+    } else {
+        md.renderer.rules.table_open = () => "<table class=\"table\">\n";
+    }
 
     return md.render(markdown);
+}
+
+function applyEnhancedRenderers(md: any) {
+    const defaultHeadingOpen = md.renderer.rules.heading_open?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, env: any, self: any) => self.renderToken(tokens, idx, options));
+    md.renderer.rules.heading_open = (tokens: any, idx: number, options: any, env: any, self: any) => {
+        const token = tokens[idx];
+        const level = typeof token.tag === "string" && /^h\d$/i.test(token.tag) ? Number(token.tag.substring(1)) : null;
+        token.attrJoin("class", "doc-heading");
+        if (level) {
+            token.attrJoin("class", `doc-heading--level-${level}`);
+        }
+        return defaultHeadingOpen(tokens, idx, options, env, self);
+    };
+
+    const defaultTableOpen = md.renderer.rules.table_open?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, env: any, self: any) => self.renderToken(tokens, idx, options));
+    md.renderer.rules.table_open = (tokens: any, idx: number, options: any, env: any, self: any) => {
+        const token = tokens[idx];
+        token.attrSet("class", "doc-table");
+        token.attrJoin("data-enhanced", "true");
+        return defaultTableOpen(tokens, idx, options, env, self);
+    };
+
+    const defaultFence = md.renderer.rules.fence?.bind(md.renderer.rules) ?? ((tokens: any, idx: number, options: any, env: any, self: any) => self.renderToken(tokens, idx, options));
+
+    md.renderer.rules.fence = (tokens: any, idx: number, options: any, env: any, self: any) => {
+        const token = tokens[idx];
+        const info = token.info ? md.utils.unescapeAll(token.info).trim() : "";
+        const langName = info.split(/\s+/g)[0] || "text";
+        const codeId = `code-${idx}-${Math.random().toString(36).slice(2, 10)}`;
+        const highlighted = defaultFence(tokens, idx, options, env, self);
+        const enriched = typeof highlighted === "string"
+            ? highlighted.replace("<pre", `<pre id="${codeId}"`)
+            : highlighted;
+
+        return `
+<div class="doc-code-block" data-language="${langName.toLowerCase()}">
+  <div class="doc-code-toolbar">
+    <span class="doc-code-language">${langName.toUpperCase()}</span>
+    <button type="button" class="doc-copy-button"
+            data-copy-target="${codeId}" aria-label="Copy code block">
+        <span class="doc-copy-label">Copy</span>
+    </button>
+  </div>
+  ${enriched}
+</div>`;
+    };
 }

@@ -663,19 +663,19 @@ function deleteFlowAndDependencies() {
             return response;
         });
     }
-    function disableFlowByIds(options: { ids: string[] }) {
+    function disableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
         return axios.post(`${apiUrl()}/flows/disable/by-ids`, options.ids)
     }
     function disableFlowByQuery(options: { namespace: string, id: string }) {
         return axios.post(`${apiUrl()}/flows/disable/by-query`, options, {params: options})
     }
-    function enableFlowByIds(options: { ids: string[] }) {
+    function enableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
         return axios.post(`${apiUrl()}/flows/enable/by-ids`, options.ids)
     }
     function enableFlowByQuery(options: { namespace: string, id: string }) {
         return axios.post(`${apiUrl()}/flows/enable/by-query`, options, {params: options})
     }
-    function deleteFlowByIds(options: { ids: string[] }) {
+    function deleteFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
         return axios.delete(`${apiUrl()}/flows/delete/by-ids`, {data: options.ids})
     }
     function deleteFlowByQuery(options: { namespace: string, id: string }) {

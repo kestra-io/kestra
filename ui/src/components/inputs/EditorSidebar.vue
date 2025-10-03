@@ -114,9 +114,8 @@
             draggable
             nodeKey="id"
             v-loading="items === undefined"
-            :props="{class: 'nodeClass', isLeaf: 'leaf'}"
+            :props="{class: nodeClass, isLeaf: 'leaf'}"
             class="mt-3"
-            @node-click="handleNodeClick"
             @node-drag-start="
                 nodeBeforeDrag = {
                     parent: $event.parent.data.id,
@@ -149,7 +148,7 @@
                     <el-row
                         justify="space-between"
                         class="w-100"
-                        @click="(event) => handleNodeClick(data, node)"
+                        @click="(event) => handleNodeClick(data, node, event)"
                     >
                         <el-col class="w-100">
                             <TypeIcon
@@ -469,6 +468,7 @@
         },
         methods: {
             nodeClass(data) {
+                // Use data.id to match the structure used in handleNodeClick
                 if (this.selectedNodes.includes(data.id)) {
                     return "node selected-tree-node";
                 }
@@ -488,18 +488,35 @@
 
                 return result.filter(i => i.path);
             },
-            handleNodeClick(data, node) {
+            handleNodeClick(data, node, event = null) {
                 const path = this.getPath(node);
                 const flatList = this.flattenTree(this.items);
                 const currentIndex = flatList.findIndex(item => item.path === path);
 
-                if (window.event.shiftKey && this.lastClickedIndex !== null) {
-                    // Handle shift-click for range selection
+                const isCtrl = event && (event.ctrlKey || event.metaKey);
+                const isShift = event && event.shiftKey;
+
+                if (isShift && this.lastClickedIndex !== null) {
                     const start = Math.min(this.lastClickedIndex, currentIndex);
                     const end = Math.max(this.lastClickedIndex, currentIndex);
 
                     this.selectedFiles = flatList.slice(start, end + 1).map(item => item.path);
                     this.selectedNodes = flatList.slice(start, end + 1).map(item => item.id);
+
+                } else if (isCtrl) {
+                    const isSelected = this.selectedNodes.includes(node.data.id);
+                    
+                    if (isSelected) {
+                        // Remove from selection - force reactivity with new arrays
+                        this.selectedFiles = [...this.selectedFiles.filter(file => file !== path)];
+                        this.selectedNodes = [...this.selectedNodes.filter(id => id !== node.data.id)];
+                    } else {
+                        // Add to selection
+                        this.selectedFiles = [...this.selectedFiles, path];
+                        this.selectedNodes = [...this.selectedNodes, node.data.id];
+                    }
+                    this.lastClickedIndex = currentIndex;
+
                 } else {
                     // Handle single-click selection
                     this.selectedFiles = [path];
@@ -1312,6 +1329,9 @@
         .el-tree-node.selected-tree-node > .el-tree-node__content {
             background-color: var(--ks-button-background-primary);
             min-width: fit-content;
+            .filename {
+                color: var(--ks-button-content-primary);
+            }
         }
     }
 }

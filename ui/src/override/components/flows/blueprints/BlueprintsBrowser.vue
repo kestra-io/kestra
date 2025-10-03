@@ -158,7 +158,7 @@
         tagsResponseMapper: (tagsResponse: any[]) =>  Object.fromEntries(tagsResponse.map(tag => [tag.id, tag]))
     });
 
-    const {onPageChanged, onDataLoaded, load, ready, internalPageNumber} = useDataTableActions();
+    const {onPageChanged, onDataLoaded, load, ready, internalPageNumber, internalPageSize} = useDataTableActions({loadData});
     useRestoreUrl();
 
     const emit = defineEmits(["goToDetail", "loaded"]);
@@ -230,8 +230,8 @@
 
     async function loadBlueprints (beforeLoadBlueprintType: string) {
         const query: Record<string, any> = {};
-        if (route.query.page || internalPageNumber) query.page = parseInt(route.query.page as string);
-        if (route.query.size || internalPageNumber) query.size = parseInt(route.query.size as string);
+        if (route.query.page || internalPageNumber.value) query.page = parseInt((route.query.page || internalPageNumber.value) as string);
+        if (route.query.size || internalPageSize.value) query.size = parseInt((route.query.size || internalPageSize.value) as string);
         if (route.query.q || searchText.value) query.q = route.query.q || searchText.value;
         if (props.system) query.tags = "system";
         else if (route.query.selectedTag || selectedTag.value) query.tags = route.query.selectedTag || selectedTag.value;

@@ -1,0 +1,13 @@
+id: flow-trigger-for-each-item-child
+namespace: io.kestra.tests.trigger.foreachitem
+
+tasks:
+  - id: write_file
+    type: io.kestra.plugin.core.storage.Write
+    content: Hello World
+    extension: .txt
+
+outputs:
+  - id: myFile
+    type: FILE
+    value: "{{ outputs.write_file.uri }}"

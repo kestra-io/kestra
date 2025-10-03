@@ -118,7 +118,7 @@ public class JsonSchemaGenerator {
             removeRequiredOnPropsWithDefaults(objectNode);
 
             return MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }
     }

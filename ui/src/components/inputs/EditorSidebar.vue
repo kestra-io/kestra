@@ -904,7 +904,7 @@
                 if (creation) {
                     if ((await this.searchFilesList(path)).includes(path)) {
                         this.$toast().error(
-                            this.$t("namespace files.create.already_exists"),
+                            this.$t("namespace files.create.file_already_exists"),
                         );
                         return;
                     }

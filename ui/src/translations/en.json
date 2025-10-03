@@ -673,8 +673,8 @@
       "create": {
         "label": "Create",
         "file": "Create file",
+        "file_already_exists": "A file with this name already exists",
         "folder": "Create folder",
-        "already_exists": "A file with this name already exists",
         "folder_already_exists": "A folder with this name already exists",
         "folder_error": "Error occurred while creating the folder"
       },

@@ -6,7 +6,7 @@
         </el-alert>
 
         <el-form labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
-            <InputsForm :initialInputs="flow.inputs" :selectedTrigger="selectedTrigger" :flow="flow" v-model="inputs" :executeClicked="executeClicked" @confirm="onSubmit($refs.form)" />
+            <InputsForm :initialInputs="flow.inputs" :selectedTrigger="selectedTrigger" :flow="flow" v-model="inputs" :executeClicked="executeClicked" @confirm="onSubmit($refs.form)" @update:model-value-no-default="values => inputsNoDefaults=values" />
 
             <el-collapse v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
@@ -105,6 +105,7 @@
         data() {
             return {
                 inputs: {},
+                inputsNoDefaults: {},
                 inputNewLabel: "",
                 executionLabels: [],
                 scheduleDate: undefined,
@@ -183,7 +184,7 @@
                                 formRef,
                                 id: this.flow.id,
                                 namespace: this.flow.namespace,
-                                inputs: this.inputs,
+                                inputs: this.inputsNoDefaults,
                                 labels: [...new Set(
                                     this.executionLabels
                                         .filter(label => label.key && label.value)
@@ -192,7 +193,7 @@
                                 scheduleDate: this.scheduleDate
                             });
                         } else {
-                            executeTask(this, this.flow, this.inputs, {
+                            executeTask(this, this.flow, this.inputsNoDefaults, {
                                 redirect: this.redirect,
                                 newTab: this.newTab,
                                 id: this.flow.id,

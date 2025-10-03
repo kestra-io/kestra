@@ -1330,7 +1330,6 @@
             background-color: var(--ks-button-background-primary);
             min-width: fit-content;
             .filename {
-                font-weight: bold;
                 color: var(--ks-button-content-primary);
             }
         }

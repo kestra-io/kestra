@@ -1,6 +1,7 @@
 name: Main Workflow
-
+# FIXME remove pr
 on:
+  pull_request:
   push:
     branches:
       - releases/*
@@ -27,9 +28,10 @@ jobs:
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
     secrets:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
 
   frontend-tests:
     name: Frontend tests

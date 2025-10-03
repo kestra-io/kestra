@@ -48,18 +48,18 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .returnThinking(false);
 
         if (getAiConfiguration().clientPem() != null) {
-            try {
+            try (ByteArrayInputStream is = new ByteArrayInputStream(getAiConfiguration().clientPem().getBytes(StandardCharsets.UTF_8));
+                 ByteArrayInputStream caPem = getAiConfiguration().caPem() == null ? null : new ByteArrayInputStream(getAiConfiguration().caPem().getBytes(StandardCharsets.UTF_8))) {
                 JdkHttpClientBuilder jdkHttpClientBuilder = ((JdkHttpClientBuilder) HttpClientBuilderLoader.loadHttpClientBuilder()).httpClientBuilder(
-                    HttpClientUtils.withPemCertificate(new ByteArrayInputStream(getAiConfiguration().clientPem().getBytes(StandardCharsets.UTF_8)), getAiConfiguration().caPem() == null ? null : new ByteArrayInputStream(getAiConfiguration().caPem().getBytes(StandardCharsets.UTF_8)))
+                    HttpClientUtils.withPemCertificate(is, caPem)
                 );
 
                 builder = builder.httpClientBuilder(jdkHttpClientBuilder);
             } catch (Exception e) {
-                log.error("Error while setting custom PEM certificate for Gemini. AI Copilot may not work as expected.", e);
+                throw new IllegalArgumentException("Exception while trying to setup AI Service certificates", e);
             }
         }
 
         return builder.build();
     }
 }
-

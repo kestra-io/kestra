@@ -1,5 +1,5 @@
-name: Set Version and Tag
-run-name: "Set version and Tag Kestra to ${{ github.event.inputs.releaseVersion }} 🚀"
+name: Start release
+run-name: "Start release of Kestra ${{ github.event.inputs.releaseVersion }} 🚀"
 on:
   workflow_dispatch:
     inputs:
@@ -7,17 +7,26 @@ on:
         description: 'The release version (e.g., 0.21.1)'
         required: true
         type: string
+
+permissions:
+  contents: write
+
 env:
   RELEASE_VERSION: "${{ github.event.inputs.releaseVersion }}"
 jobs:
   release:
     name: Release Kestra
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/heads/releases/v')
     steps:
-      # Checks
-      - name: Check Inputs
+      - name: Parse and Check Inputs
+        id: parse-and-check-inputs
         run: |
+          CURRENT_BRANCH="${{ github.ref_name }}"
+          if ! [[ "$CURRENT_BRANCH" == "develop" ]]; then
+            echo "You can only run this workflow on develop, but you ran it on $CURRENT_BRANCH"
+            exit 1
+          fi
+
           if ! [[ "$RELEASE_VERSION" =~ ^[0-9]+(\.[0-9]+)(\.[0-9]+)(-rc[0-9])?(-SNAPSHOT)?$ ]]; then
             echo "Invalid release version. Must match regex: ^[0-9]+(\.[0-9]+)(\.[0-9]+)-(rc[0-9])?(-SNAPSHOT)?$"
             exit 1
@@ -25,13 +34,8 @@ jobs:
 
           # Extract the major and minor versions
           BASE_VERSION=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+)\..*/\1/')
-          RELEASE_BRANCH="refs/heads/releases/v${BASE_VERSION}.x"
-
-          CURRENT_BRANCH="$GITHUB_REF"
-          if ! [[ "$CURRENT_BRANCH" == "$RELEASE_BRANCH" ]]; then
-            echo "Invalid release branch. Expected $RELEASE_BRANCH, was $CURRENT_BRANCH"
-            exit 1
-          fi
+          RELEASE_BRANCH="releases/v${BASE_VERSION}.x"
+          echo "release_branch=${RELEASE_BRANCH}" >> $GITHUB_OUTPUT
 
       # Checkout
       - name: Checkout
@@ -39,6 +43,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PERSONAL_TOKEN }}
+          ref: ${{ steps.parse-and-check-inputs.outputs.release_branch }}
 
       # Configure
       - name: Git - Configure
@@ -47,7 +52,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
 
       # Execute
-      - name: Run Gradle Release
+      - name: Start release by updating version and pushing a new tag
         env:
           GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
         run: |

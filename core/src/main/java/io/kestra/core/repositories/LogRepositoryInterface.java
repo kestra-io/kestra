@@ -90,6 +90,8 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
 
     Integer purge(Execution execution);
 
+    Integer purge(List<Execution> executions);
+
     void deleteByQuery(String tenantId, String executionId, String taskId, String taskRunId, Level minLevel, Integer attempt);
 
     void deleteByQuery(String tenantId, String namespace, String flowId, String triggerId);

@@ -9,55 +9,49 @@
                 :source="flowStore.flow.source"
                 :isReadOnly="isReadOnly"
                 :expandedSubflows="expandedSubflows"
-                @expand-subflow="onExpandSubflow($event)"
+                @expand-subflow="onExpandSubflow"
                 @on-edit="(event) => emit('on-edit', event, true)"
             />
             <el-alert v-else type="warning" :closable="false">
-                {{ $t("unable to generate graph") }}
+                {{ t("unable to generate graph") }}
             </el-alert>
         </div>
     </el-card>
 </template>
-<script>
-    import {mapStores} from "pinia";
-    import LowCodeEditor from "../inputs/LowCodeEditor.vue";
+<script setup lang="ts">
+    import {onBeforeUnmount, defineProps, defineEmits} from "vue";
+    import {useI18n} from "vue-i18n";
     import {useFlowStore} from "../../stores/flow";
+    import LowCodeEditor from "../inputs/LowCodeEditor.vue";
 
-    export default {
-        components: {
-            LowCodeEditor,
-        },
-        emits: [
-            "expand-subflow", "on-edit"
-        ],
-        props: {
-            isReadOnly: {
-                type: Boolean,
-                default: false
-            },
-            expandedSubflows: {
-                type: Array,
-                default: () => []
-            }
-        },
-        computed: {
-            ...mapStores(useFlowStore),
-        },
-        beforeUnmount() {
-            this.flowStore.flowValidation = undefined;
-        },
-        methods: {
-            onExpandSubflow(event) {
-                this.$emit("expand-subflow", event);
-                this.flowStore.loadGraph({
-                    flow: this.flowStore.flow,
-                    params: {
-                        subflows: event
-                    }
-                });
-            }
+    const {t} = useI18n();
+    defineProps<{
+        isReadOnly?: boolean;
+        expandedSubflows?: any[];
+    }>();
+
+    const emit = defineEmits<{
+        (e: "expand-subflow", event: any): void;
+        (e: "on-edit", event: any, flag: boolean): void;
+    }>();
+
+    const flowStore = useFlowStore();
+
+    function onExpandSubflow(event: any) {
+        emit("expand-subflow", event);
+        if(flowStore.flow){
+            flowStore.loadGraph({
+                flow: flowStore.flow,
+                params: {
+                    subflows: event
+                }
+            });
         }
-    };
+    }
+
+    onBeforeUnmount(() => {
+        flowStore.flowValidation = undefined;
+    });
 </script>
 <style scoped lang="scss">
     .el-card {

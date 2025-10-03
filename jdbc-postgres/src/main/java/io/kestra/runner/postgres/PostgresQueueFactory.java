@@ -152,4 +152,12 @@ public class PostgresQueueFactory implements QueueFactoryInterface {
     public QueueInterface<ExecutionRunning> executionRunning() {
         return new PostgresQueue<>(ExecutionRunning.class, applicationContext);
     }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.MULTIPLE_CONDITION_EVENT_NAMED)
+    @Bean(preDestroy = "close")
+    public QueueInterface<MultipleConditionEvent> multipleConditionEvent() {
+        return new PostgresQueue<>(MultipleConditionEvent.class, applicationContext);
+    }
 }

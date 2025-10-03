@@ -258,6 +258,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/flow-trigger-for-each-item-parent.yaml", "flows/valids/flow-trigger-for-each-item-child.yaml", "flows/valids/flow-trigger-for-each-item-grandchild.yaml"})
+    void forEachItemWithFlowTrigger() throws Exception {
+        multipleConditionTriggerCaseTest.forEachItemWithFlowTrigger();
+    }
+
+    @Test
     @LoadFlows({"flows/valids/each-null.yaml"})
     void eachWithNull() throws Exception {
         EachSequentialTest.eachNullTest(runnerUtils, logsQueue);

@@ -1,5 +1,5 @@
 {
-  "pt": {
+  "pt_BR": {
     "Add flow": "Adicionar flow",
     "Default log level": "Nível de log padrão",
     "Default namespace": "Namespace padrão",
@@ -96,7 +96,7 @@
     "bookmark": "Favoritos",
     "bulk action async warning": "Isso pode levar alguns instantes.",
     "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
-    "bulk delete": "Tem certeza de que deseja deletar <code>{executionCount}</code> execução(ões)?",
+    "bulk delete": "Tem certeza de que deseja excluir <code>{executionCount}</code> execução(ões)?",
     "bulk delete backfills": "Excluir {count} backfill",
     "bulk disabled status": {
       "false": "Ativar {count} triggers",
@@ -121,7 +121,7 @@
     "bulk unlock": "Desbloquear {count} triggers",
     "bulk unpause backfills": "Despausar {count} backfill",
     "bulk unqueue": "Tem certeza de que deseja remover da fila <code>{executionCount}</code> execução(ões)?",
-    "can not delete": "Não pode deletar",
+    "can not delete": "Não pode excluir",
     "can not have less than 1 task": "Cada flow deve ter pelo menos uma task.",
     "can not save": "Não pode salvar",
     "cancel": "Cancelar",
@@ -157,15 +157,15 @@
     },
     "change state tooltip": "Alterar o estado de execução",
     "chart": "Gráfico",
-    "chart preview": "Pré-visualização do gráfico",
+    "chart preview": "Prévia do gráfico",
     "charts": "Gráficos",
     "choice": "Escolha",
     "choose file": "Escolha um arquivo ou solte-o aqui...",
     "close": "Fechar",
     "close sidebar": "fechar barra lateral",
     "codeDisabled": "Desativado no Flow",
-    "collapse": "Colapsar",
-    "collapse all": "Colapsar tudo",
+    "collapse": "Recolher",
+    "collapse all": "Recolher tudo",
     "common": {
       "back": "Voltar"
     },
@@ -280,15 +280,15 @@
     "debug": "Depurar",
     "default": "Padrão",
     "defaultsToNamespaceFile": "Padrões para arquivo de namespace: <code>{name}</code>",
-    "delete": "Deletar",
-    "delete backfill": "Deletar o backfill",
-    "delete backfills": "Deletar backfills",
-    "delete confirm": "Tem certeza de que deseja deletar <code>{name}</code>?",
+    "delete": "Excluir",
+    "delete backfill": "Excluir o backfill",
+    "delete backfills": "Excluir backfills",
+    "delete confirm": "Tem certeza de que deseja excluir <code>{name}</code>?",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Esta execução ainda está RUNNING, deletá-la não irá pará-la.<br />Você precisa matar a execução para pará-la.</div>",
-    "delete logs": "Deletar logs",
+    "delete logs": "Excluir logs",
     "delete ok": "está deletado",
-    "delete task confirm": "Deseja deletar a task <code>{taskId}</code>?",
-    "delete_all_logs": "Tem certeza de que deseja deletar todos os logs?",
+    "delete task confirm": "Deseja Excluir a task <code>{taskId}</code>?",
+    "delete_all_logs": "Tem certeza de que deseja excluir todos os logs?",
     "delete_log": "Tem certeza de que deseja excluir o log?",
     "deleted": "Deletado com sucesso",
     "deleted confirm": "<em>{name}</em> foi deletado com sucesso!",
@@ -656,7 +656,7 @@
     "flow": "Flow",
     "flow already exists": "Flow já existe",
     "flow creation": "Criação de flow",
-    "flow delete": "Tem certeza de que deseja deletar <code>{flowCount}</code> flow(s)?",
+    "flow delete": "Tem certeza de que deseja excluir <code>{flowCount}</code> flow(s)?",
     "flow deleted, you can restore it": "O flow foi deletado e esta é uma visualização somente leitura. Você ainda pode restaurá-lo.",
     "flow disable": "Tem certeza de que deseja desativar <code>{flowCount}</code> flow(s)?",
     "flow enable": "Tem certeza de que deseja ativar <code>{flowCount}</code> flow(s)?",
@@ -679,11 +679,11 @@
     "focus task": "Clique em qualquer elemento para ver sua documentação.",
     "fold_all_multi_lines": "Recolher Todas as Linhas Múltiplas",
     "for flow": "para flow",
-    "force run": "Executar forçadamente",
+    "force run": "Forçar execução",
     "force run confirm": "Tem certeza de que deseja forçar a execução <code>{id}</code>?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de tarefa duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tarefas CREATED serão movidas para o estado RUNNING.</li><li>Tarefas RUNNING serão re-submetidas.</li><li>Tarefas QUEUED serão removidas da fila.</li><li>Tarefas PAUSED serão retomadas.</li></ul>",
-    "force run done": "A execução é forçada a correr",
+    "force run done": "A execução foi forçada a rodar",
     "force run title": "Forçar a execução da execução <code>{id}</code>.",
-    "force run tooltip": "Forçar a execução a correr. Pode criar execuções de task duplicadas; se possível, use outra ação.",
+    "force run tooltip": "Forçar a execução a rodar. Pode criar execuções de tarefas duplicadas; se possível, use outra ação.",
     "form": "Formulário",
     "form error": "Erro no formulário",
     "from": "De",
@@ -702,7 +702,7 @@
     "input_custom_duration": "ou insira uma duração personalizada:",
     "inputs": "Inputs",
     "instance": "Instância",
-    "invalid bulk delete": "Não foi possível deletar execuções",
+    "invalid bulk delete": "Não foi possível excluir execuções",
     "invalid bulk force run": "Não foi possível forçar a execução das execuções",
     "invalid bulk kill": "Não foi possível matar execuções",
     "invalid bulk pause": "Não foi possível pausar as execuções",
@@ -799,18 +799,18 @@
         "label": "Criar"
       },
       "delete": {
-        "file": "Deletar arquivo",
+        "file": "Excluir arquivo",
         "files": "Excluir {count} arquivos selecionados",
-        "folder": "Deletar pasta",
+        "folder": "Excluir pasta",
         "folders": "Excluir {count} pastas selecionadas",
-        "label": "Deletar"
+        "label": "Excluir"
       },
       "dialog": {
         "confirm": "Confirmar",
         "file_deletion": "Confirmar deleção de arquivo",
-        "file_deletion_description": "Tem certeza de que deseja deletar este arquivo?",
+        "file_deletion_description": "Tem certeza de que deseja excluir este arquivo?",
         "folder_deletion": "Confirmar deleção de pasta",
-        "folder_deletion_description": "Tem certeza de que deseja deletar esta pasta e todo o seu conteúdo?",
+        "folder_deletion_description": "Tem certeza de que deseja excluir esta pasta e todo o seu conteúdo?",
         "name": {
           "file": "Nome com extensão:",
           "folder": "Nome da pasta:"
@@ -1055,7 +1055,7 @@
     },
     "parent execution": "Execução pai",
     "password": "Senha",
-    "password empty constraint": "Nome de utilizador ou palavra-passe incorretos",
+    "password empty constraint": "Nome de usuário ou senha incorretos",
     "password length constraint": "Senha não deve exceder 256 caracteres",
     "passwords do not match": "Senhas não coincidem",
     "pause": "Pausar",
@@ -1239,7 +1239,7 @@
             "time_zone": "Fuso Horário"
           },
           "label": "Idioma e Região",
-          "note": "Note que esta configuração é usada para exibir propriedades de data e hora na UI. Para agendar seus flows em um fuso horário diferente de UTC, certifique-se de definir a propriedade de fuso horário no trigger de Schedule no seu código de flow ou nos padrões do seu plugin."
+          "note": "Observe que esta configuração é usada para exibir propriedades de data e hora na UI. Para agendar seus flows em um fuso horário diferente de UTC, certifique-se de definir a propriedade de fuso horário no trigger de Schedule no seu código de flow ou nos padrões do seu plugin."
         },
         "reset_section_to_defaults": "Restaurar os valores padrão desta seção",
         "save": {
@@ -1398,17 +1398,17 @@
     "tasks": "Tasks",
     "template": "Template",
     "template creation": "Criação de template",
-    "template delete": "Tem certeza de que deseja deletar <code>{templateCount}</code> template(s)?",
+    "template delete": "Tem certeza de que deseja excluir <code>{templateCount}</code> template(s)?",
     "template export": "Tem certeza de que deseja exportar <code>{templateCount}</code> template(s)?",
     "templates": "Templates",
     "templates deleted": "<code>{count}</code> Template(s) deletado(s)",
     "templates deprecated": "Templates estão obsoletos. Por favor, use subflows. Veja a <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">Seção de Migrações</a> explicando como você pode migrar de templates para subflows.",
     "templates exported": "Templates exportados",
     "tenant": {
-      "name": "Mandante",
-      "names": "Mandantes"
+      "name": "Cliente",
+      "names": "Clientes"
     },
-    "tenantId": "ID do Mandante",
+    "tenantId": "ID do Cliente",
     "test-badge-text": "Teste",
     "test-badge-tooltip": "Esta execução foi criada por um Teste",
     "theme": "Tema",

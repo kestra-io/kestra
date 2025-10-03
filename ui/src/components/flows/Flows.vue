@@ -348,8 +348,7 @@
 
     const routeInfo = computed(() => ({title: t("flows")}));
 
-    const dataTableRef = useTemplateRef<typeof DataTable>("dataTable");
-
+    const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");
     const {queryWithFilter, onPageChanged, onRowDoubleClick, onSort} = useDataTableActions({dblClickRouteName: "flows/update"});
 
     function selectionMapper({id, namespace, disabled}: {id: string; namespace: string; disabled: boolean}) {
@@ -361,7 +360,7 @@
     }
 
     const {selection, queryBulkAction, handleSelectionChange, toggleAllUnselected, toggleAllSelection} = useSelectTableActions({
-        dataTableRef,
+        dataTableRef: selectTableRef,
         selectionMapper
     });
 

@@ -478,7 +478,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             try (InputStream is = runContext.storage().getFile(splitsURI)){
                 String fileContent = new String(is.readAllBytes());
                 List<URI> splits = fileContent.lines().map(line -> URI.create(line)).toList();
-                AtomicInteger currentIteration = new AtomicInteger(1);
+                AtomicInteger currentIteration = new AtomicInteger(0);
 
                 return splits
                     .stream()

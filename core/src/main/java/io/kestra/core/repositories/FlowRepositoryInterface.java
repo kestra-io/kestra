@@ -4,6 +4,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
+import io.kestra.plugin.core.dashboard.data.Flows;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
@@ -11,7 +12,7 @@ import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
 
-public interface FlowRepositoryInterface {
+public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fields> {
 
     Optional<Flow> findById(String tenantId, String namespace, String id, Optional<Integer> revision, Boolean allowDeleted);
 

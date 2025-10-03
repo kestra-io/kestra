@@ -1,4 +1,4 @@
-package io.kestra.core.runners;
+package io.kestra.core.services;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -6,12 +6,14 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SkipExecutionServiceTest {
     @Inject
     private SkipExecutionService skipExecutionService;

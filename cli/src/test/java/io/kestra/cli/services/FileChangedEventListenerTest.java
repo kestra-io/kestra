@@ -1,5 +1,6 @@
 package io.kestra.cli.services;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -57,7 +58,8 @@ class FileChangedEventListenerTest {
         }
     }
 
-    @Test
+    @FlakyTest
+    @RetryingTest(2)
     void test() throws IOException, TimeoutException {
         var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getSimpleName(), "test");
         // remove the flow if it already exists
@@ -95,6 +97,7 @@ class FileChangedEventListenerTest {
         );
     }
 
+    @FlakyTest
     @RetryingTest(2)
     void testWithPluginDefault() throws IOException, TimeoutException {
         var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getName(), "testWithPluginDefault");

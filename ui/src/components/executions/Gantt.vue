@@ -59,13 +59,13 @@
                                             </span>
                                         </template>
                                         <div
-                                            :style="{left: item.start + '%', width: (item.width > 0 ? Math.max(item.width,1) : 0 ) + '%'}"
+                                            :style="{left: `${item.start}%`, width: `${Math.max(item.width, 3)}%`}"
                                             class="task-progress"
                                         >
                                             <div class="progress">
                                                 <div
                                                     class="progress-bar"
-                                                    :style="{left: item.left + '%', width: ((100-item.left) > 0 ? Math.max(100-item.left,1) : 0) + '%'}"
+                                                    :style="{left: `${Math.min(item.left, 90)}%`, width: `${Math.max(100 - item.left, 10)}%`}"
                                                     :class="'bg-' + item.color + (item.running ? ' progress-bar-striped progress-bar-animated' : '')"
                                                     role="progressbar"
                                                 />

@@ -82,11 +82,13 @@ html.dark {
     --el-color-alert-error: #e3262f;
     --el-color-alert-warning: #eeaf80;
     --el-color-alert-success: #beefe2;
+    --ks-card-shadow:#ECEBEF;
 
     #{--el-box-shadow}: $box-shadow;
     #{--el-box-shadow-light}: $box-shadow-sm;
     #{--el-box-shadow-lighter}: $box-shadow-sm;
     #{--el-box-shadow-dark}: $box-shadow-lg;
+    
 
     --el-button-active-text-color: var(--ks-content-primary);
 

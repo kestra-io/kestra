@@ -33,6 +33,10 @@
                 type: Array,
                 required: true
             },
+            onClose: {
+                type: Function,
+                default: null
+            },
         },
         data() {
             return {
@@ -78,7 +82,17 @@
                 }
 
                 // Close the notification
-                this.$parent?.close?.();
+                if (this.onClose) {
+                    this.onClose();
+                }
+
+                // Navigate to editor with AI copilot open
+                const currentRoute = this.$route;
+                this.$router.push({
+                    name: currentRoute.name,
+                    params: currentRoute.params,
+                    query: {...currentRoute.query, ai: "open"}
+                });
             },
         },
     };

@@ -1,7 +1,6 @@
 import axios from "axios";
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
-// FIXME remove trigger commit
 export const useAiStore = defineStore("ai", {
     actions: {
         async generateFlow({userPrompt, flowYaml, conversationId}: {userPrompt: string, flowYaml: string, conversationId: string}) {

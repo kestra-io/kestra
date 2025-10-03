@@ -202,7 +202,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
             code = """
                 id: sentry_execution_example
                 namespace: company.team
-                
+
                 tasks:
                 - id: send_alert
                   type: io.kestra.plugin.notifications.sentry.SentryExecution
@@ -221,7 +221,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                         - WARNING
                     - type: io.kestra.plugin.core.condition.ExecutionNamespace
                         namespace: company.payroll
-                        prefix: false"""                                
+                        prefix: false"""
         )
 
     },
@@ -403,6 +403,28 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             conditions.putAll(flowsCondition);
             conditions.putAll(whereConditions);
             return conditions;
+        }
+
+        @JsonIgnore
+        public Map<String, Condition> getUpstreamFlowsConditions() {
+            AtomicInteger conditionId = new AtomicInteger();
+            return ListUtils.emptyOnNull(flows).stream()
+                .map(upstreamFlow -> Map.entry(
+                    "condition_" + conditionId.incrementAndGet(),
+                    new UpstreamFlowCondition(upstreamFlow)
+                ))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        }
+
+        @JsonIgnore
+        public Map<String, Condition> getWhereConditions() {
+            AtomicInteger conditionId = new AtomicInteger();
+            return ListUtils.emptyOnNull(where).stream()
+                .map(filter -> Map.entry(
+                    "condition_" + conditionId.incrementAndGet() + "_" + filter.getId(),
+                    new FilterCondition(filter)
+                ))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         }
 
         @Override

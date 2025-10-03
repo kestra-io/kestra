@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.Map;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static io.kestra.core.runners.pebble.functions.FunctionTestUtils.NAMESPACE;
 import static io.kestra.core.runners.pebble.functions.FunctionTestUtils.getVariables;
@@ -29,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(rebuildContext = true)
 @Property(name="kestra.server-type", value="WORKER")
+@Execution(ExecutionMode.SAME_THREAD)
 class ReadFileFunctionTest {
     @Inject
     VariableRenderer variableRenderer;

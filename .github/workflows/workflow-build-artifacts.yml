@@ -26,7 +26,7 @@ jobs:
         run: npm ci
 
       # Setup build
-      - uses: kestra-io/actions/.github/actions/setup-build@main
+      - uses: kestra-io/actions/composite/setup-build@main
         name: Setup - Build
         id: build
         with:

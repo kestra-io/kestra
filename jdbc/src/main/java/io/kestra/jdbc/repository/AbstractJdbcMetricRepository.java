@@ -429,8 +429,10 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                     .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
+                boolean hasAgg = descriptors.getColumns().entrySet().stream().anyMatch(col -> col.getValue().getAgg() != null);
                 // Generate custom fields for date as they probably need formatting
-                List<Field<Date>> dateFields = generateDateFields(descriptors, fieldsMapping, startDate, endDate, dateFields());
+                // If they don't have aggs, we format datetime to minutes
+                List<Field<Date>> dateFields = generateDateFields(descriptors, fieldsMapping, startDate, endDate, dateFields(), hasAgg ? null : DateUtils.GroupType.MINUTE);
 
                 // Init request
                 SelectConditionStep<Record> selectConditionStep = select(

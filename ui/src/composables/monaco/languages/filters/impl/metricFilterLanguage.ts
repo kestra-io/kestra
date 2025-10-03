@@ -1,6 +1,6 @@
-import {Comparators, Completion, FilterKeyCompletions} from "../filterCompletion.ts";
+import {Comparators, Completion, FilterKeyCompletions} from "../filterCompletion";
 import type {useExecutionsStore} from "../../../../../stores/executions";
-import {FilterLanguage} from "../filterLanguage.ts";
+import {FilterLanguage} from "../filterLanguage";
 
 const metricFilterKeys: (executionsStore: ReturnType<typeof useExecutionsStore>) => Record<string, FilterKeyCompletions> = (executionsStore) => ({
     metric: new FilterKeyCompletions(

@@ -163,6 +163,7 @@
     "choose file": "Wählen Sie eine Datei oder ziehen Sie sie hierher...",
     "close": "Schließen",
     "close sidebar": "Seitenleiste schließen",
+    "codeDisabled": "In Flow deaktiviert",
     "collapse": "Einklappen",
     "collapse all": "Alle einklappen",
     "common": {
@@ -174,6 +175,8 @@
     "confirm": "Bestätigen",
     "confirm password": "Passwort bestätigen",
     "confirmation": "Bestätigung",
+    "context updated date": "Aktualisierungsdatum des Kontexts",
+    "context updated date tooltip": "Wann der Kontext des Triggers zuletzt aktualisiert wurde. Dies tritt auf, wenn die Ausführung ausgelöst wird, abgeschlossen ist (Sperre freigegeben) oder nach einer Bewertung (auch wenn keine Ausführung stattfindet).",
     "contextBar": {
       "demo": "Demo",
       "docs": "Dokumentation",
@@ -461,6 +464,10 @@
           "title": "Derzeit gibt es keine Abhängigkeiten."
         }
       },
+      "panels": {
+        "content": "Öffnen Sie Flow Code oder No-Code, um mit der Bearbeitung Ihrer flows zu beginnen, oder wählen Sie ein anderes Panel (Topologie, Dokumentation, Dateien, Blueprints, Namespace-Kontext) für verwandte Funktionen aus.",
+        "title": "Derzeit sind keine Panels geöffnet."
+      },
       "plugins": {
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
         "title": "Für diesen Namespace sind keine Plugin-Standardeinstellungen festgelegt."
@@ -645,6 +652,7 @@
       },
       "text_search": "Nach diesem Text suchen"
     },
+    "fix_with_ai": "Mit KI beheben",
     "flow": "Flow",
     "flow already exists": "Flow existiert bereits",
     "flow creation": "Flow-Erstellung",
@@ -661,6 +669,7 @@
     "flow-no-dependencies": "Ihr Flow hat keine Abhängigkeiten.",
     "flow_export": "Flow exportieren",
     "flow_only": "Nur auf der Flow-Registerkarte verfügbar.",
+    "flow_outputs": "Flow Outputs",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) gelöscht",
     "flows disabled": "<code>{count}</code> Flow(s) deaktiviert",
@@ -740,6 +749,8 @@
     "last execution state": "Letzter Zustand",
     "last execution status": "Letzter Ausführungsstatus",
     "last modified": "Zuletzt geändert",
+    "last trigger date": "Letztes Trigger-Datum",
+    "last trigger date tooltip": "Wann der Trigger zuletzt ausgeführt wurde. Kann in der Vergangenheit liegen, wenn ein Backfill ausgeführt wird.",
     "launch execution": "Ausführen",
     "learn_more": "Erfahren Sie mehr",
     "light_background": "Dies ist die bevorzugte Option bei der Arbeit mit einem hellen Hintergrund.",
@@ -764,9 +775,11 @@
     "metrics": "Metriken",
     "min": "Min",
     "minutes": "Minuten",
+    "missingSource": "Fehlende Quelle",
     "monogram": "Monogramm",
     "months": "Monate",
     "multi_panel_editor": {
+      "close_all_panels": "Alle Panels schließen",
       "close_all_tabs": "Alle Registerkarten schließen",
       "move_left": "Nach links verschieben",
       "move_right": "Nach rechts verschieben"
@@ -777,9 +790,12 @@
     "namespace and id readonly": "Die Eigenschaften `namespace` und `id` können nicht geändert werden — sie sind jetzt auf ihre Anfangswerte gesetzt. Wenn Sie einen Flow umbenennen oder seinen Namespace ändern möchten, können Sie einen neuen Flow erstellen und den alten entfernen.",
     "namespace files": {
       "create": {
-        "already_exists": "Eine Datei mit diesem Namen existiert bereits",
         "file": "Datei erstellen",
+        "file_already_exists": "Eine Datei mit diesem Namen existiert bereits",
+        "file_error": "Fehler beim Erstellen der Datei aufgetreten",
         "folder": "Ordner erstellen",
+        "folder_already_exists": "Ein Ordner mit diesem Namen existiert bereits",
+        "folder_error": "Beim Erstellen des Ordners ist ein Fehler aufgetreten",
         "label": "Erstellen"
       },
       "delete": {
@@ -854,6 +870,8 @@
     "neutral trend": "Stabil",
     "new": "Neu",
     "new version": "Neue Version {version} verfügbar!",
+    "next evaluation date": "Nächstes Bewertungsdatum",
+    "next evaluation date tooltip": "Wann der Trigger das nächste Mal basierend auf seinem Intervall ausgewertet wird. Nicht immer dasselbe wie das nächste Ausführungsdatum, wenn Bedingungen nicht erfüllt sind.",
     "next execution date": "Nächstes Ausführungsdatum",
     "next_execution": "Nächste Ausführung",
     "no data current task": "Für die aktuelle Task sind keine Daten verfügbar.",
@@ -1046,6 +1064,7 @@
     "pause confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> pausieren möchten?",
     "pause done": "Die Ausführung ist PAUSED.",
     "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss.",
+    "paused": "PAUSED",
     "playground": {
       "clear_history": "Verlauf löschen",
       "confirm_create": "Sie können den Playground nicht ausführen, während Sie einen flow erstellen. Das Starten eines Playground-Laufs wird den flow erstellen.",
@@ -1222,6 +1241,7 @@
           "label": "Sprache und Region",
           "note": "Beachten Sie, dass diese Einstellung für die Anzeige von Datums- und Uhrzeiteigenschaften in der Benutzeroberfläche verwendet wird. Um Ihre Flows in einer anderen Zeitzone als UTC zu konfigurieren, stellen Sie sicher, dass Sie die Zeitzoneneigenschaft im Schedule-Trigger in Ihrem Flow-Code oder in Ihren Plugin-Standardeinstellungen festlegen."
         },
+        "reset_section_to_defaults": "Stellen Sie die Standardwerte dieses Abschnitts wieder her",
         "save": {
           "discard": "Verwerfen",
           "label": "Präferenzen speichern",
@@ -1375,7 +1395,6 @@
     "task_id_exists": "Task-ID existiert bereits",
     "task_id_message": "Task-ID ${existingTask} existiert bereits im Flow.",
     "taskid column details": "Letzter Task, der ausgeführt wird, und seine Anzahl der Versuche.",
-    "taskruns": "Task-Ausführungen",
     "tasks": "Tasks",
     "template": "Vorlage",
     "template creation": "Vorlagenerstellung",
@@ -1389,6 +1408,7 @@
       "name": "Mandant",
       "names": "Mandanten"
     },
+    "tenantId": "Mandanten-ID",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Diese Ausführung wurde durch einen Test erstellt",
     "theme": "Modus",
@@ -1412,6 +1432,7 @@
       "zoom-out": "Verkleinern",
       "zoom-reset": "Zoom zurücksetzen"
     },
+    "total_duration": "Gesamtdauer",
     "total_executions": "Gesamte Ausführungen",
     "trigger": "Trigger",
     "trigger details": "Trigger-Details",
@@ -1426,6 +1447,7 @@
       "title": "Kinder-Ausführungen filtern"
     },
     "trigger refresh": "Aktualisierung auslösen",
+    "triggerId": "Trigger-ID",
     "trigger_check_warning": "Die Verwendung von Trigger-Variablen funktioniert nicht bei manueller Flow-Ausführung. Fügen Sie den `??`-Koaleszenz-Operator hinzu, um das Problem zu lösen. Verwenden Sie zum Beispiel anstelle von `trigger.date` den Ausdruck `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "Trigger-ID existiert bereits",
     "trigger_id_message": "Trigger-ID ${existingTrigger} existiert bereits im Flow.",

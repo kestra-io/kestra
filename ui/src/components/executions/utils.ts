@@ -8,7 +8,7 @@ interface FilterResult {
     error?: boolean;
 }
 
-export const filterLabels = (labels: Label[]): FilterResult => {
-    const invalid = labels.some(label => label.key === null || label.value === null || label.key === "" || label.value === "");
-    return invalid ? {labels, error: true} : {labels};
+export const filterValidLabels = (labels: Label[]): FilterResult => {
+    const validLabels = labels.filter(label => label.key !== null && label.value !== null && label.key !== "" && label.value !== "");
+    return validLabels.length === labels.length ? {labels} : {labels: validLabels, error: true};
 };

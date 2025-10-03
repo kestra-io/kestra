@@ -163,6 +163,7 @@
     "choose file": "एक फ़ाइल चुनें या इसे यहां छोड़ें...",
     "close": "बंद करें",
     "close sidebar": "साइडबार बंद करें",
+    "codeDisabled": "Flow में अक्षम",
     "collapse": "संक्षिप्त करें",
     "collapse all": "सभी संक्षिप्त करें",
     "common": {
@@ -174,6 +175,8 @@
     "confirm": "पुष्टि करें",
     "confirm password": "पासवर्ड की पुष्टि करें",
     "confirmation": "पुष्टि",
+    "context updated date": "संदर्भ अद्यतन तिथि",
+    "context updated date tooltip": "ट्रिगर के संदर्भ को आखिरी बार कब अपडेट किया गया था। यह तब होता है जब execution ट्रिगर होता है, समाप्त होता है (लॉक रिलीज़ होता है), या एक मूल्यांकन के बाद (भले ही कोई execution न हो)।",
     "contextBar": {
       "demo": "डेमो",
       "docs": "डॉक्स",
@@ -461,6 +464,10 @@
           "title": "वर्तमान में कोई निर्भरता नहीं है।"
         }
       },
+      "panels": {
+        "content": "Flow Code या No-Code खोलें ताकि आप अपने flows को संपादित करना शुरू कर सकें, या संबंधित सुविधाओं के लिए कोई अन्य पैनल चुनें (Topology, Documentation, Files, Blueprints, Namespace Context)।",
+        "title": "कोई पैनल वर्तमान में खुला नहीं है।"
+      },
       "plugins": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
         "title": "इस Namespace के लिए कोई प्लगइन डिफॉल्ट सेट नहीं हैं।"
@@ -645,6 +652,7 @@
       },
       "text_search": "इस पाठ के लिए खोजें"
     },
+    "fix_with_ai": "AI से ठीक करें",
     "flow": "Flow",
     "flow already exists": "Flow पहले से मौजूद है",
     "flow creation": "Flow निर्माण",
@@ -661,6 +669,7 @@
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
     "flow_export": "flow निर्यात करें",
     "flow_only": "केवल Flow टैब पर उपलब्ध है।",
+    "flow_outputs": "फ्लो Outputs",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) हटाए गए",
     "flows disabled": "<code>{count}</code> Flow(s) अक्षम किए गए",
@@ -740,6 +749,8 @@
     "last execution state": "अंतिम स्थिति",
     "last execution status": "अंतिम निष्पादन स्थिति",
     "last modified": "अंतिम संशोधित",
+    "last trigger date": "अंतिम ट्रिगर की तारीख",
+    "last trigger date tooltip": "ट्रिगर ने आखिरी बार कब निष्पादित किया था। जब एक backfill चल रहा हो तो यह अतीत में हो सकता है।",
     "launch execution": "निष्पादित करें",
     "learn_more": "और जानें",
     "light_background": "यह हल्की पृष्ठभूमि के साथ काम करते समय पसंदीदा विकल्प है।",
@@ -764,9 +775,11 @@
     "metrics": "मेट्रिक्स",
     "min": "न्यूनतम",
     "minutes": "मिनट्स",
+    "missingSource": "स्रोत अनुपलब्ध",
     "monogram": "मोनोग्राम",
     "months": "महीने",
     "multi_panel_editor": {
+      "close_all_panels": "सभी पैनल बंद करें",
       "close_all_tabs": "सभी टैब बंद करें",
       "move_left": "बाएँ ले जाएँ",
       "move_right": "दाईं ओर ले जाएँ"
@@ -777,9 +790,12 @@
     "namespace and id readonly": "गुण `namespace` और `id` को बदला नहीं जा सकता — वे अब अपनी प्रारंभिक मानों पर सेट हैं। यदि आप किसी flow का नाम बदलना चाहते हैं या उसका namespace बदलना चाहते हैं, तो आप एक नया flow बना सकते हैं और पुराने को हटा सकते हैं।",
     "namespace files": {
       "create": {
-        "already_exists": "इस नाम की एक फ़ाइल पहले से मौजूद है",
         "file": "फ़ाइल बनाएँ",
+        "file_already_exists": "इस नाम की एक फ़ाइल पहले से मौजूद है",
+        "file_error": "फ़ाइल बनाते समय त्रुटि हुई",
         "folder": "फ़ोल्डर बनाएँ",
+        "folder_already_exists": "इस नाम का एक फ़ोल्डर पहले से मौजूद है",
+        "folder_error": "फ़ोल्डर बनाते समय त्रुटि हुई",
         "label": "बनाएँ"
       },
       "delete": {
@@ -854,6 +870,8 @@
     "neutral trend": "स्थिर",
     "new": "नया",
     "new version": "नया संस्करण {version} उपलब्ध है!",
+    "next evaluation date": "अगली मूल्यांकन तिथि",
+    "next evaluation date tooltip": "ट्रिगर का अगला मूल्यांकन कब होगा, यह उसके अंतराल पर आधारित है। यदि शर्तें पूरी नहीं होती हैं, तो यह हमेशा अगले निष्पादन तिथि के समान नहीं होता।",
     "next execution date": "अगली निष्पादन तिथि",
     "next_execution": "अगली निष्पादन",
     "no data current task": "वर्तमान task के लिए कोई डेटा उपलब्ध नहीं है।",
@@ -1046,6 +1064,7 @@
     "pause confirm": "क्या आप वाकई <code>{id}</code> की execution को PAUSE करना चाहते हैं?",
     "pause done": "निष्पादन PAUSED है",
     "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
+    "paused": "PAUSED",
     "playground": {
       "clear_history": "इतिहास साफ़ करें",
       "confirm_create": "आप एक flow बनाते समय playground नहीं चला सकते। एक playground रन शुरू करने से flow बन जाएगा।",
@@ -1222,6 +1241,7 @@
           "label": "भाषा और क्षेत्र",
           "note": "ध्यान दें कि यह सेटिंग UI में दिनांक और समय गुणों को प्रदर्शित करने के लिए उपयोग की जाती है। अपने flows को UTC से अलग समय क्षेत्र में शेड्यूल करने के लिए, सुनिश्चित करें कि आपने अपने flow कोड में या अपने प्लगइन डिफ़ॉल्ट्स में Schedule Trigger पर समय क्षेत्र गुण सेट किया है।"
         },
+        "reset_section_to_defaults": "इस अनुभाग के डिफ़ॉल्ट मान पुनर्स्थापित करें",
         "save": {
           "discard": "रद्द करें",
           "label": "प्राथमिकताएँ सहेजें",
@@ -1375,7 +1395,6 @@
     "task_id_exists": "टास्क Id पहले से मौजूद है",
     "task_id_message": "टास्क Id ${existingTask} पहले से ही flow में मौजूद है।",
     "taskid column details": "निष्पादित होने वाला अंतिम Task और इसके प्रयासों की संख्या।",
-    "taskruns": "Task रन",
     "tasks": "Tasks",
     "template": "template",
     "template creation": "template निर्माण",
@@ -1389,6 +1408,7 @@
       "name": "मंडल",
       "names": "मंडल"
     },
+    "tenantId": "टेनेंट ID",
     "test-badge-text": "परीक्षण",
     "test-badge-tooltip": "यह execution एक Test द्वारा बनाया गया था",
     "theme": "थीम",
@@ -1412,6 +1432,7 @@
       "zoom-out": "ज़ूम आउट करें",
       "zoom-reset": "ज़ूम रीसेट करें"
     },
+    "total_duration": "कुल अवधि",
     "total_executions": "कुल Executions",
     "trigger": "Trigger",
     "trigger details": "Trigger विवरण",
@@ -1426,6 +1447,7 @@
       "title": "बाल निष्पादन फ़िल्टर करें"
     },
     "trigger refresh": "ताज़ा करें",
+    "triggerId": "ट्रिगर ID",
     "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",
     "trigger_id_exists": "ट्रिगर Id पहले से मौजूद है",
     "trigger_id_message": "ट्रिगर Id ${existingTrigger} पहले से ही flow में मौजूद है।",

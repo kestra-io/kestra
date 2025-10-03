@@ -55,7 +55,7 @@
         groupBy?: string;
     }
 
-    interface Props {
+    const props = withDefaults(defineProps<{
         data: DataItem[];
         plugins?: any[];
         total?: number;
@@ -64,9 +64,7 @@
         small?: boolean;
         externalTooltip?: boolean;
         loading?: boolean;
-    };
-
-    const props = withDefaults(defineProps<Props>(), {
+    }>(), {
         plugins: () => [],
         total: undefined,
         duration: true,
@@ -78,7 +76,7 @@
 
     const theme = useTheme();
     const scheme = useScheme();
-    const tooltipContent = ref<string>("");
+    const tooltipContent = ref<string | undefined>("");
 
     const skeletonData = computed(() => {
         const barColor = theme.value === "dark"
@@ -125,7 +123,7 @@
         }
     }));
 
-    const parsedData = computed(() => {
+    const parsedData = computed<any>(() => {
         const datasets = props.data.reduce(function (accumulator: Record<string, {
             label: string
             backgroundColor: string
@@ -136,7 +134,7 @@
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
                         label: state,
-                        backgroundColor: scheme.value[state],
+                        backgroundColor: scheme.value[state as keyof typeof scheme.value] || "#000000",
                         yAxisID: "y",
                         data: [],
                     };
@@ -178,7 +176,7 @@
         };
     });
 
-    const options = computed(() =>
+    const options = computed<any>(() =>
         defaultConfig({
             barThickness: props.small ? 8 : 12,
             skipNull: true,
@@ -218,7 +216,7 @@
                     stacked: true,
                     ticks: {
                         maxTicksLimit: props.small ? 5 : 8,
-                        callback: function (value: any) {
+                        callback: function (this: any, value: any) {
                             const label = this.getLabelForValue(value);
 
                             if (
@@ -270,13 +268,13 @@
                     position: "right",
                     ticks: {
                         maxTicksLimit: props.small ? 5 : 8,
-                        callback: function (value: any) {
+                        callback: function (this: any, value: any) {
                             return `${this.getLabelForValue(value)}s`;
                         },
                     },
                 },
             },
-            onClick: (e, elements) => {
+            onClick: (_e: any, elements: any) => {
                 chartClick(moment, router, route, {}, parsedData.value, elements, "label");
             },
         }, theme.value),

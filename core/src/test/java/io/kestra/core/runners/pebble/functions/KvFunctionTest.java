@@ -12,6 +12,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
@@ -29,18 +30,14 @@ public class KvFunctionTest {
     @Inject
     VariableRenderer variableRenderer;
 
-    @BeforeEach
-    void reset() throws IOException {
-        storageInterface.deleteByPrefix(MAIN_TENANT, null, URI.create(StorageContext.kvPrefix("io.kestra.tests")));
-    }
-
     @Test
     void shouldGetValueFromKVGivenExistingKey() throws IllegalVariableEvaluationException, IOException {
         // Given
-        KVStore kv = new InternalKVStore(MAIN_TENANT, "io.kestra.tests", storageInterface);
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        KVStore kv = new InternalKVStore(tenant, "io.kestra.tests", storageInterface);
         kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
 
-        Map<String, Object> variables = getVariables("io.kestra.tests");
+        Map<String, Object> variables = getVariables(tenant, "io.kestra.tests");
 
         // When
         String rendered = variableRenderer.render("{{ kv('my-key') }}", variables);
@@ -52,13 +49,14 @@ public class KvFunctionTest {
     @Test
     void shouldGetValueFromKVGivenExistingKeyWithInheritance() throws IllegalVariableEvaluationException, IOException {
         // Given
-        KVStore kv = new InternalKVStore(MAIN_TENANT, "my.company", storageInterface);
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        KVStore kv = new InternalKVStore(tenant, "my.company", storageInterface);
         kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
 
-        KVStore firstKv = new InternalKVStore(MAIN_TENANT, "my", storageInterface);
+        KVStore firstKv = new InternalKVStore(tenant, "my", storageInterface);
         firstKv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "firstValue")));
 
-        Map<String, Object> variables = getVariables("my.company.team");
+        Map<String, Object> variables = getVariables(tenant, "my.company.team");
 
         // When
         String rendered = variableRenderer.render("{{ kv('my-key') }}", variables);
@@ -70,10 +68,11 @@ public class KvFunctionTest {
     @Test
     void shouldNotGetValueFromKVWithGivenNamespaceAndInheritance() throws IOException {
         // Given
-        KVStore kv = new InternalKVStore(MAIN_TENANT, "kv", storageInterface);
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        KVStore kv = new InternalKVStore(tenant, "kv", storageInterface);
         kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
 
-        Map<String, Object> variables = getVariables("my.company.team");
+        Map<String, Object> variables = getVariables(tenant, "my.company.team");
 
         // When
         Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
@@ -83,10 +82,11 @@ public class KvFunctionTest {
     @Test
     void shouldGetValueFromKVGivenExistingAndNamespace() throws IllegalVariableEvaluationException, IOException {
         // Given
-        KVStore kv = new InternalKVStore(MAIN_TENANT, "kv", storageInterface);
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        KVStore kv = new InternalKVStore(tenant, "kv", storageInterface);
         kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
 
-        Map<String, Object> variables = getVariables("io.kestra.tests");
+        Map<String, Object> variables = getVariables(tenant, "io.kestra.tests");
 
         // When
         String rendered = variableRenderer.render("{{ kv('my-key', namespace='kv') }}", variables);
@@ -98,7 +98,8 @@ public class KvFunctionTest {
     @Test
     void shouldGetEmptyGivenNonExistingKeyAndErrorOnMissingFalse() throws IllegalVariableEvaluationException {
         // Given
-        Map<String, Object> variables = getVariables("io.kestra.tests");
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Map<String, Object> variables = getVariables(tenant, "io.kestra.tests");
 
         // When
         String rendered = variableRenderer.render("{{ kv('my-key', errorOnMissing=false) }}", variables);
@@ -110,7 +111,8 @@ public class KvFunctionTest {
     @Test
     void shouldFailGivenNonExistingKeyAndErrorOnMissingTrue() {
         // Given
-        Map<String, Object> variables = getVariables("io.kestra.tests");
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Map<String, Object> variables = getVariables(tenant, "io.kestra.tests");
 
         // When
         IllegalVariableEvaluationException exception = Assertions.assertThrows(IllegalVariableEvaluationException.class, () -> {
@@ -124,7 +126,8 @@ public class KvFunctionTest {
     @Test
     void shouldFailGivenNonExistingKeyUsingDefaults() {
         // Given
-        Map<String, Object> variables = getVariables("io.kestra.tests");
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Map<String, Object> variables = getVariables(tenant, "io.kestra.tests");
         // When
         IllegalVariableEvaluationException exception = Assertions.assertThrows(IllegalVariableEvaluationException.class, () -> {
             variableRenderer.render("{{ kv('my-key') }}", variables);

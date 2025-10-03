@@ -14,6 +14,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Invalid source code",
+    "missingSource": "Missing source",
     "update": "Update",
     "update ok": "is updated",
     "delete ok": "is deleted",
@@ -68,6 +69,7 @@
     "no_logs_data": "No Data",
     "no_logs_data_description": "Either no flows are running, or you may need to adjust your filters.",
     "duration": "Duration",
+    "total_duration": "Total duration",
     "running duration": "Running duration",
     "queued duration": "Queued duration",
     "choose file": "Choose a file or drop it here...",
@@ -251,6 +253,7 @@
     "metrics": "Metrics",
     "no data current task": "There's no data available for the current task",
     "outputs": "Outputs",
+    "flow_outputs": "Flow Outputs",
     "output": "Output",
     "eval": {
       "title": "Debug Expression",
@@ -365,8 +368,17 @@
     "triggers": "Triggers",
     "trigger details": "Trigger details",
     "triggerflow disabled": "Trigger is disabled from flow definition",
-    "conditions": "conditions",
-    "taskruns": "Task Runs",
+    "last trigger date": "Last triggered date",
+    "context updated date": "Context updated date",
+    "next evaluation date": "Next evaluation date",
+    "last trigger date tooltip": "When the trigger last executed. May be in the past when running a backfill.",
+    "context updated date tooltip": "When the trigger's context was last updated. This occurs when execution is triggered, finishes (lock released), or after an evaluation (even if no execution happens).",
+    "next evaluation date tooltip": "When the trigger will next be evaluated, based on its interval. Not always the same as the next execution date if conditions are not met.",
+    "conditions": "Conditions",
+    "triggerId": "Trigger ID",
+    "tenantId": "Tenant ID",
+    "codeDisabled": "Disabled in Flow",
+    "paused": "Paused",
     "Fold auto": "Editor: automatic fold of multi-lines",
     "Hover description": "Editor: Show description of field when hovering on key or value",
     "Fold content lines": "Fold multiline strings",
@@ -402,6 +414,7 @@
     },
     "back_to_dashboard": "Back to dashboard",
     "copy logs": "Copy logs",
+    "fix_with_ai": "Fix with AI",
     "download logs": "Download logs",
     "delete logs": "Delete logs",
     "delete_all_logs": "Are you sure you want to delete all logs?",
@@ -660,8 +673,11 @@
       "create": {
         "label": "Create",
         "file": "Create file",
+        "file_already_exists": "A file with this name already exists",
+        "file_error": "Error occurred while creating the file",
         "folder": "Create folder",
-        "already_exists": "A file with this name already exists"
+        "folder_already_exists": "A folder with this name already exists",
+        "folder_error": "Error occurred while creating the folder"
       },
       "rename": {
         "label": "Rename",
@@ -819,7 +835,8 @@
           "discard": "Discard",
           "unsaved_title": "Unsaved Changes",
           "unsaved_warning": "You have unsaved changes. Do you want to save them before leaving?"
-        }
+        },
+        "reset_section_to_defaults": "Restore this section's default values"
       }
     },
     "apps": "Apps",
@@ -1345,6 +1362,10 @@
       "versionPlugin": {
         "title": "You have no versioned plugin yet!",
         "content": "Here you can manage all the plugins installed on your Kestra instance. Newly installed plugins may not be immediately available in all Kestra services, depending on the configuration of your instance."
+      },
+      "panels": {
+        "title": "No panels are currently open.",
+        "content": "Open Flow Code or No-Code to start editing your flows, or select another panel (Topology, Documentation, Files, Blueprints, Namespace Context) for related features."
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",
@@ -1352,7 +1373,8 @@
     "multi_panel_editor": {
       "move_right": "Move right",
       "move_left": "Move left",
-      "close_all_tabs": "Close all tabs"
+      "close_all_tabs": "Close all tabs",
+      "close_all_panels": "Close all panels"
     },
     "search_docs": "Search",
     "no_results_found": "No results found",

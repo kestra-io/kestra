@@ -22,18 +22,11 @@
     </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
+    import {ref} from "vue"
 
-</script>
+    const collapsed = ref(false);
 
-<script>
-    export default {
-        data() {
-            return {
-                collapsed: false,
-            }
-        }
-    };
 </script>
 
 <style lang="scss" scoped>
@@ -60,6 +53,10 @@
         > div > ul > li > span:first-child {
             font-size: 12px;
         }
+    }
+
+    .main-container {
+        max-width: 100%;
     }
 
     .content {

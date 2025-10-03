@@ -9,6 +9,19 @@
 
     <Wrapper>
         <Block :heading="$t('settings.blocks.configuration.label')">
+            <template #actions>
+                <el-tooltip 
+                    :content="$t('settings.blocks.reset_section_to_defaults')" 
+                    placement="top"
+                >
+                    <el-button
+                        v-if="!hasDefaultMainConfig"
+                        :icon="Reload"
+                        circle
+                        @click="restoreDefaultConfigurations"
+                    />
+                </el-tooltip>
+            </template>
             <template #content>
                 <Row>
                     <Column v-if="allowDefaultNamespace" :label="$t('settings.blocks.configuration.fields.default_namespace')">
@@ -105,6 +118,19 @@
         </Block>
 
         <Block :heading="$t('settings.blocks.theme.label')">
+            <template #actions>
+                <el-tooltip 
+                    :content="$t('settings.blocks.reset_section_to_defaults')" 
+                    placement="top"
+                >
+                    <el-button
+                        v-if="!hasDefaultPreferences"
+                        :icon="Reload"
+                        circle
+                        @click="restoreDefaultPreferences"
+                    />
+                </el-tooltip>
+            </template>
             <template #content>
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.theme')">
@@ -195,6 +221,19 @@
         </Block>
 
         <Block :heading="$t('settings.blocks.localization.label')" :note="$t('settings.blocks.localization.note')">
+            <template #actions>
+                <el-tooltip 
+                    :content="$t('settings.blocks.reset_section_to_defaults')" 
+                    placement="top"
+                >
+                    <el-button
+                        v-if="!hasDefaultLocalization"
+                        :icon="Reload"
+                        circle
+                        @click="restoreDefaultLocalization"
+                    />
+                </el-tooltip>
+            </template>
             <template #content>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.language')">
@@ -253,6 +292,7 @@
 </template>
 
 <script setup>
+    import Reload from "vue-material-design-icons/Reload.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import {executeFlowBehaviours} from "../../utils/constants";
 </script>
@@ -279,15 +319,13 @@
     import {useFlowStore} from "../../stores/flow"
     import {defaultNamespace} from "../../composables/useNamespaces";
 
-    export const DATE_FORMAT_STORAGE_KEY = "dateFormat";
-    export const TIMEZONE_STORAGE_KEY = "timezone";
+
     export default {
         mixins: [RouteContext],
         components: {
             NamespaceSelect,
             LogLevelSelector,
             TopNavBar,
-
             Wrapper,
             Block,
             Row,
@@ -302,6 +340,35 @@
         data() {
             return {
                 hasUnsavedChanges: false,
+                hasDefaultMainConfig: undefined,
+                hasDefaultPreferences: undefined,
+                hasDefaultLocalization: undefined,
+                defaultMainConfig: {
+                    defaultNamespace: undefined,
+                    defaultLogLevel: "INFO",
+                    logDisplay: logDisplayTypes.DEFAULT,
+                    editorType: "YAML",
+                    executeFlowBehaviour: "same tab",
+                    executeDefaultTab: "gantt",
+                    flowDefaultTab: "overview",
+                    editorPlayground: true,
+                    autoRefreshInterval: 10
+                },
+                defaultPreferences: {
+                    theme: "light",
+                    logsFontSize: 12,
+                    editorFontFamily: "'Source Code Pro', monospace",
+                    editorFontSize: 12,
+                    autofoldTextEditor: false,
+                    hoverTextEditor: false,
+                    envName: undefined,
+                    envColor: undefined
+                },
+                defaultLocalization:{
+                    lang: "en",
+                    timezone: this.$moment.tz.guess(),
+                    dateFormat: "llll"
+                },
                 originalSettings: {},
                 pendingSettings: {
                     defaultNamespace: undefined,
@@ -325,8 +392,8 @@
                     logsFontSize: undefined
                 },
                 settingsKeyMapping: {
-                    dateFormat: DATE_FORMAT_STORAGE_KEY,
-                    timezone: TIMEZONE_STORAGE_KEY,
+                    dateFormat: storageKeys.DATE_FORMAT_STORAGE_KEY,
+                    timezone: storageKeys.TIMEZONE_STORAGE_KEY,
                     executeFlowBehaviour: storageKeys.EXECUTE_FLOW_BEHAVIOUR,
                 },
                 zonesWithOffset: this.$moment.tz.names().map((zone) => {
@@ -349,8 +416,8 @@
             this.pendingSettings.lang = Utils.getLang();
             this.pendingSettings.theme = Utils.getTheme();
 
-            this.pendingSettings.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
-            this.pendingSettings.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
+            this.pendingSettings.dateFormat = localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) || "llll";
+            this.pendingSettings.timezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.pendingSettings.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
             this.pendingSettings.hoverTextEditor = localStorage.getItem("hoverTextEditor") === "true";
             this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
@@ -366,10 +433,13 @@
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
             this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10;
             this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
+
+            this.checkDefaultStates();
         },
         methods: {
             checkForChanges() {
                 this.hasUnsavedChanges = JSON.stringify(this.pendingSettings) !== JSON.stringify(this.originalSettings);
+                this.checkDefaultStates();
             },
             async confirmNavigation() {
                 if (!this.hasUnsavedChanges) return true;
@@ -394,6 +464,57 @@
                     this.hasUnsavedChanges = false;
                     return true;
                 }
+            },
+            isObjectEqual(obj1, obj2, keys) {
+                return keys.every(key => {
+                    const val1 = obj1[key];
+                    const val2 = obj2[key];
+
+                    if (val1 == null && val2 == null) return true;
+                    if (val1 == null || val2 == null) return false;
+
+                    return String(val1) === String(val2);
+                });
+            },
+            checkDefaultStates() {
+                this.hasDefaultMainConfig = this.isObjectEqual(
+                    this.pendingSettings, 
+                    this.defaultMainConfig, 
+                    Object.keys(this.defaultMainConfig)
+                );
+                
+                this.hasDefaultPreferences = this.isObjectEqual(
+                    this.pendingSettings, 
+                    this.defaultPreferences, 
+                    Object.keys(this.defaultPreferences)
+                );
+
+                this.hasDefaultLocalization=this.isObjectEqual(
+                    this.pendingSettings,
+                    this.defaultLocalization,
+                    Object.keys(this.defaultLocalization)
+                );
+            },
+            restoreDefaultLocalization(){
+                Object.keys(this.defaultLocalization).forEach(key => {
+                    this.pendingSettings[key] = this.defaultLocalization[key];
+                });
+                
+                this.saveAllSettings();
+            },
+            restoreDefaultConfigurations(){
+                Object.keys(this.defaultMainConfig).forEach(key => {
+                    this.pendingSettings[key] = this.defaultMainConfig[key];
+                });
+                
+                this.saveAllSettings();
+            },
+            restoreDefaultPreferences(){
+                Object.keys(this.defaultPreferences).forEach(key => {
+                    this.pendingSettings[key] = this.defaultPreferences[key];
+                });
+                
+                this.saveAllSettings();
             },
             handleBeforeUnload(e) {
                 if (this.hasUnsavedChanges) {
@@ -584,7 +705,7 @@
 
                 this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
                 this.hasUnsavedChanges = false;
-
+                this.checkDefaultStates();
                 if(refreshWhenSaved){
                     document.location.assign(document.location.href)
                 }
@@ -626,6 +747,7 @@
                     {value: "it", text: "Italian"},
                     {value: "es", text: "Spanish"},
                     {value: "pt", text: "Portuguese"},
+                    {value: "pt_BR", text: "Portuguese (Brazil)"},
                     {value: "ru", text: "Russian"},
                     {value: "zh_CN", text: "Chinese"},
                     {value: "ja", text: "Japanese"},

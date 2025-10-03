@@ -1,6 +1,6 @@
-import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion.ts";
-import {FilterLanguage} from "../filterLanguage.ts";
-import {useFlowStore} from "../../../../../stores/flow.ts";
+import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion";
+import {FilterLanguage} from "../filterLanguage";
+import {useFlowStore} from "../../../../../stores/flow";
 
 const flowMetricFilterKeys: Record<string, FilterKeyCompletions> = {
     task: new FilterKeyCompletions(
@@ -19,7 +19,7 @@ const flowMetricFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     aggregation: new FilterKeyCompletions(
         [Comparators.EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.AGGREGATIONS
+        async (hardcodedValues) => hardcodedValues.AGGREGATIONS
     ),
     startDate: new FilterKeyCompletions(
         [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.GREATER_THAN, Comparators.LESS_THAN_OR_EQUAL_TO, Comparators.LESS_THAN, Comparators.EQUALS, Comparators.NOT_EQUALS],

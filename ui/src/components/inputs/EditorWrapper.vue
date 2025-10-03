@@ -4,7 +4,7 @@
             id="editorWrapper"
             ref="editorRefElement"
             class="flex-1"
-            :modelValue="draftSource === undefined ? source : draftSource"
+            :modelValue="hasDraft ? draftSource : source"
             :schemaType="isCurrentTabFlow ? 'flow': undefined"
             :lang="extension === undefined ? 'yaml' : undefined"
             :extension="extension"
@@ -19,14 +19,14 @@
             @execute="execute"
             @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
             @mouse-leave="() => highlightHoveredTask(-1)"
-            :original="draftSource === undefined ? undefined : source"
+            :original="hasDraft ? source : undefined"
             :diffSideBySide="false"
         >
             <template #absolute>
                 <AITriggerButton
                     :show="isCurrentTabFlow"
-                    :opened="aiAgentOpened"
-                    @click="draftSource = undefined; aiAgentOpened = true"
+                    :opened="aiCopilotOpened"
+                    @click="draftSource = undefined; aiCopilotOpened = true"
                 />
                 <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
             </template>
@@ -35,17 +35,17 @@
             </template>
         </Editor>
         <Transition name="el-zoom-in-center">
-            <AiAgent
-                v-if="aiAgentOpened"
+            <AiCopilot
+                v-if="aiCopilotOpened"
                 class="position-absolute prompt"
-                @close="aiAgentOpened = false"
+                @close="aiCopilotOpened = false"
                 :flow="editorContent"
                 :conversationId="conversationId"
-                @generated-yaml="(yaml: string) => {draftSource = yaml; aiAgentOpened = false}"
+                @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
             />
         </Transition>
         <AcceptDecline
-            v-if="draftSource !== undefined"
+            v-if="hasDraft"
             @accept="acceptDraft"
             @reject="declineDraft"
         />
@@ -56,7 +56,7 @@
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useRoute, useRouter} from "vue-router";
 
-    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys.ts";
+    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
     import {EditorTabProps, useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
@@ -68,11 +68,11 @@
 
     import Editor from "./Editor.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import AiAgent from "../ai/AiAgent.vue";
+    import AiCopilot from "../ai/AiCopilot.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
-    import Utils from "../../utils/utils.ts";
+    import Utils from "../../utils/utils";
 
     const route = useRoute();
     const router = useRouter();
@@ -88,10 +88,10 @@
             event.stopPropagation();
             event.stopImmediatePropagation();
             draftSource.value = undefined;
-            aiAgentOpened.value = !aiAgentOpened.value;
+            aiCopilotOpened.value = !aiCopilotOpened.value;
         }
     };
-    const aiAgentOpened = ref(false);
+    const aiCopilotOpened = ref(false);
     const draftSource = ref<string | undefined>(undefined);
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
@@ -127,6 +127,10 @@
         loadFile();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
+        if(route.query.ai === "open") {
+            draftSource.value = undefined;
+            aiCopilotOpened.value = true;
+        }
     });
 
     onActivated(() => {
@@ -168,7 +172,7 @@
             return;
         }
         if (isCurrentTabFlow.value) {
-            if (draftSource.value !== undefined) {
+            if (hasDraft.value) {
                 draftSource.value = newValue;
             } else {
                 flowStore.flowYaml = newValue;
@@ -221,7 +225,7 @@
                     , null as any);
 
         let result = selectedElement ? getElementFromRange(selectedElement) : undefined;
-        result = {...result, hash: hash.value};
+        result = {...result, hash: hash.value, forceRefresh: true};
         pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
     };
 
@@ -289,8 +293,10 @@
 
     function declineDraft() {
         draftSource.value = undefined;
-        aiAgentOpened.value = true;
+        aiCopilotOpened.value = true;
     }
+
+    const hasDraft = computed(() => draftSource.value !== undefined);
 
     const {
         playgroundStore,

@@ -56,7 +56,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
      *
      * @return the {@link DefaultPluginRegistry}.
      */
-    public static DefaultPluginRegistry getOrCreate() {
+    public synchronized static DefaultPluginRegistry getOrCreate() {
         DefaultPluginRegistry instance = LazyHolder.INSTANCE;
         if (!instance.isInitialized()) {
             instance.init();
@@ -74,7 +74,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
     /**
      * Initializes the registry by loading all core plugins.
      */
-    protected void init() {
+    protected synchronized void init() {
         if (initialized.compareAndSet(false, true)) {
             register(scanner.scan());
         }
@@ -200,7 +200,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
         if (existing != null && existing.crc32() == plugin.crc32()) {
             return; // same plugin already registered
         }
-        
+
         lock.lock();
         try {
             if (existing != null) {
@@ -212,7 +212,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
             lock.unlock();
         }
     }
-    
+
     protected void registerAll(Map<PluginIdentifier, PluginClassAndMetadata<? extends Plugin>> plugins) {
         pluginClassByIdentifier.putAll(plugins);
     }

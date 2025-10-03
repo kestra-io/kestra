@@ -36,7 +36,7 @@ function statsGlobalData(config: Config, uid: string): any {
 
 export async function initPostHogForSetup(config: Config): Promise<void> {
     try {
-        if (!config.isUiAnonymousUsageEnabled) return
+        if (!config.isUiAnonymousUsageEnabled || import.meta.env.MODE === "development") return
 
         const apiStore = useApiStore()
         const apiConfig = await apiStore.loadConfig()

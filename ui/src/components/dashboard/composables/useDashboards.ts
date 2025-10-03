@@ -8,6 +8,8 @@ import {useDashboardStore} from "../../../stores/dashboard";
 import {useI18n} from "vue-i18n";
 
 import {decodeSearchParams} from "../../filter/utils/helpers";
+import {storageKeys} from "../../../utils/constants"
+import {Duration} from "@js-joda/core";
 
 export type Dashboard = {
     id: string;
@@ -138,8 +140,11 @@ export function useChartGenerator(props: {chart: Chart; filters: FilterObject[];
     async function generate(id: string, pagination?: { pageNumber: number; pageSize: number }) {
         const filters = props.filters.concat(decodeSearchParams(route.query) ?? []);
         const parameters: Parameters = {...pagination, filters: (filters ?? {})};
+        const execStatistics = localStorage.getItem(storageKeys.EXECUTION_STATISTICS)
+        const {startDate, endDate}  = getStartAndEndDate(execStatistics ?? "")
 
         if (!props.showDefault) {
+            Object.assign(parameters, {startDate, endDate});
             data.value = await dashboardStore.generate(id, props.chart.id, parameters);
         } else {
             if (!props.chart.content){
@@ -158,4 +163,21 @@ export function useChartGenerator(props: {chart: Chart; filters: FilterObject[];
     });
 
     return {percentageShown, EMPTY_TEXT, data, generate};
+}
+
+
+function getStartAndEndDate(durationStr: string, start: Date = new Date()) {
+  // Parse ISO 8601 duration string like "PT12H"
+  const duration = Duration.parse(durationStr);
+
+  // Convert JS Date -> Instant
+  const startInstant = start.getTime(); // milliseconds since epoch
+
+  // Add duration
+  const endInstant = startInstant + duration.toMillis();
+
+  return {
+    startDate: new Date(startInstant),
+    endDate: new Date(endInstant)
+  };
 }

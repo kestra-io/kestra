@@ -85,6 +85,18 @@
                         </el-select>
                     </Column>
 
+                    <!-- Execution Stats -->
+                    <Column :label="$t('execution statistics')">
+                        <el-select :modelValue="pendingSettings.executionStatistics" @update:model-value="onExecutionStatChange">
+                            <el-option
+                                v-for="item in executionsDefaultStatsOptions"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value"
+                            /> 
+                        </el-select>
+                    </Column>
+
                     <Column :label="$t('settings.blocks.configuration.fields.flow_default_tab')">
                         <el-select :modelValue="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
                             <el-option
@@ -318,6 +330,7 @@
     import {useAuthStore} from "override/stores/auth"
     import {useFlowStore} from "../../stores/flow"
     import {defaultNamespace} from "../../composables/useNamespaces";
+    import {useValues} from "../filter/composables/useValues";
 
 
     export default {
@@ -433,7 +446,7 @@
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
             this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10;
             this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
-
+            this.pendingSettings.executionStatistics = localStorage.getItem(storageKeys.EXECUTION_STATISTICS) || "last 7 days"
             this.checkDefaultStates();
         },
         methods: {
@@ -550,6 +563,11 @@
             onEditorTypeChange(value) {
                 this.pendingSettings.editorType = value;
                 localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, value);
+                this.checkForChanges();
+            },
+            onExecutionStatChange(value){
+                this.pendingSettings.executionStatistics = value;
+                localStorage.setItem(storageKeys.EXECUTION_STATISTICS, value);
                 this.checkForChanges();
             },
             onLevelChange(value) {
@@ -821,6 +839,10 @@
                         text: "SimSun"
                     }
                 ]
+            },
+            executionsDefaultStatsOptions(){
+                const {VALUES} = useValues()
+                return VALUES.RELATIVE_DATE
             },
             executeDefaultTabOptions() {
                 return [

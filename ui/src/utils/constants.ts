@@ -34,6 +34,7 @@ export const storageKeys = {
     AUTO_REFRESH_INTERVAL: "autoRefreshInterval",
     DATE_FORMAT_STORAGE_KEY: "dateFormat",
     TIMEZONE_STORAGE_KEY: "timezone",
+    EXECUTION_STATISTICS:"Execution Statistics"
 }
 
 export const executeFlowBehaviours = {

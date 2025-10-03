@@ -1,5 +1,5 @@
 <template>
-    <nav data-component="TopBarNav" class="d-flex w-100 gap-3 top-bar">
+    <nav class="d-flex w-100 gap-3 top-bar">
         <div class="d-flex flex-grow-1 flex-shrink-1 overflow-hidden top-title align-items-center gap-2">
             <SidebarToggleButton 
                 v-if="layoutStore.sideMenuCollapsed"

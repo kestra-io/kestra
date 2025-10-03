@@ -1,7 +1,6 @@
 name: Main Workflow
-# FIXME remove pr
+
 on:
-  pull_request:
   push:
     branches:
       - releases/*

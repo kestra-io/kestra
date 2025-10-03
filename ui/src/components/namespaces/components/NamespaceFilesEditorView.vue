@@ -620,7 +620,7 @@
     const flowParsed = computed(() => flowStore.flowParsed);
 
     const saveUsingKeyboard = (e: KeyboardEvent) => {
-        if (e.ctrlKey && e.key === "s") {
+        if ((e.ctrlKey || e.metaKey) && e.key === "s") {
             e.preventDefault();
             return save();
         }

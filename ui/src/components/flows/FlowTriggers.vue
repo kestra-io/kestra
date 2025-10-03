@@ -1,6 +1,5 @@
 <template>
     <KestraFilter
-        v-if="triggersWithType.length"
         prefix="flow_triggers"
         readOnly
         :buttons="{
@@ -398,10 +397,9 @@
                 return this.authStore.user?.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flowStore.flow.namespace);
             },
             loadData() {
-                if(!this.triggersWithType.length) return;
-
+                const size = this.triggersWithType.length || 25;
                 this.triggerStore
-                    .find({namespace: this.flowStore.flow.namespace, flowId: this.flowStore.flow.id, size: this.triggersWithType.length, q: this.query})
+                    .find({namespace: this.flowStore.flow.namespace, flowId: this.flowStore.flow.id, size: size, q: this.query})
                     .then(triggers => this.triggers = triggers.results);
             },
             setBackfillModal(trigger, bool) {

@@ -5,11 +5,13 @@ import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys";
 import {TopologyClickParams} from "../no-code/utils/types";
 import {Panel} from "../MultiPanelTabs.vue";
 import {useFlowStore} from "../../stores/flow";
+import {usePluginsStore} from "../../stores/plugins";
+import {useNoCodePanels} from "./useNoCodePanels";
 
 export function useTopologyPanels(
     panels: Ref<Panel[]>,
-    openAddTaskTab: any,
-    openEditTaskTab: any,
+    openAddTaskTab: ReturnType<typeof useNoCodePanels>["openAddTaskTab"],
+    openEditTaskTab: ReturnType<typeof useNoCodePanels>["openEditTaskTab"],
 ) {
     const topologyClick = ref<TopologyClickParams | undefined>(undefined);
     provide(TOPOLOGY_CLICK_INJECTION_KEY, topologyClick);
@@ -29,6 +31,7 @@ export function useTopologyPanels(
     }
 
     const flowStore = useFlowStore();
+    const pluginsStore = usePluginsStore();
 
     watch(topologyClick, (value: TopologyClickParams | undefined) => {
         if (!value) return;
@@ -63,21 +66,23 @@ export function useTopologyPanels(
             return
         }
 
+        const blockSchemaPath = [pluginsStore.flowSchema?.$ref, "properties", params.section, "items"].join("/");
+
         if (action === "create"){
             const refLength = (refPath.toString().length + 2)
                 + (fieldName ? fieldName.length + 1 : 0); // -2 for the [ and ] characters an 1 for the .
 
             const parentPath = path.slice(0, - refLength); // remove the [refPath] part and the fieldName if necessary
-            openAddTaskTab(target, params.section, parentPath, refPath, params.position, undefined, fieldName);
+            openAddTaskTab(target, parentPath, blockSchemaPath, refPath, params.position, undefined, fieldName);
         } else if( action === "edit" && fieldName === undefined) {
             // if the fieldName is undefined, editing a task directly in an array
             // we need the parent path and the refPath
             const parentPath = path.slice(0, - (refPath.toString().length + 2)); // remove the [refPath] part
-            openEditTaskTab(target, params.section, parentPath, refPath);
+            openEditTaskTab(target, parentPath, blockSchemaPath, refPath);
         }else if (action === "edit" && fieldName !== undefined) {
             // if the fieldName is defined, editing a task as a subfield like a dag
             // we only need the path, the rest is part of the path
-            openEditTaskTab(target, params.section, path, undefined);
+            openEditTaskTab(target, path, blockSchemaPath);
         }
         topologyClick.value = undefined; // reset the click
     });

@@ -24,13 +24,7 @@ import jakarta.inject.Inject;
 
 import java.io.*;
 import java.time.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Validated
 @Controller("/api/v1/{tenant}/namespaces/{namespace}/kv")
@@ -51,11 +45,13 @@ public class KVController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get("/inheritance")
-    @Operation(tags = {"KV"}, summary = "List all keys for a namespace and parent namespaces")
-    public List<KVEntry> listKeysWithInheritence(
+    @Operation(tags = {"KV"}, summary = "List all keys for inherited namespaces")
+    public List<KVEntry> listKeysWithInheritance(
         @Parameter(description = "The namespace id") @PathVariable String namespace
     ) throws IOException {
-        List<String> namespaces = NamespaceUtils.asTree(namespace);
+        List<String> namespaces = NamespaceUtils.asTree(namespace).stream()
+            .filter(ns -> !ns.equals(namespace))
+            .toList();
         return getKvEntriesWithInheritance(namespaces);
     }
 

@@ -673,8 +673,11 @@
       "create": {
         "label": "Create",
         "file": "Create file",
+        "file_already_exists": "A file with this name already exists",
+        "file_error": "Error occurred while creating the file",
         "folder": "Create folder",
-        "already_exists": "A file with this name already exists"
+        "folder_already_exists": "A folder with this name already exists",
+        "folder_error": "Error occurred while creating the folder"
       },
       "rename": {
         "label": "Rename",

@@ -225,7 +225,7 @@
                     , null as any);
 
         let result = selectedElement ? getElementFromRange(selectedElement) : undefined;
-        result = {...result, hash: hash.value};
+        result = {...result, hash: hash.value, forceRefresh: true};
         pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
     };
 
@@ -233,7 +233,11 @@
         clearTimeout(timeout.value);
         const editorRef = editorRefElement.value
         if(!editorRef?.$refs.monacoEditor) return
-        const result = await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
+        
+        // Use saveAll() for consistency with the Save button behavior
+        const result = flowStore.isCreating 
+            ? await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
+            : await flowStore.saveAll();
 
         editorStore.setTabDirty({
             path: props.path,

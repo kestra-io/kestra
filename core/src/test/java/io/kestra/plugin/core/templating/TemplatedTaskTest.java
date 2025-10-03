@@ -26,7 +26,7 @@ class TemplatedTaskTest {
         TemplatedTask templatedTask = TemplatedTask.builder()
             .id("template")
             .type(TemplatedTask.class.getName())
-            .spec(new Property<>("""
+            .spec(Property.ofExpression("""
                 type: {{ type }}
                 format: It's alive!"""))
             .build();

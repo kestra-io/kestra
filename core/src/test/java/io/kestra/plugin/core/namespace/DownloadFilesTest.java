@@ -71,7 +71,7 @@ public class DownloadFilesTest {
         // Run the task
         DownloadFiles.Output output = downloadFiles.run(runContext);
         // Verify the file was downloaded successfully
-        assertThat(output.getFiles()).containsKey(weirdFileName);
-        assertThat(output.getFiles().get(weirdFileName)).isNotNull();
+        assertThat(output.getFiles()).containsKey("/a/b/sample.file with weird naming.txt");
+        assertThat(output.getFiles().get("/a/b/sample.file with weird naming.txt")).isNotNull();
     }
 }

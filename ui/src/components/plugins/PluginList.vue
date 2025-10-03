@@ -1,5 +1,5 @@
 <template>
-    <div class="breadcrumb">
+    <div v-if="currentView !== 'documentation' || currentDocumentationPlugin" class="breadcrumb">
         <el-button
             v-if="navigationStack.length > 0"
             class="back-btn"
@@ -57,7 +57,7 @@
         />
     </div>
 
-    <div v-else-if="currentView === 'documentation'" class="doc-view">
+    <div v-else-if="currentView === 'documentation'" :class="['doc-view', {'no-padding': !currentDocumentationPlugin}]">
         <PluginDocumentation 
             :plugin="currentDocumentationPlugin"
         />
@@ -76,7 +76,6 @@
 
     interface Props {
         plugins: any[];
-        initialView?: "list" | "group" | "documentation";
     }
 
     interface NavigationItem {
@@ -94,7 +93,7 @@
     const icons = ref<Record<string, string>>({});
     const navigationStack = ref<NavigationItem[]>([]);
     const currentDocumentationPlugin = ref<any>(null);
-    const currentView = ref<"list" | "group" | "documentation">(props.initialView ?? "list");
+    const currentView = ref<"list" | "group" | "documentation">("documentation");
 
     const getSimpleType = (item: string) => item.split(".").pop() || item;
 
@@ -227,13 +226,17 @@
 
     const hasIcon = (cls: string) => !!icons.value?.[cls];
 
-    const navigateToPluginFromEditor = async (editorPlugin: any) => {
+    const navigateToEditorPlugin = async (editorPlugin: any) => {
         if (!editorPlugin?.cls) return;
 
         const pluginCls = editorPlugin.cls;
         const matchingPlugin = props.plugins.find(plugin => getPluginElements(plugin).includes(pluginCls));
 
-        if (!matchingPlugin) return;
+        if (!matchingPlugin) {
+            currentDocumentationPlugin.value = editorPlugin;
+            currentView.value = "documentation";
+            return;
+        }
 
         navigationStack.value = [];
         currentGroup.value = matchingPlugin.group;
@@ -260,15 +263,15 @@
         return (parts.length >= 3 && possibleSubgroup && possibleSubgroup !== plugin?.group) ? possibleSubgroup : null;
     };
 
-    watch(() => pluginsStore.editorPlugin, (newPlugin) => {
+    watch(() => pluginsStore.editorPlugin, async (newPlugin) => {
         if (newPlugin?.cls) {
-            navigateToPluginFromEditor(newPlugin);
+            await navigateToEditorPlugin(newPlugin);
         } else {
-            currentView.value = props.initialView ?? "list";
+            currentDocumentationPlugin.value = null;
+            currentView.value = "documentation";
             navigationStack.value = [];
             currentGroup.value = "";
             currentSubgroup.value = undefined;
-            currentDocumentationPlugin.value = null;
         }
     }, {immediate: true, deep: true});
 
@@ -365,6 +368,10 @@
     flex: 1;
     overflow-y: auto;
     padding: 1rem;
+
+    &.no-padding {
+        padding-top: 0;
+    }
 }
 
 :deep(.markdown h3){

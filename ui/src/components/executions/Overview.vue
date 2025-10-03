@@ -152,7 +152,6 @@
         <div v-if="execution.trigger" class="my-5">
             <h5>{{ $t("trigger") }}</h5>
             <TriggerCascader
-                id="triggers"
                 :options="transform({
                     ...execution.trigger,
                     ...(execution.trigger.trigger ? execution.trigger.trigger : {})
@@ -165,7 +164,6 @@
         <div v-if="execution.inputs" class="my-5">
             <h5>{{ $t("inputs") }}</h5>
             <KestraCascader
-                id="inputs"
                 :options="transform(execution.inputs)"
                 :execution
                 class="overflow-auto"
@@ -175,7 +173,6 @@
         <div v-if="execution.variables" class="my-5">
             <h5>{{ $t("variables") }}</h5>
             <KestraCascader
-                id="variables"
                 :options="transform(execution.variables)"
                 :execution
                 class="overflow-auto"
@@ -185,7 +182,6 @@
         <div v-if="execution.outputs" class="my-5">
             <h5>{{ $t("flow_outputs") }}</h5>
             <KestraCascader
-                id="outputs"
                 :options="transform(execution.outputs)"
                 :execution
                 class="overflow-auto"

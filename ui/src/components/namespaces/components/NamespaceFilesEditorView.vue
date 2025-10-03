@@ -884,10 +884,16 @@
                     content: "",
                 });
             } else {
-                await namespacesStore.createDirectory({
-                    namespace: props.namespace ?? route.params.namespace?.toString(),
-                    path,
-                });
+                // Check if folder already exists before creating
+                try {
+                    await namespacesStore.readDirectory({namespace: props.namespace ?? route.params.namespace?.toString(), path: path});
+
+                    // If we reach here, the directory already exists
+                    toast.error(t("namespace files.create.folder_already_exists"), "error");
+                    return;
+                } catch {/* Directory doesn't exist, proceed with creation */}
+
+                await namespacesStore.createDirectory({namespace: props.namespace ?? route.params.namespace?.toString(), path});
             }
             dialog.value.visible = false;
             editorStore.refreshTree();
@@ -900,7 +906,7 @@
             }
         } catch (error) {
             console.error(error);
-            toast.error(t("namespace files.create.error"), "error");
+            toast.error(t(`namespace files.create.${dialog.value.type === "file" ? "file" : "folder"}_error`), "error");
         }
     };
 

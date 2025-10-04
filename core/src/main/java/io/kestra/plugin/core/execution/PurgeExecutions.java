@@ -104,11 +104,11 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
 
     @Schema(
         title = "The size of the bulk delete",
-        description = "For performance, deletion is made by batch of by default 500 executions/logs/metrics."
+        description = "For performance, deletion is made by batch of by default 100 executions/logs/metrics."
     )
     @Builder.Default
     @NotNull
-    private Property<Integer> batchSize = Property.ofValue(500);
+    private Property<Integer> batchSize = Property.ofValue(100);
 
     @Override
     public PurgeExecutions.Output run(RunContext runContext) throws Exception {

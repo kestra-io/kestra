@@ -19,7 +19,6 @@
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
         "prepare": "cd .. && husky ui/.husky && rm -f .git/hooks/*",
-        "notes": "node ./scripts/ci/generateReleaseNotes",
         "postinstall": "patch-package"
     },
     "dependencies": {

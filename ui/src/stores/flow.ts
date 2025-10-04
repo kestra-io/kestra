@@ -837,10 +837,8 @@ function deleteFlowAndDependencies() {
     })
 
     const flowHaveTasks = computed((): boolean => {
-        if (isFlow.value) {
-            const flowVar = isCreating.value ? flow.value?.source : flowYaml.value;
-            return flowVar ? YAML_UTILS.flowHaveTasks(flowVar) : false;
-        } else return false;
+        const flowVar = isCreating.value ? flow.value?.source : flowYaml.value;
+        return flowVar ? YAML_UTILS.flowHaveTasks(flowVar) : false;
     })
 
     const nextRevision = computed((): number => {

@@ -6,7 +6,7 @@ import {EditorTabProps, useEditorStore} from "../../stores/editor";
 
 export const CODE_PREFIX = "code"
 
-export function getTabFromCodeTab(tab: EditorTabProps){
+export function getTabFromFilesTab(tab: EditorTabProps){
     return {
         value: `${CODE_PREFIX}-${tab.path}`,
         button: {
@@ -18,7 +18,7 @@ export function getTabFromCodeTab(tab: EditorTabProps){
     }
 }
 
-export function useInitialCodeTabs(){
+export function useInitialFilesTabs(){
     const editorStore = useEditorStore()
 
     function setupInitialCodeTab(tab: string){
@@ -34,13 +34,13 @@ export function useInitialCodeTabs(){
             dirty: false
         }
         editorStore.openTab(editorTab)
-        return getTabFromCodeTab(editorTab)
+        return getTabFromFilesTab(editorTab)
     }
 
     return {setupInitialCodeTab}
 }
 
-export function useCodePanels(panels: Ref<Panel[]>) {
+export function useFilesPanels(panels: Ref<Panel[]>) {
     const editorStore = useEditorStore()
 
     const codeEditorTabs = computed(() => editorStore.tabs.filter((t) => !t.flow))
@@ -52,7 +52,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
     const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, p) => acc + (p.size ?? 0), 0) * 100 / panels.value.length))
 
     function getPanelsFromCodeEditorTabs(codeTabs: EditorTabProps[]){
-        const tabs = codeTabs.map(getTabFromCodeTab)
+        const tabs = codeTabs.map(getTabFromFilesTab)
 
         return {
             activeTab: tabs[0],

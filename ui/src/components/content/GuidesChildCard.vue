@@ -1,12 +1,9 @@
 <template>
-    <ChildCard :pageUrl="pageUrl" />
+    <ChildCard :pageUrl />
 </template>
 
 <script setup lang="ts">
-    import {defineProps} from "vue";
     import ChildCard from "./ChildCard.vue";
 
-    defineProps<{
-        pageUrl?: string;
-    }>();
+    defineProps<{ pageUrl?: string }>();
 </script>

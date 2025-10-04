@@ -58,7 +58,7 @@ import java.util.List;
 public class Publish extends Task implements RunnableTask<VoidOutput> {
 
     @Schema(
-        title = "List of metrics to publish."
+        title = "List of metrics to publish"
     )
     private Property<List<AbstractMetric>> metrics;
 

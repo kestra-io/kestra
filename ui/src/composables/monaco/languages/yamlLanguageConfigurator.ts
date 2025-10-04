@@ -1,4 +1,3 @@
-import {Store} from "vuex";
 import {useI18n} from "vue-i18n";
 import {configureMonacoYaml} from "monaco-yaml";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
@@ -6,7 +5,7 @@ import {yamlSchemas} from "override/utils/yamlSchemas";
 import {StandaloneServices} from "monaco-editor/esm/vs/editor/standalone/browser/standaloneServices";
 import {ILanguageFeaturesService} from "monaco-editor/esm/vs/editor/common/services/languageFeatures";
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator";
-import {YamlAutoCompletion} from "../../../services/autoCompletionProvider.ts";
+import {YamlAutoCompletion} from "../../../services/autoCompletionProvider";
 import RegexProvider from "../../../utils/regex";
 import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import IPosition = monaco.IPosition;
@@ -20,8 +19,8 @@ import {
     registerFunctionParametersAutoCompletion,
     registerNestedValueAutoCompletion,
     registerPebbleAutocompletion
-} from "./pebbleLanguageConfigurator.ts";
-import {usePluginsStore} from "../../../stores/plugins.ts";
+} from "./pebbleLanguageConfigurator";
+import {usePluginsStore} from "../../../stores/plugins";
 import {languages} from "monaco-editor/esm/vs/editor/editor.api";
 import CompletionItem = languages.CompletionItem;
 
@@ -118,7 +117,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         };
     }
 
-    configureAutoCompletion(_: ReturnType<typeof useI18n>["t"], __: Store<Record<string, any>>, ___: monaco.editor.ICodeEditor | undefined) {
+    configureAutoCompletion(_: ReturnType<typeof useI18n>["t"], ___: monaco.editor.ICodeEditor | undefined) {
         const autoCompletionProviders: IDisposable[] = [];
         const yamlAutoCompletion = this._yamlAutoCompletion;
 

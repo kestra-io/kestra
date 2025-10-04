@@ -29,7 +29,7 @@
                     </el-button-group>
                 </div>
 
-                <crud class="mt-3" permission="FLOW" :detail="{namespace: route.params.namespace, flowId: route.params.id, revision: revisionNumber(revisionLeftIndex)}" />
+                <Crud class="mt-3" permission="FLOW" :detail="{namespace: route.params.namespace, flowId: route.params.id, revision: revisionNumber(revisionLeftIndex)}" />
             </el-col>
             <el-col :span="12" v-if="revisionRightIndex !== undefined">
                 <div class="revision-select mb-3">
@@ -51,35 +51,35 @@
                     </el-button-group>
                 </div>
 
-                <crud class="mt-3" permission="FLOW" :detail="{namespace: route.params.namespace, flowId: route.params.id, revision: revisionNumber(revisionRightIndex)}" />
+                <Crud class="mt-3" permission="FLOW" :detail="{namespace: route.params.namespace, flowId: route.params.id, revision: revisionNumber(revisionRightIndex)}" />
             </el-col>
         </el-row>
 
-        <editor
+        <Editor
             class="mt-1"
             v-if="revisionLeftText && revisionRightText && !isLoadingRevisions"
-            :diff-side-by-side="sideBySide"
-            :model-value="revisionRightText"
+            :diffSideBySide="sideBySide"
+            :modelValue="revisionRightText"
             :original="revisionLeftText"
-            read-only
+            readOnly
             lang="yaml"
-            :show-doc="false"
+            :showDoc="false"
         />
 
         <div v-if="isLoadingRevisions" class="text-center p-4">
             <span class="ml-2">Loading revisions...</span>
         </div>
 
-        <drawer v-if="isModalOpen" v-model="isModalOpen">
+        <Drawer v-if="isModalOpen" v-model="isModalOpen">
             <template #header>
                 <h5>{{ t("revision") + `: ` + revision }}</h5>
             </template>
 
-            <editor v-model="revisionYaml" lang="yaml" :full-height="false" :input="true" :navbar="false" :read-only="true" />
-        </drawer>
+            <Editor v-model="revisionYaml" lang="yaml" :fullHeight="false" :input="true" :navbar="false" :readOnly="true" />
+        </Drawer>
     </div>
     <div v-else>
-        <el-alert class="mb-0" show-icon :closable="false">
+        <el-alert class="mb-0" showIcon :closable="false">
             {{ t('no revisions found') }}
         </el-alert>
     </div>

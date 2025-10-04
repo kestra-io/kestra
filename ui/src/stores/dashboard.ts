@@ -1,3 +1,4 @@
+import {ref} from "vue";
 import {defineStore} from "pinia";
 
 import type {AxiosRequestConfig, AxiosResponse} from "axios";
@@ -17,82 +18,79 @@ import {apiUrl} from "override/utils/route";
 import Utils from "../utils/utils";
 
 import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/composables/useDashboards";
+import {useAxios} from "../utils/axios";
 
-export interface State {
-    dashboard?: Dashboard;
-    chartErrors: string[];
-}
 
-export const useDashboardStore = defineStore("dashboard", {
-    state: (): State => ({
-        dashboard: undefined,
-        chartErrors: [],
-    }),
+export const useDashboardStore = defineStore("dashboard", () => {
 
-    actions: {
-        setDashboard(dashboard: Dashboard) {
-            this.dashboard = dashboard;
-        },
+        const dashboard = ref<Dashboard>();
+        const chartErrors = ref<string[]>([]);
 
-        setChartErrors(errors: string[]) {
-            this.chartErrors = errors;
-        },
+        const axios = useAxios();
 
-        async list(options: Record<string, any>) {
+        function setDashboard(dashboard: Dashboard) {
+            dashboard.value = dashboard;
+        }
+
+        function setChartErrors(errors: string[]) {
+            chartErrors.value = errors;
+        }
+
+        async function list(options: Record<string, any>) {
             const {sort, ...params} = options;
-            const response = await this.$http.get(`${apiUrl(this.vuexStore)}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params});
+            const response = await axios.get(`${apiUrl()}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params});
 
             return response.data;
-        },
+        }
 
-        async load(id: Dashboard["id"]) {
-            const response = await this.$http.get(`${apiUrl(this.vuexStore)}/dashboards/${id}`, {validateStatus});
+        async function load(id: Dashboard["id"]) {
+            const response = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus});
             let dashboard;
 
             if (response.status === 200) dashboard = response.data;
             else dashboard = {title: "Default", id};
 
-            this.setDashboard(dashboard);
+            setDashboard(dashboard);
             return dashboard;
-        },
+        }
 
-        async create(source: Dashboard["sourceCode"]) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards`, source, header);
+        async function create(source: Dashboard["sourceCode"]) {
+            const response = await axios.post(`${apiUrl()}/dashboards`, source, header);
             return response.data;
-        },
+        }
 
-        async update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
-            const response = await this.$http.put(`${apiUrl(this.vuexStore)}/dashboards/${id}`, source, header);
+        async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
+            const response = await axios.put(`${apiUrl()}/dashboards/${id}`, source, header);
             return response.data;
-        },
+        }
 
-        async delete(id: Dashboard["id"]) {
-            const response = await this.$http.delete(`${apiUrl(this.vuexStore)}/dashboards/${id}`);
+        async function deleteDashboard(id: Dashboard["id"]) {
+            const response = await axios.delete(`${apiUrl()}/dashboards/${id}`);
             return response.data;
-        },
+        }
 
-        async validateDashboard(source: Dashboard["sourceCode"]) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/validate`, source, header);
+        async function validateDashboard(source: Dashboard["sourceCode"]) {
+            const response = await axios.post(`${apiUrl()}/dashboards/validate`, source, header);
             return response.data;
-        },
+        }
 
-        async generate(id: Dashboard["id"], chartId: Chart["id"], parameters: Parameters) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/${id}/charts/${chartId}`, parameters, {validateStatus});
+        async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: Parameters) {
+            const response = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {validateStatus});
             return response.data;
-        },
+        }
 
-        async validateChart(source: Chart["source"]) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/validate/chart`, source, header);
-            this.setChartErrors(response.data);
+        async function validateChart(source: Chart["source"]) {
+            const response = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, header);
+            setChartErrors(response.data);
             return response.data;
-        },
+        }
 
-        async chartPreview(request: Request) {
-            const response = await this.$http.post(`${apiUrl(this.vuexStore)}/dashboards/charts/preview`, request);
+        async function chartPreview(request: Request) {
+            const response = await axios.post(`${apiUrl()}/dashboards/charts/preview`, request);
             return response.data;
-        },
+        }
 
-        async export(dashboard: Dashboard, chart: Chart, parameters: Parameters) {
+        async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: Parameters) {
             const isDefault = dashboard.id === "default";
 
             const path = isDefault ? "/charts/export/to-csv" : `/${dashboard.id}/charts/${chart.id}/export/to-csv`;
@@ -100,9 +98,25 @@ export const useDashboardStore = defineStore("dashboard", {
 
             const filename = `chart__${chart.id}`;
 
-            return this.$http
-                .post(`${apiUrl(this.vuexStore)}/dashboards${path}`, payload, response)
+            return axios
+                .post(`${apiUrl()}/dashboards${path}`, payload, response)
                 .then((res) => downloadHandler(res, filename));
-        },
-    },
+        }
+
+        return {
+            dashboard,
+            chartErrors,
+            setDashboard,
+            setChartErrors,
+            list,
+            load,
+            create,
+            update,
+            delete: deleteDashboard,
+            validateDashboard,
+            generate,
+            validateChart,
+            chartPreview,
+            export: exportDashboard,
+        };
 });

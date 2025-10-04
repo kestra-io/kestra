@@ -1,8 +1,8 @@
 <template>
-    <Empty v-if="!loading && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
+    <Empty v-if="!isLoading && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
     <el-splitter v-else class="dependencies">
         <el-splitter-panel id="graph" v-bind="PANEL">
-            <div v-loading="loading" ref="container" />
+            <div v-loading="isRendering" ref="container" />
 
             <div class="controls">
                 <el-button
@@ -74,7 +74,7 @@
     const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE ? String(route.params.id) : String(route.params.flowId);
     const TESTING = false; // When true, bypasses API data fetching and uses mock/test data.
 
-    const {getElements, loading, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE, initialNodeID, route.params, TESTING);
+    const {getElements, isLoading, isRendering, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE, initialNodeID, route.params, TESTING);
 </script>
 
 <style scoped lang="scss">

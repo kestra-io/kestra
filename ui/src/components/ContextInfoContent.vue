@@ -19,6 +19,7 @@
         height: 100vh;
         display: flex;
         flex-direction: column;
+        background-color: var(--ks-background-panel);
         .content {
             overflow-y: auto;
         }

@@ -1,16 +1,16 @@
 <template>
     <el-select
-        :model-value="labels"
+        :modelValue="labels"
         @update:model-value="onInput"
         multiple
         filterable
-        allow-create
+        allowCreate
         clearable
-        collapse-tags
-        collapse-tags-tooltip
-        default-first-option
+        collapseTags
+        collapseTagsTooltip
+        defaultFirstOption
         :persistent="false"
-        :reserve-keyword="false"
+        :reserveKeyword="false"
         @focus="hover = true"
         @blur="hover = false"
         :placeholder="hover ? $t('label filter placeholder') : $t('labels')"

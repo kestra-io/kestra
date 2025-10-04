@@ -31,7 +31,7 @@
                                         v-if="data.icon"
                                         :icons="pluginsStore.icons"
                                         :cls="icons[data.taskId]"
-                                        only-icon
+                                        onlyIcon
                                     />
                                     <span :class="{'ms-3': data.icon}">{{
                                         data.label
@@ -73,13 +73,13 @@
                                 </template>
 
                                 <div class="d-flex flex-column p-3 debug">
-                                    <editor
+                                    <Editor
                                         ref="debugEditor"
-                                        :full-height="false"
-                                        :custom-height="20"
+                                        :fullHeight="false"
+                                        :customHeight="20"
                                         :input="true"
                                         :navbar="false"
-                                        :model-value="computedDebugValue"
+                                        :modelValue="computedDebugValue"
                                         @update:model-value="editorValue = $event"
                                         @confirm="onDebugExpression($event)"
                                         class="w-100"
@@ -97,14 +97,14 @@
                                         {{ t("eval.title") }}
                                     </el-button>
 
-                                    <editor
+                                    <Editor
                                         v-if="debugExpression"
-                                        :read-only="true"
+                                        :readOnly="true"
                                         :input="true"
-                                        :full-height="false"
-                                        :custom-height="20"
+                                        :fullHeight="false"
+                                        :customHeight="20"
                                         :navbar="false"
-                                        :model-value="debugExpression"
+                                        :modelValue="debugExpression"
                                         :lang="isJSON ? 'json' : ''"
                                         class="mt-3"
                                     />
@@ -140,7 +140,7 @@
                         />
                         <SubFlowLink
                             v-if="selectedNode().label === 'executionId'"
-                            :execution-id="selectedNode().value"
+                            :executionId="selectedNode().value"
                         />
                     </div>
                 </div>
@@ -152,7 +152,6 @@
 <script setup lang="ts">
     import {ref, computed, shallowRef, onMounted, watch} from "vue";
     import {ElTree} from "element-plus";
-    import {useStore} from "vuex";
     import {useExecutionsStore} from "../../../stores/executions";
     import {usePluginsStore} from "../../../stores/plugins";
 
@@ -166,22 +165,22 @@
     import SubFlowLink from "../../flows/SubFlowLink.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
+    import {useAxios} from "../../../utils/axios";
 
-    const store = useStore();
     const {t} = useI18n({useScope: "global"});
 
     const editorValue = ref<string>("");
     const debugCollapse = ref<string>("");
     const debugEditor = ref<InstanceType<typeof Editor>>();
     const debugExpression = ref<string>("");
-    
+
     const computedDebugValue = computed(() => {
-        const formatTask = (task) => {
+        const formatTask = (task: string) => {
             if (!task) return "";
             return task.includes("-") ? `["${task}"]` : `.${task}`;
         };
 
-        const formatPath = (path) => {
+        const formatPath = (path: string) => {
             if (!path.includes("-")) return `.${path}`;
 
             const bracketIndex = path.indexOf("[");
@@ -210,13 +209,15 @@
         const taskRunList = [...execution.value?.taskRunList ?? []];
         return taskRunList.find((e) => e.taskId === filter);
     };
+
+    const axios = useAxios();
     const onDebugExpression = (expression: string) => {
         const taskRun = selectedTask();
 
         if (!taskRun) return;
 
-        const URL = `${apiUrl(store)}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
-        store.$http
+        const URL = `${apiUrl()}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
+        axios
             .post(URL, expression, {headers: {"Content-type": "text/plain"}})
             .then((response) => {
                 try {
@@ -290,7 +291,7 @@
         return {label: trim(data.value), regular: true};
     };
 
-    const expandedValue = ref([]);
+    const expandedValue = ref("");
     const selected = ref<string[]>([]);
 
     onMounted(() => {

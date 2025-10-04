@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.Map;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,6 +26,7 @@ import static org.hibernate.validator.internal.util.Contracts.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(rebuildContext = true)
+@Execution(ExecutionMode.SAME_THREAD)
 public class FileSizeFunctionTest {
 
     private static final String NAMESPACE = "my.namespace";
@@ -275,14 +278,14 @@ public class FileSizeFunctionTest {
 
     private URI createNsFile(boolean nsInAuthority) throws IOException {
         String namespace = "io.kestra.tests";
-        String filePath = "file.txt";
+        String filePath = "%sfile.txt".formatted(IdUtils.create());
         storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
         storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 
     private URI createFile() throws IOException {
-        File tempFile = File.createTempFile("file", ".txt");
+        File tempFile = File.createTempFile("%sfile".formatted(IdUtils.create()), ".txt");
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
     }

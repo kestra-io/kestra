@@ -10,6 +10,7 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.SecretInput;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -282,15 +283,15 @@ public final class RunVariables {
 
                 if (flow != null && flow.getInputs() != null) {
                     // we add default inputs value from the flow if not already set, this will be useful for triggers
-                        flow.getInputs().stream()
-                            .filter(input -> input.getDefaults() != null && !inputs.containsKey(input.getId()))
-                            .forEach(input -> {
-                                try {
-                                    inputs.put(input.getId(), FlowInputOutput.resolveDefaultValue(input, propertyContext));
-                                } catch (IllegalVariableEvaluationException e) {
-                                    throw new RuntimeException("Unable to inject default value for input '" + input.getId() + "'", e);
-                                }
-                            });
+                    flow.getInputs().stream()
+                        .filter(input -> input.getDefaults() != null && !inputs.containsKey(input.getId()))
+                        .forEach(input -> {
+                            try {
+                                inputs.put(input.getId(), FlowInputOutput.resolveDefaultValue(input, propertyContext));
+                            } catch (IllegalVariableEvaluationException e) {
+                                // Silent catch, if an input depends on another input, or a variable that is populated at runtime / input filling time, we can't resolve it here.
+                            }
+                        });
                 }
 
                 if (!inputs.isEmpty()) {

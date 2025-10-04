@@ -11,6 +11,10 @@ import lombok.Getter;
 import java.util.ArrayList;
 import java.util.List;
 
+// TODO for 2.0: this class is used as a queue consumer (which should have been the ExecutorInterface instead),
+//  a queue message (only in Kafka) and an execution context.
+//  At some point, we should rename it to ExecutorContext and move it to the executor module,
+//  then rename the ExecutorInterface to just Executor (to be used as a queue consumer)
 @Getter
 @AllArgsConstructor
 public class Executor {

@@ -18,10 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class SystemInformationReportTest {
-    
+
     @Inject
     private SystemInformationReport systemInformationReport;
-    
+
     @Test
     void shouldGetReport() {
         SystemInformationReport.SystemInformationEvent event = systemInformationReport.report(Instant.now());
@@ -32,34 +32,34 @@ class SystemInformationReportTest {
         assertThat(event.host().getHardware().getLogicalProcessorCount()).isNotNull();
         assertThat(event.host().getJvm().getName()).isNotNull();
         assertThat(event.host().getOs().getFamily()).isNotNull();
-        assertThat(event.configurations().getRepositoryType()).isEqualTo("memory");
-        assertThat(event.configurations().getQueueType()).isEqualTo("memory");
+        assertThat(event.configurations().getRepositoryType()).isEqualTo("h2");
+        assertThat(event.configurations().getQueueType()).isEqualTo("h2");
     }
-    
+
     @MockBean(SettingRepositoryInterface.class)
     @Singleton
     static class TestSettingRepository implements SettingRepositoryInterface {
         public static Object UUID = null;
-        
+
         @Override
         public Optional<Setting> findByKey(String key) {
             return Optional.empty();
         }
-        
+
         @Override
         public List<Setting> findAll() {
             return new ArrayList<>();
         }
-        
+
         @Override
         public Setting save(Setting setting) throws ConstraintViolationException {
             if (setting.getKey().equals(Setting.INSTANCE_UUID)) {
                 UUID = setting.getValue();
             }
-            
+
             return setting;
         }
-        
+
         @Override
         public Setting delete(Setting setting) {
             return setting;

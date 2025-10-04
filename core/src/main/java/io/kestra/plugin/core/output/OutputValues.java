@@ -58,7 +58,7 @@ tasks:
 )
 public class OutputValues extends Task implements RunnableTask<OutputValues.Output> {
     @Schema(
-        title = "The templated strings to render.",
+        title = "The templated strings to render",
         description = "These values can be strings, numbers, arrays, or objects. Templated strings (enclosed in {{ }}) will be rendered using the current context."
     )
     private Property<Map<String, Object>> values;
@@ -75,7 +75,7 @@ public class OutputValues extends Task implements RunnableTask<OutputValues.Outp
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The generated values."
+            title = "The generated values"
         )
         private Map<String, Object> values;
     }

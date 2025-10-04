@@ -195,6 +195,7 @@ public class ExecutionController {
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
+    
     @Inject
     private ExecutionStreamingService executionStreamingService;
 
@@ -1306,7 +1307,8 @@ public class ExecutionController {
         if (execution.getState().isTerminated() && !isOnKillCascade) {
             throw new IllegalStateException("Execution is already finished, can't kill it");
         }
-
+        
+        eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
         killQueue.emit(ExecutionKilledExecution
             .builder()
             .state(ExecutionKilled.State.REQUESTED)
@@ -1363,6 +1365,7 @@ public class ExecutionController {
         }
 
         executions.forEach(throwConsumer(execution -> {
+            eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
             killQueue.emit(ExecutionKilledExecution
                 .builder()
                 .state(ExecutionKilled.State.REQUESTED)
@@ -1835,7 +1838,12 @@ public class ExecutionController {
                     streamingService.registerSubscriber(executionId, subscriberId, emitter, flow);
 
                     // Fetch again the execution to avoid race when execution is ended before we are subscribed
-                    execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null);
+                    Execution finalExecution = execution;
+                    execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseGet(() -> {
+                        log.error("Execution not found but we previously found it, this is a bug, executionId: '{}'", executionId);
+                        // return the old execution fallback
+                        return finalExecution;
+                    });
                     if (streamingService.isStopFollow(flow, execution)) {
                         emitter.next(Event.of(execution).id("end"));
                         emitter.complete();
@@ -2298,9 +2306,9 @@ public class ExecutionController {
     @Get(uri = "/{executionId}/flow")
     @Operation(tags = {"Executions"}, summary = "Get flow information's for an execution")
     public FlowForExecution getFlowFromExecutionById(
-        @Parameter(description = "The execution that you want flow information's") String executionId
+        @Parameter(description = "The execution that you want flow informations") String executionId
     ) {
-        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow();
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution %s not found when fetching flow".formatted(executionId)));
 
         return FlowForExecution.of(flowRepository.findByExecutionWithoutAcl(execution));
     }

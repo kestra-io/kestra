@@ -1,9 +1,9 @@
 <template>
-    <side-bar :generate-menu="generateMenu" :show-link="showLink" @menu-collapse="onCollapse">
+    <SideBar v-if="menu" :menu :showLink="showLink" @menu-collapse="onCollapse">
         <template #footer>
-            <auth />    
+            <Auth />    
         </template>
-    </side-bar>
+    </SideBar>
 </template>
 
 <script setup>
@@ -19,7 +19,7 @@
         $emit("menu-collapse", folded);
     }
 
-    const {generateMenu} = useLeftMenu();
+    const {menu} = useLeftMenu();
 </script>
 
 <style lang="scss" scoped>

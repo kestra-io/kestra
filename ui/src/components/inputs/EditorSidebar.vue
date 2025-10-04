@@ -10,7 +10,7 @@
                 :placeholder="$t('namespace files.filter')"
                 filterable
                 remote
-                :remote-method="searchFilesList"
+                :remoteMethod="searchFilesList"
                 class="filter"
             >
                 <template #prefix>
@@ -29,9 +29,9 @@
                     effect="light"
                     :content="$t('namespace files.create.file')"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                     :persistent="false"
-                    popper-class="text-base"
+                    popperClass="text-base"
                 >
                     <el-button class="px-2" @click="toggleDialog(true, 'file')">
                         <FilePlus />
@@ -41,9 +41,9 @@
                     effect="light"
                     :content="$t('namespace files.create.folder')"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                     :persistent="false"
-                    popper-class="text-base"
+                    popperClass="text-base"
                 >
                     <el-button
                         class="px-2"
@@ -91,9 +91,9 @@
                     effect="light"
                     :content="$t('namespace files.export')"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                     :persistent="false"
-                    popper-class="text-base"
+                    popperClass="text-base"
                 >
                     <el-button class="px-2" @click="exportFiles()">
                         <FolderDownloadOutline />
@@ -107,16 +107,15 @@
             lazy
             :load="loadNodes"
             :data="items"
-            highlight-current
-            :allow-drop="
+            highlightCurrent
+            :allowDrop="
                 (_, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'
             "
             draggable
-            node-key="id"
+            nodeKey="id"
             v-loading="items === undefined"
-            :props="{class: 'nodeClass', isLeaf: 'leaf'}"
+            :props="{class: nodeClass, isLeaf: 'leaf'}"
             class="mt-3"
-            @node-click="handleNodeClick"
             @node-drag-start="
                 nodeBeforeDrag = {
                     parent: $event.parent.data.id,
@@ -149,7 +148,7 @@
                     <el-row
                         justify="space-between"
                         class="w-100"
-                        @click="(event) => handleNodeClick(data, node)"
+                        @click="(event) => handleNodeClick(data, node, event)"
                     >
                         <el-col class="w-100">
                             <TypeIcon
@@ -469,6 +468,7 @@
         },
         methods: {
             nodeClass(data) {
+                // Use data.id to match the structure used in handleNodeClick
                 if (this.selectedNodes.includes(data.id)) {
                     return "node selected-tree-node";
                 }
@@ -488,18 +488,35 @@
 
                 return result.filter(i => i.path);
             },
-            handleNodeClick(data, node) {
+            handleNodeClick(data, node, event = null) {
                 const path = this.getPath(node);
                 const flatList = this.flattenTree(this.items);
                 const currentIndex = flatList.findIndex(item => item.path === path);
 
-                if (window.event.shiftKey && this.lastClickedIndex !== null) {
-                    // Handle shift-click for range selection
+                const isCtrl = event && (event.ctrlKey || event.metaKey);
+                const isShift = event && event.shiftKey;
+
+                if (isShift && this.lastClickedIndex !== null) {
                     const start = Math.min(this.lastClickedIndex, currentIndex);
                     const end = Math.max(this.lastClickedIndex, currentIndex);
 
                     this.selectedFiles = flatList.slice(start, end + 1).map(item => item.path);
                     this.selectedNodes = flatList.slice(start, end + 1).map(item => item.id);
+
+                } else if (isCtrl) {
+                    const isSelected = this.selectedNodes.includes(node.data.id);
+                    
+                    if (isSelected) {
+                        // Remove from selection - force reactivity with new arrays
+                        this.selectedFiles = [...this.selectedFiles.filter(file => file !== path)];
+                        this.selectedNodes = [...this.selectedNodes.filter(id => id !== node.data.id)];
+                    } else {
+                        // Add to selection
+                        this.selectedFiles = [...this.selectedFiles, path];
+                        this.selectedNodes = [...this.selectedNodes, node.data.id];
+                    }
+                    this.lastClickedIndex = currentIndex;
+
                 } else {
                     // Handle single-click selection
                     this.selectedFiles = [path];
@@ -887,7 +904,7 @@
                 if (creation) {
                     if ((await this.searchFilesList(path)).includes(path)) {
                         this.$toast().error(
-                            this.$t("namespace files.create.already_exists"),
+                            this.$t("namespace files.create.file_already_exists"),
                         );
                         return;
                     }
@@ -1023,11 +1040,27 @@
                         this.dialog.folder ? `${this.dialog.folder}/` : ""
                     }${fileName}`;
 
-                    await this.namespacesStore.createDirectory({
-                        namespace: this.namespaceId,
-                        path,
-                        name: fileName,
-                    });
+                    // Check if folder already exists (similar to file validation pattern)
+                    try {
+                        await this.namespacesStore.readDirectory({namespace: this.namespaceId, path: path});
+
+                        // If we reach here, the directory already exists
+                        this.$toast().error(this.$t("namespace files.create.folder_already_exists"));
+                        return;
+                    } catch {/* Directory doesn't exist, proceed with creation */}
+
+                    try {
+                        await this.namespacesStore.createDirectory({namespace: this.namespaceId, path, name: fileName});
+                        
+                        // Reset dialog and return early (like file creation does)
+                        this.dialog = {...DIALOG_DEFAULTS};
+                        return;
+                    } catch (error) {
+                        console.error(`Failed to create folder: ${fileName}`, error);
+
+                        this.$toast().error(this.$t("namespace files.create.folder_error"));
+                        return;
+                    }
                 }
 
                 if (!this.dialog.folder) {
@@ -1240,7 +1273,6 @@
 
     .filename {
         font-size: var(--el-font-size-small);
-        color: var(--ks-content-primary);
 
         &:hover {
             color: var(--ks-content-link-hover);
@@ -1288,7 +1320,7 @@
             }
 
             &:hover{
-                background-color: var(--ks-button-background-primary);
+                background: none;
                 border: 1px solid var(--ks-border-active);
             }
         }
@@ -1303,11 +1335,19 @@
 
         .el-tree-node.is-current > .el-tree-node__content {
             min-width: fit-content;
-            border: 1px solid var(--ks-border-active)
+            border: 1px solid var(--ks-border-active);
+            background: var(--ks-button-background-primary);
+
+            .filename {
+                color: var(--ks-button-content-primary);
+            }
         }
         .el-tree-node.selected-tree-node > .el-tree-node__content {
             background-color: var(--ks-button-background-primary);
             min-width: fit-content;
+            .filename {
+                color: var(--ks-button-content-primary);
+            }
         }
     }
 }

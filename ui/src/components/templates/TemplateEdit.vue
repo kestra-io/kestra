@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
+    <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
         <template #additional-right v-if="canSave || canDelete">
             <ul>
                 <li>
@@ -15,10 +15,10 @@
                 </li>
             </ul>
         </template>
-    </top-nav-bar>
-    <templates-deprecated />
+    </TopNavBar>
+    <TemplatesDeprecated />
     <section class="container d-flex flex-fill">
-        <editor @save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange" @cursor="updatePluginDocumentation" class="w-100 h-auto" />
+        <editor @save="save" v-model="content" schemaType="template" lang="yaml" @update:model-value="onChange" @cursor="updatePluginDocumentation" class="w-100 h-auto" />
     </section>
 </template>
 

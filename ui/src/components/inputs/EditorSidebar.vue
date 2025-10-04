@@ -104,8 +104,6 @@
 
         <el-tree
             ref="tree"
-            lazy
-            :load="loadNodes"
             :data="items"
             highlightCurrent
             :allowDrop="
@@ -157,7 +155,7 @@
                                 :folder="!data.leaf"
                                 class="me-2"
                             />
-                            <span class="filename"> {{ data.fileName }}</span>
+                            <span class="filename" :class="{'empty-folder': isFolderEmpty(data)}"> {{ data.fileName }}</span>
                         </el-col>
                     </el-row>
                     <template #dropdown>
@@ -581,54 +579,6 @@
                         const file = {fileName, extension, leaf: true};
                         this.addFile({file});
                     }
-                }
-            },
-            async loadNodes(node, resolve) {
-                if (node.level === 0) {
-                    const payload = {
-                        namespace: this.namespaceId,
-                    };
-                    const items = await this.namespacesStore.readDirectory(payload);
-
-                    this.renderNodes(items);
-                    this.items = this.sorted(this.items);
-                    this.editorStore.treeData = this.items;
-                    resolve(this.items);
-                } else if (node.level >= 1) {
-                    const payload = {
-                        namespace: this.namespaceId,
-                        path: this.getPath(node),
-                    };
-
-                    let children = await this.namespacesStore.readDirectory(payload);
-                    children = this.sorted(
-                        children.map((item) => ({
-                            ...item,
-                            id: Utils.uid(),
-                            leaf: item.type === "File",
-                        })),
-                    );
-
-
-                    const updateChildren = (items, path, newChildren) => {
-                        items.forEach((item, index) => {
-                            if (this.getPath(item.id) === path) {
-                                // Update children if the fileName matches
-                                items[index].children = newChildren;
-                            } else if (Array.isArray(item.children)) {
-                                // Recursively search in children array
-                                updateChildren(item.children, path, newChildren);
-                            }
-                        });
-                    };
-
-                    updateChildren(
-                        this.items,
-                        this.getPath(node.data.id),
-                        children,
-                    );
-
-                    resolve(children);
                 }
             },
             async searchFilesList(value) {
@@ -1144,41 +1094,80 @@
                 this.selectedNodes = [];
                 this.lastClickedIndex = null;
             },
+            isFolderEmpty(data) {
+                return !data.leaf && data.children && data.children.length === 0;
+            },
+            async loadFullTree() {
+                return await this.loadTreeRecursive("");
+            },
+            async loadTreeRecursive(path, concurrency = 5) {
+                try {
+                    const payload = {
+                        namespace: this.namespaceId,
+                        path: path || undefined,
+                    };
+                    const rawItems = await this.namespacesStore.readDirectory(payload);
+
+                    return await this.processItems(rawItems, path, concurrency);
+                } catch (error) {
+                    console.error(`Error loading tree at ${path}:`, error);
+                    return [];
+                }
+            },
+            async processItems(rawItems, path, concurrency) {
+                const files = rawItems.filter(item => item.type === "File");
+                const folders = rawItems.filter(item => item.type === "Directory");
+
+                const processedFiles = files.map(item => ({
+                    id: Utils.uid(),
+                    fileName: item.fileName,
+                    type: item.type,
+                    leaf: true,
+                    children: [],
+                }));
+
+                const processedFolders = [];
+                for (let i = 0; i < folders.length; i += concurrency) {
+                    const batch = folders.slice(i, i + concurrency);
+                    const batchPromises = batch.map(async (folder) => {
+                        try {
+                            const children = await this.loadTreeRecursive(
+                                path ? `${path}/${folder.fileName}` : folder.fileName,
+                                concurrency
+                            );
+                            return {
+                                id: Utils.uid(),
+                                fileName: folder.fileName,
+                                type: folder.type,
+                                leaf: false,
+                                children,
+                            };
+                        } catch (folderError) {
+                            console.warn(`Failed to load folder ${folder.fileName}:`, folderError);
+                            return {
+                                id: Utils.uid(),
+                                fileName: folder.fileName,
+                                type: folder.type,
+                                leaf: false,
+                                children: [],
+                            };
+                        }
+                    });
+                    const batchResults = await Promise.allSettled(batchPromises);
+                    const successful = batchResults
+                        .filter(result => result.status === "fulfilled")
+                        .map(result => result.value);
+                    processedFolders.push(...successful);
+                }
+
+                const processedItems = [...processedFiles, ...processedFolders];
+                return this.sorted(processedItems);
+            },
         },
-        mounted() {
+        async mounted() {
+            this.items = await this.loadFullTree();
+            this.editorStore.treeData = this.items;
             document.addEventListener("click", this.clearSelection);
-        },
-        beforeUnmount() {
-            document.removeEventListener("click", this.clearSelection);
-        },
-        watch: {
-            "flowStore.flow": {
-                handler(flow) {
-                    if (flow) {
-                        this.editorStore.openTab({
-                            name: "Flow",
-                            path: "Flow.yaml",
-                            persistent: true,
-                            flow: true,
-                        });
-                    }
-                },
-                immediate: true,
-                deep: true,
-            },
-            "editorStore.treeRefresh": {
-                async handler() {
-                    if (this.$refs.tree) {
-                        this.items = undefined;
-                        const items = await this.namespacesStore.readDirectory({
-                            namespace: this.namespaceId
-                        });
-                        this.renderNodes(items);
-                        this.items = this.sorted(this.items);
-                    }
-                },
-                immediate: true,
-            },
         },
     };
 </script>

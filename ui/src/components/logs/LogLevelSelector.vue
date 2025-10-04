@@ -16,18 +16,14 @@
         </el-option>
     </el-select>
 </template>
-<script>
+<script lang="ts">
+    import Logs from "../../utils/logs.js";
+
     export default {
         emits: ["update:modelValue"],
         data() {
             return {
-                levelOptions: [
-                    "TRACE",
-                    "DEBUG",
-                    "INFO",
-                    "WARN",
-                    "ERROR",
-                ],
+                levelOptions: Logs.LEVELS,
             };
         },
         props: {

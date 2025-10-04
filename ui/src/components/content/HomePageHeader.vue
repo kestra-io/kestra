@@ -1,16 +1,16 @@
 <template>
-  <div class="home-page-header">
-    <h2>{{ title }}</h2>
-    <slot />
-  </div>
+    <div class="home-page-header">
+        <h2>{{ title }}</h2>
+        <slot />
+    </div>
 </template>
 
 <script setup lang="ts">
-interface Props {
-  title?: string
-}
+    interface Props {
+        title?: string
+    }
 
-const props = defineProps<Props>()
+    defineProps<Props>()
 </script>
 
 <style lang="scss" scoped>

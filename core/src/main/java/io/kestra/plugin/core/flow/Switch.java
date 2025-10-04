@@ -191,12 +191,16 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveSequentialNexts(
+        List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
+        Integer concurrency = 0;
+
+        return FlowableUtils.resolveParallelNexts(
             execution,
-            this.childTasks(runContext, parentTaskRun),
+            childTasks,
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
-            parentTaskRun
+            parentTaskRun,
+            concurrency
         );
     }
 

@@ -100,4 +100,22 @@ class SwitchTest {
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
+
+    @Test
+    @LoadFlows({"flows/valids/switch-flowable-parallel.yaml"})
+    void flowableSwitch_parallelExecution() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "switch-flowable-parallel"
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        assertThat(execution.findTaskRunsByTaskId("task_A")).hasSize(1);
+        assertThat(execution.findTaskRunsByTaskId("task_B")).hasSize(1);
+
+        assertThat(execution.getState().getDuration().toSeconds()).isLessThan(3);
+    }
+
 }

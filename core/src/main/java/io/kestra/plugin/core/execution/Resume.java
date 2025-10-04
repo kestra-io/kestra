@@ -6,20 +6,16 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.ExecutionUpdatableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.VoidOutput;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.models.tasks.runners.PluginUtilsService;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.core.models.tasks.runners.PluginUtilsService;
 import io.kestra.plugin.core.flow.Pause;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -27,8 +23,9 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -48,7 +45,7 @@ import java.util.Map;
         )
     }
 )
-public class Resume  extends Task implements RunnableTask<VoidOutput> {
+public class Resume extends Task implements ExecutionUpdatableTask {
     @Schema(
         title = "Filter for a specific namespace in case `executionId` is set. In case you wonder why `executionId` is not enough — we require specifying the namespace to make permissions explicit. The Enterprise Edition of Kestra allows you to resume executions from another namespaces only if the permissions allow it. Check the [Allowed Namespaces](https://kestra.io/docs/enterprise/allowed-namespaces) documentation for more details."
     )
@@ -75,9 +72,8 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
     )
     private Property<Map<String, Object>> inputs;
 
-    @SuppressWarnings("unchecked")
     @Override
-    public VoidOutput run(RunContext runContext) throws Exception {
+    public Execution update(Execution execution, RunContext runContext) throws Exception {
         var executionInfo = PluginUtilsService.executionFromTaskParameters(
             runContext,
             runContext.render(this.namespace).as(String.class).orElse(null),
@@ -89,17 +85,28 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
         ExecutionService executionService = applicationContext.getBean(ExecutionService.class);
         ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
         FlowMetaStoreInterface flowExecutor = applicationContext.getBean(FlowMetaStoreInterface.class);
-        QueueInterface<Execution> executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
 
-        Execution execution = executionRepository.findById(executionInfo.tenantId(), executionInfo.id())
+        Execution targetExecution = executionRepository.findById(executionInfo.tenantId(), executionInfo.id())
             .orElseThrow(() -> new IllegalArgumentException("No execution found for execution id " + executionInfo.id()));
-        FlowInterface flow = flowExecutor.findByExecution(execution).orElseThrow(() -> new IllegalArgumentException("Flow not found for execution ID " + executionInfo.id()));
+        FlowInterface flow = flowExecutor.findByExecution(targetExecution).orElseThrow(() -> new IllegalArgumentException("Flow not found for execution ID " + executionInfo.id()));
 
         Map<String, Object> renderedInputs = runContext.render(this.inputs).asMap(String.class, Object.class);
         renderedInputs = !renderedInputs.isEmpty() ? renderedInputs : null;
-        Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, renderedInputs, Pause.Resumed.now());
-        executionQueue.emit(resumed);
+        
+        Execution resumed = executionService.resume(targetExecution, flow, State.Type.RUNNING, renderedInputs, Pause.Resumed.now());
+        
+        Map<String, Object> variables = new HashMap<>(execution.getVariables() != null ? execution.getVariables() : Map.of());
+        variables.put("resumedExecution", Map.of(
+            "id", targetExecution.getId(),
+            "namespace", targetExecution.getNamespace(),
+            "flowId", targetExecution.getFlowId()
+        ));
+        
+        return execution.withVariables(variables);
+    }
 
-        return null;
+    @Override
+    public Optional<State.Type> resolveState(RunContext runContext, Execution execution) {
+        return Optional.of(State.Type.SUCCESS);
     }
 }

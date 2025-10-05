@@ -1,0 +1,50 @@
+id: allow-failure-with-retry
+namespace: io.kestra.tests
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀
+
+  - id: set_kv
+    type: io.kestra.plugin.core.kv.Set
+    key: "retry_counter_1"
+    value: "1"
+    kvType: NUMBER
+    overwrite: true
+
+  - id: retry_block
+    type: io.kestra.plugin.core.flow.AllowFailure
+    tasks:
+      - id: log_counter
+        type: io.kestra.plugin.core.log.Log
+        message: "Current value of retry_counter_1 is: {{ kv(namespace=flow.namespace, key='retry_counter_1') | string }}"
+
+      - id: run_script
+        type: io.kestra.plugin.scripts.python.Script
+        script: |
+          num = {{kv(namespace=flow.namespace, key='retry_counter_1')}}
+          print(f"current value: {num}")
+          if num < 2:
+            raise Exception("not yet!")
+          exit(0)
+    errors:
+      - id: incr_counter
+        type: io.kestra.plugin.core.kv.Set
+        key: retry_counter_1
+        value: "{{ kv(namespace=flow.namespace, key='retry_counter_1') + 1 }}"
+        overwrite: true
+    retry:
+      type: constant
+      behavior: RETRY_FAILED_TASK
+      maxAttempts: 3
+      interval: PT1S
+      warningOnRetry: true
+    finally:
+      - id: log_ok
+        type: io.kestra.plugin.core.log.Log
+        message: it's all good! 👍
+
+  - id: the_end
+    type: io.kestra.plugin.core.log.Log
+    message: Let's go home! 🏡

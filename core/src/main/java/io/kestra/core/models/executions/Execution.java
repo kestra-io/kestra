@@ -496,7 +496,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         }
 
         if (resolvedFinally != null && (
-            this.isTerminated(resolvedTasks, parentTaskRun) || this.hasFailed(resolvedTasks, parentTaskRun
+            this.isTerminated(resolvedTasks, parentTaskRun) || this.hasFailedNoRetry(resolvedTasks, parentTaskRun
         ))) {
             return resolvedFinally;
         }

@@ -9,14 +9,17 @@
                         :language="LogFilterLanguage"
                         :buttons="{
                             refresh: {shown: true, callback: refresh},
-                            settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
+                            settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}, histogram: {shown: true, value: showHistogram, callback: onShowHistogramChange}}
                         }"
                     />
                 </template>
 
-                <template v-if="showStatChart()" #top>
-                    <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" showDefault />
+                <template #top>
+                    <Sections v-if="showStatChart()" ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" showDefault />
+                    <LogHistogram v-if="showHistogram" :logs="logsStore.logs" :interval="'day'" />
                 </template>
+                
+
 
                 <template #table v-if="logsStore.logs !== undefined && logsStore.logs.length > 0">
                     <div v-loading="isLoading">
@@ -44,6 +47,7 @@
     import KestraFilter from "../filter/KestraFilter.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LogLine from "../logs/LogLine.vue";
+    import LogHistogram from "../logs/LogHistogram.vue";
 </script>
 
 <script lang="ts">
@@ -91,6 +95,7 @@
                 isLoading: false,
                 lastRefreshDate: new Date(),
                 canAutoRefresh: false,
+                showHistogram: true,
                 showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_LOGS_CHART)),
             };
         },
@@ -179,6 +184,9 @@
                     this.loadStats();
                 }
             },
+            onShowHistogramChange(value: boolean) {
+                this.showHistogram = value;
+            },
             refresh() {
                 this.lastRefreshDate = new Date();
                 this.$refs.dashboard.refreshCharts();
@@ -258,5 +266,6 @@
                 border-top: 1px solid var(--ks-border-primary);
             }
         }
+
     }
 </style>

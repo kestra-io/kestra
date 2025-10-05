@@ -708,10 +708,11 @@
           "folder": "Folder name:"
         },
         "parent_folder": "Parent folder:",
-        "file_deletion": "Confirm file deletion",
-        "folder_deletion": "Confirm folder deletion",
         "file_deletion_description": "Are you sure you want to delete the selected file(s)?",
+        "files_deletion_description": "Are you sure you want to delete {count} files?",
         "folder_deletion_description": "Are you sure you want to delete this folder and all of its contents?",
+        "folders_deletion_description": "Are you sure you want to delete {count} folders?",
+        "mixed_deletion_description": "Are you sure you want to delete {folders} folders and {files} files?",
         "confirm": "Confirm"
       },
       "path": {

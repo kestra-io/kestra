@@ -22,7 +22,7 @@
   <a href="https://twitter.com/kestra_io" style="margin: 0 10px;">
         <img height="25" src="https://kestra.io/twitter.svg" alt="twitter" width="35" height="25" /></a>
   <a href="https://www.linkedin.com/company/kestra/" style="margin: 0 10px;">
-        <img height="25" src="https://kestra.io/linkedin.svg" alt="linkedin" width="35" height="25" /></a> 
+        <img height="25" src="https://kestra.io/linkedin.svg" alt="linkedin" width="35" height="25" /></a>
   <a href="https://www.youtube.com/@kestra-io" style="margin: 0 10px;">
         <img height="25" src="https://kestra.io/youtube.svg" alt="youtube" width="35" height="25" /></a>
 </p>
@@ -65,6 +65,11 @@ Kestra is an open-source, event-driven orchestration platform that makes both **
 </p>
 
 ---
+## Requirements
+
+- Docker >= 20.x
+- Java 11+
+- Optional: Docker Compose for multi-container setups
 
 ## 🚀 Quick Start
 

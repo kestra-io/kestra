@@ -34,7 +34,7 @@ public class DownloadFilesTest {
             .id(DownloadFiles.class.getSimpleName())
             .type(DownloadFiles.class.getName())
             .files(List.of("**test1.txt"))
-            .namespace(new Property<>("{{ inputs.namespace }}"))
+            .namespace(Property.ofExpression("{{ inputs.namespace }}"))
             .build();
 
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, downloadFiles, Map.of("namespace", namespaceId));

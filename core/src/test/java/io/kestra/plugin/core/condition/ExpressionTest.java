@@ -24,7 +24,7 @@ class ExpressionTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of("test", "value"));
 
         Expression build = Expression.builder()
-            .expression(new Property<>("{{ flow.id }}"))
+            .expression(Property.ofExpression("{{ flow.id }}"))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -38,7 +38,7 @@ class ExpressionTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of("test", "value"));
 
         Expression build = Expression.builder()
-            .expression(new Property<>("{{ unknown is defined }}"))
+            .expression(Property.ofExpression("{{ unknown is defined }}"))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

@@ -139,10 +139,6 @@
 </script>
 
 <style scoped lang="scss">
-   .el-card {
-  box-shadow: 0px 4px 6px 0px var(--ks-card-shadow);
-  
-}
     :deep(.el-card__header) {
         font-size: 12px;
         line-height: 1;

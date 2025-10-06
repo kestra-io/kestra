@@ -33,7 +33,6 @@
     --el-fill-color-dark: $base-gray-400; // used in buttons .is-text when active
     --el-fill-color-darker: $base-gray-500; // not used at kestra
     --el-fill-color-blank: $base-white;// used in many places --el-input-background-color
-    --ks-card-shadow:#1E202A;
 
     // alert colors
     @each $type in $types {

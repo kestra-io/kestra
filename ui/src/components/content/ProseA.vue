@@ -24,7 +24,9 @@
         computed(() => route.path)
     );
 
-    const linkType = computed(() => (isRemote.value ? "a" : "router-link"));
+    const linkType = computed(() => {
+        return isRemote.value ? "a" : "router-link";
+    });
 
     const linkProps = computed(() => {
         if (isRemote.value) {

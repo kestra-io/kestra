@@ -1,9 +1,9 @@
-import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion.ts";
-import {FilterLanguage} from "../filterLanguage.ts";
-import permission from "../../../../../models/permission.ts";
-import action from "../../../../../models/action.ts";
+import {Comparators, Completion, FilterKeyCompletions, PICK_DATE_VALUE} from "../filterCompletion";
+import {FilterLanguage} from "../filterLanguage";
+import permission from "../../../../../models/permission";
+import action from "../../../../../models/action";
 import {useAuthStore} from "override/stores/auth";
-import {useNamespacesStore} from "override/stores/namespaces.ts";
+import {useNamespacesStore} from "override/stores/namespaces";
 
 const logFilterKeys: Record<string, FilterKeyCompletions> = {
     namespace: new FilterKeyCompletions(
@@ -27,11 +27,11 @@ const logFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     level: new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.LEVELS
+        async (hardcodedValues) => hardcodedValues.LEVELS
     ),
     timeRange: new FilterKeyCompletions(
         [Comparators.EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.RELATIVE_DATE,
+        async (hardcodedValues) => hardcodedValues.RELATIVE_DATE,
         false,
         ["timeRange", "startDate", "endDate"]
     ),
@@ -49,7 +49,7 @@ const logFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     scope: new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.SCOPES,
+        async (hardcodedValues) => hardcodedValues.SCOPES,
         undefined,
         ["scope"]
     ),

@@ -7,7 +7,7 @@ import {useDashboardStore} from "../../../stores/dashboard";
 
 import {useI18n} from "vue-i18n";
 
-import {decodeSearchParams} from "../../filter/utils/helpers.ts";
+import {decodeSearchParams} from "../../filter/utils/helpers";
 
 export type Dashboard = {
     id: string;
@@ -28,6 +28,10 @@ export type Chart = {
             enabled?: boolean;
             [key: string]: unknown;
         };
+        legend?:{
+            enabled?: boolean;
+        };
+        column: string;
         [key: string]: unknown;
     };
     data?: {
@@ -42,6 +46,7 @@ export type Chart = {
         content?: string;
         [key: string]: unknown;
     };
+
     [key: string]: unknown;
 };
 
@@ -78,7 +83,7 @@ const KEY_MAP: Record<string, keyof ReturnType<typeof STORAGE_KEYS>> = {
     "namespaces/update": "DASHBOARD_NAMESPACE"
 };
 
-export const getDashboard = (route: RouteLocation, type: "key" | "id"): string | undefined => {
+export function getDashboard(route: RouteLocation, type: "key" | "id"): string | undefined {
     if (!ALLOWED_CREATION_ROUTES.includes(route.name as string)) return;
 
     const key = KEY_MAP[route.name as string];
@@ -96,6 +101,7 @@ import Markdown from "../sections/Markdown.vue";
 import Pie from "../sections/Pie.vue";
 import Table from "../sections/Table.vue";
 import TimeSeries from "../sections/TimeSeries.vue";
+import {FilterObject} from "../../../utils/filters";
 
 export const TYPES: Record<string, any> = {
     "io.kestra.plugin.core.dashboard.chart.Bar": Bar,
@@ -118,7 +124,7 @@ export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions
 
 export const processFlowYaml = (yaml: string, namespace: string, flow: string): string => yaml.replace(/--NAMESPACE--/g, namespace).replace(/--FLOW--/g, flow);
 
-export function useChartGenerator(props: {chart: Chart; filters: string[]; showDefault: boolean;}, includeHooks: boolean = true) {
+export function useChartGenerator(props: {chart: Chart; filters: FilterObject[]; showDefault: boolean;}, includeHooks: boolean = true) {
     const percentageShown = computed(() => props.chart?.chartOptions?.numberType === "PERCENTAGE");
 
     const route = useRoute();
@@ -129,8 +135,8 @@ export function useChartGenerator(props: {chart: Chart; filters: string[]; showD
     const EMPTY_TEXT = t("dashboards.empty");
 
     const data = ref();
-    const generate = async (id: string, pagination?: { pageNumber: number; pageSize: number }) => {
-        const filters = props.filters.concat(decodeSearchParams(route.query, undefined, []) ?? []);
+    async function generate(id: string, pagination?: { pageNumber: number; pageSize: number }) {
+        const filters = props.filters.concat(decodeSearchParams(route.query) ?? []);
         const parameters: Parameters = {...pagination, filters: (filters ?? {})};
 
         if (!props.showDefault) {

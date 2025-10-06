@@ -296,7 +296,7 @@ public class TaskRun implements TenantInterface {
     }
 
     public TaskRun incrementIteration() {
-        int iteration = this.iteration == null ? 1 : this.iteration;
+        int iteration = this.iteration == null ? 0 : this.iteration;
         return this.toBuilder()
             .iteration(iteration + 1)
             .build();

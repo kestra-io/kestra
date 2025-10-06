@@ -1,7 +1,7 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import {IDisposable} from "monaco-editor/esm/vs/editor/editor.api";
 import {useI18n} from "vue-i18n";
-import {usePluginsStore} from "../../../stores/plugins.ts";
+import {usePluginsStore} from "../../../stores/plugins";
 
 export default abstract class AbstractLanguageConfigurator {
     private readonly _language: string;

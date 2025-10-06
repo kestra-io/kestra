@@ -28,60 +28,32 @@
     </el-table>
 </template>
 
-<script>
+<script setup lang="ts">
+    import {useI18n} from "vue-i18n";
     import VarValue from "../executions/VarValue.vue";
     import Markdown from "../layout/Markdown.vue";
     import Cron from "../layout/Cron.vue";
 
-    export default {
-        emits: ["on-copy"],
-        components: {
-            VarValue,
-            Markdown,
-            Cron
-        },
-        props: {
-            data: {
-                type: Object,
-                required: true
-            },
-            execution: {
-                type: Object,
-                required: false,
-                default: undefined
-            }
-        },
-        methods: {
-            emit(type, event) {
-                this.$emit(type, event);
-            },
-            getHumanizeLabel(key) {
-                const keyMappings = {
-                    "id": this.$t("id"),
-                    "triggerId": this.$t("triggerId"), 
-                    "flowId": this.$t("flow"),
-                    "namespace": this.$t("namespace"),
-                    "type": this.$t("type"),
-                    "workerId": this.$t("workerId"),
-                    "executionId": this.$t("current execution"),
-                    "nextExecutionDate": this.$t("next evaluation date"),
-                    "date": this.$t("last trigger date"),
-                    "updatedDate": this.$t("context updated date"),
-                    "evaluateRunningDate": this.$t("evaluation lock date"),
-                    "description": this.$t("description"),
-                    "cron": this.$t("cron"),
-                    "key": this.$t("key"),
-                    "backfill": this.$t("backfill"),
-                    "state": this.$t("state"),
-                    "enabled": this.$t("enabled"),
-                    "codeDisabled": this.$t("codeDisabled"),
-                    "paused": this.$t("paused"),
-                    "tenantId": this.$t("tenantId"),
-                    "conditions": this.$t("conditions"),
-                };
-                return keyMappings[key] || key.charAt(0).toUpperCase() + key.slice(1);
-            },
-        }
+    const {t} = useI18n();
+
+    defineProps<{
+        data: Record<string, any>;
+        execution?: Record<string, any>;
+    }>();
+    
+    const emit = defineEmits<{ (e: "on-copy", event: any): void }>();
+
+    const getHumanizeLabel = (key: string): string => {
+        const mappings: Record<string, string> = {
+            "flowId": "flow",
+            "executionId": "current execution",
+            "nextExecutionDate": "next evaluation date",
+            "date": "last trigger date",
+            "updatedDate": "context updated date",
+            "evaluateRunningDate": "evaluation lock date",
+        };
+        const translationKey = mappings[key] ?? key;
+        return t(translationKey);
     };
 </script>
 

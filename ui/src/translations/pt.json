@@ -652,6 +652,7 @@
       },
       "text_search": "Pesquisar por este texto"
     },
+    "fix_with_ai": "Corrigir com AI",
     "flow": "Flow",
     "flow already exists": "Flow já existe",
     "flow creation": "Criação de flow",
@@ -668,6 +669,7 @@
     "flow-no-dependencies": "Seu flow não possui dependências",
     "flow_export": "Exportar flow",
     "flow_only": "Disponível apenas na aba Flow.",
+    "flow_outputs": "Saídas do Flow",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) deletado(s)",
     "flows disabled": "<code>{count}</code> Flow(s) desativado(s)",
@@ -773,8 +775,10 @@
     "metrics": "Métricas",
     "min": "Min",
     "minutes": "Minutos",
+    "missingSource": "Fonte ausente",
     "monogram": "Monograma",
     "months": "Meses",
+    "more_actions": "Mais Ações",
     "multi_panel_editor": {
       "close_all_panels": "Fechar todos os painéis",
       "close_all_tabs": "Fechar todas as abas",
@@ -787,9 +791,12 @@
     "namespace and id readonly": "As propriedades `namespace` e `id` não podem ser alteradas — elas estão definidas para seus valores iniciais. Se você quiser renomear um flow ou alterar seu namespace, você pode criar um novo flow e remover o antigo.",
     "namespace files": {
       "create": {
-        "already_exists": "Um arquivo com este nome já existe",
         "file": "Criar arquivo",
+        "file_already_exists": "Um arquivo com este nome já existe",
+        "file_error": "Ocorreu um erro ao criar o arquivo",
         "folder": "Criar pasta",
+        "folder_already_exists": "Uma pasta com este nome já existe",
+        "folder_error": "Ocorreu um erro ao criar a pasta",
         "label": "Criar"
       },
       "delete": {
@@ -800,11 +807,13 @@
         "label": "Deletar"
       },
       "dialog": {
-        "confirm": "Confirmar",
-        "file_deletion": "Confirmar deleção de arquivo",
-        "file_deletion_description": "Tem certeza de que deseja deletar este arquivo?",
-        "folder_deletion": "Confirmar deleção de pasta",
-        "folder_deletion_description": "Tem certeza de que deseja deletar esta pasta e todo o seu conteúdo?",
+        "deletion": {
+          "confirm": "Confirmar",
+          "files": "Tem certeza de que deseja excluir <code>{count}</code> arquivo(s)?",
+          "folders": "Tem certeza de que deseja excluir <code>{count}</code> pasta(s) e todo o seu conteúdo?",
+          "mixed": "Tem certeza de que deseja excluir a(s) pasta(s) <code>{folders}</code> e o(s) arquivo(s) <code>{files}</code>?",
+          "title": "Confirmar exclusão de conteúdo"
+        },
         "name": {
           "file": "Nome com extensão:",
           "folder": "Nome da pasta:"
@@ -1426,6 +1435,7 @@
       "zoom-out": "Diminuir zoom",
       "zoom-reset": "Redefinir zoom"
     },
+    "total_duration": "Duração total",
     "total_executions": "Total de Execuções",
     "trigger": "Trigger",
     "trigger details": "Detalhes do trigger",

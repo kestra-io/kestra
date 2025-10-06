@@ -11,6 +11,7 @@ import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVStoreException;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
@@ -37,9 +38,9 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
-            .kvDescription(new Property<>("{{ inputs.description }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
+            .kvDescription(Property.ofExpression("{{ inputs.description }}"))
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
@@ -77,9 +78,9 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
-            .namespace(new Property<>("io.kestra.test"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
+            .namespace(Property.ofValue("io.kestra.test"))
             .build();
 
         // When
@@ -104,9 +105,9 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
-            .namespace(new Property<>("io.kestra"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
+            .namespace(Property.ofValue("io.kestra"))
             .build();
         // When
         set.run(runContext);
@@ -130,9 +131,9 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
-            .namespace(new Property<>("not-found"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
+            .namespace(Property.ofValue("not-found"))
             .build();
 
         // When - Then
@@ -145,8 +146,8 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
             .ttl(Property.ofValue(Duration.ofMinutes(5)))
             .build();
 
@@ -169,26 +170,33 @@ class SetTest {
     @Test
     void shouldFailGivenExistingKeyAndOverwriteFalse() throws Exception {
         // Given
+        String key = IdUtils.create();
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
             .overwrite(Property.ofValue(false))
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, set, Map.of(
-            "key", "existing_key",
+            "key", key,
             "value", value
         ));
 
         // When - Then
         //set key a first:
-        runContext.namespaceKv(runContext.flowInfo().namespace()).put("existing_key", new KVValueAndMetadata(new KVMetadata("unused", null), value));
+        runContext.namespaceKv(runContext.flowInfo().namespace()).put(key, new KVValueAndMetadata(new KVMetadata("unused", (Instant)null), value));
         //fail because key is already set
-        KVStoreException exception = Assertions.assertThrows(KVStoreException.class, () -> set.run(runContext));
-        assertThat(exception.getMessage()).isEqualTo("Cannot set value for key 'existing_key'. Key already exists and `overwrite` is set to `false`.");
+        KVStoreException exception = Assertions.assertThrows(KVStoreException.class, () -> Set.builder()
+            .id(Set.class.getSimpleName())
+            .type(Set.class.getName())
+            .key(new Property<>("{{ inputs.key }}"))
+            .value(new Property<>("{{ inputs.value }}"))
+            .overwrite(Property.ofValue(false))
+            .build().run(runContext));
+        assertThat(exception.getMessage()).isEqualTo("Cannot set value for key '%s'. Key already exists and `overwrite` is set to `false`.".formatted(key));
     }
 
     @Test

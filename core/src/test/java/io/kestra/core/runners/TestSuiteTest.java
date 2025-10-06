@@ -38,7 +38,7 @@ class TestSuiteTest {
     protected QueueInterface<Execution> executionQueue;
 
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     @Inject
     protected FlowRepositoryInterface flowRepository;

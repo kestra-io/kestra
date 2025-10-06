@@ -4,7 +4,7 @@
             id="editorWrapper"
             ref="editorRefElement"
             class="flex-1"
-            :modelValue="draftSource === undefined ? source : draftSource"
+            :modelValue="hasDraft ? draftSource : source"
             :schemaType="isCurrentTabFlow ? 'flow': undefined"
             :lang="extension === undefined ? 'yaml' : undefined"
             :extension="extension"
@@ -19,7 +19,7 @@
             @execute="execute"
             @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
             @mouse-leave="() => highlightHoveredTask(-1)"
-            :original="draftSource === undefined ? undefined : source"
+            :original="hasDraft ? source : undefined"
             :diffSideBySide="false"
         >
             <template #absolute>
@@ -45,7 +45,7 @@
             />
         </Transition>
         <AcceptDecline
-            v-if="draftSource !== undefined"
+            v-if="hasDraft"
             @accept="acceptDraft"
             @reject="declineDraft"
         />
@@ -56,7 +56,7 @@
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useRoute, useRouter} from "vue-router";
 
-    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys.ts";
+    import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
     import {EditorTabProps, useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
@@ -72,7 +72,7 @@
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
-    import Utils from "../../utils/utils.ts";
+    import Utils from "../../utils/utils";
 
     const route = useRoute();
     const router = useRouter();
@@ -127,6 +127,10 @@
         loadFile();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
+        if(route.query.ai === "open") {
+            draftSource.value = undefined;
+            aiCopilotOpened.value = true;
+        }
     });
 
     onActivated(() => {
@@ -168,7 +172,7 @@
             return;
         }
         if (isCurrentTabFlow.value) {
-            if (draftSource.value !== undefined) {
+            if (hasDraft.value) {
                 draftSource.value = newValue;
             } else {
                 flowStore.flowYaml = newValue;
@@ -221,7 +225,7 @@
                     , null as any);
 
         let result = selectedElement ? getElementFromRange(selectedElement) : undefined;
-        result = {...result, hash: hash.value};
+        result = {...result, hash: hash.value, forceRefresh: true};
         pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
     };
 
@@ -229,7 +233,11 @@
         clearTimeout(timeout.value);
         const editorRef = editorRefElement.value
         if(!editorRef?.$refs.monacoEditor) return
-        const result = await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
+        
+        // Use saveAll() for consistency with the Save button behavior
+        const result = flowStore.isCreating 
+            ? await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
+            : await flowStore.saveAll();
 
         editorStore.setTabDirty({
             path: props.path,
@@ -292,6 +300,8 @@
         aiCopilotOpened.value = true;
     }
 
+    const hasDraft = computed(() => draftSource.value !== undefined);
+
     const {
         playgroundStore,
         highlightHoveredTask,
@@ -306,6 +316,6 @@
         left: 3rem;
         max-width: 700px;
         background-color: var(--ks-background-panel);
-        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+        box-shadow: 0 2px 4px 0 var(--ks-card-shadow);
     }
 </style>

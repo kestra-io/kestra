@@ -177,7 +177,7 @@
     import {useI18n} from "vue-i18n";
 
     import {VISIBLE_PANELS_INJECTION_KEY} from "./no-code/injectionKeys";
-    import {CODE_PREFIX} from "./flows/useCodePanels";
+    import {CODE_PREFIX} from "./flows/useFilesPanels";
     import {useKeyShortcuts} from "../utils/useKeyShortcuts";
 
     import Empty from "./layout/empty/Empty.vue";
@@ -474,7 +474,7 @@
         }
     }
 
-    const defaultSize = computed(() => panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length);
+    const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length));
 
     function newPanelDrop(_e: DragEvent, direction: "left" | "right") {
         if (!movedTabInfo.value) return;

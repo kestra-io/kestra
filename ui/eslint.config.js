@@ -28,6 +28,13 @@ export default defineConfig([
         files: ["**/*.vue", "**/*.tsx", "**/*.jsx"],
         languageOptions: {parserOptions: {parser: tseslint.parser}},
         rules: {
+            "vue/block-lang": ["warn",
+                {
+                    "script": {
+                        "lang": "ts"
+                    }
+                }
+            ],
             "vue/this-in-template": "error",
             "vue/html-indent": [
                 "error",

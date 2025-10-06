@@ -652,6 +652,7 @@
       },
       "text_search": "Искать этот текст"
     },
+    "fix_with_ai": "Исправить с помощью AI",
     "flow": "Flow",
     "flow already exists": "Flow уже существует",
     "flow creation": "Создание flow",
@@ -668,6 +669,7 @@
     "flow-no-dependencies": "Ваш flow не имеет зависимостей",
     "flow_export": "Экспорт flow",
     "flow_only": "Доступно только на вкладке Flow.",
+    "flow_outputs": "Выходы Flow",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(ы) удалены",
     "flows disabled": "<code>{count}</code> Flow(ы) отключены",
@@ -773,8 +775,10 @@
     "metrics": "Метрики",
     "min": "Мин",
     "minutes": "Минуты",
+    "missingSource": "Отсутствует источник",
     "monogram": "Монограмма",
     "months": "Месяцы",
+    "more_actions": "Больше действий",
     "multi_panel_editor": {
       "close_all_panels": "Закрыть все панели",
       "close_all_tabs": "Закрыть все вкладки",
@@ -787,9 +791,12 @@
     "namespace and id readonly": "Свойства `namespace` и `id` не могут быть изменены — они установлены на начальные значения. Если вы хотите переименовать flow или изменить его namespace, вы можете создать новый flow и удалить старый.",
     "namespace files": {
       "create": {
-        "already_exists": "Файл с таким именем уже существует",
         "file": "Создать файл",
+        "file_already_exists": "Файл с таким именем уже существует",
+        "file_error": "Произошла ошибка при создании файла",
         "folder": "Создать папку",
+        "folder_already_exists": "Папка с таким именем уже существует",
+        "folder_error": "Произошла ошибка при создании папки",
         "label": "Создать"
       },
       "delete": {
@@ -800,11 +807,13 @@
         "label": "Удалить"
       },
       "dialog": {
-        "confirm": "Подтвердить",
-        "file_deletion": "Подтвердите удаление файла",
-        "file_deletion_description": "Вы уверены, что хотите удалить этот файл?",
-        "folder_deletion": "Подтвердите удаление папки",
-        "folder_deletion_description": "Вы уверены, что хотите удалить эту папку и все ее содержимое?",
+        "deletion": {
+          "confirm": "Подтвердить",
+          "files": "Вы уверены, что хотите удалить <code>{count}</code> файл(ы)?",
+          "folders": "Вы уверены, что хотите удалить <code>{count}</code> папку(и) и все её содержимое?",
+          "mixed": "Вы уверены, что хотите удалить папку(и) <code>{folders}</code> и файл(ы) <code>{files}</code>?",
+          "title": "Подтвердите удаление содержимого"
+        },
         "name": {
           "file": "Имя с расширением:",
           "folder": "Имя папки:"
@@ -1426,6 +1435,7 @@
       "zoom-out": "Уменьшить",
       "zoom-reset": "Сбросить масштаб"
     },
+    "total_duration": "Общая продолжительность",
     "total_executions": "Общее количество выполнений",
     "trigger": "Trigger",
     "trigger details": "Подробности trigger",

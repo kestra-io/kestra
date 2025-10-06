@@ -36,42 +36,29 @@
     </el-collapse>
 </template>
 
-<script>
-    import path from "path-browserify";
+<script lang="ts" setup>
+    import {ref} from "vue";
 
-    export default {
-        name: "RecursiveToc",
-        props: {
-            parent: {
-                type: Object,
-                required: true
-            },
-            makeIndexNavigable: {
-                type: Boolean,
-                default: true
-            }
+    const disabledPages = [
+        "docs/api-reference",
+        "docs/terraform/data-sources",
+        "docs/terraform/guides",
+        "docs/terraform/resources"
+    ]
+
+    defineProps({
+        parent: {
+            type: Object as () => {children?: {path: string, title: string, children?: any[]}[]},
+            required: true
         },
-        watch: {
-            "$route.path": {
-                handler() {
-                    const normalizedPath = path.normalize(this.$route.path);
-                    this.openedDocs = this.parent.children.filter(child => normalizedPath.includes(child.path)).map(child => child.path);
-                },
-                immediate: true
-            }
-        },
-        data() {
-            return {
-                openedDocs: undefined,
-                disabledPages: [
-                    "docs/api-reference",
-                    "docs/terraform/data-sources",
-                    "docs/terraform/guides",
-                    "docs/terraform/resources"
-                ]
-            }
+        makeIndexNavigable: {
+            type: Boolean,
+            default: true
         }
-    }
+    })
+
+    const openedDocs = ref<string[]>([]);
+
 </script>
 
 <style lang="scss" scoped>

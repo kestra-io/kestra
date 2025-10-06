@@ -5,6 +5,11 @@ datasources:
     username: kestra
     password: k3str4
     dialect: MYSQL
+    maximumPoolSize: 32
+    minimumIdle: 8
+    connectionTimeout: 30000
+    idleTimeout: 600000
+    maxLifetime: 1800000
 
 flyway:
   datasources:

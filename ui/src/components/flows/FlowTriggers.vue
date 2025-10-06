@@ -19,7 +19,7 @@
     >
         <el-table-column type="expand">
             <template #default="props">
-                <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purgeFilters :withCharts="false" embed />
+                <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purgeFilters :withCharts="false" :reloadLogs embed />
             </template>
         </el-table-column>
         <el-table-column prop="id" :label="$t('id')">
@@ -279,7 +279,7 @@
     import moment from "moment";
     import LogsWrapper from "../logs/LogsWrapper.vue";
     import _isEqual from "lodash/isEqual";
-    import {storageKeys} from "../../utils/constants.js";
+    import {storageKeys} from "../../utils/constants";
     import {mapStores} from "pinia";
     import {useTriggerStore} from "../../stores/trigger";
     import {useAuthStore} from "override/stores/auth";
@@ -305,7 +305,8 @@
                     end: null,
                     inputs: null,
                     labels: []
-                }
+                },
+                reloadLogs: undefined,
             }
         },
         created() {
@@ -402,7 +403,8 @@
 
                 this.triggerStore
                     .find({namespace: this.flowStore.flow.namespace, flowId: this.flowStore.flow.id, size: this.triggersWithType.length, q: this.query})
-                    .then(triggers => this.triggers = triggers.results);
+                    .then(triggers => this.triggers = triggers.results)
+                    .then(() => this.reloadLogs = Math.random());
             },
             setBackfillModal(trigger, bool) {
                 this.isBackfillOpen = bool

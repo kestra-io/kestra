@@ -7,6 +7,7 @@ import dependencies from "./assets/visuals/dependencies.png";
 import plugins from "./assets/visuals/plugins.png";
 import triggers from "./assets/visuals/triggers.png";
 import versionPlugin from "./assets/visuals/versionPlugin.png";
+import panels from "./assets/visuals/panels.png";
 
 export const images: Record<string, string> = {
     announcements,
@@ -20,5 +21,5 @@ export const images: Record<string, string> = {
     plugins,
     triggers,
     versionPlugin,
-    panels: triggers // TODO: Replace once https://github.com/kestra-io/kestra/issues/11244 is done
+    panels,
 };

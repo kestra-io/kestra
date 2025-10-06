@@ -32,5 +32,7 @@ public class ExecutionRunning implements HasUID {
         return IdUtils.fromPartsAndSeparator('|', this.tenantId, this.namespace, this.flowId, this.execution.getId());
     }
 
-    public enum ConcurrencyState { CREATED, RUNNING, QUEUED, CANCELLED, FAILED }
+    // Note: the KILLED state is only used in the Kafka implementation to difference between purging terminated running execution (null)
+    // and purging killed execution which need special treatment
+    public enum ConcurrencyState { CREATED, RUNNING, QUEUED, CANCELLED, FAILED, KILLED }
 }

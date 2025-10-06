@@ -14,51 +14,42 @@
     </EmptyTemplate>
 </template>
 
-<script>
-    import RouteContext from "../../mixins/routeContext";
+<script setup lang="ts">
+    import {computed, watch} from "vue";
+    import {useI18n} from "vue-i18n";
+    import {useRoute} from "vue-router";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import EmptyTemplate from "../../components/layout/EmptyTemplate.vue";
-    import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
     import sourceImg from "../../assets/errors/kestra-error.png";
+    import useRouteContext from "../../composables/useRouteContext";
 
-    export default {
-        mixins: [RouteContext],
-        components: {TopNavBar, EmptyTemplate},
-        props: {
-            code: {
-                type: Number,
-                required: true
-            }
-        },
-        computed: {
-            ...mapStores(useCoreStore),
-            routeInfo() {
-                return {
-                    title: this.$t("errors." + this.code + ".title"),
-                };
-            },
-            sourceImg() {
-                return sourceImg;
-            }
-        },
-        methods: {
-            isFullScreen() {
-                return document.getElementsByTagName("html")[0].classList.contains("full-screen");
-            }
-        },
-        watch: {
-            $route() {
-                this.coreStore.error = undefined;
-            }
-        },
+    const {t} = useI18n();
 
+    const props = defineProps<{
+        code: number | string;
+    }>();
+
+    const coreStore = useCoreStore();
+    const route = useRoute();
+
+    const routeInfo = computed(() => ({title: t("errors." + props.code + ".title")}));
+
+    useRouteContext(routeInfo);
+
+    const isFullScreen = () => {
+        return document.getElementsByTagName("html")[0].classList.contains("full-screen");
     };
+
+    watch(
+        () => route,
+        () => {
+            coreStore.error = undefined;
+        }
+    );
 </script>
 
-
 <style lang="scss" scoped>
-
     .img {
         margin-top: 7rem;
         max-height: 156px;
@@ -74,5 +65,4 @@
         line-height: 22px;
         font-size: 14px;
     }
-
 </style>

@@ -1,4 +1,4 @@
-import {defaultNamespace} from "../composables/useNamespaces.js";
+import {defaultNamespace} from "../composables/useNamespaces";
 
 export default {
     props: {

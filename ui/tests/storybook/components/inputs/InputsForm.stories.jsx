@@ -106,6 +106,11 @@ export const InputTypes = {
                     "Seventh value",
                     "Eighth value"
                 ]
+            },
+            {
+                id: "duration_field",
+                type: "DURATION",
+                displayName: "Duration select input",
             }]}
         />;
     }

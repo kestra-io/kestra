@@ -652,6 +652,7 @@
       },
       "text_search": "이 텍스트 검색"
     },
+    "fix_with_ai": "AI로 수정",
     "flow": "Flow",
     "flow already exists": "Flow가 이미 존재합니다",
     "flow creation": "Flow 생성",
@@ -668,6 +669,7 @@
     "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
     "flow_export": "flow 내보내기",
     "flow_only": "Flow 탭에서만 사용 가능합니다.",
+    "flow_outputs": "Flow Outputs",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> 개의 flow가 삭제되었습니다",
     "flows disabled": "<code>{count}</code> 개의 flow가 비활성화되었습니다",
@@ -773,8 +775,10 @@
     "metrics": "메트릭",
     "min": "Min",
     "minutes": "분",
+    "missingSource": "소스 누락",
     "monogram": "모노그램",
     "months": "개월",
+    "more_actions": "추가 작업",
     "multi_panel_editor": {
       "close_all_panels": "모든 패널 닫기",
       "close_all_tabs": "모든 탭 닫기",
@@ -787,9 +791,12 @@
     "namespace and id readonly": "`namespace`와 `id` 속성은 변경할 수 없습니다 — 초기 값으로 설정되었습니다. flow의 이름을 변경하거나 namespace를 변경하려면 새 flow를 만들고 기존 flow를 삭제하세요.",
     "namespace files": {
       "create": {
-        "already_exists": "파일 이름이 이미 존재합니다",
         "file": "파일 생성",
+        "file_already_exists": "이 이름의 파일이 이미 존재합니다",
+        "file_error": "파일 생성 중 오류 발생",
         "folder": "폴더 생성",
+        "folder_already_exists": "이 이름의 폴더가 이미 존재합니다",
+        "folder_error": "폴더 생성 중 오류가 발생했습니다",
         "label": "생성"
       },
       "delete": {
@@ -800,11 +807,13 @@
         "label": "삭제"
       },
       "dialog": {
-        "confirm": "확인",
-        "file_deletion": "파일 삭제 확인",
-        "file_deletion_description": "이 파일을 삭제하시겠습니까?",
-        "folder_deletion": "폴더 삭제 확인",
-        "folder_deletion_description": "이 폴더와 모든 내용을 삭제하시겠습니까?",
+        "deletion": {
+          "confirm": "확인",
+          "files": "<code>{count}</code>개의 파일을 삭제하시겠습니까?",
+          "folders": "<code>{count}</code>개의 폴더와 모든 내용을 삭제하시겠습니까?",
+          "mixed": "<code>{folders}</code> 폴더와 <code>{files}</code> 파일을 삭제하시겠습니까?",
+          "title": "콘텐츠 삭제 확인"
+        },
         "name": {
           "file": "확장자를 포함한 이름:",
           "folder": "폴더 이름:"
@@ -1426,6 +1435,7 @@
       "zoom-out": "축소",
       "zoom-reset": "확대/축소 재설정"
     },
+    "total_duration": "총 지속 시간",
     "total_executions": "총 실행 횟수",
     "trigger": "Trigger",
     "trigger details": "Trigger 세부 정보",

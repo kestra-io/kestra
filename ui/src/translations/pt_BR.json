@@ -806,11 +806,13 @@
         "label": "Excluir"
       },
       "dialog": {
-        "confirm": "Confirmar",
-        "file_deletion": "Confirmar deleção de arquivo",
-        "file_deletion_description": "Tem certeza de que deseja excluir este arquivo?",
-        "folder_deletion": "Confirmar deleção de pasta",
-        "folder_deletion_description": "Tem certeza de que deseja excluir esta pasta e todo o seu conteúdo?",
+        "deletion": {
+          "confirm": "Confirmar",
+          "files": "Tem certeza de que deseja excluir <code>{count}</code> arquivo(s)?",
+          "folders": "Tem certeza de que deseja excluir <code>{count}</code> pasta(s) e todo o seu conteúdo?",
+          "mixed": "Tem certeza de que deseja excluir a(s) pasta(s) <code>{folders}</code> e o(s) arquivo(s) <code>{files}</code>?",
+          "title": "Confirmar exclusão de conteúdo"
+        },
         "name": {
           "file": "Nome com extensão:",
           "folder": "Nome da pasta:"

@@ -1370,7 +1370,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     + taskRun.getIteration();
 
                 if (executorState.getChildDeduplication().containsKey(deduplicationKey)) {
-                    log.trace("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
+                    log.warn("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
                     return false;
                 } else {
                     executorState.getChildDeduplication().put(deduplicationKey, taskRun.getId());
@@ -1386,7 +1386,7 @@ public class JdbcExecutor implements ExecutorInterface {
         State.Type current = executorState.getWorkerTaskDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
-            log.trace("Duplicate WorkerTask on execution '{}' for taskRun '{}', value '{}, taskId '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId());
+            log.warn("Duplicate WorkerTask on execution '{}' for taskRun '{}', value '{}', taskId '{}' on state {}", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId(), current);
             return false;
         } else {
             executorState.getWorkerTaskDeduplication().put(deduplicationKey, taskRun.getState().getCurrent());
@@ -1400,7 +1400,7 @@ public class JdbcExecutor implements ExecutorInterface {
         State.Type current = executorState.getSubflowExecutionDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
-            log.trace("Duplicate SubflowExecution on execution '{}' for taskRun '{}', value '{}', taskId '{}', attempt '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId(), taskRun.getAttempts() == null ? null : taskRun.getAttempts().size() + 1);
+            log.warn("Duplicate SubflowExecution on execution '{}' for taskRun '{}', value '{}', taskId '{}', attempt '{}' on state {}", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId(), taskRun.getAttempts() == null ? null : taskRun.getAttempts().size() + 1, current);
             return false;
         } else {
             executorState.getSubflowExecutionDeduplication().put(deduplicationKey, taskRun.getState().getCurrent());

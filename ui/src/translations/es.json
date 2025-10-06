@@ -806,11 +806,13 @@
         "label": "Eliminar"
       },
       "dialog": {
-        "confirm": "Confirmar",
-        "file_deletion": "Confirmar eliminación de archivo",
-        "file_deletion_description": "¿Estás seguro de que quieres eliminar este archivo?",
-        "folder_deletion": "Confirmar eliminación de carpeta",
-        "folder_deletion_description": "¿Estás seguro de que quieres eliminar esta carpeta y todo su contenido?",
+        "deletion": {
+          "confirm": "Confirmar",
+          "files": "¿Está seguro de que desea eliminar <code>{count}</code> archivo(s)?",
+          "folders": "¿Está seguro de que desea eliminar <code>{count}</code> carpeta(s) y todo su contenido?",
+          "mixed": "¿Está seguro de que desea eliminar la(s) carpeta(s) <code>{folders}</code> y el/los archivo(s) <code>{files}</code>?",
+          "title": "Confirmar eliminación de contenido"
+        },
         "name": {
           "file": "Nombre con extensión:",
           "folder": "Nombre de la carpeta:"

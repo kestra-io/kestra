@@ -806,11 +806,13 @@
         "label": "Usuń"
       },
       "dialog": {
-        "confirm": "Potwierdź",
-        "file_deletion": "Potwierdź usunięcie pliku",
-        "file_deletion_description": "Czy na pewno chcesz usunąć ten plik?",
-        "folder_deletion": "Potwierdź usunięcie folderu",
-        "folder_deletion_description": "Czy na pewno chcesz usunąć ten folder i całą jego zawartość?",
+        "deletion": {
+          "confirm": "Potwierdź",
+          "files": "Czy na pewno chcesz usunąć <code>{count}</code> plik(ów)?",
+          "folders": "Czy na pewno chcesz usunąć <code>{count}</code> folder(y) i całą jego zawartość?",
+          "mixed": "Czy na pewno chcesz usunąć folder(y) <code>{folders}</code> i plik(i) <code>{files}</code>?",
+          "title": "Potwierdź usunięcie zawartości"
+        },
         "name": {
           "file": "Nazwa z rozszerzeniem:",
           "folder": "Nazwa folderu:"

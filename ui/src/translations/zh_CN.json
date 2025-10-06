@@ -806,11 +806,13 @@
         "label": "删除"
       },
       "dialog": {
-        "confirm": "确认",
-        "file_deletion": "确认删除文件",
-        "file_deletion_description": "确定要删除此文件吗？",
-        "folder_deletion": "确认删除文件夹",
-        "folder_deletion_description": "确定要删除此文件夹及其所有内容吗？",
+        "deletion": {
+          "confirm": "确认",
+          "files": "您确定要删除 <code>{count}</code> 个文件吗？",
+          "folders": "您确定要删除 <code>{count}</code> 个文件夹及其所有内容吗？",
+          "mixed": "您确定要删除 <code>{folders}</code> 个文件夹和 <code>{files}</code> 个文件吗？",
+          "title": "确认删除内容"
+        },
         "name": {
           "file": "文件名（带扩展名）：",
           "folder": "文件夹名："

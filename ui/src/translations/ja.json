@@ -790,9 +790,12 @@
     "namespace and id readonly": "プロパティ`namespace`と`id`は変更できません — 初期値に設定されています。flowの名前を変更したりnamespaceを変更したい場合は、新しいflowを作成して古いものを削除してください。",
     "namespace files": {
       "create": {
-        "already_exists": "この名前のファイルは既に存在します",
         "file": "ファイルを作成",
+        "file_already_exists": "この名前のファイルはすでに存在します",
+        "file_error": "ファイルの作成中にエラーが発生しました",
         "folder": "フォルダーを作成",
+        "folder_already_exists": "この名前のフォルダーはすでに存在します",
+        "folder_error": "フォルダーの作成中にエラーが発生しました",
         "label": "作成"
       },
       "delete": {
@@ -803,11 +806,13 @@
         "label": "削除"
       },
       "dialog": {
-        "confirm": "確認",
-        "file_deletion": "ファイル削除の確認",
-        "file_deletion_description": "このファイルを削除してもよろしいですか？",
-        "folder_deletion": "フォルダー削除の確認",
-        "folder_deletion_description": "このフォルダーとそのすべての内容を削除してもよろしいですか？",
+        "deletion": {
+          "confirm": "確認",
+          "files": "<code>{count}</code> 個のファイルを削除してもよろしいですか？",
+          "folders": "<code>{count}</code> 個のフォルダーとそのすべての内容を削除してもよろしいですか？",
+          "mixed": "<code>{folders}</code> フォルダーと <code>{files}</code> ファイルを削除してもよろしいですか？",
+          "title": "コンテンツの削除を確認"
+        },
         "name": {
           "file": "拡張子付きの名前:",
           "folder": "フォルダー名:"

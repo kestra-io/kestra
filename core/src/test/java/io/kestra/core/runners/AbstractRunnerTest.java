@@ -258,6 +258,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/flow-trigger-for-each-item-parent.yaml", "flows/valids/flow-trigger-for-each-item-child.yaml", "flows/valids/flow-trigger-for-each-item-grandchild.yaml"})
+    void forEachItemWithFlowTrigger() throws Exception {
+        multipleConditionTriggerCaseTest.forEachItemWithFlowTrigger();
+    }
+
+    @Test
     @LoadFlows({"flows/valids/each-null.yaml"})
     void eachWithNull() throws Exception {
         EachSequentialTest.eachNullTest(runnerUtils, logsQueue);
@@ -452,6 +458,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows(value = {"flows/valids/flow-concurrency-subflow.yml", "flows/valids/flow-concurrency-cancel.yml"}, tenantId = TENANT_1)
     void flowConcurrencySubflow() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencySubflow(TENANT_1);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-concurrency-parallel-subflow-kill.yaml", "flows/valids/flow-concurrency-parallel-subflow-kill-child.yaml", "flows/valids/flow-concurrency-parallel-subflow-kill-grandchild.yaml"})
+    void flowConcurrencyParallelSubflowKill() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyParallelSubflowKill();
     }
 
     @Test

@@ -25,7 +25,7 @@ plugins {
     id 'jacoco-report-aggregation'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.52.0"
+    id "com.github.ben-manes.versions" version "0.53.0"
 
     // front
     id 'com.github.node-gradle.node' version '7.1.0'

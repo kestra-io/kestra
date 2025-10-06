@@ -19,7 +19,7 @@
     import {useDocStore} from "../../stores/doc";
 
     interface ReleaseMetadata {
-        release?: string;
+        release: string;
         title: string;
         description?: string;
     }
@@ -52,10 +52,10 @@
     const navigation = Object.entries(resourcesWithMetadata)
         .filter(([_, metadata]) => metadata.release !== undefined)
         .sort(([_, {release: release1}], [__, {release: release2}]) => {
-            if (release1! < release2!) {
+            if (release1 < release2) {
                 return -1;
             }
-            if (release1! > release2!) {
+            if (release1 > release2) {
                 return 1;
             }
             return 0;

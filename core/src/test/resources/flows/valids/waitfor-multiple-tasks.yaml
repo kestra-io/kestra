@@ -5,6 +5,9 @@ tasks:
   - id: waitfor
     type: io.kestra.plugin.core.flow.WaitFor
     condition: "{{ outputs.output_values.values.count == '4'}}"
+    checkFrequency:
+      maxIterations: 3
+      interval: PT0.2S
     tasks:
       - id: echo
         type: io.kestra.core.tasks.log.Log

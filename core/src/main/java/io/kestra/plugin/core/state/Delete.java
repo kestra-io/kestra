@@ -46,7 +46,7 @@ public class Delete extends AbstractState implements RunnableTask<Delete.Output>
         title = "Raise an error if the state is not found."
     )
     @Builder.Default
-    private final Property<Boolean> errorOnMissing = Property.of(false);
+    private final Property<Boolean> errorOnMissing = Property.ofValue(false);
 
     @Override
     public Output run(RunContext runContext) throws Exception {
@@ -66,7 +66,7 @@ public class Delete extends AbstractState implements RunnableTask<Delete.Output>
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "Whether the state file was deleted."
+            title = "Flag specifying whether the state file was deleted"
         )
         private final Boolean deleted;
     }

@@ -24,13 +24,15 @@ public abstract class AbstractJdbcExecutionDelayStorage extends AbstractJdbcRepo
         this.jdbcRepository
             .getDslContextWrapper()
             .transaction(configuration -> {
-                SelectConditionStep<Record1<Object>> select = DSL
+                var select = DSL
                     .using(configuration)
                     .select(AbstractJdbcRepository.field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(
                         AbstractJdbcRepository.field("date").lessOrEqual(now.toOffsetDateTime())
-                    );
+                    )
+                    .forUpdate()
+                    .skipLocked();
 
                 this.jdbcRepository.fetch(select)
                     .forEach(executionDelay -> {

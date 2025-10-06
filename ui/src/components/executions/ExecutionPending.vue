@@ -1,24 +1,22 @@
 <template>
-    <div class="execution-pending">
-        <EmptyTemplate class="queued">
-            <img src="../../assets/queued_visual.svg" alt="Queued Execution">
-            <h5 class="mt-4 fw-bold">
-                {{ $t('execution_status') }} 
-                <span 
-                    class="ms-2 px-2 py-1 rounded fs-7 fw-normal" 
-                    :style="getStyle(execution.state.current)"
-                >
-                    {{ execution.state.current }}
-                </span>
-            </h5>
-            <p class="mt-4 mb-0">
-                {{ $t('no_tasks_running') }}
-            </p>
-            <p>
-                {{ $t('execution_starts_progress') }}
-            </p>
-        </EmptyTemplate>
-    </div>
+    <EmptyTemplate class="queued">
+        <img src="../../assets/queued_visual.svg" alt="Queued Execution">
+        <h5 class="mt-4 fw-bold">
+            {{ $t('execution_status') }} 
+            <span 
+                class="ms-2 px-2 py-1 rounded fs-7 fw-normal" 
+                :style="getStyle(execution.state.current)"
+            >
+                {{ execution.state.current }}
+            </span>
+        </h5>
+        <p class="mt-4 mb-0">
+            {{ $t('no_tasks_running') }}
+        </p>
+        <p>
+            {{ $t('execution_starts_progress') }}
+        </p>
+    </EmptyTemplate>
 </template>
 
 <script setup>

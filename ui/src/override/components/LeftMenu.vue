@@ -1,9 +1,9 @@
 <template>
-    <side-bar :generate-menu="generateMenu" @menu-collapse="onCollapse">
+    <SideBar v-if="menu" :menu :showLink="showLink" @menu-collapse="onCollapse">
         <template #footer>
-            <auth />    
+            <Auth />    
         </template>
-    </side-bar>
+    </SideBar>
 </template>
 
 <script setup>
@@ -11,13 +11,15 @@
     import SideBar from "../../components/layout/SideBar.vue";
     import Auth from "../../override/components/auth/Auth.vue";
 
+    defineProps({showLink: {type: Boolean, default: true}})
+
     const $emit = defineEmits(["menu-collapse"])
 
     function onCollapse(folded) {
         $emit("menu-collapse", folded);
     }
 
-    const {generateMenu} = useLeftMenu();
+    const {menu} = useLeftMenu();
 </script>
 
 <style lang="scss" scoped>

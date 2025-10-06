@@ -1,0 +1,13 @@
+id: flow-trigger-paused-flow
+namespace: io.kestra.tests.trigger.paused
+
+labels:
+  some: label
+
+tasks:
+  - id: pause
+    type: io.kestra.plugin.core.flow.Pause
+    pauseDuration: PT0.5S
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "from parents: {{execution.id}}"

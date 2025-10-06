@@ -101,7 +101,7 @@ class StateTest {
             .id(IdUtils.create())
             .type(Get.class.getName())
             .name(new Property<>(IdUtils.create()))
-            .errorOnMissing(Property.of(true))
+            .errorOnMissing(Property.ofValue(true))
             .build();
 
         assertThrows(FileNotFoundException.class, () -> {
@@ -115,7 +115,7 @@ class StateTest {
             .id(IdUtils.create())
             .type(Get.class.getName())
             .name(new Property<>(IdUtils.create()))
-            .errorOnMissing(Property.of(true))
+            .errorOnMissing(Property.ofValue(true))
             .build();
 
         assertThrows(FileNotFoundException.class, () -> {

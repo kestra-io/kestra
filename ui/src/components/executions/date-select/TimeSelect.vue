@@ -1,5 +1,5 @@
 <template>
-    <date-select
+    <DateSelect
         :placeholder="customAwarePlaceholder"
         :value="timeRangeSelect"
         :options="timeFilterPresets"
@@ -8,7 +8,7 @@
         @change="onTimeRangeSelect"
     />
     <el-tooltip v-if="allowCustom && timeRangeSelect === undefined" :content="allowInfinite ? $t('datepicker.leave empty for infinite') : $t('datepicker.duration example')">
-        <el-input class="mt-2" :model-value="timeRange" :placeholder="$t('datepicker.custom duration')" @update:model-value="onTimeRangeChange" />
+        <el-input class="mt-2" :modelValue="timeRange" :placeholder="$t('datepicker.custom duration')" @update:model-value="onTimeRangeChange" />
     </el-tooltip>
 </template>
 

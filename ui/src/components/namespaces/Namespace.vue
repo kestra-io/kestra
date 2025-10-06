@@ -1,23 +1,22 @@
 <template>
-    <Navbar :title="details.title" :breadcrumb="details.breadcrumb">
+    <TopNavBar :title="details.title" :breadcrumb="details.breadcrumb">
         <template #additional-right>
             <Actions />
         </template>
-    </Navbar>
-    <Tabs :tabs :route-name="namespace ? 'namespaces/update' : ''" :namespace />
+    </TopNavBar>
+    <Tabs :tabs :routeName="namespace ? 'namespaces/update' : ''" :namespace />
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, Ref, onMounted} from "vue";
-
+    import {computed, Ref, watch, onMounted} from "vue";
+    import {useRoute} from "vue-router";
     import {useTabs} from "override/components/namespaces/useTabs";
     import {useHelpers} from "./utils/useHelpers";
-    import {useRoute} from "vue-router";
-    import useRouteContext from "../../mixins/useRouteContext";
-    import {useStore} from "vuex";
-
-    import Navbar from "../layout/TopNavBar.vue";
+    import useRouteContext from "../../composables/useRouteContext";
+    import {useNamespacesStore} from "override/stores/namespaces";
+    import TopNavBar from "../layout/TopNavBar.vue";
     import Actions from "override/components/namespaces/Actions.vue";
+    // @ts-expect-error no types in Tabs yet
     import Tabs from "../Tabs.vue";
 
     const {tabs} = useTabs();
@@ -25,15 +24,25 @@
 
     const route = useRoute();
 
-    const context = ref({title: details.title});
+    const context = computed(() => ({title:details.value.title}));
     useRouteContext(context);
 
     const namespace = computed(() => route.params?.id) as Ref<string>;
 
-    const store = useStore();
+    const namespacesStore = useNamespacesStore();
+
+    watch(namespace, (newID) => {
+        if (newID) {
+            namespacesStore.load(newID);
+        }
+    });
+
     onMounted(() => {
+        const main = document.querySelector("main");
+        if(main) main.scrollTop = 0;
+
         if (namespace.value) {
-            store.dispatch("namespace/load", namespace.value);
+            namespacesStore.load(namespace.value);
         }
     });
 </script>

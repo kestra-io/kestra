@@ -39,7 +39,7 @@
         "yoavbls.pretty-ts-errors",
         "github.vscode-github-actions",
         "vscjava.vscode-java-pack",
-        "ms-azuretools.vscode-docker"
+        "docker.docker"
       ]
     }
   }

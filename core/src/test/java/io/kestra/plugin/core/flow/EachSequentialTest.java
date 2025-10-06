@@ -4,6 +4,7 @@ import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.utils.TestsUtils;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.exceptions.InternalException;
@@ -13,7 +14,6 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.RunnerUtils;
 
 import java.time.Duration;
 import java.util.*;
@@ -24,6 +24,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import reactor.core.publisher.Flux;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
@@ -33,7 +34,7 @@ public class EachSequentialTest {
     QueueInterface<LogEntry> logQueue;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Test
     @ExecuteFlow("flows/valids/each-sequential.yaml")
@@ -91,11 +92,11 @@ public class EachSequentialTest {
         EachSequentialTest.eachNullTest(runnerUtils, logQueue);
     }
 
-    public static void eachNullTest(RunnerUtils runnerUtils, QueueInterface<LogEntry> logQueue) throws TimeoutException, QueueException {
+    public static void eachNullTest(TestRunnerUtils runnerUtils, QueueInterface<LogEntry> logQueue) throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-null", Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "each-null", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);

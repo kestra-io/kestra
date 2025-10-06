@@ -8,6 +8,7 @@ import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
@@ -44,11 +45,37 @@ class FlowServiceTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id(taskId)
                 .type(Return.class.getName())
-                .format(Property.of("test"))
+                .format(Property.ofValue("test"))
                 .build()))
             .build();
 
         return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
+    }
+
+    @Test
+    void shouldReturnTrueWhenValidatingFlowGivenDefaults() {
+        // Given
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: download
+                type: io.kestra.plugin.core.http.Download
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: This is a message
+            pluginDefaults:
+              - type: io.kestra.plugin.core
+                values:
+                  level: WARN
+                  uri: https://kestra.io
+            """;
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", source);
+
+        // Then
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation("test", "io.kestra.unittest", 0, null, false, List.of(), List.of(), List.of()));
     }
 
     @Test
@@ -256,7 +283,7 @@ class FlowServiceTest {
             .tasks(Collections.singletonList(Echo.builder()
                 .id("taskId")
                 .type(Return.class.getName())
-                .format(Property.of("test"))
+                .format(Property.ofValue("test"))
                 .build()))
             .build();
 
@@ -344,5 +371,64 @@ class FlowServiceTest {
         List<String> exceptions = flowService.checkValidSubflows(flow, null);
 
         assertThat(exceptions.size()).isZero();
+    }
+
+    @Test
+    void shouldReturnValidationForRunnablePropsOnFlowable() {
+        // Given
+        String source = """
+            id: dolphin_164914
+            namespace: company.team
+
+            tasks:
+              - id: for
+                type: io.kestra.plugin.core.flow.ForEach
+                values: [1, 2, 3]
+                workerGroup:
+                  key: toto
+                timeout: PT10S
+                taskCache:
+                  enabled: true
+                tasks:
+                - id: hello
+                  type: io.kestra.plugin.core.log.Log
+                  message: Hello World! 🚀
+                  workerGroup:
+                    key: toto
+                  timeout: PT10S
+                  taskCache:
+                    enabled: true
+            """;
+
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", source);
+
+        // Then
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().getWarnings()).hasSize(3);
+        assertThat(results.getFirst().getWarnings()).containsExactlyInAnyOrder(
+            "The task 'for' cannot use the 'timeout' property as it's only relevant for runnable tasks.",
+            "The task 'for' cannot use the 'taskCache' property as it's only relevant for runnable tasks.",
+            "The task 'for' cannot use the 'workerGroup' property as it's only relevant for runnable tasks."
+        );
+    }
+
+    @Test
+    void shouldReturnValidationErrorForReservedFlowId() {
+        // Given
+        String source = """
+        id: pause
+        namespace: io.kestra.unittest
+        tasks:
+          - id: task
+            type: io.kestra.plugin.core.log.Log
+            message: Reserved id test
+        """;
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", source);
+
+        // Then
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().getConstraints()).contains("Flow id is a reserved keyword: pause");
     }
 }

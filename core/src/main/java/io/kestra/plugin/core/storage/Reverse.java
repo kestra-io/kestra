@@ -44,7 +44,7 @@ import java.nio.charset.StandardCharsets;
 )
 public class Reverse extends Task implements RunnableTask<Reverse.Output> {
     @Schema(
-        title = "The file to be split."
+        title = "The file to be split"
     )
     @NotNull
     @PluginProperty(internalStorageURI = true)
@@ -54,13 +54,13 @@ public class Reverse extends Task implements RunnableTask<Reverse.Output> {
         title = "The separator used to join the file into chunks. By default, it's a newline `\\n` character. If you are on Windows, you might want to use `\\r\\n` instead."
     )
     @Builder.Default
-    private Property<String> separator = Property.of("\n");
+    private Property<String> separator = Property.ofValue("\n");
 
     @Schema(
         title = "The name of a supported charset"
     )
     @Builder.Default
-    private final Property<String> charset = Property.of(StandardCharsets.UTF_8.name());
+    private final Property<String> charset = Property.ofValue(StandardCharsets.UTF_8.name());
 
     @Override
     public Reverse.Output run(RunContext runContext) throws Exception {
@@ -99,7 +99,7 @@ public class Reverse extends Task implements RunnableTask<Reverse.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The URIs of reverse files in the Kestra's internal storage."
+            title = "The URIs of reverse files in the Kestra's internal storage"
         )
         private final URI uri;
     }

@@ -115,24 +115,13 @@ class FlowTest {
         Flow updated = flow.updateTask("1-2-2_return", Return.builder()
             .id("1-2-2_return")
             .type(Return.class.getName())
-            .format(new Property<>("{{task.id}}"))
+            .format(Property.ofExpression("{{task.id}}"))
             .build()
         );
 
         Task findUpdated = updated.findTaskByTaskId("1-2-2_return");
 
         assertThat(((Return) findUpdated).getFormat().toString()).isEqualTo("{{task.id}}");
-    }
-
-    @Test
-    void workerGroup() {
-        Flow flow = this.parse("flows/invalids/worker-group.yaml");
-        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
-
-        assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
-
-        assertThat(validate.get().getMessage()).isEqualTo("tasks[0].workerGroup: Worker Group is an Enterprise Edition functionality\n");
     }
 
     @Test
@@ -151,7 +140,7 @@ class FlowTest {
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
 
-        assertThat(validate.get().getMessage()).contains("file: no `defaults` can be set for inputs of type 'FILE'");
+        assertThat(validate.get().getMessage()).contains("file: inputs of type 'FILE' only support `defaults` as local files using a file URI");
         assertThat(validate.get().getMessage()).contains("array: `itemType` cannot be `ARRAY");
     }
 

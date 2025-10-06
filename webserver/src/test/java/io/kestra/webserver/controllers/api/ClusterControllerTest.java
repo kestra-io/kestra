@@ -1,9 +1,9 @@
 package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.runners.Worker;
 import io.kestra.core.server.ServerInstance;
 import io.kestra.core.server.ServiceInstance;
+import io.kestra.worker.DefaultWorker;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -19,12 +19,12 @@ class ClusterControllerTest {
     ReactorHttpClient client;
 
     @Inject
-    Worker worker;
+    DefaultWorker worker;
 
     @Test
     void shouldGetServiceInfo() {
         ServiceInstance serviceInstance = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/cluster/services/" + worker.getId()),
+            HttpRequest.GET("/api/v1/main/cluster/services/" + worker.getId()),
             ServiceInstance.class
         );
 

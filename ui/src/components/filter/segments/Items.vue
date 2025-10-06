@@ -35,15 +35,11 @@
                                 class="col flex-grow-1 overflow-auto text-nowrap"
                             >
                                 <div class="me-3 overflow-x-auto scroller">
-                                    <el-tag
-                                        v-for="value in item.value"
-                                        :key="value"
-                                        class="me-2"
-                                    >
-                                        <span class="small">
-                                            <Label :option="value" :prefix="props.prefix" />
-                                        </span>
-                                    </el-tag>
+                                    <el-input
+                                        v-model="item.value"
+                                        disabled
+                                        type="text"
+                                    />
                                 </div>
                             </div>
 
@@ -53,7 +49,7 @@
                                     :tooltip="$t('filters.save.remove')"
                                     placement="right"
                                 >
-                                    <DeleteOutline />
+                                    <DeleteOutline class="align-middle" />
                                 </KestraIcon>
                             </div>
                         </div>
@@ -70,18 +66,18 @@
     import {CurrentItem} from "../utils/types";
 
     import KestraIcon from "../../Kicon.vue";
-    import Label from "../components/Label.vue";
     import Title from "../components/Title.vue";
 
-    import {History, DeleteOutline} from "../utils/icons";
+    import {DeleteOutline, History} from "../utils/icons";
 
     import {useI18n} from "vue-i18n";
+    import {useFilters} from "../composables/useFilters";
+
     const {t} = useI18n({useScope: "global"});
 
     const emits = defineEmits(["search"]);
     const props = defineProps({prefix: {type: String, required: true}});
 
-    import {useFilters} from "../composables/useFilters";
     const {getSavedItems, removeSavedItem} = useFilters(props.prefix);
 
     let saved = ref<{ value: CurrentItem[]; name: string }[]>([]);

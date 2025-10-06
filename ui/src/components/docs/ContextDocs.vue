@@ -1,10 +1,10 @@
 <template>
-    <context-info-content :title="routeInfo.title">
+    <ContextInfoContent :title="routeInfo.title">
         <template #back-button>
-            <button 
-                class="back-button" 
+            <button
+                class="back-button"
                 type="button"
-                @click="goBack" 
+                @click="goBack"
                 :disabled="!canGoBack"
                 :class="{disabled: !canGoBack}"
                 :aria-label="t('common.back')"
@@ -27,20 +27,20 @@
             </router-link>
         </template>
         <div ref="docWrapper" class="docs-controls">
-            <context-docs-search />
-            <docs-menu />
-            <docs-layout>
+            <ContextDocsSearch />
+            <DocsMenu />
+            <DocsLayout>
                 <template #content>
                     <MDCRenderer v-if="ast?.body" :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
                 </template>
-            </docs-layout>
+            </DocsLayout>
         </div>
-    </context-info-content>
+    </ContextInfoContent>
 </template>
 
 <script lang="ts" setup>
     import {ref, watch, computed, getCurrentInstance, onUnmounted, onMounted, nextTick} from "vue";
-    import {useStore} from "vuex";
+    import {useDocStore} from "../../stores/doc";
     import {useI18n} from "vue-i18n";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import {MDCRenderer, getMDCParser} from "@kestra-io/ui-libs";
@@ -52,7 +52,7 @@
     import ContextInfoContent from "../ContextInfoContent.vue";
     import ContextChildTableOfContents from "./ContextChildTableOfContents.vue";
 
-    const store = useStore();
+    const docStore = useDocStore();
     const {t} = useI18n({useScope: "global"});
 
     const docWrapper = ref<HTMLDivElement | null>(null);
@@ -60,8 +60,8 @@
     const currentHistoryIndex = ref(-1);
     const ast = ref<any>(undefined);
 
-    const pageMetadata = computed(() => store.getters["doc/pageMetadata"]);
-    const docPath = computed(() => store.getters["doc/docPath"]);
+    const pageMetadata = computed(() => docStore.pageMetadata);
+    const docPath = computed(() => docStore.docPath);
     const routeInfo = computed(() => ({
         title: pageMetadata.value?.title ?? t("docs"),
     }));
@@ -71,13 +71,13 @@
     const addToHistory = (path: string) => {
         // Always store the path, even empty ones
         const pathToAdd = path || "";
-        
+
         if (docHistory.value.length === 0) {
             docHistory.value = [pathToAdd];
             currentHistoryIndex.value = 0;
             return;
         }
-        
+
         if (pathToAdd !== docHistory.value[currentHistoryIndex.value]) {
             docHistory.value = docHistory.value.slice(0, currentHistoryIndex.value + 1);
             docHistory.value.push(pathToAdd);
@@ -88,11 +88,11 @@
     const goBack = () => {
         if (!canGoBack.value) return;
         currentHistoryIndex.value--;
-        store.commit("doc/setDocPath", docHistory.value[currentHistoryIndex.value]);
+        docStore.docPath = docHistory.value[currentHistoryIndex.value];
     };
 
-    async function setDocPageFromResponse(response){
-        await store.commit("doc/setPageMetadata", response.metadata);
+    async function setDocPageFromResponse(response: {metadata?: any, content:string}) {
+        docStore.pageMetadata = response.metadata;
         let content = response.content;
         if (!("canShare" in navigator)) {
             content = content.replaceAll(/\s*web-share\s*/g, "");
@@ -104,7 +104,7 @@
         // since they are the only ones visible in the beginning
         const firstLinesOfContent = content.split("---\n")[2].split("\n").slice(0, 50).join("\n") + "\nLoading the rest...\n";
         ast.value = await parse(firstLinesOfContent);
-        
+
         setTimeout(async () => {
             ast.value = await parse(content);
         }, 50);
@@ -112,7 +112,7 @@
 
     async function fetchDefaultDocFromDocIdIfPossible() {
         try {
-            const response = await store.dispatch("doc/fetchDocId", store.state.doc.docId);
+            const response = await docStore.fetchDocId(docStore.docId!);
             if (response) {
                 await setDocPageFromResponse(response);
                 // Add the default page to history
@@ -125,12 +125,12 @@
         }
     }
 
-    async function refreshPage(val) {
-        let response: {metadata: any, content:string} | undefined = undefined;
+    async function refreshPage(val?: string) {
+        let response: {metadata?: any, content:string} | undefined = undefined;
         // if this fails to return a value, fetch the default doc
         // if nothing, fetch the home page
         if(response === undefined){
-            response = await store.dispatch("doc/fetchResource", `docs${val ?? ""}`)
+            response = await docStore.fetchResource(`docs${val ?? ""}`)
         }
         if(response === undefined){
             return;
@@ -160,7 +160,7 @@
         ast.value = undefined;
     });
 
-    watch(() => store.getters["doc/docPath"], async (val) => {
+    watch(() => docStore.docPath, async (val) => {
         if (!val?.length) {
             fetchDefaultDocFromDocIdIfPossible();
             return;
@@ -188,7 +188,7 @@
         transition: all 0.2s ease;
         padding: 0;
         flex-shrink: 0;
-        
+
         &:hover:not(.disabled),
         &:focus:not(.disabled) {
             background: var(--ks-background-hover);

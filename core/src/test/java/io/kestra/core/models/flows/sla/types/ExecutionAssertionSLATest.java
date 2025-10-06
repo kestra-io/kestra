@@ -1,5 +1,6 @@
 package io.kestra.core.models.flows.sla.types;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.sla.Violation;
@@ -18,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @KestraTest
 class ExecutionAssertionSLATest {
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void shouldEvaluateToAViolation() throws InternalException {

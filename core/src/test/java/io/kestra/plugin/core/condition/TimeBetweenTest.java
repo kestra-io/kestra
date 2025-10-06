@@ -40,9 +40,9 @@ class TimeBetweenTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         TimeBetween build = TimeBetween.builder()
-            .date(Property.of(date))
-            .before(Property.of(before))
-            .after(Property.of(after))
+            .date(Property.ofValue(date))
+            .before(Property.ofValue(before))
+            .after(Property.ofValue(after))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

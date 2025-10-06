@@ -1,56 +1,38 @@
 <template>
-    <metrics-table
+    <MetricsTable
         ref="table"
-        :task-run-id="$route.query.metric?.[0] ?? undefined"
-        :show-task="true"
-        :execution="execution"
+        :taskRunId="route.query.metric?.[0] ?? undefined"
+        :showTask="true"
+        :execution="executionsStore.execution"
     >
         <template #navbar>
             <KestraFilter
-                :include="['metric']"
-                :placeholder="`${$t('display metric for specific task')}...`"
-                :values="{metric: selectOptions}"
+                :language="metricFilterLang"
+                :placeholder="`${t('display metric for specific task')}...`"
+                legacyQuery
             />
         </template>
-    </metrics-table>
+    </MetricsTable>
 </template>
-<script>
-    import {mapState} from "vuex";
-
+<script setup lang="ts">
+    import {onMounted, ref} from "vue";
+    import {useI18n} from "vue-i18n";
+    import {useRoute} from "vue-router";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {MetricFilterLanguage} from "../../composables/monaco/languages/filters/impl/metricFilterLanguage";
     import MetricsTable from "../executions/MetricsTable.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
 
-    export default {
-        components: {
-            MetricsTable,
-            KestraFilter,
-        },
-        emits: ["follow"],
-        mounted() {
-            if (this.$refs.table) {
-                this.$refs.table.loadData(this.$refs.table.onDataLoaded);
-            }
-        },
-        data() {
-            return {
-                isModalOpen: false,
-            };
-        },
-        computed: {
-            ...mapState("execution", ["execution"]),
-            selectOptions() {
-                const options = {};
-                for (const taskRun of this.execution.taskRunList || []) {
-                    options[taskRun.id] = {
-                        label:
-                            taskRun.taskId +
-                            (taskRun.value ? ` - ${taskRun.value}` : ""),
-                        value: taskRun.id,
-                    };
-                }
+    const {t} = useI18n();
+    const route = useRoute();
 
-                return Object.values(options);
-            },
-        },
-    };
+    const table = ref<typeof MetricsTable>();
+
+    const executionsStore = useExecutionsStore();
+
+    const metricFilterLang = new MetricFilterLanguage(executionsStore)
+
+    onMounted(() => {
+        table.value!.loadData(table.value!.onDataLoaded);
+    })
 </script>

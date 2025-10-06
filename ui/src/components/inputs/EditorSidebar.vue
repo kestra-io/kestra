@@ -4,13 +4,13 @@
         @click="$refs.tree.setCurrentKey(undefined)"
         @contextmenu.prevent="onTabContextMenu"
     >
-        <div class="d-flex flex-row">
+        <div class="flex-row d-flex">
             <el-select
                 v-model="filter"
                 :placeholder="$t('namespace files.filter')"
                 filterable
                 remote
-                :remote-method="searchFilesList"
+                :remoteMethod="searchFilesList"
                 class="filter"
             >
                 <template #prefix>
@@ -29,9 +29,9 @@
                     effect="light"
                     :content="$t('namespace files.create.file')"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                     :persistent="false"
-                    popper-class="text-base"
+                    popperClass="text-base"
                 >
                     <el-button class="px-2" @click="toggleDialog(true, 'file')">
                         <FilePlus />
@@ -41,9 +41,9 @@
                     effect="light"
                     :content="$t('namespace files.create.folder')"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                     :persistent="false"
-                    popper-class="text-base"
+                    popperClass="text-base"
                 >
                     <el-button
                         class="px-2"
@@ -91,9 +91,9 @@
                     effect="light"
                     :content="$t('namespace files.export')"
                     transition=""
-                    :hide-after="0"
+                    :hideAfter="0"
                     :persistent="false"
-                    popper-class="text-base"
+                    popperClass="text-base"
                 >
                     <el-button class="px-2" @click="exportFiles()">
                         <FolderDownloadOutline />
@@ -107,25 +107,15 @@
             lazy
             :load="loadNodes"
             :data="items"
-            highlight-current
-            :allow-drop="
+            highlightCurrent
+            :allowDrop="
                 (_, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'
             "
             draggable
-            node-key="id"
+            nodeKey="id"
             v-loading="items === undefined"
-            :props="{class: 'node', isLeaf: 'leaf'}"
+            :props="{class: nodeClass, isLeaf: 'leaf'}"
             class="mt-3"
-            @node-click="
-                (data, node) =>
-                    data.leaf
-                        ? openTab({
-                            name: data.fileName,
-                            extension: data.fileName.split('.').pop(),
-                            path: getPath(node),
-                        })
-                        : undefined
-            "
             @node-drag-start="
                 nodeBeforeDrag = {
                     parent: $event.parent.data.id,
@@ -133,7 +123,7 @@
                 }
             "
             @node-drop="nodeMoved"
-            @keydown.delete.prevent="deleteKeystroke"
+            @keydown.delete.prevent="removeSelectedFiles"
         >
             <template #empty>
                 <div class="m-4 empty">
@@ -146,12 +136,20 @@
                 <el-dropdown
                     :ref="`dropdown__${data.id}`"
                     @contextmenu.prevent.stop="
-                        toggleDropdown(`dropdown__${data.id}`)
+                        toggleDropdown(`dropdown__${data.id}`);
+                        if(selectedNodes.length === 0) {
+                            selectedNodes.push(data.id);
+                            selectedFiles.push(getPath(data.id));
+                        }
                     "
                     trigger="contextmenu"
                     class="w-100"
                 >
-                    <el-row justify="space-between" class="w-100">
+                    <el-row
+                        justify="space-between"
+                        class="w-100"
+                        @click="(event) => handleNodeClick(data, node, event)"
+                    >
                         <el-col class="w-100">
                             <TypeIcon
                                 :name="data.fileName"
@@ -164,21 +162,25 @@
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item
-                                v-if="!data.leaf"
+                                v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'file', node)"
                             >
                                 {{ $t("namespace files.create.file") }}
                             </el-dropdown-item>
                             <el-dropdown-item
-                                v-if="!data.leaf"
+                                v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'folder', node)"
                             >
                                 {{ $t("namespace files.create.folder") }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="copyPath(data)">
+                            <el-dropdown-item v-if="!multiSelected" @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
                             </el-dropdown-item>
+                            <el-dropdown-item v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
+                                {{ $t("namespace files.export_single") }}
+                            </el-dropdown-item>
                             <el-dropdown-item
+                                v-if="data.leaf && !multiSelected"
                                 @click="
                                     toggleRenameDialog(
                                         true,
@@ -196,13 +198,17 @@
                                     )
                                 }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="confirmRemove(node)">
+                            <el-dropdown-item @click="removeSelectedFiles()">
                                 {{
-                                    $t(
+                                    selectedNodes.length <= 1 ? $t(
                                         `namespace files.delete.${
                                             !data.leaf ? "folder" : "file"
                                         }`,
-                                    )
+                                    ) : $t(
+                                        `namespace files.delete.${
+                                            !data.leaf ? "folders" : "files"
+                                        }`
+                                        , {count: selectedNodes.length})
                                 }}
                             </el-dropdown-item>
                         </el-dropdown-menu>
@@ -304,30 +310,18 @@
 
         <el-dialog
             v-model="confirmation.visible"
-            :title="
-                Array.isArray(confirmation.node?.data?.children)
-                    ? $t('namespace files.dialog.folder_deletion')
-                    : $t('namespace files.dialog.file_deletion')
-            "
+            :title="confirmationLabels.title"
             width="500"
-            @keydown.enter.prevent="removeItem()"
+            @keydown.enter.prevent="removeItems()"
         >
-            <span class="py-3">
-                {{
-                    Array.isArray(confirmation.node?.data?.children)
-                        ? $t(
-                            "namespace files.dialog.folder_deletion_description",
-                        )
-                        : $t("namespace files.dialog.file_deletion_description")
-                }}
-            </span>
+            <span class="py-3" v-html="confirmationLabels.message" />
             <template #footer>
                 <div>
                     <el-button @click="confirmation.visible = false">
                         {{ $t("cancel") }}
                     </el-button>
-                    <el-button type="primary" @click="removeItem()">
-                        {{ $t("namespace files.dialog.confirm") }}
+                    <el-button type="primary" @click="removeItems()">
+                        {{ $t("namespace files.dialog.deletion.confirm") }}
                     </el-button>
                 </div>
             </template>
@@ -352,10 +346,12 @@
 </template>
 
 <script>
-    import {mapActions, mapMutations, mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useNamespacesStore} from "override/stores/namespaces";
+    import {useEditorStore} from "../../stores/editor";
+    import {useFlowStore} from "../../stores/flow";
 
     import Utils from "../../utils/utils";
-
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
@@ -363,8 +359,8 @@
     import FolderPlus from "vue-material-design-icons/FolderPlus.vue";
     import PlusBox from "vue-material-design-icons/PlusBox.vue";
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue";
-
     import TypeIcon from "../utils/icons/Type.vue";
+
 
     const DIALOG_DEFAULTS = {
         visible: false,
@@ -411,14 +407,19 @@
                 nodeBeforeDrag: undefined,
                 searchResults: [],
                 tabContextMenu: {visible: false, x: 0, y: 0},
+                selectedFiles: [], // Tracks selected file paths
+                selectedNodes: [], // Tracks selected node IDs
+                lastClickedIndex: null, // Tracks the last clicked file index
             };
         },
         computed: {
-            ...mapState({
-                flow: (state) => state.flow.flow,
-                explorerVisible: (state) => state.editor.explorerVisible,
-                treeRefresh: (state) => state.editor.treeRefresh,
-            }),
+            ...mapStores(useEditorStore, useFlowStore, useNamespacesStore),
+            namespaceId() {
+                return this.currentNS ?? this.$route.params.namespace;
+            },
+            multiSelected() {
+                return this.selectedNodes.length > 1;
+            },
             folders() {
                 function extractPaths(basePath = "", array) {
                     const paths = [];
@@ -440,27 +441,116 @@
 
                 return extractPaths(undefined, this.items);
             },
+            confirmationLabels() {
+                const files = this.confirmation.nodes?.filter(n => n.type === "File").length ?? 0;
+                const folders = this.confirmation.nodes?.filter(n => n.type === "Directory").length ?? 0;
+
+                const labels = {title: this.$t("namespace files.dialog.deletion.title"), message: ""};
+
+                if (folders > 0 && files > 0) labels.message = this.$t("namespace files.dialog.deletion.mixed", {folders, files});
+                else if (folders > 0) labels.message = this.$t("namespace files.dialog.deletion.folders", {count: folders});
+                else labels.message = this.$t("namespace files.dialog.deletion.files", {count: files});
+
+                return labels;
+            },
         },
         methods: {
-            ...mapMutations("editor", [
-                "toggleExplorerVisibility",
-                "setTabDirty",
-            ]),
-            ...mapActions("editor", [
-                "openTab",
-                "closeTab",
-            ]),
-            ...mapActions("namespace", [
-                "createDirectory",
-                "readDirectory",
-                "createFile",
-                "searchFiles",
-                "renameFileDirectory",
-                "moveFileDirectory",
-                "deleteFileDirectory",
-                "importFileDirectory",
-                "exportFileDirectory",
-            ]),
+            nodeClass(data) {
+                // Use data.id to match the structure used in handleNodeClick
+                if (this.selectedNodes.includes(data.id)) {
+                    return "node selected-tree-node";
+                }
+                return "node";
+            },
+            flattenTree(items, parentPath = "") {
+                const result = [];
+
+                for (const item of items) {
+                    const fullPath = `${parentPath}${item.fileName}`;
+                    result.push({path: fullPath, fileName: item.fileName, id: item.id});
+
+                    if (item.children && item.children.length > 0) {
+                        result.push(...this.flattenTree(item.children, `${fullPath}/`));
+                    }
+                }
+
+                return result.filter(i => i.path);
+            },
+            handleNodeClick(data, node, event = null) {
+                const path = this.getPath(node);
+                const flatList = this.flattenTree(this.items);
+                const currentIndex = flatList.findIndex(item => item.path === path);
+
+                const isCtrl = event && (event.ctrlKey || event.metaKey);
+                const isShift = event && event.shiftKey;
+
+                if (isShift && this.lastClickedIndex !== null) {
+                    const start = Math.min(this.lastClickedIndex, currentIndex);
+                    const end = Math.max(this.lastClickedIndex, currentIndex);
+
+                    this.selectedFiles = flatList.slice(start, end + 1).map(item => item.path);
+                    this.selectedNodes = flatList.slice(start, end + 1).map(item => item.id);
+
+                } else if (isCtrl) {
+                    const isSelected = this.selectedNodes.includes(node.data.id);
+                    
+                    if (isSelected) {
+                        // Remove from selection - force reactivity with new arrays
+                        this.selectedFiles = [...this.selectedFiles.filter(file => file !== path)];
+                        this.selectedNodes = [...this.selectedNodes.filter(id => id !== node.data.id)];
+                    } else {
+                        // Add to selection
+                        this.selectedFiles = [...this.selectedFiles, path];
+                        this.selectedNodes = [...this.selectedNodes, node.data.id];
+                    }
+                    this.lastClickedIndex = currentIndex;
+
+                } else {
+                    // Handle single-click selection
+                    this.selectedFiles = [path];
+                    this.selectedNodes = [node.data.id];
+                    this.lastClickedIndex = currentIndex;
+                    if (data.leaf) {
+                        this.editorStore.openTab({
+                            name: data.fileName,
+                            path: path,
+                            extension: data.fileName.split(".").pop(),
+                        });
+                    }
+                }
+            },
+
+            async removeSelectedFiles() {
+                const nodes = this.selectedFiles.map((filePath) => {
+                    const node = this.findNodeByPath(filePath);
+                    return node;
+                });
+
+                this.confirmRemove(nodes);
+            },
+
+            findNodeByPath(path, items = this.items, parentPath = "") {
+                for (const item of items) {
+                    const fullPath = `${parentPath}${item.fileName}`;
+
+                    if (fullPath === path) {
+                        return item;
+                    }
+
+                    if (item.children && item.children.length > 0) {
+                        const foundNode = this.findNodeByPath(
+                            path,
+                            item.children,
+                            `${fullPath}/`
+                        );
+                        if (foundNode) {
+                            return foundNode;
+                        }
+                    }
+                }
+
+                return null;
+            },
             sorted(items) {
                 return items.sort((a, b) => {
                     if (a.type === "Directory" && b.type !== "Directory") return -1;
@@ -501,21 +591,21 @@
             async loadNodes(node, resolve) {
                 if (node.level === 0) {
                     const payload = {
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                        namespace: this.namespaceId,
                     };
-                    const items = await this.readDirectory(payload);
+                    const items = await this.namespacesStore.readDirectory(payload);
 
                     this.renderNodes(items);
                     this.items = this.sorted(this.items);
-                    this.$store.commit("editor/setTreeData", this.items);
+                    this.editorStore.treeData = this.items;
                     resolve(this.items);
                 } else if (node.level >= 1) {
                     const payload = {
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                        namespace: this.namespaceId,
                         path: this.getPath(node),
                     };
 
-                    let children = await this.readDirectory(payload);
+                    let children = await this.namespacesStore.readDirectory(payload);
                     children = this.sorted(
                         children.map((item) => ({
                             ...item,
@@ -549,8 +639,8 @@
             async searchFilesList(value) {
                 if (!value) return;
 
-                const results = await this.searchFiles({
-                    namespace: this.currentNS ?? this.$route.params.namespace,
+                const results = await this.namespacesStore.searchFiles({
+                    namespace: this.namespaceId,
                     query: value,
                 });
                 this.searchResults = results.map((result) =>
@@ -559,7 +649,7 @@
                 return this.searchResults;
             },
             chooseSearchResults(item) {
-                this.openTab({
+                this.editorStore.openTab({
                     name: item.split("/").pop(),
                     extension: item.split(".").pop(),
                     path: item,
@@ -622,8 +712,8 @@
                 const path = this.getPath(this.renameDialog.node);
                 const start = path.substring(0, path.lastIndexOf("/") + 1);
 
-                this.renameFileDirectory({
-                    namespace: this.currentNS ?? this.$route.params.namespace,
+                this.namespacesStore.renameFileDirectory({
+                    namespace: this.namespaceId,
                     old: `${start}${this.renameDialog.old}`,
                     new: `${start}${this.renameDialog.name}`,
                     type: this.renameDialog.type,
@@ -635,8 +725,8 @@
             },
             async nodeMoved(draggedNode) {
                 try {
-                    await this.moveFileDirectory({
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                    await this.namespacesStore.moveFileDirectory({
+                        namespace: this.namespaceId,
                         old: this.nodeBeforeDrag.path,
                         new: this.getPath(draggedNode.data.id),
                         type: draggedNode.data.type,
@@ -716,9 +806,9 @@
                             // Read file content
                             const content = await this.readFile(file);
 
-                            this.importFileDirectory({
+                            this.namespacesStore.importFileDirectory({
                                 namespace:
-                                    this.currentNS ?? this.$route.params.namespace,
+                                    this.namespaceId,
                                 content,
                                 path: `${folderPath}/${fileName}`,
                             });
@@ -739,9 +829,9 @@
                                 file.name,
                             );
 
-                            this.importFileDirectory({
+                            this.namespacesStore.importFileDirectory({
                                 namespace:
-                                    this.currentNS ?? this.$route.params.namespace,
+                                    this.namespaceId,
                                 content,
                                 path: file.name,
                             });
@@ -770,8 +860,8 @@
                 }
             },
             exportFiles() {
-                this.exportFileDirectory({
-                    namespace: this.currentNS ?? this.$route.params.namespace,
+                this.namespacesStore.exportFileDirectory({
+                    namespace: this.namespaceId,
                 });
             },
             async addFile({file, creation, shouldReset = true}) {
@@ -802,19 +892,19 @@
                 if (creation) {
                     if ((await this.searchFilesList(path)).includes(path)) {
                         this.$toast().error(
-                            this.$t("namespace files.create.already_exists"),
+                            this.$t("namespace files.create.file_already_exists"),
                         );
                         return;
                     }
-                    await this.createFile({
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                    await this.namespacesStore.createFile({
+                        namespace: this.namespaceId,
                         path,
                         content,
                         name: NAME,
                         creation: true,
                     });
 
-                    this.openTab({
+                    this.editorStore.openTab({
                         name: NAME,
                         path,
                         extension: extension,
@@ -888,38 +978,41 @@
                     this.dialog = {...DIALOG_DEFAULTS};
                 }
             },
-            confirmRemove(node) {
-                this.confirmation = {visible: true, node};
-            },
-            async removeItem() {
-                const {
-                    node,
-                    node: {data},
-                } = this.confirmation;
-
-                await this.deleteFileDirectory({
-                    namespace: this.currentNS ?? this.$route.params.namespace,
-                    path: this.getPath(node),
-                    name: data.fileName,
-                    type: data.type,
-                });
-
-                this.$refs.tree.remove(data.id);
-
-                this.closeTab({
-                    name: data.fileName,
-                });
-
-                this.confirmation = {visible: false, node: undefined};
-            },
-            deleteKeystroke() {
-                if (this.$refs.tree.getCurrentNode()) {
-                    this.confirmRemove(
-                        this.$refs.tree.getNode(
-                            this.$refs.tree.getCurrentNode().id,
-                        ),
-                    );
+            confirmRemove(nodes) {
+                if (Array.isArray(nodes)) {
+                    this.confirmation = {
+                        visible: true,
+                        nodes,
+                    };
+                } else {
+                    this.confirmation = {
+                        visible: true,
+                        nodes: [nodes],
+                    };
                 }
+            },
+            async removeItems() {
+                for (const node of this.confirmation.nodes) {
+                    try {
+                        await this.namespacesStore.deleteFileDirectory({
+                            namespace: this.currentNS ?? this.$route.params.namespace,
+                            path: this.getPath(node),
+                            name: node.fileName,
+                            type: node.type,
+                        });
+                        this.$refs.tree.remove(node.id);
+                        this.editorStore.closeTab({
+                            name: node.fileName,
+                        });
+                    } catch (error) {
+                        console.error(`Failed to delete file: ${node.fileName}`, error);
+                        this.$toast().error(`Failed to delete file: ${node.fileName}`);
+                    }
+                }
+
+                // Clear the confirmation state after deletion
+                this.confirmation = {visible: false, nodes: []};
+                this.$toast().success("Selected files deleted successfully.");
             },
             async addFolder(folder, creation) {
                 const {fileName} = folder
@@ -935,11 +1028,27 @@
                         this.dialog.folder ? `${this.dialog.folder}/` : ""
                     }${fileName}`;
 
-                    await this.createDirectory({
-                        namespace: this.currentNS ?? this.$route.params.namespace,
-                        path,
-                        name: fileName,
-                    });
+                    // Check if folder already exists (similar to file validation pattern)
+                    try {
+                        await this.namespacesStore.readDirectory({namespace: this.namespaceId, path: path});
+
+                        // If we reach here, the directory already exists
+                        this.$toast().error(this.$t("namespace files.create.folder_already_exists"));
+                        return;
+                    } catch {/* Directory doesn't exist, proceed with creation */}
+
+                    try {
+                        await this.namespacesStore.createDirectory({namespace: this.namespaceId, path, name: fileName});
+                        
+                        // Reset dialog and return early (like file creation does)
+                        this.dialog = {...DIALOG_DEFAULTS};
+                        return;
+                    } catch (error) {
+                        console.error(`Failed to create folder: ${fileName}`, error);
+
+                        this.$toast().error(this.$t("namespace files.create.folder_error"));
+                        return;
+                    }
                 }
 
                 if (!this.dialog.folder) {
@@ -1029,6 +1138,15 @@
                     this.$toast().error(this.$t("namespace files.path.error"));
                 }
             },
+            async exportFile(node, data){
+                const content = await this.namespacesStore.readFile({
+                    path: this.getPath(node),
+                    namespace: this.namespaceId,
+                })
+
+                const blob = new Blob([content], {type: "text/plain"});
+                Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName);
+            },
             onTabContextMenu(event) {
                 this.tabContextMenu = {
                     visible: true,
@@ -1042,12 +1160,23 @@
                 this.tabContextMenu.visible = false;
                 document.removeEventListener("click", this.hideTabContextMenu);
             },
+            clearSelection() {
+                this.selectedFiles = [];
+                this.selectedNodes = [];
+                this.lastClickedIndex = null;
+            },
+        },
+        mounted() {
+            document.addEventListener("click", this.clearSelection);
+        },
+        beforeUnmount() {
+            document.removeEventListener("click", this.clearSelection);
         },
         watch: {
-            flow: {
+            "flowStore.flow": {
                 handler(flow) {
                     if (flow) {
-                        this.openTab({
+                        this.editorStore.openTab({
                             name: "Flow",
                             path: "Flow.yaml",
                             persistent: true,
@@ -1058,12 +1187,12 @@
                 immediate: true,
                 deep: true,
             },
-            treeRefresh: {
+            "editorStore.treeRefresh": {
                 async handler() {
                     if (this.$refs.tree) {
                         this.items = undefined;
-                        const items = await this.readDirectory({
-                            namespace: this.currentNS ?? this.$route.params.namespace
+                        const items = await this.namespacesStore.readDirectory({
+                            namespace: this.namespaceId
                         });
                         this.renderNodes(items);
                         this.items = this.sorted(this.items);
@@ -1079,7 +1208,7 @@
 @import "@kestra-io/ui-libs/src/scss/variables";
 
 .sidebar {
-    background: var(--ks-background-card);
+    background: var(--ks-background-panel);
     border-right: 1px solid var(--ks-border-primary);
     overflow-x: hidden;
     min-width: calc(20% - 11px);
@@ -1132,7 +1261,6 @@
 
     .filename {
         font-size: var(--el-font-size-small);
-        color: var(--ks-content-primary);
 
         &:hover {
             color: var(--ks-content-link-hover);
@@ -1159,6 +1287,7 @@
     :deep(.el-tree) {
         height: calc(100% - 64px);
         overflow: auto;
+        background: var(--ks-background-panel);
 
         .el-tree__empty-block {
             height: auto;
@@ -1179,6 +1308,7 @@
             }
 
             &:hover{
+                background: none;
                 border: 1px solid var(--ks-border-active);
             }
         }
@@ -1193,9 +1323,18 @@
 
         .el-tree-node.is-current > .el-tree-node__content {
             min-width: fit-content;
+            border: 1px solid var(--ks-border-active);
+            background: var(--ks-button-background-primary);
 
-            html.dark &{
-                background-color: $primary;
+            .filename {
+                color: var(--ks-button-content-primary);
+            }
+        }
+        .el-tree-node.selected-tree-node > .el-tree-node__content {
+            background-color: var(--ks-button-background-primary);
+            min-width: fit-content;
+            .filename {
+                color: var(--ks-button-content-primary);
             }
         }
     }

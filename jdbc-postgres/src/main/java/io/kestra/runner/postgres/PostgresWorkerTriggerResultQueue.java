@@ -1,7 +1,6 @@
 package io.kestra.runner.postgres;
 
 import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.queues.WorkerTriggerResultQueueInterface;
 import io.kestra.core.runners.WorkerTriggerResult;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.JdbcWorkerTriggerResultQueueService;
@@ -11,8 +10,11 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.util.function.Consumer;
 
+/**
+ * This specific queue is used to be able to purge WorkerJobRunning for triggers
+ */
 @Slf4j
-public class PostgresWorkerTriggerResultQueue extends PostgresQueue<WorkerTriggerResult> implements WorkerTriggerResultQueueInterface {
+public class PostgresWorkerTriggerResultQueue extends PostgresQueue<WorkerTriggerResult> {
     private final JdbcWorkerTriggerResultQueueService jdbcWorkerTriggerResultQueueService;
 
     public PostgresWorkerTriggerResultQueue(ApplicationContext applicationContext) {
@@ -22,7 +24,7 @@ public class PostgresWorkerTriggerResultQueue extends PostgresQueue<WorkerTrigge
 
     @Override
     public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerTriggerResult, DeserializationException>> consumer) {
-        return jdbcWorkerTriggerResultQueueService.receive(consumerGroup, queueType, consumer);
+        return jdbcWorkerTriggerResultQueueService.receive(this, consumerGroup, queueType, consumer);
     }
 
     @Override

@@ -1,0 +1,30 @@
+id: if-in-parallel
+namespace: io.kestra.tests
+
+tasks:
+  - id: for_each
+    type: io.kestra.plugin.core.flow.ForEach
+    concurrencyLimit: 1
+    values:
+      - 1
+      - 2
+      - 3
+    tasks:
+      - id: return
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{taskrun.value}}"
+
+      - id: if
+        type: io.kestra.plugin.core.flow.If
+        condition: '{{ taskrun.value == "2" }}'
+        then:
+          - id: after_if
+            type: io.kestra.plugin.core.debug.Return
+            format: "After if {{ parent.taskrun.value }}"
+
+  - id: assert
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.return['1'].value == '1' }}"
+      - "{{ outputs.return['3'].value == '3' }}"
+      - "{{ outputs.after_if['2'].value == 'After if 2' }}"

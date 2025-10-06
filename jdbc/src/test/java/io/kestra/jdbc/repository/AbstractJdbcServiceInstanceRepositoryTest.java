@@ -12,7 +12,6 @@ import io.kestra.core.utils.Network;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,14 +23,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static io.kestra.core.server.ServiceStateTransition.Result.FAILED;
 import static io.kestra.core.server.ServiceStateTransition.Result.SUCCEEDED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
+@Execution(ExecutionMode.SAME_THREAD)
 public abstract class AbstractJdbcServiceInstanceRepositoryTest {
 
     @Inject
@@ -168,6 +169,21 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
         Assertions.assertEquals(new ServiceStateTransition.Response(FAILED, instance), response);
     }
 
+    @Test
+    void shouldPurgeServiceInstance() {
+        // Given
+        ServiceInstance instance = Fixtures.RunningServiceInstance;
+        repository.update(instance);
+        instance = Fixtures.EmptyServiceInstance;
+        repository.update(instance);
+
+        // When
+        int purged = repository.purgeEmptyInstances(Instant.now());
+
+        //Then
+        assertThat(purged).isEqualTo(1);
+    }
+
     public static final class Fixtures {
 
         public static List<ServiceInstance> all() {
@@ -211,7 +227,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
             serviceInstanceFor(Service.ServiceState.NOT_RUNNING);
 
         public static final ServiceInstance EmptyServiceInstance =
-            serviceInstanceFor(Service.ServiceState.EMPTY);
+            serviceInstanceFor(Service.ServiceState.INACTIVE);
 
         public static ServiceInstance serviceInstanceFor(final Service.ServiceState state) {
             ServerConfig config = new ServerConfig(

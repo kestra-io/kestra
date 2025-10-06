@@ -10,7 +10,6 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.runner.Process;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
-import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 import io.kestra.plugin.scripts.runner.docker.Docker;
 import io.kestra.plugin.scripts.runner.docker.PullPolicy;
@@ -32,7 +31,7 @@ import java.util.Map;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public abstract class AbstractExecScript extends Task implements RunnableTask<ScriptOutput>, NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
+public abstract class AbstractExecScript extends Task implements NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
     @Schema(
         title = "Deprecated - use the 'taskRunner' property instead.",
         description = "Only used if the `taskRunner` property is not set",
@@ -51,7 +50,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     @Valid
     protected TaskRunner<?> taskRunner = Docker.builder()
         .type(Docker.class.getName())
-        .pullPolicy(Property.of(PullPolicy.IF_NOT_PRESENT))
+        .pullPolicy(Property.ofValue(PullPolicy.IF_NOT_PRESENT))
         .build();
 
     @Schema(
@@ -76,7 +75,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     )
     @PluginProperty(dynamic = true)
     @NotNull
-    protected Property<List<String>> interpreter = Property.of(List.of("/bin/sh", "-c"));
+    protected Property<List<String>> interpreter = Property.ofValue(List.of("/bin/sh", "-c"));
 
     @Builder.Default
     @Schema(
@@ -84,7 +83,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
         description = "If set to `false` all commands will be executed one after the other. The final state of task execution is determined by the last command. Note that this property maybe be ignored if a non compatible interpreter is specified." +
             "\nYou can also disable it if your interpreter does not support the `set -e`option."
     )
-    protected Property<Boolean> failFast = Property.of(true);
+    protected Property<Boolean> failFast = Property.ofValue(true);
 
     private NamespaceFiles namespaceFiles;
 
@@ -106,7 +105,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     )
     @Builder.Default
     @NotNull
-    protected Property<TargetOS> targetOS = Property.of(TargetOS.AUTO);
+    protected Property<TargetOS> targetOS = Property.ofValue(TargetOS.AUTO);
 
     @Schema(
         title = "Deprecated - use the 'taskRunner' property instead.",
@@ -208,8 +207,6 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
         return List.of("set -e");
     }
 
-    /** {@inheritDoc} **/
-    @Override
     public void kill() {
         if (this.getTaskRunner() != null) {
             this.getTaskRunner().kill();

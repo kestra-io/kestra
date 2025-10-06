@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -11,7 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
@@ -32,7 +33,7 @@ public class DagTest {
     ModelValidator modelValidator;
 
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     @Inject
     private FlowInputOutput flowIO;
@@ -70,7 +71,7 @@ public class DagTest {
     @LoadFlows({"flows/valids/finally-dag.yaml"})
     void errors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests", "finally-dag", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", true)),
             Duration.ofSeconds(60)

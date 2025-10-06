@@ -142,7 +142,7 @@ class FlowUpdatesCommandTest {
             };
             PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
-            assertThat(out.toString()).contains("Invalid entity: flow.namespace: io.kestra.outsider_quattro_-1 - flow namespace is invalid");
+            assertThat(out.toString()).contains("Invalid entity: flow.namespace: main_io.kestra.outsider_quattro_-1 - flow namespace is invalid");
         }
     }
 

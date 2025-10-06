@@ -2,6 +2,7 @@ package io.kestra.cli.commands.templates.namespaces;
 
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
+import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.core.serializers.YamlParser;
@@ -10,6 +11,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
+import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -26,6 +28,9 @@ import jakarta.validation.ConstraintViolationException;
 @Slf4j
 @TemplateEnabled
 public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
+
+    @Inject
+    private TenantIdSelectorService tenantService;
 
     @Override
     public Integer call() throws Exception {
@@ -44,7 +49,7 @@ public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpda
 
             try (DefaultHttpClient client = client()) {
                 MutableHttpRequest<List<Template>> request = HttpRequest
-                    .POST(apiUri("/templates/") + namespace + "?delete=" + delete, templates);
+                    .POST(apiUri("/templates/", tenantService.getTenantId(tenantId)) + namespace + "?delete=" + delete, templates);
 
                 List<UpdateResult> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),

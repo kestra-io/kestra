@@ -1,12 +1,12 @@
 package io.kestra.core.storages.kv;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageContext;
-import jakarta.annotation.Nullable;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -81,6 +81,14 @@ public interface KVStore {
     List<KVEntry> list() throws IOException;
 
     /**
+     * Lists all the K/V store entries, expired or not.
+     *
+     * @return  The list of all {@link KVEntry}.
+     * @throws IOException if an error occurred while executing the operation on the K/V store.
+     */
+    List<KVEntry> listAll() throws IOException;
+
+    /**
      * Finds the K/V store entry for the given key.
      *
      * @return  The {@link KVEntry} or {@link Optional#empty()} if entry exists or the entry expired.
@@ -98,8 +106,33 @@ public interface KVStore {
     default boolean exists(String key) throws IOException {
         return list().stream().anyMatch(kvEntry -> kvEntry.key().equals(key));
     }
-
-
+    
+    /**
+     * Finds a KV entry with associated metadata for a given key.
+     *
+     * @param key   the KV entry key.
+     * @return an optional of {@link KVValueAndMetadata}.
+     * 
+     * @throws UncheckedIOException if an error occurred while executing the operation on the K/V store.
+     */
+    default Optional<KVValueAndMetadata> findMetadataAndValue(final String key) throws UncheckedIOException {
+        try {
+            return get(key).flatMap(entry ->
+                {
+                    try {
+                        return getValue(entry.key()).map(current -> new KVValueAndMetadata(new KVMetadata(entry.description(), entry.expirationDate()), current.value()));
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    } catch (ResourceExpiredException e) {
+                        return Optional.empty();
+                    }
+                }
+            );
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+    
     Pattern KEY_VALIDATOR_PATTERN = Pattern.compile("[a-zA-Z0-9][a-zA-Z0-9._-]*");
 
     /**

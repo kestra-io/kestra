@@ -1,0 +1,434 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/io.kestra.core.models.flows.Flow",
+  "definitions": {
+    "io.kestra.preload.tasks": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/io.kestra.plugin.core.log.Log"
+          }
+        ]
+      }
+    },
+    "io.kestra.preload.triggers": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/io.kestra.plugin.core.log.Log"
+          }
+        ]
+      }
+    },
+    "io.kestra.plugin.core.log.Log": {
+      "type": "object",
+      "properties": {
+        "allowFailure": {
+          "type": "boolean",
+          "default": false,
+          "$dynamic": false,
+          "$group": "core",
+          "markdownDescription": "Default value is : `false`"
+        },
+        "allowWarning": {
+          "type": "boolean",
+          "default": false,
+          "$dynamic": false,
+          "$group": "core",
+          "markdownDescription": "Default value is : `false`"
+        },
+        "description": {
+          "type": "string",
+          "$dynamic": false,
+          "$group": "core"
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false,
+          "$dynamic": false,
+          "$group": "core",
+          "markdownDescription": "Default value is : `false`"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]*"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "ERROR",
+            "WARN",
+            "INFO",
+            "DEBUG",
+            "TRACE"
+          ],
+          "title": "The level on which the message should be logged. Note that this is different from the core `logLevel` property which sets the minimum log level to be persisted in the backend database. The `level` property is used to determine the log level of the message emitted by the Log task, while `logLevel` is used to filter which logs should be stored in the backend. Both properties can be used together to control the log level of the message emitted by the task and the logs that are persisted in the backend. If not specified, the `level` defaults to `INFO`.",
+          "default": "INFO",
+          "$dynamic": true,
+          "markdownDescription": "Default value is : `INFO`"
+        },
+        "logLevel": {
+          "type": "string",
+          "enum": [
+            "ERROR",
+            "WARN",
+            "INFO",
+            "DEBUG",
+            "TRACE"
+          ],
+          "$dynamic": false,
+          "$group": "core"
+        },
+        "logToFile": {
+          "type": "boolean",
+          "default": false,
+          "$dynamic": false,
+          "$group": "core",
+          "markdownDescription": "Default value is : `false`"
+        },
+        "message": {
+          "title": "One or more message(s) to be sent to the backend as logs.",
+          "$dynamic": true,
+          "markdownDescription": "It can be a string or an array of strings.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "retry": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Constant-2"
+                },
+                {
+                  "$dynamic": false,
+                  "$group": "core"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Exponential-2"
+                },
+                {
+                  "$dynamic": false,
+                  "$group": "core"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Random-2"
+                },
+                {
+                  "$dynamic": false,
+                  "$group": "core"
+                }
+              ]
+            }
+          ]
+        },
+        "runIf": {
+          "type": "string",
+          "default": "true",
+          "$dynamic": false,
+          "$group": "core",
+          "markdownDescription": "Default value is : `\"true\"`"
+        },
+        "taskCache": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.tasks.Cache"
+            },
+            {
+              "$dynamic": false,
+              "$group": "core"
+            }
+          ]
+        },
+        "timeout": {
+          "type": "string",
+          "format": "duration",
+          "$dynamic": true,
+          "$group": "core"
+        },
+        "type": {
+          "const": "io.kestra.plugin.core.log.Log"
+        },
+        "version": {
+          "type": "string",
+          "title": "The version of the plugin to use.",
+          "pattern": "\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9-]+)?|([a-zA-Z0-9]+)",
+          "$dynamic": false,
+          "$group": "core"
+        },
+        "workerGroup": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.tasks.WorkerGroup"
+            },
+            {
+              "$dynamic": false,
+              "$group": "core"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "message",
+        "type"
+      ],
+      "title": "Log a message to the console.",
+      "markdownDescription": "##### Examples\n> \n```yaml\nlevel: DEBUG\nmessage: \"{{ task.id }} > {{ taskrun.startDate }}\"\n```\n\n> Log one or more messages to the console.\n```yaml\nid: hello_world\nnamespace: company.team\n\ntasks:\n  - id: greeting\n    type: io.kestra.plugin.core.log.Log\n    message:\n      - Kestra team wishes you a great day 👋\n      - If you need some help, reach out via Slack\n```"
+    },
+    "io.kestra.core.models.flows.Flow": {
+      "type": "object",
+      "properties": {
+        "afterExecution": {
+          "$ref": "#/definitions/io.kestra.preload.tasks"
+        },
+        "concurrency": {
+          "$ref": "#/definitions/io.kestra.core.models.flows.Concurrency"
+        },
+        "deleted": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Default value is : `false`"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Default value is : `false`"
+        },
+        "errors": {
+          "$ref": "#/definitions/io.kestra.preload.tasks"
+        },
+        "finally": {
+          "$ref": "#/definitions/io.kestra.preload.tasks"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.ArrayInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.BooleanInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.BoolInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.DateInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.DateTimeInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.DurationInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.FileInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.FloatInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.IntInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.JsonInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.SecretInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.StringInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.EnumInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.SelectInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.TimeInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.URIInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.MultiselectInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.YamlInput-2"
+              },
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.input.EmailInput-2"
+              }
+            ]
+          }
+        },
+        "labels": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {}
+            },
+            {
+              "type": "object"
+            }
+          ]
+        },
+        "listeners": {
+          "$deprecated": true,
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/io.kestra.core.models.listeners.Listener"
+              },
+              {
+                "$deprecated": true
+              }
+            ]
+          }
+        },
+        "namespace": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150,
+          "pattern": "^[a-z0-9][a-z0-9._-]*"
+        },
+        "outputs": {
+          "title": "Output values available and exposes to other flows.",
+          "$dynamic": true,
+          "markdownDescription": "Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.",
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.Output"
+              },
+              {
+                "$dynamic": true
+              }
+            ]
+          }
+        },
+        "pluginDefaults": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/io.kestra.core.models.flows.PluginDefault"
+          }
+        },
+        "retry": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Constant-2"
+            },
+            {
+              "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Exponential-2"
+            },
+            {
+              "$ref": "#/definitions/io.kestra.core.models.tasks.retrys.Random-2"
+            }
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sla": {
+          "$dynamic": false,
+          "$beta": true,
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/io.kestra.core.models.flows.sla.types.MaxDurationSLA-2"
+                  },
+                  {
+                    "$dynamic": false,
+                    "$beta": true
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/io.kestra.core.models.flows.sla.types.ExecutionAssertionSLA-2"
+                  },
+                  {
+                    "$dynamic": false,
+                    "$beta": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "taskDefaults": {
+          "$deprecated": true,
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/io.kestra.core.models.flows.PluginDefault"
+              },
+              {
+                "$deprecated": true
+              }
+            ]
+          }
+        },
+        "tasks": {
+          "$ref": "#/definitions/io.kestra.preload.tasks"
+        },
+        "tenantId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*"
+        },
+        "triggers": {
+          "$ref": "#/definitions/io.kestra.preload.triggers"
+        },
+        "variables": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "namespace",
+        "tasks"
+      ]
+    }
+  }
+}

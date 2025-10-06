@@ -1,68 +1,55 @@
 <template>
-    <dotted-layout
+    <DottedLayout
         :embed="embed"
         :phrase="$t('pluginPage.title2')"
-        :alt="$t('blueprints.header.alt')"
+        :alt="$t('pluginPage.alt')"
         :image="headerImage"
-        :image-dark="headerImageDark"
+        :imageDark="headerImageDark"
     >
-        <el-row class="my-4 px-3">
-            <KestraFilter :placeholder="$t('pluginPage.search', {count: countPlugin})" :search-callback="(input)=> searchInput = input" />
+        <el-row class="my-4 px-3" justify="center">
+            <el-col :xs="24" :sm="18" :md="12" :lg="10" :xl="8">
+                <el-input
+                    v-model="searchText"
+                    :placeholder="$t('pluginPage.search', {count: countPlugin})"
+                    clearable
+                    @input="updateSearch"
+                />
+            </el-col>
         </el-row>
         <section class="px-3 plugins-container">
-            <el-tooltip v-for="(plugin, index) in pluginsList" :show-after="1000" :key="plugin.name + '-' + index" effect="light">
+            <el-tooltip
+                v-for="(plugin, index) in pluginsList"
+                :showAfter="1000"
+                :key="`${plugin.name}-${index}`"
+                effect="light"
+            >
                 <template #content>
                     <div class="tasks-tooltips">
-                        <p v-if="plugin?.tasks.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            {{ $t('tasks') }}
-                        </p>
-                        <ul>
-                            <li
-                                v-for="task in plugin.tasks.filter(t => t.toLowerCase().includes(searchInput))"
-                                :key="task"
+                        <template
+                            v-for="([elementType, elements]) in allElementsByTypeEntries(plugin)"
+                            :key="elementType"
+                        >
+                            <p
+                                v-if="elements.filter(t => t.toLowerCase().includes(searchInput)).length > 0"
+                                class="mb-0"
                             >
-                                <span @click="openPlugin(task)">{{ task }}</span>
-                            </li>
-                        </ul>
-                        <p v-if="plugin?.triggers.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            {{ $t('triggers') }}
-                        </p>
-                        <ul>
-                            <li
-                                v-for="trigger in plugin.triggers.filter(t => t.toLowerCase().includes(searchInput))"
-                                :key="trigger"
-                            >
-                                <span @click="openPlugin(trigger)">{{ trigger }}</span>
-                            </li>
-                        </ul>
-                        <p v-if="plugin?.conditions.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            {{ $t('conditions') }}
-                        </p>
-                        <ul>
-                            <li
-                                v-for="condition in plugin.conditions.filter(t => t.toLowerCase().includes(searchInput))"
-                                :key="condition"
-                            >
-                                <span @click="openPlugin(condition)">{{ condition }}</span>
-                            </li>
-                        </ul>
-                        <p v-if="plugin?.taskRunners.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            {{ $t('task_runners') }}
-                        </p>
-                        <ul>
-                            <li
-                                v-for="taskRunner in plugin.taskRunners.filter(t => t.toLowerCase().includes(searchInput))"
-                                :key="taskRunner"
-                            >
-                                <span @click="openPlugin(taskRunner)">{{ taskRunner }}</span>
-                            </li>
-                        </ul>
+                                {{ $t(elementType) }}
+                            </p>
+                            <ul>
+                                <li
+                                    v-for="element in elements.filter(t => t.toLowerCase().includes(searchInput))"
+                                    :key="element"
+                                >
+                                    <span @click="openPlugin(element)">{{ element }}</span>
+                                </li>
+                            </ul>
+                        </template>
                     </div>
                 </template>
                 <div class="plugin-card" @click="openGroup(plugin)">
-                    <task-icon
+                    <TaskIcon
                         class="size"
-                        :only-icon="true"
+                        :onlyIcon="true"
                         :cls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
                         :icons="icons"
                     />
@@ -70,127 +57,121 @@
                 </div>
             </el-tooltip>
         </section>
-    </dotted-layout>
+    </DottedLayout>
 </template>
 
-<script>
-    import {TaskIcon} from "@kestra-io/ui-libs";
+<script setup lang="ts">
+    import {ref, computed, onBeforeMount} from "vue";
+    import {useRoute, useRouter} from "vue-router";
+    import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
     import DottedLayout from "../layout/DottedLayout.vue";
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";
-    import KestraFilter from "../filter/KestraFilter.vue";
+    import {usePluginsStore} from "../../stores/plugins";
 
-    export default {
-        props: {
-            plugins: {
-                type: Array,
-                required: true
-            },
-            embed: {
-                type: Boolean,
-                default: false
-            }
-        },
-        components: {
-            DottedLayout,
-            TaskIcon,
-            KestraFilter
-        },
-        data() {
-            return {
-                icons: [],
-                searchInput: "",
-                headerImage,
-                headerImageDark
-            }
-        },
-        created() {
-            this.$store.dispatch("plugin/groupIcons").then(
-                res => {
-                    this.icons = res
-                }
+    const route = useRoute();
+    const router = useRouter();
+    const pluginsStore = usePluginsStore();
+
+    const props = withDefaults(defineProps<{
+        plugins: any[],
+        embed?: boolean
+    }>(), {
+        embed: false
+    });
+
+    const icons = ref<Record<string, any>>({});
+    const searchText = ref("");
+
+    const searchInput = computed(() => searchText.value.toLowerCase());
+
+    const countPlugin = computed(() => {
+        return new Set(props.plugins.flatMap(plugin => allElements(plugin))).size;
+    });
+
+    const pluginsList = computed(() => {
+        // Show subgroups only if exist, else show main group - GH-8940
+        const grouped = props.plugins.reduce((acc: Record<string, any[]>, plugin) => {
+            (acc[plugin.group] ??= []).push(plugin);
+            return acc;
+        }, {});
+
+        const filtered = Object.values(grouped).flatMap(group =>
+            group.filter((p: any) => p.subGroup).length ? group.filter((p: any) => p.subGroup) : group.filter((p: any) => !p.subGroup)
+        );
+
+        return filtered
+            .filter((plugin, index, self) =>
+                index === self.findIndex(t => t.title === plugin.title && t.group === plugin.group)
             )
-        },
-        computed: {
-            countPlugin() {
-                let allTasks = [];
-                let allTriggers = [];
-                let allConditions = [];
-                let allTaskRunners = [];
+            .filter(plugin =>
+                plugin.title.toLowerCase().includes(searchInput.value) ||
+                allElements(plugin).some(e => e.toLowerCase().includes(searchInput.value))
+            )
+            .filter(plugin => isVisible(plugin))
+            .sort((a, b) => {
+                const nameA = a.manifest["X-Kestra-Title"].toLowerCase();
+                const nameB = b.manifest["X-Kestra-Title"].toLowerCase();
+                return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
+            });
+    });
 
-                // avoid duplicate across groups and subgroups
-                this.plugins.forEach(plugin => {
-                    allTasks = [...allTasks, ...plugin.tasks];
-                    allTriggers = [...allTriggers, ...plugin.triggers];
-                    allConditions = [...allConditions, ...plugin.conditions];
-                    allTaskRunners = [...allTaskRunners, ...plugin.taskRunners];
-                });
-
-                return (new Set(allTasks)).size +
-                    (new Set(allTriggers)).size +
-                    (new Set(allConditions)).size +
-                    (new Set(allTaskRunners)).size;
-            },
-            pluginsList() {
-                return this.plugins
-                    .filter((plugin, index, self) => {
-                        return index === self.findIndex((t) => (
-                            t.title === plugin.title && t.group === plugin.group
-                        ));
-                    })
-                    .filter(plugin => {
-                        return plugin.title.toLowerCase().includes(this.searchInput.toLowerCase()) ||
-                            plugin.tasks.some(task => task.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                            plugin.triggers.some(trigger => trigger.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                            plugin.conditions.some(condition => condition.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                            plugin.taskRunners.some(taskRunner => taskRunner.toLowerCase().includes(this.searchInput.toLowerCase()))
-                    })
-                    .filter(plugin => this.isVisible(plugin))
-                    .sort((a, b) => {
-                        const nameA = a.manifest["X-Kestra-Title"].toLowerCase(),
-                              nameB = b.manifest["X-Kestra-Title"].toLowerCase();
-
-                        return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
-                    })
-            }
-        },
-        methods: {
-            openGroup(plugin) {
-                this.openPlugin(
-                    plugin.tasks?.[0] ??
-                        plugin.triggers?.[0] ??
-                        plugin.conditions?.[0] ??
-                        plugin.taskRunners?.[0]
-                )
-            },
-            openPlugin(cls) {
-                if (!cls) {
-                    return;
-                }
-                this.$router.push({name: "plugins/view", params: {cls: cls}})
-            },
-            isVisible(plugin) {
-                return [...plugin.tasks, ...plugin.triggers, ...plugin.conditions, ...plugin.taskRunners].length > 0
-            },
-            hasIcon(cls) {
-                return this.icons[cls] !== undefined;
-            }
-
+    const loadPluginIcons = async () => {
+        try {
+            icons.value = await pluginsStore.groupIcons();
+        } catch (error) {
+            console.error("Failed to load plugin icons:", error);
+            icons.value = {};
         }
-    }
+    };
+
+    const updateSearch = (value: string) => {
+        router.push({
+            query: {...route.query, q: value ?? undefined}
+        });
+    };
+
+    const openGroup = (plugin: any) => {
+        const defaultElement = Object.entries(plugin)
+            .filter(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements))
+            .flatMap((entry) => (entry[1] as any[]).filter(({deprecated}: any) => !deprecated).map(({cls}: any) => cls))?.[0];
+        openPlugin(defaultElement);
+    };
+
+    const openPlugin = (cls: string) => {
+        if (!cls) {
+            return;
+        }
+        router.push({name: "plugins/view", params: {cls: cls}})
+    };
+
+    const isVisible = (plugin: any) => {
+        return allElements(plugin).length > 0;
+    };
+
+    const hasIcon = (cls: string) => {
+        return icons.value[cls] !== undefined;
+    };
+
+    const allElementsByTypeEntries = (plugin: any): [string, string[]][] => {
+        return Object.entries(plugin).filter(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements))
+            .map(([elementType, elements]) => [
+                elementType,
+                (elements as any[]).filter(({deprecated}: any) => !deprecated).map(({cls}: any) => cls)
+            ]);
+    };
+
+    const allElements = (plugin: any) => {
+        return allElementsByTypeEntries(plugin).flatMap((entry) => entry[1] as any[]);
+    };
+
+    onBeforeMount(() => {
+        loadPluginIcons();
+        searchText.value = String(route.query?.q ?? "");
+    });
 </script>
 
 <style scoped lang="scss">
-    .search {
-        display: flex;
-        width: 22rem;
-        padding: 0.25rem 2rem;
-        justify-content: center;
-        align-items: center;
-        gap: 0.25rem;
-        background-color: transparent;
-    }
-
     .plugins-container {
         display: grid;
         gap: 16px;
@@ -231,7 +212,7 @@
         background-color: var(--ks-button-background-secondary);
         color: var(--ks-content-primary);
 
-        &:hover{
+        &:hover {
             border-color: var(--ks-border-active);
             background-color: var(--ks-button-background-secondary-hover);
         }

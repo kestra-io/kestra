@@ -8,6 +8,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.NamespaceUtils;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
@@ -22,27 +23,54 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 
 import java.io.*;
-import java.net.URISyntaxException;
 import java.time.*;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
 @Validated
-@Controller("/api/v1/namespaces/{namespace}/kv")
+@Controller("/api/v1/{tenant}/namespaces/{namespace}/kv")
 public class KVController {
     @Inject
     private StorageInterface storageInterface;
     @Inject
-    private TenantService tenantService;
+    protected TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get
     @Operation(tags = {"KV"}, summary = "List all keys for a namespace")
     public List<KVEntry> listKeys(
         @Parameter(description = "The namespace id") @PathVariable String namespace
-    ) throws IOException, URISyntaxException {
+    ) throws IOException {
         return kvStore(namespace).list();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get("/inheritance")
+    @Operation(tags = {"KV"}, summary = "List all keys for inherited namespaces")
+    public List<KVEntry> listKeysWithInheritence(
+        @Parameter(description = "The namespace id") @PathVariable String namespace
+    ) throws IOException {
+        List<String> namespaces = NamespaceUtils.asTree(namespace).stream()
+            .filter(ns -> !ns.equals(namespace))
+            .toList();
+        return getKvEntriesWithInheritance(namespaces);
+    }
+
+    protected List<KVEntry> getKvEntriesWithInheritance(List<String> namespaces) throws IOException {
+        List<KVEntry> kvEntries = new ArrayList<>();
+        Set<String> keys = new HashSet<>();
+        List<String> sortedNamespaces = namespaces.stream()
+            .sorted(Comparator.comparingInt(String::length).reversed())
+            .toList();
+        for (String ns : sortedNamespaces) {
+            List<KVEntry> entries = kvStore(ns).list();
+            entries.forEach(key -> {
+                if (!keys.contains(key.key())) {
+                    keys.add(key.key());
+                    kvEntries.add(key);
+                }
+            });
+        }
+        return kvEntries;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -51,7 +79,7 @@ public class KVController {
     public TypedValue getKeyValue(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The key") @PathVariable String key
-    ) throws IOException, URISyntaxException, ResourceExpiredException {
+    ) throws IOException, ResourceExpiredException {
         KVValue wrapper = kvStore(namespace)
             .getValue(key)
             .orElseThrow(() -> new NoSuchElementException("No value found for key '" + key + "' in namespace '" + namespace + "'"));
@@ -70,9 +98,10 @@ public class KVController {
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The key") @PathVariable String key,
         @RequestBody(description = "The value of the key") @Body String value
-    ) throws IOException, URISyntaxException, ResourceExpiredException {
+    ) throws IOException {
+        String description = httpHeaders.get("description");
         String ttl = httpHeaders.get("ttl");
-        KVMetadata metadata = new KVMetadata(ttl == null ? null : Duration.parse(ttl));
+        KVMetadata metadata = new KVMetadata(description, ttl == null ? null : Duration.parse(ttl));
         try {
             // use ION mapper to properly handle timestamp
             JsonNode jsonNode = JacksonMapper.ofIon().readTree(value);
@@ -88,7 +117,7 @@ public class KVController {
     public boolean deleteKeyValue(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The key") @PathVariable String key
-    ) throws IOException, URISyntaxException, ResourceExpiredException {
+    ) throws IOException {
         return kvStore(namespace).delete(key);
     }
 
@@ -148,10 +177,22 @@ public class KVController {
         }
     }
 
-    private KVStore kvStore(String namespace) {
+    /**
+     * Create a new {@link KVStore} facade for the given namespace.
+     *
+     * @param namespace the namespace of the KV Store.
+     * @return a new {@link KVStore}.
+     */
+    protected KVStore kvStore(final String namespace) {
         return new InternalKVStore(tenantService.resolveTenant(), namespace, storageInterface);
     }
 
-    public record TypedValue(KVType type, Object value) {
+    public record TypedValue(
+        @Parameter(description = "The type of the KV entry.")
+        KVType type,
+
+        @Parameter(description = "The value of the KV entry.")
+        Object value
+    ) {
     }
 }

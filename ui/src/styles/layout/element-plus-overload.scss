@@ -8,7 +8,8 @@
 
 // button
 .el-button {
-    &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info), &--default {
+
+    &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info):not(.el-button--playground), &--default {
         --el-button-hover-text-color: var(--ks-content-primary);
         --el-button-hover-border-color: var(--ks-border-primary);
         --el-button-bg-color: var(--ks-button-background-secondary);
@@ -18,10 +19,25 @@
 
     &.el-button--primary {
         --el-button-text-color: var(--ks-button-content-primary);
+        --el-button-hover-text-color: var(--ks-button-content-primary);
         --el-button-bg-color: var(--ks-button-background-primary);
         --el-button-border-color: var(--ks-button-background-primary);
         --el-button-hover-bg-color: var(--ks-button-background-primary-hover);
         --el-button-active-bg-color: var(--ks-button-background-primary-active);
+        --el-button-disabled-text-color: var(--ks-content-inactive);
+        --el-button-disabled-bg-color: var(--ks-button-background-inactive);
+        --el-button-disabled-border-color: var(--ks-button-background-inactive);
+    }
+
+    &.el-button--playground {
+        #{--el-button-disabled-text-color}: $base-blue-50;
+        #{--el-button-text-color}: $base-white;
+        #{--el-button-hover-text-color}: $base-white;
+        #{--el-button-bg-color}: $base-blue-500;
+        #{--el-button-hover-bg-color}: $base-blue-400;
+        #{--el-button-active-bg-color}: $base-blue-600;
+        #{--el-button-active-border-color}: $base-blue-700;
+        #{--el-button-outline-color}: $base-blue-700;
     }
 
     &.el-button--success {
@@ -80,6 +96,20 @@
         #{--el-button-bg-color}: $green-500;
         #{--el-button-hover-bg-color}: $green-400;
     }
+}
+
+.el-button--wrap {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+
+  > span {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
 }
 
 .el-input-group__append, .el-input-group__prepend {
@@ -199,10 +229,10 @@
     // icon for selection of items in multiple choices
     .el-select-dropdown.is-multiple .el-select-dropdown__item.is-selected::after{
         background-color: var(--ks-select-active-icon);
-        mask: no-repeat url(data:image/svg+xml,%3Csvg%20width%3D%2214%22%20height%3D%2211%22%20viewBox%3D%220%200%2014%2011%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5.00035%2010.6134L0.860352%206.47342L2.74702%204.58675L5.00035%206.84675L11.587%200.253418L13.4737%202.14008L5.00035%2010.6134Z%22%20fill%3D%22%23BBBBFF%22%2F%3E%3C%2Fsvg%3E);
-        mask-size: 100% 100%;
         -webkit-mask: no-repeat url(data:image/svg+xml,%3Csvg%20width%3D%2214%22%20height%3D%2211%22%20viewBox%3D%220%200%2014%2011%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5.00035%2010.6134L0.860352%206.47342L2.74702%204.58675L5.00035%206.84675L11.587%200.253418L13.4737%202.14008L5.00035%2010.6134Z%22%20fill%3D%22%23BBBBFF%22%2F%3E%3C%2Fsvg%3E);
+        mask: no-repeat url(data:image/svg+xml,%3Csvg%20width%3D%2214%22%20height%3D%2211%22%20viewBox%3D%220%200%2014%2011%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5.00035%2010.6134L0.860352%206.47342L2.74702%204.58675L5.00035%206.84675L11.587%200.253418L13.4737%202.14008L5.00035%2010.6134Z%22%20fill%3D%22%23BBBBFF%22%2F%3E%3C%2Fsvg%3E);
         -webkit-mask-size: 100% 100%;
+        mask-size: 100% 100%;
         right: 1rem;
     }
 
@@ -263,6 +293,7 @@
 
     .el-input__inner::file-selector-button {
         background: var(--ks-button-background-primary);
+        color: var(--ks-button-content-primary);
         border: 0;
         margin: 2px 10px 0 4px;
         border-radius: var(--el-border-radius-base);
@@ -404,7 +435,7 @@ form.ks-horizontal {
     }
 
     .el-table__empty-text {
-        color: var(--bs-gray-600);
+        color: var(--ks-content-tertiary) !important;
     }
 
     th {
@@ -458,7 +489,7 @@ form.ks-horizontal {
     }
 
     td.row-graph {
-        padding: 0;
+        padding: 0.75rem 0 0;
         vertical-align: bottom;
     }
 
@@ -600,8 +631,9 @@ form.ks-horizontal {
     }
 
     &.el-tabs--card{
+        margin-top: 32px;
         .el-tabs__nav-wrap{
-            margin-bottom: 1px; // fix tabs overflowing over the bottom line
+            margin-bottom: 1px;
         }
         & > .el-tabs__header .el-tabs__nav{
             background-color: var(--ks-background-card);
@@ -660,6 +692,13 @@ form.ks-horizontal {
 .el-message-box {
     --el-messagebox-title-color: var(--ks-content-primary);
     border: 1px solid var(--ks-border-primary);
+    padding: 2rem;
+    max-width: initial;
+    width: 500px;
+
+    .custom-warning {
+        margin: 1rem 0;
+    }
 
     &.full-screen {
         max-width: 80%;
@@ -714,7 +753,7 @@ form.ks-horizontal {
             color: var(--bs-gray-900);
             background: var(--bs-gray-100);
 
-            .el-popper__arrow::before {
+        .el-popper__arrow::before {
                 background-color: var(--bs-gray-100);
             }
         }
@@ -910,6 +949,7 @@ form.ks-horizontal {
 
 // loading
 .el-loading-mask {
+    -webkit-backdrop-filter: blur(3px) opacity(0.85);
     backdrop-filter: blur(3px) opacity(0.85);
     inset: 0;
     background: none;
@@ -1108,7 +1148,7 @@ form.ks-horizontal {
 
     a {
         font-weight: normal;
-        color: var(--ks-content-tertiary) !important;
+        color: var(--ks-content-primary) !important;
         white-space: nowrap;
         cursor: pointer !important;
     }
@@ -1130,7 +1170,7 @@ form.ks-horizontal {
     }
 
     html.dark & {
-        a, .el-breadcrumb__separator {
+        .el-breadcrumb__separator {
             color: var(--ks-content-secondary) !important;
         }
     }

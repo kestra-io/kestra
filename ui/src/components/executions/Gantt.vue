@@ -1,12 +1,12 @@
 <template>
-    <ExecutionPending 
-        v-if="!isExecutionStarted" 
+    <ExecutionPending
+        v-if="!isExecutionStarted"
         :execution="execution"
     />
-    <el-card id="gantt" shadow="never" v-else-if="execution && flow">
+    <el-card id="gantt" shadow="never" v-else-if="execution && executionsStore.flow">
         <template #header>
             <div class="d-flex">
-                <duration class="th text-end" :histories="execution.state.histories" />
+                <Duration class="th text-end" :histories="execution.state.histories" />
                 <span class="text-end" v-for="(date, i) in dates" :key="i">
                     {{ date }}
                 </span>
@@ -15,17 +15,17 @@
         <template #default>
             <DynamicScroller
                 :items="filteredSeries"
-                :min-item-size="40"
-                key-field="id"
+                :minItemSize="40"
+                keyField="id"
                 :buffer="0"
-                :update-interval="0"
+                :updateInterval="0"
             >
                 <template #default="{item, index, active}">
                     <DynamicScrollerItem
                         :item="item"
                         :active="active"
                         :data-index="index"
-                        :size-dependencies="[selectedTaskRuns]"
+                        :sizeDependencies="[selectedTaskRuns]"
                     >
                         <div class="d-flex flex-column">
                             <div class="gantt-row d-flex cursor-icon" @click="onTaskSelect(item.id)">
@@ -33,7 +33,7 @@
                                     <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                     <ChevronDown v-else />
                                 </div>
-                                <el-tooltip placement="top-start" :persistent="false" transition="" :hide-after="0" effect="light">
+                                <el-tooltip placement="top-start" :persistent="false" transition="" :hideAfter="0" effect="light">
                                     <template #content>
                                         <code>{{ item.name }}</code>
                                         <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
@@ -44,31 +44,28 @@
                                     </span>
                                 </el-tooltip>
                                 <div>
-                                    <el-tooltip placement="right" :persistent="false" :hide-after="0" effect="light">
+                                    <el-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" :hideAfter="0" effect="light">
                                         <template #content>
                                             <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
                                         </template>
-                                        <Warning
-                                            v-if="item.attempts > 1"
-                                            class="attempt_warn me-3"
-                                        />
+                                        <Warning class="attempt_warn me-3" />
                                     </el-tooltip>
                                 </div>
                                 <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
-                                    <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0" effect="light">
+                                    <el-tooltip placement="top" :persistent="false" transition="" :hideAfter="0" effect="light">
                                         <template #content>
                                             <span style="white-space: pre-wrap;">
                                                 {{ item.tooltip }}
                                             </span>
                                         </template>
                                         <div
-                                            :style="{left: item.start + '%', width: item.width + '%'}"
+                                            :style="{left: `${item.start}%`, width: `${Math.max(item.width, 3)}%`}"
                                             class="task-progress"
                                         >
                                             <div class="progress">
                                                 <div
                                                     class="progress-bar"
-                                                    :style="{left: item.left + '%', width: (100-item.left) + '%'}"
+                                                    :style="{left: `${Math.min(item.left, 90)}%`, width: `${Math.max(100 - item.left, 10)}%`}"
                                                     :class="'bg-' + item.color + (item.running ? ' progress-bar-striped progress-bar-animated' : '')"
                                                     role="progressbar"
                                                 />
@@ -78,14 +75,13 @@
                                 </div>
                             </div>
                             <div v-if="selectedTaskRuns.includes(item.id)" class="p-2">
-                                <task-run-details
-                                    :task-run-id="item.id"
-                                    :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                                <TaskRunDetails
+                                    :taskRunId="item.id"
+                                    :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
                                     level="TRACE"
                                     @follow="forwardEvent('follow', $event)"
-                                    :target-execution="execution"
-                                    :target-flow="flow"
-                                    :show-logs="taskTypeByTaskRunId[item.id] !== 'io.kestra.plugin.core.flow.ForEachItem' && taskTypeByTaskRunId[item.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
+                                    :targetFlow="executionsStore.flow"
+                                    :showLogs="taskTypeByTaskRunId[item.id] !== 'io.kestra.plugin.core.flow.ForEachItem' && taskTypeByTaskRunId[item.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
                                     class="mh-100 mx-3"
                                 />
                             </div>
@@ -98,7 +94,6 @@
 </template>
 <script>
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    import {mapState} from "vuex";
     import {State} from "@kestra-io/ui-libs"
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
@@ -109,17 +104,19 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import Warning from "vue-material-design-icons/Alert.vue";
     import ExecutionPending from "./ExecutionPending.vue";
+    import {mapStores} from "pinia";
+    import {useExecutionsStore} from "../../stores/executions";
 
     const ts = date => new Date(date).getTime();
     const TASKRUN_THRESHOLD = 50;
     export default {
         components: {
             DynamicScroller,
-            Warning, 
-            DynamicScrollerItem, 
-            TaskRunDetails, 
-            Duration, 
-            ChevronRight, 
+            Warning,
+            DynamicScrollerItem,
+            TaskRunDetails,
+            Duration,
+            ChevronRight,
             ChevronDown,
             ExecutionPending
         },
@@ -131,7 +128,14 @@
                 duration: undefined,
                 selectedTaskRuns: [],
                 regularPaintingInterval: undefined,
-                taskTypesToExclude: ["io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"]
+                taskTypesToExclude: [
+                    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit",
+                    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs",
+                    "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
+                    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit",
+                    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs",
+                    "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"
+                ]
             };
         },
         watch: {
@@ -160,7 +164,10 @@
             }
         },
         computed: {
-            ...mapState("execution", ["flow", "execution"]),
+            ...mapStores(useExecutionsStore),
+            execution(){
+                return this.executionsStore.execution
+            },
             taskRunsCount() {
                 return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
             },
@@ -326,7 +333,7 @@
                 this.selectedTaskRuns.push(taskRunId);
             },
             taskType(taskRun) {
-                const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
+                const task = FlowUtils.findTaskById(this.executionsStore.flow, taskRun.taskId);
                 return task?.type;
             }
         },

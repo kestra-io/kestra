@@ -5,7 +5,10 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageSplitInterface;
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -13,9 +16,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
-import static io.kestra.core.utils.Rethrow.*;
+import static io.kestra.core.utils.Rethrow.throwConsumer;
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public abstract class StorageService {
 
@@ -40,8 +43,9 @@ public abstract class StorageService {
                 splited = StorageService.partition(runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
                     bufferedReader, runContext.render(storageSplitInterface.getPartitions()).as(Integer.class).orElseThrow());
             } else if (storageSplitInterface.getRows() != null) {
+                Integer renderedRows = runContext.render(storageSplitInterface.getRows()).as(Integer.class).orElseThrow();
                 splited = StorageService.split(runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
-                    bufferedReader, throwBiFunction((bytes, size) -> size >= runContext.render(storageSplitInterface.getRows()).as(Integer.class).orElseThrow()));
+                    bufferedReader, (bytes, size) -> size >= renderedRows);
             } else {
                 throw new IllegalArgumentException("Invalid configuration with no size, count, nor rows");
             }

@@ -1,52 +1,28 @@
 <template>
-    <el-button data-component="FILENAME_PLACEHOLDER" data-test-id="execution-status" @click="$emit('click', $event)" class="status" :size="size" :style="style">
-        {{ title || $filters.cap(status) }}
+    <el-button data-component="FILENAME_PLACEHOLDER" data-test-id="execution-status" class="status" :size="props.size ?? ''" :style="style">
+        {{ props.title || FILTERS.cap(props.status) }}
     </el-button>
 </template>
 
-<script>
-    import {State} from "@kestra-io/ui-libs"
+<script lang="ts" setup>
+    import {computed} from "vue";
+    import * as FILTERS from "../utils/filters";
 
-    const StatusRemap = {
-        "failed": "error",
-        "warn": "warning"
-    }
+    const props = defineProps<{
+        status: string;
+        size?: string;
+        title?: string;
+        label?: boolean;
+    }>();
 
-    export default {
-        props: {
-            status: {
-                type: String,
-                required: true,
-                default: undefined
-            },
-            size: {
-                type: String,
-                default: ""
-            },
-            title: {
-                type: String,
-                default: ""
-            },
-            label: {
-                type: Boolean,
-                default: true
-            },
-        },
-        emits: ["click"],
-        computed: {
-            style() {
-                const statusVarname = (StatusRemap[this.status.toLowerCase()] ?? this.status)?.toLowerCase()
-                return {
-                    color: `var(--ks-content-${statusVarname}) !important`,
-                    "border-color": `var(--ks-border-${statusVarname}) !important`,
-                    "background-color": `var(--ks-background-${statusVarname}) !important`
-                };
-            },
-            icon() {
-                return State.icon()[this.status];
-            },
-        }
-    };
+    const style = computed(() => {
+        const statusVarname = props.status?.toLowerCase();
+        return {
+            color: `var(--ks-content-${statusVarname}) !important`,
+            "border-color": `var(--ks-border-${statusVarname}) !important`,
+            "background-color": `var(--ks-background-${statusVarname}) !important`,
+        };
+    });
 </script>
 <style scoped lang="scss">
     .el-button {

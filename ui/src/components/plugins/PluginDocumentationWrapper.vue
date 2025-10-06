@@ -1,23 +1,26 @@
 <template>
-    <div class="plugin-doc-wrapper" :class="{editorPlugin: plugin}">
-        <PluginDocumentation :key="theme" />
+    <div class="plugin-doc-wrapper" :class="{editorPlugin: pluginsStore.editorPlugin}">
+        <PluginDocumentation :key="miscStore.theme" />
     </div>
 </template>
 <script lang="ts" setup>
-    import {computed} from "vue";
-    import {useStore} from "vuex";
     import PluginDocumentation from "./PluginDocumentation.vue"
+    import {usePluginsStore} from "../../stores/plugins";
+    import {useMiscStore} from "override/stores/misc";
 
-    const store = useStore();
-    const plugin = computed(() => store.state.plugin.editorPlugin);
-    const theme = computed(() => store.getters["misc/theme"]);
+    const pluginsStore = usePluginsStore()
+    const miscStore = useMiscStore();
 </script>
 
 <style scoped lang="scss">
 .plugin-doc-wrapper {
     padding: 1px 1rem;
-    background-color: var(--ks-background-body);
+    background-color: var(--ks-background-panel);
     padding-bottom: 5rem;
+}
+
+.plugin-doc {
+    background-color: var(--ks-background-panel) !important;
 }
 
 .editorPlugin{

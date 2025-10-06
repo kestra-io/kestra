@@ -7,7 +7,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.LoadFlows;
 import jakarta.inject.Inject;
@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -30,7 +31,7 @@ class CorrelationIdTest {
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     private QueueInterface<Execution> executionQueue;
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Test
     @LoadFlows({"flows/valids/subflow-parent.yaml",
@@ -53,7 +54,7 @@ class CorrelationIdTest {
             }
         });
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "subflow-parent");
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-parent");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         assertTrue(countDownLatch.await(1, TimeUnit.MINUTES));

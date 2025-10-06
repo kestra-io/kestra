@@ -6,7 +6,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
@@ -21,7 +21,7 @@ class AllowFailureTest {
     @Inject
     private FlowInputOutput flowIO;
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     @Test
     @ExecuteFlow("flows/valids/allow-failure.yaml")
@@ -34,10 +34,10 @@ class AllowFailureTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/allow-failure.yaml"})
+    @LoadFlows(value = {"flows/valids/allow-failure.yaml"}, tenantId = "fail")
     void failed() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            "fail",
             "io.kestra.tests",
             "allow-failure",
             null,

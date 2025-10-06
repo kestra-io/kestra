@@ -18,6 +18,8 @@ import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.List;
 
+import static io.kestra.core.models.Plugin.isDeprecated;
+
 @CommandLine.Command(
     name = "doc",
     description = "Generate documentation for all plugins currently installed"
@@ -38,6 +40,9 @@ public class PluginDocCommand extends AbstractCommand {
     @CommandLine.Option(names = {"--schema"}, description = "Also write JSON Schema for each task")
     private boolean schema = false;
 
+    @CommandLine.Option(names = {"--skip-deprecated"},description = "Skip deprecated plugins when generating documentations")
+    private boolean skipDeprecated = false;
+
     @Override
     public Integer call() throws Exception {
         super.call();
@@ -45,6 +50,11 @@ public class PluginDocCommand extends AbstractCommand {
 
         PluginRegistry registry = pluginRegistryProvider.get();
         List<RegisteredPlugin> plugins = core ? registry.plugins() : registry.externalPlugins();
+        if (skipDeprecated) {
+            plugins = plugins.stream()
+                .filter(plugin -> !isDeprecated(plugin.getClass()))
+                .toList();
+        }
         boolean hasFailures = false;
 
         for (RegisteredPlugin registeredPlugin : plugins) {

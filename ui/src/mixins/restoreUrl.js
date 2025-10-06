@@ -1,3 +1,5 @@
+import {defaultNamespace} from "../composables/useNamespaces";
+
 export default {
     props: {
         restoreUrl: {
@@ -14,7 +16,7 @@ export default {
     computed: {
         localStorageName() {
             const tenant = this.$route.params.tenant;
-            return `${this.$route.name?.replace("/", "_")}${tenant ? "_" + tenant : ""}_restore_url`
+            return `${this.$route.name?.replace("/", "_")}${this.$route.params.tab ? "_" + this.$route.params.tab : ""}${tenant ? "_" + tenant : ""}_restore_url`
         },
 
         localStorageValue() {
@@ -55,8 +57,8 @@ export default {
 
             let change = false
 
-            if (!localExist && this.isDefaultNamespaceAllow && localStorage.getItem("defaultNamespace")) {
-                local["namespace"] = localStorage.getItem("defaultNamespace");
+            if (!localExist && this.isDefaultNamespaceAllow && defaultNamespace()) {
+                local["namespace"] = defaultNamespace();
             }
 
             for (const key in local) {

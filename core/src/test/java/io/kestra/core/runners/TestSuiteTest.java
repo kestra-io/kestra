@@ -18,6 +18,7 @@ import org.assertj.core.api.AbstractObjectAssert;
 import org.assertj.core.api.ObjectAssert;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
@@ -36,7 +38,7 @@ class TestSuiteTest {
     protected QueueInterface<Execution> executionQueue;
 
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     @Inject
     protected FlowRepositoryInterface flowRepository;
@@ -49,7 +51,7 @@ class TestSuiteTest {
     void withoutAnyTaskFixture() throws QueueException, TimeoutException {
         var fixtures = List.<TaskFixture>of();
 
-        var executionResult = runReturnFlow(fixtures);
+        var executionResult = runReturnFlow(fixtures, MAIN_TENANT);
 
         assertThat(executionResult.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertOutputForTask(executionResult, "task-id")
@@ -64,7 +66,7 @@ class TestSuiteTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/return.yaml"})
+    @LoadFlows(value = {"flows/valids/return.yaml"}, tenantId = "tenant1")
     void taskFixture() throws TimeoutException, QueueException {
         var fixtures = List.of(
             TaskFixture.builder()
@@ -72,7 +74,7 @@ class TestSuiteTest {
                 .build()
         );
 
-        var executionResult = runReturnFlow(fixtures);
+        var executionResult = runReturnFlow(fixtures, "tenant1");
 
         assertThat(executionResult.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertOutputForTask(executionResult, "task-id")
@@ -84,7 +86,7 @@ class TestSuiteTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/return.yaml"})
+    @LoadFlows(value = {"flows/valids/return.yaml"}, tenantId = "tenant2")
     void twoTaskFixturesOverridingOutput() throws QueueException, TimeoutException {
         var fixtures = List.of(
             TaskFixture.builder()
@@ -97,7 +99,7 @@ class TestSuiteTest {
                 .build()
         );
 
-        var executionResult = runReturnFlow(fixtures);
+        var executionResult = runReturnFlow(fixtures, "tenant2");
 
         assertThat(executionResult.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertOutputForTask(executionResult, "task-id")
@@ -109,7 +111,7 @@ class TestSuiteTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/return.yaml"})
+    @LoadFlows(value = {"flows/valids/return.yaml"}, tenantId = "tenant3")
     void taskFixturesWithWarningState() throws QueueException, TimeoutException {
         var fixtures = List.of(
             TaskFixture.builder()
@@ -118,7 +120,7 @@ class TestSuiteTest {
                 .build()
         );
 
-        var executionResult = runReturnFlow(fixtures);
+        var executionResult = runReturnFlow(fixtures, "tenant3");
 
         assertThat(executionResult.getState().getCurrent()).isEqualTo(State.Type.WARNING);
         assertTask(executionResult, "task-id")
@@ -132,8 +134,8 @@ class TestSuiteTest {
             .isEqualTo(State.Type.WARNING);
     }
 
-    private Execution runReturnFlow(List<TaskFixture> fixtures) throws TimeoutException, QueueException {
-        var flow = flowRepository.findById(null, "io.kestra.tests", "return", Optional.empty()).orElseThrow();
+    private Execution runReturnFlow(List<TaskFixture> fixtures, String tenantId) throws TimeoutException, QueueException {
+        var flow = flowRepository.findById(tenantId, "io.kestra.tests", "return", Optional.empty()).orElseThrow();
 
         var execution = Execution.builder()
             .id(IdUtils.create())
@@ -145,7 +147,7 @@ class TestSuiteTest {
             .state(new State())
             .build();
 
-        return runnerUtils.runOne(execution, flow, null);
+        return runnerUtils.runOne(execution, flow, Duration.ofSeconds(10));
     }
 
     private static AbstractObjectAssert<?, Object> assertOutputForTask(Execution executionResult, String taskId) {

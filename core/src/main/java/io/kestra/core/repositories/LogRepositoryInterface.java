@@ -3,16 +3,14 @@ package io.kestra.core.repositories;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.statistics.LogStatistics;
-import io.kestra.core.utils.DateUtils;
 import io.kestra.plugin.core.dashboard.data.Logs;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import org.slf4j.event.Level;
+import reactor.core.publisher.Flux;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import reactor.core.publisher.Flux;
 
 public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry>, QueryBuilderInterface<Logs.Fields> {
     /**
@@ -83,31 +81,22 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
 
     Flux<LogEntry> findAsync(
         @Nullable String tenantId,
-        @Nullable String namespace,
-        @Nullable Level minLevel,
-        ZonedDateTime startDate
+        List<QueryFilter> filters
     );
 
     Flux<LogEntry> findAllAsync(@Nullable String tenantId);
-
-    List<LogStatistics> statistics(
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable Level minLevel,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy
-    );
 
     LogEntry save(LogEntry log);
 
     Integer purge(Execution execution);
 
+    Integer purge(List<Execution> executions);
+
     void deleteByQuery(String tenantId, String executionId, String taskId, String taskRunId, Level minLevel, Integer attempt);
 
     void deleteByQuery(String tenantId, String namespace, String flowId, String triggerId);
 
-    int deleteByQuery(String tenantId, String namespace, String flowId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate);
+    void deleteByFilters(String tenantId, List<QueryFilter> filters);
+
+    int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate);
 }

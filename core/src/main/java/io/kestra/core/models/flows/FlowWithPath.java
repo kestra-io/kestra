@@ -27,6 +27,7 @@ public class FlowWithPath {
 
     public static FlowWithPath of(FlowInterface flow, String path) {
         return FlowWithPath.builder()
+            .tenantId(flow.getTenantId())
             .id(flow.getId())
             .namespace(flow.getNamespace())
             .path(path)

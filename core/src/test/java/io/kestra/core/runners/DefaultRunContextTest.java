@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.tasks.common.EncryptedString;
@@ -25,7 +26,7 @@ class DefaultRunContextTest {
     private String secretKey;
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void shouldGetKestraVersion() {

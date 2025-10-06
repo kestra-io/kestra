@@ -5,7 +5,7 @@ import {
     within,
     expect,
     waitFor
-} from "@storybook/test";
+} from "storybook/test";
 import LogLine from "../../../../src/components/logs/LogLine.vue";
 import {ElCard} from "element-plus";
 

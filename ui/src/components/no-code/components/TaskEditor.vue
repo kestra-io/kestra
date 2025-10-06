@@ -25,7 +25,7 @@
             :modelValue="taskObject"
             @update:model-value="onTaskInput"
             :schema="schemaProp"
-            :properties="properties"
+            :properties="properties.properties"
             :definitions="fullSchema.definitions"
         />
     </div>

@@ -2,10 +2,8 @@ package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.runners.pebble.functions.SecretFunction;
 import io.kestra.core.secret.SecretNotFoundException;
 import io.kestra.core.secret.SecretService;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -30,12 +28,9 @@ class SecureVariableRendererFactoryTest {
 
     @Inject
     private SecureVariableRendererFactory secureVariableRendererFactory;
-
+    
     @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
-    private VariableRenderer baseRenderer;
+    private VariableRenderer renderer;
 
     @MockBean(SecretService.class)
     SecretService testSecretService() {
@@ -59,26 +54,25 @@ class SecureVariableRendererFactoryTest {
     @Test
     void shouldCreateDebugRenderer() {
         // When
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
 
         // Then
         assertThat(debugRenderer).isNotNull();
-        assertThat(debugRenderer).isInstanceOf(DebugVariableRenderer.class);
     }
 
     @Test
     void shouldCreateDebugRendererThatIsNotSameAsBaseRenderer() {
         // When
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
 
         // Then
-        assertThat(debugRenderer).isNotSameAs(baseRenderer);
+        assertThat(debugRenderer).isNotSameAs(renderer);
     }
 
     @Test
     void shouldCreateDebugRendererThatMasksSecrets() throws IllegalVariableEvaluationException {
         // Given
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
         Map<String, Object> context = Map.of(
             "flow", Map.of("namespace", "io.kestra.unittest")
         );
@@ -94,7 +88,7 @@ class SecureVariableRendererFactoryTest {
     @Test
     void shouldCreateDebugRendererThatMasksMultipleSecrets() throws IllegalVariableEvaluationException {
         // Given
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
         Map<String, Object> context = Map.of(
             "flow", Map.of("namespace", "io.kestra.unittest")
         );
@@ -115,7 +109,7 @@ class SecureVariableRendererFactoryTest {
     @Test
     void shouldCreateDebugRendererThatDoesNotMaskNonSecretVariables() throws IllegalVariableEvaluationException {
         // Given
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
         Map<String, Object> context = Map.of(
             "username", "testuser",
             "email", "test@example.com",
@@ -135,7 +129,7 @@ class SecureVariableRendererFactoryTest {
     @Test
     void shouldCreateDebugRendererThatMasksOnlySecretFunctions() throws IllegalVariableEvaluationException {
         // Given
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
         Map<String, Object> context = Map.of(
             "flow", Map.of("namespace", "io.kestra.unittest"),
             "username", "testuser",
@@ -158,7 +152,7 @@ class SecureVariableRendererFactoryTest {
     @Test
     void shouldCreateDebugRendererThatHandlesMissingSecrets() {
         // Given
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
         Map<String, Object> context = Map.of(
             "flow", Map.of("namespace", "io.kestra.unittest")
         );
@@ -172,7 +166,7 @@ class SecureVariableRendererFactoryTest {
     @Test
     void shouldCreateDebugRendererThatMasksSecretsInComplexExpressions() throws IllegalVariableEvaluationException {
         // Given
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
         Map<String, Object> context = Map.of(
             "flow", Map.of("namespace", "io.kestra.unittest")
         );
@@ -191,7 +185,7 @@ class SecureVariableRendererFactoryTest {
     @Test
     void shouldCreateDebugRendererThatMasksSecretsInConditionals() throws IllegalVariableEvaluationException {
         // Given
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
         Map<String, Object> context = Map.of(
             "flow", Map.of("namespace", "io.kestra.unittest")
         );
@@ -210,7 +204,7 @@ class SecureVariableRendererFactoryTest {
     @Test
     void shouldCreateDebugRendererThatMasksSecretsWithSubkeys() throws IllegalVariableEvaluationException {
         // Given
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
         Map<String, Object> context = Map.of(
             "flow", Map.of("namespace", "io.kestra.unittest")
         );
@@ -225,53 +219,11 @@ class SecureVariableRendererFactoryTest {
         assertThat(result).isEqualTo("******");
         assertThat(result).doesNotContain("secret123");
     }
-
-    @Test
-    void shouldCreateMultipleIndependentDebugRenderers() throws IllegalVariableEvaluationException {
-        // Given
-        Map<String, Object> context = Map.of(
-            "flow", Map.of("namespace", "io.kestra.unittest")
-        );
-
-        // When
-        VariableRenderer debugRenderer1 = secureVariableRendererFactory.createDebugRenderer();
-        VariableRenderer debugRenderer2 = secureVariableRendererFactory.createDebugRenderer();
-
-        String result1 = debugRenderer1.render("{{ secret('MY_SECRET') }}", context);
-        String result2 = debugRenderer2.render("{{ secret('API_KEY') }}", context);
-
-        // Then
-        assertThat(debugRenderer1).isNotSameAs(debugRenderer2);
-        assertThat(result1).isEqualTo("******");
-        assertThat(result2).isEqualTo("******");
-    }
-
-    @Test
-    void shouldCreateDebugRendererThatUsesSecretFunctionName() {
-        // Given
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
-
-        // Then
-        assertThat(debugRenderer).isInstanceOf(DebugVariableRenderer.class);
-        // The debug renderer should be configured to mask the "secret" function
-        // This is verified indirectly through the masking tests above
-    }
-
-    @Test
-    void shouldCreateDebugRendererWithCorrectDependencies() {
-        // When
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
-
-        // Then
-        assertThat(debugRenderer).isNotNull();
-        // The debug renderer should have access to ApplicationContext and VariableConfiguration
-        // This is verified by the fact that it can render expressions successfully
-    }
-
+    
     @Test
     void shouldCreateDebugRendererThatHandlesEmptyContext() throws IllegalVariableEvaluationException {
         // Given
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
         Map<String, Object> emptyContext = Map.of();
 
         // When
@@ -284,7 +236,7 @@ class SecureVariableRendererFactoryTest {
     @Test
     void shouldCreateDebugRendererThatHandlesNullValues() throws IllegalVariableEvaluationException {
         // Given
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
         Map<String, Object> context = Map.of(
             "value", "test"
         );
@@ -299,7 +251,7 @@ class SecureVariableRendererFactoryTest {
     @Test
     void shouldCreateDebugRendererThatMasksSecretsInNestedRender() throws IllegalVariableEvaluationException {
         // Given
-        VariableRenderer debugRenderer = secureVariableRendererFactory.createDebugRenderer();
+        VariableRenderer debugRenderer = secureVariableRendererFactory.createOrGet();
         Map<String, Object> context = Map.of(
             "flow", Map.of("namespace", "io.kestra.unittest")
         );

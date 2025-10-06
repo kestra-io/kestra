@@ -25,7 +25,6 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.runners.pebble.functions.SecretFunction;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.InternalNamespace;
 import io.kestra.core.storages.Namespace;
@@ -124,14 +123,7 @@ public class ExecutionController {
     @Nullable
     @Value("${micronaut.server.context-path}")
     protected String basePath;
-
-    @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
-    @Nullable
-    private VariableRenderer.VariableConfiguration variableConfiguration;
-
+    
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -335,7 +327,7 @@ public class ExecutionController {
             execution,
             taskRun,
             false,
-            secureVariableRendererFactory.createDebugRenderer()
+            secureVariableRendererFactory.createOrGet()
         ).render(expression);
     }
 

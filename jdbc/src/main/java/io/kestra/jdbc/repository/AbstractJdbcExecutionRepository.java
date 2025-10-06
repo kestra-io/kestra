@@ -959,6 +959,22 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return delete;
     }
 
+    @Override
+    public Integer purge(List<Execution> executions) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                // we send the event before to be sure that if sending the event crash, we would not delete the exec
+                executions.forEach(execution -> eventPublisher.publishEvent(CrudEvent.delete(execution)));
+
+                return context.delete(this.jdbcRepository.getTable())
+                    .where(field("key", String.class).in(executions.stream().map(Execution::getId).toList()))
+                    .execute();
+            });
+    }
+
     public Executor lock(String executionId, Function<Pair<Execution, ExecutorState>, Pair<Executor, ExecutorState>> function) {
         return this.jdbcRepository
             .getDslContextWrapper()

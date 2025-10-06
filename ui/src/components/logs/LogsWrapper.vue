@@ -83,6 +83,10 @@
                 type: Object,
                 default: null
             },
+            reloadLogs: {
+                type: Number,
+                default: undefined
+            }
         },
         data() {
             return {
@@ -206,7 +210,6 @@
             load() {
                 this.isLoading = true
 
-
                 const data = {
                     page: this.filters ? this.internalPageNumber : this.$route.query.page || this.internalPageNumber,
                     size: this.filters ? this.internalPageSize : this.$route.query.size || this.internalPageSize,
@@ -224,6 +227,11 @@
 
             },
         },
+        watch: {
+            reloadLogs(newValue) {
+                if(newValue) this.refresh();
+            },
+        }
     });
 </script>
 <style lang="scss" scoped>

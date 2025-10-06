@@ -24,51 +24,34 @@
     </el-select>
 </template>
 
-<script>
-    const isValidLabel = (label) => {
+<script setup lang="ts">
+    import {ref, watch} from "vue";
+
+    const isValidLabel = (label: string): boolean => {
         return label.match(".+:.+") !== null;
     };
 
-    const isValidLabels = (labels) => {
-        return labels.every((label) => isValidLabel(label));
+    const props = defineProps<{
+        modelValue?: string | string[];
+    }>();
+
+    const emit = defineEmits<{
+        "update:modelValue": [value: string[]];
+    }>();
+
+    const asArrayProp = (unknownValue: string | string[] | undefined): string[] => {
+        return (!Array.isArray(unknownValue) && unknownValue !== undefined) ? [unknownValue] : (unknownValue ?? []);
     };
 
-    export default {
-        props: {
-            modelValue: {
-                type: [Array, String],
-                default: () => [],
-                validator(value) {
-                    return typeof value === "string" ? isValidLabel(value) : isValidLabels(value);
-                }
-            }
-        },
-        emits: ["update:modelValue"],
-        created() {
-            this.labels = this.asArrayProp(this.modelValue);
-        },
-        data() {
-            return {
-                hover: false,
-                inputValue: undefined,
-                labels: [],
-            }
-        },
-        watch: {
-            modelValue: {
-                handler (newValue) {
-                    this.labels = this.asArrayProp(newValue);
-                }
-            }
-        },
-        methods: {
-            asArrayProp(unknownValue) {
-                return (!Array.isArray(unknownValue) && unknownValue !== undefined) ? [unknownValue] : unknownValue;
-            },
-            onInput(value) {
-                this.labels = value.filter((label) => isValidLabel(label));
-                this.$emit("update:modelValue", this.labels)
-            },
-        }
+    const hover = ref<boolean>(false);
+    const labels = ref<string[]>(asArrayProp(props.modelValue));
+
+    watch(() => props.modelValue, (newValue) => {
+        labels.value = asArrayProp(newValue);
+    });
+
+    const onInput = (value: string[]) => {
+        labels.value = value.filter((label) => isValidLabel(label));
+        emit("update:modelValue", labels.value);
     };
 </script>

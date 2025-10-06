@@ -35,6 +35,7 @@
                 target: props.target ?? "_blank"
             };
         }
+
         return {
             to: href.value
         };

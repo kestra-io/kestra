@@ -806,11 +806,13 @@
         "label": "삭제"
       },
       "dialog": {
-        "confirm": "확인",
-        "file_deletion": "파일 삭제 확인",
-        "file_deletion_description": "이 파일을 삭제하시겠습니까?",
-        "folder_deletion": "폴더 삭제 확인",
-        "folder_deletion_description": "이 폴더와 모든 내용을 삭제하시겠습니까?",
+        "deletion": {
+          "confirm": "확인",
+          "files": "<code>{count}</code>개의 파일을 삭제하시겠습니까?",
+          "folders": "<code>{count}</code>개의 폴더와 모든 내용을 삭제하시겠습니까?",
+          "mixed": "<code>{folders}</code> 폴더와 <code>{files}</code> 파일을 삭제하시겠습니까?",
+          "title": "콘텐츠 삭제 확인"
+        },
         "name": {
           "file": "확장자를 포함한 이름:",
           "folder": "폴더 이름:"

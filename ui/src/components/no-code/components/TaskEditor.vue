@@ -37,7 +37,7 @@
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../plugins/PluginSelect.vue";
-    import {NoCodeElement} from "../utils/types";
+    import {NoCodeElement, Schemas} from "../utils/types";
     import {
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
@@ -67,7 +67,7 @@
     const taskObject = ref<PartialCodeElement | undefined>({});
     const selectedTaskType = ref<string>();
     const isLoading = ref(false);
-    const resolvedProperties = ref<any>();
+    const resolvedProperties = ref<Schemas["properties"]>();
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);

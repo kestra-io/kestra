@@ -190,24 +190,28 @@
         if (fieldDefinition.value?.anyOf) {
             const f = fieldDefinition.value.anyOf.reduce((acc: Record<string, string>, item: any) => {
                 if (item.$ref) {
-                    const i = getValueAtJsonPath(fullSchema.value, item.$ref);
-                    if(i) item = i;
-                }
-                if (item.allOf) {
-                    let type = "", ref;
-                    for (const subItem of item.allOf) {
-                        if (subItem.properties?.type?.const) {
-                            type = subItem.properties.type.const;
+                    const resolvedItem = getValueAtJsonPath(fullSchema.value, item.$ref);
+                    if (resolvedItem?.allOf) {
+                        let type = "", ref;
+                        for (const subItem of item.allOf) {
+                            if (subItem.properties?.type?.const) {
+                                type = subItem.properties.type.const;
+                            }
+                            if (subItem.$ref) {
+                                ref = removeRefPrefix(subItem.$ref)
+                            }
                         }
-                        if (subItem.$ref) {
-                            ref = removeRefPrefix(subItem.$ref)
+                        if (type && ref) {
+                            acc[type] = ref;
                         }
                     }
-                    if (type && ref) {
-                        acc[type] = ref;
+
+                    if (resolvedItem?.properties?.type?.const) {
+                        acc[resolvedItem.properties.type.const] = removeRefPrefix(item.$ref);
                     }
                 }
                 return acc;
+
             }, {});
 
             return f;

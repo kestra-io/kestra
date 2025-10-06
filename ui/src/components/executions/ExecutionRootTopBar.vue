@@ -29,7 +29,7 @@
                 <el-dropdown class="d-flex d-xl-none align-items-center">
                     <el-button>
                         <el-icon><DotsVerticalIcon /></el-icon>
-                        <span class="d-none d-lg-inline-block">{{ $t("more actions") }}</span>
+                        <span class="d-none d-lg-inline-block">{{ $t("more_actions") }}</span>
                     </el-button>
                     <template #dropdown>
                         <el-dropdown-menu>

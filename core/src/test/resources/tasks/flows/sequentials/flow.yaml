@@ -14,3 +14,97 @@ tasks:
       - id: 3
         type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}}"
+        tasks:
+      - id: seq
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: copyout_chunk1
+        type: io.kestra.plugin.jdbc.postgresql.CopyOut
+        url: "{{ vars.db_url }}"
+        username: "{{ vars.db_username }}"
+        password: "{{ vars.db_password }}"
+        format: TEXT
+        header: true
+        sql: SELECT * FROM "{{ inputs.params_json.schema_name }}"."{{ inputs.params_json.object_name }}" WHERE id BETWEEN 1 AND 10000000
+
+      - id: copyout_chunk2
+        type: io.kestra.plugin.jdbc.postgresql.CopyOut
+        url: "{{ vars.db_url }}"
+        username: "{{ vars.db_username }}"
+        password: "{{ vars.db_password }}"
+        format: TEXT
+        header: true
+        sql: SELECT * FROM "{{ inputs.params_json.schema_name }}"."{{ inputs.params_json.object_name }}" WHERE id BETWEEN 10000001 AND 20000000
+
+      - id: copyout_chunk3
+        type: io.kestra.plugin.jdbc.postgresql.CopyOut
+        url: "{{ vars.db_url }}"
+        username: "{{ vars.db_username }}"
+        password: "{{ vars.db_password }}"
+        format: TEXT
+        header: true
+        sql: SELECT * FROM "{{ inputs.params_json.schema_name }}"."{{ inputs.params_json.object_name }}" WHERE id BETWEEN 20000001 AND 30000000
+
+      - id: copyout_chunk4
+        type: io.kestra.plugin.jdbc.postgresql.CopyOut
+        url: "{{ vars.db_url }}"
+        username: "{{ vars.db_username }}"
+        password: "{{ vars.db_password }}"
+        format: TEXT
+        header: true
+        sql: SELECT * FROM "{{ inputs.params_json.schema_name }}"."{{ inputs.params_json.object_name }}" WHERE id BETWEEN 30000001 AND 40000000
+
+      - id: copyout_chunk5
+        type: io.kestra.plugin.jdbc.postgresql.CopyOut
+        url: "{{ vars.db_url }}"
+        username: "{{ vars.db_username }}"
+        password: "{{ vars.db_password }}"
+        format: TEXT
+        header: true
+        sql: SELECT * FROM "{{ inputs.params_json.schema_name }}"."{{ inputs.params_json.object_name }}" WHERE id BETWEEN 40000001 AND 50000000
+
+      - id: copyout_chunk6
+        type: io.kestra.plugin.jdbc.postgresql.CopyOut
+        url: "{{ vars.db_url }}"
+        username: "{{ vars.db_username }}"
+        password: "{{ vars.db_password }}"
+        format: TEXT
+        header: true
+        sql: SELECT * FROM "{{ inputs.params_json.schema_name }}"."{{ inputs.params_json.object_name }}" WHERE id BETWEEN 50000001 AND 60000000
+
+      - id: copyout_chunk7
+        type: io.kestra.plugin.jdbc.postgresql.CopyOut
+        url: "{{ vars.db_url }}"
+        username: "{{ vars.db_username }}"
+        password: "{{ vars.db_password }}"
+        format: TEXT
+        header: true
+        sql: SELECT * FROM "{{ inputs.params_json.schema_name }}"."{{ inputs.params_json.object_name }}" WHERE id BETWEEN 60000001 AND 70000000
+
+      - id: copyout_chunk8
+        type: io.kestra.plugin.jdbc.postgresql.CopyOut
+        url: "{{ vars.db_url }}"
+        username: "{{ vars.db_username }}"
+        password: "{{ vars.db_password }}"
+        format: TEXT
+        header: true
+        sql: SELECT * FROM "{{ inputs.params_json.schema_name }}"."{{ inputs.params_json.object_name }}" WHERE id BETWEEN 70000001 AND 80000000
+
+      - id: copyout_chunk9
+        type: io.kestra.plugin.jdbc.postgresql.CopyOut
+        url: "{{ vars.db_url }}"
+        username: "{{ vars.db_username }}"
+        password: "{{ vars.db_password }}"
+        format: TEXT
+        header: true
+        sql: SELECT * FROM "{{ inputs.params_json.schema_name }}"."{{ inputs.params_json.object_name }}" WHERE id BETWEEN 80000001 AND 90000000
+
+      - id: copyout_chunk10
+        type: io.kestra.plugin.jdbc.postgresql.CopyOut
+        url: "{{ vars.db_url }}"
+        username: "{{ vars.db_username }}"
+        password: "{{ vars.db_password }}"
+        format: TEXT
+        header: true
+        sql: SELECT * FROM "{{ inputs.params_json.schema_name }}"."{{ inputs.params_json.object_name }}" WHERE id BETWEEN 90000001 AND 98000000
+

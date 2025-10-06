@@ -462,6 +462,26 @@
                 }
                 return "node";
             },
+            pushToParentFolder(parentPath, newNode) {
+                const traverseAndInsert = (basePath = "", array) => {
+                    for (const item of array) {
+                        const folderPath = `${basePath}${item.fileName}`;
+                        if (folderPath === parentPath && Array.isArray(item.children)) {
+                            // Avoid duplicate folder entries
+                            if (!item.children.find(child => child.fileName === newNode.fileName)) {
+                                item.children.push(newNode);
+                                item.children = this.sorted(item.children);
+                            }
+                            return true;
+                        } else if (Array.isArray(item.children)) {
+                            if (traverseAndInsert(`${folderPath}/`, item.children)) return true;
+                        }
+                    }
+                    return false;
+                };
+
+                traverseAndInsert("", this.items);
+            },
             flattenTree(items, parentPath = "") {
                 const result = [];
 
@@ -493,7 +513,7 @@
 
                 } else if (isCtrl) {
                     const isSelected = this.selectedNodes.includes(node.data.id);
-                    
+
                     if (isSelected) {
                         // Remove from selection - force reactivity with new arrays
                         this.selectedFiles = [...this.selectedFiles.filter(file => file !== path)];
@@ -1022,15 +1042,14 @@
                     };
 
                 const NEW = this.folderNode(fileName, folder?.children ?? []);
+                const parentPath = this.dialog.folder || "";
+                const path = parentPath ? `${parentPath}/${fileName}` : fileName;
 
+                // Step 1: Create folder in backend if `creation` flag is true
                 if (creation) {
-                    const path = `${
-                        this.dialog.folder ? `${this.dialog.folder}/` : ""
-                    }${fileName}`;
-
-                    // Check if folder already exists (similar to file validation pattern)
                     try {
-                        await this.namespacesStore.readDirectory({namespace: this.namespaceId, path: path});
+                        // Check if folder already exists
+                        await this.namespacesStore.readDirectory({namespace: this.namespaceId, path});
 
                         // If we reach here, the directory already exists
                         this.$toast().error(this.$t("namespace files.create.folder_already_exists"));
@@ -1039,19 +1058,30 @@
 
                     try {
                         await this.namespacesStore.createDirectory({namespace: this.namespaceId, path, name: fileName});
-                        
-                        // Reset dialog and return early (like file creation does)
-                        this.dialog = {...DIALOG_DEFAULTS};
-                        return;
+
+                        //  pdate UI immediately (reactive push)
+                        if (!parentPath) {
+                            // Top-level folder
+                            this.items.push(NEW);
+                            this.items = this.sorted(this.items);
+                        } else {
+                            this.pushToParentFolder(parentPath, NEW);
+                        }
+
+                        this.$toast().success(`Folder "${fileName}" created successfully.`);
                     } catch (error) {
                         console.error(`Failed to create folder: ${fileName}`, error);
 
                         this.$toast().error(this.$t("namespace files.create.folder_error"));
                         return;
                     }
+
+                    this.dialog = {...DIALOG_DEFAULTS};
+                    return;
                 }
 
-                if (!this.dialog.folder) {
+                // Handle non-creation (used for restoring UI or local additions)
+                if (!parentPath) {
                     const firstFolder = NEW.fileName.split("/")[0];
                     if (!this.items.find(item => item.fileName === firstFolder)) {
                         NEW.fileName = firstFolder;
@@ -1059,58 +1089,7 @@
                         this.items = this.sorted(this.items);
                     }
                 } else {
-                    const SELF = this;
-                    (function pushItemToFolder(basePath = "", array) {
-                        for (let i = 0; i < array.length; i++) {
-                            const item = array[i];
-                            const folderPath = `${basePath}${item.fileName}`;
-                            if (
-                                folderPath === SELF.dialog.folder &&
-                                Array.isArray(item.children)
-                            ) {
-                                // find the first node that is not present in the current tree and then add it.
-
-                                const paths = NEW.fileName.split("/");
-                                let index = 0;
-                                let UNCOMMON_NODE = item;
-
-                                while (UNCOMMON_NODE && index < paths.length) {
-                                    // if any of node's children have path's folder name move ahead;
-                                    if (index >= paths.length) break;
-
-                                    const nextNode = UNCOMMON_NODE.children?.find(item => item.fileName.toLowerCase() === paths[index].toLowerCase());
-
-                                    if (!nextNode) {
-                                        break;
-                                    }
-
-                                    index++;
-                                    UNCOMMON_NODE = nextNode;
-                                }
-
-                                // return as all folders are already present so no change required.
-                                if (index === paths.length) return true;
-
-                                // add the node with last folder name which is not present already.
-                                NEW.fileName = paths[index];
-
-                                if (!UNCOMMON_NODE.children) UNCOMMON_NODE.children = [];
-                                UNCOMMON_NODE.children.push(NEW);
-                                UNCOMMON_NODE.children = SELF.sorted(UNCOMMON_NODE.children);
-                                return true; // Return true if the folder is found and item is pushed
-                            } else if (Array.isArray(item.children)) {
-                                if (
-                                    pushItemToFolder(
-                                        `${folderPath}/`,
-                                        item.children,
-                                    )
-                                ) {
-                                    return true; // Return true if the folder is found and item is pushed in recursive call
-                                }
-                            }
-                        }
-                        return false; // Return false if the folder is not found
-                    })(undefined, this.items);
+                    this.pushToParentFolder(parentPath, NEW);
                 }
 
                 this.dialog = {...DIALOG_DEFAULTS};

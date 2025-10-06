@@ -1132,7 +1132,7 @@ ul.tabs-context {
 }
 </style>
 
-<style lang="scss" scoped>
+<style lang="scss">
     .tabs .el-scrollbar__bar.is-horizontal {
         height: 1px !important;
     }

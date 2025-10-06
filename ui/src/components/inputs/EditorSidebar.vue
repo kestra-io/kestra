@@ -315,19 +315,7 @@
             @keydown.enter.prevent="removeItems()"
         >
             <span class="py-3">
-                {{
-                    foldersCount > 0 && filesCount > 0
-                        ? $t("namespace files.dialog.mixed_deletion_description", {folders: foldersCount, files: filesCount})
-                        : foldersCount > 1
-                            ? $t("namespace files.dialog.folders_deletion_description", {count: foldersCount})
-                            : foldersCount === 1
-                                ? $t("namespace files.dialog.folder_deletion_description")
-                                : filesCount > 1
-                                    ? $t("namespace files.dialog.files_deletion_description", {count: filesCount})
-                                    : $t("namespace files.dialog.file_deletion_description")
-                }}
-
-
+                {{ confirmationMessage }}                
             </span>
             <template #footer>
                 <div>
@@ -359,7 +347,7 @@
     </div>
 </template>
 
-<script lang="ts">
+<script>
     import {mapStores} from "pinia";
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useEditorStore} from "../../stores/editor";
@@ -471,11 +459,17 @@
                     ? this.$t("namespace files.dialog.folder_deletion")
                     : this.$t("namespace files.dialog.file_deletion");
             },
-            filesCount() {
-                return this.confirmation.nodes?.filter(n => n.type === "File").length ?? 0;
-            },
-            foldersCount() {
-                return this.confirmation.nodes?.filter(n => n.type === "Directory").length ?? 0;
+            confirmationMessage() {
+                const files = this.confirmation.nodes?.filter(n => n.type === "File").length ?? 0;
+                const folders = this.confirmation.nodes?.filter(n => n.type === "Directory").length ?? 0;
+
+                if (folders > 0 && files > 0) {
+                    return this.$t("namespace files.dialog.mixed_deletion_description", {folders, files});
+                } else if (folders > 0) {
+                    return this.$t("namespace files.dialog.folders_deletion_description", {count: folders});
+                } else {
+                    return this.$t("namespace files.dialog.files_deletion_description", {count: files});
+                }
             },
         },
         methods: {

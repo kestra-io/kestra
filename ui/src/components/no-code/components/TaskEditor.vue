@@ -25,7 +25,7 @@
             :modelValue="taskObject"
             @update:model-value="onTaskInput"
             :schema="schemaProp"
-            :properties="properties.properties"
+            :properties="properties"
             :definitions="fullSchema.definitions"
         />
     </div>
@@ -49,6 +49,7 @@
     import {usePlaygroundStore} from "../../../stores/playground";
     import {getValueAtJsonPath, resolve$ref} from "../../../utils/utils";
     import PlaygroundRunTaskButton from "../../inputs/PlaygroundRunTaskButton.vue";
+    import isEqual from "lodash/isEqual";
 
     const {t} = useI18n();
 
@@ -67,7 +68,6 @@
     const taskObject = ref<PartialCodeElement | undefined>({});
     const selectedTaskType = ref<string>();
     const isLoading = ref(false);
-    const resolvedProperties = ref<Schemas["properties"]>();
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
@@ -235,13 +235,14 @@
         return resolvedTypes.value ? (resolvedTypes.value.length === 1 ? resolvedTypes.value[0] : selectedTaskType.value ?? "") : "";
     });
 
-    function load() {
+    const resolvedProperties = computed<Schemas["properties"] | undefined>(() => {
         // try to resolve the type from local schema
         const defs = definitions.value ?? {}
         if (defs[resolvedType.value]) {
-            resolvedProperties.value = defs[resolvedType.value]
-            return;
-        }else if(resolvedTypes.value.length > 1){
+            return defs[resolvedType.value].properties;
+        }
+
+        if(resolvedTypes.value.length > 1){
             // explore the schemas of each possible plugins to exact similarities
             const schemas = resolvedTypes.value.map((type) => defs[type]) as any[];
 
@@ -250,9 +251,8 @@
                 return schemas.every((schema) => schema.properties[key] !== undefined);
             }).reduce((acc, key) => {
                 // check if the properties are the same when they are serialized
-                const first = JSON.stringify(schemas[0].properties[key]);
                 if (schemas.every((schema) => {
-                    return JSON.stringify(schema.properties[key]) === first;
+                    return isEqual(schemas[0].properties[key], schema.properties[key])
                 })) {
                     // if they are we can safely display them
                     acc[key] = schemas[0].properties[key];
@@ -260,13 +260,14 @@
                 return acc;
             }, {} as Record<string, any>);
 
-            resolvedProperties.value = properties;
+            return properties;
         }
-    }
+        return undefined;
+    });
+
 
     watch([selectedTaskType, fullSchema], ([task]) => {
         if (task) {
-            load();
             if(isPlugin.value){
                 pluginsStore.updateDocumentation(taskObject.value as Parameters<typeof pluginsStore.updateDocumentation>[0]);
             }
@@ -302,7 +303,6 @@
     }
 
     function onTaskTypeSelect() {
-        load();
         const value: PartialCodeElement = {
             type: selectedTaskType.value ?? ""
         };

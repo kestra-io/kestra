@@ -310,20 +310,18 @@
 
         <el-dialog
             v-model="confirmation.visible"
-            :title="confirmationTitle"
+            :title="confirmationLabels.title"
             width="500"
             @keydown.enter.prevent="removeItems()"
         >
-            <span class="py-3">
-                {{ confirmationMessage }}                
-            </span>
+            <span class="py-3" v-html="confirmationLabels.message" />
             <template #footer>
                 <div>
                     <el-button @click="confirmation.visible = false">
                         {{ $t("cancel") }}
                     </el-button>
                     <el-button type="primary" @click="removeItems()">
-                        {{ $t("namespace files.dialog.confirm") }}
+                        {{ $t("namespace files.dialog.deletion.confirm") }}
                     </el-button>
                 </div>
             </template>
@@ -443,33 +441,17 @@
 
                 return extractPaths(undefined, this.items);
             },
-            confirmationTitle() {
-                if (!this.confirmation.nodes || this.confirmation.nodes.length === 0) {
-                    return ""; // Return an empty string if no nodes are selected
-                }
-
-                if (this.confirmation.nodes.length > 1) {
-                    // Bulk deletion title
-                    return this.$t("namespace files.dialog.file_deletion");
-                }
-
-                // Single node deletion title
-                const node = this.confirmation.nodes[0];
-                return node.type === "Directory"
-                    ? this.$t("namespace files.dialog.folder_deletion")
-                    : this.$t("namespace files.dialog.file_deletion");
-            },
-            confirmationMessage() {
+            confirmationLabels() {
                 const files = this.confirmation.nodes?.filter(n => n.type === "File").length ?? 0;
                 const folders = this.confirmation.nodes?.filter(n => n.type === "Directory").length ?? 0;
 
-                if (folders > 0 && files > 0) {
-                    return this.$t("namespace files.dialog.mixed_deletion_description", {folders, files});
-                } else if (folders > 0) {
-                    return this.$t("namespace files.dialog.folders_deletion_description", {count: folders});
-                } else {
-                    return this.$t("namespace files.dialog.files_deletion_description", {count: files});
-                }
+                const labels = {title: this.$t("namespace files.dialog.deletion.title"), message: ""};
+
+                if (folders > 0 && files > 0) labels.message = this.$t("namespace files.dialog.deletion.mixed", {folders, files});
+                else if (folders > 0) labels.message = this.$t("namespace files.dialog.deletion.folders", {count: folders});
+                else labels.message = this.$t("namespace files.dialog.deletion.files", {count: files});
+
+                return labels;
             },
         },
         methods: {

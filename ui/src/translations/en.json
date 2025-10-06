@@ -708,10 +708,13 @@
           "folder": "Folder name:"
         },
         "parent_folder": "Parent folder:",
-        "confirm": "Confirm",
-        "files_deletion_description": "Are you sure you want to delete {count} file(s)?",
-        "folders_deletion_description": "Are you sure you want to delete {count} folder(s) and all of its contents?",
-        "mixed_deletion_description": "Are you sure you want to delete {folders} folder(s) and {files} file(s)?"
+        "deletion": {
+          "confirm": "Confirm",
+          "title": "Confirm deletion of content",
+          "files": "Are you sure you want to delete <code>{count}</code> file(s)?",
+          "folders": "Are you sure you want to delete <code>{count}</code> folder(s) and all of its contents?",
+          "mixed": "Are you sure you want to delete <code>{folders}</code> folder(s) and <code>{files}</code> file(s)?"
+        }
       },
       "path": {
         "copy": "Copy path",

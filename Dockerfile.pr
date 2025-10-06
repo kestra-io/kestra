@@ -1,4 +1,5 @@
-FROM  kestra/kestra:develop
+ARG KESTRA_DOCKER_BASE_VERSION=develop
+FROM  kestra/kestra:$KESTRA_DOCKER_BASE_VERSION
 
 USER root
 

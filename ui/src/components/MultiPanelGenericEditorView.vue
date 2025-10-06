@@ -23,8 +23,8 @@
     import {computed, useSlots} from "vue";
     import {useStorage} from "@vueuse/core";
     import MultiPanelEditorTabs from "./MultiPanelEditorTabs.vue";
-    import MultiPanelTabs, {Panel} from "./MultiPanelTabs.vue";
-    import {DeserializableEditorElement, Tab} from "../utils/multiPanelTypes";
+    import MultiPanelTabs from "./MultiPanelTabs.vue";
+    import {DeserializableEditorElement, Panel, Tab} from "../utils/multiPanelTypes";
 
     const props = withDefaults(defineProps<{
         editorElements: DeserializableEditorElement[];

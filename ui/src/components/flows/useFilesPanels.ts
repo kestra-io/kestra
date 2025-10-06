@@ -1,8 +1,8 @@
 import {computed, h, markRaw, Ref, watch} from "vue"
-import type {Panel} from "../MultiPanelTabs.vue";
 import EditorWrapper from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
 import {EditorTabProps, useEditorStore} from "../../stores/editor";
+import {Panel} from "../../utils/multiPanelTypes";
 
 export const CODE_PREFIX = "code"
 

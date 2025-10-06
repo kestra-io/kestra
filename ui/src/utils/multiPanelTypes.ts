@@ -10,6 +10,13 @@ export interface Tab {
     component: any
 }
 
+export interface Panel {
+    size: number;
+    tabs: Tab[],
+    dragover?: boolean,
+    activeTab: Tab,
+}
+
 export interface EditorElement {
     button: {
         icon: any,

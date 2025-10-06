@@ -2,7 +2,6 @@ import {computed, ComputedRef, h, markRaw, Ref, Suspense} from "vue"
 import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-import type {Panel} from "../MultiPanelTabs.vue";
 
 import {useFlowStore} from "../../stores/flow";
 import {useEditorStore} from "../../stores/editor";
@@ -10,7 +9,7 @@ import {NoCodeProps} from "./noCodeTypes";
 
 
 import {trackTabOpen, trackTabClose} from "../../utils/tabTracking";
-import {DeserializableEditorElement, Tab} from "../../utils/multiPanelTypes";
+import {DeserializableEditorElement, Panel, Tab} from "../../utils/multiPanelTypes";
 
 const NOCODE_PREFIX = "nocode"
 

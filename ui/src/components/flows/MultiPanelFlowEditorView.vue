@@ -27,7 +27,7 @@
     import {usePlaygroundStore} from "../../stores/playground";
     import {useEditorStore} from "../../stores/editor";
 
-    import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
+    import MultiPanelTabs from "../MultiPanelTabs.vue";
     import MultiPanelEditorTabs from "../MultiPanelEditorTabs.vue";
     import FlowPlayground from "./FlowPlayground.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
@@ -41,6 +41,7 @@
     import {setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodeHandlers, useNoCodePanels} from "./useNoCodePanels";
     import {useFlowStore} from "../../stores/flow";
     import {trackTabOpen} from "../../utils/tabTracking";
+    import {Panel, Tab} from "../../utils/multiPanelTypes";
 
     function isTabFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.value)

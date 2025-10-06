@@ -14,21 +14,30 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {useRoute} from "vue-router";
     import {useDocStore} from "../../stores/doc";
 
-    const props = defineProps({
-        pageUrl: {
-            type: String,
-            default: undefined
-        },
+    interface ReleaseMetadata {
+        release: string;
+        title: string;
+        description?: string;
+    }
+
+    interface ResourcesWithMetadata {
+        [key: string]: ReleaseMetadata;
+    }
+
+    const props = withDefaults(defineProps<{
+        pageUrl?: string;
+    }>(), {
+        pageUrl: undefined
     });
 
     const docStore = useDocStore();
     const route = useRoute();
 
-    let currentPage;
+    let currentPage: string;
 
     if (props.pageUrl) {
         currentPage = props.pageUrl;
@@ -38,7 +47,7 @@
 
     currentPage = currentPage.endsWith("/") ? currentPage.slice(0, -1) : currentPage;
 
-    const resourcesWithMetadata = await docStore.children(currentPage);
+    const resourcesWithMetadata = await docStore.children(currentPage) as ResourcesWithMetadata;
 
     const navigation = Object.entries(resourcesWithMetadata)
         .filter(([_, metadata]) => metadata.release !== undefined)

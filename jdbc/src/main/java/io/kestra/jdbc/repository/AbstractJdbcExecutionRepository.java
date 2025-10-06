@@ -1104,7 +1104,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 DSLContext context = DSL.using(configuration);
 
                 // we send the event before to be sure that if sending the event crash, we would not delete the exec
-                executions.forEach(execution -> eventPublisher.publishEvent(CrudEvent.delete(execution)));
+                executions.forEach(execution -> eventPublisher.publishEvent(new CrudEvent<>(execution, CrudEventType.DELETE)));
 
                 return context.delete(this.jdbcRepository.getTable())
                     .where(field("key", String.class).in(executions.stream().map(Execution::getId).toList()))

@@ -232,7 +232,28 @@
     });
 
     const resolvedType = computed<string>(() => {
-        return resolvedTypes.value ? (resolvedTypes.value.length === 1 ? resolvedTypes.value[0] : selectedTaskType.value ?? "") : "";
+        if(resolvedTypes.value.length > 1 && selectedTaskType.value){
+            // find the resolvedType that match the current dataType
+            const dataType = taskObject.value?.data?.type;
+            if(dataType){
+                for(const type of resolvedTypes.value){
+                    const schema = definitions.value?.[type];
+                    if(schema?.properties?.data?.properties?.type?.const === dataType){
+                        return type;
+                    }
+                }
+            }
+        }
+
+        return resolvedTypes.value
+            ? (resolvedTypes.value.length === 1
+                ? resolvedTypes.value[0]
+                : selectedTaskType.value ?? "")
+            : "";
+    });
+
+    const resolvedSchemas = computed(() => {
+        return resolvedTypes.value.map((type) => definitions.value?.[type]);
     });
 
     const resolvedProperties = computed<Schemas["properties"] | undefined>(() => {
@@ -243,8 +264,7 @@
         }
 
         if(resolvedTypes.value.length > 1){
-            // explore the schemas of each possible plugins to exact similarities
-            const schemas = resolvedTypes.value.map((type) => defs[type]) as any[];
+            const schemas = resolvedSchemas.value;
 
             // find properties with the same key and list their keys
             const properties = Object.keys(schemas[0].properties).filter((key) => {
@@ -260,11 +280,38 @@
                 return acc;
             }, {} as Record<string, any>);
 
+            if(dataTypes.value.length > 1){
+                properties["data"] = {
+                    type: "object",
+                    properties: {
+                        type: {
+                            type: "string",
+                            enum: dataTypes.value,
+                            $required: true,
+                        }
+                    },
+                    $required: true,
+                }
+            }
+
             return properties;
         }
         return undefined;
     });
 
+    const dataTypes = computed(() => {
+        const types = new Set<string>();
+        for(const schema of resolvedSchemas.value){
+            const dataResolved = schema.properties?.data?.$ref
+                ? getValueAtJsonPath(fullSchema.value, schema.properties?.data?.$ref)
+                : schema.properties?.data;
+            const typeConst = dataResolved?.properties?.type?.const
+            if(typeConst){
+                types.add(typeConst);
+            }
+        }
+        return Array.from(types);
+    });
 
     watch([selectedTaskType, fullSchema], ([task]) => {
         if (task) {
@@ -273,8 +320,6 @@
             }
         }
     }, {immediate: true});
-
-
 
     function onTaskInput(val: PartialCodeElement | undefined) {
         taskObject.value = val;

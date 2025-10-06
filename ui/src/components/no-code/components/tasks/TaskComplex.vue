@@ -23,9 +23,15 @@
             return props.schema?.properties || {};
         }
         const schemas = props.schema.allOf ?? [props.schema];
-        return schemas.reduce((acc: any, item: any) => {
+        return schemas.reduce((
+            acc: Record<string, any>,
+            item: {
+                $ref?: string;
+                properties?: Record<string, any>
+            }) => {
+
             if (item.$ref) {
-                const type = item.$ref.split("/").pop();
+                const type = item.$ref.split("/").pop()!;
                 return {
                     ...acc,
                     ...props.definitions[type]?.properties
@@ -35,6 +41,7 @@
                 ...acc,
                 ...item.properties
             };
+
         }, {});
     })
 </script>

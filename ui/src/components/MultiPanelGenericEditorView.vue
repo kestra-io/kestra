@@ -36,7 +36,7 @@
         bottomVisible: false,
         preSerializePanels: (ps: Panel[]) => ps.map(p => ({
             tabs: p.tabs.map(t => t.value),
-            activeTab: p.activeTab.value,
+            activeTab: p.activeTab?.value,
             size: p.size,
         }))
     });

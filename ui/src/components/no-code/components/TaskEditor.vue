@@ -37,7 +37,7 @@
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../plugins/PluginSelect.vue";
-    import {NoCodeElement, Schemas} from "../utils/types";
+    import {NoCodeElement} from "../utils/types";
     import {
         FIELDNAME_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
@@ -67,7 +67,7 @@
     const taskObject = ref<PartialCodeElement | undefined>({});
     const selectedTaskType = ref<string>();
     const isLoading = ref(false);
-    const plugin = ref<{schema: Schemas}>();
+    const resolvedProperties = ref<any>();
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
@@ -123,7 +123,7 @@
         $ref: "",
     }));
 
-    const schema = computed(() => plugin.value?.schema);
+
 
     const properties = computed(() => {
         const updatedProperties = schemaProp.value;
@@ -151,7 +151,7 @@
 
     const schemaProp = computed(() => {
         const prop = isTaskDefinitionBasedOnType.value
-            ? schema.value?.properties
+            ? resolvedProperties.value
             : schemaAtBlockPath.value
 
         if(!prop){
@@ -186,6 +186,7 @@
     const fieldDefinition = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value));
 
     // useful to map inputs to their real schema
+    // NOTE: there can be more than one schema per type (ex: KPI chart could be for flow or for executions.)
     const typeMap = computed<Record<string, string[]>>(() => {
         if (fieldDefinition.value?.anyOf) {
             const f = fieldDefinition.value.anyOf.reduce((acc: Record<string, string[]>, item: any) => {
@@ -238,10 +239,7 @@
         // try to resolve the type from local schema
         const defs = definitions.value ?? {}
         if (defs[resolvedType.value]) {
-            plugin.value = {schema: {
-                properties: defs[resolvedType.value],
-                definitions: defs,
-            }};
+            resolvedProperties.value = defs[resolvedType.value]
             return;
         }else if(resolvedTypes.value.length > 1){
             // explore the schemas of each possible plugins to exact similarities
@@ -256,15 +254,13 @@
                 if (schemas.every((schema) => {
                     return JSON.stringify(schema.properties[key]) === first;
                 })) {
+                    // if they are we can safely display them
                     acc[key] = schemas[0].properties[key];
                 }
                 return acc;
             }, {} as Record<string, any>);
 
-            plugin.value = {schema: {
-                properties,
-                definitions: defs,
-            }};
+            resolvedProperties.value = properties;
         }
     }
 

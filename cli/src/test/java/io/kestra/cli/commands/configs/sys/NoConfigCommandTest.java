@@ -1,6 +1,6 @@
 package io.kestra.cli.commands.configs.sys;
-import io.kestra.cli.commands.HelloCommand;
 import io.kestra.cli.commands.flows.FlowCreateCommand;
+import io.kestra.cli.commands.namespaces.kv.KvCommand;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.runtime.server.EmbeddedServer;
@@ -15,18 +15,24 @@ import java.nio.file.Paths;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
+/**
+ * Verifies CLI behavior without repository configuration:
+ * - Repo-independent commands succeed (e.g. KV with no params).
+ * - Repo-dependent commands fail with a clear error.
+ */
 class NoConfigCommandTest {
 
     @Test
-    void shouldSuccessWithHelloCommandWithoutConfig() {
+    void shouldSucceedWithNamespaceKVCommandWithoutParamsAndConfig() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
-        try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
-            int exitCode=PicocliRunner.call(HelloCommand.class, ctx);
 
-            assertThat(exitCode).isZero();
-            assertThat(out.toString()).contains("Hello from kestra");
+        try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
+            String[] args = {};
+            Integer call = PicocliRunner.call(KvCommand.class, ctx, args);
+
+            assertThat(call).isZero();
+            assertThat(out.toString()).contains("Usage: kestra namespace kv");
         }
     }
 
@@ -58,7 +64,7 @@ class NoConfigCommandTest {
                 flowPath.toString(),
             };
 
-            int exitCode = PicocliRunner.call(FlowCreateCommand.class, ctx, createArgs);
+            Integer exitCode = PicocliRunner.call(FlowCreateCommand.class, ctx, createArgs);
 
 
             assertThat(exitCode).isNotZero();

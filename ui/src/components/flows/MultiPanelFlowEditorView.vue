@@ -34,7 +34,7 @@
     import KeyShortcuts from "../inputs/KeyShortcuts.vue";
     import NoCode from "../no-code/NoCode.vue";
     import {OVERRIDE_DEFAULT_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
-    import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
+    import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels";
     import {useTopologyPanels} from "./useTopologyPanels";
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts";
 

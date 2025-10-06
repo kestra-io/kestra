@@ -98,7 +98,7 @@
     import {useBlueprintsStore} from "../../../stores/blueprints";
     import {useAuthStore} from "override/stores/auth"
     import {useFlowStore} from "../../../stores/flow";
-    import {canCreate} from "override/composables/blueprintsPermissions.js";
+    import {canCreate} from "override/composables/blueprintsPermissions";
     import {parse as parseFlow} from "@kestra-io/ui-libs/flow-yaml-utils";
 
     export default {

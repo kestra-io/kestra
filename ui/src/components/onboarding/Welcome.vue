@@ -80,9 +80,7 @@
         return (localStorage.getItem("theme") || "light") === "light" ? kestraWelcome : kestraWelcome;
     });
 
-    const routeInfo = computed(() => ({
-        title: t("welcome_page.welcome")
-    }));
+    const routeInfo = computed(() =>  ({title: t("welcome_page.welcome")}));
 
     const authStore = useAuthStore();
 

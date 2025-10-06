@@ -163,13 +163,14 @@
     "choose file": "Escolha um arquivo ou solte-o aqui...",
     "close": "Fechar",
     "close sidebar": "fechar barra lateral",
+    "codeDisabled": "Desativado no Flow",
     "collapse": "Colapsar",
     "collapse all": "Colapsar tudo",
     "common": {
       "back": "Voltar"
     },
     "concurrency": "Concorrência",
-    "conditions": "condições",
+    "conditions": "Condições",
     "configure basic auth": "Configurar Autenticação Básica",
     "confirm": "Confirmar",
     "confirm password": "Confirmar senha",
@@ -651,6 +652,7 @@
       },
       "text_search": "Pesquisar por este texto"
     },
+    "fix_with_ai": "Corrigir com AI",
     "flow": "Flow",
     "flow already exists": "Flow já existe",
     "flow creation": "Criação de flow",
@@ -667,6 +669,7 @@
     "flow-no-dependencies": "Seu flow não possui dependências",
     "flow_export": "Exportar flow",
     "flow_only": "Disponível apenas na aba Flow.",
+    "flow_outputs": "Saídas do Flow",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) deletado(s)",
     "flows disabled": "<code>{count}</code> Flow(s) desativado(s)",
@@ -772,6 +775,7 @@
     "metrics": "Métricas",
     "min": "Min",
     "minutes": "Minutos",
+    "missingSource": "Fonte ausente",
     "monogram": "Monograma",
     "months": "Meses",
     "multi_panel_editor": {
@@ -786,9 +790,12 @@
     "namespace and id readonly": "As propriedades `namespace` e `id` não podem ser alteradas — elas estão definidas para seus valores iniciais. Se você quiser renomear um flow ou alterar seu namespace, você pode criar um novo flow e remover o antigo.",
     "namespace files": {
       "create": {
-        "already_exists": "Um arquivo com este nome já existe",
         "file": "Criar arquivo",
+        "file_already_exists": "Um arquivo com este nome já existe",
+        "file_error": "Ocorreu um erro ao criar o arquivo",
         "folder": "Criar pasta",
+        "folder_already_exists": "Uma pasta com este nome já existe",
+        "folder_error": "Ocorreu um erro ao criar a pasta",
         "label": "Criar"
       },
       "delete": {
@@ -1057,6 +1064,7 @@
     "pause confirm": "Tem certeza de que deseja pausar a execução <code>{id}</code>?",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
+    "paused": "PAUSED",
     "playground": {
       "clear_history": "Limpar histórico",
       "confirm_create": "Você não pode executar o playground enquanto cria um flow. Iniciar uma execução do playground criará o flow.",
@@ -1387,7 +1395,6 @@
     "task_id_exists": "Id da Task já existe",
     "task_id_message": "O Task Id ${existingTask} já existe no flow.",
     "taskid column details": "Última task sendo executada e seu número de tentativas.",
-    "taskruns": "Execuções de Tasks",
     "tasks": "Tasks",
     "template": "Template",
     "template creation": "Criação de template",
@@ -1401,6 +1408,7 @@
       "name": "Mandante",
       "names": "Mandantes"
     },
+    "tenantId": "ID do Mandante",
     "test-badge-text": "Teste",
     "test-badge-tooltip": "Esta execução foi criada por um Teste",
     "theme": "Tema",
@@ -1424,6 +1432,7 @@
       "zoom-out": "Diminuir zoom",
       "zoom-reset": "Redefinir zoom"
     },
+    "total_duration": "Duração total",
     "total_executions": "Total de Execuções",
     "trigger": "Trigger",
     "trigger details": "Detalhes do trigger",
@@ -1438,6 +1447,7 @@
       "title": "Filtrar execuções filhas"
     },
     "trigger refresh": "Atualizar trigger",
+    "triggerId": "ID do Trigger",
     "trigger_check_warning": "Usar variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência `??` para resolver o problema. Por exemplo, em vez de `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "Id de Trigger já existe",
     "trigger_id_message": "O Trigger Id ${existingTrigger} já existe no flow.",

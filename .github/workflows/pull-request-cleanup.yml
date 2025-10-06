@@ -1,0 +1,16 @@
+name: Pull Request - Delete Docker
+
+on:
+  pull_request:
+    types: [closed]
+# TODO import a reusable one
+jobs:
+  publish:
+    name: Pull Request - Delete Docker
+    if: github.repository == 'kestra-io/kestra' # prevent running on forks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          package: kestra-pr
+          delete-tags: ${{ github.event.pull_request.number }}

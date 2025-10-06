@@ -10,7 +10,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 class RuntimeLabelsTest {
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Test
     @LoadFlows({"flows/valids/labels-update-task.yml"})
@@ -158,6 +158,27 @@ class RuntimeLabelsTest {
             new Label(Label.CORRELATION_ID, execution.getId()),
             new Label("fromStringKey", "value2"),
             new Label("fromListKey", "value2")
+        );
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/labels-update-task-empty.yml"})
+    void updateIgnoresEmpty() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "labels-update-task-empty",
+            null,
+            (flow, createdExecution) -> Map.of(),
+            null,
+            List.of()
+        );
+
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        assertThat(execution.getLabels()).containsExactly(
+            new Label(Label.CORRELATION_ID, execution.getId())
         );
     }
 }

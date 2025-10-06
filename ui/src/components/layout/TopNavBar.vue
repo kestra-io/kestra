@@ -1,32 +1,40 @@
 <template>
     <nav data-component="FILENAME_PLACEHOLDER" class="d-flex w-100 gap-3 top-bar">
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
-            <el-breadcrumb v-if="breadcrumb">
-                <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
-                    <a v-if="item.disabled || !item.link">
-                        {{ item.label }}
-                    </a>
-                    <router-link v-else :to="item.link">
-                        {{ item.label }}
-                    </router-link>
-                </el-breadcrumb-item>
-            </el-breadcrumb>
-            <h1 class="h5 fw-semibold m-0 d-inline-flex">
-                <slot name="title">
-                    {{ title }}
-                    <el-tooltip v-if="description" :content="description">
-                        <Information class="ms-2" />
-                    </el-tooltip>
-                    <Badge v-if="beta" label="Beta" />
-                </slot>
-                <el-button
-                    class="star-button"
-                    :class="{'star-active': bookmarked}"
-                    :icon="bookmarked ? StarIcon : StarOutlineIcon"
-                    circle
-                    @click="onStarClick"
+            <div class="d-flex align-items-end gap-2">
+                <SidebarToggleButton
+                    v-if="layoutStore.sideMenuCollapsed"
+                    @toggle="layoutStore.setSideMenuCollapsed(false)"
                 />
-            </h1>
+                <div class="d-flex flex-column gap-2">
+                    <el-breadcrumb v-if="breadcrumb">
+                        <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
+                            <a v-if="item.disabled || !item.link">
+                                {{ item.label }}
+                            </a>
+                            <router-link v-else :to="item.link">
+                                {{ item.label }}
+                            </router-link>
+                        </el-breadcrumb-item>
+                    </el-breadcrumb>
+                    <h1 class="h5 fw-semibold m-0 d-inline-flex">
+                        <slot name="title">
+                            {{ title }}
+                            <el-tooltip v-if="description" :content="description">
+                                <Information class="ms-2" />
+                            </el-tooltip>
+                            <Badge v-if="beta" label="Beta" />
+                        </slot>
+                        <el-button
+                            class="star-button"
+                            :class="{'star-active': bookmarked}"
+                            :icon="bookmarked ? StarIcon : StarOutlineIcon"
+                            circle
+                            @click="onStarClick"
+                        />
+                    </h1>
+                </div>
+            </div>
         </div>
         <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
             <div class="d-none d-lg-flex align-items-center">
@@ -61,6 +69,8 @@
     import {useBookmarksStore} from "../../stores/bookmarks";
     import {useToast} from "../../utils/toast";
     import {useFlowStore} from "../../stores/flow";
+    import {useLayoutStore} from "../../stores/layout";
+    import SidebarToggleButton from "./SidebarToggleButton.vue";
 
     const props = defineProps<{
         title: string;
@@ -73,6 +83,7 @@
     const bookmarksStore = useBookmarksStore();
     const flowStore = useFlowStore();
     const route = useRoute();
+    const layoutStore = useLayoutStore();
 
 
     const shouldDisplayDeleteButton = computed(() => {

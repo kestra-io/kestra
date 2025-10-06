@@ -84,9 +84,6 @@ export default [
     },
     {name: "executions/update", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: () => import("../components/executions/ExecutionRoot.vue")},
 
-    //TaskRuns
-    {name: "taskruns/list", path: "/:tenant?/taskruns", component: () => import("../components/taskruns/TaskRuns.vue")},
-
     //KV
     {name: "kv/list", path: "/:tenant?/kv", component: () => import("../components/kv/KVs.vue")},
 

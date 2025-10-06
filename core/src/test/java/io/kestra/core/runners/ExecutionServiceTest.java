@@ -58,7 +58,7 @@ class ExecutionServiceTest {
     LogRepositoryInterface logRepository;
 
     @Inject
-    RunnerUtils runnerUtils;
+    TestRunnerUtils runnerUtils;
 
     @Test
     @LoadFlows({"flows/valids/restart_last_failed.yaml"})

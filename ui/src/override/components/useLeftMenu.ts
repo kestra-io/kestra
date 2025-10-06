@@ -9,7 +9,6 @@ import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
 import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
 import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
 import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
-import ChartTimeline from "vue-material-design-icons/ChartTimeline.vue";
 import BallotOutline from "vue-material-design-icons/BallotOutline.vue";
 import ShieldAccountVariantOutline from "vue-material-design-icons/ShieldAccountVariantOutline.vue";
 import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
@@ -20,7 +19,16 @@ import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue";
 import ShieldKeyOutline from "vue-material-design-icons/ShieldKeyOutline.vue";
 import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue";
 
-export type MenuItem = {href?: {name: string, params?: Record<string, any>, query?: Record<string, any>}, child?: MenuItem[]};
+export type MenuItem = {
+    href?: {
+        path?: string,
+        name: string,
+        params?: Record<string, any>,
+        query?: Record<string, any>
+    },
+    child?: MenuItem[],
+    disabled?: boolean,
+};
 
 export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"});
@@ -99,16 +107,6 @@ export function useLeftMenu() {
                     element: TimelineClockOutline,
                     class: "menu-icon",
                 },
-            },
-            {
-                href: {name: "taskruns/list"},
-                routes: routeStartWith("taskruns"),
-                title: t("taskruns"),
-                icon: {
-                    element: ChartTimeline,
-                    class: "menu-icon",
-                },
-                hidden: !miscStore.configs?.isTaskRunEnabled,
             },
             {
                 href: {name: "logs/list"},

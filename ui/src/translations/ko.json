@@ -163,13 +163,14 @@
     "choose file": "파일을 선택하거나 여기에 드롭하세요...",
     "close": "닫기",
     "close sidebar": "사이드바 닫기",
+    "codeDisabled": "Flow에서 비활성화됨",
     "collapse": "축소",
     "collapse all": "모두 축소",
     "common": {
       "back": "뒤로"
     },
     "concurrency": "동시성",
-    "conditions": "조건들",
+    "conditions": "조건",
     "configure basic auth": "기본 인증 구성",
     "confirm": "확인",
     "confirm password": "비밀번호 확인",
@@ -651,6 +652,7 @@
       },
       "text_search": "이 텍스트 검색"
     },
+    "fix_with_ai": "AI로 수정",
     "flow": "Flow",
     "flow already exists": "Flow가 이미 존재합니다",
     "flow creation": "Flow 생성",
@@ -667,6 +669,7 @@
     "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
     "flow_export": "flow 내보내기",
     "flow_only": "Flow 탭에서만 사용 가능합니다.",
+    "flow_outputs": "Flow Outputs",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> 개의 flow가 삭제되었습니다",
     "flows disabled": "<code>{count}</code> 개의 flow가 비활성화되었습니다",
@@ -772,6 +775,7 @@
     "metrics": "메트릭",
     "min": "Min",
     "minutes": "분",
+    "missingSource": "소스 누락",
     "monogram": "모노그램",
     "months": "개월",
     "multi_panel_editor": {
@@ -786,9 +790,12 @@
     "namespace and id readonly": "`namespace`와 `id` 속성은 변경할 수 없습니다 — 초기 값으로 설정되었습니다. flow의 이름을 변경하거나 namespace를 변경하려면 새 flow를 만들고 기존 flow를 삭제하세요.",
     "namespace files": {
       "create": {
-        "already_exists": "파일 이름이 이미 존재합니다",
         "file": "파일 생성",
+        "file_already_exists": "이 이름의 파일이 이미 존재합니다",
+        "file_error": "파일 생성 중 오류 발생",
         "folder": "폴더 생성",
+        "folder_already_exists": "이 이름의 폴더가 이미 존재합니다",
+        "folder_error": "폴더 생성 중 오류가 발생했습니다",
         "label": "생성"
       },
       "delete": {
@@ -1057,6 +1064,7 @@
     "pause confirm": "실행 <code>{id}</code>을(를) 일시 중지하시겠습니까?",
     "pause done": "실행이 PAUSED 상태입니다.",
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
+    "paused": "일시 중지됨",
     "playground": {
       "clear_history": "기록 지우기",
       "confirm_create": "flow를 생성하는 동안에는 playground를 실행할 수 없습니다. playground 실행을 시작하면 flow가 생성됩니다.",
@@ -1387,7 +1395,6 @@
     "task_id_exists": "Task ID가 이미 존재합니다.",
     "task_id_message": "Flow에 Task Id ${existingTask}가 이미 존재합니다.",
     "taskid column details": "마지막으로 실행된 task 및 시도 횟수.",
-    "taskruns": "Task 실행들",
     "tasks": "Tasks",
     "template": "템플릿",
     "template creation": "템플릿 생성",
@@ -1401,6 +1408,7 @@
       "name": "테넌트",
       "names": "테넌트"
     },
+    "tenantId": "테넌트 ID",
     "test-badge-text": "테스트",
     "test-badge-tooltip": "이 실행은 테스트에 의해 생성되었습니다.",
     "theme": "테마",
@@ -1424,6 +1432,7 @@
       "zoom-out": "축소",
       "zoom-reset": "확대/축소 재설정"
     },
+    "total_duration": "총 지속 시간",
     "total_executions": "총 실행 횟수",
     "trigger": "Trigger",
     "trigger details": "Trigger 세부 정보",
@@ -1438,6 +1447,7 @@
       "title": "자식 실행 필터링"
     },
     "trigger refresh": "새로 고침 trigger",
+    "triggerId": "트리거 ID",
     "trigger_check_warning": "트리거 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 `??` 병합 연산자를 추가하세요. 예를 들어, `trigger.date` 대신 `trigger.date ?? execution.startDate`를 사용하세요.",
     "trigger_id_exists": "트리거 ID가 이미 존재합니다.",
     "trigger_id_message": "Flow에 Trigger Id ${existingTrigger}가 이미 존재합니다.",

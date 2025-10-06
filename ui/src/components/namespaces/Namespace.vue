@@ -24,7 +24,7 @@
 
     const route = useRoute();
 
-    const context = computed(() => details.value.title);
+    const context = computed(() => ({title:details.value.title}));
     useRouteContext(context);
 
     const namespace = computed(() => route.params?.id) as Ref<string>;

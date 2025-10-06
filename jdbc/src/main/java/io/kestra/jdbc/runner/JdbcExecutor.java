@@ -37,6 +37,7 @@ import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.plugin.core.flow.ForEachItem;
 import io.kestra.plugin.core.flow.Template;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
@@ -648,7 +649,14 @@ public class JdbcExecutor implements ExecutorInterface {
                                                 Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(flow, workerTask);
                                                 String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> workerTask.getRunContext().render(workerGroup.getKey())))
                                                     .orElse(null);
-                                                workerJobQueue.emit(workerGroupKey, workerTask);
+                                                if (workerTask.getTask() instanceof WorkingDirectory) {
+                                                    // WorkingDirectory is a flowable so it will be moved to RUNNING a few lines under
+                                                    workerJobQueue.emit(workerGroupKey, workerTask);
+                                                } else {
+                                                    TaskRun taskRun = workerTask.getTaskRun().withState(State.Type.SUBMITTED);
+                                                    workerJobQueue.emit(workerGroupKey, workerTask.withTaskRun(taskRun));
+                                                    workerTaskResults.add(new WorkerTaskResult(taskRun));
+                                                }
                                             }
                                             if (workerTask.getTask().isFlowable()) {
                                                 workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)));

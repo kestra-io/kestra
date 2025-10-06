@@ -1,0 +1,8 @@
+ARG KESTRA_DOCKER_BASE_VERSION=develop
+FROM  kestra/kestra:$KESTRA_DOCKER_BASE_VERSION
+
+USER root
+
+COPY --chown=kestra:kestra docker /
+
+USER kestra

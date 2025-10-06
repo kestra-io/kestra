@@ -22,6 +22,7 @@
 <script>
     import AiIcon from "vue-material-design-icons/Creation.vue";
     import * as Markdown from "../utils/markdown";
+    import {useFlowStore} from "../stores/flow";
 
     export default {
         props: {
@@ -65,7 +66,7 @@
                 }
                 return await Markdown.render(this.message.message || this.message.content.message, {html: true});
             },
-            fixWithAi() {
+            async fixWithAi() {
                 const errorMessage = this.message.message || this.message.content?.message || "";
                 const errorItems = this.items.map(item => {
                     const path = item.path ? `At ${item.path}: ` : "";
@@ -86,13 +87,8 @@
                     this.onClose();
                 }
 
-                // Navigate to editor with AI copilot open
-                const currentRoute = this.$route;
-                this.$router.push({
-                    name: currentRoute.name,
-                    params: currentRoute.params,
-                    query: {...currentRoute.query, ai: "open"}
-                });
+                const flowStore = useFlowStore();
+                flowStore.setOpenAiCopilot(true);
             },
         },
     };

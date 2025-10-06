@@ -41,7 +41,9 @@
                         <template #expand>
                             <el-table-column type="expand">
                                 <template #default="props">
-                                    <LogsWrapper class="m-3" :filters="props.row" v-if="hasLogsContent(props.row)" :withCharts="false" embed />
+                                    <LogsWrapper class="m-3" :filters="props.row" v-if="hasLogsContent(props.row)"
+                                                 :withCharts="false" embed
+                                    />
                                 </template>
                             </el-table-column>
                         </template>
@@ -71,6 +73,9 @@
                                 <el-button @click="deleteBackfills()">
                                     {{ $t("delete backfills") }}
                                 </el-button>
+                                <el-button @click="deleteTriggers()" type="danger">
+                                    {{ $t("delete triggers") }}
+                                </el-button>
                             </BulkSelect>
                         </template>
                         <el-table-column
@@ -95,17 +100,23 @@
                             :sortOrders="['flowId', 'namespace', 'nextExecutionDate'].includes(col.prop) ? ['ascending', 'descending'] : undefined"
                         >
                             <template #header v-if="col.prop === 'date'">
-                                <el-tooltip :content="$t('last trigger date tooltip')" placement="top" effect="light" popperClass="wide-tooltip">
+                                <el-tooltip :content="$t('last trigger date tooltip')" placement="top" effect="light"
+                                            popperClass="wide-tooltip"
+                                >
                                     <span>{{ col.label }}</span>
                                 </el-tooltip>
                             </template>
                             <template #header v-else-if="col.prop === 'updatedDate'">
-                                <el-tooltip :content="$t('context updated date tooltip')" placement="top" effect="light" popperClass="wide-tooltip">
+                                <el-tooltip :content="$t('context updated date tooltip')" placement="top" effect="light"
+                                            popperClass="wide-tooltip"
+                                >
                                     <span>{{ col.label }}</span>
                                 </el-tooltip>
                             </template>
                             <template #header v-else-if="col.prop === 'nextExecutionDate'">
-                                <el-tooltip :content="$t('next evaluation date tooltip')" placement="top" effect="light" popperClass="wide-tooltip">
+                                <el-tooltip :content="$t('next evaluation date tooltip')" placement="top" effect="light"
+                                            popperClass="wide-tooltip"
+                                >
                                     <span>{{ col.label }}</span>
                                 </el-tooltip>
                             </template>
@@ -181,13 +192,24 @@
                                         <LockOff />
                                     </Kicon>
                                 </el-button>
+                                <el-button>
+                                    <Kicon
+                                        :tooltip="$t('delete trigger')"
+                                        placement="left"
+                                        @click="confirmDeleteTrigger(scope.row)"
+                                    >
+                                        <Delete />
+                                    </Kicon>
+                                </el-button>
                             </template>
                         </el-table-column>
                         <el-table-column :label="$t('backfill')" columnKey="backfill">
                             <template #default="scope">
                                 <div class="backfillContainer items-center gap-2">
                                     <span v-if="scope.row.backfill" class="statusIcon">
-                                        <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
+                                        <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')"
+                                                    effect="light"
+                                        >
                                             <PlayBox font />
                                         </el-tooltip>
                                         <el-tooltip v-else :content="$t('backfill paused')">
@@ -297,7 +319,7 @@
 </template>
 <script setup lang="ts">
     import _merge from "lodash/merge";
-    import {ref, computed, watch} from "vue";
+    import {computed, ref, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import {ElMessage} from "element-plus";
@@ -311,18 +333,16 @@
     import {useTriggerFilter} from "../filter/configurations";
     import {useDataTableActions} from "../../composables/useDataTableActions";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
-    import {useTableColumns, type ColumnConfig} from "../../composables/useTableColumns";
+    import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns";
 
     import action from "../../models/action";
     import permission from "../../models/permission";
-    
-    const triggerFilter = useTriggerFilter();
-
     import LockOff from "vue-material-design-icons/LockOff.vue";
     import PlayBox from "vue-material-design-icons/PlayBox.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
+    import Delete from "vue-material-design-icons/Delete.vue";
 
     import Id from "../Id.vue";
     import Kicon from "../Kicon.vue";
@@ -340,6 +360,8 @@
     import useRestoreUrl from "../../composables/useRestoreUrl";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import useRouteContext from "../../composables/useRouteContext";
+
+    const triggerFilter = useTriggerFilter();
 
 
     const route = useRoute();
@@ -369,55 +391,55 @@
         end: null,
         inputs: null,
         labels: []
-    });    
-    
+    });
+
     const optionalColumns = computed(() => [
         {
-            label: t("flow"), 
-            prop: "flowId", 
-            default: true, 
+            label: t("flow"),
+            prop: "flowId",
+            default: true,
             description: t("filter.table_column.triggers.flow")
         },
         {
-            label: t("namespace"), 
-            prop: "namespace", 
-            default: true, 
+            label: t("namespace"),
+            prop: "namespace",
+            default: true,
             description: t("filter.table_column.triggers.namespace")
         },
         {
-            label: t("current execution"), 
-            prop: "executionId", 
-            default: false, 
+            label: t("current execution"),
+            prop: "executionId",
+            default: false,
             description: t("filter.table_column.triggers.current execution")
         },
         {
-            label: t("workerId"), 
-            prop: "workerId", 
-            default: false, 
+            label: t("workerId"),
+            prop: "workerId",
+            default: false,
             description: t("filter.table_column.triggers.workerId")
         },
         {
-            label: t("last trigger date"), 
-            prop: "date", 
-            default: true, 
+            label: t("last trigger date"),
+            prop: "date",
+            default: true,
             description: t("filter.table_column.triggers.last trigger date")
         },
         {
-            label: t("context updated date"), 
-            prop: "updatedDate", 
-            default: false, 
+            label: t("context updated date"),
+            prop: "updatedDate",
+            default: false,
             description: t("filter.table_column.triggers.context updated date")
         },
         {
-            label: t("next evaluation date"), 
-            prop: "nextExecutionDate", 
-            default: false, 
+            label: t("next evaluation date"),
+            prop: "nextExecutionDate",
+            default: false,
             description: t("filter.table_column.triggers.next evaluation date")
         },
         {
-            label: t("evaluation lock date"), 
-            prop: "evaluateRunningDate", 
-            default: false, 
+            label: t("evaluation lock date"),
+            prop: "evaluateRunningDate",
+            default: false,
             description: t("filter.table_column.triggers.evaluation lock date")
         }
     ]);
@@ -430,7 +452,7 @@
         initialVisibleColumns: optionalColumns.value.filter(col => col.default).map(col => col.prop)
     });
 
-    const visibleColumns = computed(() => 
+    const visibleColumns = computed(() =>
         displayColumns.value
             .map(prop => optionalColumns.value.find(c => c.prop === prop))
             .filter(Boolean) as ColumnConfig[]
@@ -468,7 +490,7 @@
     });
 
     const {
-        queryBulkAction, 
+        queryBulkAction,
         selection,
         handleSelectionChange,
         toggleAllUnselected,
@@ -544,7 +566,7 @@
     const disabledEndDate = (time: Date) => {
         return new Date() < time || (backfill.value.start && backfill.value.start > time);
     };
-    
+
     const triggerLoadDataAfterBulkEditAction = () => {
         loadData();
         setTimeout(() => loadData(), 200);
@@ -601,9 +623,44 @@
             });
     };
 
-    const genericConfirmAction = (toastKey: string, queryAction: string, byIdAction: string, success: string, data?: any) => {
+    const confirmDeleteTrigger = (trigger) => {
         toast.confirm(
-            t(toastKey, {"count": queryBulkAction.value ? total.value : selection.value?.length}) + ". " + t("bulk action async warning"),
+            t("delete trigger confirmation", {id: trigger.id}),
+            () => triggerStore.delete({
+                namespace: trigger.namespace,
+                flowId: trigger.flowId,
+                triggerId: trigger.triggerId
+            }).then(() => {
+                toast.success(t("delete trigger success", {id: trigger.id}));
+                loadData();
+            }).catch(error => {
+                toast.error(t("delete trigger error", {id: trigger.id}));
+                console.error(error);
+            }),
+            "warning"
+        );
+    };
+
+    const deleteTriggers = () => {
+        genericConfirmAction(
+            "bulk delete triggers",
+            "deleteByQuery",
+            "deleteByTriggers",
+            "bulk success delete triggers",
+            null,
+            "WARNING: deleting triggers may lead to duplicate executions if the triggers are still active in flows"
+        );
+    };
+
+    const genericConfirmAction = (toastKey: string, queryAction: string, byIdAction: string, success: string, data?: any, extraWarning = null) => {
+        let message = t(toastKey, {"count": queryBulkAction.value ? total.value : selection.value?.length}) + ". " + t("bulk action async warning");
+
+        if (extraWarning) {
+            message += "<br><br><strong>" + extraWarning + "</strong>";
+        }
+
+        toast.confirm(
+            message,
             () => genericConfirmCallback(queryAction, byIdAction, success, data)
         );
     };
@@ -620,6 +677,8 @@
             "unlockByTriggers": () => triggerStore.unlockByTriggers,
             "setDisabledByQuery": () => triggerStore.setDisabledByQuery,
             "setDisabledByTriggers": () => triggerStore.setDisabledByTriggers,
+            "deleteByQuery": () => triggerStore.deleteByQuery,
+            "deleteByTriggers": () => triggerStore.deleteByTriggers,
         };
 
         if (queryBulkAction.value) {
@@ -752,86 +811,86 @@
 </script>
 
 <style scoped lang="scss">
-.data-table-wrapper {
-    margin-left: 0 !important;
-    padding-left: 0 !important;
-}
-
-.backfillContainer {
-    display: flex;
-    align-items: center;
-}
-
-.statusIcon {
-    font-size: large;
-}
-
-.trigger-issue-icon {
-    color: var(--ks-content-warning);
-    font-size: 1.4em;
-}
-
-.alert-circle-icon {
-    color: var(--ks-content-warning);
-    font-size: 1.4em;
-}
-
-:deep(.el-table__expand-icon) {
-    pointer-events: none;
-
-    .el-icon {
-        display: none;
-    }
-}
-
-:deep(.el-switch) {
-    .is-text {
-        padding: 0 3px;
-        color: inherit;
+    .data-table-wrapper {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
     }
 
-    &.is-checked {
+    .backfillContainer {
+        display: flex;
+        align-items: center;
+    }
+
+    .statusIcon {
+        font-size: large;
+    }
+
+    .trigger-issue-icon {
+        color: var(--ks-content-warning);
+        font-size: 1.4em;
+    }
+
+    .alert-circle-icon {
+        color: var(--ks-content-warning);
+        font-size: 1.4em;
+    }
+
+    :deep(.el-table__expand-icon) {
+        pointer-events: none;
+
+        .el-icon {
+            display: none;
+        }
+    }
+
+    :deep(.el-switch) {
         .is-text {
-            color: #ffffff;
+            padding: 0 3px;
+            color: inherit;
+        }
+
+        &.is-checked {
+            .is-text {
+                color: #ffffff;
+            }
         }
     }
-}
 
-.el-table {
-    a {
-        color: var(--ks-content-link);
-    }
-}
-
-.wide-tooltip {
-    max-width: 400px;
-    white-space: normal;
-    word-break: break-word;
-    color: var(--ks-content-primary) !important;
-}
-
-:deep(.el-collapse) {
-    border-radius: var(--bs-border-radius-lg);
-    border: 1px solid var(--ks-border-primary);
-    background: var(--bs-gray-100);
-
-    .el-collapse-item__header {
-        background: transparent;
-        border-bottom: 1px solid var(--ks-border-primary);
-        font-size: var(--bs-font-size-sm);
+    .el-table {
+        a {
+            color: var(--ks-content-link);
+        }
     }
 
-    .el-collapse-item__content {
+    .wide-tooltip {
+        max-width: 400px;
+        white-space: normal;
+        word-break: break-word;
+        color: var(--ks-content-primary) !important;
+    }
+
+    :deep(.el-collapse) {
+        border-radius: var(--bs-border-radius-lg);
+        border: 1px solid var(--ks-border-primary);
         background: var(--bs-gray-100);
-        border-bottom: 1px solid var(--ks-border-primary);
-    }
 
-    .el-collapse-item__header,
-    .el-collapse-item__content {
-        &:last-child {
-            border-bottom-left-radius: var(--bs-border-radius-lg);
-            border-bottom-right-radius: var(--bs-border-radius-lg);
+        .el-collapse-item__header {
+            background: transparent;
+            border-bottom: 1px solid var(--ks-border-primary);
+            font-size: var(--bs-font-size-sm);
+        }
+
+        .el-collapse-item__content {
+            background: var(--bs-gray-100);
+            border-bottom: 1px solid var(--ks-border-primary);
+        }
+
+        .el-collapse-item__header,
+        .el-collapse-item__content {
+            &:last-child {
+                border-bottom-left-radius: var(--bs-border-radius-lg);
+                border-bottom-right-radius: var(--bs-border-radius-lg);
+            }
         }
     }
-}
 </style>

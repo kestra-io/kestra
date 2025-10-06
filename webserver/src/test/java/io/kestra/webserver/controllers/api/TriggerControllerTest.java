@@ -27,6 +27,10 @@ import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import java.util.Optional;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.TriggerRepositoryInterface;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -445,6 +449,165 @@ class TriggerControllerTest {
             .namespace(flow1.getNamespace())
             .triggerId(flow1.getTriggers().getFirst().getId())
             .disabled(disabled)
+            .build();
+    }
+
+    @Inject
+    FlowRepositoryInterface flowRepositoryInterface;
+
+    @Inject 
+    TriggerRepositoryInterface triggerRepository;
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void testGetTrigger() {
+        Flow flow = createTestFlow();
+        flowRepositoryInterface.create(flow);
+        
+        Trigger trigger = Trigger.builder()
+            .triggerId("test-trigger")
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .flowRevision(1)
+            .triggerId("test-trigger")
+            .build();
+        
+        triggerRepository.create(trigger);
+        
+        HttpResponse<Trigger> response = client.toBlocking()
+            .exchange(
+                HttpRequest.GET("/triggers/" + flow.getNamespace() + "/" + flow.getId() + "/test-trigger"),
+                Trigger.class
+            );
+        
+        assertEquals(HttpStatus.OK, response.getStatus());
+        assertNotNull(response.body());
+        assertEquals("test-trigger", response.body().getId());
+        assertEquals(flow.getId(), response.body().getFlowId());
+    }
+
+    @Test
+    void testGetTriggerNotFound() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.GET("/triggers/nonexistent/flow/trigger"),
+                Trigger.class
+            )
+        );
+        
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+    }
+
+    @Test
+    void testDeleteTriggersByQuery() {
+        Flow flow = createTestFlow();
+        flowRepositoryInterface.create(flow);
+        
+        Trigger trigger = Trigger.builder()
+            .id("delete-test-trigger")
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .flowRevision(1)
+            .triggerId("delete-test-trigger")
+            .build();
+
+        Trigger triggerByQuery1 = Trigger.builder()
+            .id("query-test-trigger-1")
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .flowRevision(1)
+            .triggerId("query-test-trigger-1")
+            .build();
+
+        Trigger triggerByQuery2 = Trigger.builder()
+            .id("query-test-trigger-2")
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .flowRevision(1)
+            .triggerId("query-test-trigger-2")
+            .build();
+
+        triggerRepository.save(trigger);
+        triggerRepository.save(triggerByQuery1);
+        triggerRepository.save(triggerByQuery2);
+
+        triggerRepository.create(trigger);
+
+        List<Trigger> allBeforeDelete = triggerRepository.findByQuery(flow.getNamespace(), flow.getId());
+        assertEquals(3, allBeforeDelete.size(), "Expected 3 triggers before deletion");
+        
+        HttpResponse<Integer> firstDeleteResponse = client.toBlocking()
+            .exchange(
+                 HttpRequest.DELETE("/triggers/query" + "?filters[namespace][EQUALS]=" + flow.getNamespace() + "&filters[flowId][EQUALS]=" + flow.getId() + "&filters[triggerId][EQUALS]=delete-test-trigger"),
+                Integer.class
+            );
+        
+        assertEquals(HttpStatus.OK, firstDeleteResponse.getStatus());
+        assertEquals(1, firstDeleteResponse.body(), "Expected 1 trigger deleted");
+
+        List<Trigger> remainingAfterFirstDelete = triggerRepository.findByQuery(flow.getNamespace(), flow.getId());
+        assertEquals(2, remainingAfterFirstDelete.size(), "Expected 2 triggers remaining after first delete");
+
+        HttpResponse<Integer> secondDeleteResponse = client.toBlocking()
+            .exchange(
+                HttpRequest.DELETE("/triggers/query" + "?filters[namespace][EQUALS]=" + flow.getNamespace() + "&filters[flowId][EQUALS]=" + flow.getId()),
+                Integer.class
+            );
+
+        assertEquals(HttpStatus.OK, secondDeleteResponse.getStatus());
+        assertEquals(2, secondDeleteResponse.body(), "Expected 2 remaining triggers deleted");
+
+        List<Trigger> finalRemaining = triggerRepository.findByQuery(flow.getNamespace(), flow.getId());
+        assertEquals(0, finalRemaining.size(), "Expected no triggers after final deletion");
+        
+        Optional<Trigger> deletedTrigger = triggerRepository.findById(
+            flow.getNamespace(),
+            flow.getId(),
+            "delete-test-trigger"
+        );
+        
+        assertFalse(deletedTrigger.isPresent());
+    }
+
+    @Test
+    void testDeleteTriggerById() {
+        Flow flow = createTestFlow();
+        flowRepositoryInterface.create(flow);
+        
+        Trigger trigger = Trigger.builder()
+            .id("delete-by-id-trigger")
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .flowRevision(1)
+            .triggerId("delete-by-id-trigger")
+            .build();
+        
+        triggerRepository.create(trigger);
+        
+        HttpResponse<Void> response = client.toBlocking()
+            .exchange(
+                HttpRequest.DELETE("/triggers/" + flow.getNamespace() + "/" + flow.getId() + "/delete-by-id-trigger"),
+                Void.class
+            );
+        
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatus());
+        
+        Optional<Trigger> deletedTrigger = triggerRepository.findById(
+            flow.getNamespace(),
+            flow.getId(),
+            "delete-by-id-trigger"
+        );
+        
+        assertFalse(deletedTrigger.isPresent());
+    }
+    
+    private Flow createTestFlow() {
+        return Flow.builder()
+            .id("trigger-test-flow")
+            .namespace("io.kestra.tests")
+            .revision(1)
+            .tasks(List.of())
             .build();
     }
 }

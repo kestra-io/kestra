@@ -508,6 +508,82 @@ public class TriggerController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/{namespace}/{flowId}/{triggerId}")
+    @Operation(tags = {"Triggers"}, summary = "Delete a trigger")
+    public MutableHttpResponse<?> deleteTrigger(
+        @Parameter(description = "The namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String flowId,
+        @Parameter(description = "The trigger id") @PathVariable String triggerId
+    ) throws HttpStatusException {
+        Optional<Trigger> triggerOpt = triggerRepository.findLast(TriggerContext.builder()
+            .tenantId(tenantService.resolveTenant())
+            .namespace(namespace)
+            .flowId(flowId)
+            .triggerId(triggerId)
+            .build());
+
+        if (triggerOpt.isEmpty()) {
+            return HttpResponse.notFound();
+        }
+
+        Trigger trigger = triggerOpt.get();
+        triggerRepository.delete(trigger);
+
+        return HttpResponse.noContent();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/delete/by-triggers")
+    @Operation(tags = {"Triggers"}, summary = "Delete given triggers")
+    public MutableHttpResponse<?> deleteTriggersByIds(
+        @Parameter(description = "The triggers to delete") @Body List<Trigger> triggers
+    ) {
+        AtomicInteger count = new AtomicInteger();
+        triggers.forEach(trigger -> {
+            try {
+                Optional<Trigger> triggerOpt = triggerRepository.findLast(TriggerContext.builder()
+                    .tenantId(tenantService.resolveTenant())
+                    .namespace(trigger.getNamespace())
+                    .flowId(trigger.getFlowId())
+                    .triggerId(trigger.getTriggerId())
+                    .build());
+
+                if (triggerOpt.isPresent()) {
+                    triggerRepository.delete(triggerOpt.get());
+                    count.getAndIncrement();
+                }
+            } catch (Exception ignored) {
+            }
+        });
+
+        return HttpResponse.ok(BulkResponse.builder().count(count.get()).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/delete/by-query")
+    @Operation(tags = {"Triggers"}, summary = "Delete triggers by query parameters")
+    public MutableHttpResponse<?> deleteTriggersByQuery(
+        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters
+
+    ) {
+        Integer count = triggerRepository
+            .find(tenantService.resolveTenant(), filters)
+            .map(trigger -> {
+                try {
+                    triggerRepository.delete(trigger);
+                    return 1;
+                } catch (Exception ignored) {
+                    return 0;
+                }
+            })
+            .reduce(Integer::sum)
+            .blockOptional()
+            .orElse(0);
+
+        return HttpResponse.ok(BulkResponse.builder().count(count).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/set-disabled/by-triggers")
     @Operation(tags = {"Triggers"}, summary = "Disable/enable given triggers")
     public MutableHttpResponse<?> disabledTriggersByIds(

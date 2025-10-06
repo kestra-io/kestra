@@ -806,11 +806,13 @@
         "label": "Supprimer"
       },
       "dialog": {
-        "confirm": "Confirmer",
-        "file_deletion": "Confirmer la suppression du fichier",
-        "file_deletion_description": "Êtes-vous sûr de vouloir supprimer ce fichier ?",
-        "folder_deletion": "Confirmer la suppression du dossier",
-        "folder_deletion_description": "Êtes-vous sûr de vouloir supprimer ce dossier et tous ses contenus ?",
+        "deletion": {
+          "confirm": "Confirmer",
+          "files": "Êtes-vous sûr de vouloir supprimer <code>{count}</code> fichier(s) ?",
+          "folders": "Êtes-vous sûr de vouloir supprimer <code>{count}</code> dossier(s) et tout son contenu ?",
+          "mixed": "Êtes-vous sûr de vouloir supprimer le(s) dossier(s) <code>{folders}</code> et le(s) fichier(s) <code>{files}</code> ?",
+          "title": "Confirmer la suppression du contenu"
+        },
         "name": {
           "file": "Nom avec extension :",
           "folder": "Nom du dossier :"

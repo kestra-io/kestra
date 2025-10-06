@@ -316,6 +316,6 @@
         left: 3rem;
         max-width: 700px;
         background-color: var(--ks-background-panel);
-        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+        box-shadow: 0 2px 4px 0 var(--ks-card-shadow);
     }
 </style>

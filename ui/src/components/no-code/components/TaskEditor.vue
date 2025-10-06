@@ -126,7 +126,7 @@
     const schema = computed(() => plugin.value?.schema);
 
     const properties = computed(() => {
-        const updatedProperties = schemaProp.value?.properties;
+        const updatedProperties = schemaProp.value;
         if(isPluginDefaults.value){
             updatedProperties["id"] = undefined
             updatedProperties["forced"] = {
@@ -186,9 +186,9 @@
     const fieldDefinition = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value));
 
     // useful to map inputs to their real schema
-    const typeMap = computed<Record<string, string>>(() => {
+    const typeMap = computed<Record<string, string[]>>(() => {
         if (fieldDefinition.value?.anyOf) {
-            const f = fieldDefinition.value.anyOf.reduce((acc: Record<string, string>, item: any) => {
+            const f = fieldDefinition.value.anyOf.reduce((acc: Record<string, string[]>, item: any) => {
                 if (item.$ref) {
                     const resolvedItem = getValueAtJsonPath(fullSchema.value, item.$ref);
                     if (resolvedItem?.allOf) {
@@ -202,12 +202,16 @@
                             }
                         }
                         if (type && ref) {
-                            acc[type] = ref;
+                            acc[type] = acc[type] || [];
+                            acc[type].push(ref);
                         }
                     }
 
-                    if (resolvedItem?.properties?.type?.const) {
-                        acc[resolvedItem.properties.type.const] = removeRefPrefix(item.$ref);
+                    const typeAsConst = resolvedItem?.properties?.type?.const
+
+                    if (typeAsConst) {
+                        acc[typeAsConst] = acc[typeAsConst] || [];
+                        acc[typeAsConst].push(removeRefPrefix(item.$ref));
                     }
                 }
                 return acc;
@@ -221,19 +225,46 @@
     });
 
     const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
-    const resolvedType = computed(() => typeMap.value[selectedTaskType.value ?? ""] ?? selectedTaskType.value ?? "");
+
+    const resolvedTypes = computed<string[]>(() => {
+        return typeMap.value[selectedTaskType.value ?? ""] || [];
+    });
+
+    const resolvedType = computed<string>(() => {
+        return resolvedTypes.value ? (resolvedTypes.value.length === 1 ? resolvedTypes.value[0] : selectedTaskType.value ?? "") : "";
+    });
 
     function load() {
         // try to resolve the type from local schema
-        if (definitions.value?.[resolvedType.value]) {
-            const defs = definitions.value ?? {}
-            plugin.value = {
-                schema: {
-                    properties: defs[resolvedType.value],
-                    definitions: defs,
-                }
-            };
+        const defs = definitions.value ?? {}
+        if (defs[resolvedType.value]) {
+            plugin.value = {schema: {
+                properties: defs[resolvedType.value],
+                definitions: defs,
+            }};
             return;
+        }else if(resolvedTypes.value.length > 1){
+            // explore the schemas of each possible plugins to exact similarities
+            const schemas = resolvedTypes.value.map((type) => defs[type]) as any[];
+
+            // find properties with the same key and list their keys
+            const properties = Object.keys(schemas[0].properties).filter((key) => {
+                return schemas.every((schema) => schema.properties[key] !== undefined);
+            }).reduce((acc, key) => {
+                // check if the properties are the same when they are serialized
+                const first = JSON.stringify(schemas[0].properties[key]);
+                if (schemas.every((schema) => {
+                    return JSON.stringify(schema.properties[key]) === first;
+                })) {
+                    acc[key] = schemas[0].properties[key];
+                }
+                return acc;
+            }, {} as Record<string, any>);
+
+            plugin.value = {schema: {
+                properties,
+                definitions: defs,
+            }};
         }
     }
 

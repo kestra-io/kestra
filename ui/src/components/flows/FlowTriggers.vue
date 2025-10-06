@@ -305,7 +305,8 @@
                     end: null,
                     inputs: null,
                     labels: []
-                }
+                },
+                reloadLogs: undefined,
             }
         },
         created() {

@@ -35,7 +35,7 @@ jobs:
 
       # Get Plugins List
       - name: Get Plugins List
-        uses: ./.github/actions/plugins-list
+        uses: kestra-io/actions/composite/kestra-oss/kestra-oss-plugins-list@main
         id: plugins-list
         with:
           plugin-version: 'LATEST'

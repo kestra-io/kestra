@@ -233,7 +233,11 @@
         clearTimeout(timeout.value);
         const editorRef = editorRefElement.value
         if(!editorRef?.$refs.monacoEditor) return
-        const result = await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
+        
+        // Use saveAll() for consistency with the Save button behavior
+        const result = flowStore.isCreating 
+            ? await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
+            : await flowStore.saveAll();
 
         editorStore.setTabDirty({
             path: props.path,
@@ -312,6 +316,6 @@
         left: 3rem;
         max-width: 700px;
         background-color: var(--ks-background-panel);
-        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+        box-shadow: 0 2px 4px 0 var(--ks-card-shadow);
     }
 </style>

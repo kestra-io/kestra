@@ -790,9 +790,12 @@
     "namespace and id readonly": "プロパティ`namespace`と`id`は変更できません — 初期値に設定されています。flowの名前を変更したりnamespaceを変更したい場合は、新しいflowを作成して古いものを削除してください。",
     "namespace files": {
       "create": {
-        "already_exists": "この名前のファイルは既に存在します",
         "file": "ファイルを作成",
+        "file_already_exists": "この名前のファイルはすでに存在します",
+        "file_error": "ファイルの作成中にエラーが発生しました",
         "folder": "フォルダーを作成",
+        "folder_already_exists": "この名前のフォルダーはすでに存在します",
+        "folder_error": "フォルダーの作成中にエラーが発生しました",
         "label": "作成"
       },
       "delete": {

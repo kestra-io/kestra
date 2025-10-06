@@ -790,9 +790,12 @@
     "namespace and id readonly": "属性 `namespace` 和 `id` 不能更改——它们现在被设置为初始值。如果你想重命名一个流程或更改其命名空间，可以创建一个新流程并删除旧的。",
     "namespace files": {
       "create": {
-        "already_exists": "文件名已存在",
         "file": "创建文件",
+        "file_already_exists": "已存在同名文件",
+        "file_error": "创建文件时发生错误",
         "folder": "创建文件夹",
+        "folder_already_exists": "已存在同名文件夹",
+        "folder_error": "创建文件夹时发生错误",
         "label": "创建"
       },
       "delete": {

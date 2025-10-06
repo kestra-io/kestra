@@ -44,15 +44,15 @@
 
         <template v-else-if="typeof modelValue === 'object' && modelValue !== null && !Array.isArray(modelValue)">
             <TaskDict
-                :modelValue="modelValue"
-                :task="task"
+                :modelValue
+                :task
                 @update:model-value="
                     (value) => $emit('update:modelValue', value)
                 "
-                :root="root"
+                :root
                 :schema="schema ?? {}"
-                :required="required"
-                :definitions="definitions"
+                :required
+                :definitions
             />
         </template>
     </el-form>

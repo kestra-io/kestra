@@ -38,7 +38,7 @@
             <AiCopilot
                 v-if="aiCopilotOpened"
                 class="position-absolute prompt"
-                @close="aiCopilotOpened = false"
+                @close="closeAiCopilot"
                 :flow="editorContent"
                 :conversationId="conversationId"
                 @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
@@ -53,7 +53,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
+    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
@@ -130,6 +130,14 @@
         if(route.query.ai === "open") {
             draftSource.value = undefined;
             aiCopilotOpened.value = true;
+        }
+    });
+
+    watch(() => flowStore.openAiCopilot, (newVal) => {
+        if (newVal) {
+            draftSource.value = undefined;
+            aiCopilotOpened.value = true;
+            flowStore.setOpenAiCopilot(false);
         }
     });
 
@@ -225,7 +233,7 @@
                     , null as any);
 
         let result = selectedElement ? getElementFromRange(selectedElement) : undefined;
-        result = {...result, hash: hash.value};
+        result = {...result, hash: hash.value, forceRefresh: true};
         pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
     };
 
@@ -233,7 +241,11 @@
         clearTimeout(timeout.value);
         const editorRef = editorRefElement.value
         if(!editorRef?.$refs.monacoEditor) return
-        const result = await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
+        
+        // Use saveAll() for consistency with the Save button behavior
+        const result = flowStore.isCreating 
+            ? await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
+            : await flowStore.saveAll();
 
         editorStore.setTabDirty({
             path: props.path,
@@ -296,6 +308,16 @@
         aiCopilotOpened.value = true;
     }
 
+    function closeAiCopilot() {
+        aiCopilotOpened.value = false;
+        const currentQuery = {...route.query, ai: undefined};
+        router.replace({
+            name: route.name,
+            params: route.params,
+            query: currentQuery
+        });
+    }
+
     const hasDraft = computed(() => draftSource.value !== undefined);
 
     const {
@@ -312,6 +334,6 @@
         left: 3rem;
         max-width: 700px;
         background-color: var(--ks-background-panel);
-        box-shadow: 0px 4px 4px 0px var(--ks-card-shadow);
+        box-shadow: 0 2px 4px 0 var(--ks-card-shadow);
     }
 </style>

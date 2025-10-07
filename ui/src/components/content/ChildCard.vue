@@ -30,46 +30,54 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {computed, ref} from "vue";
     import {useRoute} from "vue-router";
     import {useDocStore} from "../../stores/doc";
+
+    interface ResourceMetadata {
+        title: string;
+        description?: string;
+        icon?: string;
+        [key: string]: unknown;
+    }
+
+    const props = defineProps<{
+        pageUrl?: string;
+    }>();
 
     const route = useRoute();
     const docStore = useDocStore();
 
-    const props = defineProps({
-        pageUrl: {
-            type: String,
-            default: undefined
-        }
+    const currentPage = computed(() => {
+        const url = props.pageUrl ?? route.path;
+        return url.replace(/^\/?(.*?)\/?$/, "$1");
     });
 
-    let currentPage = null;
+    const resourcesWithMetadata = ref<Record<string, ResourceMetadata>>({});
+    const parentMetadata = ref<Partial<ResourceMetadata>>({});
 
-    if (props.pageUrl) {
-        currentPage = props.pageUrl;
-    } else {
-        currentPage = route.path;
-    }
+    const parentLevel = computed(() => currentPage.value.split("/").length);
 
-    currentPage = currentPage.replace(/^\/?(.*?)\/?$/, "$1");
+    const navigation = computed(() =>
+        Object.entries(resourcesWithMetadata.value)
+            .filter(([path]) => path.split("/").length === parentLevel.value + 1)
+            .filter(([path]) => path !== currentPage.value)
+            .map(([path, metadata]) => ({
+                path,
+                ...parentMetadata.value,
+                ...metadata
+            }))
+    );
 
-    const resourcesWithMetadata = await docStore.children(currentPage);
-    let parentMetadata;
-    if (props.pageUrl) {
-        parentMetadata = {...resourcesWithMetadata[currentPage]};
-        delete parentMetadata.description;
-    }
+    (async () => {
+        resourcesWithMetadata.value = await docStore.children(currentPage.value);
 
-    const parentLevel = currentPage.split("/").length;
-    const navigation = Object.entries(resourcesWithMetadata)
-        .filter(([path]) => path.split("/").length === parentLevel + 1)
-        .filter(([path]) => path !== currentPage)
-        .map(([path, metadata]) => ({
-            path,
-            ...parentMetadata,
-            ...metadata
-        }));
+        if (props.pageUrl) {
+            parentMetadata.value = {...resourcesWithMetadata.value[currentPage.value]};
+            delete parentMetadata.value.description;
+        }
+    })();
 </script>
 
 <style lang="scss" scoped>

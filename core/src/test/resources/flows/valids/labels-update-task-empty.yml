@@ -1,0 +1,14 @@
+id: labels-update-task-empty
+namespace: io.kestra.tests
+
+tasks:
+  - id: from-string
+    type: io.kestra.plugin.core.execution.Labels
+    labels: "{ \"fromStringKey\": \"\", \"\": \"value2\" }"
+  - id: from-list
+    type: io.kestra.plugin.core.execution.Labels
+    labels:
+      - key: "fromListKey"
+        value: ""
+      - key: ""
+        value: "value2"

@@ -43,7 +43,7 @@ import java.util.concurrent.Callable;
         SysCommand.class,
         ConfigCommand.class,
         NamespaceCommand.class,
-        MigrationCommand.class,
+        MigrationCommand.class
     }
 )
 @Introspected

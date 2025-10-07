@@ -169,6 +169,7 @@ kestra:
         - "/api/v1/executions/webhook/"
         - "/api/v1/main/executions/webhook/"
         - "/api/v1/*/executions/webhook/"
+        - "/api/v1/basicAuthValidationErrors"
 
     preview:
       initial-rows: 100

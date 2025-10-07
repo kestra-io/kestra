@@ -1,0 +1,5 @@
+id: polling-flow
+namespace: io.kestra.tests
+triggers:
+  - id: polling-trigger-1
+    type: io.kestra.core.tasks.test.PollingTrigger

@@ -1,0 +1,15 @@
+name: 'E2E tests scheduling'
+# 'New E2E tests implementation started by Roman. Based on playwright in npm UI project, tests Kestra OSS develop docker image. These tests are written from zero, lets make them unflaky from the start!.'
+on:
+  schedule:
+    - cron: "0 * * * *"  # Every hour
+  workflow_dispatch:
+    inputs:
+      noInputYet:
+        description: 'not input yet.'
+        required: false
+        type: string
+        default: "no input"
+jobs:
+  e2e:
+    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main

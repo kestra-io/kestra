@@ -2,18 +2,12 @@ name: Pull Request Workflow
 
 on:
   pull_request:
-    branches:
-      - develop
-      - releases/*
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-pr
   cancel-in-progress: true
 
 jobs:
-  # ********************************************************************************************************************
-  # File changes detection
-  # ********************************************************************************************************************
   file-changes:
     if: ${{ github.event.pull_request.draft == false }}
     name: File changes detection
@@ -34,14 +28,11 @@ jobs:
               - '!{ui,.github}/**'
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  # ********************************************************************************************************************
-  # Tests
-  # ********************************************************************************************************************
   frontend:
     name: Frontend - Tests
     needs: [file-changes]
     if: "needs.file-changes.outputs.ui == 'true'"
-    uses: ./.github/workflows/workflow-frontend-test.yml
+    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -50,7 +41,7 @@ jobs:
     name: Backend - Tests
     needs: file-changes
     if: "needs.file-changes.outputs.backend == 'true'"
-    uses: ./.github/workflows/workflow-backend-test.yml
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -59,5 +50,8 @@ jobs:
 
   e2e-tests:
     name: E2E - Tests
-    uses: ./.github/workflows/e2e.yml
+    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
 
+  generate-pull-request-docker-image:
+    name: Generate PR docker image
+    uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@main

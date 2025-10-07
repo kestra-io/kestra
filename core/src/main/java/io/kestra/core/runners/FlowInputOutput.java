@@ -209,7 +209,7 @@ public class FlowInputOutput {
         final Execution execution,
         final Map<String, ?> data
     ) {
-        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, false)
+        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, true)
             .stream()
             .filter(InputAndValue::enabled)
             .map(it -> {
@@ -271,8 +271,6 @@ public class FlowInputOutput {
         resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap, decryptSecrets));
 
         return resolvableInputMap.values().stream().map(ResolvableInput::get).toList();
-        
-        
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

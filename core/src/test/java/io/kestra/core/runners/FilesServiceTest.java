@@ -126,8 +126,8 @@ class FilesServiceTest {
         assertThat(outputFiles).containsKey("with space.txt");
         assertThat(outputFiles).containsKey("สวัสดี.txt");
 
-        assertThat(runContext.storage().exists(outputFiles.get("with space.txt"))).isTrue();
-        assertThat(runContext.storage().exists(outputFiles.get("สวัสดี.txt"))).isTrue();
+        assertThat(runContext.storage().getFile(outputFiles.get("with space.txt"))).isNotNull();
+        assertThat(runContext.storage().getFile(outputFiles.get("สวัสดี.txt"))).isNotNull();
     }
 
     private URI createFile() throws IOException {

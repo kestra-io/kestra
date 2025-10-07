@@ -99,9 +99,30 @@
             return;
         }
 
-        if(openTabs.value.includes(tabValue)){
-            focusTab(tabValue)
-            return
+        // Find if tab is already open inside any panel
+        const panelWithTab = panels.value.find(p => p.tabs.some(t => t.value === tabValue));
+
+        if (panelWithTab) {
+            const isActive = panelWithTab.activeTab?.value === tabValue;
+
+            if (isActive) {
+                const tabIndex = panelWithTab.tabs.findIndex(t => t.value === tabValue);
+                panelWithTab.tabs.splice(tabIndex, 1);
+
+                // Remove the panel if it has no tabs left
+                if (panelWithTab.tabs.length === 0) {
+                    panels.value.splice(panels.value.indexOf(panelWithTab), 1);
+                } else {
+                    panelWithTab.activeTab = panelWithTab.tabs[0];
+                }
+
+                // Also update openTabs after closing
+                openTabs.value = panels.value.flatMap(p => p.tabs.map(t => t.value));
+                return;
+            }
+
+            focusTab(tabValue);
+            return;
         }
         const {prepend, panel} = getPanelFromValue(tabValue)
 
@@ -117,6 +138,8 @@
         }else{
             panels.value.push(panelWithDefaultSize)
         }
+        // Refresh openTabs after adding
+        openTabs.value = panels.value.flatMap(p => p.tabs.map(t => t.value));
     }
 
     const {t} = useI18n()

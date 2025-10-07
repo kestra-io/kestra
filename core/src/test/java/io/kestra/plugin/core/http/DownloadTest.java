@@ -233,7 +233,7 @@ class DownloadTest {
         Download.Output output = task.run(runContext);
 
         assertThat(output.getUri().toString()).doesNotContain("/secure-path/");
-        assertThat(output.getUri().toString()).endsWith("file.with spaces.txt");
+        assertThat(output.getUri().toString()).endsWith("file.with+spaces.txt");
     }
 
     @Controller()

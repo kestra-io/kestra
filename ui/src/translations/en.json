@@ -576,6 +576,7 @@
     },
     "title": "Title",
     "api": "API",
+    "more_actions": "More Actions",
     "expand error": "Expand only failed tasks",
     "expand all": "Expand all",
     "collapse all": "Collapse all",

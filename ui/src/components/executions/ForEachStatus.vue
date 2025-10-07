@@ -13,12 +13,19 @@
                 :aria-valuemax="max"
             />
         </div>
+
         <div class="mt-2 d-flex">
             <router-link :to="goToExecutionsList(null)" class="el-button count-button">
-                {{ $t("all executions") }} <span class="counter">{{ max }}</span>
+                {{ t("all executions") }}
+                <span class="counter">{{ max }}</span>
             </router-link>
+
             <div v-for="state in State.allStates()" :key="state.key">
-                <router-link :to="goToExecutionsList(state.key)" class="el-button count-button" v-if="localSubflowStatus[state.key] >= 0">
+                <router-link
+                    :to="goToExecutionsList(state.key)"
+                    class="el-button count-button"
+                    v-if="localSubflowStatus[state.key] >= 0"
+                >
                     {{ capitalizeFirstLetter(getStateToBeDisplayed(state.key)) }}
                     <span class="counter">{{ localSubflowStatus[state.key] }}</span>
                     <div class="dot rounded-5" :class="`bg-${state.colorClass}`" />
@@ -27,125 +34,126 @@
         </div>
     </div>
 </template>
-<script>
-    import {cssVariable} from "@kestra-io/ui-libs";
+
+<script setup lang="ts">
+    import {ref, watch, onMounted} from "vue";
+    import {State} from "@kestra-io/ui-libs";
     import {stateDisplayValues} from "../../utils/constants";
-    import {State} from "@kestra-io/ui-libs"
-    import throttle from "lodash/throttle"
+    import throttle from "lodash/throttle";
+    import {useI18n} from "vue-i18n";
 
-    export default {
-        computed: {
-            State() {
-                return State
-            }
-        },
-        data() {
-            return {
-                localSubflowStatus: {},
-                updateThrottled: throttle(function () {
-                    this.localSubflowStatus = this.subflowsStatus
-                }, 500)
-            }
-        },
-        created() {
-            this.localSubflowStatus = this.subflowsStatus
-        },
-        props: {
-            subflowsStatus: {
-                type: Object,
-                required: true
-            },
-            executionId: {
-                type: String,
-                required: true
-            },
-            max: {
-                type: Number,
-                required:true
-            }
-        },
-        watch: {
-            subflowsStatus() {
-                this.updateThrottled();
-            }
-        },
-        methods: {
-            cssVariable,
-            getPercentage(state) {
-                if (!this.localSubflowStatus[state]) {
-                    return 0;
-                }
-                return Math.round((this.localSubflowStatus[state] / this.max) * 100);
-            },
-            capitalizeFirstLetter(str) {
-                return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-            },
-            getStateToBeDisplayed(str){
-                if(str === State.RUNNING){
-                    return stateDisplayValues.INPROGRESS;
-                }else{
-                    return str;
-                }
-            },
-            goToExecutionsList(state) {
-                const queries = {}
+    // Props
+    interface Props {
+        subflowsStatus?: Record<string, number>; 
+        executionId?: string;
+        max?: number;
+    }
 
-                queries["filters[triggerExecutionId][EQUALS]"] = this.executionId;
+    const props = defineProps<Props>();
 
-                if (state) {
-                    queries["filters[state][EQUALS]"] = state;
-                }
+    // i18n
+    const {t} = useI18n();
 
-                return {
-                    name: "executions/list",
-                    query: queries
-                };
-            }
+    // Mock data for testing
+    const mockSubflowsStatus: Record<string, number> = {
+        RUNNING: 3,
+        SUCCESS: 5,
+        FAILED: 2,
+    };
+    const mockExecutionId = "mock-execution";
+    const mockMax = Object.values(mockSubflowsStatus).reduce((a, b) => a + b, 0);
+
+    // Reactive local state
+    const localSubflowStatus = ref<Record<string, number>>(props.subflowsStatus || mockSubflowsStatus);
+    const max = props.max || mockMax;
+    const executionId = props.executionId || mockExecutionId;
+
+    // Throttled update
+    const updateThrottled = throttle(() => {
+        localSubflowStatus.value = props.subflowsStatus || mockSubflowsStatus;
+    }, 500);
+
+    // Lifecycle hook
+    onMounted(() => {
+        localSubflowStatus.value = props.subflowsStatus || mockSubflowsStatus;
+    });
+
+    // Watch props
+    watch(
+        () => props.subflowsStatus,
+        () => updateThrottled()
+    );
+
+    // Methods
+    function getPercentage(state: string): number {
+        if (!localSubflowStatus.value[state]) return 0;
+        return Math.round((localSubflowStatus.value[state] / max) * 100);
+    }
+
+    function capitalizeFirstLetter(str: string): string {
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+
+    function getStateToBeDisplayed(str: string): string {
+        if (str === State.RUNNING) {
+            return stateDisplayValues.INPROGRESS;
         }
+        return str;
+    }
+
+    function goToExecutionsList(state: string | null) {
+        const queries: Record<string, string> = {
+            "filters[triggerExecutionId][EQUALS]": executionId,
+        };
+        if (state) {
+            queries["filters[state][EQUALS]"] = state;
+        }
+        return {name: "executions/list", query: queries};
     }
 </script>
+
 <style scoped lang="scss">
-    .dot {
-        width: 6.413px;
-        height: 6.413px;
-        margin-right: 0.5rem;
-    }
+.dot {
+  width: 6.413px;
+  height: 6.413px;
+  margin-right: 0.5rem;
+}
 
-    .progress {
-        height: 5px;
-    }
+.progress {
+  height: 5px;
+}
 
-    .el-button {
-        padding: 0.5rem 1rem;
-        &:hover {
-            html.dark & {
-                border-color: #404559;
-            }
-        }
-        &:focus {
-            html.dark & {
-                border-color: #404559;
-            }
-        }
+.el-button {
+  padding: 0.5rem 1rem;
+  &:hover {
+    html.dark & {
+      border-color: #404559;
     }
+  }
+  &:focus {
+    html.dark & {
+      border-color: #404559;
+    }
+  }
+}
 
-    .count-button {
-        padding: 4px 8px;
-        margin-right: 0.5rem;
-        align-items: center;
-        gap: 8px;
-        border-radius: 2px;
-        font-size: 0.75rem;
-    }
+.count-button {
+  padding: 4px 8px;
+  margin-right: 0.5rem;
+  align-items: center;
+  gap: 8px;
+  border-radius: 2px;
+  font-size: 0.75rem;
+}
 
-    .counter {
-        padding: 0 4px;
-        margin-left: 0.5rem;
-        align-items: flex-start;
-        gap: 10px;
-        border-radius: 2px;
-        background-color: var(--ks-tag-background);
-        font-size: 0.65rem;
-        line-height: 1.0625rem;
-    }
+.counter {
+  padding: 0 4px;
+  margin-left: 0.5rem;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 2px;
+  background-color: var(--ks-tag-background);
+  font-size: 0.65rem;
+  line-height: 1.0625rem;
+}
 </style>

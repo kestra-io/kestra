@@ -22,7 +22,7 @@ public abstract class LogExporter<T extends Output>  implements io.kestra.core.m
     protected String id;
 
     @NotBlank
-    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
+    @Pattern(regexp = "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$")
     protected String type;
 
     public abstract T sendLogs(RunContext runContext, Flux<LogRecord> logRecords) throws Exception;

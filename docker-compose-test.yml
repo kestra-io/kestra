@@ -1,0 +1,17 @@
+services:
+  kestra:
+    image: kestra/kestra:latest
+    user: "root"
+    command: server local
+    environment:
+      KESTRA_CONFIGURATION: |
+        micronaut:
+          server:
+            cors:
+              enabled: true
+              configurations:
+                all:
+                  allowedOrigins:
+                    - http://localhost:5173
+    ports:
+      - "8080:8080"

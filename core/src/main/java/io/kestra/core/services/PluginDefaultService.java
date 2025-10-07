@@ -392,20 +392,6 @@ public class PluginDefaultService {
 
         mapFlow = innerInjectDefault(tenant, namespace, mapFlow, onlyVersions);
 
-        if (Objects.nonNull(mapFlow) && mapFlow.containsKey("labels")) {
-            Object labelsCollection = mapFlow.get("labels");
-            // in case labels is empty, it will be a Map, hence added this check
-            if (labelsCollection instanceof List) {
-                List<Map<String, Object>> labels = (List<Map<String, Object>>) labelsCollection;
-                for (Map<String, Object> label : labels) {
-                    Object value = label.get("value");
-                    if (Objects.nonNull(value)) {
-                        label.put("value", String.valueOf(value));
-                    }
-                }
-            }
-        }
-
         FlowWithSource withDefault = YamlParser.parse(mapFlow, FlowWithSource.class, strictParsing);
 
         // revision, tenants, and deleted are not in the 'source', so we copy them manually

@@ -108,6 +108,7 @@
             :load="loadNodes"
             :data="items"
             highlightCurrent
+            :showCheckbox="enableCheckboxes"
             :allowDrop="
                 (_, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'
             "
@@ -417,6 +418,7 @@
                 tree: {allExpanded: false},
                 currentFolder: undefined,
                 confirmation: {visible: false, data: {}},
+                enableCheckboxes: false,
                 items: undefined,
                 nodeBeforeDrag: undefined,
                 searchResults: [],
@@ -526,9 +528,13 @@
                         // Add to selection
                         this.selectedFiles = [...this.selectedFiles, path];
                         this.selectedNodes = [...this.selectedNodes, node.data.id];
+                        if (this.enableCheckboxes) {
+                            this.$nextTick(() => {
+                                this.$refs.tree?.setCheckedKeys(this.selectedNodes);
+                            });
+                        }
                     }
                     this.lastClickedIndex = currentIndex;
-
                 } else {
                     // Handle single-click selection
                     this.selectedFiles = [path];
@@ -543,6 +549,20 @@
                     }
                 }
             },
+            handleShiftDown(event) {
+                if (event.key === "Shift" && !event.repeat) {
+                    // 🔄 Alterna o modo de seleção
+                    this.enableCheckboxes = !this.enableCheckboxes;
+
+                    // Se ativou o modo checkboxes, sincroniza com seleção atual
+                    if (this.enableCheckboxes && this.selectedNodes.length > 0) {
+                        this.$nextTick(() => {
+                            this.$refs.tree?.setCheckedKeys(this.selectedNodes);
+                        });
+                    }
+                }
+            },
+
 
             async removeSelectedFiles() {
                 const nodes = this.selectedFiles.map((filePath) => {
@@ -1192,9 +1212,15 @@
         },
         mounted() {
             document.addEventListener("click", this.clearSelection);
+            // adicionado
+            document.addEventListener("keydown", this.handleShiftDown);
+            document.addEventListener("keyup", this.handleShiftUp);
         },
         beforeUnmount() {
             document.removeEventListener("click", this.clearSelection);
+            // adicionado
+            document.removeEventListener("keydown", this.handleShiftDown);
+            document.removeEventListener("keyup", this.handleShiftUp);
         },
         watch: {
             "flowStore.flow": {
@@ -1211,6 +1237,7 @@
                 immediate: true,
                 deep: true,
             },
+            
             "editorStore.treeRefresh": {
                 async handler() {
                     if (this.$refs.tree) {

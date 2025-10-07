@@ -170,7 +170,7 @@ public class ExecutionController {
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
-
+    
     @Inject
     private RunContextFactory runContextFactory;
 

@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.KestraRuntimeException;
@@ -65,31 +64,28 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public class FlowInputOutput {
     private static final Pattern URI_PATTERN = Pattern.compile("^[a-z]+:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
-
+    
     private final StorageInterface storageInterface;
     private final Optional<String> secretKey;
     private final RunContextFactory runContextFactory;
-    private final VariableRenderer variableRenderer;
-
+    
     @Inject
     public FlowInputOutput(
         StorageInterface storageInterface,
         RunContextFactory runContextFactory,
-        VariableRenderer variableRenderer,
         @Nullable @Value("${kestra.encryption.secret-key}") String secretKey
     ) {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
         this.secretKey = Optional.ofNullable(secretKey);
-        this.variableRenderer = variableRenderer;
     }
-
+    
     /**
      * Validate all the inputs of a given execution of a flow.
      *
-     * @param inputs                  The Flow's inputs.
-     * @param execution               The Execution.
-     * @param data                    The Execution's inputs data.
+     * @param inputs    The Flow's inputs.
+     * @param execution The Execution.
+     * @param data      The Execution's inputs data.
      * @return The list of {@link InputAndValue}.
      */
     public Mono<List<InputAndValue>> validateExecutionInputs(final List<Input<?>> inputs,
@@ -97,10 +93,11 @@ public class FlowInputOutput {
                                                              final Execution execution,
                                                              final Publisher<CompletedPart> data) {
         if (ListUtils.isEmpty(inputs)) return Mono.just(Collections.emptyList());
-
-        return readData(inputs, execution, data, false).map(inputData -> resolveInputs(inputs, flow, execution, inputData));
+        
+        return readData(inputs, execution, data, false)
+            .map(inputData -> resolveInputs(inputs, flow, execution, inputData, false));
     }
-
+    
     /**
      * Reads all the inputs of a given execution of a flow.
      *
@@ -114,7 +111,7 @@ public class FlowInputOutput {
                                                          final Publisher<CompletedPart> data) {
         return this.readExecutionInputs(flow.getInputs(), flow, execution, data);
     }
-
+    
     /**
      * Reads all the inputs of a given execution of a flow.
      *
@@ -129,7 +126,7 @@ public class FlowInputOutput {
                                                          final Publisher<CompletedPart> data) {
         return readData(inputs, execution, data, true).map(inputData -> this.readExecutionInputs(inputs, flow, execution, inputData));
     }
-
+    
     private Mono<Map<String, Object>> readData(List<Input<?>> inputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
         return Flux.from(data)
             .publishOn(Schedulers.boundedElastic())
@@ -212,7 +209,7 @@ public class FlowInputOutput {
         final Execution execution,
         final Map<String, ?> data
     ) {
-        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data)
+        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, false)
             .stream()
             .filter(InputAndValue::enabled)
             .map(it -> {
@@ -238,7 +235,7 @@ public class FlowInputOutput {
         }
         return MapUtils.flattenToNestedMap(resolved);
     }
-
+    
     /**
      * Utility method for retrieving types inputs.
      *
@@ -247,12 +244,21 @@ public class FlowInputOutput {
      * @param data      The Execution's inputs data.
      * @return The Map of typed inputs.
      */
-    @VisibleForTesting
     public List<InputAndValue> resolveInputs(
         final List<Input<?>> inputs,
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data
+    ) {
+        return resolveInputs(inputs, flow, execution, data, true);
+    }
+    
+    public List<InputAndValue> resolveInputs(
+        final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Map<String, ?> data,
+        final boolean decryptSecrets
     ) {
         if (inputs == null) {
             return Collections.emptyList();
@@ -262,9 +268,11 @@ public class FlowInputOutput {
             .map(input -> ResolvableInput.of(input,data.get(input.getId())))
             .collect(Collectors.toMap(it -> it.get().input().getId(), Function.identity(), (o1, o2) -> o1, LinkedHashMap::new)));
 
-        resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap));
+        resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap, decryptSecrets));
 
         return resolvableInputMap.values().stream().map(ResolvableInput::get).toList();
+        
+        
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -272,7 +280,8 @@ public class FlowInputOutput {
         final @NotNull ResolvableInput resolvable,
         final FlowInterface flow,
         final @NotNull Execution execution,
-        final @NotNull Map<String, ResolvableInput> inputs) {
+        final @NotNull Map<String, ResolvableInput> inputs,
+        final boolean decryptSecrets) {
 
         // return immediately if the input is already resolved
         if (resolvable.isResolved()) return resolvable.get();
@@ -281,8 +290,8 @@ public class FlowInputOutput {
 
         try {
             //  resolve all input dependencies and check whether input is enabled
-            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs);
-            final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies);
+            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, decryptSecrets);
+            final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies, decryptSecrets);
 
             boolean isInputEnabled = dependencies.isEmpty() || dependencies.values().stream().allMatch(InputAndValue::enabled);
 
@@ -317,8 +326,7 @@ public class FlowInputOutput {
                 }
             });
             resolvable.setInput(input);
-
-
+            
             Object value = resolvable.get().value();
 
             // resolve default if needed
@@ -382,7 +390,7 @@ public class FlowInputOutput {
         return Property.asList((Property<List<T>>) input.getDefaults(), renderer, clazz);
     }
 
-    private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies) {
+    private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies, final boolean decryptSecrets) {
         Map<String, Object> flattenInputs = MapUtils.flattenToNestedMap(dependencies.entrySet()
             .stream()
             .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue().value()), HashMap::putAll)
@@ -396,10 +404,10 @@ public class FlowInputOutput {
                 flattenInputs.put(input.getId(), null);
             }
         }
-        return runContextFactory.of(flow, execution, vars -> vars.withInputs(flattenInputs));
+        return runContextFactory.of(flow, execution, vars -> vars.withInputs(flattenInputs), decryptSecrets);
     }
 
-    private Map<String, InputAndValue> resolveAllDependentInputs(final Input<?> input, final FlowInterface flow, final Execution execution, final Map<String, ResolvableInput> inputs) {
+    private Map<String, InputAndValue> resolveAllDependentInputs(final Input<?> input, final FlowInterface flow, final Execution execution, final Map<String, ResolvableInput> inputs, final boolean decryptSecrets) {
         return Optional.ofNullable(input.getDependsOn())
             .map(DependsOn::inputs)
             .stream()
@@ -407,7 +415,7 @@ public class FlowInputOutput {
             .filter(id -> !id.equals(input.getId()))
             .map(inputs::get)
             .filter(Objects::nonNull) // input may declare unknown or non-necessary dependencies. Let's ignore.
-            .map(it -> resolveInputValue(it, flow, execution, inputs))
+            .map(it -> resolveInputValue(it, flow, execution, inputs, decryptSecrets))
             .collect(Collectors.toMap(it -> it.input().getId(), Function.identity()));
     }
 

@@ -25,7 +25,7 @@
     });
 </script>
 <style scoped lang="scss">
-    .el-button {
+    button.el-button {
         white-space: nowrap;
         border-radius: var(--el-border-radius-base);
         width: 7rem;

@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, getCurrentInstance, onMounted, ref, watch} from "vue";
+    import {computed, getCurrentInstance, onMounted, ref, watch, onUnmounted} from "vue";
     import Close from "vue-material-design-icons/Close.vue";
     import KeyboardReturn from "vue-material-design-icons/KeyboardReturn.vue";
     import AiIcon from "./AiIcon.vue";
@@ -120,6 +120,10 @@
             // ignore storage errors
         }
     });
+
+    onUnmounted(() => {
+        sessionStorage.removeItem("kestra-ai-prompt");
+    })
 
     // Reset prompt when the provided flow changes and the persisted prompt belongs to a different flow
     watch(() => props.flow, (newFlow, oldFlow) => {

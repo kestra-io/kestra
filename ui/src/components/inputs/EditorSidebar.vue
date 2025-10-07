@@ -70,7 +70,7 @@
                     class="hidden"
                     @change="importFiles"
                 >
-                <el-dropdown>
+                <el-dropdown :teleported="false">
                     <el-button>
                         <PlusBox />
                     </el-button>
@@ -79,9 +79,7 @@
                             <el-dropdown-item @click="$refs.filePicker.click()">
                                 {{ $t("namespace files.import.files") }}
                             </el-dropdown-item>
-                            <el-dropdown-item
-                                @click="$refs.folderPicker.click()"
-                            >
+                            <el-dropdown-item @click="$refs.folderPicker.click()">
                                 {{ $t("namespace files.import.folder") }}
                             </el-dropdown-item>
                         </el-dropdown-menu>
@@ -117,6 +115,7 @@
             v-loading="items === undefined"
             :props="{class: nodeClass, isLeaf: 'leaf'}"
             class="mt-3"
+            @check="handleCheck"
             @node-drag-start="
                 nodeBeforeDrag = {
                     parent: $event.parent.data.id,
@@ -488,6 +487,11 @@
                 }
                 return "node";
             },
+            handleCheck(checkedNodes, checkedKeys) {
+                this.selectedNodes = checkedKeys;
+                this.selectedFiles = checkedNodes.map(node => this.getPath(node));
+            },
+
             flattenTree(items, parentPath = "") {
                 const result = [];
 
@@ -565,10 +569,23 @@
 
 
             async removeSelectedFiles() {
-                const nodes = this.selectedFiles.map((filePath) => {
-                    const node = this.findNodeByPath(filePath);
-                    return node;
-                });
+                let nodes = [];
+
+                if (this.enableCheckboxes) {
+                    const checkedNodes = this.$refs.tree.getCheckedNodes();
+
+                    this.selectedFiles = checkedNodes.map(node => this.getPath(node.id));
+                    this.selectedNodes = checkedNodes.map(node => node.id);
+
+                    nodes = checkedNodes;
+                } else {
+                    nodes = this.selectedFiles.map(filePath => this.findNodeByPath(filePath));
+                }
+
+                if (!nodes || nodes.length === 0) {
+                    this.$toast().warning(this.$t("namespace files.no_selection"));
+                    return;
+                }
 
                 this.confirmRemove(nodes);
             },

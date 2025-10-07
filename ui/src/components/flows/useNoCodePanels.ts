@@ -337,9 +337,16 @@ export function useNoCodePanelsFull(options: {
 
     const {t} = useI18n()
 
-    return options.editorElements.find(e => e.value === "nocode")!.deserialize = (value, allowCreate) => {
+    options.editorElements.find(e => e.value === "nocode")!.deserialize = (value, allowCreate) => {
         return allowCreate
             ? setupInitialNoCodeTab(options.RawNoCode, value, t, noCodeHandlers, options.source.value ?? "")
             : setupInitialNoCodeTabIfExists(options.RawNoCode, value, t, noCodeHandlers, options.source.value ?? "")
+    }
+
+    return {
+        actions,
+        openTabs,
+        focusTab,
+        panels,
     }
 }

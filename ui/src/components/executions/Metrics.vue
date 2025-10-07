@@ -1,3 +1,36 @@
+<script setup lang="ts">
+import { ref, nextTick } from 'vue';
+import ChartAreaspline from 'vue-material-design-icons/ChartAreaspline.vue';
+import Drawer from '../Drawer.vue';
+import MetricsTable from './MetricsTable.vue';
+
+// Props
+interface Props {
+    embed?: boolean;
+    taskRun: Record<string, any>;
+    execution: Record<string, any>;
+}
+
+const props = defineProps<Props>();
+
+// Default value for embed
+const embed = props.embed ?? true;
+
+// Refs
+const isOpen = ref(false);
+const table = ref<InstanceType<typeof MetricsTable> | null>(null);
+
+// Methods
+const onClick = async () => {
+    isOpen.value = !isOpen.value;
+    await nextTick();
+
+    if (table.value) {
+        table.value.loadData(table.value.onDataLoaded);
+    }
+};
+</script>
+
 <template>
     <el-dropdown-item
         :icon="ChartAreaspline"
@@ -11,50 +44,10 @@
         v-model="isOpen"
         :title="$t('metrics')"
     >
-        <MetricsTable ref="table" :taskRunId="taskRun.id" :execution="execution" />
+        <MetricsTable
+            ref="table"
+            :taskRunId="props.taskRun.id"
+            :execution="props.execution"
+        />
     </Drawer>
 </template>
-
-<script setup>
-    import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue";
-
-</script>
-
-<script>
-    import MetricsTable from "./MetricsTable.vue";
-    import Drawer from "../Drawer.vue";
-
-    export default {
-        components: {
-            MetricsTable,
-            Drawer
-        },
-        data() {
-            return {
-                isOpen: false,
-            };
-        },
-        props: {
-            embed: {
-                type: Boolean,
-                default: true
-            },
-            taskRun: {
-                type: Object,
-                required: true
-            },
-            execution: {
-                type: Object,
-                required: true
-            }
-        },
-        methods: {
-            onClick() {
-                this.isOpen = !this.isOpen;
-                this.$nextTick(() => {
-                    this.$refs.table.loadData(this.$refs.table.onDataLoaded);
-                });
-            },
-        },
-    };
-</script>

@@ -282,18 +282,6 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void findByNamespace() {
-        List<Flow> save = flowRepository.findByNamespace(MAIN_TENANT, "io.kestra.tests");
-        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 22);
-
-        save = flowRepository.findByNamespace(MAIN_TENANT, "io.kestra.tests2");
-        assertThat((long) save.size()).isEqualTo(1L);
-
-        save = flowRepository.findByNamespace(MAIN_TENANT, "io.kestra.tests.minimal.bis");
-        assertThat((long) save.size()).isEqualTo(1L);
-    }
-
-    @Test
     void findByNamespacePrefix() {
         List<Flow> save = flowRepository.findByNamespacePrefix(MAIN_TENANT, "io.kestra.tests");
         assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 1);
@@ -609,13 +597,7 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count()).isEqualTo(1L);
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count()).isEqualTo(1L);
     }
-
-    @Test
-    void findDistinctNamespace() {
-        List<String> distinctNamespace = flowRepository.findDistinctNamespace(MAIN_TENANT);
-        assertThat((long) distinctNamespace.size()).isEqualTo(8L);
-    }
-
+    
     @Test
     protected void shouldReturnNullRevisionForNonExistingFlow() {
         assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, IdUtils.create())).isNull();

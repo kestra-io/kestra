@@ -160,11 +160,4 @@ public class H2QueueFactory implements QueueFactoryInterface {
     public QueueInterface<SubflowExecutionEnd> subflowExecutionEnd() {
         return new H2Queue<>(SubflowExecutionEnd.class, applicationContext);
     }
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.MULTIPLE_CONDITION_EVENT_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<MultipleConditionEvent> multipleConditionEvent() {
-        return new H2Queue<>(MultipleConditionEvent.class, applicationContext);
-    }
 }

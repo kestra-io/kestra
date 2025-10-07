@@ -10,8 +10,6 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 
-import io.micronaut.data.model.Pageable;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;

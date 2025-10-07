@@ -160,11 +160,4 @@ public class PostgresQueueFactory implements QueueFactoryInterface {
     public QueueInterface<SubflowExecutionEnd> subflowExecutionEnd() {
         return new PostgresQueue<>(SubflowExecutionEnd.class, applicationContext);
     }
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.MULTIPLE_CONDITION_EVENT_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<MultipleConditionEvent> multipleConditionEvent() {
-        return new PostgresQueue<>(MultipleConditionEvent.class, applicationContext);
-    }
 }

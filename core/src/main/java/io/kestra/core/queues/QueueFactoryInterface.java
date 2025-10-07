@@ -27,7 +27,6 @@ public interface QueueFactoryInterface {
     String SUBFLOWEXECUTIONRESULT_NAMED = "subflowExecutionResultQueue";
     String CLUSTER_EVENT_NAMED = "clusterEventQueue";
     String SUBFLOWEXECUTIONEND_NAMED = "subflowExecutionEndQueue";
-    String MULTIPLE_CONDITION_EVENT_NAMED = "multipleConditionEventQueue";
 
     QueueInterface<Execution> execution();
 
@@ -62,5 +61,4 @@ public interface QueueFactoryInterface {
     QueueInterface<SubflowExecutionResult> subflowExecutionResult();
 
     QueueInterface<SubflowExecutionEnd> subflowExecutionEnd();
-    QueueInterface<MultipleConditionEvent> multipleConditionEvent();
 }

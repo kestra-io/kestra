@@ -30,7 +30,7 @@ public interface StorageSplitInterface {
     @Schema(
         title = "Split file by regex pattern with the first capture group as the routing key.",
         description = "A regular expression pattern with a capture group. Lines matching this pattern will be grouped by the captured value. " +
-            "For example, `\"tableName\":\\s*\"([^\"]+)\"` will group lines by JSON tableName field values. " +
+            "For example, `\\[(\\w+)\\]` will group lines by log level (ERROR, WARN, INFO) extracted from log entries. " +
             "Lines with the same captured value will be written to the same output file. " +
             "This allows content-based splitting where the file is divided based on data patterns rather than size or line count."
     )

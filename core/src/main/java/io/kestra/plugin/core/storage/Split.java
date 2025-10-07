@@ -74,7 +74,7 @@ public class Split extends Task implements RunnableTask<Split.Output>, StorageSp
 
     @Schema(
         title = "Split file by regex pattern. Lines are grouped by the first capture group value.",
-        description = "A regular expression pattern with a capture group. Lines matching this pattern will be grouped by the captured value. For example, `\"tableName\":\\s*\"([^\"]+)\"` will group lines by JSON tableName field values."
+        description = "A regular expression pattern with a capture group. Lines matching this pattern will be grouped by the captured value. For example, `\\[(\\w+)\\]` will group lines by log level (ERROR, WARN, INFO) extracted from log entries."
     )
     @PluginProperty(dynamic = true)
     private Property<String> regexPattern;

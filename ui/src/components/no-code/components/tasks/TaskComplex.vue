@@ -14,8 +14,10 @@
     const props = withDefaults(defineProps<{
         schema: any,
         definitions?: Record<string, any>,
+        properties?: Record<string, any>,
     }>(), {
-        definitions: () => ({})
+        definitions: () => ({}),
+        properties: undefined,
     });
 
     const computedProperties = computed(() => {

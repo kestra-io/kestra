@@ -43,6 +43,7 @@
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
+        DATA_TYPES_MAP_INJECTION_KEY,
     } from "../injectionKeys";
     import {removeNullAndUndefined} from "../utils/cleanUp";
     import {removeRefPrefix, usePluginsStore} from "../../../stores/plugins";
@@ -158,7 +159,7 @@
             return undefined;
         }
         prop.required = prop.required || [];
-        prop.required.push("id");
+        prop.required.push("id", "data");
         if(isPluginDefaults.value){
             prop.required.push("forced");
         }
@@ -236,10 +237,14 @@
             // find the resolvedType that match the current dataType
             const dataType = taskObject.value?.data?.type;
             if(dataType){
-                for(const type of resolvedTypes.value){
-                    const schema = definitions.value?.[type];
-                    if(schema?.properties?.data?.properties?.type?.const === dataType){
-                        return type;
+                for(const typeLocal of resolvedTypes.value){
+                    const schema = definitions.value?.[typeLocal];
+                    const dataResolved = schema.properties?.data?.$ref
+                        ? getValueAtJsonPath(fullSchema.value, schema.properties?.data.$ref)
+                        : schema.properties?.data;
+                    const typeConst = dataResolved?.properties?.type?.const
+                    if(typeConst === dataType){
+                        return typeLocal;
                     }
                 }
             }
@@ -260,7 +265,7 @@
         // try to resolve the type from local schema
         const defs = definitions.value ?? {}
         if (defs[resolvedType.value]) {
-            return defs[resolvedType.value].properties;
+            return defs[resolvedType.value].properties
         }
 
         if(resolvedTypes.value.length > 1){
@@ -283,14 +288,10 @@
             if(dataTypes.value.length > 1){
                 properties["data"] = {
                     type: "object",
-                    properties: {
-                        type: {
-                            type: "string",
-                            enum: dataTypes.value,
-                            $required: true,
-                        }
-                    },
-                    $required: true,
+                    // this is to force the data field to be visible
+                    // and TaskComplex and therefore make the data type
+                    // appear without a border
+                    $ref: "#/definitions/",
                 }
             }
 
@@ -312,6 +313,12 @@
         }
         return Array.from(types);
     });
+
+    const dataTypesMap = computed(() => dataTypes.value.length > 1 ? {
+        data: dataTypes.value
+    } : {});
+
+    provide(DATA_TYPES_MAP_INJECTION_KEY, dataTypesMap)
 
     watch([selectedTaskType, fullSchema], ([task]) => {
         if (task) {

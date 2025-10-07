@@ -89,3 +89,5 @@ export const FULL_SCHEMA_INJECTION_KEY = Symbol("full-schema-injection-key") as 
         }>>
 
 export const SCHEMA_DEFINITIONS_INJECTION_KEY = Symbol("schema-definitions-injection-key") as InjectionKey<ComputedRef<Record<string, any>>>
+
+export const DATA_TYPES_MAP_INJECTION_KEY = Symbol("data-types-injection-key") as InjectionKey<ComputedRef<Record<string, string[] | undefined>>>

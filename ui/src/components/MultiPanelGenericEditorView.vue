@@ -5,7 +5,7 @@
             <slot name="actions" />
         </div>
         <div class="editor-wrapper">
-            <MultiPanelTabs v-if="slots['bottom-panel']" v-model="panels" @remove-tab="onRemoveTab" />
+            <MultiPanelTabs v-if="!slots['bottom-panel']" v-model="panels" @remove-tab="onRemoveTab" />
             <el-splitter v-else class="default-theme editor-panels" layout="vertical">
                 <el-splitter-panel>
                     <MultiPanelTabs v-model="panels" @remove-tab="onRemoveTab" />

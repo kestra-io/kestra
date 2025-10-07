@@ -82,6 +82,7 @@ export const useFlowStore = defineStore("flow", () => {
     const aggregatedMetrics = ref<any>()
     const tasksWithMetrics = ref<any[]>()
     const executeFlow = ref<boolean>(false)
+    const openAiCopilot = ref<boolean>(false)
     const lastSaveFlow = ref<string>()
     const isCreating = ref<boolean>(false)
     const flowYaml = ref<string>("")
@@ -754,6 +755,10 @@ function deleteFlowAndDependencies() {
         executeFlow.value = value;
     }
 
+    function setOpenAiCopilot(value: boolean) {
+        openAiCopilot.value = value;
+    }
+
     function addTrigger(trigger: Trigger) {
         const flowVar = flow.value ?? {} as Flow;
 
@@ -890,6 +895,7 @@ function deleteFlowAndDependencies() {
         aggregatedMetrics,
         tasksWithMetrics,
         executeFlow,
+        openAiCopilot,
         lastSaveFlow,
         isCreating,
         flowYaml,
@@ -903,6 +909,7 @@ function deleteFlowAndDependencies() {
         setTrigger,
         removeTrigger,
         setExecuteFlow,
+        setOpenAiCopilot,
         onSaveMetadata,
         saveAll,
         save,

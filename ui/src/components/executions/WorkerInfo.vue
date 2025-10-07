@@ -4,20 +4,26 @@
         :icon="Server"
         @click="visible = !visible"
     >
-        <span v-if="component !== 'el-button'">{{ $t('worker information') }}</span>
+        <span v-if="component !== 'el-button'">
+                {{ $t('worker information') }}
+        </span>
 
-        <el-dialog v-if="visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
+        <el-dialog
+            v-if="visible"
+            v-model="visible"
+            :id="uuid"
+            destroy-on-close
+            :append-to-body="true"
+        >
             <template #header>
-                <h5>{{ $t("worker information") }}</h5>
+                <h5>{{ $t('worker information') }}</h5>
             </template>
 
-            <template #default>
-                <ol>
-                    <li v-for="item in taskRun.attempts" :key="item.id">
-                        <ServiceInfo :serviceId="item.workerId" />
-                    </li>
-                </ol>
-            </template>
+            <ol>
+                <li v-for="item in taskRun?.attempts || []" :key="item.id">
+                    <ServiceInfo :serviceId="item.workerId" />
+                </li>
+            </ol>
 
             <template #footer>
                 <el-button @click="visible = false">
@@ -28,36 +34,32 @@
     </component>
 </template>
 
-<script setup>
-    import Server from "vue-material-design-icons/Server.vue";
-</script>
+<script setup lang="ts">
+import { ref, computed } from "vue";
+import Server from "vue-material-design-icons/Server.vue";
+import ServiceInfo from "./ServiceInfo.vue";
 
-<script>
-    import ServiceInfo from "./ServiceInfo.vue";
+interface Attempt {
+    id: string | number;
+    workerId: string | number;
+}
 
-    export default {
-        components: {ServiceInfo},
-        props: {
-            component: {
-                type: String,
-                default: "b-button"
-            },
-            taskRun: {
-                type: Object,
-                required: false,
-                default: undefined
-            }
-        },
-        emits: ["follow"],
-        computed: {
-            uuid() {
-                return "workerinfo-" + this.taskRun.id;
-            },
-        },
-        data() {
-            return {
-                visible: false,
-            };
-        },
-    };
+interface TaskRun {
+    id: string | number;
+    attempts: Attempt[]; 
+}
+
+const props = withDefaults(
+    defineProps<{
+        component?: string;
+        taskRun?: TaskRun;
+    }>(),
+    { component: "b-button" }
+);
+
+const visible = ref(false);
+
+const uuid = computed(() => {
+    return props.taskRun ? `workerinfo-${props.taskRun.id}` : '';
+});
 </script>

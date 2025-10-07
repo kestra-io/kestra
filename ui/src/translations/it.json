@@ -907,6 +907,7 @@
         "errors": "Aggiungi un gestore degli errori",
         "finally": "Aggiungi un blocco finally",
         "inputs": "Aggiungi un campo di input",
+        "numerator": "Aggiungi un numeratore",
         "pluginDefaults": "Aggiungi un plugin predefinito",
         "tasks": "Aggiungi un task",
         "triggers": "Aggiungi un trigger"
@@ -956,6 +957,7 @@
         "errors": "Seleziona un task",
         "finally": "Seleziona un task",
         "inputs": "Seleziona un tipo di input field",
+        "numerator": "Seleziona un numeratore",
         "pluginDefaults": "Seleziona un plugin",
         "task": "Seleziona un task",
         "tasks": "Seleziona un task",

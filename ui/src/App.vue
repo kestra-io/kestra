@@ -52,9 +52,6 @@
             envName() {
                 return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
             },
-            isOSS(){
-                return true;
-            },
             shouldRenderApp() {
                 return this.loaded
             },

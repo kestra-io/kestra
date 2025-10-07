@@ -154,4 +154,8 @@
 
 <style scoped lang="scss">
 @import "../../styles/code.scss";
+
+.delete {
+    min-height: 32px;
+}
 </style>

@@ -5,7 +5,7 @@
         :gutter="10"
         class="w-100"
     >
-        <el-col :span="2" class="d-flex flex-column justify-content-center mt-1 mb-2 reorder" v-if="items.length > 1">
+        <el-col :span="2" class="d-flex flex-column justify-content-center align-items-center reorder" v-if="items.length > 1">
             <ChevronUp
                 @click.prevent.stop="moveItem(index, 'up')"
                 :class="{disabled: index === 0}"
@@ -145,6 +145,7 @@
     cursor: not-allowed;
 }
 
+.reorder,
 .delete {
     min-height: 32px;
 }

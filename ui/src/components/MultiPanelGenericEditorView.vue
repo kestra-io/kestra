@@ -1,16 +1,14 @@
 <template>
     <div class="main-editor">
-        <div class="editor-header">
-            <MultiPanelEditorTabs :tabs="editorElements" @update:tabs="setTabValue" :openTabs="openTabs" />
+        <MultiPanelEditorTabs :tabs="editorElements" @update:tabs="setTabValue" :openTabs="openTabs">
             <slot name="actions" />
-        </div>
+        </MultiPanelEditorTabs>
         <div class="editor-wrapper">
-            <MultiPanelTabs v-if="!slots['bottom-panel']" v-model="panels" @remove-tab="onRemoveTab" />
-            <el-splitter v-else class="default-theme editor-panels" layout="vertical">
+            <el-splitter class="default-theme editor-panels" layout="vertical">
                 <el-splitter-panel>
                     <MultiPanelTabs v-model="panels" @remove-tab="onRemoveTab" />
                 </el-splitter-panel>
-                <el-splitter-panel v-if="bottomVisible">
+                <el-splitter-panel v-if="bottomVisible && slots['bottom-panel']">
                     <slot name="bottom-panel" />
                 </el-splitter-panel>
             </el-splitter>
@@ -163,27 +161,9 @@
         grid-template-rows: auto 1fr;
         height: 100%;
 
-        .editor-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--ks-border-primary);
-
-            .editor-actions {
-                display: flex;
-                align-items: center;
-                padding-right: 0.5rem;
-            }
-        }
-
         .editor-wrapper {
             position: relative;
             height: 100%;
-        }
-
-        :deep(.tabs-wrapper) {
-            background: none !important;
-            border: none !important;
         }
     }
 

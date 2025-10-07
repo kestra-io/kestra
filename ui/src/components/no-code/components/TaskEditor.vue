@@ -195,7 +195,7 @@
                     const resolvedItem = getValueAtJsonPath(fullSchema.value, item.$ref);
                     if (resolvedItem?.allOf) {
                         let type = "", ref;
-                        for (const subItem of item.allOf) {
+                        for (const subItem of resolvedItem.allOf) {
                             if (subItem.properties?.type?.const) {
                                 type = subItem.properties.type.const;
                             }

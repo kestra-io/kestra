@@ -23,7 +23,7 @@ jobs:
 
       # Get Plugins List
       - name: Get Plugins List
-        uses: ./.github/actions/plugins-list
+        uses: kestra-io/actions/composite/kestra-oss/kestra-oss-plugins-list@main
         id: plugins-list
         with:
           plugin-version: 'LATEST'
@@ -40,7 +40,7 @@ jobs:
           GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
         run: |
           chmod +x ./dev-tools/setversion-tag-plugins.sh;
-          
+
           ./dev-tools/setversion-tag-plugins.sh \
           --release-version=${{github.event.inputs.releaseVersion}} \
           --yes \
@@ -52,7 +52,7 @@ jobs:
           GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
         run: |
           chmod +x ./dev-tools/setversion-tag-plugins.sh;
-          
+
           ./dev-tools/setversion-tag-plugins.sh \
           --release-version=${{github.event.inputs.releaseVersion}} \
           --dry-run \

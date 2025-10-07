@@ -114,9 +114,8 @@
             draggable
             nodeKey="id"
             v-loading="items === undefined"
-            :props="{class: 'nodeClass', isLeaf: 'leaf'}"
+            :props="{class: nodeClass, isLeaf: 'leaf'}"
             class="mt-3"
-            @node-click="handleNodeClick"
             @node-drag-start="
                 nodeBeforeDrag = {
                     parent: $event.parent.data.id,
@@ -149,7 +148,7 @@
                     <el-row
                         justify="space-between"
                         class="w-100"
-                        @click="(event) => handleNodeClick(data, node)"
+                        @click="(event) => handleNodeClick(data, node, event)"
                     >
                         <el-col class="w-100">
                             <TypeIcon
@@ -311,26 +310,18 @@
 
         <el-dialog
             v-model="confirmation.visible"
-            :title="confirmationTitle"
+            :title="confirmationLabels.title"
             width="500"
             @keydown.enter.prevent="removeItems()"
         >
-            <span class="py-3">
-                {{
-                    confirmation.nodes.length > 1
-                        ? $t("namespace files.dialog.file_deletion_description")
-                        : confirmation.nodes[0]?.type === "Directory"
-                            ? $t("namespace files.dialog.folder_deletion_description")
-                            : $t("namespace files.dialog.file_deletion_description")
-                }}
-            </span>
+            <span class="py-3" v-html="confirmationLabels.message" />
             <template #footer>
                 <div>
                     <el-button @click="confirmation.visible = false">
                         {{ $t("cancel") }}
                     </el-button>
                     <el-button type="primary" @click="removeItems()">
-                        {{ $t("namespace files.dialog.confirm") }}
+                        {{ $t("namespace files.dialog.deletion.confirm") }}
                     </el-button>
                 </div>
             </template>
@@ -450,29 +441,46 @@
 
                 return extractPaths(undefined, this.items);
             },
-            confirmationTitle() {
-                if (!this.confirmation.nodes || this.confirmation.nodes.length === 0) {
-                    return ""; // Return an empty string if no nodes are selected
-                }
+            confirmationLabels() {
+                const files = this.confirmation.nodes?.filter(n => n.type === "File").length ?? 0;
+                const folders = this.confirmation.nodes?.filter(n => n.type === "Directory").length ?? 0;
 
-                if (this.confirmation.nodes.length > 1) {
-                    // Bulk deletion title
-                    return this.$t("namespace files.dialog.file_deletion");
-                }
+                const labels = {title: this.$t("namespace files.dialog.deletion.title"), message: ""};
 
-                // Single node deletion title
-                const node = this.confirmation.nodes[0];
-                return node.type === "Directory"
-                    ? this.$t("namespace files.dialog.folder_deletion")
-                    : this.$t("namespace files.dialog.file_deletion");
+                if (folders > 0 && files > 0) labels.message = this.$t("namespace files.dialog.deletion.mixed", {folders, files});
+                else if (folders > 0) labels.message = this.$t("namespace files.dialog.deletion.folders", {count: folders});
+                else labels.message = this.$t("namespace files.dialog.deletion.files", {count: files});
+
+                return labels;
             },
         },
         methods: {
             nodeClass(data) {
+                // Use data.id to match the structure used in handleNodeClick
                 if (this.selectedNodes.includes(data.id)) {
                     return "node selected-tree-node";
                 }
                 return "node";
+            },
+            pushToParentFolder(parentPath, newNode) {
+                const traverseAndInsert = (basePath = "", array) => {
+                    for (const item of array) {
+                        const folderPath = `${basePath}${item.fileName}`;
+                        if (folderPath === parentPath && Array.isArray(item.children)) {
+                            // Avoid duplicate folder entries
+                            if (!item.children.find(child => child.fileName === newNode.fileName)) {
+                                item.children.push(newNode);
+                                item.children = this.sorted(item.children);
+                            }
+                            return true;
+                        } else if (Array.isArray(item.children)) {
+                            if (traverseAndInsert(`${folderPath}/`, item.children)) return true;
+                        }
+                    }
+                    return false;
+                };
+
+                traverseAndInsert("", this.items);
             },
             flattenTree(items, parentPath = "") {
                 const result = [];
@@ -488,18 +496,35 @@
 
                 return result.filter(i => i.path);
             },
-            handleNodeClick(data, node) {
+            handleNodeClick(data, node, event = null) {
                 const path = this.getPath(node);
                 const flatList = this.flattenTree(this.items);
                 const currentIndex = flatList.findIndex(item => item.path === path);
 
-                if (window.event.shiftKey && this.lastClickedIndex !== null) {
-                    // Handle shift-click for range selection
+                const isCtrl = event && (event.ctrlKey || event.metaKey);
+                const isShift = event && event.shiftKey;
+
+                if (isShift && this.lastClickedIndex !== null) {
                     const start = Math.min(this.lastClickedIndex, currentIndex);
                     const end = Math.max(this.lastClickedIndex, currentIndex);
 
                     this.selectedFiles = flatList.slice(start, end + 1).map(item => item.path);
                     this.selectedNodes = flatList.slice(start, end + 1).map(item => item.id);
+
+                } else if (isCtrl) {
+                    const isSelected = this.selectedNodes.includes(node.data.id);
+
+                    if (isSelected) {
+                        // Remove from selection - force reactivity with new arrays
+                        this.selectedFiles = [...this.selectedFiles.filter(file => file !== path)];
+                        this.selectedNodes = [...this.selectedNodes.filter(id => id !== node.data.id)];
+                    } else {
+                        // Add to selection
+                        this.selectedFiles = [...this.selectedFiles, path];
+                        this.selectedNodes = [...this.selectedNodes, node.data.id];
+                    }
+                    this.lastClickedIndex = currentIndex;
+
                 } else {
                     // Handle single-click selection
                     this.selectedFiles = [path];
@@ -887,7 +912,7 @@
                 if (creation) {
                     if ((await this.searchFilesList(path)).includes(path)) {
                         this.$toast().error(
-                            this.$t("namespace files.create.already_exists"),
+                            this.$t("namespace files.create.file_already_exists"),
                         );
                         return;
                     }
@@ -1017,20 +1042,46 @@
                     };
 
                 const NEW = this.folderNode(fileName, folder?.children ?? []);
+                const parentPath = this.dialog.folder || "";
+                const path = parentPath ? `${parentPath}/${fileName}` : fileName;
 
+                // Step 1: Create folder in backend if `creation` flag is true
                 if (creation) {
-                    const path = `${
-                        this.dialog.folder ? `${this.dialog.folder}/` : ""
-                    }${fileName}`;
+                    try {
+                        // Check if folder already exists
+                        await this.namespacesStore.readDirectory({namespace: this.namespaceId, path});
 
-                    await this.namespacesStore.createDirectory({
-                        namespace: this.namespaceId,
-                        path,
-                        name: fileName,
-                    });
+                        // If we reach here, the directory already exists
+                        this.$toast().error(this.$t("namespace files.create.folder_already_exists"));
+                        return;
+                    } catch {/* Directory doesn't exist, proceed with creation */}
+
+                    try {
+                        await this.namespacesStore.createDirectory({namespace: this.namespaceId, path, name: fileName});
+
+                        //  pdate UI immediately (reactive push)
+                        if (!parentPath) {
+                            // Top-level folder
+                            this.items.push(NEW);
+                            this.items = this.sorted(this.items);
+                        } else {
+                            this.pushToParentFolder(parentPath, NEW);
+                        }
+
+                        this.$toast().success(`Folder "${fileName}" created successfully.`);
+                    } catch (error) {
+                        console.error(`Failed to create folder: ${fileName}`, error);
+
+                        this.$toast().error(this.$t("namespace files.create.folder_error"));
+                        return;
+                    }
+
+                    this.dialog = {...DIALOG_DEFAULTS};
+                    return;
                 }
 
-                if (!this.dialog.folder) {
+                // Handle non-creation (used for restoring UI or local additions)
+                if (!parentPath) {
                     const firstFolder = NEW.fileName.split("/")[0];
                     if (!this.items.find(item => item.fileName === firstFolder)) {
                         NEW.fileName = firstFolder;
@@ -1038,58 +1089,7 @@
                         this.items = this.sorted(this.items);
                     }
                 } else {
-                    const SELF = this;
-                    (function pushItemToFolder(basePath = "", array) {
-                        for (let i = 0; i < array.length; i++) {
-                            const item = array[i];
-                            const folderPath = `${basePath}${item.fileName}`;
-                            if (
-                                folderPath === SELF.dialog.folder &&
-                                Array.isArray(item.children)
-                            ) {
-                                // find the first node that is not present in the current tree and then add it.
-
-                                const paths = NEW.fileName.split("/");
-                                let index = 0;
-                                let UNCOMMON_NODE = item;
-
-                                while (UNCOMMON_NODE && index < paths.length) {
-                                    // if any of node's children have path's folder name move ahead;
-                                    if (index >= paths.length) break;
-
-                                    const nextNode = UNCOMMON_NODE.children?.find(item => item.fileName.toLowerCase() === paths[index].toLowerCase());
-
-                                    if (!nextNode) {
-                                        break;
-                                    }
-
-                                    index++;
-                                    UNCOMMON_NODE = nextNode;
-                                }
-
-                                // return as all folders are already present so no change required.
-                                if (index === paths.length) return true;
-
-                                // add the node with last folder name which is not present already.
-                                NEW.fileName = paths[index];
-
-                                if (!UNCOMMON_NODE.children) UNCOMMON_NODE.children = [];
-                                UNCOMMON_NODE.children.push(NEW);
-                                UNCOMMON_NODE.children = SELF.sorted(UNCOMMON_NODE.children);
-                                return true; // Return true if the folder is found and item is pushed
-                            } else if (Array.isArray(item.children)) {
-                                if (
-                                    pushItemToFolder(
-                                        `${folderPath}/`,
-                                        item.children,
-                                    )
-                                ) {
-                                    return true; // Return true if the folder is found and item is pushed in recursive call
-                                }
-                            }
-                        }
-                        return false; // Return false if the folder is not found
-                    })(undefined, this.items);
+                    this.pushToParentFolder(parentPath, NEW);
                 }
 
                 this.dialog = {...DIALOG_DEFAULTS};
@@ -1312,6 +1312,9 @@
         .el-tree-node.selected-tree-node > .el-tree-node__content {
             background-color: var(--ks-button-background-primary);
             min-width: fit-content;
+            .filename {
+                color: var(--ks-button-content-primary);
+            }
         }
     }
 }

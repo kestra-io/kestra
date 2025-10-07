@@ -1,12 +1,13 @@
 <template>
-    <a
-        href="https://kestra.io/slack?utm_source=app&utm_campaign=slack&utm_content=error"
-        class="position-absolute slack-on-error el-button el-button--small"
-        target="_blank"
+    <el-button
+        v-if="isFlowContext"
+        @click="fixWithAi"
+        class="position-absolute slack-on-error el-button--small"
+        size="small"
     >
-        <Slack />
-        <span>{{ $t("slack support") }}</span>
-    </a>
+        <AiIcon class="me-1" />
+        <span>{{ $t("fix_with_ai") }}</span>
+    </el-button>
     <span v-html="markdownRenderer" v-if="items.length === 0" />
     <ul>
         <li v-for="(item, index) in items" :key="index" class="font-monospace">
@@ -19,8 +20,9 @@
 </template>
 
 <script>
-    import Slack from "vue-material-design-icons/Slack.vue";
+    import AiIcon from "vue-material-design-icons/Creation.vue";
     import * as Markdown from "../utils/markdown";
+    import {useFlowStore} from "../stores/flow";
 
     export default {
         props: {
@@ -31,6 +33,10 @@
             items: {
                 type: Array,
                 required: true
+            },
+            onClose: {
+                type: Function,
+                default: null
             },
         },
         data() {
@@ -46,13 +52,43 @@
                 this.markdownRenderer = await this.renderMarkdown();
             }
         },
-        components: {Slack},
+        computed: {
+            isFlowContext() {
+                const routeName = this.$route?.name;
+                return routeName === "flows/update" || routeName === "flows/create";
+            }
+        },
+        components: {AiIcon},
         methods: {
             async renderMarkdown() {
                 if (this.message.response && this.message.response.status === 503) {
                     return await Markdown.render("Server is temporarily unavailable. Please try again later.", {html: true});
                 }
                 return await Markdown.render(this.message.message || this.message.content.message, {html: true});
+            },
+            async fixWithAi() {
+                const errorMessage = this.message.message || this.message.content?.message || "";
+                const errorItems = this.items.map(item => {
+                    const path = item.path ? `At ${item.path}: ` : "";
+                    return path + item.message;
+                }).join("\n");
+
+                const fullErrorMessage = [errorMessage, errorItems].filter(Boolean).join("\n\n");
+                const prompt = `Fix the following error in the flow:\n${fullErrorMessage}`;
+
+                try {
+                    window.sessionStorage.setItem("kestra-ai-prompt", prompt);
+                } catch (err) {
+                    console.warn("AI prompt not persisted to sessionStorage:", err);
+                }
+
+                // Close the notification
+                if (this.onClose) {
+                    this.onClose();
+                }
+
+                const flowStore = useFlowStore();
+                flowStore.setOpenAiCopilot(true);
             },
         },
     };

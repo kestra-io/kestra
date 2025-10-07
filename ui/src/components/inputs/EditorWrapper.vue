@@ -38,7 +38,7 @@
             <AiCopilot
                 v-if="aiCopilotOpened"
                 class="position-absolute prompt"
-                @close="aiCopilotOpened = false"
+                @close="closeAiCopilot"
                 :flow="editorContent"
                 :conversationId="conversationId"
                 @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
@@ -53,7 +53,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
+    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
@@ -130,6 +130,14 @@
         if(route.query.ai === "open") {
             draftSource.value = undefined;
             aiCopilotOpened.value = true;
+        }
+    });
+
+    watch(() => flowStore.openAiCopilot, (newVal) => {
+        if (newVal) {
+            draftSource.value = undefined;
+            aiCopilotOpened.value = true;
+            flowStore.setOpenAiCopilot(false);
         }
     });
 
@@ -298,6 +306,16 @@
     function declineDraft() {
         draftSource.value = undefined;
         aiCopilotOpened.value = true;
+    }
+
+    function closeAiCopilot() {
+        aiCopilotOpened.value = false;
+        const currentQuery = {...route.query, ai: undefined};
+        router.replace({
+            name: route.name,
+            params: route.params,
+            query: currentQuery
+        });
     }
 
     const hasDraft = computed(() => draftSource.value !== undefined);

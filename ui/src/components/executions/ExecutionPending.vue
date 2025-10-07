@@ -19,21 +19,23 @@
     </EmptyTemplate>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
+    import { PropType } from 'vue';
+    import { Execution } from "@kestra-io/ui-libs/src/repository/index";
 
-    defineProps({
+    const props = defineProps({
         execution: {
-            type: Object,
+            type: Object as PropType<Execution>,
             required: true
         }
     });
 
-    const getStyle = (state) => ({
+    const getStyle = (state: string) => ({
         color: `var(--ks-content-${state.toLowerCase()})`,
         border: `1px solid var(--ks-border-${state.toLowerCase()})`,
         backgroundColor: `var(--ks-background-${state.toLowerCase()})`
-    })
+    });
 </script>
 
 <style lang="scss" scoped>

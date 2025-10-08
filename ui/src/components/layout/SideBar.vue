@@ -1,7 +1,6 @@
 <template>
     <SidebarMenu
         ref="sideBarRef"
-        data-component="FILENAME_PLACEHOLDER"
         id="side-menu"
         :menu
         @update:collapsed="onToggleCollapse"

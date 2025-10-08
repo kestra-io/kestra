@@ -1,6 +1,5 @@
 <template>
     <el-input
-        data-component="FILENAME_PLACEHOLDER"
         v-model="search"
         @input="onInput"
         :placeholder="$t(placeholder)"

@@ -22,7 +22,7 @@
     const {menu} = useLeftMenu();
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 #side-menu {
     .el-select {
         padding: 0 30px;

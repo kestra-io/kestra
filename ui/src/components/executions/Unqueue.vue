@@ -107,7 +107,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     button.el-button {
         cursor: pointer !important;
     }

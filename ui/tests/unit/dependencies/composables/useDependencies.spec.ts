@@ -1,4 +1,3 @@
-// tests/useDependencies.spec.ts
 import {describe, it, expect, vi, beforeEach} from "vitest";
 import {ref, nextTick} from "vue";
 import {useDependencies, transformResponse} from "../../../../src/components/dependencies/composables/useDependencies";

@@ -1,2 +1,1 @@
-#!/bin/sh
-"C:/Program Files/nodejs/node.exe" "C:/Users/dinas/AppData/Roaming/npm/node_modules/npm/bin/npm-cli.js" exec lint-staged
+cd ui && npx lint-staged

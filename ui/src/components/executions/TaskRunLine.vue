@@ -385,14 +385,6 @@
                 const prompt = `Fix the task ${taskRun.taskId} as it generated the following error:\n${errorLine}`;
                 try {
                     window.sessionStorage.setItem("kestra-ai-prompt", prompt);
-                    // store a simple hash of the flow so the AiCopilot can associate the prompt
-                    const flowSource = this.flow?.source ?? "";
-                    let hash = 5381;
-                    for (let i = 0; i < flowSource.length; i++) {
-                        hash = ((hash << 5) + hash) + flowSource.charCodeAt(i);
-                        hash = hash & hash;
-                    }
-                    window.sessionStorage.setItem("kestra-ai-prompt-flow-hash", String(hash >>> 0));
                 } catch (err) {
                     console.warn("AI prompt not persisted to sessionStorage:", err);
                 }

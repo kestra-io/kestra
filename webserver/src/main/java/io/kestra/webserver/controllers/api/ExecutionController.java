@@ -615,7 +615,7 @@ public class ExecutionController {
                     })
                     .last()
                     .map(event -> {
-                        if (webhook.get().getOutputsAsResponse()) {
+                        if (webhook.get().getReturnOutputs()) {
                             return HttpResponse.ok(event.getData().getOutputs());
 
                         } else {

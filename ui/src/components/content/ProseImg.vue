@@ -38,7 +38,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     img {
         max-width: 100%;
     }

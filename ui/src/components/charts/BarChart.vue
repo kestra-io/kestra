@@ -281,7 +281,7 @@
     );
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .small {
     height: 40px;
 }

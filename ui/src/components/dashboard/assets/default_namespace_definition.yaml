@@ -142,9 +142,9 @@ charts:
         flow:
           field: FLOW_ID
           displayName: Flow
-        duration:
-          field: DURATION
-          displayName: Duration
+        start_date:
+          field: START_DATE
+          displayName: Start Date
         state:
           field: STATE
           displayName: State

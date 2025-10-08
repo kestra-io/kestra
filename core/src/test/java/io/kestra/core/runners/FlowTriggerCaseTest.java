@@ -88,7 +88,7 @@ public class FlowTriggerCaseTest {
 
     public void triggerWithConcurrencyLimit(String tenantId) throws QueueException, TimeoutException {
         Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, "io.kestra.tests.trigger.concurrency", "trigger-flow-with-concurrency-limit");
-        Execution execution2 = runnerUtils.runOneUntilRunning(tenantId, "io.kestra.tests.trigger.concurrency", "trigger-flow-with-concurrency-limit");
+        Execution execution2 = runnerUtils.runOne(tenantId, "io.kestra.tests.trigger.concurrency", "trigger-flow-with-concurrency-limit");
 
         List<Execution> triggeredExec = runnerUtils.awaitFlowExecutionNumber(
             5,

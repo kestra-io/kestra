@@ -26,8 +26,8 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
      * Used only if result is used internally and not exposed to the user.
      * It is useful when we want to restart/resume a flow.
      */
-    default Flow findByExecutionWithoutAcl(Execution execution) {
-        Optional<Flow> find = this.findByIdWithoutAcl(
+    default FlowWithSource findByExecutionWithoutAcl(Execution execution) {
+        Optional<FlowWithSource> find = this.findByIdWithSourceWithoutAcl(
             execution.getTenantId(),
             execution.getNamespace(),
             execution.getFlowId(),

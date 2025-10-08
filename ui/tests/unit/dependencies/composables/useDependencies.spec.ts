@@ -10,6 +10,11 @@ import {useFlowStore} from "../../../../src/stores/flow";
 import {RouteParams} from "vue-router";
 import {useMiscStore} from "override/stores/misc";
 
+vi.mock("vue-router", () => ({
+  useRouter: () => ({push: vi.fn(), replace: vi.fn(), currentRoute: {value: {path: "/"}}, beforeEach: vi.fn(), afterEach: vi.fn()}),
+  useRoute: () => ({params: {}, query: {}, path: "/"}),
+}));
+
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key})}));
 
 const cyMock = {
@@ -86,7 +91,7 @@ describe("useDependencies composable", () => {
       expect(getElements().length).toBeGreaterThan(0);
     });
 
-    it("should load elements from nameSpace Store for SUBTYPE NAMESPACE", async () => {
+    it("should load elements from namespace store for subtype NAMESPACE", async () => {
       const nameSpacesStore = useNamespacesStore();
       const mockData = {
         nodes: [{uid: "n1", id: "f1", namespace: "ns"}],
@@ -105,7 +110,7 @@ describe("useDependencies composable", () => {
       expect(getElements().length).toBeGreaterThan(0);
     });
 
-    it("should load elements from flow Store for SUBTYPE FLOW", async () => {
+    it("should load elements from flow store for subtype FLOW", async () => {
       const nameSpacesStore = useNamespacesStore();
       const flowStore = useFlowStore();
       const mockData = {

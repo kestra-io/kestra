@@ -36,7 +36,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .queued {
     margin-top: -2rem;
 }

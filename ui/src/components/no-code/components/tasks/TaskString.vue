@@ -131,7 +131,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 :deep(.el-input__inner) {
     &::placeholder {
         color: var(--ks-content-inactive) !important;

@@ -130,8 +130,13 @@
 
     const filteredProperties = computed<Entry[]>(() => {
         const propertiesProc = (props.properties ?? props.schema?.properties);
+        const isOutputsContext = props.root?.startsWith("outputs[") || false;
         return propertiesProc
-            ? (Object.entries(propertiesProc) as Entry[]).filter(([key, value]) => key !== "type" && !Array.isArray(value))
+            ? (Object.entries(propertiesProc) as Entry[]).filter(([key, value]) => {
+                // Allow "type" field for outputs context, filter it out for other contexts
+                const shouldFilterType = key === "type" && !isOutputsContext;
+                return !shouldFilterType && !Array.isArray(value);
+            })
             : [];
     });
 

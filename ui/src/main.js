@@ -9,6 +9,7 @@ import en from "./translations/en.json";
 import {setupTenantRouter} from "./composables/useTenant";
 import * as BasicAuth from "./utils/basicAuth";
 import {useMiscStore} from "override/stores/misc";
+import {shouldShowWelcome, isDashboardRoute} from "./utils/welcomeGuard";
 
 
 const app = createApp(App)
@@ -63,6 +64,13 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
             if (isSetupInProgress === "true") {
                 return next({name: "setup"})
             }
+
+            if (await shouldShowWelcome() && isDashboardRoute(to.name)) {
+                return next({
+                    name: "welcome",
+                    params: {tenant: to.params.tenant}
+                });
+            } 
 
             return next();
         } catch (error) {

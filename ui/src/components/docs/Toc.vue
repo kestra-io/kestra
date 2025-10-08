@@ -49,13 +49,9 @@
         title: string;
     }
 
-    interface Sections {
-        [key: string]: string[];
-    }
-
     const docStore = useDocStore();
 
-    const sections: Sections = {
+    const sections = {
         "Get Started with Kestra": [
             "Getting Started",
             "Tutorial",

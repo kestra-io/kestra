@@ -1,6 +1,5 @@
 <template>
     <el-drawer
-        data-component="FILENAME_PLACEHOLDER"
         v-model="modelValue"
         destroyOnClose
         lockScroll

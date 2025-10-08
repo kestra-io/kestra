@@ -31,7 +31,7 @@
             </ul>
         </template>
     </TopNavBar>
-    <section data-component="FILENAME_PLACEHOLDER" :class="{container: topbar}" v-if="ready">
+    <section :class="{container: topbar}" v-if="ready">
         <div>
             <DataTable
                 @page-changed="onPageChanged"

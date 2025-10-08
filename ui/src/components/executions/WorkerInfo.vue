@@ -17,7 +17,7 @@
 
             <template #default>
                 <ol>
-                    <li v-for="item in taskRun?.attempts || []" :key="item.id">
+                    <li v-for="item in taskRun.attempts" :key="item.id">
                         <ServiceInfo :serviceId="String(item.workerId)" />
                     </li>
                 </ol>

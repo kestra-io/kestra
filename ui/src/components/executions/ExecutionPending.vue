@@ -20,8 +20,9 @@
 </template>
 
 <script setup lang="ts">
+    import {PropType} from "vue";
+
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
-    import { PropType } from 'vue';
 
     interface ExecutionState {
         current: string;
@@ -31,7 +32,7 @@
         state: ExecutionState;
     }
 
-    const props = defineProps({
+    defineProps({
         execution: {
             type: Object as PropType<Execution>,
             required: true

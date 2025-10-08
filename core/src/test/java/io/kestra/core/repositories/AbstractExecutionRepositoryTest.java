@@ -506,13 +506,25 @@ public abstract class AbstractExecutionRepositoryTest {
         ZonedDateTime dayBeforeMidnight = ZonedDateTime.of(2025, 10, 25, 23, 30, 0, 0, prague);
         ZonedDateTime dayAfterMidnight = ZonedDateTime.of(2025, 10, 26, 0, 30, 0, 0, prague);
 
-        // Build executions with explicit start dates
-        Execution before = builder(State.Type.SUCCESS, null)
+        // Build executions with explicit start dates without using Mockito.spy (avoid inline mock maker)
+        Execution before = Execution.builder()
+            .id(IdUtils.create())
+            .namespace(NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .flowId(FLOW)
+            .flowRevision(1)
             .state(new State(State.Type.SUCCESS, List.of(new State.History(State.Type.SUCCESS, dayBeforeMidnight.toInstant()))))
+            .taskRunList(List.of())
             .build();
 
-        Execution after = builder(State.Type.SUCCESS, null)
+        Execution after = Execution.builder()
+            .id(IdUtils.create())
+            .namespace(NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .flowId(FLOW)
+            .flowRevision(1)
             .state(new State(State.Type.SUCCESS, List.of(new State.History(State.Type.SUCCESS, dayAfterMidnight.toInstant()))))
+            .taskRunList(List.of())
             .build();
 
         executionRepository.save(before);

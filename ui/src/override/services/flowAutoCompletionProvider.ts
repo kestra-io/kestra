@@ -86,6 +86,31 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         return [...tasksFromTasksProp, ...tasksFromTaskProp]
             .filter(task => typeof task?.get === "function" && task?.get("id"));
     }
+    
+    private extractAllTaskIds(parsed: any | undefined): string[] {
+        if (!parsed?.tasks) {
+            return [];
+        }
+        
+        const taskIds: string[] = [];
+        
+        const extractTasksRecursive = (tasks: any[]) => {
+            if (!tasks) return;
+            
+            for (const task of tasks) {
+                if (task.id) {
+                    taskIds.push(task.id);
+                }
+                
+                if (task.tasks && Array.isArray(task.tasks)) {
+                    extractTasksRecursive(task.tasks);
+                }
+            }
+        };
+        
+        extractTasksRecursive(parsed.tasks);
+        return taskIds;
+    }
 
     private async outputsFor(taskId: string, source: string): Promise<string[]> {
         const taskType = this.tasks(this.completionSource?.value ?? source).filter(task => task.get("id") === taskId)
@@ -124,7 +149,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             case "inputs":
                 return Promise.resolve(parsed?.inputs?.map((input: {id?: string}) => input.id) ?? []);
             case "outputs":
-                return Promise.resolve(parsed?.tasks?.map((task: {id?: string}) => task.id).filter(Boolean) ?? []);
+                return Promise.resolve(this.extractAllTaskIds(parsed));
             case "labels":
                 return Promise.resolve(Object.keys(parsed?.labels ?? {}));
             case "flow":
@@ -144,9 +169,11 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             case "kestra":
                 return Promise.resolve(["environment", "url"]);
             default: {
-                const match = parentField.match(/^outputs\.([^.]+)$/);
+                const match = parentField.match(/^outputs\.([^.]+(?:\.[^.]+)*)$/);
                 if (match) {
-                    return await this.outputsFor(match[1], source);
+                    const taskPath = match[1].split(".");
+                    const taskId = taskPath[taskPath.length-1];
+                    return await this.outputsFor(taskId, source);
                 }
 
                 return Promise.resolve([]);

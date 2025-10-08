@@ -2,7 +2,6 @@ import path from "path";
 import {defineConfig} from "vite";
 import vue from "@vitejs/plugin-vue";
 
-import {filename} from "./plugins/filename"
 import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin";
 
@@ -67,7 +66,6 @@ export default defineConfig({
                 }
             }
         }),
-        filename(),
         commit(),
         codecovVitePlugin({
             enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,

@@ -15,6 +15,6 @@ import lombok.experimental.SuperBuilder;
 public abstract class AdditionalPlugin implements Plugin {
     @NotNull
     @NotBlank
-    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
+    @Pattern(regexp = "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$")
     protected String type;
 }

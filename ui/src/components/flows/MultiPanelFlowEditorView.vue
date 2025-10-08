@@ -98,12 +98,7 @@
     const {setupInitialCodeTab} = useInitialFilesTabs()
 
     const codeElement = EDITOR_ELEMENTS.find(e => e.value === "code")!
-    codeElement!.deserialize = (value: string) => {
-        if(value === "code"){
-            return codeElement
-        }
-        return setupInitialCodeTab(value)
-    }
+    codeElement!.deserialize = (value: string) => setupInitialCodeTab(value)
 
 
     const isTourRunning = computed(() => coreStore.guidedProperties?.tourStarted)
@@ -165,9 +160,12 @@
 
     watch(isFlowDirty, (dirty) => {
         for(const panel of panels.value){
+            if(panel.activeTab && isTabFlowRelated(panel.activeTab)){
+                panel.activeTab.dirty = dirty
+            }
             for(const tab of panel.tabs){
                 if(isTabFlowRelated(tab)){
-                    editorView.value?.setTabDirtyState(tab.value, dirty);
+                    tab.dirty = dirty
                 }
             }
         }

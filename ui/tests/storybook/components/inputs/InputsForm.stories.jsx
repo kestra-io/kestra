@@ -56,16 +56,16 @@ export const InputTypes = {
             expect(can.getByTestId("test-content").textContent).to.include("foo@example.com");
         });
 
-        const input = await waitFor(() => can.getByLabelText("Single select input"));
-
-        await userEvent.click(input);
+        const singleSelect = await waitFor(() => can.getByTestId("input-form-resource_type"));
+        
+        await userEvent.click(singleSelect);
         await userEvent.click(popups.getByText("Second value"));
 
         await waitFor(function testSelect() {
             expect(can.getByTestId("test-content").textContent).to.include("Second value");
         });
 
-        await userEvent.click(can.getByLabelText("Multi select input"));
+        await userEvent.click(can.getByTestId("input-form-resource_type_multi"));
         await userEvent.click(popups.getByText("Fifth value"));
         await userEvent.click(popups.getByText("Seventh value"));
 

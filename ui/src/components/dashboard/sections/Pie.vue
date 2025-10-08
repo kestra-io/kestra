@@ -27,7 +27,7 @@
     import {Chart, getDashboard} from "../composables/useDashboards";
     import {useChartGenerator} from "../composables/useDashboards";
 
-
+    
     import NoData from "../../layout/NoData.vue";
     import Utils, {useTheme} from "../../../utils/utils";
 
@@ -153,7 +153,7 @@
 
         let results = Object.create(null);
 
-        generated.value.results?.forEach((value) => {
+        generated.value.results.forEach((value) => {
             const field = parseValue(value[aggregator.field.key]);
             const aggregated = value[aggregator.value.key];
 

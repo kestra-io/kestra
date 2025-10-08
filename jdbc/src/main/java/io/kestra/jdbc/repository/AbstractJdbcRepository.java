@@ -309,7 +309,7 @@ public abstract class AbstractJdbcRepository {
                 throw new InvalidQueryFiltersException("Label field value must but instance of Map");
             }
         }
-        if(field==QueryFilter.Field.KIND){
+        if (field == QueryFilter.Field.KIND) {
             return applyKindCondition(value,operation);
         }
 

@@ -82,7 +82,7 @@
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@eslint/js": "^9.32.0",
         "@playwright/test": "^1.54.2",
-        "@rushstack/eslint-patch": "^1.12.0",
+        "@rushstack/eslint-patch": "^1.13.0",
         "@shikijs/markdown-it": "^3.12.2",
         "@storybook/addon-themes": "^9.1.5",
         "@storybook/addon-vitest": "^9.1.5",

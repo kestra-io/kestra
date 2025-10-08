@@ -36,7 +36,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @use "@kestra-io/ui-libs/src/scss/color-palette.scss" as colorPalette;
     .tabs-wrapper{
         display:flex;

@@ -530,7 +530,7 @@
     "execution not found": "未找到执行 <code>{executionId}</code>",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
     "execution not in state PAUSED": "执行 <code>{executionId}</code> 未处于暂停状态",
-    "execution replay": "此执行是对<code>{originalId}</code>的重放。",
+    "execution replay": "此执行是以下内容的重放",
     "execution replayed": "此执行已被重放。",
     "execution restarted": "此执行已重新启动{nbRestart}次。",
     "execution statistics": "执行统计",

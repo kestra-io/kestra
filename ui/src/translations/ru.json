@@ -530,7 +530,7 @@
     "execution not found": "Выполнение <code>{executionId}</code> не найдено",
     "execution not in state FAILED": "Выполнение <code>{executionId}</code> не в состоянии FAILED",
     "execution not in state PAUSED": "Выполнение <code>{executionId}</code> не в состоянии PAUSED",
-    "execution replay": "Это выполнение является повтором <code>{originalId}</code>.",
+    "execution replay": "Это выполнение является повтором",
     "execution replayed": "Это выполнение было воспроизведено.",
     "execution restarted": "Это выполнение было перезапущено {nbRestart} раз(а).",
     "execution statistics": "Статистика выполнения",

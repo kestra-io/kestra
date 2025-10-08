@@ -530,7 +530,7 @@
     "execution not found": "Ausführung <code>{executionId}</code> nicht gefunden",
     "execution not in state FAILED": "Ausführung <code>{executionId}</code> nicht im Zustand FAILED",
     "execution not in state PAUSED": "Ausführung <code>{executionId}</code> nicht im Zustand PAUSED",
-    "execution replay": "Diese Ausführung ist eine Wiederholung von <code>{originalId}</code>.",
+    "execution replay": "Diese Ausführung ist eine Wiederholung von",
     "execution replayed": "Diese Ausführung wurde erneut abgespielt.",
     "execution restarted": "Diese Ausführung wurde {nbRestart} Mal neu gestartet.",
     "execution statistics": "Ausführungsstatistiken",

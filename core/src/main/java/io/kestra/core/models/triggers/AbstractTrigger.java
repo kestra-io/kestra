@@ -50,6 +50,7 @@ abstract public class AbstractTrigger implements TriggerInterface {
     @NotNull
     @Builder.Default
     @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @Schema(defaultValue = "false")
     private boolean disabled = false;
 
     @Valid

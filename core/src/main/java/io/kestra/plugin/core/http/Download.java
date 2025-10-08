@@ -173,8 +173,8 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
         if (path.indexOf('/') != -1) {
             path = path.substring(path.lastIndexOf('/')); // keep the last segment
         }
-        if (path.indexOf('.') != -1) {
-            return path.substring(path.indexOf('.'));
+        if (path.lastIndexOf('.') != -1) {
+            return path.substring(path.lastIndexOf('.'));
         }
         return null;
     }

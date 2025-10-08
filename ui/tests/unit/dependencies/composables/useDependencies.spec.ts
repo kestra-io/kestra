@@ -9,30 +9,36 @@ import {useNamespacesStore} from "override/stores/namespaces";
 import {AxiosResponse} from "axios";
 import {useFlowStore} from "../../../../src/stores/flow";
 import {RouteParams} from "vue-router";
+import {useMiscStore} from "override/stores/misc";
 
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key})}));
 
-const mock = {
+const cyMock = {
   style: vi.fn().mockReturnThis(),
   forEach: vi.fn().mockReturnThis(),
   map: vi.fn().mockReturnThis(),
+  fromJson: vi.fn().mockReturnThis(),
+  update: vi.fn().mockReturnThis(),
+  getElementById: vi.fn().mockReturnThis(),
+  nonempty: vi.fn().mockReturnValue(true),
+  removeClass: vi.fn().mockReturnThis(),
+  addClass: vi.fn().mockReturnThis(),
+  connectedEdges: vi.fn().mockReturnThis(),
+  connectedNodes: vi.fn().mockReturnThis(),
 };
 
 vi.mock("cytoscape", () => {
   return {
     default: vi.fn(() => ({
-      nodes: vi.fn(() => mock),
-      edges: vi.fn(() => mock),
-      // elements: vi.fn(() => ({
-      //   removeClass: vi.fn(),
-      //   addClass: vi.fn(),
-      // })),
+      nodes: vi.fn(() => cyMock),
+      edges: vi.fn(() => cyMock),
+      elements: vi.fn(() => cyMock),
       on: vi.fn(),
-      ready: vi.fn((cb) => cb()), // immediately call the callback
-      // fit: vi.fn(),
-      // style: vi.fn(),
-      // animate: vi.fn(),
-      // getElementById: vi.fn(() => ({ renderPosition: vi.fn() })),
+      ready: vi.fn(),
+      fit: vi.fn(),
+      style: vi.fn(() => cyMock),
+      animate: vi.fn(),
+      getElementById: vi.fn(() => cyMock),
     })),
   }
 })
@@ -54,7 +60,7 @@ const mountComponentWithUseDependencies = (
     });
     const composable = wrapper.vm.composable as ReturnType<typeof useDependencies>;
 
-    return {wrapper, composable};
+    return {wrapper, ...composable};
   };
 
 describe("useDependencies composable", () => {
@@ -64,21 +70,21 @@ describe("useDependencies composable", () => {
 
   describe("onMounted", () => {
     it("should not load elements when container doesn't have ref", async () => {
-      const {composable} = mountComponentWithUseDependencies(FLOW, "test-id", {}, true, false);
+      const {isLoading, getElements} = mountComponentWithUseDependencies(FLOW, "test-id", {}, true, false);
 
       await nextTick();
 
-      expect(composable.isLoading.value).toBe(true);
-      expect(composable.getElements().length).toEqual(0);
+      expect(isLoading.value).toBe(true);
+      expect(getElements().length).toEqual(0);
     });
 
     it("should load elements in testing mode", async () => {
-      const {composable} = mountComponentWithUseDependencies(FLOW, "test-id", {}, true, true)
+      const {isLoading, getElements} = mountComponentWithUseDependencies(FLOW, "test-id", {}, true, true)
 
       await nextTick();
 
-      expect(composable.isLoading.value).toBe(false);
-      expect(composable.getElements().length).toBeGreaterThan(0);
+      expect(isLoading.value).toBe(false);
+      expect(getElements().length).toBeGreaterThan(0);
     });
 
     it("should load elements from nameSpace Store for SUBTYPE NAMESPACE", async () => {
@@ -92,12 +98,12 @@ describe("useDependencies composable", () => {
         data: mockData,
       } as AxiosResponse);
 
-      const {composable} = mountComponentWithUseDependencies("NAMESPACE", "test-id", {}, false, true);
+      const {isLoading, getElements} = mountComponentWithUseDependencies("NAMESPACE", "test-id", {}, false, true);
 
       await nextTick();
 
-      expect(composable.isLoading.value).toBe(false);
-      expect(composable.getElements().length).toBeGreaterThan(0);
+      expect(isLoading.value).toBe(false);
+      expect(getElements().length).toBeGreaterThan(0);
     });
 
     it("should load elements from flow Store for SUBTYPE FLOW", async () => {
@@ -118,15 +124,74 @@ describe("useDependencies composable", () => {
         count: 2
       });
 
-      const {composable} = mountComponentWithUseDependencies("FLOW", "test-id", {}, false, true);
+      const {isLoading, getElements} = mountComponentWithUseDependencies("FLOW", "test-id", {}, false, true);
 
       await nextTick();
 
-      expect(composable.isLoading.value).toBe(false);
-      expect(composable.getElements().length).toBeGreaterThan(0);
+      expect(isLoading.value).toBe(false);
+      expect(getElements().length).toBeGreaterThan(0);
     });
   });
-});
+
+  describe("theme reactivity", () => {
+    it("should react to theme changes", async () => {
+      mountComponentWithUseDependencies(FLOW, "test-id", {}, true, true); 
+
+      const miscStore = useMiscStore();
+      miscStore.theme = "dark";
+      await nextTick();
+
+      expect(cyMock.style).toHaveBeenCalled();
+      expect(cyMock.fromJson).toHaveBeenCalled();
+      expect(cyMock.update).toHaveBeenCalled();
+
+      miscStore.theme = "light";
+
+      await nextTick();
+
+      expect(cyMock.style).toHaveBeenCalled();
+      expect(cyMock.fromJson).toHaveBeenCalled();
+      expect(cyMock.update).toHaveBeenCalled();
+    })
+  });
+
+  describe("node selection", () => {
+    it("should select a node and update selectedNodeID", () => {
+      const {selectNode, selectedNodeID} = mountComponentWithUseDependencies(FLOW, "test-id", {}, true, true);
+
+      selectNode("node1");
+      expect(selectedNodeID.value).toBe("node1");
+    })
+  })
+
+  describe("SSE", () => {
+    it("should close SSE on unmount when subtype is EXECUTION", async () => {
+      const close = vi.fn();
+
+      vi.stubGlobal("EventSource", vi.fn(() => ({
+        close,
+      })));
+
+      const {wrapper} = mountComponentWithUseDependencies(EXECUTION);
+      await nextTick();
+
+      wrapper.unmount();
+
+      expect(close).toHaveBeenCalled();
+    });
+  })
+
+  describe("handlers", () => {
+    it("should reset selection when clearSelection is invoked", () => {
+      const {handlers, selectedNodeID} = mountComponentWithUseDependencies();
+      selectedNodeID.value = "some-node";
+
+      handlers.clearSelection();
+
+      expect(selectedNodeID.value).toBeUndefined();
+    })
+  })
+})
 
 it("should transform API response to cytoscape elements", () => {
   const response = {
@@ -143,33 +208,3 @@ it("should transform API response to cytoscape elements", () => {
   expect(edge.source).toBe("n1");
   expect(edge.target).toBe("n2");
 });
-
-//   it("should select a node and update selectedNodeID", async () => {
-//     const composable = useDependencies(container, FLOW, "flow1", {id: "flow1", namespace: "ns1"}, true);
-//     await nextTick();
-
-//     composable.selectNode("node1");
-//     expect(composable.selectedNodeID.value).toBe("node1");
-//   });
-
-//   it("should clear selection", async () => {
-//     const composable = useDependencies(container, FLOW, "flow1", {id: "flow1", namespace: "ns1"}, true);
-//     await nextTick();
-
-//     composable.selectNode("node1");
-//     composable.handlers.clearSelection();
-//     expect(composable.selectedNodeID.value).toBe(undefined);
-//   });
-
-//   it("should open and close SSE when subtype is EXECUTION", async () => {
-//     const composable = useDependencies(container, EXECUTION, "exec1", {id: "exec1", namespace: "ns1"}, true);
-//     await nextTick();
-
-//     // @ts-ignore
-//     composable.openSSE();
-//     expect(composable.sse.value).toBeDefined();
-
-//     // @ts-ignore
-//     composable.closeSSE();
-//     expect(composable.sse.value).toBeUndefined();
-//   });

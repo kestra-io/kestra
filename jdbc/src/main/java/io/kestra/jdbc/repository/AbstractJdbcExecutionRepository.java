@@ -296,9 +296,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 field("value")
             )
             .from(this.jdbcRepository.getTable())
-            .where(this.defaultFilter(tenantId, false))
-            .and(NORMAL_KIND_CONDITION);
+            .where(this.defaultFilter(tenantId, false));
 
+        boolean hasKindFilter = filters != null && filters.stream()
+            .anyMatch(f -> "kind".equalsIgnoreCase(f.field().name()) );
+        if (!hasKindFilter) {
+            select = select.and(NORMAL_KIND_CONDITION);
+        }
         select = select.and(this.filter(filters, "start_date", Resource.EXECUTION));
 
         return select;

@@ -84,10 +84,7 @@
         }
     }
 
-    const {setupInitialCodeTab} = useInitialFilesTabs()
-
-    const codeElement = EDITOR_ELEMENTS.find(e => e.value === "code")!
-    codeElement!.deserialize = (value: string) => setupInitialCodeTab(value, codeElement)
+    useInitialFilesTabs(EDITOR_ELEMENTS)
 
     const isTourRunning = computed(() => coreStore.guidedProperties?.tourStarted)
     const DEFAULT_TOUR_TABS = ["code", "topology"];

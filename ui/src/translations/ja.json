@@ -530,7 +530,7 @@
     "execution not found": "実行<code>{executionId}</code>が見つかりません",
     "execution not in state FAILED": "実行<code>{executionId}</code>はFAILED状態ではありません",
     "execution not in state PAUSED": "実行<code>{executionId}</code>はPAUSED状態ではありません",
-    "execution replay": "この実行は<code>{originalId}</code>のリプレイです。",
+    "execution replay": "この実行は次のリプレイです",
     "execution replayed": "この実行は再実行されました。",
     "execution restarted": "この実行は{nbRestart}回再開されました。",
     "execution statistics": "実行統計",

@@ -28,7 +28,7 @@
     const theme = ref(localStorage.getItem("theme") === "dark" ? "dark" : "light")
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     rapi-doc {
         background: transparent;
         width: 100%;

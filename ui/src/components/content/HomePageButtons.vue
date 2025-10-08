@@ -25,7 +25,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .docs-button-row {
     display: flex;
     justify-content: flex-start;

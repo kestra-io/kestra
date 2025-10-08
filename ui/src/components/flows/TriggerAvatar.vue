@@ -23,7 +23,7 @@
         </span>
     </div>
 </template>
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed} from "vue";
     import {useRoute} from "vue-router";
     import {usePluginsStore} from "../../stores/plugins";
@@ -96,7 +96,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .trigger {
         max-width: 180px;
         overflow-x: auto;

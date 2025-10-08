@@ -1,10 +1,10 @@
 <template>
-    <el-button data-component="FILENAME_PLACEHOLDER" data-test-id="execution-status" class="status" :size="props.size ?? ''" :style="style">
+    <el-button data-test-id="execution-status" class="status" :size="props.size ?? ''" :style="style">
         {{ props.title || FILTERS.cap(props.status) }}
     </el-button>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed} from "vue";
     import * as FILTERS from "../utils/filters";
 

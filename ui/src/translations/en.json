@@ -576,6 +576,7 @@
     },
     "title": "Title",
     "api": "API",
+    "more_actions": "More Actions",
     "expand error": "Expand only failed tasks",
     "expand all": "Expand all",
     "collapse all": "Collapse all",
@@ -713,7 +714,10 @@
         "folder_deletion_description": "Are you sure you want to delete this folder and all of its contents?",
         "folders_deletion_description": "Are you sure you want to delete {count} folders and all of its contents?",
         "mixed_deletion_description": "Are you sure you want to delete {folders} folders and {files} files?",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "deletion": {
+          "confirm": "Confirm"
+        }
       },
       "path": {
         "copy": "Copy path",
@@ -1412,7 +1416,8 @@
         "id readonly": "The property `id` cannot be changed — it's now set to its initial values. If you want to change it, you can create a new dashboard and remove the old one."
       },
       "deletion": {
-        "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
+        "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?",
+        "confirm": "Confirm"
       },
       "chart_preview": "Click on a chart source code to see its preview",
       "export": "Export to CSV"

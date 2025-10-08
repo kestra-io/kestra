@@ -17,7 +17,7 @@ public interface TriggerInterface extends Plugin, PluginVersioning {
 
     @NotNull
     @NotBlank
-    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
+    @Pattern(regexp = "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$")
     @Schema(title = "The class name for this current trigger.")
     String getType();
 

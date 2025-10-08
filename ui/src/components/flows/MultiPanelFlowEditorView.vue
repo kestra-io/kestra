@@ -127,29 +127,6 @@
     })
 
 
-    /**
-     * these actions are placeholders
-     * that will be replaced later on
-     */
-    const tempActions = {
-        openAddTaskTab(){},
-        openEditTaskTab(){},
-        closeTaskTab(){}
-    } as ReturnType<typeof useNoCodePanels>
-
-    const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, tempActions)
-
-    const noCodeElement = EDITOR_ELEMENTS.find(e => e.value === "nocode")!
-    noCodeElement!.deserialize = (value: string, allowCreate: boolean) => {
-        return allowCreate
-            ? setupInitialNoCodeTab(RawNoCode, value, t, noCodeHandlers, flowStore.flowYaml ?? "")
-            : setupInitialNoCodeTabIfExists(RawNoCode, value, t, noCodeHandlers, flowStore.flowYaml ?? "")
-
-    }
-
-    const TABS = isTourRunning.value ? DEFAULT_TOUR_TABS : DEFAULT_ACTIVE_TABS;
-
-    flowStore.creationId = flowStore.creationId ?? Utils.uid()
 
     const panels = computed<Panel[]>(() => editorView.value?.panels ?? [])
 
@@ -167,9 +144,18 @@
 
     const actions = useNoCodePanels(RawNoCode, panels, openTabs, focusTab)
 
-    tempActions.openAddTaskTab = actions.openAddTaskTab
-    tempActions.openEditTaskTab = actions.openEditTaskTab
-    tempActions.closeTaskTab = actions.closeTaskTab
+    const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, actions)
+
+    const noCodeElement = EDITOR_ELEMENTS.find(e => e.value === "nocode")!
+    noCodeElement!.deserialize = (value: string, allowCreate: boolean) => {
+        return allowCreate
+            ? setupInitialNoCodeTab(RawNoCode, value, t, noCodeHandlers, flowStore.flowYaml ?? "")
+            : setupInitialNoCodeTabIfExists(RawNoCode, value, t, noCodeHandlers, flowStore.flowYaml ?? "")
+    }
+
+    const TABS = isTourRunning.value ? DEFAULT_TOUR_TABS : DEFAULT_ACTIVE_TABS;
+
+    flowStore.creationId = flowStore.creationId ?? Utils.uid()
 
     function onRemoveTab(tab: string){
         onRemoveCodeTab(tab)
@@ -179,12 +165,9 @@
 
     watch(isFlowDirty, (dirty) => {
         for(const panel of panels.value){
-            if(panel.activeTab && isTabFlowRelated(panel.activeTab)){
-                panel.activeTab.dirty = dirty
-            }
             for(const tab of panel.tabs){
                 if(isTabFlowRelated(tab)){
-                    tab.dirty = dirty
+                    editorView.value?.setTabDirtyState(tab.value, dirty);
                 }
             }
         }

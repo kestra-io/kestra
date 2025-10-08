@@ -42,7 +42,7 @@
 
     const props = withDefaults(
         defineProps<{
-            data: ExecutionData;
+            data: Record<string, any>;
             keyLabelTranslationKey?: string;
         }>(),
         {

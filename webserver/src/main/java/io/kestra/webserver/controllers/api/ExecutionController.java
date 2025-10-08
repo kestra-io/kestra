@@ -195,7 +195,7 @@ public class ExecutionController {
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
-    
+
     @Inject
     private ExecutionStreamingService executionStreamingService;
 
@@ -487,7 +487,7 @@ public class ExecutionController {
     @Post(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by POST webhook trigger")
     @SingleResult
-    public Publisher<HttpResponse<WebhookResponse>> triggerExecutionByPostWebhook(
+    public Publisher<HttpResponse<?>> triggerExecutionByPostWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -500,7 +500,7 @@ public class ExecutionController {
     @Get(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by GET webhook trigger")
     @SingleResult
-    public Publisher<HttpResponse<WebhookResponse>> triggerExecutionByGetWebhook(
+    public Publisher<HttpResponse<?>> triggerExecutionByGetWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -513,7 +513,7 @@ public class ExecutionController {
     @Put(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by PUT webhook trigger")
     @SingleResult
-    public Publisher<HttpResponse<WebhookResponse>> triggerExecutionByPutWebhook(
+    public Publisher<HttpResponse<?>> triggerExecutionByPutWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -522,7 +522,7 @@ public class ExecutionController {
         return this.webhook(namespace, id, key, request);
     }
 
-    private Publisher<HttpResponse<WebhookResponse>> webhook(
+    private Publisher<HttpResponse<?>> webhook(
         String namespace,
         String id,
         String key,
@@ -532,7 +532,7 @@ public class ExecutionController {
         return webhook(find, key, request);
     }
 
-    protected Publisher<HttpResponse<WebhookResponse>> webhook(
+    protected Publisher<HttpResponse<?>> webhook(
         Optional<Flow> maybeFlow,
         String key,
         HttpRequest<String> request
@@ -614,7 +614,17 @@ public class ExecutionController {
                         );
                     })
                     .last()
-                    .map(event -> (HttpResponse<WebhookResponse>) HttpResponse.ok(WebhookResponse.fromExecution(event.getData(), executionUrl(event.getData()))))
+                    .map(event -> {
+                        if (webhook.get().getOutputsAsResponse()) {
+                            return HttpResponse.ok(event.getData().getOutputs());
+
+                        } else {
+                            return (HttpResponse<?>) HttpResponse.ok(WebhookResponse.fromExecution(
+                                event.getData(),
+                                executionUrl(event.getData())
+                            ));
+                        }
+                    })
                     .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
             } else {
                 return Mono.just(HttpResponse.ok(WebhookResponse.fromExecution(result, executionUrl(result))));
@@ -1307,7 +1317,7 @@ public class ExecutionController {
         if (execution.getState().isTerminated() && !isOnKillCascade) {
             throw new IllegalStateException("Execution is already finished, can't kill it");
         }
-        
+
         eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
         killQueue.emit(ExecutionKilledExecution
             .builder()

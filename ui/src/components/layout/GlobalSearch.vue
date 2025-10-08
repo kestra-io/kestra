@@ -1,5 +1,5 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER">
+    <div>
         <el-autocomplete
             ref="searchInput"
             class="flex-shrink-0"

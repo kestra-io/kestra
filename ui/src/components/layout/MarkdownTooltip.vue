@@ -1,5 +1,5 @@
 <template>
-    <span data-component="FILENAME_PLACEHOLDER" v-if="description">
+    <span v-if="description">
         <a @click="open()">
             <HelpCircle
                 title=""

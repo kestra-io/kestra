@@ -1,12 +1,11 @@
 <template>
-    <el-tabs data-component="FILENAME_PLACEHOLDER" class="router-link" :class="{top: top}" v-model="activeName" :type="type">
+    <el-tabs class="router-link" :class="{top: top}" v-model="activeName" :type="type">
         <el-tab-pane
             v-for="tab in tabs.filter(t => !t.hidden)"
             :key="tab.name"
             :label="tab.title"
             :name="tab.name || 'default'"
             :disabled="tab.disabled"
-            :data-component="`FILENAME_PLACEHOLDER#${tab}`"
         >
             <template #label>
                 <component :is="embedActiveTab || tab.disabled ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)" :data-test-id="tab.name">
@@ -21,7 +20,7 @@
             </template>
         </el-tab-pane>
     </el-tabs>
-    <section v-if="isEditorActiveTab || activeTab.component" data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
+    <section v-if="isEditorActiveTab || activeTab.component" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
         <el-splitter v-if="isEditorActiveTab" class="editor-splitter" @resize="onSplitterResize">
             <el-splitter-panel v-if="editorStore.explorerVisible" :size="editorStore.explorerWidth" min="15%" max="30%">
                 <EditorSidebar ref="sidebar" :currentNS="namespace" class="sidebar" />

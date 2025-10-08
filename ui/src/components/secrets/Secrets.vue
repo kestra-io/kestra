@@ -11,7 +11,6 @@
         </template>
     </Navbar>
     <section
-        data-component="FILENAME_PLACEHOLDER"
         class="d-flex flex-column fill-height padding-bottom"
         :class="miscStore.configs?.secretsEnabled === undefined ? 'mt-0 p-0' : 'container'"
     >

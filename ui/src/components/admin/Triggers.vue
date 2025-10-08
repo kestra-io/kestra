@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="routeInfo.title" />
-    <section data-component="FILENAME_PLACEHOLDER" class="container" v-if="ready">
+    <section class="container" v-if="ready">
         <div>
             <DataTable
                 @page-changed="onPageChanged"

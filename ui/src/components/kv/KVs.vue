@@ -10,7 +10,7 @@
             </ul>
         </template>
     </TopNavBar>
-    <section data-component="FILENAME_PLACEHOLDER" class="d-flex flex-column fill-height container padding-bottom">
+    <section class="d-flex flex-column fill-height container padding-bottom">
         <KVTable />
     </section>
 </template>

@@ -1,6 +1,5 @@
 <template>
     <el-tooltip
-        data-component="FILENAME_PLACEHOLDER"
         :key="uid('tooltip')"
         v-if="date"
         :content="inverted ? from : full"

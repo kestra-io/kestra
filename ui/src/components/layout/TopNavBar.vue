@@ -1,5 +1,5 @@
 <template>
-    <nav data-component="FILENAME_PLACEHOLDER" class="d-flex align-items-center w-100 gap-3 top-bar">
+    <nav class="d-flex align-items-center w-100 gap-3 top-bar">
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <div class="d-flex align-items-end gap-2">
                 <SidebarToggleButton

@@ -199,7 +199,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .no-code {
         height: 100%;
         overflow-y: auto;

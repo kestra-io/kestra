@@ -984,6 +984,29 @@ class ExecutionControllerRunnerTest {
         assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
     }
 
+    @Test
+    @LoadFlows({"flows/valids/resume-validate.yaml"})
+    @SuppressWarnings("unchecked")
+    void resumeValidateExecutionPaused() throws TimeoutException, InterruptedException, QueueException, InternalException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "resume-validate");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        // validate inputs to resume a paused execution
+        HttpResponse<?> resumeValidateResponse = client.toBlocking().exchange(
+          HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume/validate", null));
+        assertThat(resumeValidateResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // resume the execution
+        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+          HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", null));
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+
+        // check that the execution is no more paused
+        Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
+        assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     @LoadFlows({"flows/valids/pause_on_resume.yaml"})

@@ -19,12 +19,11 @@
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
         "prepare": "cd .. && husky ui/.husky && rm -f .git/hooks/*",
-        "notes": "node ./scripts/ci/generateReleaseNotes",
         "postinstall": "patch-package"
     },
     "dependencies": {
         "@js-joda/core": "^5.6.5",
-        "@kestra-io/ui-libs": "^0.0.250",
+        "@kestra-io/ui-libs": "^0.0.253",
         "@vue-flow/background": "^1.3.2",
         "@vue-flow/controls": "^1.1.2",
         "@vue-flow/core": "^1.46.3",

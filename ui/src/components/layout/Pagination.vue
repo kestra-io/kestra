@@ -1,5 +1,5 @@
 <template>
-    <div :data-component="'FILENAME_PLACEHOLDER' + (top ? '#top' : '#not-top')" class="d-flex pagination" :class="{'top': top}">
+    <div class="d-flex pagination" :class="{'top': top}">
         <slot name="search" />
         <div class="flex-grow-1 d-sm-none d-md-inline-block page-size">
             <el-select
@@ -52,6 +52,7 @@
     }>();
 
     const route = useRoute();
+    const PAGINATION_SIZE = `${storageKeys.PAGINATION_SIZE}__${String(route.name)}`;
 
     const {t} = useI18n();
 
@@ -64,7 +65,7 @@
 
     const internalSize = ref<number>(
         parseInt(
-            localStorage.getItem(storageKeys.PAGINATION_SIZE) as string ||
+            localStorage.getItem(PAGINATION_SIZE) as string ||
                 (route.query.size as string) ||
                 props.size?.toString() ||
                 "25"
@@ -83,7 +84,7 @@
     function pageSizeChange(value: number) {
         internalPage.value = 1;
         internalSize.value = value;
-        localStorage.setItem(storageKeys.PAGINATION_SIZE, value.toString());
+        localStorage.setItem(PAGINATION_SIZE, value.toString());
         emit("page-changed", {
             page: 1,
             size: internalSize.value,
@@ -109,7 +110,7 @@
         () => route.query,
         () => {
             internalSize.value = parseInt(
-                localStorage.getItem(storageKeys.PAGINATION_SIZE) as string ||
+                localStorage.getItem(PAGINATION_SIZE) as string ||
                     (route.query.size as string) ||
                     props.size?.toString() ||
                     "25"

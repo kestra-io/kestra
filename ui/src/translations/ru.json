@@ -530,7 +530,7 @@
     "execution not found": "Выполнение <code>{executionId}</code> не найдено",
     "execution not in state FAILED": "Выполнение <code>{executionId}</code> не в состоянии FAILED",
     "execution not in state PAUSED": "Выполнение <code>{executionId}</code> не в состоянии PAUSED",
-    "execution replay": "Это выполнение является повтором <code>{originalId}</code>.",
+    "execution replay": "Это выполнение является повтором",
     "execution replayed": "Это выполнение было воспроизведено.",
     "execution restarted": "Это выполнение было перезапущено {nbRestart} раз(а).",
     "execution statistics": "Статистика выполнения",
@@ -778,6 +778,7 @@
     "missingSource": "Отсутствует источник",
     "monogram": "Монограмма",
     "months": "Месяцы",
+    "more_actions": "Больше действий",
     "multi_panel_editor": {
       "close_all_panels": "Закрыть все панели",
       "close_all_tabs": "Закрыть все вкладки",
@@ -790,9 +791,12 @@
     "namespace and id readonly": "Свойства `namespace` и `id` не могут быть изменены — они установлены на начальные значения. Если вы хотите переименовать flow или изменить его namespace, вы можете создать новый flow и удалить старый.",
     "namespace files": {
       "create": {
-        "already_exists": "Файл с таким именем уже существует",
         "file": "Создать файл",
+        "file_already_exists": "Файл с таким именем уже существует",
+        "file_error": "Произошла ошибка при создании файла",
         "folder": "Создать папку",
+        "folder_already_exists": "Папка с таким именем уже существует",
+        "folder_error": "Произошла ошибка при создании папки",
         "label": "Создать"
       },
       "delete": {
@@ -803,11 +807,13 @@
         "label": "Удалить"
       },
       "dialog": {
-        "confirm": "Подтвердить",
-        "file_deletion": "Подтвердите удаление файла",
-        "file_deletion_description": "Вы уверены, что хотите удалить этот файл?",
-        "folder_deletion": "Подтвердите удаление папки",
-        "folder_deletion_description": "Вы уверены, что хотите удалить эту папку и все ее содержимое?",
+        "deletion": {
+          "confirm": "Подтвердить",
+          "files": "Вы уверены, что хотите удалить <code>{count}</code> файл(ы)?",
+          "folders": "Вы уверены, что хотите удалить <code>{count}</code> папку(и) и все её содержимое?",
+          "mixed": "Вы уверены, что хотите удалить папку(и) <code>{folders}</code> и файл(ы) <code>{files}</code>?",
+          "title": "Подтвердите удаление содержимого"
+        },
         "name": {
           "file": "Имя с расширением:",
           "folder": "Имя папки:"
@@ -897,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "Добавить блок после выполнения",
+        "charts": "Добавить диаграмму",
         "conditions": "Добавить условие",
         "errors": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
         "inputs": "Добавить поле input",
+        "numerator": "Добавить числитель",
         "pluginDefaults": "Добавить плагин по умолчанию",
         "tasks": "Добавить task",
-        "triggers": "Добавить trigger"
+        "triggers": "Добавить trigger",
+        "where": "Фильтруйте ваши данные"
       },
       "fields": {
         "general": {
@@ -946,14 +955,17 @@
       },
       "select": {
         "afterExecution": "Выберите task",
+        "charts": "Выберите тип диаграммы",
         "conditions": "Выберите условие",
         "errors": "Выберите task",
         "finally": "Выберите task",
         "inputs": "Выберите тип поля input",
+        "numerator": "Выберите числитель",
         "pluginDefaults": "Выберите плагин",
         "task": "Выберите task",
         "tasks": "Выберите task",
-        "triggers": "Выберите trigger"
+        "triggers": "Выберите trigger",
+        "where": "Выберите тип фильтра"
       },
       "toggle_pebble": "Переключить редактор Pebble",
       "unnamed": "Без имени",

@@ -16,6 +16,10 @@ export function useSelectTableActions({
 
     const handleSelectionChange = (value: any[]) => {
         selection.value = value.map(selectionMapper)
+
+        if (queryBulkAction.value && elTable?.value && value?.length < elTable.value.data?.length) {
+            queryBulkAction.value = false
+        }
     }
 
     const toggleAllUnselected = () => {

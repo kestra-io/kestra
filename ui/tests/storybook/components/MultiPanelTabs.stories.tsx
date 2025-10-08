@@ -8,7 +8,8 @@ import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
 import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
 import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
 
-import MultiPanelTabs, {Panel} from "../../../src/components/MultiPanelTabs.vue";
+import MultiPanelTabs from "../../../src/components/MultiPanelTabs.vue";
+import {Panel} from "../../../src/utils/multiPanelTypes";
 
 const meta: Meta<typeof MultiPanelTabs> = {
     title: "Components/MultiPanelTabs",

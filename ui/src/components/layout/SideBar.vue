@@ -1,7 +1,6 @@
 <template>
     <SidebarMenu
         ref="sideBarRef"
-        data-component="FILENAME_PLACEHOLDER"
         id="side-menu"
         :menu
         @update:collapsed="onToggleCollapse"
@@ -32,8 +31,7 @@
     import {
         onUpdated,
         ref,
-        computed,
-        shallowRef, h
+        computed, h
     } from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
@@ -64,7 +62,7 @@
 
     const layoutStore = useLayoutStore();
 
-    function onToggleCollapse(folded) {
+    function onToggleCollapse(folded: boolean) {
         collapsed.value = folded;
         layoutStore.setSideMenuCollapsed(folded);
         $emit("menu-collapse", folded);
@@ -72,7 +70,7 @@
         return folded;
     }
 
-    function disabledCurrentRoute(items) {
+    function disabledCurrentRoute(items: MenuItem[]) {
         return items
             .map(r => {
                 if (r.href?.path === $route.path) {
@@ -96,7 +94,7 @@
 
     function expandParentIfNeeded() {
         document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => {
-            e.click()
+            (e as HTMLElement).click()
         });
     }
 
@@ -112,7 +110,7 @@
             ...(bookmarksStore.pages?.length ? [{
                 title: t("bookmark"),
                 icon: {
-                    element: shallowRef(StarOutline),
+                    element: StarOutline,
                     class: "menu-icon",
                 },
                 child: [{
@@ -128,7 +126,7 @@
     const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .collapseButton {
     position: absolute;
     top: .5rem;

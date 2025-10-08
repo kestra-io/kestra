@@ -31,7 +31,7 @@
             </ul>
         </template>
     </TopNavBar>
-    <section data-component="FILENAME_PLACEHOLDER" :class="{container: topbar}" v-if="ready">
+    <section :class="{container: topbar}" v-if="ready">
         <div>
             <DataTable
                 @page-changed="onPageChanged"
@@ -348,8 +348,7 @@
 
     const routeInfo = computed(() => ({title: t("flows")}));
 
-    const dataTableRef = useTemplateRef<typeof DataTable>("dataTable");
-
+    const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");
     const {queryWithFilter, onPageChanged, onRowDoubleClick, onSort} = useDataTableActions({dblClickRouteName: "flows/update"});
 
     function selectionMapper({id, namespace, disabled}: {id: string; namespace: string; disabled: boolean}) {
@@ -361,11 +360,11 @@
     }
 
     const {selection, queryBulkAction, handleSelectionChange, toggleAllUnselected, toggleAllSelection} = useSelectTableActions({
-        dataTableRef,
+        dataTableRef: selectTableRef,
         selectionMapper
     });
 
-    const selectionIds = computed(() => selection.value.map((flow) => flow.id));
+    const selectionIds = computed(() => selection.value.map((flow) => ({id: flow.id, namespace: flow.namespace})));
 
     interface ChartDefinition {
         id: string;
@@ -447,7 +446,7 @@
                         toast.success(t("flows exported", {count: flowCount}));
                     });
                 } else {
-                    return flowStore.exportFlowByIds({ids: selectionIds.value}).then(() => {
+                    return flowStore.exportFlowByIds({ids: selection.value}).then(() => {
                         toast.success(t("flows exported", {count: flowCount}));
                     });
                 }
@@ -617,7 +616,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .shadow {
     box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
 }

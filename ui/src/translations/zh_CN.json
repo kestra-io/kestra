@@ -907,6 +907,7 @@
         "errors": "添加错误处理程序",
         "finally": "添加一个finally块",
         "inputs": "添加一个input字段",
+        "numerator": "添加分子",
         "pluginDefaults": "添加插件默认值",
         "tasks": "添加任务",
         "triggers": "添加一个trigger"
@@ -956,6 +957,7 @@
         "errors": "选择一个task",
         "finally": "选择一个task",
         "inputs": "选择一个input字段类型",
+        "numerator": "选择一个分子",
         "pluginDefaults": "选择插件",
         "task": "选择一个task",
         "tasks": "选择一个task",

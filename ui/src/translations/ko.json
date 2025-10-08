@@ -907,6 +907,7 @@
         "errors": "오류 처리기 추가",
         "finally": "마지막 블록 추가",
         "inputs": "입력 필드 추가",
+        "numerator": "분자 추가",
         "pluginDefaults": "플러그인 기본값 추가",
         "tasks": "작업 추가",
         "triggers": "트리거 추가"
@@ -956,6 +957,7 @@
         "errors": "작업 선택",
         "finally": "작업 선택",
         "inputs": "입력 필드 유형 선택",
+        "numerator": "분자를 선택하세요",
         "pluginDefaults": "플러그인 선택",
         "task": "작업 선택",
         "tasks": "작업 선택",

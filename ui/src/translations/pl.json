@@ -907,6 +907,7 @@
         "errors": "Dodaj obsługę błędów",
         "finally": "Dodaj blok finally",
         "inputs": "Dodaj pole input",
+        "numerator": "Dodaj licznik",
         "pluginDefaults": "Dodaj domyślny plugin",
         "tasks": "Dodaj task",
         "triggers": "Dodaj trigger"
@@ -956,6 +957,7 @@
         "errors": "Wybierz task",
         "finally": "Wybierz task",
         "inputs": "Wybierz typ pola input",
+        "numerator": "Wybierz licznik",
         "pluginDefaults": "Wybierz plugin",
         "task": "Wybierz task",
         "tasks": "Wybierz task",

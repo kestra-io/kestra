@@ -25,4 +25,4 @@ triggers:
     type: io.kestra.plugin.core.trigger.Webhook
     key: "{{ flow.id }}"
     wait: true
-    outputsAsResponse: true
+    returnOutputs: true

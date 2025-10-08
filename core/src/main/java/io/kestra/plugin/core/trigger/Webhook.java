@@ -78,7 +78,7 @@ import jakarta.validation.constraints.Size;
            "url": "the_execution_url_inside_ui",
         }
         ```
-        If you set the `wait` property to `true` and `outputsAsResponse` to `true`, the webhook call will wait for the flow to finish and return the flow outputs as response.
+        If you set the `wait` property to `true` and `returnOutputs` to `true`, the webhook call will wait for the flow to finish and return the flow outputs as response.
 
         A webhook trigger can have conditions, but it doesn't support conditions of type `MultipleCondition`."""
 )
@@ -160,10 +160,10 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
     @PluginProperty
     @Builder.Default
     @Schema(
-        title = "Sent outputs of the flows as response for webhook caller.",
-        description = "Required `wait` TO BE `true`."
+        title = "Send outputs of the flows as response for webhook caller.",
+        description = "Requires `wait` to be `true`."
     )
-    private Boolean outputsAsResponse = false;
+    private Boolean returnOutputs = false;
 
     public Optional<Execution> evaluate(HttpRequest<String> request, io.kestra.core.models.flows.Flow flow) {
         String body = request.getBody().orElse(null);

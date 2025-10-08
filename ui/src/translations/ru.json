@@ -903,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "Добавить блок после выполнения",
+        "charts": "Добавить диаграмму",
         "conditions": "Добавить условие",
         "errors": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
         "inputs": "Добавить поле input",
+        "numerator": "Добавить числитель",
         "pluginDefaults": "Добавить плагин по умолчанию",
         "tasks": "Добавить task",
-        "triggers": "Добавить trigger"
+        "triggers": "Добавить trigger",
+        "where": "Фильтруйте ваши данные"
       },
       "fields": {
         "general": {
@@ -952,14 +955,17 @@
       },
       "select": {
         "afterExecution": "Выберите task",
+        "charts": "Выберите тип диаграммы",
         "conditions": "Выберите условие",
         "errors": "Выберите task",
         "finally": "Выберите task",
         "inputs": "Выберите тип поля input",
+        "numerator": "Выберите числитель",
         "pluginDefaults": "Выберите плагин",
         "task": "Выберите task",
         "tasks": "Выберите task",
-        "triggers": "Выберите trigger"
+        "triggers": "Выберите trigger",
+        "where": "Выберите тип фильтра"
       },
       "toggle_pebble": "Переключить редактор Pebble",
       "unnamed": "Без имени",

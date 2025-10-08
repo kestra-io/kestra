@@ -865,6 +865,23 @@ public class JdbcExecutor implements ExecutorInterface {
                         log.trace("TaskRun terminated: {}", taskRun);
                     }
 
+                    // Recalculate execution final state if all tasks are terminated
+                    // This ensures the parent execution state reflects the final state of its tasks
+                    // especially when subflows succeed after retries or manual restarts
+                    FlowWithSource parentFlow = current.getFlow() != null ? current.getFlow() : findFlow(current.getExecution());
+                    boolean isTerminated = executionService.isTerminated(parentFlow, current.getExecution());
+
+                    if (isTerminated) {
+                        State.Type currentState = current.getExecution().getState().getCurrent();
+                        State.Type finalState = current.getExecution().guessFinalState(parentFlow);
+                        if (finalState != currentState) {
+                            current = current.withExecution(
+                                current.getExecution().withState(finalState),
+                                "recalculateFinalStateAfterSubflow"
+                            );
+                        }
+                    }
+
                     // join worker result
                     return Pair.of(
                         current,
@@ -1117,6 +1134,20 @@ public class JdbcExecutor implements ExecutorInterface {
                 executor = executor.withFlow(findFlow(executor.getExecution()));
             }
             boolean isTerminated = executor.getFlow() != null && executionService.isTerminated(executor.getFlow(), executor.getExecution());
+
+            // Recalculate final state for terminated executions
+            // This ensures that if taskRuns changed state (e.g., subflow succeeded after retry),
+            // the execution state reflects the final taskRun states, not intermediate states
+            if (isTerminated && executor.getFlow() != null) {
+                State.Type currentState = executor.getExecution().getState().getCurrent();
+                State.Type finalState = executor.getExecution().guessFinalState(executor.getFlow());
+                if (finalState != currentState) {
+                    executor = executor.withExecution(
+                        executor.getExecution().withState(finalState),
+                        "recalculateFinalState"
+                    );
+                }
+            }
 
             // purge the executionQueue
             // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.

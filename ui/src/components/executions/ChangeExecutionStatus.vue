@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, getCurrentInstance} from "vue";
+    import {computed, ref} from "vue";
     import {useStore} from "vuex";
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
@@ -100,7 +100,7 @@
         },
     });
 
-    const emit = defineEmits<["follow"]>();
+    const emit = defineEmits<{(e: "follow"): void}>();
 
     const store = useStore();
     const router = useRouter();
@@ -150,7 +150,7 @@
             })
             .then((response: any) => {
                 if (response.data.id === props.execution.id) {
-                    const http = (store as any).$http || getCurrentInstance()?.appContext.config.globalProperties.$http;
+                    const http = (store as any).$http;
                     return ExecutionUtils.waitForState(http, store, response.data);
                 } else {
                     return response.data;

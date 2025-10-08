@@ -1101,7 +1101,7 @@
     "cron": "Cron",
     "execution_failed": "Execution failed! Last error was",
     "execution restarted": "This execution has been restarted {nbRestart} time(s).",
-    "execution replay": "This execution is a replay of <code>{originalId}</code>.",
+    "execution replay": "This execution is a replay of",
     "execution replayed": "This execution has been replayed.",
     "task run id": "TaskRun ID",
     "active": "Active",

@@ -30,97 +30,105 @@
     </ul>
 </template>
 
-<script setup>
-    import {mapStores} from "pinia";
+<script setup lang="ts">
+    import {ref, computed, onMounted} from "vue";
     import {useDocStore} from "../../stores/doc";
     import RecursiveToc from "./RecursiveToc.vue";
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
-</script>
 
-<script>
-    export default {
-        data() {
-            return {
-                sections: {
-                    "Get Started with Kestra": [
-                        "Getting Started",
-                        "Tutorial",
-                        "Architecture",
-                        "Installation Guide",
-                        "User Interface"
-                    ],
-                    "Build with Kestra": [
-                        "Concepts",
-                        "Workflow Components",
-                        "Expressions",
-                        "Version Control & CI/CD",
-                        "Plugin Developer Guide",
-                        "How-to Guides"
-                    ],
-                    "Scale with Kestra": [
-                        "Enterprise Edition",
-                        "Task Runners",
-                        "Best Practices"
-                    ],
-                    "Manage Kestra": [
-                        "Administrator Guide",
-                        "Configuration Guide",
-                        "Migration Guide",
-                        "Terraform Provider",
-                        "API Reference"
-                    ]
-                },
-                rawStructure: undefined,
-                query: undefined
-            }
-        },
-        computed: {
-            ...mapStores(useDocStore),
-            toc() {
-                if (this.rawStructure === undefined) {
-                    return undefined;
-                }
+    interface TocItem {
+        title: string;
+        path: string;
+        hideSidebar?: boolean;
+        children?: TocItem[];
+    }
 
-                let childrenWithMetadata = JSON.parse(JSON.stringify(this.rawStructure));
-                childrenWithMetadata = Object.fromEntries(Object.entries(childrenWithMetadata)
-                    .filter(([_, {hideSidebar}]) => !hideSidebar)
-                    .map(([url, metadata]) => [url, {
-                        ...metadata,
-                        path: url
-                    }]));
-                Object.entries(childrenWithMetadata)
-                    .forEach(([url, metadata]) => {
-                        const split = url.split("/");
-                        const parentUrl = split.slice(0, split.length - 1).join("/");
-                        const parent = childrenWithMetadata[parentUrl];
-                        if (parent !== undefined) {
-                            parent.children = [...(parent.children ?? []), metadata];
-                        }
-                    });
+    interface SearchResult {
+        parsedUrl: string;
+        title: string;
+    }
 
-                return Object.entries(childrenWithMetadata)[0]?.[1]?.children;
-            },
-            sectionsWithChildren() {
-                if (this.toc === undefined) {
-                    return undefined;
-                }
+    const docStore = useDocStore();
 
-                return Object.entries(this.sections).map(([section, childrenTitles]) => [section, this.toc.filter(({title}) => childrenTitles.includes(title))]);
-            }
-        },
-        async mounted() {
-            this.rawStructure = await this.docStore.children();
-        },
-        methods: {
-            async search(query, cb) {
-                cb(await this.docStore.search({q: query}));
-            }
+    const sections = {
+        "Get Started with Kestra": [
+            "Getting Started",
+            "Tutorial",
+            "Architecture",
+            "Installation Guide",
+            "User Interface"
+        ],
+        "Build with Kestra": [
+            "Concepts",
+            "Workflow Components",
+            "Expressions",
+            "Version Control & CI/CD",
+            "Plugin Developer Guide",
+            "How-to Guides"
+        ],
+        "Scale with Kestra": [
+            "Enterprise Edition",
+            "Task Runners",
+            "Best Practices"
+        ],
+        "Manage Kestra": [
+            "Administrator Guide",
+            "Configuration Guide",
+            "Migration Guide",
+            "Terraform Provider",
+            "API Reference"
+        ]
+    };
+
+    const rawStructure = ref<any>(undefined);
+    const query = ref<string>("");
+
+    const toc = computed((): TocItem[] | undefined => {
+        if (rawStructure.value === undefined) {
+            return undefined;
         }
+
+        let childrenWithMetadata: Record<string, TocItem> = Object.fromEntries(Object.entries(rawStructure.value)
+            .filter(([_, metadata]: [string, any]) => !metadata.hideSidebar)
+            .map(([url, metadata]: [string, any]) => [url, {
+                ...metadata,
+                path: url
+            } as TocItem]));
+        Object.entries(childrenWithMetadata)
+            .forEach(([url, metadata]: [string, any]) => {
+                const split = url.split("/");
+                const parentUrl = split.slice(0, split.length - 1).join("/");
+                const parent = childrenWithMetadata[parentUrl];
+                if (parent !== undefined) {
+                    parent.children = [...(parent.children ?? []), metadata];
+                }
+            });
+
+        return Object.entries(childrenWithMetadata)[0]?.[1]?.children;
+    });
+
+    const sectionsWithChildren = computed((): [string, TocItem[]][] | undefined => {
+        if (toc.value === undefined) {
+            return undefined;
+        }
+
+        return Object.entries(sections).map(([section, childrenTitles]) => [
+            section, 
+            toc.value!.filter(({title}) => childrenTitles.includes(title))
+        ]);
+    });
+
+    onMounted(async () => {
+        rawStructure.value = await docStore.children();
+    });
+
+    const search = async (query: string, cb: (results: SearchResult[]) => void) => {
+        cb(await docStore.search({q: query}));
     };
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
     ul > li > span:first-child {
         font-size: 12px;
     }

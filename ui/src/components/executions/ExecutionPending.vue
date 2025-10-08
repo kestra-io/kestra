@@ -19,17 +19,27 @@
     </EmptyTemplate>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {PropType} from "vue";
+
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
+
+    interface ExecutionState {
+        current: string;
+    }
+
+    interface Execution {
+        state: ExecutionState;
+    }
 
     defineProps({
         execution: {
-            type: Object,
+            type: Object as PropType<Execution>,
             required: true
         }
     });
 
-    const getStyle = (state) => ({
+    const getStyle = (state: string) => ({
         color: `var(--ks-content-${state.toLowerCase()})`,
         border: `1px solid var(--ks-border-${state.toLowerCase()})`,
         backgroundColor: `var(--ks-background-${state.toLowerCase()})`

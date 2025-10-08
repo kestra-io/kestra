@@ -84,11 +84,7 @@
         }
     }
 
-    const {setupInitialCodeTab} = useInitialFilesTabs()
-
-    const codeElement = EDITOR_ELEMENTS.find(e => e.value === "code")!
-    codeElement!.deserialize = (value: string) => setupInitialCodeTab(value, codeElement)
-
+    useInitialFilesTabs(EDITOR_ELEMENTS)
 
     const isTourRunning = computed(() => coreStore.guidedProperties?.tourStarted)
     const DEFAULT_TOUR_TABS = ["code", "topology"];
@@ -116,6 +112,7 @@
 
     const TABS = isTourRunning.value ? DEFAULT_TOUR_TABS : DEFAULT_ACTIVE_TABS;
 
+    flowStore.creationId = flowStore.creationId ?? Utils.uid()
 
     // Track initial tabs opened while editing or creating flow.
     let hasTrackedInitialTabs = false;
@@ -149,7 +146,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
     @use "@kestra-io/ui-libs/src/scss/color-palette.scss" as colorPalette;
 
     .playgroundMode :deep(.tabs-wrapper) {

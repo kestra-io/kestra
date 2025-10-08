@@ -530,7 +530,7 @@
     "execution not found": "실행 <code>{executionId}</code>을(를) 찾을 수 없습니다",
     "execution not in state FAILED": "실행 <code>{executionId}</code>이(가) FAILED 상태가 아닙니다",
     "execution not in state PAUSED": "실행 <code>{executionId}</code>이(가) PAUSED 상태가 아닙니다",
-    "execution replay": "이 실행은 <code>{originalId}</code>의 재실행입니다.",
+    "execution replay": "이 실행은 다음의 재실행입니다:",
     "execution replayed": "이 실행은 재실행되었습니다.",
     "execution restarted": "이 실행은 {nbRestart}번 다시 시작되었습니다.",
     "execution statistics": "실행 통계",

@@ -530,7 +530,7 @@
     "execution not found": "निष्पादन <code>{executionId}</code> नहीं मिला",
     "execution not in state FAILED": "निष्पादन <code>{executionId}</code> FAILED स्थिति में नहीं है",
     "execution not in state PAUSED": "निष्पादन <code>{executionId}</code> PAUSED स्थिति में नहीं है",
-    "execution replay": "यह निष्पादन <code>{originalId}</code> का पुन: प्ले है।",
+    "execution replay": "यह निष्पादन का पुनरावृत्ति है",
     "execution replayed": "इस execution को पुनः चलाया गया है।",
     "execution restarted": "इस execution को {nbRestart} बार पुनः प्रारंभ किया गया है।",
     "execution statistics": "निष्पादन सांख्यिकी",

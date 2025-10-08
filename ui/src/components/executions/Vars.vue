@@ -31,7 +31,6 @@
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import {useExecutionsStore} from "../../stores/executions";
 
-    type ExecutionData = Record<string, any>;
 
     interface VariableRow {
         key: string;

@@ -1,19 +1,19 @@
 import {computed, h, markRaw, Ref, watch} from "vue"
-import type {Panel} from "../MultiPanelTabs.vue";
 import EditorWrapper from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
 import {EditorTabProps, useEditorStore} from "../../stores/editor";
+import {DeserializableEditorElement, Panel} from "../../utils/multiPanelTypes";
 
 export const CODE_PREFIX = "code"
 
-export function getTabFromFilesTab(tab: EditorTabProps){
+function getTabFromFilesTab(tab: EditorTabProps){
     return {
         value: `${CODE_PREFIX}-${tab.path}`,
         button: {
             label: tab.name,
             icon: () => h(TypeIcon, {name:tab.name})
         },
-        component: () => h(markRaw(EditorWrapper), {...tab, flow: false}),
+        component: () => h(markRaw(EditorWrapper), {...tab}),
         dirty: tab.dirty,
     }
 }
@@ -21,20 +21,21 @@ export function getTabFromFilesTab(tab: EditorTabProps){
 export function useInitialFilesTabs(){
     const editorStore = useEditorStore()
 
-    function setupInitialCodeTab(tab: string){
-        if(!tab.startsWith(`${CODE_PREFIX}-`)){
+    function setupInitialCodeTab(tab: string, codeElement: DeserializableEditorElement){
+        const flow = CODE_PREFIX === tab
+        if(!flow && !tab.startsWith(`${CODE_PREFIX}-`)){
             return
         }
-        const filePath = tab.substring(5)
+        const filePath = flow ? "Flow.yaml" : tab.substring(5)
         const editorTab: EditorTabProps = {
             name: filePath.split("/").pop()!,
             path: filePath,
             extension: filePath.split(".").pop()!,
-            flow: false,
+            flow,
             dirty: false
         }
         editorStore.openTab(editorTab)
-        return getTabFromFilesTab(editorTab)
+        return flow ? codeElement : getTabFromFilesTab(editorTab)
     }
 
     return {setupInitialCodeTab}

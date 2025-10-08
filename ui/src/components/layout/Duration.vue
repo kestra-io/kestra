@@ -1,5 +1,5 @@
 <template>
-    <span data-component="FILENAME_PLACEHOLDER">
+    <span>
         <el-tooltip v-if="histories" popperClass="duration-tt" :persistent="false" transition="" :hideAfter="0" effect="light">
             <template #content>
                 <span v-for="(history, index) in histories" :key="'tt-' + index">

@@ -478,7 +478,7 @@
         },
     };
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .namespace-tag {
     background-color: var(--ks-log-background-debug) !important;
     color: var(--ks-log-content-debug);

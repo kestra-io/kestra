@@ -56,8 +56,8 @@
             if (deserializedTab) {
                 return {
                     panel: {
-                        activeTab: element,
-                        tabs: [element],
+                        activeTab: deserializedTab,
+                        tabs: [deserializedTab],
                         size: defaultPanelSize.value,
                     },
                     prepend: element.prepend ?? false

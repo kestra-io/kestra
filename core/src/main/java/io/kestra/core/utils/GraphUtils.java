@@ -7,6 +7,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.hierarchies.*;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
@@ -391,6 +392,8 @@ public class GraphUtils {
                     currentGraph = flowableTask.tasksTree(execution, currentTaskRun, parentValues);
                 } else if (currentTask instanceof ExecutableTask<?> subflowTask) {
                     currentGraph = new SubflowGraphTask(subflowTask, currentTaskRun, parentValues, relationType);
+                } else if (currentTask instanceof RunnableTask<?> runnableTask) {
+                    currentGraph = runnableTask.graph(currentTaskRun, parentValues, relationType);
                 } else {
                     currentGraph = new GraphTask(currentTask, currentTaskRun, parentValues, relationType);
                 }

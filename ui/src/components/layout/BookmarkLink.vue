@@ -14,7 +14,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {nextTick, ref} from "vue"
     import {useI18n} from "vue-i18n";
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";

@@ -343,7 +343,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .el-card {
         padding: 0;
 

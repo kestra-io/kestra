@@ -172,7 +172,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {nextTick, ref, watch, provide, computed} from "vue";
     import {useI18n} from "vue-i18n";
 
@@ -628,7 +628,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .editor-tabs-container{
         display: grid;
         grid-template-columns: auto 1fr auto;

@@ -141,7 +141,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .el-form-item {
     width: 100%;
 

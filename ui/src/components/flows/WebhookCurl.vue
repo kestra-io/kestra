@@ -110,7 +110,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .webhook-curl {
     position: relative;
     border: 1px solid var(--ks-border-primary);

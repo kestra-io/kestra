@@ -217,7 +217,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .basic-auth-login {
         flex-shrink: 1;
         width: 400px;

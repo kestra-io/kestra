@@ -530,7 +530,7 @@
     "execution not found": "실행 <code>{executionId}</code>을(를) 찾을 수 없습니다",
     "execution not in state FAILED": "실행 <code>{executionId}</code>이(가) FAILED 상태가 아닙니다",
     "execution not in state PAUSED": "실행 <code>{executionId}</code>이(가) PAUSED 상태가 아닙니다",
-    "execution replay": "이 실행은 <code>{originalId}</code>의 재실행입니다.",
+    "execution replay": "이 실행은 다음의 재실행입니다:",
     "execution replayed": "이 실행은 재실행되었습니다.",
     "execution restarted": "이 실행은 {nbRestart}번 다시 시작되었습니다.",
     "execution statistics": "실행 통계",
@@ -778,6 +778,7 @@
     "missingSource": "소스 누락",
     "monogram": "모노그램",
     "months": "개월",
+    "more_actions": "추가 작업",
     "multi_panel_editor": {
       "close_all_panels": "모든 패널 닫기",
       "close_all_tabs": "모든 탭 닫기",
@@ -806,11 +807,13 @@
         "label": "삭제"
       },
       "dialog": {
-        "confirm": "확인",
-        "file_deletion": "파일 삭제 확인",
-        "file_deletion_description": "이 파일을 삭제하시겠습니까?",
-        "folder_deletion": "폴더 삭제 확인",
-        "folder_deletion_description": "이 폴더와 모든 내용을 삭제하시겠습니까?",
+        "deletion": {
+          "confirm": "확인",
+          "files": "<code>{count}</code>개의 파일을 삭제하시겠습니까?",
+          "folders": "<code>{count}</code>개의 폴더와 모든 내용을 삭제하시겠습니까?",
+          "mixed": "<code>{folders}</code> 폴더와 <code>{files}</code> 파일을 삭제하시겠습니까?",
+          "title": "콘텐츠 삭제 확인"
+        },
         "name": {
           "file": "확장자를 포함한 이름:",
           "folder": "폴더 이름:"

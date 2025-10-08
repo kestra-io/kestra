@@ -568,6 +568,7 @@
                             name: data.fileName,
                             path: path,
                             extension: data.fileName.split(".").pop(),
+                            flow: false,
                         });
                     }
                 }
@@ -737,6 +738,7 @@
                     name: item.split("/").pop(),
                     extension: item.split(".").pop(),
                     path: item,
+                    flow: false,
                 });
 
                 this.filter = "";
@@ -992,6 +994,7 @@
                         name: NAME,
                         path,
                         extension: extension,
+                        flow: false,
                     });
 
                     this.dialog.folder = path.substring(0, path.lastIndexOf("/"));

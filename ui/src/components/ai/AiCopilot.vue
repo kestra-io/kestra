@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, getCurrentInstance, onMounted, ref, watch} from "vue";
+    import {computed, getCurrentInstance, onMounted, onUnmounted, ref, watch} from "vue";
     import Close from "vue-material-design-icons/Close.vue";
     import KeyboardReturn from "vue-material-design-icons/KeyboardReturn.vue";
     import AiIcon from "./AiIcon.vue";
@@ -74,6 +74,10 @@
 
     onMounted(() => {
         promptInput.value?.focus();
+    })
+
+    onUnmounted(() => {
+        sessionStorage.removeItem("kestra-ai-prompt");
     })
 
     const prompt = ref(sessionStorage.getItem("kestra-ai-prompt") ?? "");

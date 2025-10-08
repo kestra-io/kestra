@@ -91,45 +91,6 @@
             showKeyShortcuts();
             return false;
         }
-
-        if (!editorView.value) return false;
-
-        const panels = editorView.value.panels ?? [];
-        const openTabs = editorView.value.openTabs ?? [];
-
-        // If tab already open
-        if (openTabs.includes(tabValue)) {
-            const panelWithTab = panels.find(p => p.tabs.some(t => t.value === tabValue));
-
-            if (panelWithTab) {
-                const isActive = panelWithTab.activeTab?.value === tabValue;
-
-                if (isActive) {
-                    const tabIndex = panelWithTab.tabs.findIndex(t => t.value === tabValue);
-                    panelWithTab.tabs.splice(tabIndex, 1);
-
-                    if (panelWithTab.tabs.length === 0) {
-                        panels.splice(panels.indexOf(panelWithTab), 1);
-                    } else {
-                        panelWithTab.activeTab = panelWithTab.tabs[0];
-                    }
-
-                    // Reflect changes in editorView
-                    editorView.value.openTabs = panels.flatMap(p => p.tabs.map(t => t.value));
-                    editorView.value.panels = panels;
-
-                    return true;
-                }
-
-                // If not active, just focus it
-                editorView.value.setTabValue(tabValue);
-                return true;
-            }
-        }
-
-        //Otherwise, open a new tab normally
-        editorView.value.setTabValue(tabValue);
-        return true;
     }
 
     const {t} = useI18n()

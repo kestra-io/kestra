@@ -11,7 +11,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {useI18n} from "vue-i18n";
     import AiIcon from "./AiIcon.vue";
 

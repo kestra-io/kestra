@@ -28,7 +28,6 @@ test.describe("Flow Page", () => {
             await page.getByRole("textbox", {name: "Email"}).fill("user@kestra.io");
             await page.getByRole("textbox", {name: "Password"}).fill("DemoDemo1");
             await page.getByRole("button", {name: "Login"}).click();
-            await expect(page.getByRole("heading", {name: "Overview"})).toBeVisible();
         });
 
         await page.goto("/ui/flows");

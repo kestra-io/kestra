@@ -1,5 +1,5 @@
 <template>
-    <div class="enhanced-documentation" data-component="EnhancedMarkdown">
+    <div class="enhanced-documentation">
         <div v-if="showSearch" class="doc-toolbar">
             <el-input
                 v-model="searchQuery"

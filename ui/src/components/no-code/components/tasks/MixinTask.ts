@@ -29,7 +29,7 @@ export default defineComponent({
         },
         definitions: {
             type: Object,
-            default: () => undefined
+            default: undefined
         }
     },
     emits: ["update:modelValue"],

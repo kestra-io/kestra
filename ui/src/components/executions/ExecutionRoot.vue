@@ -203,7 +203,7 @@
         }
     };
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .full-space {
         flex: 1 1 auto;
     }

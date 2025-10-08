@@ -27,7 +27,7 @@
 </script>
 
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .sidebar-toggle {
         border: none;
         color: var(--ks-text-secondary);

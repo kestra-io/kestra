@@ -10,7 +10,7 @@
         :largeSuggestions="false"
     />
 </template>
-<script lang="ts" setup>
+<script setup lang="ts">
     import {collapseEmptyValues} from "./MixinTask";
     import Editor from "../../../../components/inputs/Editor.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";

@@ -5,7 +5,7 @@
     </span>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import LockIcon from "vue-material-design-icons/LockOutline.vue";
     defineProps({
         enable: {

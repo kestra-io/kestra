@@ -23,7 +23,7 @@
         </span>
     </div>
 </template>
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed} from "vue";
     import {useRoute} from "vue-router";
     import {usePluginsStore} from "../../stores/plugins";

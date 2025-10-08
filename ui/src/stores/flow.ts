@@ -82,6 +82,7 @@ export const useFlowStore = defineStore("flow", () => {
     const aggregatedMetrics = ref<any>()
     const tasksWithMetrics = ref<any[]>()
     const executeFlow = ref<boolean>(false)
+    const openAiCopilot = ref<boolean>(false)
     const lastSaveFlow = ref<string>()
     const isCreating = ref<boolean>(false)
     const flowYaml = ref<string>("")
@@ -143,8 +144,8 @@ export const useFlowStore = defineStore("flow", () => {
         const source = flowYaml.value;
         const currentTab = editorStore.current;
 
-        if (isFlow.value && source) {
-            return onEdit({source, currentIsFlow: true}).then((validation: any) => {
+        if (source) {
+            return onEdit({source, currentIsFlow: isFlow.value}).then((validation: any) => {
                 if (validation?.outdated && !isCreating.value) {
                     return "confirmOutdatedSaveDialog";
                 }
@@ -754,6 +755,10 @@ function deleteFlowAndDependencies() {
         executeFlow.value = value;
     }
 
+    function setOpenAiCopilot(value: boolean) {
+        openAiCopilot.value = value;
+    }
+
     function addTrigger(trigger: Trigger) {
         const flowVar = flow.value ?? {} as Flow;
 
@@ -779,6 +784,7 @@ function deleteFlowAndDependencies() {
         const currentTab = useEditorStore().current;
         return currentTab?.flow !== undefined || isCreating.value;
     })
+
     const isAllowedEdit = computed((): boolean => {
         if (!flow.value || !authStore.user) {
             return false;
@@ -809,29 +815,23 @@ function deleteFlowAndDependencies() {
     })
 
     const flowErrors = computed((): string[] | undefined => {
-        if (isFlow.value) {
-            const flowExistsError =
-                flowValidation.value?.outdated && isCreating.value
-                    ? [`>>>>${baseOutdatedTranslationKey.value}`] // because translating is impossible here
-                    : [];
+        const flowExistsError =
+            flowValidation.value?.outdated && isCreating.value
+                ? [`>>>>${baseOutdatedTranslationKey.value}`] // because translating is impossible here
+                : [];
 
-            const constraintsError =
-                flowValidation.value?.constraints?.split(/, ?/) ?? [];
+        const constraintsError =
+            flowValidation.value?.constraints?.split(/, ?/) ?? [];
 
-            const errors = [...flowExistsError, ...constraintsError];
+        const errors = [...flowExistsError, ...constraintsError];
 
-            return errors.length === 0 ? undefined : errors;
-        }
-
-        return undefined;
+        return errors.length === 0 ? undefined : errors;
     })
 
     const flowInfos = computed(() => {
-        if (isFlow.value) {
-            const infos = flowValidation.value?.infos ?? [];
+        const infos = flowValidation.value?.infos ?? [];
 
-            return infos.length === 0 ? undefined : infos;
-        }
+        return infos.length === 0 ? undefined : infos;
 
         return undefined;
     })
@@ -890,6 +890,7 @@ function deleteFlowAndDependencies() {
         aggregatedMetrics,
         tasksWithMetrics,
         executeFlow,
+        openAiCopilot,
         lastSaveFlow,
         isCreating,
         flowYaml,
@@ -903,6 +904,7 @@ function deleteFlowAndDependencies() {
         setTrigger,
         removeTrigger,
         setExecuteFlow,
+        setOpenAiCopilot,
         onSaveMetadata,
         saveAll,
         save,

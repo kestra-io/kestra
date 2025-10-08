@@ -138,7 +138,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .button-wrapper {
         display: flex;
         align-items: center;

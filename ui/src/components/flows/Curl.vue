@@ -144,7 +144,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     pre {
         border-radius: var(--bs-border-radius);
     }

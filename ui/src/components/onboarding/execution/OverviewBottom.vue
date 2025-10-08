@@ -38,7 +38,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .overview-bottom {
         display: flex;
         gap: 1rem;

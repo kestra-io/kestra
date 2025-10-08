@@ -557,11 +557,18 @@
             },
             handleShiftDown(event) {
                 if (event.key === "Shift" && !event.repeat) {
-                    this.enableCheckboxes = true;
-                    if (this.enableCheckboxes && this.selectedNodes.length > 0) {
+                    if (this.enableCheckboxes) {
+                        this.enableCheckboxes = false;
                         this.$nextTick(() => {
-                            this.$refs.tree?.setCheckedKeys(this.selectedNodes);
+                            this.$refs.tree?.setCheckedKeys([]);
                         });
+                    } else {
+                        this.enableCheckboxes = true;
+                        if (this.selectedNodes.length > 0) {
+                            this.$nextTick(() => {
+                                this.$refs.tree?.setCheckedKeys(this.selectedNodes);
+                            });
+                        }
                     }
                 }
             },

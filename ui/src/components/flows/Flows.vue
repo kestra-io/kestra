@@ -616,7 +616,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .shadow {
     box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
 }

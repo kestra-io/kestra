@@ -8,7 +8,6 @@
     </el-dropdown-item>
 
     <Drawer
-        data-component="FILENAME_PLACEHOLDER"
         v-if="isOpen"
         v-model="isOpen"
         :title="$t('outputs')"

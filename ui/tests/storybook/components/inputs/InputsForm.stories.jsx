@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 import {defineComponent, ref} from "vue";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
@@ -59,15 +60,51 @@ export const InputTypes = {
         const singleSelect = await waitFor(() => can.getByTestId("input-form-resource_type"));
         
         await userEvent.click(singleSelect);
-        await userEvent.click(popups.getByText("Second value"));
+        
+        await waitFor(() => {
+            const dropdown = document.querySelector(".el-select-dropdown");
+            expect(dropdown).to.exist;
+            expect(dropdown).to.be.visible;
+        }, {timeout: 2000});
+        
+        const secondOption = await waitFor(() => {
+            const options = Array.from(document.querySelectorAll(".el-select-dropdown__item"));
+            const option = options.find(el => el.textContent.includes("Second value"));
+            expect(option).to.exist;
+            return option;
+        }, {timeout: 2000});
+        
+        await userEvent.click(secondOption);
 
         await waitFor(function testSelect() {
             expect(can.getByTestId("test-content").textContent).to.include("Second value");
         });
 
         await userEvent.click(can.getByTestId("input-form-resource_type_multi"));
-        await userEvent.click(popups.getByText("Fifth value"));
-        await userEvent.click(popups.getByText("Seventh value"));
+        
+        await waitFor(() => {
+            const dropdown = document.querySelector(".el-select-dropdown");
+            expect(dropdown).to.exist;
+            expect(dropdown).to.be.visible;
+        }, {timeout: 2000});
+        
+        const fifthOption = await waitFor(() => {
+            const options = Array.from(document.querySelectorAll(".el-select-dropdown__item"));
+            const option = options.find(el => el.textContent.includes("Fifth value"));
+            expect(option).to.exist;
+            return option;
+        }, {timeout: 2000});
+        
+        await userEvent.click(fifthOption);
+        
+        const seventhOption = await waitFor(() => {
+            const options = Array.from(document.querySelectorAll(".el-select-dropdown__item"));
+            const option = options.find(el => el.textContent.includes("Seventh value"));
+            expect(option).to.exist;
+            return option;
+        }, {timeout: 2000});
+        
+        await userEvent.click(seventhOption);
 
         await userEvent.keyboard("{esc}");
 

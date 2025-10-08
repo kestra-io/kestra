@@ -41,7 +41,7 @@
 
     const slots = useSlots();
 
-    const defaultPanelSize = computed(() => panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length);
+    const defaultPanelSize = computed(() => panels.value.length ? panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length : 1);
 
     function focusTab(tabValue: string){
         for(const panel of panels.value){
@@ -86,10 +86,12 @@
         if(emit("set-tab-value", tabValue) === false) {
             return;
         }
+
         if(openTabs.value.includes(tabValue)){
             focusTab(tabValue);
             return;
         }
+
         const panel = getPanelFromValue(tabValue);
         if(panel){
             if(panel.prepend){

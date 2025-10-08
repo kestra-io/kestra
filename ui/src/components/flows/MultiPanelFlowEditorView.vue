@@ -87,12 +87,7 @@
     const {setupInitialCodeTab} = useInitialFilesTabs()
 
     const codeElement = EDITOR_ELEMENTS.find(e => e.value === "code")!
-    codeElement!.deserialize = (value: string) => {
-        if(value === "code"){
-            return codeElement
-        }
-        return setupInitialCodeTab(value)
-    }
+    codeElement!.deserialize = (value: string) => setupInitialCodeTab(value, codeElement)
 
 
     const isTourRunning = computed(() => coreStore.guidedProperties?.tourStarted)
@@ -121,7 +116,6 @@
 
     const TABS = isTourRunning.value ? DEFAULT_TOUR_TABS : DEFAULT_ACTIVE_TABS;
 
-    flowStore.creationId = flowStore.creationId ?? Utils.uid()
 
     // Track initial tabs opened while editing or creating flow.
     let hasTrackedInitialTabs = false;

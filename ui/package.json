@@ -116,7 +116,7 @@
         "lint-staged": "^16.1.6",
         "monaco-editor": "^0.52.2",
         "monaco-yaml": "5.3.1",
-        "patch-package": "^8.0.0",
+        "patch-package": "^8.0.1",
         "playwright": "^1.55.0",
         "prettier": "^3.6.2",
         "rollup-plugin-copy": "^3.5.0",

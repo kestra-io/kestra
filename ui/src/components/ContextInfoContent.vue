@@ -10,11 +10,11 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     defineProps<{title:string}>();
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .wrapper {
         height: 100vh;
         display: flex;

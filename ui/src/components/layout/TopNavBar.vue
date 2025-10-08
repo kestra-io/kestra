@@ -141,7 +141,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     nav {
         top: 0;
         position: sticky;

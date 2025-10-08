@@ -34,7 +34,7 @@
     <NoData v-else :text="EMPTY_TEXT" />
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {PropType, watch, ref, computed} from "vue";
 
     import type {RouteLocation} from "vue-router";

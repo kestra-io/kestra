@@ -54,6 +54,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.kestra.core.models.QueryFilter.Field.KIND;
+
 public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcRepository implements ExecutionRepositoryInterface, JdbcQueueIndexerInterface<Execution> {
     private static final int FETCH_SIZE = 100;
     private static final Field<String> STATE_CURRENT_FIELD = field("state_current", String.class);
@@ -299,7 +301,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .where(this.defaultFilter(tenantId, false));
 
         boolean hasKindFilter = filters != null && filters.stream()
-            .anyMatch(f -> "kind".equalsIgnoreCase(f.field().name()) );
+            .anyMatch(f -> KIND.value().equalsIgnoreCase(f.field().name()) );
         if (!hasKindFilter) {
             select = select.and(NORMAL_KIND_CONDITION);
         }

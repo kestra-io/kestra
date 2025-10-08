@@ -14,7 +14,6 @@
     import {useBlueprintsStore} from "../../../stores/blueprints"
     import {useToast} from "../../../utils/toast"
     import {getRandomID} from "../../../../scripts/id"
-    import type {Dashboard} from "../../../components/dashboard/composables/useDashboards"
     import {getDashboard, processFlowYaml} from "../../../components/dashboard/composables/useDashboards"
     import TopNavBar from "../../../components/layout/TopNavBar.vue"
     import useRouteContext from "../../../composables/useRouteContext"
@@ -33,7 +32,6 @@
     const dashboardStore = useDashboardStore()
     const blueprintsStore = useBlueprintsStore()
 
-    const dashboard = ref<Dashboard>({id: "", charts: []})
     const context = ref({title: t("dashboards.creation.label")})
 
     const header = computed(() => ({
@@ -65,19 +63,19 @@
         const {blueprintId, name, params} = route.query;
 
         if (blueprintId) {
-            dashboard.value.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId as string});
-            if (!/^id:.*$/m.test(dashboard.value.sourceCode ?? "")) {
-                dashboard.value.sourceCode = "id: " + blueprintId + "\n" + dashboard.value.sourceCode;
+            dashboardStore.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId as string});
+            if (!/^id:.*$/m.test(dashboardStore.sourceCode ?? "")) {
+                dashboardStore.sourceCode = "id: " + blueprintId + "\n" + dashboardStore.sourceCode;
             }
         } else {
             if (name === "flows/update") {
                 const {namespace, id} = JSON.parse(params as string);
-                dashboard.value.sourceCode = processFlowYaml(YAML_FLOW, namespace, id);
+                dashboardStore.sourceCode = processFlowYaml(YAML_FLOW, namespace, id);
             } else {
-                dashboard.value.sourceCode = name === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN;
+                dashboardStore.sourceCode = name === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN;
             }
 
-            dashboard.value.sourceCode = "id: " + getRandomID() + "\n" + dashboard.value.sourceCode;
+            dashboardStore.sourceCode = "id: " + getRandomID() + "\n" + dashboardStore.sourceCode;
         }
     })
 

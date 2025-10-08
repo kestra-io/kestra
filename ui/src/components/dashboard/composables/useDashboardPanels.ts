@@ -34,7 +34,7 @@ export const DASHBOARD_EDITOR_ELEMENTS = [
     {
         button: {
             icon: markRaw(CodeTagsIcon),
-            label: "Dashboard Code"
+            label: "Code"
         },
         value: "code",
         component: markRaw(DashboardCodeEditor),

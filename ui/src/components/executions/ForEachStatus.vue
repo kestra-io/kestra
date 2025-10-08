@@ -42,14 +42,12 @@
     import throttle from "lodash/throttle";
     import {useI18n} from "vue-i18n";
 
-    // Props
-    interface Props {
-        subflowsStatus?: Record<string, number>; 
+    // ✅ Define props inline instead of using interface
+    const props = defineProps<{
+        subflowsStatus?: Record<string, number>;
         executionId?: string;
         max?: number;
-    }
-
-    const props = defineProps<Props>();
+    }>();
 
     // i18n
     const {t} = useI18n();

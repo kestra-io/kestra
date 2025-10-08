@@ -96,7 +96,7 @@
         // Show dialog instead of creating panel
         if(tabValue === "keyshortcuts"){
             showKeyShortcuts();
-            return;
+            return false
         }
 
         // Find if tab is already open inside any panel

@@ -903,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "Fügen Sie einen Block nach der Ausführung hinzu",
+        "charts": "Ein Diagramm hinzufügen",
         "conditions": "Bedingung hinzufügen",
         "errors": "Einen Fehler-Handler hinzufügen",
         "finally": "Fügen Sie einen Finally-Block hinzu",
         "inputs": "Ein Eingabefeld hinzufügen",
+        "numerator": "Fügen Sie einen Zähler hinzu",
         "pluginDefaults": "Fügen Sie ein Plugin-Default hinzu",
         "tasks": "Aufgabe hinzufügen",
-        "triggers": "Füge einen Trigger hinzu"
+        "triggers": "Füge einen Trigger hinzu",
+        "where": "Filtern Sie Ihre Daten"
       },
       "fields": {
         "general": {
@@ -952,14 +955,17 @@
       },
       "select": {
         "afterExecution": "Wählen Sie eine Task aus",
+        "charts": "Wählen Sie einen Diagrammtyp aus",
         "conditions": "Wählen Sie eine Bedingung aus",
         "errors": "Wählen Sie eine Task aus",
         "finally": "Wählen Sie eine Task aus",
         "inputs": "Wählen Sie einen Input-Feldtyp aus",
+        "numerator": "Wählen Sie einen Zähler aus",
         "pluginDefaults": "Wählen Sie ein Plugin aus",
         "task": "Wählen Sie eine Task aus",
         "tasks": "Wählen Sie eine Task aus",
-        "triggers": "Wählen Sie einen Trigger aus"
+        "triggers": "Wählen Sie einen Trigger aus",
+        "where": "Wählen Sie einen Filtertyp aus"
       },
       "toggle_pebble": "Pebble-Editor umschalten",
       "unnamed": "Kein Name",

@@ -903,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "添加执行后块",
+        "charts": "添加图表",
         "conditions": "添加条件",
         "errors": "添加错误处理程序",
         "finally": "添加一个finally块",
         "inputs": "添加一个input字段",
+        "numerator": "添加分子",
         "pluginDefaults": "添加插件默认值",
         "tasks": "添加任务",
-        "triggers": "添加一个trigger"
+        "triggers": "添加一个trigger",
+        "where": "筛选您的数据"
       },
       "fields": {
         "general": {
@@ -952,14 +955,17 @@
       },
       "select": {
         "afterExecution": "选择一个task",
+        "charts": "选择图表类型",
         "conditions": "选择条件",
         "errors": "选择一个task",
         "finally": "选择一个task",
         "inputs": "选择一个input字段类型",
+        "numerator": "选择一个分子",
         "pluginDefaults": "选择插件",
         "task": "选择一个task",
         "tasks": "选择一个task",
-        "triggers": "选择一个trigger"
+        "triggers": "选择一个trigger",
+        "where": "选择筛选器类型"
       },
       "toggle_pebble": "切换Pebble编辑器",
       "unnamed": "无名称",

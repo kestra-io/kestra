@@ -903,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
+        "charts": "चार्ट जोड़ें",
         "conditions": "एक शर्त जोड़ें",
         "errors": "त्रुटि हैंडलर जोड़ें",
         "finally": "अंत में एक finally ब्लॉक जोड़ें",
         "inputs": "इनपुट फ़ील्ड जोड़ें",
+        "numerator": "संख्यांक जोड़ें",
         "pluginDefaults": "प्लगइन डिफ़ॉल्ट जोड़ें",
         "tasks": "कार्य जोड़ें",
-        "triggers": "ट्रिगर जोड़ें"
+        "triggers": "ट्रिगर जोड़ें",
+        "where": "अपने डेटा को फ़िल्टर करें"
       },
       "fields": {
         "general": {
@@ -952,14 +955,17 @@
       },
       "select": {
         "afterExecution": "एक task चुनें",
+        "charts": "चार्ट प्रकार चुनें",
         "conditions": "कंडीशन चुनें",
         "errors": "एक task चुनें",
         "finally": "एक task चुनें",
         "inputs": "इनपुट फ़ील्ड प्रकार चुनें",
+        "numerator": "एक अंश चुनें",
         "pluginDefaults": "एक प्लगइन चुनें",
         "task": "किसी task का चयन करें",
         "tasks": "कार्य चुनें",
-        "triggers": "ट्रिगर चुनें"
+        "triggers": "ट्रिगर चुनें",
+        "where": "एक फ़िल्टर प्रकार चुनें"
       },
       "toggle_pebble": "Pebble संपादक टॉगल करें",
       "unnamed": "कोई नाम नहीं",

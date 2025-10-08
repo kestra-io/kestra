@@ -52,7 +52,7 @@
 
     function getPanelFromValue(value: string): {panel: Panel, prepend: boolean} | undefined {
         for (const element of props.editorElements) {
-            const deserializedTab = element.deserialize(value, false);
+            const deserializedTab = element.deserialize(value, true);
             if (deserializedTab) {
                 return {
                     panel: {
@@ -66,10 +66,16 @@
         }
     };
 
+    /**
+     * function called on mount to deserialize tabs from storage
+     * NOTE: if a tab is not relevant anymore, it will be ignored
+     * hence the "allowCreate = false".
+     * @param tags
+     */
     function deserializeTabTags(tags: string[]): Tab[] {
         return tags.map(tag => {
             for (const element of props.editorElements) {
-                const deserializedTab = element.deserialize(tag, true);
+                const deserializedTab = element.deserialize(tag, false);
                 if (deserializedTab) {
                     return deserializedTab;
                 }

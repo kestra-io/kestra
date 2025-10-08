@@ -1,7 +1,7 @@
 <template>
     <span />
 </template>
-<script lang="ts" setup>
+<script setup lang="ts">
     defineProps({
         permission: {
             type: String,

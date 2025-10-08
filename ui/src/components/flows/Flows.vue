@@ -31,7 +31,7 @@
             </ul>
         </template>
     </TopNavBar>
-    <section data-component="FILENAME_PLACEHOLDER" :class="{container: topbar}" v-if="ready">
+    <section :class="{container: topbar}" v-if="ready">
         <div>
             <DataTable
                 @page-changed="onPageChanged"
@@ -616,7 +616,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .shadow {
     box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
 }

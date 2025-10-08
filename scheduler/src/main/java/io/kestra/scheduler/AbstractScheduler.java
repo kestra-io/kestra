@@ -275,12 +275,10 @@ public abstract class AbstractScheduler implements Scheduler {
                     return;
                 }
 
-                // Prevent race condition: wait for trigger initialization before processing worker trigger results
+                // Prevent race condition: skip processing worker trigger results until trigger initialization is complete
                 if (!isReady()) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Scheduler is not ready, waiting before processing worker trigger result");
-                    }
-                    Await.until(this::isReady);
+                    log.warn("Scheduler is not ready, skipping worker trigger result");
+                    return;
                 }
 
                 WorkerTriggerResult workerTriggerResult = either.getLeft();

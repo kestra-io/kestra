@@ -3,10 +3,10 @@
         v-for="(element, index) in items"
         :key="'array-' + index"
         :gutter="10"
-        class="w-100 array-row"
-        align="middle"
+        align="top"
+        class="w-100"
     >
-        <el-col :span="2" class="d-flex flex-column align-items-center justify-content-center reorder" v-if="items.length > 1">
+        <el-col :span="2" class="d-flex flex-column justify-content-center reorder" v-if="items.length > 1">
             <ChevronUp
                 @click.prevent.stop="moveItem(index, 'up')"
                 :class="{disabled: index === 0}"
@@ -17,7 +17,7 @@
             />
         </el-col>
         <el-col :span="items.length > 1 ? 20 : 22" class="pe-2">
-            <Wrapper :merge="!needWrapper" class="w-100">
+            <Wrapper :merge="!needWrapper">
                 <template #tasks>
                     <component
                         :key="'array-' + index"
@@ -33,7 +33,7 @@
                 </template>
             </Wrapper>
         </el-col>
-        <el-col :span="2" class="d-flex align-items-center justify-content-center delete">
+        <el-col :span="2" class="delete">
             <DeleteOutline @click="removeItem(index)" />
         </el-col>
     </el-row>
@@ -144,47 +144,5 @@
     opacity: 0.5;
     pointer-events: none;
     cursor: not-allowed;
-}
-
-.array-row {
-    display: flex !important;
-    align-items: stretch !important;
-    margin-bottom: 0.5rem;
-
-    :deep(.el-col) {
-        display: flex !important;
-        align-items: center !important;
-    }
-
-    :deep(.reorder) {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    :deep(.delete) {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    :deep(.schema-wrapper) {
-        margin: 0 !important;
-        padding-bottom: 0 !important;
-    }
-
-    :deep(.schema-wrapper.bordered) {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    :deep(.wrapper) {
-        margin: 0 !important;
-    }
-
-    :deep(.editor-container) {
-        min-height: auto !important;
-    }
 }
 </style>

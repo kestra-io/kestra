@@ -87,7 +87,7 @@
 
     function setTabValue(tabValue: string) {
         // Show dialog instead of creating panel
-        if (tabValue === "keyshortcuts") {
+        if(tabValue === "keyshortcuts"){
             showKeyShortcuts();
             return false;
         }
@@ -131,7 +131,6 @@
         editorView.value.setTabValue(tabValue);
         return true;
     }
-
 
     const {t} = useI18n()
 

@@ -3,7 +3,7 @@
         <PluginDocumentation :key="miscStore.theme" />
     </div>
 </template>
-<script lang="ts" setup>
+<script setup lang="ts">
     import PluginDocumentation from "./PluginDocumentation.vue"
     import {usePluginsStore} from "../../stores/plugins";
     import {useMiscStore} from "override/stores/misc";

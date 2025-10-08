@@ -5,7 +5,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     defineOptions({name: "Wrapper"});
 
     defineProps<{merge?: boolean, transparent?: boolean}>();

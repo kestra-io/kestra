@@ -23,7 +23,7 @@
     <NoData v-else-if="!props.short" />
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed, ref, watch, PropType} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import moment from "moment";

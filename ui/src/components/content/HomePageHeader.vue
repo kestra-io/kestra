@@ -13,7 +13,7 @@
     defineProps<Props>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 $font-size-md: 1.5rem;
 $font-size-xs: .875rem;
 

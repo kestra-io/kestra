@@ -12,9 +12,9 @@
                             <a v-if="item.disabled || !item.link">
                                 {{ item.label }}
                             </a>
-                            <router-link v-else :to="item.link">
+                            <RouterLink v-else :to="item.link">
                                 {{ item.label }}
-                            </router-link>
+                            </RouterLink>
                         </el-breadcrumb-item>
                     </el-breadcrumb>
                     <h1 class="h5 fw-semibold m-0 d-inline-flex">
@@ -57,7 +57,7 @@
 <script setup lang="ts">
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
-    import {useRoute} from "vue-router";
+    import {useRoute, RouterLink} from "vue-router";
     import GlobalSearch from "./GlobalSearch.vue";
     import Impersonating from "override/components/auth/Impersonating.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
@@ -72,10 +72,12 @@
     import {useLayoutStore} from "../../stores/layout";
     import SidebarToggleButton from "./SidebarToggleButton.vue";
 
+    type RouterLinkTo = InstanceType<typeof RouterLink>["$props"]["to"];
+
     const props = defineProps<{
         title: string;
         description?: string;
-        breadcrumb?: { label: string; link?: string; disabled?: boolean }[];
+        breadcrumb?: { label: string; link?: RouterLinkTo; disabled?: boolean }[];
         beta?: boolean;
     }>();
 

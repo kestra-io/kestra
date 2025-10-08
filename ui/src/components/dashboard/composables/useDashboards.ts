@@ -92,10 +92,6 @@ export function getDashboard(route: RouteLocation, type: "key" | "id"): string |
 
     const storageKey = STORAGE_KEYS(route.params)[key];
 
-    if(type === "id" && route.params.dashboard){
-        return route.params.dashboard as string;
-    }
-
     return type === "key" ? storageKey : localStorage.getItem(storageKey) || "default";
 };
 

@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, getCurrentInstance, onMounted, ref, watch, onUnmounted} from "vue";
+    import {computed, getCurrentInstance, onMounted, onUnmounted, ref, watch} from "vue";
     import Close from "vue-material-design-icons/Close.vue";
     import KeyboardReturn from "vue-material-design-icons/KeyboardReturn.vue";
     import AiIcon from "./AiIcon.vue";
@@ -72,78 +72,19 @@
 
     const promptInput = ref<HTMLInputElement>();
 
-    function simpleHash(value: string): string {
-        // simple deterministic hash (djb2)
-        let hash = 5381;
-        for (let i = 0; i < value.length; i++) {
-            hash = ((hash << 5) + hash) + value.charCodeAt(i); /* hash * 33 + c */
-            hash = hash & hash;
-        }
-        return String(hash >>> 0);
-    }
-
-    const prompt = ref("");
-    const waitingForReply = ref(false);
-
-    watch(prompt, (newValue) => {
-        try {
-            sessionStorage.setItem("kestra-ai-prompt", newValue);
-            // persist the flow-hash associated with this prompt (so prompts don't leak across different flows)
-            const flowHash = simpleHash(props.flow ?? "");
-            sessionStorage.setItem("kestra-ai-prompt-flow-hash", flowHash);
-        } catch (e) {
-            // ignore sessionStorage errors (e.g., privacy mode)
-        }
-    });
-
-    // When mounting, clear any persisted prompt that belongs to a different flow.
     onMounted(() => {
         promptInput.value?.focus();
-
-        try {
-            const stored = sessionStorage.getItem("kestra-ai-prompt");
-            const storedHash = sessionStorage.getItem("kestra-ai-prompt-flow-hash");
-            const currentHash = simpleHash(props.flow ?? "");
-
-            // If a stored prompt exists and it's associated with a flow hash that's different
-            // from the current flow, clear it. If there's no storedHash, keep the prompt
-            // (this preserves intentional pre-filled prompts coming from other pages, e.g. TaskRunLine).
-            if (stored && storedHash && storedHash !== currentHash) {
-                prompt.value = "";
-                sessionStorage.removeItem("kestra-ai-prompt");
-                sessionStorage.removeItem("kestra-ai-prompt-flow-hash");
-            } else if (stored) {
-                // Only set the prompt if it belongs to the current flow
-                prompt.value = stored;
-            }
-        } catch (e) {
-            // ignore storage errors
-        }
-    });
+    })
 
     onUnmounted(() => {
         sessionStorage.removeItem("kestra-ai-prompt");
     })
 
-    // Reset prompt when the provided flow changes and the persisted prompt belongs to a different flow
-    watch(() => props.flow, (newFlow, oldFlow) => {
-        if (newFlow === oldFlow) return;
-        try {
-            const storedHash = sessionStorage.getItem("kestra-ai-prompt-flow-hash");
-            const currentHash = simpleHash(newFlow ?? "");
+    const prompt = ref(sessionStorage.getItem("kestra-ai-prompt") ?? "");
+    const waitingForReply = ref(false);
 
-            // If there is an existing stored prompt associated with another flow, clear it.
-            if (storedHash && storedHash !== currentHash) {
-                prompt.value = "";
-                sessionStorage.removeItem("kestra-ai-prompt");
-                sessionStorage.removeItem("kestra-ai-prompt-flow-hash");
-            }
-        } catch (e) {
-            // ignore storage errors
-        }
-
-        // refocus the input so the user can start typing immediately
-        setTimeout(() => promptInput.value?.focus(), 0);
+    watch(prompt, (newValue) => {
+        sessionStorage.setItem("kestra-ai-prompt", newValue);
     });
 
     const props = defineProps<{

@@ -48,7 +48,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .bulk-select {
         height: 100%;
         display: flex;

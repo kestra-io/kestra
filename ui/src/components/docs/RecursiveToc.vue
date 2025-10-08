@@ -61,7 +61,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .el-collapse {
         --el-collapse-header-font-size: 14px;
 

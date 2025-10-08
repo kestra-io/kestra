@@ -211,7 +211,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
     .barResizer {

@@ -198,7 +198,7 @@
     }, {deep: true});
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     $height: 200px;
 
     .chart {

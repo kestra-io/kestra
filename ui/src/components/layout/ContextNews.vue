@@ -73,7 +73,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .post {
         padding: 1rem;
 

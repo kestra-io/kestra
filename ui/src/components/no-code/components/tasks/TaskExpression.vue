@@ -58,7 +58,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 :deep(.placeholder) {
     top: -7px !important;
 }

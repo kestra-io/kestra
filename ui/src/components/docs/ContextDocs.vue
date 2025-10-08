@@ -172,7 +172,7 @@
     }, {immediate: true});
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 
     .back-button {
         background: var(--ks-background-card);

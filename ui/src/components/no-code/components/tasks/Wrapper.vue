@@ -11,7 +11,7 @@
     defineProps<{merge?: boolean, transparent?: boolean}>();
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .schema-wrapper {
     width: 100%;
     padding-bottom: 1rem;

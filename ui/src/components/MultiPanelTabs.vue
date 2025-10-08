@@ -646,7 +646,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .editor-tabs-container{
         display: grid;
         grid-template-columns: auto 1fr auto;

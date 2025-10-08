@@ -687,7 +687,7 @@
         }
     };
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .data-table-wrapper {
         margin-left: 0 !important;
         padding-left: 0 !important;

@@ -96,7 +96,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .trigger {
         max-width: 180px;
         overflow-x: auto;

@@ -139,7 +139,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .search-container {
         position: relative;
         margin-bottom: 0;

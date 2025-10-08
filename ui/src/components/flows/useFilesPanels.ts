@@ -2,7 +2,7 @@ import {computed, h, markRaw, Ref, watch} from "vue"
 import EditorWrapper from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
 import {EditorTabProps, useEditorStore} from "../../stores/editor";
-import {Panel} from "../../utils/multiPanelTypes";
+import {DeserializableEditorElement, Panel} from "../../utils/multiPanelTypes";
 
 export const CODE_PREFIX = "code"
 
@@ -21,7 +21,7 @@ function getTabFromFilesTab(tab: EditorTabProps){
 export function useInitialFilesTabs(){
     const editorStore = useEditorStore()
 
-    function setupInitialCodeTab(tab: string){
+    function setupInitialCodeTab(tab: string, codeElement: DeserializableEditorElement){
         const flow = CODE_PREFIX === tab
         if(!flow && !tab.startsWith(`${CODE_PREFIX}-`)){
             return
@@ -35,7 +35,7 @@ export function useInitialFilesTabs(){
             dirty: false
         }
         editorStore.openTab(editorTab)
-        return getTabFromFilesTab(editorTab)
+        return flow ? codeElement : getTabFromFilesTab(editorTab)
     }
 
     return {setupInitialCodeTab}

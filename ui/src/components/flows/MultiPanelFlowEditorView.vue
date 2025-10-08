@@ -98,7 +98,7 @@
     const {setupInitialCodeTab} = useInitialFilesTabs()
 
     const codeElement = EDITOR_ELEMENTS.find(e => e.value === "code")!
-    codeElement!.deserialize = (value: string) => setupInitialCodeTab(value)
+    codeElement!.deserialize = (value: string) => setupInitialCodeTab(value, codeElement)
 
 
     const isTourRunning = computed(() => coreStore.guidedProperties?.tourStarted)

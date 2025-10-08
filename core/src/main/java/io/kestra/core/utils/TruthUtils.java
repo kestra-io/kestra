@@ -6,10 +6,10 @@ abstract public class TruthUtils {
     private static final List<String> FALSE_VALUES = List.of("false", "0", "-0", "");
 
     public static boolean isTruthy(String condition) {
-        return condition != null && !FALSE_VALUES.contains(condition);
+        return condition != null && !FALSE_VALUES.contains(condition.trim());
     }
 
     public static boolean isFalsy(String condition) {
-        return condition != null && FALSE_VALUES.contains(condition);
+        return condition != null && FALSE_VALUES.contains(condition.trim());
     }
 }

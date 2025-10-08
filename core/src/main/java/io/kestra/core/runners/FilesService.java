@@ -82,10 +82,10 @@ public abstract class FilesService {
     }
 
     private static String resolveUniqueNameForFile(final Path path) {
-        String fileName = path.getFileName().toString();
+        String filename = path.getFileName().toString();
         
-        String fileId = IdUtils.from(fileName);
+        String uniqueId = IdUtils.create();
         
-        return fileId + "-" + fileName;
+        return uniqueId + "-" + filename;
     }
 }

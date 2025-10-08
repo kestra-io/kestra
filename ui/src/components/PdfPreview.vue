@@ -126,7 +126,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     nav {
         display: flex;
         gap: 1rem;

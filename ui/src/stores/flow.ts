@@ -144,8 +144,8 @@ export const useFlowStore = defineStore("flow", () => {
         const source = flowYaml.value;
         const currentTab = editorStore.current;
 
-        if (isFlow.value && source) {
-            return onEdit({source, currentIsFlow: true}).then((validation: any) => {
+        if (source) {
+            return onEdit({source, currentIsFlow: isFlow.value}).then((validation: any) => {
                 if (validation?.outdated && !isCreating.value) {
                     return "confirmOutdatedSaveDialog";
                 }
@@ -784,6 +784,7 @@ function deleteFlowAndDependencies() {
         const currentTab = useEditorStore().current;
         return currentTab?.flow !== undefined || isCreating.value;
     })
+
     const isAllowedEdit = computed((): boolean => {
         if (!flow.value || !authStore.user) {
             return false;
@@ -814,29 +815,23 @@ function deleteFlowAndDependencies() {
     })
 
     const flowErrors = computed((): string[] | undefined => {
-        if (isFlow.value) {
-            const flowExistsError =
-                flowValidation.value?.outdated && isCreating.value
-                    ? [`>>>>${baseOutdatedTranslationKey.value}`] // because translating is impossible here
-                    : [];
+        const flowExistsError =
+            flowValidation.value?.outdated && isCreating.value
+                ? [`>>>>${baseOutdatedTranslationKey.value}`] // because translating is impossible here
+                : [];
 
-            const constraintsError =
-                flowValidation.value?.constraints?.split(/, ?/) ?? [];
+        const constraintsError =
+            flowValidation.value?.constraints?.split(/, ?/) ?? [];
 
-            const errors = [...flowExistsError, ...constraintsError];
+        const errors = [...flowExistsError, ...constraintsError];
 
-            return errors.length === 0 ? undefined : errors;
-        }
-
-        return undefined;
+        return errors.length === 0 ? undefined : errors;
     })
 
     const flowInfos = computed(() => {
-        if (isFlow.value) {
-            const infos = flowValidation.value?.infos ?? [];
+        const infos = flowValidation.value?.infos ?? [];
 
-            return infos.length === 0 ? undefined : infos;
-        }
+        return infos.length === 0 ? undefined : infos;
 
         return undefined;
     })

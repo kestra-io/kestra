@@ -2,7 +2,7 @@
     <EditorSidebar :currentNS="namespace" style="width: 100%;height: 100%;" />
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed} from "vue";
     // @ts-expect-error no types on editor sidebar
     import EditorSidebar from "./EditorSidebar.vue";

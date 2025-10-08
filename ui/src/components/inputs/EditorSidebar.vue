@@ -70,7 +70,7 @@
                     class="hidden"
                     @change="importFiles"
                 >
-                <el-dropdown :teleported="false">
+                <el-dropdown>
                     <el-button>
                         <PlusBox />
                     </el-button>
@@ -79,7 +79,9 @@
                             <el-dropdown-item @click="$refs.filePicker.click()">
                                 {{ $t("namespace files.import.files") }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="$refs.folderPicker.click()">
+                            <el-dropdown-item
+                                @click="$refs.folderPicker.click()"
+                            >
                                 {{ $t("namespace files.import.folder") }}
                             </el-dropdown-item>
                         </el-dropdown-menu>
@@ -487,9 +489,9 @@
                 }
                 return "node";
             },
-            handleCheck(checkedNodes, checkedKeys) {
+            handleCheck(_node, {checkedNodes, checkedKeys}) {
                 this.selectedNodes = checkedKeys;
-                this.selectedFiles = checkedNodes.map(node => this.getPath(node));
+                this.selectedFiles = checkedNodes.map(node => this.getPath(node.id));
             },
 
             flattenTree(items, parentPath = "") {
@@ -555,10 +557,7 @@
             },
             handleShiftDown(event) {
                 if (event.key === "Shift" && !event.repeat) {
-                    // 🔄 Alterna o modo de seleção
-                    this.enableCheckboxes = !this.enableCheckboxes;
-
-                    // Se ativou o modo checkboxes, sincroniza com seleção atual
+                    this.enableCheckboxes = true;
                     if (this.enableCheckboxes && this.selectedNodes.length > 0) {
                         this.$nextTick(() => {
                             this.$refs.tree?.setCheckedKeys(this.selectedNodes);
@@ -1229,13 +1228,11 @@
         },
         mounted() {
             document.addEventListener("click", this.clearSelection);
-            // adicionado
             document.addEventListener("keydown", this.handleShiftDown);
             document.addEventListener("keyup", this.handleShiftUp);
         },
         beforeUnmount() {
             document.removeEventListener("click", this.clearSelection);
-            // adicionado
             document.removeEventListener("keydown", this.handleShiftDown);
             document.removeEventListener("keyup", this.handleShiftUp);
         },

@@ -93,13 +93,12 @@
             return undefined;
         }
 
-        let childrenWithMetadata = JSON.parse(JSON.stringify(rawStructure.value));
-        childrenWithMetadata = Object.fromEntries(Object.entries(childrenWithMetadata)
-            .filter(([_, {hideSidebar}]: [string, any]) => !hideSidebar)
+        let childrenWithMetadata: Record<string, TocItem> = Object.fromEntries(Object.entries(rawStructure.value)
+            .filter(([_, metadata]: [string, any]) => !metadata.hideSidebar)
             .map(([url, metadata]: [string, any]) => [url, {
                 ...metadata,
                 path: url
-            }]));
+            } as TocItem]));
         Object.entries(childrenWithMetadata)
             .forEach(([url, metadata]: [string, any]) => {
                 const split = url.split("/");
@@ -133,7 +132,7 @@
     };
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
     ul > li > span:first-child {
         font-size: 12px;
     }

@@ -38,7 +38,7 @@
     </ContextInfoContent>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {ref, watch, computed, getCurrentInstance, onUnmounted, onMounted, nextTick} from "vue";
     import {useDocStore} from "../../stores/doc";
     import {useI18n} from "vue-i18n";
@@ -172,7 +172,7 @@
     }, {immediate: true});
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 
     .back-button {
         background: var(--ks-background-card);

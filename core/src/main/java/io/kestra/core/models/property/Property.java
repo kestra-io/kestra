@@ -12,6 +12,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -36,6 +37,12 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
+@Schema(
+    oneOf = {
+        Object.class,
+        String.class
+    }
+)
 public class Property<T> {
     // By default, durations are stored as numbers.
     // We cannot change that globally, as in JDBC/Elastic 'execution.state.duration' must be a number to be able to aggregate them.
@@ -68,7 +75,7 @@ public class Property<T> {
     String getExpression() {
         return expression;
     }
-    
+
     /**
      * Returns a new {@link Property} with no cached rendered value,
      * so that the next render will evaluate its original Pebble expression.
@@ -84,9 +91,9 @@ public class Property<T> {
 
     /**
      * Build a new Property object with a value already set.<br>
-     *
+     * <p>
      * A property build with this method will always return the value passed at build time, no rendering will be done.
-     *
+     * <p>
      * Use {@link #ofExpression(String)} to build a property with a Pebble expression instead.
      */
     public static <V> Property<V> ofValue(V value) {
@@ -126,12 +133,12 @@ public class Property<T> {
 
     /**
      * Build a new Property object with a Pebble expression.<br>
-     *
+     * <p>
      * Use {@link #ofValue(Object)} to build a property with a value instead.
      */
     public static <V> Property<V> ofExpression(@NotNull String expression) {
         Objects.requireNonNull(expression, "'expression' is required");
-        if(!expression.contains("{")) {
+        if (!expression.contains("{")) {
             throw new IllegalArgumentException("'expression' must be a valid Pebble expression");
         }
 
@@ -140,7 +147,7 @@ public class Property<T> {
 
     /**
      * Render a property then convert it to its target type.<br>
-     *
+     * <p>
      * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
      *
      * @see io.kestra.core.runners.RunContextProperty#as(Class)
@@ -151,14 +158,14 @@ public class Property<T> {
 
     /**
      * Render a property with additional variables, then convert it to its target type.<br>
-     *
+     * <p>
      * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
      *
      * @see io.kestra.core.runners.RunContextProperty#as(Class, Map)
      */
     public static <T> T as(Property<T> property, PropertyContext context, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (property.value == null) {
-            String rendered =  context.render(property.expression, variables);
+            String rendered = context.render(property.expression, variables);
             property.value = MAPPER.convertValue(rendered, clazz);
         }
 
@@ -167,7 +174,7 @@ public class Property<T> {
 
     /**
      * Render a property then convert it as a list of target type.<br>
-     *
+     * <p>
      * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
      *
      * @see io.kestra.core.runners.RunContextProperty#asList(Class)
@@ -178,7 +185,7 @@ public class Property<T> {
 
     /**
      * Render a property with additional variables, then convert it as a list of target type.<br>
-     *
+     * <p>
      * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
      *
      * @see io.kestra.core.runners.RunContextProperty#asList(Class, Map)
@@ -218,25 +225,25 @@ public class Property<T> {
 
     /**
      * Render a property then convert it as a map of target types.<br>
-     *
+     * <p>
      * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
      *
      * @see io.kestra.core.runners.RunContextProperty#asMap(Class, Class)
      */
-    public static <T, K,V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException {
+    public static <T, K, V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException {
         return asMap(property, runContext, keyClass, valueClass, Map.of());
     }
 
     /**
      * Render a property with additional variables, then convert it as a map of target types.<br>
-     *
+     * <p>
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
      * Warning, due to the caching mechanism, this method is not thread-safe.
      *
      * @see io.kestra.core.runners.RunContextProperty#asMap(Class, Class, Map)
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public static <T, K,V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    public static <T, K, V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (property.value == null) {
             JavaType targetMapType = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
 

@@ -77,7 +77,7 @@
     </section>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import SecretsTable from "./SecretsTable.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Navbar from "../layout/TopNavBar.vue";
@@ -107,7 +107,7 @@
     useRouteContext(routeInfo);
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .no-secret-manager-block {
         padding: 0 10.75rem;
 

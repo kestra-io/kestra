@@ -25,6 +25,7 @@
     import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue";
     import {useRoute} from "vue-router";
     import Utils from "../../utils/utils";
+    import {useI18n} from "vue-i18n";
     import {useCoreStore} from "../../stores/core";
     import {usePlaygroundStore} from "../../stores/playground";
     import {useEditorStore} from "../../stores/editor";
@@ -38,7 +39,7 @@
     import {useTopologyPanels} from "./useTopologyPanels";
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts";
 
-    import {useNoCodePanelsFull} from "./useNoCodePanels";
+    import {setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodeHandlers, useNoCodePanels} from "./useNoCodePanels";
     import {useFlowStore} from "../../stores/flow";
     import {trackTabOpen} from "../../utils/tabTracking";
     import {Panel, Tab} from "../../utils/multiPanelTypes";
@@ -76,6 +77,14 @@
         playgroundStore.clearExecutions()
     })
 
+    /**
+     * Focus or activate a tab from it's value
+     * @param tabValue
+     */
+    function focusTab(tabValue: string){
+        editorView.value?.setTabValue(tabValue)
+    }
+
     function setTabValue(tabValue: string) {
         // Show dialog instead of creating panel
         if(tabValue === "keyshortcuts"){
@@ -83,6 +92,8 @@
             return false;
         }
     }
+
+    const {t} = useI18n()
 
     const {setupInitialCodeTab} = useInitialFilesTabs()
 
@@ -111,17 +122,36 @@
         }))
     }
 
+    const openTabs = computed(() => {
+        return editorView.value?.openTabs ?? []
+    })
 
-    const {panels, actions} = useNoCodePanelsFull({
-        RawNoCode,
-        editorView,
-        editorElements: EDITOR_ELEMENTS,
-        source: computed(() => flowStore.flowYaml),
-    });
+
+    /**
+     * these actions are placeholders
+     * that will be replaced later on
+     */
+    const tempActions = {
+        openAddTaskTab(){},
+        openEditTaskTab(){},
+        closeTaskTab(){}
+    } as ReturnType<typeof useNoCodePanels>
+
+    const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, tempActions)
+
+    const noCodeElement = EDITOR_ELEMENTS.find(e => e.value === "nocode")!
+    noCodeElement!.deserialize = (value: string, allowCreate: boolean) => {
+        return allowCreate
+            ? setupInitialNoCodeTab(RawNoCode, value, t, noCodeHandlers, flowStore.flowYaml ?? "")
+            : setupInitialNoCodeTabIfExists(RawNoCode, value, t, noCodeHandlers, flowStore.flowYaml ?? "")
+
+    }
 
     const TABS = isTourRunning.value ? DEFAULT_TOUR_TABS : DEFAULT_ACTIVE_TABS;
 
     flowStore.creationId = flowStore.creationId ?? Utils.uid()
+
+    const panels = computed<Panel[]>(() => editorView.value?.panels ?? [])
 
     // Track initial tabs opened while editing or creating flow.
     let hasTrackedInitialTabs = false;
@@ -134,6 +164,12 @@
     }, {immediate: true});
 
     const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useFilesPanels(panels)
+
+    const actions = useNoCodePanels(RawNoCode, panels, openTabs, focusTab)
+
+    tempActions.openAddTaskTab = actions.openAddTaskTab
+    tempActions.openEditTaskTab = actions.openEditTaskTab
+    tempActions.closeTaskTab = actions.closeTaskTab
 
     function onRemoveTab(tab: string){
         onRemoveCodeTab(tab)

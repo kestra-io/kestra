@@ -576,6 +576,7 @@
     },
     "title": "Title",
     "api": "API",
+    "more_actions": "More Actions",
     "expand error": "Expand only failed tasks",
     "expand all": "Expand all",
     "collapse all": "Collapse all",
@@ -673,8 +674,11 @@
       "create": {
         "label": "Create",
         "file": "Create file",
+        "file_already_exists": "A file with this name already exists",
+        "file_error": "Error occurred while creating the file",
         "folder": "Create folder",
-        "already_exists": "A file with this name already exists"
+        "folder_already_exists": "A folder with this name already exists",
+        "folder_error": "Error occurred while creating the folder"
       },
       "rename": {
         "label": "Rename",
@@ -705,11 +709,13 @@
           "folder": "Folder name:"
         },
         "parent_folder": "Parent folder:",
-        "file_deletion": "Confirm file deletion",
-        "folder_deletion": "Confirm folder deletion",
-        "file_deletion_description": "Are you sure you want to delete the selected file(s)?",
-        "folder_deletion_description": "Are you sure you want to delete this folder and all of its contents?",
-        "confirm": "Confirm"
+        "deletion": {
+          "confirm": "Confirm",
+          "title": "Confirm deletion of content",
+          "files": "Are you sure you want to delete <code>{count}</code> file(s)?",
+          "folders": "Are you sure you want to delete <code>{count}</code> folder(s) and all of its contents?",
+          "mixed": "Are you sure you want to delete <code>{folders}</code> folder(s) and <code>{files}</code> file(s)?"
+        }
       },
       "path": {
         "copy": "Copy path",
@@ -1095,7 +1101,7 @@
     "cron": "Cron",
     "execution_failed": "Execution failed! Last error was",
     "execution restarted": "This execution has been restarted {nbRestart} time(s).",
-    "execution replay": "This execution is a replay of <code>{originalId}</code>.",
+    "execution replay": "This execution is a replay of",
     "execution replayed": "This execution has been replayed.",
     "task run id": "TaskRun ID",
     "active": "Active",
@@ -1223,7 +1229,10 @@
         "pluginDefaults": "Select a plugin",
         "afterExecution": "Select a task",
         "conditions": "Select a condition",
-        "inputs": "Select an input field type"
+        "inputs": "Select an input field type",
+        "charts": "Select a chart type",
+        "where": "Select a filter type",
+        "numerator": "Select a numerator"
       },
       "creation": {
         "tasks": "Add a task",
@@ -1233,7 +1242,10 @@
         "pluginDefaults": "Add a plugin default",
         "afterExecution": "Add an after execution block",
         "conditions": "Add a condition",
-        "inputs": "Add an input field"
+        "inputs": "Add an input field",
+        "charts": "Add a chart",
+        "where": "Filter your data",
+        "numerator": "Add a numerator"
       },
       "close": {
         "tasks": "Close task",

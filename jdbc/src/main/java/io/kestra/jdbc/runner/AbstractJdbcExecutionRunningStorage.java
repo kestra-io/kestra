@@ -57,11 +57,12 @@ public class AbstractJdbcExecutionRunningStorage extends AbstractJdbcRepository 
 
     /**
      * Delete the execution running corresponding to the given execution.
+     * @return true if the execution was deleted, false if it was not existing
      */
-    public void remove(Execution execution) {
-        this.jdbcRepository
+    public boolean remove(Execution execution) {
+        return this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> {
+            .transactionResult(configuration -> {
                 var select = DSL
                     .using(configuration)
                     .select(AbstractJdbcRepository.field("value"))
@@ -71,7 +72,12 @@ public class AbstractJdbcExecutionRunningStorage extends AbstractJdbcRepository 
                     .forUpdate();
 
                 Optional<ExecutionRunning> maybeExecution = this.jdbcRepository.fetchOne(select);
-                maybeExecution.ifPresent(executionRunning -> this.jdbcRepository.delete(executionRunning));
+                return maybeExecution
+                    .map(executionRunning -> {
+                        this.jdbcRepository.delete(executionRunning);
+                        return true;
+                    })
+                    .orElse(false);
             });
     }
 }

@@ -272,7 +272,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public Execution withTaskRun(TaskRun taskRun) throws InternalException {
-        ArrayList<TaskRun> newTaskRunList = new ArrayList<>(this.taskRunList);
+        ArrayList<TaskRun> newTaskRunList = this.taskRunList == null ? new ArrayList<>() : new ArrayList<>(this.taskRunList);
 
         boolean b = Collections.replaceAll(
             newTaskRunList,

@@ -1,5 +1,5 @@
 <template>
-    <div class="enhanced-documentation" data-component="EnhancedMarkdown">
+    <div class="enhanced-documentation">
         <div v-if="showSearch" class="doc-toolbar">
             <el-input
                 v-model="searchQuery"
@@ -609,7 +609,6 @@
         display: flex;
         flex-direction: column;
         gap: var(--spacer, 1rem);
-        background: var(--ks-background-panel);
         border-radius: var(--el-border-radius-base);
         color: var(--ks-content-primary);
     }

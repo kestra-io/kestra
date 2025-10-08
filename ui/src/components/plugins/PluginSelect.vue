@@ -121,7 +121,7 @@
     }>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     :deep(div.wrapper) {
         display: inline-block;
         width: 20px;

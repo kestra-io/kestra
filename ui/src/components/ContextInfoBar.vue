@@ -49,7 +49,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed, ref, watch, type Ref, type Component, PropType} from "vue";
     import {useMouse, watchThrottled} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
@@ -211,7 +211,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
     .barResizer {

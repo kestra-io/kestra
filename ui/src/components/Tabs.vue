@@ -203,7 +203,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 section.container.mt-4:has(> section.empty) {
     margin: 0 !important;
     padding: 0 !important;

@@ -54,20 +54,20 @@ public class PauseTest {
         suite.run(runnerUtils);
     }
 
-    @FlakyTest
-    @Test //This test is too flaky and it always pass in JDBC and Kafka
+    @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
+    @Test
     void delay() throws Exception {
         suite.runDelay(runnerUtils);
     }
 
-    @FlakyTest
-    @Test //This test is too flaky and it always pass in JDBC and Kafka
+    @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
+    @Test
     void delayFromInput() throws Exception {
         suite.runDurationFromInput(runnerUtils);
     }
 
-    @FlakyTest
-    @Test //This test is too flaky and it always pass in JDBC and Kafka
+    @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
+    @Test
     void parallelDelay() throws Exception {
         suite.runParallelDelay(runnerUtils);
     }

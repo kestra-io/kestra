@@ -13,4 +13,9 @@ import org.junit.jupiter.api.Tag;
 @Retention(RetentionPolicy.RUNTIME)
 @Tag("flaky")
 public @interface FlakyTest {
+
+    /**
+     * Use to excplain why the test is flaky
+     */
+    String description() default "";
 }

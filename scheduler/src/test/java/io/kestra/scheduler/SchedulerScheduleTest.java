@@ -545,8 +545,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         }
     }
 
-    @FlakyTest
-    @Test //too flaky on CI
+    @FlakyTest(description = "too flaky on CI")
+    @Test
     void recoverLASTLongRunningExecution() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
@@ -618,8 +618,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         }
     }
 
-    @FlakyTest
-    @Test //too flaky on CI
+    @FlakyTest(description = "too flaky on CI")
+    @Test
     void recoverNONELongRunningExecution() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);

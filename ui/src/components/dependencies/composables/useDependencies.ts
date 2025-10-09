@@ -41,26 +41,25 @@ const layout: cytoscape.CoseLayoutOptions = {
     name: "cose",
 
     // Physical forces
-    nodeRepulsion: 2_000_000,
+    nodeRepulsion: 8_000_000,
     edgeElasticity: 100,
-    idealEdgeLength: 250,
+    idealEdgeLength: 400,
 
     // Gravity settings
     gravity: 0.05,
 
     // Layout iterations & cooling
-    numIter: 10_000,
+    numIter: 20_000,
     initialTemp: 200,
     minTemp: 1,
 
     // Spacing and padding
-    padding: 50,
-    componentSpacing: 150,
+    padding: 80,
+    componentSpacing: 300,
 
     // Node sizing
     nodeDimensionsIncludeLabels: true,
 };
-
 /**
  * Sets the size of each node in the cytoscape instance
  * based on the number of connected edges.
@@ -328,6 +327,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         if (subtype === EXECUTION) nextTick(() => openSSE());
 
         cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
+        
 
         // Hide nodes immediately after initialization to avoid visual flickering or rearrangement during layout setup
         cy.ready(() => cy.nodes().style("display", "none"));

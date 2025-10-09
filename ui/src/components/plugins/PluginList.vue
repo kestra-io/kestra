@@ -224,7 +224,12 @@
         currentView.value = "documentation";
     };
 
-    const hasIcon = (cls: string) => !!icons.value?.[cls];
+    const hasIcon = (cls: string) => {
+        if (cls.toLowerCase().includes("grok")) {
+            return true;
+        }
+        return !!icons.value?.[cls];
+    };
 
     const navigateToEditorPlugin = async (editorPlugin: any) => {
         if (!editorPlugin?.cls) return;

@@ -15,6 +15,10 @@
     const props = defineProps<Props>();
 
     const icon = computed<string>(() => {
+        if (props.name.toLowerCase().includes("grok")) {
+            return `data:image/svg+xml;base64,${btoa(ICONS.GROK)}`;
+        }
+        
         const SVG = props.folder ? ICONS.FOLDER : getIcon(props.name).name === "file" ? ICONS.KESTRA : getIcon(props.name).svg;
         return `data:image/svg+xml;base64,${btoa(SVG)}`;
     });

@@ -10,8 +10,8 @@
                 :options="options"
                 :plugins="
                     chartOptions?.legend?.enabled
-                        ? [isDuration ? totalsDurationLegend : totalsLegend, centerPlugin, thicknessPlugin]
-                        : [centerPlugin, thicknessPlugin]
+                        ? [isDuration ? totalsDurationLegend : totalsLegend, centerPlugin]
+                        : [centerPlugin]
                 "
                 class="chart"
             />
@@ -61,6 +61,8 @@
 
     const options = computed(() => {
         return defaultConfig({
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 ...(chartOptions?.legend?.enabled
                     ? {
@@ -77,7 +79,7 @@
                         label: (value) => {
                             return `${isDuration ? Utils.humanDuration(value.raw) : value.raw}`;
                         },
-                    }
+                    },
                 },
             },
             onClick: (e, elements) => {
@@ -85,6 +87,7 @@
             },
         }, theme.value);
     });
+
 
     const centerPlugin = computed(() => ({
         id: "centerPlugin",
@@ -114,25 +117,25 @@
         },
     }));
 
-    const thicknessPlugin = {
-        id: "thicknessPlugin",
-        beforeDatasetsDraw(chart) {
-            const {ctx} = chart;
-            const dataset = chart.data.datasets[0];
-            const meta = chart.getDatasetMeta(0);
+    // const thicknessPlugin = {
+    //     id: "thicknessPlugin",
+    //     beforeDatasetsDraw(chart) {
+    //         const {ctx} = chart;
+    //         const dataset = chart.data.datasets[0];
+    //         const meta = chart.getDatasetMeta(0);
 
-            const thicknessScale = dataset.thicknessScale;
+    //         const thicknessScale = dataset.thicknessScale;
 
-            meta.data.forEach((arc, index) => {
-                const baseRadius = arc.innerRadius;
-                const additionalThickness = thicknessScale[index];
-                arc.outerRadius = baseRadius + additionalThickness;
-                arc.innerRadius = baseRadius;
+    //         meta.data.forEach((arc, index) => {
+    //             const baseRadius = arc.innerRadius;
+    //             const additionalThickness = thicknessScale[index];
+    //             arc.outerRadius = baseRadius + additionalThickness;
+    //             arc.innerRadius = baseRadius;
 
-                arc.draw(ctx);
-            });
-        },
-    };
+    //             arc.draw(ctx);
+    //         });
+    //     },
+    // };
 
     const parsedData = computed(() => {
         const parseValue = (value) => {
@@ -198,10 +201,9 @@
     }, {deep: true});
 </script>
 
-<style scoped lang="scss">
-    $height: 200px;
-
+<style scoped>
     .chart {
-        max-height: $height;
+        width: 100% !important;
+        height: 100% !important;
     }
 </style>

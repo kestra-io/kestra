@@ -1,44 +1,49 @@
 <template>
     <TaskObject
-        :modelValue="modelValue"
+        :properties="computedProperties"
         :schema
         :definitions
-        :properties="computedProperties"
-        :root="root"
-        :task="task"
-        :required="required"
         merge
-        @update:model-value="onInput"
     />
 </template>
 
-<script setup>
+<script lang="ts" setup>
+    import {computed} from "vue";
     import TaskObject from "./TaskObject.vue";
-</script>
 
-<script>
-    import Task from "./MixinTask";
+    const props = withDefaults(defineProps<{
+        schema: any,
+        definitions?: Record<string, any>,
+        properties?: Record<string, any>,
+    }>(), {
+        definitions: () => ({}),
+        properties: undefined,
+    });
 
-    export default {
-        inheritAttrs: false,
-        mixins: [Task],
-        computed: {
-            computedProperties() {
-                if(!this.schema?.allOf && !this.schema?.$ref) {
-                    return this.schema?.properties || {};
-                }
-                const schemas = this.schema.allOf ?? [this.schema];
-                return schemas.reduce((acc, item) => {
-                    if (item.$ref) {
-                        const type = item.$ref.split("/").pop();
-                        return {
-                            ...acc,
-                            ...this.definitions[type]?.properties
-                        };
-                    }
-                    return {...acc, ...item.properties};
-                }, {});
-            },
-        },
-    };
+    const computedProperties = computed(() => {
+        if(!props.schema?.allOf && !props.schema?.$ref) {
+            return props.schema?.properties || {};
+        }
+        const schemas = props.schema.allOf ?? [props.schema];
+        return schemas.reduce((
+            acc: Record<string, any>,
+            item: {
+                $ref?: string;
+                properties?: Record<string, any>
+            }) => {
+
+            if (item.$ref) {
+                const type = item.$ref.split("/").pop()!;
+                return {
+                    ...acc,
+                    ...props.definitions[type]?.properties
+                };
+            }
+            return {
+                ...acc,
+                ...item.properties
+            };
+
+        }, {});
+    })
 </script>

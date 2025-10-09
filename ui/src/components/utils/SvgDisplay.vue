@@ -23,7 +23,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .wrapper {
         display: inline-block;
         width: 100%;

@@ -48,8 +48,8 @@ class CountTest {
                 new Flow(AbstractExecutionRepositoryTest.NAMESPACE, "third")
             ))
             .expression("{{ count >= 5 }}")
-            .startDate(new Property<>("{{ now() | dateAdd (-30, 'DAYS') }}"))
-            .endDate(new Property<>("{{ now() }}"))
+            .startDate(Property.ofExpression("{{ now() | dateAdd (-30, 'DAYS') }}"))
+            .endDate(Property.ofExpression("{{ now() }}"))
             .build();
 
         RunContext runContext = runContextFactory.of("id", NAMESPACE, tenant);

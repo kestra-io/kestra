@@ -1,46 +1,50 @@
 import {computed, h, markRaw, Ref, watch} from "vue"
-import type {Panel} from "../MultiPanelTabs.vue";
 import EditorWrapper from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
 import {EditorTabProps, useEditorStore} from "../../stores/editor";
+import {DeserializableEditorElement, Panel} from "../../utils/multiPanelTypes";
 
 export const CODE_PREFIX = "code"
 
-export function getTabFromCodeTab(tab: EditorTabProps){
+function getTabFromFilesTab(tab: EditorTabProps){
     return {
         value: `${CODE_PREFIX}-${tab.path}`,
         button: {
             label: tab.name,
             icon: () => h(TypeIcon, {name:tab.name})
         },
-        component: () => h(markRaw(EditorWrapper), {...tab, flow: false}),
+        component: () => h(markRaw(EditorWrapper), {...tab}),
         dirty: tab.dirty,
     }
 }
 
-export function useInitialCodeTabs(){
+export function useInitialFilesTabs(EDITOR_ELEMENTS: DeserializableEditorElement[]){
     const editorStore = useEditorStore()
 
-    function setupInitialCodeTab(tab: string){
-        if(!tab.startsWith(`${CODE_PREFIX}-`)){
+    const codeElement = EDITOR_ELEMENTS.find(e => e.value === CODE_PREFIX)!
+    codeElement!.deserialize = (value: string) => setupInitialCodeTab(value, codeElement)
+
+    function setupInitialCodeTab(tab: string, codeElement: DeserializableEditorElement){
+        const flow = CODE_PREFIX === tab
+        if(!flow && !tab.startsWith(`${CODE_PREFIX}-`)){
             return
         }
-        const filePath = tab.substring(5)
+        const filePath = flow ? "Flow.yaml" : tab.substring(5)
         const editorTab: EditorTabProps = {
             name: filePath.split("/").pop()!,
             path: filePath,
             extension: filePath.split(".").pop()!,
-            flow: false,
+            flow,
             dirty: false
         }
         editorStore.openTab(editorTab)
-        return getTabFromCodeTab(editorTab)
+        return flow ? codeElement : getTabFromFilesTab(editorTab)
     }
 
     return {setupInitialCodeTab}
 }
 
-export function useCodePanels(panels: Ref<Panel[]>) {
+export function useFilesPanels(panels: Ref<Panel[]>) {
     const editorStore = useEditorStore()
 
     const codeEditorTabs = computed(() => editorStore.tabs.filter((t) => !t.flow))
@@ -52,7 +56,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
     const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, p) => acc + (p.size ?? 0), 0) * 100 / panels.value.length))
 
     function getPanelsFromCodeEditorTabs(codeTabs: EditorTabProps[]){
-        const tabs = codeTabs.map(getTabFromCodeTab)
+        const tabs = codeTabs.map(getTabFromFilesTab)
 
         return {
             activeTab: tabs[0],

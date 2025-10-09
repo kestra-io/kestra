@@ -56,8 +56,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.kestra.core.utils.Rethrow.throwFunction;
-import static io.kestra.core.utils.Rethrow.throwPredicate;
+import static io.kestra.core.utils.Rethrow.*;
 
 @Singleton
 @Slf4j
@@ -431,7 +430,8 @@ public class ExecutionService {
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable List<State.Type> state
+        @Nullable List<State.Type> state,
+        int batchSize
     ) throws IOException {
         PurgeResult purgeResult = this.executionRepository
             .find(
@@ -448,24 +448,27 @@ public class ExecutionService {
                 null,
                 true
             )
-            .map(throwFunction(execution -> {
+            .buffer(batchSize)
+            .map(throwFunction(executions -> {
                 PurgeResult.PurgeResultBuilder<?, ?> builder = PurgeResult.builder();
 
                 if (purgeExecution) {
-                    builder.executionsCount(this.executionRepository.purge(execution));
+                    builder.executionsCount(this.executionRepository.purge(executions));
                 }
 
                 if (purgeLog) {
-                    builder.logsCount(this.logRepository.purge(execution));
+                    builder.logsCount(this.logRepository.purge(executions));
                 }
 
                 if (purgeMetric) {
-                    builder.metricsCount(this.metricRepository.purge(execution));
+                    builder.metricsCount(this.metricRepository.purge(executions));
                 }
 
                 if (purgeStorage) {
-                    URI uri = StorageContext.forExecution(execution).getExecutionStorageURI(StorageContext.KESTRA_SCHEME);
-                    builder.storagesCount(storageInterface.deleteByPrefix(execution.getTenantId(), execution.getNamespace(), uri).size());
+                    executions.forEach(throwConsumer(execution -> {
+                        URI uri = StorageContext.forExecution(execution).getExecutionStorageURI(StorageContext.KESTRA_SCHEME);
+                        builder.storagesCount(storageInterface.deleteByPrefix(execution.getTenantId(), execution.getNamespace(), uri).size());
+                    }));
                 }
 
                 return (PurgeResult) builder.build();
@@ -715,8 +718,8 @@ public class ExecutionService {
         } else {
             newExecution = execution.withState(killingOrAfterKillState);
         }
-        
-        // Because this method is expected to be called by the Executor we can return the Execution 
+
+        // Because this method is expected to be called by the Executor we can return the Execution
         // immediately without publishing a CrudEvent like it's done on pause/resume method.
         return newExecution;
     }

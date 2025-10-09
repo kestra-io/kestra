@@ -1,12 +1,7 @@
 <template>
-    <TopNavBar :title="header.title" :breadcrumb="header.breadcrumb" />
+    <TopNavBar v-bind="header" />
     <section class="full-container">
-        <Editor
-            v-if="dashboard.sourceCode"
-            :initialSource="dashboard.sourceCode"
-            allowSaveUnchanged
-            @save="save"
-        />
+        <MultiPanelDashboardEditorView @save="save" />
     </section>
 </template>
 
@@ -19,16 +14,14 @@
     import {useBlueprintsStore} from "../../../stores/blueprints"
     import {useToast} from "../../../utils/toast"
     import {getRandomID} from "../../../../scripts/id"
-    import type {Dashboard} from "../../../components/dashboard/composables/useDashboards"
     import {getDashboard, processFlowYaml} from "../../../components/dashboard/composables/useDashboards"
     import TopNavBar from "../../../components/layout/TopNavBar.vue"
-    // @ts-expect-error need types for editor
-    import Editor from "../../../components/dashboard/components/Editor.vue"
     import useRouteContext from "../../../composables/useRouteContext"
 
     import YAML_MAIN from "../assets/default_main_definition.yaml?raw"
     import YAML_FLOW from "../assets/default_flow_definition.yaml?raw"
     import YAML_NAMESPACE from "../assets/default_namespace_definition.yaml?raw"
+    import MultiPanelDashboardEditorView from "./MultiPanelDashboardEditorView.vue"
 
     const route = useRoute()
     const router = useRouter()
@@ -39,7 +32,6 @@
     const dashboardStore = useDashboardStore()
     const blueprintsStore = useBlueprintsStore()
 
-    const dashboard = ref<Dashboard>({id: "", charts: []})
     const context = ref({title: t("dashboards.creation.label")})
 
     const header = computed(() => ({
@@ -47,7 +39,7 @@
         breadcrumb: [{label: t("dashboards.creation.label"), link: undefined}],
     }))
 
-    const save = async (source: string) => {
+    const save = async (source?: string) => {
         const response = await dashboardStore.create(source)
 
         toast.success(t("dashboards.creation.confirmation", {title: response.title}));
@@ -71,19 +63,19 @@
         const {blueprintId, name, params} = route.query;
 
         if (blueprintId) {
-            dashboard.value.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId as string});
-            if (!/^id:.*$/m.test(dashboard.value.sourceCode ?? "")) {
-                dashboard.value.sourceCode = "id: " + blueprintId + "\n" + dashboard.value.sourceCode;
+            dashboardStore.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId as string});
+            if (!/^id:.*$/m.test(dashboardStore.sourceCode ?? "")) {
+                dashboardStore.sourceCode = "id: " + blueprintId + "\n" + dashboardStore.sourceCode;
             }
         } else {
             if (name === "flows/update") {
                 const {namespace, id} = JSON.parse(params as string);
-                dashboard.value.sourceCode = processFlowYaml(YAML_FLOW, namespace, id);
+                dashboardStore.sourceCode = processFlowYaml(YAML_FLOW, namespace, id);
             } else {
-                dashboard.value.sourceCode = name === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN;
+                dashboardStore.sourceCode = name === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN;
             }
 
-            dashboard.value.sourceCode = "id: " + getRandomID() + "\n" + dashboard.value.sourceCode;
+            dashboardStore.sourceCode = "id: " + getRandomID() + "\n" + dashboardStore.sourceCode;
         }
     })
 

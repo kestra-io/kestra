@@ -620,7 +620,7 @@
     const flowParsed = computed(() => flowStore.flowParsed);
 
     const saveUsingKeyboard = (e: KeyboardEvent) => {
-        if (e.ctrlKey && e.key === "s") {
+        if ((e.ctrlKey || e.metaKey) && e.key === "s") {
             e.preventDefault();
             return save();
         }
@@ -934,7 +934,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 @use "element-plus/theme-chalk/src/mixins/mixins" as *;
 @import "@kestra-io/ui-libs/src/scss/variables";
 

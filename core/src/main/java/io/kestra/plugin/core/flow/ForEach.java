@@ -200,7 +200,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     @NotNull
     @PluginProperty(dynamic = true)
     @Schema(
-        title = "The list of values for which Kestra will execute a group of tasks.",
+        title = "The list of values for which Kestra will execute a group of tasks",
         description = "The values can be passed as a string, a list of strings, or a list of objects.",
         oneOf = {String.class, Object[].class}
     )
@@ -210,7 +210,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     @NotNull
     @Builder.Default
     @Schema(
-        title = "The number of concurrent task groups for each value in the `values` array.",
+        title = "The number of concurrent task groups for each value in the `values` array",
         description = """
         If you set the `concurrencyLimit` property to 0, Kestra will execute all task groups concurrently for all values (zero limits!). \
 
@@ -224,25 +224,16 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.DYNAMIC);
 
-        if (concurrencyLimit == 1) {
-            GraphUtils.sequential(
-                subGraph,
-                this.getTasks(),
-                this.getErrors(),
-                this.getFinally(),
-                taskRun,
-                execution
-            );
-        } else {
-            GraphUtils.parallel(
-                subGraph,
-                this.getTasks(),
-                this.errors,
-                this._finally,
-                taskRun,
-                execution
-            );
-        }
+        // ForEach executes task groups concurrently, not the task inside the group concurrently,
+        // so the topology should display it as a sequential.
+        GraphUtils.sequential(
+            subGraph,
+            this.getTasks(),
+            this.getErrors(),
+            this.getFinally(),
+            taskRun,
+            execution
+        );
 
         return subGraph;
     }

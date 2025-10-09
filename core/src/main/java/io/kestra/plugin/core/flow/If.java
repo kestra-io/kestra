@@ -74,12 +74,16 @@ public class If extends Task implements FlowableTask<If.Output> {
         title = "The `If` condition which can be any expression that evaluates to a boolean value.",
         description = "Boolean coercion allows 0, -0, null and '' to evaluate to false, all other values will evaluate to true."
     )
-    private Property<String> condition;
+    // Note: we can't use Property<String> here because of the cache of the property evaluation which causes issue when using If in a ForEach with concurrencyLimit > 1!
+    // See https://github.com/kestra-io/kestra/issues/8697
+    // At some point, if we need it, we should allow bypassing (or clearing) the property evaluation cache
+    @PluginProperty(dynamic = true)
+    private String condition;
 
     @Valid
     @PluginProperty
     @Schema(
-        title = "List of tasks to execute if the condition is true."
+        title = "List of tasks to execute if the condition is true"
     )
     @NotEmpty
     private List<Task> then;
@@ -87,7 +91,7 @@ public class If extends Task implements FlowableTask<If.Output> {
     @Valid
     @PluginProperty
     @Schema(
-        title = "List of tasks to execute if the condition is false."
+        title = "List of tasks to execute if the condition is false"
     )
     @JsonProperty("else")
     private List<Task> _else;
@@ -95,7 +99,7 @@ public class If extends Task implements FlowableTask<If.Output> {
     @Valid
     @PluginProperty
     @Schema(
-        title = "List of tasks to execute in case of errors of a child task."
+        title = "List of tasks to execute in case of errors of a child task"
     )
     private List<Task> errors;
 
@@ -205,14 +209,14 @@ public class If extends Task implements FlowableTask<If.Output> {
     }
 
     private Boolean isTrue(RunContext runContext) throws IllegalVariableEvaluationException {
-        String rendered = runContext.render(condition).as(String.class).orElse(null);
+        String rendered = runContext.render(condition);
         return TruthUtils.isTruthy(rendered);
     }
 
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "Condition evaluation result.")
+        @Schema(title = "Condition evaluation result")
         public Boolean evaluationResult;
     }
 }

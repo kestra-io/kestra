@@ -3,6 +3,7 @@ package io.kestra.core.models.flows;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.kestra.core.models.tasks.Task;
 import io.micronaut.core.annotation.Introspected;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -115,7 +116,7 @@ public class State {
     }
 
     public Instant maxDate() {
-        if (this.histories.size() == 0) {
+        if (this.histories.isEmpty()) {
             return Instant.now();
         }
 
@@ -123,7 +124,7 @@ public class State {
     }
 
     public Instant minDate() {
-        if (this.histories.size() == 0) {
+        if (this.histories.isEmpty()) {
             return Instant.now();
         }
 
@@ -168,6 +169,16 @@ public class State {
     }
 
     @JsonIgnore
+    public boolean isBreakpoint() {
+        return this.current.isBreakpoint();
+    }
+
+    @JsonIgnore
+    public boolean isQueued() {
+        return this.current.isQueued();
+    }
+
+    @JsonIgnore
     public boolean isRetrying() {
         return this.current.isRetrying();
     }
@@ -200,6 +211,14 @@ public class State {
         return this.histories.get(this.histories.size() - 2).state.isPaused();
     }
 
+    /**
+     * Return true if the execution has failed, then was restarted.
+     * This is to disambiguate between a RESTARTED after PAUSED and RESTARTED after FAILED state.
+     */
+    public boolean failedThenRestarted() {
+       return this.current ==  Type.RESTARTED && this.histories.get(this.histories.size() - 2).state.isFailed();
+    }
+
     @Introspected
     public enum Type {
         CREATED,
@@ -215,7 +234,8 @@ public class State {
         QUEUED,
         RETRYING,
         RETRIED,
-        SKIPPED;
+        SKIPPED,
+        BREAKPOINT;
 
         public boolean isTerminated() {
             return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this == Type.CANCELLED || this == Type.RETRIED || this == Type.SKIPPED;
@@ -241,6 +261,10 @@ public class State {
             return this == Type.PAUSED;
         }
 
+        public boolean isBreakpoint() {
+            return this == Type.BREAKPOINT;
+        }
+
         public boolean isRetrying() {
             return this == Type.RETRYING || this == Type.RETRIED;
         }
@@ -253,8 +277,25 @@ public class State {
             return this == Type.KILLED;
         }
 
+        public boolean isQueued(){
+            return this == Type.QUEUED;
+        }
+
+        /**
+         * @return states that are terminal to an execution
+         */
         public static List<Type> terminatedTypes() {
             return Stream.of(Type.values()).filter(type -> type.isTerminated()).toList();
+        }
+
+        /**
+         * Compute the final 'failure' of a task depending on <code>allowFailure</code> and <code>allowWarning</code>:
+         * - if both are true -> SUCCESS
+         * - if only <code>allowFailure</code> is true -> WARNING
+         * - if none -> FAILED
+         */
+        public static State.Type fail(Task task) {
+            return task.isAllowFailure() ? (task.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING) : State.Type.FAILED;
         }
     }
 

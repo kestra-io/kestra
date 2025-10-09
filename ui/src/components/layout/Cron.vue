@@ -1,5 +1,5 @@
 <template>
-    <span data-component="FILENAME_PLACEHOLDER">
+    <span>
         {{ humanReadableCron }}
     </span>
 </template>

@@ -62,7 +62,7 @@ public class RetryUtils {
             .delayFactor(2.0)
             .interval(Duration.ofSeconds(1))
             .maxInterval(Duration.ofSeconds(10))
-            .maxAttempt(3)
+            .maxAttempts(3)
             .build();
 
         @Builder.Default

@@ -20,7 +20,7 @@ public class ExponentialRetryValidationTest {
     @Test
     void shouldValidateValidRetry() throws Exception {
         var retry = Exponential.builder()
-            .maxAttempt(3)
+            .maxAttempts(3)
             .maxDuration(Duration.ofSeconds(10))
             .interval(Duration.ofSeconds(1))
             .maxInterval(Duration.ofSeconds(3))
@@ -33,7 +33,7 @@ public class ExponentialRetryValidationTest {
     @Test
     void shouldNotValidateInvalidRetry() throws Exception {
         var retry = Exponential.builder()
-            .maxAttempt(3)
+            .maxAttempts(3)
             .maxDuration(Duration.ofSeconds(1))
             .interval(Duration.ofSeconds(2))
             .maxInterval(Duration.ofSeconds(3))
@@ -45,7 +45,7 @@ public class ExponentialRetryValidationTest {
         assertThat(valid.get().getMessage()).isEqualTo(": 'interval' must be less than 'maxDuration' but is PT2S\n");
 
         retry = Exponential.builder()
-            .maxAttempt(3)
+            .maxAttempts(3)
             .maxDuration(Duration.ofSeconds(12))
             .interval(Duration.ofSeconds(3))
             .maxInterval(Duration.ofSeconds(2))

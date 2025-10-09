@@ -1,5 +1,3 @@
-publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
-
 if (rootProject.name == "kestra") {
     processResources {
         dependsOn(':ui:assembleFrontend')
@@ -24,11 +22,21 @@ dependencies {
     implementation "io.micronaut.cache:micronaut-cache-core"
     implementation "io.micronaut.cache:micronaut-cache-caffeine"
 
+    implementation("com.posthog.java:posthog:1.2.0")
+
+    // ai
+    implementation("dev.langchain4j:langchain4j")
+    implementation("dev.langchain4j:langchain4j-google-ai-gemini")
+
+    implementation("de.siegmar:fastcsv")
+
     // test
     testAnnotationProcessor project(':processor')
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':storage-local')
+    testImplementation project(':worker')
     testImplementation "org.wiremock:wiremock-jetty12"
+    testImplementation "org.awaitility:awaitility"
 
     testImplementation project(':tests')
     testImplementation project(':jdbc')

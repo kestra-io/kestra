@@ -1,15 +1,14 @@
 package io.kestra.core.models.executions;
 
+import io.kestra.core.models.flows.State;
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Value;
-import io.kestra.core.models.flows.State;
+import lombok.With;
 
 import java.net.URI;
 import java.util.List;
-
-import jakarta.validation.constraints.NotNull;
-import lombok.With;
 
 @Value
 @Builder
@@ -28,6 +27,7 @@ public class TaskRunAttempt {
     String workerId;
 
     @With
+    @Nullable
     URI logFile;
 
     public TaskRunAttempt withState(State.Type state) {

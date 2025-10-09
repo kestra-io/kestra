@@ -31,8 +31,8 @@ class OrTest {
             Arguments.of(
                 Collections.singletonList(
                     DayWeek.builder()
-                        .date(Property.of("2013-09-08"))
-                        .dayOfWeek(Property.of(DayOfWeek.SUNDAY))
+                        .date(Property.ofValue("2013-09-08"))
+                        .dayOfWeek(Property.ofValue(DayOfWeek.SUNDAY))
                         .build()
                 ),
                 true
@@ -40,12 +40,12 @@ class OrTest {
             Arguments.of(
                 Arrays.asList(
                     DayWeek.builder()
-                        .date(Property.of("2013-09-08"))
-                        .dayOfWeek(Property.of(DayOfWeek.SATURDAY))
+                        .date(Property.ofValue("2013-09-08"))
+                        .dayOfWeek(Property.ofValue(DayOfWeek.SATURDAY))
                         .build(),
                     DayWeek.builder()
-                        .date(Property.of("2013-09-08"))
-                        .dayOfWeek(Property.of(DayOfWeek.MONDAY))
+                        .date(Property.ofValue("2013-09-08"))
+                        .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
                         .build()
                 ),
                 false
@@ -53,12 +53,12 @@ class OrTest {
             Arguments.of(
                 Arrays.asList(
                     DayWeek.builder()
-                        .date(Property.of("2013-09-08"))
-                        .dayOfWeek(Property.of(DayOfWeek.SUNDAY))
+                        .date(Property.ofValue("2013-09-08"))
+                        .dayOfWeek(Property.ofValue(DayOfWeek.SUNDAY))
                         .build(),
                     DayWeek.builder()
-                        .date(Property.of("2013-09-08"))
-                        .dayOfWeek(Property.of(DayOfWeek.MONDAY))
+                        .date(Property.ofValue("2013-09-08"))
+                        .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
                         .build()
                 ),
                 true

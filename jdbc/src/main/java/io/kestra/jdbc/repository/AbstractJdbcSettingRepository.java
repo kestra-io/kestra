@@ -67,8 +67,7 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcReposito
     public Setting save(Setting setting) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(setting);
         this.jdbcRepository.persist(setting, fields);
-
-        eventPublisher.publishEvent(new CrudEvent<>(setting, CrudEventType.UPDATE));
+        this.eventPublisher.publishEvent(new CrudEvent<>(setting, CrudEventType.UPDATE));
 
         return setting;
     }
@@ -82,8 +81,7 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcReposito
         }
 
         this.jdbcRepository.delete(setting);
-
-        eventPublisher.publishEvent(new CrudEvent<>(setting, CrudEventType.DELETE));
+        this.eventPublisher.publishEvent(CrudEvent.delete(setting));
 
         return setting;
     }

@@ -34,10 +34,10 @@ class MultipleConditionTest {
             .conditions(
                 ImmutableMap.of(
                 "first", ExecutionStatus.builder()
-                    .in(Property.of(Collections.singletonList(State.Type.SUCCESS)))
+                    .in(Property.ofValue(Collections.singletonList(State.Type.SUCCESS)))
                     .build(),
                 "second", Expression.builder()
-                    .expression(new Property<>("{{ flow.id }}"))
+                    .expression(Property.ofExpression("{{ flow.id }}"))
                     .build()
             ))
             .build();

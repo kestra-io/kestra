@@ -40,7 +40,7 @@ import picocli.CommandLine.Option;
 )
 @Slf4j
 @Introspected
-abstract public class AbstractCommand implements Callable<Integer> {
+public abstract class AbstractCommand implements Callable<Integer> {
     @Inject
     private ApplicationContext applicationContext;
 
@@ -93,7 +93,7 @@ abstract public class AbstractCommand implements Callable<Integer> {
             this.startupHook.start(this);
         }
 
-        if (this.pluginsPath != null && loadExternalPlugins()) {
+        if (pluginRegistryProvider != null && this.pluginsPath != null && loadExternalPlugins()) {
             pluginRegistry = pluginRegistryProvider.get();
             pluginRegistry.registerIfAbsent(pluginsPath);
 

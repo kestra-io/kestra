@@ -23,7 +23,7 @@ import java.util.function.Predicate;
  */
 public class InternalNamespace implements Namespace {
 
-    private static final Logger log = LoggerFactory.getLogger(InternalNamespace.class);
+    private static final Logger LOG = LoggerFactory.getLogger(InternalNamespace.class);
 
     private final String namespace;
     private final String tenant;
@@ -36,8 +36,8 @@ public class InternalNamespace implements Namespace {
      * @param namespace The namespace
      * @param storage   The storage.
      */
-    public InternalNamespace(final String namespace, final StorageInterface storage) {
-        this(log, null, namespace, storage);
+    public InternalNamespace(@Nullable final String tenant, final String namespace, final StorageInterface storage) {
+        this(LOG, tenant, namespace, storage);
     }
 
     /**

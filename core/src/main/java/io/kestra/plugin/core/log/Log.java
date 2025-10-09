@@ -54,7 +54,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 )
 public class Log extends Task implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "One or more message(s) to be sent to the backend as logs.",
+        title = "One or more message(s) to be sent to the backend as logs",
         description = "It can be a string or an array of strings.",
         oneOf = {
             String.class,
@@ -66,10 +66,10 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
     private Object message;
 
     @Schema(
-        title = "The log level. If not specified, it defaults to `INFO`."
+        title = "The level on which the message should be logged. Note that this is different from the core `logLevel` property which sets the minimum log level to be persisted in the backend database. The `level` property is used to determine the log level of the message emitted by the Log task, while `logLevel` is used to filter which logs should be stored in the backend. Both properties can be used together to control the log level of the message emitted by the task and the logs that are persisted in the backend. If not specified, the `level` defaults to `INFO`."
     )
     @Builder.Default
-    private Property<Level> level = Property.of(Level.INFO);
+    private Property<Level> level = Property.ofValue(Level.INFO);
 
     @SuppressWarnings("unchecked")
     @Override

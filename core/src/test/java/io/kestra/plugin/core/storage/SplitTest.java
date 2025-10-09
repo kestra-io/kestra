@@ -1,10 +1,11 @@
 package io.kestra.plugin.core.storage;
 
 import com.google.common.io.CharStreams;
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Rethrow;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -22,12 +23,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class SplitTest {
     @Inject
-    RunContextFactory runContextFactory;
+    TestRunContextFactory runContextFactory;
 
     @Inject
     StorageInterface storageInterface;
@@ -38,8 +40,8 @@ class SplitTest {
         URI put = storageUpload(1000);
 
         Split result = Split.builder()
-            .from(Property.of(put.toString()))
-            .partitions(Property.of(8))
+            .from(Property.ofValue(put.toString()))
+            .partitions(Property.ofValue(8))
             .build();
 
         Split.Output run = result.run(runContext);
@@ -55,8 +57,8 @@ class SplitTest {
         URI put = storageUpload(1000);
 
         Split result = Split.builder()
-            .from(Property.of(put.toString()))
-            .rows(Property.of(10))
+            .from(Property.ofValue(put.toString()))
+            .rows(Property.ofValue(10))
             .build();
 
         Split.Output run = result.run(runContext);
@@ -71,8 +73,8 @@ class SplitTest {
         URI put = storageUpload(12288);
 
         Split result = Split.builder()
-            .from(Property.of(put.toString()))
-            .bytes(Property.of("1KB"))
+            .from(Property.ofValue(put.toString()))
+            .bytes(Property.ofValue("1KB"))
             .build();
 
         Split.Output run = result.run(runContext);
@@ -91,7 +93,7 @@ class SplitTest {
     private String readAll(List<URI> uris) throws IOException {
         return uris
             .stream()
-            .map(Rethrow.throwFunction(uri -> CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, uri)))))
+            .map(Rethrow.throwFunction(uri -> CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, uri)))))
             .collect(Collectors.joining());
     }
 
@@ -102,9 +104,9 @@ class SplitTest {
         Files.write(tempFile.toPath(), content(count));
 
         return storageInterface.put(
+            MAIN_TENANT,
             null,
-            null,
-            new URI("/file/storage/get.yml"),
+            new URI("/file/storage/%s/get.yml".formatted(IdUtils.create())),
             new FileInputStream(tempFile)
         );
     }

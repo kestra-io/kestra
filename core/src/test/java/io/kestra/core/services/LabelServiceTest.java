@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.Flow;
@@ -9,6 +10,10 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.plugin.core.trigger.Schedule;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import io.kestra.plugin.core.execution.Labels;
+import io.kestra.core.models.executions.Execution;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 
 import java.util.Collections;
 import java.util.List;
@@ -22,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class LabelServiceTest {
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void shouldFilterSystemLabels() {
@@ -78,4 +83,24 @@ class LabelServiceTest {
         assertTrue(LabelService.containsAll(List.of(new Label("key1", "value1")), List.of(new Label("key1", "value1"))));
         assertTrue(LabelService.containsAll(List.of(new Label("key1", "value1"), new Label("key2", "value2")), List.of(new Label("key1", "value1"))));
     }
+    @Test
+void shouldThrowExceptionOnEmptyLabelValueInLabelsTask() throws Exception {
+    Labels task = Labels.builder()
+        .id("test")
+        .type(Labels.class.getName())
+        .labels(Map.of("invalidLabel", "")) //  empty value
+        .build();
+
+    RunContext runContext = runContextFactory.of();
+
+    Execution execution = Execution.builder()
+        .id("execId")
+        .namespace("test.ns")
+        .build();
+
+    assertThatThrownBy(() -> task.update(execution, runContext))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Label values cannot be empty");
+}
+
 }

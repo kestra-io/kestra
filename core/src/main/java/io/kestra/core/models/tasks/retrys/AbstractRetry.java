@@ -29,8 +29,18 @@ public abstract class AbstractRetry {
 
     private Duration maxDuration;
 
+    @Deprecated(forRemoval = true)
+    public Integer getMaxAttempt() {
+        return maxAttempts;
+    }
+
+    @Deprecated(forRemoval = true)
+    public void setMaxAttempt(@Min(1) Integer maxAttempt) {
+        this.maxAttempts = maxAttempt;
+    }
+
     @Min(1)
-    private Integer maxAttempt;
+    private Integer maxAttempts;
 
     @Builder.Default
     private Boolean warningOnRetry = false;
@@ -46,8 +56,8 @@ public abstract class AbstractRetry {
             builder.withMaxDuration(maxDuration);
         }
 
-        if (this.maxAttempt != null) {
-            builder.withMaxAttempts(this.maxAttempt);
+        if (this.maxAttempts != null) {
+            builder.withMaxAttempts(this.maxAttempts);
         }
         return builder;
     }

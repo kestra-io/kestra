@@ -38,7 +38,7 @@ class StateTest {
         Set set = Set.builder()
             .id(IdUtils.create())
             .type(Set.class.toString())
-            .data(new Property<>(Map.of(
+            .data(Property.ofValue(Map.of(
                 "{{ inputs.key }}", "{{ inputs.inc }}"
             )))
             .build();
@@ -56,7 +56,7 @@ class StateTest {
         set = Set.builder()
             .id(IdUtils.create())
             .type(Set.class.toString())
-            .data(new Property<>(Map.of(
+            .data(Property.ofValue(Map.of(
                 "{{ inputs.key }}", "2",
                 "test2", "3"
             )))
@@ -100,8 +100,8 @@ class StateTest {
         Delete task = Delete.builder()
             .id(IdUtils.create())
             .type(Get.class.getName())
-            .name(new Property<>(IdUtils.create()))
-            .errorOnMissing(Property.of(true))
+            .name(Property.ofValue(IdUtils.create()))
+            .errorOnMissing(Property.ofValue(true))
             .build();
 
         assertThrows(FileNotFoundException.class, () -> {
@@ -114,8 +114,8 @@ class StateTest {
         Get task = Get.builder()
             .id(IdUtils.create())
             .type(Get.class.getName())
-            .name(new Property<>(IdUtils.create()))
-            .errorOnMissing(Property.of(true))
+            .name(Property.ofValue(IdUtils.create()))
+            .errorOnMissing(Property.ofValue(true))
             .build();
 
         assertThrows(FileNotFoundException.class, () -> {

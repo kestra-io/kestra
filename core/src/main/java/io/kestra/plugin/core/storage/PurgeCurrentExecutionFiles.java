@@ -46,7 +46,7 @@ public class PurgeCurrentExecutionFiles extends Task implements RunnableTask<Pur
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The deleted file URIs from Kestra's internal storage."
+            title = "The deleted file URIs from Kestra's internal storage"
         )
         private final List<URI> uris;
     }

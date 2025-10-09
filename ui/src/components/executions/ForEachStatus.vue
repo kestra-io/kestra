@@ -88,12 +88,12 @@
                 }
             },
             goToExecutionsList(state) {
-                const queries = {
-                    triggerExecutionId: this.executionId,
-                }
+                const queries = {}
+
+                queries["filters[triggerExecutionId][EQUALS]"] = this.executionId;
 
                 if (state) {
-                    queries.state = state;
+                    queries["filters[state][EQUALS]"] = state;
                 }
 
                 return {

@@ -1,0 +1,16 @@
+id: for-each-item-subflow-after-execution
+namespace: io.kestra.tests
+
+inputs:
+  - id: items
+    type: STRING
+
+tasks:
+  - id: per-item
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ inputs.items }}"
+
+afterExecution:
+  - id: afterExecution
+    type: io.kestra.plugin.core.log.Log
+    message: Hello from afterExecution!

@@ -1,0 +1,13 @@
+id: flow-concurrency-queue-fail
+namespace: io.kestra.tests
+
+concurrency:
+  behavior: QUEUE
+  limit: 1
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT2S
+  - id: fail
+    type: io.kestra.plugin.core.execution.Fail

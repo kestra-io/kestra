@@ -14,7 +14,7 @@ class TenantServiceTest {
     @Test
     void test() {
         var tenant = tenantService.resolveTenant();
-        assertThat(tenant).isNull();
+        assertThat(tenant).isEqualTo("main");
     }
 
 }

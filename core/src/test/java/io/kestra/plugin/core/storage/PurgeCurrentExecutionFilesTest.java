@@ -1,19 +1,20 @@
 package io.kestra.plugin.core.storage;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.runners.RunContextFactory;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class PurgeCurrentExecutionFilesTest {
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void run() throws Exception {
@@ -21,6 +22,7 @@ class PurgeCurrentExecutionFilesTest {
         var flow  = Flow.builder()
             .namespace("namespace")
             .id("flowId")
+            .tenantId(MAIN_TENANT)
             .build();
         var runContext = runContextFactory.of(flow, Map.of(
             "execution", Map.of("id", "executionId"),

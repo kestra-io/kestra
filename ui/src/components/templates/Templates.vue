@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo.title">
+    <TopNavBar :title="routeInfo.title">
         <template #additional-right v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
             <ul>
                 <li>
@@ -28,21 +28,21 @@
                 </li>
             </ul>
         </template>
-    </top-nav-bar>
-    <templates-deprecated />
+    </TopNavBar>
+    <TemplatesDeprecated />
     <section class="container" v-if="ready">
         <div>
-            <data-table
+            <DataTable
                 @page-changed="onPageChanged"
                 ref="dataTable"
-                :total="total"
+                :total="templateStore.total"
             >
                 <template #navbar>
                     <el-form-item>
-                        <search-field />
+                        <SearchField />
                     </el-form-item>
                     <el-form-item>
-                        <namespace-select
+                        <NamespaceSelect
                             data-type="flow"
                             :value="$route.query.namespace"
                             @update:model-value="onDataTableValue('namespace', $event)"
@@ -51,22 +51,23 @@
                 </template>
 
                 <template #table>
-                    <select-table
+                    <SelectTable
                         ref="selectTable"
-                        :data="templates"
-                        :default-sort="{prop: 'id', order: 'ascending'}"
-                        table-layout="auto"
+                        :data="templateStore.templates"
+                        :defaultSort="{prop: 'id', order: 'ascending'}"
+                        tableLayout="auto"
                         fixed
                         @row-dblclick="onRowDoubleClick"
                         @sort-change="onSort"
                         @selection-change="handleSelectionChange"
                         :selectable="canRead || canDelete"
+                        :no-data-text="$t('no_results.templates')"
                     >
                         <template #select-actions>
-                            <bulk-select
-                                :select-all="queryBulkAction"
+                            <BulkSelect
+                                :selectAll="queryBulkAction"
                                 :selections="selection"
-                                :total="total"
+                                :total="templateStore.total"
                                 @update:select-all="toggleAllSelection"
                                 @unselect="toggleAllUnselected"
                             >
@@ -76,13 +77,13 @@
                                 <el-button v-if="canDelete" @click="deleteTemplates" :icon="TrashCan">
                                     {{ $t('delete') }}
                                 </el-button>
-                            </bulk-select>
+                            </BulkSelect>
                         </template>
                         <template #default>
                             <el-table-column
                                 prop="id"
                                 sortable="custom"
-                                :sort-orders="['ascending', 'descending']"
+                                :sortOrders="['ascending', 'descending']"
                                 :label="$t('id')"
                             >
                                 <template #default="scope">
@@ -91,7 +92,7 @@
                                     >
                                         {{ scope.row.id }}
                                     </router-link>
-                                    &nbsp;<markdown-tooltip
+                                    &nbsp;<MarkdownTooltip
                                         :id="scope.row.namespace + '-' + scope.row.id"
                                         :description="scope.row.description"
                                         :title="scope.row.namespace + '.' + scope.row.id"
@@ -102,26 +103,26 @@
                             <el-table-column
                                 prop="namespace"
                                 sortable="custom"
-                                :sort-orders="['ascending', 'descending']"
+                                :sortOrders="['ascending', 'descending']"
                                 :label="$t('namespace')"
                                 :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)"
                             />
 
-                            <el-table-column column-key="action" class-name="row-action">
+                            <el-table-column columnKey="action" className="row-action">
                                 <template #default="scope">
                                     <router-link
                                         :to="{name: 'templates/update', params : {namespace: scope.row.namespace, id: scope.row.id}}"
                                     >
-                                        <kicon :tooltip="$t('details')" placement="left">
+                                        <Kicon :tooltip="$t('details')" placement="left">
                                             <TextSearch />
-                                        </kicon>
+                                        </Kicon>
                                     </router-link>
                                 </template>
                             </el-table-column>
                         </template>
-                    </select-table>
+                    </SelectTable>
                 </template>
-            </data-table>
+            </DataTable>
         </div>
     </section>
 </template>
@@ -136,7 +137,8 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapStores} from "pinia";
+    import {useTemplateStore} from "../../stores/template";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
@@ -152,6 +154,7 @@
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip.vue";
     import Upload from "vue-material-design-icons/Upload.vue";
     import SelectTableActions from "../../mixins/selectTableActions";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -169,23 +172,21 @@
             return {
                 isDefaultNamespaceAllow: true,
                 permission: permission,
-                action: action
+                action: action,
             };
         },
         computed: {
-            ...mapState("template", ["templates", "total"]),
-            ...mapState("stat", ["dailyGroupByFlow", "daily"]),
-            ...mapState("auth", ["user"]),
+            ...mapStores(useTemplateStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$t("templates")
                 };
             },
             canRead() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.READ);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.READ);
             },
             canDelete() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.DELETE);
+                return this.authStore.user?.isAllowed(permission.FLOW, action.DELETE);
             },
         },
         methods: {
@@ -195,8 +196,8 @@
                 return _merge(base, queryFilter)
             },
             loadData(callback) {
-                this.$store
-                    .dispatch("template/findTemplates", this.loadQuery({
+                this.templateStore
+                    .findTemplates(this.loadQuery({
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
                         sort: this.$route.query.sort || "id:asc",
@@ -213,11 +214,11 @@
             },
             exportTemplates() {
                 this.$toast().confirm(
-                    this.$t("template export", {"templateCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t("template export", {"templateCount": this.queryBulkAction ? this.templateStore.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("template/exportTemplateByQuery", this.loadQuery({
+                            return this.templateStore
+                                .exportTemplateByQuery(this.loadQuery({
                                     namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
                                     q: this.$route.query.q ? [this.$route.query.q] : undefined,
                                 }, false))
@@ -225,8 +226,8 @@
                                     this.$toast().success(this.$t("templates exported"));
                                 })
                         } else {
-                            return this.$store
-                                .dispatch("template/exportTemplateByIds", {ids: this.selection})
+                            return this.templateStore
+                                .exportTemplateByIds({ids: this.selection})
                                 .then(_ => {
                                     this.$toast().success(this.$t("templates exported"));
                                 })
@@ -239,8 +240,8 @@
             importTemplates() {
                 const formData = new FormData();
                 formData.append("fileUpload", this.$refs.file.files[0]);
-                this.$store
-                    .dispatch("template/importTemplates", formData)
+                this.templateStore
+                    .importTemplates(formData)
                     .then(_ => {
                         this.$toast().success(this.$t("templates imported"));
                         this.loadData(() => {
@@ -249,11 +250,11 @@
             },
             deleteTemplates() {
                 this.$toast().confirm(
-                    this.$t("template delete", {"templateCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t("template delete", {"templateCount": this.queryBulkAction ? this.templateStore.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
-                            return this.$store
-                                .dispatch("template/deleteTemplateByQuery", this.loadQuery({
+                            return this.templateStore
+                                .deleteTemplateByQuery(this.loadQuery({
                                     namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
                                     q: this.$route.query.q ? [this.$route.query.q] : undefined,
                                 }, false))
@@ -263,8 +264,8 @@
                                     })
                                 })
                         } else {
-                            return this.$store
-                                .dispatch("template/deleteTemplateByIds", {ids: this.selection})
+                            return this.templateStore
+                                .deleteTemplateByIds({ids: this.selection})
                                 .then(r => {
                                     this.$toast().success(this.$t("templates deleted", {count: r.data.count}));
                                     this.loadData(() => {

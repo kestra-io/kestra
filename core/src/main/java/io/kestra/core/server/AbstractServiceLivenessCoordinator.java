@@ -136,6 +136,9 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
         // ...all services that have transitioned to TERMINATED_FORCED.
         uncleanShutdownServices.addAll(instances.stream()
             .filter(nonRunning -> nonRunning.is(Service.ServiceState.TERMINATED_FORCED))
+            // Only select workers that have been terminated for at least the grace period, to ensure that all in-flight
+            // task runs had enough time to be fully handled by the executors.
+            .filter(terminated -> terminated.isTerminationGracePeriodElapsed(now))
             .toList()
         );
         return uncleanShutdownServices;
@@ -168,7 +171,7 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
     protected void handleAllServiceInNotRunningState() {
         // Soft delete all services which are NOT_RUNNING anymore.
         store.findAllInstancesInStates(Set.of(Service.ServiceState.NOT_RUNNING))
-            .forEach(instance -> safelyUpdate(instance, Service.ServiceState.EMPTY, null));
+            .forEach(instance -> safelyUpdate(instance, Service.ServiceState.INACTIVE, null));
     }
 
     protected void handleAllServicesForTerminatedStates(final Instant now) {

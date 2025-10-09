@@ -11,7 +11,6 @@
     </div>
 </template>
 <script>
-    import {mapGetters} from "vuex";
     import OverviewCard from "../execution/OverviewCard.vue";
 
     export default {
@@ -35,14 +34,11 @@
                     }
                 ]
             }
-        },
-        computed: {
-            ...mapGetters("core", ["guidedProperties"])
         }
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .overview-bottom {
         display: flex;
         gap: 1rem;

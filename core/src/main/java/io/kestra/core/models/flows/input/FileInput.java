@@ -20,8 +20,8 @@ public class FileInput extends Input<URI> {
 
     private static final String DEFAULT_EXTENSION = ".upl";
 
-    @Builder.Default
-    public String extension = DEFAULT_EXTENSION;
+    @Deprecated(since = "0.24", forRemoval = true)
+    public String extension;
 
     @Override
     public void validate(URI input) throws ConstraintViolationException {
@@ -32,6 +32,7 @@ public class FileInput extends Input<URI> {
         String res = inputs.stream()
             .filter(in -> in instanceof FileInput)
             .filter(in -> in.getId().equals(fileName))
+            .filter(flowInput -> ((FileInput) flowInput).getExtension() != null)
             .map(flowInput -> ((FileInput) flowInput).getExtension())
             .findFirst()
             .orElse(FileInput.DEFAULT_EXTENSION);

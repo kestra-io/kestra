@@ -2,7 +2,7 @@
     <slot v-if="embed" />
     <div class="blueprints" v-else>
         <nav class="header">
-            <div class="image-box">
+            <div :class="transparentImage ? 'transparent-image-box' : 'image-box'">
                 <img :src="image" :alt="alt || phrase">
                 <img :src="imageDark" :alt="alt || phrase" class="blueprint-dark">
             </div>
@@ -21,6 +21,7 @@
         alt?: string;
         image: string;
         imageDark: string;
+        transparentImage?: boolean;
     }>();
 </script>
 
@@ -71,13 +72,21 @@
                 display: none;
             }
         }
-
-        .dark & {
-            .image-box > img{
+        .transparent-image-box {
+            border: none;
+            background: none;
+            & > img.blueprint-dark {
                 display: none;
             }
+        }
 
-            .image-box > img.blueprint-dark{
+        .dark & {
+            .image-box > img,
+            .transparent-image-box > img{
+                display: none;
+            }
+            .image-box > img.blueprint-dark,
+            .transparent-image-box > img.blueprint-dark{
                 display: block;
             }
         }

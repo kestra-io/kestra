@@ -11,7 +11,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
@@ -37,7 +37,7 @@ class TimeoutTest {
     private QueueInterface<LogEntry> workerTaskLogQueue;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     void timeout() throws TimeoutException, QueueException {
@@ -51,8 +51,8 @@ class TimeoutTest {
             .tasks(Collections.singletonList(Sleep.builder()
                 .id("test")
                 .type(Sleep.class.getName())
-                .duration(Property.of(Duration.ofSeconds(100)))
-                .timeout(Property.of(Duration.ofNanos(100000)))
+                .duration(Property.ofValue(Duration.ofSeconds(100)))
+                .timeout(Property.ofValue(Duration.ofNanos(100000)))
                 .build()))
             .build();
 

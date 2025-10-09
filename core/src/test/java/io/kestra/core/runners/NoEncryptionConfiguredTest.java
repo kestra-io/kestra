@@ -19,6 +19,7 @@ import org.junit.jupiter.api.TestInstance;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -59,12 +60,13 @@ public class NoEncryptionConfiguredTest implements TestPropertyProvider {
     @Test
     @LoadFlows({"flows/valids/inputs.yaml"})
     void secretInput() {
-        assertThat(flowRepository.findById(null, "io.kestra.tests", "inputs").isPresent()).isTrue();
+        assertThat(flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "inputs").isPresent()).isTrue();
 
-        Flow flow = flowRepository.findById(null, "io.kestra.tests", "inputs").get();
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "inputs").get();
         Execution execution = Execution.builder()
             .id("test")
             .namespace(flow.getNamespace())
+            .tenantId(MAIN_TENANT)
             .flowRevision(1)
             .flowId(flow.getId())
             .build();

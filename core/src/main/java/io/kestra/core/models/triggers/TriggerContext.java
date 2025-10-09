@@ -4,10 +4,12 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
@@ -20,6 +22,7 @@ import java.util.List;
 @NoArgsConstructor
 @Introspected
 public class TriggerContext {
+    @Setter
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]")
     private String tenantId;
 
@@ -44,6 +47,7 @@ public class TriggerContext {
     @Nullable
     private List<State.Type> stopAfter;
 
+    @Schema(defaultValue = "false")
     private Boolean disabled = Boolean.FALSE;
 
     protected TriggerContext(TriggerContextBuilder<?, ?> b) {

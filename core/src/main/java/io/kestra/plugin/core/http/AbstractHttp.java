@@ -45,14 +45,14 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
     protected Property<String> uri;
 
     @Builder.Default
-    protected Property<String> method = Property.of("GET");
+    protected Property<String> method = Property.ofValue("GET");
 
     protected Property<String> body;
 
     protected Property<Map<String, Object>> formData;
 
     @Builder.Default
-    protected Property<String> contentType = Property.of("application/json");
+    protected Property<String> contentType = Property.ofValue("application/json");
 
     protected Property<Map<CharSequence, CharSequence>> headers;
 
@@ -61,7 +61,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
 
     @Deprecated
     @Schema(
-        title = "If true, allow a failed response code (response code >= 400)",
+        title = "If true, allow a failed response code (response code >= 400).",
         description = "Deprecated, use `options.allowFailed` instead."
     )
     private Property<Boolean> allowFailed;

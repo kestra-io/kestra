@@ -20,6 +20,6 @@ import jakarta.validation.constraints.Pattern;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public abstract class Condition implements Plugin, Rethrow.PredicateChecked<ConditionContext, InternalException> {
     @NotNull
-    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
+    @Pattern(regexp = "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$")
     protected String type;
 }

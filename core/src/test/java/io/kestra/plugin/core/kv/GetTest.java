@@ -1,9 +1,9 @@
 package io.kestra.plugin.core.kv;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
@@ -24,15 +24,13 @@ class GetTest {
     static final String TEST_KV_KEY = "test-key";
 
     @Inject
-    RunContextFactory runContextFactory;
+    TestRunContextFactory runContextFactory;
 
     @Test
     void shouldGetGivenExistingKey() throws Exception {
         // Given
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(Map.of(
-            "flow", Map.of("namespace", namespaceId),
-            "inputs", Map.of(
+        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of("inputs", Map.of(
                 "key", TEST_KV_KEY,
                 "namespace", namespaceId
             )
@@ -43,8 +41,8 @@ class GetTest {
         Get get = Get.builder()
             .id(Get.class.getSimpleName())
             .type(Get.class.getName())
-            .namespace(new Property<>("{{ inputs.namespace }}"))
-            .key(new Property<>("{{ inputs.key }}"))
+            .namespace(Property.ofExpression("{{ inputs.namespace }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
             .build();
 
 
@@ -62,8 +60,7 @@ class GetTest {
     void shouldGetGivenExistingKeyWithInheritance() throws Exception {
         // Given
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(Map.of(
-            "flow", Map.of("namespace", namespaceId),
+        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of(
             "inputs", Map.of(
                 "key", TEST_KV_KEY
             )
@@ -74,7 +71,7 @@ class GetTest {
         Get get = Get.builder()
             .id(Get.class.getSimpleName())
             .type(Get.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
             .build();
 
 
@@ -92,8 +89,7 @@ class GetTest {
     void shouldGetGivenNonExistingKey() throws Exception {
         // Given
         String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(Map.of(
-            "flow", Map.of("namespace", namespaceId),
+        RunContext runContext = this.runContextFactory.of(namespaceId, Map.of(
             "inputs", Map.of(
                 "key", TEST_KV_KEY,
                 "namespace", namespaceId
@@ -103,8 +99,8 @@ class GetTest {
         Get get = Get.builder()
             .id(Get.class.getSimpleName())
             .type(Get.class.getName())
-            .namespace(new Property<>(namespaceId))
-            .key(new Property<>("my-key"))
+            .namespace(Property.ofValue(namespaceId))
+            .key(Property.ofValue("my-key"))
             .build();
 
         // When
@@ -113,7 +109,7 @@ class GetTest {
         // Then
         assertThat(run.getValue()).isNull();
 
-        Get finalGet = get.toBuilder().errorOnMissing(Property.of(true)).build();
+        Get finalGet = get.toBuilder().errorOnMissing(Property.ofValue(true)).build();
         NoSuchElementException noSuchElementException = Assertions.assertThrows(NoSuchElementException.class, () -> finalGet.run(runContext));
         assertThat(noSuchElementException.getMessage()).isEqualTo("No value found for key 'my-key' in namespace '" + namespaceId + "' and `errorOnMissing` is set to true");
     }

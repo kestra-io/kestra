@@ -7,8 +7,8 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.schedulers.ScheduleContextInterface;
-import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
+import io.kestra.core.runners.ScheduleContextInterface;
+import io.kestra.core.runners.SchedulerTriggerStateInterface;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
@@ -97,6 +97,11 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
     @Override
     public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContext) {
         return this.triggerRepository.findByNextExecutionDateReadyForAllTenants(now, scheduleContext);
+    }
+
+    @Override
+    public List<Trigger> findByNextExecutionDateReadyButLockedTriggers(ZonedDateTime now) {
+        return this.triggerRepository.findByNextExecutionDateReadyButLockedTriggers(now);
     }
 
     @Override

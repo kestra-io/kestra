@@ -5,8 +5,8 @@ import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
-import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.annotation.Nullable;
 import lombok.Builder;
 import lombok.Value;
 
@@ -57,7 +57,10 @@ public class MetricEntry implements DeletedInterface, TenantInterface {
     @Builder.Default
     boolean deleted = false;
 
-    public static MetricEntry of(TaskRun taskRun, AbstractMetricEntry<?> metricEntry) {
+    @Nullable
+    ExecutionKind executionKind;
+
+    public static MetricEntry of(TaskRun taskRun, AbstractMetricEntry<?> metricEntry, ExecutionKind executionKind) {
         return MetricEntry.builder()
             .tenantId(taskRun.getTenantId())
             .namespace(taskRun.getNamespace())
@@ -70,6 +73,7 @@ public class MetricEntry implements DeletedInterface, TenantInterface {
             .tags(metricEntry.getTags())
             .value(computeValue(metricEntry))
             .timestamp(metricEntry.getTimestamp())
+            .executionKind(executionKind)
             .build();
     }
 

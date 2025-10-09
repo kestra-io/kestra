@@ -2,61 +2,56 @@
     <el-card>
         <div class="vueflow">
             <LowCodeEditor
-                v-if="flow && flowGraph"
-                :flow-id="flow.id"
-                :namespace="flow.namespace"
-                :flow-graph="flowGraph"
-                :source="flow.source"
-                :is-read-only="isReadOnly"
-                :expanded-subflows="expandedSubflows"
-                @expand-subflow="onExpandSubflow($event)"
+                v-if="flowStore.flow && flowStore.flowGraph"
+                :flowId="flowStore.flow.id"
+                :namespace="flowStore.flow.namespace"
+                :flowGraph="flowStore.flowGraph"
+                :source="flowStore.flow.source"
+                :isReadOnly="isReadOnly"
+                :expandedSubflows="expandedSubflows"
+                @expand-subflow="onExpandSubflow"
                 @on-edit="(event) => emit('on-edit', event, true)"
             />
             <el-alert v-else type="warning" :closable="false">
-                {{ $t("unable to generate graph") }}
+                {{ t("unable to generate graph") }}
             </el-alert>
         </div>
     </el-card>
 </template>
-<script>
-    import {mapState} from "vuex";
+<script setup lang="ts">
+    import {onBeforeUnmount} from "vue";
+    import {useI18n} from "vue-i18n";
+    import {useFlowStore} from "../../stores/flow";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
 
-    export default {
-        components: {
-            LowCodeEditor,
-        },
-        emits: [
-            "expand-subflow", "on-edit"
-        ],
-        props: {
-            isReadOnly: {
-                type: Boolean,
-                default: false
-            },
-            expandedSubflows: {
-                type: Array,
-                default: () => []
-            }
-        },
-        computed: {
-            ...mapState("flow", ["flow", "flowGraph"]),
-        },
-        beforeUnmount() {
-            this.$store.commit("flow/setFlowValidation", undefined);
-        },
-        methods: {
-            onExpandSubflow(event) {
-                this.$emit("expand-subflow", event);
-                this.$store.dispatch("flow/loadGraph", {
-                    flow: this.flow,
-                    params: {
-                        subflows: event
-                    }
-                });
-            }
+    const {t} = useI18n();
+    defineProps<{
+        isReadOnly?: boolean;
+        expandedSubflows?: any[];
+    }>();
+
+    const emit = defineEmits<{
+        (e: "expand-subflow", event: any): void;
+        (e: "on-edit", event: any, flag: boolean): void;
+    }>();
+
+    const flowStore = useFlowStore();
+
+    function onExpandSubflow(event: any) {
+        emit("expand-subflow", event);
+        if(flowStore.flow){
+            flowStore.loadGraph({
+                flow: flowStore.flow,
+                params: {
+                    subflows: event
+                }
+            });
         }
-    };
+    }
+
+    onBeforeUnmount(() => {
+        flowStore.flowValidation = undefined;
+    });
 </script>
 <style scoped lang="scss">
     .el-card {

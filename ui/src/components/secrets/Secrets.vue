@@ -1,6 +1,6 @@
 <template>
     <Navbar :title="routeInfo.title">
-        <template #additional-right v-if="configs?.secretsEnabled">
+        <template #additional-right v-if="miscStore.configs?.secretsEnabled">
             <ul>
                 <li>
                     <el-button :icon="Plus" type="primary" @click="addSecretModalVisible = true">
@@ -11,22 +11,30 @@
         </template>
     </Navbar>
     <section
-        data-component="FILENAME_PLACEHOLDER"
         class="d-flex flex-column fill-height padding-bottom"
-        :class="configs?.secretsEnabled === undefined ? 'mt-0 p-0' : 'container'"
+        :class="miscStore.configs?.secretsEnabled === undefined ? 'mt-0 p-0' : 'container'"
     >
-        <EmptyTemplate v-if="configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
+        <EmptyTemplate v-if="miscStore.configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
             <div class="no-secret-manager-block d-flex flex-column gap-6">
                 <div class="header-block d-flex align-items-center">
                     <div class="d-flex flex-column">
-                        <h5 class="mb-3">
-                            {{ $t('demos.secrets.title') }}
-                        </h5>
-                        <p>{{ $t('demos.secrets.message') }}</p>
-                        <DemoButtons />
-                    </div>
-                    <div class="img-wrapper">
-                        <img :src="sourceImg" :alt="$t('demos.secrets.title')">
+                        <div class="d-flex flex-row gap-2">
+                            <div class="d-flex flex-column align-items-start justify-content-center">
+                                <h5 class="fw-bold">
+                                    {{ $t('demos.secrets.title') }}
+                                </h5>
+                                <p>{{ $t('demos.secrets.message') }}</p>
+                            </div>
+                            <img :src="sourceImg" :alt="$t('demos.secrets.title')" class="img-wrapper">
+                        </div>
+                        <div>
+                            <div class="video-container">
+                                <iframe
+                                    src="https://www.youtube.com/embed/u0yuOYG-qMI"
+                                />
+                            </div>
+                            <DemoButtons />
+                        </div>
                     </div>
                 </div>
                 <p class="mb-0">
@@ -50,9 +58,9 @@
                 <SecretsTable
                     v-show="hasData === true"
                     :filterable="false"
-                    key-only
-                    :namespace="configs?.systemNamespace ?? 'system'"
-                    :add-secret-modal-visible="addSecretModalVisible"
+                    keyOnly
+                    :namespace="miscStore.configs?.systemNamespace ?? 'system'"
+                    :addSecretModalVisible="addSecretModalVisible"
                     @update:add-secret-modal-visible="addSecretModalVisible = $event"
                     @has-data="hasData = $event"
                 />
@@ -61,27 +69,33 @@
         <SecretsTable
             v-else
             filterable
-            :add-secret-modal-visible="addSecretModalVisible"
+            :addSecretModalVisible="addSecretModalVisible"
+            :namespace="props.namespace"
             @update:add-secret-modal-visible="addSecretModalVisible = $event"
         />
     </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import SecretsTable from "./SecretsTable.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Navbar from "../layout/TopNavBar.vue";
     import {useI18n} from "vue-i18n";
     import {computed, ref} from "vue";
-    import {useStore} from "vuex";
-    import useRouteContext from "../../mixins/useRouteContext.js";
+    import useRouteContext from "../../composables/useRouteContext";
+    import {useMiscStore} from "override/stores/misc";
     import sourceImg from "../../assets/demo/secrets.png";
     import DemoButtons from "../demo/DemoButtons.vue";
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
 
-    const store = useStore();
+    const miscStore = useMiscStore();
 
-    const configs = computed(() => store.getters["misc/configs"]);
+    const props = defineProps({
+        namespace: {
+            type: String,
+            default: undefined
+        }
+    });
 
     const addSecretModalVisible = ref(false);
     const hasData = ref(undefined);
@@ -92,7 +106,7 @@
     useRouteContext(routeInfo);
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .no-secret-manager-block {
         padding: 0 10.75rem;
 
@@ -107,6 +121,7 @@
 
             .img-wrapper {
                 width: 350px;
+                height: 300px;
                 overflow: visible;
                 direction: rtl;
             }
@@ -117,6 +132,21 @@
 
             .bold {
                 font-weight: bold;
+            }
+        }
+
+        .video-container {
+            width: 640px;
+            height: 360px;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--ks-border-primary);
+            overflow: hidden;
+
+            iframe {
+                width: 100%;
+                height: 100%;
+                border: 0;
             }
         }
     }

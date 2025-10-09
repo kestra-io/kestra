@@ -8,6 +8,7 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,20 +24,15 @@ class PublicHolidayTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         PublicHoliday publicHoliday = PublicHoliday.builder()
-            .date(Property.of("2023-01-01"))
+            .date(Property.ofValue("2023-07-14"))
+            .country(Property.ofValue("FR"))
             .build();
         assertThat(conditionService.isValid(publicHoliday, flow, execution)).isTrue();
 
         publicHoliday = PublicHoliday.builder()
-            .date(Property.of("2023-07-14"))
-            .country(Property.of("FR"))
-            .build();
-        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isTrue();
-
-        publicHoliday = PublicHoliday.builder()
-            .date(Property.of("2023-03-08"))
-            .country(Property.of("DE"))
-            .subDivision(Property.of("BE"))
+            .date(Property.ofValue("2023-03-08"))
+            .country(Property.ofValue("DE"))
+            .subDivision(Property.ofValue("BE"))
             .build();
         assertThat(conditionService.isValid(publicHoliday, flow, execution)).isTrue();
     }
@@ -47,15 +43,27 @@ class PublicHolidayTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         PublicHoliday publicHoliday = PublicHoliday.builder()
-            .date(Property.of("2023-01-02"))
-            .country(Property.of("FR"))
+            .date(Property.ofValue("2023-01-02"))
+            .country(Property.ofValue("FR"))
             .build();
         assertThat(conditionService.isValid(publicHoliday, flow, execution)).isFalse();
 
         publicHoliday = PublicHoliday.builder()
-            .date(Property.of("2023-03-08"))
-            .country(Property.of("DE"))
+            .date(Property.ofValue("2023-03-08"))
+            .country(Property.ofValue("DE"))
             .build();
         assertThat(conditionService.isValid(publicHoliday, flow, execution)).isFalse();
+    }
+
+    @Test
+    @Disabled("Locale is not deterministic on CI")
+    void disabled() {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
+
+        PublicHoliday publicHoliday = PublicHoliday.builder()
+            .date(Property.ofValue("2023-01-01"))
+            .build();
+        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isTrue();
     }
 }

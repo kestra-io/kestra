@@ -8,7 +8,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.error.AttributeNotFoundException;
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.AbstractExtension;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -24,33 +23,25 @@ public class VariableRenderer {
     private static final Pattern RAW_PATTERN = Pattern.compile("(\\{%-*\\s*raw\\s*-*%}(.*?)\\{%-*\\s*endraw\\s*-*%})");
     public static final int MAX_RENDERING_AMOUNT = 100;
 
-    private final PebbleEngine pebbleEngine;
+    private PebbleEngine pebbleEngine;
     private final VariableConfiguration variableConfiguration;
 
     @Inject
     public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
-        this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
-
-        PebbleEngine.Builder pebbleBuilder = new PebbleEngine.Builder()
-            .registerExtensionCustomizer(ExtensionCustomizer::new)
-            .strictVariables(true)
-            .cacheActive(this.variableConfiguration.getCacheEnabled())
-
-            .newLineTrimming(false)
-            .autoEscaping(false);
-
-        applicationContext.getBeansOfType(AbstractExtension.class)
-            .forEach(pebbleBuilder::extension);
-
-        if (this.variableConfiguration.getCacheEnabled()) {
-            pebbleBuilder.templateCache(new PebbleLruCache(this.variableConfiguration.getCacheSize()));
-        }
-
-        this.pebbleEngine = pebbleBuilder.build();
+        this(applicationContext.getBean(PebbleEngineFactory.class), variableConfiguration);
     }
-
-    public static IllegalVariableEvaluationException properPebbleException(PebbleException e) {
-        if (e instanceof AttributeNotFoundException current) {
+    
+    public VariableRenderer(PebbleEngineFactory pebbleEngineFactory, @Nullable VariableConfiguration variableConfiguration) {
+        this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
+        this.pebbleEngine = pebbleEngineFactory.create();
+    }
+    
+    public void setPebbleEngine(final PebbleEngine pebbleEngine) {
+        this.pebbleEngine = pebbleEngine;
+    }
+    
+    public static IllegalVariableEvaluationException properPebbleException(PebbleException initialExtension) {
+        if (initialExtension instanceof AttributeNotFoundException current) {
             return new IllegalVariableEvaluationException(
                 "Unable to find `" + current.getAttributeName() +
                     "` used in the expression `" + current.getFileName() +
@@ -58,7 +49,7 @@ public class VariableRenderer {
             );
         }
 
-        return new IllegalVariableEvaluationException(e);
+        return new IllegalVariableEvaluationException(initialExtension);
     }
 
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
@@ -133,10 +124,10 @@ public class VariableRenderer {
     /**
      * This method can be used in fallback for rendering an input string.
      *
-     * @param e         The exception that was throw by the default variable renderer.
-     * @param inline    The expression to be rendered.
-     * @param variables The context variables.
-     * @return          The rendered string.
+     * @param e The exception that was throw by the default variable renderer.
+     * @param inline           The expression to be rendered.
+     * @param variables        The context variables.
+     * @return The rendered string.
      */
     protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return null;

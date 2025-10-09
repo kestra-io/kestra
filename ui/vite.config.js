@@ -2,7 +2,6 @@ import path from "path";
 import {defineConfig} from "vite";
 import vue from "@vitejs/plugin-vue";
 
-import {filename} from "./plugins/filename"
 import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin";
 
@@ -10,8 +9,8 @@ export const manualChunks = {
     // bundle dashboard and all its dependencies in a single chunk
     "dashboard": [
         "src/components/dashboard/Dashboard.vue",
-        "src/components/dashboard/components/DashboardCreate.vue",
-        "src/override/components/dashboard/components/DashboardEdit.vue"
+        "src/components/dashboard/components/Create.vue",
+        "src/override/components/dashboard/Edit.vue"
     ],
     // bundle flows and all its dependencies in a second chunk
     "flows": [
@@ -36,7 +35,16 @@ export default defineConfig({
             output: {
                 manualChunks
             }
-        },
+        }
+    },
+    server: {
+        proxy: {
+            "^/api": {
+                target: "http://localhost:8080",
+                ws: true,
+                changeOrigin: true
+            }
+        }
     },
     resolve: {
         alias: {
@@ -45,8 +53,7 @@ export default defineConfig({
             "#build/mdc-image-component.mjs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
             "#mdc-imports": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
             "#mdc-configs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
-            "shiki": path.resolve(__dirname, "node_modules/shiki/dist"),
-            "vuex": path.resolve(__dirname, "node_modules/vuex/dist/vuex.esm-bundler.js"),
+            "@storybook/addon-actions": "storybook/actions",
         },
     },
     plugins: [
@@ -59,7 +66,6 @@ export default defineConfig({
                 }
             }
         }),
-        filename(),
         commit(),
         codecovVitePlugin({
             enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
@@ -73,7 +79,7 @@ export default defineConfig({
         devSourcemap: true,
         preprocessorOptions: {
             scss: {
-                silenceDeprecations: ["mixed-decls", "color-functions", "global-builtin", "import"]
+                silenceDeprecations: ["color-functions", "global-builtin", "import"]
             },
         }
     },

@@ -1,32 +1,25 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" />
+    <TopNavBar :title="routeInfo.title" />
     <section class="container" v-show="ready">
         <Usages class="mb-2" @loaded="ready = true" />
-        <BasicAuthPrompt class="mt-4 mb-2" />
         <EditionComparator class="mt-4" />
     </section>
 </template>
-<script>
-    import RouteContext from "../../../../mixins/routeContext";
+
+<script setup lang="ts">
+    import {ref, computed} from "vue";
     import TopNavBar from "../../../../components/layout/TopNavBar.vue";
     import Usages from "../../../../components/admin/stats/Usages.vue";
-    import BasicAuthPrompt from "../../../../components/admin/stats/BasicAuthPrompt.vue";
     import EditionComparator from "../../../../components/admin/stats/EditionComparator.vue";
+    import useRouteContext from "../../../../composables/useRouteContext";
+    import {useI18n} from "vue-i18n";
 
-    export default {
-        mixins: [RouteContext],
-        components: {TopNavBar, Usages, BasicAuthPrompt, EditionComparator},
-        data() {
-            return {
-                ready: false
-            };
-        },
-        computed: {
-            routeInfo() {
-                return {
-                    title: this.$t("stats")
-                }
-            }
-        }
-    };
+    const ready = ref(false);
+
+    const {t} = useI18n();
+
+    const routeInfo = computed(() => ({
+        title: t("system overview"),
+    }));
+    useRouteContext(routeInfo);
 </script>

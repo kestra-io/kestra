@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -32,7 +33,7 @@ public class TaskWithAllowFailureTest {
     private FlowInputOutput flowIO;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Test
     @ExecuteFlow("flows/valids/task-allow-failure-runnable.yml")
@@ -43,10 +44,10 @@ public class TaskWithAllowFailureTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/task-allow-failure-executable-flow.yml",
-        "flows/valids/for-each-item-subflow-failed.yaml"})
+    @LoadFlows(value = {"flows/valids/task-allow-failure-executable-flow.yml",
+        "flows/valids/for-each-item-subflow-failed.yaml"}, tenantId = "tenant1")
     void executableTask_Flow() throws QueueException, TimeoutException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-executable-flow");
+        Execution execution = runnerUtils.runOne("tenant1", "io.kestra.tests", "task-allow-failure-executable-flow");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
         assertThat(execution.getTaskRunList()).hasSize(2);
     }
@@ -57,7 +58,7 @@ public class TaskWithAllowFailureTest {
     void executableTask_ForEachItem() throws TimeoutException, QueueException, URISyntaxException, IOException {
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-executable-foreachitem", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "task-allow-failure-executable-foreachitem", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
         assertThat(execution.getTaskRunList()).hasSize(4);
@@ -76,7 +77,7 @@ public class TaskWithAllowFailureTest {
         Files.write(tempFile.toPath(), content());
 
         return storageInterface.put(
-            null,
+            MAIN_TENANT,
             null,
             new URI("/file/storage/file.txt"),
             new FileInputStream(tempFile)

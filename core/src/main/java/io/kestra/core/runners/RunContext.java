@@ -6,6 +6,7 @@ import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.storages.StateStore;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.kv.KVStore;
@@ -13,13 +14,12 @@ import org.slf4j.Logger;
 
 import java.net.URI;
 import java.security.GeneralSecurityException;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public abstract class RunContext {
+public abstract class RunContext implements PropertyContext {
 
     /**
      * Returns the trigger execution id attached to this context.
@@ -179,6 +179,11 @@ public abstract class RunContext {
     public StateStore stateStore() {
         return new StateStore(this, true);
     }
+
+    /**
+     * Get access to local paths of the host machine.
+     */
+    public abstract LocalPath localPath();
 
     public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
     }

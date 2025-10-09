@@ -1,5 +1,5 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER">
+    <div>
         <span class="markdown" v-html="markdownRenderer" />
     </div>
 </template>
@@ -24,7 +24,7 @@
 
     const sourceWithReplacedAlerts = computed(() => {
         return props.source.replace(
-            /(\n)?::alert\{type="(.*)"}\n([\s\S]*?)\n::(\n)?/g,
+            /(\n)?:\s*:\s*alert\{type="(.*?)"\}\s*\n([\s\S]*?)\n:\s*:(\n)?/g,
             (_, newLine1, type, content, newLine2) => `${newLine1 ?? ""}::: ${type}\n${content}\n:::${newLine2 ?? ""}`
         );
     })

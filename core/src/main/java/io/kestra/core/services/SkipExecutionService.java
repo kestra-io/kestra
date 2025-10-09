@@ -3,32 +3,41 @@ package io.kestra.core.services;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Singleton
+@Slf4j
 public class SkipExecutionService {
     private volatile List<String> skipExecutions = Collections.emptyList();
     private volatile List<FlowId> skipFlows = Collections.emptyList();
     private volatile List<NamespaceId> skipNamespaces = Collections.emptyList();
     private volatile List<String> skipTenants = Collections.emptyList();
+    private volatile List<String> skipIndexerRecords = Collections.emptyList();
 
     public synchronized void setSkipExecutions(List<String> skipExecutions) {
         this.skipExecutions = skipExecutions == null ? Collections.emptyList() : skipExecutions;
     }
 
     public synchronized void setSkipFlows(List<String> skipFlows) {
-        this.skipFlows = skipFlows == null ? Collections.emptyList() : skipFlows.stream().map(FlowId::from).toList();
+        this.skipFlows = skipFlows == null ? Collections.emptyList() : skipFlows.stream().map(FlowId::from).filter(Objects::nonNull).toList();
     }
 
     public synchronized void setSkipNamespaces(List<String> skipNamespaces) {
-        this.skipNamespaces = skipNamespaces == null ? Collections.emptyList() : skipNamespaces.stream().map(NamespaceId::from).toList();
+        this.skipNamespaces = skipNamespaces == null ? Collections.emptyList() : skipNamespaces.stream().map(NamespaceId::from).filter(Objects::nonNull).toList();
     }
 
     public synchronized void setSkipTenants(List<String> skipTenants) {
         this.skipTenants = skipTenants == null ? Collections.emptyList() : skipTenants;
+    }
+
+    public synchronized void setSkipIndexerRecords(List<String> skipIndexerRecords) {
+        this.skipIndexerRecords = skipIndexerRecords == null ? Collections.emptyList() : skipIndexerRecords;
     }
 
     /**
@@ -46,6 +55,14 @@ public class SkipExecutionService {
         return skipExecution(taskRun.getTenantId(), taskRun.getNamespace(), taskRun.getFlowId(), taskRun.getExecutionId());
     }
 
+    /**
+     * Skip an indexer records based on its key.
+     * @param key the record key as computed by <code>QueueService.key(record)</code>, can be null
+     */
+    public boolean skipIndexerRecord(@Nullable String key) {
+        return key != null && skipIndexerRecords.contains(key);
+    }
+
     @VisibleForTesting
     boolean skipExecution(String tenant, String namespace, String flow, String executionId) {
         return (tenant != null && skipTenants.contains(tenant)) ||
@@ -59,19 +76,31 @@ public class SkipExecutionService {
     }
 
     record FlowId(String tenant, String namespace, String flow) {
-        static FlowId from(String flowId) {
+        static @Nullable FlowId from(String flowId) {
             String[] parts = SkipExecutionService.splitIdParts(flowId);
             if (parts.length == 3) {
                 return new FlowId(parts[0], parts[1], parts[2]);
+            } else if (parts.length == 2) {
+                return new FlowId(null, parts[0], parts[1]);
+            } else {
+                log.error("Invalid flow skip with values: '{}'", flowId);
             }
-            return new FlowId(null, parts[0], parts[1]);
+
+            return null;
         }
     };
 
     record NamespaceId(String tenant, String namespace) {
-        static NamespaceId from(String namespaceId) {
+        static @Nullable NamespaceId from(String namespaceId) {
             String[] parts = SkipExecutionService.splitIdParts(namespaceId);
-            return new NamespaceId(parts[0], parts[1]);
+
+            if (parts.length == 2) {
+                return new NamespaceId(parts[0], parts[1]);
+            } else {
+                log.error("Invalid namespace skip with values:'{}'", namespaceId);
+            }
+
+            return null;
         }
     };
 }

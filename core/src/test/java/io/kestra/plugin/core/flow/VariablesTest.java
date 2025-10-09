@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -11,7 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -30,7 +31,7 @@ class VariablesTest {
     QueueInterface<LogEntry> workerTaskLogQueue;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Test
     @ExecuteFlow("flows/valids/variables.yaml")
@@ -49,7 +50,7 @@ class VariablesTest {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "variables-invalid");
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "variables-invalid");
 
 
         assertThat(execution.getTaskRunList()).hasSize(2);

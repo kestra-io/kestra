@@ -73,7 +73,7 @@ public class GraphUtils {
             )))
             .orElse(Collections.emptyMap());
 
-        triggersDeclarations.forEach(trigger -> {
+        triggersDeclarations.stream().filter(trigger -> trigger != null).forEach(trigger -> {
             GraphTrigger triggerNode = new GraphTrigger(trigger, triggersById.get(trigger.getId()));
             triggerCluster.addNode(triggerNode);
             triggerCluster.addEdge(triggerCluster.getRoot(), triggerNode, new Relation());

@@ -1,16 +1,18 @@
 package io.kestra.core.runners;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.micronaut.context.ApplicationContext;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
-import java.util.LinkedHashMap;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class VariableRendererTest {
@@ -29,6 +31,46 @@ class VariableRendererTest {
         TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
         String render = renderer.render("{{ dummy }}", Map.of());
         Assertions.assertEquals("result", render);
+    }
+
+    @Test
+    void shouldRenderContactUntypedStringExpression() throws IllegalVariableEvaluationException {
+        TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
+        String render = renderer.render("{{ prefix }}.kestra.{{ suffix }}", Map.of("prefix", "io", "suffix", "unittest"));
+        Assertions.assertEquals("io.kestra.unittest", render);
+    }
+
+    @Test
+    void shouldRenderContactTypedStringExpression() throws IllegalVariableEvaluationException {
+        TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
+        Object render = renderer.renderTyped("{{ prefix }}.kestra.{{ suffix }}", Map.of("prefix", "io", "suffix", "unittest"));
+        Assertions.assertEquals("io.kestra.unittest", render);
+    }
+
+    @Test
+    void shouldRenderContactTypedNumberExpression() throws IllegalVariableEvaluationException {
+        TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
+        Object render = renderer.renderTyped("{{ prefix }}{{ suffix }}", Map.of("prefix", 10, "suffix", 42L));
+        Assertions.assertEquals("1042", render);
+    }
+
+    @Test
+    void shouldRenderTypedValueExpression() throws IllegalVariableEvaluationException {
+        TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
+        for (Object o : List.of(
+            42,                         // Integer
+            3.14,                       // Double
+            true,                       // Boolean
+            'x',                        // Character
+            "hello",                    // String
+            List.of(1, 2, 3),           // List
+            Map.of("a", 1),      // Map
+            new Object(),               // Arbitrary object
+            new BigDecimal("123.45")  // BigDecimal
+        )) {
+            Object render = renderer.renderTyped("{{ input }}", Map.of("input", o));
+            Assertions.assertEquals(o, render);
+        }
     }
 
     @Test

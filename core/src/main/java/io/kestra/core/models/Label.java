@@ -1,14 +1,16 @@
 package io.kestra.core.models;
 
 import io.kestra.core.utils.MapUtils;
-import jakarta.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotEmpty;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public record Label(@NotNull String key, @NotNull String value) {
+@Schema(description = "A key/value pair that can be attached to a Flow or Execution. Labels are often used to organize and categorize objects.")
+public record Label(@NotEmpty String key, @NotEmpty String value) {
     public static final String SYSTEM_PREFIX = "system.";
 
     // system labels
@@ -29,11 +31,37 @@ public record Label(@NotNull String key, @NotNull String value) {
      * @return the nested {@link Map}.
      */
     public static Map<String, Object> toNestedMap(List<Label> labels) {
-        Map<String, Object> asMap = labels.stream()
-            .filter(label -> label.value() != null && label.key() != null)
-            // using an accumulator in case labels with the same key exists: the first is kept
-            .collect(Collectors.toMap(Label::key, Label::value, (first, second) -> first));
-        return MapUtils.flattenToNestedMap(asMap);
+        return MapUtils.flattenToNestedMap(toMap(labels));
+    }
+
+    /**
+     * Static helper method for converting a list of labels to a flat map.
+     * Key order is kept.
+     *
+     * @param labels The list of {@link Label} to be converted.
+     * @return the flat {@link Map}.
+     */
+    public static Map<String, String> toMap(@Nullable List<Label> labels) {
+        if (labels == null || labels.isEmpty()) return Collections.emptyMap();
+        return labels.stream()
+            .filter(label -> label.value() != null && !label.value().isEmpty() && label.key() != null && !label.key().isEmpty())
+            // using an accumulator in case labels with the same key exists: the second is kept
+            .collect(Collectors.toMap(Label::key, Label::value, (first, second) -> second, LinkedHashMap::new));
+    }
+
+    /**
+     * Static helper method for deduplicating a list of labels by their key.
+     * Value of the last key occurrence is kept.
+     *
+     * @param labels The list of {@link Label} to be deduplicated.
+     * @return the deduplicated {@link List}.
+     */
+    public static List<Label> deduplicate(@Nullable List<Label> labels) {
+        if (labels == null || labels.isEmpty()) return Collections.emptyList();
+        return toMap(labels).entrySet().stream()
+            .filter(getEntryNotEmptyPredicate())
+            .map(entry -> new Label(entry.getKey(), entry.getValue()))
+            .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
@@ -46,6 +74,7 @@ public record Label(@NotNull String key, @NotNull String value) {
         if (map == null || map.isEmpty()) return List.of();
         return map.entrySet()
             .stream()
+            .filter(getEntryNotEmptyPredicate())
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .toList();
     }
@@ -63,5 +92,15 @@ public record Label(@NotNull String key, @NotNull String value) {
             map.put(keyValueArray[0], keyValueArray[1]);
         }
         return map;
+    }
+
+    /**
+     * Provides predicate for not empty entries.
+     *
+     * @return The non-empty filter
+     */
+    public static Predicate<Map.Entry<String, String>> getEntryNotEmptyPredicate() {
+        return entry -> entry.getKey() != null && !entry.getKey().isEmpty() &&
+            entry.getValue() != null && !entry.getValue().isEmpty();
     }
 }

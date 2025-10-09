@@ -1,0 +1,26 @@
+id: for-each-item-after-execution
+namespace: io.kestra.tests
+
+inputs:
+  - id: file
+    type: FILE
+  - id: batch
+    type: INT
+
+tasks:
+  - id: each
+    type: io.kestra.plugin.core.flow.ForEachItem
+    items: "{{ inputs.file }}"
+    batch:
+      rows: "{{inputs.batch}}"
+    namespace: io.kestra.tests
+    flowId: for-each-item-subflow-after-execution
+    wait: true
+    transmitFailed: true
+    inputs:
+      items: "{{ taskrun.items }}"
+
+afterExecution:
+  - id: afterExecution
+    type: io.kestra.plugin.core.log.Log
+    message: Hello from afterExecution!

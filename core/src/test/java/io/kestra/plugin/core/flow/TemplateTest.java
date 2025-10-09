@@ -11,7 +11,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.annotation.Property;
@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
@@ -44,15 +45,16 @@ public class TemplateTest {
     private FlowInputOutput flowIO;
 
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     public static final io.kestra.core.models.templates.Template TEMPLATE_1 = io.kestra.core.models.templates.Template.builder()
         .id("template")
         .namespace("io.kestra.tests")
+        .tenantId(MAIN_TENANT)
         .tasks(Collections.singletonList(Log.builder().id("test").type(Log.class.getName()).message("{{ parent.outputs.args['my-forward'] }}").build())).build();
 
     public static void withTemplate(
-        RunnerUtils runnerUtils,
+        TestRunnerUtils runnerUtils,
         TemplateRepositoryInterface templateRepository,
         QueueInterface<LogEntry> logQueue,
         FlowInputOutput flowIO
@@ -62,7 +64,7 @@ public class TemplateTest {
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "with-template",
             null,
@@ -88,11 +90,11 @@ public class TemplateTest {
     }
 
 
-    public static void withFailedTemplate(RunnerUtils runnerUtils, QueueInterface<LogEntry> logQueue) throws TimeoutException, QueueException {
+    public static void withFailedTemplate(TestRunnerUtils runnerUtils, QueueInterface<LogEntry> logQueue) throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "with-failed-template", Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "with-failed-template", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);

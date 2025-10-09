@@ -1,41 +1,51 @@
 <template>
-    <div v-loading="isLoading" class="vue-flow">
+    <div id="topologyWrapper" v-loading="isLoading" class="vue-flow">
         <LowCodeEditor
             v-if="flowGraph"
-            :flow-graph="flowGraph"
-            :flow-id="flowId"
+            :flowGraph="flowGraph"
+            :flowId="flowId"
             :namespace="namespace"
-            :is-read-only="isReadOnly"
+            :isReadOnly="isReadOnly"
             :source="flowYaml"
-            :is-allowed-edit="isAllowedEdit"
-            :expanded-subflows="expandedSubflows"
+            :isAllowedEdit="isAllowedEdit"
+            :expandedSubflows="expandedSubflows"
             @on-edit="onEdit"
             @loading="loadingState"
             @expand-subflow="onExpandSubflow"
             @swapped-task="onSwappedTask"
-            @open-no-code="handleTopologyEditClick"
         />
+        <div v-else-if="invalidGraph">
+            <el-alert
+                :title="t('topology-graph.invalid')"
+                type="error"
+                class="invalid-graph"
+                :closable="false"
+            >
+                {{ t('topology-graph.invalid_description') }}
+            </el-alert>
+        </div>
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed, ref} from "vue";
-    import {useStore} from "vuex";
-    import {useRouter, useRoute} from "vue-router";
+    import {useI18n} from "vue-i18n";
     import {Utils} from "@kestra-io/ui-libs";
     import LowCodeEditor from "./LowCodeEditor.vue";
+    import {useFlowStore} from "../../stores/flow";
 
-    const store = useStore();
-    const router = useRouter();
-    const route = useRoute();
+    const flowStore = useFlowStore();
 
-    const flowYaml = computed(() => store.getters["flow/flowYaml"]);
-    const flowGraph = computed(() => store.state.flow.flowGraph);
-    const flowId = computed(() => store.getters["flow/id"]);
-    const namespace = computed(() => store.getters["flow/namespace"]);
-    const expandedSubflows = computed<string[]>(() => store.state.flow.expandedSubflows);
-    const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"]);
-    const isReadOnly = computed(() => store.getters["flow/isReadOnly"]);
+    const {t} = useI18n();
+
+    const flowYaml = computed(() => flowStore.flowYaml);
+    const flowGraph = computed(() => flowStore.flowGraph);
+    const invalidGraph = computed(() => flowStore.invalidGraph);
+    const flowId = computed(() => flowStore.flow?.id);
+    const namespace = computed(() => flowStore.flow?.namespace);
+    const expandedSubflows = computed<string[]>(() => flowStore.expandedSubflows);
+    const isAllowedEdit = computed(() => flowStore.isAllowedEdit);
+    const isReadOnly = computed(() => flowStore.isReadOnly);
 
     const isLoading = ref(false);
 
@@ -44,7 +54,7 @@
     }
 
     const onExpandSubflow = (expandedSubflows: string[]) => {
-        store.commit("flow/setExpandedSubflows", expandedSubflows);
+        flowStore.expandedSubflows = expandedSubflows;
     };
 
     const onSwappedTask = (swappedTasks: [string, string]) => {
@@ -75,20 +85,23 @@
         }))
     };
 
-    const onEdit = (source:string, currentIsFlow = false) => {
-        store.commit("flow/setFlowYaml", source)
-        return store.dispatch("flow/onEdit", {
+    const onEdit = async (source: string, currentIsFlow = false) => {
+        flowStore.flowYaml = source
+        const result = await flowStore.onEdit({
             source,
             currentIsFlow,
             editorViewType: "YAML",
         })
-    }
-
-    const handleTopologyEditClick = (params: any) => {
-        router.replace({query: {
-            ...route.query,
-            ...params
-        }})
+        
+        if (currentIsFlow && source) {
+            await flowStore.loadGraphFromSource({
+                flow: source,
+            }).catch((error) => {
+                console.error("Error loading graph:", error);
+            })
+        }
+        
+        return result
     }
 </script>
 
@@ -98,5 +111,9 @@
     }
     :deep(.vue-flow__panel.bottom) {
         bottom: 2rem !important;
+    }
+    .invalid-graph {
+        margin: 1rem;
+        width: auto;
     }
 </style>

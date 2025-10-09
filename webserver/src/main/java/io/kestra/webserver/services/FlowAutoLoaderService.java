@@ -2,6 +2,7 @@ package io.kestra.webserver.services;
 
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.annotation.WebServerEnabled;
@@ -45,6 +46,8 @@ public class FlowAutoLoaderService {
 
     @Inject
     private VersionProvider versionProvider;
+    @Inject
+    private TenantService tenantService;
 
     @SuppressWarnings("unchecked")
     public void load() {
@@ -70,7 +73,7 @@ public class FlowAutoLoaderService {
                     })
                 )
                 .map(source -> {
-                    GenericFlow flow = GenericFlow.fromYaml(null, source);
+                    GenericFlow flow = GenericFlow.fromYaml(tenantService.resolveTenant(), source);
                     repository.create(flow);
                     log.debug("Loaded flow '{}/{}'.", flow.getNamespace(), flow.getId());
                     return 1;

@@ -109,6 +109,34 @@ class FlowCreateOrUpdateCommandTest {
     }
 
     @Test
+    void should_fail_with_incorrect_tenant()  {
+        URL directory = FlowCreateOrUpdateCommandTest.class.getClassLoader().getResource("flows");
+
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(err));
+
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+
+            EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
+            embeddedServer.start();
+
+            String[] args = {
+                "--server",
+                embeddedServer.getURL().toString(),
+                "--user",
+                "myuser:pass:word",
+                "--tenant", "incorrect",
+                directory.getPath(),
+
+            };
+            PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
+
+            assertThat(err.toString()).contains("Tenant id can only be 'main'");
+            err.reset();
+        }
+    }
+
+    @Test
     void helper()  {
         URL directory = FlowCreateOrUpdateCommandTest.class.getClassLoader().getResource("helper");
         ByteArrayOutputStream out = new ByteArrayOutputStream();

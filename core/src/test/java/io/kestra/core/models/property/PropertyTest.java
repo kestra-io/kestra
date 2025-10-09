@@ -1,8 +1,8 @@
 package io.kestra.core.models.property;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -28,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class PropertyTest {
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Inject
     private StorageInterface storage;
@@ -36,25 +37,23 @@ class PropertyTest {
     @Test
     void test() throws Exception {
         var task = DynamicPropertyExampleTask.builder()
-            .number(new Property<>("{{numberValue}}"))
-            .string(new Property<>("{{stringValue}}"))
-            .level(new Property<>("{{levelValue}}"))
-            .someDuration(new Property<>("{{durationValue}}"))
-            .withDefault(new Property<>("{{defaultValue}}"))
-            .items(new Property<>("""
+            .number(Property.ofExpression("{{numberValue}}"))
+            .string(Property.ofExpression("{{stringValue}}"))
+            .level(Property.ofExpression("{{levelValue}}"))
+            .someDuration(Property.ofExpression("{{durationValue}}"))
+            .withDefault(Property.ofExpression("{{defaultValue}}"))
+            .items(Property.ofExpression("""
                 ["{{item1}}", "{{item2}}"]"""))
-            .properties(new Property<>("""
+            .properties(Property.ofExpression("""
                 {
                   "key1": "{{value1}}",
                   "key2": "{{value2}}"
                 }"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder()
-                .fromMap(new Property<>("""
-                    {
-                      "key": "{{mapKey}}",
-                      "value": "{{mapValue}}"
-                    }"""))
-                .build()
+            .from("""
+                {
+                  "key": "{{mapKey}}",
+                  "value": "{{mapValue}}"
+                }"""
             )
             .build();
         var runContext = runContextFactory.of(Map.ofEntries(
@@ -88,30 +87,28 @@ class PropertyTest {
     @Test
     void withDefaultsAndMessagesFromList() throws Exception {
         var task = DynamicPropertyExampleTask.builder()
-            .number(new Property<>("{{numberValue}}"))
-            .string(new Property<>("{{stringValue}}"))
-            .level(new Property<>("{{levelValue}}"))
-            .someDuration(new Property<>("{{durationValue}}"))
-            .items(new Property<>("""
+            .number(Property.ofExpression("{{numberValue}}"))
+            .string(Property.ofExpression("{{stringValue}}"))
+            .level(Property.ofExpression("{{levelValue}}"))
+            .someDuration(Property.ofExpression("{{durationValue}}"))
+            .items(Property.ofExpression("""
                 ["{{item1}}", "{{item2}}"]"""))
-            .properties(new Property<>("""
+            .properties(Property.ofExpression("""
                 {
                   "key1": "{{value1}}",
                   "key2": "{{value2}}"
                 }"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder()
-                .fromList(new Property<>("""
-                    [
-                      {
-                         "key": "{{mapKey1}}",
-                         "value": "{{mapValue1}}"
-                      },
-                      {
-                         "key": "{{mapKey2}}",
-                         "value": "{{mapValue2}}"
-                       }
-                    ]"""))
-                .build()
+            .from("""
+                [
+                  {
+                     "key": "{{mapKey1}}",
+                     "value": "{{mapValue1}}"
+                  },
+                  {
+                     "key": "{{mapKey2}}",
+                     "value": "{{mapValue2}}"
+                   }
+                ]"""
             )
             .build();
         var runContext = runContextFactory.of(Map.ofEntries(
@@ -155,23 +152,23 @@ class PropertyTest {
         FileSerde.writeAll(Files.newBufferedWriter(messages), Flux.fromIterable(inputValues)).block();
         URI uri;
         try (var input = new FileInputStream(messages.toFile())) {
-            uri = storage.put(null, null, URI.create("/messages.ion"), input);
+            uri = storage.put(MAIN_TENANT, null, URI.create("/messages.ion"), input);
         }
 
         var task = DynamicPropertyExampleTask.builder()
-            .number(new Property<>("{{numberValue}}"))
-            .string(new Property<>("{{stringValue}}"))
-            .level(new Property<>("{{levelValue}}"))
-            .someDuration(new Property<>("{{durationValue}}"))
-            .withDefault(new Property<>("{{defaultValue}}"))
-            .items(new Property<>("""
+            .number(Property.ofExpression("{{numberValue}}"))
+            .string(Property.ofExpression("{{stringValue}}"))
+            .level(Property.ofExpression("{{levelValue}}"))
+            .someDuration(Property.ofExpression("{{durationValue}}"))
+            .withDefault(Property.ofExpression("{{defaultValue}}"))
+            .items(Property.ofExpression("""
                 ["{{item1}}", "{{item2}}"]"""))
-            .properties(new Property<>("""
+            .properties(Property.ofExpression("""
                 {
                   "key1": "{{value1}}",
                   "key2": "{{value2}}"
                 }"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder().fromURI(new Property<>("{{uri}}")).build())
+            .from("{{uri}}")
             .build();
         var runContext = runContextFactory.of(Map.ofEntries(
             entry("numberValue", 9),
@@ -205,20 +202,14 @@ class PropertyTest {
     @Test
     void failingToRender() throws Exception {
         var task = DynamicPropertyExampleTask.builder()
-            .number(new Property<>("{{numberValue}}"))
-            .string(new Property<>("{{stringValue}}"))
-            .level(new Property<>("{{levelValue}}"))
-            .someDuration(new Property<>("{{durationValue}}"))
-            .withDefault(new Property<>("{{defaultValue}}"))
-            .items(new Property<>("""
+            .number(Property.ofExpression("{{numberValue}}"))
+            .string(Property.ofExpression("{{stringValue}}"))
+            .level(Property.ofExpression("{{levelValue}}"))
+            .someDuration(Property.ofExpression("{{durationValue}}"))
+            .withDefault(Property.ofExpression("{{defaultValue}}"))
+            .items(Property.ofExpression("""
                 ["{{item1}}", "{{item2}}"]"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder()
-                .fromMap(new Property<>("""
-                    {
-                      "key": "{{mapValue}}"
-                    }"""))
-                .build()
-            )
+            .from(Map.of("key", "{{mapValue}}"))
             .build();
         var runContext = runContextFactory.of();
 
@@ -230,25 +221,18 @@ class PropertyTest {
         var task = DynamicPropertyExampleTask.builder()
             .id("dynamic")
             .type(DynamicPropertyExampleTask.class.getName())
-            .number(new Property<>("{{numberValue}}"))
-            .string(new Property<>("{{stringValue}}"))
-            .level(new Property<>("{{levelValue}}"))
-            .someDuration(new Property<>("{{durationValue}}"))
-            .items(new Property<>("""
+            .number(Property.ofExpression("{{numberValue}}"))
+            .string(Property.ofExpression("{{stringValue}}"))
+            .level(Property.ofExpression("{{levelValue}}"))
+            .someDuration(Property.ofExpression("{{durationValue}}"))
+            .items(Property.ofExpression("""
                 ["{{item1}}", "{{item2}}"]"""))
-            .properties(new Property<>("""
+            .properties(Property.ofExpression("""
                 {
                   "key1": "{{value1}}",
                   "key2": "{{value2}}"
                 }"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder()
-                .fromMap(new Property<>("""
-                    {
-                      "key": "{{mapKey}}",
-                      "value": "{{mapValue}}"
-                    }"""))
-                .build()
-            )
+            .from(Map.of("key", "{{mapKey}}", "value", "{{mapValue}}"))
             .build();
         var runContext = runContextFactory.of(task, Map.ofEntries(
             entry("numberValue", -2),
@@ -269,16 +253,16 @@ class PropertyTest {
     }
 
     @Test
-    void of() {
-        var prop = Property.of(TestObj.builder().key("key").value("value").build());
+    void ofValue() {
+        var prop = Property.ofValue(TestObj.builder().key("key").value("value").build());
         assertThat(prop).isNotNull();
     }
 
     @Test
     void arrayAndMapToRender() throws Exception {
         var task = DynamicPropertyExampleTask.builder()
-            .items(new Property<>("{{renderOnce(listToRender)}}"))
-            .properties(new Property<>("{{renderOnce(mapToRender)}}"))
+            .items(Property.ofExpression("{{renderOnce(listToRender)}}"))
+            .properties(Property.ofExpression("{{renderOnce(mapToRender)}}"))
             .build();
         var runContext = runContextFactory.of(Map.ofEntries(
             entry("arrayValueToRender", "arrayValue1"),
@@ -300,9 +284,9 @@ class PropertyTest {
     @Test
     void aListToRender() throws Exception {
         var task = DynamicPropertyExampleTask.builder()
-            .items(new Property<>("""
+            .items(Property.ofExpression("""
                 ["python test.py --input1 \\"{{ item1 }}\\" --input2 \\"{{ item2 }}\\"", "'gs://{{ renderOnce(\\"bucket\\") }}/{{ 'table' }}/{{ 'file' }}_*.csv.gz'"]"""))
-            .properties(new Property<>("""
+            .properties(Property.ofExpression("""
                 {
                   "key1": "{{value1}}",
                   "key2": "{{value2}}"
@@ -319,6 +303,63 @@ class PropertyTest {
 
         assertThat(output).isNotNull();
         assertThat(output.getList()).containsExactlyInAnyOrder("python test.py --input1 \"item1\" --input2 \"item2\"", "'gs://bucket/table/file_*.csv.gz'");
+    }
+
+    @Test
+    void fromMessage() throws Exception {
+        var task = DynamicPropertyExampleTask.builder()
+            .items(Property.ofExpression("""
+                ["python test.py --input1 \\"{{ item1 }}\\" --input2 \\"{{ item2 }}\\"", "'gs://{{ renderOnce(\\"bucket\\") }}/{{ 'table' }}/{{ 'file' }}_*.csv.gz'"]"""))
+            .properties(Property.ofExpression("""
+                {
+                  "key1": "{{value1}}",
+                  "key2": "{{value2}}"
+                }"""))
+            .from(DynamicPropertyExampleTask.Message.builder().key("key").value("value").build())
+            .build();
+        var runContext = runContextFactory.of(Map.ofEntries(
+            entry("item1", "item1"),
+            entry("item2", "item2"),
+            entry("value1", "value1"),
+            entry("value2", "value2")
+        ));
+
+        var output = task.run(runContext);
+
+        assertThat(output).isNotNull();
+        assertThat(output.getMessages()).hasSize(1);
+        assertThat(output.getMessages().getFirst().getKey()).isEqualTo("key");
+        assertThat(output.getMessages().getFirst().getValue()).isEqualTo("value");
+    }
+
+    @Test
+    void fromListOfMessages() throws Exception {
+        var task = DynamicPropertyExampleTask.builder()
+            .items(Property.ofExpression("""
+                ["python test.py --input1 \\"{{ item1 }}\\" --input2 \\"{{ item2 }}\\"", "'gs://{{ renderOnce(\\"bucket\\") }}/{{ 'table' }}/{{ 'file' }}_*.csv.gz'"]"""))
+            .properties(Property.ofExpression("""
+                {
+                  "key1": "{{value1}}",
+                  "key2": "{{value2}}"
+                }"""))
+            .from(List.of(
+                DynamicPropertyExampleTask.Message.builder().key("key1").value("value1").build(),
+                DynamicPropertyExampleTask.Message.builder().key("key2").value("value2").build()
+            ))
+            .build();
+        var runContext = runContextFactory.of(Map.ofEntries(
+            entry("item1", "item1"),
+            entry("item2", "item2"),
+            entry("value1", "value1"),
+            entry("value2", "value2")
+        ));
+
+        var output = task.run(runContext);
+
+        assertThat(output).isNotNull();
+        assertThat(output.getMessages()).hasSize(2);
+        assertThat(output.getMessages().getFirst().getKey()).isEqualTo("key1");
+        assertThat(output.getMessages().getFirst().getValue()).isEqualTo("value1");
     }
 
     @Builder

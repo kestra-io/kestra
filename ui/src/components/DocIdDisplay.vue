@@ -11,20 +11,20 @@
     </button>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed, ref} from "vue";
-    import {useStore} from "vuex";
     import {useRoute} from "vue-router";
+    import {useDocStore} from "../stores/doc";
     import Utils from "../utils/utils";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
 
-    const store = useStore();
+    const docStore = useDocStore();
     const route = useRoute();
 
     const showDocId = computed(() => route.query["showDocId"] !== undefined);
 
-    const text = computed(() => `docId: ${ store.state.doc.docId }`);
+    const text = computed(() => `docId: ${docStore.docId}`);
 
     const copied = ref(false);
 
@@ -36,7 +36,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .app-id-display-box {
     position: fixed;
     top: 0;

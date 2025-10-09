@@ -1,5 +1,7 @@
 package io.kestra.core.runners;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+
 import io.kestra.core.models.tasks.retrys.Exponential;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.utils.RetryUtils;
@@ -27,7 +29,7 @@ public class ListenersTestTask extends Task implements RunnableTask<ListenersTes
                     .delayFactor(2.0)
                     .interval(Duration.ofSeconds(1))
                     .maxInterval(Duration.ofSeconds(15))
-                    .maxAttempt(-1)
+                    .maxAttempts(-1)
                     .maxDuration(Duration.ofMinutes(10))
                     .build(),
                 runContext.logger()
@@ -37,7 +39,7 @@ public class ListenersTestTask extends Task implements RunnableTask<ListenersTes
 
         Execution execution = retryInstance.run(
             NoSuchElementException.class,
-            () -> executionRepository.findById(null, executionRendererId)
+            () -> executionRepository.findById(MAIN_TENANT, executionRendererId)
                 .filter(e -> e.getState().getCurrent().isTerminated())
                 .orElseThrow(() -> new NoSuchElementException("Unable to find execution '" + executionRendererId + "'"))
         );

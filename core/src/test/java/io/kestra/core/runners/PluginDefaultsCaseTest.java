@@ -24,15 +24,16 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Singleton
 public class PluginDefaultsCaseTest {
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     public void taskDefaults() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "plugin-defaults", Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "plugin-defaults", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList()).hasSize(8);
 

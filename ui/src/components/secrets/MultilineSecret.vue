@@ -3,8 +3,7 @@
         <el-input
             class="flex-grow-1"
             :class="hidden || disabled ? 'secret-value' : ''"
-            :model-value="modelValue"
-            @update:model-value="$emit('update:modelValue', $event)"
+            v-model="modelValue"
             :placeholder="placeholder"
             autosize
             type="textarea"
@@ -21,10 +20,13 @@
     import {ref, watch} from "vue";
 
     const props = withDefaults(defineProps<{
-        modelValue: string,
         placeholder: string,
         disabled?: boolean,
     }>(), {disabled: false});
+
+    const modelValue = defineModel<string>({
+        required: true
+    })
 
     const hidden = ref(true);
 
@@ -37,11 +39,11 @@
 
 <style scoped lang="scss">
     @font-face {
-        font-family: 'SquareFont';
-        src:  url('../../assets/fonts/obscure.woff2') format('woff2');
+        font-family: 'DiscFont';
+        src:  url('../../assets/fonts/obscure-disc.woff2') format('woff2');
     }
 
     .secret-value:deep(textarea:not(:placeholder-shown)) {
-        font-family: 'SquareFont', serif;
+        font-family: 'DiscFont', serif;
     }
 </style>

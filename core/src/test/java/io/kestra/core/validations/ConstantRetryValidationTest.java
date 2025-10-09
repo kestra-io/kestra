@@ -20,7 +20,7 @@ public class ConstantRetryValidationTest {
     @Test
     void shouldValidateValidRetry() throws Exception {
         var retry = Constant.builder()
-            .maxAttempt(3)
+            .maxAttempts(3)
             .maxDuration(Duration.ofSeconds(10))
             .interval(Duration.ofSeconds(1))
             .build();
@@ -32,7 +32,7 @@ public class ConstantRetryValidationTest {
     @Test
     void shouldNotValidateInvalidRetry() throws Exception {
         var retry = Constant.builder()
-            .maxAttempt(3)
+            .maxAttempts(3)
             .maxDuration(Duration.ofSeconds(1))
             .interval(Duration.ofSeconds(10))
             .build();

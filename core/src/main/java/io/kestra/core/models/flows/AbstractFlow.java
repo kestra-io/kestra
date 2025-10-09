@@ -61,17 +61,29 @@ public abstract class AbstractFlow implements FlowInterface {
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
     @Schema(
-            description = "Labels as a list of Label (key/value pairs) or as a map of string to string.",
-            oneOf = {
-                    Label[].class,
-                    Map.class
-            }
+        description = "Labels as a list of Label (key/value pairs) or as a map of string to string.",
+        oneOf = {
+            Label[].class,
+            Map.class
+        }
     )
     @Valid
     List<Label> labels;
 
-    @Schema(additionalProperties = Schema.AdditionalPropertiesValue.TRUE)
+    @Schema(
+        type = "object",
+        additionalProperties = Schema.AdditionalPropertiesValue.FALSE
+    )
     Map<String, Object> variables;
+
+
+    @Schema(
+        oneOf = {
+            String.class,  // Corresponds to 'type: string' in OpenAPI
+            Map.class      // Corresponds to 'type: object' in OpenAPI
+        }
+    )
+    interface StringOrMapValue {}
 
     @Valid
     private WorkerGroup workerGroup;

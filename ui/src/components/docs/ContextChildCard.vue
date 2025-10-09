@@ -31,7 +31,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed, ref, onMounted} from "vue";
     import {useDocStore} from "../../stores/doc";
 
@@ -80,7 +80,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .card-title {

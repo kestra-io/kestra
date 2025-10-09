@@ -1,28 +1,28 @@
 <template>
     <div class="button-top">
         <el-button-group class="view-buttons">
-            <el-tooltip :content="$t('source only')">
+            <el-tooltip :content="t('source only')">
                 <el-button
                     :type="buttonType(views.NONE)"
                     :icon="FileDocumentEditOutline"
                     @click="setView(views.NONE)"
                 />
             </el-tooltip>
-            <el-tooltip :content="$t('documentation.documentation')">
+            <el-tooltip :content="t('documentation.documentation')">
                 <el-button
                     :type="buttonType(views.DOC)"
                     :icon="BookOpenVariant"
                     @click="setView(views.DOC)"
                 />
             </el-tooltip>
-            <el-tooltip :content="$t('chart preview')">
+            <el-tooltip :content="t('chart preview')">
                 <el-button
                     :type="buttonType(views.CHART)"
                     :icon="ChartBar"
                     @click="setView(views.CHART)"
                 />
             </el-tooltip>
-            <el-tooltip :content="$t('dashboards.preview')">
+            <el-tooltip :content="t('dashboards.preview')">
                 <el-button
                     :type="buttonType(views.DASHBOARD)"
                     :icon="ViewDashboard"
@@ -39,15 +39,15 @@
 
         <el-button
             :icon="ContentSave"
-            @click="$emit('save', source)"
+            @click="emit('save', source)"
             :type="saveButtonType"
             :disabled="!allowSaveUnchanged && source === initialSource"
         >
-            {{ $t("save") }}
+            {{ t("save") }}
         </el-button>
     </div>
     <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
-        <Sections :dashboard="{id: 'default'}" :charts="charts.map(chart => chart.data)" showDefault />
+        <Sections :dashboard="{id: 'default', charts: []}" :charts="charts.map(chart => chart.data)" showDefault />
     </div>
     <div class="main-editor" v-else>
         <el-splitter v-if="displaySide" class="dashboard-edit" @resize="onSplitterResize">
@@ -76,7 +76,7 @@
                     v-else-if="currentView === views.CHART"
                 >
                     <div v-if="selectedChart.length" class="w-100">
-                        <Sections :dashboard="{id: 'default'}" :charts="selectedChart" showDefault />
+                        <Sections :dashboard="{id: 'default', charts: []}" :charts="selectedChart" showDefault />
                     </div>
                     <div v-else-if="chartError" class="text-container">
                         <span>{{ chartError }}</span>
@@ -85,7 +85,7 @@
                         <el-empty :image="EmptyVisualDashboard" :imageSize="200">
                             <template #description>
                                 <h5>
-                                    {{ $t("dashboards.chart_preview") }}
+                                    {{ t("dashboards.chart_preview") }}
                                 </h5>
                             </template>
                         </el-empty>
@@ -108,203 +108,192 @@
         </div>
     </div>
 </template>
-<script setup>
+<script setup lang="ts">
+    import {ref, computed, watch, onMounted, onBeforeUnmount, nextTick} from "vue";
+    import {useI18n} from "vue-i18n";
+    import {useRoute} from "vue-router";
+    import Editor from "../../inputs/Editor.vue";
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
     import Sections from "../sections/Sections.vue";
-    import ValidationErrors from "../../flows/ValidationError.vue"
+    import ValidationErrors from "../../flows/ValidationError.vue";
     import BookOpenVariant from "vue-material-design-icons/BookOpenVariant.vue";
     import ChartBar from "vue-material-design-icons/ChartBar.vue";
     import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue";
     import ViewDashboard from "vue-material-design-icons/ViewDashboard.vue";
-    import EmptyVisualDashboard from "../../../assets/empty_visuals/Visuals_empty_dashboard.svg"
-
-    defineEmits(["save"])
-</script>
-<script>
-    import {mapStores} from "pinia";
-
-    import Editor from "../../inputs/Editor.vue";
-    import {usePluginsStore} from "../../../stores/plugins";
-    import {useDashboardStore} from "../../../stores/dashboard";
-    import yaml from "yaml";
+    import EmptyVisualDashboard from "../../../assets/empty_visuals/Visuals_empty_dashboard.svg";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
+    import yaml from "yaml";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {usePluginsStore} from "../../../stores/plugins";
+    import {useDashboardStore} from "../../../stores/dashboard";
     import {useCoreStore} from "../../../stores/core";
 
-    export default {
-        computed: {
-            ...mapStores(usePluginsStore, useDashboardStore),
-            ContentSave() {
-                return ContentSave
-            },
-            saveButtonType() {
-                if (this.errors) {
-                    return "danger";
-                }
+    const {t} = useI18n();
 
-                return this.warnings
-                    ? "warning"
-                    : "primary";
-            },
-            displaySide() {
-                return this.currentView !== this.views.NONE && this.currentView !== this.views.DASHBOARD;
-            },
-            dashboardId() {
-                return this.$route.params.dashboard
-            }
-        },
-        props: {
-            allowSaveUnchanged: {
-                type: Boolean,
-                default: false
-            },
-            initialSource: {
-                type: String,
-                default: undefined
-            },
-            modelValue: {
-                type: String,
-                default: undefined
-            }
-        },
-        mounted() {
-            this.loadPlugins();
-        },
-        components: {
-            Editor
-        },
-        methods: {
-            async updatePluginDocumentation(event) {
-                if (this.currentView === this.views.DOC) {
-                    const type = YAML_UTILS.getTypeAtPosition(event.model.getValue(), event.position, this.plugins);
-                    if (type) {
+    const props = defineProps<{
+        allowSaveUnchanged?: boolean;
+        initialSource?: string;
+        modelValue?: string;
+    }>();
 
-                        this.pluginsStore.load({cls: type})
-                            .then(plugin => {
-                                this.pluginsStore.editorPlugin = {cls: type, ...plugin};
-                            })
-                    } else {
-                        this.pluginsStore.editorPlugin = undefined;
-                    }
-                } else if (this.currentView === this.views.CHART) {
-                    const chart = YAML_UTILS.getChartAtPosition(event.model.getValue(), event.position)
-                    if (chart) {
-                        const result = await this.loadChart(chart);
-                        this.selectedChart = result.data
-                            ? [{
-                                ...result.data,
-                                chartOptions: {
-                                    ...result.data.chartOptions,
-                                    width: 12 // Setting chart to full width for the preview purposes
-                                }
-                            }]
-                            : [];
-                        this.chartError = result.error;
-                    }
-                }
-            },
-            onSplitterResize(sizes) {
-                if (sizes && sizes.length >= 1) {
-                    const percent = sizes[0];
-                    this.editorWidth = percent > 75 ? 75 : percent < 25 ? 25 : percent;
-                }
-            },
-            loadPlugins() {
-                this.pluginsStore.list({...this.$route.params})
-                    .then(data => {
-                        this.plugins = data.map(plugin => {
-                            const charts = plugin.charts || [];
-                            const dataFilters = plugin.dataFilters || [];
-                            return charts.concat(dataFilters);
-                        }).flat()
-                            .filter(({deprecated}) => !deprecated)
-                            .map(({cls}) => cls);
-                    })
-            },
-            buttonType(view) {
-                return view === this.currentView ? "primary" : "default";
-            },
-            setView(view) {
-                this.currentView = view;
+    const emit = defineEmits<{
+        (e: "save", source?: string): void;
+    }>();
 
-                if (view === this.views.DASHBOARD) {
-                    this.validateAndLoadAllCharts();
-                }
-            },
-            async validateAndLoadAllCharts() {
-                this.charts = [];
-                const allCharts = YAML_UTILS.getAllCharts(this.source);
-                for (const chart of allCharts) {
-                    const loadedChart = await this.loadChart(chart);
-                    this.charts.push(loadedChart);
-                }
-            },
-            async loadChart(chart) {
-                const yamlChart = yaml.stringify(chart);
-                const result = {error: null, data: null, raw: {}};
-                await this.dashboardStore.validateChart(yamlChart)
-                    .then(errors => {
-                        if (errors.constraints) {
-                            result.error = errors.constraints;
-                        } else {
-                            result.data = {...chart, content: yamlChart, raw: chart};
-                        }
-                    });
-                return result;
-            }
-        },
-        data() {
-            return {
-                source: this.initialSource,
-                errors: undefined,
-                warnings: undefined,
-                editorWidth: 50,
-                views: {
-                    DOC: "documentation",
-                    CHART: "chart",
-                    NONE: "none",
-                    DASHBOARD: "dashboard"
-                },
-                currentView: "documentation",
-                selectedChart: [],
-                charts: [],
-                chartError: null
-            }
-        },
-        watch: {
-            source() {
-                this.dashboardStore.validateDashboard(this.source)
-                    .then(errors => {
-                        if (errors.constraints) {
-                            this.errors = [errors.constraints];
-                        } else {
-                            this.errors = undefined;
-                        }
-                    });
+    const route = useRoute();
+    const pluginsStore = usePluginsStore();
+    const dashboardStore = useDashboardStore();
+    const coreStore = useCoreStore();
 
-                if (this.dashboardId !== undefined && YAML_UTILS.parse(this.source).id !== this.dashboardId) {
-                    const coreStore = useCoreStore();
-                    coreStore.message = {
-                        variant: "error",
-                        title: this.$t("readonly property"),
-                        message: this.$t("dashboards.edition.id readonly"),
-                    };
-
-                    this.$nextTick(() => {
-                        this.source = YAML_UTILS.replaceBlockWithPath({
-                            source: this.source,
-                            path: "id",
-                            newContent: this.dashboardId
-                        });
-                    })
-                }
-            }
-        },
-        beforeUnmount() {
-            this.pluginsStore.editorPlugin = undefined;
-        }
+    const source = ref(props.initialSource);
+    const errors = ref<any>(undefined);
+    const warnings = ref<any>(undefined);
+    const editorWidth = ref(50);
+    const views = {
+        DOC: "documentation",
+        CHART: "chart",
+        NONE: "none",
+        DASHBOARD: "dashboard"
     };
+    const currentView = ref<string>(views.DOC);
+    const selectedChart = ref<any[]>([]);
+    const charts = ref<any[]>([]);
+    const chartError = ref<string | null>(null);
+
+    const dashboardId = computed<string>(() => route.params.dashboard as string);
+
+    const saveButtonType = computed(() => {
+        if (errors.value) return "danger";
+        return warnings.value ? "warning" : "primary";
+    });
+
+    const displaySide = computed(() => {
+        return currentView.value !== views.NONE && currentView.value !== views.DASHBOARD;
+    });
+
+    function buttonType(view: string) {
+        return view === currentView.value ? "primary" : "default";
+    }
+
+    function setView(view: string) {
+        currentView.value = view;
+        if (view === views.DASHBOARD) {
+            validateAndLoadAllCharts();
+        }
+    }
+
+    async function updatePluginDocumentation(event: any) {
+        if (currentView.value === views.DOC) {
+            const type = YAML_UTILS.getTypeAtPosition(event.model.getValue(), event.position, plugins.value);
+            if (type) {
+                const plugin = await pluginsStore.load({cls: type});
+                pluginsStore.editorPlugin = {cls: type, ...plugin};
+            } else {
+                pluginsStore.editorPlugin = undefined;
+            }
+        } else if (currentView.value === views.CHART) {
+            const chart = YAML_UTILS.getChartAtPosition(event.model.getValue(), event.position);
+            if (chart) {
+                const result = await loadChart(chart);
+                selectedChart.value = typeof result.data === "object"
+                    ? [{
+                        ...result.data,
+                        chartOptions: {
+                            ...result.data?.chartOptions,
+                            width: 12
+                        }
+                    }]
+                    : [];
+                chartError.value = result.error;
+            }
+        }
+    }
+
+    function onSplitterResize(sizes: number[]) {
+        if (sizes && sizes.length >= 1) {
+            const percent = sizes[0];
+            editorWidth.value = percent > 75 ? 75 : percent < 25 ? 25 : percent;
+        }
+    }
+
+    const plugins = ref<string[]>([]);
+    async function loadPlugins() {
+        const data = await pluginsStore.list();
+        plugins.value = data.map((plugin: any) => {
+            const charts = plugin.charts || [];
+            const dataFilters = plugin.dataFilters || [];
+            return charts.concat(dataFilters);
+        }).flat()
+            .filter(({deprecated}: any) => !deprecated)
+            .map(({cls}: any) => cls);
+    }
+
+    function validateAndLoadAllCharts() {
+        charts.value = [];
+        const allCharts = source.value ? YAML_UTILS.getAllCharts(source.value) : [];
+        allCharts.forEach(async (chart: any) => {
+            const loadedChart = await loadChart(chart);
+            charts.value.push(loadedChart);
+        });
+    }
+
+    async function loadChart(chart: any) {
+        const yamlChart = yaml.stringify(chart);
+        const result: { error: string | null; data: null | {
+            id?: string;
+            name?: string;
+            type?: string;
+            chartOptions?: Record<string, any>;
+            dataFilters?: any[];
+            charts?: any[];
+        }; raw: any } = {
+            error: null,
+            data: null,
+            raw: {}
+        };
+        const errors = await dashboardStore.validateChart(yamlChart);
+        if (errors.constraints) {
+            result.error = errors.constraints;
+        } else {
+            result.data = {...chart, content: yamlChart, raw: chart};
+        }
+        return result;
+    }
+
+    watch(source, async () => {
+        const errorsResult = await dashboardStore.validateDashboard(source.value);
+        if (errorsResult.constraints) {
+            errors.value = [errorsResult.constraints];
+        } else {
+            errors.value = undefined;
+        }
+
+        if (dashboardId.value !== undefined && YAML_UTILS.parse(source.value).id !== dashboardId.value) {
+            coreStore.message = {
+                variant: "error",
+                title: t("readonly property"),
+                message: t("dashboards.edition.id readonly"),
+            };
+
+            await nextTick();
+            if(source.value && dashboardId.value){
+                source.value = YAML_UTILS.replaceBlockWithPath({
+                    source: source.value,
+                    path: "id",
+                    newContent: dashboardId.value
+                });
+            }
+        }
+    });
+
+    onMounted(() => {
+        loadPlugins();
+    });
+
+    onBeforeUnmount(() => {
+        pluginsStore.editorPlugin = undefined;
+    });
 </script>
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";

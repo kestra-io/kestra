@@ -859,13 +859,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                             DSL.partitionBy(
                                 field("namespace"),
                                 field("flow_id")
-                            ).orderBy(field("end_date").desc())
+                            ).orderBy(DSL.coalesce(field("end_date"), field("start_date")).desc())
                         ).as("row_num")
                     )
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId))
                     .and(NORMAL_KIND_CONDITION)
-                    .and(field("end_date").isNotNull())
                     .and(DSL.or(
                         ListUtils.emptyOnNull(flows).isEmpty() ?
                             DSL.trueCondition()

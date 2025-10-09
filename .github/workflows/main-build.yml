@@ -80,7 +80,7 @@ jobs:
 
       # Slack
       - name: Slack - Notification
-        if: ${{ failure() && env.SLACK_WEBHOOK_URL != 0 && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
+        if: ${{ failure() && github.event.pull_request.head.repo.full_name == github.repository && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
         uses: kestra-io/actions/composite/slack-status@main
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}

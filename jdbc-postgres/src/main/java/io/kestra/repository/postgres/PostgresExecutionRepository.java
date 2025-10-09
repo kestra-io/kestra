@@ -4,6 +4,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -16,9 +17,7 @@ import org.jooq.Field;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Singleton
 @PostgresRepositoryEnabled
@@ -45,12 +44,59 @@ public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository
 
     @Override
     protected Condition findCondition(String query, Map<String, String> labels) {
-        return PostgresExecutionRepositoryService.findCondition(this.jdbcRepository, query, labels);
+        List<Condition> conditions = new ArrayList<>();
+
+        if (query != null) {
+            conditions.add(jdbcRepository.fullTextCondition(Collections.singletonList("fulltext"), query));
+        }
+
+        if (labels != null) {
+            labels.forEach((key, value) -> {
+                String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
+                conditions.add(DSL.condition(sql));
+            });
+        }
+
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 
     @Override
-    protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation) {
-        return PostgresExecutionRepositoryService.findCondition(value, operation);
+    protected Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
+        List<Condition> conditions = new ArrayList<>();
+        List<Condition> inConditions = new ArrayList<>();
+        if (input.isRight()) {
+            var query = input.right().get();
+            if (Objects.requireNonNull(operation) == QueryFilter.Op.CONTAINS) {
+                // Match when ANY label's value contains the query (case-insensitive).
+                // `labels` is a JSONB array under value -> 'labels'.
+                String sql = """
+                    EXISTS (
+                      SELECT 1
+                      FROM jsonb_array_elements(value -> 'labels') AS l
+                      WHERE l ->> 'value' ILIKE '%' || ? || '%'
+                    )
+                    """;
+                conditions.add(DSL.condition(sql, query));
+            } else {
+                throw new UnsupportedOperationException("Unsupported operation for query: " + operation);
+            }
+        } else {
+            var labels = input.getLeft();
+            labels.forEach((key, value) -> {
+                String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
+                switch (operation) {
+                    case EQUALS -> conditions.add(DSL.condition(sql));
+                    case NOT_EQUALS, NOT_IN -> conditions.add(DSL.not(DSL.condition(sql)));
+                    case IN -> inConditions.add(DSL.condition(sql));
+                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                }
+            });
+        }
+
+        if (!inConditions.isEmpty()) {
+            conditions.add(DSL.or(inConditions));
+        }
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 
     @Override

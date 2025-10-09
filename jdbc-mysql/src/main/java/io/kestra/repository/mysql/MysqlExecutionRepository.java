@@ -3,6 +3,7 @@ package io.kestra.repository.mysql;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -15,8 +16,9 @@ import org.jooq.Field;
 import org.jooq.impl.DSL;
 
 import java.sql.Timestamp;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
+
+import static io.kestra.core.models.QueryFilter.Op.EQUALS;
 
 @Singleton
 @MysqlRepositoryEnabled
@@ -31,12 +33,57 @@ public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository {
 
     @Override
     protected Condition findCondition(String query, Map<String, String> labels) {
-        return MysqlExecutionRepositoryService.findCondition(this.jdbcRepository, query, labels);
+        List<Condition> conditions = new ArrayList<>();
+
+        if (query != null) {
+            conditions.add(jdbcRepository.fullTextCondition(Arrays.asList("namespace", "flow_id", "id"), query));
+        }
+
+        if (labels != null) {
+            labels.forEach((key, value) -> {
+                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', '" + key + "', 'value', '" + value + "')), '$.labels')", Boolean.class);
+                conditions.add(valueField.eq(value != null));
+            });
+        }
+
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 
     @Override
-    protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation) {
-        return MysqlExecutionRepositoryService.findCondition(value, operation);
+    protected Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
+        List<Condition> conditions = new ArrayList<>();
+        List<Condition> inConditions = new ArrayList<>();
+        if (input.isRight()) {
+            var query = input.getRight();
+            // This will check if any label value contains the query substring
+            if (Objects.requireNonNull(operation) == QueryFilter.Op.CONTAINS) {
+                String sql = "EXISTS (" +
+                    "SELECT 1 FROM JSON_TABLE(value, '$.labels[*]' COLUMNS(label_value VARCHAR(255) PATH '$.value')) AS lbl " +
+                    "WHERE lbl.label_value LIKE CONCAT('%', ?, '%')" +
+                    ")";
+                conditions.add(DSL.condition(sql, query));
+            } else {
+                throw new UnsupportedOperationException("Unsupported operation for query: " + operation);
+            }
+        } else {
+            var labels = input.getLeft();
+            labels.forEach((key, value) -> {
+                String sql = "JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', '" + key + "', 'value', '" + value + "')), '$.labels')";
+                switch(operation){
+                    case EQUALS ->
+                        conditions.add(DSL.condition(sql));
+                    case NOT_EQUALS, NOT_IN ->
+                        conditions.add(DSL.not(DSL.condition(sql)));
+                    case IN ->
+                        inConditions.add(DSL.condition(sql));
+                }
+            });
+        }
+
+        if(!inConditions.isEmpty()){
+            conditions.add(DSL.or(inConditions));
+        }
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 
     @Override

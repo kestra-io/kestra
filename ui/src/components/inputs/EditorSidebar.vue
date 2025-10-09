@@ -108,7 +108,6 @@
             :load="loadNodes"
             :data="items"
             highlightCurrent
-            :showCheckbox="enableCheckboxes"
             :allowDrop="
                 (_, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'
             "
@@ -117,7 +116,6 @@
             v-loading="items === undefined"
             :props="{class: nodeClass, isLeaf: 'leaf'}"
             class="mt-3"
-            @check="handleCheck"
             @node-drag-start="
                 nodeBeforeDrag = {
                     parent: $event.parent.data.id,
@@ -316,22 +314,7 @@
             width="500"
             @keydown.enter.prevent="removeItems()"
         >
-            <span class="py-3">
-                {{
-                    foldersCount > 0 && filesCount > 0
-                        ? $t("namespace files.dialog.mixed_deletion_description", {folders: foldersCount, files: filesCount})
-                        : foldersCount > 1
-                            ? $t("namespace files.dialog.folders_deletion_description", {count: foldersCount})
-                            : foldersCount === 1
-                                ? $t("namespace files.dialog.folder_deletion_description")
-                                : filesCount > 1
-                                    ? $t("namespace files.dialog.files_deletion_description", {count: filesCount})
-                                    : $t("namespace files.dialog.file_deletion_description")
-                }}
-
-
-            </span>
-
+            <span class="py-3" v-html="confirmationLabels.message" />
             <template #footer>
                 <div>
                     <el-button @click="confirmation.visible = false">
@@ -362,7 +345,7 @@
     </div>
 </template>
 
-<script lang="ts">
+<script-ts>
     import {mapStores} from "pinia";
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useEditorStore} from "../../stores/editor";
@@ -420,7 +403,6 @@
                 tree: {allExpanded: false},
                 currentFolder: undefined,
                 confirmation: {visible: false, data: {}},
-                enableCheckboxes: false,
                 items: undefined,
                 nodeBeforeDrag: undefined,
                 searchResults: [],
@@ -471,12 +453,6 @@
 
                 return labels;
             },
-            filesCount() {
-                return this.confirmation.nodes?.filter(n => n.type === "File").length ?? 0;
-            },
-            foldersCount() {
-                return this.confirmation.nodes?.filter(n => n.type === "Directory").length ?? 0;
-            },
         },
         methods: {
             nodeClass(data) {
@@ -485,10 +461,6 @@
                     return "node selected-tree-node";
                 }
                 return "node";
-            },
-            handleCheck(_node, {checkedNodes, checkedKeys}) {
-                this.selectedNodes = checkedKeys;
-                this.selectedFiles = checkedNodes.map(node => this.getPath(node.id));
             },
             pushToParentFolder(parentPath, newNode) {
                 const traverseAndInsert = (basePath = "", array) => {
@@ -510,7 +482,6 @@
 
                 traverseAndInsert("", this.items);
             },
-
             flattenTree(items, parentPath = "") {
                 const result = [];
 
@@ -551,11 +522,6 @@
                         // Add to selection
                         this.selectedFiles = [...this.selectedFiles, path];
                         this.selectedNodes = [...this.selectedNodes, node.data.id];
-                        if (this.enableCheckboxes) {
-                            this.$nextTick(() => {
-                                this.$refs.tree?.setCheckedKeys(this.selectedNodes);
-                            });
-                        }
                     }
                     this.lastClickedIndex = currentIndex;
                 } else {
@@ -568,47 +534,17 @@
                             name: data.fileName,
                             path: path,
                             extension: data.fileName.split(".").pop(),
+                            flow: false,
                         });
                     }
                 }
             },
-            handleShiftDown(event) {
-                if (event.key === "Shift" && !event.repeat) {
-                    if (this.enableCheckboxes) {
-                        this.enableCheckboxes = false;
-                        this.$nextTick(() => {
-                            this.$refs.tree?.setCheckedKeys([]);
-                        });
-                    } else {
-                        this.enableCheckboxes = true;
-                        if (this.selectedNodes.length > 0) {
-                            this.$nextTick(() => {
-                                this.$refs.tree?.setCheckedKeys(this.selectedNodes);
-                            });
-                        }
-                    }
-                }
-            },
-
 
             async removeSelectedFiles() {
-                let nodes = [];
-
-                if (this.enableCheckboxes) {
-                    const checkedNodes = this.$refs.tree.getCheckedNodes();
-
-                    this.selectedFiles = checkedNodes.map(node => this.getPath(node.id));
-                    this.selectedNodes = checkedNodes.map(node => node.id);
-
-                    nodes = checkedNodes;
-                } else {
-                    nodes = this.selectedFiles.map(filePath => this.findNodeByPath(filePath));
-                }
-
-                if (!nodes || nodes.length === 0) {
-                    this.$toast().warning(this.$t("namespace files.no_selection"));
-                    return;
-                }
+                const nodes = this.selectedFiles.map((filePath) => {
+                    const node = this.findNodeByPath(filePath);
+                    return node;
+                });
 
                 this.confirmRemove(nodes);
             },
@@ -737,6 +673,7 @@
                     name: item.split("/").pop(),
                     extension: item.split(".").pop(),
                     path: item,
+                    flow: false,
                 });
 
                 this.filter = "";
@@ -992,6 +929,7 @@
                         name: NAME,
                         path,
                         extension: extension,
+                        flow: false,
                     });
 
                     this.dialog.folder = path.substring(0, path.lastIndexOf("/"));
@@ -1211,13 +1149,9 @@
         },
         mounted() {
             document.addEventListener("click", this.clearSelection);
-            document.addEventListener("keydown", this.handleShiftDown);
-            document.addEventListener("keyup", this.handleShiftUp);
         },
         beforeUnmount() {
             document.removeEventListener("click", this.clearSelection);
-            document.removeEventListener("keydown", this.handleShiftDown);
-            document.removeEventListener("keyup", this.handleShiftUp);
         },
         watch: {
             "flowStore.flow": {
@@ -1234,7 +1168,6 @@
                 immediate: true,
                 deep: true,
             },
-            
             "editorStore.treeRefresh": {
                 async handler() {
                     if (this.$refs.tree) {
@@ -1250,7 +1183,7 @@
             },
         },
     };
-</script>
+</script-ts>
 
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";

@@ -18,8 +18,11 @@ function getTabFromFilesTab(tab: EditorTabProps){
     }
 }
 
-export function useInitialFilesTabs(){
+export function useInitialFilesTabs(EDITOR_ELEMENTS: DeserializableEditorElement[]){
     const editorStore = useEditorStore()
+
+    const codeElement = EDITOR_ELEMENTS.find(e => e.value === CODE_PREFIX)!
+    codeElement!.deserialize = (value: string) => setupInitialCodeTab(value, codeElement)
 
     function setupInitialCodeTab(tab: string, codeElement: DeserializableEditorElement){
         const flow = CODE_PREFIX === tab

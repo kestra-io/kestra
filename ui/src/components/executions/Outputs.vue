@@ -1,7 +1,7 @@
 <template>
     <el-dropdown-item
         :icon="LocationExit"
-        :disabled="!outputs || outputs.length === 0"
+        :disabled="isDisabled"
         @click="isOpen = !isOpen"
     >
         {{ $t('outputs') }}
@@ -13,41 +13,36 @@
         :title="$t('outputs')"
     >
         <Vars
-            :execution="execution"
+            :execution="props.execution"
             class="table-unrounded mt-1"
-            :data="outputs"
+            :data="props.outputs"
         />
     </Drawer>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {computed, ref} from "vue";
     import LocationExit from "vue-material-design-icons/LocationExit.vue";
-</script>
-
-<script>
     import Vars from "../executions/Vars.vue";
     import Drawer from "../Drawer.vue";
+    import {type PropType} from "vue";
 
-    export default {
-        components: {
-            Vars,
-            Drawer,
+    // Define props with TypeScript 
+    const props = defineProps({
+        outputs: {
+            type: Object as PropType<object>,
+            default: () => ({})
         },
-        props: {
-            outputs: {
-                type: Object,
-                required: false,
-                default: () => {}
-            },
-            execution: {
-                type: Object,
-                required: true
-            }
-        },
-        data() {
-            return {
-                isOpen: false,
-            };
-        },
-    };
+        execution: {
+            type: Object as PropType<object>,
+            required: true
+        }
+    });
+    // Reactive state for the drawer
+    const isOpen = ref(false);
+
+    // Computed property to determine if the button needs to be disabled
+    const isDisabled = computed(() => {
+        return !props.outputs || Object.keys(props.outputs).length === 0;
+    });
 </script>

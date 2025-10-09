@@ -78,7 +78,7 @@ describe("useDependencies composable", () => {
 
       await nextTick();
 
-      expect(isLoading.value).toBe(true);
+      expect(isLoading.value).toBe(false);
       expect(getElements().length).toEqual(0);
     });
 

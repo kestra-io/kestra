@@ -253,6 +253,7 @@
     "metrics": "Metrics",
     "no data current task": "There's no data available for the current task",
     "outputs": "Outputs",
+    "hide empty outputs": "Hide runs without output",
     "flow_outputs": "Flow Outputs",
     "output": "Output",
     "eval": {

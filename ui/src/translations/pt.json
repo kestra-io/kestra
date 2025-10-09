@@ -1044,6 +1044,7 @@
     },
     "output": "Output",
     "outputs": "Outputs",
+    "hide empty outputs": "Ocultar tasks sem outputs",
     "override": {
       "details": "O flow anterior pode ser restaurado na aba Revisions.",
       "title": "Você está prestes a sobrescrever o flow atual"

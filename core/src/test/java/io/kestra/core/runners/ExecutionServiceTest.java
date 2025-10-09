@@ -20,7 +20,6 @@ import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Pause;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import org.slf4j.event.Level;
@@ -218,7 +217,6 @@ class ExecutionServiceTest {
         assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
     }
 
-    @Disabled
     @Test
     @LoadFlows({"flows/valids/parallel-nested.yaml"})
     void replayParallel() throws Exception {

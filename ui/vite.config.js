@@ -5,7 +5,7 @@ import vue from "@vitejs/plugin-vue";
 import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin";
 
-export const manualChunks = {
+export const manualChunks = () => ({
     // bundle dashboard and all its dependencies in a single chunk
     "dashboard": [
         "src/components/dashboard/Dashboard.vue",
@@ -25,17 +25,17 @@ export const manualChunks = {
         "shiki/langs/javascript.mjs",
         "src/utils/markdownDeps.ts"
     ]
-}
+})
 
 export default defineConfig({
     base: "",
     build: {
         outDir: "../webserver/src/main/resources/ui",
-        rollupOptions: {
-            output: {
-                manualChunks
-            }
-        }
+        // rollupOptions: {
+        //     output: {
+        //         manualChunks
+        //     }
+        // }
     },
     server: {
         proxy: {

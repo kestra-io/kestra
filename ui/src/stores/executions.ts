@@ -15,6 +15,7 @@ interface LogsState {
 
 export interface Execution{
     id: string;
+    flowId?: string;
     taskRunList:  {
         id: string,
         taskId: string,

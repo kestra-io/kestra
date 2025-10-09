@@ -23,12 +23,12 @@ export function useSelectTableActions({
     }
 
     const toggleAllUnselected = () => {
-        elTable.value.clearSelection()
+        elTable.value?.clearSelection()
         queryBulkAction.value = false
     }
 
     const toggleAllSelection = () => {
-        if (elTable.value.getSelectionRows().length < elTable.value.data.length) {
+        if (elTable.value?.getSelectionRows().length < elTable.value?.data.length) {
             elTable.value.toggleAllSelection()
         }
         queryBulkAction.value = true

@@ -732,9 +732,13 @@ form.ks-horizontal {
 
     &.is-light {
         border: 1px solid var(--ks-border-primary);
+        background: var(--ks-background-body);
+        box-shadow: 2px 3px 3px 0px var(--ks-card-shadow);
+        padding: 0 !important;
 
         .el-popper__arrow::before {
             border: 1px solid var(--ks-border-primary);
+            background-color: var(--ks-background-body);
         }
     }
 
@@ -1082,6 +1086,25 @@ form.ks-horizontal {
 .el-dialog {
     --el-dialog-border-radius: var(--bs-border-radius-lg);
     background-color: var(--ks-background-card);
+
+    &.custom-dialog {
+        background-color: var(--ks-background-panel);
+
+        .el-dialog__header {
+            background: var(--ks-background-panel);
+            margin-bottom: 0;
+
+            .el-dialog__headerbtn {
+                svg {
+                    color: var(--ks-content-secondary);
+                }
+            }
+        }
+        .el-dialog__title {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+    }
 
     .el-dialog__header {
         padding: 1rem;

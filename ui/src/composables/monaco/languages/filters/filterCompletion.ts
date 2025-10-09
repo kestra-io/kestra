@@ -4,6 +4,8 @@ import {Value} from "../../../../components/filter/utils/types";
 export enum Comparators {
     EQUALS = "=",
     NOT_EQUALS = "!=",
+    IN = "IN",
+    NOT_IN = "NOT_IN",
     GREATER_THAN = ">",
     LESS_THAN = "<",
     GREATER_THAN_OR_EQUAL_TO = ">=",
@@ -19,18 +21,8 @@ export function keyOfComparator(comparator: Comparators): keyof typeof Comparato
     return Object.entries(Comparators).find(([_, value]) => value === comparator)![0] as keyof typeof Comparators;
 }
 
-export function getComparator(comparatorKey: keyof typeof Comparators | "IN" | "NOT_IN"): Comparators {
-    switch(comparatorKey) {
-        case "IN": {
-            return Comparators.EQUALS;
-        }
-        case "NOT_IN": {
-            return Comparators.NOT_EQUALS;
-        }
-        default: {
-            return Comparators[comparatorKey as keyof typeof Comparators];
-        }
-    }
+export function getComparator(comparatorKey: keyof typeof Comparators): Comparators {
+    return Comparators[comparatorKey];
 }
 
 export class Completion {

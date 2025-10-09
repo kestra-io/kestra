@@ -3,8 +3,12 @@ import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
 import CalendarEndOutline from "vue-material-design-icons/CalendarEndOutline.vue";
 import CalendarRangeOutline from "vue-material-design-icons/CalendarRangeOutline.vue";
 import ChartBar from "vue-material-design-icons/ChartBar.vue";
+import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
+import Close from "vue-material-design-icons/Close.vue";
 import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
 import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+import Filter from "vue-material-design-icons/Filter.vue";
 import FilterSettingsOutline from "vue-material-design-icons/FilterSettingsOutline.vue";
 import FilterVariantMinus from "vue-material-design-icons/FilterVariantMinus.vue";
 import FormatListBulletedType from "vue-material-design-icons/FormatListBulletedType.vue";
@@ -31,8 +35,12 @@ export {
     CalendarEndOutline,
     CalendarRangeOutline,
     ChartBar,
+    ChevronDown,
+    ChevronUp,
+    Close,
     DeleteOutline,
     DotsSquare,
+    Filter,
     FilterSettingsOutline,
     FilterVariantMinus,
     FormatListBulletedType,

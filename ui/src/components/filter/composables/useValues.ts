@@ -32,6 +32,23 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
     const DASHBOARDS = ["dashboard", "custom_dashboard"];
     const SCOPE_LABEL = label === undefined || DASHBOARDS.includes(label) ? t("executions") : label;
 
+    const RELATIVE_DATE = [
+        {label: t("datepicker.last5minutes"), value: "PT5M"},
+        {label: t("datepicker.last15minutes"), value: "PT15M"},
+        {label: t("datepicker.last1hour"), value: "PT1H"},
+        {label: t("datepicker.last12hours"), value: "PT12H"},
+        {label: t("datepicker.last24hours"), value: "PT24H"},
+        {label: t("datepicker.last48hours"), value: "PT48H"},
+        {label: t("datepicker.last7days"), value: "PT168H"},
+        {label: t("datepicker.last30days"), value: "PT720H"},
+        {label: t("datepicker.last365days"), value: "PT8760H"},
+    ];
+
+    const getRelativeDateLabel = (value: string): string => {
+        const item = RELATIVE_DATE.find((item) => item.value === value);
+        return item ? item.label : value;
+    };
+
     const VALUES = {
         EXECUTION_STATES: buildFromArray(
             State.arrayAllStates().map((state: { name: string }) => state.name),
@@ -61,18 +78,8 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         }),
         STATUSES: buildFromArray(["PENDING", "ACCEPTED", "EXPIRED"]),
         AGGREGATIONS: buildFromArray(["SUM", "AVG", "MIN", "MAX"]),
-        RELATIVE_DATE: [
-            {label: t("datepicker.last5minutes"), value: "PT5M"},
-            {label: t("datepicker.last15minutes"), value: "PT15M"},
-            {label: t("datepicker.last1hour"), value: "PT1H"},
-            {label: t("datepicker.last12hours"), value: "PT12H"},
-            {label: t("datepicker.last24hours"), value: "PT24H"},
-            {label: t("datepicker.last48hours"), value: "PT48H"},
-            {label: t("datepicker.last7days"), value: "PT168H"},
-            {label: t("datepicker.last30days"), value: "PT720H"},
-            {label: t("datepicker.last365days"), value: "PT8760H"},
-        ],
+        RELATIVE_DATE,
     };
 
-    return {VALUES};
+    return {VALUES, getRelativeDateLabel};
 }

@@ -163,9 +163,9 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
     };
 
     watch(
-        () => route,
+        () => route.query,
         (newValue, oldValue) => {
-            if (oldValue?.name === newValue?.name && !_isEqual(newValue.query, oldValue.query)) {
+            if (oldValue?.name === newValue?.name && !_isEqual(newValue, oldValue)) {
                 refreshPaging();
                 load(onDataLoaded);
             }

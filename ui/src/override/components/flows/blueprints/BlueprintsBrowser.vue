@@ -5,24 +5,17 @@
         <slot name="content">
             <DataTable class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" hideTopPagination divider>
                 <template #navbar>
-                    <el-radio-group v-if="ready && !system && !embed" v-model="selectedTag" class="tags-selection">
-                        <el-radio-button
-                            :key="0"
-                            :value="0"
-                            class="hoverable"
-                        >
-                            {{ $t("all tags") }}
-                        </el-radio-button>
-                        <el-radio-button
+                    <div v-if="ready && !system && !embed" class="tags-selection">
+                        <el-button
                             v-for="tag in Object.values(tags || {})"
                             :key="tag.id"
-                            :value="tag.id"
-                            class="hoverable"
-                            @dblclick.stop="selectedTag = 0"
+                            :class="{'is-selected': selectedTags.includes(tag.id)}"
+                            @click="toggleTag(tag.id)"
+                            class="tag-button hoverable"
                         >
                             {{ tag.name }}
-                        </el-radio-button>
-                    </el-radio-group>
+                        </el-button>
+                    </div>
                     <nav v-else-if="system" class="header pb-3">
                         <p class="mb-0 fw-lighter">
                             {{ $t("system_namespace") }}
@@ -166,10 +159,16 @@
     const route = useRoute();
     const router = useRouter();
 
-    const initSelectedTag = () => route.query.selectedTag && typeof route.query.selectedTag === "string" ? route.query.selectedTag : 0;
+    const initSelectedTags = (): string[] => {
+        if (!route.query.selectedTag) return [];
+        if (Array.isArray(route.query.selectedTag)) {
+            return route.query.selectedTag.filter((tag): tag is string => tag !== null);
+        }
+        return route.query.selectedTag ? [route.query.selectedTag] : [];
+    };
 
     const searchText = ref(route.query.q || "");
-    const selectedTag = ref<number | string>(initSelectedTag());
+    const selectedTags = ref<string[]>(initSelectedTags());
     const tags = ref<Record<string, any> | undefined>(undefined);
     const total = ref(0);
     const blueprints = ref<{
@@ -190,6 +189,28 @@
 
     const updateSearch = (value: string) => {
         router.push({query: {...route.query, q: value || undefined}});
+    };
+
+    const toggleTag = (tagId: string) => {
+        const currentTags = [...selectedTags.value];
+        const index = currentTags.indexOf(tagId);
+
+        if (index > -1) {
+            currentTags.splice(index, 1);
+        } else {
+            currentTags.push(tagId);
+        }
+
+        selectedTags.value = currentTags;
+
+        if (!props.embed) {
+            router.push({
+                query: {
+                    ...route.query,
+                    selectedTag: currentTags.length > 0 ? currentTags : undefined
+                }
+            });
+        }
     };
 
     async function copy(id: string) {
@@ -234,7 +255,7 @@
         if (route.query.size || internalPageSize.value) query.size = parseInt((route.query.size || internalPageSize.value) as string);
         if (route.query.q || searchText.value) query.q = route.query.q || searchText.value;
         if (props.system) query.tags = "system";
-        else if (route.query.selectedTag || selectedTag.value) query.tags = route.query.selectedTag || selectedTag.value;
+        else if (selectedTags.value.length > 0) query.tags = selectedTags.value;
 
         const data = await blueprintsStore.getBlueprintsForQuery({
             type: props.blueprintType,
@@ -281,7 +302,7 @@
     watch(route,
           (newValue, oldValue) =>{
               if (oldValue.name === newValue.name) {
-                  selectedTag.value = initSelectedTag();
+                  selectedTags.value = initSelectedTags();
                   searchText.value = route.query.q || "";
               }
           }
@@ -291,29 +312,18 @@
         load(onDataLoaded);
     });
 
-    watch(selectedTag, (newSelectedTag) => {
-        if (!props.embed) {
-            if (newSelectedTag === 0) {
-                router.push({
-                    query: {
-                        ...route.query,
-                    }
-                });
-            }
-            router.push({
-                query: {
-                    ...route.query,
-                    selectedTag: newSelectedTag
-                }
-            });
-        } else {
+    watch(selectedTags, () => {
+        if (props.embed) {
             load(onDataLoaded);
         }
     });
 
     watch(tags, (val) => {
-        if(!Object.prototype.hasOwnProperty.call(val, selectedTag.value)) {
-            selectedTag.value = 0;
+        const validTags = selectedTags.value.filter(tagId =>
+            Object.prototype.hasOwnProperty.call(val, tagId)
+        );
+        if (validTags.length !== selectedTags.value.length) {
+            selectedTags.value = validTags;
         }
     })
 
@@ -514,19 +524,31 @@
         margin-bottom: 1rem;
         gap: .3rem;
         flex-wrap: wrap;
-        --el-button-bg-color: var(--ks-background-card);
 
-        & > * {
-            max-width: 50%;
+        .tag-button {
+            border-radius: $border-radius;
+            border: 1px solid var(--ks-border-primary);
+            background-color: var(--ks-background-card);
+            font-size: var(--el-font-size-extra-small);
+            padding: 8px 15px;
+            color: var(--el-text-color-primary);
+            cursor: pointer;
+            transition: all 0.2s;
 
-            :deep(span) {
-                border-radius: $border-radius !important;
-                border: 1px solid var(--ks-border-primary);
-                width: 100%;
-                font-size: var(--el-font-size-extra-small);
-                box-shadow: none;
-                text-overflow: ellipsis;
-                overflow: hidden;
+            &:hover {
+                background-color: var(--el-color-primary-light-9);
+                border-color: var(--el-color-primary);
+            }
+
+            &.is-selected {
+                background-color: var(--el-color-primary);
+                border-color: var(--el-color-primary);
+                color: white;
+
+                &:hover {
+                    background-color: var(--el-color-primary-dark-2);
+                    border-color: var(--el-color-primary-dark-2);
+                }
             }
         }
     }

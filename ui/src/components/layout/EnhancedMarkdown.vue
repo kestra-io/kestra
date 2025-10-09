@@ -741,6 +741,7 @@
         display: grid;
         gap: var(--spacer, 1rem);
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        align-items: start;
     }
 
     :deep(.doc-card) {

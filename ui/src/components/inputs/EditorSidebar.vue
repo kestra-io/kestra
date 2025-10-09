@@ -516,8 +516,8 @@
 
                     if (isSelected) {
                         // Remove from selection - force reactivity with new arrays
-                        this.selectedFiles = [...this.selectedFiles.filter(file => file !== path)];
-                        this.selectedNodes = [...this.selectedNodes.filter(id => id !== node.data.id)];
+                        this.selectedFiles = this.selectedFiles.filter(file => file !== path);
+                        this.selectedNodes = this.selectedNodes.filter(id => id !== node.data.id);
                     } else {
                         // Add to selection
                         this.selectedFiles = [...this.selectedFiles, path];

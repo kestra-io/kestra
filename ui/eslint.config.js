@@ -3,6 +3,7 @@ import pluginJs from "@eslint/js";
 import {defineConfig, globalIgnores} from "eslint/config";
 import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
+import OXlint from "eslint-plugin-oxlint";
 
 const components = (folder) => `src/components/${folder}/**/*.vue`;
 
@@ -118,5 +119,6 @@ export default defineConfig([
         rules: {
             "no-console": ["off"]
         }
-    }
+    },
+    ...OXlint.configs["flat/recommended"], // OXlint should be the last one
 ]);

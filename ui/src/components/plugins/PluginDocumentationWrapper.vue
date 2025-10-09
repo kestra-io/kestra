@@ -1,6 +1,6 @@
 <template>
     <div class="plugin-doc-wrapper" :class="{editorPlugin: pluginsStore.editorPlugin}">
-        <PluginDocumentation :key="miscStore.theme" />
+        <PluginDocumentation :key="miscStore.theme" v-bind="$attrs" />
     </div>
 </template>
 <script setup lang="ts">

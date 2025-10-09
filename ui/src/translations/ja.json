@@ -903,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "実行後ブロックを追加",
+        "charts": "チャートを追加",
         "conditions": "条件を追加",
         "errors": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
         "inputs": "入力フィールドを追加",
+        "numerator": "分子を追加",
         "pluginDefaults": "プラグインのデフォルトを追加",
         "tasks": "タスクを追加",
-        "triggers": "トリガーを追加"
+        "triggers": "トリガーを追加",
+        "where": "データをフィルタリングする"
       },
       "fields": {
         "general": {
@@ -952,14 +955,17 @@
       },
       "select": {
         "afterExecution": "タスクを選択",
+        "charts": "チャートタイプを選択",
         "conditions": "条件を選択",
         "errors": "タスクを選択",
         "finally": "タスクを選択",
         "inputs": "入力フィールドタイプを選択",
+        "numerator": "分子を選択",
         "pluginDefaults": "プラグインを選択",
         "task": "タスクを選択",
         "tasks": "タスクを選択",
-        "triggers": "トリガーを選択"
+        "triggers": "トリガーを選択",
+        "where": "フィルタータイプを選択"
       },
       "toggle_pebble": "ペブルエディタを切り替え",
       "unnamed": "名前なし",

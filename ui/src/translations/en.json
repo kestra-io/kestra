@@ -1229,7 +1229,10 @@
         "pluginDefaults": "Select a plugin",
         "afterExecution": "Select a task",
         "conditions": "Select a condition",
-        "inputs": "Select an input field type"
+        "inputs": "Select an input field type",
+        "charts": "Select a chart type",
+        "where": "Select a filter type",
+        "numerator": "Select a numerator"
       },
       "creation": {
         "tasks": "Add a task",
@@ -1239,7 +1242,10 @@
         "pluginDefaults": "Add a plugin default",
         "afterExecution": "Add an after execution block",
         "conditions": "Add a condition",
-        "inputs": "Add an input field"
+        "inputs": "Add an input field",
+        "charts": "Add a chart",
+        "where": "Filter your data",
+        "numerator": "Add a numerator"
       },
       "close": {
         "tasks": "Close task",

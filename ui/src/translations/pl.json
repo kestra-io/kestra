@@ -903,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "Dodaj blok po wykonaniu",
+        "charts": "Dodaj wykres",
         "conditions": "Dodaj warunek",
         "errors": "Dodaj obsługę błędów",
         "finally": "Dodaj blok finally",
         "inputs": "Dodaj pole input",
+        "numerator": "Dodaj licznik",
         "pluginDefaults": "Dodaj domyślny plugin",
         "tasks": "Dodaj task",
-        "triggers": "Dodaj trigger"
+        "triggers": "Dodaj trigger",
+        "where": "Filtruj swoje dane"
       },
       "fields": {
         "general": {
@@ -952,14 +955,17 @@
       },
       "select": {
         "afterExecution": "Wybierz task",
+        "charts": "Wybierz typ wykresu",
         "conditions": "Wybierz warunek",
         "errors": "Wybierz task",
         "finally": "Wybierz task",
         "inputs": "Wybierz typ pola input",
+        "numerator": "Wybierz licznik",
         "pluginDefaults": "Wybierz plugin",
         "task": "Wybierz task",
         "tasks": "Wybierz task",
-        "triggers": "Wybierz trigger"
+        "triggers": "Wybierz trigger",
+        "where": "Wybierz typ filtra"
       },
       "toggle_pebble": "Przełącz edytor Pebble",
       "unnamed": "Brak Nazwy",

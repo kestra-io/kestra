@@ -903,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "Agregar un bloque después de la ejecución",
+        "charts": "Agregar un gráfico",
         "conditions": "Agregar una condición",
         "errors": "Agregar un manejador de errores",
         "finally": "Agregar un bloque finally",
         "inputs": "Agregar un campo de input",
+        "numerator": "Agregar un numerador",
         "pluginDefaults": "Agregar un plugin predeterminado",
         "tasks": "Agregar una task",
-        "triggers": "Agregar un trigger"
+        "triggers": "Agregar un trigger",
+        "where": "Filtra tus datos"
       },
       "fields": {
         "general": {
@@ -952,14 +955,17 @@
       },
       "select": {
         "afterExecution": "Seleccionar una task",
+        "charts": "Seleccione un tipo de gráfico",
         "conditions": "Seleccione una condición",
         "errors": "Selecciona una task",
         "finally": "Seleccionar una task",
         "inputs": "Seleccione un tipo de campo de input",
+        "numerator": "Seleccione un numerador",
         "pluginDefaults": "Seleccionar un plugin",
         "task": "Selecciona una task",
         "tasks": "Seleccionar una task",
-        "triggers": "Seleccione un trigger"
+        "triggers": "Seleccione un trigger",
+        "where": "Seleccione un tipo de filtro"
       },
       "toggle_pebble": "Alternar editor de Pebble",
       "unnamed": "Sin Nombre",

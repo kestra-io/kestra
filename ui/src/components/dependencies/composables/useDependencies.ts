@@ -303,7 +303,10 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
     const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number; }>({data: [], count: 0});
     onMounted(async () => {
-        if (!container.value) return;
+        if (!container.value) {
+            isLoading.value = false;
+            return;
+        }
 
         if (isTesting) {
             elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
@@ -311,16 +314,19 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
             isLoading.value = false;
         }
         else {
-            if (subtype === NAMESPACE) {
-                const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});
-                const nodes = data.nodes ?? [];
-                elements.value = {data: transformResponse(data, NAMESPACE), count: new Set(nodes.map((r: { uid: string }) => r.uid)).size};
-
-                isLoading.value = false;
-            } else {
-                const result = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype});
-                elements.value = {data: result.data ?? [], count: result.count};
-
+            try {
+                if (subtype === NAMESPACE) {
+                    const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});
+                    const nodes = data.nodes ?? [];
+                    elements.value = {data: transformResponse(data, NAMESPACE), count: new Set(nodes.map((r: { uid: string }) => r.uid)).size};
+                } else {
+                    const result = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype});
+                    elements.value = {data: result.data ?? [], count: result.count};
+                }
+            } catch (error) {
+                console.error("Failed to load dependencies:", error);
+                elements.value = {data: [], count: 0};
+            } finally {
                 isLoading.value = false;
             }
         }

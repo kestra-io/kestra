@@ -77,6 +77,10 @@ export const InputTypes = {
         }, {timeout: 3000});
         
         await userEvent.click(secondOption);
+        const input = await waitFor(() => can.getByLabelText("Single select input"), {timeout: 2000, interval: 500});
+
+        await userEvent.click(input);
+        await userEvent.click(popups.getByText("Second value"));
 
         await waitFor(function testSelect() {
             expect(can.getByTestId("test-content").textContent).to.include("Second value");

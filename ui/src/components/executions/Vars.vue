@@ -23,38 +23,38 @@
     </el-table>
 </template>
 
-<script>
+<script setup lang="ts">
+    import { computed } from "vue"; 
     import Utils from "../../utils/utils";
     import VarValue from "./VarValue.vue";
     import DateAgo from "../../components/layout/DateAgo.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue"
-    import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
 
-    export default {
-        components: {
-            DateAgo,
-            VarValue,
-            SubFlowLink
-        },
-        props: {
-            data: {
-                type: Object,
-                required: true
-            },
-            keyLabelTranslationKey: {
-                type: String,
-                required: false,
-                default: "name"
-            }
-        },
-        computed: {
-            ...mapStores(useExecutionsStore),
-            variables() {
-                return Utils.executionVars(this.data);
-            },
-        },
-    };
+
+    interface VariableRow {
+        key: string;
+        value: any;
+        date?: boolean;
+        subflow?: boolean;
+    }
+
+    const props = withDefaults(
+        defineProps<{
+            data: Record<string, any>;
+            keyLabelTranslationKey?: string;
+        }>(),
+        {
+            keyLabelTranslationKey: "name",
+        }
+    );
+
+    const executionsStore = useExecutionsStore();
+
+    const variables = computed<VariableRow[]>(() => {
+        return Utils.executionVars(props.data);
+    });
+    
 </script>
 <style>
     .key-col {

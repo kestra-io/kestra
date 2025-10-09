@@ -44,27 +44,28 @@
 
         <template v-else-if="typeof modelValue === 'object' && modelValue !== null && !Array.isArray(modelValue)">
             <TaskDict
-                :modelValue="modelValue"
-                :task="task"
+                :modelValue
+                :task
                 @update:model-value="
                     (value) => $emit('update:modelValue', value)
                 "
-                :root="root"
+                :root
                 :schema="schema ?? {}"
-                :required="required"
-                :definitions="definitions"
+                :required
+                :definitions
             />
         </template>
     </el-form>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
+    import {computed, inject, ref} from "vue";
     import {useI18n} from "vue-i18n";
     import TaskDict from "./TaskDict.vue";
     import Wrapper from "./Wrapper.vue";
     import TaskObjectField from "./TaskObjectField.vue";
     import {collapseEmptyValues} from "./MixinTask";
+    import {DATA_TYPES_MAP_INJECTION_KEY} from "../../injectionKeys";
 
     defineOptions({
         name: "TaskObject",
@@ -144,8 +145,19 @@
 
     const isRequired = (key: string) => Boolean(props.schema?.required?.includes(key));
 
+    const dataTypesMap = inject(DATA_TYPES_MAP_INJECTION_KEY, ref<Record<string, string[] | undefined>>({}));
+
     const requiredProperties = computed<Entry[]>(() => {
-        return props.merge ? sortedProperties.value : sortedProperties.value.filter(([p, v]) => v && isRequired(p));
+        const properties =  props.merge ? sortedProperties.value : sortedProperties.value.filter(([p, v]) => v && isRequired(p));
+        const dataTypes = dataTypesMap.value[props.root ?? ""]
+        if(dataTypes){
+            properties.unshift(["type", {
+                type: "string",
+                enum: dataTypes,
+                $required: true,
+            }]);
+        }
+        return properties;
     });
 
     const protectedRequiredProperties = computed<Entry[]>(() => {

@@ -530,7 +530,7 @@
     "execution not found": "실행 <code>{executionId}</code>을(를) 찾을 수 없습니다",
     "execution not in state FAILED": "실행 <code>{executionId}</code>이(가) FAILED 상태가 아닙니다",
     "execution not in state PAUSED": "실행 <code>{executionId}</code>이(가) PAUSED 상태가 아닙니다",
-    "execution replay": "이 실행은 <code>{originalId}</code>의 재실행입니다.",
+    "execution replay": "이 실행은 다음의 재실행입니다:",
     "execution replayed": "이 실행은 재실행되었습니다.",
     "execution restarted": "이 실행은 {nbRestart}번 다시 시작되었습니다.",
     "execution statistics": "실행 통계",
@@ -903,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "실행 후 블록 추가",
+        "charts": "차트 추가",
         "conditions": "조건 추가",
         "errors": "오류 처리기 추가",
         "finally": "마지막 블록 추가",
         "inputs": "입력 필드 추가",
+        "numerator": "분자를 추가하세요",
         "pluginDefaults": "플러그인 기본값 추가",
         "tasks": "작업 추가",
-        "triggers": "트리거 추가"
+        "triggers": "트리거 추가",
+        "where": "데이터 필터링"
       },
       "fields": {
         "general": {
@@ -952,14 +955,17 @@
       },
       "select": {
         "afterExecution": "작업 선택",
+        "charts": "차트 유형 선택",
         "conditions": "조건 선택",
         "errors": "작업 선택",
         "finally": "작업 선택",
         "inputs": "입력 필드 유형 선택",
+        "numerator": "분자를 선택하세요",
         "pluginDefaults": "플러그인 선택",
         "task": "작업 선택",
         "tasks": "작업 선택",
-        "triggers": "트리거 선택"
+        "triggers": "트리거 선택",
+        "where": "필터 유형 선택"
       },
       "toggle_pebble": "Pebble 편집기 전환",
       "unnamed": "이름 없음",

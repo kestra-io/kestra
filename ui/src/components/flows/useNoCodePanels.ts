@@ -1,8 +1,7 @@
-import {computed, h, markRaw, Ref, Suspense} from "vue"
+import {computed, ComputedRef, h, markRaw, Ref, Suspense} from "vue"
 import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-import type {Panel, Tab} from "../MultiPanelTabs.vue";
 
 import {useFlowStore} from "../../stores/flow";
 import {useEditorStore} from "../../stores/editor";
@@ -10,6 +9,7 @@ import {NoCodeProps} from "./noCodeTypes";
 
 
 import {trackTabOpen, trackTabClose} from "../../utils/tabTracking";
+import {DeserializableEditorElement, Panel, Tab} from "../../utils/multiPanelTypes";
 
 const NOCODE_PREFIX = "nocode"
 
@@ -318,4 +318,35 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
     const handlers = useNoCodeHandlers(openTabs, focusTab, actions)
 
     return actions
+}
+
+export function useNoCodePanelsFull(options: {
+    RawNoCode: any,
+    editorView: Ref<{openTabs: string[], panels: Panel[], focusTab: (tab: string) => void} | undefined | null>,
+    editorElements: DeserializableEditorElement[],
+    source: ComputedRef<string>
+}) {
+    const openTabs = computed(() => options.editorView.value?.openTabs ?? []);
+    const panels = computed(() => options.editorView.value?.panels ?? []);
+    function focusTab(tabValue: string){
+        options.editorView.value?.focusTab(tabValue)
+    }
+
+    const actions = useNoCodePanels(options.RawNoCode, panels, openTabs, focusTab)
+    const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, actions)
+
+    const {t} = useI18n()
+
+    options.editorElements.find(e => e.value === "nocode")!.deserialize = (value, allowCreate) => {
+        return allowCreate
+            ? setupInitialNoCodeTab(options.RawNoCode, value, t, noCodeHandlers, options.source.value ?? "")
+            : setupInitialNoCodeTabIfExists(options.RawNoCode, value, t, noCodeHandlers, options.source.value ?? "")
+    }
+
+    return {
+        actions,
+        openTabs,
+        focusTab,
+        panels,
+    }
 }

@@ -173,18 +173,32 @@ public abstract class AbstractTaskRunnerTest {
         var commands = initScriptCommands(runContext);
         Mockito.when(commands.getEnableOutputDirectory()).thenReturn(false);
         Mockito.when(commands.outputDirectoryEnabled()).thenReturn(false);
-
-        Mockito.when(commands.getCommands()).thenReturn(
-            Property.ofValue(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World' > file.txt")))
-        );
+        Mockito.when(commands.relativeWorkingDirectoryFilesPaths()).thenCallRealMethod();
+        Mockito.when(commands.relativeWorkingDirectoryFilesPaths(false)).thenCallRealMethod();
 
         var taskRunner = taskRunner();
+        Property<List<String>> renderedCommands = Property.ofValue(ScriptService.replaceInternalStorage(
+            runContext,
+            taskRunner.additionalVars(runContext, commands),
+            ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World' > " + (needsToSpecifyWorkingDirectory() ? "{{workingDir}}/" : "") + "file.txt")),
+            taskRunner instanceof RemoteRunnerInterface
+        ));
+        Mockito.when(commands.getCommands()).thenReturn(
+            renderedCommands
+        );
+
         var result = taskRunner.run(runContext, commands, Collections.emptyList());
         assertThat(result).isNotNull();
         assertThat(result.getExitCode()).isZero();
 
+        renderedCommands = Property.ofValue(ScriptService.replaceInternalStorage(
+            runContext,
+            taskRunner.additionalVars(runContext, commands),
+            ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("cat " + (needsToSpecifyWorkingDirectory() ? "{{workingDir}}/" : "") + "file.txt")),
+            taskRunner instanceof RemoteRunnerInterface
+        ));
         Mockito.when(commands.getCommands()).thenReturn(
-            Property.ofValue(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("cat file.txt")))
+            renderedCommands
         );
 
         result = taskRunner.run(runContext, commands, Collections.emptyList());

@@ -5,7 +5,14 @@
         <slot name="content">
             <DataTable class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" hideTopPagination divider>
                 <template #navbar>
-                    <div v-if="ready && !system && !embed" class="tags-selection">
+                    <div v-if="!system && !embed" class="tags-selection">
+                        <el-button
+                            :class="{'is-selected': selectedTags.length === 0}"
+                            @click="clearAllTags"
+                            class="tag-button hoverable"
+                        >
+                            {{ $t("all tags") }}
+                        </el-button>
                         <el-button
                             v-for="tag in Object.values(tags || {})"
                             :key="tag.id"
@@ -189,6 +196,19 @@
 
     const updateSearch = (value: string) => {
         router.push({query: {...route.query, q: value || undefined}});
+    };
+
+    const clearAllTags = () => {
+        selectedTags.value = [];
+
+        if (!props.embed) {
+            router.push({
+                query: {
+                    ...route.query,
+                    selectedTag: undefined
+                }
+            });
+        }
     };
 
     const toggleTag = (tagId: string) => {

@@ -89,7 +89,7 @@
             });
         }
 
-        dashboard.value = id === "default" ? {id, ...parse(defaultYAML)} : await dashboardStore.load(id);
+        dashboard.value = id === "default" ? {id, charts: [], ...parse(defaultYAML)} : await dashboardStore.load(id);
         loadCharts(dashboard.value.charts);
     };
 

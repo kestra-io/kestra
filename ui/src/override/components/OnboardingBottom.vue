@@ -48,7 +48,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .onboarding-bottom {
         display: flex;
         gap: 1rem;

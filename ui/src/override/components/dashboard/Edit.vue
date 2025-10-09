@@ -1,16 +1,13 @@
 <template>
-    <TopNavBar :title="header.title" :breadcrumb="header.breadcrumb" />
+    <TopNavBar v-bind="header" />
     <section class="full-container">
-        <Editor
-            v-if="dashboard?.sourceCode"
-            :initialSource="dashboard.sourceCode"
-            @save="save"
-        />
+        <MultiPanelDashboardEditorView @save="save" />
     </section>
 </template>
 
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue";
+    import MultiPanelDashboardEditorView from "../../../components/dashboard/components/MultiPanelDashboardEditorView.vue";
 
     import {useRoute} from "vue-router";
 
@@ -29,13 +26,11 @@
     const toast = useToast();
 
     import TopNavBar from "../../../components/layout/TopNavBar.vue";
-    // @ts-expect-error - Component not typed
-    import Editor from "../../../components/dashboard/components/Editor.vue";
 
     import type {Dashboard} from "../../../components/dashboard/composables/useDashboards";
 
     const dashboard = ref<Dashboard>({id: "", charts: []});
-    const save = async (source: string) => {
+    const save = async (source?: string) => {
         const response = await dashboardStore.update({id: route.params.dashboard.toString(), source});
 
         dashboard.value.sourceCode = source;
@@ -59,5 +54,6 @@
     const routeInfo = computed(() => ({title: t("dashboards.edition.label")}));
 
     import useRouteContext from "../../../composables/useRouteContext";
+
     useRouteContext(routeInfo);
 </script>

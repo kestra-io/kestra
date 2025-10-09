@@ -1,0 +1,23 @@
+id: resume-validate
+namespace: io.kestra.tests
+
+labels:
+  year: 2025
+
+tasks:
+  - id: pause
+    type: io.kestra.plugin.core.flow.Pause
+    onResume:
+      - id: approved
+        description: Whether to approve the request
+        type: BOOLEAN
+        defaults: true
+  - id: last
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"
+
+errors:
+  - id: failed-echo
+    type: io.kestra.plugin.core.debug.Echo
+    description: "Log the error"
+    format: I'm failing {{task.id}}

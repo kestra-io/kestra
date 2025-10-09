@@ -3,11 +3,6 @@
         <el-splitter>
             <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'">
                 <div class="d-flex flex-column overflow-x-auto left">
-                    <div class="filter-toggle">
-                        <el-checkbox v-model="hideEmptyTaskRuns">
-                            {{ t("hide empty outputs") }}
-                        </el-checkbox>
-                    </div>
                     <el-cascader-panel
                         ref="cascader"
                         v-model="selected"
@@ -263,8 +258,6 @@
 
     const execution = computed(() => executionsStore.execution);
 
-    const hideEmptyTaskRuns = ref(true);
-
     const hasOutputValue = (value: unknown): boolean => {
         if (value === null || value === undefined) return false;
 
@@ -366,10 +359,6 @@
         debugCollapse.value = "debug";
     });
 
-    watch(hideEmptyTaskRuns, () => {
-        initializeSelection();
-    });
-
     const selectedValue = computed(() => {
         if (selected.value?.length)
             return selected.value[selected.value.length - 1];
@@ -431,11 +420,9 @@
     };
     const outputs = computed(() => {
         const taskRunList = executionsStore?.execution?.taskRunList ?? [];
-        const filteredTaskRuns = hideEmptyTaskRuns.value
-            ? taskRunList.filter((task) => hasOutputs(task.outputs))
-            : taskRunList;
+        const tasksWithOutputs = taskRunList.filter((task) => hasOutputs(task.outputs));
 
-        const tasks = filteredTaskRuns.map((task) => ({
+        const tasks = tasksWithOutputs.map((task) => ({
             label: task.taskId,
             value: task.taskId,
             ...task,
@@ -488,10 +475,6 @@
 </script>
 
 <style lang="scss" scoped>
-.filter-toggle {
-    padding: 0 1rem 0.75rem 1rem;
-}
-
 .outputs {
     display: flex;
     width: 100%;
@@ -622,11 +605,6 @@
 .tasks-header {
     border-bottom: 1px solid var(--ks-border-primary);
     background: var(--ks-background-card);
-}
-
-.filter-toggle {
-    padding-top: 0.5rem;
-    padding-bottom: 0.75rem;
 }
 
 </style>

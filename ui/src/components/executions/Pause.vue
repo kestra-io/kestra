@@ -8,6 +8,17 @@
     >
         {{ t('pause') }}
     </component>
+
+    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
+        <template #header>
+            <span v-html="t('pause title', {id: execution.id})" />
+        </template>
+        <template #footer>
+            <el-button :icon="PauseBox" type="primary" @click="pause()" nativeType="submit">
+                {{ t('pause') }}
+            </el-button>
+        </template>
+    </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -17,7 +28,7 @@
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs";
     import {useAuthStore} from "override/stores/auth";
-    import {computed} from "vue";
+    import {computed, ref} from "vue";
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";
 
@@ -37,6 +48,8 @@
     const authStore = useAuthStore();
     const toast = useToast();
 
+    const isDrawerOpen = ref(false);
+
     const enabled = computed(() => {
         if (!authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, props.execution.namespace)) {
             return false;
@@ -45,19 +58,20 @@
     });
 
     const click = () => {
-        toast.confirm(t("pause confirm", {id: props.execution.id}), () => {
-            return pause();
-        });
+        isDrawerOpen.value = true;
     };
 
     const pause = () => {
-        return executionsStore
-            .pause({
-                id: props.execution.id
-            })
-            .then(() => {
-                toast.success(t("pause done"));
-            });
+        toast.confirm(t("pause confirm", {id: props.execution.id}), () => {
+            return executionsStore
+                .pause({
+                    id: props.execution.id
+                })
+                .then(() => {
+                    isDrawerOpen.value = false;
+                    toast.success(t("pause done"));
+                });
+        });
     };
 </script>
 

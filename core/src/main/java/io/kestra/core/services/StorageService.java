@@ -128,7 +128,6 @@ public abstract class StorageService {
     private static List<Path> splitByRegex(RunContext runContext, String extension, String separator, BufferedReader bufferedReader, String regexPattern) throws IOException {
         List<Path> files = new ArrayList<>();
         Map<String, RandomAccessFile> writers = new HashMap<>();
-        Map<String, Path> writerPaths = new HashMap<>();
         Pattern pattern = Pattern.compile(regexPattern);
         
         String row;
@@ -145,7 +144,6 @@ public abstract class StorageService {
                     files.add(path);
                     writer = new RandomAccessFile(path.toFile(), "rw");
                     writers.put(routingKey, writer);
-                    writerPaths.put(routingKey, path);
                 }
                 
                 byte[] bytes = (row + separator).getBytes(StandardCharsets.UTF_8);

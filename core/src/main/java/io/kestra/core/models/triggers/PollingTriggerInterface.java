@@ -1,11 +1,12 @@
 package io.kestra.core.models.triggers;
 
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.annotation.Nullable;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,39 +35,29 @@ public interface PollingTriggerInterface extends WorkerTriggerInterface {
      * Compute the next evaluation date of the trigger based on the existing trigger context: by default, it uses the current date and the interval.
      * Schedulable triggers must override this method.
      */
-    default ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws Exception {
-        RunContext runContext = conditionContext.getRunContext();
-        return computeNextEvaluationDate(runContext);
+    default ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws InvalidTriggerConfigurationException {
+        return computeNextEvaluationDate();
     }
 
     /**
      * Compute the next evaluation date of the trigger: by default, it uses the current date and the interval.
      * Schedulable triggers must override this method as it's used to init them when there is no evaluation date.
      */
-    default ZonedDateTime nextEvaluationDate() {
-        return computeNextEvaluationDate(null);
+    default ZonedDateTime nextEvaluationDate() throws InvalidTriggerConfigurationException {
+        return computeNextEvaluationDate();
     }
 
     /**
      * computes the next evaluation date using the configured interval.
      * Falls back to 60 seconds if the interval causes date overflow.
      */
-    private ZonedDateTime computeNextEvaluationDate(@Nullable RunContext runContext) {
+    private ZonedDateTime computeNextEvaluationDate() throws InvalidTriggerConfigurationException {
         Duration interval = this.getInterval();
-        Logger logger = resolveLogger(runContext);
 
         try {
             return ZonedDateTime.now().plus(interval);
         } catch (DateTimeException | ArithmeticException e) {
-            logger.warn("Trigger interval '{}' for type '{}' causes date overflow: {}. Using 60 seconds fallback.", interval, this.getClass().getName(), e.getMessage());
-            return ZonedDateTime.now().plus(Duration.ofSeconds(60));
+            throw new InvalidTriggerConfigurationException("Trigger interval too large", e);
         }
-    }
-
-    private Logger resolveLogger(@Nullable RunContext runContext) {
-        if (runContext != null) {
-            return runContext.logger();
-        }
-        return LoggerFactory.getLogger(this.getClass());
     }
 }

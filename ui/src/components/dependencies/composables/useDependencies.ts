@@ -303,14 +303,8 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
     const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number; }>({data: [], count: 0});
     onMounted(async () => {
-        if (!container.value) {
-            isLoading.value = false;
-            return;
-        }
-
         if (isTesting) {
             elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
-
             isLoading.value = false;
         }
         else {
@@ -319,17 +313,25 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
                     const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});
                     const nodes = data.nodes ?? [];
                     elements.value = {data: transformResponse(data, NAMESPACE), count: new Set(nodes.map((r: { uid: string }) => r.uid)).size};
+                    isLoading.value = false;
                 } else {
-                    const result = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype});
+                    const result = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype}, false);
                     elements.value = {data: result.data ?? [], count: result.count};
+                    isLoading.value = false;
                 }
             } catch (error) {
                 console.error("Failed to load dependencies:", error);
                 elements.value = {data: [], count: 0};
-            } finally {
                 isLoading.value = false;
             }
         }
+
+        // Only initialize cytoscape if we have elements and a container
+        if (elements.value.data.length > 0) {
+            // Wait for the container to be available in the DOM
+            await nextTick();
+            
+            if (!container.value) return;
 
         if (subtype === EXECUTION) nextTick(() => openSSE());
 
@@ -372,7 +374,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
             if (subtype === NAMESPACE) fit(cy); // If the subtype is NAMESPACE, fit the entire graph in the viewport
             else if (node) selectHandler(cy, node, selectedNodeID, subtype); // Else, preselect the proper node after layout rendering completes
         });
-    });
+    }});
 
     const sse = ref();
     const messages = ref<Record<string, any>[]>([]);

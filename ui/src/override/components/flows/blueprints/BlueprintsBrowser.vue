@@ -371,14 +371,21 @@
         gap: 0.75rem;
         
         .tag-item {
-            background-color: rgba(39, 38, 38, 0.144);
+            background-color: rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--ks-border-primary);
+            color: var(--bs-body-color);
+
             backdrop-filter: blur(10px);
             border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
             padding: 0.25rem 0.6rem;
             font-size: 0.7rem;
             font-weight: 700;
-            color: white;
+
+            html.dark & {
+                background-color: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: white;
+            }
         }
     }
 

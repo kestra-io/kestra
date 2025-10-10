@@ -865,23 +865,6 @@ public class JdbcExecutor implements ExecutorInterface {
                         log.trace("TaskRun terminated: {}", taskRun);
                     }
 
-                    // Recalculate execution final state if all tasks are terminated
-                    // This ensures the parent execution state reflects the final state of its tasks
-                    // especially when subflows succeed after retries or manual restarts
-                    FlowWithSource parentFlow = current.getFlow() != null ? current.getFlow() : findFlow(current.getExecution());
-                    boolean isTerminated = executionService.isTerminated(parentFlow, current.getExecution());
-
-                    if (isTerminated) {
-                        State.Type currentState = current.getExecution().getState().getCurrent();
-                        State.Type finalState = current.getExecution().guessFinalState(parentFlow);
-                        if (finalState != currentState) {
-                            current = current.withExecution(
-                                current.getExecution().withState(finalState),
-                                "recalculateFinalStateAfterSubflow"
-                            );
-                        }
-                    }
-
                     // join worker result
                     return Pair.of(
                         current,

@@ -18,7 +18,6 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
@@ -606,9 +605,6 @@ public class Execution implements DeletedInterface, TenantInterface {
     public boolean isTerminated(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
         List<TaskRun> taskRuns = this.findTaskRunByTasks(resolvedTasks, parentTaskRun);
 
-        // A task is truly terminated only if:
-        // 1. Its state is terminated AND
-        // 2. It's not going to be retried (no retry configured or retries exhausted)
         long terminatedCount = taskRuns.stream()
             .filter(taskRun -> {
                 State.Type currentState = taskRun.getState().getCurrent();
@@ -623,48 +619,16 @@ public class Execution implements DeletedInterface, TenantInterface {
                     return false;
                 }
 
-                // For FAILED state, check if it's an intermediate failure that will be retried
+                // For FAILED state, check if it will be retried
                 if (currentState == State.Type.FAILED) {
-                    // Find the corresponding ResolvedTask to check retry configuration
                     ResolvedTask resolvedTask = resolvedTasks.stream()
                         .filter(rt -> rt.getTask().getId().equals(taskRun.getTaskId()) &&
                                     java.util.Objects.equals(rt.getValue(), taskRun.getValue()))
                         .findFirst()
                         .orElse(null);
 
-                    if (resolvedTask != null && resolvedTask.getTask().getRetry() != null) {
-                        // Task has retry configured - check if retries are exhausted
-                        Integer maxAttempts = resolvedTask.getTask().getRetry().getMaxAttempts();
-
-                        // Count attempts - attempts list may be null or empty on first failure
-                        int currentAttempts = 0;
-                        if (taskRun.getAttempts() != null && !taskRun.getAttempts().isEmpty()) {
-                            currentAttempts = taskRun.getAttempts().size();
-                        }
-
-                        // If task has retry and hasn't exhausted retries, it's NOT terminated
-                        // Even if attempts is 0 (first failure), we should retry
-                        if (maxAttempts != null && maxAttempts > 0) {
-                            // Always return false for FAILED tasks with retry configured
-                            // until they've actually retried maxAttempts times
-                            if (currentAttempts < maxAttempts) {
-                                return false;
-                            }
-                        }
-                    }
-
-                    // Also check for retry indicators in state history (execution-level retry)
-                    boolean hasRetryInHistory = taskRun.getState().getHistories().stream()
-                        .anyMatch(history -> history.getState().isRetrying() ||
-                                           history.getState() == State.Type.RESTARTED);
-
-                    // Check for successful attempts
-                    boolean hasSuccessfulAttempt = taskRun.getAttempts() != null &&
-                        taskRun.getAttempts().stream()
-                            .anyMatch(attempt -> attempt.getState().isSuccess());
-
-                    // If there are retry indicators, this task is NOT truly terminated yet
-                    if (hasRetryInHistory || hasSuccessfulAttempt) {
+                    // Use shouldBeRetried to check if task will be retried
+                    if (resolvedTask != null && taskRun.shouldBeRetried(resolvedTask.getTask().getRetry())) {
                         return false;
                     }
                 }
@@ -752,66 +716,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public State.Type guessFinalState(Flow flow) {
-        // For determining final state, we need ALL tasks including nested ones
-        // This is important for scenarios where nested tasks (like Subflows inside Parallel/If)
-        // have retry configuration that affects whether the execution is truly terminated
-        List<ResolvedTask> allTasks = new ArrayList<>();
-        collectAllTasks(flow.getTasks(), allTasks);
-
-        return this.guessFinalState(allTasks, null, false, false);
-    }
-
-    /**
-     * Recursively collect all tasks including nested ones (in Parallel, If, etc.)
-     */
-    private void collectAllTasks(List<Task> tasks, List<ResolvedTask> collector) {
-        if (tasks == null) {
-            return;
-        }
-
-        for (Task task : tasks) {
-            collector.add(ResolvedTask.of(task));
-
-            // Recursively collect nested tasks
-            // We check for the most common flowable tasks that can contain nested tasks
-            try {
-                // Use reflection to get nested tasks to avoid coupling to specific task implementations
-                java.lang.reflect.Method getTasksMethod = task.getClass().getMethod("getTasks");
-                Object tasksObj = getTasksMethod.invoke(task);
-                if (tasksObj instanceof List) {
-                    @SuppressWarnings("unchecked")
-                    List<Task> nestedTasks = (List<Task>) tasksObj;
-                    collectAllTasks(nestedTasks, collector);
-                }
-            } catch (NoSuchMethodException | IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
-                // Task doesn't have getTasks() method, that's fine
-            }
-
-            // Also check for getThen() and getElse() for If tasks
-            try {
-                java.lang.reflect.Method getThenMethod = task.getClass().getMethod("getThen");
-                Object thenObj = getThenMethod.invoke(task);
-                if (thenObj instanceof List) {
-                    @SuppressWarnings("unchecked")
-                    List<Task> thenTasks = (List<Task>) thenObj;
-                    collectAllTasks(thenTasks, collector);
-                }
-            } catch (NoSuchMethodException | IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
-                // Task doesn't have getThen() method, that's fine
-            }
-
-            try {
-                java.lang.reflect.Method getElseMethod = task.getClass().getMethod("getOthers");
-                Object elseObj = getElseMethod.invoke(task);
-                if (elseObj instanceof List) {
-                    @SuppressWarnings("unchecked")
-                    List<Task> elseTasks = (List<Task>) elseObj;
-                    collectAllTasks(elseTasks, collector);
-                }
-            } catch (NoSuchMethodException | IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
-                // Task doesn't have getOthers() method, that's fine
-            }
-        }
+        return this.guessFinalState(ResolvedTask.of(flow.getTasks()), null, false, false);
     }
 
     public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun,
@@ -823,105 +728,28 @@ public class Execution implements DeletedInterface, TenantInterface {
                                       boolean allowFailure, boolean allowWarning, State.Type terminalState) {
         List<TaskRun> taskRuns = this.findTaskRunByTasks(currentTasks, parentTaskRun);
 
-        // Check current state of all task runs, considering only final states (not intermediate failed states from retries)
-        boolean hasKilled = false;
-        boolean hasFailed = false;
-        boolean hasWarning = false;
-        boolean hasPaused = false;
-
-        for (TaskRun taskRun : taskRuns) {
-            State.Type currentState = taskRun.getState().getCurrent();
-
-            // Skip flowable wrapper tasks (Parallel, If, Switch, etc.) that have children
-            // Their state is derived from their children, so we should only look at leaf tasks
-            // But include flowable tasks that don't have children (like WaitFor with no nested tasks)
-            // Find the corresponding ResolvedTask to check if it's flowable
-            ResolvedTask resolvedTask = currentTasks.stream()
-                .filter(rt -> rt.getTask().getId().equals(taskRun.getTaskId()) &&
-                            java.util.Objects.equals(rt.getValue(), taskRun.getValue()))
-                .findFirst()
-                .orElse(null);
-
-            if (resolvedTask != null && resolvedTask.getTask().isFlowable()) {
-                // Check if this flowable task has children in the execution
-                boolean hasChildren = this.taskRunList.stream()
-                    .anyMatch(tr -> tr.getParentTaskRunId() != null &&
-                                  tr.getParentTaskRunId().equals(taskRun.getId()));
-
-                if (hasChildren) {
-                    // Skip wrapper tasks with children - their state comes from children
-                    continue;
-                }
-                // If no children, include this flowable task in the calculation
-            }
-
-            // Skip tasks that are currently retrying - they're not in a final state yet
-            if (currentState.isRetrying()) {
-                continue;
-            }
-
-            // Only consider terminal states and exclude retrying states
-            if (currentState.isTerminated() || currentState.isPaused()) {
-                switch (currentState) {
-                    case KILLED:
-                        hasKilled = true;
-                        break;
-                    case FAILED:
-                        // Count as failed only if the CURRENT state is FAILED
-                        // Don't count intermediate failures that were resolved through:
-                        // 1. Task-level retries (attempts with successful outcomes)
-                        // 2. Execution-level retries (RETRYING/RETRIED in history)
-                        // 3. Manual restarts (RESTARTED in history)
-
-                        // Check for task-level retry success
-                        boolean hasSuccessfulAttempt = taskRun.getAttempts() != null &&
-                            taskRun.getAttempts().stream().anyMatch(attempt -> attempt.getState().isSuccess());
-
-                        // Check for execution-level retry or restart
-                        boolean hasRetryOrRestart = taskRun.getState().getHistories().stream()
-                            .anyMatch(history -> history.getState().isRetrying() || history.getState() == State.Type.RESTARTED);
-
-                        // Only count as failed if it's a true failure (no successful resolution)
-                        if (!hasSuccessfulAttempt && !hasRetryOrRestart) {
-                            hasFailed = true;
-                        }
-                        break;
-                    case WARNING:
-                        hasWarning = true;
-                        break;
-                    case PAUSED:
-                        hasPaused = true;
-                        break;
-                    default:
-                        // SUCCESS or other terminal states
-                        break;
-                }
-            }
-        }
-
-        // Check if any tasks are in a non-final state (retrying, running, created)
-        // If so, we shouldn't finalize the execution state yet
-        boolean hasNonFinalTasks = taskRuns.stream()
-            .anyMatch(taskRun -> {
-                State.Type currentState = taskRun.getState().getCurrent();
-                return currentState.isRetrying() || currentState.isRunning() || currentState.isCreated();
-            });
-
-        // Determine final state based on priority: KILLED > FAILED > WARNING > PAUSED > SUCCESS
-        State.Type state;
-        if (hasKilled) {
-            state = State.Type.KILLED;
-        } else if (hasFailed) {
-            // If there are non-final tasks, don't finalize as FAILED yet - return RUNNING instead
-            // This prevents premature termination when retries are in progress
-            state = hasNonFinalTasks ? State.Type.RUNNING : State.Type.FAILED;
-        } else if (hasWarning) {
-            state = State.Type.WARNING;
-        } else if (hasPaused) {
-            state = State.Type.PAUSED;
-        } else {
-            state = terminalState;
-        }
+        var state = this
+            .findLastByState(taskRuns, State.Type.KILLED)
+            .map(taskRun -> taskRun.getState().getCurrent())
+            .or(() -> this
+                .findLastByState(taskRuns, State.Type.FAILED)
+                .filter(taskRun -> {
+                    // Don't count as FAILED if the task has successful attempts (succeeded after retry)
+                    boolean hasSuccessfulAttempt = taskRun.getAttempts() != null &&
+                        taskRun.getAttempts().stream().anyMatch(attempt -> attempt.getState().isSuccess());
+                    return !hasSuccessfulAttempt;
+                })
+                .map(taskRun -> taskRun.getState().getCurrent())
+            )
+            .or(() -> this
+                .findLastByState(taskRuns, State.Type.WARNING)
+                .map(taskRun -> taskRun.getState().getCurrent())
+            )
+            .or(() -> this
+                .findLastByState(taskRuns, State.Type.PAUSED)
+                .map(taskRun -> taskRun.getState().getCurrent())
+            )
+            .orElse(terminalState);
 
         if (state == State.Type.FAILED && allowFailure) {
             if (allowWarning) {

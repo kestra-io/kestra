@@ -103,6 +103,8 @@
       "24hours": "24 hours",
       "48hours": "48 hours",
       "7days": "7 days",
+      "14days": "14 days",
+      "28days":"28 days",
       "30days": "30 days",
       "365days": "365 days",
       "never": "Never",

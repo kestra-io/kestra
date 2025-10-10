@@ -61,6 +61,11 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         }),
         STATUSES: buildFromArray(["PENDING", "ACCEPTED", "EXPIRED"]),
         AGGREGATIONS: buildFromArray(["SUM", "AVG", "MIN", "MAX"]),
+        EXECUTION_STATS:[
+            {label: t("datepicker.7days"),value:"PT168H"},
+            {label: t("datepicker.14days"),value:"PT336H"},
+            {label: t("datepicker.28days"),value:"PT672H"},
+        ],
         RELATIVE_DATE: [
             {label: t("datepicker.last5minutes"), value: "PT5M"},
             {label: t("datepicker.last15minutes"), value: "PT15M"},

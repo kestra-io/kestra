@@ -30,6 +30,9 @@
                             {{ row.data.namespace }}
                         </p>
                     </section>
+                    <section>
+                        <TimeSeriesChart :flowId="row.data.flow" :namespace="row.data.namespace" />
+                    </section>
 
                     <section id="right">
                         <Status
@@ -68,6 +71,7 @@
     const {t} = useI18n({useScope: "global"});
 
     import {NODE, FLOW, EXECUTION, NAMESPACE, type Node} from "../utils/types";
+    import TimeSeriesChart from "../../charts/TimeSeriesChart.vue";
 
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
     const props = defineProps<{

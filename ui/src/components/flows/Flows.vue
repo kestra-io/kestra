@@ -207,11 +207,9 @@
                                 className="row-graph"
                             >
                                 <template #default="scope">
-                                    <TimeSeries
-                                        :chart="mappedChart(scope.row.id, scope.row.namespace)"
-                                        showDefault
-                                        short
-                                    />
+                                    {{ console.log(scope.row.id) }}
+
+                                    <TimeSeriesChart :flowId="scope.row.id" :namespace="scope.row.namespace" />
                                 </template>
                             </el-table-column>
 
@@ -273,7 +271,6 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
     import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage";
-    import TimeSeries from "../dashboard/sections/TimeSeries.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     // @ts-expect-error data-table is too big for ts conversion yet
@@ -285,11 +282,11 @@
     import Kicon from "../Kicon.vue";
     import Labels from "../layout/Labels.vue";
     import {defaultNamespace} from "../../composables/useNamespaces";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {useToast} from "../../utils/toast";
     import {useDataTableActions} from "../../composables/useDataTableActions";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
     import * as FILTERS from "../../utils/filters";
+    import TimeSeriesChart from "../charts/TimeSeriesChart.vue";
 
     // Props
     const props = withDefaults(defineProps<{
@@ -365,59 +362,6 @@
     });
 
     const selectionIds = computed(() => selection.value.map((flow) => ({id: flow.id, namespace: flow.namespace})));
-
-    interface ChartDefinition {
-        id: string;
-        type: string;
-        chartOptions: {
-            displayName: string;
-            description: string;
-            legend: {enabled: boolean};
-            column: string;
-            colorByColumn: string;
-            width: number;
-        };
-        data: {
-            type: string;
-            columns: {
-                date: {field: string; displayName: string};
-                state: {field: string};
-                total: {displayName: string; agg: string};
-                duration: {field: string; displayName: string; agg: string};
-            };
-            where: {field: string; type: string; value: string}[];
-        };
-        content?: string;
-    }
-
-    // Chart definition for mappedChart
-    const CHART_DEFINITION: ChartDefinition = {
-        id: "total_executions_timeseries",
-        type: "io.kestra.plugin.core.dashboard.chart.TimeSeries",
-        chartOptions: {
-            displayName: "Total Executions",
-            description: "Executions duration and count per date",
-            legend: {enabled: false},
-            column: "date",
-            colorByColumn: "state",
-            width: 12,
-        },
-        data: {
-            type: "io.kestra.plugin.core.dashboard.data.Executions",
-            columns: {
-                date: {field: "START_DATE", displayName: "Date"},
-                state: {field: "STATE"},
-                total: {displayName: "Executions", agg: "COUNT"},
-                duration: {field: "DURATION", displayName: "Duration", agg: "SUM"},
-            },
-            where: [
-                {field: "NAMESPACE", type: "EQUAL_TO", value: "${namespace}"},
-                {field: "FLOW_ID", type: "EQUAL_TO", value: "${flow_id}"},
-            ],
-        },
-    };
-    CHART_DEFINITION.content = YAML_UTILS.stringify(CHART_DEFINITION);
-
 
 
     function loadDisplayColumns(): string[] {
@@ -575,12 +519,6 @@
 
     function rowClasses(row: any) {
         return row && row.row && row.row.disabled ? "disabled" : "";
-    }
-
-    function mappedChart(id: string, namespace: string) {
-        let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION));
-        MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id);
-        return MAPPED_CHARTS;
     }
 
     // Lifecycle

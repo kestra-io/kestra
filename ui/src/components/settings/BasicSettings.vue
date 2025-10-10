@@ -843,7 +843,7 @@
             },
             executionsDefaultStatsOptions(){
                 const {VALUES} = useValues()
-                return VALUES.RELATIVE_DATE
+                return VALUES.EXECUTION_STATS
             },
             executeDefaultTabOptions() {
                 return [

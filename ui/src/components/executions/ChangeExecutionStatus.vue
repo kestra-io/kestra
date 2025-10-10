@@ -94,19 +94,18 @@
         state: { current: string; histories?: unknown[] };
     }
 
-    const props = defineProps({
-        component: {
-            type: String,
-            default: "el-button",
-        },
-        execution: {
-            type: Object as () => ExecutionLike,
-            required: true,
-        },
-        tooltipPosition: {
-            type: String,
-            default: "bottom",
-        },
+    interface ExecutionChangeResponse { data: ExecutionLike }
+    interface StateOption { code: string; label: string; disabled: boolean }
+
+    interface Props {
+        component?: string;
+        execution: ExecutionLike;
+        tooltipPosition?: string;
+    }
+
+    const props = withDefaults(defineProps<Props>(), {
+        component: "el-button",
+        tooltipPosition: "bottom",
     });
 
     const emit = defineEmits<{(e: "follow"): void}>();
@@ -195,7 +194,7 @@
 
     const uuid = computed(() => "changestatus-" + props.execution.id);
 
-    const states = computed(() => {
+    const states = computed<StateOption[]>(() => {
         const list = (props.execution.state.current === "PAUSED"
                 ? [State.FAILED, State.RUNNING, State.CANCELLED]
                 : [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED]
@@ -207,7 +206,7 @@
                 disabled: value === props.execution.state.current,
             }));
 
-        return list as Array<{ code: string; label: string; disabled: boolean }>;
+        return list as StateOption[];
     });
 
     const enabled = computed(() => {
@@ -228,7 +227,7 @@
                 executionId: props.execution.id,
                 state: selectedStatus.value,
             })
-            .then((response: any) => {
+            .then((response: ExecutionChangeResponse) => {
                 if (response.data.id === props.execution.id) {
                     const http = (store as any).$http;
                     return ExecutionUtils.waitForState(http, store, response.data);

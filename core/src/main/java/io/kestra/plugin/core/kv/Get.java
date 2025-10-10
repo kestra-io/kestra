@@ -85,7 +85,7 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         
         String renderedKey;
         try {
-            renderedKey = runContext.render(this.key, additionalVars).as(String.class).orElse(null);
+            renderedKey = runContext.render(this.key).as(String.class).orElse(null);
         } catch (IllegalVariableEvaluationException e) {
             Boolean errorOnMissing = runContext.render(this.errorOnMissing).as(Boolean.class).orElse(false);
             if (!errorOnMissing) {

@@ -123,7 +123,7 @@
                 }
             "
             @node-drop="nodeMoved"
-            @keydown.delete.prevent="removeSelectedFiles"
+            @keydown.delete.prevent="removeSelectedFiles && removeSelectedFiles()" 
         >
             <template #empty>
                 <div class="m-4 empty">
